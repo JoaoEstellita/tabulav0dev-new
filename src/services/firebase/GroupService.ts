@@ -1,0 +1,286 @@
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  getDocs,
+  getDoc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  arrayUnion,
+  Timestamp,
+} from "firebase/firestore"
+import { db } from "../../config/firebase"
+import NotificationService from "./NotificationService"
+import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
+
+export interface Group {
+  id: string
+  name: string
+  description: string
+  createdBy: string
+  members: string[]
+  createdAt: Date
+  isPrivate: boolean
+  inviteCode?: string
+}
+
+export interface GroupMember {
+  userId: string
+  email: string
+  displayName: string
+  joinedAt: Date
+  astrologicalStatus?: AstrologicalStatus
+  lastStatusUpdate?: Date
+  birthData?: {
+    datetime: string
+    coordinates: { latitude: number; longitude: number }
+  }
+}
+
+export interface GroupAlert {
+  id: string
+  groupId: string
+  userId: string
+  userName: string
+  status: AstrologicalStatus["overall"]
+  message: string
+  createdAt: Date
+  isRead: boolean
+}
+
+class GroupService {
+  // Criar grupo
+  async createGroup(name: string, description: string, createdBy: string, isPrivate = false): Promise<string> {
+    try {
+      const inviteCode = isPrivate ? this.generateInviteCode() : undefined
+
+      const docRef = await addDoc(collection(db, "groups"), {
+        name,
+        description,
+        createdBy,
+        members: [createdBy],
+        createdAt: Timestamp.now(),
+        isPrivate,
+        inviteCode,
+      })
+
+      return docRef.id
+    } catch (error) {
+      console.error("Erro ao criar grupo:", error)
+      throw new Error("Não foi possível criar o grupo")
+    }
+  }
+
+  // Buscar grupos do usuário
+  async getUserGroups(userId: string): Promise<Group[]> {
+    try {
+      const q = query(
+        collection(db, "groups"),
+        where("members", "array-contains", userId),
+        orderBy("createdAt", "desc"),
+      )
+
+      const querySnapshot = await getDocs(q)
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate(),
+      })) as Group[]
+    } catch (error) {
+      console.error("Erro ao buscar grupos:", error)
+      return []
+    }
+  }
+
+  // Entrar em grupo por código
+  async joinGroupByCode(inviteCode: string, userId: string): Promise<boolean> {
+    try {
+      const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        throw new Error("Código de convite inválido")
+      }
+
+      const groupDoc = querySnapshot.docs[0]
+      const groupData = groupDoc.data()
+
+      if (groupData.members.includes(userId)) {
+        throw new Error("Você já é membro deste grupo")
+      }
+
+      await updateDoc(doc(db, "groups", groupDoc.id), {
+        members: arrayUnion(userId),
+      })
+
+      return true
+    } catch (error) {
+      console.error("Erro ao entrar no grupo:", error)
+      throw error
+    }
+  }
+
+  // Atualizar status astrológico do usuário
+  async updateUserStatus(userId: string, status: AstrologicalStatus, birthData?: any): Promise<void> {
+    try {
+      const userStatusRef = doc(db, "userStatus", userId)
+
+      await updateDoc(userStatusRef, {
+        astrologicalStatus: status,
+        lastStatusUpdate: Timestamp.now(),
+        birthData,
+      })
+
+      // Se status crítico, criar alerta para grupos E enviar notificações
+      if (status.overall === "critical" || status.overall === "challenging") {
+        await this.createGroupAlertsWithNotifications(userId, status)
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error)
+    }
+  }
+
+  // Criar alertas para grupos E enviar notificações push
+  private async createGroupAlertsWithNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
+    try {
+      const userGroups = await this.getUserGroups(userId)
+
+      for (const group of userGroups) {
+        const message = this.generateAlertMessage(status)
+
+        // Criar alerta no Firestore
+        await addDoc(collection(db, "groupAlerts"), {
+          groupId: group.id,
+          userId,
+          userName: "Usuário", // Buscar nome real depois
+          status: status.overall,
+          message,
+          createdAt: Timestamp.now(),
+          isRead: false,
+        })
+
+        // Enviar notificações para outros membros do grupo
+        await this.sendNotificationsToGroupMembers(group, userId, status, message)
+      }
+    } catch (error) {
+      console.error("Erro ao criar alertas:", error)
+    }
+  }
+
+  // Enviar notificações push para membros do grupo
+  private async sendNotificationsToGroupMembers(
+    group: Group,
+    alertUserId: string,
+    status: AstrologicalStatus,
+    message: string,
+  ): Promise<void> {
+    try {
+      // Enviar para todos os membros exceto quem gerou o alerta
+      const otherMembers = group.members.filter((memberId) => memberId !== alertUserId)
+
+      for (const memberId of otherMembers) {
+        await NotificationService.sendNotificationToUser(memberId, {
+          title: `🚨 Alerta no grupo ${group.name}`,
+          body: message,
+          data: {
+            screen: "Groups",
+            groupId: group.id,
+            alertType: status.overall,
+          },
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao enviar notificações:", error)
+    }
+  }
+
+  // Buscar membros do grupo com status
+  async getGroupMembersWithStatus(groupId: string): Promise<GroupMember[]> {
+    try {
+      const groupDoc = await getDoc(doc(db, "groups", groupId))
+      if (!groupDoc.exists()) return []
+
+      const group = groupDoc.data() as Group
+      const members: GroupMember[] = []
+
+      for (const memberId of group.members) {
+        const statusDoc = await getDoc(doc(db, "userStatus", memberId))
+        const statusData = statusDoc.exists() ? statusDoc.data() : null
+
+        members.push({
+          userId: memberId,
+          email: memberId, // Buscar dados reais do usuário depois
+          displayName: memberId.split("@")[0],
+          joinedAt: new Date(),
+          astrologicalStatus: statusData?.astrologicalStatus,
+          lastStatusUpdate: statusData?.lastStatusUpdate?.toDate(),
+          birthData: statusData?.birthData,
+        })
+      }
+
+      return members
+    } catch (error) {
+      console.error("Erro ao buscar membros:", error)
+      return []
+    }
+  }
+
+  // Buscar alertas do grupo
+  async getGroupAlerts(groupId: string): Promise<GroupAlert[]> {
+    try {
+      const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
+
+      const querySnapshot = await getDocs(q)
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate(),
+      })) as GroupAlert[]
+    } catch (error) {
+      console.error("Erro ao buscar alertas:", error)
+      return []
+    }
+  }
+
+  // Escutar mudanças em tempo real
+  subscribeToGroupAlerts(groupId: string, callback: (alerts: GroupAlert[]) => void) {
+    const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
+
+    return onSnapshot(q, (querySnapshot) => {
+      const alerts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate(),
+      })) as GroupAlert[]
+
+      callback(alerts)
+    })
+  }
+
+  private generateInviteCode(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  }
+
+  private generateAlertMessage(status: AstrologicalStatus): string {
+    const messages = {
+      critical: [
+        "está passando por um momento astrológico intenso e pode precisar de apoio",
+        "tem trânsitos desafiadores hoje - que tal enviar uma mensagem carinhosa?",
+        "está enfrentando energias difíceis - sua presença pode fazer a diferença",
+      ],
+      challenging: [
+        "tem alguns desafios astrológicos hoje - considere oferecer apoio",
+        "pode estar se sentindo mais sensível devido aos trânsitos atuais",
+        "está navegando por águas astrológicas agitadas - sua amizade é importante",
+      ],
+    }
+
+    const statusMessages = messages[status.overall as keyof typeof messages] || messages.challenging
+    return statusMessages[Math.floor(Math.random() * statusMessages.length)]
+  }
+}
+
+export default new GroupService()

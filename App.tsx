@@ -1,20 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import AppNavigator from './src/navigation/AppNavigator';
+import SubscriptionModal from './src/screens/auth/SubscriptionModal';
+import { useSubscriptionCheck } from './src/hooks/useSubscriptionCheck';
 
 export default function App() {
+  const { showModal, setShowModal, loading } = useSubscriptionCheck();
+
+  if (loading) return null; // Pode exibir um splash ou loader
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <AppNavigator />
+      <SubscriptionModal visible={showModal} onClose={() => setShowModal(false)} />
+      <StatusBar style="light" />
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

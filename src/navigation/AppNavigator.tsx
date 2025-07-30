@@ -1,0 +1,75 @@
+"use client"
+import { NavigationContainer } from "@react-navigation/native"
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
+import { createStackNavigator } from "@react-navigation/stack"
+import { Ionicons } from "@expo/vector-icons"
+
+// Screens
+import LoginScreen from "../screens/auth/LoginScreen"
+import HomeScreen from "../screens/home/HomeScreen"
+import GroupsScreen from "../screens/groups/GroupsScreen"
+import ProfileScreen from "../screens/profile/ProfileScreen"
+import AstrologyScreen from "../screens/astrology/AstrologyScreen"
+import { useAuth } from "../hooks/useAuth"
+
+const Tab = createBottomTabNavigator()
+const Stack = createStackNavigator()
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={LoginScreen} />
+    </Stack.Navigator>
+  )
+}
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap
+
+          if (route.name === "Home") {
+            iconName = focused ? "home" : "home-outline"
+          } else if (route.name === "Groups") {
+            iconName = focused ? "people" : "people-outline"
+          } else if (route.name === "Astrology") {
+            iconName = focused ? "star" : "star-outline"
+          } else if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline"
+          } else {
+            iconName = "help-outline"
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />
+        },
+        tabBarActiveTintColor: "#FFD700",
+        tabBarInactiveTintColor: "#8E8E93",
+        tabBarStyle: {
+          backgroundColor: "#1C1C1E",
+          borderTopColor: "#2C2C2E",
+        },
+        headerStyle: {
+          backgroundColor: "#0F0F23",
+        },
+        headerTintColor: "#FFFFFF",
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Início" }} />
+      <Tab.Screen name="Groups" component={GroupsScreen} options={{ title: "Grupos" }} />
+      <Tab.Screen name="Astrology" component={AstrologyScreen} options={{ title: "Astrologia" }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Perfil" }} />
+    </Tab.Navigator>
+  )
+}
+
+export default function AppNavigator() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return null // ou um componente de loading
+  }
+
+  return <NavigationContainer>{user ? <MainTabs /> : <AuthStack />}</NavigationContainer>
+}
