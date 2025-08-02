@@ -123,16 +123,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Configure Google Sign-In
       GoogleSignin.configure({
-        webClientId: 'YOUR_WEB_CLIENT_ID', // Será configurado no Firebase
+        webClientId: '729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com', // Será configurado no Firebase
       })
 
       // Check if your device supports Google Play
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
 
       // Get the users ID token
-      const { idToken } = await GoogleSignin.signIn()
+      const signInResult = await GoogleSignin.signIn()
+      const idToken = signInResult.data?.idToken
 
       // Create a Google credential with the token
+      if (!idToken) {
+        throw new Error('Não foi possível obter token do Google')
+      }
       const googleCredential = GoogleAuthProvider.credential(idToken)
 
       // Sign-in the user with the credential
