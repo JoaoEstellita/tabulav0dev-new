@@ -377,17 +377,31 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         )}
       </View>
 
+      {/* Mensagem para mostrar sugestões */}
+      {!selectedLocation && !showLocationSuggestions && (
+        <View style={styles.suggestionPrompt}>
+          <Ionicons name="information-circle" size={20} color="#FFD700" />
+          <Text style={styles.suggestionPromptText}>
+            Toque no campo acima para ver as cidades disponíveis
+          </Text>
+        </View>
+      )}
+
       {/* Lista de sugestões */}
       {showLocationSuggestions && locationSuggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
-          {locationSuggestions.slice(0, 5).map((item, index) => (
+          <Text style={styles.suggestionsTitle}>
+            ✨ Cidades disponíveis - Toque para selecionar:
+          </Text>
+          {locationSuggestions.slice(0, 6).map((item, index) => (
             <TouchableOpacity 
               key={`${item.city}-${index}`}
               style={styles.suggestionItem}
               onPress={() => handleLocationSelect(item)}
             >
-              <Ionicons name="location" size={16} color="#FFD700" />
+              <Ionicons name="location" size={18} color="#FFD700" />
               <Text style={styles.suggestionText}>{item.displayName}</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
             </TouchableOpacity>
           ))}
         </View>
@@ -396,15 +410,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       {/* Confirmação da localização selecionada */}
       {selectedLocation && (
         <View style={styles.selectedLocationContainer}>
-          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-          <Text style={styles.selectedLocationText}>
-            {selectedLocation.displayName}
-          </Text>
+          <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+          <View style={styles.selectedLocationTextContainer}>
+            <Text style={styles.selectedLocationLabel}>Cidade selecionada:</Text>
+            <Text style={styles.selectedLocationText}>
+              {selectedLocation.displayName}
+            </Text>
+          </View>
         </View>
       )}
 
       <Text style={styles.helpText}>
-        🔍 Digite pelo menos 2 letras para ver as sugestões
+        {selectedLocation 
+          ? "✅ Perfeito! Agora você pode finalizar" 
+          : "🔍 Digite pelo menos 2 letras ou toque no campo para ver opções"
+        }
       </Text>
     </View>
   )
@@ -442,9 +462,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           )}
 
           <TouchableOpacity 
-            style={[styles.nextButton, loading && styles.disabledButton]} 
+            style={[
+              styles.nextButton, 
+              (loading || (currentStep === 3 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
+            ]} 
             onPress={handleNext}
-            disabled={loading}
+            disabled={loading || (currentStep === 3 && !selectedLocation && !locationQuery.trim())}
           >
             {loading ? (
               <Text style={styles.nextButtonText}>Salvando...</Text>
@@ -593,10 +616,14 @@ const styles = StyleSheet.create({
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#444',
+    backgroundColor: '#2A2A2E',
+    marginHorizontal: 4,
+    marginVertical: 1,
+    borderRadius: 8,
   },
   suggestionText: {
     color: '#FFFFFF',
@@ -604,22 +631,56 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  selectedLocationContainer: {
+  suggestionPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2C2C2E',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  suggestionPromptText: {
+    color: '#FFD700',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+    fontWeight: '500',
+  },
+  suggestionsTitle: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: 'bold',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#1A1A1A',
+  },
+  selectedLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1F2937',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 2,
     borderColor: '#10B981',
+  },
+  selectedLocationTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectedLocationLabel: {
+    color: '#A0A0A0',
+    fontSize: 12,
+    marginBottom: 4,
   },
   selectedLocationText: {
     color: '#10B981',
     fontSize: 16,
-    marginLeft: 8,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
   pickerContainer: {
     backgroundColor: '#2C2C2E',
