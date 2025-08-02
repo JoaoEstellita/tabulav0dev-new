@@ -333,10 +333,10 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Switch
-              value={profile.preferences.notifications.criticalAlerts}
+              value={profile.preferences?.notifications?.criticalAlerts || false}
               onValueChange={(value) => updateNotificationPreference("criticalAlerts", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences.notifications.criticalAlerts ? "#000" : "#888"}
+              thumbColor={profile.preferences?.notifications?.criticalAlerts ? "#000" : "#888"}
             />
           </View>
 
@@ -346,10 +346,10 @@ export default function ProfileScreen() {
               <Text style={styles.preferenceDescription}>Novos membros, mensagens e atividades do grupo</Text>
             </View>
             <Switch
-              value={profile.preferences.notifications.groupUpdates}
+              value={profile.preferences?.notifications?.groupUpdates || false}
               onValueChange={(value) => updateNotificationPreference("groupUpdates", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences.notifications.groupUpdates ? "#000" : "#888"}
+              thumbColor={profile.preferences?.notifications?.groupUpdates ? "#000" : "#888"}
             />
           </View>
 
@@ -359,10 +359,10 @@ export default function ProfileScreen() {
               <Text style={styles.preferenceDescription}>Receber seu horóscopo personalizado todos os dias</Text>
             </View>
             <Switch
-              value={profile.preferences.notifications.dailyHoroscope}
+              value={profile.preferences?.notifications?.dailyHoroscope || false}
               onValueChange={(value) => updateNotificationPreference("dailyHoroscope", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences.notifications.dailyHoroscope ? "#000" : "#888"}
+              thumbColor={profile.preferences?.notifications?.dailyHoroscope ? "#000" : "#888"}
             />
           </View>
 
