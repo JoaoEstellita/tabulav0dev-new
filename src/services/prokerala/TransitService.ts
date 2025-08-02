@@ -93,8 +93,6 @@ class TransitService {
   }
 
   private async fetchPlanetPositions(birthData: BirthData) {
-    const credentials = this.getCredentials()
-    
     // Formato de data correto para Prokerala: YYYY-MM-DDTHH:mm:ss
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
@@ -105,58 +103,114 @@ class TransitService {
       ayanamsa: 1 // Lahiri
     }
 
-    console.log('🌍 Fazendo request para Prokerala:', {
-      endpoint: 'planet-position',
-      data: requestData,
-      clientId: credentials.clientId.substring(0, 8) + '...'
-    })
+    // Tentar todas as 4 chaves em sequência
+    for (let attempt = 0; attempt < PROKERALA_CONFIG.credentials.length; attempt++) {
+      const credentials = this.getCredentials()
+      
+      try {
+        console.log(`🌍 Tentativa ${attempt + 1}/4 - Prokerala API:`, {
+          endpoint: 'planet-position',
+          clientId: credentials.clientId.substring(0, 8) + '...',
+          coordinates: requestData.coordinates
+        })
 
-    const response = await axios.post(
-      `${this.baseUrl}/astrology/planet-position`,
-      requestData,
-      {
-        headers: {
-          'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        timeout: 10000
+        const response = await axios.post(
+          `${this.baseUrl}/astrology/planet-position`,
+          requestData,
+          {
+            headers: {
+              'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 15000
+          }
+        )
+
+        console.log('✅ Sucesso na API Prokerala:', {
+          status: response.status,
+          credentialUsed: attempt + 1,
+          dataKeys: Object.keys(response.data || {})
+        })
+
+        // Marcar credencial como usada com sucesso
+        credentials.lastUsed = new Date()
+        credentials.requestCount++
+
+        return response.data
+
+      } catch (error: any) {
+        console.error(`❌ Erro na credencial ${attempt + 1}:`, {
+          status: error.response?.status,
+          message: error.message,
+          clientId: credentials.clientId.substring(0, 8) + '...'
+        })
+
+        // Se não é a última tentativa, continua para próxima credencial
+        if (attempt < PROKERALA_CONFIG.credentials.length - 1) {
+          console.log(`🔄 Tentando próxima credencial...`)
+          continue
+        }
+        
+        // Se foi a última tentativa, relança o erro
+        throw error
       }
-    )
-
-    console.log('📋 Resposta da Prokerala:', {
-      status: response.status,
-      dataKeys: Object.keys(response.data || {})
-    })
-
-    return response.data
+    }
   }
 
   private async fetchDailyHoroscope(birthData: BirthData) {
-    const credentials = this.getCredentials()
-    
     const requestData = {
       datetime: new Date().toISOString().split('.')[0],
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       zodiac: 1 // Western zodiac
     }
 
-    console.log('⭐ Buscando horóscopo diário...')
+    // Tentar todas as 4 chaves em sequência para horóscopo
+    for (let attempt = 0; attempt < PROKERALA_CONFIG.credentials.length; attempt++) {
+      const credentials = this.getCredentials()
+      
+      try {
+        console.log(`⭐ Tentativa ${attempt + 1}/4 - Horóscopo Diário:`, {
+          endpoint: 'daily-horoscope',
+          clientId: credentials.clientId.substring(0, 8) + '...'
+        })
 
-    const response = await axios.post(
-      `${this.baseUrl}/astrology/daily-horoscope`,
-      requestData,
-      {
-        headers: {
-          'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        timeout: 10000
+        const response = await axios.post(
+          `${this.baseUrl}/astrology/daily-horoscope`,
+          requestData,
+          {
+            headers: {
+              'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 15000
+          }
+        )
+
+        console.log('✅ Horóscopo obtido com sucesso:', {
+          status: response.status,
+          credentialUsed: attempt + 1
+        })
+
+        return response.data
+
+      } catch (error: any) {
+        console.error(`❌ Erro no horóscopo - credencial ${attempt + 1}:`, {
+          status: error.response?.status,
+          message: error.message
+        })
+
+        // Se não é a última tentativa, continua
+        if (attempt < PROKERALA_CONFIG.credentials.length - 1) {
+          console.log(`🔄 Tentando próxima credencial para horóscopo...`)
+          continue
+        }
+        
+        // Se foi a última tentativa, relança o erro
+        throw error
       }
-    )
-
-    return response.data
+    }
   }
 
   private processRealData(prokeralaData: any, birthData: BirthData): TransitData {
