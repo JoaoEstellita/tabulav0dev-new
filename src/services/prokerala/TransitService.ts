@@ -97,10 +97,14 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    const requestData: ProkeralaRequest = {
+    // Formato correto dos parâmetros para Prokerala API v2
+    const requestData = {
       datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1 // Lahiri
+      ayanamsa: 1, // Lahiri
+      // Campos adicionais que podem ser necessários
+      la: birthData.birthLocation.latitude,
+      lo: birthData.birthLocation.longitude
     }
 
     // Tentar todas as 4 chaves em sequência
@@ -132,17 +136,43 @@ class TransitService {
         console.log('🔑 Token OAuth2 obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        const response = await axios.get(
-          `${this.baseUrl}/astrology/planet-position`,
-          {
-            params: requestData,
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Accept': 'application/json'
-            },
-            timeout: 15000
+        // Testar diferentes endpoints possíveis
+        const endpoints = [
+          '/astrology/planet-position',
+          '/horoscope/planet-position', 
+          '/v2/astrology/planet-position',
+          '/astrology/birth-details'
+        ]
+        
+        let response = null
+        let lastError = null
+        
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`🔍 Testando endpoint: ${endpoint}`)
+            response = await axios.get(
+              `${this.baseUrl}${endpoint}`,
+              {
+                params: requestData,
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Accept': 'application/json'
+                },
+                timeout: 15000
+              }
+            )
+            console.log(`✅ Endpoint funcionou: ${endpoint}`)
+            break
+          } catch (endpointError: any) {
+            console.log(`❌ Endpoint ${endpoint} falhou:`, endpointError.response?.status)
+            lastError = endpointError
+            continue
           }
-        )
+        }
+        
+        if (!response) {
+          throw lastError
+        }
 
         console.log('✅ Sucesso na API Prokerala:', {
           status: response.status,
@@ -210,17 +240,43 @@ class TransitService {
         console.log('🔑 Token OAuth2 para horóscopo obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        const response = await axios.get(
-          `${this.baseUrl}/horoscope/daily-horoscope`,
-          {
-            params: requestData,
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Accept': 'application/json'
-            },
-            timeout: 15000
+        // Testar diferentes endpoints possíveis para horóscopo
+        const horoscopeEndpoints = [
+          '/horoscope/daily-horoscope',
+          '/astrology/daily-horoscope', 
+          '/v2/horoscope/daily-horoscope',
+          '/daily-horoscope'
+        ]
+        
+        let response = null
+        let lastError = null
+        
+        for (const endpoint of horoscopeEndpoints) {
+          try {
+            console.log(`🔍 Testando endpoint horóscopo: ${endpoint}`)
+            response = await axios.get(
+              `${this.baseUrl}${endpoint}`,
+              {
+                params: requestData,
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Accept': 'application/json'
+                },
+                timeout: 15000
+              }
+            )
+            console.log(`✅ Endpoint horóscopo funcionou: ${endpoint}`)
+            break
+          } catch (endpointError: any) {
+            console.log(`❌ Endpoint horóscopo ${endpoint} falhou:`, endpointError.response?.status)
+            lastError = endpointError
+            continue
           }
-        )
+        }
+        
+        if (!response) {
+          throw lastError
+        }
 
         console.log('✅ Horóscopo obtido com sucesso:', {
           status: response.status,
