@@ -97,14 +97,17 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // Formato correto dos parâmetros para Prokerala API v2
+    // Formato correto dos parâmetros para Prokerala API v2 - Transit Chart
+    // Baseado na documentação: https://api.prokerala.com/docs#operation/get-transit-chart
     const requestData = {
       datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1, // Lahiri
-      // Campos adicionais que podem ser necessários
-      la: birthData.birthLocation.latitude,
-      lo: birthData.birthLocation.longitude
+      ayanamsa: 1, // Lahiri (1)
+      // Parâmetros específicos para Transit Chart
+      birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+      birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      transit_datetime: datetime,
+      transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
     // Tentar todas as 4 chaves em sequência
@@ -136,12 +139,12 @@ class TransitService {
         console.log('🔑 Token OAuth2 obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Testar diferentes endpoints possíveis
+        // Baseado na documentação oficial: https://api.prokerala.com/docs
         const endpoints = [
-          '/astrology/planet-position',
-          '/horoscope/planet-position', 
+          '/v2/astrology/transit-chart',
+          '/v2/horoscope/transit-chart',
           '/v2/astrology/planet-position',
-          '/astrology/birth-details'
+          '/v2/horoscope/planet-position'
         ]
         
         let response = null
@@ -206,10 +209,14 @@ class TransitService {
   }
 
   private async fetchDailyHoroscope(birthData: BirthData) {
+    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
     const requestData = {
-      datetime: new Date().toISOString().split('.')[0],
+      date: today,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      zodiac: 1 // Western zodiac
+      zodiac: 1, // Western zodiac
+      // Parâmetros adicionais baseados na documentação
+      datetime: new Date().toISOString().split('.')[0],
+      ayanamsa: 1 // Lahiri
     }
 
     // Tentar todas as 4 chaves em sequência para horóscopo
@@ -240,12 +247,12 @@ class TransitService {
         console.log('🔑 Token OAuth2 para horóscopo obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Testar diferentes endpoints possíveis para horóscopo
+        // Baseado na documentação oficial para horóscopo diário
         const horoscopeEndpoints = [
-          '/horoscope/daily-horoscope',
-          '/astrology/daily-horoscope', 
+          '/v2/horoscope/daily',
+          '/v2/astrology/daily-horoscope',
           '/v2/horoscope/daily-horoscope',
-          '/daily-horoscope'
+          '/horoscope/daily'
         ]
         
         let response = null
