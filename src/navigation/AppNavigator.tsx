@@ -10,6 +10,7 @@ import HomeScreen from "../screens/home/HomeScreen"
 import GroupsScreen from "../screens/groups/GroupsScreen"
 import ProfileScreen from "../screens/profile/ProfileScreen"
 import AstrologyScreen from "../screens/astrology/AstrologyScreen"
+import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 
 const Tab = createBottomTabNavigator()
@@ -19,6 +20,14 @@ function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
+    </Stack.Navigator>
+  )
+}
+
+function OnboardingStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="BirthDataForm" component={BirthDataFormContainer} />
     </Stack.Navigator>
   )
 }
@@ -65,11 +74,22 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth()
+  const { user, loading, birthDataComplete } = useAuth()
 
   if (loading) {
     return null // ou um componente de loading
   }
 
-  return <NavigationContainer>{user ? <MainTabs /> : <AuthStack />}</NavigationContainer>
+  // Se não estiver logado, mostra AuthStack
+  if (!user) {
+    return <NavigationContainer><AuthStack /></NavigationContainer>
+  }
+
+  // Se estiver logado mas dados de nascimento incompletos, mostra Onboarding
+  if (user && !birthDataComplete) {
+    return <NavigationContainer><OnboardingStack /></NavigationContainer>
+  }
+
+  // Se estiver logado e dados completos, mostra app principal
+  return <NavigationContainer><MainTabs /></NavigationContainer>
 }
