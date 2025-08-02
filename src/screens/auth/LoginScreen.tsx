@@ -12,19 +12,38 @@ import {
   Platform,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
-  const { signIn, signUp } = useAuth()
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const { signIn, signUp, signInWithGoogle } = useAuth()
 
   const handleAuth = async () => {
     if (!email || !password) {
       Alert.alert("Erro", "Preencha todos os campos")
       return
+    }
+
+    // Validação de confirmação de senha no cadastro
+    if (!isLogin) {
+      if (!confirmPassword) {
+        Alert.alert("Erro", "Confirme sua senha")
+        return
+      }
+      if (password !== confirmPassword) {
+        Alert.alert("Erro", "As senhas não coincidem")
+        return
+      }
+      if (password.length < 6) {
+        Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres")
+        return
+      }
     }
 
     setLoading(true)
@@ -38,6 +57,17 @@ export default function LoginScreen() {
       Alert.alert("Erro", error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+    } catch (error: any) {
+      Alert.alert("Erro", "Falha no login com Google: " + error.message)
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -68,6 +98,17 @@ export default function LoginScreen() {
               secureTextEntry
             />
 
+            {!isLogin && (
+              <TextInput
+                style={styles.input}
+                placeholder="Confirmar Senha"
+                placeholderTextColor="#8E8E93"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            )}
+
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleAuth}
@@ -76,7 +117,29 @@ export default function LoginScreen() {
               <Text style={styles.buttonText}>{loading ? "Carregando..." : isLogin ? "Entrar" : "Cadastrar"}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.switchButton} onPress={() => setIsLogin(!isLogin)}>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ou</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
+              onPress={handleGoogleSignIn}
+              disabled={googleLoading}
+            >
+              <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
+              <Text style={styles.googleButtonText}>{googleLoading ? "Conectando..." : "Continuar com Google"}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.switchButton} 
+              onPress={() => {
+                setIsLogin(!isLogin)
+                setPassword("")
+                setConfirmPassword("")
+              }}
+            >
               <Text style={styles.switchText}>{isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entre"}</Text>
             </TouchableOpacity>
           </View>
@@ -146,5 +209,39 @@ const styles = StyleSheet.create({
   switchText: {
     color: "#FFD700",
     fontSize: 14,
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#3A3A3C",
+  },
+  dividerText: {
+    color: "#8E8E93",
+    fontSize: 14,
+    marginHorizontal: 16,
+  },
+  googleButton: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E1E1E1",
+  },
+  googleIcon: {
+    marginRight: 12,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#1F1F1F",
   },
 })

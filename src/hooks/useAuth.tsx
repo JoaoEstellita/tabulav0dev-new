@@ -8,9 +8,12 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc } from "firebase/firestore"
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 
 interface AuthContextType {
   user: User | null
@@ -18,6 +21,7 @@ interface AuthContextType {
   birthDataComplete: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   checkBirthDataComplete: () => Promise<boolean>
 }
@@ -113,6 +117,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await createUserWithEmailAndPassword(auth, email, password)
   }
 
+  const signInWithGoogle = async () => {
+    try {
+      console.log('🔑 Iniciando Google Sign-In...')
+      
+      // Configure Google Sign-In
+      GoogleSignin.configure({
+        webClientId: 'YOUR_WEB_CLIENT_ID', // Será configurado no Firebase
+      })
+
+      // Check if your device supports Google Play
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+
+      // Get the users ID token
+      const { idToken } = await GoogleSignin.signIn()
+
+      // Create a Google credential with the token
+      const googleCredential = GoogleAuthProvider.credential(idToken)
+
+      // Sign-in the user with the credential
+      await signInWithCredential(auth, googleCredential)
+      
+      console.log('✅ Google Sign-In realizado com sucesso!')
+    } catch (error) {
+      console.error('❌ Erro no Google Sign-In:', error)
+      throw error
+    }
+  }
+
   const logout = async () => {
     await signOut(auth)
   }
@@ -123,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     birthDataComplete,
     signIn,
     signUp,
+    signInWithGoogle,
     logout,
     checkBirthDataComplete,
   }
