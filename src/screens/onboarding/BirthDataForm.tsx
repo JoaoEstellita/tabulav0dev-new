@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
   ScrollView,
   Alert,
   Platform,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import LocationService, { type LocationSuggestion } from '../../services/LocationService'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -45,6 +48,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [showTimePicker, setShowTimePicker] = useState(false)
   const [tempDate, setTempDate] = useState(new Date())
   const [tempTime, setTempTime] = useState(new Date())
+
+  // Estados para busca de localização
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([])
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+  const [searchingLocation, setSearchingLocation] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null)
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || tempDate
@@ -92,27 +102,55 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(false)
   }
 
-  const searchLocation = async (query: string) => {
-    if (query.length < 3) return
+  // Busca de localização com debounce
+  useEffect(() => {
+    if (locationQuery.length >= 2) {
+      const timeoutId = setTimeout(async () => {
+        setSearchingLocation(true)
+        try {
+          const suggestions = await LocationService.searchLocations(locationQuery)
+          setLocationSuggestions(suggestions)
+          setShowLocationSuggestions(true)
+        } catch (error) {
+          console.error('Erro ao buscar localizações:', error)
+        } finally {
+          setSearchingLocation(false)
+        }
+      }, 300) // Debounce de 300ms
 
-    try {
-      // Simulação de busca de localização - integrar com API real depois
-      const mockLocations = [
-        { city: 'São Paulo', country: 'Brasil', latitude: -23.5505, longitude: -46.6333 },
-        { city: 'Rio de Janeiro', country: 'Brasil', latitude: -22.9068, longitude: -43.1729 },
-        { city: 'Belo Horizonte', country: 'Brasil', latitude: -19.9167, longitude: -43.9345 },
-        { city: 'Salvador', country: 'Brasil', latitude: -12.9714, longitude: -38.5014 },
-        { city: 'Brasília', country: 'Brasil', latitude: -15.7942, longitude: -47.8825 },
-      ]
+      return () => clearTimeout(timeoutId)
+    } else {
+      setLocationSuggestions([])
+      setShowLocationSuggestions(false)
+    }
+  }, [locationQuery])
 
-      const filtered = mockLocations.filter(loc => 
-        loc.city.toLowerCase().includes(query.toLowerCase())
-      )
+  const handleLocationSelect = (location: LocationSuggestion) => {
+    setSelectedLocation(location)
+    setLocationQuery(location.displayName)
+    setFormData(prev => ({
+      ...prev,
+      city: location.city,
+      country: location.country,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    }))
+    setShowLocationSuggestions(false)
+  }
 
-      return filtered
-    } catch (error) {
-      console.log('Erro ao buscar localização:', error)
-      return []
+  const handleLocationQueryChange = (text: string) => {
+    setLocationQuery(text)
+    setSelectedLocation(null)
+    
+    // Se o usuário limpar o campo, limpa também os dados
+    if (!text) {
+      setFormData(prev => ({
+        ...prev,
+        city: '',
+        country: '',
+        latitude: 0,
+        longitude: 0,
+      }))
     }
   }
 
@@ -277,27 +315,56 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           style={styles.locationInput}
           placeholder="Digite sua cidade de nascimento"
           placeholderTextColor="#666"
-          value={formData.city}
-          onChangeText={(text) => {
-            setFormData(prev => ({ ...prev, city: text }))
-            if (text.length >= 3) {
-              // Aqui você pode implementar busca em tempo real
-              searchLocation(text)
+          value={locationQuery}
+          onChangeText={handleLocationQueryChange}
+          onFocus={() => {
+            if (locationSuggestions.length > 0) {
+              setShowLocationSuggestions(true)
             }
           }}
         />
+        {searchingLocation && (
+          <ActivityIndicator 
+            size="small" 
+            color="#FFD700" 
+            style={styles.searchIndicator} 
+          />
+        )}
       </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="País"
-        placeholderTextColor="#666"
-        value={formData.country}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, country: text }))}
-      />
+      {/* Lista de sugestões */}
+      {showLocationSuggestions && locationSuggestions.length > 0 && (
+        <View style={styles.suggestionsContainer}>
+          <FlatList
+            data={locationSuggestions}
+            keyExtractor={(item, index) => `${item.city}-${index}`}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                style={styles.suggestionItem}
+                onPress={() => handleLocationSelect(item)}
+              >
+                <Ionicons name="location" size={16} color="#FFD700" />
+                <Text style={styles.suggestionText}>{item.displayName}</Text>
+              </TouchableOpacity>
+            )}
+            style={styles.suggestionsList}
+            nestedScrollEnabled={true}
+          />
+        </View>
+      )}
+
+      {/* Confirmação da localização selecionada */}
+      {selectedLocation && (
+        <View style={styles.selectedLocationContainer}>
+          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+          <Text style={styles.selectedLocationText}>
+            {selectedLocation.displayName}
+          </Text>
+        </View>
+      )}
 
       <Text style={styles.helpText}>
-        🔍 Comece digitando e selecionaremos a localização automaticamente
+        🔍 Digite pelo menos 2 letras para ver as sugestões
       </Text>
     </View>
   )
@@ -468,6 +535,51 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     fontStyle: 'italic',
+  },
+  searchIndicator: {
+    marginLeft: 8,
+  },
+  suggestionsContainer: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#444',
+    marginBottom: 16,
+    maxHeight: 200,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
+  },
+  suggestionText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginLeft: 8,
+    flex: 1,
+  },
+  selectedLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1F2937',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  selectedLocationText: {
+    color: '#10B981',
+    fontSize: 16,
+    marginLeft: 8,
+    fontWeight: '500',
   },
   pickerContainer: {
     backgroundColor: '#2C2C2E',

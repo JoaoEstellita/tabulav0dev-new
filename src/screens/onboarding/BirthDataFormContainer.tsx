@@ -22,11 +22,8 @@ export default function BirthDataFormContainer() {
       // Atualizar estado de dados completos
       await checkBirthDataComplete()
       
-      Alert.alert(
-        'Sucesso!', 
-        'Seus dados foram salvos com sucesso. Bem-vindo ao Tabula Estelar!',
-        [{ text: 'Continuar', style: 'default' }]
-      )
+      // Não mostrar alert, apenas redirecionar automaticamente
+      console.log('Dados salvos com sucesso! Redirecionando...')
     } catch (error) {
       console.error('Erro ao salvar dados:', error)
       Alert.alert(
