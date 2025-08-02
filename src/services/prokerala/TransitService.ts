@@ -139,10 +139,10 @@ class TransitService {
         console.log('🔑 Token OAuth2 obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Baseado na documentação oficial: https://api.prokerala.com/docs
+        // Baseado na documentação oficial: https://api.prokerala.com/docs#operation/get-transit-planet-position
         const endpoints = [
+          '/v2/astrology/transit-planet-position',
           '/v2/astrology/transit-chart',
-          '/v2/horoscope/transit-chart',
           '/v2/astrology/planet-position',
           '/v2/horoscope/planet-position'
         ]
