@@ -131,14 +131,13 @@ class TransitService {
         const accessToken = tokenResponse.data.access_token
         console.log('🔑 Token OAuth2 obtido com sucesso')
 
-        // Agora fazer a requisição real com o token
-        const response = await axios.post(
-          `${this.baseUrl}/horoscope/planet-position`,
-          requestData,
+        // Agora fazer a requisição real com o token - usando GET conforme documentação
+        const response = await axios.get(
+          `${this.baseUrl}/astrology/planet-position`,
           {
+            params: requestData,
             headers: {
               'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
             timeout: 15000
@@ -210,14 +209,13 @@ class TransitService {
         const accessToken = tokenResponse.data.access_token
         console.log('🔑 Token OAuth2 para horóscopo obtido com sucesso')
 
-        // Agora fazer a requisição real com o token
-        const response = await axios.post(
+        // Agora fazer a requisição real com o token - usando GET conforme documentação
+        const response = await axios.get(
           `${this.baseUrl}/horoscope/daily-horoscope`,
-          requestData,
           {
+            params: requestData,
             headers: {
               'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
             timeout: 15000
