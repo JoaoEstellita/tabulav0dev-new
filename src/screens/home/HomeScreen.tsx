@@ -1,105 +1,245 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
-import { Ionicons } from "@expo/vector-icons"
-import { useAuth } from "../../hooks/useAuth"
-
-const { width } = Dimensions.get("window")
-
-interface DailyHoroscope {
-  sign: string
-  prediction: string
-  mood: string
-  luckyNumber: number
-}
+import React, { useEffect, useState } from 'react'
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  RefreshControl,
+  Alert,
+  ActivityIndicator 
+} from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '../../hooks/useAuth'
+import { useLifeAreas } from '../../hooks/useLifeAreas'
+import LifeAreaCard from '../../components/LifeAreaCard'
+import TransitCard from '../../components/TransitCard'
 
 export default function HomeScreen() {
   const { user } = useAuth()
-  const [dailyHoroscope, setDailyHoroscope] = useState<DailyHoroscope | null>(null)
+  const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    // Simulação de dados do horóscopo diário
-    setDailyHoroscope({
-      sign: "Áries",
-      prediction:
-        "Hoje é um dia favorável para novos começos. A energia está alta e você se sentirá motivado a iniciar projetos importantes.",
-      mood: "Energético",
-      luckyNumber: 7,
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refreshData()
+    setRefreshing(false)
+  }
+
+  const handleSendAlerts = async () => {
+    try {
+      await sendCriticalAlerts()
+      Alert.alert(
+        'Alertas Enviados',
+        'Seus alertas críticos foram enviados para todos os grupos!',
+        [{ text: 'OK', style: 'default' }]
+      )
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        'Não foi possível enviar os alertas. Tente novamente.',
+        [{ text: 'OK', style: 'default' }]
+      )
+    }
+  }
+
+  const getUserDisplayName = () => {
+    if (user?.displayName) return user.displayName
+    if (user?.email) return user.email.split('@')[0]
+    return 'Usuário'
+  }
+
+  const formatDate = () => {
+    return new Date().toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
     })
-  }, [])
+  }
 
-  const quickActions = [
-    { title: "Mapa Astral", icon: "star-outline", color: "#FF6B6B" },
-    { title: "Trânsitos", icon: "planet-outline", color: "#4ECDC4" },
-    { title: "Compatibilidade", icon: "heart-outline", color: "#45B7D1" },
-    { title: "Previsões", icon: "eye-outline", color: "#96CEB4" },
-  ]
+  const criticalAreas = transitData?.lifeAreas.filter(area => area.criticalLevel) || []
+
+  if (loading && !transitData) {
+    return (
+      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
+        </View>
+      </LinearGradient>
+    )
+  }
+
+  if (error && !transitData) {
+    return (
+      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+          <Text style={styles.errorTitle}>Ops! Algo deu errado</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={refreshData}>
+            <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    )
+  }
 
   return (
-    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFD700"
+            colors={['#FFD700']}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Olá, {user?.email?.split("@")[0]}!</Text>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString("pt-BR", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
+            <Text style={styles.date}>{formatDate()}</Text>
+          </View>
+          
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color="#FFD700" />
+            {criticalAreas.length > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>{criticalAreas.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Horóscopo Diário */}
-        {dailyHoroscope && (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="star" size={24} color="#FFD700" />
-              <Text style={styles.cardTitle}>Horóscopo de {dailyHoroscope.sign}</Text>
+        {/* Resumo Diário */}
+        {transitData && (
+          <View style={styles.section}>
+            <LinearGradient
+              colors={['#1E1E2E', '#2A2A3E']}
+              style={styles.overviewCard}
+            >
+              <View style={styles.overviewHeader}>
+                <Ionicons name="sunny" size={24} color="#FFD700" />
+                <Text style={styles.overviewTitle}>Panorama Astrológico</Text>
+              </View>
+              
+              <View style={styles.overviewContent}>
+                <View style={styles.overallScore}>
+                  <Text style={styles.scoreNumber}>{transitData.dailyOverview.overall}%</Text>
+                  <Text style={styles.scoreLabel}>Energia Geral</Text>
+                </View>
+                
+                <View style={styles.overviewDetails}>
+                  <Text style={styles.overviewMessage}>
+                    {transitData.dailyOverview.message}
+                  </Text>
+                  
+                  <View style={styles.areasSummary}>
+                    <View style={styles.summaryItem}>
+                      <Ionicons name="trending-up" size={16} color="#10B981" />
+                      <Text style={styles.summaryText}>
+                        Melhor: {transitData.dailyOverview.bestArea}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.summaryItem}>
+                      <Ionicons name="warning" size={16} color="#EF4444" />
+                      <Text style={styles.summaryText}>
+                        Atenção: {transitData.dailyOverview.challengingArea}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* Alertas Críticos */}
+        {criticalAreas.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="warning" size={20} color="#EF4444" />
+              <Text style={styles.sectionTitle}>Áreas Críticas</Text>
             </View>
-            <Text style={styles.prediction}>{dailyHoroscope.prediction}</Text>
-            <View style={styles.horoscopeDetails}>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Humor:</Text>
-                <Text style={styles.detailValue}>{dailyHoroscope.mood}</Text>
-              </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Número da Sorte:</Text>
-                <Text style={styles.detailValue}>{dailyHoroscope.luckyNumber}</Text>
-              </View>
+            
+            <LinearGradient
+              colors={['#2D1B1B', '#3D2626']}
+              style={styles.alertCard}
+            >
+              <Text style={styles.alertTitle}>
+                {criticalAreas.length} {criticalAreas.length === 1 ? 'área precisa' : 'áreas precisam'} de atenção
+              </Text>
+              
+              <Text style={styles.alertDescription}>
+                Seus trânsitos indicam desafios em algumas áreas. Compartilhe com seu grupo para receber apoio!
+              </Text>
+              
+              <TouchableOpacity style={styles.alertButton} onPress={handleSendAlerts}>
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+                <Text style={styles.alertButtonText}>Enviar Alertas para Grupos</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* Status das Áreas de Vida */}
+        {transitData && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="grid" size={20} color="#FFD700" />
+              <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
+            </View>
+            
+            <View style={styles.lifeAreasGrid}>
+              {transitData.lifeAreas.map((area, index) => (
+                <View key={area.name} style={styles.lifeAreaItem}>
+                  <LifeAreaCard area={area} />
+                </View>
+              ))}
             </View>
           </View>
         )}
 
-        {/* Ações Rápidas */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Ações Rápidas</Text>
-          <View style={styles.actionsGrid}>
-            {quickActions.map((action, index) => (
-              <TouchableOpacity key={index} style={styles.actionItem}>
-                <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-                  <Ionicons name={action.icon as any} size={24} color="#FFFFFF" />
-                </View>
-                <Text style={styles.actionText}>{action.title}</Text>
-              </TouchableOpacity>
+        {/* Trânsitos Atuais */}
+        {transitData && transitData.currentTransits.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="planet" size={20} color="#FFD700" />
+              <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
+            </View>
+            
+            {transitData.currentTransits.map((transit, index) => (
+              <TransitCard key={index} transit={transit} />
             ))}
           </View>
-        </View>
+        )}
 
-        {/* Fases da Lua */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="moon" size={24} color="#C0C0C0" />
-            <Text style={styles.cardTitle}>Fase da Lua</Text>
+        {/* Avisos */}
+        {transitData && transitData.warnings.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="information-circle" size={20} color="#FFD700" />
+              <Text style={styles.sectionTitle}>Orientações</Text>
+            </View>
+            
+            {transitData.warnings.map((warning, index) => (
+              <View key={index} style={styles.warningCard}>
+                <Ionicons name="lightbulb" size={16} color="#FFD700" />
+                <Text style={styles.warningText}>{warning}</Text>
+              </View>
+            ))}
           </View>
-          <View style={styles.moonPhase}>
-            <Text style={styles.moonPhaseText}>🌕 Lua Cheia</Text>
-            <Text style={styles.moonDescription}>Momento ideal para manifestações e rituais de gratidão</Text>
-          </View>
-        </View>
+        )}
+
+        {/* Espaçamento final */}
+        <View style={styles.bottomSpacing} />
       </ScrollView>
     </LinearGradient>
   )
@@ -111,99 +251,221 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorText: {
+    color: '#A0A0A0',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  retryButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  headerContent: {
+    flex: 1,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   date: {
     fontSize: 14,
-    color: "#8E8E93",
-    textTransform: "capitalize",
+    color: '#A0A0A0',
+    textTransform: 'capitalize',
   },
-  card: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#2C2C2E",
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
-  cardTitle: {
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginLeft: 8,
   },
-  prediction: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    lineHeight: 24,
+  overviewCard: {
+    margin: 16,
+    borderRadius: 16,
+    padding: 20,
+  },
+  overviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  horoscopeDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  overviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
-  detailItem: {
+  overviewContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overallScore: {
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  scoreNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 4,
+  },
+  overviewDetails: {
     flex: 1,
   },
-  detailLabel: {
+  overviewMessage: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  areasSummary: {
+    gap: 8,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryText: {
     fontSize: 12,
-    color: "#8E8E93",
-    marginBottom: 4,
+    color: '#A0A0A0',
+    marginLeft: 6,
   },
-  detailValue: {
+  alertCard: {
+    margin: 16,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  alertTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFD700",
-  },
-  actionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  actionItem: {
-    width: (width - 80) / 2,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  actionIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
-  actionText: {
+  alertDescription: {
     fontSize: 14,
-    color: "#FFFFFF",
-    textAlign: "center",
+    color: '#A0A0A0',
+    lineHeight: 20,
+    marginBottom: 16,
   },
-  moonPhase: {
-    alignItems: "center",
+  alertButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
-  moonPhaseText: {
-    fontSize: 20,
+  alertButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  lifeAreasGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 8,
+  },
+  lifeAreaItem: {
+    width: '50%',
+  },
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#2A2A3E',
+    marginHorizontal: 16,
     marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
   },
-  moonDescription: {
+  warningText: {
+    color: '#FFFFFF',
     fontSize: 14,
-    color: "#8E8E93",
-    textAlign: "center",
+    flex: 1,
+    marginLeft: 12,
+    lineHeight: 20,
+  },
+  bottomSpacing: {
+    height: 32,
   },
 })
