@@ -2,6 +2,13 @@ import axios from 'axios'
 import { PROKERALA_CONFIG } from '../../config/prokerala'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 
+// Interfaces baseadas na documentação real da Prokerala
+interface ProkeralaRequest {
+  datetime: string  // ISO format YYYY-MM-DDTHH:mm:ss
+  coordinates: string // "lat,lng"
+  ayanamsa: number // 1 = Lahiri
+}
+
 export interface Planet {
   id: number
   name: string
@@ -57,40 +64,212 @@ class TransitService {
 
   async getCurrentTransits(birthData: BirthData): Promise<TransitData> {
     try {
-      // Buscar trânsitos atuais da Prokerala
-      const transitsResponse = await this.fetchProkeralaTransits(birthData)
+      console.log('🔮 Iniciando busca de trânsitos na Prokerala...')
       
-      // Processar dados e calcular status das áreas de vida
-      const processedData = this.processTransitData(transitsResponse)
+      // Buscar dados astrológicos reais
+      const [planetPositions, dailyHoroscope] = await Promise.allSettled([
+        this.fetchPlanetPositions(birthData),
+        this.fetchDailyHoroscope(birthData)
+      ])
+
+      console.log('📊 Resultados da API:', {
+        planets: planetPositions.status,
+        horoscope: dailyHoroscope.status
+      })
+
+      // Processar dados reais se disponíveis
+      let processedData = this.getMockTransitData()
       
+      if (planetPositions.status === 'fulfilled') {
+        console.log('✅ Dados planetários obtidos com sucesso!')
+        processedData = this.processRealData(planetPositions.value, birthData)
+      }
+
       return processedData
     } catch (error) {
-      console.error('Erro ao buscar trânsitos:', error)
-      // Retornar dados mock em caso de erro
+      console.error('❌ Erro geral ao buscar trânsitos:', error)
       return this.getMockTransitData()
     }
   }
 
-  private async fetchProkeralaTransits(birthData: BirthData) {
+  private async fetchPlanetPositions(birthData: BirthData) {
     const credentials = this.getCredentials()
     
-    const params = {
-      ayanamsa: 1, // Lahiri
-      datetime: new Date().toISOString(),
+    // Formato de data correto para Prokerala: YYYY-MM-DDTHH:mm:ss
+    const now = new Date()
+    const datetime = now.toISOString().split('.')[0] // Remove milissegundos
+    
+    const requestData: ProkeralaRequest = {
+      datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-      birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: 1 // Lahiri
     }
 
-    const response = await axios.get(`${this.baseUrl}/astrology/transit`, {
-      params,
-      headers: {
-        'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
-        'Content-Type': 'application/json',
-      },
+    console.log('🌍 Fazendo request para Prokerala:', {
+      endpoint: 'planet-position',
+      data: requestData,
+      clientId: credentials.clientId.substring(0, 8) + '...'
+    })
+
+    const response = await axios.post(
+      `${this.baseUrl}/astrology/planet-position`,
+      requestData,
+      {
+        headers: {
+          'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000
+      }
+    )
+
+    console.log('📋 Resposta da Prokerala:', {
+      status: response.status,
+      dataKeys: Object.keys(response.data || {})
     })
 
     return response.data
+  }
+
+  private async fetchDailyHoroscope(birthData: BirthData) {
+    const credentials = this.getCredentials()
+    
+    const requestData = {
+      datetime: new Date().toISOString().split('.')[0],
+      coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      zodiac: 1 // Western zodiac
+    }
+
+    console.log('⭐ Buscando horóscopo diário...')
+
+    const response = await axios.post(
+      `${this.baseUrl}/astrology/daily-horoscope`,
+      requestData,
+      {
+        headers: {
+          'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000
+      }
+    )
+
+    return response.data
+  }
+
+  private processRealData(prokeralaData: any, birthData: BirthData): TransitData {
+    console.log('🔄 Processando dados reais da Prokerala...')
+    
+    // Extrair posições planetárias reais
+    const planets = prokeralaData.data?.planets || []
+    console.log('🪐 Planetas encontrados:', planets.length)
+
+    const currentTransits = this.extractRealTransits(planets)
+    const lifeAreas = this.calculateLifeAreaStatus(currentTransits)
+    const dailyOverview = this.generateDailyOverview(lifeAreas)
+    const warnings = this.generateWarnings(lifeAreas)
+
+    return {
+      currentTransits,
+      lifeAreas,
+      dailyOverview,
+      warnings,
+    }
+  }
+
+  private extractRealTransits(planets: any[]): Transit[] {
+    const transits: Transit[] = []
+
+    planets.forEach(planet => {
+      if (planet && planet.name) {
+        transits.push({
+          planet: {
+            id: planet.id || 0,
+            name: planet.name,
+            longitude: planet.longitude || 0,
+            degree: planet.degree || 0,
+            minutes: planet.minutes || 0,
+            seconds: planet.seconds || 0,
+            sign: planet.sign || 'Desconhecido',
+            signLord: planet.sign_lord || 'Desconhecido',
+            isRetrograde: planet.is_retrograde || false,
+          },
+          fromSign: planet.previous_sign || planet.sign || 'Desconhecido',
+          toSign: planet.sign || 'Desconhecido',
+          transitDate: new Date().toISOString(),
+          influence: this.determineInfluence(planet),
+          intensity: this.calculateIntensity(planet),
+          description: this.generateDescription(planet),
+          areas: this.getAffectedAreas(planet.name),
+        })
+      }
+    })
+
+    console.log(`✨ ${transits.length} trânsitos processados`)
+    return transits
+  }
+
+  private determineInfluence(planet: any): 'positive' | 'negative' | 'neutral' {
+    // Lógica básica baseada no planeta e retrogradação
+    if (planet.is_retrograde) return 'negative'
+    
+    const beneficPlanets = ['Venus', 'Jupiter', 'Mercury']
+    const maleficPlanets = ['Mars', 'Saturn', 'Rahu', 'Ketu']
+    
+    if (beneficPlanets.includes(planet.name)) return 'positive'
+    if (maleficPlanets.includes(planet.name)) return 'negative'
+    
+    return 'neutral'
+  }
+
+  private calculateIntensity(planet: any): number {
+    // Intensidade baseada na força planetária (simplified)
+    let intensity = 50
+    
+    if (planet.is_retrograde) intensity += 20
+    if (planet.strength) intensity += Math.floor(planet.strength / 2)
+    
+    return Math.min(Math.max(intensity, 10), 100)
+  }
+
+  private generateDescription(planet: any): string {
+    const influences = {
+      'Sun': 'Energia vital e autoconfiança em destaque',
+      'Moon': 'Emoções e intuição influenciadas',
+      'Mars': 'Ação e energia física intensificadas',
+      'Mercury': 'Comunicação e pensamento aguçados',
+      'Jupiter': 'Sabedoria e expansão favorecidas',
+      'Venus': 'Amor e beleza em evidência',
+      'Saturn': 'Disciplina e responsabilidade requeridas',
+      'Rahu': 'Transformações e mudanças inesperadas',
+      'Ketu': 'Desapego e crescimento espiritual'
+    }
+    
+    const base = influences[planet.name as keyof typeof influences] || 'Influência planetária ativa'
+    
+    if (planet.is_retrograde) {
+      return `${base} (retrógrado - atenção especial requerida)`
+    }
+    
+    return base
+  }
+
+  private getAffectedAreas(planetName: string): LifeArea[] {
+    const planetAreas = {
+      'Sun': ['career', 'spirituality'],
+      'Moon': ['family', 'health'],
+      'Mars': ['career', 'health'],
+      'Mercury': ['career', 'love'],
+      'Jupiter': ['spirituality', 'family'],
+      'Venus': ['love', 'family'],
+      'Saturn': ['career', 'health'],
+      'Rahu': ['career', 'spirituality'],
+      'Ketu': ['spirituality', 'health']
+    }
+    
+    return (planetAreas[planetName as keyof typeof planetAreas] || ['spirituality']) as LifeArea[]
   }
 
   private processTransitData(prokeralaData: any): TransitData {
