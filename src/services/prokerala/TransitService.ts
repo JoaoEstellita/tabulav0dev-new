@@ -66,15 +66,15 @@ class TransitService {
     try {
       console.log('🔮 Iniciando busca de trânsitos na Prokerala...')
       
-      // Buscar dados astrológicos reais
-      const [planetPositions, dailyHoroscope] = await Promise.allSettled([
+      // Buscar dados astrológicos reais - apenas trânsitos e aspectos
+      const [planetPositions, transitAspects] = await Promise.allSettled([
         this.fetchPlanetPositions(birthData),
-        this.fetchDailyHoroscope(birthData)
+        this.fetchTransitAspects(birthData)
       ])
 
       console.log('📊 Resultados da API:', {
         planets: planetPositions.status,
-        horoscope: dailyHoroscope.status
+        aspects: transitAspects.status
       })
 
       // Processar dados reais se disponíveis
@@ -139,12 +139,12 @@ class TransitService {
         console.log('🔑 Token OAuth2 obtido com sucesso')
 
         // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Baseado na documentação oficial: https://api.prokerala.com/docs#operation/get-transit-planet-position
+        // Baseado na documentação oficial Western Astrology endpoints
         const endpoints = [
           '/v2/astrology/transit-planet-position',
+          '/v2/astrology/transit-aspect-chart',
           '/v2/astrology/transit-chart',
-          '/v2/astrology/planet-position',
-          '/v2/horoscope/planet-position'
+          '/v2/astrology/natal-planet-position'
         ]
         
         let response = null
@@ -208,15 +208,20 @@ class TransitService {
     }
   }
 
-  private async fetchDailyHoroscope(birthData: BirthData) {
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+  private async fetchTransitAspects(birthData: BirthData) {
+    const now = new Date()
+    const datetime = now.toISOString().split('.')[0] // Remove milissegundos
+    
+    // Parâmetros para Transit Aspect Chart baseado na documentação
     const requestData = {
-      date: today,
+      datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      zodiac: 1, // Western zodiac
-      // Parâmetros adicionais baseados na documentação
-      datetime: new Date().toISOString().split('.')[0],
-      ayanamsa: 1 // Lahiri
+      ayanamsa: 1, // Lahiri (1)
+      // Parâmetros específicos para Transit Aspects
+      birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+      birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      transit_datetime: datetime,
+      transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
     // Tentar todas as 4 chaves em sequência para horóscopo
