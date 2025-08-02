@@ -133,7 +133,7 @@ class TransitService {
 
         // Agora fazer a requisição real com o token
         const response = await axios.post(
-          `${this.baseUrl}/astrology/planet-position`,
+          `${this.baseUrl}/horoscope/planet-position`,
           requestData,
           {
             headers: {
@@ -212,7 +212,7 @@ class TransitService {
 
         // Agora fazer a requisição real com o token
         const response = await axios.post(
-          `${this.baseUrl}/astrology/daily-horoscope`,
+          `${this.baseUrl}/horoscope/daily-horoscope`,
           requestData,
           {
             headers: {

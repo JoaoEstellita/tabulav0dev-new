@@ -80,16 +80,33 @@ class ProkeralaService {
     }
 
     try {
+      // Primeiro, obter token OAuth2
+      const tokenData = new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: credential.clientId,
+        client_secret: credential.clientSecret
+      })
+
+      const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        timeout: 10000
+      })
+
+      const accessToken = tokenResponse.data.access_token
+
+      // Agora fazer a requisição real com o token
       const response = await axios.get(`${BASE_URL}${endpoint}`, {
         params: {
           ayanamsa: 1,
           ...params,
         },
         headers: {
-          Authorization: `Bearer ${credential.clientId}:${credential.clientSecret}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        timeout: 10000,
+        timeout: 15000,
       })
 
       // Atualiza estatísticas da credencial
@@ -145,7 +162,7 @@ class ProkeralaService {
   async getAstrologicalStatus(birthData: BirthData): Promise<AstrologicalStatus> {
     try {
       // Tenta Prokerala primeiro
-      const data = await this.makeProkeralaRequest("/astrology/daily-prediction", {
+      const data = await this.makeProkeralaRequest("/horoscope/daily-prediction", {
         datetime: birthData.datetime,
         coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
       })
@@ -246,7 +263,7 @@ class ProkeralaService {
 
   async getBirthChart(birthData: BirthData): Promise<any> {
     try {
-      return await this.makeProkeralaRequest("/astrology/birth-chart", {
+      return await this.makeProkeralaRequest("/horoscope/birth-chart", {
         datetime: birthData.datetime,
         coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
       })
@@ -258,7 +275,7 @@ class ProkeralaService {
 
   async getTransits(birthData: BirthData): Promise<any> {
     try {
-      return await this.makeProkeralaRequest("/astrology/transits", {
+      return await this.makeProkeralaRequest("/horoscope/transits", {
         datetime: birthData.datetime,
         coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
       })
