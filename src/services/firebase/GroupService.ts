@@ -55,17 +55,21 @@ class GroupService {
   // Criar grupo
   async createGroup(name: string, description: string, createdBy: string, isPrivate = false): Promise<string> {
     try {
-      const inviteCode = isPrivate ? this.generateInviteCode() : undefined
-
-      const docRef = await addDoc(collection(db, "groups"), {
+      const groupData: any = {
         name,
         description,
         createdBy,
         members: [createdBy],
         createdAt: Timestamp.now(),
         isPrivate,
-        inviteCode,
-      })
+      }
+
+      // Só adicionar inviteCode se for grupo privado
+      if (isPrivate) {
+        groupData.inviteCode = this.generateInviteCode()
+      }
+
+      const docRef = await addDoc(collection(db, "groups"), groupData)
 
       return docRef.id
     } catch (error) {

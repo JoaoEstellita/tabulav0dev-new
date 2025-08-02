@@ -289,7 +289,7 @@ export default function ProfileScreen() {
               />
               <TouchableOpacity style={styles.locationButton} onPress={() => setShowLocationModal(true)}>
                 <Text style={styles.locationButtonText}>
-                  {profile.birthLocation.city
+                  {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
                     : "Definir local de nascimento"}
                 </Text>
@@ -312,7 +312,7 @@ export default function ProfileScreen() {
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Local:</Text>
                 <Text style={styles.infoValue}>
-                  {profile.birthLocation.city
+                  {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
                     : "Não informado"}
                 </Text>
