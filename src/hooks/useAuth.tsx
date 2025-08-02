@@ -13,7 +13,7 @@ import {
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc } from "firebase/firestore"
-import { GoogleSignin } from '@react-native-google-signin/google-signin'
+// import { GoogleSignin } from '@react-native-google-signin/google-signin' // Comentado para Expo Go
 
 interface AuthContextType {
   user: User | null
@@ -118,35 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    try {
-      console.log('🔑 Iniciando Google Sign-In...')
-      
-      // Configure Google Sign-In
-      GoogleSignin.configure({
-        webClientId: '729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com', // Será configurado no Firebase
-      })
-
-      // Check if your device supports Google Play
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
-
-      // Get the users ID token
-      const signInResult = await GoogleSignin.signIn()
-      const idToken = signInResult.data?.idToken
-
-      // Create a Google credential with the token
-      if (!idToken) {
-        throw new Error('Não foi possível obter token do Google')
-      }
-      const googleCredential = GoogleAuthProvider.credential(idToken)
-
-      // Sign-in the user with the credential
-      await signInWithCredential(auth, googleCredential)
-      
-      console.log('✅ Google Sign-In realizado com sucesso!')
-    } catch (error) {
-      console.error('❌ Erro no Google Sign-In:', error)
-      throw error
-    }
+    // Temporariamente desabilitado para Expo Go
+    throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
   }
 
   const logout = async () => {
