@@ -35,11 +35,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(user)
       if (user) {
+        console.log('⏳ Aguardando verificação de dados...')
         // Aguardar um pouco para garantir que o documento existe
         setTimeout(async () => {
-          const isComplete = await checkBirthDataComplete()
-          setBirthDataComplete(isComplete)
-          setLoading(false)
+          try {
+            const isComplete = await checkBirthDataComplete(user.uid)
+            console.log('✅ Verificação completa, resultado:', isComplete)
+            setBirthDataComplete(isComplete)
+          } catch (error) {
+            console.error('❌ Erro na verificação:', error)
+            setBirthDataComplete(false)
+          } finally {
+            setLoading(false)
+          }
         }, 500)
       } else {
         setBirthDataComplete(false)
@@ -50,14 +58,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe
   }, [])
 
-  const checkBirthDataComplete = async (): Promise<boolean> => {
-    if (!user) {
+  const checkBirthDataComplete = async (userId?: string): Promise<boolean> => {
+    const currentUser = user || auth.currentUser
+    const targetUserId = userId || currentUser?.uid
+    
+    if (!targetUserId) {
+      console.log('❌ Nenhum usuário para verificar')
       setBirthDataComplete(false)
       return false
     }
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      console.log('🔍 Iniciando verificação para usuário:', targetUserId.substring(0, 8) + '...')
+      const userDoc = await getDoc(doc(db, 'users', targetUserId))
+      
       if (userDoc.exists()) {
         const userData = userDoc.data()
         
@@ -67,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isComplete = hasFlag && hasData
         
         console.log('🔍 Verificação dados de nascimento:', {
-          userId: user.uid.substring(0, 8) + '...',
+          userId: targetUserId.substring(0, 8) + '...',
           hasFlag,
           hasData,
           isComplete,
@@ -85,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setBirthDataComplete(false)
       return false
     } catch (error) {
-      console.error('Erro ao verificar dados de nascimento:', error)
+      console.error('❌ Erro ao verificar dados de nascimento:', error)
       setBirthDataComplete(false)
       return false
     }
