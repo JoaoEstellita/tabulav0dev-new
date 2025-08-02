@@ -5,6 +5,7 @@ import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 export interface UserProfile {
   displayName: string
   email: string
+  profilePhoto?: string
   birthDate?: string
   birthTime?: string
   birthLocation?: {
@@ -51,12 +52,18 @@ class UserService {
       // Verificar se usuário já existe
       const userDoc = await getDoc(userRef)
       
-      const updateData = {
+      const updateData: any = {
+        displayName: birthData.fullName,
         birthDate: birthData.birthDate,
         birthTime: birthData.birthTime,
         birthLocation: birthData.birthLocation,
         birthDataComplete: true,
         lastBirthDataEdit: new Date(),
+      }
+
+      // Só adiciona foto se foi fornecida
+      if (birthData.profilePhoto) {
+        updateData.profilePhoto = birthData.profilePhoto
       }
 
       if (userDoc.exists()) {
@@ -65,7 +72,7 @@ class UserService {
       } else {
         // Criar novo perfil completo
         const newUserData: UserProfile = {
-          displayName: '',
+          displayName: birthData.fullName,
           email: '',
           ...updateData,
           createdAt: new Date(),
@@ -98,9 +105,11 @@ class UserService {
         await setDoc(userRef, newUserData)
       }
 
-      console.log('Dados de nascimento salvos com sucesso!')
+      console.log('✅ Dados de nascimento salvos com sucesso!')
+      console.log('📝 Nome:', birthData.fullName)
+      console.log('📸 Foto:', birthData.profilePhoto ? 'Incluída' : 'Não fornecida')
     } catch (error) {
-      console.error('Erro ao salvar dados de nascimento:', error)
+      console.error('❌ Erro ao salvar dados de nascimento:', error)
       throw new Error('Não foi possível salvar os dados de nascimento.')
     }
   }

@@ -10,10 +10,13 @@ import {
   Platform,
   FlatList,
   ActivityIndicator,
+  Image,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import LocationService, { type LocationSuggestion } from '../../services/LocationService'
 
 interface BirthDataFormProps {
@@ -22,6 +25,8 @@ interface BirthDataFormProps {
 }
 
 export interface BirthData {
+  fullName: string
+  profilePhoto?: string
   birthDate: string
   birthTime: string
   birthLocation: {
@@ -35,6 +40,8 @@ export interface BirthData {
 export default function BirthDataForm({ onComplete, loading = false }: BirthDataFormProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
+    fullName: '',
+    profilePhoto: '',
     birthDate: '',
     birthTime: '',
     city: '',
@@ -179,7 +186,108 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }
 
+  // Funções para manipulação de foto
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      return false
+    }
+    return true
+  }
+
+  const selectPhoto = async () => {
+    const hasPermission = await requestPermissions()
+    if (!hasPermission) return
+
+    Alert.alert(
+      'Escolher Foto',
+      'Como você gostaria de adicionar sua foto?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Galeria', onPress: () => pickImage('gallery') },
+        { text: 'Câmera', onPress: () => pickImage('camera') },
+      ]
+    )
+  }
+
+  const pickImage = async (source: 'gallery' | 'camera') => {
+    try {
+      let result
+
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync()
+        if (status !== 'granted') {
+          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          return
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        })
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        })
+      }
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0]
+        console.log('📸 Foto selecionada:', asset.uri)
+        
+        // Redimensionar a imagem para otimizar
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 300, height: 300 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        )
+
+        setFormData(prev => ({
+          ...prev,
+          profilePhoto: manipulatedImage.uri,
+        }))
+
+        console.log('✅ Foto processada e salva')
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar foto:', error)
+      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
+    }
+  }
+
+  const removePhoto = () => {
+    Alert.alert(
+      'Remover Foto',
+      'Tem certeza que deseja remover a foto selecionada?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Remover', 
+          style: 'destructive',
+          onPress: () => setFormData(prev => ({ ...prev, profilePhoto: '' }))
+        },
+      ]
+    )
+  }
+
   const validateStep1 = () => {
+    if (!formData.fullName.trim()) {
+      Alert.alert('Atenção', 'Por favor, informe seu nome completo.')
+      return false
+    }
+    if (formData.fullName.trim().length < 3) {
+      Alert.alert('Atenção', 'O nome deve ter pelo menos 3 caracteres.')
+      return false
+    }
+    return true
+  }
+
+  const validateStep2 = () => {
     if (!formData.birthDate) {
       Alert.alert('Atenção', 'Por favor, selecione sua data de nascimento.')
       return false
@@ -187,7 +295,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const validateStep2 = () => {
+  const validateStep3 = () => {
     if (!formData.birthTime) {
       Alert.alert('Atenção', 'Por favor, informe sua hora de nascimento.')
       return false
@@ -195,7 +303,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const validateStep3 = () => {
+  const validateStep4 = () => {
     // Aceita tanto localização selecionada quanto texto livre
     if (!selectedLocation && !locationQuery.trim()) {
       Alert.alert('Atenção', 'Por favor, informe sua cidade de nascimento.')
@@ -229,17 +337,22 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       case 3:
         isValid = validateStep3()
         break
+      case 4:
+        isValid = validateStep4()
+        break
     }
 
-    if (isValid && currentStep < 3) {
+    if (isValid && currentStep < 4) {
       setCurrentStep(currentStep + 1)
-    } else if (isValid && currentStep === 3) {
+    } else if (isValid && currentStep === 4) {
       handleComplete()
     }
   }
 
   const handleComplete = () => {
     const birthData: BirthData = {
+      fullName: formData.fullName.trim(),
+      profilePhoto: formData.profilePhoto,
       birthDate: formData.birthDate,
       birthTime: formData.birthTime,
       birthLocation: {
@@ -254,6 +367,53 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const renderStep1 = () => (
+    <View style={styles.stepContainer}>
+      <Ionicons name="person-outline" size={64} color="#FFD700" style={styles.stepIcon} />
+      
+      <Text style={styles.stepTitle}>Vamos nos conhecer!</Text>
+      <Text style={styles.stepDescription}>
+        Como você gostaria de ser chamado? E que tal adicionar uma foto?
+      </Text>
+
+      {/* Foto de Perfil */}
+      <View style={styles.photoContainer}>
+        {formData.profilePhoto ? (
+          <View style={styles.photoSelected}>
+            <Image source={{ uri: formData.profilePhoto }} style={styles.profilePhoto} />
+            <TouchableOpacity style={styles.removePhotoButton} onPress={removePhoto}>
+              <Ionicons name="close-circle" size={24} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.photoPlaceholder} onPress={selectPhoto}>
+            <Ionicons name="camera-outline" size={40} color="#666" />
+            <Text style={styles.photoPlaceholderText}>Adicionar Foto</Text>
+            <Text style={styles.photoOptionalText}>(Opcional)</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Nome Completo */}
+      <View style={styles.inputContainer}>
+        <Ionicons name="person" size={20} color="#666" style={styles.inputIcon} />
+        <TextInput
+          style={styles.nameInput}
+          placeholder="Seu nome completo"
+          placeholderTextColor="#666"
+          value={formData.fullName}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, fullName: text }))}
+          autoCapitalize="words"
+          returnKeyType="next"
+        />
+      </View>
+
+      <Text style={styles.helpText}>
+        👋 Este nome aparecerá em seu perfil e para outros usuários
+      </Text>
+    </View>
+  )
+
+  const renderStep2 = () => (
     <View style={styles.stepContainer}>
       <Ionicons name="calendar-outline" size={64} color="#FFD700" style={styles.stepIcon} />
       
@@ -294,7 +454,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     </View>
   )
 
-  const renderStep2 = () => (
+  const renderStep3 = () => (
     <View style={styles.stepContainer}>
       <Ionicons name="time-outline" size={64} color="#FFD700" style={styles.stepIcon} />
       
@@ -338,7 +498,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     </View>
   )
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <View style={styles.stepContainer}>
       <Ionicons name="location-outline" size={64} color="#FFD700" style={styles.stepIcon} />
       
@@ -432,9 +592,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderProgressBar = () => (
     <View style={styles.progressContainer}>
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${(currentStep / 3) * 100}%` }]} />
+        <View style={[styles.progressFill, { width: `${(currentStep / 4) * 100}%` }]} />
       </View>
-      <Text style={styles.progressText}>{currentStep} de 3</Text>
+      <Text style={styles.progressText}>{currentStep} de 4</Text>
     </View>
   )
 
@@ -448,6 +608,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
+          {currentStep === 4 && renderStep4()}
         </View>
 
         <View style={styles.buttonContainer}>
@@ -464,17 +625,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           <TouchableOpacity 
             style={[
               styles.nextButton, 
-              (loading || (currentStep === 3 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
+              (loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
             ]} 
             onPress={handleNext}
-            disabled={loading || (currentStep === 3 && !selectedLocation && !locationQuery.trim())}
+            disabled={loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())}
           >
             {loading ? (
               <Text style={styles.nextButtonText}>Salvando...</Text>
             ) : (
               <>
                 <Text style={styles.nextButtonText}>
-                  {currentStep === 3 ? 'Finalizar' : 'Próximo'}
+                  {currentStep === 4 ? 'Finalizar' : 'Próximo'}
                 </Text>
                 <Ionicons name="arrow-forward" size={20} color="#000" />
               </>
@@ -598,6 +759,55 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     fontStyle: 'italic',
+  },
+  photoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  photoPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#2C2C2E',
+    borderWidth: 2,
+    borderColor: '#444',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoPlaceholderText: {
+    color: '#A0A0A0',
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '500',
+  },
+  photoOptionalText: {
+    color: '#666',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  photoSelected: {
+    position: 'relative',
+  },
+  profilePhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+  },
+  nameInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    paddingVertical: 16,
   },
   searchIndicator: {
     marginLeft: 8,
