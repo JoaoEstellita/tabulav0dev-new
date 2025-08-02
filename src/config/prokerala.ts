@@ -6,42 +6,16 @@ export interface ProkeralaCredentials {
   lastUsed: Date | null
 }
 
-// 4 chaves da Prokerala para rotação e fallback
-export const PROKERALA_CREDENTIALS: ProkeralaCredentials[] = [
-  {
-    clientId: "0f1911d5-42f1-4c3f-82df-cc7c1995a621",
-    clientSecret: "8ICawBeH6Mob1Hkxb9AqdnHmdQQF9yMcjhtZMMCl",
-    isActive: true,
-    requestCount: 0,
-    lastUsed: null,
-  },
-  {
-    clientId: "ef682113-fd34-426e-bbe0-cfa241b036cb", 
-    clientSecret: "ACLvxPv337zaYn9GiVcRsU0XQjMms6JMiZhF6wXb",
-    isActive: true,
-    requestCount: 0,
-    lastUsed: null,
-  },
-  {
-    clientId: "ade5a2ed-9941-4861-97db-ffef1878a032",
-    clientSecret: "b4kjNOByUJbQegpsdpd60u8qXVlwfaezG7edkaRi", 
-    isActive: true,
-    requestCount: 0,
-    lastUsed: null,
-  },
-  {
-    clientId: "b7336b51-32b9-4a65-87a8-cfb9d5be6bea",
-    clientSecret: "uxiz04zam0BZeiblQtudvIsi1NRHjyRlB0dHUVjP",
-    isActive: true,
-    requestCount: 0,
-    lastUsed: null,
-  },
-]
+// CREDENCIAIS REMOVIDAS POR SEGURANÇA
+// Conforme diretriz da Prokerala (linhas 14-17):
+// "You should not embed your credentials in such apps"
+// As credenciais agora ficam APENAS no backend seguro
 
-// Configuração da API Prokerala
+// Configuração da API Prokerala (apenas configurações públicas)
 export const PROKERALA_CONFIG = {
   baseUrl: "https://api.prokerala.com/v2",
-  credentials: PROKERALA_CREDENTIALS,
+  // Backend seguro que gerencia as credenciais
+  backendUrl: "https://tabulav0dev-backend.vercel.app",
   defaultLocation: {
     place: "New Delhi, India",
     coordinates: "28.7041,77.1025"

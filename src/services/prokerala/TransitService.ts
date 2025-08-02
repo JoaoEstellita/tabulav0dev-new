@@ -1,47 +1,46 @@
 import axios from 'axios'
-import { PROKERALA_CONFIG } from '../../config/prokerala'
+
+// Backend seguro (seguindo diretriz de segurança da Prokerala)
+const BACKEND_URL = 'https://tabulav0dev-backend.vercel.app'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 
 // Interfaces baseadas na documentação real da Prokerala
 interface ProkeralaRequest {
   datetime: string  // ISO format YYYY-MM-DDTHH:mm:ss
-  coordinates: string // "lat,lng"
-  ayanamsa: number // 1 = Lahiri
+  coordinates: string  // "latitude,longitude"
+  ayanamsa: number  // 1 for Lahiri
+  birth_datetime: string
+  birth_coordinates: string
+  transit_datetime: string
+  transit_coordinates: string
 }
 
-export interface Planet {
-  id: number
+interface PlanetPosition {
   name: string
   longitude: number
-  degree: number
-  minutes: number
-  seconds: number
+  speed: number
   sign: string
-  signLord: string
-  isRetrograde: boolean
+  house: number
 }
 
-export interface Transit {
-  planet: Planet
-  fromSign: string
-  toSign: string
-  transitDate: string
-  influence: 'positive' | 'negative' | 'neutral'
-  intensity: number // 1-100
-  description: string
-  areas: LifeArea[]
+interface TransitAspect {
+  planet1: string
+  planet2: string
+  aspect: string
+  orb: number
+  applying: boolean
 }
 
-export interface LifeArea {
-  name: 'love' | 'career' | 'health' | 'family' | 'spirituality'
-  status: number // 0-100
+interface LifeArea {
+  name: string
+  status: number  // 0-100
+  trend: 'positive' | 'negative' | 'stable'
   description: string
-  trend: 'rising' | 'falling' | 'stable'
   criticalLevel: boolean
 }
 
-export interface TransitData {
-  currentTransits: Transit[]
+interface TransitData {
+  currentTransits: PlanetPosition[]
   lifeAreas: LifeArea[]
   dailyOverview: {
     overall: number
@@ -53,14 +52,8 @@ export interface TransitData {
 }
 
 class TransitService {
-  private readonly baseUrl = 'https://api.prokerala.com/v2'
-  private currentCredentialIndex = 0
-
-  private getCredentials() {
-    const credentials = PROKERALA_CONFIG.credentials[this.currentCredentialIndex]
-    this.currentCredentialIndex = (this.currentCredentialIndex + 1) % PROKERALA_CONFIG.credentials.length
-    return credentials
-  }
+  // Usando backend seguro conforme diretriz de segurança da Prokerala
+  private readonly backendUrl = BACKEND_URL
 
   async getCurrentTransits(birthData: BirthData): Promise<TransitData> {
     try {
@@ -85,6 +78,13 @@ class TransitService {
         processedData = this.processRealData(planetPositions.value, birthData)
       }
 
+      if (transitAspects.status === 'fulfilled') {
+        console.log('✅ Aspectos de trânsito obtidos com sucesso!')
+        // Processar aspectos para refinar as áreas da vida
+        processedData = this.enhanceWithAspects(processedData, transitAspects.value)
+      }
+
+      console.log('Dados de trânsito carregados:', processedData)
       return processedData
     } catch (error) {
       console.error('❌ Erro geral ao buscar trânsitos:', error)
@@ -93,116 +93,54 @@ class TransitService {
   }
 
   private async fetchPlanetPositions(birthData: BirthData) {
-    // Formato de data correto para Prokerala: YYYY-MM-DDTHH:mm:ss
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // Formato correto dos parâmetros para Prokerala API v2 - Transit Chart
-    // Baseado na documentação: https://api.prokerala.com/docs#operation/get-transit-chart
     const requestData = {
       datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       ayanamsa: 1, // Lahiri (1)
-      // Parâmetros específicos para Transit Chart
       birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
       birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       transit_datetime: datetime,
       transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
-    // Tentar todas as 4 chaves em sequência
-    for (let attempt = 0; attempt < PROKERALA_CONFIG.credentials.length; attempt++) {
-      const credentials = this.getCredentials()
+    try {
+      console.log('🌍 Chamando backend seguro para posições planetárias...')
       
+      const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
+        endpoint: '/astrology/transit-planet-position',
+        params: requestData
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      })
+
+      console.log('✅ Posições planetárias obtidas via backend seguro!')
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Erro no backend seguro:', error.message)
+      
+      // Tentar endpoint alternativo se o primeiro falhar
       try {
-        console.log(`🌍 Tentativa ${attempt + 1}/4 - Prokerala API:`, {
-          endpoint: 'planet-position',
-          clientId: credentials.clientId.substring(0, 8) + '...',
-          coordinates: requestData.coordinates
-        })
-
-        // Primeiro, obter token OAuth2
-        const tokenData = new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret
-        })
-
-        const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
+        console.log('🔄 Tentando endpoint alternativo...')
+        const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
+          endpoint: '/astrology/transit-chart',
+          params: requestData
+        }, {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/json'
           },
-          timeout: 10000
+          timeout: 30000
         })
-
-        const accessToken = tokenResponse.data.access_token
-        console.log('🔑 Token OAuth2 obtido com sucesso')
-
-        // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Baseado na documentação oficial Western Astrology endpoints
-        const endpoints = [
-          '/v2/astrology/transit-planet-position',
-          '/v2/astrology/transit-aspect-chart',
-          '/v2/astrology/transit-chart',
-          '/v2/astrology/natal-planet-position'
-        ]
         
-        let response = null
-        let lastError = null
-        
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`🔍 Testando endpoint: ${endpoint}`)
-            response = await axios.get(
-              `${this.baseUrl}${endpoint}`,
-              {
-                params: requestData,
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Accept': 'application/json'
-                },
-                timeout: 15000
-              }
-            )
-            console.log(`✅ Endpoint funcionou: ${endpoint}`)
-            break
-          } catch (endpointError: any) {
-            console.log(`❌ Endpoint ${endpoint} falhou:`, endpointError.response?.status)
-            lastError = endpointError
-            continue
-          }
-        }
-        
-        if (!response) {
-          throw lastError
-        }
-
-        console.log('✅ Sucesso na API Prokerala:', {
-          status: response.status,
-          credentialUsed: attempt + 1,
-          dataKeys: Object.keys(response.data || {})
-        })
-
-        // Marcar credencial como usada com sucesso
-        credentials.lastUsed = new Date()
-        credentials.requestCount++
-
-        return response.data
-
-      } catch (error: any) {
-        console.error(`❌ Erro na credencial ${attempt + 1}:`, {
-          status: error.response?.status,
-          message: error.message,
-          clientId: credentials.clientId.substring(0, 8) + '...'
-        })
-
-        // Se não é a última tentativa, continua para próxima credencial
-        if (attempt < PROKERALA_CONFIG.credentials.length - 1) {
-          console.log(`🔄 Tentando próxima credencial...`)
-          continue
-        }
-        
-        // Se foi a última tentativa, relança o erro
+        console.log('✅ Dados obtidos via endpoint alternativo!')
+        return response.data.data
+      } catch (fallbackError: any) {
+        console.error('❌ Fallback também falhou:', fallbackError.message)
         throw error
       }
     }
@@ -212,335 +150,208 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // Parâmetros para Transit Aspect Chart baseado na documentação
     const requestData = {
       datetime,
       coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       ayanamsa: 1, // Lahiri (1)
-      // Parâmetros específicos para Transit Aspects
       birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
       birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       transit_datetime: datetime,
       transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
-    // Tentar todas as 4 chaves em sequência para horóscopo
-    for (let attempt = 0; attempt < PROKERALA_CONFIG.credentials.length; attempt++) {
-      const credentials = this.getCredentials()
+    try {
+      console.log('🔗 Chamando backend seguro para aspectos de trânsito...')
       
-      try {
-        console.log(`⭐ Tentativa ${attempt + 1}/4 - Horóscopo Diário:`, {
-          endpoint: 'daily-horoscope',
-          clientId: credentials.clientId.substring(0, 8) + '...'
-        })
+      const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
+        endpoint: '/astrology/transit-aspect-chart',
+        params: requestData
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      })
 
-        // Primeiro, obter token OAuth2
-        const tokenData = new URLSearchParams({
-          grant_type: 'client_credentials',
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret
-        })
-
-        const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          timeout: 10000
-        })
-
-        const accessToken = tokenResponse.data.access_token
-        console.log('🔑 Token OAuth2 para horóscopo obtido com sucesso')
-
-        // Agora fazer a requisição real com o token - usando GET conforme documentação
-        // Baseado na documentação oficial para horóscopo diário
-        const horoscopeEndpoints = [
-          '/v2/horoscope/daily',
-          '/v2/astrology/daily-horoscope',
-          '/v2/horoscope/daily-horoscope',
-          '/horoscope/daily'
-        ]
-        
-        let response = null
-        let lastError = null
-        
-        for (const endpoint of horoscopeEndpoints) {
-          try {
-            console.log(`🔍 Testando endpoint horóscopo: ${endpoint}`)
-            response = await axios.get(
-              `${this.baseUrl}${endpoint}`,
-              {
-                params: requestData,
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Accept': 'application/json'
-                },
-                timeout: 15000
-              }
-            )
-            console.log(`✅ Endpoint horóscopo funcionou: ${endpoint}`)
-            break
-          } catch (endpointError: any) {
-            console.log(`❌ Endpoint horóscopo ${endpoint} falhou:`, endpointError.response?.status)
-            lastError = endpointError
-            continue
-          }
-        }
-        
-        if (!response) {
-          throw lastError
-        }
-
-        console.log('✅ Horóscopo obtido com sucesso:', {
-          status: response.status,
-          credentialUsed: attempt + 1
-        })
-
-        return response.data
-
-      } catch (error: any) {
-        console.error(`❌ Erro no horóscopo - credencial ${attempt + 1}:`, {
-          status: error.response?.status,
-          message: error.message
-        })
-
-        // Se não é a última tentativa, continua
-        if (attempt < PROKERALA_CONFIG.credentials.length - 1) {
-          console.log(`🔄 Tentando próxima credencial para horóscopo...`)
-          continue
-        }
-        
-        // Se foi a última tentativa, relança o erro
-        throw error
-      }
+      console.log('✅ Aspectos de trânsito obtidos via backend seguro!')
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar aspectos:', error.message)
+      throw error
     }
   }
 
-  private processRealData(prokeralaData: any, birthData: BirthData): TransitData {
+  private processRealData(apiData: any, birthData: BirthData): TransitData {
+    // Processar dados reais da API Prokerala
     console.log('🔄 Processando dados reais da Prokerala...')
     
-    // Extrair posições planetárias reais
-    const planets = prokeralaData.data?.planets || []
-    console.log('🪐 Planetas encontrados:', planets.length)
+    try {
+      const planets = apiData.planets || apiData.transits || []
+      const currentTransits: PlanetPosition[] = planets.map((planet: any) => ({
+        name: planet.name || 'Unknown',
+        longitude: planet.longitude || 0,
+        speed: planet.speed || 0,
+        sign: planet.sign || 'Unknown',
+        house: planet.house || 1
+      }))
 
-    const currentTransits = this.extractRealTransits(planets)
-    const lifeAreas = this.calculateLifeAreaStatus(currentTransits)
-    const dailyOverview = this.generateDailyOverview(lifeAreas)
-    const warnings = this.generateWarnings(lifeAreas)
-
-    return {
-      currentTransits,
-      lifeAreas,
-      dailyOverview,
-      warnings,
-    }
-  }
-
-  private extractRealTransits(planets: any[]): Transit[] {
-    const transits: Transit[] = []
-
-    planets.forEach(planet => {
-      if (planet && planet.name) {
-        transits.push({
-          planet: {
-            id: planet.id || 0,
-            name: planet.name,
-            longitude: planet.longitude || 0,
-            degree: planet.degree || 0,
-            minutes: planet.minutes || 0,
-            seconds: planet.seconds || 0,
-            sign: planet.sign || 'Desconhecido',
-            signLord: planet.sign_lord || 'Desconhecido',
-            isRetrograde: planet.is_retrograde || false,
-          },
-          fromSign: planet.previous_sign || planet.sign || 'Desconhecido',
-          toSign: planet.sign || 'Desconhecido',
-          transitDate: new Date().toISOString(),
-          influence: this.determineInfluence(planet),
-          intensity: this.calculateIntensity(planet),
-          description: this.generateDescription(planet),
-          areas: this.getAffectedAreas(planet.name),
-        })
+      // Calcular áreas da vida baseado nos trânsitos reais
+      const lifeAreas = this.calculateLifeAreasFromTransits(currentTransits)
+      
+      return {
+        currentTransits,
+        lifeAreas,
+        dailyOverview: this.calculateDailyOverview(lifeAreas),
+        warnings: this.generateWarnings(lifeAreas)
       }
-    })
-
-    console.log(`✨ ${transits.length} trânsitos processados`)
-    return transits
-  }
-
-  private determineInfluence(planet: any): 'positive' | 'negative' | 'neutral' {
-    // Lógica básica baseada no planeta e retrogradação
-    if (planet.is_retrograde) return 'negative'
-    
-    const beneficPlanets = ['Venus', 'Jupiter', 'Mercury']
-    const maleficPlanets = ['Mars', 'Saturn', 'Rahu', 'Ketu']
-    
-    if (beneficPlanets.includes(planet.name)) return 'positive'
-    if (maleficPlanets.includes(planet.name)) return 'negative'
-    
-    return 'neutral'
-  }
-
-  private calculateIntensity(planet: any): number {
-    // Intensidade baseada na força planetária (simplified)
-    let intensity = 50
-    
-    if (planet.is_retrograde) intensity += 20
-    if (planet.strength) intensity += Math.floor(planet.strength / 2)
-    
-    return Math.min(Math.max(intensity, 10), 100)
-  }
-
-  private generateDescription(planet: any): string {
-    const influences = {
-      'Sun': 'Energia vital e autoconfiança em destaque',
-      'Moon': 'Emoções e intuição influenciadas',
-      'Mars': 'Ação e energia física intensificadas',
-      'Mercury': 'Comunicação e pensamento aguçados',
-      'Jupiter': 'Sabedoria e expansão favorecidas',
-      'Venus': 'Amor e beleza em evidência',
-      'Saturn': 'Disciplina e responsabilidade requeridas',
-      'Rahu': 'Transformações e mudanças inesperadas',
-      'Ketu': 'Desapego e crescimento espiritual'
-    }
-    
-    const base = influences[planet.name as keyof typeof influences] || 'Influência planetária ativa'
-    
-    if (planet.is_retrograde) {
-      return `${base} (retrógrado - atenção especial requerida)`
-    }
-    
-    return base
-  }
-
-  private getAffectedAreas(planetName: string): LifeArea[] {
-    const planetAreas = {
-      'Sun': ['career', 'spirituality'],
-      'Moon': ['family', 'health'],
-      'Mars': ['career', 'health'],
-      'Mercury': ['career', 'love'],
-      'Jupiter': ['spirituality', 'family'],
-      'Venus': ['love', 'family'],
-      'Saturn': ['career', 'health'],
-      'Rahu': ['career', 'spirituality'],
-      'Ketu': ['spirituality', 'health']
-    }
-    
-    return (planetAreas[planetName as keyof typeof planetAreas] || ['spirituality']) as LifeArea[]
-  }
-
-  private processTransitData(prokeralaData: any): TransitData {
-    // Processar dados reais da Prokerala e converter para nosso formato
-    const currentTransits = this.extractTransits(prokeralaData)
-    const lifeAreas = this.calculateLifeAreaStatus(currentTransits)
-    const dailyOverview = this.generateDailyOverview(lifeAreas)
-    const warnings = this.generateWarnings(lifeAreas)
-
-    return {
-      currentTransits,
-      lifeAreas,
-      dailyOverview,
-      warnings,
+    } catch (error) {
+      console.error('❌ Erro ao processar dados reais:', error)
+      return this.getMockTransitData()
     }
   }
 
-  private extractTransits(data: any): Transit[] {
-    // Extrair e processar trânsitos dos dados da Prokerala
-    // Por enquanto, retorna dados mock estruturados
-    return [
-      {
-        planet: {
-          id: 1,
-          name: 'Mercúrio',
-          longitude: 125.5,
-          degree: 5,
-          minutes: 30,
-          seconds: 0,
-          sign: 'Leão',
-          signLord: 'Sol',
-          isRetrograde: false,
-        },
-        fromSign: 'Câncer',
-        toSign: 'Leão',
-        transitDate: new Date().toISOString(),
-        influence: 'positive',
-        intensity: 75,
-        description: 'Comunicação e criatividade em alta',
-        areas: ['career', 'spirituality'],
-      },
-      {
-        planet: {
-          id: 2,
-          name: 'Vênus',
-          longitude: 200.3,
-          degree: 20,
-          minutes: 18,
-          seconds: 0,
-          sign: 'Escorpião',
-          signLord: 'Marte',
-          isRetrograde: true,
-        },
-        fromSign: 'Libra',
-        toSign: 'Escorpião',
-        transitDate: new Date().toISOString(),
-        influence: 'negative',
-        intensity: 60,
-        description: 'Relacionamentos precisam de atenção especial',
-        areas: ['love', 'family'],
-      },
-    ]
+  private enhanceWithAspects(data: TransitData, aspects: any): TransitData {
+    // Refinar as áreas da vida com base nos aspectos
+    console.log('🔮 Aprimorando com aspectos de trânsito...')
+    
+    try {
+      const aspectList: TransitAspect[] = aspects.aspects || []
+      
+      // Ajustar porcentagens das áreas baseado nos aspectos
+      const enhancedLifeAreas = data.lifeAreas.map(area => {
+        let adjustment = 0
+        
+        aspectList.forEach(aspect => {
+          if (this.aspectAffectsArea(aspect, area.name)) {
+            if (aspect.aspect === 'trine' || aspect.aspect === 'sextile') {
+              adjustment += 10 // Aspectos positivos
+            } else if (aspect.aspect === 'square' || aspect.aspect === 'opposition') {
+              adjustment -= 10 // Aspectos desafiadores
+            }
+          }
+        })
+        
+        return {
+          ...area,
+          status: Math.max(0, Math.min(100, area.status + adjustment))
+        }
+      })
+      
+      return {
+        ...data,
+        lifeAreas: enhancedLifeAreas,
+        dailyOverview: this.calculateDailyOverview(enhancedLifeAreas)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar aspectos:', error)
+      return data
+    }
   }
 
-  private calculateLifeAreaStatus(transits: Transit[]): LifeArea[] {
-    // Calcular status baseado nos trânsitos
+  private aspectAffectsArea(aspect: TransitAspect, areaName: string): boolean {
+    // Mapear quais planetas afetam quais áreas da vida
+    const areaMapping: Record<string, string[]> = {
+      love: ['venus', 'mars', 'moon'],
+      career: ['saturn', 'jupiter', 'mars', 'sun'],
+      health: ['mars', 'saturn', 'sun'],
+      family: ['moon', 'cancer', 'jupiter'],
+      spirituality: ['jupiter', 'neptune', 'pluto']
+    }
+    
+    const relevantPlanets = areaMapping[areaName] || []
+    return relevantPlanets.some(planet => 
+      aspect.planet1.toLowerCase().includes(planet) || 
+      aspect.planet2.toLowerCase().includes(planet)
+    )
+  }
+
+  private calculateLifeAreasFromTransits(transits: PlanetPosition[]): LifeArea[] {
+    // Calcular status das áreas da vida baseado nas posições planetárias
+    const baseStatus = 60 // Status base
+    
     return [
       {
         name: 'love',
-        status: 35,
-        description: 'Vênus retrógrada traz desafios nos relacionamentos',
-        trend: 'falling',
-        criticalLevel: true,
+        status: this.calculateAreaStatus(transits, ['venus', 'mars'], baseStatus),
+        trend: 'stable',
+        description: 'Período de equilíbrio emocional',
+        criticalLevel: false
       },
       {
         name: 'career',
-        status: 78,
-        description: 'Mercúrio em Leão favorece comunicação profissional',
-        trend: 'rising',
-        criticalLevel: false,
+        status: this.calculateAreaStatus(transits, ['saturn', 'jupiter', 'mars'], baseStatus),
+        trend: 'stable',
+        description: 'Oportunidades moderadas no trabalho',
+        criticalLevel: false
       },
       {
         name: 'health',
-        status: 65,
-        description: 'Energia estável, mas atenção ao estresse',
+        status: this.calculateAreaStatus(transits, ['mars', 'saturn'], baseStatus + 10),
         trend: 'stable',
-        criticalLevel: false,
+        description: 'Energia boa e disposição',
+        criticalLevel: false
       },
       {
         name: 'family',
-        status: 40,
-        description: 'Tensões familiares requerem paciência',
-        trend: 'falling',
-        criticalLevel: true,
+        status: this.calculateAreaStatus(transits, ['moon', 'jupiter'], baseStatus - 5),
+        trend: 'stable',
+        description: 'Harmonia familiar estável',
+        criticalLevel: false
       },
       {
         name: 'spirituality',
-        status: 85,
-        description: 'Momento ideal para crescimento espiritual',
-        trend: 'rising',
-        criticalLevel: false,
-      },
+        status: this.calculateAreaStatus(transits, ['jupiter', 'neptune'], baseStatus + 5),
+        trend: 'stable',
+        description: 'Bom momento para reflexão',
+        criticalLevel: false
+      }
     ]
   }
 
-  private generateDailyOverview(lifeAreas: LifeArea[]) {
-    const average = lifeAreas.reduce((sum, area) => sum + area.status, 0) / lifeAreas.length
-    const bestArea = lifeAreas.reduce((best, area) => area.status > best.status ? area : best)
-    const worstArea = lifeAreas.reduce((worst, area) => area.status < worst.status ? area : worst)
+  private calculateAreaStatus(transits: PlanetPosition[], relevantPlanets: string[], baseStatus: number): number {
+    let adjustment = 0
+    
+    transits.forEach(transit => {
+      if (relevantPlanets.some(planet => transit.name.toLowerCase().includes(planet))) {
+        // Ajustar baseado na velocidade e posição
+        if (transit.speed > 0) {
+          adjustment += 5 // Planeta direto - positivo
+        } else {
+          adjustment -= 3 // Planeta retrógrado - desafiador
+        }
+      }
+    })
+    
+    return Math.max(20, Math.min(90, baseStatus + adjustment))
+  }
 
+  private calculateDailyOverview(lifeAreas: LifeArea[]) {
+    const totalStatus = lifeAreas.reduce((sum, area) => sum + area.status, 0)
+    const overall = Math.round(totalStatus / lifeAreas.length)
+    
+    const bestArea = lifeAreas.reduce((best, area) => 
+      area.status > best.status ? area : best
+    )
+    
+    const challengingArea = lifeAreas.reduce((worst, area) => 
+      area.status < worst.status ? area : worst
+    )
+    
+    const areaNames: Record<string, string> = {
+      love: 'Amor & Relacionamentos',
+      career: 'Carreira & Finanças',
+      health: 'Saúde & Bem-estar',
+      family: 'Família & Amizades',
+      spirituality: 'Espiritualidade & Crescimento'
+    }
+    
     return {
-      overall: Math.round(average),
-      message: this.getOverallMessage(average),
-      bestArea: this.translateAreaName(bestArea.name),
-      challengingArea: this.translateAreaName(worstArea.name),
+      overall,
+      message: overall >= 70 ? 'Período favorável com boas energias.' :
+               overall >= 50 ? 'Período equilibrado com energias estáveis.' :
+               'Período que requer atenção e cuidado.',
+      bestArea: areaNames[bestArea.name] || bestArea.name,
+      challengingArea: areaNames[challengingArea.name] || challengingArea.name
     }
   }
 
@@ -548,80 +359,62 @@ class TransitService {
     const warnings: string[] = []
     
     lifeAreas.forEach(area => {
-      if (area.criticalLevel) {
-        warnings.push(`${this.translateAreaName(area.name)}: ${area.description}`)
+      if (area.status < 30) {
+        area.criticalLevel = true
+        warnings.push(`Atenção especial necessária em ${area.name}`)
       }
     })
-
+    
     return warnings
   }
 
-  private getOverallMessage(average: number): string {
-    if (average >= 80) return 'Excelente momento astrológico! Aproveite as energias positivas.'
-    if (average >= 60) return 'Período equilibrado com boas oportunidades de crescimento.'
-    if (average >= 40) return 'Momento de cautela e reflexão. Foque no essencial.'
-    return 'Período desafiador. Pratique paciência e busque apoio.'
-  }
-
-  private translateAreaName(area: string): string {
-    const translations = {
-      love: 'Amor & Relacionamentos',
-      career: 'Carreira & Finanças',
-      health: 'Saúde & Bem-estar',
-      family: 'Família & Amizades',
-      spirituality: 'Espiritualidade & Crescimento',
-    }
-    return translations[area as keyof typeof translations] || area
-  }
-
   private getMockTransitData(): TransitData {
-    // Dados mock para quando a API falhar
     return {
       currentTransits: [],
       lifeAreas: [
         {
           name: 'love',
           status: 50,
-          description: 'Período neutro para relacionamentos',
           trend: 'stable',
-          criticalLevel: false,
+          description: 'Período neutro para relacionamentos',
+          criticalLevel: false
         },
         {
           name: 'career',
           status: 60,
-          description: 'Oportunidades moderadas no trabalho',
           trend: 'stable',
-          criticalLevel: false,
+          description: 'Oportunidades moderadas no trabalho',
+          criticalLevel: false
         },
         {
           name: 'health',
           status: 70,
-          description: 'Energia boa e disposição',
           trend: 'stable',
-          criticalLevel: false,
+          description: 'Energia boa e disposição',
+          criticalLevel: false
         },
         {
           name: 'family',
           status: 55,
-          description: 'Harmonia familiar estável',
           trend: 'stable',
-          criticalLevel: false,
+          description: 'Harmonia familiar estável',
+          criticalLevel: false
         },
         {
           name: 'spirituality',
           status: 65,
-          description: 'Bom momento para reflexão',
           trend: 'stable',
-          criticalLevel: false,
-        },
+          description: 'Bom momento para reflexão',
+          criticalLevel: false
+        }
       ],
       dailyOverview: {
         overall: 60,
         message: 'Período equilibrado com energias estáveis.',
         bestArea: 'Saúde & Bem-estar',
-        challengingArea: 'Amor & Relacionamentos',
+        challengingArea: 'Amor & Relacionamentos'
       },
-      warnings: [],
+      warnings: []
     }
   }
 }
