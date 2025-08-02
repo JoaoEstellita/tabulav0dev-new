@@ -7,6 +7,8 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, PieChart } from "react-native-chart-kit"
 import { useAuth } from "../../hooks/useAuth"
 import ProkeralaService, { type AstrologicalStatus, type BirthData } from "../../services/prokerala/ProkeralaService"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "../../config/firebase"
 
 const { width } = Dimensions.get("window")
 
@@ -41,6 +43,19 @@ interface ChartData {
   }>
 }
 
+interface UserProfile {
+  displayName: string
+  birthDate: string
+  birthTime: string
+  birthLocation: {
+    city: string
+    country: string
+    latitude: number
+    longitude: number
+  }
+  zodiacSign: string
+}
+
 export default function AstrologyScreen() {
   const { user } = useAuth()
   const [currentStatus, setCurrentStatus] = useState<AstrologicalStatus | null>(null)
@@ -48,21 +63,60 @@ export default function AstrologyScreen() {
   const [birthChart, setBirthChart] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState<"status" | "transits" | "chart">("status")
-
-  // Dados de nascimento simulados (em produção, vir do perfil do usuário)
-  const birthData: BirthData = {
-    datetime: "1990-03-21T10:30:00",
-    coordinates: {
-      latitude: -23.5505,
-      longitude: -46.6333,
-    },
-  }
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    loadAstrologicalData()
-  }, [])
+    if (user) {
+      loadUserProfile()
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (userProfile && userProfile.birthDate && userProfile.birthTime) {
+      loadAstrologicalData()
+    }
+  }, [userProfile])
+
+  const loadUserProfile = async () => {
+    if (!user?.uid) return
+
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid))
+      if (userDoc.exists()) {
+        const profileData = userDoc.data() as UserProfile
+        setUserProfile(profileData)
+      }
+    } catch (error) {
+      console.error("Erro ao carregar perfil do usuário:", error)
+    }
+  }
+
+  const getBirthData = (): BirthData | null => {
+    if (!userProfile || !userProfile.birthDate || !userProfile.birthTime) {
+      return null
+    }
+
+    // Combinar data e hora de nascimento
+    const datetime = `${userProfile.birthDate}T${userProfile.birthTime}:00`
+    
+    return {
+      datetime,
+      coordinates: {
+        latitude: userProfile.birthLocation?.latitude || -23.5505, // São Paulo como fallback
+        longitude: userProfile.birthLocation?.longitude || -46.6333,
+      },
+    }
+  }
 
   const loadAstrologicalData = async () => {
+    const birthData = getBirthData()
+    
+    if (!birthData) {
+      console.log("Dados de nascimento não disponíveis")
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
 
@@ -389,6 +443,20 @@ export default function AstrologyScreen() {
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Calculando dados astrológicos...</Text>
           </View>
+        ) : !userProfile || !userProfile.birthDate || !userProfile.birthTime ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="person-outline" size={64} color="#8E8E93" />
+            <Text style={styles.emptyTitle}>Dados de Nascimento Necessários</Text>
+            <Text style={styles.emptyText}>
+              Para ver seus dados astrológicos, complete seu perfil com:
+            </Text>
+            <Text style={styles.emptyList}>• Data de nascimento</Text>
+            <Text style={styles.emptyList}>• Hora de nascimento</Text>
+            <Text style={styles.emptyList}>• Local de nascimento</Text>
+            <TouchableOpacity style={styles.profileButton}>
+              <Text style={styles.profileButtonText}>Ir para Perfil</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             {selectedTab === "status" && renderStatusTab()}
@@ -449,6 +517,43 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "#FFFFFF",
     fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "#8E8E93",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  emptyList: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  profileButton: {
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  profileButtonText: {
+    color: "#000000",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   statusCard: {
     backgroundColor: "#1C1C1E",
