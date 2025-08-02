@@ -76,20 +76,30 @@ function MainTabs() {
 export default function AppNavigator() {
   const { user, loading, birthDataComplete } = useAuth()
 
+  console.log('🧭 AppNavigator render:', {
+    user: user ? `${user.uid.substring(0, 8)}...` : 'null',
+    loading,
+    birthDataComplete
+  })
+
   if (loading) {
+    console.log('⏳ Showing loading state')
     return null // ou um componente de loading
   }
 
   // Se não estiver logado, mostra AuthStack
   if (!user) {
+    console.log('🔒 Showing AuthStack (no user)')
     return <NavigationContainer><AuthStack /></NavigationContainer>
   }
 
   // Se estiver logado mas dados de nascimento incompletos, mostra Onboarding
   if (user && !birthDataComplete) {
+    console.log('📝 Showing OnboardingStack (incomplete data)')
     return <NavigationContainer><OnboardingStack /></NavigationContainer>
   }
 
   // Se estiver logado e dados completos, mostra app principal
+  console.log('🏠 Showing MainTabs (complete data)')
   return <NavigationContainer><MainTabs /></NavigationContainer>
 }

@@ -31,14 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('🔐 Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
+      
       setUser(user)
       if (user) {
-        const isComplete = await checkBirthDataComplete()
-        setBirthDataComplete(isComplete)
+        // Aguardar um pouco para garantir que o documento existe
+        setTimeout(async () => {
+          const isComplete = await checkBirthDataComplete()
+          setBirthDataComplete(isComplete)
+          setLoading(false)
+        }, 500)
       } else {
         setBirthDataComplete(false)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return unsubscribe
@@ -54,11 +60,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (userDoc.exists()) {
         const userData = userDoc.data()
-        const isComplete = !!(userData.birthDate && userData.birthTime && userData.birthLocation)
+        
+        // Verificar tanto o flag quanto os dados específicos
+        const hasFlag = userData.birthDataComplete === true
+        const hasData = !!(userData.birthDate && userData.birthTime && userData.birthLocation && userData.displayName)
+        const isComplete = hasFlag && hasData
+        
+        console.log('🔍 Verificação dados de nascimento:', {
+          userId: user.uid.substring(0, 8) + '...',
+          hasFlag,
+          hasData,
+          isComplete,
+          birthDate: !!userData.birthDate,
+          birthTime: !!userData.birthTime,
+          birthLocation: !!userData.birthLocation,
+          displayName: !!userData.displayName
+        })
+        
         setBirthDataComplete(isComplete)
-        console.log('Dados de nascimento completos:', isComplete)
         return isComplete
       }
+      
+      console.log('❌ Documento do usuário não existe')
       setBirthDataComplete(false)
       return false
     } catch (error) {
