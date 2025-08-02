@@ -114,12 +114,30 @@ class TransitService {
           coordinates: requestData.coordinates
         })
 
+        // Primeiro, obter token OAuth2
+        const tokenData = new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: credentials.clientId,
+          client_secret: credentials.clientSecret
+        })
+
+        const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          timeout: 10000
+        })
+
+        const accessToken = tokenResponse.data.access_token
+        console.log('🔑 Token OAuth2 obtido com sucesso')
+
+        // Agora fazer a requisição real com o token
         const response = await axios.post(
           `${this.baseUrl}/astrology/planet-position`,
           requestData,
           {
             headers: {
-              'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
@@ -175,12 +193,30 @@ class TransitService {
           clientId: credentials.clientId.substring(0, 8) + '...'
         })
 
+        // Primeiro, obter token OAuth2
+        const tokenData = new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: credentials.clientId,
+          client_secret: credentials.clientSecret
+        })
+
+        const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          timeout: 10000
+        })
+
+        const accessToken = tokenResponse.data.access_token
+        console.log('🔑 Token OAuth2 para horóscopo obtido com sucesso')
+
+        // Agora fazer a requisição real com o token
         const response = await axios.post(
           `${this.baseUrl}/astrology/daily-horoscope`,
           requestData,
           {
             headers: {
-              'Authorization': `Bearer ${credentials.clientId}:${credentials.clientSecret}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
