@@ -45,17 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const checkBirthDataComplete = async (): Promise<boolean> => {
-    if (!user) return false
+    if (!user) {
+      setBirthDataComplete(false)
+      return false
+    }
 
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid))
       if (userDoc.exists()) {
         const userData = userDoc.data()
-        return !!(userData.birthDate && userData.birthTime && userData.birthLocation)
+        const isComplete = !!(userData.birthDate && userData.birthTime && userData.birthLocation)
+        setBirthDataComplete(isComplete)
+        console.log('Dados de nascimento completos:', isComplete)
+        return isComplete
       }
+      setBirthDataComplete(false)
       return false
     } catch (error) {
       console.error('Erro ao verificar dados de nascimento:', error)
+      setBirthDataComplete(false)
       return false
     }
   }

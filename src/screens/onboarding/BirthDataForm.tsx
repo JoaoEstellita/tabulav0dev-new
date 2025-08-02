@@ -102,6 +102,19 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(false)
   }
 
+  // Carregar sugestões iniciais quando o componente monta
+  useEffect(() => {
+    const loadInitialSuggestions = async () => {
+      try {
+        const initialSuggestions = await LocationService.searchLocations('')
+        setLocationSuggestions(initialSuggestions)
+      } catch (error) {
+        console.error('Erro ao carregar sugestões iniciais:', error)
+      }
+    }
+    loadInitialSuggestions()
+  }, [])
+
   // Busca de localização com debounce
   useEffect(() => {
     if (locationQuery.length >= 2) {
@@ -111,6 +124,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           const suggestions = await LocationService.searchLocations(locationQuery)
           setLocationSuggestions(suggestions)
           setShowLocationSuggestions(true)
+          console.log('Sugestões encontradas:', suggestions.length)
         } catch (error) {
           console.error('Erro ao buscar localizações:', error)
         } finally {
@@ -119,6 +133,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       }, 300) // Debounce de 300ms
 
       return () => clearTimeout(timeoutId)
+    } else if (locationQuery.length === 0) {
+      // Se campo vazio, carrega sugestões padrão
+      const loadDefaultSuggestions = async () => {
+        try {
+          const defaultSuggestions = await LocationService.searchLocations('')
+          setLocationSuggestions(defaultSuggestions)
+        } catch (error) {
+          console.error('Erro ao carregar sugestões padrão:', error)
+        }
+      }
+      loadDefaultSuggestions()
     } else {
       setLocationSuggestions([])
       setShowLocationSuggestions(false)
@@ -171,10 +196,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const validateStep3 = () => {
-    if (!formData.city || !formData.country) {
+    // Aceita tanto localização selecionada quanto texto livre
+    if (!selectedLocation && !locationQuery.trim()) {
       Alert.alert('Atenção', 'Por favor, informe sua cidade de nascimento.')
       return false
     }
+
+    // Se tem texto mas não selecionou nenhuma cidade, usa os dados do texto
+    if (!selectedLocation && locationQuery.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        city: locationQuery.trim(),
+        country: 'Brasil', // Padrão para texto livre
+        latitude: -15.7942, // Coordenadas do centro do Brasil
+        longitude: -47.8825,
+      }))
+    }
+
     return true
   }
 
@@ -318,9 +356,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           value={locationQuery}
           onChangeText={handleLocationQueryChange}
           onFocus={() => {
-            if (locationSuggestions.length > 0) {
-              setShowLocationSuggestions(true)
-            }
+            console.log('Campo focado. Sugestões disponíveis:', locationSuggestions.length)
+            setShowLocationSuggestions(true)
+          }}
+          onBlur={() => {
+            // Delay para permitir seleção de sugestão
+            setTimeout(() => {
+              if (!selectedLocation) {
+                setShowLocationSuggestions(false)
+              }
+            }, 200)
           }}
         />
         {searchingLocation && (
@@ -335,21 +380,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       {/* Lista de sugestões */}
       {showLocationSuggestions && locationSuggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
-          <FlatList
-            data={locationSuggestions}
-            keyExtractor={(item, index) => `${item.city}-${index}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={styles.suggestionItem}
-                onPress={() => handleLocationSelect(item)}
-              >
-                <Ionicons name="location" size={16} color="#FFD700" />
-                <Text style={styles.suggestionText}>{item.displayName}</Text>
-              </TouchableOpacity>
-            )}
-            style={styles.suggestionsList}
-            nestedScrollEnabled={true}
-          />
+          {locationSuggestions.slice(0, 5).map((item, index) => (
+            <TouchableOpacity 
+              key={`${item.city}-${index}`}
+              style={styles.suggestionItem}
+              onPress={() => handleLocationSelect(item)}
+            >
+              <Ionicons name="location" size={16} color="#FFD700" />
+              <Text style={styles.suggestionText}>{item.displayName}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 

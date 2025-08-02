@@ -67,6 +67,7 @@ class LocationService {
   async searchLocations(query: string): Promise<LocationSuggestion[]> {
     if (!query || query.length < 2) {
       // Retorna as 10 cidades mais populares se a busca for muito pequena
+      console.log('Retornando cidades padrão:', BRAZILIAN_CITIES.slice(0, 10).length)
       return BRAZILIAN_CITIES.slice(0, 10)
     }
 
