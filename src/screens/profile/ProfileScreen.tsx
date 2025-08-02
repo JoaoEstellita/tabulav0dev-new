@@ -238,19 +238,19 @@ export default function ProfileScreen() {
         {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{profile.stats.groupsJoined}</Text>
+            <Text style={styles.statNumber}>{profile.stats?.groupsJoined || 0}</Text>
             <Text style={styles.statLabel}>Grupos</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{profile.stats.alertsSent}</Text>
+            <Text style={styles.statNumber}>{profile.stats?.alertsSent || 0}</Text>
             <Text style={styles.statLabel}>Alertas Enviados</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{profile.stats.alertsReceived}</Text>
+            <Text style={styles.statNumber}>{profile.stats?.alertsReceived || 0}</Text>
             <Text style={styles.statLabel}>Alertas Recebidos</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{profile.stats.daysActive}</Text>
+            <Text style={styles.statNumber}>{profile.stats?.daysActive || 1}</Text>
             <Text style={styles.statLabel}>Dias Ativo</Text>
           </View>
         </View>
