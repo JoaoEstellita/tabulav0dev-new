@@ -384,10 +384,10 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Switch
-              value={profile.preferences.privacy.showStatusToGroups}
+              value={profile.preferences?.privacy?.showStatusToGroups || false}
               onValueChange={(value) => updatePrivacyPreference("showStatusToGroups", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences.privacy.showStatusToGroups ? "#000" : "#888"}
+              thumbColor={profile.preferences?.privacy?.showStatusToGroups ? "#000" : "#888"}
             />
           </View>
 
@@ -397,10 +397,10 @@ export default function ProfileScreen() {
               <Text style={styles.preferenceDescription}>Receber convites para novos grupos</Text>
             </View>
             <Switch
-              value={profile.preferences.privacy.allowGroupInvites}
+              value={profile.preferences?.privacy?.allowGroupInvites || false}
               onValueChange={(value) => updatePrivacyPreference("allowGroupInvites", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences.privacy.allowGroupInvites ? "#000" : "#888"}
+              thumbColor={profile.preferences?.privacy?.allowGroupInvites ? "#000" : "#888"}
             />
           </View>
         </View>
