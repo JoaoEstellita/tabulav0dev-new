@@ -40,13 +40,13 @@ function MainTabs() {
           let iconName: keyof typeof Ionicons.glyphMap
 
           if (route.name === "Home") {
-            iconName = focused ? "home" : "home-outline"
+            iconName = focused ? "person" : "person-outline"
           } else if (route.name === "Groups") {
             iconName = focused ? "people" : "people-outline"
           } else if (route.name === "Astrology") {
             iconName = focused ? "star" : "star-outline"
           } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline"
+            iconName = focused ? "settings" : "settings-outline"
           } else {
             iconName = "help-outline"
           }
@@ -65,10 +65,10 @@ function MainTabs() {
         headerTintColor: "#FFFFFF",
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Início" }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Perfil" }} />
       <Tab.Screen name="Groups" component={GroupsScreen} options={{ title: "Grupos" }} />
       <Tab.Screen name="Astrology" component={AstrologyScreen} options={{ title: "Astrologia" }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Perfil" }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Configurações" }} />
     </Tab.Navigator>
   )
 }

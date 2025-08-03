@@ -8,6 +8,7 @@ import { useAuth } from "../../hooks/useAuth"
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
+import FAQ from "../../components/FAQ"
 
 interface UserProfile {
   displayName: string
@@ -48,6 +49,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
+  const [showFAQ, setShowFAQ] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -255,6 +257,19 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* FAQ Button */}
+        <TouchableOpacity 
+          style={styles.faqButton} 
+          onPress={() => setShowFAQ(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.faqButtonContent}>
+            <Ionicons name="help-circle-outline" size={24} color="#8B5FBF" />
+            <Text style={styles.faqButtonText}>Como este aplicativo funciona?</Text>
+            <Ionicons name="chevron-forward" size={20} color="#8B5FBF" />
+          </View>
+        </TouchableOpacity>
+
         {/* Informações Pessoais */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -413,6 +428,9 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* FAQ Modal */}
+      <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
     </LinearGradient>
   )
 }
@@ -609,5 +627,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 8,
+  },
+  faqButton: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  faqButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+  },
+  faqButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2D1B69",
+    marginLeft: 12,
   },
 })

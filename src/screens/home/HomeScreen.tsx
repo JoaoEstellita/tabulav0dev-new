@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   RefreshControl,
   Alert,
-  ActivityIndicator 
+  ActivityIndicator,
+  Image 
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -15,11 +16,40 @@ import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import TransitCard from '../../components/TransitCard'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 
 export default function HomeScreen() {
   const { user } = useAuth()
   const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
   const [refreshing, setRefreshing] = useState(false)
+  const [userProfile, setUserProfile] = useState<{
+    displayName: string
+    profilePhoto?: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      loadUserProfile()
+    }
+  }, [user])
+
+  const loadUserProfile = async () => {
+    if (!user) return
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        setUserProfile({
+          displayName: userData.displayName || userData.fullName || 'Usuário',
+          profilePhoto: userData.profilePhoto
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil do usuário:', error)
+    }
+  }
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -45,6 +75,7 @@ export default function HomeScreen() {
   }
 
   const getUserDisplayName = () => {
+    if (userProfile?.displayName) return userProfile.displayName
     if (user?.displayName) return user.displayName
     if (user?.email) return user.email.split('@')[0]
     return 'Usuário'
@@ -102,9 +133,23 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
-            <Text style={styles.date}>{formatDate()}</Text>
+          <View style={styles.userSection}>
+            <View style={styles.avatarContainer}>
+              {userProfile?.profilePhoto ? (
+                <Image 
+                  source={{ uri: userProfile.profilePhoto }} 
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={24} color="#FFD700" />
+                </View>
+              )}
+            </View>
+            <View style={styles.headerContent}>
+              <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
+              <Text style={styles.date}>{formatDate()}</Text>
+            </View>
           </View>
           
           <TouchableOpacity style={styles.notificationButton}>
@@ -302,6 +347,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    marginRight: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2A2A3E',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerContent: {
     flex: 1,
