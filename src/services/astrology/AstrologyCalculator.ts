@@ -564,4 +564,4 @@ export class AstrologyCalculator {
   }
 }
 
-export default new AstrologyCalculator()
+export default AstrologyCalculator
