@@ -96,14 +96,13 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
+    // ✅ Parâmetros corretos conforme API Prokerala
     const requestData = {
-      datetime,
-      coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1, // Lahiri (1)
-      birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-      birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      transit_datetime: datetime,
-      transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
+      'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
+      'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: '1', // Lahiri (1) - string conforme API
+      transit_datetime: `${datetime}+00:00`,
+      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
     try {
@@ -150,14 +149,13 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
+    // ✅ Parâmetros corretos conforme API Prokerala
     const requestData = {
-      datetime,
-      coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1, // Lahiri (1)
-      birth_datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-      birth_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      transit_datetime: datetime,
-      transit_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
+      'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
+      'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: '1', // Lahiri (1) - string conforme API
+      transit_datetime: `${datetime}+00:00`,
+      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
     }
 
     try {
