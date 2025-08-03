@@ -10,6 +10,27 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
+// Componente para renderizar texto com formatação
+function FormattedText({ children }: { children: string }) {
+  const parts = children.split(/(\*\*[^*]+\*\*)/g)
+  
+  return (
+    <Text style={styles.answer}>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          const boldText = part.slice(2, -2)
+          return (
+            <Text key={index} style={styles.boldText}>
+              {boldText}
+            </Text>
+          )
+        }
+        return part
+      })}
+    </Text>
+  )
+}
+
 interface FAQItem {
   question: string
   answer: string
@@ -194,7 +215,7 @@ export default function FAQ({ visible, onClose }: FAQProps) {
 
               {expandedItems.has(index) && (
                 <View style={styles.answerContainer}>
-                  <Text style={styles.answer}>{item.answer}</Text>
+                  <FormattedText>{item.answer}</FormattedText>
                 </View>
               )}
             </View>
@@ -285,6 +306,10 @@ const styles = StyleSheet.create({
     color: '#444',
     lineHeight: 22,
     textAlign: 'left',
+  },
+  boldText: {
+    fontWeight: 'bold',
+    color: '#2D1B69',
   },
   footer: {
     marginTop: 20,

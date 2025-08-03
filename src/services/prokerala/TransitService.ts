@@ -56,6 +56,26 @@ class TransitService {
   // Usando backend seguro conforme diretriz de segurança da Prokerala
   private readonly backendUrl = BACKEND_URL
 
+  // Log de status das credenciais
+  private logCredentialStatus(systemStatus: any) {
+    console.log('🔍 Status das Credenciais Prokerala:')
+    console.log(`📊 Disponíveis: ${systemStatus.availableCredentials}/${systemStatus.totalCredentials}`)
+    console.log(`🚫 Com limite esgotado: ${systemStatus.credentialsWithLimits}`)
+    console.log(`❌ Com erros: ${systemStatus.credentialsWithErrors}`)
+    
+    if (systemStatus.credentials) {
+      systemStatus.credentials.forEach((cred: any) => {
+        const status = cred.hasCredits ? '✅' : '🚫'
+        const error = cred.lastError ? ` (${cred.lastError})` : ''
+        console.log(`${status} Credencial ${cred.id}: ${cred.clientId}${error}`)
+      })
+    }
+    
+    if (systemStatus.availableCredentials === 0) {
+      console.warn('⚠️ ATENÇÃO: Todas as credenciais Prokerala estão indisponíveis!')
+    }
+  }
+
   async getCurrentTransits(birthData: BirthData): Promise<TransitData> {
     try {
       console.log('🔮 Iniciando busca de trânsitos na Prokerala...')
@@ -120,9 +140,20 @@ class TransitService {
       })
 
       console.log('✅ Posições planetárias obtidas via backend seguro!')
+      
+      // Log de status se disponível
+      if (response.data.systemStatus) {
+        this.logCredentialStatus(response.data.systemStatus)
+      }
+      
       return response.data.data
     } catch (error: any) {
       console.error('❌ Erro no backend seguro:', error.message)
+      
+      // Capturar informações de status se disponíveis
+      if (error.response?.data?.systemStatus) {
+        this.logCredentialStatus(error.response.data.systemStatus)
+      }
       
       // Tentar endpoint alternativo se o primeiro falhar
       try {
@@ -173,9 +204,21 @@ class TransitService {
       })
 
       console.log('✅ Aspectos de trânsito obtidos via backend seguro!')
+      
+      // Log de status se disponível
+      if (response.data.systemStatus) {
+        this.logCredentialStatus(response.data.systemStatus)
+      }
+      
       return response.data.data
     } catch (error: any) {
       console.error('❌ Erro ao buscar aspectos:', error.message)
+      
+      // Capturar informações de status se disponíveis
+      if (error.response?.data?.systemStatus) {
+        this.logCredentialStatus(error.response.data.systemStatus)
+      }
+      
       throw error
     }
   }
