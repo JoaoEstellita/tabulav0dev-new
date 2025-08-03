@@ -110,7 +110,7 @@ class TransitService {
       console.log('🌍 Chamando backend seguro para posições planetárias...')
       
       const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
-        endpoint: '/astrology/transit-planet-position',
+        endpoint: '/v2/astrology/transit-planet-position',
         params: requestData
       }, {
         headers: {
@@ -164,7 +164,7 @@ class TransitService {
       console.log('🔗 Chamando backend seguro para aspectos de trânsito...')
       
       const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
-        endpoint: '/astrology/transit-aspect-chart',
+        endpoint: '/v2/astrology/transit-aspect-chart',
         params: requestData
       }, {
         headers: {
