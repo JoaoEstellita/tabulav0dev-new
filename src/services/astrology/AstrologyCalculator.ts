@@ -199,7 +199,7 @@ export class AstrologyCalculator {
   /**
    * Calcula o status de uma área da vida usando dados astrológicos reais
    */
-  calculateLifeAreaStatus(
+  static calculateLifeAreaStatus(
     areaName: keyof typeof LIFE_AREAS_CONFIG,
     astrologyData: AstrologyData
   ): LifeAreaCalculation {
@@ -211,7 +211,7 @@ export class AstrologyCalculator {
     console.log(`🔮 Calculando ${areaName} com precisão astrológica avançada...`)
 
     // 1. PONTUAÇÃO PLANETÁRIA
-    const planetaryScore = this.calculatePlanetaryScore(
+    const planetaryScore = AstrologyCalculator.calculatePlanetaryScore(
       astrologyData.planets,
       config.primaryPlanets,
       config.secondaryPlanets,
@@ -219,27 +219,27 @@ export class AstrologyCalculator {
     )
 
     // 2. PONTUAÇÃO DOS ASPECTOS
-    const aspectScore = this.calculateAspectScore(
+    const aspectScore = AstrologyCalculator.calculateAspectScore(
       astrologyData.aspects,
       config.primaryPlanets,
       config.aspectMultiplier
     )
 
     // 3. PONTUAÇÃO DAS CASAS
-    const houseScore = this.calculateHouseScore(
+    const houseScore = AstrologyCalculator.calculateHouseScore(
       astrologyData.planets,
       config.houses,
       config.primaryPlanets
     )
 
     // 4. PONTUAÇÃO DE DIGNIDADE
-    const dignityScore = this.calculateDignityScore(
+    const dignityScore = AstrologyCalculator.calculateDignityScore(
       astrologyData.planets,
       config.primaryPlanets
     )
 
     // 5. PONTUAÇÃO DE TRÂNSITOS (placeholder para dados reais)
-    const transitScore = this.calculateTransitScore(astrologyData.planets)
+    const transitScore = AstrologyCalculator.calculateTransitScore(astrologyData.planets)
 
     // SCORE FINAL COM SISTEMA DE PESOS
     const rawScore = config.baseScore + 
@@ -252,10 +252,10 @@ export class AstrologyCalculator {
     const adjustedScore = Math.max(20, Math.min(95, Math.round(rawScore)))
 
     // CONFIANÇA BASEADA NA QUANTIDADE DE DADOS
-    const confidence = this.calculateConfidence(astrologyData, config)
+    const confidence = AstrologyCalculator.calculateConfidence(astrologyData, config)
 
     // BREAKDOWN DETALHADO
-    const detailedBreakdown = this.generateDetailedBreakdown({
+    const detailedBreakdown = AstrologyCalculator.generateDetailedBreakdown({
       planetaryScore,
       aspectScore,
       houseScore,
@@ -284,7 +284,7 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação planetária baseada em posições e dignidades
    */
-  private calculatePlanetaryScore(
+  private static calculatePlanetaryScore(
     planets: PlanetPosition[],
     primaryPlanets: string[],
     secondaryPlanets: string[],
@@ -306,7 +306,7 @@ export class AstrologyCalculator {
         }
 
         // Velocidade afeta (muito lento = fraco, muito rápido = instável)
-        const speedFactor = this.calculateSpeedFactor(planet)
+        const speedFactor = AstrologyCalculator.calculateSpeedFactor(planet)
         planetScore *= speedFactor
 
         score += planetScore
@@ -329,7 +329,7 @@ export class AstrologyCalculator {
   /**
    * Calcula fator de velocidade planetária
    */
-  private calculateSpeedFactor(planet: PlanetPosition): number {
+  private static calculateSpeedFactor(planet: PlanetPosition): number {
     const speedRanges = {
       sun: { min: 0.95, max: 1.02, optimal: 0.99 },
       moon: { min: 11, max: 15, optimal: 13 },
@@ -363,7 +363,7 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação dos aspectos com orbes precisos
    */
-  private calculateAspectScore(
+  private static calculateAspectScore(
     aspects: Aspect[],
     relevantPlanets: string[],
     multipliers: Record<string, number>
@@ -416,7 +416,7 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação das casas astrológicas
    */
-  private calculateHouseScore(
+  private static calculateHouseScore(
     planets: PlanetPosition[],
     relevantHouses: number[],
     relevantPlanets: string[]
@@ -438,7 +438,7 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação de dignidade planetária
    */
-  private calculateDignityScore(
+  private static calculateDignityScore(
     planets: PlanetPosition[],
     relevantPlanets: string[]
   ): number {
@@ -463,7 +463,7 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação de trânsitos (placeholder para dados reais)
    */
-  private calculateTransitScore(planets: PlanetPosition[]): number {
+  private static calculateTransitScore(planets: PlanetPosition[]): number {
     // Por enquanto, usa dados simulados baseados nas posições atuais
     // No futuro, isso será calculado com trânsitos reais
     return Math.floor(Math.random() * 10) - 5
@@ -472,7 +472,7 @@ export class AstrologyCalculator {
   /**
    * Calcula confiança baseada na quantidade de dados disponíveis
    */
-  private calculateConfidence(
+  private static calculateConfidence(
     astrologyData: AstrologyData,
     config: any
   ): number {
@@ -505,7 +505,7 @@ export class AstrologyCalculator {
   /**
    * Gera breakdown detalhado dos cálculos
    */
-  private generateDetailedBreakdown(
+  private static generateDetailedBreakdown(
     factors: any,
     areaName: string
   ): string[] {
@@ -530,18 +530,36 @@ export class AstrologyCalculator {
     const aspects: Aspect[] = []
     const houses = []
 
-    // Extrai posições planetárias
-    if (prokeralaData.transit_details?.planets) {
-      prokeralaData.transit_details.planets.forEach((planet: any) => {
+    console.log('🔍 Convertendo dados da Prokerala:', {
+      hasTransitDetails: !!(prokeralaData.transit_details),
+      hasPlanetPosition: !!(prokeralaData.planet_position),
+      hasTransitAspect: !!(prokeralaData.transit_aspect),
+      keys: Object.keys(prokeralaData || {})
+    })
+
+    // Extrai posições planetárias - diferentes estruturas possíveis
+    let planetData = []
+    if (prokeralaData.planet_position) {
+      planetData = prokeralaData.planet_position
+    } else if (prokeralaData.transit_details?.planets) {
+      planetData = prokeralaData.transit_details.planets
+    } else if (prokeralaData.planets) {
+      planetData = prokeralaData.planets
+    }
+
+    console.log('📊 Dados planetários encontrados:', planetData?.length || 0)
+
+    if (planetData && Array.isArray(planetData)) {
+      planetData.forEach((planet: any) => {
         planets.push({
-          name: planet.name,
-          longitude: planet.longitude,
+          name: planet.name || 'Unknown',
+          longitude: planet.longitude || 0,
           latitude: planet.latitude || 0,
           speed: planet.speed || 0,
-          sign: planet.sign?.name || '',
-          house: planet.house || 1,
+          sign: planet.sign?.name || planet.sign || 'Unknown',
+          house: planet.house?.number || planet.house || 1,
           dignity: 0, // Será calculado baseado no signo
-          retrograde: planet.speed < 0
+          retrograde: (planet.speed || 0) < 0
         })
       })
     }
@@ -557,8 +575,31 @@ export class AstrologyCalculator {
       }
     })
 
-    // TODO: Extrair aspectos dos dados da Prokerala
-    // TODO: Extrair casas dos dados da Prokerala
+    // Extrai aspectos de trânsito
+    let aspectData = []
+    if (prokeralaData.transit_aspect) {
+      aspectData = prokeralaData.transit_aspect
+    } else if (prokeralaData.aspects) {
+      aspectData = prokeralaData.aspects
+    }
+
+    console.log('🔗 Aspectos encontrados:', aspectData?.length || 0)
+
+    if (aspectData && Array.isArray(aspectData)) {
+      aspectData.forEach((aspect: any) => {
+        aspects.push({
+          planet1: aspect.planet1?.name || aspect.planet1 || 'Unknown',
+          planet2: aspect.planet2?.name || aspect.planet2 || 'Unknown',
+          aspect: aspect.aspect?.name || aspect.aspect || 'unknown',
+          orb: aspect.orb || 0,
+          exact: aspect.exact || 0,
+          applying: aspect.is_applying || false,
+          strength: Math.max(0, 10 - (aspect.orb || 0)) // Força baseada no orb
+        })
+      })
+    }
+
+    console.log(`✅ Conversão concluída: ${planets.length} planetas, ${aspects.length} aspectos`)
 
     return { planets, aspects, houses }
   }

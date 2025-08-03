@@ -337,35 +337,16 @@ class TransitService {
       })
 
       // 1. Converter dados da Prokerala para formato padronizado
-      let astrologyData: AstrologyData
-      
-      // Implementação temporária robusta enquanto investigamos o erro
-      if (AstrologyCalculator && typeof AstrologyCalculator.convertProkeralaData === 'function') {
-        astrologyData = AstrologyCalculator.convertProkeralaData(apiData)
-      } else {
-        console.warn('⚠️ AstrologyCalculator.convertProkeralaData não disponível, usando implementação básica')
-        astrologyData = this.basicDataConversion(apiData)
-      }
+      const astrologyData: AstrologyData = AstrologyCalculator.convertProkeralaData(apiData)
       
       console.log(`📊 Dados convertidos: ${astrologyData.planets.length} planetas, ${astrologyData.aspects.length} aspectos`)
 
       // 2. Calcular cada área da vida com PRECISÃO ASTROLÓGICA
-      let loveCalculation, careerCalculation, healthCalculation, familyCalculation, spiritualityCalculation
-      
-      if (AstrologyCalculator && typeof AstrologyCalculator.calculateLifeAreaStatus === 'function') {
-        loveCalculation = AstrologyCalculator.calculateLifeAreaStatus('love', astrologyData)
-        careerCalculation = AstrologyCalculator.calculateLifeAreaStatus('career', astrologyData)
-        healthCalculation = AstrologyCalculator.calculateLifeAreaStatus('health', astrologyData)
-        familyCalculation = AstrologyCalculator.calculateLifeAreaStatus('family', astrologyData)
-        spiritualityCalculation = AstrologyCalculator.calculateLifeAreaStatus('spirituality', astrologyData)
-      } else {
-        console.warn('⚠️ AstrologyCalculator.calculateLifeAreaStatus não disponível, usando cálculo básico')
-        loveCalculation = this.basicLifeAreaCalculation('love', astrologyData)
-        careerCalculation = this.basicLifeAreaCalculation('career', astrologyData)
-        healthCalculation = this.basicLifeAreaCalculation('health', astrologyData)
-        familyCalculation = this.basicLifeAreaCalculation('family', astrologyData)
-        spiritualityCalculation = this.basicLifeAreaCalculation('spirituality', astrologyData)
-      }
+      const loveCalculation = AstrologyCalculator.calculateLifeAreaStatus('love', astrologyData)
+      const careerCalculation = AstrologyCalculator.calculateLifeAreaStatus('career', astrologyData)
+      const healthCalculation = AstrologyCalculator.calculateLifeAreaStatus('health', astrologyData)
+      const familyCalculation = AstrologyCalculator.calculateLifeAreaStatus('family', astrologyData)
+      const spiritualityCalculation = AstrologyCalculator.calculateLifeAreaStatus('spirituality', astrologyData)
 
       // 3. Converter para formato de saída
       const lifeAreas: LifeArea[] = [
