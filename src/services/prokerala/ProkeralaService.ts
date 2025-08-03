@@ -1,17 +1,6 @@
 import axios from "axios"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { PROKERALA_CREDENTIALS, FALLBACK_APIS, type ProkeralaCredentials } from "../../config/prokerala"
-
-const BASE_URL = "https://api.prokerala.com/v2"
-const STORAGE_KEY = "prokerala_credentials"
-
-export interface BirthData {
-  datetime: string
-  coordinates: {
-    latitude: number
-    longitude: number
-  }
-}
+import { PROKERALA_CONFIG, FALLBACK_APIS } from "../../config/prokerala"
+import type { BirthData } from "../../screens/onboarding/BirthDataForm"
 
 export interface AstrologicalStatus {
   overall: "critical" | "challenging" | "neutral" | "positive" | "excellent"
@@ -28,109 +17,32 @@ export interface AstrologicalStatus {
 }
 
 class ProkeralaService {
-  private credentials: ProkeralaCredentials[] = []
-  private currentCredentialIndex = 0
+  private readonly backendUrl = PROKERALA_CONFIG.backendUrl
 
   constructor() {
-    this.loadCredentials()
+    // ✅ Não precisa mais carregar credenciais - usa backend seguro
   }
 
-  private async loadCredentials() {
+  // ✅ Métodos removidos - não precisamos mais gerenciar credenciais localmente
+
+  private async makeProkeralaRequest(endpoint: string, params: any): Promise<any> {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        this.credentials = JSON.parse(stored)
-      } else {
-        this.credentials = [...PROKERALA_CREDENTIALS]
-        await this.saveCredentials()
-      }
-    } catch (error) {
-      console.error("Erro ao carregar credenciais:", error)
-      this.credentials = [...PROKERALA_CREDENTIALS]
-    }
-  }
-
-  private async saveCredentials() {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.credentials))
-    } catch (error) {
-      console.error("Erro ao salvar credenciais:", error)
-    }
-  }
-
-  private getNextCredential(): ProkeralaCredentials | null {
-    // Encontra a próxima credencial ativa
-    for (let i = 0; i < this.credentials.length; i++) {
-      const index = (this.currentCredentialIndex + i) % this.credentials.length
-      const credential = this.credentials[index]
-
-      if (credential.isActive) {
-        this.currentCredentialIndex = index
-        return credential
-      }
-    }
-    return null
-  }
-
-  private async makeProkeralaRequest(endpoint: string, params: any, retryCount = 0): Promise<any> {
-    const credential = this.getNextCredential()
-
-    if (!credential) {
-      throw new Error("Nenhuma credencial Prokerala disponível")
-    }
-
-    try {
-      // Primeiro, obter token OAuth2
-      const tokenData = new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: credential.clientId,
-        client_secret: credential.clientSecret
-      })
-
-      const tokenResponse = await axios.post('https://api.prokerala.com/token', tokenData, {
+      console.log(`🔮 Chamando backend seguro para: ${endpoint}`)
+      
+      const response = await axios.post(`${this.backendUrl}/api/prokerala-proxy`, {
+        endpoint,
+        params
+      }, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/json'
         },
-        timeout: 10000
+        timeout: 30000
       })
 
-      const accessToken = tokenResponse.data.access_token
-
-      // Agora fazer a requisição real com o token
-      const response = await axios.get(`${BASE_URL}${endpoint}`, {
-        params: {
-          ayanamsa: 1,
-          ...params,
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
-      })
-
-      // Atualiza estatísticas da credencial
-      credential.requestCount++
-      credential.lastUsed = new Date()
-      await this.saveCredentials()
-
-      return response.data
+      console.log(`✅ Dados obtidos via backend seguro: ${endpoint}`)
+      return response.data.data
     } catch (error: any) {
-      console.error(`Erro na API Prokerala (credencial ${this.currentCredentialIndex}):`, error.message)
-
-      // Se erro de limite ou auth, desativa a credencial
-      if (error.response?.status === 429 || error.response?.status === 401) {
-        credential.isActive = false
-        await this.saveCredentials()
-      }
-
-      // Tenta próxima credencial se disponível
-      if (retryCount < this.credentials.length - 1) {
-        this.currentCredentialIndex = (this.currentCredentialIndex + 1) % this.credentials.length
-        return this.makeProkeralaRequest(endpoint, params, retryCount + 1)
-      }
-
-      // Se todas falharam, usa fallback
+      console.error(`❌ Erro no backend seguro (${endpoint}):`, error.message)
       throw error
     }
   }
@@ -161,10 +73,11 @@ class ProkeralaService {
 
   async getAstrologicalStatus(birthData: BirthData): Promise<AstrologicalStatus> {
     try {
-      // Tenta Prokerala primeiro
-      const data = await this.makeProkeralaRequest("/horoscope/daily-prediction", {
-        datetime: birthData.datetime,
-        coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
+      // Tenta Prokerala primeiro - convertendo formato de parâmetros
+      const data = await this.makeProkeralaRequest("/v2/horoscope/daily-prediction", {
+        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
+        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+        ayanamsa: '1'
       })
 
       return this.parseAstrologicalStatus(data)
@@ -217,7 +130,7 @@ class ProkeralaService {
     // Gera status baseado na data atual e dados de nascimento
     const today = new Date()
     const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000)
-    const seed = dayOfYear + birthData.coordinates.latitude + birthData.coordinates.longitude
+    const seed = dayOfYear + birthData.birthLocation.latitude + birthData.birthLocation.longitude
 
     const statuses: AstrologicalStatus["overall"][] = ["neutral", "positive", "challenging", "critical", "excellent"]
     const overall = statuses[Math.floor(seed) % statuses.length]
@@ -263,9 +176,10 @@ class ProkeralaService {
 
   async getBirthChart(birthData: BirthData): Promise<any> {
     try {
-      return await this.makeProkeralaRequest("/horoscope/birth-chart", {
-        datetime: birthData.datetime,
-        coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
+      return await this.makeProkeralaRequest("/v2/astrology/kundli", {
+        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
+        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+        ayanamsa: '1'
       })
     } catch (error) {
       console.error("Erro ao buscar mapa natal:", error)
@@ -275,9 +189,15 @@ class ProkeralaService {
 
   async getTransits(birthData: BirthData): Promise<any> {
     try {
-      return await this.makeProkeralaRequest("/horoscope/transits", {
-        datetime: birthData.datetime,
-        coordinates: `${birthData.coordinates.latitude},${birthData.coordinates.longitude}`,
+      const now = new Date()
+      const datetime = now.toISOString().split('.')[0] // Remove milissegundos
+      
+      return await this.makeProkeralaRequest("/v2/astrology/transit-planet-position", {
+        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
+        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+        ayanamsa: '1',
+        transit_datetime: `${datetime}+00:00`,
+        current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
       })
     } catch (error) {
       console.error("Erro ao buscar trânsitos:", error)
@@ -285,27 +205,7 @@ class ProkeralaService {
     }
   }
 
-  // Método para reativar credenciais (para admin)
-  async resetCredentials() {
-    this.credentials = this.credentials.map((cred) => ({
-      ...cred,
-      isActive: true,
-      requestCount: 0,
-      lastUsed: null,
-    }))
-    await this.saveCredentials()
-  }
-
-  // Método para verificar status das credenciais
-  getCredentialsStatus() {
-    return this.credentials.map((cred, index) => ({
-      index,
-      clientId: cred.clientId.substring(0, 8) + "...",
-      isActive: cred.isActive,
-      requestCount: cred.requestCount,
-      lastUsed: cred.lastUsed,
-    }))
-  }
+  // ✅ Métodos de credenciais removidos - agora usa backend seguro
 }
 
 export default new ProkeralaService()
