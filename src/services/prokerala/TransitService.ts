@@ -1,4 +1,5 @@
 import axios from 'axios'
+import AstrologyCalculator, { AstrologyData } from '../astrology/AstrologyCalculator'
 
 // Backend seguro (seguindo diretriz de segurança da Prokerala)
 const BACKEND_URL = 'https://tabulav0dev-backend.vercel.app'
@@ -180,30 +181,82 @@ class TransitService {
   }
 
   private processRealData(apiData: any, birthData: BirthData): TransitData {
-    // Processar dados reais da API Prokerala
-    console.log('🔄 Processando dados reais da Prokerala...')
+    // Processar dados reais da API Prokerala com PRECISÃO ASTROLÓGICA AVANÇADA
+    console.log('🔮 Processando dados reais com sistema astrológico avançado...')
     
     try {
-      const planets = apiData.planets || apiData.transits || []
-      const currentTransits: PlanetPosition[] = planets.map((planet: any) => ({
-        name: planet.name || 'Unknown',
-        longitude: planet.longitude || 0,
-        speed: planet.speed || 0,
-        sign: planet.sign || 'Unknown',
-        house: planet.house || 1
+      // 1. Converter dados da Prokerala para formato padronizado
+      const astrologyData: AstrologyData = AstrologyCalculator.convertProkeralaData(apiData)
+      
+      console.log(`📊 Dados convertidos: ${astrologyData.planets.length} planetas, ${astrologyData.aspects.length} aspectos`)
+
+      // 2. Calcular cada área da vida com PRECISÃO ASTROLÓGICA
+      const loveCalculation = AstrologyCalculator.calculateLifeAreaStatus('love', astrologyData)
+      const careerCalculation = AstrologyCalculator.calculateLifeAreaStatus('career', astrologyData)
+      const healthCalculation = AstrologyCalculator.calculateLifeAreaStatus('health', astrologyData)
+      const familyCalculation = AstrologyCalculator.calculateLifeAreaStatus('family', astrologyData)
+      const spiritualityCalculation = AstrologyCalculator.calculateLifeAreaStatus('spirituality', astrologyData)
+
+      // 3. Converter para formato de saída
+      const lifeAreas: LifeArea[] = [
+        {
+          name: 'love',
+          status: loveCalculation.adjustedScore,
+          trend: this.calculateTrendFromFactors(loveCalculation.factors),
+          description: this.generateAdvancedDescription(loveCalculation),
+          criticalLevel: loveCalculation.adjustedScore < 30
+        },
+        {
+          name: 'career',
+          status: careerCalculation.adjustedScore,
+          trend: this.calculateTrendFromFactors(careerCalculation.factors),
+          description: this.generateAdvancedDescription(careerCalculation),
+          criticalLevel: careerCalculation.adjustedScore < 30
+        },
+        {
+          name: 'health',
+          status: healthCalculation.adjustedScore,
+          trend: this.calculateTrendFromFactors(healthCalculation.factors),
+          description: this.generateAdvancedDescription(healthCalculation),
+          criticalLevel: healthCalculation.adjustedScore < 35
+        },
+        {
+          name: 'family',
+          status: familyCalculation.adjustedScore,
+          trend: this.calculateTrendFromFactors(familyCalculation.factors),
+          description: this.generateAdvancedDescription(familyCalculation),
+          criticalLevel: familyCalculation.adjustedScore < 25
+        },
+        {
+          name: 'spirituality',
+          status: spiritualityCalculation.adjustedScore,
+          trend: this.calculateTrendFromFactors(spiritualityCalculation.factors),
+          description: this.generateAdvancedDescription(spiritualityCalculation),
+          criticalLevel: spiritualityCalculation.adjustedScore < 30
+        }
+      ]
+
+      // 4. Extrair trânsitos para exibição
+      const currentTransits: PlanetPosition[] = astrologyData.planets.map(planet => ({
+        name: planet.name,
+        longitude: planet.longitude,
+        speed: planet.speed,
+        sign: planet.sign,
+        house: planet.house
       }))
 
-      // Calcular áreas da vida baseado nos trânsitos reais
-      const lifeAreas = this.calculateLifeAreasFromTransits(currentTransits)
+      console.log('✨ Cálculos astrológicos avançados concluídos!')
+      console.log(`📈 Confiança média: ${Math.round([loveCalculation, careerCalculation, healthCalculation, familyCalculation, spiritualityCalculation].reduce((sum, calc) => sum + calc.confidence, 0) / 5)}%`)
       
       return {
         currentTransits,
         lifeAreas,
         dailyOverview: this.calculateDailyOverview(lifeAreas),
-        warnings: this.generateWarnings(lifeAreas)
+        warnings: this.generateAdvancedWarnings(lifeAreas, [loveCalculation, careerCalculation, healthCalculation, familyCalculation, spiritualityCalculation])
       }
     } catch (error) {
       console.error('❌ Erro ao processar dados reais:', error)
+      console.log('🔄 Retornando para dados simulados...')
       return this.getMockTransitData()
     }
   }
@@ -360,6 +413,94 @@ class TransitService {
       if (area.status < 30) {
         area.criticalLevel = true
         warnings.push(`Atenção especial necessária em ${area.name}`)
+      }
+    })
+    
+    return warnings
+  }
+
+  /**
+   * Calcula tendência baseada nos fatores astrológicos
+   */
+  private calculateTrendFromFactors(factors: any): 'positive' | 'negative' | 'stable' {
+    const positiveFactors = factors.planetaryScore + factors.aspectScore + 
+                           factors.dignityScore + factors.houseScore
+    const negativeFactors = factors.transitScore < 0 ? Math.abs(factors.transitScore) : 0
+    
+    const netFactor = positiveFactors - negativeFactors
+    
+    if (netFactor > 8) return 'positive'
+    if (netFactor < -5) return 'negative'
+    return 'stable'
+  }
+
+  /**
+   * Gera descrição avançada baseada nos cálculos astrológicos
+   */
+  private generateAdvancedDescription(calculation: any): string {
+    const { name, adjustedScore, factors, confidence } = calculation
+    
+    const descriptions = {
+      love: {
+        high: 'Período excelente para relacionamentos e conexões profundas',
+        medium: 'Equilíbrio emocional com potencial para crescimento amoroso',
+        low: 'Desafios emocionais requerem paciência e autocompreensão'
+      },
+      career: {
+        high: 'Momento favorável para avanços profissionais e novos projetos',
+        medium: 'Progresso constante com oportunidades moderadas',
+        low: 'Período de consolidação e planejamento estratégico'
+      },
+      health: {
+        high: 'Vitalidade em alta com energia para atividades físicas',
+        medium: 'Bem-estar estável com foco na manutenção da saúde',
+        low: 'Atenção especial ao corpo e práticas de autocuidado'
+      },
+      family: {
+        high: 'Harmonia familiar fortalecida com laços mais próximos',
+        medium: 'Relacionamentos familiares equilibrados e estáveis',
+        low: 'Necessidade de diálogo e compreensão nas relações familiares'
+      },
+      spirituality: {
+        high: 'Crescimento espiritual acelerado com insights profundos',
+        medium: 'Desenvolvimento espiritual constante e reflexivo',
+        low: 'Período de questionamento e busca por significado'
+      }
+    }
+
+    const level = adjustedScore >= 70 ? 'high' : adjustedScore >= 50 ? 'medium' : 'low'
+    const baseDescription = descriptions[name as keyof typeof descriptions]?.[level] || 'Período de equilíbrio'
+    
+    // Adiciona informação de confiança se for baixa
+    if (confidence < 60) {
+      return `${baseDescription} (precisão moderada devido a dados limitados)`
+    }
+    
+    return baseDescription
+  }
+
+  /**
+   * Gera avisos avançados baseados nos cálculos detalhados
+   */
+  private generateAdvancedWarnings(lifeAreas: LifeArea[], calculations: any[]): string[] {
+    const warnings: string[] = []
+    
+    calculations.forEach((calc, index) => {
+      const area = lifeAreas[index]
+      
+      // Avisos críticos
+      if (area.criticalLevel) {
+        warnings.push(`⚠️ ${area.name}: Status crítico detectado (${area.status}%)`)
+      }
+      
+      // Avisos de baixa confiança
+      if (calc.confidence < 50) {
+        warnings.push(`📊 ${area.name}: Precisão limitada - dados astrológicos incompletos`)
+      }
+      
+      // Avisos de tendência negativa
+      if (area.trend === 'negative') {
+        warnings.push(`📉 ${area.name}: Tendência declinante - atenção recomendada`)
       }
     })
     
