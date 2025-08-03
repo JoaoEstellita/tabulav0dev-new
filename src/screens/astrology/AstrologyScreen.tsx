@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, RefreshControl, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { LineChart, PieChart } from "react-native-chart-kit"
 import { useAuth } from "../../hooks/useAuth"
-import ProkeralaService, { type AstrologicalStatus, type BirthData } from "../../services/prokerala/ProkeralaService"
+import { useLifeAreas } from "../../hooks/useLifeAreas"
+import ProkeralaService, { type AstrologicalStatus } from "../../services/prokerala/ProkeralaService"
+import type { BirthData } from "../../screens/onboarding/BirthDataForm"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "../../config/firebase"
 
@@ -58,12 +60,12 @@ interface UserProfile {
 
 export default function AstrologyScreen() {
   const { user } = useAuth()
+  const { transitData, cacheStatus, loading, error, refreshData } = useLifeAreas()
   const [currentStatus, setCurrentStatus] = useState<AstrologicalStatus | null>(null)
-  const [transits, setTransits] = useState<TransitData[]>([])
   const [birthChart, setBirthChart] = useState<ChartData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState<"status" | "transits" | "chart">("status")
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -73,7 +75,7 @@ export default function AstrologyScreen() {
 
   useEffect(() => {
     if (userProfile && userProfile.birthDate && userProfile.birthTime) {
-      loadAstrologicalData()
+      loadAdditionalData()
     }
   }, [userProfile])
 
@@ -91,48 +93,75 @@ export default function AstrologyScreen() {
     }
   }
 
-  const getBirthData = (): BirthData | null => {
-    if (!userProfile || !userProfile.birthDate || !userProfile.birthTime) {
-      return null
-    }
+  // Pull-to-refresh inteligente
+  const handleRefresh = async () => {
+    if (!cacheStatus) return
 
-    // Combinar data e hora de nascimento
-    const datetime = `${userProfile.birthDate}T${userProfile.birthTime}:00`
-    
-    return {
-      datetime,
-      coordinates: {
-        latitude: userProfile.birthLocation?.latitude || -23.5505, // São Paulo como fallback
-        longitude: userProfile.birthLocation?.longitude || -46.6333,
-      },
-    }
-  }
-
-  const loadAstrologicalData = async () => {
-    const birthData = getBirthData()
-    
-    if (!birthData) {
-      console.log("Dados de nascimento não disponíveis")
-      setLoading(false)
+    // Verificar se pode fazer refresh
+    if (!cacheStatus.canRefresh) {
+      const message = cacheStatus.nextRefreshAvailable 
+        ? `Próximo refresh disponível: ${cacheStatus.nextRefreshAvailable.toLocaleTimeString()}`
+        : `Limite diário atingido (${cacheStatus.requestsToday}/${cacheStatus.maxRequests})`
+      
+      Alert.alert(
+        "🕒 Aguarde um pouco",
+        message,
+        [{ text: "OK" }]
+      )
       return
     }
 
     try {
-      setLoading(true)
+      setRefreshing(true)
+      console.log('🔄 Iniciando refresh manual...')
+      
+      await refreshData(false) // Não forçar, respeitar limites
+      
+      console.log('✅ Refresh concluído!')
+    } catch (error) {
+      console.error('❌ Erro no refresh:', error)
+      Alert.alert("Erro", "Não foi possível atualizar os dados")
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
-      const [status, transitsData, chartData] = await Promise.all([
+  const getBirthData = (): BirthData | null => {
+    if (!userProfile || !userProfile.birthDate || !userProfile.birthTime) {
+      return null
+    }
+    
+    return {
+      fullName: userProfile.displayName || "Usuário",
+      birthDate: userProfile.birthDate,
+      birthTime: userProfile.birthTime,
+      birthLocation: {
+        latitude: userProfile.birthLocation?.latitude || -23.5505, // São Paulo como fallback
+        longitude: userProfile.birthLocation?.longitude || -46.6333,
+        city: userProfile.birthLocation?.city || "São Paulo",
+        country: userProfile.birthLocation?.country || "Brasil"
+      },
+    }
+  }
+
+  const loadAdditionalData = async () => {
+    const birthData = getBirthData()
+    
+    if (!birthData) {
+      console.log("Dados de nascimento não disponíveis")
+      return
+    }
+
+    try {
+      const [status, chartData] = await Promise.all([
         ProkeralaService.getAstrologicalStatus(birthData),
-        ProkeralaService.getTransits(birthData),
         ProkeralaService.getBirthChart(birthData),
       ])
 
       setCurrentStatus(status)
-      setTransits(generateTransitData(transitsData))
       setBirthChart(chartData)
     } catch (error) {
       console.error("Erro ao carregar dados astrológicos:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -196,6 +225,28 @@ export default function AstrologyScreen() {
     return "#44AA44"
   }
 
+  const getLifeAreaIcon = (areaName: string): string => {
+    const icons: Record<string, string> = {
+      love: "❤️",
+      career: "💼", 
+      health: "🏥",
+      family: "👨‍👩‍👧‍👦",
+      spirituality: "🙏"
+    }
+    return icons[areaName] || "🌟"
+  }
+
+  const getLifeAreaDisplayName = (areaName: string): string => {
+    const names: Record<string, string> = {
+      love: "Amor & Relacionamentos",
+      career: "Carreira & Trabalho",
+      health: "Saúde & Bem-estar", 
+      family: "Família & Lar",
+      spirituality: "Espiritualidade"
+    }
+    return names[areaName] || areaName
+  }
+
   const energyChartData = {
     labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
     datasets: [
@@ -215,22 +266,32 @@ export default function AstrologyScreen() {
   ]
 
   const renderStatusTab = () => (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      {currentStatus && (
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#FFD700"
+          title={cacheStatus?.canRefresh ? "Puxe para atualizar" : "Aguarde para atualizar"}
+        />
+      }
+    >
+      {transitData && (
         <>
-          {/* Status Atual */}
+          {/* Visão Geral Diária */}
           <View style={styles.statusCard}>
             <View style={styles.statusHeader}>
-              <Ionicons name="pulse" size={32} color={getStatusColor(currentStatus.overall)} />
+              <Ionicons name="pulse" size={32} color={getStatusColor(transitData.dailyOverview.overall)} />
               <View style={styles.statusInfo}>
-                <Text style={[styles.statusTitle, { color: getStatusColor(currentStatus.overall) }]}>
-                  {currentStatus.overall.toUpperCase()}
+                <Text style={[styles.statusTitle, { color: getStatusColor(transitData.dailyOverview.overall) }]}>
+                  ENERGIA: {transitData.dailyOverview.overall}%
                 </Text>
-                <Text style={styles.statusMood}>{currentStatus.mood}</Text>
+                <Text style={styles.statusMood}>{transitData.dailyOverview.message}</Text>
               </View>
               <View style={styles.energyMeter}>
-                <Text style={styles.energyLabel}>Energia</Text>
-                <Text style={styles.energyValue}>{currentStatus.energy}%</Text>
+                <Text style={styles.energyLabel}>Geral</Text>
+                <Text style={styles.energyValue}>{transitData.dailyOverview.overall}%</Text>
               </View>
             </View>
 
@@ -239,61 +300,62 @@ export default function AstrologyScreen() {
                 style={[
                   styles.energyFill,
                   {
-                    width: `${currentStatus.energy}%`,
-                    backgroundColor: getStatusColor(currentStatus.overall),
+                    width: `${transitData.dailyOverview.overall}%`,
+                    backgroundColor: getStatusColor(transitData.dailyOverview.overall),
                   },
                 ]}
               />
             </View>
           </View>
 
-          {/* Trânsitos Críticos */}
-          {currentStatus.criticalTransits.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🚨 Trânsitos Críticos</Text>
-              {currentStatus.criticalTransits.map((transit, index) => (
-                <View key={index} style={styles.transitCard}>
-                  <View style={styles.transitHeader}>
-                    <Text style={styles.transitPlanet}>{transit.planet}</Text>
-                    <Text style={styles.transitAspect}>{transit.aspect}</Text>
-                    <View style={[styles.intensityBadge, { backgroundColor: getIntensityColor(transit.intensity) }]}>
-                      <Text style={styles.intensityText}>{transit.intensity}</Text>
-                    </View>
+          {/* Áreas da Vida */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🌟 Áreas da Vida</Text>
+            <View style={styles.bestWorstAreas}>
+              <Text style={styles.bestAreaText}>
+                ✨ Melhor: {transitData.dailyOverview.bestArea}
+              </Text>
+              <Text style={styles.worstAreaText}>
+                ⚠️ Atenção: {transitData.dailyOverview.challengingArea}
+              </Text>
+            </View>
+            
+            {transitData.lifeAreas.map((area: any, index: number) => (
+              <View key={index} style={styles.lifeAreaCard}>
+                <View style={styles.lifeAreaHeader}>
+                  <Text style={styles.lifeAreaName}>
+                    {getLifeAreaIcon(area.name)} {getLifeAreaDisplayName(area.name)}
+                  </Text>
+                  <View style={[
+                    styles.lifeAreaBadge, 
+                    { backgroundColor: area.criticalLevel ? "#FF4444" : getStatusColor(area.status) }
+                  ]}>
+                    <Text style={styles.lifeAreaStatus}>{area.status}%</Text>
                   </View>
-                  <Text style={styles.transitDescription}>{transit.description}</Text>
+                </View>
+                <Text style={styles.lifeAreaDescription}>{area.description}</Text>
+                {area.criticalLevel && (
+                  <View style={styles.criticalAlert}>
+                    <Ionicons name="warning" size={16} color="#FF4444" />
+                    <Text style={styles.criticalText}>Área crítica - atenção especial</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Avisos e Alertas */}
+          {transitData.warnings && transitData.warnings.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>⚠️ Avisos Importantes</Text>
+              {transitData.warnings.map((warning: any, index: number) => (
+                <View key={index} style={styles.warningCard}>
+                  <Ionicons name="alert-circle" size={20} color="#FF8800" />
+                  <Text style={styles.warningText}>{warning}</Text>
                 </View>
               ))}
             </View>
           )}
-
-          {/* Desafios e Oportunidades */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⚡ Desafios e Oportunidades</Text>
-
-            {currentStatus.challenges.length > 0 && (
-              <View style={styles.subsection}>
-                <Text style={styles.subsectionTitle}>Desafios:</Text>
-                {currentStatus.challenges.map((challenge, index) => (
-                  <View key={index} style={styles.listItem}>
-                    <Ionicons name="warning" size={16} color="#FF8800" />
-                    <Text style={styles.listText}>{challenge}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {currentStatus.opportunities.length > 0 && (
-              <View style={styles.subsection}>
-                <Text style={styles.subsectionTitle}>Oportunidades:</Text>
-                {currentStatus.opportunities.map((opportunity, index) => (
-                  <View key={index} style={styles.listItem}>
-                    <Ionicons name="star" size={16} color="#FFD700" />
-                    <Text style={styles.listText}>{opportunity}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
 
           {/* Gráfico de Energia Semanal */}
           <View style={styles.section}>
@@ -329,7 +391,7 @@ export default function AstrologyScreen() {
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🌟 Trânsitos Atuais</Text>
-        {transits.map((transit, index) => (
+        {transitData?.currentTransits.map((transit: any, index: number) => (
           <View key={index} style={styles.transitDetailCard}>
             <View style={styles.transitDetailHeader}>
               <View style={styles.planetInfo}>
@@ -437,6 +499,37 @@ export default function AstrologyScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Indicador de Cache - Apenas na aba Astrologia */}
+      {cacheStatus && (
+        <View style={styles.cacheIndicator}>
+          <View style={styles.cacheInfo}>
+            <Ionicons 
+              name={cacheStatus.isValid ? "checkmark-circle" : "time-outline"} 
+              size={16} 
+              color={cacheStatus.isValid ? "#44AA44" : "#FF8800"} 
+            />
+            <Text style={styles.cacheText}>
+              {cacheStatus.isValid 
+                ? `Cache: ${cacheStatus.hoursOld}h atrás` 
+                : `Expirado: ${cacheStatus.hoursOld}h atrás`
+              }
+            </Text>
+          </View>
+          <View style={styles.cacheInfo}>
+            <Ionicons name="cloud-download-outline" size={16} color="#8E8E93" />
+            <Text style={styles.cacheText}>
+              {cacheStatus.requestsToday}/{cacheStatus.maxRequests} hoje
+            </Text>
+          </View>
+          {error && (
+            <View style={styles.cacheInfo}>
+              <Ionicons name="warning-outline" size={16} color="#FF4444" />
+              <Text style={[styles.cacheText, styles.errorText]}>{error}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Conteúdo */}
       <View style={styles.content}>
         {loading ? (
@@ -467,7 +560,7 @@ export default function AstrologyScreen() {
       </View>
 
       {/* Botão de Refresh */}
-      <TouchableOpacity style={styles.refreshButton} onPress={loadAstrologicalData}>
+              <TouchableOpacity style={styles.refreshButton} onPress={loadAdditionalData}>
         <Ionicons name="refresh" size={24} color="#FFD700" />
       </TouchableOpacity>
     </LinearGradient>
@@ -783,5 +876,108 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  // Novos estilos para cache e áreas da vida
+  cacheIndicator: {
+    backgroundColor: "#1C1C1E",
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  cacheInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  cacheText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  errorText: {
+    color: "#FF4444",
+  },
+  bestWorstAreas: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  bestAreaText: {
+    color: "#44AA44",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  worstAreaText: {
+    color: "#FF8800",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  lifeAreaCard: {
+    backgroundColor: "#2C2C2E",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  lifeAreaHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  lifeAreaName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    flex: 1,
+  },
+  lifeAreaBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  lifeAreaStatus: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  lifeAreaDescription: {
+    color: "#CCCCCC",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  criticalAlert: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: "#FF444420",
+    borderRadius: 8,
+  },
+  criticalText: {
+    color: "#FF4444",
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: "bold",
+  },
+  warningCard: {
+    backgroundColor: "#2C2C2E",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  warningText: {
+    color: "#FF8800",
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
   },
 })
