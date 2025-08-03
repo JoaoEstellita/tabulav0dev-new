@@ -1,5 +1,6 @@
 import axios from 'axios'
 import AstrologyCalculator, { AstrologyData } from '../astrology/AstrologyCalculator'
+import AstrologyCacheService, { CacheStatus } from '../astrology/AstrologyCacheService'
 
 // Backend seguro (seguindo diretriz de segurança da Prokerala)
 const BACKEND_URL = 'https://tabulav0dev-backend.vercel.app'
@@ -76,11 +77,59 @@ class TransitService {
     }
   }
 
-  async getCurrentTransits(birthData: BirthData): Promise<TransitData> {
+  async getCurrentTransits(birthData: BirthData, userId: string, forceRefresh: boolean = false): Promise<{
+    data: TransitData
+    cacheStatus: CacheStatus
+  }> {
     try {
-      console.log('🔮 Iniciando busca de trânsitos na Prokerala...')
+      console.log('🔮 Iniciando busca de trânsitos com sistema de cache...')
       
-      // Buscar dados astrológicos reais - apenas trânsitos e aspectos
+      // 1. Verificar status do cache
+      const cacheStatus = await AstrologyCacheService.getCacheStatus(userId, birthData)
+      console.log('📊 Status do cache:', {
+        isValid: cacheStatus.isValid,
+        hoursOld: cacheStatus.hoursOld,
+        requestsToday: `${cacheStatus.requestsToday}/${cacheStatus.maxRequests}`,
+        canRefresh: cacheStatus.canRefresh,
+        source: cacheStatus.cacheSource
+      })
+
+      // 2. Se cache é válido e não é refresh forçado, usar cache
+      if (cacheStatus.isValid && !forceRefresh) {
+        console.log(`✅ Usando dados do cache (${cacheStatus.hoursOld}h atrás)`)
+        const cache = await AstrologyCacheService.getCache(userId)
+        if (cache?.calculatedData) {
+          return {
+            data: {
+              currentTransits: cache.calculatedData.currentTransits,
+              lifeAreas: cache.calculatedData.lifeAreas,
+              dailyOverview: cache.calculatedData.dailyOverview,
+              warnings: []
+            },
+            cacheStatus
+          }
+        }
+      }
+
+      // 3. Se não pode fazer refresh, usar cache expirado + aviso
+      if (!cacheStatus.canRefresh && !forceRefresh) {
+        console.log('🚫 Limite de requisições atingido, usando cache expirado')
+        const cache = await AstrologyCacheService.getCache(userId)
+        if (cache?.calculatedData) {
+          return {
+            data: {
+              currentTransits: cache.calculatedData.currentTransits,
+              lifeAreas: cache.calculatedData.lifeAreas,
+              dailyOverview: cache.calculatedData.dailyOverview,
+              warnings: [`Dados antigos (${cacheStatus.hoursOld}h). Limite diário atingido.`]
+            },
+            cacheStatus
+          }
+        }
+      }
+
+      // 4. Buscar dados reais da API
+      console.log('🌐 Buscando dados atualizados da API Prokerala...')
       const [planetPositions, transitAspects] = await Promise.allSettled([
         this.fetchPlanetPositions(birthData),
         this.fetchTransitAspects(birthData)
@@ -91,25 +140,75 @@ class TransitService {
         aspects: transitAspects.status
       })
 
-      // Processar dados reais se disponíveis
-      let processedData = this.getMockTransitData()
+      // 5. Processar dados se obtidos com sucesso
+      if (planetPositions.status === 'fulfilled' && transitAspects.status === 'fulfilled') {
+        console.log('✅ Dados planetários e aspectos obtidos com sucesso!')
+        
+        // Combinar dados para processamento
+        const combinedData = {
+          planet_position: planetPositions.value,
+          transit_aspect: transitAspects.value
+        }
+        
+        const processedData = this.processRealData(combinedData, birthData)
+        
+        // 6. Salvar no cache
+        await AstrologyCacheService.saveCache(
+          userId,
+          birthData,
+          planetPositions.value,
+          transitAspects.value,
+          processedData,
+          'prokerala'
+        )
+        
+        // Atualizar status do cache
+        const newCacheStatus = await AstrologyCacheService.getCacheStatus(userId, birthData)
+        
+        return {
+          data: processedData,
+          cacheStatus: newCacheStatus
+        }
+      }
+
+      // 7. Se API falhou, tentar usar cache antigo
+      console.error('❌ Falha na API, tentando usar cache antigo...')
+      const fallbackCache = await AstrologyCacheService.getCache(userId)
+      if (fallbackCache?.calculatedData) {
+        console.log('🔄 Usando cache antigo devido a falha na API')
+        return {
+          data: {
+            currentTransits: fallbackCache.calculatedData.currentTransits,
+            lifeAreas: fallbackCache.calculatedData.lifeAreas,
+            dailyOverview: fallbackCache.calculatedData.dailyOverview,
+            warnings: ['Falha na atualização. Usando dados anteriores.']
+          },
+          cacheStatus
+        }
+      }
+
+      // 8. Sem cache e sem API - erro total
+      throw new Error('Não foi possível obter dados astrológicos. Sem cache e API indisponível.')
       
-      if (planetPositions.status === 'fulfilled') {
-        console.log('✅ Dados planetários obtidos com sucesso!')
-        processedData = this.processRealData(planetPositions.value, birthData)
-      }
-
-      if (transitAspects.status === 'fulfilled') {
-        console.log('✅ Aspectos de trânsito obtidos com sucesso!')
-        // Processar aspectos para refinar as áreas da vida
-        processedData = this.enhanceWithAspects(processedData, transitAspects.value)
-      }
-
-      console.log('Dados de trânsito carregados:', processedData)
-      return processedData
     } catch (error) {
-      console.error('❌ Erro geral ao buscar trânsitos:', error)
-      return this.getMockTransitData()
+      console.error('❌ Erro crítico no sistema de trânsitos:', error)
+      
+      // Último recurso: tentar cache antigo
+      const emergencyCache = await AstrologyCacheService.getCache(userId)
+      if (emergencyCache?.calculatedData) {
+        const emergencyStatus = await AstrologyCacheService.getCacheStatus(userId, birthData)
+        return {
+          data: {
+            currentTransits: emergencyCache.calculatedData.currentTransits,
+            lifeAreas: emergencyCache.calculatedData.lifeAreas,
+            dailyOverview: emergencyCache.calculatedData.dailyOverview,
+            warnings: ['Sistema temporariamente indisponível. Dados antigos.']
+          },
+          cacheStatus: emergencyStatus
+        }
+      }
+      
+      throw error
     }
   }
 
@@ -299,8 +398,7 @@ class TransitService {
       }
     } catch (error) {
       console.error('❌ Erro ao processar dados reais:', error)
-      console.log('🔄 Retornando para dados simulados...')
-      return this.getMockTransitData()
+      throw new Error(`Falha no processamento de dados astrológicos: ${error.message}`)
     }
   }
 
@@ -550,55 +648,7 @@ class TransitService {
     return warnings
   }
 
-  private getMockTransitData(): TransitData {
-    return {
-      currentTransits: [],
-      lifeAreas: [
-        {
-          name: 'love',
-          status: 50,
-          trend: 'stable',
-          description: 'Período neutro para relacionamentos',
-          criticalLevel: false
-        },
-        {
-          name: 'career',
-          status: 60,
-          trend: 'stable',
-          description: 'Oportunidades moderadas no trabalho',
-          criticalLevel: false
-        },
-        {
-          name: 'health',
-          status: 70,
-          trend: 'stable',
-          description: 'Energia boa e disposição',
-          criticalLevel: false
-        },
-        {
-          name: 'family',
-          status: 55,
-          trend: 'stable',
-          description: 'Harmonia familiar estável',
-          criticalLevel: false
-        },
-        {
-          name: 'spirituality',
-          status: 65,
-          trend: 'stable',
-          description: 'Bom momento para reflexão',
-          criticalLevel: false
-        }
-      ],
-      dailyOverview: {
-        overall: 60,
-        message: 'Período equilibrado com energias estáveis.',
-        bestArea: 'Saúde & Bem-estar',
-        challengingArea: 'Amor & Relacionamentos'
-      },
-      warnings: []
-    }
-  }
+
 }
 
 export default new TransitService()

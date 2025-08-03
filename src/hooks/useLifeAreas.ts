@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
+import { type CacheStatus } from '../services/astrology/AstrologyCacheService'
 import UserService from '../services/firebase/UserService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
 export interface UseLifeAreasReturn {
   transitData: TransitData | null
+  cacheStatus: CacheStatus | null
   loading: boolean
   error: string | null
-  refreshData: () => Promise<void>
+  refreshData: (forceRefresh?: boolean) => Promise<void>
   sendCriticalAlerts: () => Promise<void>
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
   const { user } = useAuth()
   const [transitData, setTransitData] = useState<TransitData | null>(null)
+  const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -25,7 +28,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     }
   }, [user])
 
-  const loadTransitData = async () => {
+  const loadTransitData = async (forceRefresh: boolean = false) => {
     if (!user) return
 
     try {
@@ -47,21 +50,27 @@ export function useLifeAreas(): UseLifeAreasReturn {
         birthLocation: userProfile.birthLocation,
       }
 
-      // Buscar trânsitos atuais
-      const data = await TransitService.getCurrentTransits(birthData)
-      setTransitData(data)
+      // Buscar trânsitos atuais com cache inteligente
+      const result = await TransitService.getCurrentTransits(birthData, user.uid, forceRefresh)
+      setTransitData(result.data)
+      setCacheStatus(result.cacheStatus)
 
-      console.log('Dados de trânsito carregados:', data)
+      console.log('📊 Dados de trânsito carregados:', {
+        lifeAreas: result.data.lifeAreas.length,
+        cacheStatus: result.cacheStatus.cacheSource,
+        hoursOld: result.cacheStatus.hoursOld,
+        requestsToday: `${result.cacheStatus.requestsToday}/${result.cacheStatus.maxRequests}`
+      })
     } catch (err) {
-      console.error('Erro ao carregar dados de trânsito:', err)
-      setError('Erro ao carregar dados astrológicos')
+      console.error('❌ Erro ao carregar dados de trânsito:', err)
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
     } finally {
       setLoading(false)
     }
   }
 
-  const refreshData = async () => {
-    await loadTransitData()
+  const refreshData = async (forceRefresh: boolean = false) => {
+    await loadTransitData(forceRefresh)
   }
 
   const sendCriticalAlerts = async () => {
@@ -113,6 +122,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
   return {
     transitData,
+    cacheStatus,
     loading,
     error,
     refreshData,
