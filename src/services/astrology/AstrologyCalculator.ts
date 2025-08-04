@@ -538,10 +538,35 @@ export class AstrologyCalculator {
     })
 
     // DEBUG COMPLETO: Estrutura da resposta da API
-    console.log('🔍 Estrutura completa da API:') 
-    console.log('- prokeralaData keys:', Object.keys(prokeralaData || {}))
-    console.log('- planet_position type:', typeof prokeralaData.planet_position)
-    console.log('- transit_aspect length:', Array.isArray(prokeralaData.transit_aspect) ? prokeralaData.transit_aspect.length : 'not array')
+    console.log('🔍 === ESTRUTURA REAL DOS DADOS DA API ===')
+    console.log('🔍 Chaves principais:', Object.keys(prokeralaData || {}))
+    
+    // Debug específico para aspectos
+    if (prokeralaData.transit_aspect) {
+      console.log('🔗 transit_aspect existe!')
+      console.log('🔗 transit_aspect tipo:', typeof prokeralaData.transit_aspect)
+      console.log('🔗 transit_aspect é array?', Array.isArray(prokeralaData.transit_aspect))
+      
+      if (Array.isArray(prokeralaData.transit_aspect)) {
+        console.log('🔗 transit_aspect length:', prokeralaData.transit_aspect.length)
+        if (prokeralaData.transit_aspect.length > 0) {
+          console.log('🔗 Primeiro aspecto completo:', JSON.stringify(prokeralaData.transit_aspect[0], null, 2))
+        }
+      } else {
+        console.log('🔗 transit_aspect estrutura:', JSON.stringify(prokeralaData.transit_aspect, null, 2).substring(0, 300))
+      }
+    }
+    
+    // Debug para outras possíveis localizações de aspectos
+    if (prokeralaData.aspects) {
+      console.log('🔗 aspects direto existe!')
+      console.log('🔗 aspects tipo:', typeof prokeralaData.aspects, 'length:', Array.isArray(prokeralaData.aspects) ? prokeralaData.aspects.length : 'not array')
+    }
+    
+    if (prokeralaData.data) {
+      console.log('🔗 data existe!')
+      console.log('🔗 data chaves:', Object.keys(prokeralaData.data || {}))
+    }
     
     // Extrai posições planetárias - parser robusto baseado nos logs reais
     let planetData = []
