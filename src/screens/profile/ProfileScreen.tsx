@@ -9,6 +9,8 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
+import { useSubscription } from "../../hooks/useSubscription"
+import SubscriptionScreen from "../subscription/SubscriptionScreen"
 
 interface UserProfile {
   displayName: string
@@ -45,11 +47,13 @@ interface UserProfile {
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth()
+  const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showFAQ, setShowFAQ] = useState(false)
+  const [showSubscription, setShowSubscription] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -257,6 +261,28 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Subscription Button */}
+        <TouchableOpacity 
+          style={styles.subscriptionButton} 
+          onPress={() => setShowSubscription(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.subscriptionButtonContent}>
+            <Ionicons name="card-outline" size={24} color="#8B5FBF" />
+            <View style={styles.subscriptionButtonTextContainer}>
+              <Text style={styles.subscriptionButtonText}>Assinatura</Text>
+              {subscription && (
+                <Text style={styles.subscriptionStatus}>
+                  {subscription.status === 'active' ? 'Ativa' : 
+                   subscription.status === 'trial' ? `Teste (${trialDaysRemaining} dias)` :
+                   subscription.status === 'cancelled' ? 'Cancelada' : 'Expirada'}
+                </Text>
+              )}
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#8B5FBF" />
+          </View>
+        </TouchableOpacity>
+
         {/* FAQ Button */}
         <TouchableOpacity 
           style={styles.faqButton} 
@@ -431,6 +457,21 @@ export default function ProfileScreen() {
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
+      
+      {/* Subscription Modal */}
+      {showSubscription && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Assinatura</Text>
+              <TouchableOpacity onPress={() => setShowSubscription(false)}>
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <SubscriptionScreen />
+          </View>
+        </View>
+      )}
     </LinearGradient>
   )
 }
@@ -651,5 +692,60 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2D1B69",
     marginLeft: 12,
+  },
+  subscriptionButton: {
+    backgroundColor: "#1C1C1E",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  subscriptionButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  subscriptionButtonTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  subscriptionButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  subscriptionStatus: {
+    fontSize: 12,
+    color: "#8B5FBF",
+    marginTop: 2,
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "#0F0F23",
+    borderRadius: 16,
+    width: "90%",
+    height: "80%",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2C2C2E",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
 })
