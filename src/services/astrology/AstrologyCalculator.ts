@@ -647,27 +647,59 @@ export class AstrologyCalculator {
     // Extrai aspectos de trânsito - parser robusto baseado nos logs reais
     let aspectData = []
     
-    // Baseado nos logs, vejo que os aspectos estão chegando da API
-    // Vou tentar todas as possíveis estruturas
-    if (Array.isArray(prokeralaData.transit_aspect)) {
-      aspectData = prokeralaData.transit_aspect
-      console.log('🔗 Usando transit_aspect como array direto')
-    } else if (prokeralaData.transit_aspect?.data && Array.isArray(prokeralaData.transit_aspect.data)) {
-      aspectData = prokeralaData.transit_aspect.data
-      console.log('🔗 Usando transit_aspect.data')
-    } else if (prokeralaData.transit_aspect?.aspects && Array.isArray(prokeralaData.transit_aspect.aspects)) {
-      aspectData = prokeralaData.transit_aspect.aspects
-      console.log('🔗 Usando transit_aspect.aspects')
-    } else if (Array.isArray(prokeralaData.aspects)) {
-      aspectData = prokeralaData.aspects
-      console.log('🔗 Usando aspects direto')
-    } else if (prokeralaData.data?.aspects && Array.isArray(prokeralaData.data.aspects)) {
-      aspectData = prokeralaData.data.aspects
-      console.log('🔗 Usando data.aspects')
-    } else if (prokeralaData.data && Array.isArray(prokeralaData.data)) {
-      aspectData = prokeralaData.data
-      console.log('🔗 Usando data como array direto')
-    } else {
+    // CORREÇÃO BASEADA NOS LOGS: Os aspectos estão em transit_aspect, mas provavelmente é um objeto
+    console.log('🔍 ANALISANDO transit_aspect...')
+    
+    if (prokeralaData.transit_aspect) {
+      console.log('🔍 transit_aspect existe, tipo:', typeof prokeralaData.transit_aspect)
+      console.log('🔍 É array?', Array.isArray(prokeralaData.transit_aspect))
+      
+      if (Array.isArray(prokeralaData.transit_aspect)) {
+        aspectData = prokeralaData.transit_aspect
+        console.log('🎯 ENCONTRADO! Usando transit_aspect como array direto')
+      } else if (typeof prokeralaData.transit_aspect === 'object') {
+        console.log('🔍 transit_aspect é objeto, explorando chaves...')
+        
+        // Tentar encontrar um array dentro do objeto
+        const keys = Object.keys(prokeralaData.transit_aspect)
+        console.log('🔍 Chaves em transit_aspect:', keys)
+        
+        for (const key of keys) {
+          const value = prokeralaData.transit_aspect[key]
+          if (Array.isArray(value) && value.length > 0) {
+            console.log(`🎯 ENCONTRADO! Array de aspectos em transit_aspect.${key} com ${value.length} itens`)
+            aspectData = value
+            break
+          }
+        }
+        
+        // Se não encontrou, talvez o objeto inteiro seja um array mascarado
+        if (!aspectData || aspectData.length === 0) {
+          const values = Object.values(prokeralaData.transit_aspect)
+          if (values.length > 0 && typeof values[0] === 'object') {
+            console.log('🎯 TENTATIVA! Usando valores do objeto como array')
+            aspectData = values
+          }
+        }
+      }
+    }
+    
+    // Fallbacks originais
+    if (!aspectData || aspectData.length === 0) {
+      if (Array.isArray(prokeralaData.aspects)) {
+        aspectData = prokeralaData.aspects
+        console.log('🔗 Usando aspects direto')
+      } else if (prokeralaData.data?.aspects && Array.isArray(prokeralaData.data.aspects)) {
+        aspectData = prokeralaData.data.aspects
+        console.log('🔗 Usando data.aspects')
+      } else if (prokeralaData.data && Array.isArray(prokeralaData.data)) {
+        aspectData = prokeralaData.data
+        console.log('🔗 Usando data como array direto')
+      }
+    }
+    
+    // Se ainda não encontrou, tentar debug completo
+    if (!aspectData || aspectData.length === 0) {
       console.log('❌ Estrutura de aspectos não reconhecida. Tentando debug completo...')
       console.log('🔍 Chaves disponíveis:', Object.keys(prokeralaData || {}))
       
