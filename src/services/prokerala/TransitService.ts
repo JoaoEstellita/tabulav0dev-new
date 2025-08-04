@@ -216,7 +216,7 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros conforme documentação transit-planet-position
+    // ✅ Parâmetros EXATOS conforme documentação transit-planet-position
     const requestData = {
       profile: {
         datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
@@ -225,11 +225,11 @@ class TransitService {
       },
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus',
-      orb: 'default', 
-      birth_time_rectification: 'flat-chart',
-      la: 'en',
-      ayanamsa: 1
+      house_system: 'placidus', // OBRIGATÓRIO
+      orb: 'default', // OBRIGATÓRIO
+      birth_time_rectification: 'flat-chart', // OBRIGATÓRIO para este endpoint
+      la: 'en', // Opcional
+      ayanamsa: 1 // OBRIGATÓRIO
     }
 
     try {
