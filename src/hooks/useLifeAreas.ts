@@ -3,7 +3,8 @@ import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
 import { type CacheStatus } from '../services/astrology/AstrologyCacheService'
 import UserService from '../services/firebase/UserService'
-import { doc, getDoc } from 'firebase/firestore'
+import NotificationService from '../services/firebase/NotificationService'
+import { doc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
 export interface UseLifeAreasReturn {
@@ -77,25 +78,30 @@ export function useLifeAreas(): UseLifeAreasReturn {
     if (!transitData || !user) return
 
     try {
-      // Identificar áreas críticas
-      const criticalAreas = transitData.lifeAreas.filter(area => area.criticalLevel)
+      // Identificar áreas críticas (status baixo OU marcadas como críticas)
+      const criticalAreas = transitData.lifeAreas.filter(area => 
+        area.criticalLevel || area.status < 30
+      )
       
       if (criticalAreas.length === 0) {
-        console.log('Nenhuma área crítica detectada')
+        console.log('✅ Nenhuma área crítica detectada')
         return
       }
+
+      console.log(`🚨 ${criticalAreas.length} área(s) crítica(s) detectada(s)`)
 
       // Buscar grupos do usuário
       const userGroups = await getUserGroups(user.uid)
       
       if (userGroups.length === 0) {
-        console.log('Usuário não participa de nenhum grupo')
+        console.log('ℹ️ Usuário não participa de nenhum grupo')
         return
       }
 
       // Buscar mensagens personalizadas do usuário
       const userProfile = await UserService.getUserProfile(user.uid)
       const alertMessages = userProfile?.alertMessages
+      const userName = userProfile?.displayName || userProfile?.fullName || 'Usuário'
 
       // Enviar alertas para cada área crítica
       for (const area of criticalAreas) {
@@ -103,20 +109,34 @@ export function useLifeAreas(): UseLifeAreasReturn {
         
         // Enviar para todos os grupos do usuário
         for (const groupId of userGroups) {
+          // Salvar alerta no Firestore
           await sendAlertToGroup(groupId, {
             userId: user.uid,
-            userName: userProfile?.displayName || 'Usuário',
+            userName,
             area: area.name,
             message,
             status: area.status,
             timestamp: new Date(),
+            type: 'critical_area'
+          })
+
+          // Enviar notificações push para outros membros do grupo
+          await sendPushNotificationsToGroup(groupId, {
+            title: `⚠️ Alerta de ${getAreaDisplayName(area.name)}`,
+            body: `${userName} está passando por um momento crítico em ${getAreaDisplayName(area.name)} (${area.status}%)`,
+            data: {
+              type: 'critical_area_alert',
+              userId: user.uid,
+              area: area.name,
+              status: area.status
+            }
           })
         }
       }
 
-      console.log(`Alertas enviados para ${criticalAreas.length} áreas críticas`)
+      console.log(`✅ Alertas enviados para ${criticalAreas.length} áreas críticas`)
     } catch (err) {
-      console.error('Erro ao enviar alertas críticos:', err)
+      console.error('❌ Erro ao enviar alertas críticos:', err)
     }
   }
 
@@ -134,13 +154,20 @@ export function useLifeAreas(): UseLifeAreasReturn {
 async function getUserGroups(userId: string): Promise<string[]> {
   try {
     // Buscar grupos onde o usuário é membro
-    // Implementação simplificada - em produção, usar query otimizada
-    const userDoc = await getDoc(doc(db, 'users', userId))
-    const userData = userDoc.data()
+    const groupsQuery = query(
+      collection(db, 'groups'),
+      where('members', 'array-contains', userId)
+    )
     
-    // Por enquanto, retorna array vazio
-    // TODO: implementar busca real de grupos do usuário
-    return []
+    const snapshot = await getDocs(groupsQuery)
+    const groups: string[] = []
+    
+    snapshot.forEach(doc => {
+      groups.push(doc.id)
+    })
+    
+    console.log(`👥 Usuário participa de ${groups.length} grupo(s)`)
+    return groups
   } catch (error) {
     console.error('Erro ao buscar grupos do usuário:', error)
     return []
@@ -149,12 +176,57 @@ async function getUserGroups(userId: string): Promise<string[]> {
 
 async function sendAlertToGroup(groupId: string, alert: any) {
   try {
-    // Implementar envio de alerta para grupo
-    // TODO: salvar alerta na coleção groupAlerts
-    console.log(`Alerta enviado para grupo ${groupId}:`, alert)
+    // Salvar alerta na coleção groupAlerts
+    await addDoc(collection(db, 'groupAlerts'), {
+      ...alert,
+      groupId,
+      createdAt: new Date(),
+      read: false
+    })
+    
+    console.log(`📢 Alerta salvo para grupo ${groupId}:`, alert.area)
   } catch (error) {
     console.error('Erro ao enviar alerta para grupo:', error)
   }
+}
+
+async function sendPushNotificationsToGroup(groupId: string, notification: any) {
+  try {
+    // Buscar membros do grupo
+    const groupDoc = await getDoc(doc(db, 'groups', groupId))
+    if (!groupDoc.exists()) return
+
+    const groupData = groupDoc.data()
+    const members = groupData.members || []
+    
+    // Enviar notificação para cada membro (exceto o remetente)
+    const promises = members
+      .filter((memberId: string) => memberId !== notification.data.userId)
+      .map((memberId: string) => 
+        NotificationService.sendNotificationToUser(memberId, {
+          title: notification.title,
+          body: notification.body,
+          data: notification.data
+        })
+      )
+    
+    await Promise.all(promises)
+    console.log(`📱 Notificações enviadas para ${promises.length} membros do grupo`)
+  } catch (error) {
+    console.error('Erro ao enviar notificações push:', error)
+  }
+}
+
+function getAreaDisplayName(areaName: string): string {
+  const displayNames = {
+    love: 'Amor',
+    career: 'Carreira', 
+    health: 'Saúde',
+    family: 'Família',
+    spirituality: 'Espiritualidade'
+  }
+  
+  return displayNames[areaName as keyof typeof displayNames] || areaName
 }
 
 function getDefaultMessage(area: LifeArea['name']): string {

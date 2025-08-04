@@ -537,31 +537,65 @@ export class AstrologyCalculator {
       keys: Object.keys(prokeralaData || {})
     })
 
-    // Extrai posições planetárias - diferentes estruturas possíveis
+    // DEBUG COMPLETO: Estrutura da resposta da API
+    console.log('🔍 Estrutura completa da API:') 
+    console.log('- prokeralaData keys:', Object.keys(prokeralaData || {}))
+    console.log('- prokeralaData completo:', JSON.stringify(prokeralaData, null, 2))
+    console.log('- planet_position type:', typeof prokeralaData.planet_position)
+    console.log('- planet_position keys:', prokeralaData.planet_position ? Object.keys(prokeralaData.planet_position) : 'null')
+    console.log('- transit_aspect length:', Array.isArray(prokeralaData.transit_aspect) ? prokeralaData.transit_aspect.length : 'not array')
+    
+    // Extrai posições planetárias - parser robusto
     let planetData = []
+    
     if (prokeralaData.planet_position) {
-      planetData = prokeralaData.planet_position
+      // Tenta diferentes estruturas da API
+      if (Array.isArray(prokeralaData.planet_position)) {
+        planetData = prokeralaData.planet_position
+        console.log('📍 Usando planet_position como array direto')
+      } else if (prokeralaData.planet_position.data && Array.isArray(prokeralaData.planet_position.data)) {
+        planetData = prokeralaData.planet_position.data
+        console.log('📍 Usando planet_position.data')
+      } else if (prokeralaData.planet_position.planets && Array.isArray(prokeralaData.planet_position.planets)) {
+        planetData = prokeralaData.planet_position.planets
+        console.log('📍 Usando planet_position.planets')
+      } else if (prokeralaData.planet_position.planet_positions && Array.isArray(prokeralaData.planet_position.planet_positions)) {
+        planetData = prokeralaData.planet_position.planet_positions
+        console.log('📍 Usando planet_position.planet_positions')
+      } else {
+        // Se é um objeto, pode ser um único planeta ou estrutura diferente
+        console.log('🔍 Estrutura planet_position não reconhecida:', JSON.stringify(prokeralaData.planet_position, null, 2))
+      }
     } else if (prokeralaData.transit_details?.planets) {
       planetData = prokeralaData.transit_details.planets
+      console.log('📍 Usando transit_details.planets')
     } else if (prokeralaData.planets) {
       planetData = prokeralaData.planets
+      console.log('📍 Usando planets direto')
     }
 
     console.log('📊 Dados planetários encontrados:', planetData?.length || 0)
+    if (planetData?.length > 0) {
+      console.log('📍 Primeiro planeta de exemplo:', JSON.stringify(planetData[0], null, 2))
+    }
 
     if (planetData && Array.isArray(planetData)) {
-      planetData.forEach((planet: any) => {
+      console.log('🔍 Processando dados planetários:', planetData.length, 'planetas')
+      planetData.forEach((planet: any, index: number) => {
+        console.log(`📍 Planeta ${index + 1}:`, JSON.stringify(planet, null, 2))
         planets.push({
-          name: planet.name || 'Unknown',
-          longitude: planet.longitude || 0,
-          latitude: planet.latitude || 0,
-          speed: planet.speed || 0,
+          name: planet.name || planet.planet || 'Unknown',
+          longitude: planet.longitude || planet.long || 0,
+          latitude: planet.latitude || planet.lat || 0,
+          speed: planet.speed || planet.velocity || 0,
           sign: planet.sign?.name || planet.sign || 'Unknown',
           house: planet.house?.number || planet.house || 1,
           dignity: 0, // Será calculado baseado no signo
-          retrograde: (planet.speed || 0) < 0
+          retrograde: (planet.speed || planet.velocity || 0) < 0
         })
       })
+    } else {
+      console.log('❌ planetData não é um array válido:', typeof planetData, planetData)
     }
 
     // Adiciona dignidades baseadas nos signos
@@ -575,31 +609,71 @@ export class AstrologyCalculator {
       }
     })
 
-    // Extrai aspectos de trânsito
+    // Extrai aspectos de trânsito - parser robusto 
     let aspectData = []
+    
     if (prokeralaData.transit_aspect) {
-      aspectData = prokeralaData.transit_aspect
+      if (Array.isArray(prokeralaData.transit_aspect)) {
+        aspectData = prokeralaData.transit_aspect
+        console.log('🔗 Usando transit_aspect como array direto')
+      } else if (prokeralaData.transit_aspect.data && Array.isArray(prokeralaData.transit_aspect.data)) {
+        aspectData = prokeralaData.transit_aspect.data
+        console.log('🔗 Usando transit_aspect.data')
+      } else if (prokeralaData.transit_aspect.aspects && Array.isArray(prokeralaData.transit_aspect.aspects)) {
+        aspectData = prokeralaData.transit_aspect.aspects
+        console.log('🔗 Usando transit_aspect.aspects')
+      }
     } else if (prokeralaData.aspects) {
       aspectData = prokeralaData.aspects
+      console.log('🔗 Usando aspects direto')
     }
 
     console.log('🔗 Aspectos encontrados:', aspectData?.length || 0)
-
+    
+    // Filtrar aspectos válidos (alguns podem ser inválidos causando o número alto)
     if (aspectData && Array.isArray(aspectData)) {
+      aspectData = aspectData.filter(aspect => 
+        aspect && 
+        (aspect.planet1 || aspect.planet_1) && 
+        (aspect.planet2 || aspect.planet_2) &&
+        (aspect.aspect || aspect.aspect_name)
+      )
+      console.log('🔗 Aspectos válidos após filtro:', aspectData.length)
+      
+      if (aspectData.length > 0 && aspectData.length < 50) {
+        console.log('🔗 Primeiro aspecto de exemplo:', JSON.stringify(aspectData[0], null, 2))
+      }
+    }
+
+    if (aspectData && Array.isArray(aspectData) && aspectData.length < 1000) { // Evita processar dados inválidos
       aspectData.forEach((aspect: any) => {
+        // Parser flexível para diferentes formatos da API
+        const planet1 = aspect.planet1?.name || aspect.planet_1?.name || aspect.planet1 || aspect.planet_1 || 'Unknown'
+        const planet2 = aspect.planet2?.name || aspect.planet_2?.name || aspect.planet2 || aspect.planet_2 || 'Unknown'
+        const aspectType = aspect.aspect?.name || aspect.aspect_name || aspect.aspect || aspect.type || 'unknown'
+        const orb = aspect.orb || aspect.orb_value || 0
+        
         aspects.push({
-          planet1: aspect.planet1?.name || aspect.planet1 || 'Unknown',
-          planet2: aspect.planet2?.name || aspect.planet2 || 'Unknown',
-          aspect: aspect.aspect?.name || aspect.aspect || 'unknown',
-          orb: aspect.orb || 0,
-          exact: aspect.exact || 0,
-          applying: aspect.is_applying || false,
-          strength: Math.max(0, 10 - (aspect.orb || 0)) // Força baseada no orb
+          planet1,
+          planet2,
+          aspect: aspectType,
+          orb,
+          exact: aspect.exact || aspect.exact_aspect || 0,
+          applying: aspect.is_applying || aspect.applying || false,
+          strength: Math.max(0, 10 - orb) // Força baseada no orb
         })
       })
     }
 
     console.log(`✅ Conversão concluída: ${planets.length} planetas, ${aspects.length} aspectos`)
+    
+    // DEBUG: Mostrar alguns exemplos se tiver dados
+    if (planets.length > 0) {
+      console.log(`🌟 Planetas processados: ${planets.map(p => `${p.name}(${p.sign})`).slice(0, 5).join(', ')}`)
+    }
+    if (aspects.length > 0 && aspects.length < 20) {
+      console.log(`🔗 Aspectos processados: ${aspects.map(a => `${a.planet1}-${a.planet2}(${a.aspect})`).slice(0, 3).join(', ')}`)
+    }
 
     return { planets, aspects, houses }
   }

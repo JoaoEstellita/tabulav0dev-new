@@ -16,9 +16,15 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 import GroupService, { type Group, type GroupMember, type GroupAlert } from "../../services/firebase/GroupService"
+import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 
 export default function GroupsScreen() {
   const { user } = useAuth()
+  
+  // Estados para abas
+  const [selectedTab, setSelectedTab] = useState<"groups" | "couple">("groups")
+  
+  // Estados para grupos
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([])
@@ -29,10 +35,18 @@ export default function GroupsScreen() {
   const [newGroupName, setNewGroupName] = useState("")
   const [newGroupDescription, setNewGroupDescription] = useState("")
   const [inviteCode, setInviteCode] = useState("")
+  
+  // Estados para casais
+  const [coupleRelationship, setCoupleRelationship] = useState<CoupleRelationship | null>(null)
+  const [coupleLoading, setCoupleLoading] = useState(false)
+  const [showCreateCoupleModal, setShowCreateCoupleModal] = useState(false)
+  const [partnerEmail, setPartnerEmail] = useState("")
+  const [relationshipType, setRelationshipType] = useState<CoupleRelationship['relationshipType']>("dating")
 
   useEffect(() => {
     if (user) {
       loadUserGroups()
+      loadCoupleRelationship()
     }
   }, [user])
 
@@ -71,6 +85,84 @@ export default function GroupsScreen() {
       setGroupAlerts(alerts)
     } catch (error) {
       console.error("Erro ao carregar dados do grupo:", error)
+    }
+  }
+  
+  // === FUNÇÕES DE CASAIS ===
+  
+  const loadCoupleRelationship = async () => {
+    if (!user) return
+    
+    try {
+      setCoupleLoading(true)
+      const relationship = await CoupleService.getUserCoupleRelationship(user.uid)
+      setCoupleRelationship(relationship)
+      
+      // Se existe relacionamento, atualizar compatibilidade se necessário
+      if (relationship) {
+        const lastUpdate = relationship.dailyCompatibility?.lastUpdated
+        const now = new Date()
+        const hoursSinceUpdate = lastUpdate ? 
+          (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60) : 24
+        
+        // Atualizar se passou mais de 12 horas
+        if (hoursSinceUpdate >= 12) {
+          await CoupleService.updateDailyCompatibility(relationship.id)
+          // Recarregar dados atualizados
+          const updatedRelationship = await CoupleService.getUserCoupleRelationship(user.uid)
+          setCoupleRelationship(updatedRelationship)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar relacionamento:', error)
+    } finally {
+      setCoupleLoading(false)
+    }
+  }
+  
+  const handleCreateCouple = async () => {
+    if (!user || !partnerEmail.trim()) {
+      Alert.alert('Erro', 'Por favor, insira o email do seu parceiro')
+      return
+    }
+    
+    try {
+      setCoupleLoading(true)
+      
+      // TODO: Buscar partner por email
+      // Por enquanto, vou simular com um ID fictício
+      Alert.alert(
+        'Funcionalidade em desenvolvimento',
+        'Em breve você poderá convidar seu parceiro pelo email. Por enquanto, peça para ele/ela criar uma conta no app.'
+      )
+      
+      setShowCreateCoupleModal(false)
+      setPartnerEmail('')
+    } catch (error) {
+      console.error('Erro ao criar relacionamento:', error)
+      Alert.alert('Erro', 'Não foi possível criar o relacionamento')
+    } finally {
+      setCoupleLoading(false)
+    }
+  }
+  
+  const handleRefreshCompatibility = async () => {
+    if (!coupleRelationship) return
+    
+    try {
+      setCoupleLoading(true)
+      await CoupleService.updateDailyCompatibility(coupleRelationship.id)
+      
+      // Recarregar dados
+      const updatedRelationship = await CoupleService.getUserCoupleRelationship(user!.uid)
+      setCoupleRelationship(updatedRelationship)
+      
+      Alert.alert('Sucesso', 'Compatibilidade atualizada!')
+    } catch (error) {
+      console.error('Erro ao atualizar compatibilidade:', error)
+      Alert.alert('Erro', 'Não foi possível atualizar a compatibilidade')
+    } finally {
+      setCoupleLoading(false)
     }
   }
 
@@ -604,5 +696,199 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  
+  // === ESTILOS PARA ABAS PRINCIPAIS ===
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#1C1C1E",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  mainTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  mainTabActive: {
+    backgroundColor: "#2C2C2E",
+  },
+  mainTabText: {
+    color: "#8E8E93",
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  mainTabTextActive: {
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+  
+  // === ESTILOS PARA CASAIS ===
+  coupleContainer: {
+    padding: 16,
+  },
+  coupleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  coupleNames: {
+    flex: 1,
+  },
+  coupleNamesText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  coupleSignsText: {
+    color: "#888",
+    fontSize: 14,
+    marginTop: 4,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#2C2C2E",
+  },
+  compatibilityCard: {
+    backgroundColor: "#1C1C1E",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  compatibilityHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  compatibilityTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  compatibilityScore: {
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  compatibilityScoreText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  compatibilityDescription: {
+    color: "#CCCCCC",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  compatibilityAreas: {
+    marginBottom: 16,
+  },
+  areaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  areaLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+  },
+  areaScore: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  adviceContainer: {
+    backgroundColor: "#2C2C2E",
+    padding: 12,
+    borderRadius: 8,
+  },
+  adviceTitle: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+  adviceText: {
+    color: "#CCCCCC",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  emptyCoupleState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 80,
+  },
+  emptyCoupleTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyCoupleText: {
+    color: "#888",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 32,
+    paddingHorizontal: 32,
+    lineHeight: 22,
+  },
+  createCoupleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  createCoupleButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  modalLabel: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  relationshipTypes: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 24,
+  },
+  relationshipType: {
+    backgroundColor: "#2C2C2E",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  relationshipTypeActive: {
+    backgroundColor: "#FFD700",
+  },
+  relationshipTypeText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+  },
+  relationshipTypeTextActive: {
+    color: "#000",
+    fontWeight: "bold",
   },
 })

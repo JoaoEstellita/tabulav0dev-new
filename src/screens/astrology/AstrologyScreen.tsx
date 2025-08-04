@@ -8,6 +8,7 @@ import { LineChart, PieChart } from "react-native-chart-kit"
 import { useAuth } from "../../hooks/useAuth"
 import { useLifeAreas } from "../../hooks/useLifeAreas"
 import ProkeralaService, { type AstrologicalStatus } from "../../services/prokerala/ProkeralaService"
+import NatalChartService, { type NatalChart } from "../../services/prokerala/NatalChartService"
 import type { BirthData } from "../../screens/onboarding/BirthDataForm"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "../../config/firebase"
@@ -63,6 +64,8 @@ export default function AstrologyScreen() {
   const { transitData, cacheStatus, loading, error, refreshData } = useLifeAreas()
   const [currentStatus, setCurrentStatus] = useState<AstrologicalStatus | null>(null)
   const [birthChart, setBirthChart] = useState<ChartData | null>(null)
+  const [natalChart, setNatalChart] = useState<NatalChart | null>(null)
+  const [natalLoading, setNatalLoading] = useState(false)
   const [selectedTab, setSelectedTab] = useState<"status" | "transits" | "chart">("status")
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -76,8 +79,12 @@ export default function AstrologyScreen() {
   useEffect(() => {
     if (userProfile && userProfile.birthDate && userProfile.birthTime) {
       loadAdditionalData()
+      // Carregar mapa natal apenas quando necessário (aba Mapa selecionada)
+      if (selectedTab === "chart") {
+        loadNatalChart()
+      }
     }
-  }, [userProfile])
+  }, [userProfile, selectedTab])
 
   const loadUserProfile = async () => {
     if (!user?.uid) return
@@ -153,15 +160,41 @@ export default function AstrologyScreen() {
     }
 
     try {
-      const [status, chartData] = await Promise.all([
-        ProkeralaService.getAstrologicalStatus(birthData),
-        ProkeralaService.getBirthChart(birthData),
-      ])
-
-      setCurrentStatus(status)
-      setBirthChart(chartData)
+      // REMOVIDO: Chamadas que falhavam
+      // const [status, chartData] = await Promise.all([
+      //   ProkeralaService.getAstrologicalStatus(birthData),
+      //   ProkeralaService.getBirthChart(birthData),
+      // ])
+      
+      console.log('📊 loadAdditionalData executado (endpoints desabilitados)')
+      // Status vem dos trânsitos via useLifeAreas
+      // Mapa natal será carregado separadamente e permanente
     } catch (error) {
       console.error("Erro ao carregar dados astrológicos:", error)
+    }
+  }
+  
+  // Função para carregar mapa natal permanente
+  const loadNatalChart = async () => {
+    const birthData = getBirthData()
+    
+    if (!birthData) {
+      console.log("Dados de nascimento não disponíveis para mapa natal")
+      return
+    }
+    
+    try {
+      setNatalLoading(true)
+      console.log('🌟 Carregando mapa natal permanente...')
+      
+      const natal = await NatalChartService.getNatalChart(birthData)
+      setNatalChart(natal)
+      
+      console.log('✅ Mapa natal carregado com sucesso')
+    } catch (error) {
+      console.error('❌ Erro ao carregar mapa natal:', error)
+    } finally {
+      setNatalLoading(false)
     }
   }
 
@@ -423,53 +456,80 @@ export default function AstrologyScreen() {
 
   const renderChartTab = () => (
     <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Distribuição dos Elementos */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔥 Distribuição dos Elementos</Text>
-        <PieChart
-          data={planetDistributionData}
-          width={width - 64}
-          height={200}
-          chartConfig={{
-            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-          }}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
-          style={styles.chart}
-        />
-      </View>
-
-      {/* Planetas nas Casas */}
-      {birthChart && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏠 Planetas nas Casas</Text>
-          {birthChart.planets.map((planet, index) => (
-            <View key={index} style={styles.planetCard}>
-              <View style={styles.planetHeader}>
-                <Text style={styles.planetName}>{planet.name}</Text>
-                <Text style={styles.planetDegree}>{planet.degree.toFixed(1)}°</Text>
-              </View>
-              <Text style={styles.planetPosition}>
-                {planet.sign} - Casa {planet.house}
-              </Text>
-            </View>
-          ))}
+      {natalLoading ? (
+        <View style={styles.loadingSection}>
+          <Text style={styles.loadingText}>Carregando mapa natal permanente...</Text>
         </View>
-      )}
-
-      {/* Aspectos Principais */}
-      {birthChart && birthChart.aspects.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚡ Aspectos Principais</Text>
-          {birthChart.aspects.slice(0, 5).map((aspect, index) => (
-            <View key={index} style={styles.aspectCard}>
-              <Text style={styles.aspectPlanets}>
-                {aspect.planet1} {aspect.aspect} {aspect.planet2}
-              </Text>
-              <Text style={styles.aspectOrb}>Orbe: {aspect.orb.toFixed(1)}°</Text>
+      ) : natalChart ? (
+        <>
+          {/* Informações Principais */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🌟 Mapa Natal Permanente</Text>
+            <View style={styles.natalInfo}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Ascendente:</Text>
+                <Text style={styles.infoValue}>{natalChart.ascendant.sign}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Meio do Céu:</Text>
+                <Text style={styles.infoValue}>{natalChart.midheaven.sign}</Text>
+              </View>
             </View>
-          ))}
+          </View>
+
+          {/* Planetas no Mapa Natal */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🌌 Posições Planetárias</Text>
+            {natalChart.planets.map((planet, index) => (
+              <View key={index} style={styles.planetCard}>
+                <View style={styles.planetHeader}>
+                  <Text style={styles.planetName}>{planet.name}</Text>
+                  <View style={styles.planetFlags}>
+                    {planet.dignity > 0 && (
+                      <Text style={styles.dignityPositive}>+{planet.dignity}</Text>
+                    )}
+                    {planet.dignity < 0 && (
+                      <Text style={styles.dignityNegative}>{planet.dignity}</Text>
+                    )}
+                    {planet.retrograde && (
+                      <Text style={styles.retrograde}>R</Text>
+                    )}
+                  </View>
+                </View>
+                <Text style={styles.planetPosition}>
+                  {planet.sign} - Casa {planet.house}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Aspectos Natais */}
+          {natalChart.aspects.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>⚡ Aspectos Natais</Text>
+              {natalChart.aspects.slice(0, 8).map((aspect, index) => (
+                <View key={index} style={styles.aspectCard}>
+                  <View style={styles.aspectHeader}>
+                    <Text style={styles.aspectPlanets}>
+                      {aspect.planet1} {aspect.aspect} {aspect.planet2}
+                    </Text>
+                    <Text style={styles.aspectStrength}>Força: {aspect.strength}</Text>
+                  </View>
+                  <Text style={styles.aspectOrb}>Orbe: {aspect.orb.toFixed(1)}°</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
+      ) : (
+        <View style={styles.emptySection}>
+          <Text style={styles.emptyText}>Carregue o mapa natal permanente</Text>
+          <TouchableOpacity 
+            style={styles.reloadButton}
+            onPress={loadNatalChart}
+          >
+            <Text style={styles.reloadButtonText}>Carregar Mapa Natal</Text>
+          </TouchableOpacity>
         </View>
       )}
     </ScrollView>
@@ -979,5 +1039,85 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
     flex: 1,
+  },
+  
+  // === ESTILOS PARA MAPA NATAL ===
+  loadingSection: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+  },
+  natalInfo: {
+    backgroundColor: "#2C2C2E",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  infoLabel: {
+    color: "#888",
+    fontSize: 14,
+  },
+  infoValue: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  planetFlags: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dignityPositive: {
+    color: "#44AA44",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginRight: 4,
+  },
+  dignityNegative: {
+    color: "#FF4444",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginRight: 4,
+  },
+  retrograde: {
+    color: "#FF8800",
+    fontSize: 12,
+    fontWeight: "bold",
+    backgroundColor: "#2C2C2E",
+    paddingHorizontal: 4,
+    borderRadius: 4,
+  },
+  aspectHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  aspectStrength: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  emptySection: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+  },
+  reloadButton: {
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  reloadButtonText: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 })

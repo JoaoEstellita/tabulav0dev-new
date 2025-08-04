@@ -71,29 +71,11 @@ class ProkeralaService {
     }
   }
 
+  // DESABILITADO: Endpoint daily-prediction retorna erro 500
   async getAstrologicalStatus(birthData: BirthData): Promise<AstrologicalStatus> {
-    try {
-      // Tenta Prokerala primeiro - convertendo formato de parâmetros
-      const data = await this.makeProkeralaRequest("/v2/horoscope/daily-prediction", {
-        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
-        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-        ayanamsa: '1'
-      })
-
-      return this.parseAstrologicalStatus(data)
-    } catch (error) {
-      console.log("Prokerala falhou, tentando fallbacks...")
-
-      try {
-        // Fallback 1: FreeAstrologyAPI
-        const fallbackData = await this.fallbackToFreeAstrology("/daily-horoscope")
-        return this.parseAstrologicalStatus(fallbackData)
-      } catch (fallbackError) {
-        // Fallback 2: Dados simulados baseados na data
-        console.log("Todos os fallbacks falharam, usando dados simulados")
-        return this.generateSimulatedStatus(birthData)
-      }
-    }
+    console.warn('getAstrologicalStatus desabilitado - endpoint /v2/horoscope/daily-prediction com erro 500')
+    // Retorna status neutro baseado apenas na data
+    return this.generateSimulatedStatus(birthData)
   }
 
   private parseAstrologicalStatus(data: any): AstrologicalStatus {
@@ -174,17 +156,11 @@ class ProkeralaService {
     }
   }
 
+  // DESABILITADO: Endpoint kundli retorna erro 500
   async getBirthChart(birthData: BirthData): Promise<any> {
-    try {
-      return await this.makeProkeralaRequest("/v2/astrology/kundli", {
-        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
-        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-        ayanamsa: '1'
-      })
-    } catch (error) {
-      console.error("Erro ao buscar mapa natal:", error)
-      return { planets: [], houses: [], aspects: [] }
-    }
+    console.warn('getBirthChart desabilitado - endpoint /v2/astrology/kundli com erro 500')
+    // Retorna estrutura vazia até implementarmos natal-chart
+    return { planets: [], houses: [], aspects: [], disabled: true }
   }
 
   async getTransits(birthData: BirthData): Promise<any> {

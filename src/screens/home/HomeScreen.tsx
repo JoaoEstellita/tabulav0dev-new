@@ -276,7 +276,7 @@ export default function HomeScreen() {
             
             {transitData.warnings.map((warning, index) => (
               <View key={index} style={styles.warningCard}>
-                <Ionicons name="lightbulb" size={16} color="#FFD700" />
+                <Ionicons name="bulb-outline" size={16} color="#FFD700" />
                 <Text style={styles.warningText}>{warning}</Text>
               </View>
             ))}
