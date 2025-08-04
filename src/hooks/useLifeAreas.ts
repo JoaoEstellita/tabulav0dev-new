@@ -64,23 +64,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       })
     } catch (err) {
       console.error('❌ Erro ao carregar dados de trânsito:', err)
-      
-      // Sistema de fallback quando API e cache falham
-      console.log('🔄 Ativando sistema de fallback para demonstração...')
-      const fallbackData = generateFallbackData()
-      
-      setTransitData(fallbackData)
-      setCacheStatus({
-        isValid: true,
-        cacheSource: 'fallback',
-        lastUpdate: new Date(),
-        hoursOld: 0,
-        canRefresh: true,
-        requestsToday: 0,
-        maxRequests: 2
-      })
-      
-      setError('Usando dados de demonstração - API indisponível')
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
     } finally {
       setLoading(false)
     }
@@ -156,75 +140,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     }
   }
 
-  // Função para gerar dados de fallback quando API e cache falham
-  const generateFallbackData = () => {
-    console.log('📊 Gerando dados de fallback realistas...')
-    
-    return {
-      lifeAreas: [
-        {
-          name: 'love',
-          status: 75,
-          criticalLevel: false,
-          lastUpdate: new Date(),
-          factors: {
-            venus: 'Vênus em Touro favorece relacionamentos',
-            moon: 'Lua crescente traz harmonia emocional',
-            mars: 'Marte em aspecto positivo aumenta paixão'
-          }
-        },
-        {
-          name: 'career',
-          status: 65,
-          criticalLevel: false,
-          lastUpdate: new Date(),
-          factors: {
-            saturn: 'Saturno em posição estável para carreira',
-            mercury: 'Mercúrio favorece comunicação profissional',
-            jupiter: 'Júpiter traz oportunidades de crescimento'
-          }
-        },
-        {
-          name: 'health',
-          status: 80,
-          criticalLevel: false,
-          lastUpdate: new Date(),
-          factors: {
-            sun: 'Sol em aspecto positivo fortalece vitalidade',
-            moon: 'Lua influencia positivamente o bem-estar',
-            mars: 'Marte estimula energia física'
-          }
-        },
-        {
-          name: 'family',
-          status: 55,
-          criticalLevel: false,
-          lastUpdate: new Date(),
-          factors: {
-            moon: 'Lua em aspecto neutro com questões familiares',
-            saturn: 'Saturno pode trazer responsabilidades',
-            venus: 'Vênus favorece harmonia no lar'
-          }
-        },
-        {
-          name: 'spirituality',
-          status: 85,
-          criticalLevel: false,
-          lastUpdate: new Date(),
-          factors: {
-            neptune: 'Netuno desperta intuição espiritual',
-            jupiter: 'Júpiter expande consciência',
-            moon: 'Lua conecta com sabedoria interior'
-          }
-        }
-      ],
-      planets: [],
-      aspects: [],
-      calculatedAt: new Date(),
-      confidence: 85,
-      source: 'fallback-demo'
-    }
-  }
+
 
   return {
     transitData,

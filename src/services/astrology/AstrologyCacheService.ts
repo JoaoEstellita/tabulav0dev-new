@@ -255,8 +255,17 @@ class AstrologyCacheService {
       
       console.log(`💾 Cache salvo - Fonte: ${source}, Requests hoje: ${dailyRequestCount}/${this.MAX_DAILY_REQUESTS}`)
     } catch (error) {
-      console.error('❌ Erro ao salvar cache:', error)
-      throw error
+      console.warn('⚠️ Não foi possível salvar cache no Firestore, salvando apenas localmente:', error.message)
+      // Ainda salva no cache local
+      await this.setLocalCache(userId, {
+        data,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + this.CACHE_DURATION,
+        birthDataHash: this.generateBirthDataHash(birthData),
+        lastUpdate: new Date(),
+        dailyRequestCount: 1,
+        lastRequestDate: new Date().toDateString()
+      })
     }
   }
 
