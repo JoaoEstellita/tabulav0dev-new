@@ -64,7 +64,33 @@ export function useLifeAreas(): UseLifeAreasReturn {
       })
     } catch (err) {
       console.error('❌ Erro ao carregar dados de trânsito:', err)
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
+      
+      // FALLBACK: Tentar cache local quando Firebase falha
+      try {
+        console.log('🔄 Tentando cache local como fallback...')
+        const localCacheData = await getLocalCacheData(user.uid)
+        
+        if (localCacheData) {
+          console.log('✅ Dados encontrados no cache local')
+          setTransitData(localCacheData)
+          setCacheStatus({
+            isValid: true,
+            cacheSource: 'local-fallback',
+            lastUpdate: new Date(),
+            hoursOld: 0,
+            canRefresh: true,
+            requestsToday: 0,
+            maxRequests: 2
+          })
+          setError('Usando cache local - Firestore indisponível')
+        } else {
+          console.log('❌ Cache local também vazio')
+          setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
+        }
+      } catch (fallbackErr) {
+        console.error('❌ Erro no cache local:', fallbackErr)
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
+      }
     } finally {
       setLoading(false)
     }
@@ -149,6 +175,31 @@ export function useLifeAreas(): UseLifeAreasReturn {
     error,
     refreshData,
     sendCriticalAlerts,
+  }
+}
+
+// Função para cache local como fallback
+async function getLocalCacheData(userId: string) {
+  try {
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default
+    const cacheKey = `astrology_cache_${userId}`
+    const cachedData = await AsyncStorage.getItem(cacheKey)
+    
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData)
+      // Verificar se não está muito antigo (máximo 24h)
+      const age = Date.now() - parsed.timestamp
+      const maxAge = 24 * 60 * 60 * 1000 // 24 horas
+      
+      if (age < maxAge) {
+        return parsed.data
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('❌ Erro ao ler cache local:', error)
+    return null
   }
 }
 
