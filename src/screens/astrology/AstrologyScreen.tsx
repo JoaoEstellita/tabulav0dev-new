@@ -61,7 +61,7 @@ interface UserProfile {
 
 export default function AstrologyScreen() {
   const { user } = useAuth()
-  const { transitData, cacheStatus, loading, error, refreshData } = useLifeAreas()
+  const { transitData, cacheStatus, loading, error, refreshData, isUsingLocalEngine } = useLifeAreas()
   const [currentStatus, setCurrentStatus] = useState<AstrologicalStatus | null>(null)
   const [birthChart, setBirthChart] = useState<ChartData | null>(null)
   const [natalChart, setNatalChart] = useState<NatalChart | null>(null)
@@ -559,6 +559,25 @@ export default function AstrologyScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Indicador de Engine - Dados REAIS */}
+      {isUsingLocalEngine && (
+        <View style={styles.realDataIndicator}>
+          <View style={styles.realDataInfo}>
+            <Ionicons 
+              name="star" 
+              size={16} 
+              color="#FFD700" 
+            />
+            <Text style={styles.realDataText}>DADOS REAIS • Engine Local</Text>
+            <Ionicons 
+              name="flash" 
+              size={16} 
+              color="#00FF00" 
+            />
+          </View>
+        </View>
+      )}
+
       {/* Indicador de Cache - Apenas na aba Astrologia */}
       {cacheStatus && (
         <View style={styles.cacheIndicator}>
@@ -937,6 +956,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  // Indicador de dados REAIS
+  realDataIndicator: {
+    backgroundColor: "#1A2B1A",
+    borderRadius: 8,
+    padding: 10,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#00FF00",
+  },
+  realDataInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  realDataText: {
+    color: "#00FF00",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginHorizontal: 8,
+  },
+  
   // Novos estilos para cache e áreas da vida
   cacheIndicator: {
     backgroundColor: "#1C1C1E",

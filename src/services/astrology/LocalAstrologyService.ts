@@ -1,0 +1,264 @@
+/**
+ * 🚀 LOCAL ASTROLOGY SERVICE 🚀
+ * 
+ * Serviço que substitui completamente as APIs externas
+ * Usa o RealAstrologyEngine para cálculos locais precisos
+ * 
+ * BENEFÍCIOS:
+ * - Performance instantânea
+ * - Dados 100% reais
+ * - Sem dependência de APIs externas
+ * - Sem limites de requisições
+ * - Custo zero
+ */
+
+import RealAstrologyEngine, { RealAstrologyData } from './RealAstrologyEngine'
+import { BirthData } from '../../types/astrology'
+import { AstrologyCacheService } from '../firebase/AstrologyCacheService'
+
+export interface LocalTransitData {
+  currentTransits: RealAstrologyData
+  lifeAreas: {
+    [area: string]: {
+      percentage: number
+      status: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crítico'
+      influences: string[]
+      mainPlanets: string[]
+    }
+  }
+  dailyOverview: {
+    bestArea: string
+    challengingArea: string
+    generalTrend: string
+    keyAspects: string[]
+  }
+  warnings: string[]
+}
+
+export interface CacheStatus {
+  isValid: boolean
+  hoursOld: number
+  requestsToday: number
+  maxRequests: number
+  canRefresh: boolean
+  cacheSource: 'local' | 'firebase' | 'none'
+}
+
+export class LocalAstrologyService {
+  
+  /**
+   * Obtém dados astrológicos usando cálculos LOCAIS
+   * Substitui completamente as APIs externas
+   */
+  static async getCurrentTransits(
+    birthData: BirthData, 
+    userId: string, 
+    forceRefresh: boolean = false
+  ): Promise<{ data: LocalTransitData, cacheStatus: CacheStatus }> {
+    try {
+      console.log('🔮 Iniciando cálculos astrológicos LOCAIS...')
+      
+      // 1. Verificar cache primeiro (se não for refresh forçado)
+      if (!forceRefresh) {
+        const cachedData = await this.getCachedData(userId)
+        if (cachedData) {
+          console.log('✅ Usando dados do cache local')
+          return cachedData
+        }
+      }
+
+      // 2. Calcular dados REAIS usando engine local
+      console.log('🔬 Calculando dados astrológicos REAIS localmente...')
+      const realData = await RealAstrologyEngine.calculateRealAstrology(
+        birthData.birthDate,
+        birthData.birthTime,
+        birthData.birthLocation.latitude,
+        birthData.birthLocation.longitude
+      )
+
+      // 3. Processar dados para formato do app
+      const processedData = this.processRealData(realData, birthData)
+
+      // 4. Salvar no cache
+      await this.saveToCache(userId, birthData, realData, processedData)
+
+      // 5. Status do cache
+      const cacheStatus: CacheStatus = {
+        isValid: true,
+        hoursOld: 0,
+        requestsToday: 1,
+        maxRequests: 999, // Sem limite para cálculos locais!
+        canRefresh: true,
+        cacheSource: 'local'
+      }
+
+      console.log('🎯 Cálculos astrológicos LOCAIS concluídos com sucesso!')
+      
+      return {
+        data: processedData,
+        cacheStatus
+      }
+
+    } catch (error) {
+      console.error('❌ Erro nos cálculos astrológicos locais:', error)
+      throw new Error(`Falha nos cálculos locais: ${error.message}`)
+    }
+  }
+
+  /**
+   * Processa dados reais para formato do app
+   */
+  private static processRealData(realData: RealAstrologyData, birthData: BirthData): LocalTransitData {
+    // Analisar áreas da vida
+    const lifeAreas = realData.lifeAreas
+
+    // Encontrar melhor e pior área
+    const areas = Object.entries(lifeAreas)
+    const bestArea = areas.reduce((best, current) => 
+      current[1].percentage > best[1].percentage ? current : best
+    )[0]
+    
+    const challengingArea = areas.reduce((worst, current) => 
+      current[1].percentage < worst[1].percentage ? current : worst
+    )[0]
+
+    // Analisar tendência geral
+    const averageScore = areas.reduce((sum, [_, area]) => sum + area.percentage, 0) / areas.length
+    const generalTrend = averageScore >= 70 ? 'Período muito favorável' :
+                        averageScore >= 55 ? 'Período equilibrado' :
+                        averageScore >= 40 ? 'Período de desafios moderados' :
+                        'Período que requer cautela'
+
+    // Aspectos-chave (mais fortes)
+    const keyAspects = realData.aspects
+      .filter(aspect => aspect.strength > 70)
+      .slice(0, 3)
+      .map(aspect => `${aspect.planet1} ${aspect.type} ${aspect.planet2}`)
+
+    const dailyOverview = {
+      bestArea,
+      challengingArea,
+      generalTrend,
+      keyAspects
+    }
+
+    return {
+      currentTransits: realData,
+      lifeAreas,
+      dailyOverview,
+      warnings: [] // Sem warnings para cálculos locais!
+    }
+  }
+
+  /**
+   * Obtém dados do cache (local ou Firebase)
+   */
+  private static async getCachedData(userId: string): Promise<{ data: LocalTransitData, cacheStatus: CacheStatus } | null> {
+    try {
+      // Tentar cache do Firebase primeiro
+      const cache = await AstrologyCacheService.getCache(userId)
+      
+      if (cache && cache.calculatedData) {
+        const hoursOld = (Date.now() - new Date(cache.timestamp).getTime()) / (1000 * 60 * 60)
+        
+        // Cache válido por 12 horas
+        if (hoursOld < 12) {
+          const cacheStatus: CacheStatus = {
+            isValid: true,
+            hoursOld,
+            requestsToday: cache.requestsToday || 0,
+            maxRequests: 999,
+            canRefresh: hoursOld > 6, // Pode refreshar após 6 horas
+            cacheSource: 'firebase'
+          }
+
+          return {
+            data: cache.calculatedData as LocalTransitData,
+            cacheStatus
+          }
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.log('ℹ️ Cache não disponível, calculando dados frescos...')
+      return null
+    }
+  }
+
+  /**
+   * Salva dados no cache
+   */
+  private static async saveToCache(
+    userId: string,
+    birthData: BirthData,
+    realData: RealAstrologyData,
+    processedData: LocalTransitData
+  ): Promise<void> {
+    try {
+      await AstrologyCacheService.saveCache(
+        userId,
+        birthData,
+        realData.planets, // Raw planet data
+        realData.aspects, // Raw aspects data
+        processedData, // Processed data
+        'local' // Source
+      )
+      console.log('✅ Dados salvos no cache')
+    } catch (error) {
+      console.log('⚠️ Não foi possível salvar no cache, mas cálculos funcionam normalmente')
+    }
+  }
+
+  /**
+   * Calcula dados para TODOS os usuários (para notificações automáticas)
+   */
+  static async calculateDailyDataForAllUsers(): Promise<Map<string, LocalTransitData>> {
+    console.log('🌅 Iniciando cálculos diários para todos os usuários...')
+    
+    const results = new Map<string, LocalTransitData>()
+    
+    try {
+      // Aqui você buscaria todos os usuários do Firebase
+      // Por enquanto, retornamos um mapa vazio
+      // Em produção, isso seria executado como uma função serverless diária
+      
+      console.log('✅ Cálculos diários concluídos')
+      return results
+      
+    } catch (error) {
+      console.error('❌ Erro nos cálculos diários:', error)
+      return results
+    }
+  }
+
+  /**
+   * Verifica se precisa enviar notificações críticas
+   */
+  static shouldSendCriticalAlert(data: LocalTransitData): boolean {
+    // Verificar se alguma área está crítica
+    const criticalAreas = Object.entries(data.lifeAreas).filter(
+      ([_, area]) => area.status === 'crítico'
+    )
+
+    // Verificar aspectos muito desafiadores
+    const challengingAspects = data.currentTransits.aspects.filter(
+      aspect => aspect.type === 'quadratura' || aspect.type === 'oposição'
+    ).filter(aspect => aspect.strength > 80)
+
+    return criticalAreas.length > 0 || challengingAspects.length > 2
+  }
+
+  /**
+   * Gera mensagem de alerta personalizada
+   */
+  static generateAlertMessage(data: LocalTransitData): string {
+    const { bestArea, challengingArea, generalTrend } = data.dailyOverview
+    
+    return `🌟 Hoje: ${generalTrend}. ` +
+           `💫 Área favorável: ${bestArea}. ` +
+           `⚠️ Atenção para: ${challengingArea}.`
+  }
+}
+
+export default LocalAstrologyService

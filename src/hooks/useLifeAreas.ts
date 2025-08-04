@@ -1,27 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
-import { type CacheStatus } from '../services/astrology/AstrologyCacheService'
+import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
 import UserService from '../services/firebase/UserService'
 import NotificationService from '../services/firebase/NotificationService'
 import { doc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
 export interface UseLifeAreasReturn {
-  transitData: TransitData | null
+  transitData: LocalTransitData | null
   cacheStatus: CacheStatus | null
   loading: boolean
   error: string | null
   refreshData: (forceRefresh?: boolean) => Promise<void>
   sendCriticalAlerts: () => Promise<void>
+  isUsingLocalEngine: boolean
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
   const { user } = useAuth()
-  const [transitData, setTransitData] = useState<TransitData | null>(null)
+  const [transitData, setTransitData] = useState<LocalTransitData | null>(null)
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
 
   useEffect(() => {
     if (user) {
@@ -51,16 +53,19 @@ export function useLifeAreas(): UseLifeAreasReturn {
         birthLocation: userProfile.birthLocation,
       }
 
-      // Buscar trânsitos atuais com cache inteligente
-      const result = await TransitService.getCurrentTransits(birthData, user.uid, forceRefresh)
+      // 🚀 USAR NOVO SISTEMA LOCAL (dados 100% reais, performance instantânea)
+      console.log('🔬 Usando cálculos astrológicos LOCAIS (dados reais)...')
+      const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, forceRefresh)
       setTransitData(result.data)
       setCacheStatus(result.cacheStatus)
+      setIsUsingLocalEngine(true)
 
-      console.log('📊 Dados de trânsito carregados:', {
-        lifeAreas: result.data.lifeAreas.length,
-        cacheStatus: result.cacheStatus.cacheSource,
+      console.log('📊 Dados astrológicos REAIS carregados:', {
+        lifeAreas: Object.keys(result.data.lifeAreas).length,
+        cacheSource: result.cacheStatus.cacheSource,
         hoursOld: result.cacheStatus.hoursOld,
-        requestsToday: `${result.cacheStatus.requestsToday}/${result.cacheStatus.maxRequests}`
+        requestsToday: `${result.cacheStatus.requestsToday}/${result.cacheStatus.maxRequests}`,
+        engine: 'LOCAL (dados reais)'
       })
     } catch (err) {
       console.error('❌ Erro ao carregar dados de trânsito:', err)
@@ -78,17 +83,17 @@ export function useLifeAreas(): UseLifeAreasReturn {
     if (!transitData || !user) return
 
     try {
-      // Identificar áreas críticas (status baixo OU marcadas como críticas)
-      const criticalAreas = transitData.lifeAreas.filter(area => 
-        area.criticalLevel || area.status < 30
-      )
+      // Verificar se deve enviar alertas críticos usando o novo sistema
+      const shouldAlert = LocalAstrologyService.shouldSendCriticalAlert(transitData)
       
-      if (criticalAreas.length === 0) {
-        console.log('✅ Nenhuma área crítica detectada')
+      if (!shouldAlert) {
+        console.log('✅ Nenhuma situação crítica detectada')
         return
       }
 
-      console.log(`🚨 ${criticalAreas.length} área(s) crítica(s) detectada(s)`)
+      // Gerar mensagem personalizada
+      const alertMessage = LocalAstrologyService.generateAlertMessage(transitData)
+      console.log(`🚨 Alerta crítico detectado: ${alertMessage}`)
 
       // Buscar grupos do usuário
       const userGroups = await getUserGroups(user.uid)
@@ -149,6 +154,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     error,
     refreshData,
     sendCriticalAlerts,
+    isUsingLocalEngine,
   }
 }
 
