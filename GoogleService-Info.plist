@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM</string>
+	<string>AIzaSyDtfj8sob-0AAQmMveEYbZ2unS0Qbk64NM</string>
 	<key>GCM_SENDER_ID</key>
 	<string>729037358278</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.joaoestellita.tabulaestelarnew</string>
+	<string>com.estellita.tabulaestelar</string>
 	<key>PROJECT_ID</key>
 	<string>tabula-estelar-84fdc</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:729037358278:ios:35bd0e39a865439a00c3c7</string>
+	<string>1:729037358278:ios:ca931b9d0744ad5200c3c7</string>
 </dict>
 </plist>

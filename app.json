@@ -19,7 +19,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.joaoestellita.tabulaestelarnew",
+      "package": "com.estellita.tabulaestelar",
       "googleServicesFile": "./google-services.json"
     },
     "ios": {

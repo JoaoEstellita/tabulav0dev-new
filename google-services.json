@@ -7,20 +7,30 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:729037358278:android:35bd0e39a865439a00c3c7",
+        "mobilesdk_app_id": "1:729037358278:android:ca931b9d0744ad5200c3c7",
         "android_client_info": {
-          "package_name": "com.joaoestellita.tabulaestelarnew"
+          "package_name": "com.estellita.tabulaestelar"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM"
+          "current_key": "AIzaSyDtfj8sob-0AAQmMveEYbZ2unS0Qbk64NM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
