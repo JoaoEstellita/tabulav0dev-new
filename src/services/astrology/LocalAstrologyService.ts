@@ -14,7 +14,7 @@
 
 import RealAstrologyEngine, { RealAstrologyData } from './RealAstrologyEngine'
 import { BirthData } from '../../types/astrology'
-import { AstrologyCacheService } from '../firebase/AstrologyCacheService'
+import AstrologyCacheService from './AstrologyCacheService'
 
 export interface LocalTransitData {
   currentTransits: RealAstrologyData
