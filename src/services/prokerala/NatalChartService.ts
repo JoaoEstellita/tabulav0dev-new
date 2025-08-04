@@ -84,9 +84,11 @@ class NatalChartService {
         body: JSON.stringify({
           endpoint: '/v2/astrology/natal-aspect-chart',
           params: {
-            'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00`,
-            'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-            'profile[location_timezone_id]': 'America/Sao_Paulo',
+            profile: {
+              datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+              coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+              location_timezone_id: 'America/Sao_Paulo'
+            },
             ayanamsa: 1
           }
         })

@@ -216,13 +216,16 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros corretos conforme API Prokerala
+    // ✅ Parâmetros corretos conforme documentação API Prokerala
     const requestData = {
-      'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
-      'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: '1', // Lahiri (1) - string conforme API
+      profile: {
+        datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+        coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+        location_timezone_id: 'America/Sao_Paulo'
+      },
       transit_datetime: `${datetime}+00:00`,
-      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
+      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: 1 // Inteiro conforme documentação
     }
 
     try {
@@ -280,13 +283,16 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros corretos conforme API Prokerala
+    // ✅ Parâmetros corretos conforme documentação API Prokerala
     const requestData = {
-      'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00+00:00`,
-      'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: '1', // Lahiri (1) - string conforme API
+      profile: {
+        datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+        coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+        location_timezone_id: 'America/Sao_Paulo'
+      },
       transit_datetime: `${datetime}+00:00`,
-      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`
+      current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: 1 // Inteiro conforme documentação
     }
 
     try {
