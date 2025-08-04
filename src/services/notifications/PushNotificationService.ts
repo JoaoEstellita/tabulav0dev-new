@@ -260,22 +260,67 @@ export class PushNotificationService {
   }
 
   /**
-   * Envia notificação push individual
+   * Envia notificação push individual usando FCM HTTP v1 API via backend
    */
   private static async sendPushNotification(
     token: string, 
     transitData: LocalTransitData, 
-    preferences: NotificationPreferences
+    preferences: NotificationPreferences,
+    customMessage?: any
   ): Promise<void> {
     try {
-      const notification = this.generateDailyNotification(transitData, preferences)
+      // Se há uma mensagem customizada (para grupos), usar ela
+      const notification = customMessage || this.generateDailyNotification(transitData, preferences)
+      
+      // Enviar via nosso backend que usa FCM v1
+      const response = await fetch('https://seu-backend.vercel.app/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          title: notification.title,
+          body: notification.body,
+          data: notification.data || {
+            type: 'daily_astrology',
+            timestamp: new Date().toISOString()
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Notificação enviada via FCM v1:', result)
+
+    } catch (error) {
+      // Fallback para Expo Push se o backend falhar
+      console.log('⚠️ Tentando fallback Expo Push...')
+      await this.sendExpoPushNotification(token, transitData, preferences, customMessage)
+    }
+  }
+
+  /**
+   * Fallback para Expo Push Notifications
+   */
+  private static async sendExpoPushNotification(
+    token: string, 
+    transitData: LocalTransitData, 
+    preferences: NotificationPreferences,
+    customMessage?: any
+  ): Promise<void> {
+    try {
+      const notification = customMessage || this.generateDailyNotification(transitData, preferences)
       
       const message = {
         to: token,
         sound: 'default',
         title: notification.title,
         body: notification.body,
-        data: {
+        data: notification.data || {
           type: 'daily_astrology',
           timestamp: new Date().toISOString()
         },
@@ -294,11 +339,13 @@ export class PushNotificationService {
       const result = await response.json()
       
       if (result.errors) {
-        throw new Error(`Push notification error: ${JSON.stringify(result.errors)}`)
+        throw new Error(`Expo Push error: ${JSON.stringify(result.errors)}`)
       }
 
+      console.log('✅ Notificação enviada via Expo Push (fallback)')
+
     } catch (error) {
-      throw new Error(`Falha ao enviar push notification: ${error.message}`)
+      throw new Error(`Falha ao enviar notificação: ${error.message}`)
     }
   }
 

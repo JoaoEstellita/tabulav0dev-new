@@ -87,16 +87,22 @@ No Firebase Console → Project Settings → Cloud Messaging:
 
 ## **5. CONFIGURAÇÃO BACKEND (VERCEL)**
 
-### **5.1 - Variáveis de Ambiente**
+### **5.1 - Variáveis de Ambiente (FCM HTTP v1 API)**
 No painel da Vercel (https://vercel.com), adicione estas variáveis:
 
+**📋 COPIE E COLE EXATAMENTE ASSIM:**
+
 ```env
-FIREBASE_PROJECT_ID=seu-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@seu-project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nSua chave privada aqui\n-----END PRIVATE KEY-----"
-FIREBASE_SERVER_KEY=sua-server-key-do-cloud-messaging
-CRON_SECRET_TOKEN=um-token-secreto-qualquer-para-seguranca
+FIREBASE_PROJECT_ID=tabula-estelar-84fdc
+FIREBASE_PRIVATE_KEY_ID=005de71ea12e8c1679837334356eeb2a02edc4e4
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCvvHMOzeynYXXE\nJqxednnlTRZ0FWd7Yh4GbCHWaWpMAMcOvbXspARlAv/baxS1ch59FvoQxbv+Gdrx\nKzo4ZoxHPecjrM2AFmVTRRrCXocuo2H+OMn2dg4HunQCF8T0/wyZbgWHnTqTl5iv\nMFBWNwCrNfjHhlDX7Fs0pk76Wdx/hnGhco9Nxg0Dr6vam8d3eKJQ5XU7cVpNMmZE\nwd3v0Lu/3V/sNvbeYcOzM/TozYUiggEobnJNM/8iqMHP90qz84TPC/9ihFVz97YV\nwz9fKF66iNw+4UJ6v3ZZgbrQl0jqTxgPIDbUDHmrWV2bys5fMN4q2VjFlsMCD8Cp\nF87Bn2xbAgMBAAECggEASL3pJGYhwNELNcPKUpmY8Ezd7/QSLxTYl9D3mrBs0wP5\nYYUugkMMHKHGtZTX8BlKPH4fyYSHwfEC2xQJF+J+y1h4ziAPuibLD1JJ9s25CBmS\nDPCFzNJmEVXhAiLDoKPYG8RaXp266u/zwARwJJfE25nOHgzfdtk7kYoLo/5BUrlr\nC8gw2dShi7OemCaeIoEaxva9AYK14DPZK+91Daj4dpWYz5l2beRq5ZRaaOYgz2/3\nUyVwAK9kdZPygrL59LMWPhW7ACrHtaH64VRMrLKdhyQ7ilFhoek7NtwxGVfN3kbn\ndz5S/sJ/kltqiQAxVu4NHQ8e6190iJiStiEb9hNYCQKBgQDz9X0Kkt9VnpN9A6jI\nMhDJc/eGk9L55OEm/QI7BbVlv/jXVrFmKfEo8z7cBkSrk2k0UXiamPYIwJpBxCja\nmiXsalRX73AkRDpwdXPzGc5Yyk1vhvdVlTKxudrZTgoGIMeywZ6QGYcO36kIRZK4\nR2fqq8094DNWr1y86UfWGz/YMwKBgQC4aPDHptt+Cfizu4TQT9X9/yNa3F+rWgJG\niNpIGOFxqdPTkpudRX8FeNMEEI7dKJXzOSnDW17wOckU1Pf1eJnsinJKvMwkdiy6\nAQvAzrQI/SOt/3EOy8nS4JL0iggOifkwQaakSdIhp/v9eaNuyN1z0/CJCgJvo79L\nPJppRLGTOQKBgQDM3o9PXd/niu/YwEXxOPoX8ycfAOzfpnHdyAMjhbu74ucaD1eS\nsA4xkXRsWWc5nuVuZiydx252Eyh3qj+UtHa8ft6tqgnGqvVYk4n30OgUcG9vBSyX\n1l9oGOfMLVkFpGmPmEGMSaO9vd25cJOx5WVDEVueZrU2SrXafx0wlFmdOQKBgBbq\nc4Fb6squ0okDNG3ufdkia3JPEFRqyv2Y5AcxkFJfmEMiZNQWXsJ/UTmgFSDGelvP\nLrFoGVQg2iwMiwOmCPqr+afv7i5ZwRUcLCm5hgXX7ycgJxx/loTuA1UAEiA8ZQrq\nHZss0T/9cAL/qp+Jtns+SxW8eLEG2C6xST7rmmWBAoGAH0s2/rESwvfKLAvaWyrk\nzvFvcKx+rd0n4jjAvHVhQi+rHGG2Kta0kexbW+4nSfWW4/tT3K0q0diHuy6MQC2n\nCIY8KdZUEOAsPaH+qLvocgDaftHvxxyrYdt1jXAtw8jC5PsAQVDdO1TA3c3qa4oj\n0M0UAnCCNMpH1iZMq9n7DK0=\n-----END PRIVATE KEY-----"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@tabula-estelar-84fdc.iam.gserviceaccount.com
+FIREBASE_CLIENT_ID=106676486327651252934
+FIREBASE_SENDER_ID=729037358278
+CRON_SECRET_TOKEN=tabula-estelar-cron-2025
 ```
+
+**⚠️ IMPORTANTE:** Use exatamente esses valores que extraí do seu Service Account!
 
 ### **5.2 - Como Obter as Credenciais**
 1. **Firebase Console** → Project Settings → **Service Accounts**
