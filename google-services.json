@@ -2,12 +2,12 @@
   "project_info": {
     "project_number": "729037358278",
     "project_id": "tabula-estelar-84fdc",
-    "storage_bucket": "tabula-estelar-84fdc.appspot.com"
+    "storage_bucket": "tabula-estelar-84fdc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:729037358278:android:xxxxxxxxxxxxxxxx",
+        "mobilesdk_app_id": "1:729037358278:android:35bd0e39a865439a00c3c7",
         "android_client_info": {
           "package_name": "com.joaoestellita.tabulaestelarnew"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          "current_key": "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM"
         }
       ],
       "services": {
