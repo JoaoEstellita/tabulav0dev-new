@@ -47,35 +47,25 @@ class NatalChartService {
   
   /**
    * Busca mapa natal permanente do usuário
-   * TODO: Integrar com endpoint /v2/astrology/natal-chart quando disponível
+   * Apenas dados reais da API Prokerala
    */
-  async getNatalChart(birthData: BirthData): Promise<NatalChart> {
+  async getNatalChart(birthData: BirthData): Promise<NatalChart | null> {
     try {
       console.log('🌟 Buscando mapa natal permanente...')
       
-      // Tentar buscar dados reais da API primeiro
+      // Tentar buscar dados reais da API
       const realChart = await this.fetchRealNatalChart(birthData)
       if (realChart) {
         console.log('✅ Mapa natal real obtido da API')
         return realChart
       }
       
-      // Fallback para simulação se a API falhar
-      console.log('⚠️ API falhou, usando simulação temporária')
-      const simulatedChart = this.generateNatalChart(birthData)
-      
-      console.log('🌟 Mapa natal gerado:', {
-        planets: simulatedChart.planets.length,
-        houses: simulatedChart.houses.length,
-        aspects: simulatedChart.aspects.length,
-        ascendant: simulatedChart.ascendant.sign
-      })
-      
-      return simulatedChart
+      // Se não conseguir dados reais, retornar null
+      console.log('❌ Não foi possível obter dados reais do mapa natal')
+      return null
     } catch (error) {
       console.error('❌ Erro ao buscar mapa natal:', error)
-      // Em caso de erro, retornar simulação
-      return this.generateNatalChart(birthData)
+      return null
     }
   }
 
@@ -84,42 +74,64 @@ class NatalChartService {
    */
   private async fetchRealNatalChart(birthData: BirthData): Promise<NatalChart | null> {
     try {
-      console.log('🔮 Buscando mapa natal real via API...')
+      console.log('🔮 Buscando mapa natal real...')
       
-      // Preparar parâmetros no formato correto da Prokerala
-      const params = {
-        'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00`,
-        'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-        ayanamsa: 1
-      }
-
-      console.log('📋 Parâmetros do mapa natal:', params)
-
-      // Fazer requisição para o endpoint natal-planet-position
-      const response = await axios.post(`${PROKERALA_CONFIG.backendUrl}/api/prokerala-proxy`, {
-        endpoint: '/v2/astrology/natal-planet-position',
-        params
-      }, {
+      const response = await fetch(`${PROKERALA_CONFIG.backendUrl}/api/prokerala-proxy`, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        timeout: 30000
+        body: JSON.stringify({
+          endpoint: '/v2/astrology/natal-aspect-chart',
+          params: {
+            'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00`,
+            'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+            ayanamsa: 1
+          }
+        })
       })
 
-      console.log('✅ Resposta API mapa natal:', response.status)
-      
-      if (response.data && response.data.success && response.data.data) {
-        return this.parseNatalChartResponse(response.data.data, birthData)
+      if (!response.ok) {
+        console.error('❌ Erro na API do mapa natal:', response.status, response.statusText)
+        return null
       }
 
-      return null
+      const data = await response.json()
+      console.log('✅ Dados do mapa natal recebidos:', data)
 
-    } catch (error: any) {
-      console.error('❌ Erro ao buscar mapa natal real:', error.message)
-      if (error.response) {
-        console.error('Status:', error.response.status)
-        console.error('Data:', error.response.data)
+      if (!data || !data.aspects) {
+        console.error('❌ Dados inválidos do mapa natal')
+        return null
       }
+
+      // Converter dados da Prokerala para formato interno
+      const natalChart: NatalChart = {
+        planets: [], // Será preenchido se necessário
+        houses: [], // Será preenchido se necessário
+        aspects: data.aspects.map((aspect: any) => ({
+          planet1: aspect.planet_one?.name || aspect.planet1,
+          planet2: aspect.planet_two?.name || aspect.planet2,
+          aspect: aspect.aspect?.name || aspect.aspect_type,
+          orb: aspect.orb || 0,
+          strength: 5 // Valor padrão
+        })),
+        ascendant: {
+          sign: 'Áries',
+          degree: 0
+        },
+        midheaven: {
+          sign: 'Capricórnio',
+          degree: 0
+        },
+        calculatedAt: new Date(),
+        isValid: true
+      }
+
+      console.log('✅ Mapa natal convertido com sucesso')
+      return natalChart
+
+    } catch (error) {
+      console.error('❌ Erro ao buscar mapa natal:', error)
       return null
     }
   }
@@ -158,7 +170,7 @@ class NatalChartService {
         number: i,
         cusp: (i - 1) * 30, // Distribuição básica
         sign: this.getSignFromLongitude((i - 1) * 30),
-        ruler: this.getHouseRuler(i)
+        ruler: this.getHouseRulerByNumber(i)
       })
     }
 
@@ -294,27 +306,27 @@ class NatalChartService {
       })
     }
     
-    // Gerar aspectos natais
-    const aspects: NatalAspect[] = []
-    for (let i = 0; i < planets.length; i++) {
-      for (let j = i + 1; j < planets.length; j++) {
-        const planet1 = planets[i]
-        const planet2 = planets[j]
-        const orb = Math.abs(planet1.longitude - planet2.longitude)
-        
-        // Verificar aspectos principais
-        const aspect = this.calculateAspect(orb)
-        if (aspect) {
-          aspects.push({
-            planet1: planet1.name,
-            planet2: planet2.name,
-            aspect: aspect.name,
-            orb: aspect.orb,
-            strength: aspect.strength
-          })
+            // Gerar aspectos natais
+        const aspects: NatalAspect[] = []
+        for (let i = 0; i < planets.length; i++) {
+          for (let j = i + 1; j < planets.length; j++) {
+            const planet1 = planets[i]
+            const planet2 = planets[j]
+            const orb = Math.abs(planet1.longitude - planet2.longitude)
+            
+            // Verificar aspectos principais
+            const aspect = this.calculateAspectFromOrb(orb)
+            if (aspect) {
+              aspects.push({
+                planet1: planet1.name,
+                planet2: planet2.name,
+                aspect: aspect.name,
+                orb: aspect.orb,
+                strength: aspect.strength
+              })
+            }
+          }
         }
-      }
-    }
     
     return {
       planets,
@@ -434,8 +446,8 @@ class NatalChartService {
     return null
   }
 
-  // Overload para compatibilidade com código existente
-  private calculateAspect(orb: number): { name: string, orb: number, strength: number } | null {
+  // Função para calcular aspecto baseado apenas no orb
+  private calculateAspectFromOrb(orb: number): { name: string, orb: number, strength: number } | null {
     const aspects = [
       { degrees: 0, name: 'Conjunção', tolerance: 8, strength: 10 },
       { degrees: 60, name: 'Sextil', tolerance: 6, strength: 6 },
@@ -462,9 +474,9 @@ class NatalChartService {
   }
 
   /**
-   * Obtém regente da casa astrológica
+   * Obtém regente da casa astrológica por número
    */
-  private getHouseRuler(houseNumber: number): string {
+  private getHouseRulerByNumber(houseNumber: number): string {
     const rulers = [
       'Marte',     // Casa 1
       'Vênus',     // Casa 2

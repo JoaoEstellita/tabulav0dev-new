@@ -540,32 +540,23 @@ export class AstrologyCalculator {
     // DEBUG COMPLETO: Estrutura da resposta da API
     console.log('🔍 Estrutura completa da API:') 
     console.log('- prokeralaData keys:', Object.keys(prokeralaData || {}))
-    console.log('- prokeralaData completo:', JSON.stringify(prokeralaData, null, 2))
     console.log('- planet_position type:', typeof prokeralaData.planet_position)
-    console.log('- planet_position keys:', prokeralaData.planet_position ? Object.keys(prokeralaData.planet_position) : 'null')
     console.log('- transit_aspect length:', Array.isArray(prokeralaData.transit_aspect) ? prokeralaData.transit_aspect.length : 'not array')
     
-    // Extrai posições planetárias - parser robusto
+    // Extrai posições planetárias - parser robusto baseado nos logs reais
     let planetData = []
     
-    if (prokeralaData.planet_position) {
-      // Tenta diferentes estruturas da API
-      if (Array.isArray(prokeralaData.planet_position)) {
-        planetData = prokeralaData.planet_position
-        console.log('📍 Usando planet_position como array direto')
-      } else if (prokeralaData.planet_position.data && Array.isArray(prokeralaData.planet_position.data)) {
-        planetData = prokeralaData.planet_position.data
-        console.log('📍 Usando planet_position.data')
-      } else if (prokeralaData.planet_position.planets && Array.isArray(prokeralaData.planet_position.planets)) {
-        planetData = prokeralaData.planet_position.planets
-        console.log('📍 Usando planet_position.planets')
-      } else if (prokeralaData.planet_position.planet_positions && Array.isArray(prokeralaData.planet_position.planet_positions)) {
-        planetData = prokeralaData.planet_position.planet_positions
-        console.log('📍 Usando planet_position.planet_positions')
-      } else {
-        // Se é um objeto, pode ser um único planeta ou estrutura diferente
-        console.log('🔍 Estrutura planet_position não reconhecida:', JSON.stringify(prokeralaData.planet_position, null, 2))
-      }
+    // Baseado nos logs, a estrutura real é:
+    // planet_position: { planets: [...] }
+    if (prokeralaData.planet_position?.planets) {
+      planetData = prokeralaData.planet_position.planets
+      console.log('📍 Usando planet_position.planets (estrutura real)')
+    } else if (Array.isArray(prokeralaData.planet_position)) {
+      planetData = prokeralaData.planet_position
+      console.log('📍 Usando planet_position como array direto')
+    } else if (prokeralaData.planet_position?.data) {
+      planetData = prokeralaData.planet_position.data
+      console.log('📍 Usando planet_position.data')
     } else if (prokeralaData.transit_details?.planets) {
       planetData = prokeralaData.transit_details.planets
       console.log('📍 Usando transit_details.planets')
@@ -582,16 +573,26 @@ export class AstrologyCalculator {
     if (planetData && Array.isArray(planetData)) {
       console.log('🔍 Processando dados planetários:', planetData.length, 'planetas')
       planetData.forEach((planet: any, index: number) => {
-        console.log(`📍 Planeta ${index + 1}:`, JSON.stringify(planet, null, 2))
+        // Baseado nos logs reais, a estrutura é:
+        // { name: "Sun", longitude: 123.45, latitude: 0, speed: 1.0, sign: { name: "Leo" }, house: { number: 5 } }
+        const planetName = planet.name || planet.planet || 'Unknown'
+        const longitude = planet.longitude || planet.long || 0
+        const latitude = planet.latitude || planet.lat || 0
+        const speed = planet.speed || planet.velocity || 0
+        const signName = planet.sign?.name || planet.sign || 'Unknown'
+        const houseNumber = planet.house?.number || planet.house || 1
+        
+        console.log(`📍 Planeta ${index + 1}: ${planetName} em ${signName} (casa ${houseNumber})`)
+        
         planets.push({
-          name: planet.name || planet.planet || 'Unknown',
-          longitude: planet.longitude || planet.long || 0,
-          latitude: planet.latitude || planet.lat || 0,
-          speed: planet.speed || planet.velocity || 0,
-          sign: planet.sign?.name || planet.sign || 'Unknown',
-          house: planet.house?.number || planet.house || 1,
+          name: planetName,
+          longitude,
+          latitude,
+          speed,
+          sign: signName,
+          house: houseNumber,
           dignity: 0, // Será calculado baseado no signo
-          retrograde: (planet.speed || planet.velocity || 0) < 0
+          retrograde: speed < 0
         })
       })
     } else {
@@ -609,9 +610,11 @@ export class AstrologyCalculator {
       }
     })
 
-    // Extrai aspectos de trânsito - parser robusto 
+    // Extrai aspectos de trânsito - parser robusto baseado nos logs reais
     let aspectData = []
     
+    // Baseado nos logs, a estrutura real é:
+    // transit_aspect: [{ planet_one: { name: "Sun" }, planet_two: { name: "Moon" }, aspect: { name: "Conjunction" }, orb: 1.5 }]
     if (prokeralaData.transit_aspect) {
       if (Array.isArray(prokeralaData.transit_aspect)) {
         aspectData = prokeralaData.transit_aspect
@@ -630,13 +633,13 @@ export class AstrologyCalculator {
 
     console.log('🔗 Aspectos encontrados:', aspectData?.length || 0)
     
-    // Filtrar aspectos válidos (alguns podem ser inválidos causando o número alto)
+    // Filtrar aspectos válidos (baseado na estrutura real dos logs)
     if (aspectData && Array.isArray(aspectData)) {
       aspectData = aspectData.filter(aspect => 
         aspect && 
-        (aspect.planet1 || aspect.planet_1) && 
-        (aspect.planet2 || aspect.planet_2) &&
-        (aspect.aspect || aspect.aspect_name)
+        aspect.planet_one && 
+        aspect.planet_two &&
+        aspect.aspect
       )
       console.log('🔗 Aspectos válidos após filtro:', aspectData.length)
       
@@ -647,11 +650,14 @@ export class AstrologyCalculator {
 
     if (aspectData && Array.isArray(aspectData) && aspectData.length < 1000) { // Evita processar dados inválidos
       aspectData.forEach((aspect: any) => {
-        // Parser flexível para diferentes formatos da API
-        const planet1 = aspect.planet1?.name || aspect.planet_1?.name || aspect.planet1 || aspect.planet_1 || 'Unknown'
-        const planet2 = aspect.planet2?.name || aspect.planet_2?.name || aspect.planet2 || aspect.planet_2 || 'Unknown'
-        const aspectType = aspect.aspect?.name || aspect.aspect_name || aspect.aspect || aspect.type || 'unknown'
+        // Baseado nos logs reais, a estrutura é:
+        // { planet_one: { name: "Sun" }, planet_two: { name: "Moon" }, aspect: { name: "Conjunction" }, orb: 1.5 }
+        const planet1 = aspect.planet_one?.name || aspect.planet1?.name || aspect.planet_1?.name || 'Unknown'
+        const planet2 = aspect.planet_two?.name || aspect.planet2?.name || aspect.planet_2?.name || 'Unknown'
+        const aspectType = aspect.aspect?.name || aspect.aspect_name || aspect.aspect || 'unknown'
         const orb = aspect.orb || aspect.orb_value || 0
+        
+        console.log(`🔗 Aspecto: ${planet1}-${planet2} ${aspectType} (orb: ${orb})`)
         
         aspects.push({
           planet1,
