@@ -563,11 +563,16 @@ export class AstrologyCalculator {
     } else if (prokeralaData.planets) {
       planetData = prokeralaData.planets
       console.log('📍 Usando planets direto')
+    } else if (prokeralaData.data?.planets) {
+      planetData = prokeralaData.data.planets
+      console.log('📍 Usando data.planets')
     }
 
     console.log('📊 Dados planetários encontrados:', planetData?.length || 0)
     if (planetData?.length > 0) {
       console.log('📍 Primeiro planeta de exemplo:', JSON.stringify(planetData[0], null, 2))
+    } else {
+      console.log('❌ Nenhum planeta encontrado. Estrutura completa:', JSON.stringify(prokeralaData, null, 2))
     }
 
     if (planetData && Array.isArray(planetData)) {
@@ -625,10 +630,10 @@ export class AstrologyCalculator {
       } else if (prokeralaData.transit_aspect.aspects && Array.isArray(prokeralaData.transit_aspect.aspects)) {
         aspectData = prokeralaData.transit_aspect.aspects
         console.log('🔗 Usando transit_aspect.aspects')
+      } else if (prokeralaData.aspects && Array.isArray(prokeralaData.aspects)) {
+        aspectData = prokeralaData.aspects
+        console.log('🔗 Usando aspects direto')
       }
-    } else if (prokeralaData.aspects) {
-      aspectData = prokeralaData.aspects
-      console.log('🔗 Usando aspects direto')
     }
 
     console.log('🔗 Aspectos encontrados:', aspectData?.length || 0)
