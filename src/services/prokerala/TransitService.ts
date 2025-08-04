@@ -216,7 +216,7 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros corretos conforme documentação API Prokerala
+    // ✅ Parâmetros conforme documentação transit-planet-position
     const requestData = {
       profile: {
         datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
@@ -226,7 +226,7 @@ class TransitService {
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
       house_system: 'placidus',
-      orb: 'default',
+      orb: 'default', 
       birth_time_rectification: 'flat-chart',
       la: 'en',
       ayanamsa: 1
@@ -287,7 +287,7 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros corretos conforme documentação API Prokerala
+    // ✅ Parâmetros conforme documentação transit-aspect-chart
     const requestData = {
       profile: {
         datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
@@ -296,11 +296,12 @@ class TransitService {
       },
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus',
-      orb: 'default',
-      birth_time_rectification: 'flat-chart',
-      la: 'en',
-      ayanamsa: 1
+      house_system: 'placidus', // OBRIGATÓRIO
+      orb: 'default', // OBRIGATÓRIO
+      birth_time_rectification: 'flat-chart', // Opcional
+      aspect_filter: 'major', // Opcional - major, minor, all
+      la: 'en', // Opcional - idioma
+      ayanamsa: 1 // OBRIGATÓRIO
     }
 
     try {
