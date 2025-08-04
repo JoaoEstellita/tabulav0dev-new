@@ -77,7 +77,23 @@ export class LocalAstrologyService {
       )
 
       // 3. Processar dados para formato do app
+      console.log('🔍 DEBUG - realData recebido:', {
+        timestamp: realData.timestamp,
+        planetsCount: realData.planets.length,
+        aspectsCount: realData.aspects.length,
+        housesCount: realData.houses.length,
+        lifeAreasKeys: Object.keys(realData.lifeAreas),
+        ascendant: realData.ascendant,
+        midheaven: realData.midheaven
+      })
+      
       const processedData = this.processRealData(realData, birthData)
+      
+      console.log('🔍 DEBUG - processedData:', {
+        lifeAreasKeys: Object.keys(processedData.lifeAreas),
+        lifeAreasCount: Object.keys(processedData.lifeAreas).length,
+        sample: Object.entries(processedData.lifeAreas)[0]
+      })
 
       // 4. Salvar no cache
       await this.saveToCache(userId, birthData, realData, processedData)
@@ -196,17 +212,31 @@ export class LocalAstrologyService {
     processedData: LocalTransitData
   ): Promise<void> {
     try {
+      // Verificar e limpar dados undefined antes de salvar
+      const cleanPlanets = realData.planets || []
+      const cleanAspects = realData.aspects || []
+      const cleanProcessedData = processedData || {}
+      
+      console.log('🔍 DEBUG - Salvando cache:', {
+        userId: userId ? 'presente' : 'AUSENTE',
+        planetsCount: cleanPlanets.length,
+        aspectsCount: cleanAspects.length,
+        processedDataKeys: Object.keys(cleanProcessedData),
+        birthDataKeys: Object.keys(birthData)
+      })
+
       await AstrologyCacheService.saveCache(
         userId,
         birthData,
-        realData.planets, // Raw planet data
-        realData.aspects, // Raw aspects data
-        processedData, // Processed data
+        cleanPlanets, // Raw planet data (verificado)
+        cleanAspects, // Raw aspects data (verificado)
+        cleanProcessedData, // Processed data (verificado)
         'local' // Source
       )
       console.log('✅ Dados salvos no cache')
     } catch (error) {
-      console.log('⚠️ Não foi possível salvar no cache, mas cálculos funcionam normalmente')
+      console.log('⚠️ Não foi possível salvar no cache:', error)
+      console.log('⚠️ Mas cálculos funcionam normalmente')
     }
   }
 

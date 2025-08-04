@@ -111,7 +111,10 @@ export default function HomeScreen() {
     })
   }
 
-  const criticalAreas = transitData?.lifeAreas.filter(area => area.criticalLevel) || []
+  const criticalAreas = transitData?.lifeAreas ? 
+    Object.entries(transitData.lifeAreas)
+      .filter(([_, area]) => area.percentage < 30)
+      .map(([name, area]) => ({ name, ...area })) : []
 
   if (loading && !transitData) {
     return (
