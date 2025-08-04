@@ -216,20 +216,17 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros EXATOS conforme documentação transit-planet-position
+    // ✅ Parâmetros CORRETOS conforme documentação oficial Prokerala (FLAT, não aninhados)
     const requestData = {
-      profile: {
-        datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-        coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-        location_timezone_id: 'America/Sao_Paulo'
-      },
+      datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+      coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: 1,
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus', // OBRIGATÓRIO
-      orb: 'default', // OBRIGATÓRIO
-      birth_time_rectification: 'flat-chart', // OBRIGATÓRIO para este endpoint
-      la: 'en', // Opcional
-      ayanamsa: 1 // OBRIGATÓRIO
+      house_system: 'placidus',
+      orb: 'default',
+      birth_time_rectification: 'flat-chart',
+      la: 'en'
     }
 
     try {
@@ -287,21 +284,18 @@ class TransitService {
     const now = new Date()
     const datetime = now.toISOString().split('.')[0] // Remove milissegundos
     
-    // ✅ Parâmetros conforme documentação transit-aspect-chart
+    // ✅ Parâmetros CORRETOS conforme documentação oficial Prokerala (FLAT, não aninhados)
     const requestData = {
-      profile: {
-        datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-        coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-        location_timezone_id: 'America/Sao_Paulo'
-      },
+      datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+      coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+      ayanamsa: 1,
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus', // OBRIGATÓRIO
-      orb: 'default', // OBRIGATÓRIO
-      birth_time_rectification: 'flat-chart', // Opcional
-      aspect_filter: 'major', // Opcional - major, minor, all
-      la: 'en', // Opcional - idioma
-      ayanamsa: 1 // OBRIGATÓRIO
+      house_system: 'placidus',
+      orb: 'default',
+      birth_time_rectification: 'flat-chart',
+      aspect_filter: 'major',
+      la: 'en'
     }
 
     try {

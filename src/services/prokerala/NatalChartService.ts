@@ -84,17 +84,14 @@ class NatalChartService {
         body: JSON.stringify({
           endpoint: '/v2/astrology/natal-aspect-chart',
           params: {
-            profile: {
-              datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
-              coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-              location_timezone_id: 'America/Sao_Paulo'
-            },
+            datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
+            coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+            ayanamsa: 1,
             house_system: 'placidus',
             orb: 'default',
             birth_time_rectification: 'flat-chart',
             aspect_filter: 'major',
-            la: 'en',
-            ayanamsa: 1
+            la: 'en'
           }
         })
       })
