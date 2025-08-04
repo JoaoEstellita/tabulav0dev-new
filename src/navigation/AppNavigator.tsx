@@ -9,7 +9,7 @@ import LoginScreen from "../screens/auth/LoginScreen"
 import HomeScreen from "../screens/home/HomeScreen"
 import GroupsScreen from "../screens/groups/GroupsScreen"
 import ProfileScreen from "../screens/profile/ProfileScreen"
-import AstrologyScreen from "../screens/astrology/AstrologyScreen"
+import PremiumScreen from "../screens/premium/PremiumScreen"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 
@@ -67,7 +67,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Perfil" }} />
       <Tab.Screen name="Groups" component={GroupsScreen} options={{ title: "Grupos" }} />
-      <Tab.Screen name="Astrology" component={AstrologyScreen} options={{ title: "Astrologia" }} />
+              <Tab.Screen name="Premium" component={PremiumScreen} options={{ title: "Premium" }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Configurações" }} />
     </Tab.Navigator>
   )

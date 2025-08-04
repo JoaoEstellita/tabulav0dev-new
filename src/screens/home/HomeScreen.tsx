@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import TransitCard from '../../components/TransitCard'
+import PushNotificationService from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 
@@ -31,8 +32,29 @@ export default function HomeScreen() {
   useEffect(() => {
     if (user) {
       loadUserProfile()
+      initializeNotifications()
     }
   }, [user])
+
+  const initializeNotifications = async () => {
+    if (!user) return
+    
+    try {
+      console.log('📱 Inicializando notificações push...')
+      const token = await PushNotificationService.initializeForUser(user.uid)
+      
+      if (token) {
+        console.log('✅ Notificações push configuradas com sucesso')
+        
+        // Agendar notificação diária se houver dados de trânsito
+        if (transitData) {
+          await PushNotificationService.scheduleDailyNotification(user.uid, transitData)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao inicializar notificações:', error)
+    }
+  }
 
   const loadUserProfile = async () => {
     if (!user) return
