@@ -86,6 +86,7 @@ class NatalChartService {
           params: {
             'profile[datetime]': `${birthData.birthDate}T${birthData.birthTime}:00`,
             'profile[coordinates]': `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
+            'profile[location_timezone_id]': 'America/Sao_Paulo',
             ayanamsa: 1
           }
         })

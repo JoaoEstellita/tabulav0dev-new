@@ -618,21 +618,40 @@ export class AstrologyCalculator {
     // Extrai aspectos de trânsito - parser robusto baseado nos logs reais
     let aspectData = []
     
-    // Baseado nos logs, a estrutura real é:
-    // transit_aspect: [{ planet_one: { name: "Sun" }, planet_two: { name: "Moon" }, aspect: { name: "Conjunction" }, orb: 1.5 }]
-    if (prokeralaData.transit_aspect) {
-      if (Array.isArray(prokeralaData.transit_aspect)) {
-        aspectData = prokeralaData.transit_aspect
-        console.log('🔗 Usando transit_aspect como array direto')
-      } else if (prokeralaData.transit_aspect.data && Array.isArray(prokeralaData.transit_aspect.data)) {
-        aspectData = prokeralaData.transit_aspect.data
-        console.log('🔗 Usando transit_aspect.data')
-      } else if (prokeralaData.transit_aspect.aspects && Array.isArray(prokeralaData.transit_aspect.aspects)) {
-        aspectData = prokeralaData.transit_aspect.aspects
-        console.log('🔗 Usando transit_aspect.aspects')
-      } else if (prokeralaData.aspects && Array.isArray(prokeralaData.aspects)) {
-        aspectData = prokeralaData.aspects
-        console.log('🔗 Usando aspects direto')
+    // Baseado nos logs, vejo que os aspectos estão chegando da API
+    // Vou tentar todas as possíveis estruturas
+    if (Array.isArray(prokeralaData.transit_aspect)) {
+      aspectData = prokeralaData.transit_aspect
+      console.log('🔗 Usando transit_aspect como array direto')
+    } else if (prokeralaData.transit_aspect?.data && Array.isArray(prokeralaData.transit_aspect.data)) {
+      aspectData = prokeralaData.transit_aspect.data
+      console.log('🔗 Usando transit_aspect.data')
+    } else if (prokeralaData.transit_aspect?.aspects && Array.isArray(prokeralaData.transit_aspect.aspects)) {
+      aspectData = prokeralaData.transit_aspect.aspects
+      console.log('🔗 Usando transit_aspect.aspects')
+    } else if (Array.isArray(prokeralaData.aspects)) {
+      aspectData = prokeralaData.aspects
+      console.log('🔗 Usando aspects direto')
+    } else if (prokeralaData.data?.aspects && Array.isArray(prokeralaData.data.aspects)) {
+      aspectData = prokeralaData.data.aspects
+      console.log('🔗 Usando data.aspects')
+    } else if (prokeralaData.data && Array.isArray(prokeralaData.data)) {
+      aspectData = prokeralaData.data
+      console.log('🔗 Usando data como array direto')
+    } else {
+      console.log('❌ Estrutura de aspectos não reconhecida. Tentando debug completo...')
+      console.log('🔍 Chaves disponíveis:', Object.keys(prokeralaData || {}))
+      
+      // Buscar por qualquer array que contenha objetos com planet_one/planet_two
+      for (const [key, value] of Object.entries(prokeralaData || {})) {
+        if (Array.isArray(value) && value.length > 0) {
+          const firstItem = value[0]
+          if (firstItem && (firstItem.planet_one || firstItem.planet_two || firstItem.aspect)) {
+            console.log(`🎯 Encontrado array de aspectos em: ${key}`)
+            aspectData = value
+            break
+          }
+        }
       }
     }
 
