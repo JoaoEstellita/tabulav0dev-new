@@ -37,6 +37,21 @@ export interface NotificationPreferences {
     criticalAlerts: boolean
     favorableAspects: boolean
     challenges: boolean
+    groupMessages: boolean
+  }
+}
+
+export interface UserSpecificSettings {
+  personalMessage: string
+  criticalStates: {
+    amor: boolean
+    carreira: boolean
+    financas: boolean
+    saude: boolean
+    familia: boolean
+    espiritualidade: boolean
+    comunicacao: boolean
+    transformacao: boolean
   }
 }
 
@@ -303,9 +318,9 @@ export class PushNotificationService {
   }
 
   /**
-   * Busca preferências de notificação do usuário
+   * Busca preferências de notificação do usuário (método público)
    */
-  private static async getUserPreferences(userId: string): Promise<NotificationPreferences> {
+  static async getUserPreferences(userId: string): Promise<NotificationPreferences> {
     try {
       const doc_ref = doc(db, 'notificationPreferences', userId)
       const doc_snap = await getDoc(doc_ref)
@@ -322,7 +337,8 @@ export class PushNotificationService {
           dailyOverview: true,
           criticalAlerts: true,
           favorableAspects: true,
-          challenges: true
+          challenges: true,
+          groupMessages: true
         }
       }
     } catch (error) {
@@ -335,7 +351,8 @@ export class PushNotificationService {
           dailyOverview: true,
           criticalAlerts: true,
           favorableAspects: true,
-          challenges: true
+          challenges: true,
+          groupMessages: true
         }
       }
     }
@@ -439,6 +456,152 @@ export class PushNotificationService {
       console.log('✅ Todas as notificações canceladas')
     } catch (error) {
       console.error('❌ Erro ao cancelar notificações:', error)
+    }
+  }
+
+  /**
+   * Busca configurações específicas do usuário
+   */
+  static async getUserSpecificSettings(userId: string): Promise<UserSpecificSettings | null> {
+    try {
+      const doc_ref = doc(db, 'userNotificationSettings', userId)
+      const doc_snap = await getDoc(doc_ref)
+      
+      if (doc_snap.exists()) {
+        return doc_snap.data() as UserSpecificSettings
+      }
+      
+      return null
+    } catch (error) {
+      console.error('❌ Erro ao buscar configurações específicas:', error)
+      return null
+    }
+  }
+
+  /**
+   * Atualiza configurações específicas do usuário
+   */
+  static async updateUserSpecificSettings(
+    userId: string, 
+    settings: UserSpecificSettings
+  ): Promise<void> {
+    try {
+      await setDoc(doc(db, 'userNotificationSettings', userId), settings, { merge: true })
+      console.log('✅ Configurações específicas atualizadas')
+    } catch (error) {
+      console.error('❌ Erro ao atualizar configurações específicas:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Gera notificação personalizada com frase do usuário
+   */
+  static generatePersonalizedNotification(
+    transitData: LocalTransitData,
+    preferences: NotificationPreferences,
+    userSettings: UserSpecificSettings
+  ): { title: string, body: string } {
+    // Verificar quais áreas estão críticas e se o usuário quer ser notificado
+    const criticalAreas = Object.entries(transitData.lifeAreas).filter(
+      ([area, data]) => {
+        const isCritical = data.status === 'crítico'
+        const userWantsAlert = userSettings.criticalStates[area as keyof typeof userSettings.criticalStates]
+        return isCritical && userWantsAlert
+      }
+    )
+
+    // Título baseado nos alertas críticos personalizados
+    let title = '🌟 Seu Dia Astrológico'
+    if (criticalAreas.length > 0) {
+      title = `🚨 ${criticalAreas.length} Área(s) Requer(em) Atenção`
+    }
+
+    // Corpo da mensagem
+    let body = transitData.dailyOverview.generalTrend
+
+    // Adicionar áreas críticas específicas
+    if (criticalAreas.length > 0 && preferences.types.criticalAlerts) {
+      const areaNames = criticalAreas.map(([area]) => this.getLifeAreaName(area))
+      body += ` 🚨 Atenção especial: ${areaNames.join(', ')}.`
+    }
+
+    // Adicionar área favorável se habilitado
+    if (preferences.types.favorableAspects) {
+      const bestAreaName = this.getLifeAreaName(transitData.dailyOverview.bestArea)
+      body += ` ✨ Foco em: ${bestAreaName}.`
+    }
+
+    // Adicionar frase pessoal se definida
+    if (userSettings.personalMessage.trim()) {
+      body += ` 💫 ${userSettings.personalMessage.trim()}`
+    }
+
+    return { title, body: body.trim() }
+  }
+
+  /**
+   * Envia notificação para grupo com frase pessoal
+   */
+  static async sendGroupNotificationWithPersonalMessage(
+    groupId: string,
+    userId: string,
+    transitData: LocalTransitData
+  ): Promise<void> {
+    try {
+      // Buscar configurações do usuário
+      const preferences = await this.getUserPreferences(userId)
+      const userSettings = await this.getUserSpecificSettings(userId)
+      
+      if (!preferences.types.groupMessages || !userSettings) {
+        return
+      }
+
+      // Gerar notificação personalizada
+      const notification = this.generatePersonalizedNotification(
+        transitData, 
+        preferences, 
+        userSettings
+      )
+
+      // Buscar membros do grupo
+      const groupDoc = await getDoc(doc(db, 'groups', groupId))
+      if (!groupDoc.exists()) return
+
+      const groupData = groupDoc.data()
+      const groupName = groupData.name || 'Grupo'
+
+      // Buscar tokens dos membros do grupo
+      const memberTokens = []
+      for (const memberId of groupData.members || []) {
+        if (memberId === userId) continue // Não enviar para si mesmo
+        
+        const tokenDoc = await getDoc(doc(db, 'userTokens', memberId))
+        if (tokenDoc.exists()) {
+          memberTokens.push(tokenDoc.data().token)
+        }
+      }
+
+      // Enviar notificação para todos os membros
+      const groupMessage = {
+        title: `👥 ${groupName} - Mensagem Astrológica`,
+        body: `${notification.body}\n\n💫 Mensagem enviada por um membro do grupo`,
+        data: {
+          type: 'group_astrology',
+          groupId,
+          senderId: userId,
+          timestamp: new Date().toISOString()
+        }
+      }
+
+      for (const token of memberTokens) {
+        await this.sendPushNotification(token, transitData, preferences, groupMessage)
+      }
+
+      console.log(`📢 Notificação de grupo enviada para ${memberTokens.length} membros`)
+
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação de grupo:', error)
     }
   }
 }

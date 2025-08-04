@@ -364,7 +364,19 @@ export default function ProfileScreen() {
 
         {/* Preferências de Notificação */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notificações</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Notificações</Text>
+            <TouchableOpacity 
+              style={styles.advancedButton}
+              onPress={() => {
+                // Navegar para tela de configurações avançadas
+                Alert.alert('🔔 Configurações Avançadas', 'Funcionalidade será implementada em breve!')
+              }}
+            >
+              <Text style={styles.advancedButtonText}>Avançado</Text>
+              <Ionicons name="settings-outline" size={16} color="#FFD700" />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
@@ -559,11 +571,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 16,
+  },
+  advancedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  advancedButtonText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginRight: 4,
   },
   input: {
     backgroundColor: "#2C2C2E",
