@@ -552,9 +552,13 @@ export class AstrologyCalculator {
         if (prokeralaData.transit_aspect.length > 0) {
           console.log('🔗 Primeiro aspecto completo:', JSON.stringify(prokeralaData.transit_aspect[0], null, 2))
         }
-      } else {
-        console.log('🔗 transit_aspect estrutura:', JSON.stringify(prokeralaData.transit_aspect, null, 2).substring(0, 300))
+      } else if (typeof prokeralaData.transit_aspect === 'object') {
+        console.log('🔗 transit_aspect é objeto!')
+        console.log('🔗 transit_aspect chaves:', Object.keys(prokeralaData.transit_aspect))
+        console.log('🔗 transit_aspect estrutura:', JSON.stringify(prokeralaData.transit_aspect, null, 2).substring(0, 500))
       }
+    } else {
+      console.log('🔗 transit_aspect NÃO existe!')
     }
     
     // Debug para outras possíveis localizações de aspectos
@@ -667,14 +671,31 @@ export class AstrologyCalculator {
       console.log('❌ Estrutura de aspectos não reconhecida. Tentando debug completo...')
       console.log('🔍 Chaves disponíveis:', Object.keys(prokeralaData || {}))
       
-      // Buscar por qualquer array que contenha objetos com planet_one/planet_two
-      for (const [key, value] of Object.entries(prokeralaData || {})) {
-        if (Array.isArray(value) && value.length > 0) {
-          const firstItem = value[0]
-          if (firstItem && (firstItem.planet_one || firstItem.planet_two || firstItem.aspect)) {
-            console.log(`🎯 Encontrado array de aspectos em: ${key}`)
-            aspectData = value
+      // CORREÇÃO ESPECÍFICA: Se transit_aspect existe mas não é array, pode ser objeto
+      if (prokeralaData.transit_aspect && typeof prokeralaData.transit_aspect === 'object') {
+        console.log('🔍 transit_aspect é objeto, verificando estrutura...')
+        console.log('🔍 transit_aspect chaves:', Object.keys(prokeralaData.transit_aspect))
+        
+        // Verificar se é um objeto que contém array
+        for (const [subKey, subValue] of Object.entries(prokeralaData.transit_aspect)) {
+          if (Array.isArray(subValue) && subValue.length > 0) {
+            console.log(`🎯 Encontrado array de aspectos em transit_aspect.${subKey}`)
+            aspectData = subValue
             break
+          }
+        }
+      }
+      
+      // Se ainda não encontrou, buscar por qualquer array que contenha objetos com planet_one/planet_two
+      if (!aspectData || aspectData.length === 0) {
+        for (const [key, value] of Object.entries(prokeralaData || {})) {
+          if (Array.isArray(value) && value.length > 0) {
+            const firstItem = value[0]
+            if (firstItem && (firstItem.planet_one || firstItem.planet_two || firstItem.aspect)) {
+              console.log(`🎯 Encontrado array de aspectos em: ${key}`)
+              aspectData = value
+              break
+            }
           }
         }
       }
