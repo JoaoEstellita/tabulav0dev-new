@@ -108,6 +108,16 @@ export function useLifeAreas(): UseLifeAreasReturn {
       const alertMessages = userProfile?.alertMessages
       const userName = userProfile?.displayName || userProfile?.fullName || 'Usuário'
 
+      // Encontrar áreas críticas (abaixo de 30%)
+      const criticalAreas = Object.entries(transitData.lifeAreas)
+        .filter(([_, area]) => area.percentage < 30)
+        .map(([name, area]) => ({ name, status: area.percentage }))
+
+      if (criticalAreas.length === 0) {
+        console.log('✅ Nenhuma área crítica encontrada')
+        return
+      }
+
       // Enviar alertas para cada área crítica
       for (const area of criticalAreas) {
         const message = alertMessages?.[area.name] || getDefaultMessage(area.name)
@@ -237,8 +247,8 @@ function getAreaDisplayName(areaName: string): string {
   return displayNames[areaName as keyof typeof displayNames] || areaName
 }
 
-function getDefaultMessage(area: LifeArea['name']): string {
-  const defaultMessages = {
+function getDefaultMessage(area: string): string {
+  const defaultMessages: { [key: string]: string } = {
     love: "Meus trânsitos amorosos estão em fase crítica. Preciso de apoio!",
     career: "Minha carreira passa por um momento desafiador. Pedindo energias positivas!",
     health: "Minha saúde precisa de atenção especial agora. Enviando amor e luz!",
@@ -246,5 +256,5 @@ function getDefaultMessage(area: LifeArea['name']): string {
     spirituality: "Meu crescimento espiritual está intenso. Compartilhando essa energia!",
   }
 
-  return defaultMessages[area]
+  return defaultMessages[area] || `Estou passando por um momento crítico em ${area}. Pedindo energias positivas!`
 }

@@ -17,7 +17,7 @@ export interface AstrologyCache {
     dailyOverview: any
   }
   dataVersion: string
-  cacheSource: 'prokerala' | 'fallback'
+  cacheSource: 'prokerala' | 'fallback' | 'local'
   userId: string
   birthDataHash: string // Para detectar mudanças nos dados de nascimento
 }
@@ -209,7 +209,7 @@ class AstrologyCacheService {
     planetPositions: any[], 
     transitAspects: any[], 
     calculatedData: any,
-    source: 'prokerala' | 'fallback' = 'prokerala'
+    source: 'prokerala' | 'fallback' | 'local' = 'prokerala'
   ): Promise<void> {
     try {
       const now = new Date()
@@ -255,17 +255,22 @@ class AstrologyCacheService {
       
       console.log(`💾 Cache salvo - Fonte: ${source}, Requests hoje: ${dailyRequestCount}/${this.MAX_DAILY_REQUESTS}`)
     } catch (error) {
-      console.warn('⚠️ Não foi possível salvar cache no Firestore, salvando apenas localmente:', error.message)
+      console.warn('⚠️ Não foi possível salvar cache no Firestore, salvando apenas localmente:', error)
       // Ainda salva no cache local
-      await this.setLocalCache(userId, {
-        data,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + this.CACHE_DURATION,
-        birthDataHash: this.generateBirthDataHash(birthData),
-        lastUpdate: new Date(),
+      const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`
+      await AsyncStorage.setItem(localCacheKey, JSON.stringify({
+        lastUpdate: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000)).toISOString(),
         dailyRequestCount: 1,
-        lastRequestDate: new Date().toDateString()
-      })
+        lastRequestDate: this.getTodayString(),
+        planetPositions: planetPositions || [],
+        transitAspects: transitAspects || [],
+        calculatedData: calculatedData || {},
+        dataVersion: this.DATA_VERSION,
+        cacheSource: source,
+        userId,
+        birthDataHash: this.generateBirthDataHash(birthData)
+      }))
     }
   }
 
