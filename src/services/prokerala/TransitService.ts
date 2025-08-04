@@ -223,9 +223,13 @@ class TransitService {
         coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
         location_timezone_id: 'America/Sao_Paulo'
       },
-      transit_datetime: `${datetime}+00:00`,
+      transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1 // Inteiro conforme documentação
+      house_system: 'placidus',
+      orb: 'default',
+      birth_time_rectification: 'flat-chart',
+      la: 'en',
+      ayanamsa: 1
     }
 
     try {
@@ -290,9 +294,13 @@ class TransitService {
         coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
         location_timezone_id: 'America/Sao_Paulo'
       },
-      transit_datetime: `${datetime}+00:00`,
+      transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      ayanamsa: 1 // Inteiro conforme documentação
+      house_system: 'placidus',
+      orb: 'default',
+      birth_time_rectification: 'flat-chart',
+      la: 'en',
+      ayanamsa: 1
     }
 
     try {

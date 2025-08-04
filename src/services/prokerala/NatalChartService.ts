@@ -89,6 +89,11 @@ class NatalChartService {
               coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
               location_timezone_id: 'America/Sao_Paulo'
             },
+            house_system: 'placidus',
+            orb: 'default',
+            birth_time_rectification: 'flat-chart',
+            aspect_filter: 'major',
+            la: 'en',
             ayanamsa: 1
           }
         })
