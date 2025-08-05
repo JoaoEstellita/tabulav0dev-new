@@ -245,16 +245,37 @@ class AstrologyCacheService {
         expiresAt: Timestamp.fromDate(cache.expiresAt)
       }
       
-      // Debug: verificar campos undefined
-      const undefinedFields = Object.entries(firestoreData)
-        .filter(([key, value]) => value === undefined)
-        .map(([key]) => key)
+      // Debug: verificar campos undefined RECURSIVAMENTE
+      const findUndefinedFields = (obj, path = '') => {
+        const undefinedPaths = []
+        for (const [key, value] of Object.entries(obj)) {
+          const currentPath = path ? `${path}.${key}` : key
+          if (value === undefined) {
+            undefinedPaths.push(currentPath)
+          } else if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+            undefinedPaths.push(...findUndefinedFields(value, currentPath))
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (item === undefined) {
+                undefinedPaths.push(`${currentPath}[${index}]`)
+              } else if (item && typeof item === 'object') {
+                undefinedPaths.push(...findUndefinedFields(item, `${currentPath}[${index}]`))
+              }
+            })
+          }
+        }
+        return undefinedPaths
+      }
+
+      const undefinedFields = findUndefinedFields(firestoreData)
       
       if (undefinedFields.length > 0) {
-        console.error('❌ Campos undefined detectados:', undefinedFields)
-        console.error('🔍 Cache completo:', cache)
-        throw new Error(`Campos undefined: ${undefinedFields.join(', ')}`)
+        console.error('❌ Campos undefined detectados (recursivo):', undefinedFields)
+        console.error('🔍 Estrutura completa:', JSON.stringify(firestoreData, null, 2))
+        throw new Error(`Campos undefined encontrados: ${undefinedFields.join(', ')}`)
       }
+      
+      console.log('✅ Validação passou - nenhum campo undefined encontrado')
       
       await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), firestoreData)
       

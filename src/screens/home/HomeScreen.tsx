@@ -289,11 +289,11 @@ export default function HomeScreen() {
               <View key={index} style={styles.planetCard}>
                 <View style={styles.planetHeader}>
                   <Ionicons name="planet" size={16} color="#FFD700" />
-                  <Text style={styles.planetName}>{planet.name}</Text>
-                  <Text style={styles.planetSign}>{planet.sign}</Text>
+                  <Text style={styles.planetName}>{planet.name || 'Planeta'}</Text>
+                  <Text style={styles.planetSign}>{planet.sign || 'N/A'}</Text>
                 </View>
                 <Text style={styles.planetPosition}>
-                  {planet.position.toFixed(2)}° em {planet.sign}
+                  {planet.position ? planet.position.toFixed(2) : '0.00'}° em {planet.sign || 'N/A'}
                 </Text>
               </View>
             ))}

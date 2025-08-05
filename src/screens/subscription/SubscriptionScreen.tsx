@@ -205,7 +205,7 @@ export default function SubscriptionScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                R$ {plan.price.toFixed(2).replace('.', ',')}
+                R$ {(plan.price || 0).toFixed(2).replace('.', ',')}
                 <Text style={styles.planPeriod}>/mês</Text>
               </Text>
             </View>
@@ -253,7 +253,7 @@ export default function SubscriptionScreen() {
               <>
                 <Ionicons name="card-outline" size={20} color="#FFFFFF" />
                 <Text style={styles.subscriptionButtonText}>
-                  Assinar por R$ {selectedPlan.price.toFixed(2).replace('.', ',')}/mês
+                  Assinar por R$ {(selectedPlan.price || 0).toFixed(2).replace('.', ',')}/mês
                 </Text>
               </>
             )}

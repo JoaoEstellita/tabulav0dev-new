@@ -80,7 +80,7 @@ export default function PremiumScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2)}/mês`}
+                {plan.price === 0 ? 'Grátis' : `R$ ${(plan.price || 0).toFixed(2)}/mês`}
               </Text>
             </View>
             <View style={styles.planFeatures}>
