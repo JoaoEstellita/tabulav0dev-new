@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
-// TransitCard removido - usando componente inline personalizado
+import TransitComparisonCard from '../../components/TransitComparisonCard'
 import PushNotificationService from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -348,27 +348,12 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Trânsitos Atuais */}
-        {safePlanets.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="planet" size={20} color="#FFD700" />
-              <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
-            </View>
-            
-            {safePlanets.map((planet, index) => (
-              <View key={index} style={styles.planetCard}>
-                <View style={styles.planetHeader}>
-                  <Ionicons name="planet" size={16} color="#FFD700" />
-                  <Text style={styles.planetName}>{planet.name || 'Planeta'}</Text>
-                  <Text style={styles.planetSign}>{planet.sign || 'N/A'}</Text>
-                </View>
-                <Text style={styles.planetPosition}>
-                  {(planet.longitude || 0).toFixed(2)}° em {planet.sign || 'N/A'}
-                </Text>
-              </View>
-            ))}
-          </View>
+        {/* Trânsitos Comparativos Completos */}
+        {transitData?.currentTransits?.planetComparisons && transitData?.currentTransits?.chartSummary && (
+          <TransitComparisonCard 
+            planetComparisons={transitData.currentTransits.planetComparisons}
+            chartSummary={transitData.currentTransits.chartSummary}
+          />
         )}
 
         {/* Orientações */}
