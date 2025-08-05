@@ -286,7 +286,16 @@ export default function HomeScreen() {
             </View>
             
             {transitData.currentTransits.planets.map((planet, index) => (
-              <TransitCard key={index} transit={planet} />
+              <View key={index} style={styles.planetCard}>
+                <View style={styles.planetHeader}>
+                  <Ionicons name="planet" size={16} color="#FFD700" />
+                  <Text style={styles.planetName}>{planet.name}</Text>
+                  <Text style={styles.planetSign}>{planet.sign}</Text>
+                </View>
+                <Text style={styles.planetPosition}>
+                  {planet.position.toFixed(2)}° em {planet.sign}
+                </Text>
+              </View>
             ))}
           </View>
         )}
@@ -559,6 +568,37 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     lineHeight: 20,
+  },
+  planetCard: {
+    backgroundColor: '#2A2A3E',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFD700',
+  },
+  planetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  planetName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  planetSign: {
+    color: '#FFD700',
+    fontSize: 14,
+    marginLeft: 'auto',
+    fontWeight: '600',
+  },
+  planetPosition: {
+    color: '#A0A0A0',
+    fontSize: 12,
+    marginLeft: 24,
   },
   bottomSpacing: {
     height: 32,
