@@ -1,4 +1,14 @@
-import React, { useState } from 'react'
+/**
+ * 💎 SUBSCRIPTION SCREEN 💎
+ * 
+ * Tela completa de assinaturas com:
+ * - Planos visuais e atrativos
+ * - Trial gratuito
+ * - Fluxo de pagamento integrado
+ * - Gestão de assinaturas ativas
+ */
+
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -7,35 +17,96 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Linking
+  Linking,
+  SafeAreaView
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useSubscription } from '../../hooks/useSubscription'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useAuth } from '../../hooks/useAuth'
-import type { SubscriptionPlan } from '../../services/mercadopago/MercadoPagoService'
+import MercadoPagoService, { type SubscriptionPlan, type SubscriptionStatus } from '../../services/payment/MercadoPagoService'
+import SubscriptionPlanCard from '../../components/SubscriptionPlanCard'
 
 export default function SubscriptionScreen() {
   const { user } = useAuth()
-  const {
-    subscription,
-    plans,
-    loading,
-    error,
-    isInTrial,
-    trialDaysRemaining,
-    createSubscription,
-    cancelSubscription
-  } = useSubscription()
-
+  
+  // Estados
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null)
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null)
+  const [loading, setLoading] = useState(true)
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [startingTrial, setStartingTrial] = useState(false)
 
-  const handleSelectPlan = (plan: SubscriptionPlan) => {
-    setSelectedPlan(plan)
+  // Carregar status da assinatura
+  useEffect(() => {
+    loadSubscriptionStatus()
+  }, [user])
+
+  const loadSubscriptionStatus = async () => {
+    if (!user?.uid) return
+
+    try {
+      setLoading(true)
+      const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
+      setSubscriptionStatus(status)
+      
+      // Selecionar plano atual se existir
+      if (status.planId) {
+        const currentPlan = MercadoPagoService.getPlanById(status.planId)
+        if (currentPlan) {
+          setSelectedPlan(currentPlan)
+        }
+      } else {
+        // Selecionar plano anual como padrão (mais popular)
+        setSelectedPlan(MercadoPagoService.PLANS[1])
+      }
+      
+    } catch (error) {
+      console.error('Erro ao carregar status da assinatura:', error)
+      Alert.alert('Erro', 'Não foi possível carregar informações da assinatura')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStartTrial = async (plan: SubscriptionPlan) => {
+    if (!user?.uid) {
+      Alert.alert('Erro', 'Usuário não autenticado')
+      return
+    }
+
+    try {
+      setStartingTrial(true)
+      
+      const success = await MercadoPagoService.startFreeTrial(user.uid, plan.id)
+      
+      if (success) {
+        Alert.alert(
+          '🎉 Trial Ativado!',
+          `Você agora tem ${plan.trialDays} dias grátis para testar todos os recursos premium!\n\nAproveite sua experiência completa no Tabula Estelar.`,
+          [
+            {
+              text: 'Começar a usar',
+              onPress: () => {
+                // Recarregar status
+                loadSubscriptionStatus()
+              }
+            }
+          ]
+        )
+      } else {
+        Alert.alert('Erro', 'Não foi possível ativar o trial. Você pode já ter usado seu período gratuito.')
+      }
+      
+    } catch (error) {
+      console.error('Erro ao iniciar trial:', error)
+      Alert.alert('Erro', 'Falha ao ativar trial. Tente novamente.')
+    } finally {
+      setStartingTrial(false)
+    }
   }
 
   const handleSubscribe = async () => {
-    if (!selectedPlan) {
+    if (!selectedPlan || !user?.uid) {
       Alert.alert('Erro', 'Selecione um plano primeiro')
       return
     }
@@ -43,11 +114,24 @@ export default function SubscriptionScreen() {
     try {
       setProcessingPayment(true)
       
-      const result = await createSubscription(selectedPlan.id)
+      const externalReference = MercadoPagoService.generateExternalReference(user.uid, selectedPlan.id)
       
+      const paymentData = {
+        userId: user.uid,
+        planId: selectedPlan.id,
+        email: user.email || '',
+        name: user.displayName || 'Usuário',
+        amount: selectedPlan.price,
+        description: selectedPlan.name,
+        externalReference,
+      }
+      
+      const preference = await MercadoPagoService.createPaymentPreference(paymentData)
+      
+      // Mostrar confirmação antes de redirecionar
       Alert.alert(
-        'Redirecionando para Pagamento',
-        'Você será redirecionado para a página de pagamento do Mercado Pago.',
+        '💳 Redirecionando para Pagamento',
+        `Você será redirecionado para finalizar o pagamento de ${MercadoPagoService.formatPrice(selectedPlan.price)}.\n\nApós a confirmação, sua assinatura será ativada automaticamente.`,
         [
           {
             text: 'Cancelar',
@@ -56,40 +140,47 @@ export default function SubscriptionScreen() {
           {
             text: 'Continuar',
             onPress: () => {
-              Linking.openURL(result.paymentUrl)
+              Linking.openURL(preference.init_point)
             }
           }
         ]
       )
+      
     } catch (error) {
-      console.error('Erro ao criar assinatura:', error)
-      Alert.alert('Erro', 'Não foi possível criar a assinatura. Tente novamente.')
+      console.error('Erro ao processar pagamento:', error)
+      Alert.alert('Erro', 'Falha ao processar pagamento. Tente novamente.')
     } finally {
       setProcessingPayment(false)
     }
   }
 
   const handleCancelSubscription = async () => {
-    if (!subscription) return
+    if (!user?.uid || !subscriptionStatus?.isActive) return
 
     Alert.alert(
-      'Cancelar Assinatura',
-      'Tem certeza que deseja cancelar sua assinatura?',
+      '⚠️ Cancelar Assinatura',
+      'Tem certeza que deseja cancelar sua assinatura?\n\nVocê continuará com acesso premium até o final do período pago.',
       [
         {
-          text: 'Não',
+          text: 'Não cancelar',
           style: 'cancel'
         },
         {
-          text: 'Sim, Cancelar',
+          text: 'Confirmar Cancelamento',
           style: 'destructive',
           onPress: async () => {
             try {
-              await cancelSubscription()
-              Alert.alert('Sucesso', 'Assinatura cancelada com sucesso.')
+              const success = await MercadoPagoService.cancelSubscription(user.uid)
+              
+              if (success) {
+                Alert.alert('✅ Assinatura Cancelada', 'Sua assinatura foi cancelada com sucesso.')
+                loadSubscriptionStatus()
+              } else {
+                Alert.alert('Erro', 'Não foi possível cancelar a assinatura.')
+              }
             } catch (error) {
               console.error('Erro ao cancelar assinatura:', error)
-              Alert.alert('Erro', 'Não foi possível cancelar a assinatura.')
+              Alert.alert('Erro', 'Falha ao cancelar assinatura.')
             }
           }
         }
@@ -97,441 +188,359 @@ export default function SubscriptionScreen() {
     )
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return '#4CAF50'
-      case 'trial':
-        return '#FF9800'
-      case 'cancelled':
-        return '#F44336'
-      case 'expired':
-        return '#9E9E9E'
-      default:
-        return '#757575'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'Ativa'
-      case 'trial':
-        return 'Período de Teste'
-      case 'cancelled':
-        return 'Cancelada'
-      case 'expired':
-        return 'Expirada'
-      default:
-        return 'Desconhecido'
-    }
-  }
-
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6200EE" />
-        <Text style={styles.loadingText}>Carregando planos...</Text>
-      </View>
+      <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={styles.loadingText}>Carregando assinatura...</Text>
+        </View>
+      </LinearGradient>
     )
   }
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Planos de Assinatura</Text>
-        <Text style={styles.subtitle}>
-          Escolha o plano ideal para você
-        </Text>
-      </View>
-
-      {/* Status da Assinatura Atual */}
-      {subscription && (
-        <View style={styles.currentSubscription}>
-          <Text style={styles.sectionTitle}>Sua Assinatura Atual</Text>
-          <View style={styles.subscriptionCard}>
-            <View style={styles.subscriptionHeader}>
-              <View style={styles.statusContainer}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(subscription.status) }
-                  ]}
-                />
-                <Text style={styles.statusText}>
-                  {getStatusText(subscription.status)}
-                </Text>
-              </View>
-              {isInTrial && (
-                <Text style={styles.trialText}>
-                  {trialDaysRemaining} dias restantes
-                </Text>
-              )}
+  // Se usuário tem assinatura ativa ou trial
+  if (subscriptionStatus?.isActive) {
+    return (
+      <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
+        <SafeAreaView style={styles.container}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>💎 Assinatura Premium</Text>
+              <Text style={styles.subtitle}>
+                {MercadoPagoService.isInTrial(subscriptionStatus) ? 'Trial Ativo' : 'Assinatura Ativa'}
+              </Text>
             </View>
-            
-            <Text style={styles.planName}>
-              {plans.find(p => p.id === subscription.planId)?.name || 'Plano'}
-            </Text>
-            
-            <Text style={styles.subscriptionDate}>
-              Iniciada em: {new Date(subscription.startDate).toLocaleDateString('pt-BR')}
-            </Text>
-            
-            {subscription.status === 'active' && (
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCancelSubscription}
+
+            {/* Status Card */}
+            <View style={styles.statusCard}>
+              <LinearGradient
+                colors={MercadoPagoService.isInTrial(subscriptionStatus) ? ['#FFD700', '#FFA500'] : ['#4CAF50', '#45A049']}
+                style={styles.statusGradient}
               >
-                <Text style={styles.cancelButtonText}>Cancelar Assinatura</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
+                <View style={styles.statusHeader}>
+                  <Ionicons 
+                    name={MercadoPagoService.isInTrial(subscriptionStatus) ? "gift" : "checkmark-circle"} 
+                    size={32} 
+                    color="#000" 
+                  />
+                  <Text style={styles.statusTitle}>
+                    {MercadoPagoService.isInTrial(subscriptionStatus) ? 'Trial Gratuito' : 'Premium Ativo'}
+                  </Text>
+                </View>
 
-      {/* Planos Disponíveis */}
-      <View style={styles.plansSection}>
-        <Text style={styles.sectionTitle}>Planos Disponíveis</Text>
-        
-        {plans.map((plan) => (
-          <TouchableOpacity
-            key={plan.id}
-            style={[
-              styles.planCard,
-              selectedPlan?.id === plan.id && styles.selectedPlanCard
-            ]}
-            onPress={() => handleSelectPlan(plan)}
-          >
-            <View style={styles.planHeader}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <Text style={styles.planPrice}>
-                R$ {(plan.price || 0).toFixed(2).replace('.', ',')}
-                <Text style={styles.planPeriod}>/mês</Text>
-              </Text>
+                <Text style={styles.statusSubtitle}>
+                  {subscriptionStatus.planId ? MercadoPagoService.getPlanById(subscriptionStatus.planId)?.name : 'Plano Premium'}
+                </Text>
+
+                {MercadoPagoService.isInTrial(subscriptionStatus) ? (
+                  <Text style={styles.statusDetails}>
+                    🎁 {MercadoPagoService.getTrialDaysRemaining(subscriptionStatus)} dias restantes do trial
+                  </Text>
+                ) : (
+                  <Text style={styles.statusDetails}>
+                    ✨ Renovação em {subscriptionStatus.nextBillingDate ? new Date(subscriptionStatus.nextBillingDate).toLocaleDateString('pt-BR') : 'N/A'}
+                  </Text>
+                )}
+              </LinearGradient>
             </View>
-            
-            <View style={styles.trialInfo}>
-              <Ionicons name="time-outline" size={16} color="#FF9800" />
-              <Text style={styles.trialText}>
-                {plan.trialDays} dias de teste grátis
-              </Text>
-            </View>
-            
-            <View style={styles.featuresList}>
-              {plan.features.map((feature, index) => (
+
+            {/* Recursos Ativos */}
+            <View style={styles.featuresSection}>
+              <Text style={styles.sectionTitle}>🚀 Recursos Disponíveis</Text>
+              {MercadoPagoService.PLANS[0].features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
-                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
                   <Text style={styles.featureText}>{feature}</Text>
                 </View>
               ))}
             </View>
-            
-            {selectedPlan?.id === plan.id && (
-              <View style={styles.selectedIndicator}>
-                <Ionicons name="checkmark-circle" size={20} color="#6200EE" />
-                <Text style={styles.selectedText}>Selecionado</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
 
-      {/* Botão de Assinatura */}
-      {selectedPlan && !subscription?.status === 'active' && (
-        <View style={styles.subscriptionButtonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.subscriptionButton,
-              processingPayment && styles.subscriptionButtonDisabled
-            ]}
-            onPress={handleSubscribe}
-            disabled={processingPayment}
-          >
-            {processingPayment ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <Ionicons name="card-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.subscriptionButtonText}>
-                  Assinar por R$ {(selectedPlan.price || 0).toFixed(2).replace('.', ',')}/mês
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
+            {/* Ações */}
+            <View style={styles.actionsSection}>
+              {MercadoPagoService.isInTrial(subscriptionStatus) && (
+                <TouchableOpacity
+                  style={styles.upgradeButton}
+                  onPress={() => {
+                    // Scroll para os planos
+                    setSubscriptionStatus(null) // Temporário para mostrar planos
+                  }}
+                >
+                  <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.upgradeGradient}>
+                    <Ionicons name="arrow-up-circle" size={24} color="#000" />
+                    <Text style={styles.upgradeButtonText}>Assinar Agora</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelSubscription}>
+                <Text style={styles.cancelButtonText}>Cancelar Assinatura</Text>
+              </TouchableOpacity>
+            </View>
+
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+    )
+  }
+
+  // Tela de seleção de planos
+  return (
+    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           
-          <Text style={styles.termsText}>
-            Ao assinar, você concorda com nossos{' '}
-            <Text style={styles.termsLink}>Termos de Uso</Text>
-            {' '}e{' '}
-            <Text style={styles.termsLink}>Política de Privacidade</Text>
-          </Text>
-        </View>
-      )}
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>✨ Desbloqueie o Poder dos Astros</Text>
+            <Text style={styles.subtitle}>
+              Acesse recursos premium e descubra insights astrológicos únicos
+            </Text>
+          </View>
 
-      {/* Informações Adicionais */}
-      <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>Informações Importantes</Text>
-        
-        <View style={styles.infoItem}>
-          <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
-          <Text style={styles.infoText}>
-            Pagamento seguro via Mercado Pago
-          </Text>
-        </View>
-        
-        <View style={styles.infoItem}>
-          <Ionicons name="refresh" size={16} color="#2196F3" />
-          <Text style={styles.infoText}>
-            Renovação automática mensal
-          </Text>
-        </View>
-        
-        <View style={styles.infoItem}>
-          <Ionicons name="close-circle" size={16} color="#FF5722" />
-          <Text style={styles.infoText}>
-            Cancele a qualquer momento
-          </Text>
-        </View>
-      </View>
+          {/* Planos */}
+          <View style={styles.plansSection}>
+            {MercadoPagoService.PLANS.map((plan) => (
+              <SubscriptionPlanCard
+                key={plan.id}
+                plan={plan}
+                isSelected={selectedPlan?.id === plan.id}
+                onSelect={setSelectedPlan}
+                disabled={processingPayment || startingTrial}
+              />
+            ))}
+          </View>
 
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-    </ScrollView>
+          {/* Botões de Ação */}
+          <View style={styles.actionButtons}>
+            {/* Botão Trial */}
+            {selectedPlan?.trialDays && (
+              <TouchableOpacity
+                style={[styles.trialButton, startingTrial && styles.disabledButton]}
+                onPress={() => selectedPlan && handleStartTrial(selectedPlan)}
+                disabled={startingTrial || processingPayment}
+              >
+                <LinearGradient colors={['#4CAF50', '#45A049']} style={styles.buttonGradient}>
+                  {startingTrial ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Ionicons name="gift" size={24} color="#FFFFFF" />
+                  )}
+                  <Text style={styles.trialButtonText}>
+                    {startingTrial ? 'Ativando...' : `Teste ${selectedPlan?.trialDays} dias grátis`}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+
+            {/* Botão Assinar */}
+            <TouchableOpacity
+              style={[styles.subscribeButton, processingPayment && styles.disabledButton]}
+              onPress={handleSubscribe}
+              disabled={!selectedPlan || processingPayment || startingTrial}
+            >
+              <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.buttonGradient}>
+                {processingPayment ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <Ionicons name="card" size={24} color="#000" />
+                )}
+                <Text style={styles.subscribeButtonText}>
+                  {processingPayment 
+                    ? 'Processando...' 
+                    : `Assinar por ${selectedPlan ? MercadoPagoService.formatPrice(selectedPlan.price) : 'R$ 0,00'}`
+                  }
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Garantia */}
+          <View style={styles.guaranteeSection}>
+            <Ionicons name="shield-checkmark" size={24} color="#4CAF50" />
+            <Text style={styles.guaranteeText}>
+              🔒 Pagamento 100% seguro via Mercado Pago{'\n'}
+              ⚡ Ativação instantânea após confirmação{'\n'}
+              🔄 Cancele quando quiser
+            </Text>
+          </View>
+
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5'
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5'
   },
   loadingText: {
-    marginTop: 16,
+    color: '#FFFFFF',
     fontSize: 16,
-    color: '#666'
+    marginTop: 16,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0'
+    paddingTop: 20,
+    paddingBottom: 24,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666'
-  },
-  currentSubscription: {
-    padding: 20
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16
-  },
-  subscriptionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3
-  },
-  subscriptionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333'
-  },
-  trialText: {
-    fontSize: 12,
-    color: '#FF9800',
-    fontWeight: '600'
-  },
-  planName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8
-  },
-  subscriptionDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12
-  },
-  cancelButton: {
-    backgroundColor: '#F44336',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignSelf: 'flex-start'
-  },
-  cancelButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600'
+    color: '#CCCCCC',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
   },
   plansSection: {
-    padding: 20
+    marginBottom: 24,
   },
-  planCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: 'transparent'
+  actionButtons: {
+    gap: 16,
+    marginBottom: 24,
   },
-  selectedPlanCard: {
-    borderColor: '#6200EE',
-    backgroundColor: '#F3E5F5'
+  trialButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  planHeader: {
+  subscribeButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    gap: 12,
   },
-  planPrice: {
+  trialButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  subscribeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  guaranteeSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 32,
+    gap: 12,
+  },
+  guaranteeText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#CCCCCC',
+    lineHeight: 20,
+  },
+  // Estilos para assinatura ativa
+  statusCard: {
+    borderRadius: 20,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  statusGradient: {
+    padding: 24,
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  statusTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  statusSubtitle: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 8,
+  },
+  statusDetails: {
+    fontSize: 16,
+    color: '#333',
+  },
+  featuresSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#6200EE'
-  },
-  planPeriod: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: 'normal'
-  },
-  trialInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  featuresList: {
-    marginBottom: 16
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
   },
   featureText: {
-    fontSize: 14,
-    color: '#333',
-    marginLeft: 8
-  },
-  selectedIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0'
-  },
-  selectedText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6200EE',
-    marginLeft: 8
-  },
-  subscriptionButtonContainer: {
-    padding: 20
-  },
-  subscriptionButton: {
-    backgroundColor: '#6200EE',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 12
-  },
-  subscriptionButtonDisabled: {
-    backgroundColor: '#B39DDB'
-  },
-  subscriptionButtonText: {
+    fontSize: 16,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8
+    flex: 1,
   },
-  termsText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 16
+  actionsSection: {
+    gap: 16,
+    marginBottom: 32,
   },
-  termsLink: {
-    color: '#6200EE',
-    textDecorationLine: 'underline'
+  upgradeButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  infoSection: {
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    marginTop: 20
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16
-  },
-  infoItem: {
+  upgradeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    gap: 12,
   },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8
+  upgradeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
   },
-  errorContainer: {
-    padding: 20,
-    backgroundColor: '#FFEBEE',
-    margin: 20,
-    borderRadius: 8
+  cancelButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
   },
-  errorText: {
-    color: '#C62828',
-    fontSize: 14,
-    textAlign: 'center'
-  }
-}) 
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#FF4444',
+    textDecorationLine: 'underline',
+  },
+})
