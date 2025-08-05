@@ -66,42 +66,34 @@ function MainTabs() {
         headerTintColor: "#FFFFFF",
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={() => (
+      <Tab.Screen name="Home" options={{ title: "Perfil" }}>
+        {() => (
           <ErrorBoundary>
             <HomeScreen />
           </ErrorBoundary>
-        )} 
-        options={{ title: "Perfil" }} 
-      />
-      <Tab.Screen 
-        name="Groups" 
-        component={() => (
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Groups" options={{ title: "Grupos" }}>
+        {() => (
           <ErrorBoundary>
             <GroupsScreen />
           </ErrorBoundary>
-        )} 
-        options={{ title: "Grupos" }} 
-      />
-      <Tab.Screen 
-        name="Premium" 
-        component={() => (
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Premium" options={{ title: "Premium" }}>
+        {() => (
           <ErrorBoundary>
             <PremiumScreen />
           </ErrorBoundary>
-        )} 
-        options={{ title: "Premium" }} 
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={() => (
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Profile" options={{ title: "Configurações" }}>
+        {() => (
           <ErrorBoundary>
             <ProfileScreen />
           </ErrorBoundary>
-        )} 
-        options={{ title: "Configurações" }} 
-      />
+        )}
+      </Tab.Screen>
     </Tab.Navigator>
   )
 }

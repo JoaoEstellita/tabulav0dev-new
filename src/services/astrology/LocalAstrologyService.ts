@@ -164,7 +164,15 @@ export class LocalAstrologyService {
     }
 
     return {
-      currentTransits: realData,
+      currentTransits: {
+        timestamp: realData.timestamp,
+        planets: realData.planets,
+        aspects: realData.aspects,
+        houses: realData.houses,
+        ascendant: realData.ascendant,
+        midheaven: realData.midheaven,
+        lifeAreas: realData.lifeAreas
+      },
       lifeAreas,
       dailyOverview,
       warnings: [] // Sem warnings para cálculos locais!
