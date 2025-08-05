@@ -19,6 +19,8 @@ import GroupService, { type Group, type GroupMember, type GroupAlert } from "../
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
+import GroupCard from "../../components/GroupCard"
+import GroupDetailModal from "../../components/GroupDetailModal"
 
 export default function GroupsScreen() {
   const { user } = useAuth()
@@ -50,6 +52,10 @@ export default function GroupsScreen() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [groupMessage, setGroupMessage] = useState("")
   const [sendingNotification, setSendingNotification] = useState(false)
+  
+  // Estados para modal de detalhes
+  const [showGroupDetail, setShowGroupDetail] = useState(false)
+  const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -633,6 +639,30 @@ export default function GroupsScreen() {
           </View>
         </View>
       </Modal>
+      
+      {/* Modal de Detalhes do Grupo */}
+      <GroupDetailModal
+        visible={showGroupDetail}
+        group={selectedGroupForDetail}
+        members={selectedGroupForDetail?.id === selectedGroup?.id ? groupMembers : []}
+        currentUserId={user?.uid || ''}
+        onClose={() => {
+          setShowGroupDetail(false)
+          setSelectedGroupForDetail(null)
+        }}
+        onInvite={() => {
+          // Ação de convite será implementada na próxima etapa
+          Alert.alert('Em breve', 'Sistema de convites em desenvolvimento!')
+        }}
+        onLeaveGroup={() => {
+          // Ação de sair do grupo
+          Alert.alert('Sair do grupo', 'Funcionalidade em desenvolvimento!')
+        }}
+        onMemberProfile={(member) => {
+          // Ação de ver perfil do membro
+          Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)
+        }}
+      />
     </LinearGradient>
   )
 }
@@ -1138,5 +1168,43 @@ const styles = StyleSheet.create({
   modalButtonDisabled: {
     backgroundColor: "#555",
     opacity: 0.6,
+  },
+  
+  // Estilos modernos para o novo layout
+  modernHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#888',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modernActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1C1C1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+  },
+  groupsContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
 })
