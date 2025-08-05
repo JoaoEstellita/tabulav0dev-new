@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 
 // Componente para renderizar texto com formatação
 function FormattedText({ children }: { children: string }) {
-  const parts = children.split(/(\*\*[^*]+\*\*)/g)
+  const parts = (children || '').split(/(\*\*[^*]+\*\*)/g)
   
   return (
     <Text style={styles.answer}>

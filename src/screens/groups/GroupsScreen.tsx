@@ -254,7 +254,7 @@ export default function GroupsScreen() {
         {/* Header com seletor de grupos */}
         <View style={styles.header}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupSelector}>
-            {groups.map((group) => (
+            {(groups || []).map((group) => (
               <TouchableOpacity
                 key={group.id}
                 style={[styles.groupTab, selectedGroup?.id === group.id && styles.groupTabActive]}
@@ -283,7 +283,7 @@ export default function GroupsScreen() {
             {groupAlerts.filter((alert) => alert.status === "critical").length > 0 && (
               <View style={styles.criticalAlertsSection}>
                 <Text style={styles.sectionTitle}>🚨 Alertas Críticos</Text>
-                {groupAlerts
+                {(groupAlerts || [])
                   .filter((alert) => alert.status === "critical")
                   .slice(0, 3)
                   .map((alert) => (
@@ -308,7 +308,7 @@ export default function GroupsScreen() {
             {/* Status dos Membros */}
             <View style={styles.membersSection}>
               <Text style={styles.sectionTitle}>Status dos Membros</Text>
-              {groupMembers.map((member) => (
+              {(groupMembers || []).map((member) => (
                 <View key={member.userId} style={styles.memberCard}>
                   <View style={styles.memberInfo}>
                     <Text style={styles.memberName}>{member.displayName}</Text>
@@ -342,7 +342,7 @@ export default function GroupsScreen() {
             {/* Feed de Alertas */}
             <View style={styles.alertsSection}>
               <Text style={styles.sectionTitle}>Feed de Alertas</Text>
-              {groupAlerts.slice(0, 10).map((alert) => (
+              {(groupAlerts || []).slice(0, 10).map((alert) => (
                 <View key={alert.id} style={styles.alertCard}>
                   <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
                   <View style={styles.alertContent}>

@@ -159,8 +159,8 @@ export class RealAstrologyEngine {
         // Converter para coordenadas eclípticas
         const ecliptic = Astronomy.Ecliptic(position)
         
-        // Verificar se coordenadas eclípticas são válidas
-        if (!ecliptic || ecliptic.lon === undefined || ecliptic.lat === undefined) {
+        // Verificar se coordenadas eclípticas são válidas (astronomy-engine usa 'elon' e 'elat')
+        if (!ecliptic || ecliptic.elon === undefined || ecliptic.elat === undefined) {
           console.error(`❌ Coordenadas eclípticas inválidas para ${planetName}:`, ecliptic)
           continue
         }
@@ -169,12 +169,12 @@ export class RealAstrologyEngine {
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
         const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
-        const speed = (nextEcliptic && nextEcliptic.lon !== undefined) ? 
-          nextEcliptic.lon - ecliptic.lon : 0
+        const speed = (nextEcliptic && nextEcliptic.elon !== undefined) ? 
+          nextEcliptic.elon - ecliptic.elon : 0
 
         // Determinar signo e grau
-        const signIndex = Math.floor(ecliptic.lon / 30)
-        const degree = ecliptic.lon % 30
+        const signIndex = Math.floor(ecliptic.elon / 30)
+        const degree = ecliptic.elon % 30
         const sign = this.SIGNS[signIndex] || 'Áries'
 
         // Verificar retrogradação
@@ -182,8 +182,8 @@ export class RealAstrologyEngine {
 
         const planetData = {
           name: planetName,
-          longitude: ecliptic.lon,
-          latitude: ecliptic.lat,
+          longitude: ecliptic.elon, // astronomy-engine usa 'elon'
+          latitude: ecliptic.elat,  // astronomy-engine usa 'elat'
           distance: position.length,
           speed,
           sign,
@@ -193,8 +193,8 @@ export class RealAstrologyEngine {
         }
         
         console.log(`🔍 DEBUG ${planetName}:`, {
-          longitude: ecliptic.lon,
-          latitude: ecliptic.lat,
+          longitude: ecliptic.elon,
+          latitude: ecliptic.elat,
           distance: position.length,
           sign,
           degree,
