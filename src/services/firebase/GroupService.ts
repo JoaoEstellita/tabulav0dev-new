@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import NotificationService from "./NotificationService"
+import GroupNotificationService from "../notifications/GroupNotificationService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 
 export interface Group {
@@ -141,6 +142,11 @@ class GroupService {
       // Se status crítico, criar alerta para grupos E enviar notificações
       if (status.overall === "critical" || status.overall === "challenging") {
         await this.createGroupAlertsWithNotifications(userId, status)
+      }
+      
+      // Se status favorável, enviar notificação positiva
+      if (status.overall === "excellent" || status.overall === "positive") {
+        await this.createFavorableGroupNotifications(userId, status)
       }
     } catch (error) {
       console.error("Erro ao atualizar status:", error)
@@ -283,6 +289,58 @@ class GroupService {
     }
 
     const statusMessages = messages[status.overall as keyof typeof messages] || messages.challenging
+    return statusMessages[Math.floor(Math.random() * statusMessages.length)]
+  }
+  
+  // Criar notificações favoráveis para grupos
+  private async createFavorableGroupNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
+    try {
+      const userGroups = await this.getUserGroups(userId)
+      
+      // Buscar dados do usuário
+      const userDoc = await getDoc(doc(db, 'users', userId))
+      if (!userDoc.exists()) return
+      
+      const userData = userDoc.data()
+      const userName = userData.displayName || 'Um membro'
+      
+      for (const group of userGroups) {
+        const favorableMessage = this.generateFavorableMessage(status, userName)
+        
+        // Enviar notificação favorável via backend
+        try {
+          await GroupNotificationService.sendAutomaticFavorableAlert(group.id, {
+            area: 'energia_geral',
+            percentage: 85, // Simular alta energia
+            description: favorableMessage
+          })
+          
+          console.log(`✨ Notificação favorável enviada para grupo ${group.name}`)
+        } catch (notificationError) {
+          console.error('Erro ao enviar notificação favorável:', notificationError)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao criar notificações favoráveis:', error)
+    }
+  }
+  
+  // Gerar mensagem favorável
+  private generateFavorableMessage(status: AstrologicalStatus, userName: string): string {
+    const favorableMessages = {
+      excellent: [
+        `${userName} está com energias incríveis hoje! ✨`,
+        `${userName} tem trânsitos muito favoráveis - é um ótimo momento!`,
+        `${userName} está radiante astrologicamente - aproveitem essa energia!`,
+      ],
+      positive: [
+        `${userName} tem boas energias hoje - momento favorável para projetos!`,
+        `${userName} está com trânsitos positivos - é hora de agir!`,
+        `${userName} tem o cosmos a seu favor hoje! 🌟`,
+      ],
+    }
+    
+    const statusMessages = favorableMessages[status.overall as keyof typeof favorableMessages] || favorableMessages.positive
     return statusMessages[Math.floor(Math.random() * statusMessages.length)]
   }
 }

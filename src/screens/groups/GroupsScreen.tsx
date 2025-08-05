@@ -17,9 +17,12 @@ import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 import GroupService, { type Group, type GroupMember, type GroupAlert } from "../../services/firebase/GroupService"
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
+import GroupNotificationService from "../../services/notifications/GroupNotificationService"
+import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 
 export default function GroupsScreen() {
   const { user } = useAuth()
+  const { preferences } = useNotificationPreferences()
   
   // Estados para abas
   const [selectedTab, setSelectedTab] = useState<"groups" | "couple">("groups")
@@ -42,6 +45,11 @@ export default function GroupsScreen() {
   const [showCreateCoupleModal, setShowCreateCoupleModal] = useState(false)
   const [partnerEmail, setPartnerEmail] = useState("")
   const [relationshipType, setRelationshipType] = useState<CoupleRelationship['relationshipType']>("dating")
+  
+  // Estados para notificações de grupo
+  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [groupMessage, setGroupMessage] = useState("")
+  const [sendingNotification, setSendingNotification] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -195,10 +203,114 @@ export default function GroupsScreen() {
       setShowJoinModal(false)
       setInviteCode("")
       await loadUserGroups()
+      
+      // Notificar grupo sobre novo membro
+      if (selectedGroup) {
+        await GroupNotificationService.sendMemberJoined(selectedGroup.id, user!.uid)
+      }
+      
       Alert.alert("Sucesso", "Você entrou no grupo!")
     } catch (error: any) {
       Alert.alert("Erro", error.message)
     }
+  }
+  
+  // === FUNÇÕES DE NOTIFICAÇÕES ===
+  
+  const sendGroupMessage = async () => {
+    if (!selectedGroup || !groupMessage.trim()) {
+      Alert.alert("Erro", "Mensagem é obrigatória")
+      return
+    }
+
+    try {
+      setSendingNotification(true)
+      
+      await GroupNotificationService.sendCustomMessage(
+        selectedGroup.id,
+        user!.uid,
+        groupMessage
+      )
+      
+      setShowMessageModal(false)
+      setGroupMessage("")
+      Alert.alert("Sucesso", "Mensagem enviada para o grupo!")
+      
+    } catch (error: any) {
+      console.error('Erro ao enviar mensagem:', error)
+      Alert.alert("Erro", "Não foi possível enviar a mensagem")
+    } finally {
+      setSendingNotification(false)
+    }
+  }
+  
+  const sendCriticalAlert = async () => {
+    if (!selectedGroup) return
+
+    Alert.alert(
+      "Alerta Crítico",
+      "Deseja enviar um alerta crítico para todos os membros do grupo?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Enviar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setSendingNotification(true)
+              
+              await GroupNotificationService.sendCriticalAlert(
+                selectedGroup.id,
+                user!.uid,
+                "Alerta enviado pelo usuário. Verifique seu mapa astral!"
+              )
+              
+              Alert.alert("Sucesso", "Alerta crítico enviado!")
+              
+            } catch (error: any) {
+              console.error('Erro ao enviar alerta:', error)
+              Alert.alert("Erro", "Não foi possível enviar o alerta")
+            } finally {
+              setSendingNotification(false)
+            }
+          }
+        }
+      ]
+    )
+  }
+  
+  const sendFavorableEvent = async () => {
+    if (!selectedGroup) return
+
+    Alert.alert(
+      "Energia Favorável",
+      "Deseja compartilhar uma energia favorável com o grupo?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Compartilhar",
+          onPress: async () => {
+            try {
+              setSendingNotification(true)
+              
+              await GroupNotificationService.sendFavorableEvent(
+                selectedGroup.id,
+                user!.uid,
+                "Energia positiva detectada! Aproveitem este momento!"
+              )
+              
+              Alert.alert("Sucesso", "Energia favorável compartilhada!")
+              
+            } catch (error: any) {
+              console.error('Erro ao compartilhar energia:', error)
+              Alert.alert("Erro", "Não foi possível compartilhar")
+            } finally {
+              setSendingNotification(false)
+            }
+          }
+        }
+      ]
+    )
   }
 
   const getStatusColor = (status: string) => {
@@ -279,6 +391,39 @@ export default function GroupsScreen() {
 
         {selectedGroup && (
           <>
+            {/* Ações de Notificação */}
+            <View style={styles.notificationActionsSection}>
+              <Text style={styles.sectionTitle}>📢 Ações do Grupo</Text>
+              <View style={styles.actionButtonsRow}>
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.messageButton]} 
+                  onPress={() => setShowMessageModal(true)}
+                  disabled={sendingNotification}
+                >
+                  <Ionicons name="chatbubble" size={20} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Mensagem</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.alertButton]} 
+                  onPress={sendCriticalAlert}
+                  disabled={sendingNotification}
+                >
+                  <Ionicons name="warning" size={20} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Alerta</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.favorableButton]} 
+                  onPress={sendFavorableEvent}
+                  disabled={sendingNotification}
+                >
+                  <Ionicons name="star" size={20} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Energia+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
             {/* Alertas Críticos */}
             {groupAlerts.filter((alert) => alert.status === "critical").length > 0 && (
               <View style={styles.criticalAlertsSection}>
@@ -434,6 +579,55 @@ export default function GroupsScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={joinGroup}>
                 <Text style={styles.modalButtonConfirmText}>Entrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Modal Enviar Mensagem */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>📢 Enviar Mensagem para o Grupo</Text>
+            
+            <Text style={styles.modalSubtitle}>
+              Todos os membros do grupo receberão uma notificação
+            </Text>
+
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea]}
+              placeholder="Digite sua mensagem..."
+              placeholderTextColor="#888"
+              value={groupMessage}
+              onChangeText={setGroupMessage}
+              multiline
+              numberOfLines={4}
+              maxLength={200}
+            />
+            
+            <Text style={styles.characterCount}>
+              {groupMessage.length}/200 caracteres
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButtonCancel} 
+                onPress={() => {
+                  setShowMessageModal(false)
+                  setGroupMessage("")
+                }}
+              >
+                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButtonConfirm, sendingNotification && styles.modalButtonDisabled]} 
+                onPress={sendGroupMessage}
+                disabled={sendingNotification || !groupMessage.trim()}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {sendingNotification ? "Enviando..." : "Enviar"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -890,5 +1084,59 @@ const styles = StyleSheet.create({
   relationshipTypeTextActive: {
     color: "#000",
     fontWeight: "bold",
+  },
+  
+  // Estilos para ações de notificação
+  notificationActionsSection: {
+    marginBottom: 24,
+  },
+  actionButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  messageButton: {
+    backgroundColor: "#4A90E2",
+  },
+  alertButton: {
+    backgroundColor: "#FF4444",
+  },
+  favorableButton: {
+    backgroundColor: "#28A745",
+  },
+  actionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  
+  // Estilos para modal de mensagem
+  modalSubtitle: {
+    color: "#888",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  characterCount: {
+    color: "#888",
+    fontSize: 12,
+    textAlign: "right",
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  modalButtonDisabled: {
+    backgroundColor: "#555",
+    opacity: 0.6,
   },
 })
