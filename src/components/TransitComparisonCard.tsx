@@ -119,10 +119,7 @@ export default function TransitComparisonCard({
     return signs[signIndex]
   }
 
-  const formatSpeed = (speed: number): string => {
-    const direction = speed >= 0 ? '↑' : '↓'
-    return `${direction}${Math.abs(speed).toFixed(2)}°/dia`
-  }
+  // ⚡ Velocidade removida para melhor UX - informação desnecessária
 
   const getAspectColor = (aspect: string): string => {
     return ASPECT_COLORS[aspect as keyof typeof ASPECT_COLORS] || '#6B7280'
@@ -264,7 +261,6 @@ export default function TransitComparisonCard({
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
                 <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
-                <Text style={styles.speedText}>{formatSpeed(comparison.current.speed)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
                     {ELEMENT_ICONS[comparison.current.element]} {translateElement(comparison.current.element)}
@@ -319,13 +315,13 @@ export default function TransitComparisonCard({
             )}
           </View>
         ))}
-        {/* 🎯 ASCENDENTE E MEIO DO CÉU */}
-        {(ascendant || midheaven || natalAscendant || natalMidheaven) && (
+        {/* 🎯 ASCENDENTE E MEIO DO CÉU - SEMPRE MOSTRAR */}
+        {console.log('🔍 DEBUG Ângulos:', { ascendant, midheaven, natalAscendant, natalMidheaven }) || (
           <View style={styles.anglesSection}>
             <Text style={styles.sectionTitle}>🎯 Ângulos Importantes</Text>
             
             {/* Ascendente */}
-            {(ascendant && natalAscendant) && (
+            {(ascendant || natalAscendant) && (
               <View style={styles.angleCard}>
                 <View style={styles.angleHeader}>
                   <Text style={styles.angleName}>🌅 Ascendente</Text>
@@ -333,21 +329,21 @@ export default function TransitComparisonCard({
                 <View style={styles.angleComparison}>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{formatDegreeInSign(natalAscendant)}</Text>
-                    <Text style={styles.angleSign}>{getSignFromDegree(natalAscendant)}</Text>
+                    <Text style={styles.angleDegree}>{natalAscendant ? formatDegreeInSign(natalAscendant) : 'N/A'}</Text>
+                    <Text style={styles.angleSign}>{natalAscendant ? getSignFromDegree(natalAscendant) : 'N/A'}</Text>
                   </View>
                   <Text style={styles.angleArrow}>→</Text>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{formatDegreeInSign(ascendant)}</Text>
-                    <Text style={styles.angleSign}>{getSignFromDegree(ascendant)}</Text>
+                    <Text style={styles.angleDegree}>{ascendant ? formatDegreeInSign(ascendant) : 'N/A'}</Text>
+                    <Text style={styles.angleSign}>{ascendant ? getSignFromDegree(ascendant) : 'N/A'}</Text>
                   </View>
                 </View>
               </View>
             )}
 
             {/* Meio do Céu */}
-            {(midheaven && natalMidheaven) && (
+            {(midheaven || natalMidheaven) && (
               <View style={styles.angleCard}>
                 <View style={styles.angleHeader}>
                   <Text style={styles.angleName}>⭐ Meio do Céu</Text>
@@ -355,14 +351,14 @@ export default function TransitComparisonCard({
                 <View style={styles.angleComparison}>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{formatDegreeInSign(natalMidheaven)}</Text>
-                    <Text style={styles.angleSign}>{getSignFromDegree(natalMidheaven)}</Text>
+                    <Text style={styles.angleDegree}>{natalMidheaven ? formatDegreeInSign(natalMidheaven) : 'N/A'}</Text>
+                    <Text style={styles.angleSign}>{natalMidheaven ? getSignFromDegree(natalMidheaven) : 'N/A'}</Text>
                   </View>
                   <Text style={styles.angleArrow}>→</Text>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{formatDegreeInSign(midheaven)}</Text>
-                    <Text style={styles.angleSign}>{getSignFromDegree(midheaven)}</Text>
+                    <Text style={styles.angleDegree}>{midheaven ? formatDegreeInSign(midheaven) : 'N/A'}</Text>
+                    <Text style={styles.angleSign}>{midheaven ? getSignFromDegree(midheaven) : 'N/A'}</Text>
                   </View>
                 </View>
               </View>

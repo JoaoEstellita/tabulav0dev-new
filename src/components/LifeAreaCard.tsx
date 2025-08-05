@@ -150,6 +150,19 @@ export default function LifeAreaCard({ area, onPress }: LifeAreaCardProps) {
 
       <Text style={styles.description}>{area.description || 'Área da vida'}</Text>
 
+      {/* 📊 EQUAÇÃO DOS CÁLCULOS */}
+      {area.influences && area.influences.length > 0 && (
+        <View style={styles.calculationContainer}>
+          <Text style={styles.calculationTitle}>📊 Cálculo:</Text>
+          <Text style={styles.calculationFormula}>
+            {area.mainPlanets?.slice(0, 2).join(' + ') || 'Planetas'} + Aspectos + Casas = {area.percentage || 0}%
+          </Text>
+          <Text style={styles.calculationDetail}>
+            Base: Dignidades planetárias • Aspectos harmônicos/desafiadores • Força das casas
+          </Text>
+        </View>
+      )}
+
       {area.criticalLevel && (
         <View style={styles.criticalBadge}>
           <Ionicons name="warning" size={12} color="#FFFFFF" />
@@ -240,6 +253,32 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     lineHeight: 18,
     flex: 1,
+  },
+  calculationContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFD700',
+  },
+  calculationTitle: {
+    fontSize: 11,
+    color: '#FFD700',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  calculationFormula: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  calculationDetail: {
+    fontSize: 10,
+    color: '#CCCCCC',
+    opacity: 0.8,
+    fontStyle: 'italic',
   },
   criticalBadge: {
     flexDirection: 'row',
