@@ -44,24 +44,27 @@ export default function HomeScreen() {
   }, [transitData])
 
   // Usar arrays seguros
-  // 🔍 Debug: verificar estrutura dos dados
-  React.useEffect(() => {
-    if (transitData) {
-      console.log('🔍 HOME DEBUG - transitData estrutura completa:', {
-        hasCurrentTransits: !!transitData.currentTransits,
-        currentTransitsType: typeof transitData.currentTransits,
-        currentTransitsKeys: transitData.currentTransits ? Object.keys(transitData.currentTransits) : [],
-        hasPlanets: !!(transitData.currentTransits as any)?.planets,
-        planetsType: typeof (transitData.currentTransits as any)?.planets,
-        planetsIsArray: Array.isArray((transitData.currentTransits as any)?.planets),
-        planetsLength: (transitData.currentTransits as any)?.planets?.length || 0,
-        firstPlanet: (transitData.currentTransits as any)?.planets?.[0]
-      })
-    }
-  }, [transitData])
+  // ✅ Estrutura de dados verificada e funcionando
 
-  const safePlanets = useSafeArray((transitData?.currentTransits as any)?.planets, 'currentTransits.planets')
-  const safeWarnings = useSafeArray(transitData?.warnings, 'warnings')
+  // 🔧 FIX: Usar useMemo para evitar timing issues
+  const safePlanets = React.useMemo(() => {
+    if (!transitData?.currentTransits) return []
+    const planets = (transitData.currentTransits as any)?.planets
+    if (!Array.isArray(planets)) {
+      console.warn('⚠️ safePlanets: currentTransits.planets não é array:', typeof planets)
+      return []
+    }
+    return planets
+  }, [transitData?.currentTransits])
+
+  const safeWarnings = React.useMemo(() => {
+    if (!transitData?.warnings) return []
+    if (!Array.isArray(transitData.warnings)) {
+      console.warn('⚠️ safeWarnings: warnings não é array:', typeof transitData.warnings)
+      return []
+    }
+    return transitData.warnings
+  }, [transitData?.warnings])
   const [userProfile, setUserProfile] = useState<{
     displayName: string
     profilePhoto?: string
@@ -297,60 +300,61 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Status das Áreas de Vida - TEMPORARIAMENTE REMOVIDO */}
-        {transitData && (
+        {/* Status das Áreas de Vida */}
+        {transitData?.lifeAreas && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="grid" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
             </View>
             
-            <View style={styles.card}>
-              <Text style={styles.cardText}>
-                ✅ {Object.keys(transitData.lifeAreas || {}).length} áreas calculadas
-              </Text>
-              <Text style={styles.cardText}>
-                🔍 Componente LifeAreaCard temporariamente removido para debug
-              </Text>
+            <View style={styles.lifeAreasGrid}>
+              {safeEntries(transitData.lifeAreas).map(([name, area], index) => (
+                <View key={name} style={styles.lifeAreaItem}>
+                  <LifeAreaCard area={{name, ...area}} />
+                </View>
+              ))}
             </View>
           </View>
         )}
 
-        {/* Trânsitos Atuais - TEMPORARIAMENTE REMOVIDO */}
-        {transitData && transitData.currentTransits && (
+        {/* Trânsitos Atuais */}
+        {safePlanets.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="planet" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
             </View>
             
-            <View style={styles.card}>
-              <Text style={styles.cardText}>
-                ✅ {safePlanets.length} planetas calculados
-              </Text>
-              <Text style={styles.cardText}>
-                🔍 Lista de planetas temporariamente removida para debug
-              </Text>
-            </View>
+            {safePlanets.map((planet, index) => (
+              <View key={index} style={styles.planetCard}>
+                <View style={styles.planetHeader}>
+                  <Ionicons name="planet" size={16} color="#FFD700" />
+                  <Text style={styles.planetName}>{planet.name || 'Planeta'}</Text>
+                  <Text style={styles.planetSign}>{planet.sign || 'N/A'}</Text>
+                </View>
+                <Text style={styles.planetPosition}>
+                  {(planet.longitude || 0).toFixed(2)}° em {planet.sign || 'N/A'}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
 
-        {/* Avisos - TEMPORARIAMENTE REMOVIDO */}
-        {transitData && (
+        {/* Orientações */}
+        {safeWarnings.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Orientações</Text>
             </View>
             
-            <View style={styles.card}>
-              <Text style={styles.cardText}>
-                ✅ {safeWarnings.length} orientações disponíveis
-              </Text>
-              <Text style={styles.cardText}>
-                🔍 Lista de orientações temporariamente removida para debug
-              </Text>
-            </View>
+            {safeWarnings.map((warning, index) => (
+              <View key={index} style={styles.warningCard}>
+                <Ionicons name="bulb-outline" size={16} color="#FFD700" />
+                <Text style={styles.warningText}>{warning}</Text>
+              </View>
+            ))}
           </View>
         )}
 
