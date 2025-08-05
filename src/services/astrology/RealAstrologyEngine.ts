@@ -294,7 +294,7 @@ export class RealAstrologyEngine {
           name: planetName,
           longitude: ecliptic.elon, // astronomy-engine usa 'elon'
           latitude: ecliptic.elat,  // astronomy-engine usa 'elat'
-          distance: position.length,
+          distance: position.length || Math.sqrt(position.x*position.x + position.y*position.y + position.z*position.z) || 1.0,
           speed,
           sign,
           degree,
@@ -305,7 +305,7 @@ export class RealAstrologyEngine {
         console.log(`🔍 DEBUG ${planetName}:`, {
           longitude: ecliptic.elon,
           latitude: ecliptic.elat,
-          distance: position.length,
+          distance: planetData.distance,
           sign,
           degree,
           speed,

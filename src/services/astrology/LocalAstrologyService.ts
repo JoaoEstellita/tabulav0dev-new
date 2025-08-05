@@ -234,17 +234,34 @@ export class LocalAstrologyService {
       
       const cleanAspects = realData.aspects || []
       
+      // Limpar natalPlanets também (NOVO!)
+      const cleanNatalPlanets = (realData.natalPlanets || []).map(planet => ({
+        name: planet.name || 'Unknown',
+        longitude: planet.longitude || 0,
+        latitude: planet.latitude || 0,
+        distance: planet.distance || 1.0, // ✅ PROTEÇÃO CRÍTICA
+        speed: planet.speed || 0,
+        sign: planet.sign || 'Áries',
+        degree: planet.degree || 0,
+        house: planet.house || 1,
+        isRetrograde: Boolean(planet.isRetrograde)
+      }))
+      
       // Limpar dados processados também
       const cleanProcessedData = {
         ...processedData,
         currentTransits: {
           ...processedData.currentTransits,
           planets: cleanPlanets, // Usar planetas limpos
+          natalPlanets: cleanNatalPlanets, // ✅ NATAL PLANETS LIMPOS
           aspects: cleanAspects,
           houses: processedData.currentTransits?.houses || [],
           ascendant: processedData.currentTransits?.ascendant || 0,
           midheaven: processedData.currentTransits?.midheaven || 0,
-          lifeAreas: processedData.currentTransits?.lifeAreas || {}
+          lifeAreas: processedData.currentTransits?.lifeAreas || {},
+          planetComparisons: processedData.currentTransits?.planetComparisons || [],
+          chartSummary: processedData.currentTransits?.chartSummary || {},
+          houseAspects: processedData.currentTransits?.houseAspects || []
         },
         lifeAreas: processedData.lifeAreas || {},
         dailyOverview: processedData.dailyOverview || {
