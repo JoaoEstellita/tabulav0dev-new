@@ -478,8 +478,10 @@ export class RealAstrologyEngine {
       const avgPlanetScore = planetScores.length > 0 ? 
         planetScores.reduce((sum, score) => sum + score, 0) / planetScores.length : 50
 
-      // Adicionar variação baseada no número de influências
-      const variationFactor = Math.random() * 30 - 15 // -15 a +15
+      // Adicionar variação determinística baseada nos dados de nascimento
+      const birthHash = this.calculateBirthHash(date, latitude, longitude)
+      const areaHash = this.calculateAreaHash(areaName)
+      const variationFactor = ((birthHash + areaHash) % 30) - 15 // -15 a +15 determinístico
       const finalScore = avgPlanetScore + variationFactor
 
       // Normalizar pontuação (20-95 para mais realismo)
@@ -500,6 +502,34 @@ export class RealAstrologyEngine {
     }
 
     return lifeAreas
+  }
+
+  // 🎯 MÉTODOS PARA CÁLCULOS DETERMINÍSTICOS
+  private static calculateBirthHash(date: Date, latitude: number, longitude: number): number {
+    // Hash determinístico baseado nos dados de nascimento
+    const dateStr = date.toISOString().slice(0, 10) // YYYY-MM-DD
+    const latStr = latitude.toFixed(4)
+    const lonStr = longitude.toFixed(4)
+    const combined = dateStr + latStr + lonStr
+    
+    let hash = 0
+    for (let i = 0; i < combined.length; i++) {
+      const char = combined.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return Math.abs(hash)
+  }
+
+  private static calculateAreaHash(areaName: string): number {
+    // Hash determinístico baseado no nome da área
+    let hash = 0
+    for (let i = 0; i < areaName.length; i++) {
+      const char = areaName.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash
+    }
+    return Math.abs(hash)
   }
 
   // Métodos auxiliares para cálculos astronômicos
@@ -721,7 +751,8 @@ export class RealAstrologyEngine {
       const diff = currentElemental[key] - natalElemental[key]
       if (Math.abs(diff) >= 2) {
         const emoji = element === 'fire' ? '🔥' : element === 'earth' ? '🌍' : element === 'air' ? '💨' : '💧'
-        elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${element}`)
+        const translatedElement = element === 'fire' ? 'fogo' : element === 'earth' ? 'terra' : element === 'air' ? 'ar' : 'água'
+        elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${translatedElement}`)
       }
     })
 
@@ -730,7 +761,8 @@ export class RealAstrologyEngine {
       const key = modality as keyof ModalityAnalysis
       const diff = currentModality[key] - natalModality[key]
       if (Math.abs(diff) >= 2) {
-        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${modality}`)
+        const translatedModality = modality === 'cardinal' ? 'cardeal' : modality === 'fixed' ? 'fixo' : 'mutável'
+        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${translatedModality}`)
       }
     })
 
