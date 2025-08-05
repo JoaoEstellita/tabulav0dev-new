@@ -160,7 +160,9 @@ export class LocalAstrologyService {
       bestArea,
       challengingArea,
       generalTrend,
-      keyAspects
+      keyAspects,
+      overall: Math.round(averageScore), // Energia Geral baseada na média das áreas
+      message: `${generalTrend}. Destaque para ${bestArea} e atenção em ${challengingArea}.`
     }
 
     return {

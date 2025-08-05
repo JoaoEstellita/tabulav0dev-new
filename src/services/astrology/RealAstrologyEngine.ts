@@ -313,37 +313,62 @@ export class RealAstrologyEngine {
       let mainPlanets: string[] = []
 
       // Analisar planetas relevantes para a área
+      let planetScores: number[] = []
+      
       for (const planetName of config.planets) {
         const planet = planets.find(p => p.name === planetName)
         if (!planet) continue
 
         mainPlanets.push(planetName)
 
-        // Pontuação baseada no signo
+        let planetScore = 0
+
+        // Pontuação baseada no signo (20-30%)
         const signScore = this.getPlanetSignScore(planet)
-        totalScore += signScore * 0.3
+        planetScore += signScore * 0.25
 
-        // Pontuação baseada na casa
+        // Pontuação baseada na casa (30-40%)
         const houseScore = this.getPlanetHouseScore(planet, config.houses)
-        totalScore += houseScore * 0.4
+        planetScore += houseScore * 0.35
 
-        // Influências dos aspectos
+        // Influências dos aspectos (30-40%)
         const planetAspects = aspects.filter(a => 
           a.planet1 === planetName || a.planet2 === planetName
         )
         
+        let aspectScoreSum = 0
+        let aspectCount = 0
+        
         for (const aspect of planetAspects) {
           const aspectScore = this.getAspectScore(aspect)
-          totalScore += aspectScore * 0.3
+          aspectScoreSum += aspectScore
+          aspectCount++
           
           if (aspectScore > 60) {
             influences.push(`${aspect.type} ${aspect.planet1 === planetName ? aspect.planet2 : aspect.planet1}`)
           }
         }
+        
+        // Média dos aspectos em vez de soma
+        if (aspectCount > 0) {
+          planetScore += (aspectScoreSum / aspectCount) * 0.4
+        } else {
+          planetScore += 50 * 0.4 // Neutro se não há aspectos
+        }
+
+        planetScores.push(planetScore)
       }
 
-      // Normalizar pontuação (0-100)
-      const percentage = Math.max(0, Math.min(100, totalScore))
+      // Média das pontuações dos planetas relevantes
+      const avgPlanetScore = planetScores.length > 0 ? 
+        planetScores.reduce((sum, score) => sum + score, 0) / planetScores.length : 50
+
+      // Adicionar variação baseada no número de influências
+      const variationFactor = Math.random() * 30 - 15 // -15 a +15
+      const finalScore = avgPlanetScore + variationFactor
+
+      // Normalizar pontuação (20-95 para mais realismo)
+      const percentage = Math.max(20, Math.min(95, finalScore))
       
       // Determinar status baseado na pontuação
       const status = percentage >= 80 ? 'excelente' :
