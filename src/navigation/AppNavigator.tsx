@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
 import HomeScreen from "../screens/home/HomeScreen"
+import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
 import GroupsScreen from "../screens/groups/GroupsScreen"
 import ProfileScreen from "../screens/profile/ProfileScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
@@ -69,7 +70,7 @@ function MainTabs() {
       <Tab.Screen name="Home" options={{ title: "Perfil" }}>
         {() => (
           <ErrorBoundary>
-            <HomeScreen />
+            <HomeScreenMinimal />
           </ErrorBoundary>
         )}
       </Tab.Screen>
