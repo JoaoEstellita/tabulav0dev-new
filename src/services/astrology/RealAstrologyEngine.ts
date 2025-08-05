@@ -33,6 +33,68 @@ export interface RealAspect {
   strength: number // Força do aspecto (0-100)
 }
 
+// 🌍 Análise Elemental
+export interface ElementalAnalysis {
+  fire: number    // 🔥 Planetas em signos de fogo
+  earth: number   // 🌍 Planetas em signos de terra  
+  air: number     // 💨 Planetas em signos de ar
+  water: number   // 💧 Planetas em signos de água
+}
+
+// ⚡ Análise de Modalidades
+export interface ModalityAnalysis {
+  cardinal: number  // ⚡ Planetas em signos cardinais
+  fixed: number     // 🔒 Planetas em signos fixos
+  mutable: number   // 🔄 Planetas em signos mutáveis
+}
+
+// 🏠 Aspectos com Casas
+export interface HouseAspect {
+  house: number
+  cusp: number
+  aspect: string
+  orb: number
+  meaning: string
+  strength: number
+}
+
+// 📊 Comparação Completa de Planetas
+export interface PlanetComparison {
+  name: string
+  natal: {
+    longitude: number
+    sign: string
+    element: 'fire' | 'earth' | 'air' | 'water'
+    modality: 'cardinal' | 'fixed' | 'mutable'
+    house: number
+  }
+  current: {
+    longitude: number
+    sign: string
+    element: 'fire' | 'earth' | 'air' | 'water'
+    modality: 'cardinal' | 'fixed' | 'mutable'
+    house: number
+    speed: number
+    isRetrograde: boolean
+  }
+  planetaryAspects: RealAspect[]
+  houseAspects: HouseAspect[]
+}
+
+// 🌟 Resumo da Carta
+export interface ChartSummary {
+  elemental: {
+    natal: ElementalAnalysis
+    current: ElementalAnalysis
+    changes: string[]
+  }
+  modality: {
+    natal: ModalityAnalysis  
+    current: ModalityAnalysis
+    changes: string[]
+  }
+}
+
 export interface RealAstrologyData {
   timestamp: string
   planets: RealPlanetPosition[]
@@ -48,6 +110,11 @@ export interface RealAstrologyData {
       mainPlanets: string[]
     }
   }
+  // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
+  natalPlanets: RealPlanetPosition[] // Posições natais
+  planetComparisons: PlanetComparison[] // Comparação natal vs atual
+  chartSummary: ChartSummary // Resumo elemental e modalidades
+  houseAspects: HouseAspect[] // Aspectos com casas
 }
 
 export class RealAstrologyEngine {
@@ -60,6 +127,28 @@ export class RealAstrologyEngine {
     'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
     'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
   ]
+
+  // 🌍 Classificação dos Elementos
+  private static readonly SIGN_ELEMENTS = {
+    'Áries': 'fire', 'Leão': 'fire', 'Sagitário': 'fire',
+    'Touro': 'earth', 'Virgem': 'earth', 'Capricórnio': 'earth',
+    'Gêmeos': 'air', 'Libra': 'air', 'Aquário': 'air',
+    'Câncer': 'water', 'Escorpião': 'water', 'Peixes': 'water'
+  } as const
+
+  // ⚡ Classificação das Modalidades
+  private static readonly SIGN_MODALITIES = {
+    'Áries': 'cardinal', 'Câncer': 'cardinal', 'Libra': 'cardinal', 'Capricórnio': 'cardinal',
+    'Touro': 'fixed', 'Leão': 'fixed', 'Escorpião': 'fixed', 'Aquário': 'fixed',
+    'Gêmeos': 'mutable', 'Virgem': 'mutable', 'Sagitário': 'mutable', 'Peixes': 'mutable'
+  } as const
+
+  // 🏠 Significados das Casas
+  private static readonly HOUSE_MEANINGS = {
+    1: 'Identidade', 2: 'Recursos', 3: 'Comunicação', 4: 'Lar', 
+    5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'Transformação',
+    9: 'Expansão', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
+  } as const
 
   private static readonly LIFE_AREAS = {
     amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
@@ -104,6 +193,22 @@ export class RealAstrologyEngine {
       const lifeAreas = this.calculateRealLifeAreas(realPlanets, realAspects, houses)
       console.log('✅ Análise real das áreas da vida concluída')
 
+      // 🌟 5. CÁLCULO DAS POSIÇÕES NATAIS
+      const natalPlanets = await this.calculateRealPlanetPositions(birthDateTime, latitude, longitude)
+      console.log('✅ Calculadas posições natais')
+
+      // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
+      const planetComparisons = this.createPlanetComparisons(natalPlanets, realPlanets, houses)
+      console.log('✅ Comparações planetárias criadas')
+
+      // 🌟 7. ASPECTOS COM CASAS
+      const houseAspects = this.calculateHouseAspects(realPlanets, houses)
+      console.log('✅ Aspectos com casas calculados')
+
+      // 🌟 8. RESUMO ELEMENTAL E MODAL
+      const chartSummary = this.createChartSummary(natalPlanets, realPlanets)
+      console.log('✅ Resumo da carta criado')
+
       const result: RealAstrologyData = {
         timestamp: date.toISOString(),
         planets: realPlanets,
@@ -111,7 +216,12 @@ export class RealAstrologyEngine {
         houses: houses.cusps,
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,
-        lifeAreas
+        lifeAreas,
+        // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
+        natalPlanets,
+        planetComparisons,
+        chartSummary,
+        houseAspects
       }
 
       console.log('🎯 Cálculos astrológicos REAIS concluídos com sucesso!')
@@ -465,6 +575,172 @@ export class RealAstrologyEngine {
     }
     
     return 50
+  }
+
+  // 🌟 NOVOS MÉTODOS PARA FUNCIONALIDADES GRATUITAS
+
+  /**
+   * Cria comparações entre posições natais e atuais
+   */
+  private static createPlanetComparisons(
+    natalPlanets: RealPlanetPosition[],
+    currentPlanets: RealPlanetPosition[],
+    houses: { cusps: number[], ascendant: number, midheaven: number }
+  ): PlanetComparison[] {
+    const comparisons: PlanetComparison[] = []
+
+    for (const currentPlanet of currentPlanets) {
+      const natalPlanet = natalPlanets.find(p => p.name === currentPlanet.name)
+      if (!natalPlanet) continue
+
+      // Aspectos planetários para este planeta
+      const planetaryAspects = this.calculateRealAspects(currentPlanets)
+        .filter(aspect => aspect.planet1 === currentPlanet.name || aspect.planet2 === currentPlanet.name)
+
+      // Aspectos com casas
+      const houseAspects = this.calculateHouseAspects([currentPlanet], houses)
+
+      const comparison: PlanetComparison = {
+        name: currentPlanet.name,
+        natal: {
+          longitude: natalPlanet.longitude,
+          sign: natalPlanet.sign,
+          element: this.SIGN_ELEMENTS[natalPlanet.sign as keyof typeof this.SIGN_ELEMENTS],
+          modality: this.SIGN_MODALITIES[natalPlanet.sign as keyof typeof this.SIGN_MODALITIES],
+          house: natalPlanet.house
+        },
+        current: {
+          longitude: currentPlanet.longitude,
+          sign: currentPlanet.sign,
+          element: this.SIGN_ELEMENTS[currentPlanet.sign as keyof typeof this.SIGN_ELEMENTS],
+          modality: this.SIGN_MODALITIES[currentPlanet.sign as keyof typeof this.SIGN_MODALITIES],
+          house: currentPlanet.house,
+          speed: currentPlanet.speed,
+          isRetrograde: currentPlanet.isRetrograde
+        },
+        planetaryAspects,
+        houseAspects
+      }
+
+      comparisons.push(comparison)
+    }
+
+    return comparisons
+  }
+
+  /**
+   * Calcula aspectos entre planetas e casas
+   */
+  private static calculateHouseAspects(
+    planets: RealPlanetPosition[],
+    houses: { cusps: number[], ascendant: number, midheaven: number }
+  ): HouseAspect[] {
+    const houseAspects: HouseAspect[] = []
+    const aspectTypes = [
+      { name: 'conjunção', degrees: 0, orb: 8 },
+      { name: 'sextil', degrees: 60, orb: 6 },
+      { name: 'quadratura', degrees: 90, orb: 7 },
+      { name: 'trígono', degrees: 120, orb: 8 },
+      { name: 'oposição', degrees: 180, orb: 8 }
+    ]
+
+    for (const planet of planets) {
+      for (let houseIndex = 0; houseIndex < houses.cusps.length; houseIndex++) {
+        const cusp = houses.cusps[houseIndex]
+        const houseNumber = houseIndex + 1
+
+        for (const aspectType of aspectTypes) {
+          let angleDiff = Math.abs(planet.longitude - cusp)
+          if (angleDiff > 180) angleDiff = 360 - angleDiff
+
+          const orb = Math.abs(angleDiff - aspectType.degrees)
+          
+          if (orb <= aspectType.orb) {
+            houseAspects.push({
+              house: houseNumber,
+              cusp,
+              aspect: aspectType.name,
+              orb,
+              meaning: this.HOUSE_MEANINGS[houseNumber as keyof typeof this.HOUSE_MEANINGS],
+              strength: Math.max(0, 100 - (orb / aspectType.orb) * 100)
+            })
+          }
+        }
+      }
+    }
+
+    return houseAspects.sort((a, b) => b.strength - a.strength)
+  }
+
+  /**
+   * Cria resumo elemental e de modalidades
+   */
+  private static createChartSummary(
+    natalPlanets: RealPlanetPosition[],
+    currentPlanets: RealPlanetPosition[]
+  ): ChartSummary {
+    const analyzeElements = (planets: RealPlanetPosition[]): ElementalAnalysis => {
+      const analysis = { fire: 0, earth: 0, air: 0, water: 0 }
+      
+      for (const planet of planets) {
+        const element = this.SIGN_ELEMENTS[planet.sign as keyof typeof this.SIGN_ELEMENTS]
+        if (element) analysis[element]++
+      }
+      
+      return analysis
+    }
+
+    const analyzeModalities = (planets: RealPlanetPosition[]): ModalityAnalysis => {
+      const analysis = { cardinal: 0, fixed: 0, mutable: 0 }
+      
+      for (const planet of planets) {
+        const modality = this.SIGN_MODALITIES[planet.sign as keyof typeof this.SIGN_MODALITIES]
+        if (modality) analysis[modality]++
+      }
+      
+      return analysis
+    }
+
+    const natalElemental = analyzeElements(natalPlanets)
+    const currentElemental = analyzeElements(currentPlanets)
+    const natalModality = analyzeModalities(natalPlanets)
+    const currentModality = analyzeModalities(currentPlanets)
+
+    // Detectar mudanças significativas
+    const elementalChanges: string[] = []
+    const modalityChanges: string[] = []
+
+    // Análise elemental
+    Object.keys(natalElemental).forEach(element => {
+      const key = element as keyof ElementalAnalysis
+      const diff = currentElemental[key] - natalElemental[key]
+      if (Math.abs(diff) >= 2) {
+        const emoji = element === 'fire' ? '🔥' : element === 'earth' ? '🌍' : element === 'air' ? '💨' : '💧'
+        elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${element}`)
+      }
+    })
+
+    // Análise de modalidades
+    Object.keys(natalModality).forEach(modality => {
+      const key = modality as keyof ModalityAnalysis
+      const diff = currentModality[key] - natalModality[key]
+      if (Math.abs(diff) >= 2) {
+        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${modality}`)
+      }
+    })
+
+    return {
+      elemental: {
+        natal: natalElemental,
+        current: currentElemental,
+        changes: elementalChanges
+      },
+      modality: {
+        natal: natalModality,
+        current: currentModality,
+        changes: modalityChanges
+      }
+    }
   }
 }
 
