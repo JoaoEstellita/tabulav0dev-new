@@ -44,7 +44,23 @@ export default function HomeScreen() {
   }, [transitData])
 
   // Usar arrays seguros
-  const safePlanets = useSafeArray(transitData?.currentTransits?.planets, 'currentTransits.planets')
+  // 🔍 Debug: verificar estrutura dos dados
+  React.useEffect(() => {
+    if (transitData) {
+      console.log('🔍 HOME DEBUG - transitData estrutura completa:', {
+        hasCurrentTransits: !!transitData.currentTransits,
+        currentTransitsType: typeof transitData.currentTransits,
+        currentTransitsKeys: transitData.currentTransits ? Object.keys(transitData.currentTransits) : [],
+        hasPlanets: !!(transitData.currentTransits as any)?.planets,
+        planetsType: typeof (transitData.currentTransits as any)?.planets,
+        planetsIsArray: Array.isArray((transitData.currentTransits as any)?.planets),
+        planetsLength: (transitData.currentTransits as any)?.planets?.length || 0,
+        firstPlanet: (transitData.currentTransits as any)?.planets?.[0]
+      })
+    }
+  }, [transitData])
+
+  const safePlanets = useSafeArray((transitData?.currentTransits as any)?.planets, 'currentTransits.planets')
   const safeWarnings = useSafeArray(transitData?.warnings, 'warnings')
   const [userProfile, setUserProfile] = useState<{
     displayName: string
