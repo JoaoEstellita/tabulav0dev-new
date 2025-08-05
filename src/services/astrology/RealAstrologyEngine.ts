@@ -192,7 +192,7 @@ export class RealAstrologyEngine {
       console.log(`✅ Calculados ${realAspects.length} aspectos reais`)
 
       // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
-      const lifeAreas = this.calculateRealLifeAreas(realPlanets, realAspects, houses)
+      const lifeAreas = this.calculateRealLifeAreas(realPlanets, realAspects, houses, birthDateTime, latitude, longitude)
       console.log('✅ Análise real das áreas da vida concluída')
 
       // 🌟 5. CÁLCULO DAS POSIÇÕES NATAIS E CASAS NATAIS
@@ -418,7 +418,10 @@ export class RealAstrologyEngine {
   private static calculateRealLifeAreas(
     planets: RealPlanetPosition[],
     aspects: RealAspect[],
-    houses: { cusps: number[], ascendant: number, midheaven: number }
+    houses: { cusps: number[], ascendant: number, midheaven: number },
+    date: Date,
+    latitude: number,
+    longitude: number
   ): RealAstrologyData['lifeAreas'] {
     const lifeAreas: RealAstrologyData['lifeAreas'] = {}
 
