@@ -207,59 +207,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         {/* 📊 CONTEÚDO DETALHADO */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           
-          {/* 🌟 INFLUÊNCIAS POSITIVAS */}
-          {analysis.positiveInfluences.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🌟 Influências Positivas</Text>
-              {analysis.positiveInfluences.map((influence, index) => (
-                <View key={index} style={[styles.influenceCard, styles.positiveCard]}>
-                  <Text style={styles.influenceText}>
-                    {ASPECT_ICONS[influence.split(' ')[0]] || '✨'} {influence}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* ⚠️ DESAFIOS */}
-          {analysis.challengingInfluences.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>⚠️ Desafios Atuais</Text>
-              {analysis.challengingInfluences.map((influence, index) => (
-                <View key={index} style={[styles.influenceCard, styles.challengingCard]}>
-                  <Text style={styles.influenceText}>
-                    {ASPECT_ICONS[influence.split(' ')[0]] || '⚡'} {influence}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* 🪐 PLANETAS PRINCIPAIS */}
+          {/* 💡 DICAS ASTROLÓGICAS */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🪐 Planetas Influentes</Text>
-            {areaData.mainPlanets.map((planet, index) => (
-              <View key={index} style={styles.planetCard}>
-                <View style={styles.planetHeader}>
-                  <Text style={styles.planetIcon}>{PLANET_ICONS[planet] || '🪐'}</Text>
-                  <Text style={styles.planetName}>{planet}</Text>
-                </View>
-                <View style={styles.scoreBar}>
-                  <View 
-                    style={[
-                      styles.scoreBarFill, 
-                      { 
-                        width: `${analysis.planetaryScores[planet] || 50}%`,
-                        backgroundColor: colors[0]
-                      }
-                    ]} 
-                  />
-                </View>
-                <Text style={styles.scoreText}>
-                  {Math.round(analysis.planetaryScores[planet] || 50)}% de influência
+            <Text style={styles.sectionTitle}>💡 Dicas Astrológicas</Text>
+            <View style={styles.tipsCard}>
+              {areaData.percentage >= 70 && (
+                <Text style={styles.tipText}>
+                  ✨ Momento excelente para focar nesta área! Aproveite a energia positiva para fazer progressos significativos.
                 </Text>
-              </View>
-            ))}
+              )}
+              {areaData.percentage >= 50 && areaData.percentage < 70 && (
+                <Text style={styles.tipText}>
+                  ⚖️ Energia equilibrada. Bom momento para manter o que está funcionando e fazer ajustes graduais.
+                </Text>
+              )}
+              {areaData.percentage < 50 && (
+                <Text style={styles.tipText}>
+                  🔄 Período de transformação. Use os desafios como oportunidades de crescimento e evolução.
+                </Text>
+              )}
+            </View>
           </View>
 
           {/* 📊 CÁLCULOS DETALHADOS */}
@@ -289,41 +256,63 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             </View>
           </View>
 
-          {/* 🎆 ASPECTOS PLANETÁRIOS DETALHADOS */}
+          {/* ✨ ASPECTOS FAVORÁVEIS */}
+          {analysis.positiveInfluences.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>✨ Aspectos Favoráveis</Text>
+              {analysis.positiveInfluences.map((aspect, index) => (
+                <View key={index} style={styles.aspectCard}>
+                  <Text style={styles.aspectIcon}>✨</Text>
+                  <View style={styles.aspectContent}>
+                    <Text style={styles.aspectText}>{aspect}</Text>
+                    <Text style={styles.aspectScore}>+{Math.round(Math.random() * 15 + 5)} pontos</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+          
+          {/* ⚠️ ASPECTOS DESFAVORÁVEIS */}
+          {analysis.challengingInfluences.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>⚠️ Aspectos Desfavoráveis</Text>
+              {analysis.challengingInfluences.map((aspect, index) => (
+                <View key={index} style={styles.aspectCard}>
+                  <Text style={styles.aspectIcon}>⚠️</Text>
+                  <View style={styles.aspectContent}>
+                    <Text style={styles.aspectText}>{aspect}</Text>
+                    <Text style={styles.aspectScore}>-{Math.round(Math.random() * 10 + 3)} pontos</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* 🪐 PLANETAS INFLUENTES */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎆 Aspectos Planetários</Text>
-            
-            {/* Aspectos Positivos */}
-            {analysis.positiveInfluences.length > 0 && (
-              <View style={styles.aspectGroup}>
-                <Text style={styles.aspectGroupTitle}>✨ Aspectos Favoráveis</Text>
-                {analysis.positiveInfluences.map((aspect, index) => (
-                  <View key={index} style={styles.aspectCard}>
-                    <Text style={styles.aspectIcon}>✨</Text>
-                    <View style={styles.aspectContent}>
-                      <Text style={styles.aspectText}>{aspect}</Text>
-                      <Text style={styles.aspectScore}>+{Math.round(Math.random() * 15 + 5)} pontos</Text>
-                    </View>
-                  </View>
-                ))}
+            <Text style={styles.sectionTitle}>🪐 Planetas Influentes</Text>
+            {areaData.mainPlanets.map((planet, index) => (
+              <View key={index} style={styles.planetCard}>
+                <View style={styles.planetHeader}>
+                  <Text style={styles.planetIcon}>{PLANET_ICONS[planet] || '🪐'}</Text>
+                  <Text style={styles.planetName}>{planet}</Text>
+                </View>
+                <View style={styles.scoreBar}>
+                  <View 
+                    style={[
+                      styles.scoreBarFill, 
+                      { 
+                        width: `${analysis.planetaryScores[planet] || 50}%`,
+                        backgroundColor: colors[0]
+                      }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.scoreText}>
+                  {Math.round(analysis.planetaryScores[planet] || 50)}% de influência
+                </Text>
               </View>
-            )}
-            
-            {/* Aspectos Desafiadores */}
-            {analysis.challengingInfluences.length > 0 && (
-              <View style={styles.aspectGroup}>
-                <Text style={styles.aspectGroupTitle}>⚠️ Aspectos Desafiadores</Text>
-                {analysis.challengingInfluences.map((aspect, index) => (
-                  <View key={index} style={styles.aspectCard}>
-                    <Text style={styles.aspectIcon}>⚠️</Text>
-                    <View style={styles.aspectContent}>
-                      <Text style={styles.aspectText}>{aspect}</Text>
-                      <Text style={styles.aspectScore}>-{Math.round(Math.random() * 10 + 3)} pontos</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
+            ))}
           </View>
 
           {/* 📈 RESUMO DA ANÁLISE */}
@@ -344,28 +333,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 Os planetas mais influentes são: {areaData.mainPlanets.join(', ')}.
                 {areaData.description && ` ${areaData.description}`}
               </Text>
-            </View>
-          </View>
-
-          {/* 💡 DICAS */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>💡 Dicas Astrológicas</Text>
-            <View style={styles.tipsCard}>
-              {areaData.percentage >= 70 && (
-                <Text style={styles.tipText}>
-                  ✨ Momento excelente para focar nesta área! Aproveite a energia positiva para fazer progressos significativos.
-                </Text>
-              )}
-              {areaData.percentage >= 50 && areaData.percentage < 70 && (
-                <Text style={styles.tipText}>
-                  ⚖️ Energia equilibrada. Bom momento para manter o que está funcionando e fazer ajustes graduais.
-                </Text>
-              )}
-              {areaData.percentage < 50 && (
-                <Text style={styles.tipText}>
-                  🔄 Período de transformação. Use os desafios como oportunidades de crescimento e evolução.
-                </Text>
-              )}
             </View>
           </View>
 
@@ -561,16 +528,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 20,
   },
-  // 🎆 ESTILOS PARA ASPECTOS DETALHADOS
-  aspectGroup: {
-    marginBottom: 16,
-  },
-  aspectGroupTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
+  // ✨ ESTILOS PARA ASPECTOS (REORGANIZADOS)
   aspectCard: {
     flexDirection: 'row',
     alignItems: 'center',
