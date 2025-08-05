@@ -278,21 +278,21 @@ export default function HomeScreen() {
         )}
 
         {/* Trânsitos Atuais */}
-        {transitData && transitData.currentTransits.length > 0 && (
+        {transitData && transitData.currentTransits && transitData.currentTransits.planets && transitData.currentTransits.planets.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="planet" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
             </View>
             
-            {transitData.currentTransits.map((transit, index) => (
-              <TransitCard key={index} transit={transit} />
+            {transitData.currentTransits.planets.map((planet, index) => (
+              <TransitCard key={index} transit={planet} />
             ))}
           </View>
         )}
 
         {/* Avisos */}
-        {transitData && transitData.warnings.length > 0 && (
+        {transitData && transitData.warnings && Array.isArray(transitData.warnings) && transitData.warnings.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle" size={20} color="#FFD700" />

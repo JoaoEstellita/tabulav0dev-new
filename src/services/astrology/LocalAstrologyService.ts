@@ -92,7 +92,12 @@ export class LocalAstrologyService {
       console.log('🔍 DEBUG - processedData:', {
         lifeAreasKeys: Object.keys(processedData.lifeAreas),
         lifeAreasCount: Object.keys(processedData.lifeAreas).length,
-        sample: Object.entries(processedData.lifeAreas)[0]
+        sample: Object.entries(processedData.lifeAreas)[0],
+        currentTransitsType: typeof processedData.currentTransits,
+        currentTransitsKeys: processedData.currentTransits ? Object.keys(processedData.currentTransits) : 'null',
+        planetsCount: processedData.currentTransits?.planets?.length || 0,
+        warningsType: typeof processedData.warnings,
+        warningsLength: processedData.warnings?.length || 0
       })
 
       // 4. Salvar no cache
