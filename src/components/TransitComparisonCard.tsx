@@ -7,6 +7,10 @@ import type { PlanetComparison, ChartSummary } from '../services/astrology/RealA
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
   chartSummary: ChartSummary
+  ascendant?: number
+  midheaven?: number
+  natalAscendant?: number
+  natalMidheaven?: number
 }
 
 // 🌍 Ícones dos Elementos
@@ -14,14 +18,23 @@ const ELEMENT_ICONS = {
   fire: '🔥',
   earth: '🌍', 
   air: '💨',
-  water: '💧'
+  water: '💧',
+  // Português
+  fogo: '🔥',
+  terra: '🌍',
+  ar: '💨',
+  agua: '💧'
 } as const
 
 // ⚡ Ícones das Modalidades
 const MODALITY_ICONS = {
   cardinal: '⚡',
   fixed: '🔒',
-  mutable: '🔄'
+  mutable: '🔄',
+  // Português
+  cardeal: '⚡',
+  fixo: '🔒',
+  mutavel: '🔄'
 } as const
 
 // ⭐ Ícones dos Aspectos
@@ -44,11 +57,22 @@ const ASPECT_COLORS = {
 
 export default function TransitComparisonCard({ 
   planetComparisons, 
-  chartSummary 
+  chartSummary,
+  ascendant,
+  midheaven,
+  natalAscendant,
+  natalMidheaven
 }: TransitComparisonCardProps) {
   
   const formatDegree = (longitude: number): string => {
     return `${longitude.toFixed(1)}°`
+  }
+
+  const getSignFromDegree = (degree: number): string => {
+    const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 
+                   'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+    const signIndex = Math.floor(degree / 30) % 12
+    return signs[signIndex]
   }
 
   const formatSpeed = (speed: number): string => {
@@ -251,6 +275,57 @@ export default function TransitComparisonCard({
             )}
           </View>
         ))}
+        {/* 🎯 ASCENDENTE E MEIO DO CÉU */}
+        {(ascendant || midheaven || natalAscendant || natalMidheaven) && (
+          <View style={styles.anglesSection}>
+            <Text style={styles.sectionTitle}>🎯 Ângulos Importantes</Text>
+            
+            {/* Ascendente */}
+            {(ascendant && natalAscendant) && (
+              <View style={styles.angleCard}>
+                <View style={styles.angleHeader}>
+                  <Text style={styles.angleName}>🌅 Ascendente</Text>
+                </View>
+                <View style={styles.angleComparison}>
+                  <View style={styles.angleColumn}>
+                    <Text style={styles.angleLabel}>Natal</Text>
+                    <Text style={styles.angleDegree}>{formatDegree(natalAscendant)}</Text>
+                    <Text style={styles.angleSign}>{getSignFromDegree(natalAscendant)}</Text>
+                  </View>
+                  <Text style={styles.angleArrow}>→</Text>
+                  <View style={styles.angleColumn}>
+                    <Text style={styles.angleLabel}>Atual</Text>
+                    <Text style={styles.angleDegree}>{formatDegree(ascendant)}</Text>
+                    <Text style={styles.angleSign}>{getSignFromDegree(ascendant)}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Meio do Céu */}
+            {(midheaven && natalMidheaven) && (
+              <View style={styles.angleCard}>
+                <View style={styles.angleHeader}>
+                  <Text style={styles.angleName}>⭐ Meio do Céu</Text>
+                </View>
+                <View style={styles.angleComparison}>
+                  <View style={styles.angleColumn}>
+                    <Text style={styles.angleLabel}>Natal</Text>
+                    <Text style={styles.angleDegree}>{formatDegree(natalMidheaven)}</Text>
+                    <Text style={styles.angleSign}>{getSignFromDegree(natalMidheaven)}</Text>
+                  </View>
+                  <Text style={styles.angleArrow}>→</Text>
+                  <View style={styles.angleColumn}>
+                    <Text style={styles.angleLabel}>Atual</Text>
+                    <Text style={styles.angleDegree}>{formatDegree(midheaven)}</Text>
+                    <Text style={styles.angleSign}>{getSignFromDegree(midheaven)}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
       </ScrollView>
     </LinearGradient>
   )
@@ -426,5 +501,58 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  // 🎯 ESTILOS PARA ASCENDENTE E MEIO DO CÉU
+  anglesSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  angleCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  angleHeader: {
+    marginBottom: 8,
+  },
+  angleName: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  angleComparison: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  angleColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  angleLabel: {
+    color: '#CCCCCC',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  angleDegree: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  angleSign: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  angleArrow: {
+    color: '#FFD700',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginHorizontal: 16,
   },
 })

@@ -16,6 +16,7 @@ const BRAZILIAN_CITIES: LocationSuggestion[] = [
   { city: 'Brasília', country: 'Brasil', state: 'DF', latitude: -15.7942, longitude: -47.8825, displayName: 'Brasília, DF' },
   { city: 'Fortaleza', country: 'Brasil', state: 'CE', latitude: -3.7319, longitude: -38.5267, displayName: 'Fortaleza, CE' },
   { city: 'Manaus', country: 'Brasil', state: 'AM', latitude: -3.1190, longitude: -60.0217, displayName: 'Manaus, AM' },
+  { city: 'Rio Branco', country: 'Brasil', state: 'AC', latitude: -9.9754, longitude: -67.8249, displayName: 'Rio Branco, AC' },
   { city: 'Curitiba', country: 'Brasil', state: 'PR', latitude: -25.4244, longitude: -49.2654, displayName: 'Curitiba, PR' },
   { city: 'Recife', country: 'Brasil', state: 'PE', latitude: -8.0476, longitude: -34.8770, displayName: 'Recife, PE' },
   { city: 'Porto Alegre', country: 'Brasil', state: 'RS', latitude: -30.0346, longitude: -51.2177, displayName: 'Porto Alegre, RS' },

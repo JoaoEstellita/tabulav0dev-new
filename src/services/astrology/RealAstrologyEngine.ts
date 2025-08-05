@@ -112,6 +112,8 @@ export interface RealAstrologyData {
   }
   // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
   natalPlanets: RealPlanetPosition[] // Posições natais
+  natalAscendant: number // Ascendente natal
+  natalMidheaven: number // Meio do Céu natal
   planetComparisons: PlanetComparison[] // Comparação natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
@@ -193,9 +195,10 @@ export class RealAstrologyEngine {
       const lifeAreas = this.calculateRealLifeAreas(realPlanets, realAspects, houses)
       console.log('✅ Análise real das áreas da vida concluída')
 
-      // 🌟 5. CÁLCULO DAS POSIÇÕES NATAIS
+      // 🌟 5. CÁLCULO DAS POSIÇÕES NATAIS E CASAS NATAIS
       const natalPlanets = await this.calculateRealPlanetPositions(birthDateTime, latitude, longitude)
-      console.log('✅ Calculadas posições natais')
+      const natalHouses = this.calculateRealHouses(birthDateTime, latitude, longitude)
+      console.log('✅ Calculadas posições natais e casas natais')
 
       // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
       const planetComparisons = this.createPlanetComparisons(natalPlanets, realPlanets, houses)
@@ -219,6 +222,8 @@ export class RealAstrologyEngine {
         lifeAreas,
         // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
         natalPlanets,
+        natalAscendant: natalHouses.ascendant,
+        natalMidheaven: natalHouses.midheaven,
         planetComparisons,
         chartSummary,
         houseAspects

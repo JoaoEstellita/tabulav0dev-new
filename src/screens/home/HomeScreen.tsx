@@ -368,6 +368,10 @@ export default function HomeScreen() {
           <TransitComparisonCard 
             planetComparisons={transitData.currentTransits.planetComparisons}
             chartSummary={transitData.currentTransits.chartSummary}
+            ascendant={transitData.currentTransits.ascendant}
+            midheaven={transitData.currentTransits.midheaven}
+            natalAscendant={transitData.currentTransits.natalAscendant}
+            natalMidheaven={transitData.currentTransits.natalMidheaven}
           />
         )}
 
