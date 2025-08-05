@@ -8,32 +8,66 @@ interface LifeAreaCardProps {
   area: LifeArea
 }
 
-const AREA_ICONS = {
+const AREA_ICONS: Record<string, string> = {
+  // Português (sistema atual)
+  amor: 'heart',
+  carreira: 'briefcase',
+  financas: 'cash',
+  saude: 'fitness',
+  familia: 'people',
+  espiritualidade: 'flower',
+  comunicacao: 'chatbubble',
+  transformacao: 'refresh',
+  // Inglês (fallback)
   love: 'heart',
   career: 'briefcase',
   health: 'fitness',
   family: 'people',
   spirituality: 'flower',
-} as const
+  finances: 'cash',
+  communication: 'chatbubble',
+  transformation: 'refresh',
+}
 
-const AREA_COLORS = {
+const AREA_COLORS: Record<string, string[]> = {
+  // Português (sistema atual)
+  amor: ['#FF6B9D', '#FF8E8E'],
+  carreira: ['#4ECDC4', '#44A08D'],
+  financas: ['#FFD93D', '#FF9F40'],
+  saude: ['#96E6A1', '#7BC142'],
+  familia: ['#FF9F40', '#FFD93D'],
+  espiritualidade: ['#B19CD9', '#8B5CF6'],
+  comunicacao: ['#60A5FA', '#3B82F6'],
+  transformacao: ['#F472B6', '#EC4899'],
+  // Inglês (fallback)
   love: ['#FF6B9D', '#FF8E8E'],
   career: ['#4ECDC4', '#44A08D'],
   health: ['#96E6A1', '#7BC142'],
   family: ['#FFD93D', '#FF9F40'],
   spirituality: ['#B19CD9', '#8B5CF6'],
-} as const
+  finances: ['#FFD93D', '#FF9F40'],
+  communication: ['#60A5FA', '#3B82F6'],
+  transformation: ['#F472B6', '#EC4899'],
+}
 
-const TREND_ICONS = {
+const TREND_ICONS: Record<string, string> = {
   rising: 'trending-up',
   falling: 'trending-down',
   stable: 'remove',
-} as const
+  // Fallbacks
+  crescente: 'trending-up',
+  decrescente: 'trending-down',
+  estavel: 'remove',
+}
 
-const TREND_COLORS = {
+const TREND_COLORS: Record<string, string> = {
   rising: '#10B981',
   falling: '#EF4444',
   stable: '#6B7280',
+  // Fallbacks
+  crescente: '#10B981',
+  decrescente: '#EF4444',
+  estavel: '#6B7280',
 }
 
 export default function LifeAreaCard({ area }: LifeAreaCardProps) {
@@ -60,15 +94,21 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
     return translations[name as keyof typeof translations] || name
   }
 
+  // 🛡️ Proteções para evitar undefined
+  const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280'] // Cor padrão cinza
+  const areaIcon = AREA_ICONS[area.name] || 'help-circle' // Ícone padrão
+  const trendIcon = TREND_ICONS[area.trend] || 'remove' // Ícone padrão
+  const trendColor = TREND_COLORS[area.trend] || '#6B7280' // Cor padrão
+
   return (
     <LinearGradient
-      colors={AREA_COLORS[area.name]}
+      colors={areaColors}
       style={[styles.card, area.criticalLevel && styles.criticalCard]}
     >
       <View style={styles.header}>
         <View style={styles.iconContainer}>
           <Ionicons 
-            name={AREA_ICONS[area.name] as any} 
+            name={areaIcon as any} 
             size={24} 
             color="#FFFFFF" 
           />
@@ -76,9 +116,9 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
         
         <View style={styles.trendContainer}>
           <Ionicons 
-            name={TREND_ICONS[area.trend] as any} 
+            name={trendIcon as any} 
             size={16} 
-            color={TREND_COLORS[area.trend]} 
+            color={trendColor} 
           />
         </View>
       </View>
@@ -86,9 +126,9 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
       <Text style={styles.areaName}>{translateAreaName(area.name)}</Text>
       
       <View style={styles.statusContainer}>
-        <Text style={styles.statusNumber}>{area.status}%</Text>
-        <Text style={[styles.statusText, { color: getStatusColor(area.status) }]}>
-          {getStatusText(area.status)}
+        <Text style={styles.statusNumber}>{area.percentage || area.status || 0}%</Text>
+        <Text style={[styles.statusText, { color: getStatusColor(area.percentage || area.status || 0) }]}>
+          {getStatusText(area.percentage || area.status || 0)}
         </Text>
       </View>
 
@@ -98,15 +138,15 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
             style={[
               styles.progressFill, 
               { 
-                width: `${area.status}%`,
-                backgroundColor: getStatusColor(area.status)
+                width: `${area.percentage || area.status || 0}%`,
+                backgroundColor: getStatusColor(area.percentage || area.status || 0)
               }
             ]} 
           />
         </View>
       </View>
 
-      <Text style={styles.description}>{area.description}</Text>
+      <Text style={styles.description}>{area.description || 'Área da vida'}</Text>
 
       {area.criticalLevel && (
         <View style={styles.criticalBadge}>

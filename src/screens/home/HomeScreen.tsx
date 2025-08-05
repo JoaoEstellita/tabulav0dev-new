@@ -20,12 +20,12 @@ import PushNotificationService from '../../services/notifications/PushNotificati
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
-import { SafeMapWrapper, useSafeArray } from '../../utils/SafeMapWrapper'
 
 export default function HomeScreen() {
-  const { user } = useAuth()
-  const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
-  const [refreshing, setRefreshing] = useState(false)
+  try {
+    const { user } = useAuth()
+    const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
+    const [refreshing, setRefreshing] = useState(false)
   
   // Debug: Log da estrutura completa
   React.useEffect(() => {
@@ -152,10 +152,32 @@ export default function HomeScreen() {
     })
   }
 
-  const criticalAreas = transitData?.lifeAreas ? 
-    safeEntries(transitData.lifeAreas)
-      .filter(([_, area]) => area.percentage < 30)
-      .map(([name, area]) => ({ name, ...area })) : []
+  const criticalAreas = React.useMemo(() => {
+    if (!transitData?.lifeAreas) {
+      console.log('🔍 criticalAreas: transitData.lifeAreas é undefined')
+      return []
+    }
+    
+    try {
+      const entries = safeEntries(transitData.lifeAreas)
+      console.log('🔍 criticalAreas: safeEntries retornou', entries.length, 'entradas')
+      
+      const filtered = entries.filter(([_, area]) => {
+        if (!area || typeof area.percentage !== 'number') {
+          console.warn('⚠️ criticalAreas: área inválida:', area)
+          return false
+        }
+        return area.percentage < 30
+      })
+      
+      const mapped = filtered.map(([name, area]) => ({ name, ...area }))
+      console.log('🔍 criticalAreas: encontradas', mapped.length, 'áreas críticas')
+      return mapped
+    } catch (error) {
+      console.error('❌ criticalAreas: erro ao processar:', error)
+      return []
+    }
+  }, [transitData?.lifeAreas])
 
   if (loading && !transitData) {
     return (
@@ -309,11 +331,19 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.lifeAreasGrid}>
-              {safeEntries(transitData.lifeAreas).map(([name, area], index) => (
-                <View key={name} style={styles.lifeAreaItem}>
-                  <LifeAreaCard area={{name, ...area}} />
-                </View>
-              ))}
+              {safeEntries(transitData.lifeAreas).map(([name, area], index) => {
+                // 🛡️ Proteção extra para cada área
+                if (!area || typeof area !== 'object') {
+                  console.warn('⚠️ LifeArea inválida:', { name, area })
+                  return null
+                }
+                
+                return (
+                  <View key={name} style={styles.lifeAreaItem}>
+                    <LifeAreaCard area={{name, ...area}} />
+                  </View>
+                )
+              })}
             </View>
           </View>
         )}
@@ -363,6 +393,20 @@ export default function HomeScreen() {
       </ScrollView>
     </LinearGradient>
   )
+  } catch (error) {
+    console.error('🚨 ERRO CRÍTICO NO HOMESCREEN:', error)
+    return (
+      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Ionicons name="warning" size={48} color="#EF4444" />
+          <Text style={styles.loadingText}>Erro inesperado</Text>
+          <Text style={styles.errorText}>
+            {error instanceof Error ? error.message : 'Erro desconhecido'}
+          </Text>
+        </View>
+      </LinearGradient>
+    )
+  }
 }
 
 const styles = StyleSheet.create({
@@ -648,5 +692,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     marginBottom: 8,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
   },
 })
