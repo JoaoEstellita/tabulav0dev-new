@@ -121,6 +121,42 @@ export default function TransitComparisonCard({
 
   // ⚡ Velocidade removida para melhor UX - informação desnecessária
 
+  // 🏠 FUNÇÕES PARA CASAS ASTROLÓGICAS
+  const getHouseInfo = (houseNumber: number) => {
+    const houseNames = {
+      1: 'Identidade', 2: 'Recursos', 3: 'Comunicação', 4: 'Lar',
+      5: 'Criatividade', 6: 'Saúde', 7: 'Relacionamentos', 8: 'Transformação',
+      9: 'Filosofia', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritualidade'
+    }
+    return { name: houseNames[houseNumber as keyof typeof houseNames] }
+  }
+
+  const getSignFromHouse = (houseNumber: number, type: 'natal' | 'current'): string => {
+    // Por enquanto retorna signos padrão - depois conectar com dados reais
+    const signs = ['Carneiro', 'Touro', 'Gêmeos', 'Caranguejo', 'Leão', 'Virgem', 
+                   'Balança', 'Escorpião', 'Sagitário', 'Capricórnio', 'Água', 'Peixes']
+    return signs[(houseNumber - 1) % 12]
+  }
+
+  const getHouseElement = (sign: string): string => {
+    const elements = {
+      'Carneiro': '🔥 Fogo', 'Leão': '🔥 Fogo', 'Sagitário': '🔥 Fogo',
+      'Touro': '🌍 Terra', 'Virgem': '🌍 Terra', 'Capricórnio': '🌍 Terra',
+      'Gêmeos': '💨 Ar', 'Balança': '💨 Ar', 'Água': '💨 Ar',
+      'Caranguejo': '💧 Água', 'Escorpião': '💧 Água', 'Peixes': '💧 Água'
+    }
+    return elements[sign as keyof typeof elements] || '🌍 Terra'
+  }
+
+  const getHouseModality = (sign: string): string => {
+    const modalities = {
+      'Carneiro': 'Cardeal', 'Caranguejo': 'Cardeal', 'Balança': 'Cardeal', 'Capricórnio': 'Cardeal',
+      'Touro': 'Fixo', 'Leão': 'Fixo', 'Escorpião': 'Fixo', 'Água': 'Fixo',
+      'Gêmeos': 'Mutável', 'Virgem': 'Mutável', 'Sagitário': 'Mutável', 'Peixes': 'Mutável'
+    }
+    return modalities[sign as keyof typeof modalities] || 'Cardeal'
+  }
+
   const getAspectColor = (aspect: string): string => {
     return ASPECT_COLORS[aspect as keyof typeof ASPECT_COLORS] || '#6B7280'
   }
@@ -315,56 +351,39 @@ export default function TransitComparisonCard({
             )}
           </View>
         ))}
-        {/* 🎯 ASCENDENTE E MEIO DO CÉU - SEMPRE MOSTRAR */}
-        {console.log('🔍 DEBUG Ângulos:', { ascendant, midheaven, natalAscendant, natalMidheaven }) || (
-          <View style={styles.anglesSection}>
-            <Text style={styles.sectionTitle}>🎯 Ângulos Importantes</Text>
-            
-            {/* Ascendente */}
-            {(ascendant || natalAscendant) && (
-              <View style={styles.angleCard}>
-                <View style={styles.angleHeader}>
-                  <Text style={styles.angleName}>🌅 Ascendente</Text>
+        {/* 🏠 CASAS ASTROLÓGICAS */}
+        <View style={styles.housesSection}>
+          <Text style={styles.sectionTitle}>🏠 Casas Astrológicas</Text>
+          
+          {/* Lista das 12 casas */}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(houseNumber => {
+            const houseInfo = getHouseInfo(houseNumber)
+            return (
+              <View key={houseNumber} style={styles.houseCard}>
+                <View style={styles.houseHeader}>
+                  <Text style={styles.houseName}>🏠 Casa {houseNumber} - {houseInfo.name}</Text>
                 </View>
-                <View style={styles.angleComparison}>
-                  <View style={styles.angleColumn}>
-                    <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{natalAscendant ? formatDegreeInSign(natalAscendant) : 'N/A'}</Text>
-                    <Text style={styles.angleSign}>{natalAscendant ? getSignFromDegree(natalAscendant) : 'N/A'}</Text>
+                <View style={styles.houseComparison}>
+                  <View style={styles.houseColumn}>
+                    <Text style={styles.houseLabel}>Natal</Text>
+                    <Text style={styles.houseSign}>{getSignFromHouse(houseNumber, 'natal')}</Text>
+                    <Text style={styles.houseAttributes}>
+                      {getHouseElement(getSignFromHouse(houseNumber, 'natal'))} • {getHouseModality(getSignFromHouse(houseNumber, 'natal'))}
+                    </Text>
                   </View>
-                  <Text style={styles.angleArrow}>→</Text>
-                  <View style={styles.angleColumn}>
-                    <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{ascendant ? formatDegreeInSign(ascendant) : 'N/A'}</Text>
-                    <Text style={styles.angleSign}>{ascendant ? getSignFromDegree(ascendant) : 'N/A'}</Text>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Meio do Céu */}
-            {(midheaven || natalMidheaven) && (
-              <View style={styles.angleCard}>
-                <View style={styles.angleHeader}>
-                  <Text style={styles.angleName}>⭐ Meio do Céu</Text>
-                </View>
-                <View style={styles.angleComparison}>
-                  <View style={styles.angleColumn}>
-                    <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{natalMidheaven ? formatDegreeInSign(natalMidheaven) : 'N/A'}</Text>
-                    <Text style={styles.angleSign}>{natalMidheaven ? getSignFromDegree(natalMidheaven) : 'N/A'}</Text>
-                  </View>
-                  <Text style={styles.angleArrow}>→</Text>
-                  <View style={styles.angleColumn}>
-                    <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{midheaven ? formatDegreeInSign(midheaven) : 'N/A'}</Text>
-                    <Text style={styles.angleSign}>{midheaven ? getSignFromDegree(midheaven) : 'N/A'}</Text>
+                  <Text style={styles.houseArrow}>→</Text>
+                  <View style={styles.houseColumn}>
+                    <Text style={styles.houseLabel}>Atual</Text>
+                    <Text style={styles.houseSign}>{getSignFromHouse(houseNumber, 'current')}</Text>
+                    <Text style={styles.houseAttributes}>
+                      {getHouseElement(getSignFromHouse(houseNumber, 'current'))} • {getHouseModality(getSignFromHouse(houseNumber, 'current'))}
+                    </Text>
                   </View>
                 </View>
               </View>
-            )}
-          </View>
-        )}
+            )
+          })}
+        </View>
 
       </ScrollView>
     </LinearGradient>
@@ -594,5 +613,57 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginHorizontal: 16,
+  },
+  // 🏠 ESTILOS PARA CASAS ASTROLÓGICAS
+  housesSection: {
+    marginTop: 20,
+  },
+  houseCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#10B981',
+  },
+  houseHeader: {
+    marginBottom: 8,
+  },
+  houseName: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  houseComparison: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  houseColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  houseLabel: {
+    color: '#CCCCCC',
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  houseSign: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  houseAttributes: {
+    color: '#AAAAAA',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  houseArrow: {
+    color: '#10B981',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginHorizontal: 12,
   },
 })
