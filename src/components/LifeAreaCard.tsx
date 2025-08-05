@@ -1,11 +1,12 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 
 interface LifeAreaCardProps {
   area: LifeArea
+  onPress?: () => void
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -70,7 +71,7 @@ const TREND_COLORS: Record<string, string> = {
   estavel: '#6B7280',
 }
 
-export default function LifeAreaCard({ area }: LifeAreaCardProps) {
+export default function LifeAreaCard({ area, onPress }: LifeAreaCardProps) {
   const getStatusColor = (status: number) => {
     if (status >= 70) return '#10B981' // Verde
     if (status >= 40) return '#F59E0B' // Amarelo
@@ -101,10 +102,11 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
   const trendColor = TREND_COLORS[area.trend] || '#6B7280' // Cor padrão
 
   return (
-    <LinearGradient
-      colors={areaColors}
-      style={[styles.card, area.criticalLevel && styles.criticalCard]}
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <LinearGradient
+        colors={areaColors}
+        style={[styles.card, area.criticalLevel && styles.criticalCard]}
+      >
       <View style={styles.header}>
         <View style={styles.iconContainer}>
           <Ionicons 
@@ -155,6 +157,7 @@ export default function LifeAreaCard({ area }: LifeAreaCardProps) {
         </View>
       )}
     </LinearGradient>
+    </TouchableOpacity>
   )
 }
 

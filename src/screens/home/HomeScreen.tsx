@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
+import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import PushNotificationService from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -26,6 +27,17 @@ export default function HomeScreen() {
     const { user } = useAuth()
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const [refreshing, setRefreshing] = useState(false)
+    const [selectedArea, setSelectedArea] = useState<any>(null)
+    const [modalVisible, setModalVisible] = useState(false)
+
+    // 🎯 Função para abrir modal de detalhes
+    const handleAreaPress = (areaName: string, areaData: any) => {
+      setSelectedArea({
+        name: areaName,
+        ...areaData
+      })
+      setModalVisible(true)
+    }
   
   // Debug: Log da estrutura completa
   React.useEffect(() => {
@@ -340,7 +352,10 @@ export default function HomeScreen() {
                 
                 return (
                   <View key={name} style={styles.lifeAreaItem}>
-                    <LifeAreaCard area={{name, ...area}} />
+                    <LifeAreaCard 
+                      area={{name, ...area}} 
+                      onPress={() => handleAreaPress(name, area)}
+                    />
                   </View>
                 )
               })}
@@ -376,6 +391,14 @@ export default function HomeScreen() {
         {/* Espaçamento final */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* 🎯 MODAL DE DETALHES DA ÁREA */}
+      <LifeAreaDetailModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        areaData={selectedArea}
+        transitData={transitData}
+      />
     </LinearGradient>
   )
   } catch (error) {
