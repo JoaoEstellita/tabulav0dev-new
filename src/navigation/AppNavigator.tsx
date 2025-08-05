@@ -10,6 +10,7 @@ import HomeScreen from "../screens/home/HomeScreen"
 import GroupsScreen from "../screens/groups/GroupsScreen"
 import ProfileScreen from "../screens/profile/ProfileScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
+import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 
@@ -65,10 +66,42 @@ function MainTabs() {
         headerTintColor: "#FFFFFF",
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: "Perfil" }} />
-      <Tab.Screen name="Groups" component={GroupsScreen} options={{ title: "Grupos" }} />
-              <Tab.Screen name="Premium" component={PremiumScreen} options={{ title: "Premium" }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Configurações" }} />
+      <Tab.Screen 
+        name="Home" 
+        component={() => (
+          <ErrorBoundary>
+            <HomeScreen />
+          </ErrorBoundary>
+        )} 
+        options={{ title: "Perfil" }} 
+      />
+      <Tab.Screen 
+        name="Groups" 
+        component={() => (
+          <ErrorBoundary>
+            <GroupsScreen />
+          </ErrorBoundary>
+        )} 
+        options={{ title: "Grupos" }} 
+      />
+      <Tab.Screen 
+        name="Premium" 
+        component={() => (
+          <ErrorBoundary>
+            <PremiumScreen />
+          </ErrorBoundary>
+        )} 
+        options={{ title: "Premium" }} 
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={() => (
+          <ErrorBoundary>
+            <ProfileScreen />
+          </ErrorBoundary>
+        )} 
+        options={{ title: "Configurações" }} 
+      />
     </Tab.Navigator>
   )
 }

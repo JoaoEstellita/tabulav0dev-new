@@ -20,11 +20,16 @@ import PushNotificationService from '../../services/notifications/PushNotificati
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
+import { SafeMapWrapper, useSafeArray } from '../../utils/SafeMapWrapper'
 
 export default function HomeScreen() {
   const { user } = useAuth()
   const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
   const [refreshing, setRefreshing] = useState(false)
+  
+  // Usar arrays seguros
+  const safePlanets = useSafeArray(transitData?.currentTransits?.planets, 'currentTransits.planets')
+  const safeWarnings = useSafeArray(transitData?.warnings, 'warnings')
   const [userProfile, setUserProfile] = useState<{
     displayName: string
     profilePhoto?: string
@@ -286,7 +291,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
             </View>
             
-                            {safeMap(transitData.currentTransits.planets, (planet, index) => (
+                            {safePlanets.map((planet, index) => (
               <View key={index} style={styles.planetCard}>
                 <View style={styles.planetHeader}>
                   <Ionicons name="planet" size={16} color="#FFD700" />
@@ -309,7 +314,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Orientações</Text>
             </View>
             
-                            {safeMap(transitData.warnings, (warning, index) => (
+                            {safeWarnings.map((warning, index) => (
               <View key={index} style={styles.warningCard}>
                 <Ionicons name="bulb-outline" size={16} color="#FFD700" />
                 <Text style={styles.warningText}>{warning}</Text>
