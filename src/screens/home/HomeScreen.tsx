@@ -27,6 +27,22 @@ export default function HomeScreen() {
   const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
   const [refreshing, setRefreshing] = useState(false)
   
+  // Debug: Log da estrutura completa
+  React.useEffect(() => {
+    if (transitData) {
+      console.log('🔍 HOME DEBUG - transitData estrutura completa:', {
+        hasCurrentTransits: !!transitData.currentTransits,
+        currentTransitsType: typeof transitData.currentTransits,
+        currentTransitsKeys: transitData.currentTransits ? Object.keys(transitData.currentTransits) : 'null',
+        hasPlanets: !!transitData.currentTransits?.planets,
+        planetsType: typeof transitData.currentTransits?.planets,
+        planetsLength: transitData.currentTransits?.planets?.length || 'undefined',
+        planetsIsArray: Array.isArray(transitData.currentTransits?.planets),
+        firstPlanet: transitData.currentTransits?.planets?.[0] || 'undefined'
+      })
+    }
+  }, [transitData])
+
   // Usar arrays seguros
   const safePlanets = useSafeArray(transitData?.currentTransits?.planets, 'currentTransits.planets')
   const safeWarnings = useSafeArray(transitData?.warnings, 'warnings')
