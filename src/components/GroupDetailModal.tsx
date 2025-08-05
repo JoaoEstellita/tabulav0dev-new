@@ -23,6 +23,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Avatar from './Avatar'
+import InviteModal from './InviteModal'
 import type { Group, GroupMember } from '../services/firebase/GroupService'
 
 export interface GroupDetailModalProps {
@@ -79,6 +80,7 @@ export default function GroupDetailModal({
   onMemberProfile
 }: GroupDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
+  const [showInviteModal, setShowInviteModal] = useState(false)
   
   if (!group) return null
   
@@ -132,7 +134,7 @@ export default function GroupDetailModal({
             </Text>
           </View>
           
-          <TouchableOpacity onPress={onInvite} style={styles.inviteButton}>
+          <TouchableOpacity onPress={() => setShowInviteModal(true)} style={styles.inviteButton}>
             <Ionicons name="person-add" size={20} color="#000" />
           </TouchableOpacity>
         </View>
@@ -351,6 +353,17 @@ export default function GroupDetailModal({
           )}
         </View>
       </View>
+      
+      {/* Modal de Convites */}
+      <InviteModal
+        visible={showInviteModal}
+        group={group}
+        onClose={() => setShowInviteModal(false)}
+        onInviteSent={() => {
+          setShowInviteModal(false)
+          if (onInvite) onInvite()
+        }}
+      />
     </Modal>
   )
 }
