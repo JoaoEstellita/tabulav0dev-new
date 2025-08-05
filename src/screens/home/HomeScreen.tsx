@@ -15,10 +15,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
-import TransitCard from '../../components/TransitCard'
+// TransitCard removido - usando componente inline personalizado
 import PushNotificationService from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
+import { safeMap, safeEntries } from '../../utils/safeArray'
 
 export default function HomeScreen() {
   const { user } = useAuth()
@@ -112,7 +113,7 @@ export default function HomeScreen() {
   }
 
   const criticalAreas = transitData?.lifeAreas ? 
-    Object.entries(transitData.lifeAreas)
+    safeEntries(transitData.lifeAreas)
       .filter(([_, area]) => area.percentage < 30)
       .map(([name, area]) => ({ name, ...area })) : []
 
@@ -268,7 +269,7 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.lifeAreasGrid}>
-              {Object.entries(transitData.lifeAreas).map(([name, area], index) => (
+              {safeEntries(transitData.lifeAreas).map(([name, area], index) => (
                 <View key={name} style={styles.lifeAreaItem}>
                   <LifeAreaCard area={{name, ...area}} />
                 </View>
@@ -285,7 +286,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
             </View>
             
-            {transitData.currentTransits.planets.map((planet, index) => (
+                            {safeMap(transitData.currentTransits.planets, (planet, index) => (
               <View key={index} style={styles.planetCard}>
                 <View style={styles.planetHeader}>
                   <Ionicons name="planet" size={16} color="#FFD700" />
@@ -308,7 +309,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Orientações</Text>
             </View>
             
-            {transitData.warnings.map((warning, index) => (
+                            {safeMap(transitData.warnings, (warning, index) => (
               <View key={index} style={styles.warningCard}>
                 <Ionicons name="bulb-outline" size={16} color="#FFD700" />
                 <Text style={styles.warningText}>{warning}</Text>

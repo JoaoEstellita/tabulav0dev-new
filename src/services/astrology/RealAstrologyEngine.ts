@@ -150,19 +150,32 @@ export class RealAstrologyEngine {
         // Posição geocêntrica REAL
         const position = Astronomy.GeoVector(body, date, false)
         
+        // Verificar se a posição é válida
+        if (!position || position.x === undefined || position.y === undefined || position.z === undefined) {
+          console.error(`❌ Posição inválida para ${planetName}:`, position)
+          continue
+        }
+        
         // Converter para coordenadas eclípticas
         const ecliptic = Astronomy.Ecliptic(position)
+        
+        // Verificar se coordenadas eclípticas são válidas
+        if (!ecliptic || ecliptic.lon === undefined || ecliptic.lat === undefined) {
+          console.error(`❌ Coordenadas eclípticas inválidas para ${planetName}:`, ecliptic)
+          continue
+        }
         
         // Calcular velocidade (diferença de posição em 1 dia)
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
         const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
-        const speed = nextEcliptic.lon - ecliptic.lon
+        const speed = (nextEcliptic && nextEcliptic.lon !== undefined) ? 
+          nextEcliptic.lon - ecliptic.lon : 0
 
         // Determinar signo e grau
         const signIndex = Math.floor(ecliptic.lon / 30)
         const degree = ecliptic.lon % 30
-        const sign = this.SIGNS[signIndex]
+        const sign = this.SIGNS[signIndex] || 'Áries'
 
         // Verificar retrogradação
         const isRetrograde = speed < 0

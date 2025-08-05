@@ -43,7 +43,7 @@ function MainTabs() {
             iconName = focused ? "person" : "person-outline"
           } else if (route.name === "Groups") {
             iconName = focused ? "people" : "people-outline"
-          } else if (route.name === "Astrology") {
+          } else if (route.name === "Premium") {
             iconName = focused ? "star" : "star-outline"
           } else if (route.name === "Profile") {
             iconName = focused ? "settings" : "settings-outline"
