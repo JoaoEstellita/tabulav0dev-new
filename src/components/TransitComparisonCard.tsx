@@ -68,6 +68,50 @@ export default function TransitComparisonCard({
     return `${longitude.toFixed(1)}°`
   }
 
+  // 🎯 CONVERTER GRAUS PARA 0°-30° POR SIGNO
+  const formatDegreeInSign = (longitude: number): string => {
+    const degreeInSign = longitude % 30
+    return `${degreeInSign.toFixed(1)}°`
+  }
+
+  // 🌟 TRADUÇÃO DOS PLANETAS
+  const translatePlanetName = (planetName: string): string => {
+    const translations: { [key: string]: string } = {
+      'Sun': 'Sol',
+      'Moon': 'Lua', 
+      'Mercury': 'Mercúrio',
+      'Venus': 'Vênus',
+      'Mars': 'Marte',
+      'Jupiter': 'Júpiter',
+      'Saturn': 'Saturno',
+      'Uranus': 'Urano',
+      'Neptune': 'Netuno',
+      'Pluto': 'Plutão'
+    }
+    return translations[planetName] || planetName
+  }
+
+  // 🌍 TRADUÇÃO DOS ELEMENTOS
+  const translateElement = (element: string): string => {
+    const translations: { [key: string]: string } = {
+      'fire': 'Fogo',
+      'earth': 'Terra',
+      'air': 'Ar', 
+      'water': 'Água'
+    }
+    return translations[element] || element
+  }
+
+  // ⚡ TRADUÇÃO DAS MODALIDADES
+  const translateModality = (modality: string): string => {
+    const translations: { [key: string]: string } = {
+      'cardinal': 'Cardeal',
+      'fixed': 'Fixo',
+      'mutable': 'Mutável'
+    }
+    return translations[modality] || modality
+  }
+
   const getSignFromDegree = (degree: number): string => {
     const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 
                    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
@@ -189,7 +233,7 @@ export default function TransitComparisonCard({
                  comparison.name === 'Saturn' ? '♄' :
                  comparison.name === 'Uranus' ? '♅' :
                  comparison.name === 'Neptune' ? '♆' :
-                 comparison.name === 'Pluto' ? '♇' : '●'} {comparison.name}
+                 comparison.name === 'Pluto' ? '♇' : '●'} {translatePlanetName(comparison.name)}
               </Text>
             </View>
 
@@ -199,15 +243,15 @@ export default function TransitComparisonCard({
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>🌟 Natal</Text>
                 <Text style={styles.positionText}>
-                  {formatDegree(comparison.natal.longitude)} {comparison.natal.sign}
+                  {formatDegreeInSign(comparison.natal.longitude)} {comparison.natal.sign}
                 </Text>
                 <Text style={styles.houseText}>Casa {comparison.natal.house}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
-                    {ELEMENT_ICONS[comparison.natal.element]} {comparison.natal.element}
+                    {ELEMENT_ICONS[comparison.natal.element]} {translateElement(comparison.natal.element)}
                   </Text>
                   <Text style={styles.attributeChip}>
-                    {MODALITY_ICONS[comparison.natal.modality]} {comparison.natal.modality}
+                    {MODALITY_ICONS[comparison.natal.modality]} {translateModality(comparison.natal.modality)}
                   </Text>
                 </View>
               </View>
@@ -216,17 +260,17 @@ export default function TransitComparisonCard({
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>🌍 Atual</Text>
                 <Text style={styles.positionText}>
-                  {formatDegree(comparison.current.longitude)} {comparison.current.sign}
+                  {formatDegreeInSign(comparison.current.longitude)} {comparison.current.sign}
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
                 <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
                 <Text style={styles.speedText}>{formatSpeed(comparison.current.speed)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
-                    {ELEMENT_ICONS[comparison.current.element]} {comparison.current.element}
+                    {ELEMENT_ICONS[comparison.current.element]} {translateElement(comparison.current.element)}
                   </Text>
                   <Text style={styles.attributeChip}>
-                    {MODALITY_ICONS[comparison.current.modality]} {comparison.current.modality}
+                    {MODALITY_ICONS[comparison.current.modality]} {translateModality(comparison.current.modality)}
                   </Text>
                 </View>
               </View>
@@ -242,7 +286,7 @@ export default function TransitComparisonCard({
                       {getAspectIcon(aspect.type)}
                     </Text>
                     <Text style={styles.aspectText}>
-                      {aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1} 
+                      {translatePlanetName(aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1)} 
                       ({aspect.orb.toFixed(1)}° orbe)
                     </Text>
                     <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(aspect.type) }]}>
@@ -289,13 +333,13 @@ export default function TransitComparisonCard({
                 <View style={styles.angleComparison}>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{formatDegree(natalAscendant)}</Text>
+                    <Text style={styles.angleDegree}>{formatDegreeInSign(natalAscendant)}</Text>
                     <Text style={styles.angleSign}>{getSignFromDegree(natalAscendant)}</Text>
                   </View>
                   <Text style={styles.angleArrow}>→</Text>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{formatDegree(ascendant)}</Text>
+                    <Text style={styles.angleDegree}>{formatDegreeInSign(ascendant)}</Text>
                     <Text style={styles.angleSign}>{getSignFromDegree(ascendant)}</Text>
                   </View>
                 </View>
@@ -311,13 +355,13 @@ export default function TransitComparisonCard({
                 <View style={styles.angleComparison}>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Natal</Text>
-                    <Text style={styles.angleDegree}>{formatDegree(natalMidheaven)}</Text>
+                    <Text style={styles.angleDegree}>{formatDegreeInSign(natalMidheaven)}</Text>
                     <Text style={styles.angleSign}>{getSignFromDegree(natalMidheaven)}</Text>
                   </View>
                   <Text style={styles.angleArrow}>→</Text>
                   <View style={styles.angleColumn}>
                     <Text style={styles.angleLabel}>Atual</Text>
-                    <Text style={styles.angleDegree}>{formatDegree(midheaven)}</Text>
+                    <Text style={styles.angleDegree}>{formatDegreeInSign(midheaven)}</Text>
                     <Text style={styles.angleSign}>{getSignFromDegree(midheaven)}</Text>
                   </View>
                 </View>

@@ -258,6 +258,8 @@ export class LocalAstrologyService {
           houses: processedData.currentTransits?.houses || [],
           ascendant: processedData.currentTransits?.ascendant || 0,
           midheaven: processedData.currentTransits?.midheaven || 0,
+          natalAscendant: processedData.currentTransits?.natalAscendant || 0, // ✅ NATAL ASCENDANT
+          natalMidheaven: processedData.currentTransits?.natalMidheaven || 0, // ✅ NATAL MIDHEAVEN
           lifeAreas: processedData.currentTransits?.lifeAreas || {},
           planetComparisons: processedData.currentTransits?.planetComparisons || [],
           chartSummary: processedData.currentTransits?.chartSummary || {},
