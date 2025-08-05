@@ -201,27 +201,27 @@ export default function HomeScreen() {
               
               <View style={styles.overviewContent}>
                 <View style={styles.overallScore}>
-                  <Text style={styles.scoreNumber}>{transitData.dailyOverview.overall}%</Text>
+                  <Text style={styles.scoreNumber}>{transitData?.dailyOverview?.overall || 0}%</Text>
                   <Text style={styles.scoreLabel}>Energia Geral</Text>
                 </View>
                 
                 <View style={styles.overviewDetails}>
                   <Text style={styles.overviewMessage}>
-                    {transitData.dailyOverview.message}
+                    {transitData?.dailyOverview?.message || 'Analisando dados astrológicos...'}
                   </Text>
                   
                   <View style={styles.areasSummary}>
                     <View style={styles.summaryItem}>
                       <Ionicons name="trending-up" size={16} color="#10B981" />
                       <Text style={styles.summaryText}>
-                        Melhor: {transitData.dailyOverview.bestArea}
+                        Melhor: {transitData?.dailyOverview?.bestArea || 'N/A'}
                       </Text>
                     </View>
                     
                     <View style={styles.summaryItem}>
                       <Ionicons name="warning" size={16} color="#EF4444" />
                       <Text style={styles.summaryText}>
-                        Atenção: {transitData.dailyOverview.challengingArea}
+                        Atenção: {transitData?.dailyOverview?.challengingArea || 'N/A'}
                       </Text>
                     </View>
                   </View>
@@ -293,7 +293,7 @@ export default function HomeScreen() {
                   <Text style={styles.planetSign}>{planet.sign || 'N/A'}</Text>
                 </View>
                 <Text style={styles.planetPosition}>
-                  {planet.position ? planet.position.toFixed(2) : '0.00'}° em {planet.sign || 'N/A'}
+                  {planet.longitude ? planet.longitude.toFixed(2) : '0.00'}° em {planet.sign || 'N/A'}
                 </Text>
               </View>
             ))}

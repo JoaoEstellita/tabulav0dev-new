@@ -217,10 +217,42 @@ export class LocalAstrologyService {
     processedData: LocalTransitData
   ): Promise<void> {
     try {
-      // Verificar e limpar dados undefined antes de salvar
-      const cleanPlanets = realData.planets || []
+      // Verificar e limpar dados undefined/null antes de salvar
+      const cleanPlanets = (realData.planets || []).map(planet => ({
+        ...planet,
+        longitude: planet.longitude || 0,
+        latitude: planet.latitude || 0,
+        distance: planet.distance || 0,
+        speed: planet.speed || 0,
+        sign: planet.sign || 'N/A',
+        degree: planet.degree || 0,
+        house: planet.house || 1,
+        isRetrograde: Boolean(planet.isRetrograde)
+      }))
+      
       const cleanAspects = realData.aspects || []
-      const cleanProcessedData = processedData || {}
+      
+      // Limpar dados processados também
+      const cleanProcessedData = {
+        ...processedData,
+        currentTransits: {
+          ...processedData.currentTransits,
+          planets: cleanPlanets, // Usar planetas limpos
+          aspects: cleanAspects,
+          houses: processedData.currentTransits?.houses || [],
+          ascendant: processedData.currentTransits?.ascendant || 0,
+          midheaven: processedData.currentTransits?.midheaven || 0,
+          lifeAreas: processedData.currentTransits?.lifeAreas || {}
+        },
+        lifeAreas: processedData.lifeAreas || {},
+        dailyOverview: processedData.dailyOverview || {
+          bestArea: 'N/A',
+          challengingArea: 'N/A', 
+          generalTrend: 'Analisando...',
+          keyAspects: []
+        },
+        warnings: processedData.warnings || []
+      }
       
       console.log('🔍 DEBUG - Salvando cache:', {
         userId: userId ? 'presente' : 'AUSENTE',

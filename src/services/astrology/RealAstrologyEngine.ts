@@ -167,7 +167,7 @@ export class RealAstrologyEngine {
         // Verificar retrogradação
         const isRetrograde = speed < 0
 
-        positions.push({
+        const planetData = {
           name: planetName,
           longitude: ecliptic.lon,
           latitude: ecliptic.lat,
@@ -177,7 +177,19 @@ export class RealAstrologyEngine {
           degree,
           house: 1, // Será calculado posteriormente
           isRetrograde
+        }
+        
+        console.log(`🔍 DEBUG ${planetName}:`, {
+          longitude: ecliptic.lon,
+          latitude: ecliptic.lat,
+          distance: position.length,
+          sign,
+          degree,
+          speed,
+          isRetrograde
         })
+        
+        positions.push(planetData)
 
       } catch (error) {
         console.error(`❌ Erro ao calcular posição de ${planetName}:`, error)
