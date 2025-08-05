@@ -70,7 +70,7 @@ function MainTabs() {
       <Tab.Screen name="Home" options={{ title: "Perfil" }}>
         {() => (
           <ErrorBoundary>
-            <HomeScreenMinimal />
+            <HomeScreen />
           </ErrorBoundary>
         )}
       </Tab.Screen>

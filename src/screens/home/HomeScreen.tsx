@@ -281,7 +281,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Status das Áreas de Vida */}
+        {/* Status das Áreas de Vida - TEMPORARIAMENTE REMOVIDO */}
         {transitData && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -289,53 +289,52 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
             </View>
             
-            <View style={styles.lifeAreasGrid}>
-              {safeEntries(transitData.lifeAreas).map(([name, area], index) => (
-                <View key={name} style={styles.lifeAreaItem}>
-                  <LifeAreaCard area={{name, ...area}} />
-                </View>
-              ))}
+            <View style={styles.card}>
+              <Text style={styles.cardText}>
+                ✅ {Object.keys(transitData.lifeAreas || {}).length} áreas calculadas
+              </Text>
+              <Text style={styles.cardText}>
+                🔍 Componente LifeAreaCard temporariamente removido para debug
+              </Text>
             </View>
           </View>
         )}
 
-        {/* Trânsitos Atuais */}
-        {transitData && transitData.currentTransits && transitData.currentTransits.planets && transitData.currentTransits.planets.length > 0 && (
+        {/* Trânsitos Atuais - TEMPORARIAMENTE REMOVIDO */}
+        {transitData && transitData.currentTransits && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="planet" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Trânsitos Atuais</Text>
             </View>
             
-                            {safePlanets.map((planet, index) => (
-              <View key={index} style={styles.planetCard}>
-                <View style={styles.planetHeader}>
-                  <Ionicons name="planet" size={16} color="#FFD700" />
-                  <Text style={styles.planetName}>{planet.name || 'Planeta'}</Text>
-                  <Text style={styles.planetSign}>{planet.sign || 'N/A'}</Text>
-                </View>
-                <Text style={styles.planetPosition}>
-                  {planet.longitude ? planet.longitude.toFixed(2) : '0.00'}° em {planet.sign || 'N/A'}
-                </Text>
-              </View>
-            ))}
+            <View style={styles.card}>
+              <Text style={styles.cardText}>
+                ✅ {safePlanets.length} planetas calculados
+              </Text>
+              <Text style={styles.cardText}>
+                🔍 Lista de planetas temporariamente removida para debug
+              </Text>
+            </View>
           </View>
         )}
 
-        {/* Avisos */}
-        {transitData && transitData.warnings && Array.isArray(transitData.warnings) && transitData.warnings.length > 0 && (
+        {/* Avisos - TEMPORARIAMENTE REMOVIDO */}
+        {transitData && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="information-circle" size={20} color="#FFD700" />
               <Text style={styles.sectionTitle}>Orientações</Text>
             </View>
             
-                            {safeWarnings.map((warning, index) => (
-              <View key={index} style={styles.warningCard}>
-                <Ionicons name="bulb-outline" size={16} color="#FFD700" />
-                <Text style={styles.warningText}>{warning}</Text>
-              </View>
-            ))}
+            <View style={styles.card}>
+              <Text style={styles.cardText}>
+                ✅ {safeWarnings.length} orientações disponíveis
+              </Text>
+              <Text style={styles.cardText}>
+                🔍 Lista de orientações temporariamente removida para debug
+              </Text>
+            </View>
           </View>
         )}
 
@@ -624,5 +623,10 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 32,
+  },
+  cardText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginBottom: 8,
   },
 })
