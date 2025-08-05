@@ -820,6 +820,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     maxHeight: 200,
   },
+  suggestionsAbove: {
+    marginTop: 0,
+    marginBottom: 8,
+    // Sombra para destacar que está "flutuando" acima
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   suggestionsList: {
     maxHeight: 200,
   },

@@ -106,7 +106,8 @@ class LocationService {
       )
       
       if (!response.ok) {
-        throw new Error('Erro na busca online')
+        console.warn(`API de localização indisponível (${response.status}). Usando apenas cidades locais.`)
+        return []
       }
 
       const data = await response.json()
