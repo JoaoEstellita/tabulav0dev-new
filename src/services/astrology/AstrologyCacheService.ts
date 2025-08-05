@@ -238,12 +238,25 @@ class AstrologyCacheService {
         birthDataHash: this.generateBirthDataHash(birthData)
       }
       
-      // Salvar no Firestore
-      await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), {
+      // Salvar no Firestore - com validação de undefined
+      const firestoreData = {
         ...cache,
         lastUpdate: Timestamp.fromDate(cache.lastUpdate),
         expiresAt: Timestamp.fromDate(cache.expiresAt)
-      })
+      }
+      
+      // Debug: verificar campos undefined
+      const undefinedFields = Object.entries(firestoreData)
+        .filter(([key, value]) => value === undefined)
+        .map(([key]) => key)
+      
+      if (undefinedFields.length > 0) {
+        console.error('❌ Campos undefined detectados:', undefinedFields)
+        console.error('🔍 Cache completo:', cache)
+        throw new Error(`Campos undefined: ${undefinedFields.join(', ')}`)
+      }
+      
+      await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), firestoreData)
       
       // Salvar no cache local
       const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`

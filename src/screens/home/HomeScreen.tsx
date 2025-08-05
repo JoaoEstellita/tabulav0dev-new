@@ -268,9 +268,9 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.lifeAreasGrid}>
-              {transitData.lifeAreas.map((area, index) => (
-                <View key={area.name} style={styles.lifeAreaItem}>
-                  <LifeAreaCard area={area} />
+              {Object.entries(transitData.lifeAreas).map(([name, area], index) => (
+                <View key={name} style={styles.lifeAreaItem}>
+                  <LifeAreaCard area={{name, ...area}} />
                 </View>
               ))}
             </View>
