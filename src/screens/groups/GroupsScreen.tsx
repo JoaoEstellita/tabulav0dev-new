@@ -456,37 +456,39 @@ export default function GroupsScreen() {
               </View>
             )}
 
-            {/* Status dos Membros */}
-            <View style={styles.membersSection}>
-              <Text style={styles.sectionTitle}>Status dos Membros</Text>
-              {(groupMembers || []).map((member) => (
-                <View key={member.userId} style={styles.memberCard}>
-                  <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{member.displayName}</Text>
-                    <Text style={styles.memberEmail}>{member.email}</Text>
-                  </View>
+            {/* NOVA INTERFACE: Cards de Grupos Modernos */}
+            <View style={styles.groupsCardsSection}>
+              <Text style={styles.sectionTitle}>👥 Membros do Grupo</Text>
+              
+              {/* Card do Grupo Atual */}
+              <GroupCard
+                group={selectedGroup}
+                members={groupMembers}
+                onPress={() => {
+                  setSelectedGroupForDetail(selectedGroup)
+                  setShowGroupDetail(true)
+                }}
+              />
 
-                  {member.astrologicalStatus && (
-                    <View style={styles.memberStatus}>
-                      <Ionicons
-                        name={getStatusIcon(member.astrologicalStatus.overall) as any}
-                        size={24}
-                        color={getStatusColor(member.astrologicalStatus.overall)}
-                      />
-                      <View style={styles.statusDetails}>
-                        <Text style={[styles.statusText, { color: getStatusColor(member.astrologicalStatus.overall) }]}>
-                          {member.astrologicalStatus.overall.toUpperCase()}
-                        </Text>
-                        <Text style={styles.statusMood}>{member.astrologicalStatus.mood}</Text>
-                        {member.astrologicalStatus.criticalTransits.length > 0 && (
-                          <Text style={styles.statusTransits}>
-                            {member.astrologicalStatus.criticalTransits.length} trânsito(s) crítico(s)
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  )}
-                </View>
+              {/* Cards dos Membros */}
+              {groupMembers.map((member) => (
+                <GroupCard
+                  key={member.userId}
+                  group={{
+                    id: member.userId,
+                    name: member.displayName,
+                    description: member.email,
+                    createdAt: new Date(),
+                    createdBy: member.userId,
+                    members: [member.userId],
+                    isPrivate: false
+                  }}
+                  members={[member]}
+                  onPress={() => {
+                    // Abrir modal de detalhes do membro
+                    Alert.alert('Perfil do Membro', `Ver detalhes de ${member.displayName}`)
+                  }}
+                />
               ))}
             </View>
 
@@ -844,14 +846,13 @@ const styles = StyleSheet.create({
     color: "#888",
     fontSize: 14,
     textAlign: "center",
-    lineHeight: 20,
     marginBottom: 24,
   },
   createFirstGroupButton: {
     backgroundColor: "#FFD700",
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 25,
   },
   createFirstGroupButtonText: {
     color: "#000000",
@@ -1206,5 +1207,8 @@ const styles = StyleSheet.create({
   groupsContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,
+  },
+  groupsCardsSection: {
+    marginBottom: 24,
   },
 })
