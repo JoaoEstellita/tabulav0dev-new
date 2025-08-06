@@ -82,7 +82,7 @@ export default function SubscriptionScreen() {
       if (success) {
         Alert.alert(
           '🎉 Trial Ativado!',
-          `Você agora tem ${plan.trialDays} dias grátis para testar todos os recursos premium!\n\nAproveite sua experiência completa no Tabula Estelar.`,
+          `Você agora tem ${plan.trialDays} dias grátis para testar todos os recursos premium!\n\nAproveite sua experiência completa no Tábula Estelar.`,
           [
             {
               text: 'Começar a usar',

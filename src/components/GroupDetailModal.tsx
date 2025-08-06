@@ -91,7 +91,7 @@ export default function GroupDetailModal({
     try {
       if (group.inviteCode) {
         await Share.share({
-          message: `Junte-se ao meu grupo "${group.name}" no Tabula Estelar!\n\n🔗 Link: ${inviteLink}\n📱 Código: ${group.inviteCode}\n\n✨ Descubra como os astros influenciam nosso grupo!`,
+          message: `Junte-se ao meu grupo "${group.name}" no Tábula Estelar!\n\n🔗 Link: ${inviteLink}\n📱 Código: ${group.inviteCode}\n\n✨ Descubra como os astros influenciam nosso grupo!`,
           title: `Convite - ${group.name}`
         })
       }

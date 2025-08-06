@@ -261,7 +261,7 @@ export default function InviteModal({
               <View style={styles.instructionBox}>
                 <Text style={styles.instructionTitle}>📱 Como usar:</Text>
                 <Text style={styles.instructionText}>
-                  1. Abra o Tabula Estelar{'\n'}
+                  1. Abra o Tábula Estelar{'\n'}
                   2. Vá em "Grupos" → "Entrar"{'\n'}
                   3. Digite o código acima{'\n'}
                   4. Pronto! Você está no grupo ✨

@@ -70,7 +70,7 @@ async function initializeFirestore() {
     // Criar documento de exemplo na coleção notifications
     await setDoc(doc(db, 'notifications', 'example'), {
       userId: 'example',
-      title: 'Bem-vindo ao Tabula Estelar!',
+      title: 'Bem-vindo ao Tábula Estelar!',
       body: 'Seu aplicativo está configurado e pronto para uso.',
       data: { type: 'welcome' },
       read: false,

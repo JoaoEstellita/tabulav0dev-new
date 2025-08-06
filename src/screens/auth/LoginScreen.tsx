@@ -75,7 +75,7 @@ export default function LoginScreen() {
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
         <View style={styles.content}>
-          <Text style={styles.title}>Tabula Estelar</Text>
+          <Text style={styles.title}>Tábula Estelar</Text>
           <Text style={styles.subtitle}>Seu guia astrológico pessoal</Text>
 
           <View style={styles.form}>

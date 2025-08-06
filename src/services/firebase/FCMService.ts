@@ -171,7 +171,7 @@ class FCMService {
 
   private showWebNotification(notification: any): void {
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(notification.title || "Tabula Estelar", {
+      new Notification(notification.title || "Tábula Estelar", {
         body: notification.body,
         icon: "/assets/icon.png",
         badge: "/assets/badge.png",

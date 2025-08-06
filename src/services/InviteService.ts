@@ -73,12 +73,12 @@ export class InviteService {
    * Constrói mensagem de convite personalizada
    */
   private static buildInviteMessage(groupName: string, inviteCode: string, inviteLink: string): string {
-    return `🌟 Você foi convidado para o grupo "${groupName}" no Tabula Estelar!
+    return `🌟 Você foi convidado para o grupo "${groupName}" no Tábula Estelar!
 
 ✨ Descubra como os astros influenciam nosso grupo e compartilhe energia positiva com todos os membros.
 
 📱 Para entrar:
-1. Baixe o app Tabula Estelar
+1. Baixe o app Tábula Estelar
 2. Use o código: ${inviteCode}
 3. Ou acesse: ${inviteLink}
 

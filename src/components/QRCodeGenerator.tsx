@@ -83,7 +83,7 @@ export default function QRCodeGenerator({
       
       // Salvar na galeria
       const asset = await MediaLibrary.createAssetAsync(uri)
-      await MediaLibrary.createAlbumAsync('Tabula Estelar', asset, false)
+      await MediaLibrary.createAlbumAsync('Tábula Estelar', asset, false)
       
       Alert.alert('Sucesso', 'QR Code salvo na galeria!')
       
