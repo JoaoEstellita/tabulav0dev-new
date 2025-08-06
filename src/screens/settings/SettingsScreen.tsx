@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 
 const { width } = Dimensions.get('window');
@@ -38,6 +39,7 @@ interface SettingsItem {
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { preferences, updatePreferences } = useNotificationPreferences();
+  const { settings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
 
   const [settings, setSettings] = useState<SettingsSection[]>([
@@ -112,8 +114,8 @@ export default function SettingsScreen() {
           subtitle: 'Backup automático na nuvem',
           icon: 'cloud',
           type: 'toggle',
-          value: true,
-          onToggle: (value) => updateDataSync(value),
+          value: settings?.dataSync ?? true,
+          onToggle: (value) => updateSettings({ dataSync: value }),
         },
         {
           id: 'analytics',
@@ -121,8 +123,8 @@ export default function SettingsScreen() {
           subtitle: 'Ajudar a melhorar o app',
           icon: 'analytics',
           type: 'toggle',
-          value: true,
-          onToggle: (value) => updateAnalytics(value),
+          value: settings?.analytics ?? true,
+          onToggle: (value) => updateSettings({ analytics: value }),
         },
         {
           id: 'location_sharing',
@@ -130,8 +132,8 @@ export default function SettingsScreen() {
           subtitle: 'Para cálculos astrológicos precisos',
           icon: 'location',
           type: 'toggle',
-          value: true,
-          onToggle: (value) => updateLocationSharing(value),
+          value: settings?.locationSharing ?? true,
+          onToggle: (value) => updateSettings({ locationSharing: value }),
         },
       ],
     },
@@ -252,20 +254,7 @@ export default function SettingsScreen() {
     Linking.openURL('https://www.mercadopago.com.br');
   };
 
-  const updateDataSync = (value: boolean) => {
-    // TODO: Implementar sincronização de dados
-    console.log('Data sync:', value);
-  };
-
-  const updateAnalytics = (value: boolean) => {
-    // TODO: Implementar analytics
-    console.log('Analytics:', value);
-  };
-
-  const updateLocationSharing = (value: boolean) => {
-    // TODO: Implementar compartilhamento de localização
-    console.log('Location sharing:', value);
-  };
+  // Funções removidas pois agora usam os hooks
 
   const editProfile = () => {
     // TODO: Navegar para tela de edição de perfil

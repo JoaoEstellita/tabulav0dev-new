@@ -29,6 +29,17 @@ export function useNotificationPreferences() {
 
   const loadPreferences = async () => {
     try {
+      // TODO: Implementar quando tivermos contexto de usuário
+      // const response = await fetch(`${BACKEND_URL}/notification-preferences?userId=${userId}`);
+      // if (response.ok) {
+      //   const data = await response.json();
+      //   if (data.success) {
+      //     setPreferences(data.preferences);
+      //     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.preferences));
+      //   }
+      // }
+      
+      // Por enquanto, usar localStorage
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -68,8 +79,15 @@ export function useNotificationPreferences() {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
       setPreferences(newPreferences);
       
-      // TODO: Sincronizar com backend
-      // await syncPreferencesWithBackend(newPreferences);
+      // TODO: Sincronizar com backend quando tivermos contexto de usuário
+      // const response = await fetch(`${BACKEND_URL}/notification-preferences?userId=${userId}`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ preferences: newPreferences })
+      // });
+      // if (!response.ok) {
+      //   console.error('Erro ao sincronizar com backend');
+      // }
       
       return true;
     } catch (error) {
