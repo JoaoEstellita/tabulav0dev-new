@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tábula Estelar - Seu Guia Astrológico Pessoal</title>
+    <meta name="description" content="Descubra seu mapa astral, compatibilidade e horóscopo personalizado. Baixe o app ou use no navegador.">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #FFD700;
+            color: #000;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: #A0A0A0;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Features */
+        .features {
+            padding: 80px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+
+        .feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+
+        .feature p {
+            color: #A0A0A0;
+        }
+
+        /* Download Section */
+        .download-section {
+            text-align: center;
+            padding: 80px 0;
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: #FFD700;
+            color: #000;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .pwa-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            color: #A0A0A0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">⭐ Tábula Estelar</div>
+            <nav class="nav-buttons">
+                <a href="/app" class="btn btn-secondary">Usar App</a>
+                <a href="/app" class="btn btn-primary">Entrar</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Seu Guia Astrológico Pessoal</h1>
+            <p>Descubra seu mapa astral, compatibilidade e horóscopo personalizado. 
+               Acesse insights profundos sobre sua personalidade e destino através da astrologia.</p>
+            
+            <div class="download-buttons">
+                <a href="/app" class="download-btn pwa-btn">
+                    🌟 Usar no Navegador
+                </a>
+                <a href="#" class="download-btn">
+                    📱 Google Play (Em breve)
+                </a>
+                <a href="#" class="download-btn">
+                    🍎 App Store (Em breve)
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="container">
+            <div class="feature">
+                <div class="feature-icon">🌟</div>
+                <h3>Mapa Astral Completo</h3>
+                <p>Visualize seu mapa astral com todos os planetas, casas e aspectos. 
+                   Entenda como as energias cósmicas influenciam sua vida.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">💕</div>
+                <h3>Compatibilidade</h3>
+                <p>Descubra sua compatibilidade com outras pessoas através da sinastria. 
+                   Analise relacionamentos amorosos, amizades e parcerias.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📅</div>
+                <h3>Horóscopo Personalizado</h3>
+                <p>Receba horóscopos diários baseados no seu mapa astral único. 
+                   Previsões precisas para todos os aspectos da vida.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🔮</div>
+                <h3>Transitos Planetários</h3>
+                <p>Acompanhe os trânsitos planetários e como eles afetam sua vida. 
+                   Prepare-se para mudanças e oportunidades.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🌙</div>
+                <h3>Fases Lunares</h3>
+                <p>Monitore as fases lunares e seu impacto em suas emoções e energia. 
+                   Aproveite os ciclos lunares para manifestação.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">✨</div>
+                <h3>Comunidade Astrológica</h3>
+                <p>Conecte-se com outros astrólogos e entusiastas. 
+                   Compartilhe experiências e aprenda com a comunidade.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download-section">
+        <div class="container">
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: #FFD700;">Comece Sua Jornada Astrológica</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 40px; color: #A0A0A0;">
+                Acesse agora mesmo e descubra os segredos das estrelas
+            </p>
+            
+            <div class="download-buttons">
+                <a href="/app" class="download-btn pwa-btn">
+                    🚀 Começar Agora
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Tábula Estelar. Todos os direitos reservados.</p>
+            <p style="margin-top: 10px;">
+                <a href="/app" style="color: #FFD700; text-decoration: none;">Usar App</a> | 
+                <a href="#" style="color: #FFD700; text-decoration: none;">Política de Privacidade</a> | 
+                <a href="#" style="color: #FFD700; text-decoration: none;">Termos de Uso</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Adicionar efeitos de scroll suave
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Adicionar animação de entrada
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-in';
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
