@@ -66,7 +66,7 @@ function formatRelativeTime(date: Date): string {
  * Gera link de convite
  */
 function generateInviteLink(groupId: string, inviteCode: string): string {
-  return `https://tabulaestelar.app/join/${inviteCode}`
+  return `https://tabulaestelar.com.br/join/${inviteCode}`
 }
 
 export default function GroupDetailModal({

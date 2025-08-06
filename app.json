@@ -25,6 +25,7 @@
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist"
     },
+    "scheme": "tabulaestelar",
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",

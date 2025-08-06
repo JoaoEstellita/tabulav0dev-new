@@ -22,7 +22,7 @@ export interface InviteData {
 export class InviteService {
   
   // Base URL do app (será configurada para produção)
-  private static readonly BASE_URL = 'https://tabulaestelar.app'
+  private static readonly BASE_URL = 'https://tabulaestelar.com.br'
   
   /**
    * Gera link de convite dinâmico
@@ -102,7 +102,7 @@ export class InviteService {
       const parsedUrl = Linking.parse(url)
       
       // Formatos suportados:
-      // https://tabulaestelar.app/join/ABC123
+      // https://tabulaestelar.com.br/join/ABC123
       // tabulaestelar://join/ABC123
       
       if (parsedUrl.path?.includes('/join/')) {
