@@ -197,6 +197,31 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const selectPhoto = async () => {
+    // Para web, usar input file nativo
+    if (typeof window !== 'undefined') {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = async (event: any) => {
+        const file = event.target.files[0]
+        if (file) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const result = e.target?.result as string
+            setFormData(prev => ({
+              ...prev,
+              profilePhoto: result,
+            }))
+            console.log('✅ Foto selecionada na web')
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+      input.click()
+      return
+    }
+
+    // Para mobile, usar ImagePicker
     const hasPermission = await requestPermissions()
     if (!hasPermission) return
 
@@ -434,7 +459,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           <DateTimePicker
             value={tempDate}
             mode="date"
-            display="default"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDateChange}
             maximumDate={new Date()}
             minimumDate={new Date(1900, 0, 1)}
@@ -448,6 +473,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                 <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>Confirmar</Text>
               </TouchableOpacity>
             </View>
+          )}
+          {Platform.OS !== 'ios' && (
+            <TouchableOpacity onPress={confirmDate} style={[styles.pickerButton, styles.confirmButton, { marginTop: 16 }]}>
+              <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>Confirmar</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -648,6 +678,18 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Botão para voltar ao login */}
+        <TouchableOpacity 
+          style={styles.backToLoginButton} 
+          onPress={() => {
+            // Aqui você pode adicionar lógica para voltar ao login
+            window.location.href = '/'
+          }}
+        >
+          <Ionicons name="log-out-outline" size={16} color="#FFD700" />
+          <Text style={styles.backToLoginText}>Voltar ao Login</Text>
+        </TouchableOpacity>
 
       </ScrollView>
     </LinearGradient>
@@ -977,5 +1019,23 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     padding: 8,
+  },
+  backToLoginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  backToLoginText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 })
