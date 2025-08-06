@@ -67,7 +67,7 @@ export function useNotificationPreferences() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`https://tabula-estelar-backend.vercel.app/api/notification-preferences?userId=${user.uid}`, {
+      const response = await fetch(`https://tabulav0dev-backend.vercel.app/api/notification-preferences?userId=${user.uid}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export function useNotificationPreferences() {
     try {
       setError(null)
 
-      const response = await fetch(`https://tabula-estelar-backend.vercel.app/api/notification-preferences?userId=${user.uid}`, {
+      const response = await fetch(`https://tabulav0dev-backend.vercel.app/api/notification-preferences?userId=${user.uid}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

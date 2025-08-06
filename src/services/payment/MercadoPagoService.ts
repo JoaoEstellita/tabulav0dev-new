@@ -48,7 +48,7 @@ export interface SubscriptionStatus {
 }
 
 export class MercadoPagoService {
-  private static readonly BACKEND_URL = 'https://tabula-estelar-new.vercel.app/api'
+  private static readonly BACKEND_URL = 'https://tabulav0dev-backend.vercel.app/api'
   
   // Planos disponíveis
   static readonly PLANS: SubscriptionPlan[] = [

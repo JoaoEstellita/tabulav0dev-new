@@ -273,7 +273,7 @@ export class PushNotificationService {
       const notification = customMessage || this.generateDailyNotification(transitData, preferences)
       
       // Enviar via nosso backend que usa FCM v1
-      const response = await fetch('https://tabula-estelar-backend.vercel.app/api/send-notification', {
+      const response = await fetch('https://tabulav0dev-backend.vercel.app/api/send-notification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

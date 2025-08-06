@@ -22,7 +22,7 @@ export class GroupNotificationService {
     try {
       console.log('📢 Enviando notificação de grupo:', data.notificationType)
 
-      const response = await fetch('https://tabula-estelar-backend.vercel.app/api/group-notifications', {
+      const response = await fetch('https://tabulav0dev-backend.vercel.app/api/group-notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
