@@ -2,16 +2,20 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-
-// Mock user interface
-interface MockUser {
-  uid: string
-  email: string
-  displayName?: string
-}
+import {
+  type User,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth"
+import { auth, db } from "../config/firebase"
+import { doc, getDoc, setDoc } from "firebase/firestore"
 
 interface AuthContextType {
-  user: MockUser | null
+  user: User | null
   loading: boolean
   birthDataComplete: boolean
   signIn: (email: string, password: string) => Promise<void>
@@ -24,21 +28,91 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<MockUser | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const [birthDataComplete, setBirthDataComplete] = useState(false)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('🔐 Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
+      
+      setUser(user)
+      if (user) {
+        console.log('⏳ Aguardando verificação de dados...')
+        // Aguardar um pouco para garantir que o documento existe
+        setTimeout(async () => {
+          try {
+            const isComplete = await checkBirthDataComplete(user.uid)
+            console.log('✅ Verificação completa, resultado:', isComplete)
+            setBirthDataComplete(isComplete)
+          } catch (error) {
+            console.error('❌ Erro na verificação:', error)
+            setBirthDataComplete(false)
+          } finally {
+            setLoading(false)
+          }
+        }, 500)
+      } else {
+        setBirthDataComplete(false)
+        setLoading(false)
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
+  const checkBirthDataComplete = async (userId?: string): Promise<boolean> => {
+    const currentUser = user || auth.currentUser
+    const targetUserId = userId || currentUser?.uid
+    
+    if (!targetUserId) {
+      console.log('❌ Nenhum usuário para verificar')
+      setBirthDataComplete(false)
+      return false
+    }
+
+    try {
+      console.log('🔍 Iniciando verificação para usuário:', targetUserId.substring(0, 8) + '...')
+      const userDoc = await getDoc(doc(db, 'users', targetUserId))
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        
+        // Verificar tanto o flag quanto os dados específicos
+        const hasFlag = userData.birthDataComplete === true
+        const hasData = !!(userData.birthDate && userData.birthTime && userData.birthLocation && userData.displayName)
+        const isComplete = hasFlag && hasData
+        
+        console.log('🔍 Verificação dados de nascimento:', {
+          userId: targetUserId.substring(0, 8) + '...',
+          hasFlag,
+          hasData,
+          isComplete,
+          birthDate: !!userData.birthDate,
+          birthTime: !!userData.birthTime,
+          birthLocation: !!userData.birthLocation,
+          displayName: !!userData.displayName
+        })
+        
+        setBirthDataComplete(isComplete)
+        return isComplete
+      }
+      
+      console.log('❌ Documento do usuário não existe')
+      setBirthDataComplete(false)
+      return false
+    } catch (error) {
+      console.error('❌ Erro ao verificar dados de nascimento:', error)
+      setBirthDataComplete(false)
+      return false
+    }
+  }
 
   const signIn = async (email: string, password: string) => {
     try {
       console.log('🔐 Tentando login com email:', email)
-      // Mock login - sempre funciona
-      const mockUser: MockUser = {
-        uid: 'mock-user-id',
-        email: email,
-        displayName: email.split('@')[0]
-      }
-      setUser(mockUser)
-      console.log('✅ Login mock bem-sucedido:', mockUser.uid)
+      const result = await signInWithEmailAndPassword(auth, email, password)
+      console.log('✅ Login bem-sucedido:', result.user.uid)
     } catch (error: any) {
       console.error('❌ Erro no login:', error.message)
       throw error
@@ -48,14 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       console.log('📝 Tentando cadastro com email:', email)
-      // Mock signup - sempre funciona
-      const mockUser: MockUser = {
-        uid: 'mock-user-id-' + Date.now(),
-        email: email,
-        displayName: email.split('@')[0]
-      }
-      setUser(mockUser)
-      console.log('✅ Cadastro mock bem-sucedido:', mockUser.uid)
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      
+      // Criar documento do usuário no Firestore
+      await setDoc(doc(db, 'users', result.user.uid), {
+        email: result.user.email,
+        displayName: result.user.displayName || email.split('@')[0],
+        createdAt: new Date(),
+        birthDataComplete: false,
+      })
+      
+      console.log('✅ Cadastro bem-sucedido:', result.user.uid)
     } catch (error: any) {
       console.error('❌ Erro no cadastro:', error.message)
       throw error
@@ -65,14 +142,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('🔐 Tentando login com Google')
-      // Mock Google login
-      const mockUser: MockUser = {
-        uid: 'google-mock-user-id',
-        email: 'google@example.com',
-        displayName: 'Google User'
+      // Para web, usar popup
+      if (typeof window !== 'undefined') {
+        const provider = new GoogleAuthProvider()
+        const result = await signInWithPopup(auth, provider)
+        
+        // Verificar se usuário já existe no Firestore
+        const userDoc = await getDoc(doc(db, 'users', result.user.uid))
+        if (!userDoc.exists()) {
+          // Criar documento para novo usuário Google
+          await setDoc(doc(db, 'users', result.user.uid), {
+            email: result.user.email,
+            displayName: result.user.displayName || result.user.email?.split('@')[0],
+            createdAt: new Date(),
+            birthDataComplete: false,
+          })
+        }
+        
+        console.log('✅ Login Google bem-sucedido:', result.user.uid)
+      } else {
+        throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
       }
-      setUser(mockUser)
-      console.log('✅ Login Google mock bem-sucedido:', mockUser.uid)
     } catch (error: any) {
       console.error('❌ Erro no login Google:', error.message)
       throw error
@@ -80,13 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
-    setUser(null)
+    await signOut(auth)
     console.log('✅ Logout realizado')
-  }
-
-  const checkBirthDataComplete = async (): Promise<boolean> => {
-    // Mock - sempre retorna false para mostrar onboarding
-    return false
   }
 
   const value = {

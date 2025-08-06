@@ -3,17 +3,16 @@ import { initializeAuth, getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
-// Configuração temporária para teste - sem Firebase
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "test-key",
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "test.firebaseapp.com",
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "test-project",
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "test.appspot.com",
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:123456789:web:test",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "tabula-estelar-84fdc.firebaseapp.com",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "tabula-estelar-84fdc",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "tabula-estelar-84fdc.firebasestorage.app",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "729037358278",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:729037358278:web:35bd0e39a865439a00c3c7",
 }
 
-console.log('🔥 Inicializando Firebase com config:', {
+console.log('🔥 Inicializando Firebase com config real:', {
   apiKey: firebaseConfig.apiKey ? '✅ Configurado' : '❌ Não configurado',
   authDomain: firebaseConfig.authDomain ? '✅ Configurado' : '❌ Não configurado',
   projectId: firebaseConfig.projectId ? '✅ Configurado' : '❌ Não configurado',
