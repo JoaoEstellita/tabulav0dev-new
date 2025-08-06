@@ -12,6 +12,12 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:729037358278:web:XXXXXXXXXXXXXXXXXXXX",
 }
 
+console.log('🔥 Inicializando Firebase com config:', {
+  apiKey: firebaseConfig.apiKey ? '✅ Configurado' : '❌ Não configurado',
+  authDomain: firebaseConfig.authDomain ? '✅ Configurado' : '❌ Não configurado',
+  projectId: firebaseConfig.projectId ? '✅ Configurado' : '❌ Não configurado',
+})
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
@@ -23,5 +29,7 @@ const db = getFirestore(app)
 
 // Initialize Storage
 const storage = getStorage(app)
+
+console.log('✅ Firebase inicializado com sucesso')
 
 export { auth, db, storage }

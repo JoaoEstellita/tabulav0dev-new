@@ -10,6 +10,7 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithCredential,
+  signInWithPopup,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc } from "firebase/firestore"
@@ -110,16 +111,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
+    try {
+      console.log('🔐 Tentando login com email:', email)
+      const result = await signInWithEmailAndPassword(auth, email, password)
+      console.log('✅ Login bem-sucedido:', result.user.uid)
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error.message)
+      throw error
+    }
   }
 
   const signUp = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password)
+    try {
+      console.log('📝 Tentando cadastro com email:', email)
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      console.log('✅ Cadastro bem-sucedido:', result.user.uid)
+    } catch (error: any) {
+      console.error('❌ Erro no cadastro:', error.message)
+      throw error
+    }
   }
 
   const signInWithGoogle = async () => {
-    // Temporariamente desabilitado para Expo Go
-    throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
+    try {
+      console.log('🔐 Tentando login com Google')
+      // Para web, vamos usar uma abordagem diferente
+      if (typeof window !== 'undefined') {
+        // Web - usar popup
+        const provider = new GoogleAuthProvider()
+        const result = await signInWithPopup(auth, provider)
+        console.log('✅ Login Google bem-sucedido:', result.user.uid)
+      } else {
+        // Mobile - desabilitado por enquanto
+        throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
+      }
+    } catch (error: any) {
+      console.error('❌ Erro no login Google:', error.message)
+      throw error
+    }
   }
 
   const logout = async () => {
