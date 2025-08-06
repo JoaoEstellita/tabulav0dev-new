@@ -142,7 +142,7 @@ export class MercadoPagoService {
    */
   static async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription/status/${userId}`)
+      const response = await fetch(`${this.BACKEND_URL}/subscription?action=status&userId=${userId}`)
       
       if (!response.ok) {
         throw new Error(`Erro HTTP: ${response.status}`)
@@ -174,19 +174,16 @@ export class MercadoPagoService {
   }
   
   /**
-   * Inicia trial gratuito
+   * Inicia período de teste gratuito
    */
   static async startFreeTrial(userId: string, planId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription/start-trial`, {
+      const response = await fetch(`${this.BACKEND_URL}/subscription?action=start-trial&userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId,
-          planId,
-        })
+        body: JSON.stringify({ planId })
       })
       
       return response.ok
@@ -198,16 +195,15 @@ export class MercadoPagoService {
   }
   
   /**
-   * Cancela assinatura
+   * Cancela assinatura do usuário
    */
   static async cancelSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription/cancel`, {
+      const response = await fetch(`${this.BACKEND_URL}/subscription?action=cancel&userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
+        }
       })
       
       return response.ok
@@ -219,16 +215,15 @@ export class MercadoPagoService {
   }
   
   /**
-   * Reativa assinatura cancelada
+   * Reativa assinatura do usuário
    */
   static async reactivateSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription/reactivate`, {
+      const response = await fetch(`${this.BACKEND_URL}/subscription?action=reactivate&userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
+        }
       })
       
       return response.ok
