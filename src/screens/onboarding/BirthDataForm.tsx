@@ -500,56 +500,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const renderStep4 = () => (
     <View style={styles.stepContainer}>
-      <Ionicons name="location-outline" size={64} color="#FFD700" style={styles.stepIcon} />
-      
-      <Text style={styles.stepTitle}>Onde você nasceu?</Text>
+      <Text style={styles.stepTitle}>📍 Local de Nascimento</Text>
       <Text style={styles.stepDescription}>
-        Sua cidade de nascimento define a posição dos planetas no momento exato
+        Informe a cidade onde você nasceu para cálculos astrológicos precisos
       </Text>
 
-      <View style={styles.inputContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.inputIcon} />
-        <TextInput
-          style={styles.locationInput}
-          placeholder="Digite sua cidade de nascimento"
-          placeholderTextColor="#666"
-          value={locationQuery}
-          onChangeText={handleLocationQueryChange}
-          onFocus={() => {
-            console.log('Campo focado. Sugestões disponíveis:', locationSuggestions.length)
-            setShowLocationSuggestions(true)
-          }}
-          onBlur={() => {
-            // Delay para permitir seleção de sugestão
-            setTimeout(() => {
-              if (!selectedLocation) {
-                setShowLocationSuggestions(false)
-              }
-            }, 200)
-          }}
-        />
-        {searchingLocation && (
-          <ActivityIndicator 
-            size="small" 
-            color="#FFD700" 
-            style={styles.searchIndicator} 
-          />
-        )}
-      </View>
-
-      {/* Mensagem para mostrar sugestões */}
-      {!selectedLocation && !showLocationSuggestions && (
-        <View style={styles.suggestionPrompt}>
-          <Ionicons name="information-circle" size={20} color="#FFD700" />
-          <Text style={styles.suggestionPromptText}>
-            Toque no campo acima para ver as cidades disponíveis
-          </Text>
-        </View>
-      )}
-
-      {/* Lista de sugestões */}
+      {/* Lista de sugestões - AGORA ACIMA DO CAMPO */}
       {showLocationSuggestions && locationSuggestions.length > 0 && (
-        <View style={styles.suggestionsContainer}>
+        <View style={[styles.suggestionsContainer, styles.suggestionsAbove]}>
           <Text style={styles.suggestionsTitle}>
             ✨ Cidades disponíveis - Toque para selecionar:
           </Text>
@@ -564,6 +522,49 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               <Ionicons name="chevron-forward" size={16} color="#666" />
             </TouchableOpacity>
           ))}
+        </View>
+      )}
+
+      {/* Campo de busca de localização */}
+      <View style={styles.inputContainer}>
+        <Ionicons name="search" size={20} color="#FFD700" style={styles.inputIcon} />
+        <TextInput
+          style={styles.locationInput}
+          placeholder="Digite o nome da cidade..."
+          placeholderTextColor="#8E8E93"
+          value={locationQuery}
+          onChangeText={handleLocationQueryChange}
+          onFocus={() => {
+            setShowLocationSuggestions(true)
+            if (locationSuggestions.length === 0) {
+              loadDefaultSuggestions()
+            }
+          }}
+          onBlur={() => {
+            // Pequeno delay para permitir toque nas sugestões
+            setTimeout(() => setShowLocationSuggestions(false), 200)
+          }}
+        />
+        {locationQuery.length > 0 && (
+          <TouchableOpacity 
+            style={styles.clearButton}
+            onPress={() => {
+              setLocationQuery('')
+              setSelectedLocation(null)
+            }}
+          >
+            <Ionicons name="close-circle" size={20} color="#FFD700" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Mensagem para mostrar sugestões */}
+      {!selectedLocation && !showLocationSuggestions && (
+        <View style={styles.suggestionPrompt}>
+          <Ionicons name="information-circle" size={20} color="#FFD700" />
+          <Text style={styles.suggestionPromptText}>
+            Toque no campo acima para ver as cidades disponíveis
+          </Text>
         </View>
       )}
 
@@ -968,5 +969,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginRight: 8,
+  },
+  clearButton: {
+    padding: 8,
   },
 })

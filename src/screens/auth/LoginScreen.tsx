@@ -15,6 +15,17 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 
+// Componente Logo
+const Logo = () => (
+  <View style={styles.logoContainer}>
+    <View style={styles.logoCircle}>
+      <Text style={styles.logoIcon}>🌟</Text>
+    </View>
+    <Text style={styles.title}>Tábula Estelar</Text>
+    <Text style={styles.subtitle}>Seu guia astrológico pessoal</Text>
+  </View>
+)
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -75,8 +86,7 @@ export default function LoginScreen() {
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
         <View style={styles.content}>
-          <Text style={styles.title}>Tábula Estelar</Text>
-          <Text style={styles.subtitle}>Seu guia astrológico pessoal</Text>
+          <Logo />
 
           <View style={styles.form}>
             <TextInput
@@ -161,6 +171,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 32,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 48,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#FFD700",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  logoIcon: {
+    fontSize: 40,
   },
   title: {
     fontSize: 32,
