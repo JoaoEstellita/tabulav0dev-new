@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tábula Estelar - Astrologia Inteligente</title>
+    <title>Tábula Estelar - Seu Guia Astrológico Pessoal</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="Descubra como os astros influenciam sua vida com análises precisas e insights personalizados. Baixe o app Tábula Estelar gratuitamente.">
     <style>
         * {
             margin: 0;
@@ -58,10 +61,26 @@
         
         .logo-container {
             margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .app-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
         }
         
         .logo {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: bold;
             background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
             -webkit-background-clip: text;
@@ -102,58 +121,167 @@
         }
         
         .feature {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 78, 0.05));
-            padding: 35px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .feature::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .feature:hover::before {
-            left: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            transition: all 0.3s ease;
         }
         
         .feature:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.1);
         }
         
         .feature h3 {
-            font-size: 1.6rem;
-            margin-bottom: 15px;
             color: #ffd700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
         }
         
-        .feature p {
-            color: #d0d0d0;
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
             font-size: 1rem;
-            line-height: 1.7;
+        }
+        
+        .download-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 50px;
+            margin: 60px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .download-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .download-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #e0e0e0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .download-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .download-option {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .download-option:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.2);
+        }
+        
+        .download-option h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .download-option p {
+            color: #b0b0b0;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #0a0e27;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+        
+        .pwa-info {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .pwa-info h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .pwa-info ul {
+            text-align: left;
+            color: #e0e0e0;
+            list-style: none;
+            padding: 0;
+        }
+        
+        .pwa-info li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .pwa-info li:before {
+            content: "✓";
+            color: #ffd700;
+            position: absolute;
+            left: 0;
         }
         
         .cta {
             text-align: center;
-            padding: 80px 0;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 78, 0.05));
-            border-radius: 20px;
-            margin: 60px 0;
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 60px 0;
         }
         
         .cta h2 {
@@ -171,83 +299,37 @@
             margin-right: auto;
         }
         
-        .download-btn {
-            display: inline-block;
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            color: #1a1f3a;
-            padding: 20px 50px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-size: 1.3rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .download-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .download-btn:hover::before {
-            left: 100%;
-        }
-        
-        .download-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4);
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin: 60px 0;
-        }
-        
-        .stat {
-            text-align: center;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 10px;
-        }
-        
-        .stat-label {
-            color: #b0b0b0;
-            font-size: 1rem;
-        }
-        
         .footer {
             text-align: center;
-            padding: 60px 0 40px;
-            border-top: 1px solid rgba(255, 215, 0, 0.2);
-            margin-top: 80px;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 60px;
+        }
+        
+        .social-links {
+            margin-bottom: 20px;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            font-size: 1.5rem;
+            color: #b0b0b0;
+            transition: color 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: #ffd700;
         }
         
         .footer-links {
-            margin: 20px 0;
+            margin-bottom: 20px;
         }
         
         .footer-links a {
             color: #b0b0b0;
             text-decoration: none;
-            margin: 0 15px;
+            margin: 0 10px;
             transition: color 0.3s ease;
         }
         
@@ -255,22 +337,22 @@
             color: #ffd700;
         }
         
-        .social-links {
-            margin: 30px 0;
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
         
-        .social-links a {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 10px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 50%;
-            transition: all 0.3s ease;
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
         }
         
-        .social-links a:hover {
-            background: rgba(255, 215, 0, 0.2);
-            transform: translateY(-2px);
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #ffed4e, #ffd700);
         }
         
         @media (max-width: 768px) {
@@ -282,90 +364,65 @@
                 font-size: 1.4rem;
             }
             
+            .download-options {
+                grid-template-columns: 1fr;
+            }
+            
             .features {
                 grid-template-columns: 1fr;
             }
             
-            .cta h2 {
-                font-size: 2rem;
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
             }
-            
-            .download-btn {
-                padding: 18px 40px;
-                font-size: 1.1rem;
-            }
-        }
-        
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #1a1f3a;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #ffd700;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #ffed4e;
         }
     </style>
 </head>
 <body>
-    <!-- Estrelas animadas -->
-    <div class="stars" id="stars"></div>
+    <div id="stars" class="stars"></div>
     
     <div class="container">
         <div class="header">
             <div class="logo-container">
-                <div class="logo">🌟 Tábula Estelar</div>
+                <div class="app-logo">🌟</div>
+                <h1 class="logo">Tábula Estelar</h1>
             </div>
-            <div class="tagline">Astrologia Inteligente para sua Vida</div>
-            <div class="subtitle">Descubra como os astros influenciam seu destino com cálculos precisos e interpretações personalizadas</div>
+            <h2 class="tagline">Seu Guia Astrológico Pessoal</h2>
+            <p class="subtitle">Descubra como os astros influenciam sua vida com análises precisas, trânsitos em tempo real e insights personalizados baseados em astronomia de alta precisão.</p>
         </div>
         
         <div class="hero-section">
-            <h2 style="text-align: center; color: #ffd700; margin-bottom: 20px; font-size: 2rem;">✨ Por que escolher o Tábula Estelar?</h2>
-            <p style="text-align: center; color: #e0e0e0; font-size: 1.1rem; line-height: 1.8;">
-                Nossa tecnologia combina astronomia de precisão com inteligência artificial para oferecer 
-                análises astrológicas únicas e personalizadas. Cada cálculo é baseado em dados reais dos 
-                movimentos planetários, garantindo interpretações precisas e confiáveis.
-            </p>
-        </div>
-        
-        <div class="features">
-            <div class="feature">
-                <h3>🔮 Cálculos Precisos</h3>
-                <p>Análise astrológica em tempo real com posições planetárias exatas calculadas através de algoritmos astronômicos avançados. Cada interpretação é baseada em dados científicos.</p>
-            </div>
-            
-            <div class="feature">
-                <h3>💫 Trânsitos Diários</h3>
-                <p>Acompanhe as influências astrológicas do dia com notificações personalizadas e insights valiosos. Receba alertas sobre aspectos importantes e oportunidades astrológicas.</p>
-            </div>
-            
-            <div class="feature">
-                <h3>👥 Grupos Astrológicos</h3>
-                <p>Conecte-se com outros astrólogos, compartilhe insights e participe de comunidades temáticas. Crie grupos personalizados e compartilhe experiências astrológicas.</p>
-            </div>
-            
-            <div class="feature">
-                <h3>🤖 IA Conversacional</h3>
-                <p>Converse com nossa IA astrológica especializada para interpretações profundas e conselhos personalizados. Tire dúvidas e receba orientações baseadas em seu mapa astral.</p>
-            </div>
-            
-            <div class="feature">
-                <h3>📊 Análises Detalhadas</h3>
-                <p>Relatórios completos sobre áreas da vida: amor, carreira, saúde, finanças e espiritualidade. Entenda como cada planeta influencia diferentes aspectos da sua vida.</p>
-            </div>
-            
-            <div class="feature">
-                <h3>🎯 Previsões Avançadas</h3>
-                <p>Previsões baseadas em trânsitos planetários e aspectos astrológicos para planejar seu futuro. Identifique períodos favoráveis e desafios astrológicos.</p>
+            <h2 style="text-align: center; color: #ffd700; margin-bottom: 30px; font-size: 2.2rem;">✨ Funcionalidades Principais</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>🌌 Mapa Astral Completo</h3>
+                    <p>Análise detalhada do seu mapa natal com posições planetárias precisas, aspectos astrológicos e interpretações personalizadas baseadas em astronomia de alta precisão.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>🔄 Trânsitos em Tempo Real</h3>
+                    <p>Acompanhe as influências astrológicas atuais com cálculos em tempo real. Compare posições planetárias atuais com seu mapa natal para insights valiosos.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>💫 Trânsitos Diários</h3>
+                    <p>Acompanhe as influências astrológicas do dia com notificações personalizadas e insights valiosos. Receba alertas sobre aspectos importantes e oportunidades astrológicas.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>👥 Grupos Astrológicos</h3>
+                    <p>Conecte-se com outros astrólogos, compartilhe insights e participe de comunidades temáticas. Crie grupos personalizados e compartilhe experiências astrológicas.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>🤖 IA Conversacional</h3>
+                    <p>Converse com nossa IA astrológica especializada para interpretações profundas e conselhos personalizados. Tire dúvidas e receba orientações baseadas em seu mapa astral.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>📊 Análises Detalhadas</h3>
+                    <p>Relatórios completos sobre áreas da vida: amor, carreira, saúde, finanças e espiritualidade. Entenda como cada planeta influencia diferentes aspectos da sua vida.</p>
+                </div>
             </div>
         </div>
         
@@ -388,10 +445,43 @@
             </div>
         </div>
         
+        <div class="download-section">
+            <h2>🚀 Baixe o Tábula Estelar</h2>
+            <p>Escolha a melhor opção para você e comece sua jornada astrológica hoje mesmo. Disponível gratuitamente em todas as plataformas.</p>
+            
+            <div class="download-options">
+                <div class="download-option" onclick="downloadPWA()">
+                    <h3>🌐 Versão Web (PWA)</h3>
+                    <p>Instale diretamente no seu navegador e use como um app nativo. Funciona offline e tem experiência otimizada para mobile.</p>
+                    <button class="download-btn">📱 Instalar PWA</button>
+                    <div class="pwa-info">
+                        <h4>Vantagens do PWA:</h4>
+                        <ul>
+                            <li>Funciona offline</li>
+                            <li>Experiência nativa</li>
+                            <li>Atualizações automáticas</li>
+                            <li>Sem necessidade de lojas</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="download-option">
+                    <h3>📱 App Mobile</h3>
+                    <p>Versão nativa para Android e iOS com todas as funcionalidades e notificações push integradas.</p>
+                    <button class="download-btn">📲 Baixar App</button>
+                </div>
+                
+                <div class="download-option">
+                    <h3>💻 Versão Desktop</h3>
+                    <p>Use no seu computador com interface otimizada para telas maiores e funcionalidades avançadas.</p>
+                    <button class="download-btn">🖥️ Acessar Web</button>
+                </div>
+            </div>
+        </div>
+        
         <div class="cta">
-            <h2>🚀 Comece sua Jornada Astrológica</h2>
-            <p>Baixe o app e descubra como os astros influenciam sua vida. Junte-se a milhares de usuários que já transformaram sua compreensão astrológica.</p>
-            <a href="#" class="download-btn">📱 Baixar App Gratuitamente</a>
+            <h2>🌟 Comece sua Jornada Astrológica</h2>
+            <p>Junte-se a milhares de usuários que já transformaram sua compreensão astrológica com o Tábula Estelar. Descubra como os astros influenciam sua vida.</p>
         </div>
         
         <div class="footer">
@@ -414,6 +504,19 @@
     </div>
     
     <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+        
         // Criar estrelas animadas
         function createStars() {
             const starsContainer = document.getElementById('stars');
@@ -438,6 +541,54 @@
                 starsContainer.appendChild(star);
             }
         }
+        
+        // Função para instalar PWA
+        function downloadPWA() {
+            if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
+                // PWA está disponível
+                alert('PWA disponível! Use o menu do navegador para instalar.');
+            } else {
+                // Redirecionar para versão web
+                window.open('https://tabulav0dev-new.vercel.app', '_blank');
+            }
+        }
+        
+        // Detectar se PWA pode ser instalado
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botão de instalação
+            const pwaButton = document.querySelector('.download-option:first-child .download-btn');
+            if (pwaButton) {
+                pwaButton.textContent = '📱 Instalar Agora';
+                pwaButton.onclick = () => {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('PWA instalado com sucesso');
+                        }
+                        deferredPrompt = null;
+                    });
+                };
+            }
+        });
+        
+        // Verificar se o app está instalado
+        window.addEventListener('load', () => {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('App está rodando em modo standalone');
+                // Ocultar botão de instalação se já estiver instalado
+                const pwaButton = document.querySelector('.download-option:first-child .download-btn');
+                if (pwaButton) {
+                    pwaButton.textContent = '✅ Já Instalado';
+                    pwaButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+                    pwaButton.disabled = true;
+                }
+            }
+        });
         
         // Inicializar estrelas quando a página carregar
         window.addEventListener('load', createStars);
