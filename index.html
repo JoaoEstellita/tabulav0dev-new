@@ -13,12 +13,38 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b69 100%);
             color: white;
             line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Estrelas animadas */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .star {
+            position: absolute;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
         
         .container {
+            position: relative;
+            z-index: 2;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -26,139 +52,395 @@
         
         .header {
             text-align: center;
-            padding: 60px 0;
+            padding: 80px 0 60px;
+            position: relative;
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
         }
         
         .logo {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
         }
         
         .tagline {
-            font-size: 1.5rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #e0e0e0;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .hero-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
         }
         
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
             margin: 60px 0;
         }
         
         .feature {
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 78, 0.05));
+            padding: 35px;
+            border-radius: 20px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .feature:hover::before {
+            left: 100%;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
         }
         
         .feature h3 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin-bottom: 15px;
             color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature p {
+            color: #d0d0d0;
+            font-size: 1rem;
+            line-height: 1.7;
         }
         
         .cta {
             text-align: center;
-            padding: 60px 0;
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 78, 0.05));
+            border-radius: 20px;
+            margin: 60px 0;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .cta p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #e0e0e0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .download-btn {
             display: inline-block;
             background: linear-gradient(45deg, #ffd700, #ffed4e);
-            color: #333;
-            padding: 20px 40px;
+            color: #1a1f3a;
+            padding: 20px 50px;
             border-radius: 50px;
             text-decoration: none;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            transition: transform 0.3s ease;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .download-btn:hover::before {
+            left: 100%;
         }
         
         .download-btn:hover {
             transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 1rem;
         }
         
         .footer {
             text-align: center;
-            padding: 40px 0;
-            opacity: 0.8;
+            padding: 60px 0 40px;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            margin-top: 80px;
+        }
+        
+        .footer-links {
+            margin: 20px 0;
+        }
+        
+        .footer-links a {
+            color: #b0b0b0;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: #ffd700;
+        }
+        
+        .social-links {
+            margin: 30px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: rgba(255, 215, 0, 0.2);
+            transform: translateY(-2px);
         }
         
         @media (max-width: 768px) {
             .logo {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             
             .tagline {
-                font-size: 1.2rem;
+                font-size: 1.4rem;
             }
             
             .features {
                 grid-template-columns: 1fr;
             }
+            
+            .cta h2 {
+                font-size: 2rem;
+            }
+            
+            .download-btn {
+                padding: 18px 40px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1f3a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ffed4e;
         }
     </style>
 </head>
 <body>
+    <!-- Estrelas animadas -->
+    <div class="stars" id="stars"></div>
+    
     <div class="container">
         <div class="header">
-            <div class="logo">🌟 Tábula Estelar</div>
+            <div class="logo-container">
+                <div class="logo">🌟 Tábula Estelar</div>
+            </div>
             <div class="tagline">Astrologia Inteligente para sua Vida</div>
+            <div class="subtitle">Descubra como os astros influenciam seu destino com cálculos precisos e interpretações personalizadas</div>
+        </div>
+        
+        <div class="hero-section">
+            <h2 style="text-align: center; color: #ffd700; margin-bottom: 20px; font-size: 2rem;">✨ Por que escolher o Tábula Estelar?</h2>
+            <p style="text-align: center; color: #e0e0e0; font-size: 1.1rem; line-height: 1.8;">
+                Nossa tecnologia combina astronomia de precisão com inteligência artificial para oferecer 
+                análises astrológicas únicas e personalizadas. Cada cálculo é baseado em dados reais dos 
+                movimentos planetários, garantindo interpretações precisas e confiáveis.
+            </p>
         </div>
         
         <div class="features">
             <div class="feature">
                 <h3>🔮 Cálculos Precisos</h3>
-                <p>Análise astrológica em tempo real com posições planetárias exatas e interpretações personalizadas.</p>
+                <p>Análise astrológica em tempo real com posições planetárias exatas calculadas através de algoritmos astronômicos avançados. Cada interpretação é baseada em dados científicos.</p>
             </div>
             
             <div class="feature">
                 <h3>💫 Trânsitos Diários</h3>
-                <p>Acompanhe as influências astrológicas do dia com notificações personalizadas e insights valiosos.</p>
+                <p>Acompanhe as influências astrológicas do dia com notificações personalizadas e insights valiosos. Receba alertas sobre aspectos importantes e oportunidades astrológicas.</p>
             </div>
             
             <div class="feature">
                 <h3>👥 Grupos Astrológicos</h3>
-                <p>Conecte-se com outros astrólogos, compartilhe insights e participe de comunidades temáticas.</p>
+                <p>Conecte-se com outros astrólogos, compartilhe insights e participe de comunidades temáticas. Crie grupos personalizados e compartilhe experiências astrológicas.</p>
             </div>
             
             <div class="feature">
                 <h3>🤖 IA Conversacional</h3>
-                <p>Converse com nossa IA astrológica especializada para interpretações profundas e conselhos personalizados.</p>
+                <p>Converse com nossa IA astrológica especializada para interpretações profundas e conselhos personalizados. Tire dúvidas e receba orientações baseadas em seu mapa astral.</p>
             </div>
             
             <div class="feature">
                 <h3>📊 Análises Detalhadas</h3>
-                <p>Relatórios completos sobre áreas da vida: amor, carreira, saúde, finanças e espiritualidade.</p>
+                <p>Relatórios completos sobre áreas da vida: amor, carreira, saúde, finanças e espiritualidade. Entenda como cada planeta influencia diferentes aspectos da sua vida.</p>
             </div>
             
             <div class="feature">
                 <h3>🎯 Previsões Avançadas</h3>
-                <p>Previsões baseadas em trânsitos planetários e aspectos astrológicos para planejar seu futuro.</p>
+                <p>Previsões baseadas em trânsitos planetários e aspectos astrológicos para planejar seu futuro. Identifique períodos favoráveis e desafios astrológicos.</p>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">10+</div>
+                <div class="stat-label">Planetas Analisados</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Casas Astrológicas</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Cálculos em Tempo Real</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Precisão Astronômica</div>
             </div>
         </div>
         
         <div class="cta">
             <h2>🚀 Comece sua Jornada Astrológica</h2>
-            <p style="margin: 20px 0; font-size: 1.1rem;">Baixe o app e descubra como os astros influenciam sua vida</p>
-            <a href="#" class="download-btn">📱 Baixar App</a>
+            <p>Baixe o app e descubra como os astros influenciam sua vida. Junte-se a milhares de usuários que já transformaram sua compreensão astrológica.</p>
+            <a href="#" class="download-btn">📱 Baixar App Gratuitamente</a>
         </div>
         
         <div class="footer">
-            <p>&copy; 2025 Tábula Estelar. Todos os direitos reservados.</p>
-            <p style="margin-top: 10px;">
-                <a href="#" style="color: white; text-decoration: none; margin: 0 10px;">Termos de Uso</a> |
-                <a href="#" style="color: white; text-decoration: none; margin: 0 10px;">Política de Privacidade</a> |
-                <a href="#" style="color: white; text-decoration: none; margin: 0 10px;">Suporte</a>
-            </p>
+            <div class="social-links">
+                <a href="#" title="Instagram">📱</a>
+                <a href="#" title="Facebook">📘</a>
+                <a href="#" title="YouTube">📺</a>
+                <a href="#" title="Blog">📝</a>
+            </div>
+            
+            <div class="footer-links">
+                <a href="#">Termos de Uso</a> |
+                <a href="#">Política de Privacidade</a> |
+                <a href="#">Suporte</a> |
+                <a href="#">FAQ</a>
+            </div>
+            
+            <p style="color: #b0b0b0; margin-top: 20px;">&copy; 2025 Tábula Estelar. Todos os direitos reservados.</p>
         </div>
     </div>
+    
+    <script>
+        // Criar estrelas animadas
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Posição aleatória
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                
+                // Tamanho aleatório
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                
+                // Delay aleatório para animação
+                star.style.animationDelay = Math.random() * 3 + 's';
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Inicializar estrelas quando a página carregar
+        window.addEventListener('load', createStars);
+    </script>
 </body>
 </html> 
