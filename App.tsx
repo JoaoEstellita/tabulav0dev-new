@@ -1,41 +1,31 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { AuthProvider } from './src/hooks/useAuth';
+import AppNavigator from './src/navigation/AppNavigator';
+import SubscriptionModal from './src/screens/auth/SubscriptionModal';
+import { useSubscriptionCheck } from './src/hooks/useSubscriptionCheck';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
-export default function App() {
+function AppContent() {
+  const { showModal, setShowModal, loading } = useSubscriptionCheck();
+
+  if (loading) return null; // Pode exibir um splash ou loader
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tábula Estelar</Text>
-      <Text style={styles.subtitle}>Seu Guia Astrológico Pessoal</Text>
-      <Text style={styles.message}>App funcionando! 🎉</Text>
+    <ErrorBoundary>
+      <AppNavigator />
+      <SubscriptionModal visible={showModal} onClose={() => setShowModal(false)} />
       <StatusBar style="light" />
-    </View>
+    </ErrorBoundary>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0e27',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  message: {
-    fontSize: 16,
-    color: '#10B981',
-    textAlign: 'center',
-  },
-});
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+}
