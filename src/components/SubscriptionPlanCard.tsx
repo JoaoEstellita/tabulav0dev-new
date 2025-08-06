@@ -8,332 +8,293 @@
  * - Botões de ação
  */
 
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
-import MercadoPagoService, { type SubscriptionPlan } from '../services/payment/MercadoPagoService'
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MercadoPagoService } from '../services/payment/MercadoPagoService';
 
-export interface SubscriptionPlanCardProps {
-  plan: SubscriptionPlan
-  isSelected?: boolean
-  onSelect: (plan: SubscriptionPlan) => void
-  showTrial?: boolean
-  disabled?: boolean
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  period: string;
+  features: string[];
+  isPopular?: boolean;
+  isPremium?: boolean;
+  originalPrice?: number;
+  discount?: number;
 }
 
-export default function SubscriptionPlanCard({
+interface SubscriptionPlanCardProps {
+  plan: SubscriptionPlan;
+  onSubscribe: (planId: string) => void;
+  isLoading?: boolean;
+}
+
+const { width } = Dimensions.get('window');
+
+export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   plan,
-  isSelected = false,
-  onSelect,
-  showTrial = true,
-  disabled = false
-}: SubscriptionPlanCardProps) {
-  
-  const monthlyPrice = plan.frequency === 'yearly' ? plan.price / 12 : plan.price
-  const savings = plan.frequency === 'yearly' ? MercadoPagoService.getYearlySavings() : 0
-  const savingsPercentage = plan.frequency === 'yearly' ? Math.round((savings / (plan.price + savings)) * 100) : 0
+  onSubscribe,
+  isLoading = false,
+}) => {
+  const handleSubscribe = async () => {
+    try {
+      if (isLoading) return;
+      
+      const result = await MercadoPagoService.createPreference({
+        title: `Tábula Estelar - ${plan.name}`,
+        price: plan.price,
+        quantity: 1,
+        currency_id: 'BRL',
+        description: `Assinatura ${plan.name} do Tábula Estelar`,
+        external_reference: `subscription_${plan.id}`,
+      });
 
-  const cardGradient = plan.popular 
-    ? ['#FFD700', '#FFA500', '#FF6B6B']
-    : isSelected 
-      ? ['#4A90E2', '#357ABD', '#2E6DA4']
-      : ['#2C2C2E', '#1C1C1E', '#0F0F23']
+      if (result.success && result.init_point) {
+        onSubscribe(plan.id);
+      } else {
+        Alert.alert('Erro', 'Não foi possível processar o pagamento. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao criar preferência:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao processar o pagamento.');
+    }
+  };
 
-  const borderColor = plan.popular 
-    ? '#FFD700'
-    : isSelected 
-      ? '#4A90E2'
-      : '#3C3C3E'
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(price);
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        { borderColor },
-        disabled && styles.disabled
-      ]}
-      onPress={() => !disabled && onSelect(plan)}
-      activeOpacity={0.8}
-    >
+    <View style={[styles.container, plan.isPopular && styles.popularContainer]}>
+      {plan.isPopular && (
+        <View style={styles.popularBadge}>
+          <Text style={styles.popularText}>🌟 MAIS POPULAR</Text>
+        </View>
+      )}
+      
       <LinearGradient
-        colors={cardGradient}
-        style={styles.gradient}
+        colors={plan.isPremium 
+          ? ['#FFD700', '#FFED4E', '#FFD700'] 
+          : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']
+        }
+        style={[styles.gradient, plan.isPremium && styles.premiumGradient]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        {/* Badge Popular */}
-        {plan.popular && (
-          <View style={styles.popularBadge}>
-            <Ionicons name="star" size={16} color="#000" />
-            <Text style={styles.popularText}>MAIS POPULAR</Text>
-          </View>
-        )}
-
-        {/* Header do Plano */}
         <View style={styles.header}>
-          <Text style={[styles.planName, plan.popular && styles.popularPlanName]}>
+          <Text style={[styles.planName, plan.isPremium && styles.premiumText]}>
             {plan.name}
           </Text>
-          <Text style={[styles.planDescription, plan.popular && styles.popularPlanDescription]}>
-            {plan.description}
-          </Text>
-        </View>
-
-        {/* Preço */}
-        <View style={styles.priceSection}>
-          <View style={styles.priceRow}>
-            <Text style={[styles.currency, plan.popular && styles.popularCurrency]}>R$</Text>
-            <Text style={[styles.price, plan.popular && styles.popularPrice]}>
-              {plan.price.toFixed(2).replace('.', ',')}
+          
+          <View style={styles.priceContainer}>
+            {plan.originalPrice && plan.discount && (
+              <Text style={styles.originalPrice}>
+                {formatPrice(plan.originalPrice)}
+              </Text>
+            )}
+            <Text style={[styles.price, plan.isPremium && styles.premiumPrice]}>
+              {formatPrice(plan.price)}
             </Text>
-            <Text style={[styles.period, plan.popular && styles.popularPeriod]}>
-              /{plan.frequency === 'monthly' ? 'mês' : 'ano'}
+            <Text style={[styles.period, plan.isPremium && styles.premiumText]}>
+              /{plan.period}
             </Text>
           </View>
-
-          {plan.frequency === 'yearly' && (
-            <View style={styles.monthlyEquivalent}>
-              <Text style={[styles.monthlyText, plan.popular && styles.popularMonthlyText]}>
-                Equivale a R$ {monthlyPrice.toFixed(2).replace('.', ',')}/mês
-              </Text>
-              {savings > 0 && (
-                <View style={styles.savingsContainer}>
-                  <Text style={[styles.savingsText, plan.popular && styles.popularSavingsText]}>
-                    💰 Economize R$ {savings.toFixed(2).replace('.', ',')} ({savingsPercentage}%)
-                  </Text>
-                </View>
-              )}
+          
+          {plan.discount && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>-{plan.discount}%</Text>
             </View>
           )}
         </View>
 
-        {/* Trial */}
-        {showTrial && plan.trialDays && (
-          <View style={styles.trialSection}>
-            <Ionicons 
-              name="gift" 
-              size={20} 
-              color={plan.popular ? "#000" : "#FFD700"} 
-            />
-            <Text style={[styles.trialText, plan.popular && styles.popularTrialText]}>
-              {plan.trialDays} dias grátis para testar
-            </Text>
-          </View>
-        )}
-
-        {/* Features */}
-        <View style={styles.featuresSection}>
-          <Text style={[styles.featuresTitle, plan.popular && styles.popularFeaturesTitle]}>
-            ✨ Recursos inclusos:
-          </Text>
-          {plan.features.slice(0, 4).map((feature, index) => (
+        <View style={styles.featuresContainer}>
+          {plan.features.map((feature, index) => (
             <View key={index} style={styles.featureItem}>
-              <Ionicons 
-                name="checkmark-circle" 
-                size={16} 
-                color={plan.popular ? "#000" : "#4CAF50"} 
-              />
-              <Text style={[styles.featureText, plan.popular && styles.popularFeatureText]}>
+              <Text style={styles.checkIcon}>✓</Text>
+              <Text style={[styles.featureText, plan.isPremium && styles.premiumFeatureText]}>
                 {feature}
               </Text>
             </View>
           ))}
-          
-          {plan.features.length > 4 && (
-            <Text style={[styles.moreFeatures, plan.popular && styles.popularMoreFeatures]}>
-              + {plan.features.length - 4} recursos adicionais
-            </Text>
-          )}
         </View>
 
-        {/* Selection Indicator */}
-        {isSelected && (
-          <View style={styles.selectedIndicator}>
-            <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            <Text style={styles.selectedText}>Selecionado</Text>
-          </View>
-        )}
+        <TouchableOpacity
+          style={[
+            styles.subscribeButton,
+            plan.isPremium && styles.premiumButton,
+            isLoading && styles.disabledButton
+          ]}
+          onPress={handleSubscribe}
+          disabled={isLoading}
+        >
+          <LinearGradient
+            colors={plan.isPremium 
+              ? ['#0a0e27', '#1a1f3a'] 
+              : ['#FFD700', '#FFED4E']
+            }
+            style={styles.buttonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Text style={[
+              styles.buttonText,
+              plan.isPremium && styles.premiumButtonText
+            ]}>
+              {isLoading ? 'Processando...' : 'Assinar Agora'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </LinearGradient>
-    </TouchableOpacity>
-  )
-}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
+    width: width * 0.85,
+    marginVertical: 10,
     borderRadius: 20,
-    borderWidth: 2,
-    marginBottom: 16,
     overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  disabled: {
-    opacity: 0.6,
-  },
-  gradient: {
-    padding: 20,
-    paddingTop: 24,
+  popularContainer: {
+    transform: [{ scale: 1.05 }],
+    elevation: 8,
+    shadowOpacity: 0.4,
   },
   popularBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
+    top: -10,
+    right: 20,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    borderRadius: 15,
+    zIndex: 1,
   },
   popularText: {
-    color: '#FFD700',
+    color: '#0a0e27',
     fontSize: 12,
     fontWeight: 'bold',
   },
+  gradient: {
+    padding: 25,
+    borderRadius: 20,
+  },
+  premiumGradient: {
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
   header: {
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 25,
   },
   planName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    color: '#FFD700',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  popularPlanName: {
-    color: '#000',
+  premiumText: {
+    color: '#0a0e27',
   },
-  planDescription: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    lineHeight: 22,
-  },
-  popularPlanDescription: {
-    color: '#333',
-  },
-  priceSection: {
-    marginBottom: 16,
-  },
-  priceRow: {
+  priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    justifyContent: 'center',
   },
-  currency: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginRight: 4,
-  },
-  popularCurrency: {
-    color: '#000',
+  originalPrice: {
+    fontSize: 16,
+    color: '#b0b0b0',
+    textDecorationLine: 'line-through',
+    marginRight: 8,
   },
   price: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  popularPrice: {
-    color: '#000',
-  },
-  period: {
-    fontSize: 18,
-    color: '#CCCCCC',
-    marginLeft: 4,
-  },
-  popularPeriod: {
-    color: '#333',
-  },
-  monthlyEquivalent: {
-    alignItems: 'flex-start',
-  },
-  monthlyText: {
-    fontSize: 14,
-    color: '#CCCCCC',
-    marginBottom: 4,
-  },
-  popularMonthlyText: {
-    color: '#333',
-  },
-  savingsContainer: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  savingsText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
-  },
-  popularSavingsText: {
-    color: '#2E7D32',
-  },
-  trialSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    gap: 8,
-  },
-  trialText: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#FFD700',
   },
-  popularTrialText: {
-    color: '#000',
+  premiumPrice: {
+    color: '#0a0e27',
   },
-  featuresSection: {
-    marginBottom: 16,
-  },
-  featuresTitle: {
+  period: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    color: '#b0b0b0',
+    marginLeft: 5,
   },
-  popularFeaturesTitle: {
-    color: '#000',
+  discountBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  discountText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  featuresContainer: {
+    marginBottom: 25,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: 12,
+  },
+  checkIcon: {
+    color: '#4CAF50',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 12,
   },
   featureText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    flex: 1,
-    lineHeight: 20,
-  },
-  popularFeatureText: {
-    color: '#000',
-  },
-  moreFeatures: {
-    fontSize: 14,
-    color: '#CCCCCC',
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
-  popularMoreFeatures: {
-    color: '#333',
-  },
-  selectedIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-  },
-  selectedText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#4CAF50',
+    color: '#e0e0e0',
+    flex: 1,
   },
-})
+  premiumFeatureText: {
+    color: '#0a0e27',
+  },
+  subscribeButton: {
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  premiumButton: {
+    borderWidth: 2,
+    borderColor: '#0a0e27',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  premiumButtonText: {
+    color: '#FFD700',
+  },
+});
