@@ -9,7 +9,7 @@ import LoginScreen from "../screens/auth/LoginScreen"
 import HomeScreen from "../screens/home/HomeScreen"
 import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
 import GroupsScreen from "../screens/groups/GroupsScreen"
-import ProfileScreen from "../screens/profile/ProfileScreen"
+import SettingsScreen from "../screens/settings/SettingsScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
@@ -47,7 +47,7 @@ function MainTabs() {
             iconName = focused ? "people" : "people-outline"
           } else if (route.name === "Premium") {
             iconName = focused ? "star" : "star-outline"
-          } else if (route.name === "Profile") {
+          } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline"
           } else {
             iconName = "help-outline"
@@ -88,10 +88,10 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Profile" options={{ title: "Configurações" }}>
+      <Tab.Screen name="Settings" options={{ title: "Configurações" }}>
         {() => (
           <ErrorBoundary>
-            <ProfileScreen />
+            <SettingsScreen />
           </ErrorBoundary>
         )}
       </Tab.Screen>
