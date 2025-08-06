@@ -537,7 +537,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onFocus={() => {
             setShowLocationSuggestions(true)
             if (locationSuggestions.length === 0) {
-              loadDefaultSuggestions()
+              // Carregar sugestões padrão
+              LocationService.searchLocations('').then(suggestions => {
+                setLocationSuggestions(suggestions)
+              }).catch(error => {
+                console.error('Erro ao carregar sugestões padrão:', error)
+              })
             }
           }}
           onBlur={() => {
