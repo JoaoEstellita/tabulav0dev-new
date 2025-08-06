@@ -37,12 +37,12 @@ interface SettingsItem {
 }
 
 export default function SettingsScreen() {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const { preferences, updatePreferences } = useNotificationPreferences();
-  const { settings, updateSettings } = useUserSettings();
+  const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [settings, setSettings] = useState<SettingsSection[]>([
+  const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
       title: '🔔 Notificações',
       items: [
@@ -114,7 +114,7 @@ export default function SettingsScreen() {
           subtitle: 'Backup automático na nuvem',
           icon: 'cloud',
           type: 'toggle',
-          value: settings?.dataSync ?? true,
+          value: userSettings?.dataSync ?? true,
           onToggle: (value) => updateSettings({ dataSync: value }),
         },
         {
@@ -123,7 +123,7 @@ export default function SettingsScreen() {
           subtitle: 'Ajudar a melhorar o app',
           icon: 'analytics',
           type: 'toggle',
-          value: settings?.analytics ?? true,
+          value: userSettings?.analytics ?? true,
           onToggle: (value) => updateSettings({ analytics: value }),
         },
         {
@@ -132,7 +132,7 @@ export default function SettingsScreen() {
           subtitle: 'Para cálculos astrológicos precisos',
           icon: 'location',
           type: 'toggle',
-          value: settings?.locationSharing ?? true,
+          value: userSettings?.locationSharing ?? true,
           onToggle: (value) => updateSettings({ locationSharing: value }),
         },
       ],
@@ -295,7 +295,7 @@ export default function SettingsScreen() {
       'Tem certeza que deseja sair?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: signOut }
+        { text: 'Sair', style: 'destructive', onPress: logout }
       ]
     );
   };
@@ -317,7 +317,7 @@ export default function SettingsScreen() {
   };
 
   const handleToggle = (itemId: string, value: boolean) => {
-    setSettings(prevSettings => 
+    setSettingsSections(prevSettings => 
       prevSettings.map(section => ({
         ...section,
         items: section.items.map(item => 
@@ -327,7 +327,7 @@ export default function SettingsScreen() {
     );
 
     // Executar ação específica
-    const item = settings.flatMap(s => s.items).find(i => i.id === itemId);
+    const item = settingsSections.flatMap(s => s.items).find(i => i.id === itemId);
     if (item?.onToggle) {
       item.onToggle(value);
     }
@@ -424,7 +424,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* Settings Sections */}
-          {settings.map((section, sectionIndex) => (
+          {settingsSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <View style={styles.sectionContent}>
