@@ -244,7 +244,7 @@ export default function GroupDetailModal({
                     
                     {member.lastStatusUpdate && (
                       <Text style={styles.lastUpdate}>
-                        Atualizado {formatRelativeTime(member.lastStatusUpdate.toDate())}
+                        Atualizado {formatRelativeTime(member.lastStatusUpdate)}
                       </Text>
                     )}
                   </View>
@@ -316,7 +316,7 @@ export default function GroupDetailModal({
                   Grupo criado por {members.find(m => m.userId === group.createdBy)?.displayName}
                 </Text>
                 <Text style={styles.activityTime}>
-                  {formatRelativeTime(group.createdAt.toDate())}
+                  {formatRelativeTime(group.createdAt)}
                 </Text>
               </View>
               

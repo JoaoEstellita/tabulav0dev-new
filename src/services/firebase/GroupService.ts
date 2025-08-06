@@ -92,7 +92,7 @@ class GroupService {
       return querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
       })) as Group[]
     } catch (error) {
       console.error("Erro ao buscar grupos:", error)
@@ -222,11 +222,11 @@ class GroupService {
 
         members.push({
           userId: memberId,
-          email: memberId, // Buscar dados reais do usuário depois
+          email: memberId.split("@")[0], // Buscar dados reais do usuário depois
           displayName: memberId.split("@")[0],
           joinedAt: new Date(),
           astrologicalStatus: statusData?.astrologicalStatus,
-          lastStatusUpdate: statusData?.lastStatusUpdate?.toDate(),
+          lastStatusUpdate: statusData?.lastStatusUpdate?.toDate() || new Date(),
           birthData: statusData?.birthData,
         })
       }
@@ -247,7 +247,7 @@ class GroupService {
       return querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
       })) as GroupAlert[]
     } catch (error) {
       console.error("Erro ao buscar alertas:", error)
@@ -263,7 +263,7 @@ class GroupService {
       const alerts = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
       })) as GroupAlert[]
 
       callback(alerts)

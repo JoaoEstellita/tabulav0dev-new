@@ -445,10 +445,10 @@ export default function GroupsScreen() {
                           <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
                         </Text>
                         <Text style={styles.alertTime}>
-                          {alert.createdAt.toLocaleTimeString("pt-BR", {
+                          {alert.createdAt?.toLocaleTimeString("pt-BR", {
                             hour: "2-digit",
                             minute: "2-digit",
-                          })}
+                          }) || "Agora"}
                         </Text>
                       </View>
                     </View>
@@ -503,11 +503,11 @@ export default function GroupsScreen() {
                       <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
                     </Text>
                     <Text style={styles.alertTime}>
-                      {alert.createdAt.toLocaleDateString("pt-BR")} às{" "}
-                      {alert.createdAt.toLocaleTimeString("pt-BR", {
+                      {alert.createdAt?.toLocaleDateString("pt-BR")} às{" "}
+                      {alert.createdAt?.toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      }) || "Agora"}
                     </Text>
                   </View>
                 </View>
