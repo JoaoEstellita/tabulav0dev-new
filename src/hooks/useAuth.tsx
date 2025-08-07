@@ -165,6 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('❌ Erro no login Google:', error.message)
+      
+      // Tratamento específico para domínio não autorizado
+      if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('Domínio não autorizado. Adicione tabulaestelar.com.br nas configurações do Firebase.')
+      }
+      
       throw error
     }
   }

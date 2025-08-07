@@ -120,6 +120,18 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       }
     }
     loadInitialSuggestions()
+
+    // Carregar foto salva no localStorage
+    if (typeof window !== 'undefined') {
+      const savedPhoto = localStorage.getItem('tempProfilePhoto')
+      if (savedPhoto) {
+        setFormData(prev => ({
+          ...prev,
+          profilePhoto: savedPhoto,
+        }))
+        console.log('✅ Foto carregada do localStorage')
+      }
+    }
   }, [])
 
   // Busca de localização com debounce
@@ -212,6 +224,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               ...prev,
               profilePhoto: result,
             }))
+            // Salvar no localStorage para persistência
+            localStorage.setItem('tempProfilePhoto', result)
             console.log('✅ Foto selecionada na web')
           }
           reader.readAsDataURL(file)
@@ -447,12 +461,43 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         Sua data de nascimento é essencial para calcular seu mapa astral
       </Text>
 
-      <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-        <Ionicons name="calendar" size={20} color="#FFD700" />
-        <Text style={styles.dateButtonText}>
-          {formData.birthDate || 'Selecionar data de nascimento'}
-        </Text>
-      </TouchableOpacity>
+      {/* Para web, usar input date nativo */}
+      {typeof window !== 'undefined' ? (
+        <View style={styles.dateInputContainer}>
+          <Ionicons name="calendar" size={20} color="#FFD700" style={styles.inputIcon} />
+          <input
+            type="date"
+            value={formData.birthDate}
+            onChange={(e) => {
+              setFormData(prev => ({
+                ...prev,
+                birthDate: e.target.value
+              }))
+              console.log('✅ Data selecionada:', e.target.value)
+            }}
+            max={new Date().toISOString().split('T')[0]}
+            min="1900-01-01"
+            style={{
+              backgroundColor: '#2C2C2E',
+              color: '#FFFFFF',
+              fontSize: 16,
+              padding: '16px',
+              borderRadius: 12,
+              border: '1px solid #444',
+              flex: 1,
+              outline: 'none',
+              borderColor: '#FFD700'
+            }}
+          />
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+          <Ionicons name="calendar" size={20} color="#FFD700" />
+          <Text style={styles.dateButtonText}>
+            {formData.birthDate || 'Selecionar data de nascimento'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {showDatePicker && (
         <View style={styles.pickerContainer}>
@@ -493,12 +538,41 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         A hora exata é crucial para determinar seu ascendente e casas astrológicas
       </Text>
 
-      <TouchableOpacity style={styles.dateButton} onPress={() => setShowTimePicker(true)}>
-        <Ionicons name="time" size={20} color="#FFD700" />
-        <Text style={styles.dateButtonText}>
-          {formData.birthTime || 'Selecionar hora de nascimento'}
-        </Text>
-      </TouchableOpacity>
+      {/* Para web, usar input time nativo */}
+      {typeof window !== 'undefined' ? (
+        <View style={styles.dateInputContainer}>
+          <Ionicons name="time" size={20} color="#FFD700" style={styles.inputIcon} />
+          <input
+            type="time"
+            value={formData.birthTime}
+            onChange={(e) => {
+              setFormData(prev => ({
+                ...prev,
+                birthTime: e.target.value
+              }))
+              console.log('✅ Hora selecionada:', e.target.value)
+            }}
+            style={{
+              backgroundColor: '#2C2C2E',
+              color: '#FFFFFF',
+              fontSize: 16,
+              padding: '16px',
+              borderRadius: 12,
+              border: '1px solid #444',
+              flex: 1,
+              outline: 'none',
+              borderColor: '#FFD700'
+            }}
+          />
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowTimePicker(true)}>
+          <Ionicons name="time" size={20} color="#FFD700" />
+          <Text style={styles.dateButtonText}>
+            {formData.birthTime || 'Selecionar hora de nascimento'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {showTimePicker && (
         <View style={styles.pickerContainer}>
@@ -683,8 +757,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <TouchableOpacity 
           style={styles.backToLoginButton} 
           onPress={() => {
-            // Aqui você pode adicionar lógica para voltar ao login
-            window.location.href = '/'
+            // Limpar dados do usuário e redirecionar
+            if (typeof window !== 'undefined') {
+              // Limpar localStorage se necessário
+              localStorage.removeItem('user')
+              // Redirecionar para login
+              window.location.href = '/app'
+            }
           }}
         >
           <Ionicons name="log-out-outline" size={16} color="#FFD700" />
@@ -1037,5 +1116,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  dateInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#444',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    minWidth: '100%',
   },
 })
