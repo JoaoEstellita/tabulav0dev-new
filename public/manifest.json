@@ -4,7 +4,7 @@
   "description": "Descubra seu mapa astral, compatibilidade e horóscopo personalizado",
   "start_url": "/app",
   "display": "standalone",
-  "background_color": "#1a1a2e",
+  "background_color": "#000000",
   "theme_color": "#FFD700",
   "orientation": "portrait-primary",
   "scope": "/app",
@@ -24,5 +24,31 @@
   ],
   "categories": ["lifestyle", "entertainment", "education"],
   "lang": "pt-BR",
-  "dir": "ltr"
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Mapa Astral",
+      "short_name": "Mapa",
+      "description": "Visualizar seu mapa astral",
+      "url": "/app?shortcut=mapa",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Trânsitos",
+      "short_name": "Trânsitos",
+      "description": "Ver trânsitos atuais",
+      "url": "/app?shortcut=transitos",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

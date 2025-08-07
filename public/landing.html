@@ -404,6 +404,80 @@
                 document.body.style.opacity = '1';
             }, 100);
         });
+
+        // Animações de scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observar elementos para animação
+        document.addEventListener('DOMContentLoaded', () => {
+            const animatedElements = document.querySelectorAll('.feature, .download-btn');
+            animatedElements.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+        });
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botão de instalação se não estiver na landing
+            if (window.location.pathname === '/app') {
+                showInstallButton();
+            }
+        });
+
+        function showInstallButton() {
+            const installBtn = document.createElement('div');
+            installBtn.innerHTML = `
+                <div style="
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #FFD700;
+                    color: #000;
+                    padding: 12px 20px;
+                    border-radius: 25px;
+                    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+                    cursor: pointer;
+                    z-index: 1000;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    📱 Instalar App
+                </div>
+            `;
+            installBtn.onclick = () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('PWA instalado!');
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            };
+            document.body.appendChild(installBtn);
+        }
     </script>
 </body>
 </html>
