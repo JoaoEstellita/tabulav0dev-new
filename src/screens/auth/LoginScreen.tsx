@@ -104,90 +104,88 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          <ResponsiveContainer>
-            <View style={styles.content}>
-              <Logo />
+          <View style={styles.content}>
+            <Logo />
+            
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>
+                {isLogin ? "Entrar" : "Criar Conta"}
+              </Text>
               
-              <View style={styles.formContainer}>
-                <Text style={styles.formTitle}>
-                  {isLogin ? "Entrar" : "Criar Conta"}
-                </Text>
-                
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    placeholderTextColor="#666"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail" size={20} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#666"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Senha"
+                  placeholderTextColor="#666"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+
+              {!isLogin && (
                 <View style={styles.inputContainer}>
                   <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Senha"
+                    placeholder="Confirmar senha"
                     placeholderTextColor="#666"
-                    value={password}
-                    onChangeText={setPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
                     secureTextEntry
                   />
                 </View>
+              )}
 
-                {!isLogin && (
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Confirmar senha"
-                      placeholderTextColor="#666"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      secureTextEntry
-                    />
-                  </View>
+              <TouchableOpacity
+                style={[styles.authButton, loading && styles.disabledButton]}
+                onPress={handleAuth}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Text style={styles.authButtonText}>Carregando...</Text>
+                ) : (
+                  <Text style={styles.authButtonText}>
+                    {isLogin ? "Entrar" : "Cadastrar"}
+                  </Text>
                 )}
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.authButton, loading && styles.disabledButton]}
-                  onPress={handleAuth}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Text style={styles.authButtonText}>Carregando...</Text>
-                  ) : (
-                    <Text style={styles.authButtonText}>
-                      {isLogin ? "Entrar" : "Cadastrar"}
-                    </Text>
-                  )}
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.googleButton, googleLoading && styles.disabledButton]}
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading}
+              >
+                <Ionicons name="logo-google" size={20} color="#000" />
+                <Text style={styles.googleButtonText}>
+                  {googleLoading ? "Carregando..." : "Continuar com Google"}
+                </Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.googleButton, googleLoading && styles.disabledButton]}
-                  onPress={handleGoogleSignIn}
-                  disabled={googleLoading}
-                >
-                  <Ionicons name="logo-google" size={20} color="#000" />
-                  <Text style={styles.googleButtonText}>
-                    {googleLoading ? "Carregando..." : "Continuar com Google"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.switchButton}
-                  onPress={() => setIsLogin(!isLogin)}
-                >
-                  <Text style={styles.switchText}>
-                    {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entre"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={() => setIsLogin(!isLogin)}
+              >
+                <Text style={styles.switchText}>
+                  {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entre"}
+                </Text>
+              </TouchableOpacity>
             </View>
-          </ResponsiveContainer>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -204,23 +202,24 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingVertical: SPACING.xl,
-    minHeight: screenHeight,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingHorizontal: isDesktop() ? 40 : 20,
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: isDesktop() ? SPACING.xl * 2 : SPACING.xl,
+    marginBottom: 40,
   },
   logoImageContainer: {
-    width: isDesktop() ? 150 : isTablet() ? 120 : 100,
-    height: isDesktop() ? 150 : isTablet() ? 120 : 100,
-    marginBottom: SPACING.md,
+    width: 120,
+    height: 120,
+    marginBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -229,43 +228,42 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
-    fontSize: isDesktop() ? 36 : isTablet() ? 32 : 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFD700',
     letterSpacing: 2,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: isDesktop() ? 24 : isTablet() ? 20 : 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFD700',
     letterSpacing: 2,
-    marginTop: -SPACING.xs,
+    marginTop: -5,
     textAlign: 'center',
   },
   tagline: {
-    fontSize: isDesktop() ? 16 : 14,
+    fontSize: 14,
     color: '#A0A0A0',
-    marginTop: SPACING.sm,
+    marginTop: 10,
     textAlign: 'center',
     paddingHorizontal: 20,
   },
   formContainer: {
     width: '100%',
-    maxWidth: isDesktop() ? 450 : isTablet() ? 400 : 350,
     backgroundColor: 'rgba(44, 44, 46, 0.9)',
     borderRadius: 16,
-    padding: isDesktop() ? SPACING.xl : SPACING.lg,
-    marginTop: SPACING.lg,
+    padding: 24,
+    marginTop: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.2)',
   },
   formTitle: {
-    fontSize: isDesktop() ? 24 : isTablet() ? 20 : 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: 24,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -274,55 +272,55 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#444',
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    minHeight: isDesktop() ? 56 : 48,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 50,
   },
   inputIcon: {
-    marginRight: SPACING.sm,
+    marginRight: 12,
   },
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: isDesktop() ? 16 : 14,
-    paddingVertical: SPACING.md,
+    fontSize: 16,
+    paddingVertical: 12,
   },
   authButton: {
     backgroundColor: '#FFD700',
-    paddingVertical: isDesktop() ? SPACING.lg : SPACING.md,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    minHeight: isDesktop() ? 56 : 48,
+    marginBottom: 16,
+    height: 50,
   },
   authButtonText: {
     color: '#000',
-    fontSize: isDesktop() ? 18 : 16,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   googleButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: isDesktop() ? SPACING.lg : SPACING.md,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: SPACING.md,
-    minHeight: isDesktop() ? 56 : 48,
+    marginBottom: 16,
+    height: 50,
   },
   googleButtonText: {
     color: '#000',
-    fontSize: isDesktop() ? 16 : 14,
+    fontSize: 16,
     fontWeight: '600',
-    marginLeft: SPACING.sm,
+    marginLeft: 12,
   },
   switchButton: {
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    paddingVertical: 12,
   },
   switchText: {
     color: '#FFD700',
-    fontSize: isDesktop() ? 16 : 14,
+    fontSize: 14,
     textDecorationLine: 'underline',
   },
   disabledButton: {
