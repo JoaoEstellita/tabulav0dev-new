@@ -18,6 +18,7 @@ import { useNotificationPreferences } from '../../hooks/useNotificationPreferenc
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
+import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 
 const { width } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export default function SettingsScreen() {
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
+  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -246,18 +248,63 @@ export default function SettingsScreen() {
   const checkSubscriptionStatus = async () => {
     try {
       setIsLoading(true);
-      // TODO: Implementar verificação de status da assinatura
-      Alert.alert(
-        'Status da Assinatura',
-        'Funcionalidade em desenvolvimento. Em breve você poderá gerenciar sua assinatura aqui.',
-        [{ text: 'OK' }]
-      );
+      
+      if (!user?.uid) {
+        Alert.alert('Erro', 'Usuário não identificado.');
+        return;
+      }
+
+      const status = await MercadoPagoService.getSubscriptionStatus(user.uid);
+      
+      if (status.isActive) {
+        const plan = MercadoPagoService.getPlanById(status.planId || '');
+        const planName = plan?.name || 'Premium';
+        const expiresAt = status.expiresAt ? 
+          new Date(status.expiresAt).toLocaleDateString('pt-BR') : 'N/A';
+        
+        Alert.alert(
+          '✅ Assinatura Ativa',
+          `Plano: ${planName}\nExpira em: ${expiresAt}\n\nDeseja gerenciar sua assinatura?`,
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Gerenciar', onPress: () => openSubscriptionManagement() }
+          ]
+        );
+      } else if (MercadoPagoService.isInTrial(status)) {
+        const daysRemaining = MercadoPagoService.getTrialDaysRemaining(status);
+        Alert.alert(
+          '🆓 Período de Teste',
+          `Você está no período de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
+          ]
+        );
+      } else {
+        Alert.alert(
+          '💎 Assinatura Premium',
+          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e análises avançadas!',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
+          ]
+        );
+      }
     } catch (error) {
       console.error('Erro ao verificar assinatura:', error);
       Alert.alert('Erro', 'Não foi possível verificar o status da assinatura.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openSubscriptionPlans = () => {
+    setShowSubscriptionPlans(true);
+  };
+
+  const openSubscriptionManagement = () => {
+    // TODO: Navegar para tela de gerenciamento de assinatura
+    Alert.alert('Gerenciar Assinatura', 'Funcionalidade em desenvolvimento.');
   };
 
   const openBillingInfo = () => {
@@ -457,6 +504,10 @@ export default function SettingsScreen() {
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
+      <SubscriptionPlansModal
+        visible={showSubscriptionPlans}
+        onClose={() => setShowSubscriptionPlans(false)}
+      />
     </SafeAreaView>
   );
 }
