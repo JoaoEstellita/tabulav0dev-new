@@ -22,42 +22,21 @@ import { FONT_SIZES, SPACING, isDesktop, isTablet } from "../../styles/responsiv
 const Logo = () => (
   <View style={styles.logoContainer}>
     <View style={styles.logoCircle}>
-      {/* Logo SVG da Tábula Estelar */}
-      <svg width={isDesktop() ? 120 : 80} height={isDesktop() ? 120 : 80} viewBox="0 0 100 100" style={styles.logoSvg}>
+      {/* Logo da Tábula Estelar - Versão React Native */}
+      <View style={styles.logoInner}>
         {/* Roda do navio */}
-        <circle cx="50" cy="50" r="35" fill="none" stroke="#FFD700" strokeWidth="3"/>
-        {/* 8 raios da roda */}
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
-          <line
-            key={i}
-            x1="50"
-            y1="50"
-            x2={50 + 30 * Math.cos(angle * Math.PI / 180)}
-            y2={50 + 30 * Math.sin(angle * Math.PI / 180)}
-            stroke="#FFD700"
-            strokeWidth="2"
-          />
-        ))}
-        {/* Olho central */}
-        <ellipse cx="50" cy="50" rx="12" ry="8" fill="none" stroke="#FFD700" strokeWidth="2"/>
-        {/* Pupila estrela */}
-        <polygon
-          points="50,46 52,50 50,54 48,50"
-          fill="#FFFFFF"
-          stroke="#FFD700"
-          strokeWidth="1"
-        />
+        <View style={styles.wheel}>
+          {/* Olho central */}
+          <View style={styles.eye}>
+            {/* Pupila estrela */}
+            <View style={styles.pupil} />
+          </View>
+        </View>
         {/* Estrelas pequenas */}
-        {[15, 25, 35, 65, 75, 85].map((angle, i) => (
-          <circle
-            key={i}
-            cx={50 + 20 * Math.cos(angle * Math.PI / 180)}
-            cy={50 + 20 * Math.sin(angle * Math.PI / 180)}
-            r="1"
-            fill="#FFFFFF"
-          />
-        ))}
-      </svg>
+        <View style={styles.star1} />
+        <View style={styles.star2} />
+        <View style={styles.star3} />
+      </View>
     </View>
     <Text style={styles.title}>TÁBULA</Text>
     <Text style={styles.subtitle}>ESTELAR</Text>
@@ -251,9 +230,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.md,
   },
-  logoSvg: {
+  logoInner: {
+    position: 'relative',
     width: '100%',
     height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheel: {
+    position: 'absolute',
+    width: isDesktop() ? 60 : 40,
+    height: isDesktop() ? 60 : 40,
+    borderRadius: isDesktop() ? 30 : 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheelRay: {
+    position: 'absolute',
+    width: 2,
+    height: isDesktop() ? 30 : 20,
+    backgroundColor: '#FFD700',
+  },
+  eye: {
+    position: 'absolute',
+    width: isDesktop() ? 20 : 15,
+    height: isDesktop() ? 15 : 12,
+    borderRadius: isDesktop() ? 10 : 7.5,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pupil: {
+    width: isDesktop() ? 8 : 6,
+    height: isDesktop() ? 8 : 6,
+    borderRadius: isDesktop() ? 4 : 3,
+    backgroundColor: '#FFFFFF',
+  },
+  star: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  star1: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+    top: 10,
+    right: 15,
+  },
+  star2: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+    bottom: 15,
+    left: 10,
+  },
+  star3: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+    top: 15,
+    left: 15,
   },
   title: {
     fontSize: FONT_SIZES.xxxl,
