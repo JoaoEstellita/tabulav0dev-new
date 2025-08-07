@@ -17,6 +17,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
+import FAQ from '../../components/FAQ';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +42,7 @@ export default function SettingsScreen() {
   const { preferences, updatePreferences } = useNotificationPreferences();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -146,6 +148,14 @@ export default function SettingsScreen() {
           subtitle: '1.0.0',
           icon: 'information-circle',
           type: 'link',
+        },
+        {
+          id: 'faq',
+          title: 'Perguntas Frequentes',
+          subtitle: 'Como o app funciona',
+          icon: 'help-circle',
+          type: 'button',
+          onPress: () => setShowFAQ(true),
         },
         {
           id: 'terms_of_service',
@@ -444,6 +454,9 @@ export default function SettingsScreen() {
           </View>
         </ScrollView>
       </LinearGradient>
+
+      {/* FAQ Modal */}
+      <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
     </SafeAreaView>
   );
 }
