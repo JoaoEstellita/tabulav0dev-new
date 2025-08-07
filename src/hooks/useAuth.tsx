@@ -180,8 +180,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       console.log('🚪 Iniciando logout...')
+      console.log('👤 Usuário atual:', auth.currentUser?.uid)
+      
+      if (!auth.currentUser) {
+        console.log('⚠️ Nenhum usuário logado')
+        return
+      }
+      
       await signOut(auth)
       console.log('✅ Logout realizado com sucesso')
+      
+      // Verificar se realmente saiu
+      const userAfterLogout = auth.currentUser
+      console.log('👤 Usuário após logout:', userAfterLogout ? userAfterLogout.uid : 'null')
+      
     } catch (error) {
       console.error('❌ Erro no logout:', error)
       throw error

@@ -355,6 +355,10 @@ export default function SettingsScreen() {
   };
 
   const handleSignOut = () => {
+    console.log('🔍 handleSignOut chamado')
+    console.log('👤 Usuário atual:', user?.uid)
+    console.log('🔧 Função logout disponível:', !!logout)
+    
     Alert.alert(
       'Sair da Conta',
       'Tem certeza que deseja sair?',
@@ -362,11 +366,13 @@ export default function SettingsScreen() {
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Sair', style: 'destructive', onPress: async () => {
           try {
+            console.log('🚪 Iniciando processo de logout...')
             setIsLoading(true);
             await logout();
             console.log('✅ Logout realizado com sucesso');
+            Alert.alert('✅ Sucesso', 'Logout realizado com sucesso!');
           } catch (error) {
-            console.error('Erro no logout:', error);
+            console.error('❌ Erro no logout:', error);
             Alert.alert('❌ Erro', 'Não foi possível fazer logout. Tente novamente.');
           } finally {
             setIsLoading(false);
