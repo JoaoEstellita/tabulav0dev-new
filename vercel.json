@@ -2,17 +2,11 @@
   "version": 2,
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/app", "destination": "/index.html" },
     {
       "source": "/app/(.*)",
       "destination": "/index.html"
     },
-    {
-      "source": "/app",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
-    }
+    { "source": "/", "destination": "/landing.html" }
   ]
 }

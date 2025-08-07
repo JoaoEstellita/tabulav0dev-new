@@ -48,7 +48,7 @@ export interface SubscriptionStatus {
 }
 
 export class MercadoPagoService {
-  private static readonly BACKEND_URL = 'https://tabulav0dev-backend.vercel.app/api'
+  private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
   
   // Planos disponíveis
   static readonly PLANS: SubscriptionPlan[] = [
@@ -149,14 +149,14 @@ export class MercadoPagoService {
       }
       
       const data = await response.json()
-      
+      const status = data.success ? data.subscription : data
       return {
-        isActive: data.isActive || false,
-        planId: data.planId || null,
-        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-        nextBillingDate: data.nextBillingDate ? new Date(data.nextBillingDate) : null,
-        status: data.status || 'expired',
-        trialEndsAt: data.trialEndsAt ? new Date(data.trialEndsAt) : null,
+        isActive: !!status.isActive,
+        planId: status.planId || null,
+        expiresAt: status.expiresAt ? new Date(status.expiresAt) : null,
+        nextBillingDate: status.nextBillingDate ? new Date(status.nextBillingDate) : null,
+        status: status.status || 'expired',
+        trialEndsAt: status.trialEndsAt ? new Date(status.trialEndsAt) : null,
       }
       
     } catch (error) {

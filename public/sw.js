@@ -45,43 +45,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Push notification event
+// Push: exibir título/corpo vindos do payload
 self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data ? event.data.text() : 'Nova notificação astrológica!',
+  const data = (event.data && (() => { try { return event.data.json() } catch { return {} } })()) || {}
+  const title = data.title || 'Tábula Estelar'
+  const body = data.body || ''
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Ver mais',
-        icon: '/icon-192.png'
-      },
-      {
-        action: 'close',
-        title: 'Fechar',
-        icon: '/icon-192.png'
-      }
-    ]
-  };
+    data
+  }))
+})
 
-  event.waitUntil(
-    self.registration.showNotification('Tábula Estelar', options)
-  );
-});
-
-// Notification click event
+// Click: abrir /app
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/app')
-    );
-  }
-});
+  event.notification.close()
+  event.waitUntil(clients.openWindow('/app'))
+})

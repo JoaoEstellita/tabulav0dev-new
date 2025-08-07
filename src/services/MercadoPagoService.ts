@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BACKEND_URL = 'https://tabulav0dev-backend.vercel.app/api/check-subscription';
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '') + '/api/check-subscription';
 
 export async function checkUserSubscription(email: string): Promise<{ active: boolean; status: string }> {
   try {

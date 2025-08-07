@@ -19,6 +19,7 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
+import { subscribeWebPush } from '../../webpush/subscribe';
 
 const { width } = Dimensions.get('window');
 
@@ -58,6 +59,22 @@ export default function SettingsScreen() {
           type: 'toggle',
           value: preferences?.dailyNotifications ?? true,
           onToggle: (value) => updatePreferences({ dailyNotifications: value }),
+        },
+        {
+          id: 'register_webpush',
+          title: 'Registrar Web Push',
+          subtitle: 'Ativar notificações no navegador',
+          icon: 'notifications-outline',
+          type: 'button',
+          onPress: async () => {
+            if (!user?.uid) return Alert.alert('Erro', 'Faça login para registrar')
+            try {
+              await subscribeWebPush(user.uid)
+              Alert.alert('Sucesso', 'Web Push registrado!')
+            } catch (e: any) {
+              Alert.alert('Erro', e?.message || 'Falha ao registrar Web Push')
+            }
+          }
         },
         {
           id: 'critical_alerts',

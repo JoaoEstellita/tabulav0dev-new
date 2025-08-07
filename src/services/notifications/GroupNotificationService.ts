@@ -22,12 +22,18 @@ export class GroupNotificationService {
     try {
       console.log('📢 Enviando notificação de grupo:', data.notificationType)
 
-      const response = await fetch('https://tabulav0dev-backend.vercel.app/api/group-notifications', {
+      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+      const response = await fetch(`${base}/api/group/notify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          groupId: data.groupId,
+          title: data.notificationType === 'custom_message' ? 'Mensagem do grupo' : 'Tábula Estelar',
+          body: data.customMessage || 'Alerta do grupo',
+          data: { type: data.notificationType, senderId: data.senderId, ...data.eventData },
+        }),
       })
 
       if (!response.ok) {
@@ -35,12 +41,10 @@ export class GroupNotificationService {
       }
 
       const result = await response.json()
-
-      if (!result.success) {
+      if (!result.ok) {
         throw new Error(result.error || 'Erro ao enviar notificação de grupo')
       }
-
-      console.log('✅ Notificação de grupo enviada:', result.stats)
+      console.log('✅ Notificação de grupo enviada:', result.sent)
 
     } catch (error) {
       console.error('❌ Erro ao enviar notificação de grupo:', error)

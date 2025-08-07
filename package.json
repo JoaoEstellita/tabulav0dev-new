@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "build": "expo export",
     "build:web": "expo export",
-    "build:pwa": "expo export --pwa",
+    "build:pwa": "expo export --platform web --clear && node scripts/copyPublicToDist.js",
     "build:android": "expo build:android",
     "build:ios": "expo build:ios",
     "init-firestore": "node scripts/initFirestore.js",
