@@ -11,32 +11,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  Dimensions,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 import ResponsiveContainer from "../../components/ResponsiveContainer"
-import { FONT_SIZES, SPACING, isDesktop, isTablet } from "../../styles/responsive"
+import { FONT_SIZES, SPACING, isDesktop, isTablet, isMobile } from "../../styles/responsive"
 
-// Componente Logo
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
+
+// Componente Logo com imagem real
 const Logo = () => (
   <View style={styles.logoContainer}>
-    <View style={styles.logoCircle}>
-      {/* Logo da Tábula Estelar - Versão React Native */}
-      <View style={styles.logoInner}>
-        {/* Roda do navio */}
-        <View style={styles.wheel}>
-          {/* Olho central */}
-          <View style={styles.eye}>
-            {/* Pupila estrela */}
-            <View style={styles.pupil} />
-          </View>
-        </View>
-        {/* Estrelas pequenas */}
-        <View style={styles.star1} />
-        <View style={styles.star2} />
-        <View style={styles.star3} />
-      </View>
+    <View style={styles.logoImageContainer}>
+      <Image 
+        source={require('../../../assets/icon.png')} 
+        style={styles.logoImage}
+        resizeMode="contain"
+      />
     </View>
     <Text style={styles.title}>TÁBULA</Text>
     <Text style={styles.subtitle}>ESTELAR</Text>
@@ -211,127 +205,63 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingVertical: SPACING.xl,
+    minHeight: screenHeight,
   },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: isDesktop() ? 600 : 'auto',
+    width: '100%',
+    paddingHorizontal: isDesktop() ? 40 : 20,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: isDesktop() ? SPACING.xl * 2 : SPACING.xl,
   },
-  logoCircle: {
-    width: isDesktop() ? 120 : 80,
-    height: isDesktop() ? 120 : 80,
-    borderRadius: isDesktop() ? 60 : 40,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+  logoImageContainer: {
+    width: isDesktop() ? 150 : isTablet() ? 120 : 100,
+    height: isDesktop() ? 150 : isTablet() ? 120 : 100,
+    marginBottom: SPACING.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.md,
   },
-  logoInner: {
-    position: 'relative',
+  logoImage: {
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  wheel: {
-    position: 'absolute',
-    width: isDesktop() ? 60 : 40,
-    height: isDesktop() ? 60 : 40,
-    borderRadius: isDesktop() ? 30 : 20,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  wheelRay: {
-    position: 'absolute',
-    width: 2,
-    height: isDesktop() ? 30 : 20,
-    backgroundColor: '#FFD700',
-  },
-  eye: {
-    position: 'absolute',
-    width: isDesktop() ? 20 : 15,
-    height: isDesktop() ? 15 : 12,
-    borderRadius: isDesktop() ? 10 : 7.5,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pupil: {
-    width: isDesktop() ? 8 : 6,
-    height: isDesktop() ? 8 : 6,
-    borderRadius: isDesktop() ? 4 : 3,
-    backgroundColor: '#FFFFFF',
-  },
-  star: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-  },
-  star1: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-    top: 10,
-    right: 15,
-  },
-  star2: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-    bottom: 15,
-    left: 10,
-  },
-  star3: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-    top: 15,
-    left: 15,
   },
   title: {
-    fontSize: FONT_SIZES.xxxl,
+    fontSize: isDesktop() ? 36 : isTablet() ? 32 : 28,
     fontWeight: 'bold',
     color: '#FFD700',
     letterSpacing: 2,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: isDesktop() ? 24 : isTablet() ? 20 : 18,
     fontWeight: 'bold',
     color: '#FFD700',
     letterSpacing: 2,
     marginTop: -SPACING.xs,
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: isDesktop() ? 16 : 14,
     color: '#A0A0A0',
     marginTop: SPACING.sm,
     textAlign: 'center',
+    paddingHorizontal: 20,
   },
   formContainer: {
     width: '100%',
-    maxWidth: isDesktop() ? 400 : '100%',
-    backgroundColor: 'rgba(44, 44, 46, 0.8)',
+    maxWidth: isDesktop() ? 450 : isTablet() ? 400 : 350,
+    backgroundColor: 'rgba(44, 44, 46, 0.9)',
     borderRadius: 16,
-    padding: SPACING.lg,
+    padding: isDesktop() ? SPACING.xl : SPACING.lg,
     marginTop: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
   formTitle: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: isDesktop() ? 24 : isTablet() ? 20 : 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -346,6 +276,7 @@ const styles = StyleSheet.create({
     borderColor: '#444',
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.md,
+    minHeight: isDesktop() ? 56 : 48,
   },
   inputIcon: {
     marginRight: SPACING.sm,
@@ -353,33 +284,35 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: FONT_SIZES.md,
+    fontSize: isDesktop() ? 16 : 14,
     paddingVertical: SPACING.md,
   },
   authButton: {
     backgroundColor: '#FFD700',
-    paddingVertical: SPACING.md,
+    paddingVertical: isDesktop() ? SPACING.lg : SPACING.md,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: SPACING.md,
+    minHeight: isDesktop() ? 56 : 48,
   },
   authButtonText: {
     color: '#000',
-    fontSize: FONT_SIZES.md,
+    fontSize: isDesktop() ? 18 : 16,
     fontWeight: 'bold',
   },
   googleButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: SPACING.md,
+    paddingVertical: isDesktop() ? SPACING.lg : SPACING.md,
     borderRadius: 12,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: SPACING.md,
+    minHeight: isDesktop() ? 56 : 48,
   },
   googleButtonText: {
     color: '#000',
-    fontSize: FONT_SIZES.md,
+    fontSize: isDesktop() ? 16 : 14,
     fontWeight: '600',
     marginLeft: SPACING.sm,
   },
@@ -389,7 +322,7 @@ const styles = StyleSheet.create({
   },
   switchText: {
     color: '#FFD700',
-    fontSize: FONT_SIZES.sm,
+    fontSize: isDesktop() ? 16 : 14,
     textDecorationLine: 'underline',
   },
   disabledButton: {
