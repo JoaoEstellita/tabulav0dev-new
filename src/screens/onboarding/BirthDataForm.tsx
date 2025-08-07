@@ -18,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import LocationService, { type LocationSuggestion } from '../../services/LocationService'
+import { useAuth } from '../../hooks/useAuth'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -38,6 +39,7 @@ export interface BirthData {
 }
 
 export default function BirthDataForm({ onComplete, loading = false }: BirthDataFormProps) {
+  const { logout } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -756,15 +758,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         {/* Botão para voltar ao login */}
         <TouchableOpacity 
           style={styles.backToLoginButton} 
-          onPress={() => {
-            // Limpar dados do usuário e redirecionar
-            if (typeof window !== 'undefined') {
-              // Limpar localStorage se necessário
-              localStorage.removeItem('user')
-              // Redirecionar para login
-              window.location.href = '/app'
-            }
-          }}
+          onPress={logout}
         >
           <Ionicons name="log-out-outline" size={16} color="#FFD700" />
           <Text style={styles.backToLoginText}>Voltar ao Login</Text>

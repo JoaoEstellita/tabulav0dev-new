@@ -19,10 +19,46 @@ import { useAuth } from "../../hooks/useAuth"
 const Logo = () => (
   <View style={styles.logoContainer}>
     <View style={styles.logoCircle}>
-      <Text style={styles.logoIcon}>🌟</Text>
+      {/* Logo SVG da Tábula Estelar */}
+      <svg width="80" height="80" viewBox="0 0 100 100" style={styles.logoSvg}>
+        {/* Roda do navio */}
+        <circle cx="50" cy="50" r="35" fill="none" stroke="#FFD700" strokeWidth="3"/>
+        {/* 8 raios da roda */}
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
+          <line
+            key={i}
+            x1="50"
+            y1="50"
+            x2={50 + 30 * Math.cos(angle * Math.PI / 180)}
+            y2={50 + 30 * Math.sin(angle * Math.PI / 180)}
+            stroke="#FFD700"
+            strokeWidth="2"
+          />
+        ))}
+        {/* Olho central */}
+        <ellipse cx="50" cy="50" rx="12" ry="8" fill="none" stroke="#FFD700" strokeWidth="2"/>
+        {/* Pupila estrela */}
+        <polygon
+          points="50,46 52,50 50,54 48,50"
+          fill="#FFFFFF"
+          stroke="#FFD700"
+          strokeWidth="1"
+        />
+        {/* Estrelas pequenas */}
+        {[15, 25, 35, 65, 75, 85].map((angle, i) => (
+          <circle
+            key={i}
+            cx={50 + 20 * Math.cos(angle * Math.PI / 180)}
+            cy={50 + 20 * Math.sin(angle * Math.PI / 180)}
+            r="1"
+            fill="#FFFFFF"
+          />
+        ))}
+      </svg>
     </View>
-    <Text style={styles.title}>Tábula Estelar</Text>
-    <Text style={styles.subtitle}>Seu guia astrológico pessoal</Text>
+    <Text style={styles.title}>TÁBULA</Text>
+    <Text style={styles.subtitle}>ESTELAR</Text>
+    <Text style={styles.tagline}>Seu guia astrológico pessoal</Text>
   </View>
 )
 
@@ -185,8 +221,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  logoIcon: {
-    fontSize: 40,
+  logoSvg: {
+    width: "100%",
+    height: "100%",
   },
   title: {
     fontSize: 32,
@@ -198,6 +235,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
     marginBottom: 48,
+    textAlign: "center",
+  },
+  tagline: {
+    fontSize: 14,
+    color: "#8E8E93",
     textAlign: "center",
   },
   form: {
