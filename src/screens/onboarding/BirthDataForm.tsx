@@ -19,6 +19,9 @@ import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import LocationService, { type LocationSuggestion } from '../../services/LocationService'
 import { useAuth } from '../../hooks/useAuth'
+import ResponsiveContainer from '../../components/ResponsiveContainer'
+import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
+import { useOrientation } from '../../hooks/useOrientation'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -40,6 +43,7 @@ export interface BirthData {
 
 export default function BirthDataForm({ onComplete, loading = false }: BirthDataFormProps) {
   const { logout } = useAuth()
+  const { isLandscape } = useOrientation()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -408,8 +412,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const renderStep1 = () => (
-    <View style={styles.stepContainer}>
-      <Ionicons name="person-outline" size={64} color="#FFD700" style={styles.stepIcon} />
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
       <Text style={styles.stepTitle}>Vamos nos conhecer!</Text>
       <Text style={styles.stepDescription}>
@@ -427,7 +431,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           </View>
         ) : (
           <TouchableOpacity style={styles.photoPlaceholder} onPress={selectPhoto}>
-            <Ionicons name="camera-outline" size={40} color="#666" />
+            <Ionicons name="camera-outline" size={isDesktop() ? 50 : 40} color="#666" />
             <Text style={styles.photoPlaceholderText}>Adicionar Foto</Text>
             <Text style={styles.photoOptionalText}>(Opcional)</Text>
           </TouchableOpacity>
@@ -455,8 +459,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep2 = () => (
-    <View style={styles.stepContainer}>
-      <Ionicons name="calendar-outline" size={64} color="#FFD700" style={styles.stepIcon} />
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons name="calendar-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
       <Text style={styles.stepTitle}>Quando você nasceu?</Text>
       <Text style={styles.stepDescription}>
@@ -482,8 +486,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             style={{
               backgroundColor: '#2C2C2E',
               color: '#FFFFFF',
-              fontSize: 16,
-              padding: '16px',
+              fontSize: FONT_SIZES.md,
+              padding: `${SPACING.md}px`,
               borderRadius: 12,
               border: '1px solid #444',
               flex: 1,
@@ -532,8 +536,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep3 = () => (
-    <View style={styles.stepContainer}>
-      <Ionicons name="time-outline" size={64} color="#FFD700" style={styles.stepIcon} />
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons name="time-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
       <Text style={styles.stepTitle}>Que horas você nasceu?</Text>
       <Text style={styles.stepDescription}>
@@ -557,8 +561,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             style={{
               backgroundColor: '#2C2C2E',
               color: '#FFFFFF',
-              fontSize: 16,
-              padding: '16px',
+              fontSize: FONT_SIZES.md,
+              padding: `${SPACING.md}px`,
               borderRadius: 12,
               border: '1px solid #444',
               flex: 1,
@@ -605,7 +609,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep4 = () => (
-    <View style={styles.stepContainer}>
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Text style={styles.stepTitle}>📍 Local de Nascimento</Text>
       <Text style={styles.stepDescription}>
         Informe a cidade onde você nasceu para cálculos astrológicos precisos
@@ -713,57 +717,57 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        
-        {renderProgressBar()}
-        
-        <View style={styles.content}>
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
-        </View>
+        <ResponsiveContainer>
+          {renderProgressBar()}
+          
+          <View style={styles.content}>
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+            {currentStep === 4 && renderStep4()}
+          </View>
 
-        <View style={styles.buttonContainer}>
-          {currentStep > 1 && (
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={() => setCurrentStep(currentStep - 1)}
-            >
-              <Ionicons name="arrow-back" size={20} color="#FFD700" />
-              <Text style={styles.backButtonText}>Voltar</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity 
-            style={[
-              styles.nextButton, 
-              (loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
-            ]} 
-            onPress={handleNext}
-            disabled={loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())}
-          >
-            {loading ? (
-              <Text style={styles.nextButtonText}>Salvando...</Text>
-            ) : (
-              <>
-                <Text style={styles.nextButtonText}>
-                  {currentStep === 4 ? 'Finalizar' : 'Próximo'}
-                </Text>
-                <Ionicons name="arrow-forward" size={20} color="#000" />
-              </>
+          <View style={styles.buttonContainer}>
+            {currentStep > 1 && (
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setCurrentStep(currentStep - 1)}
+              >
+                <Ionicons name="arrow-back" size={20} color="#FFD700" />
+                <Text style={styles.backButtonText}>Voltar</Text>
+              </TouchableOpacity>
             )}
+
+            <TouchableOpacity 
+              style={[
+                styles.nextButton, 
+                (loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
+              ]} 
+              onPress={handleNext}
+              disabled={loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())}
+            >
+              {loading ? (
+                <Text style={styles.nextButtonText}>Salvando...</Text>
+              ) : (
+                <>
+                  <Text style={styles.nextButtonText}>
+                    {currentStep === 4 ? 'Finalizar' : 'Próximo'}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={20} color="#000" />
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Botão para voltar ao login */}
+          <TouchableOpacity 
+            style={styles.backToLoginButton} 
+            onPress={logout}
+          >
+            <Ionicons name="log-out-outline" size={16} color="#FFD700" />
+            <Text style={styles.backToLoginText}>Voltar ao Login</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Botão para voltar ao login */}
-        <TouchableOpacity 
-          style={styles.backToLoginButton} 
-          onPress={logout}
-        >
-          <Ionicons name="log-out-outline" size={16} color="#FFD700" />
-          <Text style={styles.backToLoginText}>Voltar ao Login</Text>
-        </TouchableOpacity>
-
+        </ResponsiveContainer>
       </ScrollView>
     </LinearGradient>
   )
@@ -775,7 +779,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.lg,
     paddingTop: 60,
     paddingBottom: 40,
   },
@@ -795,7 +799,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     color: '#FFD700',
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 8,
@@ -806,20 +810,26 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.md,
+  },
+  stepContainerLandscape: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   stepIcon: {
-    marginBottom: 24,
+    marginBottom: SPACING.lg,
   },
   stepTitle: {
-    fontSize: 28,
+    fontSize: FONT_SIZES.xxxl,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: SPACING.sm,
   },
   stepDescription: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     color: '#A0A0A0',
     textAlign: 'center',
     lineHeight: 24,
@@ -829,8 +839,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#2C2C2E',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFD700',
@@ -840,7 +850,7 @@ const styles = StyleSheet.create({
   },
   dateButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: '500',
     marginLeft: 8,
   },
@@ -860,15 +870,15 @@ const styles = StyleSheet.create({
   locationInput: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 16,
+    fontSize: FONT_SIZES.md,
+    paddingVertical: SPACING.md,
   },
   input: {
     backgroundColor: '#2C2C2E',
     color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    fontSize: FONT_SIZES.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#444',
@@ -876,7 +886,7 @@ const styles = StyleSheet.create({
   },
   helpText: {
     color: '#A0A0A0',
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     textAlign: 'center',
     marginTop: 16,
     fontStyle: 'italic',
@@ -886,9 +896,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: isDesktop() ? 150 : 120,
+    height: isDesktop() ? 150 : 120,
+    borderRadius: isDesktop() ? 75 : 60,
     backgroundColor: '#2C2C2E',
     borderWidth: 2,
     borderColor: '#444',
@@ -898,22 +908,22 @@ const styles = StyleSheet.create({
   },
   photoPlaceholderText: {
     color: '#A0A0A0',
-    fontSize: 12,
+    fontSize: FONT_SIZES.sm,
     marginTop: 8,
     fontWeight: '500',
   },
   photoOptionalText: {
     color: '#666',
-    fontSize: 10,
+    fontSize: FONT_SIZES.xs,
     marginTop: 2,
   },
   photoSelected: {
     position: 'relative',
   },
   profilePhoto: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: isDesktop() ? 150 : 120,
+    height: isDesktop() ? 150 : 120,
+    borderRadius: isDesktop() ? 75 : 60,
     borderWidth: 3,
     borderColor: '#FFD700',
   },
@@ -927,8 +937,8 @@ const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 16,
+    fontSize: FONT_SIZES.md,
+    paddingVertical: SPACING.md,
   },
   searchIndicator: {
     marginLeft: 8,
@@ -968,7 +978,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     marginLeft: 8,
     flex: 1,
   },
@@ -985,14 +995,14 @@ const styles = StyleSheet.create({
   },
   suggestionPromptText: {
     color: '#FFD700',
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     marginLeft: 8,
     flex: 1,
     fontWeight: '500',
   },
   suggestionsTitle: {
     color: '#FFD700',
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     fontWeight: 'bold',
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -1015,12 +1025,12 @@ const styles = StyleSheet.create({
   },
   selectedLocationLabel: {
     color: '#A0A0A0',
-    fontSize: 12,
+    fontSize: FONT_SIZES.xs,
     marginBottom: 4,
   },
   selectedLocationText: {
     color: '#10B981',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: 'bold',
   },
   pickerContainer: {
@@ -1046,7 +1056,7 @@ const styles = StyleSheet.create({
   },
   pickerButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: '500',
   },
   confirmButtonText: {
@@ -1061,12 +1071,12 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
   },
   backButtonText: {
     color: '#FFD700',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
     marginLeft: 8,
   },
@@ -1074,7 +1084,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFD700',
-    paddingVertical: 16,
+    paddingVertical: SPACING.md,
     paddingHorizontal: 32,
     borderRadius: 12,
     flex: 1,
@@ -1086,7 +1096,7 @@ const styles = StyleSheet.create({
   },
   nextButtonText: {
     color: '#000',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: 'bold',
     marginRight: 8,
   },
@@ -1098,8 +1108,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     backgroundColor: '#2C2C2E',
     borderRadius: 12,
     borderWidth: 1,
@@ -1107,7 +1117,7 @@ const styles = StyleSheet.create({
   },
   backToLoginText: {
     color: '#FFD700',
-    fontSize: 16,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
     marginLeft: 8,
   },

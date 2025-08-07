@@ -209,20 +209,161 @@
             color: #FFF8DC;
         }
 
-        /* Responsive */
+        /* Responsive Design */
         @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            
             .hero h1 {
                 font-size: 2.5rem;
+                line-height: 1.2;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+            
+            .hero-logo {
+                width: 80px;
+                height: 80px;
             }
             
             .download-buttons {
                 flex-direction: column;
-                align-items: center;
+                gap: 12px;
+            }
+            
+            .download-btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .feature {
+                padding: 24px;
             }
             
             .nav-buttons {
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
+            }
+            
+            .nav-buttons .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 0.9rem;
+            }
+            
+            .logo-text {
+                font-size: 18px;
+            }
+            
+            .logo-svg {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .feature h3 {
+                font-size: 1.2rem;
+            }
+            
+            .feature p {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            .hero {
+                padding: 120px 0;
+            }
+            
+            .hero h1 {
+                font-size: 4rem;
+            }
+            
+            .hero p {
+                font-size: 1.3rem;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .features {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 40px;
+            }
+            
+            .feature {
+                padding: 40px;
+            }
+            
+            .download-section {
+                padding: 100px 0;
+            }
+        }
+        
+        /* Tablet optimizations */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px;
+            }
+            
+            .download-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .download-btn {
+                flex: 1;
+                min-width: 200px;
+            }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .hero-logo {
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: crisp-edges;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #0f0f23 100%);
+            }
+        }
+        
+        /* Reduced motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
