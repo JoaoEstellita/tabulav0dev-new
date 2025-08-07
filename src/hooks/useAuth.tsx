@@ -8,11 +8,12 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  deleteUser,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore"
 
 interface AuthContextType {
   user: User | null
@@ -22,6 +23,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
+  deleteAccount: () => Promise<void>
   checkBirthDataComplete: () => Promise<boolean>
 }
 
@@ -176,8 +178,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
-    await signOut(auth)
-    console.log('✅ Logout realizado')
+    try {
+      console.log('🚪 Iniciando logout...')
+      await signOut(auth)
+      console.log('✅ Logout realizado com sucesso')
+    } catch (error) {
+      console.error('❌ Erro no logout:', error)
+      throw error
+    }
+  }
+
+  const deleteAccount = async () => {
+    try {
+      const currentUser = auth.currentUser
+      if (!currentUser) {
+        throw new Error('Nenhum usuário logado')
+      }
+
+      console.log('🗑️ Iniciando exclusão de conta...')
+      
+      // Deletar dados do Firestore primeiro
+      await deleteDoc(doc(db, 'users', currentUser.uid))
+      console.log('✅ Dados do Firestore deletados')
+      
+      // Deletar conta do Firebase Auth
+      await deleteUser(currentUser)
+      console.log('✅ Conta deletada com sucesso')
+      
+    } catch (error) {
+      console.error('❌ Erro ao deletar conta:', error)
+      throw error
+    }
   }
 
   const value = {
@@ -188,6 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signInWithGoogle,
     logout,
+    deleteAccount,
     checkBirthDataComplete,
   }
 

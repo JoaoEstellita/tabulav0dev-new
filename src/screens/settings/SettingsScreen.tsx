@@ -39,7 +39,7 @@ interface SettingsItem {
 }
 
 export default function SettingsScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
   const { preferences, updatePreferences } = useNotificationPreferences();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
@@ -338,9 +338,17 @@ export default function SettingsScreen() {
       'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: () => {
-          // TODO: Implementar exclusão de conta
-          Alert.alert('Conta Excluída', 'Sua conta foi excluída com sucesso.');
+        { text: 'Excluir', style: 'destructive', onPress: async () => {
+          try {
+            setIsLoading(true);
+            await deleteUserAccount();
+            Alert.alert('✅ Conta Excluída', 'Sua conta foi excluída com sucesso.');
+          } catch (error) {
+            console.error('Erro ao excluir conta:', error);
+            Alert.alert('❌ Erro', 'Não foi possível excluir a conta. Tente novamente.');
+          } finally {
+            setIsLoading(false);
+          }
         }}
       ]
     );
@@ -352,7 +360,18 @@ export default function SettingsScreen() {
       'Tem certeza que deseja sair?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: logout }
+        { text: 'Sair', style: 'destructive', onPress: async () => {
+          try {
+            setIsLoading(true);
+            await logout();
+            console.log('✅ Logout realizado com sucesso');
+          } catch (error) {
+            console.error('Erro no logout:', error);
+            Alert.alert('❌ Erro', 'Não foi possível fazer logout. Tente novamente.');
+          } finally {
+            setIsLoading(false);
+          }
+        }}
       ]
     );
   };

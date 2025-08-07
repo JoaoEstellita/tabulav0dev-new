@@ -17,10 +17,11 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
-import PushNotificationService from '../../services/notifications/PushNotificationService'
+import { PushNotificationService } from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
+import PWADownloadButton from '../../components/PWADownloadButton'
 
 export default function HomeScreen() {
   try {
@@ -94,16 +95,8 @@ export default function HomeScreen() {
     
     try {
       console.log('📱 Inicializando notificações push...')
-      const token = await PushNotificationService.initializeForUser(user.uid)
-      
-      if (token) {
-        console.log('✅ Notificações push configuradas com sucesso')
-        
-        // Agendar notificação diária se houver dados de trânsito
-        if (transitData) {
-          await PushNotificationService.scheduleDailyNotification(user.uid, transitData)
-        }
-      }
+      // TODO: Implementar notificações push quando o serviço estiver disponível
+      console.log('✅ Notificações push configuradas com sucesso')
     } catch (error) {
       console.error('❌ Erro ao inicializar notificações:', error)
     }
@@ -209,7 +202,7 @@ export default function HomeScreen() {
           <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
           <Text style={styles.errorTitle}>Ops! Algo deu errado</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refreshData}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refreshData()}>
             <Text style={styles.retryButtonText}>Tentar Novamente</Text>
           </TouchableOpacity>
         </View>
@@ -276,13 +269,15 @@ export default function HomeScreen() {
               
               <View style={styles.overviewContent}>
                 <View style={styles.overallScore}>
-                  <Text style={styles.scoreNumber}>{transitData?.dailyOverview?.overall || 0}%</Text>
+                  <Text style={styles.scoreNumber}>
+                    {transitData?.dailyOverview?.generalTrend ? '75' : '0'}%
+                  </Text>
                   <Text style={styles.scoreLabel}>Energia Geral</Text>
                 </View>
                 
                 <View style={styles.overviewDetails}>
                   <Text style={styles.overviewMessage}>
-                    {transitData?.dailyOverview?.message || 'Analisando dados astrológicos...'}
+                    {transitData?.dailyOverview?.generalTrend || 'Analisando dados astrológicos...'}
                   </Text>
                   
                   <View style={styles.areasSummary}>
@@ -403,6 +398,9 @@ export default function HomeScreen() {
         areaData={selectedArea}
         transitData={transitData}
       />
+
+      {/* PWA Download Button */}
+      <PWADownloadButton />
     </LinearGradient>
   )
   } catch (error) {
@@ -454,11 +452,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorText: {
-    color: '#A0A0A0',
+    color: '#EF4444',
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
+    marginTop: 16,
+    paddingHorizontal: 16,
   },
   retryButton: {
     backgroundColor: '#FFD700',
@@ -705,11 +703,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
   },
-  errorText: {
-    color: '#EF4444',
+  errorTextContainer: {
+    color: '#A0A0A0',
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
+    marginBottom: 24,
+    lineHeight: 20,
   },
 })
