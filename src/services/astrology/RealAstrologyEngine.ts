@@ -464,7 +464,7 @@ export class RealAstrologyEngine {
       speed: p.speed ?? 0,
       sign: RealAstrologyEngine.SIGNS[Math.floor((p.lon % 360) / 30)],
       degree: (p.lon % 360) % 30,
-      house: 1,
+      house: typeof p.house === 'number' ? p.house : 1,
       isRetrograde: !!p.retrograde,
     })
 
