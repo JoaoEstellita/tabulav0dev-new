@@ -1,6 +1,7 @@
-import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
+import { cleanUndefined } from '../../utils/clean'
 
 export interface UserProfile {
   displayName: string
@@ -52,14 +53,14 @@ class UserService {
       // Verificar se usuário já existe
       const userDoc = await getDoc(userRef)
       
-      const updateData: any = {
+      const updateData: any = cleanUndefined({
         displayName: birthData.fullName,
         birthDate: birthData.birthDate,
         birthTime: birthData.birthTime,
         birthLocation: birthData.birthLocation,
         birthDataComplete: true,
-        lastBirthDataEdit: new Date(),
-      }
+        lastBirthDataEdit: serverTimestamp(),
+      })
 
       // Só adiciona foto se foi fornecida
       if (birthData.profilePhoto) {

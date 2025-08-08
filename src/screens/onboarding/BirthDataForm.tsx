@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import LocationService, { type LocationSuggestion } from '../../services/LocationService'
 import { useAuth } from '../../hooks/useAuth'
+import { hardSignOut } from '../../services/auth/logout'
 import ResponsiveContainer from '../../components/ResponsiveContainer'
 import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
 import { useOrientation } from '../../hooks/useOrientation'
@@ -762,7 +763,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           {/* Botão para voltar ao login */}
           <TouchableOpacity 
             style={styles.backToLoginButton} 
-            onPress={logout}
+            onPress={async () => { await hardSignOut(); logout(); }}
           >
             <Ionicons name="log-out-outline" size={16} color="#FFD700" />
             <Text style={styles.backToLoginText}>Voltar ao Login</Text>

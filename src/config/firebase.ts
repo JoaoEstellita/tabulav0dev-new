@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app'
-import { initializeAuth, getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeApp, getApps, getApp } from 'firebase/app'
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
+import { initializeFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
@@ -18,14 +18,22 @@ console.log('🔥 Inicializando Firebase com config real:', {
   projectId: firebaseConfig.projectId ? '✅ Configurado' : '❌ Não configurado',
 })
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
+// Initialize Firebase (singleton)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
-// Initialize Auth
+// Initialize Auth + persistência local no Web
 const auth = getAuth(app)
+// Ignorar erro assíncrono de ambientes nativos sem localStorage
+try {
+  void setPersistence(auth, browserLocalPersistence)
+} catch {}
 
-// Initialize Firestore
-const db = getFirestore(app)
+// Initialize Firestore com endurecimento para Web
+const db = initializeFirestore(app, {
+  ignoreUndefinedProperties: true,
+  experimentalAutoDetectLongPolling: true,
+  useFetchStreams: false,
+})
 
 // Initialize Storage
 const storage = getStorage(app)
