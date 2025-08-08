@@ -53,7 +53,8 @@ class UserService {
 
     // Se for data URL, usar uploadString; caso contrário, buscar o blob
     if (photo.startsWith('data:')) {
-      await uploadString(storageRef, photo, 'data_url')
+      const blob = await (await fetch(photo)).blob()
+      await uploadBytes(storageRef, blob)
     } else if (photo.startsWith('http')) {
       return photo
     } else {

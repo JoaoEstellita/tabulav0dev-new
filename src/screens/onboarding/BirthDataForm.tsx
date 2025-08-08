@@ -224,25 +224,20 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       input.onchange = async (event: any) => {
         const file = event.target.files[0]
         if (file) {
-          const compressToDataUrl = (file: File): Promise<string> => new Promise((resolve) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-              const img = new Image()
-              img.onload = () => {
-                const canvas = document.createElement('canvas')
-                const maxSize = 300
-                const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
-                canvas.width = Math.round(img.width * scale)
-                canvas.height = Math.round(img.height * scale)
-                const ctx = canvas.getContext('2d')!
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-                // JPEG qualidade 0.8
-                resolve(canvas.toDataURL('image/jpeg', 0.8))
-              }
-              img.src = reader.result as string
-            }
-            reader.readAsDataURL(file)
-          })
+          const compressToDataUrl = async (file: File): Promise<string> => {
+            const img = document.createElement('img')
+            const objectUrl = URL.createObjectURL(file)
+            await new Promise((res) => { img.onload = () => res(null as any); img.src = objectUrl })
+            const canvas = document.createElement('canvas')
+            const maxSize = 600
+            const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+            canvas.width = Math.round(img.width * scale)
+            canvas.height = Math.round(img.height * scale)
+            const ctx = canvas.getContext('2d')!
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+            URL.revokeObjectURL(objectUrl)
+            return canvas.toDataURL('image/jpeg', 0.82)
+          }
 
           const dataUrl = await compressToDataUrl(file)
           setFormData(prev => ({
