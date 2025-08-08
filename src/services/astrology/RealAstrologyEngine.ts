@@ -117,6 +117,30 @@ export interface RealAstrologyData {
   planetComparisons: PlanetComparison[] // Comparação natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
+  // 🧭 Logs estruturados para UI (detalhamento por área)
+  debug?: {
+    lifeAreas: {
+      [area: string]: {
+        finalScore: number
+        planetDetails: Array<{
+          planet: string
+          signScore: number
+          houseScore: number
+          conditions: { modifier: number; tags: string[] }
+          aspects: Array<{
+            with: string
+            type: string
+            orb: number
+            isApplying: boolean
+            baseScore: number
+            beneficMaleficDelta: number
+            finalScore: number
+          }>
+          total: number
+        }>
+      }
+    }
+  }
 }
 
 export class RealAstrologyEngine {
@@ -490,6 +514,7 @@ export class RealAstrologyEngine {
     longitude: number
   ): RealAstrologyData['lifeAreas'] {
     const lifeAreas: RealAstrologyData['lifeAreas'] = {}
+    const debugByArea: NonNullable<RealAstrologyData['debug']>['lifeAreas'] = {}
     const sun = planets.find(p => p.name === 'Sun')
 
     for (const [areaName, config] of Object.entries(this.LIFE_AREAS)) {
@@ -499,6 +524,7 @@ export class RealAstrologyEngine {
 
       // Analisar planetas relevantes para a área
       let planetScores: number[] = []
+      const planetDetails: NonNullable<RealAstrologyData['debug']>['lifeAreas'][string]['planetDetails'] = [] as any
       
       for (const planetName of config.planets) {
         const planet = planets.find(p => p.name === planetName)
@@ -526,9 +552,11 @@ export class RealAstrologyEngine {
         
         let aspectScoreSum = 0
         let aspectCount = 0
+        const aspectDetails: Array<{ with: string; type: string; orb: number; isApplying: boolean; baseScore: number; beneficMaleficDelta: number; finalScore: number }> = []
         
         for (const aspect of planetAspects) {
           let aspectScore = this.getAspectScore(aspect)
+          const baseScore = aspectScore
 
           // Ponderar por benéficos/maléficos
           const other = aspect.planet1 === planetName ? aspect.planet2 : aspect.planet1
@@ -546,6 +574,16 @@ export class RealAstrologyEngine {
             else if (aspect.type === 'conjunção') delta -= 5
           }
           aspectScore = Math.max(0, Math.min(100, aspectScore + delta))
+
+          aspectDetails.push({
+            with: other,
+            type: aspect.type,
+            orb: aspect.orb,
+            isApplying: aspect.isApplying,
+            baseScore,
+            beneficMaleficDelta: delta,
+            finalScore: aspectScore
+          })
 
           aspectScoreSum += aspectScore
           aspectCount++
@@ -569,6 +607,15 @@ export class RealAstrologyEngine {
         if (cond.tags.length) influences.push(...cond.tags)
 
         planetScores.push(planetScore)
+
+        planetDetails.push({
+          planet: planetName,
+          signScore,
+          houseScore,
+          conditions: cond,
+          aspects: aspectDetails,
+          total: planetScore
+        })
       }
 
       // Média das pontuações dos planetas relevantes
@@ -593,8 +640,15 @@ export class RealAstrologyEngine {
         influences: influences.slice(0, 4), // Top influências
         mainPlanets
       }
+
+      debugByArea[areaName] = {
+        finalScore,
+        planetDetails
+      }
     }
 
+    // Anexar logs estruturados para UI consumir
+    ;(this as any)._debugLifeAreas = debugByArea
     return lifeAreas
   }
 
