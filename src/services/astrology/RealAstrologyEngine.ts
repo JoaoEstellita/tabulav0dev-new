@@ -212,11 +212,11 @@ export class RealAstrologyEngine {
       try {
         const natalLocalStr = `${birthDate}T${birthTime}:00`
         const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || undefined
-        const offMinNatal = new Date(natalLocalStr).getTimezoneOffset()
+        const offMinNatal = -new Date(natalLocalStr).getTimezoneOffset()
         const pad = (n: number) => n.toString().padStart(2, '0')
         const now = date
         const localNowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-        const offMinNow = now.getTimezoneOffset()
+        const offMinNow = -now.getTimezoneOffset()
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
           datetimeLocal: localNowStr,
           timezone: tz,
