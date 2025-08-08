@@ -210,20 +210,8 @@ export class RealAstrologyEngine {
       let natalHouses: { cusps: number[]; ascendant: number; midheaven: number }
 
       try {
-        const natalLocalStr = `${birthDate}T${birthTime}:00`
-        const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || undefined
-        const offMinNatal = new Date(natalLocalStr).getTimezoneOffset()
-        const pad = (n: number) => n.toString().padStart(2, '0')
-        const now = date
-        const localNowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-        const offMinNow = now.getTimezoneOffset()
+        // Enviar timestamps em UTC apenas (ISO), sem timezone manual
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
-          datetimeLocal: localNowStr,
-          timezone: tz,
-          offsetMinutes: offMinNow,
-          natalLocal: natalLocalStr,
-          natalTimezone: tz,
-          natalOffsetMinutes: offMinNatal,
           natalLat: latitude,
           natalLon: longitude,
         })
@@ -431,7 +419,7 @@ export class RealAstrologyEngine {
     natalDate: Date,
     latitude: number,
     longitude: number,
-    options?: { datetimeLocal?: string; timezone?: string; offsetMinutes?: number; natalLocal?: string; natalTimezone?: string; natalOffsetMinutes?: number; natalLat?: number; natalLon?: number }
+    options?: { natalLat?: number; natalLon?: number }
   ): Promise<{
     current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
     natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
@@ -439,18 +427,12 @@ export class RealAstrologyEngine {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!backend) throw new Error('No backend url')
     const requestBody = {
-      datetimeISO: options?.datetimeLocal ? undefined : currentDate.toISOString(),
-      datetimeLocal: options?.datetimeLocal,
-      timezone: options?.timezone,
-      offsetMinutes: options?.offsetMinutes,
+      datetimeISO: currentDate.toISOString(),
       lat: latitude,
       lon: longitude,
       includeHouses: true,
       system: 'placidus',
-      natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
-      natalLocal: options?.natalLocal,
-      natalTimezone: options?.natalTimezone,
-      natalOffsetMinutes: options?.natalOffsetMinutes,
+      natalISO: natalDate.toISOString(),
       natalLat: options?.natalLat,
       natalLon: options?.natalLon,
       bodies: RealAstrologyEngine.PLANETS,
@@ -633,8 +615,12 @@ export class RealAstrologyEngine {
     const getHouse = (lon: number): number => {
       const Lp = transform(lon)
       const L = Lp >= start ? Lp : Lp + 360
+      const eps = 0.05 // tolerância de fronteira em graus
       for (let i = 0; i < 12; i++) {
-        if (L >= unwrapped[i] && L < unwrapped[i + 1]) return i + 1
+        const a = unwrapped[i]
+        const b = unwrapped[i + 1]
+        if (Math.abs(L - a) < eps) return i + 1 // fronteira: pertence ao setor atual
+        if (L > a && L < b) return i + 1
       }
       return 1
     }
