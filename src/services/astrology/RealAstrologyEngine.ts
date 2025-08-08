@@ -210,7 +210,14 @@ export class RealAstrologyEngine {
       let natalHouses: { cusps: number[]; ascendant: number; midheaven: number }
 
       try {
-        const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude)
+        const natalLocalStr = `${birthDate}T${birthTime}:00`
+        const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || undefined
+        const offMin = new Date(natalLocalStr).getTimezoneOffset()
+        const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
+          natalLocal: natalLocalStr,
+          natalTimezone: tz,
+          natalOffsetMinutes: offMin,
+        })
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
         natalPlanets = bundle.natal.planets
