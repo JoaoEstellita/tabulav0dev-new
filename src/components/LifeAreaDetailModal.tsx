@@ -147,7 +147,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       positiveInfluences: [] as string[],
       challengingInfluences: [] as string[],
       planetaryScores: {} as { [key: string]: number },
-      aspectScores: {} as { [key: string]: number }
+      aspectScores: {} as { [key: string]: number },
+      debugArea: null as any,
+      planetDetails: [] as Array<any>,
+      topAspects: [] as Array<any>,
     }
 
     // Analisar influências
@@ -162,12 +165,30 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       }
     })
 
-    // Calcular scores dos planetas (simulado baseado na lógica do engine)
+    // Calcular scores dos planetas (simulado base, substituído por debug se disponível)
     areaData.mainPlanets.forEach(planet => {
       const baseScore = Math.random() * 30 + 20 // 20-50
       const aspectBonus = areaData.influences.filter(inf => inf.includes(planet)).length * 10
       analysis.planetaryScores[planet] = Math.min(100, baseScore + aspectBonus)
     })
+
+    // Enriquecer com logs estruturados do engine, se disponíveis
+    const areaKeyLower = (areaData.name || '').toLowerCase()
+    const debugArea = (transitData as any)?.currentTransits?.debug?.lifeAreas?.[areaKeyLower]
+    if (debugArea) {
+      analysis.debugArea = debugArea
+      const planetDetails = Array.isArray(debugArea.planetDetails) ? debugArea.planetDetails : []
+      analysis.planetDetails = planetDetails
+      // Usar totais do debug como "scores" dos planetas
+      planetDetails.forEach((pd: any) => {
+        if (pd?.planet) analysis.planetaryScores[pd.planet] = Math.round(pd.total || 0)
+      })
+      // Top aspectos agregados (flaten)
+      const allAspects = planetDetails.flatMap((pd: any) => Array.isArray(pd.aspects) ? pd.aspects.map((a: any) => ({...a, of: pd.planet})) : [])
+      analysis.topAspects = allAspects
+        .sort((a: any, b: any) => (b.finalScore || 0) - (a.finalScore || 0))
+        .slice(0, 8)
+    }
 
     return analysis
   }
@@ -314,6 +335,44 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
             ))}
           </View>
+
+          {/* 🧭 LOGS E JUSTIFICATIVAS (ESTRUTURADOS) */}
+          {analysis.debugArea && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🧭 Fatores‑chave e justificativas</Text>
+              {analysis.planetDetails.map((pd: any, idx: number) => (
+                <View key={idx} style={styles.planetCard}>
+                  <View style={styles.planetHeader}>
+                    <Text style={styles.planetIcon}>{PLANET_ICONS[pd.planet] || '🪐'}</Text>
+                    <Text style={styles.planetName}>{pd.planet}</Text>
+                  </View>
+                  <Text style={styles.summaryText}>
+                    Total: {Math.round(pd.total || 0)} • Dignidades: {Math.round(pd.signScore || 0)} • Casa: {Math.round(pd.houseScore || 0)}
+                  </Text>
+                  {Array.isArray(pd.conditions?.tags) && pd.conditions.tags.length > 0 && (
+                    <Text style={styles.summaryText}>Condições: {pd.conditions.tags.join(' • ')}</Text>
+                  )}
+                  {Array.isArray(pd.aspects) && pd.aspects.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      {pd.aspects.slice(0, 3).map((a: any, i: number) => (
+                        <View key={i} style={styles.aspectCard}>
+                          <Text style={styles.aspectIcon}>{ASPECT_ICONS[a.type] || '∠'}</Text>
+                          <View style={styles.aspectContent}>
+                            <Text style={styles.aspectText}>
+                              {a.type} {a.with} • orb {a.orb.toFixed ? a.orb.toFixed(1) : a.orb}° {a.isApplying ? '(aplicante)' : '(separante)'}
+                            </Text>
+                            <Text style={[styles.aspectScore, { color: (a.beneficMaleficDelta||0) >= 0 ? '#27AE60' : '#E74C3C' }]}>
+                              {Math.round(a.finalScore || 0)}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* 📈 RESUMO DA ANÁLISE */}
           <View style={styles.section}>
