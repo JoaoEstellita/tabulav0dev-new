@@ -1008,7 +1008,7 @@ export class RealAstrologyEngine {
     currentPlanets: RealPlanetPosition[]
   ): ChartSummary {
     const analyzeElements = (planets: RealPlanetPosition[]): ElementalAnalysis => {
-      const analysis = { fire: 0, earth: 0, air: 0, water: 0 }
+      const analysis: ElementalAnalysis = { fire: 0, earth: 0, air: 0, water: 0 }
       
       for (const planet of planets) {
         const element = this.SIGN_ELEMENTS[planet.sign as keyof typeof this.SIGN_ELEMENTS]
@@ -1019,7 +1019,7 @@ export class RealAstrologyEngine {
     }
 
     const analyzeModalities = (planets: RealPlanetPosition[]): ModalityAnalysis => {
-      const analysis = { cardinal: 0, fixed: 0, mutable: 0 }
+      const analysis: ModalityAnalysis = { cardinal: 0, fixed: 0, mutable: 0 }
       
       for (const planet of planets) {
         const modality = this.SIGN_MODALITIES[planet.sign as keyof typeof this.SIGN_MODALITIES]
@@ -1034,7 +1034,7 @@ export class RealAstrologyEngine {
     const natalModality = analyzeModalities(natalPlanets)
     const currentModality = analyzeModalities(currentPlanets)
 
-    // Detectar mudanças significativas
+    // Detectar mudanças significativas, sempre com emoji
     const elementalChanges: string[] = []
     const modalityChanges: string[] = []
 
@@ -1042,7 +1042,7 @@ export class RealAstrologyEngine {
     Object.keys(natalElemental).forEach(element => {
       const key = element as keyof ElementalAnalysis
       const diff = currentElemental[key] - natalElemental[key]
-      if (Math.abs(diff) >= 2) {
+      if (diff !== 0) {
         const emoji = element === 'fire' ? '🔥' : element === 'earth' ? '🌍' : element === 'air' ? '💨' : '💧'
         const translatedElement = element === 'fire' ? 'fogo' : element === 'earth' ? 'terra' : element === 'air' ? 'ar' : 'água'
         elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${translatedElement}`)
@@ -1053,9 +1053,10 @@ export class RealAstrologyEngine {
     Object.keys(natalModality).forEach(modality => {
       const key = modality as keyof ModalityAnalysis
       const diff = currentModality[key] - natalModality[key]
-      if (Math.abs(diff) >= 2) {
+      if (diff !== 0) {
+        const icon = modality === 'cardinal' ? '⚡' : modality === 'fixed' ? '🔒' : '🔄'
         const translatedModality = modality === 'cardinal' ? 'cardeal' : modality === 'fixed' ? 'fixo' : 'mutável'
-        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${translatedModality}`)
+        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${icon} ${translatedModality}`)
       }
     })
 
