@@ -1,5 +1,6 @@
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '../../config/firebase'
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || ''
 import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { cleanUndefined } from '../../utils/clean'
@@ -85,11 +86,31 @@ class UserService {
       if (birthData.profilePhoto) {
         try {
           const isHttp = birthData.profilePhoto.startsWith('http')
-          updateData.profilePhoto = isHttp
-            ? birthData.profilePhoto
-            : await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+          if (isHttp) {
+            updateData.profilePhoto = birthData.profilePhoto
+          } else {
+            // Tenta Storage direto
+            try {
+              updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+            } catch (e) {
+              // Fallback via backend (CORS-free)
+              if (BACKEND_URL) {
+                const resp = await fetch(`${BACKEND_URL}/api/upload/profile-photo`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId, dataUrl: birthData.profilePhoto }),
+                })
+                if (resp.ok) {
+                  const { url } = await resp.json()
+                  updateData.profilePhoto = url
+                } else {
+                  console.warn('Upload backend falhou', await resp.text())
+                }
+              }
+            }
+          }
         } catch (err) {
-          console.warn('⚠️ Falha ao enviar foto ao Storage. Prosseguindo sem foto.', err)
+          console.warn('⚠️ Falha ao processar foto. Prosseguindo sem foto.', err)
         }
       }
 
