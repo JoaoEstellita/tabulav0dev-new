@@ -436,26 +436,30 @@ export class RealAstrologyEngine {
   }> {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!backend) throw new Error('No backend url')
+    const requestBody = {
+      datetimeISO: options?.datetimeLocal ? undefined : currentDate.toISOString(),
+      datetimeLocal: options?.datetimeLocal,
+      timezone: options?.timezone,
+      offsetMinutes: options?.offsetMinutes,
+      lat: latitude,
+      lon: longitude,
+      includeHouses: true,
+      system: 'placidus',
+      natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
+      natalLocal: options?.natalLocal,
+      natalTimezone: options?.natalTimezone,
+      natalOffsetMinutes: options?.natalOffsetMinutes,
+      natalLat: options?.natalLat,
+      natalLon: options?.natalLon,
+      bodies: RealAstrologyEngine.PLANETS,
+    }
+
+    console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
+
     const resp = await fetch(`${backend}/api/astro/positions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        datetimeISO: options?.datetimeLocal ? undefined : currentDate.toISOString(),
-        datetimeLocal: options?.datetimeLocal,
-        timezone: options?.timezone,
-        offsetMinutes: options?.offsetMinutes,
-        lat: latitude,
-        lon: longitude,
-        includeHouses: true,
-        system: 'placidus',
-        natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
-        natalLocal: options?.natalLocal,
-        natalTimezone: options?.natalTimezone,
-        natalOffsetMinutes: options?.natalOffsetMinutes,
-        natalLat: options?.natalLat,
-        natalLon: options?.natalLon,
-        bodies: RealAstrologyEngine.PLANETS,
-      })
+      body: JSON.stringify(requestBody)
     })
     if (!resp.ok) throw new Error('backend error')
     const data = await resp.json()
@@ -477,9 +481,27 @@ export class RealAstrologyEngine {
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
     const natalHouses = data.natal?.houses || currentHouses
 
+    const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
+    const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
+
+    const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
+    console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
+    console.log('🏠 ASTRO DEBUG - Casas ATUAIS', {
+      asc: currentHouses.ascendant,
+      mc: currentHouses.midheaven,
+      cusps: fmtCusps(currentHouses.cusps),
+      planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
+    })
+    console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
+      asc: natalHouses.ascendant,
+      mc: natalHouses.midheaven,
+      cusps: fmtCusps(natalHouses.cusps),
+      planets: natalWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
+    })
+
     return {
-      current: { planets: this.assignHouses(currentPlanets, currentHouses), houses: currentHouses },
-      natal: { planets: this.assignHouses(natalPlanets, natalHouses), houses: natalHouses },
+      current: { planets: currentWithHouses, houses: currentHouses },
+      natal: { planets: natalWithHouses, houses: natalHouses },
     }
   }
 
