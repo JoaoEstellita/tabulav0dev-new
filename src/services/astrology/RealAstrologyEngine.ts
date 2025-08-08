@@ -412,7 +412,8 @@ export class RealAstrologyEngine {
     currentDate: Date,
     natalDate: Date,
     latitude: number,
-    longitude: number
+    longitude: number,
+    options?: { datetimeLocal?: string; timezone?: string; offsetMinutes?: number; natalLocal?: string; natalTimezone?: string; natalOffsetMinutes?: number }
   ): Promise<{
     current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
     natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
@@ -423,12 +424,18 @@ export class RealAstrologyEngine {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        datetimeISO: currentDate.toISOString(),
+        datetimeISO: options?.datetimeLocal ? undefined : currentDate.toISOString(),
+        datetimeLocal: options?.datetimeLocal,
+        timezone: options?.timezone,
+        offsetMinutes: options?.offsetMinutes,
         lat: latitude,
         lon: longitude,
         includeHouses: true,
         system: 'placidus',
-        natalISO: natalDate.toISOString(),
+        natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
+        natalLocal: options?.natalLocal,
+        natalTimezone: options?.natalTimezone,
+        natalOffsetMinutes: options?.natalOffsetMinutes,
         bodies: RealAstrologyEngine.PLANETS,
       })
     })
