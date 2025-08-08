@@ -1,5 +1,6 @@
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../../config/firebase'
+import { db, storage } from '../../config/firebase'
+import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { cleanUndefined } from '../../utils/clean'
 
@@ -46,6 +47,23 @@ export interface UserProfile {
 }
 
 class UserService {
+  private async uploadProfilePhoto(userId: string, photo: string): Promise<string> {
+    const fileName = `profile-${Date.now()}.jpg`
+    const storageRef = ref(storage, `users/${userId}/${fileName}`)
+
+    // Se for data URL, usar uploadString; caso contrário, buscar o blob
+    if (photo.startsWith('data:')) {
+      await uploadString(storageRef, photo, 'data_url')
+    } else if (photo.startsWith('http')) {
+      return photo
+    } else {
+      const response = await fetch(photo)
+      const blob = await response.blob()
+      await uploadBytes(storageRef, blob)
+    }
+    return await getDownloadURL(storageRef)
+  }
+
   async saveBirthData(userId: string, birthData: BirthData): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)
@@ -62,9 +80,13 @@ class UserService {
         lastBirthDataEdit: serverTimestamp(),
       })
 
-      // Só adiciona foto se foi fornecida
+      // Só adiciona foto se foi fornecida. Se base64/local URI, envia para Storage e salva URL.
       if (birthData.profilePhoto) {
-        updateData.profilePhoto = birthData.profilePhoto
+        const isDataUrl = birthData.profilePhoto.startsWith('data:')
+        const isHttp = birthData.profilePhoto.startsWith('http')
+        updateData.profilePhoto = isHttp
+          ? birthData.profilePhoto
+          : await this.uploadProfilePhoto(userId, birthData.profilePhoto)
       }
 
       if (userDoc.exists()) {
