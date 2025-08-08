@@ -147,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Para web, usar popup
       if (typeof window !== 'undefined') {
         const provider = new GoogleAuthProvider()
+        provider.setCustomParameters({ prompt: 'select_account' })
         const result = await signInWithPopup(auth, provider)
         
         // Verificar se usuário já existe no Firestore

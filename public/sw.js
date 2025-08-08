@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tabula-estelar-v1';
+const CACHE_NAME = 'tabula-estelar-v2';
 const urlsToCache = [
   '/',
   '/app',
@@ -43,6 +43,8 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  // Recarregar clientes para pegar SW novo
+  event.waitUntil(self.clients.claim())
 });
 
 // Push: exibir título/corpo vindos do payload
