@@ -165,10 +165,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       }
     })
 
-    // Calcular scores dos planetas (simulado base, substituído por debug se disponível)
+    // Calcular scores dos planetas (sem aleatoriedade; neutro até termos debug)
     areaData.mainPlanets.forEach(planet => {
-      const baseScore = Math.random() * 30 + 20 // 20-50
-      const aspectBonus = areaData.influences.filter(inf => inf.includes(planet)).length * 10
+      const aspectHint = areaData.influences.filter(inf => inf.includes(planet)).length
+      const baseScore = 50 // neutro
+      const aspectBonus = Math.min(20, aspectHint * 5) // leve ajuste informativo
       analysis.planetaryScores[planet] = Math.min(100, baseScore + aspectBonus)
     })
 
@@ -256,19 +257,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             <View style={styles.calculationCard}>
               <Text style={styles.calculationTitle}>Fórmula do Cálculo:</Text>
               <Text style={styles.calculationFormula}>
-                {areaData.mainPlanets.slice(0, 2).join(' + ') || 'Planetas'} + Aspectos + Casas = {areaData.percentage}%
+                Dignidades (30%) + Casas (30%) + Aspectos (40%) = {areaData.percentage}%
               </Text>
               
               <Text style={styles.calculationBreakdown}>Detalhamento:</Text>
               <View style={styles.calculationItems}>
+                <Text style={styles.calculationItem}>• Dignidades planetárias: domicílio/exaltação/detrimento/queda + (triplicidade/termos/faces)</Text>
                 <Text style={styles.calculationItem}>
-                  • Dignidades planetárias: {Math.round(areaData.percentage * 0.4)}%
-                </Text>
-                <Text style={styles.calculationItem}>
-                  • Aspectos harmônicos: +{analysis.positiveInfluences.length * 5}%
-                </Text>
-                <Text style={styles.calculationItem}>
-                  • Aspectos desafiadores: -{analysis.challengingInfluences.length * 3}%
+                  • Aspectos: ponderados por tipo/orbe/aplicante e natureza do outro planeta (benéfico/maléfico)
                 </Text>
                 <Text style={styles.calculationItem}>
                   • Força das casas: {Math.round(areaData.percentage * 0.3)}%
