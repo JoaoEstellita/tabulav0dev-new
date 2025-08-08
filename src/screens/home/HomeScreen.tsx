@@ -270,7 +270,7 @@ export default function HomeScreen() {
               <View style={styles.overviewContent}>
                 <View style={styles.overallScore}>
                   <Text style={styles.scoreNumber}>
-                    {transitData?.dailyOverview?.generalTrend ? '75' : '0'}%
+                    {typeof transitData?.dailyOverview?.overall === 'number' ? transitData.dailyOverview.overall : 0}%
                   </Text>
                   <Text style={styles.scoreLabel}>Energia Geral</Text>
                 </View>
@@ -280,6 +280,29 @@ export default function HomeScreen() {
                     {transitData?.dailyOverview?.generalTrend || 'Analisando dados astrológicos...'}
                   </Text>
                   
+                  {/* Mini gráfico: distribuição atual de Elementos e Modalidades */}
+                  {transitData?.currentTransits?.chartSummary && (
+                    <View style={{ marginTop: 8 }}>
+                      <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                        <Text style={[styles.summaryText, { marginRight: 6 }]}>🌍 Elementos:</Text>
+                        <Text style={styles.summaryText}>
+                          🔥 {transitData.currentTransits.chartSummary.elemental.current.fire}  
+                          🌍 {transitData.currentTransits.chartSummary.elemental.current.earth}  
+                          💨 {transitData.currentTransits.chartSummary.elemental.current.air}  
+                          💧 {transitData.currentTransits.chartSummary.elemental.current.water}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row' }}>
+                        <Text style={[styles.summaryText, { marginRight: 6 }]}>⚡ Modalidades:</Text>
+                        <Text style={styles.summaryText}>
+                          ⚡ {transitData.currentTransits.chartSummary.modality.current.cardinal}  
+                          🔒 {transitData.currentTransits.chartSummary.modality.current.fixed}  
+                          🔄 {transitData.currentTransits.chartSummary.modality.current.mutable}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
                   <View style={styles.areasSummary}>
                     <View style={styles.summaryItem}>
                       <Ionicons name="trending-up" size={16} color="#10B981" />

@@ -274,6 +274,11 @@ export default function TransitComparisonCard({
               </View>
             </View>
 
+            {/* Linha de resumo explícita das casas */}
+            <Text style={[styles.positionText, { marginTop: 6, opacity: 0.9 }]}>
+              Casa natal {comparison.natal.house} → atual {comparison.current.house}
+            </Text>
+
             {/* Aspectos Planetários */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
