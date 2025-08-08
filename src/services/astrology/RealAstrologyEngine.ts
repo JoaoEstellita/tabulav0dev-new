@@ -768,20 +768,23 @@ export class RealAstrologyEngine {
   }
 
   private static getPlanetSignScore(planet: RealPlanetPosition): number {
-    // Dignidades essenciais completas (simplificado; tabelas devem ser extraídas para arquivo dedicado)
+    // Dignidades essenciais (inclui domicílio/exaltação/detrimento/queda + triplicidade/termos/faces simplificados)
     const essentials: Record<string, {
       domicile?: string[]; exaltation?: string[]; detriment?: string[]; fall?: string[]
+      triplicity?: string[]; // signos onde o planeta participa da triplicidade
+      terms?: string[];      // aproximação: signos em que comumente recebe algum termo
+      faces?: string[];      // faces/decanatos aproximados por signo
     }> = {
       Sun:    { domicile: ['Leão'],    exaltation: ['Áries'],     detriment: ['Aquário'],  fall: ['Libra'] },
       Moon:   { domicile: ['Câncer'],  exaltation: ['Touro'],     detriment: ['Capricórnio'], fall: ['Escorpião'] },
-      Mercury:{ domicile: ['Gêmeos','Virgem'], exaltation: [],    detriment: ['Sagitário','Peixes'], fall: [] },
-      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['Escorpião','Áries'], fall: ['Virgem'] },
-      Mars:   { domicile: ['Áries','Escorpião'], exaltation: ['Capricórnio'], detriment: ['Libra','Touro'], fall: ['Câncer'] },
-      Jupiter:{ domicile: ['Sagitário','Peixes'], exaltation: ['Câncer'], detriment: ['Gêmeos','Virgem'], fall: ['Capricórnio'] },
-      Saturn: { domicile: ['Capricórnio','Aquário'], exaltation: ['Libra'], detriment: ['Câncer','Leão'], fall: ['Áries'] },
-      Uranus: { domicile: ['Aquário'] },
-      Neptune:{ domicile: ['Peixes'] },
-      Pluto:  { domicile: ['Escorpião'] },
+      Mercury:{ domicile: ['Gêmeos','Virgem'], exaltation: [],    detriment: ['Sagitário','Peixes'], fall: [], triplicity:['Gêmeos','Virgem'], faces:['Gêmeos','Virgem'] },
+      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['Escorpião','Áries'], fall: ['Virgem'], triplicity:['Touro','Libra'], faces:['Touro','Libra'] },
+      Mars:   { domicile: ['Áries','Escorpião'], exaltation: ['Capricórnio'], detriment: ['Libra','Touro'], fall: ['Câncer'], triplicity:['Áries','Escorpião'] },
+      Jupiter:{ domicile: ['Sagitário','Peixes'], exaltation: ['Câncer'], detriment: ['Gêmeos','Virgem'], fall: ['Capricórnio'], triplicity:['Sagitário','Peixes'] },
+      Saturn: { domicile: ['Capricórnio','Aquário'], exaltation: ['Libra'], detriment: ['Câncer','Leão'], fall: ['Áries'], triplicity:['Aquário','Libra'] },
+      Uranus: { domicile: ['Aquário'], triplicity:['Aquário'] },
+      Neptune:{ domicile: ['Peixes'], triplicity:['Peixes'] },
+      Pluto:  { domicile: ['Escorpião'], triplicity:['Escorpião'] },
     }
 
     const e = essentials[planet.name]
@@ -789,10 +792,17 @@ export class RealAstrologyEngine {
     const inList = (arr?: string[]) => !!arr && arr.includes(planet.sign)
 
     let score = 50
-    if (inList(e.domicile)) score += 30
-    if (inList(e.exaltation)) score += 40
-    if (inList(e.detriment)) score -= 30
-    if (inList(e.fall)) score -= 40
+    if (inList(e.domicile)) score += 28
+    if (inList(e.exaltation)) score += 24
+    if (inList(e.detriment)) score -= 28
+    if (inList(e.fall)) score -= 24
+    // Triplicidade (bônus moderado)
+    if (inList(e.triplicity)) score += 6
+    // Termos (aprox por signo: pequeno bônus/pena suave)
+    // Para simplificar, considerar bônus leve se não estiver em detrimento/queda
+    if (!inList(e.detriment) && !inList(e.fall)) score += 2
+    // Faces/decanos (muito sutil)
+    if (inList(e.faces)) score += 2
 
     // Clamp 0–100
     return Math.max(0, Math.min(100, score))
