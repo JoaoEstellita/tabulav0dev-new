@@ -203,14 +203,34 @@ export class RealAstrologyEngine {
     const birthDateTime = new Date(`${birthDate}T${birthTime}:00`)
     
     try {
-      // 1. CÁLCULO REAL DAS POSIÇÕES PLANETÁRIAS (tenta backend preciso, cai para engine local)
-      const realPlanets = await this.fetchBackendPositions(date, latitude, longitude)
-        .catch(() => this.calculateRealPlanetPositions(date, latitude, longitude))
-      console.log(`✅ Calculadas ${realPlanets.length} posições planetárias reais`)
+      // 1-2. TENTAR BACKEND PRECISO: posições + casas + pacote natal
+      let realPlanets: RealPlanetPosition[]
+      let houses: { cusps: number[]; ascendant: number; midheaven: number }
+      let natalPlanets: RealPlanetPosition[]
+      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number }
 
-      // 2. CÁLCULO REAL DAS CASAS ASTROLÓGICAS
-      const houses = await this.calculateRealHouses(date, birthDateTime, latitude, longitude)
-      console.log('✅ Calculadas casas astrológicas reais')
+      try {
+        const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude)
+        realPlanets = bundle.current.planets
+        houses = bundle.current.houses
+        natalPlanets = bundle.natal.planets
+        natalHouses = bundle.natal.houses
+        console.log('✅ Backend astro bundle utilizado (posições + casas + natal)')
+      } catch (_e) {
+        // Fallback para engine local
+        const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
+        const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude)
+        const natalPlanetsRaw = await this.calculateRealPlanetPositions(birthDateTime, latitude, longitude)
+        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, latitude, longitude)
+        realPlanets = planetsLocal
+        houses = housesLocal
+        natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
+        natalHouses = natalHousesLocal
+        console.log('⚠️ Fallback local utilizado (posições + casas)')
+      }
+
+      console.log(`✅ Calculadas ${realPlanets.length} posições planetárias reais`)
+      console.log('✅ Casas astrológicas disponíveis')
 
       // 3. CÁLCULO REAL DOS ASPECTOS
       // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cúspides
@@ -222,12 +242,8 @@ export class RealAstrologyEngine {
       const lifeAreas = this.calculateRealLifeAreas(planetsWithHouses, realAspects, houses, birthDateTime, latitude, longitude)
       console.log('✅ Análise real das áreas da vida concluída')
 
-      // 🌟 5. CÁLCULO DAS POSIÇÕES NATAIS E CASAS NATAIS
-      const natalPlanetsRaw = await this.fetchBackendPositions(birthDateTime, latitude, longitude)
-        .catch(() => this.calculateRealPlanetPositions(birthDateTime, latitude, longitude))
-      const natalHouses = await this.calculateRealHouses(birthDateTime, latitude, longitude)
-      const natalPlanets = this.assignHouses(natalPlanetsRaw, natalHouses)
-      console.log('✅ Calculadas posições natais e casas natais')
+      // 🌟 5. NATAIS já obtidos (do backend ou fallback)
+      console.log('✅ Posições natais e casas natais prontas')
 
       // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
       const planetComparisons = this.createPlanetComparisons(natalPlanets, realPlanets, houses)
@@ -389,6 +405,57 @@ export class RealAstrologyEngine {
       isRetrograde: !!p.retrograde,
     }))
     return planets
+  }
+
+  /** Bundle: posições + casas + natal, via backend */
+  private static async fetchBackendBundle(
+    currentDate: Date,
+    natalDate: Date,
+    latitude: number,
+    longitude: number
+  ): Promise<{
+    current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
+    natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
+  }> {
+    const backend = process.env.EXPO_PUBLIC_BACKEND_URL
+    if (!backend) throw new Error('No backend url')
+    const resp = await fetch(`${backend}/api/astro/positions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        datetimeISO: currentDate.toISOString(),
+        lat: latitude,
+        lon: longitude,
+        includeHouses: true,
+        system: 'placidus',
+        natalISO: natalDate.toISOString(),
+        bodies: RealAstrologyEngine.PLANETS,
+      })
+    })
+    if (!resp.ok) throw new Error('backend error')
+    const data = await resp.json()
+
+    const toPlanet = (p: any): RealPlanetPosition => ({
+      name: p.body,
+      longitude: p.lon,
+      latitude: p.lat ?? 0,
+      distance: p.dist ?? 1,
+      speed: p.speed ?? 0,
+      sign: RealAstrologyEngine.SIGNS[Math.floor((p.lon % 360) / 30)],
+      degree: (p.lon % 360) % 30,
+      house: 1,
+      isRetrograde: !!p.retrograde,
+    })
+
+    const currentPlanets = (data.positions || []).map(toPlanet)
+    const currentHouses = data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
+    const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
+    const natalHouses = data.natal?.houses || currentHouses
+
+    return {
+      current: { planets: this.assignHouses(currentPlanets, currentHouses), houses: currentHouses },
+      natal: { planets: this.assignHouses(natalPlanets, natalHouses), houses: natalHouses },
+    }
   }
 
   /**
