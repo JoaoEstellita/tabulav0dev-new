@@ -211,7 +211,11 @@ export class RealAstrologyEngine {
 
       try {
         // Enviar timestamps em UTC apenas (ISO), sem timezone manual
+        const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || undefined
+        const natalLocalStr = `${birthDate}T${birthTime}:00`
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
+          natalLocal: natalLocalStr,
+          natalTimezone: tz,
           natalLat: latitude,
           natalLon: longitude,
         })
@@ -419,7 +423,7 @@ export class RealAstrologyEngine {
     natalDate: Date,
     latitude: number,
     longitude: number,
-    options?: { natalLat?: number; natalLon?: number }
+    options?: { natalLocal?: string; natalTimezone?: string; natalLat?: number; natalLon?: number }
   ): Promise<{
     current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
     natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
@@ -432,7 +436,9 @@ export class RealAstrologyEngine {
       lon: longitude,
       includeHouses: true,
       system: 'placidus',
-      natalISO: natalDate.toISOString(),
+      natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
+      natalLocal: options?.natalLocal,
+      natalTimezone: options?.natalTimezone,
       natalLat: options?.natalLat,
       natalLon: options?.natalLon,
       bodies: RealAstrologyEngine.PLANETS,
