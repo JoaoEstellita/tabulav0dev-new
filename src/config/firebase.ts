@@ -31,7 +31,6 @@ try {
 // Initialize Firestore com endurecimento para Web
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
-  experimentalAutoDetectLongPolling: true,
   experimentalForceLongPolling: true,
   useFetchStreams: false,
 })
