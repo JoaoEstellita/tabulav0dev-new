@@ -251,6 +251,8 @@ export class RealAstrologyEngine {
       // 3. CÁLCULO REAL DOS ASPECTOS
       // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cúspides
       const planetsWithHouses = this.assignHouses(realPlanets, houses)
+      console.log('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
+        planetsWithHouses.map(p => ({ name: p.name, natal: (natalPlanets.find(n=>n.name===p.name)?.house), current: p.house })))
       const realAspects = this.calculateRealAspects(planetsWithHouses)
       console.log(`✅ Calculados ${realAspects.length} aspectos reais`)
 

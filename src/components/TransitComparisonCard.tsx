@@ -244,7 +244,7 @@ export default function TransitComparisonCard({
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.natal.longitude)} {comparison.natal.sign}
                 </Text>
-                <Text style={styles.houseText}>Casa {comparison.natal.house}</Text>
+                <Text style={styles.houseText}>Casa {Number(comparison.natal.house || 0)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
                     {ELEMENT_ICONS[comparison.natal.element]} {translateElement(comparison.natal.element)}
@@ -262,7 +262,7 @@ export default function TransitComparisonCard({
                   {formatDegreeInSign(comparison.current.longitude)} {comparison.current.sign}
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
-                <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
+                <Text style={styles.houseText}>Casa {Number(comparison.current.house || 0)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
                     {ELEMENT_ICONS[comparison.current.element]} {translateElement(comparison.current.element)}
