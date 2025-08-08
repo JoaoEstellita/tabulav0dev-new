@@ -255,7 +255,10 @@ export class RealAstrologyEngine {
         natalMidheaven: natalHouses.midheaven,
         planetComparisons,
         chartSummary,
-        houseAspects
+        houseAspects,
+        debug: {
+          lifeAreas: ((this as any)._debugLifeAreas) || {}
+        }
       }
 
       console.log('🎯 Cálculos astrológicos REAIS concluídos com sucesso!')
