@@ -474,7 +474,8 @@ export class RealAstrologyEngine {
       speed: p.speed ?? 0,
       sign: RealAstrologyEngine.SIGNS[Math.floor((p.lon % 360) / 30)],
       degree: (p.lon % 360) % 30,
-      house: typeof p.house === 'number' ? p.house : 1,
+      // Não confiar em "house" do backend; atribuirremos localmente com base nos cúspides
+      house: 0 as unknown as number,
       isRetrograde: !!p.retrograde,
     })
 
@@ -483,6 +484,7 @@ export class RealAstrologyEngine {
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
     const natalHouses = data.natal?.houses || currentHouses
 
+    // Sempre recalcular casas localmente usando os cúspides recebidos
     const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
@@ -600,20 +602,39 @@ export class RealAstrologyEngine {
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
     const cusps = houses.cusps
-    const normalized = (deg: number) => (deg % 360 + 360) % 360
+    const norm = (deg: number) => (deg % 360 + 360) % 360
+    const orientation = (() => {
+      let inc = 0, dec = 0
+      for (let i = 0; i < 12; i++) {
+        const a = norm(cusps[i])
+        const b = norm(cusps[(i + 1) % 12])
+        inc += (b - a + 360) % 360
+        dec += (a - b + 360) % 360
+      }
+      return inc <= dec ? 'inc' : 'dec'
+    })()
+    const transform = (v: number) => orientation === 'inc' ? norm(v) : norm(-v)
+    const unwrap = (arr: number[]) => {
+      const u = new Array(13)
+      u[0] = transform(arr[0])
+      for (let i = 1; i < 12; i++) {
+        const prev = u[i - 1]
+        const prevRaw = transform(arr[i - 1])
+        const curr = transform(arr[i])
+        const delta = (curr - prevRaw + 360) % 360
+        u[i] = prev + delta
+      }
+      u[12] = u[0] + 360
+      return u
+    }
+    const unwrapped = unwrap(cusps)
+    const start = unwrapped[0]
 
     const getHouse = (lon: number): number => {
-      const L = normalized(lon)
-      // Percorre cúspides em ordem e encontra o setor [cusp_i, cusp_{i+1})
+      const Lp = transform(lon)
+      const L = Lp >= start ? Lp : Lp + 360
       for (let i = 0; i < 12; i++) {
-        const a = normalized(cusps[i])
-        const b = normalized(cusps[(i + 1) % 12])
-        if (a <= b) {
-          if (L >= a && L < b) return i + 1
-        } else {
-          // Envolve 360º
-          if (L >= a || L < b) return i + 1
-        }
+        if (L >= unwrapped[i] && L < unwrapped[i + 1]) return i + 1
       }
       return 1
     }
