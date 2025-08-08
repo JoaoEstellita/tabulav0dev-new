@@ -281,15 +281,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           {analysis.positiveInfluences.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>✨ Aspectos Favoráveis</Text>
-              {analysis.positiveInfluences.map((aspect, index) => (
-                <View key={index} style={styles.aspectCard}>
-                  <Text style={styles.aspectIcon}>✨</Text>
-                  <View style={styles.aspectContent}>
-                    <Text style={styles.aspectText}>{aspect}</Text>
-                    <Text style={styles.aspectScore}>+{Math.round(Math.random() * 15 + 5)} pontos</Text>
+              {(analysis.topAspects.length > 0 ? analysis.topAspects.filter(a => (a.finalScore||0) >= 60) : analysis.positiveInfluences).map((item: any, index: number) => {
+                const text = typeof item === 'string' ? item : `${item.type} ${item.with} • orb ${item.orb?.toFixed ? item.orb.toFixed(1) : item.orb}° ${item.isApplying ? '(aplicante)' : '(separante)'} `
+                const score = typeof item === 'string' ? undefined : Math.round(item.finalScore || 0)
+                return (
+                  <View key={index} style={styles.aspectCard}>
+                    <Text style={styles.aspectIcon}>✨</Text>
+                    <View style={styles.aspectContent}>
+                      <Text style={styles.aspectText}>{text}</Text>
+                      {score !== undefined && (
+                        <Text style={styles.aspectScore}>+{score}</Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                )
+              })}
             </View>
           )}
           
@@ -297,15 +303,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           {analysis.challengingInfluences.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>⚠️ Aspectos Desfavoráveis</Text>
-              {analysis.challengingInfluences.map((aspect, index) => (
-                <View key={index} style={styles.aspectCard}>
-                  <Text style={styles.aspectIcon}>⚠️</Text>
-                  <View style={styles.aspectContent}>
-                    <Text style={styles.aspectText}>{aspect}</Text>
-                    <Text style={styles.aspectScore}>-{Math.round(Math.random() * 10 + 3)} pontos</Text>
+              {(analysis.topAspects.length > 0 ? analysis.topAspects.filter(a => (a.finalScore||0) < 60) : analysis.challengingInfluences).map((item: any, index: number) => {
+                const text = typeof item === 'string' ? item : `${item.type} ${item.with} • orb ${item.orb?.toFixed ? item.orb.toFixed(1) : item.orb}° ${item.isApplying ? '(aplicante)' : '(separante)'} `
+                const score = typeof item === 'string' ? undefined : Math.round(item.finalScore || 0)
+                return (
+                  <View key={index} style={styles.aspectCard}>
+                    <Text style={styles.aspectIcon}>⚠️</Text>
+                    <View style={styles.aspectContent}>
+                      <Text style={styles.aspectText}>{text}</Text>
+                      {score !== undefined && (
+                        <Text style={[styles.aspectScore, { color: '#E74C3C' }]}>-{Math.max(0, 100 - score)}</Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                )
+              })}
             </View>
           )}
 

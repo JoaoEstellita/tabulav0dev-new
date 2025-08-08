@@ -10,7 +10,7 @@
  */
 
 import * as Astronomy from 'astronomy-engine'
-import * as Ephemeris from 'ephemeris'
+// Removido Ephemeris não utilizado
 
 export interface RealPlanetPosition {
   name: string
