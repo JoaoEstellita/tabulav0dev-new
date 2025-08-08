@@ -83,11 +83,14 @@ class UserService {
 
       // Só adiciona foto se foi fornecida. Se base64/local URI, envia para Storage e salva URL.
       if (birthData.profilePhoto) {
-        const isDataUrl = birthData.profilePhoto.startsWith('data:')
-        const isHttp = birthData.profilePhoto.startsWith('http')
-        updateData.profilePhoto = isHttp
-          ? birthData.profilePhoto
-          : await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+        try {
+          const isHttp = birthData.profilePhoto.startsWith('http')
+          updateData.profilePhoto = isHttp
+            ? birthData.profilePhoto
+            : await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+        } catch (err) {
+          console.warn('⚠️ Falha ao enviar foto ao Storage. Prosseguindo sem foto.', err)
+        }
       }
 
       if (userDoc.exists()) {

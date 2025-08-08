@@ -240,12 +240,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           }
 
           const dataUrl = await compressToDataUrl(file)
-          setFormData(prev => ({
-            ...prev,
-            profilePhoto: dataUrl,
-          }))
-          localStorage.setItem('tempProfilePhoto', dataUrl)
-          console.log('✅ Foto selecionada na web (comprimida)')
+          try {
+            setFormData(prev => ({
+              ...prev,
+              profilePhoto: dataUrl,
+            }))
+            localStorage.setItem('tempProfilePhoto', dataUrl)
+            console.log('✅ Foto selecionada na web (comprimida)')
+          } catch {
+            // Se algo falhar no localStorage, apenas ignore
+          }
         }
       }
       input.click()
