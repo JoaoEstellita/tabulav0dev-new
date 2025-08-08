@@ -350,6 +350,7 @@ export default function HomeScreen() {
                     <LifeAreaCard 
                       area={{name, ...area}} 
                       onPress={() => handleAreaPress(name, area)}
+                      onViewReasons={() => handleAreaPress(name, area)}
                     />
                   </View>
                 )

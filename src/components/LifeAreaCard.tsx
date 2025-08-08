@@ -7,6 +7,7 @@ import type { LifeArea } from '../services/prokerala/TransitService'
 interface LifeAreaCardProps {
   area: LifeArea
   onPress?: () => void
+  onViewReasons?: () => void
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -71,7 +72,11 @@ const TREND_COLORS: Record<string, string> = {
   estavel: '#6B7280',
 }
 
-export default function LifeAreaCard({ area, onPress }: LifeAreaCardProps) {
+export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaCardProps) {
+  // Enriquecer o card com pistas do "porquê" (se disponível via log/explicações)
+  const hints: string[] = Array.isArray((area as any)?.influences)
+    ? ((area as any).influences as string[]).slice(0, 2)
+    : []
   const getStatusColor = (status: number) => {
     if (status >= 70) return '#10B981' // Verde
     if (status >= 40) return '#F59E0B' // Amarelo
@@ -148,7 +153,17 @@ export default function LifeAreaCard({ area, onPress }: LifeAreaCardProps) {
         </View>
       </View>
 
-      <Text style={styles.description}>{area.description || 'Área da vida'}</Text>
+      <Text style={styles.description}>
+        {area.description || (hints.length
+          ? `Fatores-chave: ${hints.join(' • ')}`
+          : 'Área da vida')}
+      </Text>
+
+      {onViewReasons && (
+        <TouchableOpacity onPress={onViewReasons} style={styles.reasonsButton}>
+          <Text style={styles.reasonsText}>Ver justificativas</Text>
+        </TouchableOpacity>
+      )}
 
       {area.criticalLevel && (
         <View style={styles.criticalBadge}>
@@ -240,6 +255,19 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     lineHeight: 18,
     flex: 1,
+  },
+  reasonsButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  reasonsText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   criticalBadge: {
     flexDirection: 'row',
