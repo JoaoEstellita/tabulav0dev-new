@@ -224,6 +224,8 @@ export class RealAstrologyEngine {
           natalLocal: natalLocalStr,
           natalTimezone: tz,
           natalOffsetMinutes: offMinNatal,
+          natalLat: latitude,
+          natalLon: longitude,
         })
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
@@ -427,7 +429,7 @@ export class RealAstrologyEngine {
     natalDate: Date,
     latitude: number,
     longitude: number,
-    options?: { datetimeLocal?: string; timezone?: string; offsetMinutes?: number; natalLocal?: string; natalTimezone?: string; natalOffsetMinutes?: number }
+    options?: { datetimeLocal?: string; timezone?: string; offsetMinutes?: number; natalLocal?: string; natalTimezone?: string; natalOffsetMinutes?: number; natalLat?: number; natalLon?: number }
   ): Promise<{
     current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
     natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
@@ -450,6 +452,8 @@ export class RealAstrologyEngine {
         natalLocal: options?.natalLocal,
         natalTimezone: options?.natalTimezone,
         natalOffsetMinutes: options?.natalOffsetMinutes,
+        natalLat: options?.natalLat,
+        natalLon: options?.natalLon,
         bodies: RealAstrologyEngine.PLANETS,
       })
     })
