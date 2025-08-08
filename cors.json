@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "https://tabulaestelar.com.br",
+      "https://www.tabulaestelar.com.br"
+    ],
+    "method": ["GET", "POST", "PUT", "HEAD", "DELETE"],
+    "responseHeader": ["Content-Type", "Authorization", "x-goog-*"],
+    "maxAgeSeconds": 3600
+  }
+]
+
+
