@@ -89,24 +89,25 @@ class UserService {
           if (isHttp) {
             updateData.profilePhoto = birthData.profilePhoto
           } else {
-            // Tenta Storage direto
-            try {
-              updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
-            } catch (e) {
-              // Fallback via backend (CORS-free)
-              if (BACKEND_URL) {
-                const resp = await fetch(`${BACKEND_URL}/api/upload/profile-photo`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId, dataUrl: birthData.profilePhoto }),
-                })
-                if (resp.ok) {
-                  const { url } = await resp.json()
-                  updateData.profilePhoto = url
-                } else {
-                  console.warn('Upload backend falhou', await resp.text())
-                }
+            const isWeb = typeof window !== 'undefined'
+            // No Web: prioriza backend para evitar CORS
+            if (isWeb && BACKEND_URL) {
+              const resp = await fetch(`${BACKEND_URL}/api/upload/profile-photo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, dataUrl: birthData.profilePhoto }),
+              })
+              if (resp.ok) {
+                const { url } = await resp.json()
+                updateData.profilePhoto = url
+              } else {
+                console.warn('Upload backend falhou', await resp.text())
+                // Tenta Storage como alternativa
+                updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
               }
+            } else {
+              // Em native (ou se BACKEND_URL ausente), tenta Storage direto
+              updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
             }
           }
         } catch (err) {
