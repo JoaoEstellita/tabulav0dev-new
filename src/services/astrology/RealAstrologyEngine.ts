@@ -253,7 +253,7 @@ export class RealAstrologyEngine {
       console.log('✅ Posições natais e casas natais prontas')
 
       // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
-      const planetComparisons = this.createPlanetComparisons(natalPlanets, realPlanets, houses)
+      const planetComparisons = this.createPlanetComparisons(natalPlanets, planetsWithHouses, houses)
       console.log('✅ Comparações planetárias criadas')
 
       // 🌟 7. ASPECTOS COM CASAS
@@ -261,7 +261,7 @@ export class RealAstrologyEngine {
       console.log('✅ Aspectos com casas calculados')
 
       // 🌟 8. RESUMO ELEMENTAL E MODAL
-      const chartSummary = this.createChartSummary(natalPlanets, realPlanets)
+      const chartSummary = this.createChartSummary(natalPlanets, planetsWithHouses)
       console.log('✅ Resumo da carta criado')
 
       const result: RealAstrologyData = {

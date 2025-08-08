@@ -201,10 +201,10 @@ export default function TransitComparisonCard({
         {(chartSummary.elemental.changes.length > 0 || chartSummary.modality.changes.length > 0) && (
           <View style={styles.changesSection}>
             <Text style={styles.changesTitle}>📈 Mudanças Detectadas:</Text>
-            {chartSummary.elemental.changes.map((change, index) => (
+            {chartSummary.elemental.changes.filter(Boolean).map((change, index) => (
               <Text key={`elemental-${index}`} style={styles.changeItem}>• {change}</Text>
             ))}
-            {chartSummary.modality.changes.map((change, index) => (
+            {chartSummary.modality.changes.filter(Boolean).map((change, index) => (
               <Text key={`modality-${index}`} style={styles.changeItem}>• {change}</Text>
             ))}
           </View>
