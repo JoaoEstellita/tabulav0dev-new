@@ -224,18 +224,33 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       input.onchange = async (event: any) => {
         const file = event.target.files[0]
         if (file) {
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            const result = e.target?.result as string
-            setFormData(prev => ({
-              ...prev,
-              profilePhoto: result,
-            }))
-            // Salvar no localStorage para persistência
-            localStorage.setItem('tempProfilePhoto', result)
-            console.log('✅ Foto selecionada na web')
-          }
-          reader.readAsDataURL(file)
+          const compressToDataUrl = (file: File): Promise<string> => new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              const img = new Image()
+              img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const maxSize = 300
+                const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+                canvas.width = Math.round(img.width * scale)
+                canvas.height = Math.round(img.height * scale)
+                const ctx = canvas.getContext('2d')!
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+                // JPEG qualidade 0.8
+                resolve(canvas.toDataURL('image/jpeg', 0.8))
+              }
+              img.src = reader.result as string
+            }
+            reader.readAsDataURL(file)
+          })
+
+          const dataUrl = await compressToDataUrl(file)
+          setFormData(prev => ({
+            ...prev,
+            profilePhoto: dataUrl,
+          }))
+          localStorage.setItem('tempProfilePhoto', dataUrl)
+          console.log('✅ Foto selecionada na web (comprimida)')
         }
       }
       input.click()
