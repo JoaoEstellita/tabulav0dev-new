@@ -221,8 +221,9 @@ export class RealAstrologyEngine {
         })
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
-        natalPlanets = bundle.natal.planets
         natalHouses = bundle.natal.houses
+        // Reatribuir casas dos NATAIS no cliente para garantir a mesma regra de particionamento
+        natalPlanets = this.assignHouses(bundle.natal.planets, natalHouses)
         console.log('✅ Backend astro bundle utilizado (posições + casas + natal)')
       } catch (_e) {
         // Fallback para engine local
