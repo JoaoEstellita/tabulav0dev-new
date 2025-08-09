@@ -80,87 +80,81 @@ export function computePlacidusCusps(
   ascDeg: number,
   mcDeg: number
 ): PlacidusResult {
-  const approximate: boolean = Math.abs(latDeg) >= 66
-  if (approximate){
-    // fallback: usar Equal (com asc dado)
+  const approxByLat: boolean = Math.abs(latDeg) >= 66
+  if (approxByLat){
     const cusps = Array.from({length:12}, (_,i)=>norm360(ascDeg + 30*i))
     return { cusps, asc: ascDeg, mc: mcDeg, approximate: true }
   }
 
-  // LST em horas
   const lstHours = SiderealTime(dateUTC, lonDeg)
-  const lst = toRad(lstHours*15)
-  const lat = toRad(latDeg)
+  const RAMC = norm360(lstHours*15)
+  const epsRad = obliquityRad()
+  const latRad = toRad(latDeg)
 
-  // MC e ASC já foram fornecidos (em graus). Precisamos derivar as cúspides 11/12/2/3 por semi-arcos.
-  // Estratégia: procuramos AR (α) do ponto na eclíptica cujo hour-angle H satisfaça H = k*H0(dec), com k = ±1/3, ±2/3.
+  // helpers em graus
+  const deg2rad = (d:number)=> d*Math.PI/180
+  const rad2deg = (r:number)=> r*180/Math.PI
+  const normalize = (d:number)=> ((d%360)+360)%360
+  const sin = Math.sin, cos = Math.cos, tan = Math.tan, asin = Math.asin, atan2 = Math.atan2, acos = Math.acos
 
-  const eps = obliquityRad()
-
-  function errorForK(targetK: number, side: 'east'|'west'): (alpha: number)=>number {
-    // alpha em rad; dec depende de λ correspondente, mas aqui aproximamos dec a partir de α assumindo lat e obliquidade.
-    return (alpha: number) => {
-      // Declinação aproximada de ponto na eclíptica com RA=alpha: dec = asin(sin ε sin λ), com λ ≈ atan2(sin α / cos ε, cos α)
-      const lam = Math.atan2(Math.sin(alpha)/Math.cos(eps), Math.cos(alpha))
-      const dec = Math.asin(Math.sin(eps)*Math.sin(lam))
-      const H0 = semiArcHours(dec, lat) // rad
-      // hour-angle do ponto relativo ao meridiano local: H = lst - alpha
-      let H = lst - alpha
-      // normalizar para (-π, π]
-      while (H <= -Math.PI) H += 2*Math.PI
-      while (H > Math.PI) H -= 2*Math.PI
-      const target = targetK * H0 * (side==='west' ? -1 : +1)
-      return H - target
+  function raFromLon(lonDeg:number): number {
+    const L = deg2rad(lonDeg)
+    const a = atan2(sin(L)*cos(epsRad), cos(L))
+    let A = rad2deg(a); if (A<0) A+=360; return A
+  }
+  function decFromLon(lonDeg:number): number {
+    const L = deg2rad(lonDeg)
+    const d = asin(sin(epsRad)*sin(L))
+    return rad2deg(d)
+  }
+  function H0FromDec(decDeg:number): number {
+    const D = deg2rad(decDeg)
+    const val = -tan(latRad)*tan(D)
+    const clamped = Math.max(-1, Math.min(1, val))
+    return rad2deg(acos(clamped))
+  }
+  function solveCusp(baseRAMC:number, k:number, sign:number, seed:number): number {
+    // f(lon) = RA(lon) - (base + sign*k*H0(dec(lon)))
+    const f = (lon:number)=>{
+      const ra = raFromLon(lon)
+      const dec = decFromLon(lon)
+      const H0 = H0FromDec(dec)
+      const target = normalize(baseRAMC + sign*k*H0)
+      let diff = normalize(ra - target)
+      if (diff > 180) diff -= 360
+      return diff
     }
+    let x0 = normalize(seed)
+    let x1 = normalize(seed + (sign>0?+5:-5))
+    let y0 = f(x0)
+    let y1 = f(x1)
+    for (let i=0;i<40;i++){
+      if (Math.abs(y1 - y0) < 1e-9) break
+      let x2 = normalize(x1 - y1*(x1 - x0)/(y1 - y0))
+      const y2 = f(x2)
+      x0 = x1; y0 = y1
+      x1 = x2; y1 = y2
+      if (Math.abs(y1) < 1e-4) break
+    }
+    return normalize(x1)
   }
 
-  function solveAlphaFromK(k: number, side: 'east'|'west', seedAlpha: number): number {
-    const seed = seedAlpha
-    const f = errorForK(k, side)
-    const lo = seed - 0.7 // janela mais ampla para garantir raiz
-    const hi = seed + 0.7
-    return solveAngle(f, lo, hi, 1e-6, 60)
-  }
+  // Porphyry seeds em eclíptica
+  const asc = normalize(ascDeg), mc = normalize(mcDeg)
+  const dsc = normalize(asc + 180), ic = normalize(mc + 180)
+  const span = (a:number,b:number)=> normalize(b - a)
+  const along = (a:number,b:number,frac:number)=> normalize(a + frac*span(a,b))
+  const seed12 = along(mc, asc, 2/3)
+  const seed11 = along(mc, asc, 1/3)
+  const seed9  = along(dsc, mc, 1/3)
+  const seed8  = along(dsc, mc, 2/3)
 
-  // Seeds Porphyry em AR por quadrante
-  const { ra: aMC }  = lonToRaDec(mcDeg)
-  const { ra: aASC } = lonToRaDec(ascDeg)
-  const aDSC = aASC + Math.PI
-  const aIC  = aMC  + Math.PI
-  const norm2pi = (x:number)=>{ while(x<0)x+=2*Math.PI; while(x>=2*Math.PI)x-=2*Math.PI; return x }
-  const span = (from:number, to:number)=> norm2pi(to - from)
-  const arcPoint = (from:number, to:number, frac:number)=> norm2pi(from + frac*span(from,to))
-
-  // Quadrantes em AR (anti-horário):
-  // MC→ASC (leste acima): casas 11 (1/3), 12 (2/3)
-  const seedA11 = arcPoint(aMC, aASC, 1/3)
-  const seedA12 = arcPoint(aMC, aASC, 2/3)
-  // DSC→MC (oeste acima): casas 9 (1/3), 8 (2/3)
-  const seedA9  = arcPoint(aDSC, aMC, 1/3)
-  const seedA8  = arcPoint(aDSC, aMC, 2/3)
-
-  const a11 = solveAlphaFromK(1/3, 'east', seedA11)
-  const a12 = solveAlphaFromK(2/3, 'east', seedA12)
-  const a9  = solveAlphaFromK(1/3, 'west', seedA9)
-  const a8  = solveAlphaFromK(2/3, 'west', seedA8)
-
-  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
-    // Logs de diagnóstico (somente dev)
-    try {
-      // eslint-disable-next-line no-console
-      console.debug('[Placidus] Seeds AR', {
-        aMC, aASC, aDSC, aIC,
-        seedA11, seedA12, seedA9, seedA8
-      })
-      // eslint-disable-next-line no-console
-      console.debug('[Placidus] Soluções AR', { a11, a12, a9, a8 })
-    } catch {}
-  }
-
-  const c11 = raDecToLon(a11, 0)
-  const c12 = raDecToLon(a12, 0)
-  const c9  = raDecToLon(a9 , 0)
-  const c8  = raDecToLon(a8 , 0)
+  // Resolver
+  // Mapeamento k calibrado: 11 = 1/3, 12 = 2/3 (leste/acima); 9 = 2/3, 8 = 1/3 (oeste/acima)
+  const c11 = solveCusp(RAMC, 1/3, +1, seed11)
+  const c12 = solveCusp(RAMC, 2/3, +1, seed12)
+  const c9  = solveCusp(RAMC, 2/3, -1, seed9)
+  const c8  = solveCusp(RAMC, 1/3, -1, seed8)
 
   // Opostos
   const c5 = norm360(c11 + 180)
@@ -199,7 +193,7 @@ export function computePlacidusCusps(
     return { cusps: eq, asc: ascDeg, mc: mcDeg, approximate: true }
   }
 
-  return { cusps, asc: ascDeg, mc: mcDeg, approximate }
+  return { cusps, asc: ascDeg, mc: mcDeg, approximate: false }
 }
 
 
