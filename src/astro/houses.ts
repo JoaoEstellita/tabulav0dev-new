@@ -1,6 +1,7 @@
 import { Observer, SiderealTime } from 'astronomy-engine'
 import { angleDiffCCW, degToSign, norm360, toDeg, toRad, withinArcCCW, wrapIndex } from './houses.math'
 import { PLANETS, Planet, getPlanetEclipticLongitude } from './planets'
+import { getCachedHouses, makeKey, setCachedHouses } from './cache'
 
 export type HouseSystem = 'whole' | 'equal' | 'placidus'
 
@@ -11,6 +12,8 @@ export interface HouseResult {
   cusps: number[] // 12 valores 0–360
   planetLongitudes: Record<Planet, number>
   planetHouses: Record<Planet, number>
+  /** true quando o sistema 'placidus' precisou cair em aproximação/fallback */
+  approximate?: boolean
 }
 
 const OBLIQUITY_DEG = 23.4392911 // obliquidade média (WGS)
@@ -44,6 +47,9 @@ export async function computeHousesUTC(
   lon: number,
   system: HouseSystem = 'whole'
 ): Promise<HouseResult> {
+  const cacheKey = makeKey(dateUTC, lat, lon, system)
+  const cached = getCachedHouses(cacheKey)
+  if (cached) return cached
   const { asc, mc } = computeAscMc(dateUTC, lat, lon)
 
   // Cúspides
@@ -80,7 +86,7 @@ export async function computeHousesUTC(
     planetHouses[p] = found
   }
 
-  return {
+  const result: HouseResult = {
     system,
     asc,
     mc,
@@ -90,6 +96,8 @@ export async function computeHousesUTC(
     // @ts-expect-error: campo opcional usado pela UI
     approximate,
   }
+  setCachedHouses(cacheKey, result)
+  return result
 }
 
 
