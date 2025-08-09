@@ -162,14 +162,14 @@ export function computePlacidusCusps(
   const c3 = norm360(c9  + 180)
   const c2 = norm360(c8  + 180)
   const c7 = norm360(ascDeg + 180)
-  const ic = norm360(mcDeg + 180)
+  const icOpp = norm360(mcDeg + 180)
 
   // Montar cúspides
   const cusps = [
     norm360(ascDeg),
     c2,
     c3,
-    ic,
+    icOpp,
     c5,
     c6,
     c7,
