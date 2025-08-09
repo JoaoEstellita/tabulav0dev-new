@@ -20,7 +20,6 @@ import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 import HousesPreview from '../../components/HousesPreview';
-import { useUserBirthData } from '../../hooks/useUserBirthData';
 import { subscribeWebPush } from '../../webpush/subscribe';
 
 const { width } = Dimensions.get('window');
@@ -48,8 +47,7 @@ export default function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
-  const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus-beta'>('equal');
-  const { birthData } = (typeof useUserBirthData === 'function' ? useUserBirthData() : { birthData: null }) as any;
+  const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>( 'equal');
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -545,16 +543,14 @@ export default function SettingsScreen() {
               <TouchableOpacity onPress={() => setHouseSystem('placidus-beta')} style={styles.choiceBtn}><Text style={styles.choiceText}>Placidus (beta)</Text></TouchableOpacity>
             </View>
             <Text style={{ color:'#b0b0b0', paddingHorizontal: 20, marginBottom: 8 }}>Atual: {houseSystem}</Text>
-            {birthData?.birthLocation && (
-              <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
-                <HousesPreview
-                  dateUTC={new Date()}
-                  lat={birthData.birthLocation.latitude}
-                  lon={birthData.birthLocation.longitude}
-                  system={houseSystem}
-                />
-              </View>
-            )}
+            <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
+              <HousesPreview
+                dateUTC={new Date()}
+                lat={-22.9068}
+                lon={-43.1729}
+                system={houseSystem}
+              />
+            </View>
           </View>
 
           {/* App Info */}
