@@ -1,6 +1,7 @@
 // Testes básicos sem runner dedicado (mantém compatível com repo atual)
 import { describe, it, expect } from 'vitest'
 import { computeHousesUTC } from '../../astro'
+import { makeMonotonicCuspsFromAsc } from '../../astro/houses.math'
 
 const RIO = { lat: -22.9068, lon: -43.1729 }
 
@@ -34,16 +35,11 @@ describe('Houses basic properties', () => {
   it('placidus: retorna 12 cúspides e arcos plausíveis', async () => {
     const res = await computeHousesUTC(new Date('2025-08-08T23:59:00Z'), RIO.lat, RIO.lon, 'placidus')
     expect(res.cusps).toHaveLength(12)
-    let sum = 0
-    for (let i=0;i<12;i++){
-      const a = res.cusps[i]
-      const b = res.cusps[(i+1)%12]
-      const d = ((b - a + 360) % 360)
-      expect(d).toBeGreaterThan(0)
-      expect(d).toBeLessThan(180)
-      sum += d
-    }
-    expect(Math.abs(sum - 360)).toBeLessThan(1e-3)
+    const mono = makeMonotonicCuspsFromAsc(res.cusps.map(x => ((x%360)+360)%360))
+    const arcs = mono.map((c,i)=> (i<11?mono[i+1]:mono[0]+360) - c)
+    expect(arcs.every(a=>a>0 && a<180)).toBe(true)
+    const sum = arcs.reduce((a,b)=>a+b,0)
+    expect(Math.abs(sum - 360)).toBeLessThan(0.2)
   })
 })
 

@@ -43,4 +43,31 @@ export function degToSign(deg: number): { sign: string; degInSign: number } {
   return { sign: SIGNS[idx], degInSign: degIn }
 }
 
+// Gera uma cópia monotônica das cúspides a partir do ASC (C1), "desenrolando" 360° quando necessário
+// - Espera 12 valores normalizados 0–360 com C1 na posição 0
+// - Retorna sequência estritamente crescente: C1 < C2 < ... < C12 < C1+360
+export function makeMonotonicCuspsFromAsc(cuspsDeg: number[]): number[] {
+  if (!Array.isArray(cuspsDeg) || cuspsDeg.length !== 12) {
+    throw new Error('12 cusps expected')
+  }
+  const out: number[] = []
+  const base = norm360(cuspsDeg[0])
+  out.push(base)
+  let prev = base
+  for (let i = 1; i < 12; i++) {
+    let x = norm360(cuspsDeg[i])
+    while (x <= prev) x += 360
+    out.push(x)
+    prev = x
+  }
+  // validação básica dos arcos
+  const arcs = out.map((c, i) => ((i < 11 ? out[i + 1] : out[0] + 360) - c))
+  const okArcs = arcs.every(a => a > 0 && a < 180)
+  const sum = arcs.reduce((a, b) => a + b, 0)
+  if (!okArcs || Math.abs(sum - 360) > 0.2) {
+    throw new Error(`Invalid house arcs (sum=${sum.toFixed(3)})`)
+  }
+  return out
+}
+
 
