@@ -114,26 +114,48 @@ export function computePlacidusCusps(
     }
   }
 
-  function solveAlphaFromK(k: number, side: 'east'|'west', seedDeg: number): number {
-    const seed = toRad(seedDeg)
+  function solveAlphaFromK(k: number, side: 'east'|'west', seedAlpha: number): number {
+    const seed = seedAlpha
     const f = errorForK(k, side)
-    const lo = seed - 0.6 // janela ampla
-    const hi = seed + 0.6
+    const lo = seed - 0.7 // janela mais ampla para garantir raiz
+    const hi = seed + 0.7
     return solveAngle(f, lo, hi, 1e-6, 60)
   }
 
-  // Seeds a partir de MC/ASC aproximando vizinhança
-  const seeds = {
-    c11: mcDeg - 20,
-    c12: mcDeg - 40,
-    c9:  mcDeg + 20,
-    c8:  mcDeg + 40,
-  }
+  // Seeds Porphyry em AR por quadrante
+  const { ra: aMC }  = lonToRaDec(mcDeg)
+  const { ra: aASC } = lonToRaDec(ascDeg)
+  const aDSC = aASC + Math.PI
+  const aIC  = aMC  + Math.PI
+  const norm2pi = (x:number)=>{ while(x<0)x+=2*Math.PI; while(x>=2*Math.PI)x-=2*Math.PI; return x }
+  const span = (from:number, to:number)=> norm2pi(to - from)
+  const arcPoint = (from:number, to:number, frac:number)=> norm2pi(from + frac*span(from,to))
 
-  const a11 = solveAlphaFromK(1/3, 'east', seeds.c11)
-  const a12 = solveAlphaFromK(2/3, 'east', seeds.c12)
-  const a9  = solveAlphaFromK(1/3, 'west', seeds.c9)
-  const a8  = solveAlphaFromK(2/3, 'west', seeds.c8)
+  // Quadrantes em AR (anti-horário):
+  // MC→ASC (leste acima): casas 11 (1/3), 12 (2/3)
+  const seedA11 = arcPoint(aMC, aASC, 1/3)
+  const seedA12 = arcPoint(aMC, aASC, 2/3)
+  // DSC→MC (oeste acima): casas 9 (1/3), 8 (2/3)
+  const seedA9  = arcPoint(aDSC, aMC, 1/3)
+  const seedA8  = arcPoint(aDSC, aMC, 2/3)
+
+  const a11 = solveAlphaFromK(1/3, 'east', seedA11)
+  const a12 = solveAlphaFromK(2/3, 'east', seedA12)
+  const a9  = solveAlphaFromK(1/3, 'west', seedA9)
+  const a8  = solveAlphaFromK(2/3, 'west', seedA8)
+
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
+    // Logs de diagnóstico (somente dev)
+    try {
+      // eslint-disable-next-line no-console
+      console.debug('[Placidus] Seeds AR', {
+        aMC, aASC, aDSC, aIC,
+        seedA11, seedA12, seedA9, seedA8
+      })
+      // eslint-disable-next-line no-console
+      console.debug('[Placidus] Soluções AR', { a11, a12, a9, a8 })
+    } catch {}
+  }
 
   const c11 = raDecToLon(a11, 0)
   const c12 = raDecToLon(a12, 0)

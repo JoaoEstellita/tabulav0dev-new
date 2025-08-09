@@ -1,3 +1,4 @@
+// Testes básicos sem runner dedicado (mantém compatível com repo atual)
 import { describe, it, expect } from 'vitest'
 import { computeHousesUTC } from '../../astro'
 
@@ -28,6 +29,21 @@ describe('Houses basic properties', () => {
       expect(seen.has(key)).toBe(false)
       seen.add(key)
     }
+  })
+
+  it('placidus: retorna 12 cúspides e arcos plausíveis', async () => {
+    const res = await computeHousesUTC(new Date('2025-08-08T23:59:00Z'), RIO.lat, RIO.lon, 'placidus')
+    expect(res.cusps).toHaveLength(12)
+    let sum = 0
+    for (let i=0;i<12;i++){
+      const a = res.cusps[i]
+      const b = res.cusps[(i+1)%12]
+      const d = ((b - a + 360) % 360)
+      expect(d).toBeGreaterThan(0)
+      expect(d).toBeLessThan(180)
+      sum += d
+    }
+    expect(Math.abs(sum - 360)).toBeLessThan(1e-3)
   })
 })
 

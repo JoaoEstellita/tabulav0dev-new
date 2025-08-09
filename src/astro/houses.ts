@@ -1,5 +1,5 @@
-import { Observer, SiderealTime } from 'astronomy-engine'
-import { angleDiffCCW, degToSign, norm360, toDeg, toRad, withinArcCCW, wrapIndex } from './houses.math'
+import { SiderealTime } from 'astronomy-engine'
+import { angleDiffCCW, norm360, toDeg, toRad, withinArcCCW } from './houses.math'
 import { PLANETS, Planet, getPlanetEclipticLongitude } from './planets'
 import { getCachedHouses, makeKey, setCachedHouses } from './cache'
 
@@ -75,13 +75,19 @@ export async function computeHousesUTC(
 
   // Mapeamento planeta → casa
   const planetHouses: Record<Planet, number> = {} as any
+  const epsDeg = 0.03
   for (const p of Object.keys(planetLongitudes) as Planet[]) {
     const L = planetLongitudes[p]
     let found = 12
     for (let i = 0; i < 12; i++) {
       const a = cusps[i]
       const b = cusps[(i + 1) % 12]
-      if (withinArcCCW(a, b, L, 1e-6)) { found = i + 1; break }
+      const distA = Math.abs(angleDiffCCW(a, L))
+      const distB = Math.abs(angleDiffCCW(b, L))
+      // Intervalo semiaberto [a, b):
+      if (distA < epsDeg) { found = i + 1; break }
+      if (distB < epsDeg) { found = ((i + 1) % 12) + 1; break }
+      if (withinArcCCW(a, b, L, 1e-9)) { found = i + 1; break }
     }
     planetHouses[p] = found
   }

@@ -524,23 +524,13 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Settings Sections */}
-          {settingsSections.map((section, sectionIndex) => (
-            <View key={sectionIndex} style={styles.section}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <View style={styles.sectionContent}>
-                {section.items.map(renderSettingsItem)}
-              </View>
-            </View>
-          ))}
-
           {/* Casas Astrológicas (MVP) */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🏠 Sistema de Casas (MVP)</Text>
             <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 12 }}>
               <TouchableOpacity onPress={() => setHouseSystem('whole')} style={styles.choiceBtn}><Text style={styles.choiceText}>Whole</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => setHouseSystem('equal')} style={styles.choiceBtn}><Text style={styles.choiceText}>Equal</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => setHouseSystem('placidus-beta')} style={styles.choiceBtn}><Text style={styles.choiceText}>Placidus (beta)</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => setHouseSystem('placidus')} style={styles.choiceBtn}><Text style={styles.choiceText}>Placidus</Text></TouchableOpacity>
             </View>
             <Text style={{ color:'#b0b0b0', paddingHorizontal: 20, marginBottom: 8 }}>Atual: {houseSystem}</Text>
             <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
@@ -552,6 +542,16 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
+
+          {/* Settings Sections */}
+          {settingsSections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+              <View style={styles.sectionContent}>
+                {section.items.map(renderSettingsItem)}
+              </View>
+            </View>
+          ))}
 
           {/* App Info */}
           <View style={styles.appInfo}>

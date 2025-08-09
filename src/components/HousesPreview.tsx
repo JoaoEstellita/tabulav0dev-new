@@ -17,7 +17,7 @@ export default function HousesPreview({ dateUTC, lat, lon, system }: Props) {
     return () => { mounted = false }
   }, [dateUTC.getTime(), lat, lon, system])
 
-  if (err) return <Text style={styles.err}>Erro: {err}</Text>
+  if (err) return <Text style={styles.err}>Prévia indisponível para este dispositivo/ambiente.</Text>
   if (!state) return <Text style={styles.loading}>Calculando casas…</Text>
 
   const { asc, mc, cusps, planetLongitudes, planetHouses, approximate } = state
