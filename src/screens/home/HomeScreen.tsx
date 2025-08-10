@@ -24,6 +24,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
+import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 
 export default function HomeScreen() {
   try {
@@ -268,6 +269,7 @@ export default function HomeScreen() {
 
         {/* Resumo Diário */}
         {transitData && (
+          <AnimatedMount>
           <View style={styles.section}>
             <LinearGradient
               colors={['#1E1E2E', '#2A2A3E']}
@@ -333,10 +335,12 @@ export default function HomeScreen() {
               </View>
             </LinearGradient>
           </View>
+          </AnimatedMount>
         )}
 
         {/* Alertas Críticos */}
         {criticalAreas.length > 0 && (
+          <AnimatedMount>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="warning" size={20} color="#EF4444" />
@@ -361,10 +365,12 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
+          </AnimatedMount>
         )}
 
         {/* Status das Áreas de Vida */}
         {transitData?.lifeAreas && (
+          <AnimatedMount>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="grid" size={20} color="#FFD700" />
@@ -391,18 +397,21 @@ export default function HomeScreen() {
               })}
             </View>
           </View>
+          </AnimatedMount>
         )}
 
         {/* Trânsitos Comparativos Completos */}
         {transitData?.currentTransits?.planetComparisons && transitData?.currentTransits?.chartSummary && (
-          <TransitComparisonCard 
-            planetComparisons={transitData.currentTransits.planetComparisons}
-            chartSummary={transitData.currentTransits.chartSummary}
-            ascendant={transitData.currentTransits.ascendant}
-            midheaven={transitData.currentTransits.midheaven}
-            natalAscendant={transitData.currentTransits.natalAscendant}
-            natalMidheaven={transitData.currentTransits.natalMidheaven}
-          />
+          <AnimatedMount>
+            <TransitComparisonCard 
+              planetComparisons={transitData.currentTransits.planetComparisons}
+              chartSummary={transitData.currentTransits.chartSummary}
+              ascendant={transitData.currentTransits.ascendant}
+              midheaven={transitData.currentTransits.midheaven}
+              natalAscendant={transitData.currentTransits.natalAscendant}
+              natalMidheaven={transitData.currentTransits.natalMidheaven}
+            />
+          </AnimatedMount>
         )}
 
         {/* Orientações */}
