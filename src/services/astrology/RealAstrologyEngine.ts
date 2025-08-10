@@ -10,6 +10,9 @@
  */
 
 import * as Astronomy from 'astronomy-engine'
+import aspectsConfig from '../../astro/aspects.config'
+import { detectAspects } from '../../astro/aspects.engine'
+import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/transits.utils'
 // Removido Ephemeris não utilizado
 
 export interface RealPlanetPosition {
@@ -102,6 +105,37 @@ export interface RealAstrologyData {
   houses: number[] // Cúspides das casas
   ascendant: number
   midheaven: number
+  // Novos conjuntos de aspectos padronizados
+  aspectsCurrentTT?: RealAspect[]
+  aspectsTransitsToNatalTN?: RealAspect[]
+  transits?: {
+    personal: Array<{
+      transitPlanet: string
+      natalPlanet: string
+      type: string
+      orb: number
+      isApplying: boolean
+      strength: number
+      natalHouseImpacted: number
+      durationClass?: 'curto' | 'médio' | 'longo'
+    }>
+    general: RealAspect[]
+    byArea?: Record<string, Array<{
+      transitPlanet: string
+      natalPlanet: string
+      type: string
+      orb: number
+      isApplying: boolean
+      strength: number
+      natalHouseImpacted: number
+      durationClass?: 'curto' | 'médio' | 'longo'
+    }>>
+  }
+  statusPersonal?: {
+    score: number
+    level: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crítico'
+    highlights: string[]
+  }
   lifeAreas: {
     [area: string]: {
       percentage: number
@@ -253,11 +287,32 @@ export class RealAstrologyEngine {
       }
       console.log('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
         planetsWithHouses.map(p => ({ name: p.name, natal: (natalPlanets.find(n=>n.name===p.name)?.house), current: p.house })))
-      const realAspects = this.calculateRealAspects(planetsWithHouses)
-      console.log(`✅ Calculados ${realAspects.length} aspectos reais`)
+      // Aspectos T→T (momento)
+      const aspectsCurrentTT = detectAspects(
+        planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
+        planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
+        aspectsConfig
+      )
+      console.log(`✅ Aspectos T→T calculados: ${aspectsCurrentTT.length}`)
+
+      // Aspectos T→N (pessoais)
+      const aspectsTransitsToNatalTN = detectAspects(
+        planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
+        natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
+        aspectsConfig
+      )
+      console.log(`✅ Aspectos T→N calculados: ${aspectsTransitsToNatalTN.length}`)
 
       // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
-      const lifeAreas = this.calculateRealLifeAreas(planetsWithHouses, realAspects, houses, birthDateTime, latitude, longitude)
+      // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos T→N
+      const currentOnNatalHouses = this.assignHouses(realPlanets, natalHouses)
+      const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, birthDateTime, latitude, longitude)
+      // Derivar um status agregado pessoal simplificado a partir de lifeAreas
+      const areaScores = Object.values(lifeAreas).map(a => a.percentage)
+      const avg = areaScores.length ? Math.round(areaScores.reduce((s,n)=>s+n,0)/areaScores.length) : 50
+      const level = avg >= 80 ? 'excelente' : avg >= 65 ? 'bom' : avg >= 45 ? 'neutro' : avg >= 25 ? 'desafiador' : 'crítico'
+      const areaTop = Object.entries(lifeAreas).sort((a,b)=>b[1].percentage-a[1].percentage).slice(0,2).map(([k])=>k)
+      const statusPersonal = { score: avg, level: level as any, highlights: areaTop }
       console.log('✅ Análise real das áreas da vida concluída')
 
       // 🌟 5. NATAIS já obtidos (do backend ou fallback)
@@ -275,13 +330,48 @@ export class RealAstrologyEngine {
       const chartSummary = this.createChartSummary(natalPlanets, planetsWithHouses)
       console.log('✅ Resumo da carta criado')
 
+      // Preparar agrupamento para futura UI de Trânsitos Comparativos
+      const personalTransits = aspectsTransitsToNatalTN.map(a => {
+        // Lado A = trânsito por construção
+        const transitName = a.planet1
+        const natalName = a.planet2
+        // Casa natal impactada: onde o planeta em trânsito cai nas casas NATAIS
+        const transitHouseNatal = currentOnNatalHouses.find(p => p.name === transitName)?.house || 0
+        return {
+          transitPlanet: transitName,
+          natalPlanet: natalName,
+          type: a.type,
+          orb: a.orb,
+          isApplying: a.isApplying,
+          strength: a.strength,
+          natalHouseImpacted: transitHouseNatal,
+          durationClass: this.classifyTransitDuration(transitName),
+        }
+      })
+      const personalSummary = summarizePersonalTransits(personalTransits)
+
+      // Agrupar trânsitos pessoais por área da vida com base nas casas significadoras
+      const byArea: Record<string, typeof personalTransits> = {}
+      for (const [areaName, cfg] of Object.entries(this.LIFE_AREAS)) {
+        byArea[areaName] = personalTransits.filter(t => cfg.houses.includes(t.natalHouseImpacted))
+      }
+
       const result: RealAstrologyData = {
         timestamp: date.toISOString(),
         planets: realPlanets,
-        aspects: realAspects,
+        aspects: aspectsCurrentTT,
+        // novos campos para consumo futuro na UI
+        aspectsCurrentTT,
+        aspectsTransitsToNatalTN,
         houses: houses.cusps,
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,
+        transits: {
+          personal: personalTransits,
+          general: aspectsCurrentTT,
+          byArea,
+        },
+        statusPersonal,
         lifeAreas,
         // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
         natalPlanets,
@@ -291,7 +381,8 @@ export class RealAstrologyEngine {
         chartSummary,
         houseAspects,
         debug: {
-          lifeAreas: ((this as any)._debugLifeAreas) || {}
+          lifeAreas: ((this as any)._debugLifeAreas) || {},
+          personalTransitsSummary: personalSummary,
         }
       }
 
@@ -686,9 +777,8 @@ export class RealAstrologyEngine {
         if (houseScore >= 65) influences.push(`${planetName} na casa ${planet.house}`)
 
         // Influências dos aspectos
-        const planetAspects = aspects.filter(a => 
-          a.planet1 === planetName || a.planet2 === planetName
-        )
+        // Considerar apenas aspectos onde este planeta em trânsito está do lado A
+        const planetAspects = aspects.filter(a => a.planet1 === planetName && (a as any).side1 === 'A')
         
         let aspectScoreSum = 0
         let aspectCount = 0
@@ -698,8 +788,10 @@ export class RealAstrologyEngine {
           let aspectScore = this.getAspectScore(aspect)
           const baseScore = aspectScore
 
-          // Ponderar por benéficos/maléficos
-          const other = aspect.planet1 === planetName ? aspect.planet2 : aspect.planet1
+          // Planeta natal alvo (lado B por construção)
+          const other = aspect.planet2
+
+          // Ponderar por benéficos/maléficos do alvo
           const benefics = ['Venus', 'Jupiter']
           const malefics = ['Mars', 'Saturn']
           const harmonious = aspect.type === 'trígono' || aspect.type === 'sextil'
@@ -713,7 +805,21 @@ export class RealAstrologyEngine {
             if (hard) delta -= 10
             else if (aspect.type === 'conjunção') delta -= 5
           }
-          aspectScore = Math.max(0, Math.min(100, aspectScore + delta))
+
+          // Peso por importância do alvo natal
+          const natalWeights: Record<string, number> = {
+            Sun: 1.15, Moon: 1.15,
+            Mercury: 1.0, Venus: 1.05, Mars: 1.05,
+            Jupiter: 1.10, Saturn: 1.10,
+            Uranus: 0.95, Neptune: 0.95, Pluto: 0.95,
+          }
+          const natalWeight = natalWeights[other] ?? 1.0
+
+          // Bonus se trânsito está em casa natal relevante para a área
+          const transitInRelevantHouse = config.houses.includes(planet.house)
+          const relevantHouseBoost = transitInRelevantHouse ? 1.10 : 1.0
+
+          aspectScore = Math.max(0, Math.min(100, aspectScore * natalWeight * relevantHouseBoost + delta))
 
           aspectDetails.push({
             with: other,
@@ -730,7 +836,8 @@ export class RealAstrologyEngine {
           
           if (aspectScore > 60) {
             const tagExtra = delta > 0 ? ' (apoio)' : delta < 0 ? ' (tensão)' : ''
-            influences.push(`${aspect.type} ${other}${tagExtra}`)
+            const houseTag = transitInRelevantHouse ? ` [casa ${planet.house}]` : ''
+            influences.push(`${aspect.type} ${other}${tagExtra}${houseTag}`)
           }
         }
         
@@ -790,6 +897,17 @@ export class RealAstrologyEngine {
     // Anexar logs estruturados para UI consumir
     ;(this as any)._debugLifeAreas = debugByArea
     return lifeAreas
+  }
+
+  private static classifyTransitDuration(planetName: string): 'curto' | 'médio' | 'longo' {
+    // Heurística baseada em velocidade média/orbital
+    if (planetName === 'Sun' || planetName === 'Moon' || planetName === 'Mercury' || planetName === 'Venus' || planetName === 'Mars') {
+      return 'curto'
+    }
+    if (planetName === 'Jupiter' || planetName === 'Saturn') {
+      return 'médio'
+    }
+    return 'longo'
   }
 
   // 🎯 MÉTODOS PARA CÁLCULOS DETERMINÍSTICOS

@@ -20,6 +20,7 @@ import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 import HousesPreview from '../../components/HousesPreview';
+import TransitsComparativePanel from '../../components/TransitsComparativePanel';
 import { subscribeWebPush } from '../../webpush/subscribe';
 
 const { width } = Dimensions.get('window');
@@ -541,6 +542,12 @@ export default function SettingsScreen() {
                 system={houseSystem}
               />
             </View>
+          </View>
+
+          {/* Trânsitos Comparativos (beta) */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🪐 Trânsitos Comparativos</Text>
+            <TransitsComparativePanel />
           </View>
 
           {/* Settings Sections */}

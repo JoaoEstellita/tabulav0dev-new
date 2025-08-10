@@ -76,6 +76,9 @@ export class LocalAstrologyService {
         birthData.birthLocation.longitude
       )
 
+      // Disponibilizar em singleton simples para hooks leves de UI
+      ;(globalThis as any).__lastTransitData = realData
+
       // 3. Processar dados para formato do app
       console.log('🔍 DEBUG - realData recebido:', {
         timestamp: realData.timestamp,

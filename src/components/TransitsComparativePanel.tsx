@@ -1,0 +1,73 @@
+import React from 'react'
+import { View, Text, StyleSheet, FlatList } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import useTransits from '../hooks/useTransits'
+
+export default function TransitsComparativePanel() {
+  const { personal, general, statusPersonal } = useTransits(null)
+
+  const topPersonal = [...personal].sort((a,b)=>b.strength-a.strength).slice(0,8)
+
+  return (
+    <LinearGradient colors={['#1E1E2E', '#2A2A3E']} style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Trânsitos Comparativos</Text>
+        {statusPersonal && (
+          <Text style={styles.status}>Status: {statusPersonal.level} ({statusPersonal.score}%)</Text>
+        )}
+      </View>
+
+      <Text style={styles.sectionTitle}>Pessoais (Trânsito → Natal)</Text>
+      {topPersonal.length === 0 ? (
+        <Text style={styles.emptyText}>Sem trânsitos pessoais relevantes.</Text>
+      ) : (
+        <FlatList
+          data={topPersonal}
+          keyExtractor={(item, idx) => `${item.transitPlanet}-${item.natalPlanet}-${idx}`}
+          renderItem={({ item }) => (
+            <View style={styles.itemRow}>
+              <Text style={styles.itemText}>
+                {translate(item.transitPlanet)} {item.type} {translate(item.natalPlanet)} • orbe {item.orb.toFixed(1)}° • {item.isApplying ? 'aplicante' : 'separante'}
+              </Text>
+              <Text style={styles.metaText}>Casa natal {item.natalHouseImpacted} • {item.durationClass}</Text>
+            </View>
+          )}
+        />
+      )}
+
+      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Do Momento (Trânsito → Trânsito)</Text>
+      <Text style={styles.metaText}>{general.length} aspectos ativos</Text>
+    </LinearGradient>
+  )
+}
+
+function translate(p: string): string {
+  const m: Record<string,string> = {
+    Sun: 'Sol', Moon: 'Lua', Mercury: 'Mercúrio', Venus: 'Vênus', Mars: 'Marte',
+    Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Netuno', Pluto: 'Plutão'
+  }
+  return m[p] ?? p
+}
+
+const styles = StyleSheet.create({
+  container: {
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: { color: '#FFD700', fontWeight: 'bold', fontSize: 16 },
+  status: { color: '#FFFFFF', opacity: 0.85, fontSize: 12 },
+  sectionTitle: { color: '#FFFFFF', fontWeight: '600', marginTop: 8, marginBottom: 6 },
+  emptyText: { color: '#A0A0A0', fontSize: 12 },
+  itemRow: { marginBottom: 8 },
+  itemText: { color: '#FFFFFF', fontSize: 13 },
+  metaText: { color: '#A0A0A0', fontSize: 12 },
+})
+
+

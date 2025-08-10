@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { Transit } from '../services/prokerala/TransitService'
+import useTransits from '../hooks/useTransits'
 
 interface TransitCardProps {
   transit: Transit
@@ -21,6 +22,7 @@ const INFLUENCE_ICONS = {
 } as const
 
 export default function TransitCard({ transit }: TransitCardProps) {
+  const { personal, general, statusPersonal } = useTransits(null)
   const getIntensityText = (intensity: number) => {
     if (intensity >= 80) return 'Muito Forte'
     if (intensity >= 60) return 'Forte'
@@ -43,6 +45,17 @@ export default function TransitCard({ transit }: TransitCardProps) {
       colors={INFLUENCE_COLORS[transit.influence]}
       style={styles.card}
     >
+      {/* Meta-resumo do novo motor (não quebra layout) */}
+      <View style={{ marginBottom: 8 }}>
+        <Text style={{ color: '#fff', fontSize: 12, opacity: 0.85 }}>
+          Trânsitos Pessoais: {personal.length} • Do Momento: {general.length}
+        </Text>
+        {statusPersonal && (
+          <Text style={{ color: '#fff', fontSize: 12, opacity: 0.85 }}>
+            Status pessoal: {statusPersonal.level} ({statusPersonal.score}%)
+          </Text>
+        )}
+      </View>
       <View style={styles.header}>
         <View style={styles.planetInfo}>
           <Text style={styles.planetName}>{transit.planet.name}</Text>
