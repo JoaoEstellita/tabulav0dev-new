@@ -238,7 +238,18 @@ export class RealAstrologyEngine {
     console.log('🔬 Iniciando cálculos astrológicos REAIS...')
     
     const date = currentDate || new Date()
-    const birthDateTime = new Date(`${birthDate}T${birthTime}:00`)
+    // Converter hora local de nascimento em UTC aproximando fuso pelo meridiano (lon/15) + DST heurístico
+    const birthDateTime = (() => {
+      try {
+        const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
+        const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
+        const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
+        const tzOffsetHoursApprox = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), longitude, latitude)
+        return new Date(Date.UTC(y, (m - 1), d, hh - tzOffsetHoursApprox, mm, 0))
+      } catch {
+        return new Date(`${birthDate}T${birthTime}:00`)
+      }
+    })()
     
     try {
       // 1-2. TENTAR BACKEND PRECISO: posições + casas + pacote natal
