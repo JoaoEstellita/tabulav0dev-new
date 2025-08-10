@@ -266,7 +266,6 @@ export default function TransitComparisonCard({
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.natal.longitude)} {comparison.natal.sign}
                 </Text>
-                <Text style={styles.houseText}>Casa {Number(comparison.natal.house || 0)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
                     {ELEMENT_ICONS[comparison.natal.element]} {translateElement(comparison.natal.element)}
@@ -284,7 +283,6 @@ export default function TransitComparisonCard({
                   {formatDegreeInSign(comparison.current.longitude)} {comparison.current.sign}
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
-                <Text style={styles.houseText}>Casa {Number(comparison.current.house || 0)}</Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
                     {ELEMENT_ICONS[comparison.current.element]} {translateElement(comparison.current.element)}
@@ -363,9 +361,9 @@ export default function TransitComparisonCard({
                       </View>
                     </View>
                 ))}
-                {/* Meta do T→N: casa natal + duração */}
+                {/* Casa natal -> atual apenas */}
                 <Text style={{ color:'#A0A0A0', fontSize:12, marginTop:4 }}>
-                  Casa natal tocada: {personalByTransitPlanet[comparison.name][0]?.natalHouseImpacted} • {personalByTransitPlanet[comparison.name][0]?.durationClass}
+                  Casa natal {Number(comparison.natal.house || 0)} → atual {Number(comparison.current.house || 0)}
                 </Text>
               </View>
             )}
