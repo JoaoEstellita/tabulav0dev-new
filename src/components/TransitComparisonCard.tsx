@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
+import useTransits from '../hooks/useTransits'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -63,6 +64,16 @@ export default function TransitComparisonCard({
   natalAscendant,
   natalMidheaven
 }: TransitComparisonCardProps) {
+  const { personal, statusPersonal } = useTransits(null)
+  const showApprox = false // placeholder: card não recebe props de housesApproximate aqui
+  const personalByTransitPlanet = React.useMemo(() => {
+    const map: Record<string, typeof personal> = {}
+    for (const item of personal) {
+      if (!map[item.transitPlanet]) map[item.transitPlanet] = [] as any
+      map[item.transitPlanet]!.push(item as any)
+    }
+    return map
+  }, [personal])
   
   const formatDegree = (longitude: number): string => {
     return `${longitude.toFixed(1)}°`
@@ -136,11 +147,22 @@ export default function TransitComparisonCard({
       colors={['#1E1E2E', '#2A2A3E']}
       style={styles.container}
     >
+      {/* Status Pessoal agregado (T→N) */}
+      {statusPersonal && (
+        <View style={{ marginBottom: 8 }}>
+          <Text style={{ color:'#fff', opacity:0.9 }}>
+            Status pessoal: {statusPersonal.level} ({statusPersonal.score}%)
+          </Text>
+        </View>
+      )}
       {/* 📊 Resumo Elemental e Modal */}
       <View style={styles.summarySection}>
         <View style={styles.sectionHeader}>
           <Ionicons name="analytics" size={20} color="#FFD700" />
           <Text style={styles.sectionTitle}>Resumo da Carta</Text>
+          {showApprox && (
+            <Text style={{ color:'#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text>
+          )}
         </View>
 
         {/* Análise Elemental */}
@@ -279,7 +301,7 @@ export default function TransitComparisonCard({
               Casa natal {comparison.natal.house} → atual {comparison.current.house}
             </Text>
 
-            {/* Aspectos Planetários */}
+            {/* Aspectos do Momento (T→T) para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>⭐ Aspectos Planetários:</Text>
@@ -318,6 +340,33 @@ export default function TransitComparisonCard({
                     </View>
                   </View>
                 ))}
+              </View>
+            )}
+
+            {/* Trânsitos Pessoais (T→N) para este planeta em trânsito */}
+            {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>🧭 Trânsitos Pessoais (T→N):</Text>
+                {personalByTransitPlanet[comparison.name]
+                  .slice(0,3)
+                  .map((t, idx) => (
+                    <View key={idx} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>
+                        {getAspectIcon(t.type)}
+                      </Text>
+                      <Text style={styles.aspectText}>
+                        {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
+                        {' '}({t.orb.toFixed(1)}°{t.isApplying ? ', aplicante' : ', separante'})
+                      </Text>
+                      <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
+                        <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
+                      </View>
+                    </View>
+                ))}
+                {/* Meta do T→N: casa natal + duração */}
+                <Text style={{ color:'#A0A0A0', fontSize:12, marginTop:4 }}>
+                  Casa natal tocada: {personalByTransitPlanet[comparison.name][0]?.natalHouseImpacted} • {personalByTransitPlanet[comparison.name][0]?.durationClass}
+                </Text>
               </View>
             )}
           </View>

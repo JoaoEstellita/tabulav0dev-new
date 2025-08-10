@@ -16,6 +16,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
+import TransitsComparativePanel from '../../components/TransitsComparativePanel'
+import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import { PushNotificationService } from '../../services/notifications/PushNotificationService'
 import { doc, getDoc } from 'firebase/firestore'
@@ -27,6 +29,8 @@ export default function HomeScreen() {
   try {
     const { user } = useAuth()
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
+    const { settings, updateSettings } = useUserSettings()
+    const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>(settings?.houseSystem || 'placidus')
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
@@ -410,6 +414,32 @@ export default function HomeScreen() {
             ))}
           </View>
         )}
+
+        {/* Seleção de Sistema de Casas (persistida) */}
+        <View style={[styles.section, { paddingHorizontal: 16 }]}>
+          <Text style={styles.sectionTitle}>🏠 Sistema de Casas</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {(['whole','equal','placidus'] as const).map(sys => (
+              <TouchableOpacity
+                key={sys}
+                onPress={async () => {
+                  setHouseSystem(sys)
+                  await updateSettings({ houseSystem: sys })
+                  ;(globalThis as any).__userHouseSystem = sys
+                }}
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: houseSystem === sys ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.08)'
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: houseSystem === sys ? '700' : '500' }}>{sys}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem}</Text>
+        </View>
 
         {/* Espaçamento final */}
         <View style={styles.bottomSpacing} />

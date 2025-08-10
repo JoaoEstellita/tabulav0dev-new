@@ -105,6 +105,7 @@ export interface RealAstrologyData {
   houses: number[] // Cúspides das casas
   ascendant: number
   midheaven: number
+  housesApproximate?: boolean
   // Novos conjuntos de aspectos padronizados
   aspectsCurrentTT?: RealAspect[]
   aspectsTransitsToNatalTN?: RealAspect[]
@@ -148,6 +149,7 @@ export interface RealAstrologyData {
   natalPlanets: RealPlanetPosition[] // Posições natais
   natalAscendant: number // Ascendente natal
   natalMidheaven: number // Meio do Céu natal
+  natalHousesApproximate?: boolean
   planetComparisons: PlanetComparison[] // Comparação natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
@@ -229,7 +231,8 @@ export class RealAstrologyEngine {
     birthTime: string, // HH:MM
     latitude: number,
     longitude: number,
-    currentDate?: Date
+    currentDate?: Date,
+    options?: { houseSystem?: 'whole'|'equal'|'placidus' }
   ): Promise<RealAstrologyData> {
     console.log('🔬 Iniciando cálculos astrológicos REAIS...')
     
@@ -239,9 +242,9 @@ export class RealAstrologyEngine {
     try {
       // 1-2. TENTAR BACKEND PRECISO: posições + casas + pacote natal
       let realPlanets: RealPlanetPosition[]
-      let houses: { cusps: number[]; ascendant: number; midheaven: number }
+      let houses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean }
       let natalPlanets: RealPlanetPosition[]
-      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number }
+      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean }
 
       try {
         // Enviar timestamps em UTC apenas (ISO), sem timezone manual
@@ -262,9 +265,9 @@ export class RealAstrologyEngine {
       } catch (_e) {
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
-        const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude)
+        const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude, options?.houseSystem)
         const natalPlanetsRaw = await this.calculateRealPlanetPositions(birthDateTime, latitude, longitude)
-        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, latitude, longitude)
+        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, birthDateTime, latitude, longitude, options?.houseSystem)
         realPlanets = planetsLocal
         houses = housesLocal
         natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
@@ -366,6 +369,7 @@ export class RealAstrologyEngine {
         houses: houses.cusps,
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,
+        housesApproximate: (houses as any).approximate === true,
         transits: {
           personal: personalTransits,
           general: aspectsCurrentTT,
@@ -377,6 +381,7 @@ export class RealAstrologyEngine {
         natalPlanets,
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
+        natalHousesApproximate: (natalHouses as any).approximate === true,
         planetComparisons,
         chartSummary,
         houseAspects,
@@ -601,35 +606,23 @@ export class RealAstrologyEngine {
    */
   private static async calculateRealHouses(
     currentDate: Date,
-    birthDate: Date, 
+    _birthDate: Date, 
     latitude: number, 
-    longitude: number
-  ): Promise<{ cusps: number[], ascendant: number, midheaven: number }> {
+    longitude: number,
+    houseSystem?: 'whole'|'equal'|'placidus'
+  ): Promise<{ cusps: number[], ascendant: number, midheaven: number, approximate?: boolean }> {
+    // Delegar para módulo unificado de casas do app (garante monotonicidade e fallback)
     try {
-      // Usar Ephemeris para cálculos de casas REAIS
-      const julianDay = this.dateToJulianDay(currentDate)
-      
-      // Calcular Tempo Sideral Local
-      const lst = this.calculateLocalSiderealTime(julianDay, longitude)
-      
-      // Calcular Ascendente (casa 1)
-      const ascendant = this.calculateAscendant(lst, latitude)
-      
-      // Calcular Meio do Céu (casa 10)
-      const midheaven = (lst * 15) % 360 // Converter horas para graus
-      
-      // Calcular cúspides das casas usando sistema Placidus
-      const cusps = this.calculatePlacidusHouses(ascendant, midheaven, latitude)
-      
-      return { cusps, ascendant, midheaven }
-      
+      const { computeHousesUTC } = await import('../../astro/houses')
+      const system = (houseSystem || (globalThis as any).__userHouseSystem || 'placidus') as 'whole'|'equal'|'placidus'
+      const res = await computeHousesUTC(currentDate, latitude, longitude, system)
+      return { cusps: res.cusps, ascendant: res.asc, midheaven: res.mc, approximate: (res as any).approximate === true }
     } catch (error) {
-      console.error('❌ Erro no cálculo das casas:', error)
-      // Fallback com casas iguais
+      console.error('❌ Erro no cálculo das casas (unificado):', error)
       const ascendant = 0
       const midheaven = 90
       const cusps = Array.from({ length: 12 }, (_, i) => (ascendant + i * 30) % 360)
-      return { cusps, ascendant, midheaven }
+      return { cusps, ascendant, midheaven, approximate: true }
     }
   }
 

@@ -3,6 +3,7 @@ import type { BirthData } from '../types/astrology'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import { filterPersonalTransits } from '../astro/transits.utils'
 import type { PersonalTransitFilters } from '../astro/transits.types'
+import { useAstrologyData } from '../context/AstrologyDataProvider'
 
 export interface UseTransitsResult {
   data: RealAstrologyData | null
@@ -19,7 +20,7 @@ export interface UseTransitsResult {
 // o último RealAstrologyData em um singleton simples (global). Integrações reais podem
 // usar React Query/SWR; mantemos simples aqui para não quebrar a UI existente.
 export function useTransits(_birthData: BirthData | null): UseTransitsResult {
-  const state = (globalThis as any).__lastTransitData as RealAstrologyData | null
+  const { data: state } = useAstrologyData()
 
   const personal = state?.transits?.personal ?? []
   const general = state?.transits?.general ?? []

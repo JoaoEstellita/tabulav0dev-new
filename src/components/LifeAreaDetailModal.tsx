@@ -195,6 +195,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const analysis = getDetailedAnalysis()
+  const housesApprox = Boolean((transitData as any)?.currentTransits?.housesApproximate)
 
   return (
     <Modal
@@ -259,6 +260,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               <Text style={styles.calculationFormula}>
                 Dignidades (30%) + Casas (30%) + Aspectos (40%) = {areaData.percentage}%
               </Text>
+              {housesApprox && (
+                <Text style={styles.summaryText}>
+                  Cálculo das casas: método alternativo devido à sua localização.
+                </Text>
+              )}
               
               <Text style={styles.calculationBreakdown}>Detalhamento:</Text>
               <View style={styles.calculationItems}>

@@ -9,6 +9,7 @@ export interface UserSettings {
   language: string;
   timezone: string;
   currency: string;
+  houseSystem?: 'whole' | 'equal' | 'placidus';
 }
 
 const STORAGE_KEY = '@tabula_estelar:user_settings';
@@ -48,6 +49,7 @@ export function useUserSettings() {
           language: 'pt-BR',
           timezone: 'America/Sao_Paulo',
           currency: 'BRL',
+          houseSystem: 'placidus',
         };
         setSettings(defaultSettings);
         await saveSettings(defaultSettings);
@@ -63,6 +65,7 @@ export function useUserSettings() {
         language: 'pt-BR',
         timezone: 'America/Sao_Paulo',
         currency: 'BRL',
+        houseSystem: 'placidus',
       };
       setSettings(defaultSettings);
     } finally {

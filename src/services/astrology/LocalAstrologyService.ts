@@ -13,6 +13,8 @@
  */
 
 import RealAstrologyEngine, { RealAstrologyData } from './RealAstrologyEngine'
+import { publishAstrologyData } from '../../context/AstrologyDataProvider'
+import { useUserSettings } from '../../hooks/useUserSettings'
 import { BirthData } from '../../types/astrology'
 import AstrologyCacheService from './AstrologyCacheService'
 
@@ -69,15 +71,20 @@ export class LocalAstrologyService {
 
       // 2. Calcular dados REAIS usando engine local
       console.log('🔬 Calculando dados astrológicos REAIS localmente...')
+      // Ler sistema de casas persistido (fallback placidus)
+      const houseSystem = (globalThis as any).__userHouseSystem || 'placidus'
+
       const realData = await RealAstrologyEngine.calculateRealAstrology(
         birthData.birthDate,
         birthData.birthTime,
         birthData.birthLocation.latitude,
-        birthData.birthLocation.longitude
+        birthData.birthLocation.longitude,
+        undefined,
+        { houseSystem }
       )
 
-      // Disponibilizar em singleton simples para hooks leves de UI
-      ;(globalThis as any).__lastTransitData = realData
+      // Publicar para Provider (e manter compat por enquanto)
+      publishAstrologyData(realData)
 
       // 3. Processar dados para formato do app
       console.log('🔍 DEBUG - realData recebido:', {
