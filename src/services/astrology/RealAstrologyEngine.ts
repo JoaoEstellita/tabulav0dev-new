@@ -106,6 +106,7 @@ export interface RealAstrologyData {
   ascendant: number
   midheaven: number
   housesApproximate?: boolean
+  houseSystem?: 'whole'|'equal'|'placidus'
   // Novos conjuntos de aspectos padronizados
   aspectsCurrentTT?: RealAspect[]
   aspectsTransitsToNatalTN?: RealAspect[]

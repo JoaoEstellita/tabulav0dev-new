@@ -19,8 +19,7 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
-import HousesPreview from '../../components/HousesPreview';
-import TransitsComparativePanel from '../../components/TransitsComparativePanel';
+// Removidos itens de preview e comparativos da Configuração (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
 
 const { width } = Dimensions.get('window');
@@ -48,7 +47,7 @@ export default function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
-  const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>( 'equal');
+  const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>('placidus');
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -525,30 +524,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Casas Astrológicas (MVP) */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏠 Sistema de Casas (MVP)</Text>
-            <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 12 }}>
-              <TouchableOpacity onPress={() => setHouseSystem('whole')} style={styles.choiceBtn}><Text style={styles.choiceText}>Whole</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => setHouseSystem('equal')} style={styles.choiceBtn}><Text style={styles.choiceText}>Equal</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => setHouseSystem('placidus')} style={styles.choiceBtn}><Text style={styles.choiceText}>Placidus</Text></TouchableOpacity>
-            </View>
-            <Text style={{ color:'#b0b0b0', paddingHorizontal: 20, marginBottom: 8 }}>Atual: {houseSystem}</Text>
-            <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
-              <HousesPreview
-                dateUTC={new Date()}
-                lat={-22.9068}
-                lon={-43.1729}
-                system={houseSystem}
-              />
-            </View>
-          </View>
-
-          {/* Trânsitos Comparativos (beta) */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🪐 Trânsitos Comparativos</Text>
-            <TransitsComparativePanel />
-          </View>
+          {/* Removidos: Sistema de Casas e Trânsitos Comparativos desta tela */}
 
           {/* Settings Sections */}
           {settingsSections.map((section, sectionIndex) => (

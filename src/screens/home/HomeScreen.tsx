@@ -31,6 +31,13 @@ export default function HomeScreen() {
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings, updateSettings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>(settings?.houseSystem || 'placidus')
+
+    // Garantir que o motor use o sistema salvo ao entrar na Home
+    useEffect(() => {
+      if (settings?.houseSystem) {
+        ;(globalThis as any).__userHouseSystem = settings.houseSystem
+      }
+    }, [settings?.houseSystem])
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
@@ -426,6 +433,7 @@ export default function HomeScreen() {
                   setHouseSystem(sys)
                   await updateSettings({ houseSystem: sys })
                   ;(globalThis as any).__userHouseSystem = sys
+                  await refreshData(true)
                 }}
                 style={{
                   paddingVertical: 8,
