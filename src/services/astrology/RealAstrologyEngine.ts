@@ -238,14 +238,22 @@ export class RealAstrologyEngine {
     console.log('🔬 Iniciando cálculos astrológicos REAIS...')
     
     const date = currentDate || new Date()
-    // Converter hora local de nascimento em UTC aproximando fuso pelo meridiano (lon/15) + DST heurístico
-    const birthDateTime = (() => {
+    // Converter hora local de nascimento em UTC usando IANA (se disponível), caso contrário, fallback para aprox.
+    let resolvedTz: { offsetSec: number; timeZoneId?: string } | null = null
+    const birthDateTime = await (async () => {
       try {
         const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
         const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
+        const ts = Math.floor(Date.UTC(y, (m - 1), d, 0, 0, 0) / 1000)
+        const { TimezoneService } = await import('../timezone/TimezoneService')
+        resolvedTz = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
+        if (resolvedTz && typeof resolvedTz.offsetSec === 'number') {
+          const offsetHours = resolvedTz.offsetSec / 3600
+          return new Date(Date.UTC(y, (m - 1), d, hh - offsetHours, mm, 0))
+        }
         const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
-        const tzOffsetHoursApprox = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), longitude, latitude)
-        return new Date(Date.UTC(y, (m - 1), d, hh - tzOffsetHoursApprox, mm, 0))
+        const approx = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), longitude, latitude)
+        return new Date(Date.UTC(y, (m - 1), d, hh - approx, mm, 0))
       } catch {
         return new Date(`${birthDate}T${birthTime}:00`)
       }
@@ -260,11 +268,11 @@ export class RealAstrologyEngine {
 
       try {
         // Enviar timestamps em UTC apenas (ISO), sem timezone manual
-        const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || undefined
-        const natalLocalStr = `${birthDate}T${birthTime}:00`
+        // Preferir o timezone real resolvido pelo endpoint (IANA) e também enviar offsetMinutes no padrão JS (positivo para Oeste)
+        // Para máxima precisão e evitar divergências de conversão, enviar ISO UTC do nascimento diretamente
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
-          natalLocal: natalLocalStr,
-          natalTimezone: tz,
+          natalLocal: undefined,
+          natalTimezone: undefined,
           natalLat: latitude,
           natalLon: longitude,
         })
