@@ -701,48 +701,33 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
+    // Mesma regra do backend: distância relativa ao ASC com tolerância de cúspide
+    const norm = (d: number) => (d % 360 + 360) % 360
     const cusps = houses.cusps
-    const norm = (deg: number) => (deg % 360 + 360) % 360
-    const orientation = (() => {
-      let inc = 0, dec = 0
-      for (let i = 0; i < 12; i++) {
-        const a = norm(cusps[i])
-        const b = norm(cusps[(i + 1) % 12])
-        inc += (b - a + 360) % 360
-        dec += (a - b + 360) % 360
-      }
-      return inc <= dec ? 'inc' : 'dec'
-    })()
-    const transform = (v: number) => orientation === 'inc' ? norm(v) : norm(-v)
-    const unwrap = (arr: number[]) => {
-      const u = new Array(13)
-      u[0] = transform(arr[0])
-      for (let i = 1; i < 12; i++) {
-        const prev = u[i - 1]
-        const prevRaw = transform(arr[i - 1])
-        const curr = transform(arr[i])
-        const delta = (curr - prevRaw + 360) % 360
-        u[i] = prev + delta
-      }
-      u[12] = u[0] + 360
-      return u
+    const asc = norm(cusps[0])
+    const edges = new Array<number>(13)
+    edges[0] = 0
+    for (let i = 1; i < 12; i++) {
+      edges[i] = norm(cusps[i] - asc)
     }
-    const unwrapped = unwrap(cusps)
-    const start = unwrapped[0]
-
+    edges[12] = 360
+    // Monotonicidade estrita
+    for (let i = 1; i < 12; i++) {
+      if (edges[i] <= edges[i - 1]) edges[i] = edges[i - 1] + 1e-6
+    }
+    const cuspTol = 0.5 // graus
     const getHouse = (lon: number): number => {
-      const Lp = transform(lon)
-      const L = Lp >= start ? Lp : Lp + 360
-      const eps = 0.05 // tolerância de fronteira em graus
+      const d = norm(lon - asc)
       for (let i = 0; i < 12; i++) {
-        const a = unwrapped[i]
-        const b = unwrapped[i + 1]
-        if (Math.abs(L - a) < eps) return i + 1 // fronteira: pertence ao setor atual
-        if (L > a && L < b) return i + 1
+        const a = edges[i]
+        const b = edges[i + 1]
+        if (d >= a && d < b) {
+          if ((b - d) <= cuspTol) return ((i + 1) % 12) + 1
+          return i + 1
+        }
       }
       return 1
     }
-
     return planets.map(p => ({ ...p, house: getHouse(p.longitude) }))
   }
 
