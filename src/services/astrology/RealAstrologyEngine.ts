@@ -598,8 +598,13 @@ export class RealAstrologyEngine {
 
     // Reatribuir SEMPRE as casas no cliente usando as cúspides do backend,
     // para evitar qualquer inconsistência (ex.: propriedades ausentes/zeradas).
-    const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
-    const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
+    // Não reatribuir se o backend já trouxe a casa (verdade única)
+    const currentWithHouses = currentPlanets.every(p => typeof p.house === 'number' && p.house >= 1)
+      ? currentPlanets
+      : this.assignHouses(currentPlanets, currentHouses)
+    const natalWithHouses = natalPlanets.every(p => typeof p.house === 'number' && p.house >= 1)
+      ? natalPlanets
+      : this.assignHouses(natalPlanets, natalHouses)
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
@@ -730,7 +735,7 @@ export class RealAstrologyEngine {
     }
     A[12] = A[0] + 360
 
-    const eps = 0.05
+    const eps = 0.2
     const getHouse = (lon: number): number => {
       let L = transform(lon)
       if (L < A[0]) L += 360
