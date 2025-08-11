@@ -1,7 +1,7 @@
 // Script para testar endpoints do backend Vercel diretamente
 const axios = require('axios')
 
-const BACKEND_URL = 'https://tabulav0dev-backend.vercel.app'
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
 async function testEndpoint(endpoint, params = {}) {
   console.log(`\n🔍 Testando: ${endpoint}`)
@@ -54,21 +54,34 @@ async function runTests() {
   console.log('🚀 Iniciando testes dos endpoints do backend...')
   
   // Parâmetros de teste (usar dados reais de exemplo)
-  const testParams = {
-    'profile[datetime]': '2024-01-15T12:00:00',
-    'profile[coordinates]': '-23.5505,-46.6333', // São Paulo
-    'profile[location_timezone_id]': 'America/Sao_Paulo',
-    ayanamsa: 1
+  // Parâmetros FLAT conforme proxy premium
+  const nowISO = '2024-01-15T12:00:00'
+  const coords = '-23.5505,-46.6333'
+  const testParamsFlat = {
+    datetime: nowISO,
+    coordinates: coords,
+    ayanamsa: 1,
+    transit_datetime: nowISO,
+    current_coordinates: coords,
+    house_system: 'placidus',
+    la: 'en'
   }
   
   // Teste 1: Transit Planet Position
-  await testEndpoint('/v2/astrology/transit-planet-position', testParams)
+  await testEndpoint('/v2/astrology/transit-planet-position', testParamsFlat)
   
   // Teste 2: Transit Aspect Chart
-  await testEndpoint('/v2/astrology/transit-aspect-chart', testParams)
+  await testEndpoint('/v2/astrology/transit-aspect-chart', testParamsFlat)
   
   // Teste 3: Natal Aspect Chart
-  await testEndpoint('/v2/astrology/natal-aspect-chart', testParams)
+  await testEndpoint('/v2/astrology/natal-aspect-chart', {
+    datetime: nowISO,
+    coordinates: coords,
+    ayanamsa: 1,
+    house_system: 'placidus',
+    aspect_filter: 'major',
+    la: 'en'
+  })
   
   // Teste 4: Health do backend
   console.log('\n🔍 Testando health do backend...')

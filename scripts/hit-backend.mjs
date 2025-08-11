@@ -34,10 +34,30 @@ async function main(){
       numPositions: r.data?.positions?.length,
       hasHouses: !!r.data?.houses,
       asc: r.data?.houses?.ascendant,
-      mc: r.data?.houses?.midheaven
+      mc: r.data?.houses?.midheaven,
+      approx: r.data?.houses?.approximate === true
     })
   } catch (e) {
     console.error('POST /api/astro/positions FAILED →', e.response?.status || e.message, e.response?.data || '')
+  }
+
+  // Teste de approx em latitudes extremas
+  try {
+    const extreme = await axios.post(`${BACKEND}/api/astro/positions`, {
+      datetimeISO: date.toISOString(),
+      lat: 70,
+      lon: 0,
+      includeHouses: true,
+      system: 'placidus'
+    }, { timeout: 30000 })
+    console.log('POST /api/astro/positions (lat=70) →', extreme.status, {
+      approx: extreme.data?.houses?.approximate === true,
+      system: extreme.data?.houses?.system,
+      asc: extreme.data?.houses?.ascendant,
+      mc: extreme.data?.houses?.midheaven
+    })
+  } catch (e) {
+    console.error('POST /api/astro/positions (lat=70) FAILED →', e.response?.status || e.message, e.response?.data || '')
   }
 }
 

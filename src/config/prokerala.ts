@@ -15,7 +15,7 @@ export interface ProkeralaCredentials {
 export const PROKERALA_CONFIG = {
   baseUrl: "https://api.prokerala.com/v2",
   // Backend seguro que gerencia as credenciais
-  backendUrl: "https://tabulav0dev-backend.vercel.app",
+  backendUrl: (process.env.EXPO_PUBLIC_BACKEND_URL || "https://tabulav0dev-backend.vercel.app").replace(/\/$/, ''),
   defaultLocation: {
     place: "New Delhi, India",
     coordinates: "28.7041,77.1025"
