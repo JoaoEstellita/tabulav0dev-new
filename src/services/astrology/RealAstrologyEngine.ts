@@ -586,8 +586,8 @@ export class RealAstrologyEngine {
       speed: p.speed ?? 0,
       sign: RealAstrologyEngine.SIGNS[Math.floor((p.lon % 360) / 30)],
       degree: (p.lon % 360) % 30,
-      // Não confiar em "house" do backend; atribuirremos localmente com base nos cúspides
-      house: 0 as unknown as number,
+      // Confiar na casa do backend quando presente; fallback para 0 para reatribuição local
+      house: typeof p.house === 'number' ? p.house : (0 as unknown as number),
       isRetrograde: !!p.retrograde,
     })
 
@@ -596,9 +596,13 @@ export class RealAstrologyEngine {
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
     const natalHouses = data.natal?.houses || currentHouses
 
-    // Sempre recalcular casas localmente usando os cúspides recebidos
-    const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
-    const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
+    // Preferir casas vindas do backend se os planetas já vierem classificados
+    const currentWithHouses = currentPlanets.every(p => (p.house && p.house >= 1))
+      ? currentPlanets
+      : this.assignHouses(currentPlanets, currentHouses)
+    const natalWithHouses = natalPlanets.every(p => (p.house && p.house >= 1))
+      ? natalPlanets
+      : this.assignHouses(natalPlanets, natalHouses)
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)

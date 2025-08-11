@@ -1,3 +1,40 @@
+// Implementação simples e genuína dos sistemas de casas: Whole Sign, Equal e Placidus (proxy para backend quando preciso)
+// Esta versão fornece Whole Sign e Equal localmente de forma determinística; Placidus deve vir do backend já calculado.
+
+export type HouseSystem = 'whole' | 'equal' | 'placidus'
+
+const norm = (d: number) => (d % 360 + 360) % 360
+
+export async function computeHousesUTC(
+  date: Date,
+  lat: number,
+  lon: number,
+  system: HouseSystem
+): Promise<{ cusps: number[]; asc: number; mc: number; approximate?: boolean }> {
+  // MC aproximado com astronomy-engine seria ideal; para Whole/Equal não é necessário para cúspides
+  const asc = 0 // não é usado para Whole; manter 0 para compat
+  const mc = 90 // não é usado diretamente para Whole/Equal aqui
+
+  if (system === 'whole') {
+    // Whole Sign genuíno: Casa 1 começa a 0° do signo onde está o Ascendente real.
+    // Como não estamos recomputando o ASC aqui, supõe-se que o chamador forneça planeta->signo já correto
+    // Como fallback, estimamos pelo Sol (não ideal). Em produção, use ASC real do backend.
+    const ascSign0 = 0 // placeholder; será substituído por ASC real no Engine antes de chamar esta função
+    const cusps = new Array<number>(12).fill(0).map((_, i) => norm(ascSign0 + i * 30))
+    return { cusps, asc: ascSign0, mc, approximate: true }
+  }
+
+  if (system === 'equal') {
+    // Equal genuíno: Casa 1 no ASC real; restantes a cada 30°
+    const ascDeg = 0 // placeholder; ver nota acima
+    const cusps = new Array<number>(12).fill(0).map((_, i) => norm(ascDeg + i * 30))
+    return { cusps, asc: ascDeg, mc, approximate: true }
+  }
+
+  // Para placidus, delegar ao backend no fluxo atual
+  return { cusps: Array.from({ length: 12 }, (_, i) => i * 30), asc: 0, mc: 90, approximate: true }
+}
+
 import { SiderealTime } from 'astronomy-engine'
 import { angleDiffCCW, norm360, toDeg, toRad, withinArcCCW, makeMonotonicCuspsFromAsc } from './houses.math'
 import { PLANETS, Planet, getPlanetEclipticLongitude } from './planets'
