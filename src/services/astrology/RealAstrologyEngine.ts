@@ -596,13 +596,10 @@ export class RealAstrologyEngine {
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
     const natalHouses = data.natal?.houses || currentHouses
 
-    // Preferir casas vindas do backend se os planetas já vierem classificados
-    const currentWithHouses = currentPlanets.every(p => (p.house && p.house >= 1))
-      ? currentPlanets
-      : this.assignHouses(currentPlanets, currentHouses)
-    const natalWithHouses = natalPlanets.every(p => (p.house && p.house >= 1))
-      ? natalPlanets
-      : this.assignHouses(natalPlanets, natalHouses)
+    // Reatribuir SEMPRE as casas no cliente usando as cúspides do backend,
+    // para evitar qualquer inconsistência (ex.: propriedades ausentes/zeradas).
+    const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
+    const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
