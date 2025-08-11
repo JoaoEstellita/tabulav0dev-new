@@ -702,30 +702,44 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
-    // Mesma regra do backend (unwrap CCW estritamente crescente a partir do ASC)
+    // Regra robusta (igual backend): detectar orientação e desembrulhar para sequência crescente
     const norm = (d: number) => (d % 360 + 360) % 360
-    const c = houses.cusps.map(norm)
+    const cusps = houses.cusps
+    const orientation = (() => {
+      let inc = 0, dec = 0
+      for (let i = 0; i < 12; i++) {
+        const a = norm(cusps[i])
+        const b = norm(cusps[(i + 1) % 12])
+        inc += (b - a + 360) % 360
+        dec += (a - b + 360) % 360
+      }
+      return inc <= dec ? 'inc' : 'dec'
+    })()
+
+    const transform = (v: number) => orientation === 'inc' ? norm(v) : norm(-v)
+
     const A = new Array<number>(13)
-    A[0] = c[0]
+    A[0] = transform(cusps[0])
     for (let i = 1; i < 12; i++) {
-      let v = c[i]
-      while (v <= A[i - 1]) v += 360
-      A[i] = v
+      const prevRaw = transform(cusps[i - 1])
+      let v = transform(cusps[i])
+      const prev = A[i - 1]
+      let delta = (v - prevRaw + 360) % 360
+      if (delta <= 0) delta += 360
+      A[i] = prev + delta
     }
     A[12] = A[0] + 360
 
-    const cuspTol = 0.5 // graus
-    const getHouse = (longitudeDeg: number): number => {
-      const L0 = norm(longitudeDeg)
-      let L = L0
-      while (L < A[0]) L += 360
-      while (L >= A[12]) L -= 360
+    const eps = 0.05
+    const getHouse = (lon: number): number => {
+      let L = transform(lon)
+      if (L < A[0]) L += 360
+      if (L >= A[12]) L -= 360
       for (let i = 0; i < 12; i++) {
         const a = A[i]
         const b = A[i + 1]
-        if (Math.abs(L - a) <= cuspTol / 10) return i + 1
+        if (Math.abs(L - a) < eps) return i + 1
         if (L > a && L < b) return i + 1
-        if (L === b) return ((i + 1) % 12) + 1
       }
       return 1
     }
