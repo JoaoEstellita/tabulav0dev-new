@@ -707,48 +707,27 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
-    // Regra robusta (igual backend): detectar orientação e desembrulhar para sequência crescente
+    // Regra final: edges relativos ao ASC (0..360) com particionamento [edge[i], edge[i+1)) e eps 0.2°
     const norm = (d: number) => (d % 360 + 360) % 360
-    const cusps = houses.cusps
-    const orientation = (() => {
-      let inc = 0, dec = 0
-      for (let i = 0; i < 12; i++) {
-        const a = norm(cusps[i])
-        const b = norm(cusps[(i + 1) % 12])
-        inc += (b - a + 360) % 360
-        dec += (a - b + 360) % 360
-      }
-      return inc <= dec ? 'inc' : 'dec'
-    })()
-
-    const transform = (v: number) => orientation === 'inc' ? norm(v) : norm(-v)
-
-    const A = new Array<number>(13)
-    A[0] = transform(cusps[0])
-    for (let i = 1; i < 12; i++) {
-      const prevRaw = transform(cusps[i - 1])
-      let v = transform(cusps[i])
-      const prev = A[i - 1]
-      let delta = (v - prevRaw + 360) % 360
-      if (delta <= 0) delta += 360
-      A[i] = prev + delta
-    }
-    A[12] = A[0] + 360
-
+    const asc = norm(houses.cusps[0])
+    const edges = new Array<number>(13)
+    edges[0] = 0
+    for (let i = 1; i < 12; i++) edges[i] = norm(houses.cusps[i] - asc)
+    edges[12] = 360
+    for (let i = 1; i < 12; i++) if (edges[i] <= edges[i - 1]) edges[i] = edges[i - 1] + 1e-6
     const eps = 0.2
     const getHouse = (lon: number): number => {
-      let L = transform(lon)
-      if (L < A[0]) L += 360
-      if (L >= A[12]) L -= 360
+      const Lrel = norm(lon - asc)
       for (let i = 0; i < 12; i++) {
-        const a = A[i]
-        const b = A[i + 1]
-        if (Math.abs(L - a) < eps) return i + 1
-        if (L > a && L < b) return i + 1
+        const a = edges[i]
+        const b = edges[i + 1]
+        if (Lrel >= a && Lrel < b) {
+          if ((b - Lrel) <= eps) return ((i + 1) % 12) + 1
+          return i + 1
+        }
       }
       return 1
     }
-
     return planets.map(p => ({ ...p, house: getHouse(p.longitude) }))
   }
 
