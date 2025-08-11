@@ -1,9 +1,41 @@
-// Implementação simples e genuína dos sistemas de casas: Whole Sign, Equal e Placidus (proxy para backend quando preciso)
-// Esta versão fornece Whole Sign e Equal localmente de forma determinística; Placidus deve vir do backend já calculado.
+// Implementação genuína de Whole Sign e Equal usando astronomy-engine (ASC/MC precisos).
+// Para Placidus, o app usa o backend. Arquivo minimalista e sem dependências internas.
+
+import * as Astronomy from 'astronomy-engine'
 
 export type HouseSystem = 'whole' | 'equal' | 'placidus'
 
 const norm = (d: number) => (d % 360 + 360) % 360
+
+function getObliquityRad(d: Date): number {
+  try {
+    const tilt = (Astronomy as any).EarthTilt?.(d)
+    if (tilt && typeof tilt.obliquity === 'number') return tilt.obliquity * Math.PI / 180
+  } catch {}
+  // Meeus (mean obliquity) como fallback
+  const jd = (d.getTime() / 86400000) + 2440587.5
+  const T = (jd - 2451545.0) / 36525.0
+  const seconds = 21.448 - 46.8150*T - 0.00059*T*T + 0.001813*T*T*T
+  const epsDeg = 23 + (26/60) + (seconds/3600)
+  return epsDeg * Math.PI/180
+}
+
+function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
+  const gmstHours = Astronomy.SiderealTime(date)
+  const lstHours = ((gmstHours + (lonDeg/15)) % 24 + 24) % 24
+  const theta = lstHours * 15 * Math.PI/180
+  const eps = getObliquityRad(date)
+  const phi = latDeg * Math.PI/180
+  const sin = Math.sin, cos = Math.cos, tan = Math.tan
+  // MC
+  const alphaMC = Math.atan2(tan(theta), cos(eps))
+  let mc = Math.atan2(sin(alphaMC)/cos(eps), Math.cos(alphaMC)) * 180/Math.PI
+  mc = norm(mc)
+  // Ascendente
+  let asc = Math.atan2(-cos(theta), (sin(theta)*cos(eps)) - (tan(phi)*Math.sin(eps))) * 180/Math.PI
+  asc = norm(asc)
+  return { asc, mc }
+}
 
 export async function computeHousesUTC(
   date: Date,
@@ -11,164 +43,17 @@ export async function computeHousesUTC(
   lon: number,
   system: HouseSystem
 ): Promise<{ cusps: number[]; asc: number; mc: number; approximate?: boolean }> {
-  // MC aproximado com astronomy-engine seria ideal; para Whole/Equal não é necessário para cúspides
-  const asc = 0 // não é usado para Whole; manter 0 para compat
-  const mc = 90 // não é usado diretamente para Whole/Equal aqui
-
+  const { asc, mc } = calculateAscMc(date, lat, lon)
   if (system === 'whole') {
-    // Whole Sign genuíno: Casa 1 começa a 0° do signo onde está o Ascendente real.
-    // Como não estamos recomputando o ASC aqui, supõe-se que o chamador forneça planeta->signo já correto
-    // Como fallback, estimamos pelo Sol (não ideal). Em produção, use ASC real do backend.
-    const ascSign0 = 0 // placeholder; será substituído por ASC real no Engine antes de chamar esta função
-    const cusps = new Array<number>(12).fill(0).map((_, i) => norm(ascSign0 + i * 30))
-    return { cusps, asc: ascSign0, mc, approximate: true }
+    const ascSign0 = Math.floor(asc/30)*30
+    const cusps = Array.from({length:12}, (_,i)=> norm(ascSign0 + i*30))
+    return { cusps, asc, mc, approximate: false }
   }
-
   if (system === 'equal') {
-    // Equal genuíno: Casa 1 no ASC real; restantes a cada 30°
-    const ascDeg = 0 // placeholder; ver nota acima
-    const cusps = new Array<number>(12).fill(0).map((_, i) => norm(ascDeg + i * 30))
-    return { cusps, asc: ascDeg, mc, approximate: true }
+    const cusps = Array.from({length:12}, (_,i)=> norm(asc + i*30))
+    return { cusps, asc, mc, approximate: false }
   }
-
-  // Para placidus, delegar ao backend no fluxo atual
-  return { cusps: Array.from({ length: 12 }, (_, i) => i * 30), asc: 0, mc: 90, approximate: true }
+  // placidus calculado no backend; devolver placeholder seguro
+  return { cusps: Array.from({length:12},(_,i)=> norm(asc + i*30)), asc, mc, approximate: true }
 }
-
-import { SiderealTime } from 'astronomy-engine'
-import { angleDiffCCW, norm360, toDeg, toRad, withinArcCCW, makeMonotonicCuspsFromAsc } from './houses.math'
-import { PLANETS, Planet, getPlanetEclipticLongitude } from './planets'
-import { getCachedHouses, makeKey, setCachedHouses } from './cache'
-
-export type HouseSystem = 'whole' | 'equal' | 'placidus'
-
-export interface HouseResult {
-  system: HouseSystem
-  asc: number
-  mc: number
-  cusps: number[] // 12 valores 0–360
-  planetLongitudes: Record<Planet, number>
-  planetHouses: Record<Planet, number>
-  /** true quando o sistema 'placidus' precisou cair em aproximação/fallback */
-  approximate?: boolean
-}
-
-const OBLIQUITY_DEG = 23.4392911 // obliquidade média (WGS)
-
-export function computeAscMc(dateUTC: Date, latDeg: number, lonDeg: number): { asc: number; mc: number } {
-  const lstHours = SiderealTime(dateUTC, lonDeg) // horas
-  const theta = toRad(lstHours * 15) // AR do meridiano
-  const eps = toRad(OBLIQUITY_DEG)
-  const phi = toRad(latDeg)
-
-  // MC: converter AR=theta em longitude eclíptica (ponto na eclíptica)
-  // Fórmula estável: λ = atan2(sin α / cos ε, cos α)
-  const mc = norm360(toDeg(Math.atan2(Math.sin(theta) / Math.cos(eps), Math.cos(theta))))
-
-  // Ascendente (Meeus):
-  // tan(λ) = 1 / (cos ε tan φ + sin ε sin α / cos α)
-  const sinA = Math.sin(theta)
-  const cosA = Math.cos(theta)
-  const num = 1
-  const den = Math.cos(eps) * Math.tan(phi) + (Math.sin(eps) * (sinA / cosA))
-  let asc = toDeg(Math.atan2(num, den))
-  if (asc < 0) asc += 360
-  asc = norm360(asc)
-
-  return { asc, mc }
-}
-
-export async function computeHousesUTC(
-  dateUTC: Date,
-  lat: number,
-  lon: number,
-  system: HouseSystem = 'whole'
-): Promise<HouseResult> {
-  const cacheKey = makeKey(dateUTC, lat, lon, system)
-  const cached = getCachedHouses(cacheKey)
-  if (cached) return cached
-  const { asc, mc } = computeAscMc(dateUTC, lat, lon)
-
-  // Cúspides
-  let cusps: number[] = []
-  let approximate = false as any
-  if (system === 'whole') {
-    const ascSign0 = Math.floor(asc / 30) * 30
-    for (let i = 0; i < 12; i++) cusps.push(norm360(ascSign0 + i * 30))
-  } else if (system === 'equal') {
-    for (let i = 0; i < 12; i++) cusps.push(norm360(asc + i * 30))
-  } else if (system === 'placidus') {
-    const { computePlacidusCusps } = await import('./houses.placidus')
-    const res = computePlacidusCusps(dateUTC, lat, lon, asc, mc)
-    cusps = res.cusps
-    approximate = res.approximate
-  }
-
-  // Longitudes planetárias
-  const planetLongitudes: Record<Planet, number> = {} as any
-  for (const name of Object.keys(PLANETS) as Planet[]) {
-    planetLongitudes[name] = getPlanetEclipticLongitude(dateUTC, PLANETS[name])
-  }
-
-  // "Desenrolar" cúspides para garantir monotonicidade e partição correta
-  const cusps0to360 = cusps.map(x => norm360(x))
-  let cuspsMono: number[]
-  try {
-    cuspsMono = makeMonotonicCuspsFromAsc(cusps0to360)
-  } catch {
-    // se falhar por algum motivo, cai no Equal como fallback local para não quebrar a UI
-    cuspsMono = Array.from({ length: 12 }, (_, i) => norm360(asc + i * 30))
-  }
-
-  const EPS = 0.03
-  function pickHouseForLongitude(Ldeg: number, mono: number[]): number {
-    const c13 = mono[0] + 360
-    for (let i = 0; i < 12; i++) {
-      const a = mono[i]
-      const b = (i === 11) ? c13 : mono[i + 1]
-      let L = norm360(Ldeg)
-      // alinhar L ao segmento corrente [a,b)
-      while (L < a) L += 360
-      while (L >= b) L -= 360
-      if (Math.abs(L - a) < EPS) return ((i + 1) % 12) + 1
-      if (L >= a && L < b) return i + 1
-    }
-    return 12
-  }
-
-  // Mapeamento planeta → casa usando cúspides monotônicas
-  const planetHouses: Record<Planet, number> = {} as any
-  for (const p of Object.keys(planetLongitudes) as Planet[]) {
-    const L = planetLongitudes[p]
-    planetHouses[p] = pickHouseForLongitude(L, cuspsMono)
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      const arcs = cuspsMono.map((c, i) => (i < 11 ? cuspsMono[i + 1] : cuspsMono[0] + 360) - c)
-      // eslint-disable-next-line no-console
-      console.debug('HOUSES MONO OK?', {
-        asc: cuspsMono[0],
-        mc,
-        arcsMin: Math.min(...arcs).toFixed(3),
-        arcsMax: Math.max(...arcs).toFixed(3),
-        arcsSum: arcs.reduce((a, b) => a + b, 0).toFixed(3),
-      })
-    } catch {}
-  }
-
-  const result: HouseResult = {
-    system,
-    asc,
-    mc,
-    cusps,
-    planetLongitudes,
-    planetHouses,
-    // @ts-expect-error: campo opcional usado pela UI
-    approximate,
-  }
-  setCachedHouses(cacheKey, result)
-  return result
-}
-
 
