@@ -11,6 +11,17 @@ export default function HousesPreview({ dateUTC, lat, lon, system }: Props) {
 
   useEffect(() => {
     let mounted = true
+    // Guardas de segurança: evitar cálculo sem parâmetros válidos
+    const invalidDate = !(dateUTC instanceof Date) || isNaN(dateUTC.getTime())
+    const invalidLatLon = !Number.isFinite(lat) || !Number.isFinite(lon)
+    if (invalidDate || invalidLatLon) {
+      if (mounted) {
+        setState(null)
+        setErr('Faltam parâmetros para calcular as casas (data/latitude/longitude).')
+      }
+      return () => { mounted = false }
+    }
+
     computeHousesUTC(dateUTC, lat, lon, system)
       .then(res => { if (mounted) setState(res) })
       .catch(e => { if (mounted) setErr(String(e?.message || e)) })

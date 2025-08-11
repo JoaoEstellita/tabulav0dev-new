@@ -1,6 +1,21 @@
 export class TimezoneService {
   static async resolveOffsetSeconds(lat: number, lon: number, timestampSec: number): Promise<{ offsetSec: number; timeZoneId?: string } | null> {
     try {
+      // Preferir endpoint backend (não expõe chave no cliente)
+      const endpoint = process.env.EXPO_PUBLIC_TZ_API_ENDPOINT
+      if (endpoint) {
+        try {
+          const r = await fetch(`${endpoint}?lat=${lat}&lon=${lon}&ts=${timestampSec}`)
+          if (r.ok) {
+            const j = await r.json()
+            if (j && typeof j.offsetSec === 'number') {
+              return { offsetSec: j.offsetSec, timeZoneId: j.timeZoneId }
+            }
+          }
+        } catch {}
+      }
+
+      // Fallback: chamada direta ao Google somente se chave pública estiver configurada
       const googleKey = process.env.EXPO_PUBLIC_GOOGLE_TZ_KEY
       if (googleKey) {
         const url = `https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lon}&timestamp=${timestampSec}&key=${googleKey}`
@@ -13,15 +28,7 @@ export class TimezoneService {
           }
         }
       }
-      // Backend opcional
-      const endpoint = process.env.EXPO_PUBLIC_TZ_API_ENDPOINT
-      if (endpoint) {
-        const r = await fetch(`${endpoint}?lat=${lat}&lon=${lon}&ts=${timestampSec}`)
-        if (r.ok) {
-          const j = await r.json()
-          if (typeof j.offsetSec === 'number') return { offsetSec: j.offsetSec, timeZoneId: j.timeZoneId }
-        }
-      }
+
       return null
     } catch {
       return null
