@@ -318,7 +318,7 @@ export class RealAstrologyEngine {
       )
       console.log(`✅ Aspectos T→T calculados: ${aspectsCurrentTT.length}`)
 
-      // Aspectos T→N (pessoais)
+      // Aspectos T→N (pessoais) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
@@ -791,8 +791,8 @@ export class RealAstrologyEngine {
         if (houseScore >= 65) influences.push(`${planetName} na casa ${planet.house}`)
 
         // Influências dos aspectos
-        // Considerar apenas aspectos onde este planeta em trânsito está do lado A
-        const planetAspects = aspects.filter(a => a.planet1 === planetName && (a as any).side1 === 'A')
+        // Considerar aspectos T→N onde este planeta é o trânsito (detectAspects mantém planet1 como trânsito)
+        const planetAspects = aspects.filter(a => a.planet1 === planetName)
         
         let aspectScoreSum = 0
         let aspectCount = 0
