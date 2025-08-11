@@ -24,6 +24,8 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
+  // Forçar um recálculo fresco na primeira carga para refletir correções de casas
+  const [firstLoad, setFirstLoad] = useState(true)
 
   useEffect(() => {
     if (user) {
@@ -55,10 +57,13 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       // 🚀 USAR NOVO SISTEMA LOCAL (dados 100% reais, performance instantânea)
       console.log('🔬 Usando cálculos astrológicos LOCAIS (dados reais)...')
-      const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, forceRefresh)
+      // Regra: primeira carga ignora cache para refletir correções recentes de casas; depois volta ao fluxo normal
+      const effectiveForce = forceRefresh || firstLoad || (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+      const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, effectiveForce)
       setTransitData(result.data)
       setCacheStatus(result.cacheStatus)
       setIsUsingLocalEngine(true)
+      if (firstLoad) setFirstLoad(false)
 
       console.log('📊 Dados astrológicos REAIS carregados:', {
         lifeAreas: Object.keys(result.data.lifeAreas).length,

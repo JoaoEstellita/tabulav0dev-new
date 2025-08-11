@@ -21,18 +21,12 @@ async function main(){
   }
 
   try {
-    const payload = {
-      datetimeISO: date.toISOString(),
-      lat,
-      lon,
-      includeHouses: true,
-      system: 'placidus'
-    }
+    const natalISO = '1989-04-10T09:59:00Z'
+    const payload = { datetimeISO: natalISO, lat: -22.9068, lon: -43.1729, includeHouses: true, system: 'placidus' }
     const r = await axios.post(`${BACKEND}/api/astro/positions`, payload, { timeout: 30000 })
-    console.log('POST /api/astro/positions →', r.status, {
+    console.log('POST /api/astro/positions (RJ natal) →', r.status, {
       ok: r.data?.ok,
-      numPositions: r.data?.positions?.length,
-      hasHouses: !!r.data?.houses,
+      SunHouse: r.data?.positions?.find?.(p=>p.body==='Sun')?.house,
       asc: r.data?.houses?.ascendant,
       mc: r.data?.houses?.midheaven,
       approx: r.data?.houses?.approximate === true
