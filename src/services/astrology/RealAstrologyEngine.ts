@@ -702,33 +702,34 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
-    // Mesma regra do backend: distância relativa ao ASC com tolerância de cúspide
+    // Mesma regra do backend (unwrap CCW estritamente crescente a partir do ASC)
     const norm = (d: number) => (d % 360 + 360) % 360
-    const cusps = houses.cusps
-    const asc = norm(cusps[0])
-    const edges = new Array<number>(13)
-    edges[0] = 0
+    const c = houses.cusps.map(norm)
+    const A = new Array<number>(13)
+    A[0] = c[0]
     for (let i = 1; i < 12; i++) {
-      edges[i] = norm(cusps[i] - asc)
+      let v = c[i]
+      while (v <= A[i - 1]) v += 360
+      A[i] = v
     }
-    edges[12] = 360
-    // Monotonicidade estrita
-    for (let i = 1; i < 12; i++) {
-      if (edges[i] <= edges[i - 1]) edges[i] = edges[i - 1] + 1e-6
-    }
+    A[12] = A[0] + 360
+
     const cuspTol = 0.5 // graus
-    const getHouse = (lon: number): number => {
-      const d = norm(lon - asc)
+    const getHouse = (longitudeDeg: number): number => {
+      const L0 = norm(longitudeDeg)
+      let L = L0
+      while (L < A[0]) L += 360
+      while (L >= A[12]) L -= 360
       for (let i = 0; i < 12; i++) {
-        const a = edges[i]
-        const b = edges[i + 1]
-        if (d >= a && d < b) {
-          if ((b - d) <= cuspTol) return ((i + 1) % 12) + 1
-          return i + 1
-        }
+        const a = A[i]
+        const b = A[i + 1]
+        if (Math.abs(L - a) <= cuspTol / 10) return i + 1
+        if (L > a && L < b) return i + 1
+        if (L === b) return ((i + 1) % 12) + 1
       }
       return 1
     }
+
     return planets.map(p => ({ ...p, house: getHouse(p.longitude) }))
   }
 
