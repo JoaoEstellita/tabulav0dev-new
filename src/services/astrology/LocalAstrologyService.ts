@@ -74,11 +74,33 @@ export class LocalAstrologyService {
       // Ler sistema de casas persistido (fallback placidus)
       const houseSystem = (globalThis as any).__userHouseSystem || 'placidus'
 
+      // Determinar localização atual para casas do momento
+      let currentLat = birthData.birthLocation.latitude
+      let currentLon = birthData.birthLocation.longitude
+      try {
+        const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
+        const wantsShare = userProfile?.preferences?.privacy?.shareLocation === true
+          || (await (await import('../../hooks/useUserSettings')).useUserSettings)?.settings?.locationSharing === true
+        if (wantsShare && typeof navigator !== 'undefined' && navigator.geolocation) {
+          const coords: { latitude: number, longitude: number } = await new Promise((resolve, reject) => {
+            const id = navigator.geolocation.getCurrentPosition(
+              pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+              err => reject(err),
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+            )
+          })
+          if (Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude)) {
+            currentLat = coords.latitude
+            currentLon = coords.longitude
+          }
+        }
+      } catch {}
+
       const realData = await RealAstrologyEngine.calculateRealAstrology(
         birthData.birthDate,
         birthData.birthTime,
-        birthData.birthLocation.latitude,
-        birthData.birthLocation.longitude,
+        currentLat,
+        currentLon,
         undefined,
         { houseSystem }
       )

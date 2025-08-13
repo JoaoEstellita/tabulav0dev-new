@@ -469,6 +469,9 @@ export default function HomeScreen() {
               ? ' (Equal aplicado ao calcular casas devido a override de ASC)'
               : ''}
           </Text>
+          {transitData?.currentTransits?.housesApproximate ? (
+            <Text style={{ color: '#FFA500', marginTop: 4 }}>aprox: casas calculadas com timezone heurístico</Text>
+          ) : null}
         </View>
 
         {/* Espaçamento final */}
