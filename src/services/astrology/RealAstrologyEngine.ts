@@ -559,7 +559,8 @@ export class RealAstrologyEngine {
       lat: latitude,
       lon: longitude,
       includeHouses: true,
-      system: 'placidus',
+      // Respeitar sistema de casas escolhido pelo usuário (fallback 'placidus')
+      system: ((globalThis as any).__userHouseSystem || 'placidus') as 'placidus'|'equal'|'porphyry',
       natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
       natalLocal: options?.natalLocal,
       natalTimezone: options?.natalTimezone,
