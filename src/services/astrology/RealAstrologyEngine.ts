@@ -573,6 +573,13 @@ export class RealAstrologyEngine {
     if (Number.isFinite(ascOverrideDeg)) requestBody.ascOverrideDeg = ascOverrideDeg
     if (Number.isFinite(natalAscOverrideDeg)) requestBody.natalAscOverrideDeg = natalAscOverrideDeg
 
+    try {
+      // Ativar debug detalhado quando a URL tiver ?debug=1
+      if (typeof window !== 'undefined' && window.location.search.includes('debug=1')) {
+        requestBody.debug = true
+      }
+    } catch {}
+
     console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
 
     const resp = await fetch(`${backend}/api/astro/positions`, {
@@ -619,12 +626,14 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(currentHouses.cusps),
       planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
+    try { if ((currentHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
     console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
       asc: natalHouses.ascendant,
       mc: natalHouses.midheaven,
       cusps: fmtCusps(natalHouses.cusps),
       planets: natalWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
+    try { if ((natalHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
 
     return {
       current: { planets: currentWithHouses, houses: currentHouses },
