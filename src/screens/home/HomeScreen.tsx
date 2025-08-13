@@ -40,12 +40,13 @@ export default function HomeScreen() {
       }
     }, [settings?.houseSystem])
 
-    // Propagar overrides para o motor (lidos no RealAstrologyEngine)
+    // Propagar overrides somente em debug (?debug=1) para não afetar produção
     useEffect(() => {
       const g: any = globalThis as any
-      if (typeof settings?.ascOverrideDeg === 'number') g.__ascOverrideDeg = settings.ascOverrideDeg
+      const debugOn = typeof window !== 'undefined' && window.location.search.includes('debug=1')
+      if (debugOn && typeof settings?.ascOverrideDeg === 'number') g.__ascOverrideDeg = settings.ascOverrideDeg
       else if (g.__ascOverrideDeg) delete g.__ascOverrideDeg
-      if (typeof settings?.natalAscOverrideDeg === 'number') g.__natalAscOverrideDeg = settings.natalAscOverrideDeg
+      if (debugOn && typeof settings?.natalAscOverrideDeg === 'number') g.__natalAscOverrideDeg = settings.natalAscOverrideDeg
       else if (g.__natalAscOverrideDeg) delete g.__natalAscOverrideDeg
     }, [settings?.ascOverrideDeg, settings?.natalAscOverrideDeg])
     const [refreshing, setRefreshing] = useState(false)

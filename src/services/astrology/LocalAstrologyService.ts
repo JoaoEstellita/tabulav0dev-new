@@ -80,7 +80,6 @@ export class LocalAstrologyService {
       try {
         const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
         const wantsShare = userProfile?.preferences?.privacy?.shareLocation === true
-          || (await (await import('../../hooks/useUserSettings')).useUserSettings)?.settings?.locationSharing === true
         if (wantsShare && typeof navigator !== 'undefined' && navigator.geolocation) {
           const coords: { latitude: number, longitude: number } = await new Promise((resolve, reject) => {
             const id = navigator.geolocation.getCurrentPosition(

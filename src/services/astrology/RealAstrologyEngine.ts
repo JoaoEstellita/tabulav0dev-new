@@ -244,7 +244,8 @@ export class RealAstrologyEngine {
       try {
         const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
         const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
-        const ts = Math.floor(Date.UTC(y, (m - 1), d, 0, 0, 0) / 1000)
+        // Usar meio-dia UTC para resolver TZ histórico e evitar bordas de alteração de DST
+        const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
         const { TimezoneService } = await import('../timezone/TimezoneService')
         resolvedTz = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
         if (resolvedTz && typeof resolvedTz.offsetSec === 'number') {
@@ -279,8 +280,8 @@ export class RealAstrologyEngine {
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
         natalHouses = bundle.natal.houses
-        // Reatribuir casas dos NATAIS no cliente para garantir a mesma regra de particionamento
-        natalPlanets = this.assignHouses(bundle.natal.planets, natalHouses)
+        // Não reatribuir se o backend já enviou as casas dos natais; confiar no backend para consistência 1:1
+        natalPlanets = bundle.natal.planets
         console.log('✅ Backend astro bundle utilizado (posições + casas + natal)')
       } catch (_e) {
         // Fallback para engine local

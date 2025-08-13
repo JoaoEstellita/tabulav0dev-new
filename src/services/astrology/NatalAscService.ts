@@ -15,7 +15,8 @@ export class NatalAscService {
 	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: 'whole'|'equal'|'placidus' = 'placidus'): Promise<NatalAscResult> {
 		// Resolve timezone histórico no dia do nascimento (00:00 UTC)
 		const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
-		const ts = Math.floor(Date.UTC(y, (m - 1), d, 0, 0, 0) / 1000)
+		// Meio-dia UTC para evitar bordas de DST
+		const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
 		const tz = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
 		const approximate = !tz || typeof tz.offsetSec !== 'number'
 		const hh = parseInt(birthTime.split(':')[0] || '12', 10)
