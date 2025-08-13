@@ -287,6 +287,7 @@ export default function SettingsScreen() {
         profile.birthLocation.longitude,
         (userSettings?.houseSystem || 'placidus')
       )
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('natal-houses-reprocessed')) } catch {}
       Alert.alert('Pronto', 'Casas natais recalculadas com sucesso.')
     } catch (e: any) {
       Alert.alert('Erro', e?.message || 'Falha ao recalcular as casas natais')

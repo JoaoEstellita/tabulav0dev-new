@@ -104,6 +104,20 @@ export default function HomeScreen() {
     }
   }, [user])
 
+  // Toast simples ao reprocessar casas natais
+  useEffect(() => {
+    const handler = () => {
+      try {
+        Alert.alert('Sucesso', 'Casas recalculadas com sucesso!')
+        refreshData(true)
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('natal-houses-reprocessed', handler as any)
+      return () => window.removeEventListener('natal-houses-reprocessed', handler as any)
+    }
+  }, [])
+
   const initializeNotifications = async () => {
     if (!user) return
     
@@ -464,6 +478,9 @@ export default function HomeScreen() {
           </Text>
           {transitData?.currentTransits?.housesApproximate ? (
             <Text style={{ color: '#FFA500', marginTop: 4 }}>aprox: casas calculadas com timezone heurístico</Text>
+          ) : null}
+          {transitData?.currentTransits?.natalHousesApproximate ? (
+            <Text style={{ color: '#FFA500', marginTop: 2 }}>aprox (natal): casas natais com aproximação</Text>
           ) : null}
         </View>
 
