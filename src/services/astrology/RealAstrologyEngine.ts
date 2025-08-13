@@ -554,7 +554,9 @@ export class RealAstrologyEngine {
   }> {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!backend) throw new Error('No backend url')
-    const requestBody = {
+    const ascOverrideDeg = Number((globalThis as any).__ascOverrideDeg)
+    const natalAscOverrideDeg = Number((globalThis as any).__natalAscOverrideDeg)
+    const requestBody: any = {
       datetimeISO: currentDate.toISOString(),
       lat: latitude,
       lon: longitude,
@@ -568,6 +570,8 @@ export class RealAstrologyEngine {
       natalLon: options?.natalLon,
       bodies: RealAstrologyEngine.PLANETS,
     }
+    if (Number.isFinite(ascOverrideDeg)) requestBody.ascOverrideDeg = ascOverrideDeg
+    if (Number.isFinite(natalAscOverrideDeg)) requestBody.natalAscOverrideDeg = natalAscOverrideDeg
 
     console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
 
