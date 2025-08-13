@@ -9,6 +9,7 @@ import {
   Switch,
   Linking,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +22,7 @@ import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 // Removidos itens de preview e comparativos da Configuração (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
+import { parseAscInputToDegrees, degreesToSignString } from '../../utils/angle/ascParser';
 
 const { width } = Dimensions.get('window');
 
@@ -48,6 +50,8 @@ export default function SettingsScreen() {
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
   const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>('placidus');
+  const [ascOverrideText, setAscOverrideText] = useState('');
+  const [natalAscOverrideText, setNatalAscOverrideText] = useState('');
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -255,6 +259,20 @@ export default function SettingsScreen() {
     loadSettings();
   }, []);
 
+  // Sincroniza campos de texto quando as configs chegarem/alterarem
+  useEffect(() => {
+    if (userSettings?.ascOverrideDeg != null) {
+      setAscOverrideText(
+        `${userSettings.ascOverrideDeg.toFixed(6)} (${degreesToSignString(userSettings.ascOverrideDeg)})`
+      )
+    }
+    if (userSettings?.natalAscOverrideDeg != null) {
+      setNatalAscOverrideText(
+        `${userSettings.natalAscOverrideDeg.toFixed(6)} (${degreesToSignString(userSettings.natalAscOverrideDeg)})`
+      )
+    }
+  }, [userSettings?.ascOverrideDeg, userSettings?.natalAscOverrideDeg])
+
   const loadSettings = async () => {
     try {
       // Carregar configurações salvas
@@ -263,6 +281,35 @@ export default function SettingsScreen() {
       console.error('Erro ao carregar configurações:', error);
     }
   };
+
+  const applyOverrides = async () => {
+    const ascDeg = parseAscInputToDegrees(ascOverrideText)
+    const natalDeg = parseAscInputToDegrees(natalAscOverrideText)
+    if (ascOverrideText && ascDeg == null) return Alert.alert('Override inválido', 'ASC Atual inválido. Use graus decimais ou "Signo D°M\'S\"".')
+    if (natalAscOverrideText && natalDeg == null) return Alert.alert('Override inválido', 'ASC Natal inválido. Use graus decimais ou "Signo D°M\'S\"".')
+
+    const updates: any = {}
+    updates.ascOverrideDeg = ascOverrideText ? ascDeg : undefined
+    updates.natalAscOverrideDeg = natalAscOverrideText ? natalDeg : undefined
+
+    await updateSettings(updates)
+    const g: any = globalThis as any
+    if (updates.ascOverrideDeg != null) g.__ascOverrideDeg = updates.ascOverrideDeg
+    else if (g.__ascOverrideDeg) delete g.__ascOverrideDeg
+    if (updates.natalAscOverrideDeg != null) g.__natalAscOverrideDeg = updates.natalAscOverrideDeg
+    else if (g.__natalAscOverrideDeg) delete g.__natalAscOverrideDeg
+    Alert.alert('Overrides aplicados', 'Ao calcular casas, Equal 30° será usado quando um override estiver definido.')
+  }
+
+  const clearOverrides = async () => {
+    setAscOverrideText('')
+    setNatalAscOverrideText('')
+    await updateSettings({ ascOverrideDeg: undefined, natalAscOverrideDeg: undefined })
+    const g: any = globalThis as any
+    if (g.__ascOverrideDeg) delete g.__ascOverrideDeg
+    if (g.__natalAscOverrideDeg) delete g.__natalAscOverrideDeg
+    Alert.alert('Overrides limpos', 'Voltando ao sistema selecionado sem forçar Equal.')
+  }
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -536,6 +583,45 @@ export default function SettingsScreen() {
             </View>
           ))}
 
+          {/* Casas e Overrides */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🏠 Casas e Overrides</Text>
+            <View style={styles.sectionContent}>
+              <View style={{ padding: 16 }}>
+                <Text style={styles.inputLabel}>ASC Atual (override)</Text>
+                <TextInput
+                  placeholder="Ex.: 179.866111 ou Virgem 29°51'58''"
+                  placeholderTextColor="#9aa0b1"
+                  value={ascOverrideText}
+                  onChangeText={setAscOverrideText}
+                  style={styles.input}
+                  autoCapitalize="none"
+                />
+                <Text style={styles.helperText}>Quando definido, as casas atuais serão calculadas por Equal 30° a partir deste ASC.</Text>
+
+                <Text style={[styles.inputLabel, { marginTop: 12 }]}>ASC Natal (override)</Text>
+                <TextInput
+                  placeholder="Ex.: 32.069722 ou Touro 02°04'11''"
+                  placeholderTextColor="#9aa0b1"
+                  value={natalAscOverrideText}
+                  onChangeText={setNatalAscOverrideText}
+                  style={styles.input}
+                  autoCapitalize="none"
+                />
+                <Text style={styles.helperText}>Quando definido, as casas do mapa natal serão por Equal 30° a partir deste ASC.</Text>
+
+                <View style={{ flexDirection: 'row', columnGap: 12, marginTop: 14 }}>
+                  <TouchableOpacity onPress={applyOverrides} style={styles.primaryButton}>
+                    <Text style={styles.primaryButtonText}>Aplicar Overrides</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={clearOverrides} style={styles.secondaryButton}>
+                    <Text style={styles.secondaryButtonText}>Limpar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+
           {/* App Info */}
           <View style={styles.appInfo}>
             <Text style={styles.appInfoText}>
@@ -656,6 +742,47 @@ const styles = StyleSheet.create({
   },
   linkItem: {
     opacity: 0.7,
+  },
+  inputLabel: {
+    color: '#e0e0e0',
+    marginBottom: 6,
+    fontWeight: '600'
+  },
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    color: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  helperText: {
+    color: '#9aa0b1',
+    fontSize: 12,
+    marginTop: 6,
+  },
+  primaryButton: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  primaryButtonText: {
+    color: '#0a0e27',
+    fontWeight: '700'
+  },
+  secondaryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)'
+  },
+  secondaryButtonText: {
+    color: '#e0e0e0',
+    fontWeight: '600'
   },
   itemLeft: {
     flexDirection: 'row',

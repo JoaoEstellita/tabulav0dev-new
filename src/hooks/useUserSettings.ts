@@ -10,6 +10,8 @@ export interface UserSettings {
   timezone: string;
   currency: string;
   houseSystem?: 'whole' | 'equal' | 'placidus';
+  ascOverrideDeg?: number;
+  natalAscOverrideDeg?: number;
 }
 
 const STORAGE_KEY = '@tabula_estelar:user_settings';

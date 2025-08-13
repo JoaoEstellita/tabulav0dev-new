@@ -39,6 +39,15 @@ export default function HomeScreen() {
         ;(globalThis as any).__userHouseSystem = settings.houseSystem
       }
     }, [settings?.houseSystem])
+
+    // Propagar overrides para o motor (lidos no RealAstrologyEngine)
+    useEffect(() => {
+      const g: any = globalThis as any
+      if (typeof settings?.ascOverrideDeg === 'number') g.__ascOverrideDeg = settings.ascOverrideDeg
+      else if (g.__ascOverrideDeg) delete g.__ascOverrideDeg
+      if (typeof settings?.natalAscOverrideDeg === 'number') g.__natalAscOverrideDeg = settings.natalAscOverrideDeg
+      else if (g.__natalAscOverrideDeg) delete g.__natalAscOverrideDeg
+    }, [settings?.ascOverrideDeg, settings?.natalAscOverrideDeg])
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
@@ -455,7 +464,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem}</Text>
+          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem}
+            {typeof settings?.ascOverrideDeg === 'number' || typeof settings?.natalAscOverrideDeg === 'number'
+              ? ' (Equal aplicado ao calcular casas devido a override de ASC)'
+              : ''}
+          </Text>
         </View>
 
         {/* Espaçamento final */}
