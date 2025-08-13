@@ -40,15 +40,7 @@ export default function HomeScreen() {
       }
     }, [settings?.houseSystem])
 
-    // Propagar overrides somente em debug (?debug=1) para não afetar produção
-    useEffect(() => {
-      const g: any = globalThis as any
-      const debugOn = typeof window !== 'undefined' && window.location.search.includes('debug=1')
-      if (debugOn && typeof settings?.ascOverrideDeg === 'number') g.__ascOverrideDeg = settings.ascOverrideDeg
-      else if (g.__ascOverrideDeg) delete g.__ascOverrideDeg
-      if (debugOn && typeof settings?.natalAscOverrideDeg === 'number') g.__natalAscOverrideDeg = settings.natalAscOverrideDeg
-      else if (g.__natalAscOverrideDeg) delete g.__natalAscOverrideDeg
-    }, [settings?.ascOverrideDeg, settings?.natalAscOverrideDeg])
+    // Overrides removidos do app (mantidos apenas para diagnósticos via console em ?debug=1)
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
