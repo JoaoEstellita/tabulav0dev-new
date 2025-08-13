@@ -9,6 +9,8 @@ import {
   Switch,
   Linking,
   Dimensions,
+  Platform,
+  ToastAndroid,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -290,7 +292,12 @@ export default function SettingsScreen() {
       try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('natal-houses-reprocessed')) } catch {}
       Alert.alert('Pronto', 'Casas natais recalculadas com sucesso.')
     } catch (e: any) {
-      Alert.alert('Erro', e?.message || 'Falha ao recalcular as casas natais')
+      const msg = e?.message || 'Falha ao recalcular as casas natais'
+      if (Platform.OS === 'android') {
+        try { ToastAndroid.show(msg, ToastAndroid.SHORT) } catch { Alert.alert('Erro', msg) }
+      } else {
+        Alert.alert('Erro', msg)
+      }
     } finally {
       setIsLoading(false)
     }
