@@ -45,6 +45,13 @@ export interface UserProfile {
     family: string
     spirituality: string
   }
+  // Cache de cálculo natal
+  natalAscDeg?: number
+  natalMcDeg?: number
+  natalCusps?: number[]
+  natalSystem?: 'whole'|'equal'|'placidus'
+  natalApproximate?: boolean
+  natalTimeZoneId?: string
 }
 
 class UserService {
@@ -198,6 +205,31 @@ class UserService {
     } catch (error) {
       console.error('Erro ao buscar perfil do usuário:', error)
       return null
+    }
+  }
+
+  async saveNatalAsc(userId: string, data: {
+    natalAscDeg: number
+    natalMcDeg: number
+    natalCusps: number[]
+    natalSystem: 'whole'|'equal'|'placidus'
+    natalApproximate: boolean
+    natalTimeZoneId?: string
+  }): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', userId)
+      await updateDoc(userRef, {
+        natalAscDeg: data.natalAscDeg,
+        natalMcDeg: data.natalMcDeg,
+        natalCusps: data.natalCusps,
+        natalSystem: data.natalSystem,
+        natalApproximate: data.natalApproximate,
+        natalTimeZoneId: data.natalTimeZoneId || null,
+        lastBirthDataEdit: serverTimestamp(),
+      })
+    } catch (error) {
+      console.error('Erro ao salvar cache de ASC natal:', error)
+      throw new Error('Não foi possível salvar o cache natal.')
     }
   }
 

@@ -3,6 +3,7 @@ import { Alert } from 'react-native'
 import BirthDataForm, { type BirthData } from './BirthDataForm'
 import UserService from '../../services/firebase/UserService'
 import { useAuth } from '../../hooks/useAuth'
+import NatalAscService from '../../services/astrology/NatalAscService'
 
 export default function BirthDataFormContainer() {
   const [loading, setLoading] = useState(false)
@@ -18,6 +19,19 @@ export default function BirthDataFormContainer() {
 
     try {
       await UserService.saveBirthData(user.uid, birthData)
+      // Calcula e persiste automaticamente ASC/MC/cúspides (Placidus por padrão)
+      try {
+        await NatalAscService.computeAndPersist(
+          user.uid,
+          birthData.birthDate,
+          birthData.birthTime,
+          birthData.birthLocation.latitude,
+          birthData.birthLocation.longitude,
+          'placidus'
+        )
+      } catch (e) {
+        console.warn('⚠️ Não foi possível calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)
+      }
       
       // Atualizar estado de dados completos
       await checkBirthDataComplete()

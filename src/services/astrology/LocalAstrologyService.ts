@@ -83,6 +83,21 @@ export class LocalAstrologyService {
         { houseSystem }
       )
 
+      // Se perfil do usuário já tem cache de natal (ASC/cúspides), podemos substituir casas natais do bundle para estabilidade
+      try {
+        const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
+        if (userProfile?.natalAscDeg && Array.isArray(userProfile?.natalCusps)) {
+          ;(realData as any).natal = (realData as any).natal || {}
+          ;(realData as any).natal.houses = {
+            ascendant: userProfile.natalAscDeg,
+            midheaven: userProfile.natalMcDeg || realData.midheaven,
+            cusps: userProfile.natalCusps,
+            approximate: !!userProfile.natalApproximate,
+            system: (userProfile.natalSystem || houseSystem)
+          }
+        }
+      } catch {}
+
       // Publicar para Provider (e manter compat por enquanto)
       publishAstrologyData(realData)
 
