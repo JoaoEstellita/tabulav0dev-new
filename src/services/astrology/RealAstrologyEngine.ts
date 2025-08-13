@@ -268,12 +268,11 @@ export class RealAstrologyEngine {
       let natalHouses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean }
 
       try {
-        // Enviar timestamps em UTC apenas (ISO), sem timezone manual
-        // Preferir o timezone real resolvido pelo endpoint (IANA) e também enviar offsetMinutes no padrão JS (positivo para Oeste)
-        // Para máxima precisão e evitar divergências de conversão, enviar ISO UTC do nascimento diretamente
+        // Enviar horário LOCAL de nascimento e TZ resolvido para unificar conversão no backend
+        const natalLocalStr = `${birthDate}T${birthTime}:00`
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
-          natalLocal: undefined,
-          natalTimezone: undefined,
+          natalLocal: natalLocalStr,
+          natalTimezone: resolvedTz?.timeZoneId,
           natalLat: latitude,
           natalLon: longitude,
         })
