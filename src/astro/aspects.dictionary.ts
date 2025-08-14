@@ -39,6 +39,27 @@ const PAIR_NOTES: Record<string, string> = {
   'Sun|Saturn|quadratura': 'Responsabilidades e realidade pedem maturidade.',
   'Sun|Jupiter|trígono': 'Expansão e confiança favorecidas; oportunidades crescem.',
   'Venus|Uranus|oposição': 'Surpresas afetivas; busca por liberdade versus vínculo.',
+  // Ampliadas
+  'Sun|Moon|conjunção': 'Integração de identidade e emoções; foco subjetivo elevado.',
+  'Sun|Moon|oposição': 'Conflito interno/externo entre vontade e necessidades emocionais.',
+  'Mercury|Venus|trígono': 'Linguagem afetuosa e estética; bom para acordos e arte.',
+  'Mercury|Venus|quadratura': 'Dizer/sentir em descompasso; atenção a diplomacia.',
+  'Mars|Jupiter|trígono': 'Ânimo e iniciativa para crescer; coragem com visão.',
+  'Mars|Jupiter|quadratura': 'Excesso de confiança/ímpeto; cuide da imprudência.',
+  'Saturn|Uranus|quadratura': 'Tensão entre tradição e inovação; ajustes estruturais.',
+  'Saturn|Uranus|trígono': 'Mudanças com base sólida; inovação disciplinada.',
+  'Jupiter|Saturn|conjunção': 'Consolidação de crescimento; novos ciclos socioeconômicos.',
+  'Venus|Mars|trígono': 'Paixão e atração fluem; energia criativa elevada.',
+  'Venus|Mars|quadratura': 'Tensão afetivo‑desejo; ciúmes ou impulsividade afetiva.',
+  'Sun|Uranus|oposição': 'Imprevisibilidade e necessidade de autenticidade; libertação.',
+  'Moon|Neptune|trígono': 'Intuição e imaginação; sensibilidade artística e onírica.',
+  'Mercury|Mars|quadratura': 'Fala afiada; risco de discussões e impulsividade mental.',
+  'Mercury|Saturn|oposição': 'Rigor e críticas; comunicação mais austera/exigente.',
+  'Venus|Saturn|quadratura': 'Provas em vínculos/valores; comprometimento é chave.',
+  'Mars|Neptune|oposição': 'Drenagem de energia/rumo; clareza e limites ajudam.',
+  'Jupiter|Uranus|trígono': 'Inovações e oportunidades súbitas; expansão libertadora.',
+  'Saturn|Neptune|quadratura': 'Limites difusos; concretizar o sutil exige método.',
+  'Neptune|Pluto|sextil': 'Transformações silenciosas e profundas no coletivo.',
 }
 
 export function getPairNote(p1: string, p2: string, type: AspectName): string | undefined {

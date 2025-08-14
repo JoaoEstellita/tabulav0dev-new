@@ -343,14 +343,28 @@ export default function HomeScreen() {
                             const txt = `${a.planet1} ${a.type} ${a.planet2}`
                             const icon = getAspectSymbol(a.type as any)
                             const strength = typeof a.strength === 'number' ? a.strength : 0
-                            const color = strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0'
+                            // Destacar janela longa vs curta
+                            const windowDays = typeof (a as any).windowDays === 'number' ? (a as any).windowDays : undefined
+                            const long = (windowDays ?? 0) >= 21 // >3 semanas = coletivo/lento
+                            const short = (windowDays ?? 0) <= 3 // <=3 dias = rápido
+                            const color = long ? '#F59E0B' : short ? '#9AE6B4' : (strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0')
                             return (
                               <TouchableOpacity key={idx} onPress={() => {
                                 const note = getPairNote(a.planet1, a.planet2, a.type as any)
                                 const extra = [] as string[]
                                 extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
                                 if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
-                                if (typeof (a as any).windowDays === 'number') extra.push(`vigência ~${(a as any).windowDays} dias`)
+                                if (typeof windowDays === 'number') extra.push(`vigência ~${windowDays} dias`)
+                                // Pico aproximado: deslocamento atual/relSpeed assumindo fechamento ao meio
+                                let peak = ''
+                                try {
+                                  if (typeof a.orb === 'number' && typeof (a as any).relSpeed === 'number' && (a as any).relSpeed > 0.01) {
+                                    const daysToPeak = (a.orb / (a as any).relSpeed)
+                                    const d = new Date(Date.now() + daysToPeak * 86400000)
+                                    peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
+                                    extra.push(peak)
+                                  }
+                                } catch {}
                                 setCollectiveModal({
                                   visible: true,
                                   title: `${icon} ${txt}`,
