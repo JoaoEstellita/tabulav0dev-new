@@ -11,7 +11,7 @@ import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
 import SubscriptionScreen from "../subscription/SubscriptionScreen"
-import NatalAscService from "../../services/astrology/NatalAscService"
+// Removido reprocesso manual de casas natais deste fluxo
 
 interface UserProfile {
   displayName: string
@@ -115,29 +115,11 @@ export default function ProfileScreen() {
     }
   }
 
+  // saveProfile simplificado (sem reprocesso manual de casas)
   const saveProfile = async () => {
     try {
       if (!user || !profile) return
-      // Persistir alterações básicas
       await setDoc(doc(db, "users", user.uid), profile, { merge: true })
-      // Se dados natais foram alterados, recalcular cache natal
-      if (profile.birthDate && profile.birthTime && profile.birthLocation?.latitude && profile.birthLocation?.longitude) {
-        try {
-          await NatalAscService.computeAndPersist(
-            user.uid,
-            // Converter formato DD/MM/AAAA -> YYYY-MM-DD se necessário
-            (profile.birthDate.includes('/')
-              ? (()=>{ const [d,m,y]=profile.birthDate.split('/'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` })()
-              : profile.birthDate),
-            profile.birthTime,
-            profile.birthLocation.latitude,
-            profile.birthLocation.longitude,
-            'placidus'
-          )
-        } catch (e) {
-          console.warn('Falha ao recalcular cache natal:', (e as any)?.message || e)
-        }
-      }
       Alert.alert('Sucesso', 'Perfil atualizado!')
       await loadUserProfile()
     } catch (e) {

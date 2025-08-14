@@ -160,7 +160,7 @@ Nosso app supera em precisão a maioria dos aplicativos gratuitos e até mesmo a
   ,
   {
     question: 'Como o app calcula ASC/MC e as casas? Preciso informar o grau do Ascendente?',
-    answer: '**Não.** O app calcula automaticamente com base na sua data, hora e cidade de nascimento. Usamos timezone IANA histórico quando disponível e, em raros casos, mostramos "aprox". Você pode escolher Equal, Placidus ou Porphyry nas configurações. Se editar seus dados de nascimento, use o botão "Reprocessar Casas Natais" para recalcular.'
+    answer: '**Não.** O app calcula automaticamente com base na sua data, hora e cidade de nascimento. Usamos timezone IANA histórico quando disponível e, em raros casos, mostramos "aprox". Você pode escolher Equal, Placidus ou Porphyry nas configurações. Ao editar seus dados de nascimento, o app recalcula as casas automaticamente.'
   },
   {
     question: 'Por que às vezes aparece "aprox"?',

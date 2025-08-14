@@ -23,8 +23,6 @@ import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 // Removidos itens de preview e comparativos da Configuração (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
-import NatalAscService from '../../services/astrology/NatalAscService'
-import UserService from '../../services/firebase/UserService'
 
 const { width } = Dimensions.get('window');
 
@@ -270,38 +268,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleReprocessNatalHouses = async () => {
-    try {
-      if (!user?.uid) return Alert.alert('Erro', 'Usuário não identificado.')
-      setIsLoading(true)
-      const profile = await UserService.getUserProfile(user.uid)
-      if (!profile?.birthDate || !profile?.birthTime || !profile?.birthLocation) {
-        Alert.alert('Dados incompletos', 'Complete seus dados natais no Perfil.')
-        return
-      }
-      await NatalAscService.computeAndPersist(
-        user.uid,
-        profile.birthDate.includes('/')
-          ? (()=>{ const [d,m,y]=profile.birthDate.split('/'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` })()
-          : profile.birthDate,
-        profile.birthTime,
-        profile.birthLocation.latitude,
-        profile.birthLocation.longitude,
-        (userSettings?.houseSystem || 'placidus')
-      )
-      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('natal-houses-reprocessed')) } catch {}
-      Alert.alert('Pronto', 'Casas natais recalculadas com sucesso.')
-    } catch (e: any) {
-      const msg = e?.message || 'Falha ao recalcular as casas natais'
-      if (Platform.OS === 'android') {
-        try { ToastAndroid.show(msg, ToastAndroid.SHORT) } catch { Alert.alert('Erro', msg) }
-      } else {
-        Alert.alert('Erro', msg)
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // Reprocessar Casas Natais removido desta tela conforme solicitado
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -575,18 +542,7 @@ export default function SettingsScreen() {
             </View>
           ))}
 
-          {/* Casas (Manutenção) */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏠 Casas</Text>
-            <View style={styles.sectionContent}>
-              <View style={{ padding: 16 }}>
-                <TouchableOpacity onPress={handleReprocessNatalHouses} style={styles.primaryButton}>
-                  <Text style={styles.primaryButtonText}>Reprocessar Casas Natais</Text>
-                </TouchableOpacity>
-                <Text style={styles.helperText}>Recalcula ASC, MC e cúspides a partir dos seus dados de nascimento.</Text>
-              </View>
-            </View>
-          </View>
+          {/* Seção de Casas removida */}
 
           {/* App Info */}
           <View style={styles.appInfo}>

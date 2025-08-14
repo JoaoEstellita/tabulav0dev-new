@@ -185,18 +185,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!auth.currentUser) {
         console.log('⚠️ Nenhum usuário logado')
+        setUser(null)
+        setBirthDataComplete(false)
         return
       }
       
       await signOut(auth)
-      console.log('✅ Logout realizado com sucesso')
-      
-      // Verificar se realmente saiu
-      const userAfterLogout = auth.currentUser
-      console.log('👤 Usuário após logout:', userAfterLogout ? userAfterLogout.uid : 'null')
+      // Forçar estado local imediatamente para refletir na navegação
+      setUser(null)
+      setBirthDataComplete(false)
+      ;(globalThis as any).__userHouseSystem = undefined
+      console.log('✅ Logout realizado com sucesso (estado limpo)')
       
     } catch (error) {
       console.error('❌ Erro no logout:', error)
+      // Ainda assim limpar estado local para evitar travar o usuário logado
+      setUser(null)
+      setBirthDataComplete(false)
       throw error
     }
   }
