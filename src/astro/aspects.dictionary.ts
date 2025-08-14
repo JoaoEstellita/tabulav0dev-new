@@ -102,6 +102,36 @@ const PAIR_NOTES: Record<string, string> = {
   'Moon|Mars|oposição': 'Conflitos de humor/desejo; melhor negociar pausas.',
   'Moon|Mars|trígono': 'Coragem emocional; ação protetiva e dinâmica.',
   'Moon|Mars|sextil': 'Iniciativa suave; motivação para cuidar/agir.',
+  // Lua – Júpiter
+  'Moon|Jupiter|conjunção': 'Ânimo elevado e generosidade; confiança emocional.',
+  'Moon|Jupiter|quadratura': 'Excessos no humor/apetite; moderação ajuda.',
+  'Moon|Jupiter|oposição': 'Expectativas infladas; calibrar promessas e apoio.',
+  'Moon|Jupiter|trígono': 'Proteção e otimismo; favorece sociabilidade e fé.',
+  'Moon|Jupiter|sextil': 'Boa vontade e apoio emocional disponíveis.',
+  // Lua – Saturno
+  'Moon|Saturn|conjunção': 'Sobriedade e responsabilidade afetiva; contenção.',
+  'Moon|Saturn|quadratura': 'Melancolia/pressões; cuidar de limites e autocuidado.',
+  'Moon|Saturn|oposição': 'Demandas externas pesam no humor; pedir ajuda.',
+  'Moon|Saturn|trígono': 'Estabilidade emocional; comprometimento e maturidade.',
+  'Moon|Saturn|sextil': 'Rotina e suporte estruturado favorecem bem‑estar.',
+  // Lua – Urano
+  'Moon|Uranus|conjunção': 'Oscilações rápidas de humor; impulso por novidade.',
+  'Moon|Uranus|quadratura': 'Impaciência/irritação; necessidade de mudar o ritmo.',
+  'Moon|Uranus|oposição': 'Instabilidade no ambiente; flexibilidade emocional.',
+  'Moon|Uranus|trígono': 'Liberdade afetiva; insights e frescor emocional.',
+  'Moon|Uranus|sextil': 'Abertura a mudanças diárias leves; improviso positivo.',
+  // Lua – Netuno
+  'Moon|Neptune|conjunção': 'Hipersensibilidade e imaginação; sonhos vívidos.',
+  'Moon|Neptune|quadratura': 'Confusão/absorção emocional; cuidar de limites.',
+  'Moon|Neptune|oposição': 'Projeções e expectativas; buscar clareza e descanso.',
+  'Moon|Neptune|trígono': 'Empatia e inspiração; bom para artes e recolhimento.',
+  'Moon|Neptune|sextil': 'Intuição disponível; suavidade no trato afetivo.',
+  // Lua – Plutão
+  'Moon|Pluto|conjunção': 'Intensidade emocional; catarses e cura profunda.',
+  'Moon|Pluto|quadratura': 'Controle/ciúmes; transformar padrões emocionais.',
+  'Moon|Pluto|oposição': 'Jogos de poder no ambiente; praticar desapego.',
+  'Moon|Pluto|trígono': 'Regeneração afetiva; força interior serena.',
+  'Moon|Pluto|sextil': 'Oportunidades de limpeza emocional e renovação.',
   // Mercúrio – Vênus
   'Mercury|Venus|conjunção': 'Charme e diplomacia; comunicação afetiva.',
   'Mercury|Venus|trígono': 'Linguagem afetuosa e estética; bom para acordos e arte.',
