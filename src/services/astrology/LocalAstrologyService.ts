@@ -35,6 +35,7 @@ export interface LocalTransitData {
     keyAspects: string[]
     message?: string
     overall?: number
+    masterAspects?: Array<{ text: string; strength: number }>
     // Índice coletivo (T→T)
     collectivePositive?: number
     collectiveNegative?: number
@@ -226,6 +227,13 @@ export class LocalAstrologyService {
       return Math.round(Math.max(0, Math.min(100, shifted)))
     })()
 
+    // Ranking de aspectos‑mestres (heurística): T→N fortes
+    const masterAspects = (realData.transits?.personal || [])
+      .filter(t => t.isMaster)
+      .sort((a,b)=>b.strength-a.strength)
+      .slice(0,5)
+      .map(t => ({ text: `${t.transitPlanet} ${t.type} ${t.natalPlanet} (${t.strength}%)`, strength: t.strength }))
+
     const dailyOverview = {
       bestArea,
       challengingArea,
@@ -233,6 +241,7 @@ export class LocalAstrologyService {
       keyAspects,
       overall: overallModulated,
       message: `${generalTrend}. Destaque para ${bestArea} e atenção em ${challengingArea}.`,
+      masterAspects,
       collectivePositive,
       collectiveNegative,
       collectiveKeyAspects,

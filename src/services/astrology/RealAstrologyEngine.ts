@@ -131,6 +131,9 @@ export interface RealAstrologyData {
       strength: number
       natalHouseImpacted: number
       durationClass?: 'curto' | 'médio' | 'longo'
+      seriesId?: string
+      contactPhase?: 'direct' | 'retro'
+      isMaster?: boolean
     }>
     general: RealAspect[]
     byArea?: Record<string, Array<{
@@ -374,6 +377,12 @@ export class RealAstrologyEngine {
         const natalName = a.planet2
         // Casa natal impactada: onde o planeta em trânsito cai nas casas NATAIS
         const transitHouseNatal = currentOnNatalHouses.find(p => p.name === transitName)?.house || 0
+        // Série retrógrada (marcação heurística): id por par + tipo
+        const seriesId = `${transitName}:${natalName}:${a.type}`
+        const contactPhase: 'direct'|'retro' = (planetsWithHouses.find(p=>p.name===transitName)?.isRetrograde ? 'retro' : 'direct')
+        // Aspecto‑mestre (heurística): forte e envolvendo planetas lentos ou ângulos
+        const slowSet = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto'])
+        const isMaster = a.strength >= 80 || slowSet.has(transitName)
         return {
           transitPlanet: transitName,
           natalPlanet: natalName,
@@ -383,6 +392,9 @@ export class RealAstrologyEngine {
           strength: a.strength,
           natalHouseImpacted: transitHouseNatal,
           durationClass: this.classifyTransitDuration(transitName),
+          seriesId,
+          contactPhase,
+          isMaster,
         }
       })
       const personalSummary = summarizePersonalTransits(personalTransits)
