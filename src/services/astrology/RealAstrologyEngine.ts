@@ -678,12 +678,21 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
-    // Regra final: edges relativos ao ASC (0..360) com particionamento [edge[i], edge[i+1)) e eps 0.2°
+    // Particionamento robusto:
+    // - Normaliza ângulos relativos ao ASC
+    // - Ordena as cúspides 2..12 em ordem CCW crescente a partir do ASC
+    // - Garante monotonicidade estrita e fecha 360°
     const norm = (d: number) => (d % 360 + 360) % 360
-    const asc = norm(houses.cusps[0])
+    const asc = Number.isFinite(houses.ascendant) ? norm(houses.ascendant) : norm(houses.cusps[0])
+    const rels: number[] = new Array(12)
+    for (let i = 0; i < 12; i++) rels[i] = norm(houses.cusps[i] - asc)
+    rels[0] = 0
+    const sortedRels = rels
+      .slice(1)
+      .sort((a, b) => a - b)
     const edges = new Array<number>(13)
     edges[0] = 0
-    for (let i = 1; i < 12; i++) edges[i] = norm(houses.cusps[i] - asc)
+    for (let i = 1; i < 12; i++) edges[i] = sortedRels[i - 1]
     edges[12] = 360
     for (let i = 1; i < 12; i++) if (edges[i] <= edges[i - 1]) edges[i] = edges[i - 1] + 1e-6
     const eps = 0.2
