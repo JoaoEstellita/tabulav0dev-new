@@ -1,9 +1,10 @@
 import React from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
 import useTransits from '../hooks/useTransits'
+import { useUserSettings } from '../hooks/useUserSettings'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -65,6 +66,20 @@ export default function TransitComparisonCard({
   natalMidheaven
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
+  const { settings, updateSettings } = useUserSettings()
+  const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
+    (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
+  )
+  const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
+    try {
+      setHouseSystem(sys)
+      await updateSettings({ houseSystem: sys })
+      ;(globalThis as any).__userHouseSystem = sys
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('house-system-changed'))
+      }
+    } catch {}
+  }, [])
   const showApprox = false // placeholder: card não recebe props de housesApproximate aqui
   const personalByTransitPlanet = React.useMemo(() => {
     const map: Record<string, typeof personal> = {}
@@ -235,10 +250,25 @@ export default function TransitComparisonCard({
 
       {/* 🪐 Comparações Planetárias */}
       <ScrollView style={styles.planetsSection} showsVerticalScrollIndicator={false}>
-        <View style={styles.sectionHeader}>
+      <View style={styles.sectionHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="planet" size={20} color="#FFD700" />
           <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
         </View>
+        <View style={styles.toggleGroup}>
+          {(['equal','placidus'] as const).map(sys => (
+            <TouchableOpacity
+              key={sys}
+              onPress={() => applyHouseSystem(sys)}
+              style={[styles.toggleBtn, houseSystem === sys && styles.toggleBtnActive]}
+            >
+              <Text style={[styles.toggleText, houseSystem === sys && styles.toggleTextActive]}>
+                {sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
         {planetComparisons.map((comparison, index) => (
           <View key={comparison.name} style={styles.planetCard}>
@@ -390,6 +420,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
   sectionTitle: {
@@ -518,6 +549,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  toggleGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  toggleBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)'
+  },
+  toggleBtnActive: {
+    backgroundColor: 'rgba(255,215,0,0.2)'
+  },
+  toggleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500'
+  },
+  toggleTextActive: {
+    fontWeight: '700'
   },
   aspectItem: {
     flexDirection: 'row',
