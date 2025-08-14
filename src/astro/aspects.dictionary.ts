@@ -24,12 +24,33 @@ const DESCRIPTIONS: Record<AspectName, string> = {
   'sesquiquadratura': 'Tensão acumulada. Desalinhamentos medianos que pressionam mudanças gradativas e persistentes.',
 }
 
-export function getAspectSymbol(type: AspectName): string {
-  return SYMBOLS[type] || '•'
+function normalizeType(t: string): AspectName | any {
+  const map: Record<string, AspectName> = {
+    'conjuncao': 'conjunção', 'conjuncao': 'conjunção', 'conjunção': 'conjunção',
+    'oposicao': 'oposição', 'oposição': 'oposição',
+    'trigono': 'trígono', 'trígono': 'trígono',
+    'quadratura': 'quadratura',
+    'sextil': 'sextil',
+    'quincuncio': 'quincúncio', 'quincúncio': 'quincúncio',
+    'semissextil': 'semissextil',
+    'semiquadratura': 'semiquadratura',
+    'sesquiquadratura': 'sesquiquadratura',
+  }
+  const k = t.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase()
+  return map[k] || t
 }
 
-export function getAspectDescription(type: AspectName): string {
-  return DESCRIPTIONS[type] || 'Aspecto ativo.'
+export function getAspectSymbol(type: AspectName | string): string {
+  const t = normalizeType(type as string) as AspectName
+  const sym = SYMBOLS[t]
+  // Fallback para quincúncio se fonte não suportar
+  if (t === 'quincúncio' && !sym) return '150°'
+  return sym || '•'
+}
+
+export function getAspectDescription(type: AspectName | string): string {
+  const t = normalizeType(type as string) as AspectName
+  return DESCRIPTIONS[t] || 'Aspecto ativo.'
 }
 
 // Notas curtas por par de planetas (parcial, pode ser expandido)

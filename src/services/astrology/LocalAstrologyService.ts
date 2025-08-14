@@ -33,6 +33,7 @@ export interface LocalTransitData {
     challengingArea: string
     generalTrend: string
     keyAspects: string[]
+    message?: string
     overall?: number
     // Índice coletivo (T→T)
     collectivePositive?: number

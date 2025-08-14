@@ -739,7 +739,11 @@ export class RealAstrologyEngine {
       // Estimar janela de vigência a partir da orbe máxima e velocidade relativa
       const orbAllowed = maxOrbForPair(a.type, a.planet1, a.planet2)
       const relSpeed = Math.max(0.02, Math.abs((p1?.speed ?? 0) - (p2?.speed ?? 0))) // deg/dia; piso para evitar /0
-      const windowDays = Number(((2 * orbAllowed) / relSpeed).toFixed(1))
+      let windowDays = (2 * orbAllowed) / relSpeed
+      // Clamp e arredondamento
+      if (!Number.isFinite(windowDays)) windowDays = 0
+      windowDays = Math.min(365, Math.max(1, windowDays))
+      windowDays = Math.round(windowDays)
 
       return { a: { ...a, orbAllowed, relSpeed, windowDays }, score, sign }
     })
