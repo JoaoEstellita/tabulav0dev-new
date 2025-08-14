@@ -39,7 +39,7 @@ export default function HousesPreview({ dateUTC, lat, lon, system }: Props) {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Sistema: {system}</Text>
+      <Text style={styles.title}>Sistema: {system === 'equal' ? 'casas inteiras' : system}</Text>
       <Text style={styles.item}>ASC: {format(asc)} | MC: {format(mc)}</Text>
       {state.system === 'placidus' && approximate && (
         <Text style={{ color:'#FFD700', marginBottom: 8 }}>Placidus (aprox)</Text>
