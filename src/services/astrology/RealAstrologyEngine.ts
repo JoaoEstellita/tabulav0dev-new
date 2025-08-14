@@ -670,48 +670,10 @@ export class RealAstrologyEngine {
    * Calcula aspectos REAIS entre planetas
    */
   private static calculateRealAspects(planets: RealPlanetPosition[]): RealAspect[] {
-    const aspects: RealAspect[] = []
-    const aspectTypes = {
-      0: { name: 'conjunção', orb: 8 },
-      60: { name: 'sextil', orb: 6 },
-      90: { name: 'quadratura', orb: 8 },
-      120: { name: 'trígono', orb: 8 },
-      180: { name: 'oposição', orb: 8 }
-    }
-
-    for (let i = 0; i < planets.length; i++) {
-      for (let j = i + 1; j < planets.length; j++) {
-        const planet1 = planets[i]
-        const planet2 = planets[j]
-        
-        let diff = Math.abs(planet1.longitude - planet2.longitude)
-        if (diff > 180) diff = 360 - diff
-
-        for (const [angle, config] of Object.entries(aspectTypes)) {
-          const targetAngle = parseInt(angle)
-          const orb = Math.abs(diff - targetAngle)
-          
-          if (orb <= config.orb) {
-            // Determinar se o aspecto está se aplicando ou se separando
-            const isApplying = this.isAspectApplying(planet1, planet2, targetAngle)
-            
-            // Calcular força do aspecto (mais próximo = mais forte)
-            const strength = Math.max(0, 100 - (orb / config.orb) * 100)
-            
-            aspects.push({
-              planet1: planet1.name,
-              planet2: planet2.name,
-              type: config.name,
-              orb,
-              isApplying,
-              strength
-            })
-          }
-        }
-      }
-    }
-
-    return aspects.sort((a, b) => b.strength - a.strength)
+    // Usar engine unificada com orbes configuráveis
+    const A = planets.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed }))
+    const res = detectAspects(A, A, aspectsConfig)
+    return res.map(r => ({ planet1: r.planet1, planet2: r.planet2, type: r.type, orb: r.orb, isApplying: r.isApplying, strength: r.strength }))
   }
 
   /**
@@ -1144,11 +1106,14 @@ export class RealAstrologyEngine {
   ): HouseAspect[] {
     const houseAspects: HouseAspect[] = []
     const aspectTypes = [
-      { name: 'conjunção', degrees: 0, orb: 8 },
-      { name: 'sextil', degrees: 60, orb: 6 },
-      { name: 'quadratura', degrees: 90, orb: 7 },
-      { name: 'trígono', degrees: 120, orb: 8 },
-      { name: 'oposição', degrees: 180, orb: 8 }
+      // Orbe fixo para casas: 0.5°
+      { name: 'conjunção', degrees: 0, orb: 0.5 },
+      { name: 'sextil', degrees: 60, orb: 0.5 },
+      { name: 'quadratura', degrees: 90, orb: 0.5 },
+      { name: 'trígono', degrees: 120, orb: 0.5 },
+      { name: 'oposição', degrees: 180, orb: 0.5 },
+      { name: 'quincúncio', degrees: 150, orb: 0.5 },
+      { name: 'semissextil', degrees: 30, orb: 0.5 },
     ]
 
     for (const planet of planets) {

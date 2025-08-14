@@ -7,15 +7,29 @@ function angularSeparation(a: number, b: number): number {
   return diff
 }
 
-function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBody, baseOrb: number): number {
+function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBody, baseOrb: number, angle: number): number {
   const cap = config.maxOrbCap ?? 12
+  // Base do aspecto
+  let eff = baseOrb
+  // Planet-specific por aspecto (se disponível)
+  const pa = config.planetAspectOrbs?.[a.name]?.[angle]
+  const pb = config.planetAspectOrbs?.[b.name]?.[angle]
+  if (pa !== undefined || pb !== undefined) {
+    eff = Math.min(eff, pa ?? eff, pb ?? eff)
+  }
+  // Overrides específicos por par (compatibilidade legada)
   const ovrA = config.overrides?.[a.name]?.[b.name]
   const ovrB = config.overrides?.[b.name]?.[a.name]
-  const base = ovrA ?? ovrB ?? baseOrb
+  if (ovrA !== undefined || ovrB !== undefined) {
+    eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
+  }
+  // planetOrbs legado (cap global por planeta)
   const orbA = config.planetOrbs?.[a.name]
   const orbB = config.planetOrbs?.[b.name]
-  const withPlanets = Math.min(base, orbA ?? base, orbB ?? base)
-  return clamp(withPlanets, 0, cap)
+  if (orbA !== undefined || orbB !== undefined) {
+    eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
+  }
+  return clamp(eff, 0, cap)
 }
 
 function isApplying(a: AspectInputBody, b: AspectInputBody, exactAngle: number): boolean {
@@ -39,7 +53,7 @@ export function detectAspects(setA: AspectInputBody[], setB: AspectInputBody[], 
       const B = setB[j]
       const sep = angularSeparation(A.longitude, B.longitude)
       for (const def of config.aspects) {
-        const orbAllowed = resolveOrb(config, A, B, def.baseOrb)
+        const orbAllowed = resolveOrb(config, A, B, def.baseOrb, def.angle)
         const orb = Math.abs(sep - def.angle)
         if (orb <= orbAllowed) {
           const proximity = clamp(1 - (orb / (orbAllowed || 1)), 0, 1)
@@ -52,6 +66,8 @@ export function detectAspects(setA: AspectInputBody[], setB: AspectInputBody[], 
             'quadratura': 0.8,
             'trígono': 0.8,
             'sextil': 0.6,
+            'quincúncio': 0.5,
+            'semissextil': 0.4,
           }
           const applyBoost = applying ? 1.10 : 1.0
           const strength = Math.round(100 * weight[type] * proximity * applyBoost)

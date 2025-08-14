@@ -1,4 +1,4 @@
-export type AspectName = 'conjunção' | 'oposição' | 'quadratura' | 'trígono' | 'sextil' | 'quincúncio'
+export type AspectName = 'conjunção' | 'oposição' | 'quadratura' | 'trígono' | 'sextil' | 'quincúncio' | 'semissextil'
 
 export interface AspectDefinition {
   name: AspectName
@@ -15,6 +15,8 @@ export interface AspectsConfig {
   maxOrbCap?: number
   // Orbe base por planeta (usaremos min(baseAspect, orbPlanetaA, orbPlanetaB))
   planetOrbs?: Record<string, number>
+  // Orbe por planeta POR ASPECTO (ângulo em graus). Usa min(baseOrb, planetaA[angle], planetaB[angle])
+  planetAspectOrbs?: Record<string, Record<number, number>>
 }
 
 export interface AspectInputBody {

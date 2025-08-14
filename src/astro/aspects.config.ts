@@ -1,28 +1,36 @@
 import { AspectsConfig } from './aspects.types'
 
-// Configuração única de aspectos e orbes
-// Orbes base inspiradas em prática comum: conj/oposição 8°, quadratura/trígono 6–8°, sextil 4–6°
+// Config conforme solicitado: orbes por planeta e aspecto
 const aspectsConfig: AspectsConfig = {
   aspects: [
-    { name: 'conjunção', angle: 0, baseOrb: 10 },
-    { name: 'oposição', angle: 180, baseOrb: 10 },
-    { name: 'quadratura', angle: 90, baseOrb: 8 },
+    { name: 'conjunção', angle: 0, baseOrb: 9 },
+    { name: 'oposição', angle: 180, baseOrb: 9 },
     { name: 'trígono', angle: 120, baseOrb: 8 },
-    { name: 'sextil', angle: 60, baseOrb: 6 },
-    { name: 'quincúncio', angle: 150, baseOrb: 3 },
+    { name: 'quadratura', angle: 90, baseOrb: 6 },
+    { name: 'sextil', angle: 60, baseOrb: 5 },
+    { name: 'quincúncio', angle: 150, baseOrb: 5 },
+    { name: 'semissextil', angle: 30, baseOrb: 3 },
   ],
-  overrides: {
-    Sun: { Moon: 10, Mercury: 9, Venus: 9 },
-    Moon: { Sun: 10 },
-    Jupiter: { Sun: 9, Moon: 9 },
-  },
   maxOrbCap: 12,
-  planetOrbs: {
-    Sun: 12, Moon: 12,
-    Mercury: 9, Venus: 9, Mars: 9,
-    Jupiter: 8, Saturn: 8,
-    Uranus: 6, Neptune: 6, Pluto: 6,
-    Node: 5, Chiron: 5, Lilith: 3,
+  // Orbes específicos por planeta e aspecto (graus)
+  // Se um planeta não estiver listado, usa baseOrb
+  planetAspectOrbs: {
+    // 1) Sol e Lua (luminares)
+    Sun:   { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
+    Moon:  { 0: 9, 180: 9, 120: 8, 90: 6, 60: 5, 150: 5, 30: 3 },
+    // 2) Mercúrio, Vênus e Júpiter (7/9 dos luminares → arredondado conforme pedido)
+    Mercury: { 0: 7, 180: 7, 120: 6, 90: 5, 60: 4, 150: 4, 30: 2 },
+    Venus:   { 0: 7, 180: 7, 120: 6, 90: 5, 60: 4, 150: 4, 30: 2 },
+    Jupiter: { 0: 7, 180: 7, 120: 6, 90: 5, 60: 4, 150: 4, 30: 2 },
+    // 3) Marte e Saturno (6/9 dos luminares)
+    Mars:   { 0: 6, 180: 6, 120: 5, 90: 4, 60: 3, 150: 3, 30: 2 },
+    Saturn: { 0: 6, 180: 6, 120: 5, 90: 4, 60: 3, 150: 3, 30: 2 },
+    // 4) Urano, Netuno e Plutão (transpessoais)
+    Uranus:  { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
+    Neptune: { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
+    Pluto:   { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
+    // 5) Nodo Norte: adota o orbe do outro planeta do par (tratado no engine)
+    // 6) Aspectos com casas: 0.5 grau (aplicado no RealAstrologyEngine)
   },
 }
 
