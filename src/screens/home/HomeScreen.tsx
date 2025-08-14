@@ -26,6 +26,7 @@ import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
+import { getAspectDescription, getAspectSymbol } from '../../astro/aspects.dictionary'
 
 export default function HomeScreen() {
   try {
@@ -340,23 +341,14 @@ export default function HomeScreen() {
                         <View style={{ marginTop: 4 }}>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
                             const txt = `${a.planet1} ${a.type} ${a.planet2}`
-                            const icon = (() => {
-                              if (a.type === 'conjunção') return '☌'
-                              if (a.type === 'oposição') return '☍'
-                              if (a.type === 'quadratura') return '□'
-                              if (a.type === 'trígono') return '△'
-                              if (a.type === 'sextil') return '✶'
-                              if (a.type === 'sesquiquadratura') return '∡'
-                              if (a.type === 'semiquadratura') return '∠'
-                              return '•'
-                            })()
+                            const icon = getAspectSymbol(a.type as any)
                             const strength = typeof a.strength === 'number' ? a.strength : 0
                             const color = strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0'
                             return (
                               <TouchableOpacity key={idx} onPress={() => setCollectiveModal({
                                 visible: true,
                                 title: `${icon} ${txt}`,
-                                body: `Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}${typeof a.orb === 'number' ? ` • orbe ${a.orb.toFixed(1)}°` : ''}`
+                                body: `${getAspectDescription(a.type as any)}\nForça: ${strength}%${a.isApplying ? ' • aplicante' : ''}${typeof a.orb === 'number' ? ` • orbe ${a.orb.toFixed(1)}°` : ''}`
                               })}>
                                 <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
                               </TouchableOpacity>
