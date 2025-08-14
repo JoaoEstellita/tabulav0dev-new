@@ -70,6 +70,13 @@ export default function TransitComparisonCard({
   const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
     (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
   )
+
+  // Sincronizar quando as configurações carregarem/alterarem
+  React.useEffect(() => {
+    if (settings?.houseSystem === 'placidus' || settings?.houseSystem === 'equal') {
+      setHouseSystem(settings.houseSystem)
+    }
+  }, [settings?.houseSystem])
   const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
     try {
       setHouseSystem(sys)

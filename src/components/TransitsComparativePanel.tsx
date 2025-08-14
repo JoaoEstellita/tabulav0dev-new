@@ -10,6 +10,11 @@ export default function TransitsComparativePanel() {
   const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
     (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
   )
+  React.useEffect(() => {
+    if (settings?.houseSystem === 'placidus' || settings?.houseSystem === 'equal') {
+      setHouseSystem(settings.houseSystem)
+    }
+  }, [settings?.houseSystem])
 
   const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
     try {
