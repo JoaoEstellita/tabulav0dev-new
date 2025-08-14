@@ -227,6 +227,9 @@ export class RealAstrologyEngine {
     9: 'Expansão', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
   } as const
 
+  // Cache simples do índice coletivo por dia (UTC)
+  private static _collectiveCache: Map<string, NonNullable<RealAstrologyData['collective']>> = new Map()
+
   private static readonly LIFE_AREAS = {
     amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
     carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'], weight: 1.0 },
@@ -332,8 +335,13 @@ export class RealAstrologyEngine {
       )
       console.log(`✅ Aspectos T→T calculados: ${aspectsCurrentTT.length}`)
 
-      // Índice coletivo (T→T) + fase lunar
-      const collective = this.computeCollectiveIndex(aspectsCurrentTT, planetsWithHouses)
+      // Índice coletivo (T→T) + fase lunar (cache por dia UTC)
+      const dayKey = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0,10)
+      let collective = RealAstrologyEngine._collectiveCache.get(dayKey)
+      if (!collective) {
+        collective = this.computeCollectiveIndex(aspectsCurrentTT, planetsWithHouses)
+        RealAstrologyEngine._collectiveCache.set(dayKey, collective)
+      }
 
       // Aspectos T→N (pessoais) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
       const aspectsTransitsToNatalTN = detectAspects(
@@ -383,6 +391,16 @@ export class RealAstrologyEngine {
         // Aspecto‑mestre (heurística): forte e envolvendo planetas lentos ou ângulos
         const slowSet = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto'])
         const isMaster = a.strength >= 80 || slowSet.has(transitName)
+        // Índice do contato (heurística por orbe decrescente dentro da série)
+        let contactIndex: 1|2|3 = 1
+        try {
+          const sameSeries = aspectsTransitsToNatalTN
+            .filter(x => x.planet1===transitName && x.planet2===natalName && x.type===a.type)
+            .sort((x,y)=>x.orb - y.orb)
+          const idx = sameSeries.findIndex(x=>x===a)
+          if (idx === 1) contactIndex = 2
+          if (idx >= 2) contactIndex = 3
+        } catch {}
         return {
           transitPlanet: transitName,
           natalPlanet: natalName,
@@ -395,6 +413,7 @@ export class RealAstrologyEngine {
           seriesId,
           contactPhase,
           isMaster,
+          contactIndex,
         }
       })
       const personalSummary = summarizePersonalTransits(personalTransits)
@@ -984,6 +1003,12 @@ export class RealAstrologyEngine {
           // Casa natal relevante
           const transitInRelevantHouse = config.houses.includes(planet.house)
           const relevantHouseBoost = transitInRelevantHouse ? 1.10 : 1.0
+          // Regências de casa: pequeno boost quando o trânsito aspecta regente de casa-chave da área
+          const houseRulers: Record<number, string[]> = {
+            1:['Mars'], 2:['Venus'], 3:['Mercury'], 4:['Moon'], 5:['Sun'], 6:['Mercury'], 7:['Venus'], 8:['Mars'], 9:['Jupiter'], 10:['Saturn'], 11:['Saturn','Uranus'], 12:['Jupiter','Neptune']
+          }
+          const areaRulers = new Set(config.houses.flatMap(h => houseRulers[h] || []))
+          const rulerBoost = areaRulers.has(other) ? 1.06 : 1.0
 
           // Casa angularidade – multiplicador acidental pelo local do trânsito nas casas NATAIS
           const angularMult = this.getHouseAngularMultiplier(planet.house)
@@ -991,7 +1016,7 @@ export class RealAstrologyEngine {
           // Almuten (peso extra quando envolvido)
           const almutenMult = (natalAlmuten && (planetName === natalAlmuten || other === natalAlmuten)) ? 1.08 : 1.0
           let aspectScore = Math.max(0, Math.min(100,
-            baseScore * natalWeight * relevantHouseBoost * receptionMult * angularMult * almutenMult + delta
+            baseScore * natalWeight * relevantHouseBoost * rulerBoost * receptionMult * angularMult * almutenMult + delta
           ))
 
           // Peso de duração por ciclo planetário (Lua/Mercúrio < 1; lentos > 1)
@@ -1213,7 +1238,7 @@ export class RealAstrologyEngine {
       tags.push(`${planet.name} retrógrado`)
     }
 
-    // Combustão e Cazimi (aprox: dentro de 8° do Sol para combustão; <= 0.3° para cazimi)
+    // Combustão e Cazimi (aprox: dentro de 8° do Sol para combustão; <= 0.3° para cazimi) e "sob os raios" (até ~15°)
     if (sunLongitude !== undefined && planet.name !== 'Sun' && planet.name !== 'Moon') {
       const diff = Math.abs(((planet.longitude - sunLongitude + 540) % 360) - 180)
       const deg = diff
@@ -1224,6 +1249,9 @@ export class RealAstrologyEngine {
       } else if (deg <= 8) {
         mod -= 5
         tags.push(`${planet.name} combusto`)
+      } else if (deg <= 15) {
+        mod -= 2
+        tags.push(`${planet.name} sob os raios`)
       }
     }
 
@@ -1245,13 +1273,16 @@ export class RealAstrologyEngine {
       }
     }
 
-    // Velocidade (aproximação: velocidade negativa já capturada por retrógrado;
-    // velocidade muito baixa penaliza levemente, muito alta dá leve bônus)
-    if (Math.abs(planet.speed) < 0.1) {
-      mod -= 1
-    } else if (Math.abs(planet.speed) > 1.5) {
-      mod += 1
+    // Velocidade normalizada por planeta (aprox média): lento/rápido
+    const meanSpeed: Record<string, number> = {
+      Sun: 0.9856, Moon: 13.176, Mercury: 1.2, Venus: 1.18, Mars: 0.524,
+      Jupiter: 0.083, Saturn: 0.033, Uranus: 0.011, Neptune: 0.006, Pluto: 0.004
     }
+    const v = Math.abs(planet.speed)
+    const m = meanSpeed[planet.name] ?? 1
+    const ratio = v / m
+    if (ratio < 0.5) mod -= 1
+    else if (ratio > 1.5) mod += 1
 
     return { modifier: mod, tags }
   }
