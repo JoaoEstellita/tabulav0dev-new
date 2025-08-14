@@ -195,9 +195,166 @@ const PAIR_NOTES: Record<string, string> = {
 }
 
 export function getPairNote(p1: string, p2: string, type: AspectName): string | undefined {
-  const key1 = `${p1}|${p2}|${type}`
-  const key2 = `${p2}|${p1}|${type}`
-  return PAIR_NOTES[key1] || PAIR_NOTES[key2]
+  const t = normalizeType(type as string) as AspectName
+  const key1 = `${p1}|${p2}|${t}`
+  const key2 = `${p2}|${p1}|${t}`
+  const specific = PAIR_NOTES[key1] || PAIR_NOTES[key2]
+  if (specific) return specific
+  // Fallback genérico por categorias de planetas
+  return generateGenericPairNote(p1, p2, t)
+}
+
+
+// ------------------
+// Geração genérica por categorias
+// ------------------
+type PlanetCategory = 'luminar' | 'pessoal' | 'social' | 'transpessoal'
+
+const PLANET_CATEGORY: Record<string, PlanetCategory> = {
+  Sun: 'luminar', Moon: 'luminar',
+  Mercury: 'pessoal', Venus: 'pessoal', Mars: 'pessoal',
+  Jupiter: 'social', Saturn: 'social',
+  Uranus: 'transpessoal', Neptune: 'transpessoal', Pluto: 'transpessoal',
+}
+
+const CATEGORY_TEMPLATES: Record<string, Partial<Record<AspectName, string>>> = {
+  // luminar ↔ luminar
+  'luminar|luminar': {
+    'conjunção': 'Integração de forças vitais; foco alto em identidade/emoções.',
+    'quadratura': 'Atrito entre vontade e ritmo interno; pede ajuste consciente.',
+    'oposição': 'Polarização entre expressão e necessidade; negociar equilíbrio.',
+    'trígono': 'Harmonia vital; bem‑estar e fluidez natural.',
+    'sextil': 'Oportunidades de integração subjetiva com leveza.',
+    'quincúncio': 'Ajuste fino entre foco e humor; reorganização útil.',
+    'semissextil': 'Contato sutil de tom subjetivo; pequenas aberturas.',
+    'semiquadratura': 'Incômodos recorrentes de humor/expressão; corrigir curso.',
+    'sesquiquadratura': 'Pressão média na integração emocional/volitiva.',
+  },
+  // luminar ↔ pessoal
+  'luminar|pessoal': {
+    'conjunção': 'Vitalidade e funções pessoais se somam; impulso claro.',
+    'quadratura': 'Tensão entre humor/identidade e expressão pessoal; moderação.',
+    'oposição': 'Expectativas x respostas pessoais; pedir reciprocidade.',
+    'trígono': 'Fluidez para agir, pensar e relacionar com naturalidade.',
+    'sextil': 'Apoio prático às iniciativas pessoais e ao afeto/comunicação.',
+    'quincúncio': 'Ajustes cotidianos em hábitos e expressão.',
+    'semissextil': 'Sutilezas que ajudam rotinas e interações.',
+    'semiquadratura': 'Pequenas fricções no dia a dia; ajustes imediatos.',
+    'sesquiquadratura': 'Desalinho moderado pede persistência e refinamento.',
+  },
+  // luminar ↔ social
+  'luminar|social': {
+    'conjunção': 'Tom emocional/vital alinhado a metas e responsabilidades.',
+    'quadratura': 'Pressão entre bem‑estar e deveres; estruturar ajuda.',
+    'oposição': 'Demandas externas modulam humor/identidade; negociar limites.',
+    'trígono': 'Estabilidade e crescimento coerentes; favorece maturidade.',
+    'sextil': 'Oportunidades de consolidar apoios e organização.',
+    'quincúncio': 'Ajustar rotina para metas; realinhar expectativas.',
+    'semissextil': 'Pequenos ganhos de ordem e visão.',
+    'semiquadratura': 'Atritos práticos com cobranças; corrigir processos.',
+    'sesquiquadratura': 'Tensão média entre conforto e exigências; constância.',
+  },
+  // luminar ↔ transpessoal
+  'luminar|transpessoal': {
+    'conjunção': 'Clima interno sintoniza transformações/insights coletivos.',
+    'quadratura': 'Instabilidade/nebulosa externa pressiona o tom emocional.',
+    'oposição': 'Forças coletivas espelham desafios internos; manter centro.',
+    'trígono': 'Abre percepção e renovação emocional/identitária.',
+    'sextil': 'Janela de inspiração e atualização subjetiva.',
+    'quincúncio': 'Microajustes de sensibilidade a mudanças sutis.',
+    'semissextil': 'Sinais suaves do ambiente; escuta apurada.',
+    'semiquadratura': 'Ruídos difusos; higiene emocional ajuda.',
+    'sesquiquadratura': 'Pressões latentes pedem flexibilidade e visão.',
+  },
+  // pessoal ↔ pessoal
+  'pessoal|pessoal': {
+    'conjunção': 'Impulso forte em expressão, afeto e mente; alta atividade.',
+    'quadratura': 'Choques de ritmo/desejo; ajustar comunicação e ação.',
+    'oposição': 'Polaridade em necessidades pessoais; combinar tempos.',
+    'trígono': 'Sinergia pessoal; produtividade e trocas favorecidas.',
+    'sextil': 'Boas oportunidades sociais/práticas com iniciativa.',
+    'quincúncio': 'Ajustes em hábitos e trato; refino de rotinas.',
+    'semissextil': 'Pequenos entendimentos que destravam o dia.',
+    'semiquadratura': 'Atritos leves recorrentes; calibrar expectativas.',
+    'sesquiquadratura': 'Desalinho moderado; persistir com ajustes.',
+  },
+  // pessoal ↔ social
+  'pessoal|social': {
+    'conjunção': 'Iniciativas e relações sob foco de metas/estrutura.',
+    'quadratura': 'Limites e cobranças testam expressão/afetos.',
+    'oposição': 'Exigências externas pedem negociação de prioridades.',
+    'trígono': 'Crescimento consistente; disciplina com leveza.',
+    'sextil': 'Acordos e oportunidades realistas; bom para planejar.',
+    'quincúncio': 'Ajustes entre ambição e rotina pessoal.',
+    'semissextil': 'Pequenos alinhamentos com autoridade/processos.',
+    'semiquadratura': 'Burocracias/atritos práticos; corrigir fluxo.',
+    'sesquiquadratura': 'Pressões medianas; manter método e diálogo.',
+  },
+  // pessoal ↔ transpessoal
+  'pessoal|transpessoal': {
+    'conjunção': 'Ação, mente e afetos sintonizam viradas profundas.',
+    'quadratura': 'Tensões com o imprevisível/coletivo; adaptar‑se.',
+    'oposição': 'Ambiente impõe mudanças; flexibilidade estratégica.',
+    'trígono': 'Intuição e criatividade elevadas; boas inovações.',
+    'sextil': 'Oportunidades de atualizar visão e relações.',
+    'quincúncio': 'Refinos para lidar com mudanças sutis.',
+    'semissextil': 'Sinais discretos de renovação; experimentar.',
+    'semiquadratura': 'Ruídos e dispersões; foco e limites.',
+    'sesquiquadratura': 'Desalinho médio; cadência e revisão contínua.',
+  },
+  // social ↔ social
+  'social|social': {
+    'conjunção': 'Ciclos de consolidação e visão; marco estratégico.',
+    'quadratura': 'Fricção crescimento‑limites; reestruturação.',
+    'oposição': 'Pêndulo entre expansão e controle; diplomacia.',
+    'trígono': 'Sustentabilidade e reconhecimento; frutos do método.',
+    'sextil': 'Janelas para acordos sólidos e políticas eficazes.',
+    'quincúncio': 'Ajustar metas a recursos; realismo.',
+    'semissextil': 'Sutilezas de timing favorecem avanços.',
+    'semiquadratura': 'Entraves administrativos; afinar processos.',
+    'sesquiquadratura': 'Pressão gradual por mudanças estruturais.',
+  },
+  // social ↔ transpessoal
+  'social|transpessoal': {
+    'conjunção': 'Reformas profundas com visão; ciclos marcantes.',
+    'quadratura': 'Choques de sistema; ruptura vs. manutenção.',
+    'oposição': 'Polarizações coletivas; gerir riscos e transições.',
+    'trígono': 'Atualizações estruturais fluem; modernização.',
+    'sextil': 'Oportunidades de transformação responsável.',
+    'quincúncio': 'Ajustes regulatórios e culturais.',
+    'semissextil': 'Sinais de tendência; prudência tática.',
+    'semiquadratura': 'Tensões difusas; amortecer impactos.',
+    'sesquiquadratura': 'Pressão sistêmica média; adaptação contínua.',
+  },
+  // transpessoal ↔ transpessoal
+  'transpessoal|transpessoal': {
+    'conjunção': 'Marcos geracionais; transformações de época.',
+    'quadratura': 'Crises coletivas que pedem reinvenção.',
+    'oposição': 'Polaridades históricas; redefinições amplas.',
+    'trígono': 'Avanços sutis porém duradouros no coletivo.',
+    'sextil': 'Oportunidades latentes de evolução cultural.',
+    'quincúncio': 'Ajustes de longo prazo na psique coletiva.',
+    'semissextil': 'Sinais fracos de mudança; decantar.',
+    'semiquadratura': 'Atritos de fundo; purgar excessos.',
+    'sesquiquadratura': 'Pressões latentes por mutações sistêmicas.',
+  },
+}
+
+function sortCategories(a: PlanetCategory, b: PlanetCategory): [PlanetCategory, PlanetCategory] {
+  const order: PlanetCategory[] = ['luminar','pessoal','social','transpessoal']
+  const ia = order.indexOf(a), ib = order.indexOf(b)
+  return ia <= ib ? [a,b] as [PlanetCategory,PlanetCategory] : [b,a] as [PlanetCategory,PlanetCategory]
+}
+
+function generateGenericPairNote(p1: string, p2: string, type: AspectName): string | undefined {
+  const c1 = PLANET_CATEGORY[p1]
+  const c2 = PLANET_CATEGORY[p2]
+  if (!c1 || !c2) return undefined
+  const [ca, cb] = sortCategories(c1, c2)
+  const catKey = `${ca}|${cb}`
+  const bucket = CATEGORY_TEMPLATES[catKey]
+  if (!bucket) return undefined
+  return bucket[type] || undefined
 }
 
 
