@@ -451,7 +451,7 @@ export default function HomeScreen() {
         <View style={[styles.section, { paddingHorizontal: 16 }]}>
           <Text style={styles.sectionTitle}>🏠 Sistema de Casas</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            {(['whole','equal','placidus'] as const).map(sys => (
+            {(['equal','placidus'] as const).map(sys => (
               <TouchableOpacity
                 key={sys}
                 onPress={async () => {
@@ -467,13 +467,11 @@ export default function HomeScreen() {
                   backgroundColor: houseSystem === sys ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.08)'
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: houseSystem === sys ? '700' : '500' }}>
-                  {sys === 'equal' ? 'casas inteiras' : sys}
-                </Text>
+                <Text style={{ color: '#fff', fontWeight: houseSystem === sys ? '700' : '500' }}>{sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem === 'equal' ? 'casas inteiras' : houseSystem}
+          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem === 'equal' ? 'Casas Inteiras' : 'Placidus'}
             {typeof settings?.ascOverrideDeg === 'number' || typeof settings?.natalAscOverrideDeg === 'number'
               ? ' (Equal aplicado ao calcular casas devido a override de ASC)'
               : ''}

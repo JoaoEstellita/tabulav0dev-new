@@ -1,10 +1,23 @@
 import React from 'react'
-import { View, Text, StyleSheet, FlatList } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import useTransits from '../hooks/useTransits'
 
 export default function TransitsComparativePanel() {
   const { personal, general, statusPersonal } = useTransits(null)
+  const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
+    ((globalThis as any).__userHouseSystem === 'placidus' ? 'placidus' : 'equal')
+  )
+
+  const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
+    try {
+      setHouseSystem(sys)
+      ;(globalThis as any).__userHouseSystem = sys
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('house-system-changed'))
+      }
+    } catch {}
+  }, [])
 
   const topPersonal = [...personal].sort((a,b)=>b.strength-a.strength).slice(0,8)
 
@@ -12,6 +25,19 @@ export default function TransitsComparativePanel() {
     <LinearGradient colors={['#1E1E2E', '#2A2A3E']} style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Trânsitos Comparativos</Text>
+        <View style={styles.toggleGroup}>
+          {(['equal','placidus'] as const).map(sys => (
+            <TouchableOpacity
+              key={sys}
+              onPress={() => applyHouseSystem(sys)}
+              style={[styles.toggleBtn, houseSystem === sys && styles.toggleBtnActive]}
+            >
+              <Text style={[styles.toggleText, houseSystem === sys && styles.toggleTextActive]}>
+                {sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         {statusPersonal && (
           <Text style={styles.status}>Status: {statusPersonal.level} ({statusPersonal.score}%)</Text>
         )}
@@ -68,6 +94,28 @@ const styles = StyleSheet.create({
   itemRow: { marginBottom: 8 },
   itemText: { color: '#FFFFFF', fontSize: 13 },
   metaText: { color: '#A0A0A0', fontSize: 12 },
+  toggleGroup: {
+    flexDirection: 'row',
+    gap: 6,
+    marginLeft: 'auto',
+  },
+  toggleBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)'
+  },
+  toggleBtnActive: {
+    backgroundColor: 'rgba(255,215,0,0.2)'
+  },
+  toggleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500'
+  },
+  toggleTextActive: {
+    fontWeight: '700'
+  },
 })
 
 
