@@ -447,42 +447,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Seleção de Sistema de Casas (persistida) */}
-        <View style={[styles.section, { paddingHorizontal: 16 }]}>
-          <Text style={styles.sectionTitle}>🏠 Sistema de Casas</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {(['equal','placidus'] as const).map(sys => (
-              <TouchableOpacity
-                key={sys}
-                onPress={async () => {
-                  setHouseSystem(sys)
-                  await updateSettings({ houseSystem: sys })
-                  ;(globalThis as any).__userHouseSystem = sys
-                  await refreshData(true)
-                }}
-                style={{
-                  paddingVertical: 8,
-                  paddingHorizontal: 12,
-                  borderRadius: 8,
-                  backgroundColor: houseSystem === sys ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.08)'
-                }}
-              >
-                <Text style={{ color: '#fff', fontWeight: houseSystem === sys ? '700' : '500' }}>{sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={{ color: '#A0A0A0', marginTop: 6 }}>Atual: {houseSystem === 'equal' ? 'Casas Inteiras' : 'Placidus'}
-            {typeof settings?.ascOverrideDeg === 'number' || typeof settings?.natalAscOverrideDeg === 'number'
-              ? ' (Equal aplicado ao calcular casas devido a override de ASC)'
-              : ''}
-          </Text>
-          {transitData?.currentTransits?.housesApproximate ? (
-            <Text style={{ color: '#FFA500', marginTop: 4 }}>aprox: casas calculadas com timezone heurístico</Text>
-          ) : null}
-          {transitData?.currentTransits?.natalHousesApproximate ? (
-            <Text style={{ color: '#FFA500', marginTop: 2 }}>aprox (natal): casas natais com aproximação</Text>
-          ) : null}
-        </View>
+        {/* Toggle removido daqui (agora ao lado de Trânsitos Comparativos) */}
 
         {/* Espaçamento final */}
         <View style={styles.bottomSpacing} />

@@ -2,16 +2,19 @@ import React from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import useTransits from '../hooks/useTransits'
+import { useUserSettings } from '../hooks/useUserSettings'
 
 export default function TransitsComparativePanel() {
   const { personal, general, statusPersonal } = useTransits(null)
+  const { settings, updateSettings } = useUserSettings()
   const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
-    ((globalThis as any).__userHouseSystem === 'placidus' ? 'placidus' : 'equal')
+    (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
   )
 
   const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
     try {
       setHouseSystem(sys)
+      await updateSettings({ houseSystem: sys })
       ;(globalThis as any).__userHouseSystem = sys
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
