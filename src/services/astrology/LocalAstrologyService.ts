@@ -214,12 +214,21 @@ export class LocalAstrologyService {
     const collectiveKeyAspects = (realData.collective?.keyAspects || []).slice(0, 5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     const lunarPhase = realData.collective?.lunarPhase
 
+    // Modulação leve do índice coletivo sobre o overall pessoal
+    const overallModulated = (() => {
+      const pos = collectivePositive ?? 0
+      const neg = collectiveNegative ?? 0
+      const net = pos - neg // -100..+100
+      const shifted = averageScore + net * 0.15 // mistura 15%
+      return Math.round(Math.max(0, Math.min(100, shifted)))
+    })()
+
     const dailyOverview = {
       bestArea,
       challengingArea,
       generalTrend,
       keyAspects,
-      overall: Math.round(averageScore), // Energia Geral baseada na média das áreas
+      overall: overallModulated,
       message: `${generalTrend}. Destaque para ${bestArea} e atenção em ${challengingArea}.`,
       collectivePositive,
       collectiveNegative,

@@ -333,6 +333,26 @@ export default function HomeScreen() {
                           Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
                         </Text>
                       )}
+                      {/* Aspectos-chave coletivos com ícones */}
+                      {!!(transitData?.dailyOverview?.collectiveKeyAspects?.length) && (
+                        <View style={{ marginTop: 4 }}>
+                          {(transitData.dailyOverview.collectiveKeyAspects || []).slice(0,3).map((txt, idx) => {
+                            const icon = (() => {
+                              if (txt.includes('conjunção')) return '☌'
+                              if (txt.includes('oposição')) return '☍'
+                              if (txt.includes('quadratura')) return '□'
+                              if (txt.includes('trígono')) return '△'
+                              if (txt.includes('sextil')) return '✶'
+                              if (txt.includes('sesquiquadratura')) return '∡'
+                              if (txt.includes('semiquadratura')) return '∠'
+                              return '•'
+                            })()
+                            return (
+                              <Text key={idx} style={styles.summaryText}>{icon} {txt}</Text>
+                            )
+                          })}
+                        </View>
+                      )}
                     </View>
                   )}
                   
