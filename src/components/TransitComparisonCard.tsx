@@ -267,17 +267,16 @@ export default function TransitComparisonCard({
           <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
         </View>
         <View style={styles.toggleGroup}>
-          {(['equal','placidus'] as const).map(sys => (
-            <TouchableOpacity
-              key={sys}
-              onPress={() => applyHouseSystem(sys)}
-              style={[styles.toggleBtn, houseSystem === sys && styles.toggleBtnActive]}
-            >
-              <Text style={[styles.toggleText, houseSystem === sys && styles.toggleTextActive]}>
-                {sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            onPress={() => applyHouseSystem(houseSystem === 'placidus' ? 'equal' : 'placidus')}
+            style={[styles.toggleBtn, styles.toggleBtnActive]}
+            accessibilityRole="button"
+            accessibilityLabel="Alternar sistema de casas"
+          >
+            <Text style={[styles.toggleText, styles.toggleTextActive]}>
+              {houseSystem === 'equal' ? 'Casas Inteiras' : 'Placidus'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 

@@ -38,17 +38,16 @@ export default function TransitsComparativePanel() {
       <View style={styles.headerRow}>
         <Text style={styles.title}>Trânsitos Comparativos</Text>
         <View style={styles.toggleGroup}>
-          {(['equal','placidus'] as const).map(sys => (
-            <TouchableOpacity
-              key={sys}
-              onPress={() => applyHouseSystem(sys)}
-              style={[styles.toggleBtn, houseSystem === sys && styles.toggleBtnActive]}
-            >
-              <Text style={[styles.toggleText, houseSystem === sys && styles.toggleTextActive]}>
-                {sys === 'equal' ? 'Casas Inteiras' : 'Placidus'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            onPress={() => applyHouseSystem(houseSystem === 'placidus' ? 'equal' : 'placidus')}
+            style={[styles.toggleBtn, styles.toggleBtnActive]}
+            accessibilityRole="button"
+            accessibilityLabel="Alternar sistema de casas"
+          >
+            <Text style={[styles.toggleText, styles.toggleTextActive]}>
+              {houseSystem === 'equal' ? 'Casas Inteiras' : 'Placidus'}
+            </Text>
+          </TouchableOpacity>
         </View>
         {statusPersonal && (
           <Text style={styles.status}>Status: {statusPersonal.level} ({statusPersonal.score}%)</Text>
