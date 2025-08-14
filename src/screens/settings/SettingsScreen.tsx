@@ -384,6 +384,23 @@ export default function SettingsScreen() {
     console.log('👤 Usuário atual:', user?.uid)
     console.log('🔧 Função logout disponível:', !!logout)
     
+    if (Platform.OS === 'web') {
+      try {
+        // window.confirm retorna true/false no Web
+        // eslint-disable-next-line no-restricted-globals
+        const ok = typeof window !== 'undefined' ? window.confirm('Tem certeza que deseja sair?') : true
+        if (!ok) return
+        setIsLoading(true)
+        logout()
+          .then(() => console.log('✅ Logout (web) realizado com sucesso'))
+          .catch((error) => console.error('❌ Erro no logout (web):', error))
+          .finally(() => setIsLoading(false))
+      } catch (error) {
+        console.error('❌ Erro no fluxo de logout (web):', error)
+      }
+      return
+    }
+
     Alert.alert(
       'Sair da Conta',
       'Tem certeza que deseja sair?',

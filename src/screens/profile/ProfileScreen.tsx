@@ -142,6 +142,20 @@ export default function ProfileScreen() {
   }
 
   const handleLogout = async () => {
+    // Web: usar confirm() para garantir fluxo sem modais nativos bloqueando estado
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line no-restricted-globals
+      const ok = window.confirm('Tem certeza que deseja sair da sua conta?')
+      if (!ok) return
+      try {
+        await FCMService.clearAllNotifications()
+        await logout()
+      } catch (error) {
+        console.error('Erro ao fazer logout (web):', error)
+      }
+      return
+    }
+
     Alert.alert("Sair", "Tem certeza que deseja sair da sua conta?", [
       { text: "Cancelar", style: "cancel" },
       {
