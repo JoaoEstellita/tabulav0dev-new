@@ -68,6 +68,8 @@ export function detectAspects(setA: AspectInputBody[], setB: AspectInputBody[], 
             'sextil': 0.6,
             'quincúncio': 0.5,
             'semissextil': 0.4,
+            'semiquadratura': 0.45,
+            'sesquiquadratura': 0.55,
           }
           const applyBoost = applying ? 1.10 : 1.0
           const strength = Math.round(100 * weight[type] * proximity * applyBoost)

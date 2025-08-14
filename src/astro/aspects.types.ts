@@ -1,4 +1,13 @@
-export type AspectName = 'conjunção' | 'oposição' | 'quadratura' | 'trígono' | 'sextil' | 'quincúncio' | 'semissextil'
+export type AspectName =
+  | 'conjunção'
+  | 'oposição'
+  | 'quadratura'
+  | 'trígono'
+  | 'sextil'
+  | 'quincúncio'
+  | 'semissextil'
+  | 'semiquadratura'
+  | 'sesquiquadratura'
 
 export interface AspectDefinition {
   name: AspectName

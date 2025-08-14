@@ -10,6 +10,8 @@ const aspectsConfig: AspectsConfig = {
     { name: 'sextil', angle: 60, baseOrb: 5 },
     { name: 'quincúncio', angle: 150, baseOrb: 5 },
     { name: 'semissextil', angle: 30, baseOrb: 3 },
+    { name: 'semiquadratura', angle: 45, baseOrb: 2 },
+    { name: 'sesquiquadratura', angle: 135, baseOrb: 2 },
   ],
   maxOrbCap: 12,
   // Orbes específicos por planeta e aspecto (graus)
@@ -26,9 +28,9 @@ const aspectsConfig: AspectsConfig = {
     Mars:   { 0: 6, 180: 6, 120: 5.3333, 90: 4, 60: 3.3333, 150: 3.3333, 30: 2 },
     Saturn: { 0: 6, 180: 6, 120: 5.3333, 90: 4, 60: 3.3333, 150: 3.3333, 30: 2 },
     // 4) Urano, Netuno e Plutão (transpessoais)
-    Uranus:  { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
-    Neptune: { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
-    Pluto:   { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1 },
+    Uranus:  { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1, 45: 1, 135: 1 },
+    Neptune: { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1, 45: 1, 135: 1 },
+    Pluto:   { 0: 5, 180: 5, 120: 4, 90: 3, 60: 2, 150: 2, 30: 1, 45: 1, 135: 1 },
     // 5) Nodo Norte: adota o orbe do outro planeta do par (tratado no engine)
     // 6) Aspectos com casas: 0.5 grau (aplicado no RealAstrologyEngine)
   },
