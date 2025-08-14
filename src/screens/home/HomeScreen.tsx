@@ -118,6 +118,17 @@ export default function HomeScreen() {
     }
   }, [])
 
+  // Recalcular quando sistema de casas for alterado via toggle global
+  useEffect(() => {
+    const onSysChanged = () => {
+      try { refreshData(true) } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('house-system-changed', onSysChanged as any)
+      return () => window.removeEventListener('house-system-changed', onSysChanged as any)
+    }
+  }, [])
+
   const initializeNotifications = async () => {
     if (!user) return
     
