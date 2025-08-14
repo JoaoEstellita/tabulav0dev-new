@@ -381,6 +381,14 @@ export default function HomeScreen() {
                           })}
                         </View>
                       )}
+                      {/* Master Aspects (UI opcional – mostrar quando disponível e configurado) */}
+                      {Array.isArray(transitData?.dailyOverview?.masterAspects) && transitData.dailyOverview.masterAspects.length > 0 && (
+                        <View style={{ marginTop: 6 }}>
+                          {(transitData.dailyOverview.masterAspects || []).slice(0,3).map((m, i) => (
+                            <Text key={i} style={styles.summaryText}>⭐ {m.text}</Text>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   )}
                   

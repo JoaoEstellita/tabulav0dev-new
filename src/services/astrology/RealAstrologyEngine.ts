@@ -928,6 +928,46 @@ export class RealAstrologyEngine {
     const sun = planets.find(p => p.name === 'Sun')
     const natalAlmuten = this.getNatalAlmuten(natalPlanets)
 
+    // Helpers para padrões T→N envolvendo pontos natais
+    const degDiff = (a:number,b:number)=>{ const d=Math.abs(((a-b+540)%360)-180); return d }
+    const within = (x:number, target:number, tol:number)=> Math.abs(x-target) <= tol
+    const natalByName = new Map(natalPlanets.map(p=>[p.name,p]))
+    const countByNatal: Record<string, number> = {}
+    aspects.forEach(a=>{ countByNatal[a.planet2]=(countByNatal[a.planet2]||0)+1 })
+    const tnPatternBoost: Map<string, number> = new Map()
+    const markBoost = (t:string,n:string,m:number)=>{
+      const k = `${t}|${n}`
+      tnPatternBoost.set(k, Math.max(m, tnPatternBoost.get(k)||1))
+    }
+    // Escanear por transit hitting dois natais para padrões: T‑Square, Grande Trígono, Yod
+    const byTransit: Record<string, RealAspect[]> = {}
+    for (const a of aspects) {
+      (byTransit[a.planet1] ||= []).push(a)
+    }
+    for (const [tName, list] of Object.entries(byTransit)) {
+      for (let i=0;i<list.length;i++) for (let j=i+1;j<list.length;j++) {
+        const A = list[i], B = list[j]
+        const n1 = natalByName.get(A.planet2), n2 = natalByName.get(B.planet2)
+        if (!n1 || !n2) continue
+        const dd = degDiff(n1.longitude, n2.longitude)
+        // T‑Square: t□n1 e t□n2 com n1☍n2
+        if (A.type==='quadratura' && B.type==='quadratura' && within(dd,180,6)) {
+          markBoost(tName, A.planet2, 1.15)
+          markBoost(tName, B.planet2, 1.15)
+        }
+        // Grande Trígono: t△n1 e t△n2 com n1△n2
+        if (A.type==='trígono' && B.type==='trígono' && within(dd,120,6)) {
+          markBoost(tName, A.planet2, 1.12)
+          markBoost(tName, B.planet2, 1.12)
+        }
+        // Yod: t⚻n1 e t⚻n2 com n1✶n2
+        if (A.type==='quincúncio' && B.type==='quincúncio' && within(dd,60,4)) {
+          markBoost(tName, A.planet2, 1.10)
+          markBoost(tName, B.planet2, 1.10)
+        }
+      }
+    }
+
     for (const [areaName, config] of Object.entries(this.LIFE_AREAS)) {
       let totalScore = 0
       let influences: string[] = []
@@ -1010,13 +1050,18 @@ export class RealAstrologyEngine {
           const areaRulers = new Set(config.houses.flatMap(h => houseRulers[h] || []))
           const rulerBoost = areaRulers.has(other) ? 1.06 : 1.0
 
+          // Padrões T→N
+          const pattMult = tnPatternBoost.get(`${planetName}|${other}`) || 1.0
+          // Cluster: múltiplos hits ao mesmo natal
+          const clusterMult = (countByNatal[other]||0) >= 2 ? 1.10 : 1.0
+
           // Casa angularidade – multiplicador acidental pelo local do trânsito nas casas NATAIS
           const angularMult = this.getHouseAngularMultiplier(planet.house)
 
           // Almuten (peso extra quando envolvido)
           const almutenMult = (natalAlmuten && (planetName === natalAlmuten || other === natalAlmuten)) ? 1.08 : 1.0
           let aspectScore = Math.max(0, Math.min(100,
-            baseScore * natalWeight * relevantHouseBoost * rulerBoost * receptionMult * angularMult * almutenMult + delta
+            baseScore * natalWeight * relevantHouseBoost * rulerBoost * receptionMult * angularMult * almutenMult * pattMult * clusterMult + delta
           ))
 
           // Peso de duração por ciclo planetário (Lua/Mercúrio < 1; lentos > 1)
