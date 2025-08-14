@@ -41,7 +41,10 @@ const PAIR_NOTES: Record<string, string> = {
   'Venus|Uranus|oposição': 'Surpresas afetivas; busca por liberdade versus vínculo.',
   // Ampliadas
   'Sun|Moon|conjunção': 'Integração de identidade e emoções; foco subjetivo elevado.',
-  'Sun|Moon|oposição': 'Conflito interno/externo entre vontade e necessidades emocionais.',
+  'Sun|Moon|oposição': 'Conflito entre vontade consciente e necessidades emocionais; pede harmonização.',
+  'Sun|Moon|trígono': 'Harmonia entre expressão pessoal e sentimentos; bem‑estar e fluidez emocional.',
+  'Sun|Moon|quadratura': 'Choque entre desejos conscientes e emoções; desafios em decisões e equilíbrio.',
+  'Sun|Moon|sextil': 'Oportunidade de integrar identidade e emoções de forma construtiva.',
   'Mercury|Venus|trígono': 'Linguagem afetuosa e estética; bom para acordos e arte.',
   'Mercury|Venus|quadratura': 'Dizer/sentir em descompasso; atenção a diplomacia.',
   'Mars|Jupiter|trígono': 'Ânimo e iniciativa para crescer; coragem com visão.',
