@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
+import UserService from '../services/firebase/UserService'
+import { useAuth } from '../hooks/useAuth'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -67,6 +69,7 @@ export default function TransitComparisonCard({
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
+  const { user } = useAuth()
   const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
     (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
   )
@@ -82,6 +85,7 @@ export default function TransitComparisonCard({
       setHouseSystem(sys)
       await updateSettings({ houseSystem: sys })
       ;(globalThis as any).__userHouseSystem = sys
+      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, sys) } catch {} }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }

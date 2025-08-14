@@ -1,12 +1,15 @@
 import React from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import UserService from '../services/firebase/UserService'
+import { useAuth } from '../hooks/useAuth'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
 
 export default function TransitsComparativePanel() {
   const { personal, general, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
+  const { user } = useAuth()
   const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
     (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
   )
@@ -21,6 +24,7 @@ export default function TransitsComparativePanel() {
       setHouseSystem(sys)
       await updateSettings({ houseSystem: sys })
       ;(globalThis as any).__userHouseSystem = sys
+      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, sys) } catch {} }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }

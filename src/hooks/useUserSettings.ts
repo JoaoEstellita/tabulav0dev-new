@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import UserService from '../services/firebase/UserService';
+import { useAuth } from './useAuth';
 
 export interface UserSettings {
   dataSync: boolean;
@@ -17,6 +19,7 @@ export interface UserSettings {
 const STORAGE_KEY = '@tabula_estelar:user_settings';
 
 export function useUserSettings() {
+  const { user } = useAuth() as any;
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +40,7 @@ export function useUserSettings() {
       // }
       
       // Por enquanto, usar localStorage
+      // Preferir preferência do usuário no Firestore quando logado
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -56,6 +60,16 @@ export function useUserSettings() {
         setSettings(defaultSettings);
         await saveSettings(defaultSettings);
       }
+      // Se logado, tentar puxar preferência persistida
+      try {
+        if (user?.uid) {
+          const hs = await UserService.getHouseSystem(user.uid)
+          if (hs === 'placidus' || hs === 'equal' || hs === 'whole') {
+            const merged = { ...(settings || JSON.parse(stored || '{}')), houseSystem: hs === 'whole' ? 'placidus' : hs }
+            await saveSettings(merged)
+          }
+        }
+      } catch {}
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
       // Fallback para configurações padrão

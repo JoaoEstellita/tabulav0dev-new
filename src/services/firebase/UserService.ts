@@ -208,6 +208,34 @@ class UserService {
     }
   }
 
+  async getHouseSystem(userId: string): Promise<'whole'|'equal'|'placidus'|null> {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId))
+      if (!userDoc.exists()) return null
+      const data = userDoc.data() as any
+      return (
+        data?.preferences?.houseSystem ||
+        data?.houseSystem ||
+        null
+      )
+    } catch (error) {
+      console.error('Erro ao obter houseSystem do usuário:', error)
+      return null
+    }
+  }
+
+  async setHouseSystem(userId: string, system: 'whole'|'equal'|'placidus'): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', userId)
+      await updateDoc(userRef, {
+        'preferences.houseSystem': system,
+        updatedAt: serverTimestamp(),
+      })
+    } catch (error) {
+      console.error('Erro ao salvar preferência houseSystem:', error)
+    }
+  }
+
   async saveNatalAsc(userId: string, data: {
     natalAscDeg: number
     natalMcDeg: number
