@@ -355,13 +355,17 @@ export default function HomeScreen() {
                                 extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
                                 if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
                                 if (typeof windowDays === 'number') extra.push(`vigência ~${windowDays} dias`)
-                                // Pico aproximado: deslocamento atual/relSpeed assumindo fechamento ao meio
+                                // Pico aproximado (aplicante) ou tempo desde pico (separante)
                                 let peak = ''
                                 try {
                                   if (typeof a.orb === 'number' && typeof (a as any).relSpeed === 'number' && (a as any).relSpeed > 0.01) {
-                                    const daysToPeak = (a.orb / (a as any).relSpeed)
-                                    const d = new Date(Date.now() + daysToPeak * 86400000)
-                                    peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
+                                    const days = (a.orb / (a as any).relSpeed)
+                                    if (a.isApplying) {
+                                      const d = new Date(Date.now() + days * 86400000)
+                                      peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
+                                    } else {
+                                      peak = `separante: pico há ~${Math.round(days)} dias`
+                                    }
                                     extra.push(peak)
                                   }
                                 } catch {}

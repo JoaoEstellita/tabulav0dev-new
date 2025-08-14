@@ -748,6 +748,69 @@ export class RealAstrologyEngine {
       return { a: { ...a, orbAllowed, relSpeed, windowDays }, score, sign }
     })
 
+    // Detectar padrões aspectuais (simplificado)
+    const keyFor = (x: string, y: string) => x < y ? `${x}|${y}` : `${y}|${x}`
+    const hasPair = (list: RealAspect[], type: string, p: string, q: string) => list.some(a => a.type === type && keyFor(a.planet1,a.planet2) === keyFor(p,q))
+    const idxOf = (list: RealAspect[], type: string, p: string, q: string): number | undefined => {
+      for (let i=0;i<list.length;i++) { const a=list[i]; if (a.type===type && keyFor(a.planet1,a.planet2)===keyFor(p,q)) return i }
+      return undefined
+    }
+    const uniqPlanets = Array.from(new Set(aspectsTT.flatMap(a => [a.planet1, a.planet2])))
+    const boostIdx = new Map<number, number>()
+
+    // T‑Square: A□B, A□C, B☍C
+    for (const a of uniqPlanets) {
+      for (let i = 0; i < uniqPlanets.length; i++) {
+        for (let j = i+1; j < uniqPlanets.length; j++) {
+          const b = uniqPlanets[i], c = uniqPlanets[j]
+          if (hasPair(aspectsTT,'quadratura',a,b) && hasPair(aspectsTT,'quadratura',a,c) && hasPair(aspectsTT,'oposição',b,c)) {
+            const i1 = idxOf(aspectsTT,'quadratura',a,b)
+            const i2 = idxOf(aspectsTT,'quadratura',a,c)
+            const i3 = idxOf(aspectsTT,'oposição',b,c)
+            ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.15, boostIdx.get(ix)||1)) })
+          }
+        }
+      }
+    }
+
+    // Grande Trígono: A△B, A△C, B△C
+    for (let i = 0; i < uniqPlanets.length; i++) {
+      for (let j = i+1; j < uniqPlanets.length; j++) {
+        for (let k = j+1; k < uniqPlanets.length; k++) {
+          const a = uniqPlanets[i], b = uniqPlanets[j], c = uniqPlanets[k]
+          if (hasPair(aspectsTT,'trígono',a,b) && hasPair(aspectsTT,'trígono',a,c) && hasPair(aspectsTT,'trígono',b,c)) {
+            const i1 = idxOf(aspectsTT,'trígono',a,b)
+            const i2 = idxOf(aspectsTT,'trígono',a,c)
+            const i3 = idxOf(aspectsTT,'trígono',b,c)
+            ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.12, boostIdx.get(ix)||1)) })
+          }
+        }
+      }
+    }
+
+    // Yod: A⚻B, A⚻C e B✶C
+    for (let i = 0; i < uniqPlanets.length; i++) {
+      for (let j = 0; j < uniqPlanets.length; j++) if (j!==i) {
+        for (let k = 0; k < uniqPlanets.length; k++) if (k!==i && k!==j) {
+          const a = uniqPlanets[i], b = uniqPlanets[j], c = uniqPlanets[k]
+          if (hasPair(aspectsTT,'quincúncio',a,b) && hasPair(aspectsTT,'quincúncio',a,c) && hasPair(aspectsTT,'sextil',b,c)) {
+            const i1 = idxOf(aspectsTT,'quincúncio',a,b)
+            const i2 = idxOf(aspectsTT,'quincúncio',a,c)
+            const i3 = idxOf(aspectsTT,'sextil',b,c)
+            ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.10, boostIdx.get(ix)||1)) })
+          }
+        }
+      }
+    }
+
+    // Aplicar boosts
+    if (boostIdx.size) {
+      boostIdx.forEach((mult, idx) => {
+        const s = scored[idx]
+        if (s) s.score = Math.max(0, Math.min(100, Math.round(s.score * mult)))
+      })
+    }
+
     const pos = scored.filter(s => s.sign > 0).map(s => s.score)
     const neg = scored.filter(s => s.sign < 0).map(s => s.score)
     const avg = (arr: number[]) => arr.length ? arr.reduce((x,y)=>x+y,0)/arr.length : 0
@@ -832,6 +895,7 @@ export class RealAstrologyEngine {
     const lifeAreas: RealAstrologyData['lifeAreas'] = {}
     const debugByArea: NonNullable<RealAstrologyData['debug']>['lifeAreas'] = {}
     const sun = planets.find(p => p.name === 'Sun')
+    const natalAlmuten = this.getNatalAlmuten(natalPlanets)
 
     for (const [areaName, config] of Object.entries(this.LIFE_AREAS)) {
       let totalScore = 0
@@ -912,13 +976,24 @@ export class RealAstrologyEngine {
           // Casa angularidade – multiplicador acidental pelo local do trânsito nas casas NATAIS
           const angularMult = this.getHouseAngularMultiplier(planet.house)
 
+          // Almuten (peso extra quando envolvido)
+          const almutenMult = (natalAlmuten && (planetName === natalAlmuten || other === natalAlmuten)) ? 1.08 : 1.0
           let aspectScore = Math.max(0, Math.min(100,
-            baseScore * natalWeight * relevantHouseBoost * receptionMult * angularMult + delta
+            baseScore * natalWeight * relevantHouseBoost * receptionMult * angularMult * almutenMult + delta
           ))
 
           // Peso de duração por ciclo planetário (Lua/Mercúrio < 1; lentos > 1)
           aspectScore *= this.getPlanetDurationWeight(planetName, other)
 
+          // Estimativa de tempo ao pico (aplicante) ou desde o pico (separante)
+          const transitSpeed = Math.abs(planets.find(p=>p.name===planetName)?.speed ?? 0)
+          const relSpeedTN = Math.max(0.02, transitSpeed)
+          const daysToPeak = aspect.orb / relSpeedTN
+          const timeInfo: any = {}
+          if (Number.isFinite(daysToPeak)) {
+            if (aspect.isApplying) timeInfo.timeToPeakDays = Math.round(daysToPeak)
+            else timeInfo.elapsedSincePeakDays = Math.round(daysToPeak)
+          }
           aspectDetails.push({
             with: other,
             type: aspect.type,
@@ -926,7 +1001,8 @@ export class RealAstrologyEngine {
             isApplying: aspect.isApplying,
             baseScore,
             beneficMaleficDelta: delta,
-            finalScore: aspectScore
+            finalScore: aspectScore,
+            ...timeInfo
           })
 
           aspectScoreSum += aspectScore
@@ -1125,12 +1201,35 @@ export class RealAstrologyEngine {
       tags.push(`${planet.name} retrógrado`)
     }
 
-    // Combustão (aprox: dentro de 8° do Sol para planetas tradicionais)
+    // Combustão e Cazimi (aprox: dentro de 8° do Sol para combustão; <= 0.3° para cazimi)
     if (sunLongitude !== undefined && planet.name !== 'Sun' && planet.name !== 'Moon') {
       const diff = Math.abs(((planet.longitude - sunLongitude + 540) % 360) - 180)
-      if (diff <= 8) {
+      const deg = diff
+      const cazimiThreshold = 0.3 // ~18'
+      if (deg <= cazimiThreshold) {
+        mod += 4
+        tags.push(`${planet.name} cazimi`)
+      } else if (deg <= 8) {
         mod -= 5
         tags.push(`${planet.name} combusto`)
+      }
+    }
+
+    // Orientalidade/occidentalidade (aproximação)
+    if (sunLongitude !== undefined && planet.name !== 'Sun' && planet.name !== 'Moon') {
+      const norm = (d:number)=>((d%360)+360)%360
+      const d = norm(planet.longitude - sunLongitude) // 0..360
+      const oriental = d > 0 && d < 180
+      const isSuperior = ['Mars','Jupiter','Saturn'].includes(planet.name)
+      const isInferior = ['Mercury','Venus'].includes(planet.name)
+      if (oriental) {
+        tags.push(`${planet.name} oriental`)
+        if (isSuperior) mod += 1
+        if (isInferior) mod -= 1
+      } else {
+        tags.push(`${planet.name} ocidental`)
+        if (isSuperior) mod -= 1
+        if (isInferior) mod += 1
       }
     }
 
@@ -1167,6 +1266,15 @@ export class RealAstrologyEngine {
     const involvesLuminary = (p: string) => p === 'Sun' || p === 'Moon'
     if (involvesLuminary(aspect.planet1) || involvesLuminary(aspect.planet2)) score *= 1.05
     return Math.max(0, Math.min(100, score))
+  }
+
+  private static getNatalAlmuten(natalPlanets: RealPlanetPosition[]): string | undefined {
+    let best: { name: string; score: number } | undefined
+    for (const p of natalPlanets) {
+      const s = this.getPlanetSignScore(p)
+      if (!best || s > best.score) best = { name: p.name, score: s }
+    }
+    return best?.name
   }
 
   // Recepção mútua (simplificada): se trânsito/natal estão em signos de domicílio/exaltação um do outro => boost; em detrimento/queda => penalidade

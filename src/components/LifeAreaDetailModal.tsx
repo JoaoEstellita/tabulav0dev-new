@@ -372,9 +372,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         <View key={i} style={styles.aspectCard}>
                           <Text style={styles.aspectIcon}>{ASPECT_ICONS[a.type] || '∠'}</Text>
                           <View style={styles.aspectContent}>
-                            <Text style={styles.aspectText}>
-                              {a.type} {a.with} • orb {a.orb.toFixed ? a.orb.toFixed(1) : a.orb}° {a.isApplying ? '(aplicante)' : '(separante)'}
-                            </Text>
+                              <Text style={styles.aspectText}>
+                                {a.type} {a.with} • orb {a.orb.toFixed ? a.orb.toFixed(1) : a.orb}° {a.isApplying ? `(aplicante${typeof a.timeToPeakDays==='number' ? `: pico em ~${a.timeToPeakDays}d` : ''})` : `(separante${typeof a.elapsedSincePeakDays==='number' ? `: pico há ~${a.elapsedSincePeakDays}d` : ''})`}
+                              </Text>
                             <Text style={[styles.aspectScore, { color: (a.beneficMaleficDelta||0) >= 0 ? '#27AE60' : '#E74C3C' }]}>
                               {Math.round(a.finalScore || 0)}
                             </Text>
