@@ -319,6 +319,22 @@ export default function HomeScreen() {
                   <Text style={styles.overviewMessage}>
                     {transitData?.dailyOverview?.generalTrend || 'Analisando dados astrológicos...'}
                   </Text>
+
+                  {/* Índice coletivo (T→T) + fase lunar */}
+                  {(transitData?.dailyOverview?.collectivePositive !== undefined || transitData?.dailyOverview?.lunarPhase) && (
+                    <View style={{ marginTop: 6 }}>
+                      {transitData?.dailyOverview?.collectivePositive !== undefined && (
+                        <Text style={styles.summaryText}>
+                          Clima coletivo: +{transitData.dailyOverview.collectivePositive || 0}% / -{transitData.dailyOverview.collectiveNegative || 0}%
+                        </Text>
+                      )}
+                      {transitData?.dailyOverview?.lunarPhase && (
+                        <Text style={styles.summaryText}>
+                          Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
+                        </Text>
+                      )}
+                    </View>
+                  )}
                   
                   {/* Mini gráfico: distribuição atual de Elementos e Modalidades */}
                   {transitData?.currentTransits?.chartSummary && (

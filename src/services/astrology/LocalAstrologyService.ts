@@ -33,6 +33,12 @@ export interface LocalTransitData {
     challengingArea: string
     generalTrend: string
     keyAspects: string[]
+    overall?: number
+    // Índice coletivo (T→T)
+    collectivePositive?: number
+    collectiveNegative?: number
+    collectiveKeyAspects?: string[]
+    lunarPhase?: { name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'; waxing: boolean; elongation: number }
   }
   warnings: string[]
 }
@@ -202,13 +208,23 @@ export class LocalAstrologyService {
       .slice(0, 3)
       .map(aspect => `${aspect.planet1} ${aspect.type} ${aspect.planet2}`)
 
+    // Índice coletivo (quando disponível)
+    const collectivePositive = realData.collective?.positive
+    const collectiveNegative = realData.collective?.negative
+    const collectiveKeyAspects = (realData.collective?.keyAspects || []).slice(0, 5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+    const lunarPhase = realData.collective?.lunarPhase
+
     const dailyOverview = {
       bestArea,
       challengingArea,
       generalTrend,
       keyAspects,
       overall: Math.round(averageScore), // Energia Geral baseada na média das áreas
-      message: `${generalTrend}. Destaque para ${bestArea} e atenção em ${challengingArea}.`
+      message: `${generalTrend}. Destaque para ${bestArea} e atenção em ${challengingArea}.`,
+      collectivePositive,
+      collectiveNegative,
+      collectiveKeyAspects,
+      lunarPhase,
     }
 
     return {

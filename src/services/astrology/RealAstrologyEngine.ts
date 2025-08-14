@@ -107,6 +107,17 @@ export interface RealAstrologyData {
   midheaven: number
   housesApproximate?: boolean
   houseSystem?: 'whole'|'equal'|'placidus'
+  // Índice coletivo (T→T) e fase lunar
+  collective?: {
+    positive: number
+    negative: number
+    keyAspects: RealAspect[]
+    lunarPhase: {
+      name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'
+      waxing: boolean
+      elongation: number // 0..180 distância Sol-Lua
+    }
+  }
   // Novos conjuntos de aspectos padronizados
   aspectsCurrentTT?: RealAspect[]
   aspectsTransitsToNatalTN?: RealAspect[]
@@ -318,6 +329,9 @@ export class RealAstrologyEngine {
       )
       console.log(`✅ Aspectos T→T calculados: ${aspectsCurrentTT.length}`)
 
+      // Índice coletivo (T→T) + fase lunar
+      const collective = this.computeCollectiveIndex(aspectsCurrentTT, planetsWithHouses)
+
       // Aspectos T→N (pessoais) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
@@ -390,6 +404,7 @@ export class RealAstrologyEngine {
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,
         housesApproximate: (houses as any).approximate === true,
+        collective,
         transits: {
           personal: personalTransits,
           general: aspectsCurrentTT,
@@ -669,6 +684,65 @@ export class RealAstrologyEngine {
     const A = planets.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed }))
     const res = detectAspects(A, A, aspectsConfig)
     return res.map(r => ({ planet1: r.planet1, planet2: r.planet2, type: r.type, orb: r.orb, isApplying: r.isApplying, strength: r.strength }))
+  }
+
+  /** Índice coletivo do dia (T→T) e fase lunar */
+  private static computeCollectiveIndex(aspectsTT: RealAspect[], planets: RealPlanetPosition[]): NonNullable<RealAstrologyData['collective']> {
+    // Mapear planet data
+    const get = (name: string) => planets.find(p => p.name === name)
+    const slowBoost: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
+    const fastPenalty: Record<string, number> = { Moon:0.9 }
+    const hardTypes = new Set(['quadratura','oposição','semiquadratura','sesquiquadratura'])
+    const softTypes = new Set(['trígono','sextil'])
+
+    const scored = aspectsTT.map(a => {
+      const p1 = get(a.planet1)
+      const p2 = get(a.planet2)
+      const w1 = (slowBoost[p1?.name||''] ?? 1)*(fastPenalty[p1?.name||''] ?? 1)
+      const w2 = (slowBoost[p2?.name||''] ?? 1)*(fastPenalty[p2?.name||''] ?? 1)
+      const w = (w1 + w2) / 2
+      let sign = 0
+      if (softTypes.has(a.type)) sign = +1
+      else if (hardTypes.has(a.type)) sign = -1
+      else if (a.type === 'conjunção') {
+        // Conjunção: neutra → avaliar pares clássicos
+        const malefics = new Set(['Mars','Saturn'])
+        const benefics = new Set(['Venus','Jupiter'])
+        if ((p1 && malefics.has(p1.name)) || (p2 && malefics.has(p2.name))) sign = -1
+        if ((p1 && benefics.has(p1.name)) || (p2 && benefics.has(p2.name))) sign = sign === -1 ? 0 : +1
+      }
+      const strength = a.strength ?? 50
+      const score = Math.max(0, Math.min(100, strength * w))
+      return { a, score, sign }
+    })
+
+    const pos = scored.filter(s => s.sign > 0).map(s => s.score)
+    const neg = scored.filter(s => s.sign < 0).map(s => s.score)
+    const avg = (arr: number[]) => arr.length ? arr.reduce((x,y)=>x+y,0)/arr.length : 0
+    const positive = Math.round(Math.max(0, Math.min(100, avg(pos))))
+    const negative = Math.round(Math.max(0, Math.min(100, avg(neg))))
+
+    // Top 5 aspectos ponderados
+    const keyAspects = scored.sort((a,b)=>b.score - a.score).slice(0,5).map(s => s.a)
+
+    // Fase lunar simples
+    const sun = get('Sun')
+    const moon = get('Moon')
+    const norm = (d:number)=>((d%360)+360)%360
+    const elong = sun && moon ? Math.abs(norm(moon.longitude - sun.longitude)) : 0
+    const elong180 = elong>180 ? 360-elong : elong // 0..180
+    const waxing = sun && moon ? (norm(moon.longitude - sun.longitude) < 180) : true
+    let name: 'Nova'|'Crescente'|'Cheia'|'Minguante' = 'Crescente'
+    if (elong180 < 12) name = 'Nova'
+    else if (Math.abs(elong180 - 180) < 12) name = 'Cheia'
+    else if (!waxing) name = 'Minguante'
+
+    return {
+      positive,
+      negative,
+      keyAspects,
+      lunarPhase: { name, waxing, elongation: Number(elong180.toFixed(2)) }
+    }
   }
 
   /**
