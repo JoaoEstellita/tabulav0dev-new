@@ -14,6 +14,19 @@ const aspectsConfig: AspectsConfig = {
     { name: 'sesquiquadratura', angle: 135, baseOrb: 2 },
   ],
   maxOrbCap: 12,
+  // Orbes base por planeta (fallback/moieties)
+  planetOrbs: {
+    Sun: 15,
+    Moon: 12,
+    Mercury: 7,
+    Venus: 7,
+    Mars: 8,
+    Jupiter: 9,
+    Saturn: 9,
+    Uranus: 6,
+    Neptune: 6,
+    Pluto: 5,
+  },
   // Orbes específicos por planeta e aspecto (graus)
   // Se um planeta não estiver listado, usa baseOrb
   planetAspectOrbs: {
