@@ -8,7 +8,8 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
-  Image 
+  Image,
+  Modal
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -44,6 +45,7 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
+  const [collectiveModal, setCollectiveModal] = useState<{ visible: boolean; title?: string; body?: string }>({ visible: false })
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -351,7 +353,11 @@ export default function HomeScreen() {
                             const strength = typeof a.strength === 'number' ? a.strength : 0
                             const color = strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0'
                             return (
-                              <TouchableOpacity key={idx} onPress={() => Alert.alert('Aspecto Coletivo', `${txt} (força ${strength}%)`)}>
+                              <TouchableOpacity key={idx} onPress={() => setCollectiveModal({
+                                visible: true,
+                                title: `${icon} ${txt}`,
+                                body: `Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}${typeof a.orb === 'number' ? ` • orbe ${a.orb.toFixed(1)}°` : ''}`
+                              })}>
                                 <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
                               </TouchableOpacity>
                             )
@@ -516,6 +522,19 @@ export default function HomeScreen() {
 
       {/* PWA Download Button */}
       <PWADownloadButton />
+
+      {/* Modal de detalhes de aspecto coletivo */}
+      <Modal visible={collectiveModal.visible} transparent animationType="fade" onRequestClose={() => setCollectiveModal({ visible: false })}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{collectiveModal.title || 'Aspecto coletivo'}</Text>
+            <Text style={styles.modalText}>{collectiveModal.body || ''}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setCollectiveModal({ visible: false })}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   )
   } catch (error) {
@@ -825,4 +844,39 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 20,
   },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#1E1E2E',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+  },
+  modalTitle: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFD700',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#000',
+    fontWeight: '600',
+  }
 })

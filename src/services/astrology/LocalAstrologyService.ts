@@ -38,7 +38,7 @@ export interface LocalTransitData {
     collectivePositive?: number
     collectiveNegative?: number
     collectiveKeyAspects?: string[]
-    collectiveKeyAspectsRich?: Array<{ planet1: string; planet2: string; type: string; strength: number }>
+    collectiveKeyAspectsRich?: Array<{ planet1: string; planet2: string; type: string; strength: number; orb?: number; isApplying?: boolean }>
     lunarPhase?: { name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'; waxing: boolean; elongation: number }
   }
   warnings: string[]
