@@ -329,7 +329,7 @@ export class RealAstrologyEngine {
       // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
       // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos T→N
       const currentOnNatalHouses = this.assignHouses(realPlanets, natalHouses)
-      const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, birthDateTime, latitude, longitude)
+      const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, natalPlanets, birthDateTime, latitude, longitude)
       // Derivar um status agregado pessoal simplificado a partir de lifeAreas
       const areaScores = Object.values(lifeAreas).map(a => a.percentage)
       const avg = areaScores.length ? Math.round(areaScores.reduce((s,n)=>s+n,0)/areaScores.length) : 50
@@ -718,6 +718,7 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     aspects: RealAspect[],
     houses: { cusps: number[], ascendant: number, midheaven: number },
+    natalPlanets: RealPlanetPosition[],
     date: Date,
     latitude: number,
     longitude: number
@@ -763,13 +764,12 @@ export class RealAstrologyEngine {
         const aspectDetails: Array<{ with: string; type: string; orb: number; isApplying: boolean; baseScore: number; beneficMaleficDelta: number; finalScore: number }> = []
         
         for (const aspect of planetAspects) {
-          let aspectScore = this.getAspectScore(aspect)
-          const baseScore = aspectScore
-
-          // Planeta natal alvo (lado B por construção)
+          // Contextos
           const other = aspect.planet2
+          const otherNatal = natalPlanets.find(p => p.name === other)
+          const baseScore = this.getAspectScoreAdvanced(aspect, planets, natalPlanets)
 
-          // Ponderar por benéficos/maléficos do alvo
+          // Benéficos/Maléficos do alvo natal
           const benefics = ['Venus', 'Jupiter']
           const malefics = ['Mars', 'Saturn']
           const harmonious = aspect.type === 'trígono' || aspect.type === 'sextil'
@@ -784,6 +784,12 @@ export class RealAstrologyEngine {
             else if (aspect.type === 'conjunção') delta -= 5
           }
 
+          // Recepção mútua simples (domicílio/exaltação)
+          const receptionMult = this.getReceptionMultiplier(
+            planets.find(p=>p.name===planetName)!,
+            otherNatal || undefined
+          )
+
           // Peso por importância do alvo natal
           const natalWeights: Record<string, number> = {
             Sun: 1.15, Moon: 1.15,
@@ -793,11 +799,19 @@ export class RealAstrologyEngine {
           }
           const natalWeight = natalWeights[other] ?? 1.0
 
-          // Bonus se trânsito está em casa natal relevante para a área
+          // Casa natal relevante
           const transitInRelevantHouse = config.houses.includes(planet.house)
           const relevantHouseBoost = transitInRelevantHouse ? 1.10 : 1.0
 
-          aspectScore = Math.max(0, Math.min(100, aspectScore * natalWeight * relevantHouseBoost + delta))
+          // Casa angularidade – multiplicador acidental pelo local do trânsito nas casas NATAIS
+          const angularMult = this.getHouseAngularMultiplier(planet.house)
+
+          let aspectScore = Math.max(0, Math.min(100,
+            baseScore * natalWeight * relevantHouseBoost * receptionMult * angularMult + delta
+          ))
+
+          // Peso de duração por ciclo planetário (Lua/Mercúrio < 1; lentos > 1)
+          aspectScore *= this.getPlanetDurationWeight(planetName, other)
 
           aspectDetails.push({
             with: other,
@@ -1023,6 +1037,83 @@ export class RealAstrologyEngine {
     }
 
     return { modifier: mod, tags }
+  }
+
+  // Avançado: score de aspecto com aplicação/separação, orbes por tipo e peso por Sol/Lua
+  private static getAspectScoreAdvanced(aspect: RealAspect, currentPlanets: RealPlanetPosition[], natalPlanets: RealPlanetPosition[]): number {
+    const typeWeights: Record<string, number> = {
+      'conjunção': 1.10,
+      'oposição': 1.00,
+      'quadratura': 0.95,
+      'trígono': 0.85,
+      'sextil': 0.65,
+      'quincúncio': 0.40,
+    }
+    const maxOrbByType: Record<string, number> = {
+      'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4, 'quincúncio': 3
+    }
+    const w = typeWeights[aspect.type] ?? 0.5
+    const maxOrb = maxOrbByType[aspect.type] ?? 5
+    const proximity = Math.max(0, 1 - aspect.orb / maxOrb)
+    const applyingBonus = aspect.isApplying ? 1.15 : 0.95
+    let score = 50 + 50 * w * proximity * applyingBonus
+    // Peso extra se envolve Sol/Lua (influência larga)
+    const involvesLuminary = (p: string) => p === 'Sun' || p === 'Moon'
+    if (involvesLuminary(aspect.planet1) || involvesLuminary(aspect.planet2)) score *= 1.05
+    return Math.max(0, Math.min(100, score))
+  }
+
+  // Recepção mútua (simplificada): se trânsito/natal estão em signos de domicílio/exaltação um do outro => boost; em detrimento/queda => penalidade
+  private static getReceptionMultiplier(transit: RealPlanetPosition | undefined, natal: RealPlanetPosition | undefined): number {
+    if (!transit || !natal) return 1.0
+    const domicile: Record<string, string[]> = {
+      Sun:['Leão'], Moon:['Câncer'], Mercury:['Gêmeos','Virgem'], Venus:['Touro','Libra'], Mars:['Áries','Escorpião'], Jupiter:['Sagitário','Peixes'], Saturn:['Capricórnio','Aquário']
+    }
+    const exalt: Record<string, string[]> = {
+      Sun:['Áries'], Moon:['Touro'], Mercury:[], Venus:['Peixes'], Mars:['Capricórnio'], Jupiter:['Câncer'], Saturn:['Libra']
+    }
+    const detr: Record<string, string[]> = {
+      Sun:['Aquário'], Moon:['Capricórnio'], Mercury:['Sagitário','Peixes'], Venus:['Áries','Escorpião'], Mars:['Libra','Touro'], Jupiter:['Gêmeos','Virgem'], Saturn:['Câncer','Leão']
+    }
+    const fall: Record<string, string[]> = {
+      Sun:['Libra'], Moon:['Escorpião'], Mercury:[], Venus:['Virgem'], Mars:['Câncer'], Jupiter:['Capricórnio'], Saturn:['Áries']
+    }
+    const isIn = (tbl: Record<string,string[]>, name: string, sign: string) => (tbl[name]||[]).includes(sign)
+    const tDom = isIn(domicile, transit.name, transit.sign)
+    const nDom = isIn(domicile, natal.name, natal.sign)
+    const tExa = isIn(exalt, transit.name, transit.sign)
+    const nExa = isIn(exalt, natal.name, natal.sign)
+    const tDet = isIn(detr, transit.name, transit.sign)
+    const nDet = isIn(detr, natal.name, natal.sign)
+    const tFal = isIn(fall, transit.name, transit.sign)
+    const nFal = isIn(fall, natal.name, natal.sign)
+    // Boost se ambos dignificados; penalidade se ambos debilitados
+    if ((tDom||tExa) && (nDom||nExa)) return 1.10
+    if ((tDet||tFal) && (nDet||nFal)) return 0.90
+    return 1.0
+  }
+
+  // Angularidade da casa natal (1,4,7,10 mais fortes)
+  private static getHouseAngularMultiplier(house: number): number {
+    const angular = [1,4,7,10]
+    const succedent = [2,5,8,11]
+    const cadent = [3,6,9,12]
+    if (angular.includes(house)) return 1.05
+    if (succedent.includes(house)) return 0.9
+    if (cadent.includes(house)) return 0.8
+    return 1.0
+  }
+
+  // Peso por duração/inércia do par de planetas (privilegia lentos, atenua muito rápidos)
+  private static getPlanetDurationWeight(transitName: string, natalName: string): number {
+    const slow: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
+    const fast: Record<string, number> = { Moon:0.85, Mercury:0.9 }
+    let w = 1.0
+    if (slow[transitName]) w *= slow[transitName]
+    if (fast[transitName]) w *= fast[transitName]
+    // leve reforço se alvo natal é luminar
+    if (natalName === 'Sun' || natalName === 'Moon') w *= 1.05
+    return w
   }
 
   private static getAspectScore(aspect: RealAspect): number {
