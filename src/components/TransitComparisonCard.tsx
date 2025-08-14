@@ -15,6 +15,7 @@ interface TransitComparisonCardProps {
   midheaven?: number
   natalAscendant?: number
   natalMidheaven?: number
+  housesCusps?: number[]
 }
 
 // 🌍 Ícones dos Elementos
@@ -65,7 +66,8 @@ export default function TransitComparisonCard({
   ascendant,
   midheaven,
   natalAscendant,
-  natalMidheaven
+  natalMidheaven,
+  housesCusps
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
@@ -167,6 +169,25 @@ export default function TransitComparisonCard({
   const getAspectIcon = (aspect: string): string => {
     return ASPECT_ICONS[aspect as keyof typeof ASPECT_ICONS] || '•'
   }
+
+  // 🏷️ Distância até a cúspide mais próxima (casas ATUAIS)
+  const nearestCuspInfo = React.useCallback((longitude: number): { house: number, distance: number } | null => {
+    try {
+      if (!housesCusps || housesCusps.length !== 12) return null
+      const norm = (d: number) => ((d % 360) + 360) % 360
+      const lon = norm(longitude)
+      let best: { house: number, distance: number } | null = null
+      for (let i = 0; i < 12; i++) {
+        const cusp = norm(housesCusps[i])
+        const diff = Math.abs(lon - cusp)
+        const dist = Math.min(diff, 360 - diff)
+        if (!best || dist < best.distance) best = { house: i + 1, distance: dist }
+      }
+      return best
+    } catch {
+      return null
+    }
+  }, [housesCusps])
 
   return (
     <LinearGradient
@@ -334,10 +355,21 @@ export default function TransitComparisonCard({
               </View>
             </View>
 
-            {/* Linha de resumo explícita das casas */}
-            <Text style={[styles.positionText, { marginTop: 6, opacity: 0.9 }]}>
-              Casa natal {comparison.natal.house} → atual {comparison.current.house}
-            </Text>
+            {/* Linha de resumo explícita das casas + badge "próx. cúspide" */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+              <Text style={[styles.positionText, { opacity: 0.9 }]}>
+                Casa natal {comparison.natal.house} → atual {comparison.current.house}
+              </Text>
+              {(() => {
+                const info = nearestCuspInfo(comparison.current.longitude)
+                if (info && info.distance <= 0.5) {
+                  return (
+                    <Text style={styles.nearCuspChip}>{`próx. cúspide ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
+                  )
+                }
+                return null
+              })()}
+            </View>
 
             {/* Aspectos do Momento (T→T) para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
@@ -580,6 +612,15 @@ const styles = StyleSheet.create({
   },
   toggleTextActive: {
     fontWeight: '700'
+  },
+  nearCuspChip: {
+    marginLeft: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    color: '#FFD700',
+    fontSize: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   aspectItem: {
     flexDirection: 'row',
