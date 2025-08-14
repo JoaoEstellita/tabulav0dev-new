@@ -32,4 +32,19 @@ export function getAspectDescription(type: AspectName): string {
   return DESCRIPTIONS[type] || 'Aspecto ativo.'
 }
 
+// Notas curtas por par de planetas (parcial, pode ser expandido)
+const PAIR_NOTES: Record<string, string> = {
+  'Mars|Saturn|quadratura': 'Esforço sob pressão; disciplina versus impulso.',
+  'Mars|Saturn|oposição': 'Choque de freio e aceleração; testar limites com cautela.',
+  'Sun|Saturn|quadratura': 'Responsabilidades e realidade pedem maturidade.',
+  'Sun|Jupiter|trígono': 'Expansão e confiança favorecidas; oportunidades crescem.',
+  'Venus|Uranus|oposição': 'Surpresas afetivas; busca por liberdade versus vínculo.',
+}
+
+export function getPairNote(p1: string, p2: string, type: AspectName): string | undefined {
+  const key1 = `${p1}|${p2}|${type}`
+  const key2 = `${p2}|${p1}|${type}`
+  return PAIR_NOTES[key1] || PAIR_NOTES[key2]
+}
+
 

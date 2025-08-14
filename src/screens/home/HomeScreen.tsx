@@ -26,7 +26,7 @@ import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
-import { getAspectDescription, getAspectSymbol } from '../../astro/aspects.dictionary'
+import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
 
 export default function HomeScreen() {
   try {
@@ -345,11 +345,18 @@ export default function HomeScreen() {
                             const strength = typeof a.strength === 'number' ? a.strength : 0
                             const color = strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0'
                             return (
-                              <TouchableOpacity key={idx} onPress={() => setCollectiveModal({
-                                visible: true,
-                                title: `${icon} ${txt}`,
-                                body: `${getAspectDescription(a.type as any)}\nForça: ${strength}%${a.isApplying ? ' • aplicante' : ''}${typeof a.orb === 'number' ? ` • orbe ${a.orb.toFixed(1)}°` : ''}`
-                              })}>
+                              <TouchableOpacity key={idx} onPress={() => {
+                                const note = getPairNote(a.planet1, a.planet2, a.type as any)
+                                const extra = [] as string[]
+                                extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
+                                if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
+                                if (typeof (a as any).windowDays === 'number') extra.push(`vigência ~${(a as any).windowDays} dias`)
+                                setCollectiveModal({
+                                  visible: true,
+                                  title: `${icon} ${txt}`,
+                                  body: `${getAspectDescription(a.type as any)}${note ? `\n${note}` : ''}\n${extra.join(' • ')}`
+                                })
+                              }}>
                                 <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
                               </TouchableOpacity>
                             )

@@ -111,7 +111,7 @@ export interface RealAstrologyData {
   collective?: {
     positive: number
     negative: number
-    keyAspects: RealAspect[]
+    keyAspects: Array<RealAspect & { orbAllowed?: number; relSpeed?: number; windowDays?: number }>
     lunarPhase: {
       name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'
       waxing: boolean
@@ -695,6 +695,28 @@ export class RealAstrologyEngine {
     const hardTypes = new Set(['quadratura','oposição','semiquadratura','sesquiquadratura'])
     const softTypes = new Set(['trígono','sextil'])
 
+    const angleOf = (type: string): number => {
+      const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
+      return def?.angle ?? 0
+    }
+    const maxOrbForPair = (type: string, p1Name: string, p2Name: string): number => {
+      // Replica lógica essencial de resolveOrb()
+      const cap = (aspectsConfig as any).maxOrbCap ?? 12
+      const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
+      let eff = def?.baseOrb ?? 5
+      const ang = def?.angle ?? angleOf(type)
+      const pa = (aspectsConfig as any).planetAspectOrbs?.[p1Name]?.[ang]
+      const pb = (aspectsConfig as any).planetAspectOrbs?.[p2Name]?.[ang]
+      if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
+      const ovrA = (aspectsConfig as any).overrides?.[p1Name]?.[p2Name]
+      const ovrB = (aspectsConfig as any).overrides?.[p2Name]?.[p1Name]
+      if (ovrA !== undefined || ovrB !== undefined) eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
+      const orbA = (aspectsConfig as any).planetOrbs?.[p1Name]
+      const orbB = (aspectsConfig as any).planetOrbs?.[p2Name]
+      if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
+      return Math.max(0, Math.min(cap, eff))
+    }
+
     const scored = aspectsTT.map(a => {
       const p1 = get(a.planet1)
       const p2 = get(a.planet2)
@@ -713,7 +735,13 @@ export class RealAstrologyEngine {
       }
       const strength = a.strength ?? 50
       const score = Math.max(0, Math.min(100, strength * w))
-      return { a, score, sign }
+
+      // Estimar janela de vigência a partir da orbe máxima e velocidade relativa
+      const orbAllowed = maxOrbForPair(a.type, a.planet1, a.planet2)
+      const relSpeed = Math.max(0.02, Math.abs((p1?.speed ?? 0) - (p2?.speed ?? 0))) // deg/dia; piso para evitar /0
+      const windowDays = Number(((2 * orbAllowed) / relSpeed).toFixed(1))
+
+      return { a: { ...a, orbAllowed, relSpeed, windowDays }, score, sign }
     })
 
     const pos = scored.filter(s => s.sign > 0).map(s => s.score)
