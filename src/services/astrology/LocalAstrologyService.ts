@@ -38,6 +38,7 @@ export interface LocalTransitData {
     collectivePositive?: number
     collectiveNegative?: number
     collectiveKeyAspects?: string[]
+    collectiveKeyAspectsRich?: Array<{ planet1: string; planet2: string; type: string; strength: number }>
     lunarPhase?: { name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'; waxing: boolean; elongation: number }
   }
   warnings: string[]
@@ -211,7 +212,8 @@ export class LocalAstrologyService {
     // Índice coletivo (quando disponível)
     const collectivePositive = realData.collective?.positive
     const collectiveNegative = realData.collective?.negative
-    const collectiveKeyAspects = (realData.collective?.keyAspects || []).slice(0, 5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+    const collectiveKeyAspectsRaw = (realData.collective?.keyAspects || []).slice(0, 5)
+    const collectiveKeyAspects = collectiveKeyAspectsRaw.map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     const lunarPhase = realData.collective?.lunarPhase
 
     // Modulação leve do índice coletivo sobre o overall pessoal
@@ -233,6 +235,7 @@ export class LocalAstrologyService {
       collectivePositive,
       collectiveNegative,
       collectiveKeyAspects,
+      collectiveKeyAspectsRich: collectiveKeyAspectsRaw,
       lunarPhase,
     }
 

@@ -334,21 +334,26 @@ export default function HomeScreen() {
                         </Text>
                       )}
                       {/* Aspectos-chave coletivos com ícones */}
-                      {!!(transitData?.dailyOverview?.collectiveKeyAspects?.length) && (
+                      {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
                         <View style={{ marginTop: 4 }}>
-                          {(transitData.dailyOverview.collectiveKeyAspects || []).slice(0,3).map((txt, idx) => {
+                          {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
+                            const txt = `${a.planet1} ${a.type} ${a.planet2}`
                             const icon = (() => {
-                              if (txt.includes('conjunção')) return '☌'
-                              if (txt.includes('oposição')) return '☍'
-                              if (txt.includes('quadratura')) return '□'
-                              if (txt.includes('trígono')) return '△'
-                              if (txt.includes('sextil')) return '✶'
-                              if (txt.includes('sesquiquadratura')) return '∡'
-                              if (txt.includes('semiquadratura')) return '∠'
+                              if (a.type === 'conjunção') return '☌'
+                              if (a.type === 'oposição') return '☍'
+                              if (a.type === 'quadratura') return '□'
+                              if (a.type === 'trígono') return '△'
+                              if (a.type === 'sextil') return '✶'
+                              if (a.type === 'sesquiquadratura') return '∡'
+                              if (a.type === 'semiquadratura') return '∠'
                               return '•'
                             })()
+                            const strength = typeof a.strength === 'number' ? a.strength : 0
+                            const color = strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0'
                             return (
-                              <Text key={idx} style={styles.summaryText}>{icon} {txt}</Text>
+                              <TouchableOpacity key={idx} onPress={() => Alert.alert('Aspecto Coletivo', `${txt} (força ${strength}%)`)}>
+                                <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
+                              </TouchableOpacity>
                             )
                           })}
                         </View>
