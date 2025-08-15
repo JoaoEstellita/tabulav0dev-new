@@ -33,6 +33,7 @@ export default function NotificationSettingsScreen() {
   const [weekly, setWeekly] = useState(true)
   const [monthly, setMonthly] = useState(true)
   const [personalAlerts, setPersonalAlerts] = useState(true)
+  const [effectsHigh, setEffectsHigh] = useState(true)
  
   useEffect(() => {
     if (preferences) {
@@ -41,6 +42,7 @@ export default function NotificationSettingsScreen() {
       setWeekly((preferences as any)?.weeklyNotifications ?? true)
       setMonthly((preferences as any)?.monthlyNotifications ?? true)
       setPersonalAlerts((preferences as any)?.personalAlerts ?? true)
+      setEffectsHigh((preferences as any)?.effectsHigh ?? true)
     }
   }, [preferences])
  
@@ -53,7 +55,9 @@ export default function NotificationSettingsScreen() {
         monthlyNotifications: monthly,
         personalAlerts: personalAlerts,
         dailyTime,
+        effectsHigh,
       } as any)
+      ;(globalThis as any).__effectsIntensity = effectsHigh ? 'high' : 'low'
       Alert.alert('Sucesso', 'Preferências salvas!')
     } finally { setSaving(false) }
   }
@@ -147,6 +151,20 @@ export default function NotificationSettingsScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.timeHint}>Formato: HH:MM (ex: 08:00, 14:30)</Text>
+          </View>
+        </View>
+
+        {/* Efeitos Visuais */}
+        <View className="effects-section" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Efeitos Visuais</Text>
+          </View>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Intensidade Alta</Text>
+              <Text style={styles.settingDescription}>Ativa starfield/pulse/stagger (pode consumir mais bateria)</Text>
+            </View>
+            <Switch value={effectsHigh} onValueChange={setEffectsHigh} trackColor={{ false: '#3e3e3e', true: '#FFD700' }} thumbColor={effectsHigh ? '#000' : '#f4f3f4'} />
           </View>
         </View>
 

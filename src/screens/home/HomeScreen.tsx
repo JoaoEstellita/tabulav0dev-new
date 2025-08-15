@@ -296,7 +296,7 @@ export default function HomeScreen() {
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Starfield apenas no PWA/web */}
-      {typeof document !== 'undefined' && (
+      {typeof document !== 'undefined' && ((globalThis as any).__effectsIntensity !== 'low') && (
         <View
           // @ts-ignore
           ref={(ref: any) => {
