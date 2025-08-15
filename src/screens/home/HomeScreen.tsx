@@ -28,6 +28,10 @@ import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
+// Web-only starfield (no-op on native)
+let mountStarfield: any = null
+let unmountStarfield: any = null
+try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield; unmountStarfield = mod.unmountStarfield } catch {}
 
 export default function HomeScreen() {
   try {
@@ -266,6 +270,18 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      {/* Starfield apenas no PWA/web */}
+      {typeof document !== 'undefined' && (
+        <View
+          // @ts-ignore
+          ref={(ref: any) => {
+            try {
+              if (ref && mountStarfield) mountStarfield(ref as unknown as HTMLElement, { count: 50 })
+            } catch {}
+          }}
+          style={{ position:'absolute', inset:0 }}
+        />
+      )}
       <ScrollView 
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
