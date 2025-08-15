@@ -42,6 +42,8 @@ export interface LocalTransitData {
     collectiveKeyAspects?: string[]
     collectiveKeyAspectsRich?: Array<{ planet1: string; planet2: string; type: string; strength: number; orb?: number; isApplying?: boolean }>
     lunarPhase?: { name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'; waxing: boolean; elongation: number }
+    weeklySnapshot?: { key: string, keyAspects: string[] }
+    monthlySnapshot?: { key: string, keyAspects: string[] }
   }
   warnings: string[]
 }
@@ -217,6 +219,14 @@ export class LocalAstrologyService {
     const collectiveKeyAspectsRaw = (realData.collective?.keyAspects || []).slice(0, 5)
     const collectiveKeyAspects = collectiveKeyAspectsRaw.map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     const lunarPhase = realData.collective?.lunarPhase
+    const weeklySnapshot = realData.collectiveWeekly ? {
+      key: realData.collectiveWeekly.key,
+      keyAspects: (realData.collectiveWeekly.keyAspects || []).slice(0,5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+    } : undefined
+    const monthlySnapshot = realData.collectiveMonthly ? {
+      key: realData.collectiveMonthly.key,
+      keyAspects: (realData.collectiveMonthly.keyAspects || []).slice(0,5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+    } : undefined
 
     // Modulação leve do índice coletivo sobre o overall pessoal
     const overallModulated = (() => {
@@ -247,6 +257,8 @@ export class LocalAstrologyService {
       collectiveKeyAspects,
       collectiveKeyAspectsRich: collectiveKeyAspectsRaw,
       lunarPhase,
+      weeklySnapshot,
+      monthlySnapshot,
     }
 
     return {

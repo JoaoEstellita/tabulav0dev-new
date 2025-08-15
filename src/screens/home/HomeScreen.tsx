@@ -389,6 +389,23 @@ export default function HomeScreen() {
                           ))}
                         </View>
                       )}
+                      {/* Panorama semanal/mensal dos aspectos coletivos (T→T) */}
+                      {!!transitData?.dailyOverview?.weeklySnapshot && (
+                        <View style={{ marginTop: 6 }}>
+                          <Text style={[styles.summaryText, { color:'#A0E7A0' }]}>{`Semana ${transitData.dailyOverview.weeklySnapshot.key}`}</Text>
+                          {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).slice(0,3).map((txt, i) => (
+                            <Text key={i} style={styles.summaryText}>• {txt}</Text>
+                          ))}
+                        </View>
+                      )}
+                      {!!transitData?.dailyOverview?.monthlySnapshot && (
+                        <View style={{ marginTop: 6 }}>
+                          <Text style={[styles.summaryText, { color:'#F59E0B' }]}>{`Mês ${transitData.dailyOverview.monthlySnapshot.key}`}</Text>
+                          {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).slice(0,3).map((txt, i) => (
+                            <Text key={i} style={styles.summaryText}>• {txt}</Text>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   )}
                   

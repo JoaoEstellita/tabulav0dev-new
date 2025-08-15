@@ -118,6 +118,8 @@ export interface RealAstrologyData {
       elongation: number // 0..180 distância Sol-Lua
     }
   }
+  collectiveWeekly?: { key: string, keyAspects: Array<RealAspect & { orbAllowed?: number; relSpeed?: number; windowDays?: number }> }
+  collectiveMonthly?: { key: string, keyAspects: Array<RealAspect & { orbAllowed?: number; relSpeed?: number; windowDays?: number }> }
   // Novos conjuntos de aspectos padronizados
   aspectsCurrentTT?: RealAspect[]
   aspectsTransitsToNatalTN?: RealAspect[]
@@ -347,11 +349,13 @@ export class RealAstrologyEngine {
       }
 
       // Pré‑cálculo semanal e mensal de T→T (cache): guardar snapshot representativo
+      let weekKey: string | undefined
+      let monthKey: string | undefined
       try {
         const y = date.getUTCFullYear()
         const m = date.getUTCMonth()+1
         const firstDayUTC = new Date(Date.UTC(y, m-1, 1))
-        const monthKey = `${y}-${String(m).padStart(2,'0')}`
+        monthKey = `${y}-${String(m).padStart(2,'0')}`
         if (!RealAstrologyEngine._monthlyTTCache.has(monthKey)) {
           RealAstrologyEngine._monthlyTTCache.set(monthKey, aspectsCurrentTT)
         }
@@ -361,7 +365,7 @@ export class RealAstrologyEngine {
         const monday = new Date(tmp); monday.setUTCDate(tmp.getUTCDate() - dayNum)
         const oneJan = new Date(Date.UTC(y,0,1))
         const week = Math.ceil((((monday.getTime() - oneJan.getTime())/86400000) + oneJan.getUTCDay()+1) / 7)
-        const weekKey = `${y}-W${String(week).padStart(2,'0')}`
+        weekKey = `${y}-W${String(week).padStart(2,'0')}`
         if (!RealAstrologyEngine._weeklyTTCache.has(weekKey)) {
           RealAstrologyEngine._weeklyTTCache.set(weekKey, aspectsCurrentTT)
         }
@@ -460,6 +464,14 @@ export class RealAstrologyEngine {
         midheaven: houses.midheaven,
         housesApproximate: (houses as any).approximate === true,
         collective,
+        collectiveWeekly: (weekKey && RealAstrologyEngine._weeklyTTCache.get(weekKey)) ? {
+          key: weekKey!,
+          keyAspects: (RealAstrologyEngine._weeklyTTCache.get(weekKey!) || []).slice(0,5) as any
+        } : undefined,
+        collectiveMonthly: (monthKey && RealAstrologyEngine._monthlyTTCache.get(monthKey)) ? {
+          key: monthKey!,
+          keyAspects: (RealAstrologyEngine._monthlyTTCache.get(monthKey!) || []).slice(0,5) as any
+        } : undefined,
         transits: {
           personal: personalTransits,
           general: aspectsCurrentTT,
