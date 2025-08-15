@@ -409,9 +409,17 @@ export default function HomeScreen() {
                           })}
                         </View>
                       )}
-                      {/* Master Aspects (UI opcional – mostrar quando disponível e configurado) */}
+                      {/* Master Aspects (dar destaque quando veio por deep link) */}
                       {Array.isArray(transitData?.dailyOverview?.masterAspects) && transitData.dailyOverview.masterAspects.length > 0 && (
-                        <View style={{ marginTop: 6 }}>
+                        <View
+                          style={{ marginTop: 6, borderLeftWidth: homeFocus==='home-personal'?2:0, borderLeftColor:'#9AE6B4', paddingLeft: homeFocus==='home-personal'?6:0 }}
+                          // @ts-ignore
+                          ref={(ref:any)=>{
+                            try {
+                              if (ref && typeof document !== 'undefined' && homeFocus==='home-personal' && (pulseOnce as any)) (pulseOnce as any)(ref, 'rgba(154,230,180,0.35)')
+                            } catch {}
+                          }}
+                        >
                           {(transitData.dailyOverview.masterAspects || []).slice(0,3).map((m, i) => (
                             <Text key={i} style={styles.summaryText}>⭐ {m.text}</Text>
                           ))}
