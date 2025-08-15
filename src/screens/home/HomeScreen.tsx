@@ -27,9 +27,11 @@ import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
+import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 
 export default function HomeScreen() {
   try {
+    useAutoScheduleNotifications()
     const { user } = useAuth()
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings, updateSettings } = useUserSettings()
