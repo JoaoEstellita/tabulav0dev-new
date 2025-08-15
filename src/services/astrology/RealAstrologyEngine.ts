@@ -229,6 +229,9 @@ export class RealAstrologyEngine {
 
   // Cache simples do índice coletivo por dia (UTC)
   private static _collectiveCache: Map<string, NonNullable<RealAstrologyData['collective']>> = new Map()
+  // Cache T→T semanal/mensal (chaves: YYYY-Www e YYYY-MM)
+  private static _weeklyTTCache: Map<string, RealAspect[]> = new Map()
+  private static _monthlyTTCache: Map<string, RealAspect[]> = new Map()
 
   private static readonly LIFE_AREAS = {
     amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
@@ -342,6 +345,27 @@ export class RealAstrologyEngine {
         collective = this.computeCollectiveIndex(aspectsCurrentTT, planetsWithHouses)
         RealAstrologyEngine._collectiveCache.set(dayKey, collective)
       }
+
+      // Pré‑cálculo semanal e mensal de T→T (cache): guardar snapshot representativo
+      try {
+        const y = date.getUTCFullYear()
+        const m = date.getUTCMonth()+1
+        const firstDayUTC = new Date(Date.UTC(y, m-1, 1))
+        const monthKey = `${y}-${String(m).padStart(2,'0')}`
+        if (!RealAstrologyEngine._monthlyTTCache.has(monthKey)) {
+          RealAstrologyEngine._monthlyTTCache.set(monthKey, aspectsCurrentTT)
+        }
+        // Semana ISO aproximada (UTC)
+        const tmp = new Date(Date.UTC(y, date.getUTCMonth(), date.getUTCDate()))
+        const dayNum = (tmp.getUTCDay() + 6) % 7 // 0=Mon .. 6=Sun
+        const monday = new Date(tmp); monday.setUTCDate(tmp.getUTCDate() - dayNum)
+        const oneJan = new Date(Date.UTC(y,0,1))
+        const week = Math.ceil((((monday.getTime() - oneJan.getTime())/86400000) + oneJan.getUTCDay()+1) / 7)
+        const weekKey = `${y}-W${String(week).padStart(2,'0')}`
+        if (!RealAstrologyEngine._weeklyTTCache.has(weekKey)) {
+          RealAstrologyEngine._weeklyTTCache.set(weekKey, aspectsCurrentTT)
+        }
+      } catch {}
 
       // Aspectos T→N (pessoais) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
       const aspectsTransitsToNatalTN = detectAspects(
@@ -1212,7 +1236,7 @@ export class RealAstrologyEngine {
   }
 
   private static getPlanetSignScore(planet: RealPlanetPosition): number {
-    // Dignidades essenciais (inclui domicílio/exaltação/detrimento/queda + triplicidade/termos/faces simplificados)
+    // Dignidades essenciais (inclui domicílio/exaltação/detrimento/queda + triplicidade + termos/faces clássicos)
     const essentials: Record<string, {
       domicile?: string[]; exaltation?: string[]; detriment?: string[]; fall?: string[]
       triplicity?: string[]; // signos onde o planeta participa da triplicidade
@@ -1242,11 +1266,21 @@ export class RealAstrologyEngine {
     if (inList(e.fall)) score -= 24
     // Triplicidade (bônus moderado)
     if (inList(e.triplicity)) score += 6
-    // Termos (aprox por signo: pequeno bônus/pena suave)
-    // Para simplificar, considerar bônus leve se não estiver em detrimento/queda
-    if (!inList(e.detriment) && !inList(e.fall)) score += 2
-    // Faces/decanos (muito sutil)
-    if (inList(e.faces)) score += 2
+    // Termos/Faces clássicos por grau (bounds egípcios + faces caldeias)
+    try {
+      const { getTermRuler, getFaceRuler } = require('../../astro/dignities.classical')
+      const termRuler = getTermRuler(planet.sign, planet.degree)
+      const faceRuler = getFaceRuler(planet.sign, planet.degree)
+      if (termRuler) {
+        // Bônus pequeno quando o planeta é regente do termo
+        if (termRuler === planet.name) score += 4
+        // Penalidade suave se inimigo tradicional (Marte/Saturno) rege o termo do planeta
+        if ((termRuler === 'Marte' || termRuler === 'Saturno') && (planet.name === 'Moon' || planet.name === 'Venus')) score -= 2
+      }
+      if (faceRuler) {
+        if (faceRuler === planet.name) score += 2
+      }
+    } catch {}
 
     // Clamp 0–100
     return Math.max(0, Math.min(100, score))

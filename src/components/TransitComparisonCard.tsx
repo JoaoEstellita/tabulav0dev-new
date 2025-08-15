@@ -428,6 +428,9 @@ export default function TransitComparisonCard({
                         {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
                         {' '}({t.orb.toFixed(1)}°{t.isApplying ? ', aplicante' : ', separante'})
                       </Text>
+                      {!!t.contactIndex && (
+                        <Text style={styles.nearCuspChip}>{`${t.contactIndex}º contato${t.contactPhase==='retro' ? ' (retrógrado)' : ''}`}</Text>
+                      )}
                       <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
                         <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
                       </View>
