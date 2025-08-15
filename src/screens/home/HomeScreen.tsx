@@ -12,6 +12,7 @@ import {
   Modal
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -28,10 +29,12 @@ import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
-// Web-only starfield (no-op on native)
+// Web-only effects (no-op on native)
 let mountStarfield: any = null
 let unmountStarfield: any = null
+let pulseOnce: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield; unmountStarfield = mod.unmountStarfield } catch {}
+try { const mod2 = require('../../ui/motion/web/pulse'); pulseOnce = mod2.pulseOnce } catch {}
 
 export default function HomeScreen() {
   try {
@@ -268,6 +271,26 @@ export default function HomeScreen() {
     )
   }
 
+  // Componente local para entrada com stagger (opacity + translateY)
+  const StaggerItem: React.FC<{ delay: number, children: any }> = ({ delay, children }) => {
+    const opacity = React.useRef(new Animated.Value(0)).current
+    const translateY = React.useRef(new Animated.Value(8)).current
+    React.useEffect(() => {
+      const t = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(opacity, { toValue: 1, duration: 240, useNativeDriver: true }),
+          Animated.timing(translateY, { toValue: 0, duration: 240, useNativeDriver: true }),
+        ]).start()
+      }, delay)
+      return () => clearTimeout(t)
+    }, [])
+    return (
+      <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+        {children}
+      </Animated.View>
+    )
+  }
+
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Starfield apenas no PWA/web */}
@@ -366,7 +389,11 @@ export default function HomeScreen() {
                       )}
                       {/* ✨ Aspectos-chave Coletivos com ícones (dar destaque quando veio por deep link) */}
                       {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
-                        <View style={{ marginTop: 4, borderLeftWidth: homeFocus==='home-collective'?2:0, borderLeftColor:'#F59E0B', paddingLeft: homeFocus==='home-collective'?6:0 }}>
+                        <View
+                          style={{ marginTop: 4, borderLeftWidth: homeFocus==='home-collective'?2:0, borderLeftColor:'#F59E0B', paddingLeft: homeFocus==='home-collective'?6:0 }}
+                          // @ts-ignore
+                          ref={(ref:any)=>{ try { if (ref && typeof document !== 'undefined' && homeFocus==='home-collective' && (pulseOnce as any)) (pulseOnce as any)(ref, 'rgba(245,158,11,0.25)') } catch {} }}
+                        >
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
                             const txt = `${a.planet1} ${a.type} ${a.planet2}`
                             const icon = getAspectSymbol(a.type as any)
