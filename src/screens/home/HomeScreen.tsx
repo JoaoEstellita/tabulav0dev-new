@@ -27,6 +27,7 @@ import { db } from '../../config/firebase'
 import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
+import StarLoader from '../../components/StarLoader'
 import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import { usePressScale } from '../../ui/motion/native/micro'
@@ -252,7 +253,7 @@ export default function HomeScreen() {
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FFD700" />
+          <StarLoader size={36} color="#FFD700" />
           <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
         </View>
       </LinearGradient>
