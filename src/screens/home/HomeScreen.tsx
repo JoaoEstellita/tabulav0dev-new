@@ -35,6 +35,8 @@ let unmountStarfield: any = null
 let pulseOnce: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield; unmountStarfield = mod.unmountStarfield } catch {}
 try { const mod2 = require('../../ui/motion/web/pulse'); pulseOnce = mod2.pulseOnce } catch {}
+let fadeSlideIn: any = null
+try { const mod3 = require('../../ui/motion/web/pageTransitions'); fadeSlideIn = mod3.fadeSlideIn } catch {}
 
 export default function HomeScreen() {
   try {
@@ -355,6 +357,8 @@ export default function HomeScreen() {
             <LinearGradient
               colors={['#1E1E2E', '#2A2A3E']}
               style={styles.overviewCard}
+              // @ts-ignore
+              ref={(ref:any)=>{ try { if (ref && typeof document !== 'undefined' && fadeSlideIn) (fadeSlideIn as any)(ref) } catch {} }}
             >
               <View style={styles.overviewHeader}>
                 <Ionicons name="sunny" size={24} color="#FFD700" />
