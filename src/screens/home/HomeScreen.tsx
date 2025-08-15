@@ -29,6 +29,7 @@ import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
+import { usePressScale } from '../../ui/motion/native/micro'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 let unmountStarfield: any = null
@@ -340,14 +341,21 @@ export default function HomeScreen() {
             </View>
           </View>
           
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="#FFD700" />
-            {criticalAreas.length > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>{criticalAreas.length}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {(() => {
+            const press = usePressScale()
+            return (
+              <Animated.View style={press.style}>
+                <TouchableOpacity style={styles.notificationButton} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
+                  <Ionicons name="notifications-outline" size={24} color="#FFD700" />
+                  {criticalAreas.length > 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationBadgeText}>{criticalAreas.length}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            )
+          })()}
         </View>
 
         {/* 📝 Resumo Diário */}
@@ -542,10 +550,17 @@ export default function HomeScreen() {
                 Seus trânsitos indicam desafios em algumas áreas. Compartilhe com seu grupo para receber apoio!
               </Text>
               
-              <TouchableOpacity style={styles.alertButton} onPress={handleSendAlerts}>
-                <Ionicons name="send" size={16} color="#FFFFFF" />
-                <Text style={styles.alertButtonText}>Enviar Alertas para Grupos</Text>
-              </TouchableOpacity>
+              {(() => {
+                const press = usePressScale()
+                return (
+                  <Animated.View style={press.style}>
+                    <TouchableOpacity style={styles.alertButton} onPress={handleSendAlerts} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
+                      <Ionicons name="send" size={16} color="#FFFFFF" />
+                      <Text style={styles.alertButtonText}>Enviar Alertas para Grupos</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                )
+              })()}
             </LinearGradient>
           </View>
           </AnimatedMount>
