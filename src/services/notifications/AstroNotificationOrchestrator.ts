@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import LocalAstrologyService from '../astrology/LocalAstrologyService'
 import { PushNotificationService } from './PushNotificationService'
 import type { BirthData } from '../../types/astrology'
+import UserService from '../firebase/UserService'
 
 type ScheduleOpts = {
   dailyTime?: string // 'HH:MM' local
@@ -12,6 +13,7 @@ type ScheduleOpts = {
 }
 
 const DEDUPE_KEY = '@tabula_estelar:last_sent_alerts'
+const DAILY_COUNT_PREFIX = '@tabula_estelar:alerts_count:' // + YYYY-MM-DD
 
 function parseTime(t?: string): { hour: number, minute: number } {
   if (!t) return { hour: 8, minute: 0 }
@@ -56,7 +58,7 @@ export class AstroNotificationOrchestrator {
     if (enableDaily) {
       await PushNotificationService.scheduleDailyNotification(
         'Resumo diário – Pessoal e Coletivo',
-        'Abra para ver seus destaques Pessoais de hoje e os principais movimentos Coletivos.',
+        `📝 ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, veja seus destaques Pessoais e os movimentos Coletivos de hoje.`,
         hour,
         minute,
         { type: 'daily_overview', navTarget: 'home-daily' }
@@ -68,7 +70,7 @@ export class AstroNotificationOrchestrator {
       const date = nextMondayAt(hour, minute)
       await PushNotificationService.scheduleCustomNotification(
         'Panorama semanal – Coletivo',
-        'Principais aspectos Coletivos da semana. Abra para detalhes.',
+        `✨ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, veja os principais aspectos Coletivos da semana.`,
         date,
         { type: 'weekly_digest', navTarget: 'home-collective' }
       )
@@ -79,7 +81,7 @@ export class AstroNotificationOrchestrator {
       const date = firstDayNextMonthAt(hour, minute)
       await PushNotificationService.scheduleCustomNotification(
         'Panorama mensal – Coletivo',
-        'Movimentos Coletivos do mês em destaque. Abra para detalhes.',
+        `✨ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, movimentos Coletivos do mês em destaque.`,
         date,
         { type: 'monthly_digest', navTarget: 'home-collective' }
       )
@@ -93,6 +95,9 @@ export class AstroNotificationOrchestrator {
         const planets = realData.planets
         const personal = realData.transits?.personal || []
         const sent = new Set<string>(JSON.parse((await AsyncStorage.getItem(DEDUPE_KEY)) || '[]'))
+        const todayKey = new Date().toISOString().slice(0,10)
+        const countKey = `${DAILY_COUNT_PREFIX}${todayKey}`
+        let todayCount = Number(await AsyncStorage.getItem(countKey) || '0') || 0
 
         const norm = (x: number) => Math.max(0.02, x)
         const candidates = personal.filter(t => t.isMaster && t.isApplying)
@@ -104,19 +109,43 @@ export class AstroNotificationOrchestrator {
           .filter(x => x.daysToPeak <= 3)
 
         for (const c of candidates) {
+          if (todayCount >= 2) break // cap diário simples
           const key = `${c.t.seriesId}|${c.t.contactIndex}`
           if (sent.has(key)) continue
           const title = 'Alerta Pessoal – ápice próximo'
-          const body = `${translatePlanet(c.t.transitPlanet)} ${c.t.type} ${translatePlanet(c.t.natalPlanet)} • orbe ${c.t.orb.toFixed(1)}° • ${c.t.contactIndex}º contato • pico ~${c.daysToPeak}d`
+          const body = `⭐ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, ${translatePlanet(c.t.transitPlanet)} ${c.t.type} ${translatePlanet(c.t.natalPlanet)} • orbe ${c.t.orb.toFixed(1)}° • ${c.t.contactIndex}º contato • pico ~${c.daysToPeak}d`
           await PushNotificationService.sendImmediateNotification(title, body, { type: 'personal_alert', navTarget: 'home-personal', seriesId: c.t.seriesId, contactIndex: c.t.contactIndex })
           sent.add(key)
+          todayCount++
+        }
+
+        // Agendar lembrete para o dia seguinte (apenas itens com pico em 1 dia), respeitando cap implícito de agenda simples
+        const nextDay = candidates.filter(x => x.daysToPeak === 1).slice(0, 1)
+        if (nextDay.length) {
+          const nd = new Date()
+          nd.setDate(nd.getDate() + 1)
+          nd.setHours(hour, minute, 0, 0)
+          const t = nextDay[0]
+          const title = 'Lembrete Pessoal – amanhã é o pico'
+          const body = `⭐ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, ${translatePlanet(t.t.transitPlanet)} ${t.t.type} ${translatePlanet(t.t.natalPlanet)} atinge pico amanhã.`
+          await PushNotificationService.scheduleCustomNotification(title, body, nd, { type: 'personal_alert', navTarget: 'home-personal', seriesId: t.t.seriesId, contactIndex: t.t.contactIndex })
         }
 
         await AsyncStorage.setItem(DEDUPE_KEY, JSON.stringify(Array.from(sent)))
+        await AsyncStorage.setItem(countKey, String(todayCount))
       } catch (e) {
         console.log('⚠️ Falha ao enviar alertas pessoais:', e)
       }
     }
+  }
+
+  private static async getUserShortName(userId: string): Promise<string> {
+    try {
+      const profile = await UserService.getUserProfile(userId)
+      const n = profile?.displayName || profile?.fullName || ''
+      if (!n) return 'você'
+      return n.split(' ')[0]
+    } catch { return 'você' }
   }
 }
 
