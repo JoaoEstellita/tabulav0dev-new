@@ -299,7 +299,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Resumo Diário */}
+        {/* 📝 Resumo Diário */}
         {transitData && (
           <AnimatedMount>
           <View style={styles.section}>
@@ -338,7 +338,7 @@ export default function HomeScreen() {
                           Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
                         </Text>
                       )}
-                      {/* Aspectos-chave Coletivos com ícones */}
+                      {/* ✨ Aspectos-chave Coletivos com ícones */}
                       {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
                         <View style={{ marginTop: 4 }}>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {

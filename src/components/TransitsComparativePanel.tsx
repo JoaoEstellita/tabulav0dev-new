@@ -54,7 +54,7 @@ export default function TransitsComparativePanel() {
         )}
       </View>
 
-      <Text style={styles.sectionTitle}>Pessoais</Text>
+      <Text style={styles.sectionTitle}>⭐ Pessoais</Text>
       {topPersonal.length === 0 ? (
         <Text style={styles.emptyText}>Sem trânsitos pessoais relevantes.</Text>
       ) : (
@@ -72,7 +72,7 @@ export default function TransitsComparativePanel() {
         />
       )}
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Coletivos (do Momento)</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>✨ Coletivos (do Momento)</Text>
       <Text style={styles.metaText}>{general.length} aspectos ativos</Text>
     </LinearGradient>
   )

@@ -206,7 +206,7 @@ export default function TransitComparisonCard({
       <View style={styles.summarySection}>
         <View style={styles.sectionHeader}>
           <Ionicons name="analytics" size={20} color="#FFD700" />
-          <Text style={styles.sectionTitle}>Resumo da Carta</Text>
+          <Text style={styles.sectionTitle}>📝 Resumo da Carta</Text>
           {showApprox && (
             <Text style={{ color:'#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text>
           )}
@@ -374,7 +374,7 @@ export default function TransitComparisonCard({
             {/* Aspectos do Momento (Coletivo) para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>⭐ Aspectos Planetários:</Text>
+                <Text style={styles.aspectsTitle}>✨ Aspectos Coletivos:</Text>
                 {comparison.planetaryAspects.slice(0, 3).map((aspect, aspectIndex) => (
                   <View key={aspectIndex} style={styles.aspectItem}>
                     <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>
@@ -416,7 +416,7 @@ export default function TransitComparisonCard({
             {/* Trânsitos Pessoais para este planeta em trânsito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>🧭 Trânsitos Pessoais:</Text>
+                <Text style={styles.aspectsTitle}>⭐ Trânsitos Pessoais:</Text>
                 {personalByTransitPlanet[comparison.name]
                   .slice(0,3)
                   .map((t, idx) => (

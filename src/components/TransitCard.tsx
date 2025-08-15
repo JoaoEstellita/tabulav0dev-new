@@ -48,7 +48,7 @@ export default function TransitCard({ transit }: TransitCardProps) {
       {/* Meta-resumo do novo motor (não quebra layout) */}
       <View style={{ marginBottom: 8 }}>
         <Text style={{ color: '#fff', fontSize: 12, opacity: 0.85 }}>
-          Trânsitos Pessoais: {personal.length} • Do Momento: {general.length}
+          ⭐ Pessoais: {personal.length} • ✨ Coletivos: {general.length}
         </Text>
         {statusPersonal && (
           <Text style={{ color: '#fff', fontSize: 12, opacity: 0.85 }}>
