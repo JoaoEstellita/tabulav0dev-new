@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native'
 
 // Configurar comportamento das notificações
 Notifications.setNotificationHandler({
@@ -18,6 +19,7 @@ export function useNotifications() {
   const [notification, setNotification] = useState<Notifications.Notification>();
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
+  const navigation = useNavigation<any>()
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
@@ -27,7 +29,18 @@ export function useNotifications() {
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notificação respondida:', response);
+      try {
+        const data: any = response.notification.request.content.data || {}
+        const target = data.navTarget as string | undefined
+        if (target?.startsWith('home')) {
+          // home-personal, home-collective, home-daily
+          navigation.navigate('Home')
+          // Sinalizar intenção de focar bloco na Home via global flag
+          ;(globalThis as any).__homeFocus = target
+        }
+      } catch (e) {
+        console.log('Nav from notification error', e)
+      }
     });
 
     return () => {

@@ -59,7 +59,7 @@ export class AstroNotificationOrchestrator {
         'Abra para ver seus destaques Pessoais de hoje e os principais movimentos Coletivos.',
         hour,
         minute,
-        { type: 'daily_overview' }
+        { type: 'daily_overview', navTarget: 'home-daily' }
       )
     }
 
@@ -70,7 +70,7 @@ export class AstroNotificationOrchestrator {
         'Panorama semanal – Coletivo',
         'Principais aspectos Coletivos da semana. Abra para detalhes.',
         date,
-        { type: 'weekly_digest' }
+        { type: 'weekly_digest', navTarget: 'home-collective' }
       )
     }
 
@@ -81,7 +81,7 @@ export class AstroNotificationOrchestrator {
         'Panorama mensal – Coletivo',
         'Movimentos Coletivos do mês em destaque. Abra para detalhes.',
         date,
-        { type: 'monthly_digest' }
+        { type: 'monthly_digest', navTarget: 'home-collective' }
       )
     }
 
@@ -108,7 +108,7 @@ export class AstroNotificationOrchestrator {
           if (sent.has(key)) continue
           const title = 'Alerta Pessoal – ápice próximo'
           const body = `${translatePlanet(c.t.transitPlanet)} ${c.t.type} ${translatePlanet(c.t.natalPlanet)} • orbe ${c.t.orb.toFixed(1)}° • ${c.t.contactIndex}º contato • pico ~${c.daysToPeak}d`
-          await PushNotificationService.sendImmediateNotification(title, body, { type: 'personal_alert', seriesId: c.t.seriesId, contactIndex: c.t.contactIndex })
+          await PushNotificationService.sendImmediateNotification(title, body, { type: 'personal_alert', navTarget: 'home-personal', seriesId: c.t.seriesId, contactIndex: c.t.contactIndex })
           sent.add(key)
         }
 

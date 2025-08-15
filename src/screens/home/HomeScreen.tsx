@@ -37,6 +37,16 @@ export default function HomeScreen() {
     const { settings, updateSettings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>(settings?.houseSystem || 'placidus')
 
+    // Foco da Home via deep link (pessoal/coletivo/resumo)
+    const [homeFocus, setHomeFocus] = useState<string|undefined>(undefined)
+    useEffect(()=>{
+      const f = (globalThis as any).__homeFocus
+      if (typeof f === 'string') {
+        setHomeFocus(f)
+        ;(globalThis as any).__homeFocus = undefined
+      }
+    },[])
+
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
       if (settings?.houseSystem) {
@@ -338,9 +348,9 @@ export default function HomeScreen() {
                           Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
                         </Text>
                       )}
-                      {/* ✨ Aspectos-chave Coletivos com ícones */}
+                      {/* ✨ Aspectos-chave Coletivos com ícones (dar destaque quando veio por deep link) */}
                       {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
-                        <View style={{ marginTop: 4 }}>
+                        <View style={{ marginTop: 4, borderLeftWidth: homeFocus==='home-collective'?2:0, borderLeftColor:'#F59E0B', paddingLeft: homeFocus==='home-collective'?6:0 }}>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
                             const txt = `${a.planet1} ${a.type} ${a.planet2}`
                             const icon = getAspectSymbol(a.type as any)
