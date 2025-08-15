@@ -194,7 +194,7 @@ export default function TransitComparisonCard({
       colors={['#1E1E2E', '#2A2A3E']}
       style={styles.container}
     >
-      {/* Status Pessoal agregado (T→N) */}
+      {/* Status Pessoal agregado */}
       {statusPersonal && (
         <View style={{ marginBottom: 8 }}>
           <Text style={{ color:'#fff', opacity:0.9 }}>
@@ -371,7 +371,7 @@ export default function TransitComparisonCard({
               })()}
             </View>
 
-            {/* Aspectos do Momento (T→T) para este planeta */}
+            {/* Aspectos do Momento (Coletivo) para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>⭐ Aspectos Planetários:</Text>
@@ -413,10 +413,10 @@ export default function TransitComparisonCard({
               </View>
             )}
 
-            {/* Trânsitos Pessoais (T→N) para este planeta em trânsito */}
+            {/* Trânsitos Pessoais para este planeta em trânsito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>🧭 Trânsitos Pessoais (T→N):</Text>
+                <Text style={styles.aspectsTitle}>🧭 Trânsitos Pessoais:</Text>
                 {personalByTransitPlanet[comparison.name]
                   .slice(0,3)
                   .map((t, idx) => (

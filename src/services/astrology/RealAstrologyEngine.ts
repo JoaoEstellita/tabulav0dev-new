@@ -107,7 +107,7 @@ export interface RealAstrologyData {
   midheaven: number
   housesApproximate?: boolean
   houseSystem?: 'whole'|'equal'|'placidus'
-  // Índice coletivo (T→T) e fase lunar
+  // Índice Coletivo (T→T) e fase lunar
   collective?: {
     positive: number
     negative: number
@@ -231,7 +231,7 @@ export class RealAstrologyEngine {
 
   // Cache simples do índice coletivo por dia (UTC)
   private static _collectiveCache: Map<string, NonNullable<RealAstrologyData['collective']>> = new Map()
-  // Cache T→T semanal/mensal (chaves: YYYY-Www e YYYY-MM)
+  // Cache Coletivo semanal/mensal (chaves: YYYY-Www e YYYY-MM)
   private static _weeklyTTCache: Map<string, RealAspect[]> = new Map()
   private static _monthlyTTCache: Map<string, RealAspect[]> = new Map()
 
@@ -332,15 +332,15 @@ export class RealAstrologyEngine {
       }
       console.log('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
         planetsWithHouses.map(p => ({ name: p.name, natal: (natalPlanets.find(n=>n.name===p.name)?.house), current: p.house })))
-      // Aspectos T→T (momento)
+      // Aspectos Coletivos (momento)
       const aspectsCurrentTT = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         aspectsConfig
       )
-      console.log(`✅ Aspectos T→T calculados: ${aspectsCurrentTT.length}`)
+      console.log(`✅ Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
 
-      // Índice coletivo (T→T) + fase lunar (cache por dia UTC)
+      // Índice Coletivo + fase lunar (cache por dia UTC)
       const dayKey = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0,10)
       let collective = RealAstrologyEngine._collectiveCache.get(dayKey)
       if (!collective) {
@@ -348,7 +348,7 @@ export class RealAstrologyEngine {
         RealAstrologyEngine._collectiveCache.set(dayKey, collective)
       }
 
-      // Pré‑cálculo semanal e mensal de T→T (cache): guardar snapshot representativo
+      // Pré‑cálculo semanal e mensal Coletivo (cache): guardar snapshot representativo
       let weekKey: string | undefined
       let monthKey: string | undefined
       try {
@@ -371,16 +371,16 @@ export class RealAstrologyEngine {
         }
       } catch {}
 
-      // Aspectos T→N (pessoais) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
+      // Aspectos Pessoais (T→N) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
         aspectsConfig
       )
-      console.log(`✅ Aspectos T→N calculados: ${aspectsTransitsToNatalTN.length}`)
+      console.log(`✅ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
 
       // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
-      // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos T→N
+      // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos Pessoais
       const currentOnNatalHouses = this.assignHouses(realPlanets, natalHouses)
       const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, natalPlanets, birthDateTime, latitude, longitude)
       // Derivar um status agregado pessoal simplificado a partir de lifeAreas
@@ -964,7 +964,7 @@ export class RealAstrologyEngine {
     const sun = planets.find(p => p.name === 'Sun')
     const natalAlmuten = this.getNatalAlmuten(natalPlanets)
 
-    // Helpers para padrões T→N envolvendo pontos natais
+    // Helpers para padrões Pessoais envolvendo pontos natais
     const degDiff = (a:number,b:number)=>{ const d=Math.abs(((a-b+540)%360)-180); return d }
     const within = (x:number, target:number, tol:number)=> Math.abs(x-target) <= tol
     const natalByName = new Map(natalPlanets.map(p=>[p.name,p]))
@@ -1086,7 +1086,7 @@ export class RealAstrologyEngine {
           const areaRulers = new Set(config.houses.flatMap(h => houseRulers[h] || []))
           const rulerBoost = areaRulers.has(other) ? 1.06 : 1.0
 
-          // Padrões T→N
+          // Padrões Pessoais
           const pattMult = tnPatternBoost.get(`${planetName}|${other}`) || 1.0
           // Cluster: múltiplos hits ao mesmo natal
           const clusterMult = (countByNatal[other]||0) >= 2 ? 1.10 : 1.0

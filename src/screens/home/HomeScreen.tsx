@@ -323,7 +323,7 @@ export default function HomeScreen() {
                     {transitData?.dailyOverview?.generalTrend || 'Analisando dados astrológicos...'}
                   </Text>
 
-                  {/* Índice coletivo (T→T) + fase lunar */}
+                  {/* Índice Coletivo + fase lunar */}
                   {(transitData?.dailyOverview?.collectivePositive !== undefined || transitData?.dailyOverview?.lunarPhase) && (
                     <View style={{ marginTop: 6 }}>
                       {transitData?.dailyOverview?.collectivePositive !== undefined && (
@@ -336,7 +336,7 @@ export default function HomeScreen() {
                           Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
                         </Text>
                       )}
-                      {/* Aspectos-chave coletivos com ícones */}
+                      {/* Aspectos-chave Coletivos com ícones */}
                       {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
                         <View style={{ marginTop: 4 }}>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
@@ -389,7 +389,7 @@ export default function HomeScreen() {
                           ))}
                         </View>
                       )}
-                      {/* Panorama semanal/mensal dos aspectos coletivos (T→T) */}
+                      {/* Panorama semanal/mensal dos aspectos Coletivos */}
                       {!!transitData?.dailyOverview?.weeklySnapshot && (
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#A0E7A0' }]}>{`Semana ${transitData.dailyOverview.weeklySnapshot.key}`}</Text>

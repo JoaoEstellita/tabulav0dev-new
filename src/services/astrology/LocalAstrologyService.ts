@@ -36,7 +36,7 @@ export interface LocalTransitData {
     message?: string
     overall?: number
     masterAspects?: Array<{ text: string; strength: number }>
-    // Índice coletivo (T→T)
+    // Índice Coletivo
     collectivePositive?: number
     collectiveNegative?: number
     collectiveKeyAspects?: string[]
