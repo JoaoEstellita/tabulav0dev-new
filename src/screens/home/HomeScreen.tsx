@@ -39,6 +39,8 @@ try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod
 try { const mod2 = require('../../ui/motion/web/pulse'); pulseOnce = mod2.pulseOnce } catch {}
 let fadeSlideIn: any = null
 try { const mod3 = require('../../ui/motion/web/pageTransitions'); fadeSlideIn = mod3.fadeSlideIn } catch {}
+let lineDrawOnce: any = null
+try { const mod4 = require('../../ui/motion/web/lineDraw'); lineDrawOnce = mod4.lineDrawOnce } catch {}
 
 export default function HomeScreen() {
   try {
@@ -417,34 +419,55 @@ export default function HomeScreen() {
                             const short = (windowDays ?? 0) <= 3 // <=3 dias = rápido
                             const color = long ? '#F59E0B' : short ? '#9AE6B4' : (strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0')
                             return (
-                              <TouchableOpacity key={idx} onPress={() => {
-                                const note = getPairNote(a.planet1, a.planet2, a.type as any)
-                                const extra = [] as string[]
-                                extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
-                                if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
-                                if (typeof windowDays === 'number') extra.push(`vigência ~${windowDays} dias`)
-                                // Pico aproximado (aplicante) ou tempo desde pico (separante)
-                                let peak = ''
-                                try {
-                                  if (typeof a.orb === 'number' && typeof (a as any).relSpeed === 'number' && (a as any).relSpeed > 0.01) {
-                                    const days = (a.orb / (a as any).relSpeed)
-                                    if (a.isApplying) {
-                                      const d = new Date(Date.now() + days * 86400000)
-                                      peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
-                                    } else {
-                                      peak = `separante: pico há ~${Math.round(days)} dias`
-                                    }
-                                    extra.push(peak)
-                                  }
-                                } catch {}
-                                setCollectiveModal({
-                                  visible: true,
-                                  title: `${icon} ${txt}`,
-                                  body: `${getAspectDescription(a.type as any)}${note ? `\n${note}` : ''}\n${extra.join(' • ')}`
-                                })
-                              }}>
-                                <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
-                              </TouchableOpacity>
+                              (() => {
+                                const press = usePressScale()
+                                return (
+                                  <Animated.View key={idx} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const note = getPairNote(a.planet1, a.planet2, a.type as any)
+                                      const extra = [] as string[]
+                                      extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
+                                      if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
+                                      if (typeof windowDays === 'number') extra.push(`vigência ~${windowDays} dias`)
+                                      // Pico aproximado (aplicante) ou tempo desde pico (separante)
+                                      let peak = ''
+                                      try {
+                                        if (typeof a.orb === 'number' && typeof (a as any).relSpeed === 'number' && (a as any).relSpeed > 0.01) {
+                                          const days = (a.orb / (a as any).relSpeed)
+                                          if (a.isApplying) {
+                                            const d = new Date(Date.now() + days * 86400000)
+                                            peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
+                                          } else {
+                                            peak = `separante: pico há ~${Math.round(days)} dias`
+                                          }
+                                          extra.push(peak)
+                                        }
+                                      } catch {}
+                                      setCollectiveModal({
+                                        visible: true,
+                                        title: `${icon} ${txt}`,
+                                        body: `${getAspectDescription(a.type as any)}${note ? `\n${note}` : ''}\n${extra.join(' • ')}`
+                                      })
+                                    }}>
+                                      <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
+                                      {/* sublinhado com line-draw (web only) */}
+                                      {typeof document !== 'undefined' && ((globalThis as any).__effectsIntensity !== 'low') && (
+                                        <svg width="100%" height="2" style={{ marginTop: 2 }}>
+                                          <path
+                                            // @ts-ignore
+                                            ref={(ref:any)=>{ try { if (ref && (lineDrawOnce as any)) (lineDrawOnce as any)(ref, { duration: 500 }) } catch {} }}
+                                            d="M0 1 H 3000"
+                                            stroke={color}
+                                            strokeWidth="2"
+                                            fill="none"
+                                            strokeLinecap="round"
+                                          />
+                                        </svg>
+                                      )}
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })()
                             )
                           })}
                         </View>
