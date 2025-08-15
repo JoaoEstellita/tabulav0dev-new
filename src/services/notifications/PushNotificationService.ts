@@ -33,6 +33,30 @@ export interface NotificationData {
 }
 
 export class PushNotificationService {
+  private static getBadgeAndColor(data?: any): { prefix: string, color?: string } {
+    const type = data?.type
+    // Emojis e cores: 🧭 Pessoal, 🌐 Coletivo, 🧭🌐 misto
+    if (type === 'personal_alert') return { prefix: '🧭 ', color: '#10B981' }
+    if (type === 'weekly_digest' || type === 'monthly_digest') return { prefix: '🌐 ', color: '#F59E0B' }
+    if (type === 'daily_overview') return { prefix: '🧭🌐 ', color: '#8B5CF6' }
+    if (type === 'group') return { prefix: '👥 ' }
+    if (type === 'critical_alert') return { prefix: '⚠️ ', color: '#EF4444' }
+    if (type === 'favorable_event') return { prefix: '✨ ', color: '#10B981' }
+    return { prefix: '' }
+  }
+
+  private static buildContent(title: string, body: string, data?: any) {
+    const meta = this.getBadgeAndColor(data)
+    const content: Notifications.NotificationContentInput = {
+      title: `${meta.prefix}${title}`,
+      body,
+      data,
+    } as any
+    if (Platform.OS === 'android' && meta.color) {
+      ;(content as any).color = meta.color
+    }
+    return content
+  }
   static async scheduleNotification(
     title: string,
     body: string,
@@ -41,11 +65,7 @@ export class PushNotificationService {
   ) {
     try {
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          data,
-        },
+        content: this.buildContent(title, body, data),
         trigger,
       });
       console.log('✅ Notificação agendada com sucesso');
@@ -62,11 +82,7 @@ export class PushNotificationService {
   ) {
     try {
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          data,
-        },
+        content: this.buildContent(title, body, data),
         trigger: null, // Envio imediato
       });
       console.log('✅ Notificação enviada imediatamente');
