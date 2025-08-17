@@ -393,13 +393,31 @@ export default function HomeScreen() {
                   {(transitData?.dailyOverview?.collectivePositive !== undefined || transitData?.dailyOverview?.lunarPhase) && (
                     <View style={{ marginTop: 6 }}>
                       {transitData?.dailyOverview?.collectivePositive !== undefined && (
-                        <Text style={styles.summaryText}>
-                          Clima coletivo: +{transitData.dailyOverview.collectivePositive || 0}% / -{transitData.dailyOverview.collectiveNegative || 0}%
-                        </Text>
+                        (() => {
+                          const press = usePressScale()
+                          const labelPercent = typeof transitData?.dailyOverview?.collectiveClimatePercent === 'number'
+                            ? transitData.dailyOverview.collectiveClimatePercent
+                            : Math.round(((transitData?.dailyOverview?.collectivePositive || 0) - (transitData?.dailyOverview?.collectiveNegative || 0) + 100) / 2)
+                          return (
+                            <Animated.View style={press.style}>
+                              <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => setHomeFocus('home-collective')}>
+                                <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Clima Coletivo: {labelPercent}%</Text>
+                              </TouchableOpacity>
+                            </Animated.View>
+                          )
+                        })()
                       )}
-                      {transitData?.dailyOverview?.lunarPhase && (
+                      {(transitData?.dailyOverview?.lunarPhasePublic || transitData?.dailyOverview?.lunarPhase) && (
                         <Text style={styles.summaryText}>
-                          Fase lunar: {transitData.dailyOverview.lunarPhase.name} ({transitData.dailyOverview.lunarPhase.elongation}° {transitData.dailyOverview.lunarPhase.waxing ? 'crescente' : 'minguante'})
+                          {(() => {
+                            const lp = transitData?.dailyOverview?.lunarPhasePublic
+                            if (lp && lp.name) return `Fase lunar: ${lp.name} ${lp.emoji || ''}`.trim()
+                            const ph = transitData?.dailyOverview?.lunarPhase
+                            if (!ph) return ''
+                            const emoji = ph.waxing ? (ph.elongation < 90 ? '🌓' : '🌔') : (ph.elongation > 90 ? '🌖' : '🌗')
+                            const name = ph.waxing ? (ph.elongation >= 145 ? 'Cheia (Ápice)' : ph.elongation >= 80 ? 'Quarto Crescente' : 'Crescente') : (ph.elongation >= 145 ? 'Cheia (Ápice)' : ph.elongation >= 80 ? 'Quarto Minguante' : 'Minguante')
+                            return `Fase lunar: ${name} ${emoji}`
+                          })()}
                         </Text>
                       )}
                       {/* ✨ Aspectos-chave Coletivos com ícones (dar destaque quando veio por deep link) */}
@@ -409,7 +427,7 @@ export default function HomeScreen() {
                           // @ts-ignore
                           ref={(ref:any)=>{ try { if (ref && typeof document !== 'undefined' && homeFocus==='home-collective' && (pulseOnce as any)) (pulseOnce as any)(ref, 'rgba(245,158,11,0.25)') } catch {} }}
                         >
-                          {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0,3).map((a, idx) => {
+                          {(transitData.dailyOverview.collectiveKeyAspectsRich || []).map((a, idx) => {
                             const txt = `${a.planet1} ${a.type} ${a.planet2}`
                             const icon = getAspectSymbol(a.type as any)
                             const strength = typeof a.strength === 'number' ? a.strength : 0
@@ -472,6 +490,30 @@ export default function HomeScreen() {
                           })}
                         </View>
                       )}
+                      {/* ⭐ Pessoais de hoje: lista completa, clicáveis, sem porcentagem */}
+                      {!!(transitData?.dailyOverview?.personalToday?.length) && (
+                        <View style={{ marginTop: 8 }}>
+                          <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoais (Hoje)</Text>
+                          {(transitData.dailyOverview.personalToday || []).map((txt, i) => {
+                            const press = usePressScale()
+                            const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
+                            const p1 = match?.[1] || ''
+                            const type = (match?.[2] || '') as any
+                            const p2 = match?.[3] || ''
+                            return (
+                              <Animated.View key={`pt-${i}`} style={press.style}>
+                                <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                  const desc = getAspectDescription(type)
+                                  const note = getPairNote(p1 as any, p2 as any, type)
+                                  setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                }}>
+                                  <Text style={styles.summaryText}>• {txt}</Text>
+                                </TouchableOpacity>
+                              </Animated.View>
+                            )
+                          })}
+                        </View>
+                      )}
                       {/* Master Aspects (dar destaque quando veio por deep link) */}
                       {Array.isArray(transitData?.dailyOverview?.masterAspects) && transitData.dailyOverview.masterAspects.length > 0 && (
                         <View
@@ -483,49 +525,170 @@ export default function HomeScreen() {
                             } catch {}
                           }}
                         >
-                          {(transitData.dailyOverview.masterAspects || []).slice(0,3).map((m, i) => (
-                            <Text key={i} style={styles.summaryText}>⭐ {m.text}</Text>
-                          ))}
+                          {(transitData.dailyOverview.masterAspects || []).map((m, i) => {
+                            const press = usePressScale()
+                            const [p1, type, p2] = (()=>{
+                              const t = (m.text||'').replace(/\(.*\)/,'').trim()
+                              const parts = t.split(/\s+/)
+                              const idx = parts.findIndex(x=>['conjunção','oposição','quadratura','trígono','sextil','quincúncio','semissextil','semiquadratura','sesquiquadratura'].includes(x))
+                              if (idx>0) return [parts.slice(0,idx).join(' '), parts[idx], parts.slice(idx+1).join(' ')]
+                              return [t,'', '']
+                            })()
+                            return (
+                              <Animated.View key={i} style={press.style}>
+                                <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                  const desc = getAspectDescription(type as any)
+                                  const note = getPairNote(p1 as any, p2 as any, type as any)
+                                  setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                }}>
+                                  <Text style={styles.summaryText}>⭐ {m.text.replace(/\s*\(\d+%\)\s*$/,'')}</Text>
+                                </TouchableOpacity>
+                              </Animated.View>
+                            )
+                          })}
                         </View>
                       )}
-                      {/* Panorama semanal/mensal dos aspectos Coletivos */}
+                      {/* Panorama semanal/mensal: dividir Pessoal e Coletivo */}
                       {!!transitData?.dailyOverview?.weeklySnapshot && (
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#A0E7A0' }]}>{`Semana ${transitData.dailyOverview.weeklySnapshot.key}`}</Text>
-                          {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).slice(0,3).map((txt, i) => (
-                            <Text key={i} style={styles.summaryText}>• {txt}</Text>
-                          ))}
+                          {/* Pessoal (semana) */}
+                          {!!(transitData?.dailyOverview?.weeklyPersonal?.length) && (
+                            <View style={{ marginTop: 2 }}>
+                              <Text style={[styles.summaryText, { opacity: 0.85 }]}>⭐ Pessoal</Text>
+                              {(transitData.dailyOverview.weeklyPersonal || []).map((txt, i) => {
+                                const press = usePressScale()
+                                const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
+                                const p1 = match?.[1] || ''
+                                const type = (match?.[2] || '') as any
+                                const p2 = match?.[3] || ''
+                                return (
+                                  <Animated.View key={`wp-${i}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const desc = getAspectDescription(type)
+                                      const note = getPairNote(p1 as any, p2 as any, type)
+                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                    }}>
+                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                            </View>
+                          )}
+                          {/* Coletivo (semana) */}
+                          <View style={{ marginTop: 2 }}>
+                            <Text style={[styles.summaryText, { opacity: 0.85 }]}>✨ Coletivo</Text>
+                            {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).map((txt, i) => {
+                              const press = usePressScale()
+                              const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
+                              const p1 = match?.[1] || ''
+                              const type = (match?.[2] || '') as any
+                              const p2 = match?.[3] || ''
+                              return (
+                                <Animated.View key={`wc-${i}`} style={press.style}>
+                                  <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                    const desc = getAspectDescription(type)
+                                    const note = getPairNote(p1 as any, p2 as any, type)
+                                    setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                  }}>
+                                    <Text style={styles.summaryText}>• {txt}</Text>
+                                  </TouchableOpacity>
+                                </Animated.View>
+                              )
+                            })}
+                          </View>
                         </View>
                       )}
                       {!!transitData?.dailyOverview?.monthlySnapshot && (
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#F59E0B' }]}>{`Mês ${transitData.dailyOverview.monthlySnapshot.key}`}</Text>
-                          {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).slice(0,3).map((txt, i) => (
-                            <Text key={i} style={styles.summaryText}>• {txt}</Text>
-                          ))}
+                          {/* Pessoal (mês) */}
+                          {!!(transitData?.dailyOverview?.monthlyPersonal?.length) && (
+                            <View style={{ marginTop: 2 }}>
+                              <Text style={[styles.summaryText, { opacity: 0.85 }]}>⭐ Pessoal</Text>
+                              {(transitData.dailyOverview.monthlyPersonal || []).map((txt, i) => {
+                                const press = usePressScale()
+                                const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
+                                const p1 = match?.[1] || ''
+                                const type = (match?.[2] || '') as any
+                                const p2 = match?.[3] || ''
+                                return (
+                                  <Animated.View key={`mp-${i}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const desc = getAspectDescription(type)
+                                      const note = getPairNote(p1 as any, p2 as any, type)
+                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                    }}>
+                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                            </View>
+                          )}
+                          {/* Coletivo (mês) */}
+                          <View style={{ marginTop: 2 }}>
+                            <Text style={[styles.summaryText, { opacity: 0.85 }]}>✨ Coletivo</Text>
+                            {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).map((txt, i) => {
+                              const press = usePressScale()
+                              const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
+                              const p1 = match?.[1] || ''
+                              const type = (match?.[2] || '') as any
+                              const p2 = match?.[3] || ''
+                              return (
+                                <Animated.View key={`mc-${i}`} style={press.style}>
+                                  <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                    const desc = getAspectDescription(type)
+                                    const note = getPairNote(p1 as any, p2 as any, type)
+                                    setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                  }}>
+                                    <Text style={styles.summaryText}>• {txt}</Text>
+                                  </TouchableOpacity>
+                                </Animated.View>
+                              )
+                            })}
+                          </View>
                         </View>
                       )}
                     </View>
                   )}
                   
-                  {/* Mini gráfico: distribuição atual de Elementos e Modalidades */}
+                  {/* Mini gráfico: distribuição atual de Elementos e Modalidades, com deltas */}
                   {transitData?.currentTransits?.chartSummary && (
                     <View style={{ marginTop: 8 }}>
                       <View style={{ flexDirection: 'row', marginBottom: 4 }}>
                         <Text style={[styles.summaryText, { marginRight: 6 }]}>🌍 Elementos:</Text>
                         <Text style={styles.summaryText}>
-                          🔥 {transitData.currentTransits.chartSummary.elemental.current.fire}  
-                          🌍 {transitData.currentTransits.chartSummary.elemental.current.earth}  
-                          💨 {transitData.currentTransits.chartSummary.elemental.current.air}  
-                          💧 {transitData.currentTransits.chartSummary.elemental.current.water}
+                          {(() => {
+                            const cs = transitData.currentTransits.chartSummary
+                            const f = cs.elemental.current.fire
+                            const e = cs.elemental.current.earth
+                            const a = cs.elemental.current.air
+                            const w = cs.elemental.current.water
+                            const df = f - cs.elemental.natal.fire
+                            const de = e - cs.elemental.natal.earth
+                            const da = a - cs.elemental.natal.air
+                            const dw = w - cs.elemental.natal.water
+                            const fmt = (val:number, d:number, icon:string) => `${icon} ${val} ${d===0?'(0)':d>0?`(↑${d})`:`(↓${Math.abs(d)})`}`
+                            return `${fmt(f,df,'🔥')}  ${fmt(e,de,'🌍')}  ${fmt(a,da,'💨')}  ${fmt(w,dw,'💧')}`
+                          })()}
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row' }}>
                         <Text style={[styles.summaryText, { marginRight: 6 }]}>⚡ Modalidades:</Text>
                         <Text style={styles.summaryText}>
-                          ⚡ {transitData.currentTransits.chartSummary.modality.current.cardinal}  
-                          🔒 {transitData.currentTransits.chartSummary.modality.current.fixed}  
-                          🔄 {transitData.currentTransits.chartSummary.modality.current.mutable}
+                          {(() => {
+                            const cs = transitData.currentTransits.chartSummary
+                            const c = cs.modality.current.cardinal
+                            const fx = cs.modality.current.fixed
+                            const mu = cs.modality.current.mutable
+                            const dc = c - cs.modality.natal.cardinal
+                            const dfx = fx - cs.modality.natal.fixed
+                            const dmu = mu - cs.modality.natal.mutable
+                            const fmt = (val:number, d:number, icon:string) => `${icon} ${val} ${d===0?'(0)':d>0?`(↑${d})`:`(↓${Math.abs(d)})`}`
+                            return `${fmt(c,dc,'⚡')}  ${fmt(fx,dfx,'🔒')}  ${fmt(mu,dmu,'🔄')}`
+                          })()}
                         </Text>
                       </View>
                     </View>

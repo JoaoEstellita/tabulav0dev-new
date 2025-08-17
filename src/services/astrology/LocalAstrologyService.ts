@@ -42,8 +42,16 @@ export interface LocalTransitData {
     collectiveKeyAspects?: string[]
     collectiveKeyAspectsRich?: Array<{ planet1: string; planet2: string; type: string; strength: number; orb?: number; isApplying?: boolean }>
     lunarPhase?: { name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'; waxing: boolean; elongation: number }
+    // Campos novos para apresentação
+    collectiveClimatePercent?: number
+    lunarPhasePublic?: { name: string; emoji: string }
     weeklySnapshot?: { key: string, keyAspects: string[] }
     monthlySnapshot?: { key: string, keyAspects: string[] }
+    // Listas pessoais agregadas por período (heurística baseada em duração)
+    weeklyPersonal?: string[]
+    monthlyPersonal?: string[]
+    // Lista completa de trânsitos pessoais de hoje (sem porcentagem por item)
+    personalToday?: string[]
   }
   warnings: string[]
 }
@@ -207,8 +215,9 @@ export class LocalAstrologyService {
                         averageScore >= 40 ? 'Período de desafios moderados' :
                         'Período que requer cautela'
 
-    // Aspectos-chave (mais fortes)
+    // Aspectos-chave (T→T) do dia: filtrar pares triviais (planeta consigo mesmo) e pegar os mais fortes
     const keyAspects = realData.aspects
+      .filter(aspect => aspect.planet1 !== aspect.planet2)
       .filter(aspect => aspect.strength > 70)
       .slice(0, 3)
       .map(aspect => `${aspect.planet1} ${aspect.type} ${aspect.planet2}`)
@@ -216,16 +225,49 @@ export class LocalAstrologyService {
     // Índice coletivo (quando disponível)
     const collectivePositive = realData.collective?.positive
     const collectiveNegative = realData.collective?.negative
-    const collectiveKeyAspectsRaw = (realData.collective?.keyAspects || []).slice(0, 5)
+    // Índice único de clima coletivo (0..100; 50 neutro)
+    const collectiveClimatePercent = (() => {
+      const pos = collectivePositive ?? 0
+      const neg = collectiveNegative ?? 0
+      const netScaled = Math.round(Math.max(0, Math.min(100, (pos - neg + 100) / 2)))
+      return netScaled
+    })()
+    // Lista completa dos coletivos do dia (sem limitar a 5 aqui; a UI controla exibição)
+    const collectiveKeyAspectsRaw = (realData.collective?.keyAspects || [])
+      .filter(a => a.planet1 !== a.planet2)
     const collectiveKeyAspects = collectiveKeyAspectsRaw.map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     const lunarPhase = realData.collective?.lunarPhase
+    const lunarPhasePublic = (() => {
+      if (!lunarPhase) return undefined
+      const e = lunarPhase.elongation
+      const waxing = lunarPhase.waxing
+      type Stage = { name: string, emoji: string }
+      const stage = (): Stage => {
+        if (e < 11.25) return { name: 'Nova', emoji: '🌑' }
+        if (e < 33.75) return { name: waxing ? 'Crescente' : 'Balsâmica', emoji: waxing ? '🌒' : '🌘' }
+        if (e < 56.25) return { name: waxing ? 'Crescente' : 'Minguante', emoji: waxing ? '🌒' : '🌘' }
+        if (e < 78.75) return { name: waxing ? 'Quarto Crescente' : 'Quarto Minguante', emoji: waxing ? '🌓' : '🌗' }
+        if (e < 101.25) return { name: waxing ? 'Gibosa Crescente' : 'Gibosa Minguante', emoji: waxing ? '🌔' : '🌖' }
+        if (e < 123.75) return { name: waxing ? 'Gibosa Crescente' : 'Gibosa Minguante', emoji: waxing ? '🌔' : '🌖' }
+        if (e < 146.25) return { name: waxing ? 'Cheia (Ápice)' : 'Cheia (Ápice)', emoji: '🌕' }
+        if (e < 168.75) return { name: 'Gibosa Minguante', emoji: '🌖' }
+        return { name: 'Quarto Minguante', emoji: '🌗' }
+      }
+      return stage()
+    })()
     const weeklySnapshot = realData.collectiveWeekly ? {
       key: realData.collectiveWeekly.key,
-      keyAspects: (realData.collectiveWeekly.keyAspects || []).slice(0,5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+      keyAspects: (realData.collectiveWeekly.keyAspects || [])
+        .filter(a => a.planet1 !== a.planet2)
+        .slice(0,5)
+        .map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     } : undefined
     const monthlySnapshot = realData.collectiveMonthly ? {
       key: realData.collectiveMonthly.key,
-      keyAspects: (realData.collectiveMonthly.keyAspects || []).slice(0,5).map(a => `${a.planet1} ${a.type} ${a.planet2}`)
+      keyAspects: (realData.collectiveMonthly.keyAspects || [])
+        .filter(a => a.planet1 !== a.planet2)
+        .slice(0,5)
+        .map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     } : undefined
 
     // Modulação leve do índice coletivo sobre o overall pessoal
@@ -238,11 +280,20 @@ export class LocalAstrologyService {
     })()
 
     // Ranking de aspectos‑mestres (heurística): T→N fortes
-    const masterAspects = (realData.transits?.personal || [])
+    const personalTransitsAll = (realData.transits?.personal || [])
+    const masterAspects = personalTransitsAll
       .filter(t => t.isMaster)
       .sort((a,b)=>b.strength-a.strength)
       .slice(0,5)
       .map(t => ({ text: `${t.transitPlanet} ${t.type} ${t.natalPlanet} (${t.strength}%)`, strength: t.strength }))
+
+    // Listas pessoais para Semana/Mês (heurística baseada em duração/força)
+    const weeklyPersonal = personalTransitsAll
+      .filter(t => t.durationClass !== 'curto')
+      .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    const monthlyPersonal = personalTransitsAll
+      .filter(t => t.durationClass === 'longo' || t.strength >= 75)
+      .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
 
     const dailyOverview = {
       bestArea,
@@ -254,11 +305,16 @@ export class LocalAstrologyService {
       masterAspects,
       collectivePositive,
       collectiveNegative,
+      collectiveClimatePercent,
       collectiveKeyAspects,
       collectiveKeyAspectsRich: collectiveKeyAspectsRaw,
       lunarPhase,
+      lunarPhasePublic,
       weeklySnapshot,
       monthlySnapshot,
+      weeklyPersonal,
+      monthlyPersonal,
+      personalToday: personalTransitsAll.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
     }
 
     return {
