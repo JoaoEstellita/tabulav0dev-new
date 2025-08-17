@@ -352,12 +352,14 @@ export class LocalAstrologyService {
     const weekRange = getWeekRange(realData.collectiveWeekly?.key)
     const monthRange = getMonthRange(realData.collectiveMonthly?.key)
 
+    // Listas Semana/Mês Pessoal por interseção real de janelas
     const weeklyList = personalTransitsAll
       .filter(t => intersects((t as any).window, weekRange.start, weekRange.end))
     const monthlyList = personalTransitsAll
       .filter(t => intersects((t as any).window, monthRange.start, monthRange.end))
-    const weeklyPersonal = weeklyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
-    const monthlyPersonal = monthlyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    // Strings simples para compatibilidade com UI legada
+    const weeklyPersonalList = weeklyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    const monthlyPersonalList = monthlyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
 
     const dailyOverview = {
       bestArea,
@@ -376,8 +378,8 @@ export class LocalAstrologyService {
       lunarPhasePublic,
       weeklySnapshot,
       monthlySnapshot,
-      weeklyPersonal,
-      monthlyPersonal,
+      weeklyPersonal: weeklyPersonalList,
+      monthlyPersonal: monthlyPersonalList,
       personalToday: personalTransitsAll.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`),
       personalTodayRich: personalTransitsAll.map((t:any)=> ({
         transitPlanet: t.transitPlanet,
