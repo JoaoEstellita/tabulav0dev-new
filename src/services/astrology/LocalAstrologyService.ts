@@ -291,8 +291,68 @@ export class LocalAstrologyService {
     const weeklyPersonal = personalTransitsAll
       .filter(t => t.durationClass !== 'curto')
       .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    const intersects = (w: any, start: Date, end: Date): boolean => {
+      if (!w || !w.start || !w.end) return false
+      const ws = new Date(w.start).getTime()
+      const we = new Date(w.end).getTime()
+      return ws <= end.getTime() && we >= start.getTime()
+    }
+    const getWeekRange = (key?: string): { start: Date, end: Date } => {
+      const now = new Date()
+      if (!key) {
+        const day = now.getDay()
+        const diffToMonday = (day === 0 ? -6 : 1 - day)
+        const start = new Date(now)
+        start.setHours(0,0,0,0)
+        start.setDate(start.getDate() + diffToMonday)
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+        end.setHours(23,59,59,999)
+        return { start, end }
+      }
+      const m = key.match(/^(\d{4})-W(\d{2})$/)
+      if (m) {
+        const year = parseInt(m[1],10)
+        const week = parseInt(m[2],10)
+        const jan4 = new Date(Date.UTC(year,0,4))
+        const jan4Day = jan4.getUTCDay() || 7
+        const monday = new Date(jan4)
+        monday.setUTCDate(jan4.getUTCDate() - (jan4Day - 1) + (week - 1) * 7)
+        const start = new Date(monday)
+        const end = new Date(start)
+        end.setUTCDate(start.getUTCDate() + 6)
+        return { start, end }
+      }
+      return getWeekRange(undefined)
+    }
+    const getMonthRange = (key?: string): { start: Date, end: Date } => {
+      const now = new Date()
+      if (!key) {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1)
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        end.setHours(23,59,59,999)
+        return { start, end }
+      }
+      const m = key.match(/^(\d{4})-(\d{2})$/)
+      if (m) {
+        const year = parseInt(m[1],10)
+        const month = parseInt(m[2],10) - 1
+        const start = new Date(year, month, 1)
+        const end = new Date(year, month + 1, 0)
+        end.setHours(23,59,59,999)
+        return { start, end }
+      }
+      return getMonthRange(undefined)
+    }
+
+    const weekRange = getWeekRange(realData.collectiveWeekly?.key)
+    const monthRange = getMonthRange(realData.collectiveMonthly?.key)
+
+    const weeklyPersonal = personalTransitsAll
+      .filter(t => intersects((t as any).window, weekRange.start, weekRange.end))
+      .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
     const monthlyPersonal = personalTransitsAll
-      .filter(t => t.durationClass === 'longo' || t.strength >= 75)
+      .filter(t => intersects((t as any).window, monthRange.start, monthRange.end))
       .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
 
     const dailyOverview = {

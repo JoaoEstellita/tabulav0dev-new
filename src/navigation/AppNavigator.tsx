@@ -17,6 +17,7 @@ import { useAuth } from "../hooks/useAuth"
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
+const RootStack = createStackNavigator()
 
 function AuthStack() {
   return (
@@ -99,6 +100,15 @@ function MainTabs() {
   )
 }
 
+function RootNavigator() {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="Tabs" component={MainTabs} />
+      <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} />
+    </RootStack.Navigator>
+  )
+}
+
 export default function AppNavigator() {
   const { user, loading, birthDataComplete } = useAuth()
 
@@ -127,5 +137,5 @@ export default function AppNavigator() {
 
   // Se estiver logado e dados completos, mostra app principal
   console.log('🏠 Showing MainTabs (complete data)')
-  return <NavigationContainer><MainTabs /></NavigationContainer>
+  return <NavigationContainer><RootNavigator /></NavigationContainer>
 }

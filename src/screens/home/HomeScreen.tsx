@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
@@ -49,6 +50,7 @@ export default function HomeScreen() {
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings, updateSettings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>(settings?.houseSystem || 'placidus')
+    const navigation = useNavigation<any>()
 
     // Foco da Home via deep link (pessoal/coletivo/resumo)
     const [homeFocus, setHomeFocus] = useState<string|undefined>(undefined)
@@ -72,6 +74,11 @@ export default function HomeScreen() {
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
   const [collectiveModal, setCollectiveModal] = useState<{ visible: boolean; title?: string; body?: string }>({ visible: false })
+    const [collectiveExpanded, setCollectiveExpanded] = useState<boolean>(false)
+    const [collectiveTab, setCollectiveTab] = useState<'today'|'week'|'month'>('today')
+    const [showAllToday, setShowAllToday] = useState<boolean>(false)
+    const [showAllWeek, setShowAllWeek] = useState<boolean>(false)
+    const [showAllMonth, setShowAllMonth] = useState<boolean>(false)
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -400,12 +407,107 @@ export default function HomeScreen() {
                             : Math.round(((transitData?.dailyOverview?.collectivePositive || 0) - (transitData?.dailyOverview?.collectiveNegative || 0) + 100) / 2)
                           return (
                             <Animated.View style={press.style}>
-                              <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => setHomeFocus('home-collective')}>
+                              <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => setCollectiveExpanded(v=>!v)}>
                                 <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Clima Coletivo: {labelPercent}%</Text>
                               </TouchableOpacity>
                             </Animated.View>
                           )
                         })()
+                      )}
+                      {collectiveExpanded && (
+                        <View style={{ marginTop: 6 }}>
+                          {/* Tabs */}
+                          <View style={{ flexDirection:'row', marginBottom:6 }}>
+                            {['today','week','month'].map((t)=>{
+                              const label = t==='today'?'Hoje': t==='week'?'Semana':'Mês'
+                              const active = collectiveTab=== (t as any)
+                              return (
+                                <TouchableOpacity key={t} onPress={()=>setCollectiveTab(t as any)} style={{ paddingVertical:4, paddingHorizontal:10, borderRadius:8, backgroundColor: active?'#3B3B4F':'#25253A', marginRight:6 }}>
+                                  <Text style={{ color: active?'#FFD700':'#FFFFFF', fontSize:12 }}>{label}</Text>
+                                </TouchableOpacity>
+                              )
+                            })}
+                          </View>
+                          {/* Conteúdo por aba */}
+                          {collectiveTab==='today' && !!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
+                            <View>
+                              {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0, showAllToday? undefined : 5).map((a, idx) => {
+                                const txt = `${a.planet1} ${a.type} ${a.planet2}`
+                                const icon = getAspectSymbol(a.type as any)
+                                const strength = typeof a.strength === 'number' ? a.strength : 0
+                                const windowDays = typeof (a as any).windowDays === 'number' ? (a as any).windowDays : undefined
+                                const press = usePressScale()
+                                return (
+                                  <Animated.View key={`ct-${idx}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const desc = getAspectDescription(a.type as any)
+                                      navigation.navigate('TransitDetail', { title: `${icon} ${txt}`, description: desc, type: 'collective', window: { days: windowDays } })
+                                    }}>
+                                      <Text style={styles.summaryText}>{icon} {txt}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                              {(transitData.dailyOverview.collectiveKeyAspectsRich || []).length > 5 && (
+                                <TouchableOpacity onPress={()=>setShowAllToday(v=>!v)}>
+                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllToday? 'ver menos' : 'ver todos'}</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          )}
+                          {collectiveTab==='week' && !!(transitData?.dailyOverview?.weeklySnapshot) && (
+                            <View>
+                              {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).slice(0, showAllWeek? undefined : 5).map((txt, i) => {
+                                const press = usePressScale()
+                                return (
+                                  <Animated.View key={`cw-${i}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const match = txt.match(/^(\S+)\s+(.*)\s+(\S.*)$/)
+                                      const p1 = match?.[1] || ''
+                                      const type = match?.[2] || ''
+                                      const p2 = match?.[3] || ''
+                                      const desc = getAspectDescription(type as any)
+                                      navigation.navigate('TransitDetail', { title: `✨ ${p1} ${type} ${p2}`, description: desc, type: 'collective' })
+                                    }}>
+                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                              {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).length > 5 && (
+                                <TouchableOpacity onPress={()=>setShowAllWeek(v=>!v)}>
+                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllWeek? 'ver menos' : 'ver todos'}</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          )}
+                          {collectiveTab==='month' && !!(transitData?.dailyOverview?.monthlySnapshot) && (
+                            <View>
+                              {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).slice(0, showAllMonth? undefined : 5).map((txt, i) => {
+                                const press = usePressScale()
+                                return (
+                                  <Animated.View key={`cm-${i}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                      const match = txt.match(/^(\S+)\s+(.*)\s+(\S.*)$/)
+                                      const p1 = match?.[1] || ''
+                                      const type = match?.[2] || ''
+                                      const p2 = match?.[3] || ''
+                                      const desc = getAspectDescription(type as any)
+                                      navigation.navigate('TransitDetail', { title: `✨ ${p1} ${type} ${p2}`, description: desc, type: 'collective' })
+                                    }}>
+                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                              {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).length > 5 && (
+                                <TouchableOpacity onPress={()=>setShowAllMonth(v=>!v)}>
+                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllMonth? 'ver menos' : 'ver todos'}</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          )}
+                        </View>
                       )}
                       {(transitData?.dailyOverview?.lunarPhasePublic || transitData?.dailyOverview?.lunarPhase) && (
                         <Text style={styles.summaryText}>

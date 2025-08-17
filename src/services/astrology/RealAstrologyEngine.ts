@@ -755,19 +755,11 @@ export class RealAstrologyEngine {
 
   /** Índice coletivo do dia (T→T) e fase lunar */
   private static computeCollectiveIndex(aspectsTT: RealAspect[], planets: RealPlanetPosition[]): NonNullable<RealAstrologyData['collective']> {
-    // Mapear planet data
-    const get = (name: string) => planets.find(p => p.name === name)
-    const slowBoost: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
-    const fastPenalty: Record<string, number> = { Moon:0.9 }
-    const hardTypes = new Set(['quadratura','oposição','semiquadratura','sesquiquadratura'])
-    const softTypes = new Set(['trígono','sextil'])
-
     const angleOf = (type: string): number => {
       const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
       return def?.angle ?? 0
     }
     const maxOrbForPair = (type: string, p1Name: string, p2Name: string): number => {
-      // Replica lógica essencial de resolveOrb()
       const cap = (aspectsConfig as any).maxOrbCap ?? 12
       const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
       let eff = def?.baseOrb ?? 5
@@ -783,6 +775,13 @@ export class RealAstrologyEngine {
       if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
       return Math.max(0, Math.min(cap, eff))
     }
+    // Mapear planet data
+    const get = (name: string) => planets.find(p => p.name === name)
+    const slowBoost: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
+    const fastPenalty: Record<string, number> = { Moon:0.9 }
+    const hardTypes = new Set(['quadratura','oposição','semiquadratura','sesquiquadratura'])
+    const softTypes = new Set(['trígono','sextil'])
+
 
     const scored = aspectsTT.map(a => {
       const p1 = get(a.planet1)
