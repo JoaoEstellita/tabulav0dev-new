@@ -4,7 +4,7 @@ try { Reanimated = require('react-native-reanimated') } catch {}
 const useSharedValue = Reanimated?.useSharedValue || ((v: number)=>({ value: v }))
 const withTiming = Reanimated?.withTiming || ((v: number)=>v)
 const useAnimatedStyle = Reanimated?.useAnimatedStyle || ((fn: any)=>({}))
-import { MotionDurations } from '../motion/tokens'
+import { MotionDurations } from '../tokens'
 
 export function usePressScale() {
   const s = useSharedValue(1)
