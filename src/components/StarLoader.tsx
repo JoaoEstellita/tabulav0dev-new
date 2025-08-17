@@ -6,7 +6,8 @@ export default function StarLoader({ size = 32, color = '#FFD700' }: { size?: nu
   React.useEffect(() => {
     const loop = () => {
       rot.setValue(0)
-      Animated.timing(rot, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start(loop)
+      const useNative = typeof document === 'undefined' // evita warning no Web
+      Animated.timing(rot, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.cubic), useNativeDriver: useNative }).start(loop)
     }
     loop()
     return () => { try { rot.stopAnimation() } catch {} }

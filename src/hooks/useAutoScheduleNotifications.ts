@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from './useAuth'
 import { useNotificationPreferences } from './useNotificationPreferences'
@@ -15,6 +16,8 @@ export function useAutoScheduleNotifications() {
   useEffect(() => {
     (async () => {
       try {
+        // Web não suporta agendamento local via expo-notifications
+        if (Platform.OS === 'web') return
         if (!user?.uid) return
         // Registrar token Android (no-op em iOS)
         try { await registerAndroidDeviceToken(user.uid) } catch {}

@@ -267,7 +267,23 @@ class AstrologyCacheService {
         return undefinedPaths
       }
 
-      const undefinedFields = findUndefinedFields(firestoreData)
+      // Sanitizar: converter campos undefined para null para compat Firestore
+      const sanitize = (obj: any): any => {
+        if (obj === undefined) return null
+        if (obj === null) return null
+        if (Array.isArray(obj)) return obj.map(sanitize)
+        if (obj && typeof obj === 'object') {
+          const out: any = {}
+          for (const [k, v] of Object.entries(obj)) {
+            out[k] = sanitize(v as any)
+          }
+          return out
+        }
+        return obj
+      }
+      const firestoreDataSanitized = sanitize(firestoreData)
+
+      const undefinedFields = findUndefinedFields(firestoreDataSanitized)
       
       if (undefinedFields.length > 0) {
         console.error('❌ Campos undefined detectados (recursivo):', undefinedFields)
@@ -277,7 +293,7 @@ class AstrologyCacheService {
       
       console.log('✅ Validação passou - nenhum campo undefined encontrado')
       
-      await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), firestoreData)
+      await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), firestoreDataSanitized)
       
       // Salvar no cache local
       const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`

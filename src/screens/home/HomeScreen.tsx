@@ -73,7 +73,8 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
-  const [collectiveModal, setCollectiveModal] = useState<{ visible: boolean; title?: string; body?: string }>({ visible: false })
+    // Modal legado removido em favor da tela de detalhe
+    const [collectiveModal, setCollectiveModal] = useState<{ visible: boolean; title?: string; body?: string }>({ visible: false })
     const [collectiveExpanded, setCollectiveExpanded] = useState<boolean>(false)
     const [collectiveTab, setCollectiveTab] = useState<'today'|'week'|'month'>('today')
     const [showAllToday, setShowAllToday] = useState<boolean>(false)
@@ -290,9 +291,10 @@ export default function HomeScreen() {
     const translateY = React.useRef(new Animated.Value(8)).current
     React.useEffect(() => {
       const t = setTimeout(() => {
+        const useNative = typeof document === 'undefined'
         Animated.parallel([
-          Animated.timing(opacity, { toValue: 1, duration: 240, useNativeDriver: true }),
-          Animated.timing(translateY, { toValue: 0, duration: 240, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 1, duration: 240, useNativeDriver: useNative }),
+          Animated.timing(translateY, { toValue: 0, duration: 240, useNativeDriver: useNative }),
         ]).start()
       }, delay)
       return () => clearTimeout(t)
@@ -441,7 +443,7 @@ export default function HomeScreen() {
                                   <Animated.View key={`ct-${idx}`} style={press.style}>
                                     <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                       const desc = getAspectDescription(a.type as any)
-                                      navigation.navigate('TransitDetail', { title: `${icon} ${txt}`, description: desc, type: 'collective', window: { days: windowDays } })
+                                      setCollectiveModal({ visible:true, title:`${icon} ${txt}`, body: desc })
                                     }}>
                                       <Text style={styles.summaryText}>{icon} {txt}</Text>
                                     </TouchableOpacity>
@@ -467,7 +469,7 @@ export default function HomeScreen() {
                                       const type = match?.[2] || ''
                                       const p2 = match?.[3] || ''
                                       const desc = getAspectDescription(type as any)
-                                      navigation.navigate('TransitDetail', { title: `✨ ${p1} ${type} ${p2}`, description: desc, type: 'collective' })
+                                      setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body: desc })
                                     }}>
                                       <Text style={styles.summaryText}>• {txt}</Text>
                                     </TouchableOpacity>
@@ -493,7 +495,7 @@ export default function HomeScreen() {
                                       const type = match?.[2] || ''
                                       const p2 = match?.[3] || ''
                                       const desc = getAspectDescription(type as any)
-                                      navigation.navigate('TransitDetail', { title: `✨ ${p1} ${type} ${p2}`, description: desc, type: 'collective' })
+                                      setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body: desc })
                                     }}>
                                       <Text style={styles.summaryText}>• {txt}</Text>
                                     </TouchableOpacity>
@@ -606,7 +608,12 @@ export default function HomeScreen() {
                                 <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                   const desc = getAspectDescription(type)
                                   const note = getPairNote(p1 as any, p2 as any, type)
-                                  navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
+                                  navigation.navigate('TransitDetail', {
+                                    title: `⭐ ${p1} ${type} ${p2}`,
+                                    description: [desc, note].filter(Boolean).join('\n'),
+                                    type: 'personal',
+                                    window: it.window || undefined,
+                                  })
                                 }}>
                                   <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                 </TouchableOpacity>
@@ -654,8 +661,8 @@ export default function HomeScreen() {
                           })}
                         </View>
                       )}
-                      {/* Panorama semanal/mensal: dividir Pessoal e Coletivo */}
-                      {!!transitData?.dailyOverview?.weeklySnapshot && (
+                      {/* Panorama semanal/mensal removido (evitar duplicidade; usar apenas acordeão) */}
+                      {/* {!!transitData?.dailyOverview?.weeklySnapshot && (
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#A0E7A0' }]}>{`Semana ${transitData.dailyOverview.weeklySnapshot.key}`}</Text>
                           {/* Pessoal (semana) */}
@@ -672,7 +679,7 @@ export default function HomeScreen() {
                                     <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                       const desc = getAspectDescription(type)
                                       const note = getPairNote(p1 as any, p2 as any, type)
-                                      navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
+                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
                                     }}>
                                       <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                     </TouchableOpacity>
@@ -727,7 +734,7 @@ export default function HomeScreen() {
                                     <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                       const desc = getAspectDescription(type)
                                       const note = getPairNote(p1 as any, p2 as any, type)
-                                      navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
+                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
                                     }}>
                                       <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                     </TouchableOpacity>
@@ -764,7 +771,7 @@ export default function HomeScreen() {
                             })}
                           </View>
                         </View>
-                      )}
+                      )} */}
                     </View>
                   )}
                   

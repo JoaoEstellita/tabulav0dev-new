@@ -484,7 +484,19 @@ export class LocalAstrologyService {
       }))
       
       // Limpar dados processados também
-      const cleanProcessedData = {
+      const deepSanitize = (obj: any): any => {
+        if (obj === undefined) return null
+        if (obj === null) return null
+        if (Array.isArray(obj)) return obj.map(deepSanitize)
+        if (obj && typeof obj === 'object') {
+          const out: any = {}
+          for (const [k, v] of Object.entries(obj)) out[k] = deepSanitize(v as any)
+          return out
+        }
+        return obj
+      }
+
+      const cleanProcessedData = deepSanitize({
         ...processedData,
         currentTransits: {
           ...processedData.currentTransits,
@@ -509,7 +521,7 @@ export class LocalAstrologyService {
           keyAspects: []
         },
         warnings: processedData.warnings || []
-      }
+      })
       
       console.log('🔍 DEBUG - Salvando cache:', {
         userId: userId ? 'presente' : 'AUSENTE',

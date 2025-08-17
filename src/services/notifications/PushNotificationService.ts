@@ -64,6 +64,10 @@ export class PushNotificationService {
     data?: any
   ) {
     try {
+      if (Platform.OS === 'web') {
+        console.warn('[push] Web: scheduleNotification ignorado');
+        return
+      }
       await Notifications.scheduleNotificationAsync({
         content: this.buildContent(title, body, data),
         trigger,
@@ -81,6 +85,10 @@ export class PushNotificationService {
     data?: any
   ) {
     try {
+      if (Platform.OS === 'web') {
+        console.warn('[push] Web: sendImmediateNotification ignorado');
+        return
+      }
       await Notifications.scheduleNotificationAsync({
         content: this.buildContent(title, body, data),
         trigger: null, // Envio imediato
@@ -150,6 +158,10 @@ export class PushNotificationService {
     data?: any
   ) {
     try {
+      if (Platform.OS === 'web') {
+        console.warn('[push] Web: scheduleDailyNotification ignorado');
+        return
+      }
       const trigger = {
         hour,
         minute,
@@ -173,6 +185,10 @@ export class PushNotificationService {
     data?: any
   ) {
     try {
+      if (Platform.OS === 'web') {
+        console.warn('[push] Web: scheduleWeeklyNotification ignorado');
+        return
+      }
       const trigger = {
         weekday,
         hour,
@@ -195,6 +211,10 @@ export class PushNotificationService {
     data?: any
   ) {
     try {
+      if (Platform.OS === 'web') {
+        console.warn('[push] Web: scheduleCustomNotification ignorado');
+        return
+      }
       const trigger = {
         date,
         type: 'date' as const,
