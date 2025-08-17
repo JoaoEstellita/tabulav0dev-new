@@ -52,6 +52,10 @@ export interface LocalTransitData {
     monthlyPersonal?: string[]
     // Lista completa de trânsitos pessoais de hoje (sem porcentagem por item)
     personalToday?: string[]
+    // Versões ricas com janela para navegação e exibição de datas
+    personalTodayRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
+    weeklyPersonalRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
+    monthlyPersonalRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
   }
   warnings: string[]
 }
@@ -348,12 +352,12 @@ export class LocalAstrologyService {
     const weekRange = getWeekRange(realData.collectiveWeekly?.key)
     const monthRange = getMonthRange(realData.collectiveMonthly?.key)
 
-    const weeklyPersonal = personalTransitsAll
+    const weeklyList = personalTransitsAll
       .filter(t => intersects((t as any).window, weekRange.start, weekRange.end))
-      .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
-    const monthlyPersonal = personalTransitsAll
+    const monthlyList = personalTransitsAll
       .filter(t => intersects((t as any).window, monthRange.start, monthRange.end))
-      .map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    const weeklyPersonal = weeklyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+    const monthlyPersonal = monthlyList.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
 
     const dailyOverview = {
       bestArea,
@@ -374,7 +378,25 @@ export class LocalAstrologyService {
       monthlySnapshot,
       weeklyPersonal,
       monthlyPersonal,
-      personalToday: personalTransitsAll.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`)
+      personalToday: personalTransitsAll.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`),
+      personalTodayRich: personalTransitsAll.map((t:any)=> ({
+        transitPlanet: t.transitPlanet,
+        natalPlanet: t.natalPlanet,
+        type: t.type,
+        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+      })),
+      weeklyPersonalRich: weeklyList.map((t:any)=> ({
+        transitPlanet: t.transitPlanet,
+        natalPlanet: t.natalPlanet,
+        type: t.type,
+        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+      })),
+      monthlyPersonalRich: monthlyList.map((t:any)=> ({
+        transitPlanet: t.transitPlanet,
+        natalPlanet: t.natalPlanet,
+        type: t.type,
+        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+      })),
     }
 
     return {

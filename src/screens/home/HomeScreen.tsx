@@ -593,27 +593,31 @@ export default function HomeScreen() {
                         </View>
                       )}
                       {/* ⭐ Pessoais de hoje: lista completa, clicáveis, sem porcentagem */}
-                      {!!(transitData?.dailyOverview?.personalToday?.length) && (
+                      {!!(transitData?.dailyOverview?.personalTodayRich?.length) && (
                         <View style={{ marginTop: 8 }}>
                           <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoais (Hoje)</Text>
-                          {(transitData.dailyOverview.personalToday || []).map((txt, i) => {
+                          {(transitData.dailyOverview.personalTodayRich || []).slice(0, showAllToday ? undefined : 5).map((it, i) => {
                             const press = usePressScale()
-                            const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
-                            const p1 = match?.[1] || ''
-                            const type = (match?.[2] || '') as any
-                            const p2 = match?.[3] || ''
+                            const p1 = it.transitPlanet
+                            const type = it.type as any
+                            const p2 = it.natalPlanet
                             return (
                               <Animated.View key={`pt-${i}`} style={press.style}>
                                 <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                   const desc = getAspectDescription(type)
                                   const note = getPairNote(p1 as any, p2 as any, type)
-                                  setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                  navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
                                 }}>
-                                  <Text style={styles.summaryText}>• {txt}</Text>
+                                  <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                 </TouchableOpacity>
                               </Animated.View>
                             )
                           })}
+                          {(transitData.dailyOverview.personalTodayRich || []).length > 5 && (
+                            <TouchableOpacity onPress={()=>setShowAllToday(v=>!v)}>
+                              <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllToday? 'ver menos' : 'ver todos'}</Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
                       )}
                       {/* Master Aspects (dar destaque quando veio por deep link) */}
@@ -655,27 +659,31 @@ export default function HomeScreen() {
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#A0E7A0' }]}>{`Semana ${transitData.dailyOverview.weeklySnapshot.key}`}</Text>
                           {/* Pessoal (semana) */}
-                          {!!(transitData?.dailyOverview?.weeklyPersonal?.length) && (
+                          {!!(transitData?.dailyOverview?.weeklyPersonalRich?.length) && (
                             <View style={{ marginTop: 2 }}>
                               <Text style={[styles.summaryText, { opacity: 0.85 }]}>⭐ Pessoal</Text>
-                              {(transitData.dailyOverview.weeklyPersonal || []).map((txt, i) => {
+                              {(transitData.dailyOverview.weeklyPersonalRich || []).slice(0, showAllWeek? undefined : 5).map((it, i) => {
                                 const press = usePressScale()
-                                const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
-                                const p1 = match?.[1] || ''
-                                const type = (match?.[2] || '') as any
-                                const p2 = match?.[3] || ''
+                                const p1 = it.transitPlanet
+                                const type = it.type as any
+                                const p2 = it.natalPlanet
                                 return (
                                   <Animated.View key={`wp-${i}`} style={press.style}>
                                     <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                       const desc = getAspectDescription(type)
                                       const note = getPairNote(p1 as any, p2 as any, type)
-                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                      navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
                                     }}>
-                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                      <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                     </TouchableOpacity>
                                   </Animated.View>
                                 )
                               })}
+                              {(transitData.dailyOverview.weeklyPersonalRich || []).length > 5 && (
+                                <TouchableOpacity onPress={()=>setShowAllWeek(v=>!v)}>
+                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllWeek? 'ver menos' : 'ver todos'}</Text>
+                                </TouchableOpacity>
+                              )}
                             </View>
                           )}
                           {/* Coletivo (semana) */}
@@ -706,27 +714,31 @@ export default function HomeScreen() {
                         <View style={{ marginTop: 6 }}>
                           <Text style={[styles.summaryText, { color:'#F59E0B' }]}>{`Mês ${transitData.dailyOverview.monthlySnapshot.key}`}</Text>
                           {/* Pessoal (mês) */}
-                          {!!(transitData?.dailyOverview?.monthlyPersonal?.length) && (
+                          {!!(transitData?.dailyOverview?.monthlyPersonalRich?.length) && (
                             <View style={{ marginTop: 2 }}>
                               <Text style={[styles.summaryText, { opacity: 0.85 }]}>⭐ Pessoal</Text>
-                              {(transitData.dailyOverview.monthlyPersonal || []).map((txt, i) => {
+                              {(transitData.dailyOverview.monthlyPersonalRich || []).slice(0, showAllMonth? undefined : 5).map((it, i) => {
                                 const press = usePressScale()
-                                const match = txt.match(/^(\S+)\s+(conjunção|oposição|quadratura|trígono|sextil|quincúncio|semissextil|semiquadratura|sesquiquadratura)\s+(.*)$/)
-                                const p1 = match?.[1] || ''
-                                const type = (match?.[2] || '') as any
-                                const p2 = match?.[3] || ''
+                                const p1 = it.transitPlanet
+                                const type = it.type as any
+                                const p2 = it.natalPlanet
                                 return (
                                   <Animated.View key={`mp-${i}`} style={press.style}>
                                     <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
                                       const desc = getAspectDescription(type)
                                       const note = getPairNote(p1 as any, p2 as any, type)
-                                      setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
+                                      navigation.navigate('TransitDetail', { title:`⭐ ${p1} ${type} ${p2}`, description:[desc, note].filter(Boolean).join('\n'), type:'personal', window: it.window })
                                     }}>
-                                      <Text style={styles.summaryText}>• {txt}</Text>
+                                      <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
                                     </TouchableOpacity>
                                   </Animated.View>
                                 )
                               })}
+                              {(transitData.dailyOverview.monthlyPersonalRich || []).length > 5 && (
+                                <TouchableOpacity onPress={()=>setShowAllMonth(v=>!v)}>
+                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllMonth? 'ver menos' : 'ver todos'}</Text>
+                                </TouchableOpacity>
+                              )}
                             </View>
                           )}
                           {/* Coletivo (mês) */}
