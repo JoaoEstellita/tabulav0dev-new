@@ -1,4 +1,9 @@
-import { useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated'
+// Importar dinamicamente para evitar dependência no bundle web (Vercel)
+let Reanimated: any = null
+try { Reanimated = require('react-native-reanimated') } catch {}
+const useSharedValue = Reanimated?.useSharedValue || ((v: number)=>({ value: v }))
+const withTiming = Reanimated?.withTiming || ((v: number)=>v)
+const useAnimatedStyle = Reanimated?.useAnimatedStyle || ((fn: any)=>({}))
 import { MotionDurations } from '../motion/tokens'
 
 export function usePressScale() {
