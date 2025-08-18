@@ -567,7 +567,6 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 </View>
-              </View>
             </LinearGradient>
           </View>
           </AnimatedMount>
