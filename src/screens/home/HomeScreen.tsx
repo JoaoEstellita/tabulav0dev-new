@@ -12,6 +12,7 @@ import {
   Modal
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { translatePlanetPT, getAspectSymbol } from '../../utils/astro/pt'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -594,37 +595,64 @@ export default function HomeScreen() {
                           })}
                         </View>
                       )}
-                      {/* ⭐ Pessoais de hoje: lista completa, clicáveis, sem porcentagem */}
+                      {/* ⭐ Pessoais (compacto): apenas lista e Ver mais */}
                       {!!(transitData?.dailyOverview?.personalTodayRich?.length) && (
                         <View style={{ marginTop: 8 }}>
-                          <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoais (Hoje)</Text>
-                          {(transitData.dailyOverview.personalTodayRich || []).slice(0, showAllToday ? undefined : 5).map((it, i) => {
-                            const press = usePressScale()
-                            const p1 = it.transitPlanet
-                            const type = it.type as any
-                            const p2 = it.natalPlanet
-                            return (
-                              <Animated.View key={`pt-${i}`} style={press.style}>
-                                <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                  const desc = getAspectDescription(type)
-                                  const note = getPairNote(p1 as any, p2 as any, type)
-                                  navigation.navigate('TransitDetail', {
-                                    title: `⭐ ${p1} ${type} ${p2}`,
-                                    description: [desc, note].filter(Boolean).join('\n'),
-                                    type: 'personal',
-                                    window: it.window || undefined,
-                                  })
-                                }}>
-                                  <Text style={styles.summaryText}>• {p1} {type} {p2}</Text>
-                                </TouchableOpacity>
-                              </Animated.View>
-                            )
-                          })}
-                          {(transitData.dailyOverview.personalTodayRich || []).length > 5 && (
-                            <TouchableOpacity onPress={()=>setShowAllToday(v=>!v)}>
-                              <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllToday? 'ver menos' : 'ver todos'}</Text>
-                            </TouchableOpacity>
-                          )}
+                          <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoal</Text>
+                          {(transitData.dailyOverview.personalTodayRich || [])
+                            .slice()
+                            .sort((a:any,b:any)=>{
+                              const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
+                              const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
+                              return ax - bx
+                            })
+                            .slice(0, 5)
+                            .map((it:any, i:number) => {
+                              const press = usePressScale()
+                              const pNatal = it.natalPlanet
+                              const type = it.type as any
+                              const pTransit = it.transitPlanet
+                              return (
+                                <Animated.View key={`pt-${i}`} style={press.style}>
+                                  <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
+                                    navigation.navigate('PersonalTransits')
+                                  }}>
+                                    <Text style={styles.summaryText}>• {translatePlanetPT(pNatal)} {getAspectSymbol(type)} {translatePlanetPT(pTransit)}</Text>
+                                  </TouchableOpacity>
+                                </Animated.View>
+                              )
+                            })}
+                          <TouchableOpacity onPress={()=> navigation.navigate('PersonalTransits')}>
+                            <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>Ver mais</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                      {/* ✨ Coletivo (compacto): lista + Ver mais */}
+                      {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
+                        <View style={{ marginTop: 12 }}>
+                          <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo</Text>
+                          {(transitData.dailyOverview.collectiveKeyAspectsRich || [])
+                            .filter((a:any)=> a.planet1 !== a.planet2)
+                            .slice()
+                            .sort((a:any,b:any)=>{
+                              const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
+                              const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
+                              return ax - bx
+                            })
+                            .slice(0,5)
+                            .map((a:any, i:number) => {
+                              const press = usePressScale()
+                              return (
+                                <Animated.View key={`ct-${i}`} style={press.style}>
+                                  <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => navigation.navigate('CollectiveTransits')}>
+                                    <Text style={styles.summaryText}>• {translatePlanetPT(a.planet1)} {getAspectSymbol(a.type)} {translatePlanetPT(a.planet2)}</Text>
+                                  </TouchableOpacity>
+                                </Animated.View>
+                              )
+                            })}
+                          <TouchableOpacity onPress={()=> navigation.navigate('CollectiveTransits')}>
+                            <Text style={[styles.summaryText,{ color:'#FDE68A', marginTop:4 }]}>Ver mais</Text>
+                          </TouchableOpacity>
                         </View>
                       )}
                       {/* Master Aspects (dar destaque quando veio por deep link) */}

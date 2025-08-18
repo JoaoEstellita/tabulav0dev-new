@@ -385,6 +385,7 @@ export class LocalAstrologyService {
         transitPlanet: t.transitPlanet,
         natalPlanet: t.natalPlanet,
         type: t.type,
+        house: t.natalHouseImpacted || undefined,
         window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
       })),
       weeklyPersonalRich: weeklyList.map((t:any)=> ({

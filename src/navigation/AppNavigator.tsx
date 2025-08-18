@@ -105,6 +105,8 @@ function RootNavigator() {
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
       <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} />
+      <RootStack.Screen name="PersonalTransits" component={require('../screens/transits/PersonalTransitsScreen').default} />
+      <RootStack.Screen name="CollectiveTransits" component={require('../screens/transits/CollectiveTransitsScreen').default} />
     </RootStack.Navigator>
   )
 }
