@@ -375,8 +375,7 @@ export default function HomeScreen() {
               ref={(ref:any)=>{ try { if (ref && typeof document !== 'undefined' && fadeSlideIn) (fadeSlideIn as any)(ref) } catch {} }}
             >
               <View style={styles.overviewHeader}>
-                <Ionicons name="sunny" size={24} color="#FFD700" />
-                <Text style={styles.overviewTitle}>Panorama Astrológico</Text>
+                <Text style={styles.overviewTitle}>🧮 Tábula</Text>
               </View>
               
               <View style={styles.overviewContent}>
@@ -438,18 +437,18 @@ export default function HomeScreen() {
                           </TouchableOpacity>
                         </View>
                       )}
-                      {/* ✨ Coletivo (compacto): lista + Ver mais */}
-                      {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
-                        <View style={{ marginTop: 12 }}>
-                          <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo {(() => {
-                            const d:any = transitData?.dailyOverview || {}
-                            if (typeof d.collectiveClimatePercent === 'number') return d.collectiveClimatePercent
-                            if (typeof d.collectivePositive === 'number' && typeof d.collectiveNegative === 'number') {
-                              return Math.round(((d.collectivePositive - d.collectiveNegative + 100) / 2))
-                            }
-                            return 0
-                          })()}%</Text>
-                          {(transitData.dailyOverview.collectiveKeyAspectsRich || [])
+                      {/* ✨ Coletivo (compacto): lista + Ver mais (sempre mostrar cabeçalho) */}
+                      <View style={{ marginTop: 12 }}>
+                        <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo {(() => {
+                          const d:any = transitData?.dailyOverview || {}
+                          if (typeof d.collectiveClimatePercent === 'number') return d.collectiveClimatePercent
+                          if (typeof d.collectivePositive === 'number' && typeof d.collectiveNegative === 'number') {
+                            return Math.round(((d.collectivePositive - d.collectiveNegative + 100) / 2))
+                          }
+                          return 0
+                        })()}%</Text>
+                        {(() => {
+                          const list = (transitData?.dailyOverview?.collectiveKeyAspectsRich || [])
                             .filter((a:any)=> a.planet1 !== a.planet2)
                             .filter((a:any, idx:number, arr:any[]) => arr.findIndex(x=> x.planet1===a.planet1 && x.type===a.type && x.planet2===a.planet2) === idx)
                             .slice()
@@ -459,21 +458,29 @@ export default function HomeScreen() {
                               return ax - bx
                             })
                             .slice(0,5)
-                            .map((a:any, i:number) => {
-                              const press = usePressScale()
-                              return (
-                                <Animated.View key={`ct-${i}`} style={press.style}>
-                                  <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => navigation.navigate('CollectiveTransits')}>
-                                    <Text style={styles.summaryText}>• {translatePlanetPT(a.planet1)} {getAspectSymbol(a.type)} {translatePlanetPT(a.planet2)}</Text>
-                                  </TouchableOpacity>
-                                </Animated.View>
-                              )
-                            })}
-                          <TouchableOpacity onPress={()=> navigation.navigate('CollectiveTransits')}>
-                            <Text style={[styles.summaryText,{ color:'#FDE68A', marginTop:4 }]}>Ver mais</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
+                        
+                          if (list.length === 0) {
+                            return <Text style={[styles.summaryText,{ opacity:0.8 }]}>Sem trânsitos coletivos relevantes hoje</Text>
+                          }
+                          return (
+                            <>
+                              {list.map((a:any, i:number) => {
+                                const press = usePressScale()
+                                return (
+                                  <Animated.View key={`ct-${i}`} style={press.style}>
+                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => navigation.navigate('CollectiveTransits')}>
+                                      <Text style={styles.summaryText}>• {translatePlanetPT(a.planet1)} {getAspectSymbol(a.type)} {translatePlanetPT(a.planet2)}</Text>
+                                    </TouchableOpacity>
+                                  </Animated.View>
+                                )
+                              })}
+                              <TouchableOpacity onPress={()=> navigation.navigate('CollectiveTransits')}>
+                                <Text style={[styles.summaryText,{ color:'#FDE68A', marginTop:4 }]}>Ver mais</Text>
+                              </TouchableOpacity>
+                            </>
+                          )
+                        })()}
+                      </View>
                       {/* removido: Master Aspects (evitar duplicidade) */}
                       {/* Panorama semanal/mensal removido (evitar duplicidade; usar apenas acordeão) */}
                     </View>
