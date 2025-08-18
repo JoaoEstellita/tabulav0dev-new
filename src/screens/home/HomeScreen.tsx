@@ -30,7 +30,7 @@ import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
-import { getAspectDescription, getAspectSymbol, getPairNote } from '../../astro/aspects.dictionary'
+import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import { usePressScale } from '../../ui/motion/native/micro'
 // Web-only effects (no-op on native)
