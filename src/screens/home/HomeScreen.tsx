@@ -30,7 +30,7 @@ import { safeMap, safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
-import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
+// import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import { usePressScale } from '../../ui/motion/native/micro'
 // Web-only effects (no-op on native)
@@ -74,13 +74,6 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
-    // Modal legado removido em favor da tela de detalhe
-    const [collectiveModal, setCollectiveModal] = useState<{ visible: boolean; title?: string; body?: string }>({ visible: false })
-    const [collectiveExpanded, setCollectiveExpanded] = useState<boolean>(false)
-    const [collectiveTab, setCollectiveTab] = useState<'today'|'week'|'month'>('today')
-    const [showAllToday, setShowAllToday] = useState<boolean>(false)
-    const [showAllWeek, setShowAllWeek] = useState<boolean>(false)
-    const [showAllMonth, setShowAllMonth] = useState<boolean>(false)
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -400,118 +393,10 @@ export default function HomeScreen() {
                   </Text>
 
                   {/* Índice Coletivo + fase lunar */}
-                  {(transitData?.dailyOverview?.collectivePositive !== undefined || transitData?.dailyOverview?.lunarPhase) && (
+                  {(transitData?.dailyOverview?.lunarPhase) && (
                     <View style={{ marginTop: 6 }}>
-                      {transitData?.dailyOverview?.collectivePositive !== undefined && (
-                        (() => {
-                          const press = usePressScale()
-                          const labelPercent = typeof transitData?.dailyOverview?.collectiveClimatePercent === 'number'
-                            ? transitData.dailyOverview.collectiveClimatePercent
-                            : Math.round(((transitData?.dailyOverview?.collectivePositive || 0) - (transitData?.dailyOverview?.collectiveNegative || 0) + 100) / 2)
-                          return (
-                            <Animated.View style={press.style}>
-                              <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => setCollectiveExpanded(v=>!v)}>
-                                <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Clima Coletivo: {labelPercent}%</Text>
-                              </TouchableOpacity>
-                            </Animated.View>
-                          )
-                        })()
-                      )}
-                      {collectiveExpanded && (
-                        <View style={{ marginTop: 6 }}>
-                          {/* Tabs */}
-                          <View style={{ flexDirection:'row', marginBottom:6 }}>
-                            {['today','week','month'].map((t)=>{
-                              const label = t==='today'?'Hoje': t==='week'?'Semana':'Mês'
-                              const active = collectiveTab=== (t as any)
-                              return (
-                                <TouchableOpacity key={t} onPress={()=>setCollectiveTab(t as any)} style={{ paddingVertical:4, paddingHorizontal:10, borderRadius:8, backgroundColor: active?'#3B3B4F':'#25253A', marginRight:6 }}>
-                                  <Text style={{ color: active?'#FFD700':'#FFFFFF', fontSize:12 }}>{label}</Text>
-                                </TouchableOpacity>
-                              )
-                            })}
-                          </View>
-                          {/* Conteúdo por aba */}
-                          {collectiveTab==='today' && !!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
-                            <View>
-                              {(transitData.dailyOverview.collectiveKeyAspectsRich || []).slice(0, showAllToday? undefined : 5).map((a, idx) => {
-                                const txt = `${a.planet1} ${a.type} ${a.planet2}`
-                                const icon = getAspectSymbol(a.type as any)
-                                const strength = typeof a.strength === 'number' ? a.strength : 0
-                                const windowDays = typeof (a as any).windowDays === 'number' ? (a as any).windowDays : undefined
-                                const press = usePressScale()
-                                return (
-                                  <Animated.View key={`ct-${idx}`} style={press.style}>
-                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                      const desc = getAspectDescription(a.type as any)
-                                      setCollectiveModal({ visible:true, title:`${icon} ${txt}`, body: desc })
-                                    }}>
-                                      <Text style={styles.summaryText}>{icon} {txt}</Text>
-                                    </TouchableOpacity>
-                                  </Animated.View>
-                                )
-                              })}
-                              {(transitData.dailyOverview.collectiveKeyAspectsRich || []).length > 5 && (
-                                <TouchableOpacity onPress={()=>setShowAllToday(v=>!v)}>
-                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllToday? 'ver menos' : 'ver todos'}</Text>
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          )}
-                          {collectiveTab==='week' && !!(transitData?.dailyOverview?.weeklySnapshot) && (
-                            <View>
-                              {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).slice(0, showAllWeek? undefined : 5).map((txt, i) => {
-                                const press = usePressScale()
-                                return (
-                                  <Animated.View key={`cw-${i}`} style={press.style}>
-                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                      const match = txt.match(/^(\S+)\s+(.*)\s+(\S.*)$/)
-                                      const p1 = match?.[1] || ''
-                                      const type = match?.[2] || ''
-                                      const p2 = match?.[3] || ''
-                                      const desc = getAspectDescription(type as any)
-                                      setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body: desc })
-                                    }}>
-                                      <Text style={styles.summaryText}>• {txt}</Text>
-                                    </TouchableOpacity>
-                                  </Animated.View>
-                                )
-                              })}
-                              {(transitData.dailyOverview.weeklySnapshot.keyAspects || []).length > 5 && (
-                                <TouchableOpacity onPress={()=>setShowAllWeek(v=>!v)}>
-                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllWeek? 'ver menos' : 'ver todos'}</Text>
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          )}
-                          {collectiveTab==='month' && !!(transitData?.dailyOverview?.monthlySnapshot) && (
-                            <View>
-                              {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).slice(0, showAllMonth? undefined : 5).map((txt, i) => {
-                                const press = usePressScale()
-                                return (
-                                  <Animated.View key={`cm-${i}`} style={press.style}>
-                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                      const match = txt.match(/^(\S+)\s+(.*)\s+(\S.*)$/)
-                                      const p1 = match?.[1] || ''
-                                      const type = match?.[2] || ''
-                                      const p2 = match?.[3] || ''
-                                      const desc = getAspectDescription(type as any)
-                                      setCollectiveModal({ visible:true, title:`✨ ${p1} ${type} ${p2}`, body: desc })
-                                    }}>
-                                      <Text style={styles.summaryText}>• {txt}</Text>
-                                    </TouchableOpacity>
-                                  </Animated.View>
-                                )
-                              })}
-                              {(transitData.dailyOverview.monthlySnapshot.keyAspects || []).length > 5 && (
-                                <TouchableOpacity onPress={()=>setShowAllMonth(v=>!v)}>
-                                  <Text style={[styles.summaryText,{ color:'#A0E7A0', marginTop:4 }]}>{showAllMonth? 'ver menos' : 'ver todos'}</Text>
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          )}
-                        </View>
-                      )}
+                    </View>
+                  )}
                       {(transitData?.dailyOverview?.lunarPhasePublic || transitData?.dailyOverview?.lunarPhase) && (
                         <Text style={styles.summaryText}>
                           {(() => {
@@ -525,81 +410,13 @@ export default function HomeScreen() {
                           })()}
                         </Text>
                       )}
-                      {/* ✨ Aspectos-chave Coletivos com ícones (dar destaque quando veio por deep link) */}
-                      {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
-                        <View
-                          style={{ marginTop: 4, borderLeftWidth: homeFocus==='home-collective'?2:0, borderLeftColor:'#F59E0B', paddingLeft: homeFocus==='home-collective'?6:0 }}
-                          // @ts-ignore
-                          ref={(ref:any)=>{ try { if (ref && typeof document !== 'undefined' && homeFocus==='home-collective' && (pulseOnce as any)) (pulseOnce as any)(ref, 'rgba(245,158,11,0.25)') } catch {} }}
-                        >
-                          {(transitData.dailyOverview.collectiveKeyAspectsRich || []).map((a, idx) => {
-                            const txt = `${a.planet1} ${a.type} ${a.planet2}`
-                            const icon = getAspectSymbol(a.type as any)
-                            const strength = typeof a.strength === 'number' ? a.strength : 0
-                            // Destacar janela longa vs curta
-                            const windowDays = typeof (a as any).windowDays === 'number' ? (a as any).windowDays : undefined
-                            const long = (windowDays ?? 0) >= 21 // >3 semanas = coletivo/lento
-                            const short = (windowDays ?? 0) <= 3 // <=3 dias = rápido
-                            const color = long ? '#F59E0B' : short ? '#9AE6B4' : (strength >= 80 ? '#FFD700' : strength >= 60 ? '#A0E7A0' : '#A0A0A0')
-                            return (
-                              (() => {
-                                const press = usePressScale()
-                                return (
-                                  <Animated.View key={idx} style={press.style}>
-                                    <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                      const note = getPairNote(a.planet1, a.planet2, a.type as any)
-                                      const extra = [] as string[]
-                                      extra.push(`Força: ${strength}%${a.isApplying ? ' • aplicante' : ''}`)
-                                      if (typeof a.orb === 'number') extra.push(`orbe ${a.orb.toFixed(1)}°`)
-                                      if (typeof windowDays === 'number') extra.push(`vigência ~${windowDays} dias`)
-                                      // Pico aproximado (aplicante) ou tempo desde pico (separante)
-                                      let peak = ''
-                                      try {
-                                        if (typeof a.orb === 'number' && typeof (a as any).relSpeed === 'number' && (a as any).relSpeed > 0.01) {
-                                          const days = (a.orb / (a as any).relSpeed)
-                                          if (a.isApplying) {
-                                            const d = new Date(Date.now() + days * 86400000)
-                                            peak = `pico ~${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })}`
-                                          } else {
-                                            peak = `separante: pico há ~${Math.round(days)} dias`
-                                          }
-                                          extra.push(peak)
-                                        }
-                                      } catch {}
-                                      setCollectiveModal({
-                                        visible: true,
-                                        title: `${icon} ${txt}`,
-                                        body: `${getAspectDescription(a.type as any)}${note ? `\n${note}` : ''}\n${extra.join(' • ')}`
-                                      })
-                                    }}>
-                                      <Text style={[styles.summaryText, { color }]}>{icon} {txt}</Text>
-                                      {/* sublinhado com line-draw (web only) */}
-                                      {typeof document !== 'undefined' && ((globalThis as any).__effectsIntensity !== 'low') && (
-                                        <svg width="100%" height="2" style={{ marginTop: 2 }}>
-                                          <path
-                                            // @ts-ignore
-                                            ref={(ref:any)=>{ try { if (ref && (lineDrawOnce as any)) (lineDrawOnce as any)(ref, { duration: 500 }) } catch {} }}
-                                            d="M0 1 H 3000"
-                                            stroke={color}
-                                            strokeWidth="2"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                          />
-                                        </svg>
-                                      )}
-                                    </TouchableOpacity>
-                                  </Animated.View>
-                                )
-                              })()
-                            )
-                          })}
-                        </View>
-                      )}
+                      {/* suprimido no panorama compacto; usar seção Coletivo abaixo */}
                       {/* ⭐ Pessoais (compacto): apenas lista e Ver mais */}
                       {!!(transitData?.dailyOverview?.personalTodayRich?.length) && (
                         <View style={{ marginTop: 8 }}>
                           <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoal</Text>
                           {(transitData.dailyOverview.personalTodayRich || [])
+                            .filter((it:any, idx:number, arr:any[]) => arr.findIndex(x=> x.natalPlanet===it.natalPlanet && x.type===it.type && x.transitPlanet===it.transitPlanet) === idx)
                             .slice()
                             .sort((a:any,b:any)=>{
                               const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
@@ -633,6 +450,7 @@ export default function HomeScreen() {
                           <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo</Text>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || [])
                             .filter((a:any)=> a.planet1 !== a.planet2)
+                            .filter((a:any, idx:number, arr:any[]) => arr.findIndex(x=> x.planet1===a.planet1 && x.type===a.type && x.planet2===a.planet2) === idx)
                             .slice()
                             .sort((a:any,b:any)=>{
                               const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
@@ -873,18 +691,7 @@ export default function HomeScreen() {
       {/* PWA Download Button */}
       <PWADownloadButton />
 
-      {/* Modal de detalhes de aspecto coletivo */}
-      <Modal visible={collectiveModal.visible} transparent animationType="fade" onRequestClose={() => setCollectiveModal({ visible: false })}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{collectiveModal.title || 'Aspecto coletivo'}</Text>
-            <Text style={styles.modalText}>{collectiveModal.body || ''}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setCollectiveModal({ visible: false })}>
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* modal legado removido */}
     </LinearGradient>
   )
   } catch (error) {

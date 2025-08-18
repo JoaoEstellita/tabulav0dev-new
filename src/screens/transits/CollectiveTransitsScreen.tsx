@@ -5,8 +5,16 @@ import { formatTransitCompact, aspectNature } from '../../utils/astro/pt'
 
 export default function CollectiveTransitsScreen() {
   const { transitData } = useLifeAreas()
-  const raw = (transitData?.dailyOverview?.collectiveKeyAspectsRich || [])
+  const rawAll = (transitData?.dailyOverview?.collectiveKeyAspectsRich || [])
     .filter((a:any)=> a.planet1 !== a.planet2)
+  // deduplicar por par ordenado + aspecto
+  const seen = new Set<string>()
+  const raw = rawAll.filter((a:any)=>{
+    const key = `${a.planet1}|${a.type}|${a.planet2}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
   const list = raw.slice().sort((a:any,b:any)=>{
     const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
     const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
@@ -14,8 +22,8 @@ export default function CollectiveTransitsScreen() {
   })
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
-      <Text style={{ color:'#fff', fontSize:18, fontWeight:'600', marginBottom:8 }}>✨ Trânsitos Coletivos</Text>
+    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor:'#0F0F23', minHeight:'100%' }}>
+      <Text style={{ color:'#FFFFFF', fontSize:18, fontWeight:'600', marginBottom:8 }}>✨ Trânsitos Coletivos</Text>
       {list.map((a:any, i:number)=>{
         const title = formatTransitCompact(a.planet1, a.type, a.planet2)
         const nature = aspectNature(a.type)

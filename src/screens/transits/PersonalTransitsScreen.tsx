@@ -1,11 +1,19 @@
 import React from 'react'
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { formatTransitCompact, getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
 
 export default function PersonalTransitsScreen() {
   const { transitData } = useLifeAreas()
-  const personal = (transitData?.dailyOverview?.personalTodayRich || [])
+  const personalRaw = (transitData?.dailyOverview?.personalTodayRich || [])
+  // deduplicar por chave planeta-aspecto-planeta
+  const seen = new Set<string>()
+  const personal = personalRaw.filter((t:any) => {
+    const key = `${t.natalPlanet}|${t.type}|${t.transitPlanet}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
   const collective = (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a:any)=>a.planet1!==a.planet2)
   const list = personal
     .slice()
@@ -16,8 +24,8 @@ export default function PersonalTransitsScreen() {
     })
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
-      <Text style={{ color:'#fff', fontSize:18, fontWeight:'600', marginBottom:8 }}>⭐ Trânsitos Pessoais</Text>
+    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor:'#0F0F23', minHeight:'100%' }}>
+      <Text style={{ color:'#FFFFFF', fontSize:18, fontWeight:'600', marginBottom:8 }}>⭐ Trânsitos Pessoais</Text>
       {list.map((it:any, i:number) => {
         const title = formatTransitCompact(it.natalPlanet, it.type, it.transitPlanet)
         const state = getTransitState(it.window)
