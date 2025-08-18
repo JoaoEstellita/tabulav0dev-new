@@ -380,13 +380,7 @@ export default function HomeScreen() {
               </View>
               
               <View style={styles.overviewContent}>
-                <View style={styles.overallScore}>
-                  <Text style={styles.scoreNumber}>
-                    {typeof transitData?.dailyOverview?.overall === 'number' ? transitData.dailyOverview.overall : 0}%
-                  </Text>
-                  <Text style={styles.scoreLabel}>Energia Geral</Text>
-                </View>
-                
+                {/* Percentual geral removido do topo; agora aparece nos cabeçalhos Pessoal/Coletivo */}
                 <View style={styles.overviewDetails}>
                   <Text style={styles.overviewMessage}>
                     {transitData?.dailyOverview?.generalTrend || 'Analisando dados astrológicos...'}
@@ -414,7 +408,7 @@ export default function HomeScreen() {
                       {/* ⭐ Pessoais (compacto): apenas lista e Ver mais */}
                       {!!(transitData?.dailyOverview?.personalTodayRich?.length) && (
                         <View style={{ marginTop: 8 }}>
-                          <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoal</Text>
+                          <Text style={[styles.summaryText, { color:'#9AE6B4' }]}>⭐ Pessoal {Math.round((transitData?.dailyOverview?.overall as any) ?? 0)}%</Text>
                           {(transitData.dailyOverview.personalTodayRich || [])
                             .filter((it:any, idx:number, arr:any[]) => arr.findIndex(x=> x.natalPlanet===it.natalPlanet && x.type===it.type && x.transitPlanet===it.transitPlanet) === idx)
                             .slice()
@@ -447,7 +441,14 @@ export default function HomeScreen() {
                       {/* ✨ Coletivo (compacto): lista + Ver mais */}
                       {!!(transitData?.dailyOverview?.collectiveKeyAspectsRich?.length) && (
                         <View style={{ marginTop: 12 }}>
-                          <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo</Text>
+                          <Text style={[styles.summaryText, { color:'#FDE68A' }]}>✨ Coletivo {(() => {
+                            const d:any = transitData?.dailyOverview || {}
+                            if (typeof d.collectiveClimatePercent === 'number') return d.collectiveClimatePercent
+                            if (typeof d.collectivePositive === 'number' && typeof d.collectiveNegative === 'number') {
+                              return Math.round(((d.collectivePositive - d.collectiveNegative + 100) / 2))
+                            }
+                            return 0
+                          })()}%</Text>
                           {(transitData.dailyOverview.collectiveKeyAspectsRich || [])
                             .filter((a:any)=> a.planet1 !== a.planet2)
                             .filter((a:any, idx:number, arr:any[]) => arr.findIndex(x=> x.planet1===a.planet1 && x.type===a.type && x.planet2===a.planet2) === idx)
@@ -473,99 +474,12 @@ export default function HomeScreen() {
                           </TouchableOpacity>
                         </View>
                       )}
-                      {/* Master Aspects (dar destaque quando veio por deep link) */}
-                      {Array.isArray(transitData?.dailyOverview?.masterAspects) && transitData.dailyOverview.masterAspects.length > 0 && (
-                        <View
-                          style={{ marginTop: 6, borderLeftWidth: homeFocus==='home-personal'?2:0, borderLeftColor:'#9AE6B4', paddingLeft: homeFocus==='home-personal'?6:0 }}
-                          // @ts-ignore
-                          ref={(ref:any)=>{
-                            try {
-                              if (ref && typeof document !== 'undefined' && homeFocus==='home-personal' && (pulseOnce as any)) (pulseOnce as any)(ref, 'rgba(154,230,180,0.35)')
-                            } catch {}
-                          }}
-                        >
-                          {(transitData.dailyOverview.masterAspects || []).map((m, i) => {
-                            const press = usePressScale()
-                            const [p1, type, p2] = (()=>{
-                              const t = (m.text||'').replace(/\(.*\)/,'').trim()
-                              const parts = t.split(/\s+/)
-                              const idx = parts.findIndex(x=>['conjunção','oposição','quadratura','trígono','sextil','quincúncio','semissextil','semiquadratura','sesquiquadratura'].includes(x))
-                              if (idx>0) return [parts.slice(0,idx).join(' '), parts[idx], parts.slice(idx+1).join(' ')]
-                              return [t,'', '']
-                            })()
-                            return (
-                              <Animated.View key={i} style={press.style}>
-                                <TouchableOpacity onPressIn={press.onPressIn} onPressOut={press.onPressOut} onPress={() => {
-                                  const desc = getAspectDescription(type as any)
-                                  const note = getPairNote(p1 as any, p2 as any, type as any)
-                                  setCollectiveModal({ visible:true, title:`⭐ ${p1} ${type} ${p2}`, body:[desc, note].filter(Boolean).join('\n') })
-                                }}>
-                                  <Text style={styles.summaryText}>⭐ {m.text.replace(/\s*\(\d+%\)\s*$/,'')}</Text>
-                                </TouchableOpacity>
-                              </Animated.View>
-                            )
-                          })}
-                        </View>
-                      )}
+                      {/* removido: Master Aspects (evitar duplicidade) */}
                       {/* Panorama semanal/mensal removido (evitar duplicidade; usar apenas acordeão) */}
                     </View>
                   )}
                   
-                  {/* Mini gráfico: distribuição atual de Elementos e Modalidades, com deltas */}
-                  {transitData?.currentTransits?.chartSummary && (
-                    <View style={{ marginTop: 8 }}>
-                      <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                        <Text style={[styles.summaryText, { marginRight: 6 }]}>🌍 Elementos:</Text>
-                        <Text style={styles.summaryText}>
-                          {(() => {
-                            const cs = transitData.currentTransits.chartSummary
-                            const f = cs.elemental.current.fire
-                            const e = cs.elemental.current.earth
-                            const a = cs.elemental.current.air
-                            const w = cs.elemental.current.water
-                            const df = f - cs.elemental.natal.fire
-                            const de = e - cs.elemental.natal.earth
-                            const da = a - cs.elemental.natal.air
-                            const dw = w - cs.elemental.natal.water
-                            const fmt = (val:number, d:number, icon:string) => `${icon} ${val} ${d===0?'(0)':d>0?`(↑${d})`:`(↓${Math.abs(d)})`}`
-                            return `${fmt(f,df,'🔥')}  ${fmt(e,de,'🌍')}  ${fmt(a,da,'💨')}  ${fmt(w,dw,'💧')}`
-                          })()}
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: 'row' }}>
-                        <Text style={[styles.summaryText, { marginRight: 6 }]}>⚡ Modalidades:</Text>
-                        <Text style={styles.summaryText}>
-                          {(() => {
-                            const cs = transitData.currentTransits.chartSummary
-                            const c = cs.modality.current.cardinal
-                            const fx = cs.modality.current.fixed
-                            const mu = cs.modality.current.mutable
-                            const dc = c - cs.modality.natal.cardinal
-                            const dfx = fx - cs.modality.natal.fixed
-                            const dmu = mu - cs.modality.natal.mutable
-                            const fmt = (val:number, d:number, icon:string) => `${icon} ${val} ${d===0?'(0)':d>0?`(↑${d})`:`(↓${Math.abs(d)})`}`
-                            return `${fmt(c,dc,'⚡')}  ${fmt(fx,dfx,'🔒')}  ${fmt(mu,dmu,'🔄')}`
-                          })()}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  <View style={styles.areasSummary}>
-                    <View style={styles.summaryItem}>
-                      <Ionicons name="trending-up" size={16} color="#10B981" />
-                      <Text style={styles.summaryText}>
-                        Melhor: {transitData?.dailyOverview?.bestArea || 'N/A'}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.summaryItem}>
-                      <Ionicons name="warning" size={16} color="#EF4444" />
-                      <Text style={styles.summaryText}>
-                        Atenção: {transitData?.dailyOverview?.challengingArea || 'N/A'}
-                      </Text>
-                    </View>
-                  </View>
+                  {/* removidos: Elementos, Modalidades, Melhor/Atenção para manter concisão */}
                 </View>
             </LinearGradient>
           </View>
