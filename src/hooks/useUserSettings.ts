@@ -45,6 +45,7 @@ export function useUserSettings() {
       if (stored) {
         const parsed = JSON.parse(stored);
         setSettings(parsed);
+        try { (globalThis as any).__userHouseSystem = parsed.houseSystem || 'placidus' } catch {}
       } else {
         // Configurações padrão
         const defaultSettings: UserSettings = {
@@ -58,6 +59,7 @@ export function useUserSettings() {
           houseSystem: 'placidus',
         };
         setSettings(defaultSettings);
+        try { (globalThis as any).__userHouseSystem = defaultSettings.houseSystem } catch {}
         await saveSettings(defaultSettings);
       }
       // Se logado, tentar puxar preferência persistida
@@ -65,7 +67,9 @@ export function useUserSettings() {
         if (user?.uid) {
           const hs = await UserService.getHouseSystem(user.uid)
           if (hs === 'placidus' || hs === 'equal' || hs === 'whole') {
-            const merged = { ...(settings || JSON.parse(stored || '{}')), houseSystem: hs === 'whole' ? 'placidus' : hs }
+            const normalized = (hs === 'whole') ? 'equal' : hs
+            const merged = { ...(settings || JSON.parse(stored || '{}')), houseSystem: normalized }
+            try { (globalThis as any).__userHouseSystem = normalized } catch {}
             await saveSettings(merged)
           }
         }
