@@ -124,7 +124,7 @@ export class LocalAstrologyService {
         currentLat,
         currentLon,
         undefined,
-        { houseSystem }
+        { houseSystem, natalLat: birthData.birthLocation.latitude, natalLon: birthData.birthLocation.longitude }
       )
 
       // Se perfil do usuário já tem cache de natal (ASC/cúspides), podemos substituir casas natais do bundle para estabilidade

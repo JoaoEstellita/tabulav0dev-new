@@ -252,10 +252,10 @@ export class RealAstrologyEngine {
   static async calculateRealAstrology(
     birthDate: string, // YYYY-MM-DD
     birthTime: string, // HH:MM
-    latitude: number,
+    latitude: number,  // localização ATUAL para casas do momento
     longitude: number,
     currentDate?: Date,
-    options?: { houseSystem?: 'whole'|'equal'|'placidus' }
+    options?: { houseSystem?: 'whole'|'equal'|'placidus'; natalLat?: number; natalLon?: number }
   ): Promise<RealAstrologyData> {
     console.log('🔬 Iniciando cálculos astrológicos REAIS...')
     
@@ -295,8 +295,8 @@ export class RealAstrologyEngine {
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
           natalLocal: natalLocalStr,
           natalTimezone: resolvedTz?.timeZoneId,
-          natalLat: latitude,
-          natalLon: longitude,
+          natalLat: (typeof options?.natalLat === 'number') ? options!.natalLat! : latitude,
+          natalLon: (typeof options?.natalLon === 'number') ? options!.natalLon! : longitude,
         })
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
@@ -308,8 +308,10 @@ export class RealAstrologyEngine {
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
         const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude, options?.houseSystem)
-        const natalPlanetsRaw = await this.calculateRealPlanetPositions(birthDateTime, latitude, longitude)
-        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, birthDateTime, latitude, longitude, options?.houseSystem)
+        const natalLat = (typeof options?.natalLat === 'number') ? options!.natalLat! : latitude
+        const natalLon = (typeof options?.natalLon === 'number') ? options!.natalLon! : longitude
+        const natalPlanetsRaw = await this.calculateRealPlanetPositions(birthDateTime, natalLat, natalLon)
+        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, birthDateTime, natalLat, natalLon, options?.houseSystem)
         realPlanets = planetsLocal
         houses = housesLocal
         natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
@@ -372,9 +374,13 @@ export class RealAstrologyEngine {
       } catch {}
 
       // Aspectos Pessoais (T→N) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
+      const natalSetForAspects = [
+        ...natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
+        { name: 'Asc', longitude: natalHouses.ascendant, speed: 0 },
+      ]
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
-        natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
+        natalSetForAspects,
         aspectsConfig
       )
       console.log(`✅ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
@@ -913,26 +919,24 @@ export class RealAstrologyEngine {
     planets: RealPlanetPosition[],
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): RealPlanetPosition[] {
-    // Particionamento robusto:
-    // - Normaliza ângulos relativos ao ASC
-    // - Ordena as cúspides 2..12 em ordem CCW crescente a partir do ASC
-    // - Garante monotonicidade estrita e fecha 360°
+    // Particionamento CCW preservando C1..C12 ancorado no ASC
     const norm = (d: number) => (d % 360 + 360) % 360
     const asc = Number.isFinite(houses.ascendant) ? norm(houses.ascendant) : norm(houses.cusps[0])
-    const rels: number[] = new Array(12)
-    for (let i = 0; i < 12; i++) rels[i] = norm(houses.cusps[i] - asc)
-    rels[0] = 0
-    const sortedRels = rels
-      .slice(1)
-      .sort((a, b) => a - b)
+    const ccwDelta = (from: number, to: number): number => {
+      const a = norm(from), b = norm(to)
+      return a <= b ? (b - a) : (b + 360 - a)
+    }
     const edges = new Array<number>(13)
     edges[0] = 0
-    for (let i = 1; i < 12; i++) edges[i] = sortedRels[i - 1]
-    edges[12] = 360
-    for (let i = 1; i < 12; i++) if (edges[i] <= edges[i - 1]) edges[i] = edges[i - 1] + 1e-6
+    for (let i = 1; i < 12; i++) {
+      const prev = (i === 1) ? asc : houses.cusps[i - 1]
+      const curr = houses.cusps[i]
+      edges[i] = edges[i - 1] + ccwDelta(prev, curr)
+    }
+    edges[12] = edges[11] + ccwDelta(houses.cusps[11], asc)
     const eps = 0.2
     const getHouse = (lon: number): number => {
-      const Lrel = norm(lon - asc)
+      const Lrel = ccwDelta(asc, lon)
       for (let i = 0; i < 12; i++) {
         const a = edges[i]
         const b = edges[i + 1]
