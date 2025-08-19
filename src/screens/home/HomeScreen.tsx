@@ -33,7 +33,6 @@ import StarLoader from '../../components/StarLoader'
 // import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import { usePressScale } from '../../ui/motion/native/micro'
-
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 let unmountStarfield: any = null
@@ -75,8 +74,6 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
-    
-
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -86,10 +83,6 @@ export default function HomeScreen() {
       })
       setModalVisible(true)
     }
-    
-
-    
-
   
   // Debug: Log da estrutura completa
   React.useEffect(() => {
@@ -138,7 +131,6 @@ export default function HomeScreen() {
     if (user) {
       loadUserProfile()
       initializeNotifications()
-
     }
   }, [user])
 
@@ -555,11 +547,13 @@ export default function HomeScreen() {
                 }
                 
                 return (
-                  <LifeAreaCard 
-                    key={name}
-                    area={area}
-                    onPress={() => handleAreaPress(name, area)}
-                  />
+                  <View key={name} style={styles.lifeAreaItem}>
+                    <LifeAreaCard 
+                      area={{name, ...area}} 
+                      onPress={() => handleAreaPress(name, area)}
+                      onViewReasons={() => handleAreaPress(name, area)}
+                    />
+                  </View>
                 )
               })}
             </View>
@@ -570,21 +564,15 @@ export default function HomeScreen() {
         {/* Trânsitos Comparativos Completos */}
         {transitData?.currentTransits?.planetComparisons && transitData?.currentTransits?.chartSummary && (
           <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="analytics" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
-              </View>
-              <TransitComparisonCard 
-                planetComparisons={transitData.currentTransits.planetComparisons}
-                chartSummary={transitData.currentTransits.chartSummary}
-                ascendant={transitData.currentTransits.ascendant}
-                midheaven={transitData.currentTransits.midheaven}
-                natalAscendant={transitData.currentTransits.natalAscendant}
-                natalMidheaven={transitData.currentTransits.natalMidheaven}
-                housesCusps={transitData.currentTransits.houses}
-              />
-            </View>
+            <TransitComparisonCard 
+              planetComparisons={transitData.currentTransits.planetComparisons}
+              chartSummary={transitData.currentTransits.chartSummary}
+              ascendant={transitData.currentTransits.ascendant}
+              midheaven={transitData.currentTransits.midheaven}
+              natalAscendant={transitData.currentTransits.natalAscendant}
+              natalMidheaven={transitData.currentTransits.natalMidheaven}
+              housesCusps={transitData.currentTransits.houses}
+            />
           </AnimatedMount>
         )}
 
@@ -619,12 +607,8 @@ export default function HomeScreen() {
         transitData={transitData}
       />
 
-
-
       {/* PWA Download Button */}
       <PWADownloadButton />
-
-
 
       {/* modal legado removido */}
     </LinearGradient>
@@ -708,7 +692,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-
   avatarContainer: {
     marginRight: 12,
   },
@@ -950,4 +933,26 @@ const styles = StyleSheet.create({
     padding: 16,
     width: '100%',
   },
+  modalTitle: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFD700',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#000',
+    fontWeight: '600',
+  }
 })
