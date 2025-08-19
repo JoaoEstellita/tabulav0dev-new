@@ -29,9 +29,26 @@ export interface PlanetaryScore {
   total: number
 }
 
+export interface AspectAnalysis {
+  totalAspects: number
+  majorAspects: number
+  minorAspects: number
+  applyingAspects: number
+  strongestAspect?: {
+    planet1: string
+    planet2: string
+    type: string
+    orb: number
+    isApplying: boolean
+    strength: number
+  }
+  aspectTypes: Record<string, number>
+}
+
 export interface PlanetaryStatus {
   level: PlanetaryStatusLevel
   score: number
   breakdown: PlanetaryScore
   interpretation: string
+  aspectAnalysis: AspectAnalysis
 }

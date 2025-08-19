@@ -484,7 +484,6 @@ export default function HomeScreen() {
                       {/* removido: Master Aspects (evitar duplicidade) */}
                       {/* Panorama semanal/mensal removido (evitar duplicidade; usar apenas acordeão) */}
                     </View>
-                  )}
                   
                   {/* removidos: Elementos, Modalidades, Melhor/Atenção para manter concisão */}
                 </View>
