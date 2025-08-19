@@ -13,6 +13,8 @@ import * as Astronomy from 'astronomy-engine'
 import aspectsConfig from '../../astro/aspects.config'
 import { detectAspects } from '../../astro/aspects.engine'
 import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/transits.utils'
+import { calculatePlanetaryStatus } from '../../astro/planetary-status.engine'
+import type { PlanetaryStatus, PlanetaryStatusLevel } from '../../astro/planetary-status.types'
 // Removido Ephemeris não utilizado
 
 export interface RealPlanetPosition {
@@ -25,6 +27,8 @@ export interface RealPlanetPosition {
   degree: number // Grau dentro do signo (0-30)
   house: number // Casa astrológica (1-12)
   isRetrograde: boolean
+  // 🌟 NOVO: Status planetário integrado
+  planetaryStatus?: PlanetaryStatus
 }
 
 export interface RealAspect {
@@ -96,6 +100,22 @@ export interface ChartSummary {
     current: ModalityAnalysis
     changes: string[]
   }
+}
+
+// 🌟 NOVO: Análise de Status Planetários
+export interface PlanetaryStatusAnalysis {
+  overallScore: number
+  overallLevel: PlanetaryStatusLevel
+  strongestPlanet: {
+    name: string
+    status: PlanetaryStatus
+  }
+  weakestPlanet: {
+    name: string
+    status: PlanetaryStatus
+  }
+  planetsByLevel: Record<PlanetaryStatusLevel, string[]>
+  recommendations: string[]
 }
 
 export interface RealAstrologyData {
@@ -170,6 +190,8 @@ export interface RealAstrologyData {
   planetComparisons: PlanetComparison[] // Comparação natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
+  // 🌟 NOVO: Análise completa de status planetários
+  planetaryStatusAnalysis?: PlanetaryStatusAnalysis
   // 🧭 Logs estruturados para UI (detalhamento por área)
   debug?: {
     lifeAreas: {
@@ -342,6 +364,25 @@ export class RealAstrologyEngine {
       )
       console.log(`✅ Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
 
+      // 🌟 NOVO: CÁLCULO DE STATUS PLANETÁRIOS
+      const planetsWithStatus = planetsWithHouses.map(planet => {
+        const sign = planet.sign as any // Converter para SignName
+        const planetaryStatus = calculatePlanetaryStatus(
+          planet.name as any, // Converter para PlanetName
+          sign,
+          planet.house,
+          aspectsCurrentTT,
+          planet.isRetrograde,
+          planet.speed
+        )
+        
+        return {
+          ...planet,
+          planetaryStatus
+        }
+      })
+      console.log(`✅ Status planetários calculados para ${planetsWithStatus.length} planetas`)
+
       // Índice Coletivo + fase lunar (cache por dia UTC)
       const dayKey = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0,10)
       let collective = RealAstrologyEngine._collectiveCache.get(dayKey)
@@ -412,6 +453,10 @@ export class RealAstrologyEngine {
       const chartSummary = this.createChartSummary(natalPlanets, planetsWithHouses)
       console.log('✅ Resumo da carta criado')
 
+      // 🌟 9. ANÁLISE GERAL DE STATUS PLANETÁRIOS
+      const planetaryStatusAnalysis = this.createPlanetaryStatusAnalysis(planetsWithStatus)
+      console.log('✅ Análise de status planetários criada')
+
       // Preparar agrupamento para futura UI de Trânsitos Comparativos
       const personalTransits = aspectsTransitsToNatalTN.map(a => {
         // Lado A = trânsito por construção
@@ -460,7 +505,7 @@ export class RealAstrologyEngine {
 
       const result: RealAstrologyData = {
         timestamp: date.toISOString(),
-        planets: realPlanets,
+        planets: planetsWithStatus, // Usar planetas com status
         aspects: aspectsCurrentTT,
         // novos campos para consumo futuro na UI
         aspectsCurrentTT,
@@ -493,6 +538,8 @@ export class RealAstrologyEngine {
         planetComparisons,
         chartSummary,
         houseAspects,
+        // 🌟 NOVO: Análise completa de status planetários
+        planetaryStatusAnalysis,
         debug: {
           lifeAreas: ((this as any)._debugLifeAreas) || {},
           personalTransitsSummary: personalSummary,
@@ -1705,6 +1752,153 @@ export class RealAstrologyEngine {
         changes: modalityChanges
       }
     }
+  }
+
+  /**
+   * 🌟 NOVO: Cria análise completa de status planetários
+   */
+  private static createPlanetaryStatusAnalysis(
+    planetsWithStatus: RealPlanetPosition[]
+  ): PlanetaryStatusAnalysis {
+    // Filtrar planetas que têm status calculado
+    const planetsWithValidStatus = planetsWithStatus.filter(p => p.planetaryStatus)
+    
+    if (planetsWithValidStatus.length === 0) {
+      return {
+        overallScore: 0,
+        overallLevel: 'Neutro',
+        strongestPlanet: { name: 'N/A', status: null as any },
+        weakestPlanet: { name: 'N/A', status: null as any },
+        planetsByLevel: {
+          'Muito Forte': [],
+          'Forte': [],
+          'Moderado': [],
+          'Neutro': [],
+          'Fraco': [],
+          'Muito Fraco': []
+        },
+        recommendations: ['Status planetários não disponíveis']
+      }
+    }
+
+    // Calcular score geral (média ponderada)
+    const totalScore = planetsWithValidStatus.reduce((sum, planet) => {
+      return sum + (planet.planetaryStatus?.score || 0)
+    }, 0)
+    const overallScore = totalScore / planetsWithValidStatus.length
+
+    // Classificar score geral
+    const overallLevel = this.classifyOverallPlanetaryLevel(overallScore)
+
+    // Encontrar planeta mais forte e mais fraco
+    const sortedByScore = [...planetsWithValidStatus].sort((a, b) => 
+      (b.planetaryStatus?.score || 0) - (a.planetaryStatus?.score || 0)
+    )
+    
+    const strongestPlanet = {
+      name: sortedByScore[0].name,
+      status: sortedByScore[0].planetaryStatus!
+    }
+    
+    const weakestPlanet = {
+      name: sortedByScore[sortedByScore.length - 1].name,
+      status: sortedByScore[sortedByScore.length - 1].planetaryStatus!
+    }
+
+    // Agrupar planetas por nível
+    const planetsByLevel: Record<PlanetaryStatusLevel, string[]> = {
+      'Muito Forte': [],
+      'Forte': [],
+      'Moderado': [],
+      'Neutro': [],
+      'Fraco': [],
+      'Muito Fraco': []
+    }
+
+    planetsWithValidStatus.forEach(planet => {
+      const level = planet.planetaryStatus?.level
+      if (level) {
+        planetsByLevel[level].push(planet.name)
+      }
+    })
+
+    // Gerar recomendações baseadas na análise
+    const recommendations = this.generatePlanetaryRecommendations(planetsByLevel, overallLevel, strongestPlanet, weakestPlanet)
+
+    return {
+      overallScore,
+      overallLevel,
+      strongestPlanet,
+      weakestPlanet,
+      planetsByLevel,
+      recommendations
+    }
+  }
+
+  /**
+   * Classifica o nível geral baseado no score médio
+   */
+  private static classifyOverallPlanetaryLevel(score: number): PlanetaryStatusLevel {
+    if (score >= 8) return 'Muito Forte'
+    if (score >= 4) return 'Forte'
+    if (score >= 0) return 'Moderado'
+    if (score >= -2) return 'Neutro'
+    if (score >= -6) return 'Fraco'
+    return 'Muito Fraco'
+  }
+
+  /**
+   * Gera recomendações baseadas na análise planetária
+   */
+  private static generatePlanetaryRecommendations(
+    planetsByLevel: Record<PlanetaryStatusLevel, string[]>,
+    overallLevel: PlanetaryStatusLevel,
+    strongestPlanet: { name: string; status: PlanetaryStatus },
+    weakestPlanet: { name: string; status: PlanetaryStatus }
+  ): string[] {
+    const recommendations: string[] = []
+
+    // Recomendações baseadas no nível geral
+    if (overallLevel === 'Muito Forte') {
+      recommendations.push('🌟 Excelente momento para iniciativas importantes e tomada de decisões')
+      recommendations.push('💪 Aproveite a força planetária para projetos desafiadores')
+    } else if (overallLevel === 'Forte') {
+      recommendations.push('✅ Bom momento para avançar em objetivos pessoais')
+      recommendations.push('🎯 Foque em áreas onde você se sente mais confiante')
+    } else if (overallLevel === 'Moderado') {
+      recommendations.push('⚖️ Momento equilibrado - mantenha consistência em suas ações')
+      recommendations.push('🔄 Aproveite para revisar e ajustar estratégias')
+    } else if (overallLevel === 'Neutro') {
+      recommendations.push('🌱 Período de estabilidade - ideal para manutenção e planejamento')
+      recommendations.push('📋 Foque em tarefas rotineiras e organização')
+    } else if (overallLevel === 'Fraco') {
+      recommendations.push('⚠️ Momento desafiador - evite decisões importantes')
+      recommendations.push('🛡️ Foque em autocuidado e proteção')
+    } else {
+      recommendations.push('🚨 Período crítico - priorize segurança e estabilidade')
+      recommendations.push('🙏 Busque apoio e evite riscos desnecessários')
+    }
+
+    // Recomendações específicas por planeta
+    if (strongestPlanet.status.level === 'Muito Forte') {
+      recommendations.push(`🚀 ${strongestPlanet.name} está excepcional - aproveite sua energia máxima`)
+    }
+    
+    if (weakestPlanet.status.level === 'Muito Fraco') {
+      recommendations.push(`💡 ${weakestPlanet.name} precisa de atenção especial - trabalhe suas limitações`)
+    }
+
+    // Recomendações baseadas na distribuição
+    const strongPlanets = planetsByLevel['Muito Forte'].length + planetsByLevel['Forte'].length
+    const weakPlanets = planetsByLevel['Fraco'].length + planetsByLevel['Muito Fraco'].length
+
+    if (strongPlanets > weakPlanets) {
+      recommendations.push('🎉 Maioria dos planetas está forte - momento propício para expansão')
+    } else if (weakPlanets > strongPlanets) {
+      recommendations.push('🔧 Maioria dos planetas está fraca - foco em recuperação e fortalecimento')
+    }
+
+    return recommendations
   }
 }
 
