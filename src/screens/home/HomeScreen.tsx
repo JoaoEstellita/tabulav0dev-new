@@ -33,12 +33,7 @@ import StarLoader from '../../components/StarLoader'
 // import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import { usePressScale } from '../../ui/motion/native/micro'
-import { ViewModeToggle } from '../../ui/components/ViewModeToggle'
-import type { ViewMode, UserLevel } from '../../astro'
-import { SimplifiedLifeAreaCard } from '../../ui/components/SimplifiedLifeAreaCard'
-import { TechnicalTooltip } from '../../ui/components/TechnicalTooltip'
-import { SimplifiedInsightsEngine } from '../../astro'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 let unmountStarfield: any = null
@@ -81,14 +76,7 @@ export default function HomeScreen() {
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
     
-    // 🌟 Sistema de Visualização Dual
-    const [viewMode, setViewMode] = useState<ViewMode>('simple')
-    const [userLevel, setUserLevel] = useState<UserLevel>('beginner')
-    const [showPreferencesModal, setShowPreferencesModal] = useState(false)
-    
-    // 🔄 Estados de animação e feedback
-    const [isChangingMode, setIsChangingMode] = useState(false)
-    const [preferencesSaved, setPreferencesSaved] = useState(false)
+
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -99,111 +87,9 @@ export default function HomeScreen() {
       setModalVisible(true)
     }
     
-    // 🌟 Função para adaptar dados das áreas para SimplifiedLifeArea
-    const adaptAreaData = (areaName: string, areaData: any) => {
-      const percentage = areaData.percentage || areaData.status || 50
-      const level: 'Excelente' | 'Bom' | 'Moderado' | 'Desafiador' = 
-        percentage >= 70 ? 'Excelente' : 
-        percentage >= 50 ? 'Bom' : 
-        percentage >= 30 ? 'Moderado' : 'Desafiador'
-      
-      const color: 'success' | 'warning' | 'info' | 'danger' = 
-        percentage >= 70 ? 'success' : 
-        percentage >= 50 ? 'info' : 
-        percentage >= 30 ? 'warning' : 'danger'
-      
-      return {
-        area: areaName,
-        energy: {
-          percentage,
-          level,
-          color
-        },
-        mainInfluence: {
-          planet: 'Planeta Principal',
-          description: areaData.description || 'Influência astrológica',
-          impact: 'Impacto moderado'
-        },
-        dailyGuidance: {
-          focus: 'Foque em seus objetivos',
-          avoid: 'Evite conflitos',
-          opportunity: 'Aproveite as oportunidades'
-        },
-        technicalSummary: {
-          dignities: 'Dignidades planetárias',
-          house: 'Posição na casa',
-          aspects: 'Aspectos ativos'
-        }
-      }
-    }
+
     
-    // 🔄 Funções para gerenciar preferências
-    const loadUserPreferences = async () => {
-      try {
-        const savedPreferences = await AsyncStorage.getItem('userPreferences')
-        if (savedPreferences) {
-          const preferences = JSON.parse(savedPreferences)
-          setViewMode(preferences.viewMode || 'simple')
-          setUserLevel(preferences.userLevel || 'beginner')
-          console.log('✅ Preferências carregadas:', preferences)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao carregar preferências:', error)
-      }
-    }
-    
-    const saveUserPreferences = async (newViewMode?: ViewMode, newUserLevel?: UserLevel) => {
-      try {
-        const preferences = {
-          viewMode: newViewMode || viewMode,
-          userLevel: newUserLevel || userLevel,
-          lastUpdated: new Date().toISOString()
-        }
-        
-        await AsyncStorage.setItem('userPreferences', JSON.stringify(preferences))
-        console.log('✅ Preferências salvas:', preferences)
-        
-        // Sincronizar com backend se necessário
-        await syncPreferencesWithBackend(preferences)
-        
-        // Feedback visual
-        setPreferencesSaved(true)
-        setTimeout(() => setPreferencesSaved(false), 2000)
-        
-      } catch (error) {
-        console.error('❌ Erro ao salvar preferências:', error)
-        Alert.alert('Erro', 'Não foi possível salvar suas preferências')
-      }
-    }
-    
-    const syncPreferencesWithBackend = async (preferences: any) => {
-      try {
-        if (user?.uid) {
-          // TODO: Implementar sincronização com backend quando disponível
-          console.log('🔄 Sincronizando preferências com backend:', preferences)
-          // await updateUserPreferences(user.uid, preferences)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao sincronizar com backend:', error)
-      }
-    }
-    
-    const handleViewModeChange = async (newMode: ViewMode) => {
-      setIsChangingMode(true)
-      
-      // Animação de transição
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      setViewMode(newMode)
-      await saveUserPreferences(newMode)
-      
-      setIsChangingMode(false)
-    }
-    
-    const handleUserLevelChange = async (newLevel: UserLevel) => {
-      setUserLevel(newLevel)
-      await saveUserPreferences(undefined, newLevel)
-    }
+
   
   // Debug: Log da estrutura completa
   React.useEffect(() => {
@@ -252,7 +138,7 @@ export default function HomeScreen() {
     if (user) {
       loadUserProfile()
       initializeNotifications()
-      loadUserPreferences() // Carregar preferências ao iniciar
+
     }
   }, [user])
 
@@ -466,65 +352,8 @@ export default function HomeScreen() {
             <View style={styles.headerContent}>
               <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
               <Text style={styles.date}>{formatDate()}</Text>
-              <View style={styles.modeIndicator}>
-                <Text style={styles.modeIndicatorText}>
-                  {viewMode === 'simple' ? '🌟 Simples' : 
-                   viewMode === 'dual' ? '⚖️ Dual' : '🔬 Técnico'}
-                </Text>
-                {preferencesSaved && (
-                  <View style={styles.preferencesStatusIndicator}>
-                    <Ionicons name="sync" size={12} color="#10B981" />
-                  </View>
-                )}
-              </View>
             </View>
           </View>
-          
-          {/* 🌟 ViewModeToggle - Sistema de Visualização Dual */}
-          <View style={styles.viewModeSection}>
-            <ViewModeToggle
-              currentMode={viewMode}
-              userLevel={userLevel}
-              onModeChange={handleViewModeChange}
-              showUserLevel={true}
-            />
-            {userLevel !== 'beginner' && (
-              <View style={styles.levelIndicator}>
-                <Ionicons name="star" size={12} color="#FFD700" />
-              </View>
-            )}
-            {isChangingMode && (
-              <View style={styles.modeChangeIndicator}>
-                <ActivityIndicator size="small" color="#FFD700" />
-              </View>
-            )}
-          </View>
-          
-          {/* ❓ Botão de Ajuda */}
-          <TouchableOpacity 
-            style={styles.helpButton} 
-            onPress={() => {
-              Alert.alert(
-                'Sistema de Visualização Dual',
-                'Este app oferece três modos de visualização:\n\n' +
-                '🌟 SIMPLES: Linguagem acessível para iniciantes\n' +
-                '⚖️ DUAL: Combina informações simples e técnicas\n' +
-                '🔬 TÉCNICO: Dados completos para astrólogos\n\n' +
-                'Configure seu nível de experiência nas preferências!',
-                [{ text: 'Entendi!', style: 'default' }]
-              )
-            }}
-          >
-            <Ionicons name="help-circle-outline" size={24} color="#FFD700" />
-          </TouchableOpacity>
-          
-          {/* ⚙️ Botão de Configurações */}
-          <TouchableOpacity 
-            style={styles.settingsButton} 
-            onPress={() => setShowPreferencesModal(true)}
-          >
-            <Ionicons name="settings-outline" size={24} color="#FFD700" />
-          </TouchableOpacity>
           
           {(() => {
             const press = usePressScale()
@@ -677,18 +506,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="warning" size={20} color="#EF4444" />
-              <TechnicalTooltip 
-                term="Áreas Críticas"
-                tooltip={{
-                  term: 'Áreas Críticas',
-                  simple: 'Áreas da vida que precisam de atenção especial',
-                  technical: 'Casas com scores baixos ou aspectos desafiadores',
-                  example: 'Score < 30% = Necessita de cuidado e foco',
-                  significance: 'Indica onde você deve concentrar seus esforços'
-                }}
-              >
-                <Text style={styles.sectionTitle}>Áreas Críticas</Text>
-              </TechnicalTooltip>
+              <Text style={styles.sectionTitle}>Áreas Críticas</Text>
             </View>
             
             <LinearGradient
@@ -725,18 +543,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Ionicons name="grid" size={20} color="#FFD700" />
-              <TechnicalTooltip 
-                term="Status das Áreas de Vida"
-                tooltip={{
-                  term: 'Status das Áreas de Vida',
-                  simple: 'Como estão suas diferentes áreas da vida hoje',
-                  technical: 'Análise astrológica das 12 casas e suas influências',
-                  example: 'Casa 1 = Personalidade, Casa 7 = Relacionamentos',
-                  significance: 'Mostra onde focar sua energia e atenção'
-                }}
-              >
-                <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
-              </TechnicalTooltip>
+              <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
             </View>
             
             <View style={styles.lifeAreasGrid}>
@@ -748,24 +555,11 @@ export default function HomeScreen() {
                 }
                 
                 return (
-                  <Animated.View 
-                    key={name} 
-                    style={[
-                      styles.lifeAreaItem,
-                      {
-                        opacity: isChangingMode ? 0.6 : 1,
-                        transform: [{ 
-                          scale: isChangingMode ? 0.95 : 1 
-                        }]
-                      }
-                    ]}
-                  >
-                    <SimplifiedLifeAreaCard 
-                      area={adaptAreaData(name, area)} 
-                      onViewMore={() => handleAreaPress(name, area)}
-                      showTechnicalSummary={viewMode === 'technical' || viewMode === 'dual'}
-                    />
-                  </Animated.View>
+                  <LifeAreaCard 
+                    key={name}
+                    area={area}
+                    onPress={() => handleAreaPress(name, area)}
+                  />
                 )
               })}
             </View>
@@ -779,18 +573,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="analytics" size={20} color="#FFD700" />
-                <TechnicalTooltip 
-                  term="Trânsitos Comparativos"
-                  tooltip={{
-                    term: 'Trânsitos Comparativos',
-                    simple: 'Como os planetas atuais afetam seu mapa natal',
-                    technical: 'Análise dos aspectos entre posições atuais e posições de nascimento',
-                    example: 'Sol atual △ Lua natal = Energia emocional elevada',
-                    significance: 'Revela oportunidades e desafios do momento'
-                  }}
-                >
-                  <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
-                </TechnicalTooltip>
+                <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
               </View>
               <TransitComparisonCard 
                 planetComparisons={transitData.currentTransits.planetComparisons}
@@ -836,104 +619,12 @@ export default function HomeScreen() {
         transitData={transitData}
       />
 
-      {/* 🌟 MODAL DE PREFERÊNCIAS */}
-      <Modal
-        visible={showPreferencesModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowPreferencesModal(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>⚙️ Preferências</Text>
-              <TouchableOpacity onPress={() => setShowPreferencesModal(false)}>
-                <Ionicons name="close" size={24} color="#A0A0A0" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceLabel}>Nível de Experiência</Text>
-              <View style={styles.levelButtons}>
-                {(['beginner', 'intermediate', 'expert'] as UserLevel[]).map((level) => (
-                  <TouchableOpacity
-                    key={level}
-                    style={[
-                      styles.levelButton,
-                      userLevel === level && styles.levelButtonActive
-                    ]}
-                    onPress={() => handleUserLevelChange(level)}
-                  >
-                    <Text style={[
-                      styles.levelButtonText,
-                      userLevel === level && styles.levelButtonTextActive
-                    ]}>
-                      {level === 'beginner' ? 'Iniciante' : 
-                       level === 'intermediate' ? 'Intermediário' : 'Avançado'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceLabel}>Modo de Visualização</Text>
-              <View style={styles.modeButtons}>
-                {(['simple', 'dual', 'technical'] as ViewMode[]).map((mode) => (
-                  <TouchableOpacity
-                    key={mode}
-                    style={[
-                      styles.modeButton,
-                      viewMode === mode && styles.modeButtonActive
-                    ]}
-                    onPress={() => handleViewModeChange(mode)}
-                  >
-                    <Text style={[
-                      styles.modeButtonText,
-                      viewMode === mode && styles.modeButtonTextActive
-                    ]}>
-                      {mode === 'simple' ? 'Simples' : 
-                       mode === 'dual' ? 'Dual' : 'Técnico'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            
-            {/* 🌟 Feedback Visual de Preferências Salvas */}
-            {preferencesSaved && (
-              <View style={styles.preferencesSavedIndicator}>
-                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                <Text style={styles.preferencesSavedText}>Preferências salvas!</Text>
-              </View>
-            )}
-            
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceDescription}>
-                {userLevel === 'beginner' && 'Modo iniciante: Linguagem simples e direta'}
-                {userLevel === 'intermediate' && 'Modo intermediário: Informações balanceadas'}
-                {userLevel === 'expert' && 'Modo avançado: Dados técnicos completos'}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
 
       {/* PWA Download Button */}
       <PWADownloadButton />
 
-      {/* 🌟 Toast de Mudança de Modo */}
-      {isChangingMode && (
-        <View style={styles.modeChangeToast}>
-          <View style={styles.modeChangeToastContent}>
-            <ActivityIndicator size="small" color="#FFD700" />
-            <Text style={styles.modeChangeToastText}>
-              Alterando para modo {viewMode === 'simple' ? 'Simples' : 
-                               viewMode === 'dual' ? 'Dual' : 'Técnico'}...
-            </Text>
-          </View>
-        </View>
-      )}
+
 
       {/* modal legado removido */}
     </LinearGradient>
@@ -1017,15 +708,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  viewModeSection: {
-    marginRight: 12,
-  },
-  helpButton: {
-    padding: 8,
-  },
-  settingsButton: {
-    padding: 8,
-  },
+
   avatarContainer: {
     marginRight: 12,
   },
@@ -1266,172 +949,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     width: '100%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  preferenceSection: {
-    marginBottom: 20,
-  },
-  preferenceLabel: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  levelButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#2A2A3E',
-    borderRadius: 8,
-    padding: 4,
-  },
-  levelButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-  },
-  levelButtonActive: {
-    backgroundColor: '#FFD700',
-  },
-  levelButtonText: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  levelButtonTextActive: {
-    color: '#000',
-  },
-  modeButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#2A2A3E',
-    borderRadius: 8,
-    padding: 4,
-  },
-  modeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-  },
-  modeButtonActive: {
-    backgroundColor: '#FFD700',
-  },
-  modeButtonText: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  modeButtonTextActive: {
-    color: '#000',
-  },
-  preferenceDescription: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  modalButton: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#FFD700',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  modalButtonText: {
-    color: '#000',
-    fontWeight: '600',
-  },
-  levelIndicator: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#FFD700',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  modeIndicator: {
-    backgroundColor: '#2A2A3E',
-    borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  modeIndicatorText: {
-    color: '#FFD700',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  modeChangeIndicator: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-  },
-  preferencesSavedIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  preferencesSavedText: {
-    color: '#10B981',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  preferencesStatusIndicator: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  modeChangeToast: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 10,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modeChangeToastContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modeChangeToastText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    marginLeft: 8,
   },
 })
