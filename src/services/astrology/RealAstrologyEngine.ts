@@ -703,8 +703,39 @@ export class RealAstrologyEngine {
     const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
+    // CRÍTICO: Validar ordem das cúspides
+    const validateCuspsOrder = (cusps: number[], asc: number, label: string) => {
+      const norm = (d: number) => (d % 360 + 360) % 360
+      const ascNorm = norm(asc)
+      let isValid = true
+      
+      for (let i = 0; i < 11; i++) {
+        const current = norm(cusps[i] - ascNorm)
+        const next = norm(cusps[i + 1] - ascNorm)
+        if (next <= current) {
+          console.error(`❌ ${label}: Cúspides desordenadas!`, { 
+            casa: i + 1, 
+            current: cusps[i].toFixed(2), 
+            next: cusps[i + 1].toFixed(2),
+            currentDist: current.toFixed(2),
+            nextDist: next.toFixed(2)
+          })
+          isValid = false
+        }
+      }
+      
+      if (isValid) {
+        console.log(`✅ ${label}: Cúspides ordenadas corretamente`)
+      }
+      
+      return isValid
+    }
+
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
+    // Validar ordem das cúspides
+    validateCuspsOrder(currentHouses.cusps, currentHouses.ascendant, 'Casas ATUAIS')
+    
     console.log('🏠 ASTRO DEBUG - Casas ATUAIS', {
       system: (currentHouses as any).system || null,
       systemEffective: (currentHouses as any).systemEffective || null,
@@ -715,6 +746,10 @@ export class RealAstrologyEngine {
       planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
     try { if ((currentHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
+    
+    // Validar ordem das cúspides natais
+    validateCuspsOrder(natalHouses.cusps, natalHouses.ascendant, 'Casas NATAIS')
+    
     console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
       system: (natalHouses as any).system || null,
       systemEffective: (natalHouses as any).systemEffective || null,
