@@ -637,8 +637,8 @@ export class RealAstrologyEngine {
     longitude: number,
     options?: { natalLocal?: string; natalTimezone?: string; natalLat?: number; natalLon?: number }
   ): Promise<{
-    current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
-    natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number } },
+    current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } },
+    natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } },
   }> {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!backend) throw new Error('No backend url')
@@ -692,9 +692,11 @@ export class RealAstrologyEngine {
     })
 
     const currentPlanets = (data.positions || []).map(toPlanet)
-    const currentHouses = data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
+    const currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
+      data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
-    const natalHouses = data.natal?.houses || currentHouses
+    const natalHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
+      data.natal?.houses || currentHouses
 
     // Reatribuir SEMPRE as casas no cliente usando as cúspides do backend
     // para garantir consistência de partição (ASC-ancorado, CCW, fronteira eps)
@@ -704,6 +706,9 @@ export class RealAstrologyEngine {
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
     console.log('🏠 ASTRO DEBUG - Casas ATUAIS', {
+      system: (currentHouses as any).system || null,
+      systemEffective: (currentHouses as any).systemEffective || null,
+      approximate: !!(currentHouses as any).approximate,
       asc: currentHouses.ascendant,
       mc: currentHouses.midheaven,
       cusps: fmtCusps(currentHouses.cusps),
@@ -711,6 +716,9 @@ export class RealAstrologyEngine {
     })
     try { if ((currentHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
     console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
+      system: (natalHouses as any).system || null,
+      systemEffective: (natalHouses as any).systemEffective || null,
+      approximate: !!(natalHouses as any).approximate,
       asc: natalHouses.ascendant,
       mc: natalHouses.midheaven,
       cusps: fmtCusps(natalHouses.cusps),
@@ -917,7 +925,7 @@ export class RealAstrologyEngine {
    */
   private static assignHouses(
     planets: RealPlanetPosition[],
-    houses: { cusps: number[], ascendant: number, midheaven: number }
+    houses: { cusps: number[], ascendant: number, midheaven: number, approximate?: boolean, system?: string, systemEffective?: string }
   ): RealPlanetPosition[] {
     // Particionamento CCW preservando C1..C12 ancorado no ASC
     const norm = (d: number) => (d % 360 + 360) % 360
