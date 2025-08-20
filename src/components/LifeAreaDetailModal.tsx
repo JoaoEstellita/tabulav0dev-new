@@ -29,6 +29,137 @@ interface LifeAreaDetailModalProps {
 
 const { width, height } = Dimensions.get('window')
 
+// 🎨 SISTEMA DE DESIGN CONSISTENTE
+const DESIGN_SYSTEM = {
+  colors: {
+    primary: '#2C3E50',
+    secondary: '#6C757D',
+    accent: '#E67E22',
+    success: '#27AE60',
+    warning: '#F39C12',
+    danger: '#E74C3C',
+    info: '#3498DB',
+    light: '#F8F9FA',
+    white: '#FFFFFF',
+    transparent: 'rgba(0,0,0,0.1)'
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24
+  },
+  borderRadius: {
+    sm: 6,
+    md: 10,
+    lg: 12,
+    xl: 15
+  },
+  shadows: {
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1
+    },
+    md: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3
+    },
+    lg: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 5
+    }
+  },
+  typography: {
+    h1: { fontSize: 24, fontWeight: 'bold' },
+    h2: { fontSize: 20, fontWeight: 'bold' },
+    h3: { fontSize: 18, fontWeight: 'bold' },
+    h4: { fontSize: 16, fontWeight: 'bold' },
+    body: { fontSize: 14, lineHeight: 20 },
+    caption: { fontSize: 12, lineHeight: 16 },
+    small: { fontSize: 10, lineHeight: 14 }
+  }
+}
+
+// 🧩 COMPONENTES REUTILIZÁVEIS
+const InfoCard = ({ title, subtitle, children, style, variant = 'default' }: {
+  title?: string
+  subtitle?: string
+  children: React.ReactNode
+  style?: any
+  variant?: 'default' | 'success' | 'warning' | 'info' | 'danger'
+}) => {
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'success':
+        return { backgroundColor: DESIGN_SYSTEM.colors.success + '20', borderLeftColor: DESIGN_SYSTEM.colors.success }
+      case 'warning':
+        return { backgroundColor: DESIGN_SYSTEM.colors.warning + '20', borderLeftColor: DESIGN_SYSTEM.colors.warning }
+      case 'info':
+        return { backgroundColor: DESIGN_SYSTEM.colors.info + '20', borderLeftColor: DESIGN_SYSTEM.colors.info }
+      case 'danger':
+        return { backgroundColor: DESIGN_SYSTEM.colors.danger + '20', borderLeftColor: DESIGN_SYSTEM.colors.danger }
+      default:
+        return { backgroundColor: DESIGN_SYSTEM.colors.white, borderLeftColor: DESIGN_SYSTEM.colors.accent }
+    }
+  }
+
+  return (
+    <View style={[
+      styles.infoCard,
+      getVariantStyles(),
+      style
+    ]}>
+      {title && <Text style={styles.infoCardTitle}>{title}</Text>}
+      {subtitle && <Text style={styles.infoCardSubtitle}>{subtitle}</Text>}
+      {children}
+    </View>
+  )
+}
+
+const MetricDisplay = ({ value, label, icon, color }: {
+  value: string | number
+  label: string
+  icon?: string
+  color?: string
+}) => (
+  <View style={styles.metricDisplay}>
+    {icon && <Text style={styles.metricIcon}>{icon}</Text>}
+    <Text style={[styles.metricValue, { color: color || DESIGN_SYSTEM.colors.accent }]}>
+      {value}
+    </Text>
+    <Text style={styles.metricLabel}>{label}</Text>
+  </View>
+)
+
+const SectionHeader = ({ title, subtitle, icon, action }: {
+  title: string
+  subtitle?: string
+  icon?: string
+  action?: React.ReactNode
+}) => (
+  <View style={styles.sectionHeader}>
+    <View style={styles.sectionHeaderLeft}>
+      {icon && <Text style={styles.sectionHeaderIcon}>{icon}</Text>}
+      <View>
+        <Text style={styles.sectionHeaderTitle}>{title}</Text>
+        {subtitle && <Text style={styles.sectionHeaderSubtitle}>{subtitle}</Text>}
+      </View>
+    </View>
+    {action && <View style={styles.sectionHeaderAction}>{action}</View>}
+  </View>
+)
+
 // 🎨 MAPEAMENTOS VISUAIS
 const AREA_ICONS: { [key: string]: string } = {
   // Português
@@ -277,6 +408,353 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const analysis = getDetailedAnalysis()
   const housesApprox = Boolean((transitData as any)?.currentTransits?.housesApproximate)
 
+  // 🧠 SISTEMA DE INTELIGÊNCIA E PERSONALIZAÇÃO
+  const [userPreferences, setUserPreferences] = React.useState({
+    showTechnicalDetails: false,
+    showAdvancedInsights: false,
+    preferredLanguage: 'pt-BR',
+    showDebugInfo: false
+  })
+
+  const [activeFilters, setActiveFilters] = React.useState({
+    aspectScore: 'all', // 'all', 'high', 'medium', 'low'
+    aspectType: 'all', // 'all', 'harmonious', 'challenging'
+    planetInfluence: 'all' // 'all', 'strong', 'moderate', 'weak'
+  })
+
+  // 🎯 ANÁLISE INTELIGENTE BASEADA NO SCORE
+  const getIntelligentAnalysis = () => {
+    const score = areaData.percentage
+    const isHighScore = score >= 70
+    const isMediumScore = score >= 50 && score < 70
+    const isLowScore = score < 50
+
+    return {
+      energyLevel: isHighScore ? 'excepcional' : isMediumScore ? 'equilibrado' : 'transformador',
+      recommendedFocus: isHighScore ? 'expansão' : isMediumScore ? 'consolidação' : 'transformação',
+      timeHorizon: isHighScore ? 'curto prazo (7-14 dias)' : isMediumScore ? 'médio prazo (2-4 semanas)' : 'longo prazo (1-2 meses)',
+      riskLevel: isHighScore ? 'baixo' : isMediumScore ? 'moderado' : 'alto',
+      opportunityType: isHighScore ? 'crescimento acelerado' : isMediumScore ? 'crescimento sustentável' : 'crescimento através de desafios'
+    }
+  }
+
+  // 🔍 FILTROS INTELIGENTES PARA ASPECTOS
+  const getFilteredAspects = () => {
+    let filtered = analysis.topAspects
+
+    // Filtro por score
+    if (activeFilters.aspectScore !== 'all') {
+      filtered = filtered.filter(aspect => {
+        const score = aspect.finalScore || 0
+        switch (activeFilters.aspectScore) {
+          case 'high': return score >= 80
+          case 'medium': return score >= 60 && score < 80
+          case 'low': return score < 60
+          default: return true
+        }
+      })
+    }
+
+    // Filtro por tipo
+    if (activeFilters.aspectType !== 'all') {
+      filtered = filtered.filter(aspect => {
+        const isHarmonious = ['trígono', 'sextil', 'conjunção'].includes(aspect.type)
+        switch (activeFilters.aspectType) {
+          case 'harmonious': return isHarmonious
+          case 'challenging': return !isHarmonious
+          default: return true
+        }
+      })
+    }
+
+    return filtered
+  }
+
+  // 📊 MÉTRICAS INTELIGENTES
+  const getIntelligentMetrics = () => {
+    const filteredAspects = getFilteredAspects()
+    const totalAspects = analysis.topAspects.length
+    const highScoreAspects = filteredAspects.filter(a => (a.finalScore || 0) >= 80).length
+    const harmoniousAspects = filteredAspects.filter(a => ['trígono', 'sextil', 'conjunção'].includes(a.type)).length
+
+    return {
+      totalAspects,
+      filteredAspects: filteredAspects.length,
+      highScorePercentage: totalAspects > 0 ? Math.round((highScoreAspects / totalAspects) * 100) : 0,
+      harmoniousPercentage: totalAspects > 0 ? Math.round((harmoniousAspects / totalAspects) * 100) : 0,
+      averageScore: filteredAspects.length > 0 ? 
+        Math.round(filteredAspects.reduce((sum, a) => sum + (a.finalScore || 0), 0) / filteredAspects.length) : 0
+    }
+  }
+
+  // 🎨 CONTEÚDO ADAPTATIVO BASEADO NO SCORE
+  const getAdaptiveContent = () => {
+    const score = areaData.percentage
+    const intelligentAnalysis = getIntelligentAnalysis()
+
+    if (score >= 70) {
+      return {
+        headerColor: DESIGN_SYSTEM.colors.success,
+        headerMessage: `✨ Energia ${intelligentAnalysis.energyLevel}`,
+        primaryAction: 'APROVEITAR',
+        secondaryAction: 'EXPANDIR',
+        focusMessage: 'Momento de máxima eficiência - aja com confiança!'
+      }
+    } else if (score >= 50) {
+      return {
+        headerColor: DESIGN_SYSTEM.colors.warning,
+        headerMessage: `⚖️ Energia ${intelligentAnalysis.energyLevel}`,
+        primaryAction: 'CONSOLIDAR',
+        secondaryAction: 'AJUSTAR',
+        focusMessage: 'Momento de estabilização - mantenha o que funciona!'
+      }
+    } else {
+      return {
+        headerColor: DESIGN_SYSTEM.colors.danger,
+        headerMessage: `🔄 Energia ${intelligentAnalysis.energyLevel}`,
+        primaryAction: 'TRANSFORMAR',
+        secondaryAction: 'CRESCER',
+        focusMessage: 'Momento de transformação - use os desafios como oportunidades!'
+      }
+    }
+  }
+
+  const intelligentMetrics = getIntelligentMetrics()
+  const adaptiveContent = getAdaptiveContent()
+
+  // 📈 MÉTRICAS DE SUCESSO E FEEDBACK
+  const [userFeedback, setUserFeedback] = React.useState({
+    helpful: false,
+    accuracy: 0, // 1-5
+    suggestions: ''
+  })
+
+  const [performanceMetrics, setPerformanceMetrics] = React.useState({
+    timeSpent: 0,
+    sectionsViewed: new Set<string>(),
+    interactions: 0
+  })
+
+  // 🎯 SISTEMA DE FEEDBACK
+  const handleFeedback = (type: 'helpful' | 'accuracy' | 'suggestion', value: any) => {
+    setUserFeedback(prev => ({ ...prev, [type]: value }))
+    
+    // Log para análise de UX
+    console.log('ASTRO UX FEEDBACK:', { type, value, area: areaData.name, timestamp: new Date().toISOString() })
+  }
+
+  // ⏱️ TRACKING DE PERFORMANCE
+  React.useEffect(() => {
+    const startTime = Date.now()
+    
+    return () => {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000)
+      setPerformanceMetrics(prev => ({ ...prev, timeSpent }))
+      
+      // Log de métricas de performance
+      console.log('ASTRO UX METRICS:', {
+        area: areaData.name,
+        timeSpent,
+        sectionsViewed: Array.from(performanceMetrics.sectionsViewed),
+        interactions: performanceMetrics.interactions
+      })
+    }
+  }, [])
+
+  // 🎨 HEADER INTELIGENTE COM CONTEÚDO ADAPTATIVO
+  const renderIntelligentHeader = () => (
+    <LinearGradient
+      colors={colors}
+      style={styles.headerCompact}
+    >
+      <View style={styles.headerContentCompact}>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color="white" />
+        </TouchableOpacity>
+        
+        <View style={styles.headerMainCompact}>
+          <View style={styles.headerIconContainerCompact}>
+            <Ionicons name={icon as any} size={32} color="white" />
+          </View>
+          
+          <Text style={styles.areaTitleCompact}>{areaData.name.toUpperCase()}</Text>
+          
+          <View style={styles.scoreMainContainerCompact}>
+            <Text style={styles.scoreMainValueCompact}>{areaData.percentage}%</Text>
+            <Text style={styles.headerAdaptiveMessage}>{adaptiveContent.headerMessage}</Text>
+          </View>
+        </View>
+      </View>
+    </LinearGradient>
+  )
+
+  // 🔍 FILTROS INTELIGENTES INTERATIVOS
+  const renderIntelligentFilters = () => (
+    <InfoCard
+      title="🔍 Filtros Inteligentes"
+      subtitle="Personalize sua análise"
+      variant="info"
+    >
+      <View style={styles.filterRow}>
+        <Text style={styles.filterLabel}>Score dos Aspectos:</Text>
+        <View style={styles.filterButtons}>
+          {['all', 'high', 'medium', 'low'].map(filter => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterButton,
+                activeFilters.aspectScore === filter && styles.filterButtonActive
+              ]}
+              onPress={() => setActiveFilters(prev => ({ ...prev, aspectScore: filter }))}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                activeFilters.aspectScore === filter && styles.filterButtonTextActive
+              ]}>
+                {filter === 'all' ? 'Todos' : filter === 'high' ? 'Altos' : filter === 'medium' ? 'Médios' : 'Baixos'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      <View style={styles.filterRow}>
+        <Text style={styles.filterLabel}>Tipo de Aspecto:</Text>
+        <View style={styles.filterButtons}>
+          {['all', 'harmonious', 'challenging'].map(filter => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterButton,
+                activeFilters.aspectType === filter && styles.filterButtonActive
+              ]}
+              onPress={() => setActiveFilters(prev => ({ ...prev, aspectType: filter }))}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                activeFilters.aspectType === filter && styles.filterButtonTextActive
+              ]}>
+                {filter === 'all' ? 'Todos' : filter === 'harmonious' ? 'Harmoniosos' : 'Desafiadores'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </InfoCard>
+  )
+
+  // 📊 MÉTRICAS INTELIGENTES VISUAIS
+  const renderIntelligentMetrics = () => (
+    <InfoCard
+      title="📊 Métricas Inteligentes"
+      subtitle="Análise baseada nos filtros ativos"
+      variant="success"
+    >
+      <View style={styles.metricsGrid}>
+        <MetricDisplay
+          value={intelligentMetrics.filteredAspects}
+          label="Aspectos Filtrados"
+          icon="✨"
+          color={DESIGN_SYSTEM.colors.info}
+        />
+        <MetricDisplay
+          value={`${intelligentMetrics.highScorePercentage}%`}
+          label="Score Alto (80%+)"
+          icon="🌟"
+          color={DESIGN_SYSTEM.colors.success}
+        />
+        <MetricDisplay
+          value={`${intelligentMetrics.harmoniousPercentage}%`}
+          label="Harmoniosos"
+          icon="💫"
+          color={DESIGN_SYSTEM.colors.primary}
+        />
+        <MetricDisplay
+          value={intelligentMetrics.averageScore}
+          label="Score Médio"
+          icon="📊"
+          color={DESIGN_SYSTEM.colors.accent}
+        />
+      </View>
+    </InfoCard>
+  )
+
+  // 🎯 CALL-TO-ACTION INTELIGENTE
+  const renderIntelligentCTA = () => (
+    <InfoCard
+      title="🎯 Ação Recomendada"
+      subtitle={adaptiveContent.focusMessage}
+      variant="success"
+    >
+      <View style={styles.ctaContainer}>
+        <TouchableOpacity style={[styles.ctaButton, { backgroundColor: adaptiveContent.headerColor }]}>
+          <Text style={styles.ctaButtonText}>{adaptiveContent.primaryAction}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.ctaButton, { backgroundColor: DESIGN_SYSTEM.colors.secondary }]}>
+          <Text style={styles.ctaButtonText}>{adaptiveContent.secondaryAction}</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.ctaInsight}>
+        💡 Foque em: <Text style={styles.ctaInsightHighlight}>{getIntelligentAnalysis().recommendedFocus}</Text>
+      </Text>
+      <Text style={styles.ctaInsight}>
+        ⏰ Horizonte: <Text style={styles.ctaInsightHighlight}>{getIntelligentAnalysis().timeHorizon}</Text>
+      </Text>
+    </InfoCard>
+  )
+
+  // 📝 SISTEMA DE FEEDBACK DO USUÁRIO
+  const renderUserFeedback = () => (
+    <InfoCard
+      title="📝 Sua Opinião"
+      subtitle="Ajude-nos a melhorar"
+      variant="info"
+    >
+      <View style={styles.feedbackRow}>
+        <Text style={styles.feedbackLabel}>Esta análise foi útil?</Text>
+        <View style={styles.feedbackButtons}>
+          <TouchableOpacity
+            style={[
+              styles.feedbackButton,
+              userFeedback.helpful === true && styles.feedbackButtonActive
+            ]}
+            onPress={() => handleFeedback('helpful', true)}
+          >
+            <Text style={styles.feedbackButtonText}>👍 Sim</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.feedbackButton,
+              userFeedback.helpful === false && styles.feedbackButtonActive
+            ]}
+            onPress={() => handleFeedback('helpful', false)}
+          >
+            <Text style={styles.feedbackButtonText}>👎 Não</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      <View style={styles.feedbackRow}>
+        <Text style={styles.feedbackLabel}>Precisão da análise:</Text>
+        <View style={styles.ratingContainer}>
+          {[1, 2, 3, 4, 5].map(rating => (
+            <TouchableOpacity
+              key={rating}
+              style={[
+                styles.ratingButton,
+                userFeedback.accuracy === rating && styles.ratingButtonActive
+              ]}
+              onPress={() => handleFeedback('accuracy', rating)}
+            >
+              <Text style={styles.ratingButtonText}>{rating}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </InfoCard>
+  )
+
   return (
     <Modal
       visible={visible}
@@ -285,39 +763,20 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        {/* 🎨 HEADER COMPACTO E EFICIENTE */}
-        <LinearGradient
-          colors={colors}
-          style={styles.headerCompact}
-        >
-          <View style={styles.headerContentCompact}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="white" />
-            </TouchableOpacity>
-            
-            {/* 🎯 HEADER PRINCIPAL COMPACTO */}
-            <View style={styles.headerMainCompact}>
-              <View style={styles.headerIconContainerCompact}>
-                <Ionicons name={icon as any} size={32} color="white" />
-              </View>
-              
-              <Text style={styles.areaTitleCompact}>{areaData.name.toUpperCase()}</Text>
-              
-              {/* 🏆 SCORE PRINCIPAL EM DESTAQUE */}
-              <View style={styles.scoreMainContainerCompact}>
-                <Text style={styles.scoreMainValueCompact}>{areaData.percentage}%</Text>
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
+        {/* 🎨 HEADER INTELIGENTE COM CONTEÚDO ADAPTATIVO */}
+        {renderIntelligentHeader()}
 
         {/* 📱 CONTEÚDO HIERÁRQUICO ORGANIZADO */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           
           {/* 🟢 NÍVEL 1: LEIGOS (VISÍVEL IMEDIATAMENTE) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📊 Resumo Executivo</Text>
-            <View style={styles.summaryCardCompact}>
+            <SectionHeader
+              title="📊 Resumo Executivo"
+              subtitle="Visão geral da situação atual"
+              icon="🎯"
+            />
+            <InfoCard variant="success">
               <Text style={styles.summaryTextCompact}>
                 {areaData.percentage >= 70 ? 
                   `✨ Momento excepcional para ${areaData.name.toLowerCase()}! Aproveite esta energia cósmica favorável.` :
@@ -326,12 +785,25 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   `🔄 Período de transformação em ${areaData.name.toLowerCase()}. Use os desafios como oportunidades.`
                 }
               </Text>
-            </View>
+            </InfoCard>
           </View>
 
+          {/* 🔍 FILTROS INTELIGENTES INTERATIVOS */}
+          {renderIntelligentFilters()}
+
+          {/* 📊 MÉTRICAS INTELIGENTES VISUAIS */}
+          {renderIntelligentMetrics()}
+
+          {/* 🎯 CALL-TO-ACTION INTELIGENTE */}
+          {renderIntelligentCTA()}
+
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>💡 Dicas Práticas</Text>
-            <View style={styles.tipsCardCompact}>
+            <SectionHeader
+              title="💡 Dicas Práticas"
+              subtitle="Ações específicas para este momento"
+              icon="💡"
+            />
+            <InfoCard variant="warning">
               {areaData.percentage >= 70 && (
                 <>
                   <Text style={styles.tipTextCompact}>• Aproveite a energia favorável para iniciar novos projetos</Text>
@@ -353,12 +825,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.tipTextCompact}>• Foque no desenvolvimento pessoal</Text>
                 </>
               )}
-            </View>
+            </InfoCard>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎯 Recomendações Imediatas</Text>
-            <View style={styles.recommendationsCardCompact}>
+            <SectionHeader
+              title="🎯 Recomendações Imediatas"
+              subtitle="O que fazer agora, esta semana e o que evitar"
+              icon="🎯"
+            />
+            <InfoCard>
               <View style={styles.recommendationItemCompact}>
                 <Text style={styles.recommendationTitleCompact}>🚀 O que fazer AGORA:</Text>
                 <Text style={styles.recommendationTextCompact}>
@@ -383,17 +859,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                    'Desistir diante dos desafios'}
                 </Text>
               </View>
-            </View>
+            </InfoCard>
           </View>
 
           {/* 🟡 NÍVEL 2: INTERMEDIÁRIO (EXPANSÍVEL) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🌟 Planetas Principais</Text>
-            <Text style={styles.sectionSubtitle}>
-              Top 3 planetas mais influentes nesta área
-            </Text>
+            <SectionHeader
+              title="🌟 Planetas Principais"
+              subtitle="Top 3 planetas mais influentes nesta área"
+              icon="🌟"
+            />
             {analysis.planetDetails.slice(0, 3).map((planetData: any, index: number) => (
-              <View key={index} style={styles.planetCardCompact}>
+              <InfoCard key={index} style={styles.planetCardCompact}>
                 <View style={styles.planetHeaderCompact}>
                   <Text style={styles.planetIconCompact}>{PLANET_ICONS[planetData.planet] || '🪐'}</Text>
                   <Text style={styles.planetNameCompact}>{planetData.planet}</Text>
@@ -405,17 +882,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   Impacto: {planetData.planet} contribui com {Math.round((planetData.total || 0) / (analysis.planetDetails.length || 1) * 100)}% 
                   do score total
                 </Text>
-              </View>
+              </InfoCard>
             ))}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>✨ Aspectos Destacados</Text>
-            <Text style={styles.sectionSubtitle}>
-              Aspectos mais importantes para esta área
-            </Text>
-            {analysis.topAspects.slice(0, 5).map((aspect: any, index: number) => (
-              <View key={index} style={styles.aspectCardCompact}>
+            <SectionHeader
+              title="✨ Aspectos Destacados"
+              subtitle="Aspectos mais importantes para esta área"
+              icon="✨"
+            />
+            {getFilteredAspects().slice(0, 5).map((aspect: any, index: number) => (
+              <InfoCard key={index} style={styles.aspectCardCompact}>
                 <Text style={styles.aspectIconCompact}>{ASPECT_ICONS[aspect.type] || '∠'}</Text>
                 <View style={styles.aspectContentCompact}>
                   <Text style={styles.aspectTextCompact}>
@@ -425,13 +903,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     {aspect.isApplying ? '🔄 Aplicante' : '📤 Separante'} • Score: {Math.round(aspect.finalScore || 0)}
                   </Text>
                 </View>
-              </View>
+              </InfoCard>
             ))}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📈 Tendências</Text>
-            <View style={styles.trendsCardCompact}>
+            <SectionHeader
+              title="📈 Tendências"
+              subtitle="Direção geral e períodos favoráveis"
+              icon="📈"
+            />
+            <InfoCard>
               <View style={styles.trendItemCompact}>
                 <Text style={styles.trendTitleCompact}>Direção Geral:</Text>
                 <Text style={styles.trendTextCompact}>
@@ -453,16 +935,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                    areaData.percentage >= 50 ? 'Mantenha o equilíbrio' : 'Foque na transformação interna'}
                 </Text>
               </View>
-            </View>
+            </InfoCard>
           </View>
 
           {/* 🔴 NÍVEL 3: TÉCNICO (COLAPSÁVEL) */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🧮 Cálculos Detalhados</Text>
-            <Text style={styles.sectionSubtitle}>
-              Fórmulas e breakdowns técnicos
-            </Text>
-            <View style={styles.calculationCardCompact}>
+            <SectionHeader
+              title="🧮 Cálculos Detalhados"
+              subtitle="Fórmulas e breakdowns técnicos"
+              icon="🧮"
+            />
+            <InfoCard variant="warning">
               <Text style={styles.calculationTitleCompact}>Fórmula do Cálculo:</Text>
               <Text style={styles.calculationFormulaCompact}>
                 {analysis.areaFormula}
@@ -478,16 +961,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   • Aspectos: {analysis.totalBreakdown.aspectScore}%
                 </Text>
               </View>
-            </View>
+            </InfoCard>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🪐 Análise Planetária Completa</Text>
-            <Text style={styles.sectionSubtitle}>
-              Dados técnicos de todos os planetas
-            </Text>
+            <SectionHeader
+              title="🪐 Análise Planetária Completa"
+              subtitle="Dados técnicos de todos os planetas"
+              icon="🪐"
+            />
             {analysis.planetDetails.map((planetData: any, index: number) => (
-              <View key={index} style={styles.planetAnalysisCardCompact}>
+              <InfoCard key={index} style={styles.planetAnalysisCardCompact}>
                 <View style={styles.planetAnalysisHeaderCompact}>
                   <Text style={styles.planetAnalysisIconCompact}>{PLANET_ICONS[planetData.planet] || '🪐'}</Text>
                   <Text style={styles.planetAnalysisNameCompact}>{planetData.planet}</Text>
@@ -503,16 +987,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     </Text>
                   )}
                 </View>
-              </View>
+              </InfoCard>
             ))}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔮 Insights Avançados</Text>
-            <Text style={styles.sectionSubtitle}>
-              Análises profundas e padrões cósmicos
-            </Text>
-            <View style={styles.insightsCardCompact}>
+            <SectionHeader
+              title="🔮 Insights Avançados"
+              subtitle="Análises profundas e padrões cósmicos"
+              icon="🔮"
+            />
+            <InfoCard>
               <Text style={styles.insightTextCompact}>
                 {areaData.percentage >= 70 ? 
                   `Harmonia elemental excepcional em ${areaData.name.toLowerCase()}. Elementos em perfeita sintonia criam fluxo de energia favorável.` :
@@ -521,16 +1006,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   `Tensão elemental em ${areaData.name.toLowerCase()} cria oportunidades de transformação e evolução através da superação.`
                 }
               </Text>
-            </View>
+            </InfoCard>
           </View>
 
           {analysis.debugArea && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🧭 Logs e Debug</Text>
-              <Text style={styles.sectionSubtitle}>
-                Dados técnicos para desenvolvedores
-              </Text>
-              <View style={styles.debugCardCompact}>
+              <SectionHeader
+                title="🧭 Logs e Debug"
+                subtitle="Dados técnicos para desenvolvedores"
+                icon="🧭"
+              />
+              <InfoCard variant="info">
                 <Text style={styles.debugTextCompact}>
                   Área analisada: {areaData.name} • Planetas: {analysis.planetDetails.length} • 
                   Aspectos: {analysis.topAspects.length} • Score final: {analysis.totalBreakdown.total}%
@@ -539,15 +1025,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   Dados de debug disponíveis: {analysis.debugArea ? 'Sim' : 'Não'} • 
                   Precisão: {analysis.debugArea ? 'Alta' : 'Estimada'}
                 </Text>
-              </View>
+              </InfoCard>
             </View>
           )}
+
+          {/* 📝 SISTEMA DE FEEDBACK DO USUÁRIO */}
+          {renderUserFeedback()}
 
         </ScrollView>
 
         {/* 🆕 FECHAMENTO ELEGANTE */}
         <View style={styles.section}>
-          <View style={styles.closingCard}>
+          <InfoCard variant="success">
             <Text style={styles.closingTitle}>
               ✨ Análise Astrológica Completa
             </Text>
@@ -583,7 +1072,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 Análise gerada com precisão astrológica
               </Text>
             </View>
-          </View>
+          </InfoCard>
         </View>
 
       </View>
@@ -1908,5 +2397,201 @@ const styles = StyleSheet.create({
     color: '#34495E',
     marginBottom: 3,
     lineHeight: 18,
+  },
+  // 🎨 SISTEMA DE DESIGN CONSISTENTE
+  infoCard: {
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#E67E22',
+    backgroundColor: '#F8F9FA',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 5,
+  },
+  infoCardSubtitle: {
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 10,
+  },
+  metricDisplay: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  metricIcon: {
+    fontSize: 24,
+    marginBottom: 5,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionHeaderIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  sectionHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+  },
+  sectionHeaderSubtitle: {
+    fontSize: 14,
+    color: '#6C757D',
+  },
+  sectionHeaderAction: {
+    // Placeholder for action component if needed
+  },
+  // 🎨 ESTILOS PARA COMPONENTES INTELIGENTES
+  headerAdaptiveMessage: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  filterRow: {
+    marginBottom: 15,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 8,
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
+  },
+  filterButtonActive: {
+    backgroundColor: '#E67E22',
+    borderColor: '#E67E22',
+  },
+  filterButtonText: {
+    fontSize: 12,
+    color: '#6C757D',
+    fontWeight: '500',
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  ctaContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 15,
+  },
+  ctaButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  ctaInsight: {
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 5,
+  },
+  ctaInsightHighlight: {
+    color: '#E67E22',
+    fontWeight: '600',
+  },
+  feedbackRow: {
+    marginBottom: 15,
+  },
+  feedbackLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 8,
+  },
+  feedbackButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  feedbackButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
+    alignItems: 'center',
+  },
+  feedbackButtonActive: {
+    backgroundColor: '#E67E22',
+    borderColor: '#E67E22',
+  },
+  feedbackButtonText: {
+    fontSize: 14,
+    color: '#6C757D',
+    fontWeight: '500',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  ratingButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingButtonActive: {
+    backgroundColor: '#E67E22',
+    borderColor: '#E67E22',
+  },
+  ratingButtonText: {
+    fontSize: 16,
+    color: '#6C757D',
+    fontWeight: '600',
   },
 })
