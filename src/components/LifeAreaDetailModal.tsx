@@ -54,6 +54,49 @@ interface LifeAreaDetailModalProps {
 
 const { width, height } = Dimensions.get('window')
 
+// 🎨 SISTEMA DE CORES E EMOJIS POR ÁREA DE VIDA (MANTENDO IDENTIDADE ORIGINAL)
+const AREA_ICONS: Record<string, string> = {
+  // Português (sistema atual)
+  amor: 'heart',
+  carreira: 'briefcase',
+  financas: 'cash',
+  saude: 'fitness',
+  familia: 'people',
+  espiritualidade: 'flower',
+  comunicacao: 'chatbubble',
+  transformacao: 'refresh',
+  // Inglês (fallback)
+  love: 'heart',
+  career: 'briefcase',
+  health: 'fitness',
+  family: 'people',
+  spirituality: 'flower',
+  finances: 'cash',
+  communication: 'chatbubble',
+  transformation: 'refresh',
+}
+
+const AREA_COLORS: Record<string, string[]> = {
+  // Português (sistema atual)
+  amor: ['#FF6B9D', '#FF8E8E'],
+  carreira: ['#4ECDC4', '#44A08D'],
+  financas: ['#FFD93D', '#FF9F40'],
+  saude: ['#96E6A1', '#7BC142'],
+  familia: ['#FF6B9D', '#FF8E8E'], // Corrigido: diferente de Finanças, usando rosa como Amor
+  espiritualidade: ['#B19CD9', '#8B5CF6'],
+  comunicacao: ['#60A5FA', '#3B82F6'],
+  transformacao: ['#F472B6', '#EC4899'],
+  // Inglês (fallback)
+  love: ['#FF6B9D', '#FF8E8E'],
+  career: ['#4ECDC4', '#44A08D'],
+  health: ['#96E6A1', '#7BC142'],
+  family: ['#FF6B9D', '#FF8E8E'], // Corrigido: diferente de Finances
+  spirituality: ['#B19CD9', '#8B5CF6'],
+  finances: ['#FFD93D', '#FF9F40'],
+  communication: ['#60A5FA', '#3B82F6'],
+  transformation: ['#F472B6', '#EC4899'],
+}
+
 // 🎨 SISTEMA DE DESIGN SIMPLIFICADO
 const DESIGN_SYSTEM = {
   colors: {
@@ -61,6 +104,7 @@ const DESIGN_SYSTEM = {
     negative: '#E74C3C',
     neutral: '#3498DB',
     warning: '#F39C12',
+    info: '#3498DB',
     primary: '#2C3E50',
     secondary: '#6C757D',
     light: '#F8F9FA',
@@ -92,6 +136,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   areaData
 }) => {
   if (!areaData) return null
+
+  // 🎯 OBTER CORES E ÍCONES ESPECÍFICOS DA ÁREA
+  const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
+  const areaIcon = AREA_ICONS[areaData.name] || 'help-circle'
+  const headerGradient = [areaColors[0], areaColors[1]]
 
   // 🎯 DADOS MOCKADOS PARA DEMONSTRAÇÃO
   const mockTransits: TransitData[] = [
@@ -202,14 +251,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   // 🎨 COMPONENTES DE RENDERIZAÇÃO
 
   const renderHeader = () => (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
         </TouchableOpacity>
         
         <View style={styles.headerMain}>
+          <View style={styles.headerIconContainer}>
+            <Ionicons 
+              name={areaIcon as any} 
+              size={32} 
+              color={DESIGN_SYSTEM.colors.white} 
+            />
+          </View>
+          
           <Text style={styles.areaTitle}>{areaData.name.toUpperCase()}</Text>
+          
           <View style={styles.scoreContainer}>
             <Text style={styles.scoreValue}>{areaData.percentage}%</Text>
           </View>
@@ -346,7 +404,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   },
   header: {
-    backgroundColor: DESIGN_SYSTEM.colors.primary,
     height: 60,
     justifyContent: 'center',
     paddingHorizontal: DESIGN_SYSTEM.spacing.lg
@@ -365,6 +422,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginLeft: DESIGN_SYSTEM.spacing.lg
+  },
+  headerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   areaTitle: {
     color: DESIGN_SYSTEM.colors.white,
