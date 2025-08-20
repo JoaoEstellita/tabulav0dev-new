@@ -33,7 +33,7 @@ interface TransitAspect {
   applying: boolean
 }
 
-interface LifeArea {
+export interface LifeArea {
   name: string
   status: number  // 0-100
   trend: 'positive' | 'negative' | 'stable'

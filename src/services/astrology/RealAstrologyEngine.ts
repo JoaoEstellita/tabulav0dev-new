@@ -1250,15 +1250,26 @@ export class RealAstrologyEngine {
         })
       }
 
-      // Média das pontuações dos planetas relevantes
-      const avgPlanetScore = planetScores.length > 0 ? 
-        planetScores.reduce((sum, score) => sum + score, 0) / planetScores.length : 50
+      // Sistema de pesos por planeta (importância astrológica)
+      const planetWeights: Record<string, number> = {
+        'Sun': 1.2, 'Moon': 1.2,        // Luminares (máxima importância)
+        'Mercury': 1.0, 'Venus': 1.0, 'Mars': 1.0,  // Pessoais
+        'Jupiter': 1.1, 'Saturn': 1.1,              // Sociais
+        'Uranus': 0.9, 'Neptune': 0.9, 'Pluto': 0.9 // Transpessoais
+      }
 
-      // Remover variação artificial: score deve ser apenas astrológico
-      const finalScore = avgPlanetScore
+      // Score ponderado por importância planetária
+      const weightedScore = planetScores.reduce((sum, score, i) => {
+        const planetName = config.planets[i]
+        const weight = planetWeights[planetName] || 1.0
+        return sum + (score * weight)
+      }, 0) / planetScores.length
 
-      // Normalizar pontuação (20-95 para mais realismo)
-      const percentage = Math.max(20, Math.min(95, finalScore))
+      // Score final baseado na lógica astrológica real
+      const finalScore = weightedScore
+
+      // Normalização baseada na lógica astrológica (0-100%)
+      const percentage = Math.max(0, Math.min(100, finalScore))
       
       // Determinar status baseado na pontuação
       const status = percentage >= 80 ? 'excelente' :
@@ -1474,12 +1485,15 @@ export class RealAstrologyEngine {
   // Avançado: score de aspecto com aplicação/separação, orbes por tipo e peso por Sol/Lua
   private static getAspectScoreAdvanced(aspect: RealAspect, currentPlanets: RealPlanetPosition[], natalPlanets: RealPlanetPosition[]): number {
     const typeWeights: Record<string, number> = {
-      'conjunção': 1.10,
-      'oposição': 1.00,
-      'quadratura': 0.95,
-      'trígono': 0.85,
-      'sextil': 0.65,
-      'quincúncio': 0.40,
+      'conjunção': 1.0,      // Neutro (depende dos planetas)
+      'oposição': -0.6,      // Negativo (tensão)
+      'quadratura': -0.8,    // Negativo (desafio)
+      'trígono': 0.8,        // Positivo (harmonia)
+      'sextil': 0.6,         // Positivo (oportunidade)
+      'quincúncio': -0.2,    // Levemente negativo
+      'semissextil': 0.3,    // Levemente positivo
+      'semiquadratura': -0.4, // Negativo leve
+      'sesquiquadratura': -0.5, // Negativo médio
     }
     const maxOrbByType: Record<string, number> = {
       'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4, 'quincúncio': 3
@@ -1558,26 +1572,34 @@ export class RealAstrologyEngine {
   }
 
   private static getAspectScore(aspect: RealAspect): number {
-    // Peso por tipo
-    const weights: Record<string, number> = {
-      'conjunção': 1.0,
-      'oposição': 0.9,
-      'quadratura': 0.8,
-      'trígono': 0.8,
-      'sextil': 0.6,
-    }
-    const w = weights[aspect.type] ?? 0.5
+              // Peso por tipo (corrigido para lógica astrológica)
+          const weights: Record<string, number> = {
+            'conjunção': 1.0,      // Neutro
+            'oposição': -0.6,      // Negativo
+            'quadratura': -0.8,    // Negativo
+            'trígono': 0.8,        // Positivo
+            'sextil': 0.6,         // Positivo
+            'quincúncio': -0.2,    // Levemente negativo
+            'semissextil': 0.3,    // Levemente positivo
+            'semiquadratura': -0.4, // Negativo leve
+            'sesquiquadratura': -0.5, // Negativo médio
+          }
+          const w = weights[aspect.type] ?? 0.0
 
-    // Aplicante ganha bônus
-    const applyingBonus = aspect.isApplying ? 1.15 : 1.0
-    // Proximidade do aspecto (orb menor = mais forte)
-    // Orbe base por tipo
-    const baseOrb: Record<string, number> = {
-      'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4,
-    }
-    const maxOrb = baseOrb[aspect.type] ?? 5
-    const proximity = Math.max(0, 1 - aspect.orb / maxOrb)
-    const score = 50 + 50 * w * proximity * applyingBonus
+          // Aplicante ganha bônus
+          const applyingBonus = aspect.isApplying ? 1.15 : 1.0
+          // Proximidade do aspecto (orb menor = mais forte)
+          // Orbe base por tipo
+          const baseOrb: Record<string, number> = {
+            'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4,
+            'quincúncio': 5, 'semissextil': 3, 'semiquadratura': 2, 'sesquiquadratura': 2,
+          }
+          const maxOrb = baseOrb[aspect.type] ?? 5
+          const proximity = Math.max(0, 1 - aspect.orb / maxOrb)
+          
+          // Score baseado no peso do aspecto (pode ser negativo)
+          const baseScore = w * proximity * applyingBonus
+          const score = 50 + (baseScore * 50) // 50 é o centro neutro
 
     return Math.max(0, Math.min(100, score))
   }

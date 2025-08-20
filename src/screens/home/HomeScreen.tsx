@@ -604,7 +604,7 @@ export default function HomeScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         areaData={selectedArea}
-        transitData={transitData}
+        astrologyData={transitData?.currentTransits}
       />
 
       {/* PWA Download Button */}

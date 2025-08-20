@@ -3,54 +3,14 @@ import {
   Modal,
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  StyleSheet
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-
-interface TransitData {
-  id: string
-  name: string
-  weight: number
-  status: 'positive' | 'negative' | 'neutral'
-  planets: string[]
-  aspectType: string
-  contribution: number
-  description: string
-}
-
-interface SuggestionData {
-  transitId: string
-  suggestion: string
-  action: string
-  influencePeriod: string
-  priority: 'high' | 'medium' | 'low'
-}
-
-interface CalculationData {
-  formula: string
-  breakdown: { step: string; value: number; description: string }[]
-  total: number
-  validation: string
-  astrologicalBasis: string
-}
-
-interface LifeAreaDetail {
-  name: string
-  percentage: number
-  status: string
-  transits: TransitData[]
-  suggestions: SuggestionData[]
-  calculations: CalculationData
-}
-
-interface LifeAreaDetailModalProps {
-  visible: boolean
-  onClose: () => void
-  areaData: LifeAreaDetail | null
-}
+import type { LifeArea } from '../services/prokerala/TransitService'
+import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 
 const { width, height } = Dimensions.get('window')
 
@@ -82,7 +42,7 @@ const AREA_COLORS: Record<string, string[]> = {
   carreira: ['#4ECDC4', '#44A08D'],
   financas: ['#FFD93D', '#FF9F40'],
   saude: ['#96E6A1', '#7BC142'],
-  familia: ['#FF6B9D', '#FF8E8E'], // Corrigido: diferente de Finanças, usando rosa como Amor
+  familia: ['#FF8A65', '#FFAB91'], // Corrigido: coral suave, diferente de todas
   espiritualidade: ['#B19CD9', '#8B5CF6'],
   comunicacao: ['#60A5FA', '#3B82F6'],
   transformacao: ['#F472B6', '#EC4899'],
@@ -90,7 +50,7 @@ const AREA_COLORS: Record<string, string[]> = {
   love: ['#FF6B9D', '#FF8E8E'],
   career: ['#4ECDC4', '#44A08D'],
   health: ['#96E6A1', '#7BC142'],
-  family: ['#FF6B9D', '#FF8E8E'], // Corrigido: diferente de Finances
+  family: ['#FF8A65', '#FFAB91'], // Corrigido: coral suave, diferente de todas
   spirituality: ['#B19CD9', '#8B5CF6'],
   finances: ['#FFD93D', '#FF9F40'],
   communication: ['#60A5FA', '#3B82F6'],
@@ -114,26 +74,91 @@ const DESIGN_SYSTEM = {
   spacing: {
     xs: 4,
     sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20
+    md: 16,
+    lg: 24,
+    xl: 32
   },
-  borderRadius: 8,
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16
+  },
   shadows: {
-    sm: {
+    card: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2
+      shadowRadius: 4,
+      elevation: 3
     }
   }
+}
+
+interface LifeAreaDetailModalProps {
+  visible: boolean
+  onClose: () => void
+  areaData: LifeArea | null
+  astrologyData?: RealAstrologyData | null
+}
+
+// 🎯 INTERFACES PARA DADOS REAIS
+interface RealTransitData {
+  transitPlanet: string
+  natalPlanet: string
+  type: string
+  orb: number
+  isApplying: boolean
+  strength: number
+  natalHouseImpacted: number
+  durationClass?: 'curto' | 'médio' | 'longo'
+  seriesId?: string
+  contactPhase?: 'direct' | 'retro'
+  isMaster?: boolean
+  contactIndex?: 1 | 2 | 3
+}
+
+interface RealSuggestionData {
+  transitId: string
+  suggestion: string
+  action: string
+  influencePeriod: string
+  priority: 'high' | 'medium' | 'low'
+  basedOn: string
+}
+
+interface RealCalculationData {
+  formula: string
+  breakdown: Array<{
+    step: string
+    value: number
+    description: string
+  }>
+  total: number
+  validation: string
+  astrologicalBasis: string
+  planetDetails?: Array<{
+    planet: string
+    signScore: number
+    houseScore: number
+    conditions: { modifier: number; tags: string[] }
+    aspects: Array<{
+      with: string
+      type: string
+      orb: number
+      isApplying: boolean
+      baseScore: number
+      beneficMaleficDelta: number
+      finalScore: number
+    }>
+    total: number
+  }>
 }
 
 export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   visible,
   onClose,
-  areaData
+  areaData,
+  astrologyData
 }) => {
   if (!areaData) return null
 
@@ -142,176 +167,191 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const areaIcon = AREA_ICONS[areaData.name] || 'help-circle'
   const headerGradient = [areaColors[0], areaColors[1]]
 
-  // 🎯 DADOS MOCKADOS PARA DEMONSTRAÇÃO
-  const mockTransits: TransitData[] = [
-    {
-      id: '1',
-      name: 'Júpiter em Trígono com Vênus',
-      weight: 12.5,
-      status: 'positive',
-      planets: ['Júpiter', 'Vênus'],
-      aspectType: 'Trígono',
-      contribution: 25.0,
-      description: 'Harmonia e expansão nas relações'
-    },
-    {
-      id: '2',
-      name: 'Marte em Quadratura com Saturno',
-      weight: 8.3,
-      status: 'negative',
-      planets: ['Marte', 'Saturno'],
-      aspectType: 'Quadratura',
-      contribution: 16.6,
-      description: 'Tensões e desafios na ação'
-    },
-    {
-      id: '3',
-      name: 'Sol em Conjunção com Mercúrio',
-      weight: 6.7,
-      status: 'positive',
-      planets: ['Sol', 'Mercúrio'],
-      aspectType: 'Conjunção',
-      contribution: 13.4,
-      description: 'Comunicação clara e direta'
-    },
-    {
-      id: '4',
-      name: 'Lua em Oposição com Plutão',
-      weight: 5.2,
-      status: 'negative',
-      planets: ['Lua', 'Plutão'],
-      aspectType: 'Oposição',
-      contribution: 10.4,
-      description: 'Transformações emocionais intensas'
-    },
-    {
-      id: '5',
-      name: 'Vênus em Sextil com Urano',
-      weight: 4.8,
-      status: 'positive',
-      planets: ['Vênus', 'Urano'],
-      aspectType: 'Sextil',
-      contribution: 9.6,
-      description: 'Inovação e criatividade no amor'
-    }
-  ]
-
-  const mockSuggestions: SuggestionData[] = [
-    {
-      transitId: '1',
-      suggestion: 'Aproveite a energia expansiva de Júpiter',
-      action: 'Inicie novos projetos de relacionamento',
-      influencePeriod: 'Próximas 2 semanas',
-      priority: 'high'
-    },
-    {
-      transitId: '2',
-      suggestion: 'Mantenha paciência com os desafios',
-      action: 'Evite confrontos desnecessários',
-      influencePeriod: 'Próximos 5 dias',
-      priority: 'medium'
-    },
-    {
-      transitId: '3',
-      suggestion: 'Comunicação será sua aliada',
-      action: 'Expressar ideias com clareza',
-      influencePeriod: 'Próximos 3 dias',
-      priority: 'high'
-    },
-    {
-      transitId: '4',
-      suggestion: 'Transformações emocionais em andamento',
-      action: 'Refletir sobre padrões antigos',
-      influencePeriod: 'Próximas 3 semanas',
-      priority: 'medium'
-    },
-    {
-      transitId: '5',
-      suggestion: 'Inovação no campo amoroso',
-      action: 'Experimentar novas abordagens',
-      influencePeriod: 'Próximas 2 semanas',
-      priority: 'low'
-    }
-  ]
-
-  const mockCalculations: CalculationData = {
-    formula: 'Score = Σ(Peso × Coeficiente × Status)',
-    breakdown: [
-      { step: 'Júpiter-Vênus (Trígono)', value: 12.5, description: '12.5 × 1.0 × 1.0 = 12.5' },
-      { step: 'Marte-Saturno (Quadratura)', value: 8.3, description: '8.3 × 1.0 × 0.8 = 6.64' },
-      { step: 'Sol-Mercúrio (Conjunção)', value: 6.7, description: '6.7 × 1.0 × 1.0 = 6.7' },
-      { step: 'Lua-Plutão (Oposição)', value: 5.2, description: '5.2 × 1.0 × 0.7 = 3.64' },
-      { step: 'Vênus-Urano (Sextil)', value: 4.8, description: '4.8 × 1.0 × 0.9 = 4.32' }
-    ],
-    total: 33.8,
-    validation: 'Score calculado: 33.8/50 = 67.6% (arredondado para 68%)',
-    astrologicalBasis: 'Fórmula baseada em dignidades essenciais, força das casas e aspectos planetários. Coeficientes: Trígono (1.0), Sextil (0.9), Conjunção (1.0), Oposição (0.7), Quadratura (0.8).'
+  // 🎯 DADOS REAIS DO ENGINE ASTROLÓGICO
+  const getRealTransits = (): RealTransitData[] => {
+    if (!astrologyData?.transits?.byArea) return []
+    
+    const areaTransits = astrologyData.transits.byArea[areaData.name] || []
+          return areaTransits.map(transit => ({
+        transitPlanet: transit.transitPlanet,
+        natalPlanet: transit.natalPlanet,
+        type: transit.type,
+        orb: transit.orb,
+        isApplying: transit.isApplying,
+        strength: transit.strength,
+        natalHouseImpacted: transit.natalHouseImpacted,
+        durationClass: transit.durationClass
+      })).sort((a, b) => b.strength - a.strength) // Ordena por força
   }
 
-  // 🎨 COMPONENTES DE RENDERIZAÇÃO
+  const getRealSuggestions = (): RealSuggestionData[] => {
+    const transits = getRealTransits()
+    if (transits.length === 0) return []
+
+    return transits.map((transit, index) => {
+      const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
+      const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
+      const isNeutral = transit.type === 'conjunção'
+
+      let suggestion = ''
+      let action = ''
+      let priority: 'high' | 'medium' | 'low' = 'medium'
+
+      if (isHarmonious) {
+        suggestion = `Aproveite a harmonia entre ${transit.transitPlanet} e ${transit.natalPlanet}`
+        action = 'Iniciar projetos, expandir relacionamentos'
+        priority = 'high'
+      } else if (isChallenging) {
+        suggestion = `Gerencie a tensão entre ${transit.transitPlanet} e ${transit.natalPlanet}`
+        action = 'Revisar planos, buscar equilíbrio'
+        priority = 'high'
+      } else if (isNeutral) {
+        suggestion = `Integre as energias de ${transit.transitPlanet} e ${transit.natalPlanet}`
+        action = 'Refletir, planejar, integrar'
+        priority = 'medium'
+      }
+
+      const influencePeriod = transit.durationClass === 'longo' ? 'Meses' : 
+                             transit.durationClass === 'médio' ? 'Semanas' : 'Dias'
+
+      return {
+        transitId: `${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`,
+        suggestion,
+        action,
+        influencePeriod,
+        priority,
+        basedOn: `${transit.type} ${transit.transitPlanet} → ${transit.natalPlanet}`
+      }
+    })
+  }
+
+  const getRealCalculations = (): RealCalculationData => {
+    const transits = getRealTransits()
+    const debugData = astrologyData?.debug?.lifeAreas?.[areaData.name]
+
+    // Fórmula real baseada no RealAstrologyEngine
+    const formula = 'Score Final = Σ(Peso do Planeta × (Dignidade + Casa + Aspectos + Condições))'
+
+    // Breakdown real se disponível
+    let breakdown: Array<{ step: string; value: number; description: string }> = []
+    let total = areaData.status
+
+    if (debugData?.planetDetails) {
+      breakdown = debugData.planetDetails.map(planet => ({
+        step: `${planet.planet} (${planet.signScore} + ${planet.houseScore} + ${planet.aspects.length} aspectos)`,
+        value: planet.total,
+        description: `Dignidade: ${planet.signScore}, Casa: ${planet.houseScore}, Aspectos: ${planet.aspects.length}`
+      }))
+      total = debugData.finalScore
+    } else {
+      // Fallback baseado nos trânsitos
+      breakdown = transits.map(transit => {
+        const aspectValue = transit.strength * (transit.isApplying ? 1.15 : 0.95)
+        return {
+          step: `${transit.type} ${transit.transitPlanet} → ${transit.natalPlanet}`,
+          value: Math.round(aspectValue),
+          description: `Força: ${transit.strength}, Orb: ${transit.orb.toFixed(1)}°, ${transit.isApplying ? 'Aplicante' : 'Separando'}`
+        }
+      })
+    }
+
+    const validation = 'Score calculado com base em dignidades essenciais, força das casas, aspectos planetários e condições acidentais.'
+    
+    const astrologicalBasis = 'A pontuação considera a tradição astrológica clássica: domicílios (+28), exaltações (+24), casas angulares (+15), aspectos harmônicos (trígonos/sextis) e desafiadores (quadraturas/oposições).'
+
+    return {
+      formula,
+      breakdown,
+      total: Math.round(total),
+      validation,
+      astrologicalBasis,
+      planetDetails: debugData?.planetDetails
+    }
+  }
+
+  const realTransits = getRealTransits()
+  const realSuggestions = getRealSuggestions()
+  const realCalculations = getRealCalculations()
 
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
-        </TouchableOpacity>
-        
-        <View style={styles.headerMain}>
-          <View style={styles.headerIconContainer}>
-            <Ionicons 
-              name={areaIcon as any} 
-              size={32} 
-              color={DESIGN_SYSTEM.colors.white} 
-            />
-          </View>
-          
-          <Text style={styles.areaTitle}>{areaData.name.toUpperCase()}</Text>
-          
-          <View style={styles.scoreContainer}>
-            <Text style={styles.scoreValue}>{areaData.percentage}%</Text>
-          </View>
-        </View>
+        <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
+        <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
+        <Text style={styles.areaScore}>{areaData.status}%</Text>
       </View>
     </View>
   )
 
   const renderTransitsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS (Por Relevância)</Text>
+      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS POR RELEVÂNCIA</Text>
       
-      <View style={styles.transitTable}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerCell}>Trânsito</Text>
-          <Text style={styles.headerCell}>Peso</Text>
-          <Text style={styles.headerCell}>Status</Text>
-          <Text style={styles.headerCell}>Contribuição</Text>
+      {realTransits.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
         </View>
-        
-        {mockTransits.map((transit) => (
-          <View key={transit.id} style={styles.transitRow}>
-            <View style={styles.transitInfo}>
-              <Text style={styles.transitName}>{transit.name}</Text>
-              <Text style={styles.transitPlanets}>{transit.planets.join(' + ')}</Text>
-              <Text style={styles.transitDescription}>{transit.description}</Text>
+      ) : (
+        realTransits.map((transit, index) => {
+          const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
+          const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
+          const statusColor = isHarmonious ? DESIGN_SYSTEM.colors.positive : 
+                             isChallenging ? DESIGN_SYSTEM.colors.negative : 
+                             DESIGN_SYSTEM.colors.neutral
+
+          return (
+            <View key={`${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
+              <View style={styles.transitHeader}>
+                <Text style={styles.transitNumber}>#{index + 1}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={styles.statusText}>
+                    {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                  </Text>
+                </View>
+              </View>
+              
+              <Text style={styles.transitName}>
+                {transit.transitPlanet} em {transit.type} com {transit.natalPlanet}
+              </Text>
+              
+              <View style={styles.transitDetails}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Força:</Text>
+                  <Text style={styles.detailValue}>{transit.strength}</Text>
+                  <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
+                    <View style={[styles.strengthFill, { 
+                      width: `${transit.strength}%`, 
+                      backgroundColor: statusColor 
+                    }]} />
+                  </View>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Orb:</Text>
+                  <Text style={styles.detailValue}>{transit.orb.toFixed(1)}°</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Planetas:</Text>
+                  <Text style={styles.detailValue}>{transit.transitPlanet} + {transit.natalPlanet}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Tipo:</Text>
+                  <Text style={styles.detailValue}>{transit.type}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Contribuição:</Text>
+                  <Text style={styles.detailValue}>
+                    {Math.round((transit.strength / realTransits.reduce((sum, t) => sum + t.strength, 0)) * 100)}%
+                  </Text>
+                </View>
+              </View>
             </View>
-            
-            <View style={styles.weightCell}>
-              <Text style={styles.weightValue}>{transit.weight}</Text>
-              <View style={[styles.weightBar, { width: (transit.weight / 15) * 60 }]} />
-            </View>
-            
-            <View style={styles.statusCell}>
-              <View style={[styles.statusIndicator, { backgroundColor: DESIGN_SYSTEM.colors[transit.status] }]} />
-              <Text style={styles.statusText}>{transit.status}</Text>
-            </View>
-            
-            <View style={styles.contributionCell}>
-              <Text style={styles.contributionValue}>{transit.contribution}%</Text>
-            </View>
-          </View>
-        ))}
-      </View>
+          )
+        })
+      )}
     </View>
   )
 
@@ -319,20 +359,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>SUGESTÕES ESPECÍFICAS POR TRÂNSITO</Text>
       
-      {mockSuggestions.map((suggestion, index) => (
-        <View key={suggestion.transitId} style={styles.suggestionCard}>
-          <View style={styles.suggestionHeader}>
-            <Text style={styles.suggestionNumber}>#{index + 1}</Text>
-            <View style={[styles.priorityBadge, { backgroundColor: DESIGN_SYSTEM.colors[suggestion.priority === 'high' ? 'warning' : suggestion.priority === 'medium' ? 'info' : 'secondary'] }]}>
-              <Text style={styles.priorityText}>{suggestion.priority.toUpperCase()}</Text>
-            </View>
-          </View>
-          
-          <Text style={styles.suggestionText}>{suggestion.suggestion}</Text>
-          <Text style={styles.actionText}>Ação: {suggestion.action}</Text>
-          <Text style={styles.periodText}>Período: {suggestion.influencePeriod}</Text>
+      {realSuggestions.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Nenhuma sugestão disponível no momento</Text>
         </View>
-      ))}
+      ) : (
+        realSuggestions.map((suggestion, index) => (
+          <View key={suggestion.transitId} style={styles.suggestionCard}>
+            <View style={styles.suggestionHeader}>
+              <Text style={styles.suggestionNumber}>#{index + 1}</Text>
+              <View style={[styles.priorityBadge, { 
+                backgroundColor: suggestion.priority === 'high' ? DESIGN_SYSTEM.colors.warning : 
+                               suggestion.priority === 'medium' ? DESIGN_SYSTEM.colors.info : 
+                               DESIGN_SYSTEM.colors.secondary 
+              }]}>
+                <Text style={styles.priorityText}>{suggestion.priority.toUpperCase()}</Text>
+              </View>
+            </View>
+            
+            <Text style={styles.suggestionText}>{suggestion.suggestion}</Text>
+            <Text style={styles.actionText}>Ação: {suggestion.action}</Text>
+            <Text style={styles.periodText}>Período: {suggestion.influencePeriod}</Text>
+            <Text style={styles.basedOnText}>Baseado em: {suggestion.basedOn}</Text>
+          </View>
+        ))
+      )}
     </View>
   )
 
@@ -342,10 +393,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       
       <View style={styles.calculationCard}>
         <Text style={styles.formulaTitle}>Fórmula de Cálculo:</Text>
-        <Text style={styles.formulaText}>{mockCalculations.formula}</Text>
+        <Text style={styles.formulaText}>{realCalculations.formula}</Text>
         
         <Text style={styles.breakdownTitle}>Breakdown Matemático:</Text>
-        {mockCalculations.breakdown.map((step, index) => (
+        {realCalculations.breakdown.map((step, index) => (
           <View key={index} style={styles.breakdownStep}>
             <Text style={styles.stepName}>{step.step}</Text>
             <Text style={styles.stepValue}>{step.value}</Text>
@@ -355,14 +406,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>{mockCalculations.total}</Text>
+          <Text style={styles.totalValue}>{realCalculations.total}</Text>
         </View>
         
         <Text style={styles.validationTitle}>Validação:</Text>
-        <Text style={styles.validationText}>{mockCalculations.validation}</Text>
+        <Text style={styles.validationText}>{realCalculations.validation}</Text>
         
         <Text style={styles.basisTitle}>Base Astrológica:</Text>
-        <Text style={styles.basisText}>{mockCalculations.astrologicalBasis}</Text>
+        <Text style={styles.basisText}>{realCalculations.astrologicalBasis}</Text>
       </View>
     </View>
   )
@@ -377,7 +428,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           {renderHeader()}
-          
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {renderTransitsSection()}
             {renderSuggestionsSection()}
@@ -392,64 +442,45 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center'
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end'
   },
   modalContent: {
-    width: width * 0.95,
-    height: height * 0.9,
     backgroundColor: DESIGN_SYSTEM.colors.white,
-    borderRadius: DESIGN_SYSTEM.borderRadius,
-    overflow: 'hidden'
+    borderTopLeftRadius: DESIGN_SYSTEM.borderRadius.lg,
+    borderTopRightRadius: DESIGN_SYSTEM.borderRadius.lg,
+    maxHeight: height * 0.9,
+    minHeight: height * 0.6
   },
   header: {
     height: 60,
+    borderTopLeftRadius: DESIGN_SYSTEM.borderRadius.lg,
+    borderTopRightRadius: DESIGN_SYSTEM.borderRadius.lg,
     justifyContent: 'center',
-    paddingHorizontal: DESIGN_SYSTEM.spacing.lg
+    alignItems: 'center'
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    gap: DESIGN_SYSTEM.spacing.sm
   },
-  closeButton: {
-    padding: DESIGN_SYSTEM.spacing.xs
-  },
-  headerMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginLeft: DESIGN_SYSTEM.spacing.lg
-  },
-  headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  areaTitle: {
-    color: DESIGN_SYSTEM.colors.white,
+  areaName: {
     fontSize: 18,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.white,
+    textAlign: 'center'
   },
-  scoreContainer: {
-    backgroundColor: DESIGN_SYSTEM.colors.white,
-    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
-    paddingVertical: DESIGN_SYSTEM.spacing.xs,
-    borderRadius: DESIGN_SYSTEM.borderRadius
-  },
-  scoreValue: {
-    color: DESIGN_SYSTEM.colors.primary,
-    fontSize: 20,
-    fontWeight: 'bold'
+  areaScore: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
   scrollContent: {
-    flex: 1,
-    padding: DESIGN_SYSTEM.spacing.lg
+    padding: DESIGN_SYSTEM.spacing.md
   },
   section: {
     marginBottom: DESIGN_SYSTEM.spacing.xl
@@ -459,99 +490,95 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
     marginBottom: DESIGN_SYSTEM.spacing.md,
-    textAlign: 'center'
-  },
-  transitTable: {
-    borderWidth: 1,
-    borderColor: DESIGN_SYSTEM.colors.border,
-    borderRadius: DESIGN_SYSTEM.borderRadius
-  },
-  tableHeader: {
-    flexDirection: 'row',
+    textAlign: 'center',
     backgroundColor: DESIGN_SYSTEM.colors.light,
+    padding: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
+  },
+  emptyState: {
+    padding: DESIGN_SYSTEM.spacing.lg,
+    alignItems: 'center',
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md
+  },
+  emptyText: {
+    color: DESIGN_SYSTEM.colors.secondary,
+    textAlign: 'center',
+    fontSize: 14
+  },
+  transitCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.white,
     padding: DESIGN_SYSTEM.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: DESIGN_SYSTEM.colors.border
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
+    ...DESIGN_SYSTEM.shadows.card
   },
-  headerCell: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.primary,
-    textAlign: 'center'
-  },
-  transitRow: {
+  transitHeader: {
     flexDirection: 'row',
-    padding: DESIGN_SYSTEM.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: DESIGN_SYSTEM.colors.border,
-    alignItems: 'center'
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: DESIGN_SYSTEM.spacing.sm
   },
-  transitInfo: {
-    flex: 2,
-    marginRight: DESIGN_SYSTEM.spacing.sm
-  },
-  transitName: {
-    fontSize: 12,
+  transitNumber: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: 2
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
-  transitPlanets: {
-    fontSize: 10,
-    color: DESIGN_SYSTEM.colors.secondary,
-    marginBottom: 2
-  },
-  transitDescription: {
-    fontSize: 9,
-    color: DESIGN_SYSTEM.colors.secondary,
-    fontStyle: 'italic'
-  },
-  weightCell: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  weightValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: 4
-  },
-  weightBar: {
-    height: 4,
-    backgroundColor: DESIGN_SYSTEM.colors.primary,
-    borderRadius: 2
-  },
-  statusCell: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 4
+  statusBadge: {
+    paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
   statusText: {
-    fontSize: 10,
-    color: DESIGN_SYSTEM.colors.secondary,
-    textTransform: 'capitalize'
-  },
-  contributionCell: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  contributionValue: {
+    color: DESIGN_SYSTEM.colors.white,
     fontSize: 12,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.primary
+    fontWeight: 'bold'
+  },
+  transitName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.md
+  },
+  transitDetails: {
+    gap: DESIGN_SYSTEM.spacing.sm
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DESIGN_SYSTEM.spacing.sm
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.secondary,
+    minWidth: 80
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    minWidth: 40
+  },
+  strengthBar: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden'
+  },
+  strengthFill: {
+    height: '100%',
+    borderRadius: 4
   },
   suggestionCard: {
-    backgroundColor: DESIGN_SYSTEM.colors.light,
+    backgroundColor: DESIGN_SYSTEM.colors.white,
     padding: DESIGN_SYSTEM.spacing.md,
-    borderRadius: DESIGN_SYSTEM.borderRadius,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
     marginBottom: DESIGN_SYSTEM.spacing.md,
-    ...DESIGN_SYSTEM.shadows.sm
+    ...DESIGN_SYSTEM.shadows.card
   },
   suggestionHeader: {
     flexDirection: 'row',
@@ -562,53 +589,66 @@ const styles = StyleSheet.create({
   suggestionNumber: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.primary
+    color: DESIGN_SYSTEM.colors.primary,
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
   priorityBadge: {
     paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 4
+    paddingVertical: 4,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
   priorityText: {
-    fontSize: 8,
     color: DESIGN_SYSTEM.colors.white,
+    fontSize: 12,
     fontWeight: 'bold'
   },
   suggestionText: {
-    fontSize: 12,
+    fontSize: 16,
+    fontWeight: '600',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: DESIGN_SYSTEM.spacing.xs
+    marginBottom: DESIGN_SYSTEM.spacing.sm
   },
   actionText: {
-    fontSize: 11,
+    fontSize: 14,
     color: DESIGN_SYSTEM.colors.secondary,
-    marginBottom: 2
+    marginBottom: DESIGN_SYSTEM.spacing.xs
   },
   periodText: {
-    fontSize: 10,
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.secondary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
+  },
+  basedOnText: {
+    fontSize: 12,
     color: DESIGN_SYSTEM.colors.secondary,
     fontStyle: 'italic'
   },
   calculationCard: {
-    backgroundColor: DESIGN_SYSTEM.colors.light,
+    backgroundColor: DESIGN_SYSTEM.colors.white,
     padding: DESIGN_SYSTEM.spacing.md,
-    borderRadius: DESIGN_SYSTEM.borderRadius,
-    ...DESIGN_SYSTEM.shadows.sm
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    ...DESIGN_SYSTEM.shadows.card
   },
   formulaTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: DESIGN_SYSTEM.spacing.xs
+    marginBottom: DESIGN_SYSTEM.spacing.sm
   },
   formulaText: {
-    fontSize: 12,
+    fontSize: 14,
     color: DESIGN_SYSTEM.colors.secondary,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
     fontFamily: 'monospace',
-    marginBottom: DESIGN_SYSTEM.spacing.md
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    padding: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
   breakdownTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
     marginBottom: DESIGN_SYSTEM.spacing.sm
@@ -617,69 +657,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: DESIGN_SYSTEM.spacing.xs,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: DESIGN_SYSTEM.colors.border
   },
   stepName: {
     flex: 2,
-    fontSize: 11,
+    fontSize: 14,
     color: DESIGN_SYSTEM.colors.primary
   },
   stepValue: {
     flex: 1,
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     color: DESIGN_SYSTEM.colors.primary,
     textAlign: 'center'
   },
   stepDescription: {
-    flex: 2,
-    fontSize: 10,
-    color: DESIGN_SYSTEM.colors.secondary,
-    fontFamily: 'monospace',
-    textAlign: 'right'
+    flex: 3,
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    paddingVertical: DESIGN_SYSTEM.spacing.md,
     borderTopWidth: 2,
     borderTopColor: DESIGN_SYSTEM.colors.primary,
-    marginTop: DESIGN_SYSTEM.spacing.sm
+    marginTop: DESIGN_SYSTEM.spacing.md
   },
   totalLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.primary
-  },
-  totalValue: {
     fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary
   },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary
+  },
   validationTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
     marginTop: DESIGN_SYSTEM.spacing.md,
-    marginBottom: DESIGN_SYSTEM.spacing.xs
+    marginBottom: DESIGN_SYSTEM.spacing.sm
   },
   validationText: {
-    fontSize: 12,
+    fontSize: 14,
     color: DESIGN_SYSTEM.colors.secondary,
     marginBottom: DESIGN_SYSTEM.spacing.md
   },
   basisTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: DESIGN_SYSTEM.spacing.xs
+    marginBottom: DESIGN_SYSTEM.spacing.sm
   },
   basisText: {
-    fontSize: 11,
+    fontSize: 14,
     color: DESIGN_SYSTEM.colors.secondary,
-    lineHeight: 16
+    lineHeight: 20
   }
 })
