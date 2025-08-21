@@ -185,6 +185,8 @@ interface NatalAspectData {
   score: number
   description: string
   isHarmonious: boolean
+  isChallenging: boolean
+  isNeutral: boolean
 }
 
 export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
@@ -226,6 +228,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     // Buscar aspectos entre planetas que afetam esta área
     debugData.planetDetails.forEach(planet => {
       planet.aspects.forEach(aspect => {
+        // 🎯 CORREÇÃO: Classificação baseada no TIPO, não no score
+        const isHarmonious = ['trígono', 'sextil'].includes(aspect.type)
+        const isChallenging = ['quadratura', 'oposição', 'quincúncio', 'semiquadratura', 'sesquiquadratura'].includes(aspect.type)
+        const isNeutral = aspect.type === 'conjunção'
+        
         aspects.push({
           planet1: planet.planet,
           planet2: aspect.with,
@@ -233,7 +240,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           orb: aspect.orb,
           score: aspect.finalScore,
           description: `${planet.planet} em ${aspect.type} com ${aspect.with}`,
-          isHarmonious: ['trígono', 'sextil'].includes(aspect.type)
+          isHarmonious,
+          isChallenging,
+          isNeutral
         })
       })
     })
@@ -321,8 +330,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
     // Sugestões baseadas em trânsitos ativos
     transits.forEach((transit, index) => {
+      // 🎯 CORREÇÃO: Classificação mais abrangente
       const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
-      const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
+      const isChallenging = ['quadratura', 'oposição', 'quincúncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
       const isNeutral = transit.type === 'conjunção'
 
       let suggestion = ''
@@ -355,13 +365,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
     // Sugestões baseadas em aspectos natais
     aspects.forEach((aspect, index) => {
+      // 🎯 CORREÇÃO: Sugestões baseadas na natureza real do aspecto
       const suggestion = aspect.isHarmonious 
         ? `Aproveite a harmonia natal entre ${aspect.planet1} e ${aspect.planet2}`
-        : `Gerencie a tensão natal entre ${aspect.planet1} e ${aspect.planet2}`
+        : aspect.isChallenging
+        ? `Gerencie a tensão natal entre ${aspect.planet1} e ${aspect.planet2}`
+        : `Integre as energias natais entre ${aspect.planet1} e ${aspect.planet2}`
       
       const action = aspect.isHarmonious
         ? 'Desenvolver talentos naturais, fortalecer relacionamentos'
-        : 'Trabalhar equilíbrio, transformar desafios em oportunidades'
+        : aspect.isChallenging
+        ? 'Trabalhar equilíbrio, transformar desafios em oportunidades'
+        : 'Refletir sobre a natureza da relação entre estes planetas'
 
       suggestions.push({
         transitId: `natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`,
@@ -459,11 +474,28 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           activeTransits.map((transit, index) => {
+            // 🎯 CORREÇÃO: Classificação mais abrangente dos aspectos
             const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
-            const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
-            const statusColor = isHarmonious ? DESIGN_SYSTEM.colors.positive : 
-                               isChallenging ? DESIGN_SYSTEM.colors.negative : 
-                               DESIGN_SYSTEM.colors.neutral
+            const isChallenging = ['quadratura', 'oposição', 'quincúncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
+            const isNeutral = transit.type === 'conjunção'
+            
+            // 🎯 CORREÇÃO: Cores e status baseados na natureza real
+            let statusColor: string
+            let statusText: string
+            
+            if (isHarmonious) {
+              statusColor = DESIGN_SYSTEM.colors.positive
+              statusText = 'Harmônico'
+            } else if (isChallenging) {
+              statusColor = DESIGN_SYSTEM.colors.negative
+              statusText = 'Desafiador'
+            } else if (isNeutral) {
+              statusColor = DESIGN_SYSTEM.colors.neutral
+              statusText = 'Neutro'
+            } else {
+              statusColor = DESIGN_SYSTEM.colors.secondary
+              statusText = 'Neutro'
+            }
 
             return (
               <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
@@ -471,7 +503,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.transitNumber}>#{index + 1}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
                     <Text style={styles.statusText}>
-                      {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                      {statusText}
                     </Text>
                   </View>
                 </View>
@@ -530,7 +562,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           natalAspects.map((aspect, index) => {
-            const statusColor = aspect.isHarmonious ? DESIGN_SYSTEM.colors.positive : DESIGN_SYSTEM.colors.neutral
+            // 🎯 CORREÇÃO: Cores e status baseados na natureza real do aspecto
+            let statusColor: string
+            let statusText: string
+            
+            if (aspect.isHarmonious) {
+              statusColor = DESIGN_SYSTEM.colors.positive
+              statusText = 'Harmônico'
+            } else if (aspect.isChallenging) {
+              statusColor = DESIGN_SYSTEM.colors.negative
+              statusText = 'Desafiador'
+            } else if (aspect.isNeutral) {
+              statusColor = DESIGN_SYSTEM.colors.neutral
+              statusText = 'Neutro'
+            } else {
+              statusColor = DESIGN_SYSTEM.colors.secondary
+              statusText = 'Neutro'
+            }
 
             return (
               <View key={`natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`} style={styles.transitCard}>
@@ -538,7 +586,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.transitNumber}>#{index + 1}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
                     <Text style={styles.statusText}>
-                      {aspect.isHarmonious ? 'Harmônico' : 'Neutro'}
+                      {statusText}
                     </Text>
                   </View>
                 </View>
@@ -670,23 +718,42 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {planet.natalAspects.length > 0 && (
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>🔗 Aspectos Natais:</Text>
-                {planet.natalAspects.map((aspect, aspectIndex) => (
-                  <View key={aspectIndex} style={styles.aspectRow}>
-                    <View style={styles.aspectLabel}>
-                      <Text style={styles.aspectLabelText}>
-                        {aspect.type} com {aspect.with}:
-                      </Text>
+                {planet.natalAspects.map((aspect, aspectIndex) => {
+                  // 🎯 CORREÇÃO: Mostrar natureza real do aspecto
+                  const isHarmonious = ['trígono', 'sextil'].includes(aspect.type)
+                  const isChallenging = ['quadratura', 'oposição', 'quincúncio', 'semiquadratura', 'sesquiquadratura'].includes(aspect.type)
+                  
+                  let aspectIcon = '⚪'
+                  let aspectColor = DESIGN_SYSTEM.colors.secondary
+                  
+                  if (isHarmonious) {
+                    aspectIcon = '🌿'
+                    aspectColor = DESIGN_SYSTEM.colors.positive
+                  } else if (isChallenging) {
+                    aspectIcon = '⚡'
+                    aspectColor = DESIGN_SYSTEM.colors.negative
+                  }
+                  
+                  return (
+                    <View key={aspectIndex} style={styles.aspectRow}>
+                      <View style={styles.aspectLabel}>
+                        <Text style={styles.aspectLabelText}>
+                          {aspectIcon} {aspect.type} com {aspect.with}:
+                        </Text>
+                      </View>
+                      <View style={styles.aspectValue}>
+                        <Text style={[styles.aspectValueText, { color: aspectColor }]}>
+                          {isChallenging ? '-' : '+'}{Math.abs(aspect.score)}
+                        </Text>
+                      </View>
+                      <View style={styles.aspectDescription}>
+                        <Text style={styles.aspectDescriptionText}>
+                          Orb: {aspect.orb.toFixed(1)}° • {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.aspectValue}>
-                      <Text style={styles.aspectValueText}>+{aspect.score}</Text>
-                    </View>
-                    <View style={styles.aspectDescription}>
-                      <Text style={styles.aspectDescriptionText}>
-                        Orb: {aspect.orb.toFixed(1)}°
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             )}
             
@@ -732,6 +799,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         
         <Text style={styles.basisTitle}>Base Astrológica:</Text>
         <Text style={styles.basisText}>{realCalculations.astrologicalBasis}</Text>
+        
+        {/* 🎯 NOTA EXPLICATIVA SOBRE SCORES */}
+        <View style={styles.explanationCard}>
+          <Text style={styles.explanationTitle}>ℹ️ Como Interpretar os Scores:</Text>
+          <Text style={styles.explanationText}>
+            • <Text style={{ color: DESIGN_SYSTEM.colors.positive }}>Scores positivos</Text> indicam influências favoráveis
+          </Text>
+          <Text style={styles.explanationText}>
+            • <Text style={{ color: DESIGN_SYSTEM.colors.negative }}>Scores negativos</Text> indicam desafios a serem superados
+          </Text>
+          <Text style={styles.explanationText}>
+            • <Text style={{ color: DESIGN_SYSTEM.colors.neutral }}>Scores neutros</Text> indicam influências equilibradas
+          </Text>
+          <Text style={styles.explanationText}>
+            • A <Text style={{ fontWeight: 'bold' }}>natureza do aspecto</Text> (Harmônico/Desafiador/Neutro) é baseada no tipo astrológico, não no score numérico
+          </Text>
+        </View>
       </View>
     </View>
   )
@@ -1232,5 +1316,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.positive
+  },
+
+  // 🎯 ESTILOS PARA NOTA EXPLICATIVA
+  explanationCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    padding: DESIGN_SYSTEM.spacing.md,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    marginTop: DESIGN_SYSTEM.spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: DESIGN_SYSTEM.colors.info
+  },
+  explanationTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  explanationText: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary,
+    lineHeight: 16,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
   }
 })
