@@ -276,14 +276,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
-        </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
           <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
         </View>
         <Text style={styles.areaScore}>{areaData.status}%</Text>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
+        </TouchableOpacity>
       </View>
     </View>
   )
