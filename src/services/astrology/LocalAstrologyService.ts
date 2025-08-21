@@ -15,7 +15,7 @@
 import RealAstrologyEngine, { RealAstrologyData } from './RealAstrologyEngine'
 import { publishAstrologyData } from '../../context/AstrologyDataProvider'
 import { useUserSettings } from '../../hooks/useUserSettings'
-import { BirthData } from '../../types/astrology'
+import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import AstrologyCacheService from './AstrologyCacheService'
 
 export interface LocalTransitData {
@@ -102,7 +102,7 @@ export class LocalAstrologyService {
       let currentLon = birthData.birthLocation.longitude
       try {
         const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
-        const wantsShare = userProfile?.preferences?.privacy?.shareLocation === true
+        const wantsShare = userProfile?.preferences?.privacy?.showStatusToGroups === true
         if (wantsShare && typeof navigator !== 'undefined' && navigator.geolocation) {
           const coords: { latitude: number, longitude: number } = await new Promise((resolve, reject) => {
             const id = navigator.geolocation.getCurrentPosition(
@@ -191,7 +191,8 @@ export class LocalAstrologyService {
 
     } catch (error) {
       console.error('❌ Erro nos cálculos astrológicos locais:', error)
-      throw new Error(`Falha nos cálculos locais: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`Falha nos cálculos locais: ${errorMessage}`)
     }
   }
 
@@ -201,6 +202,23 @@ export class LocalAstrologyService {
   private static processRealData(realData: RealAstrologyData, birthData: BirthData): LocalTransitData {
     // Analisar áreas da vida
     const lifeAreas = realData.lifeAreas
+
+    // Mapear áreas para o formato esperado pelo LifeAreaCard
+    const mappedLifeAreas: Record<string, any> = {}
+    
+    Object.entries(lifeAreas).forEach(([areaName, areaData]) => {
+      // Converter percentage para status e adicionar propriedades necessárias
+      mappedLifeAreas[areaName] = {
+        name: areaName,
+        status: areaData.percentage, // ✅ CONVERTER percentage para status
+        trend: areaData.percentage >= 70 ? 'positive' : 
+               areaData.percentage >= 40 ? 'stable' : 'negative',
+        description: areaData.influences?.join(' • ') || 'Área da vida',
+        criticalLevel: areaData.percentage < 25,
+        influences: areaData.influences || [],
+        mainPlanets: areaData.mainPlanets || []
+      }
+    })
 
     // Encontrar melhor e pior área
     const areas = Object.entries(lifeAreas)
@@ -404,10 +422,10 @@ export class LocalAstrologyService {
 
     return {
       currentTransits: realData, // RealAstrologyData já tem a estrutura correta!
-      lifeAreas,
+      lifeAreas: mappedLifeAreas, // ✅ USAR AREAS MAPEADAS
       dailyOverview,
       warnings: [] // Sem warnings para cálculos locais!
-    }
+    } as LocalTransitData
   }
 
   /**
@@ -419,21 +437,24 @@ export class LocalAstrologyService {
       const cache = await AstrologyCacheService.getCache(userId)
       
       if (cache && cache.calculatedData) {
-        const hoursOld = (Date.now() - new Date(cache.timestamp).getTime()) / (1000 * 60 * 60)
+        const hoursOld = (Date.now() - new Date(cache.lastUpdate).getTime()) / (1000 * 60 * 60)
         
         // Cache válido por 12 horas
         if (hoursOld < 12) {
           const cacheStatus: CacheStatus = {
             isValid: true,
             hoursOld,
-            requestsToday: cache.requestsToday || 0,
+            requestsToday: 0, // Não temos essa informação no cache
             maxRequests: 999,
             canRefresh: hoursOld > 6, // Pode refreshar após 6 horas
             cacheSource: 'firebase'
           }
 
           return {
-            data: cache.calculatedData as LocalTransitData,
+            data: {
+              ...cache.calculatedData,
+              warnings: [] // Adicionar warnings faltante
+            } as unknown as LocalTransitData,
             cacheStatus
           }
         }
