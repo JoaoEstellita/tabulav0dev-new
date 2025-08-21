@@ -97,8 +97,8 @@ export default function TransitComparisonCard({
   const personalByTransitPlanet = React.useMemo(() => {
     const map: Record<string, typeof personal> = {}
     for (const item of personal) {
-      if (!map[item.transitPlanet]) map[item.transitPlanet] = [] as any
-      map[item.transitPlanet]!.push(item as any)
+      if (!map[item.transitPlanet]) map[item.transitPlanet] = []
+      ;(map[item.transitPlanet] as any[]).push(item)
     }
     return map
   }, [personal])
@@ -428,9 +428,7 @@ export default function TransitComparisonCard({
                         {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
                         {' '}({t.orb.toFixed(1)}°{t.isApplying ? ', aplicante' : ', separante'})
                       </Text>
-                      {!!t.contactIndex && (
-                        <Text style={styles.nearCuspChip}>{`${t.contactIndex}º contato${t.contactPhase==='retro' ? ' (retrógrado)' : ''}`}</Text>
-                      )}
+                      {/* Remover contactIndex - não existe na interface */}
                       <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
                         <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
                       </View>

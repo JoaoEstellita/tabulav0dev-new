@@ -109,7 +109,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <LinearGradient
-        colors={areaColors}
+        colors={areaColors as any}
         style={[styles.card, area.criticalLevel && styles.criticalCard]}
       >
       <View style={styles.header}>
@@ -133,9 +133,9 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
       <Text style={styles.areaName}>{translateAreaName(area.name)}</Text>
       
       <View style={styles.statusContainer}>
-        <Text style={styles.statusNumber}>{area.percentage || area.status || 0}%</Text>
-        <Text style={[styles.statusText, { color: getStatusColor(area.percentage || area.status || 0) }]}>
-          {getStatusText(area.percentage || area.status || 0)}
+        <Text style={styles.statusNumber}>{area.status || 0}%</Text>
+        <Text style={[styles.statusText, { color: getStatusColor(area.status || 0) }]}>
+          {getStatusText(area.status || 0)}
         </Text>
       </View>
 
@@ -145,8 +145,8 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
             style={[
               styles.progressFill, 
               { 
-                width: `${area.percentage || area.status || 0}%`,
-                backgroundColor: getStatusColor(area.percentage || area.status || 0)
+                width: `${area.status || 0}%`,
+                backgroundColor: getStatusColor(area.status || 0)
               }
             ]} 
           />

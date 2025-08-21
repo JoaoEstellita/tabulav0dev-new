@@ -316,7 +316,7 @@ export class RealAstrologyEngine {
         const natalLocalStr = `${birthDate}T${birthTime}:00`
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
           natalLocal: natalLocalStr,
-          natalTimezone: resolvedTz?.timeZoneId,
+          natalTimezone: (resolvedTz as any)?.timeZoneId || undefined,
           natalLat: (typeof options?.natalLat === 'number') ? options!.natalLat! : latitude,
           natalLon: (typeof options?.natalLon === 'number') ? options!.natalLon! : longitude,
         })
@@ -542,7 +542,7 @@ export class RealAstrologyEngine {
         planetaryStatusAnalysis,
         debug: {
           lifeAreas: ((this as any)._debugLifeAreas) || {},
-          personalTransitsSummary: personalSummary,
+          // Remover personalTransitsSummary - não está na interface
         }
       }
 
@@ -551,7 +551,8 @@ export class RealAstrologyEngine {
 
     } catch (error) {
       console.error('❌ Erro nos cálculos astrológicos reais:', error)
-      throw new Error(`Falha nos cálculos astrológicos reais: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`Falha nos cálculos astrológicos reais: ${errorMessage}`)
     }
   }
 
@@ -616,7 +617,7 @@ export class RealAstrologyEngine {
           name: planetName,
           longitude: ecliptic.elon, // astronomy-engine usa 'elon'
           latitude: ecliptic.elat,  // astronomy-engine usa 'elat'
-          distance: position.length || Math.sqrt(position.x*position.x + position.y*position.y + position.z*position.z) || 1.0,
+          distance: position.Length() || Math.sqrt(position.x*position.x + position.y*position.y + position.z*position.z) || 1.0,
           speed,
           sign,
           degree,
