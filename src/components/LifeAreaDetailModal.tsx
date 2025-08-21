@@ -276,8 +276,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
-        <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
-        <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
+        <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={DESIGN_SYSTEM.colors.white} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
+          <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
+        </View>
         <Text style={styles.areaScore}>{areaData.status}%</Text>
       </View>
     </View>
@@ -460,6 +465,16 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md
+  },
+  backButton: {
+    padding: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm
+  },
+  headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: DESIGN_SYSTEM.spacing.sm
