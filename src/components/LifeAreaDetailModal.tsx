@@ -154,6 +154,39 @@ interface RealCalculationData {
   }>
 }
 
+// 🎯 NOVAS INTERFACES PARA BREAKDOWN DETALHADO
+interface PlanetBreakdown {
+  planet: string
+  dignityScore: number
+  dignityReason: string
+  houseScore: number
+  houseReason: string
+  natalAspects: Array<{
+    with: string
+    type: string
+    orb: number
+    score: number
+    description: string
+  }>
+  accidentalConditions: Array<{
+    condition: string
+    score: number
+    description: string
+  }>
+  totalScore: number
+  percentageOfTotal: number
+}
+
+interface NatalAspectData {
+  planet1: string
+  planet2: string
+  type: string
+  orb: number
+  score: number
+  description: string
+  isHarmonious: boolean
+}
+
 export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   visible,
   onClose,
@@ -168,65 +201,187 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const headerGradient = [areaColors[0], areaColors[1]]
 
   // 🎯 DADOS REAIS DO ENGINE ASTROLÓGICO
-  const getRealTransits = (): RealTransitData[] => {
+  const getActiveTransits = (): RealTransitData[] => {
     if (!astrologyData?.transits?.byArea) return []
     
     const areaTransits = astrologyData.transits.byArea[areaData.name] || []
-          return areaTransits.map(transit => ({
-        transitPlanet: transit.transitPlanet,
-        natalPlanet: transit.natalPlanet,
-        type: transit.type,
-        orb: transit.orb,
-        isApplying: transit.isApplying,
-        strength: transit.strength,
-        natalHouseImpacted: transit.natalHouseImpacted,
-        durationClass: transit.durationClass
-      })).sort((a, b) => b.strength - a.strength) // Ordena por força
+    return areaTransits.map(transit => ({
+      transitPlanet: transit.transitPlanet,
+      natalPlanet: transit.natalPlanet,
+      type: transit.type,
+      orb: transit.orb,
+      isApplying: transit.isApplying,
+      strength: transit.strength,
+      natalHouseImpacted: transit.natalHouseImpacted,
+      durationClass: transit.durationClass
+    })).sort((a, b) => b.strength - a.strength) // Ordena por força
+  }
+
+  const getNatalAspects = (): NatalAspectData[] => {
+    const debugData = astrologyData?.debug?.lifeAreas?.[areaData.name]
+    if (!debugData?.planetDetails) return []
+
+    const aspects: NatalAspectData[] = []
+    
+    // Buscar aspectos entre planetas que afetam esta área
+    debugData.planetDetails.forEach(planet => {
+      planet.aspects.forEach(aspect => {
+        aspects.push({
+          planet1: planet.planet,
+          planet2: aspect.with,
+          type: aspect.type,
+          orb: aspect.orb,
+          score: aspect.finalScore,
+          description: `${planet.planet} em ${aspect.type} com ${aspect.with}`,
+          isHarmonious: ['trígono', 'sextil'].includes(aspect.type)
+        })
+      })
+    })
+
+    return aspects.sort((a, b) => b.score - a.score)
+  }
+
+  const getDetailedPlanetBreakdown = (): PlanetBreakdown[] => {
+    const debugData = astrologyData?.debug?.lifeAreas?.[areaData.name]
+    if (!debugData?.planetDetails) return []
+
+    const totalScore = debugData.finalScore || areaData.status
+    
+    return debugData.planetDetails.map(planet => {
+      const planetTotal = planet.total || 0
+      const percentageOfTotal = totalScore > 0 ? (planetTotal / totalScore) * 100 : 0
+
+      return {
+        planet: planet.planet,
+        dignityScore: planet.signScore || 0,
+        dignityReason: getDignityReason(planet.planet, planet.signScore || 0),
+        houseScore: planet.houseScore || 0,
+        houseReason: getHouseReason(planet.houseScore || 0),
+        natalAspects: planet.aspects.map(aspect => ({
+          with: aspect.with,
+          type: aspect.type,
+          orb: aspect.orb,
+          score: aspect.finalScore || 0,
+          description: `${planet.planet} em ${aspect.type} com ${aspect.with}`
+        })),
+        accidentalConditions: getAccidentalConditions(planet.planet, planet.conditions),
+        totalScore: planetTotal,
+        percentageOfTotal: Math.round(percentageOfTotal)
+      }
+    }).sort((a, b) => b.totalScore - a.totalScore)
+  }
+
+  // 🎯 FUNÇÕES AUXILIARES PARA EXPLICAÇÕES
+  const getDignityReason = (planet: string, score: number): string => {
+    if (score >= 45) return 'Domicílio (+28) + Exaltação (+24)'
+    if (score >= 28) return 'Domicílio (+28)'
+    if (score >= 24) return 'Exaltação (+24)'
+    if (score >= 15) return 'Termo (+15)'
+    if (score >= 10) return 'Face (+10)'
+    if (score >= 5) return 'Peregrino (+5)'
+    return 'Detrimento/Fall (0)'
+  }
+
+  const getHouseReason = (score: number): string => {
+    if (score >= 15) return 'Casa Angular (+15)'
+    if (score >= 10) return 'Casa Succedente (+10)'
+    if (score >= 5) return 'Casa Cadente (+5)'
+    return 'Sem influência da casa (0)'
+  }
+
+  const getAccidentalConditions = (planet: string, conditions?: { modifier: number; tags: string[] }): Array<{ condition: string; score: number; description: string }> => {
+    if (!conditions) return []
+    
+    const conditionsList: Array<{ condition: string; score: number; description: string }> = []
+    
+    if (conditions.modifier !== 0) {
+      conditionsList.push({
+        condition: 'Modificador',
+        score: conditions.modifier,
+        description: `Condições acidentais de ${planet}`
+      })
+    }
+
+    conditions.tags.forEach(tag => {
+      conditionsList.push({
+        condition: tag,
+        score: 2,
+        description: `Tag: ${tag}`
+      })
+    })
+
+    return conditionsList
   }
 
   const getRealSuggestions = (): RealSuggestionData[] => {
-    const transits = getRealTransits()
-    if (transits.length === 0) return []
+    const transits = activeTransits
+    const aspects = natalAspects
+    
+    const suggestions: RealSuggestionData[] = []
 
-    return transits.map((transit, index) => {
+    // Sugestões baseadas em trânsitos ativos
+    transits.forEach((transit, index) => {
       const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
       const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
       const isNeutral = transit.type === 'conjunção'
 
       let suggestion = ''
       let action = ''
-      let priority: 'high' | 'medium' | 'low' = 'medium'
+      let priority: 'high' | 'medium' | 'low' = 'high'
 
       if (isHarmonious) {
         suggestion = `Aproveite a harmonia entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Iniciar projetos, expandir relacionamentos'
-        priority = 'high'
       } else if (isChallenging) {
         suggestion = `Gerencie a tensão entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Revisar planos, buscar equilíbrio'
-        priority = 'high'
       } else if (isNeutral) {
         suggestion = `Integre as energias de ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Refletir, planejar, integrar'
-        priority = 'medium'
       }
 
       const influencePeriod = transit.durationClass === 'longo' ? 'Meses' : 
                              transit.durationClass === 'médio' ? 'Semanas' : 'Dias'
 
-      return {
-        transitId: `${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`,
+      suggestions.push({
+        transitId: `transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`,
         suggestion,
         action,
         influencePeriod,
         priority,
-        basedOn: `${transit.type} ${transit.transitPlanet} → ${transit.natalPlanet}`
-      }
+        basedOn: `Trânsito: ${transit.type} ${transit.transitPlanet} → ${transit.natalPlanet}`
+      })
+    })
+
+    // Sugestões baseadas em aspectos natais
+    aspects.forEach((aspect, index) => {
+      const suggestion = aspect.isHarmonious 
+        ? `Aproveite a harmonia natal entre ${aspect.planet1} e ${aspect.planet2}`
+        : `Gerencie a tensão natal entre ${aspect.planet1} e ${aspect.planet2}`
+      
+      const action = aspect.isHarmonious
+        ? 'Desenvolver talentos naturais, fortalecer relacionamentos'
+        : 'Trabalhar equilíbrio, transformar desafios em oportunidades'
+
+      suggestions.push({
+        transitId: `natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`,
+        suggestion,
+        action,
+        influencePeriod: 'Constante (Natal)',
+        priority: 'medium',
+        basedOn: `Aspecto Natal: ${aspect.type} ${aspect.planet1} → ${aspect.planet2}`
+      })
+    })
+
+    return suggestions.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 }
+      return priorityOrder[b.priority] - priorityOrder[a.priority]
     })
   }
 
   const getRealCalculations = (): RealCalculationData => {
-    const transits = getRealTransits()
+    const transits = activeTransits
+    const aspects = natalAspects
     const debugData = astrologyData?.debug?.lifeAreas?.[areaData.name]
 
     // Fórmula real baseada no RealAstrologyEngine
@@ -269,7 +424,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
   }
 
-  const realTransits = getRealTransits()
+  const activeTransits = getActiveTransits()
+  const natalAspects = getNatalAspects()
+  const planetBreakdown = getDetailedPlanetBreakdown()
   const realSuggestions = getRealSuggestions()
   const realCalculations = getRealCalculations()
 
@@ -290,73 +447,145 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderTransitsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS POR RELEVÂNCIA</Text>
+      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS E ASPECTOS NATAIS</Text>
       
-      {realTransits.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
-        </View>
-      ) : (
-        realTransits.map((transit, index) => {
-          const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
-          const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
-          const statusColor = isHarmonious ? DESIGN_SYSTEM.colors.positive : 
-                             isChallenging ? DESIGN_SYSTEM.colors.negative : 
-                             DESIGN_SYSTEM.colors.neutral
+      {/* Subseção: Trânsitos Ativos */}
+      <View style={styles.subsection}>
+        <Text style={styles.subsectionTitle}>🔄 TRÂNSITOS ATIVOS</Text>
+        
+        {activeTransits.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
+          </View>
+        ) : (
+          activeTransits.map((transit, index) => {
+            const isHarmonious = ['trígono', 'sextil'].includes(transit.type)
+            const isChallenging = ['quadratura', 'oposição'].includes(transit.type)
+            const statusColor = isHarmonious ? DESIGN_SYSTEM.colors.positive : 
+                               isChallenging ? DESIGN_SYSTEM.colors.negative : 
+                               DESIGN_SYSTEM.colors.neutral
 
-          return (
-            <View key={`${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
-              <View style={styles.transitHeader}>
-                <Text style={styles.transitNumber}>#{index + 1}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                  <Text style={styles.statusText}>
-                    {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
-                  </Text>
-                </View>
-              </View>
-              
-              <Text style={styles.transitName}>
-                {transit.transitPlanet} em {transit.type} com {transit.natalPlanet}
-              </Text>
-              
-              <View style={styles.transitDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Força:</Text>
-                  <Text style={styles.detailValue}>{transit.strength}</Text>
-                  <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
-                    <View style={[styles.strengthFill, { 
-                      width: `${transit.strength}%`, 
-                      backgroundColor: statusColor 
-                    }]} />
+            return (
+              <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
+                <View style={styles.transitHeader}>
+                  <Text style={styles.transitNumber}>#{index + 1}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                    <Text style={styles.statusText}>
+                      {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                    </Text>
                   </View>
                 </View>
                 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Orb:</Text>
-                  <Text style={styles.detailValue}>{transit.orb.toFixed(1)}°</Text>
-                </View>
+                <Text style={styles.transitName}>
+                  {transit.transitPlanet} em {transit.type} com {transit.natalPlanet}
+                </Text>
                 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Planetas:</Text>
-                  <Text style={styles.detailValue}>{transit.transitPlanet} + {transit.natalPlanet}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Tipo:</Text>
-                  <Text style={styles.detailValue}>{transit.type}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Contribuição:</Text>
-                  <Text style={styles.detailValue}>
-                    {Math.round((transit.strength / realTransits.reduce((sum, t) => sum + t.strength, 0)) * 100)}%
-                  </Text>
+                <View style={styles.transitDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Força:</Text>
+                    <Text style={styles.detailValue}>{transit.strength}</Text>
+                    <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
+                      <View style={[styles.strengthFill, { 
+                        width: `${transit.strength}%`, 
+                        backgroundColor: statusColor 
+                      }]} />
+                    </View>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Orb:</Text>
+                    <Text style={styles.detailValue}>{transit.orb.toFixed(1)}°</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Planetas:</Text>
+                    <Text style={styles.detailValue}>{transit.transitPlanet} + {transit.natalPlanet}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Tipo:</Text>
+                    <Text style={styles.detailValue}>{transit.type}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Contribuição:</Text>
+                    <Text style={styles.detailValue}>
+                      {Math.round((transit.strength / activeTransits.reduce((sum, t) => sum + t.strength, 0)) * 100)}%
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          )
-        })
-      )}
+            )
+          })
+        )}
+      </View>
+
+      {/* Subseção: Aspectos Natais */}
+      <View style={styles.subsection}>
+        <Text style={styles.subsectionTitle}>🔗 ASPECTOS NATAIS RELEVANTES</Text>
+        
+        {natalAspects.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Nenhum aspecto natal relevante para esta área</Text>
+          </View>
+        ) : (
+          natalAspects.map((aspect, index) => {
+            const statusColor = aspect.isHarmonious ? DESIGN_SYSTEM.colors.positive : DESIGN_SYSTEM.colors.neutral
+
+            return (
+              <View key={`natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`} style={styles.transitCard}>
+                <View style={styles.transitHeader}>
+                  <Text style={styles.transitNumber}>#{index + 1}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                    <Text style={styles.statusText}>
+                      {aspect.isHarmonious ? 'Harmônico' : 'Neutro'}
+                    </Text>
+                  </View>
+                </View>
+                
+                <Text style={styles.transitName}>
+                  {aspect.planet1} em {aspect.type} com {aspect.planet2}
+                </Text>
+                
+                <View style={styles.transitDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Força:</Text>
+                    <Text style={styles.detailValue}>{aspect.score}</Text>
+                    <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
+                      <View style={[styles.strengthFill, { 
+                        width: `${Math.min(aspect.score, 100)}%`, 
+                        backgroundColor: statusColor 
+                      }]} />
+                    </View>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Orb:</Text>
+                    <Text style={styles.detailValue}>{aspect.orb.toFixed(1)}°</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Planetas:</Text>
+                    <Text style={styles.detailValue}>{aspect.planet1} + {aspect.planet2}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Tipo:</Text>
+                    <Text style={styles.detailValue}>{aspect.type}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Natureza:</Text>
+                    <Text style={styles.detailValue}>
+                      {aspect.isHarmonious ? 'Harmônico' : 'Neutro'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )
+          })
+        )}
+      </View>
     </View>
   )
 
@@ -400,17 +629,101 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         <Text style={styles.formulaTitle}>Fórmula de Cálculo:</Text>
         <Text style={styles.formulaText}>{realCalculations.formula}</Text>
         
-        <Text style={styles.breakdownTitle}>Breakdown Matemático:</Text>
-        {realCalculations.breakdown.map((step, index) => (
-          <View key={index} style={styles.breakdownStep}>
-            <Text style={styles.stepName}>{step.step}</Text>
-            <Text style={styles.stepValue}>{step.value}</Text>
-            <Text style={styles.stepDescription}>{step.description}</Text>
+        <Text style={styles.breakdownTitle}>Breakdown Matemático Detalhado:</Text>
+        
+        {/* Breakdown em Árvore por Planeta */}
+        {planetBreakdown.map((planet, index) => (
+          <View key={planet.planet} style={styles.planetBreakdownCard}>
+            <View style={styles.planetHeader}>
+              <Text style={styles.planetName}>{planet.planet}</Text>
+              <Text style={styles.planetTotal}>{planet.totalScore} pts</Text>
+              <Text style={styles.planetPercentage}>({planet.percentageOfTotal}%)</Text>
+            </View>
+            
+            {/* Dignidade Essencial */}
+            <View style={styles.breakdownRow}>
+              <View style={styles.breakdownLabel}>
+                <Text style={styles.breakdownLabelText}>🏛️ Dignidade Essencial:</Text>
+              </View>
+              <View style={styles.breakdownValue}>
+                <Text style={styles.breakdownValueText}>+{planet.dignityScore}</Text>
+              </View>
+              <View style={styles.breakdownReason}>
+                <Text style={styles.breakdownReasonText}>{planet.dignityReason}</Text>
+              </View>
+            </View>
+            
+            {/* Força da Casa */}
+            <View style={styles.breakdownRow}>
+              <View style={styles.breakdownLabel}>
+                <Text style={styles.breakdownLabelText}>🏠 Força da Casa:</Text>
+              </View>
+              <View style={styles.breakdownValue}>
+                <Text style={styles.breakdownValueText}>+{planet.houseScore}</Text>
+              </View>
+              <View style={styles.breakdownReason}>
+                <Text style={styles.breakdownReasonText}>{planet.houseReason}</Text>
+              </View>
+            </View>
+            
+            {/* Aspectos Natais */}
+            {planet.natalAspects.length > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>🔗 Aspectos Natais:</Text>
+                {planet.natalAspects.map((aspect, aspectIndex) => (
+                  <View key={aspectIndex} style={styles.aspectRow}>
+                    <View style={styles.aspectLabel}>
+                      <Text style={styles.aspectLabelText}>
+                        {aspect.type} com {aspect.with}:
+                      </Text>
+                    </View>
+                    <View style={styles.aspectValue}>
+                      <Text style={styles.aspectValueText}>+{aspect.score}</Text>
+                    </View>
+                    <View style={styles.aspectDescription}>
+                      <Text style={styles.aspectDescriptionText}>
+                        Orb: {aspect.orb.toFixed(1)}°
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {/* Condições Acidentais */}
+            {planet.accidentalConditions.length > 0 && (
+              <View style={styles.conditionsSection}>
+                <Text style={styles.conditionsTitle}>⚡ Condições Acidentais:</Text>
+                {planet.accidentalConditions.map((condition, conditionIndex) => (
+                  <View key={conditionIndex} style={styles.conditionRow}>
+                    <View style={styles.conditionLabel}>
+                      <Text style={styles.conditionLabelText}>
+                        {condition.condition}:
+                      </Text>
+                    </View>
+                    <View style={styles.conditionValue}>
+                      <Text style={styles.conditionValueText}>+{condition.score}</Text>
+                    </View>
+                    <View style={styles.conditionDescription}>
+                      <Text style={styles.conditionDescriptionText}>
+                        {condition.description}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {/* Total do Planeta */}
+            <View style={styles.planetTotalRow}>
+              <Text style={styles.planetTotalLabel}>Total {planet.planet}:</Text>
+              <Text style={styles.planetTotalValue}>{planet.totalScore} pontos</Text>
+            </View>
           </View>
         ))}
         
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total:</Text>
+          <Text style={styles.totalLabel}>Total Geral:</Text>
           <Text style={styles.totalValue}>{realCalculations.total}</Text>
         </View>
         
@@ -499,6 +812,19 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: DESIGN_SYSTEM.spacing.xl
+  },
+  subsection: {
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    padding: DESIGN_SYSTEM.spacing.md,
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md
+  },
+  subsectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
+    textAlign: 'center'
   },
   sectionTitle: {
     fontSize: 16,
@@ -734,5 +1060,177 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: DESIGN_SYSTEM.colors.secondary,
     lineHeight: 20
+  },
+
+  // 🎯 ESTILOS PARA BREAKDOWN DETALHADO EM ÁRVORE
+  planetBreakdownCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.white,
+    padding: DESIGN_SYSTEM.spacing.md,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.border,
+    ...DESIGN_SYSTEM.shadows.card
+  },
+  planetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: DESIGN_SYSTEM.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: DESIGN_SYSTEM.colors.border,
+    marginBottom: DESIGN_SYSTEM.spacing.md
+  },
+  planetName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary
+  },
+  planetTotal: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.positive
+  },
+  planetPercentage: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.secondary
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: DESIGN_SYSTEM.colors.light
+  },
+  breakdownLabel: {
+    flex: 2,
+    paddingRight: DESIGN_SYSTEM.spacing.sm
+  },
+  breakdownLabelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary
+  },
+  breakdownValue: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  breakdownValueText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.positive
+  },
+  breakdownReason: {
+    flex: 3,
+    paddingLeft: DESIGN_SYSTEM.spacing.sm
+  },
+  breakdownReasonText: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary
+  },
+  aspectsSection: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    paddingTop: DESIGN_SYSTEM.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: DESIGN_SYSTEM.colors.light
+  },
+  aspectsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  aspectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: DESIGN_SYSTEM.spacing.xs,
+    paddingLeft: DESIGN_SYSTEM.spacing.md
+  },
+  aspectLabel: {
+    flex: 2,
+    paddingRight: DESIGN_SYSTEM.spacing.sm
+  },
+  aspectLabelText: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.primary
+  },
+  aspectValue: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  aspectValueText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.positive
+  },
+  aspectDescription: {
+    flex: 2,
+    paddingLeft: DESIGN_SYSTEM.spacing.sm
+  },
+  aspectDescriptionText: {
+    fontSize: 11,
+    color: DESIGN_SYSTEM.colors.secondary
+  },
+  conditionsSection: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    paddingTop: DESIGN_SYSTEM.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: DESIGN_SYSTEM.colors.light
+  },
+  conditionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  conditionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: DESIGN_SYSTEM.spacing.xs,
+    paddingLeft: DESIGN_SYSTEM.spacing.md
+  },
+  conditionLabel: {
+    flex: 2,
+    paddingRight: DESIGN_SYSTEM.spacing.sm
+  },
+  conditionLabelText: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.primary
+  },
+  conditionValue: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  conditionValueText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.warning
+  },
+  conditionDescription: {
+    flex: 3,
+    paddingLeft: DESIGN_SYSTEM.spacing.sm
+  },
+  conditionDescriptionText: {
+    fontSize: 11,
+    color: DESIGN_SYSTEM.colors.secondary
+  },
+  planetTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: DESIGN_SYSTEM.spacing.md,
+    marginTop: DESIGN_SYSTEM.spacing.md,
+    borderTopWidth: 2,
+    borderTopColor: DESIGN_SYSTEM.colors.primary
+  },
+  planetTotalLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary
+  },
+  planetTotalValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.positive
   }
 })
