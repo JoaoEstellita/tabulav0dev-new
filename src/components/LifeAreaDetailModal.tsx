@@ -276,8 +276,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: headerGradient[0] }]}>
       <View style={styles.headerContent}>
-        <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={DESIGN_SYSTEM.colors.white} />
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Ionicons name={areaIcon as any} size={24} color={DESIGN_SYSTEM.colors.white} />
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: DESIGN_SYSTEM.spacing.md
   },
-  backButton: {
+  closeButton: {
     padding: DESIGN_SYSTEM.spacing.sm,
     borderRadius: DESIGN_SYSTEM.borderRadius.sm
   },
