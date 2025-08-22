@@ -1104,7 +1104,7 @@ export class RealAstrologyEngine {
       let mainPlanets: string[] = []
 
       // Analisar planetas relevantes para a área
-      let planetScores: number[] = []
+      let planetScores: [string, number][] = []
       const planetDetails: NonNullable<RealAstrologyData['debug']>['lifeAreas'][string]['planetDetails'] = [] as any
       
       for (const planetName of config.planets) {
@@ -1239,7 +1239,7 @@ export class RealAstrologyEngine {
         planetScore += cond.modifier
         if (cond.tags.length) influences.push(...cond.tags)
 
-        planetScores.push(planetScore)
+        planetScores.push([planetName, planetScore])
 
         planetDetails.push({
           planet: planetName,
@@ -1260,11 +1260,13 @@ export class RealAstrologyEngine {
       }
 
       // Score ponderado por importância planetária
-      const weightedScore = planetScores.reduce((sum, score, i) => {
-        const planetName = config.planets[i]
+      const { sum: weightedSum, totalWeight } = planetScores.reduce((acc, [planetName, score]) => {
         const weight = planetWeights[planetName] || 1.0
-        return sum + (score * weight)
-      }, 0) / planetScores.length
+        acc.sum += score * weight
+        acc.totalWeight += weight
+        return acc
+      }, { sum: 0, totalWeight: 0 })
+      const weightedScore = totalWeight === 0 ? 0 : weightedSum / totalWeight
 
       // Score final baseado na lógica astrológica real
       const finalScore = weightedScore
