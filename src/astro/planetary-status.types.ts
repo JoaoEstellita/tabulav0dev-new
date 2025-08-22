@@ -46,6 +46,7 @@ export interface AspectAnalysis {
 }
 
 export interface PlanetaryStatus {
+  planet: PlanetName
   level: PlanetaryStatusLevel
   score: number
   breakdown: PlanetaryScore

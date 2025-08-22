@@ -15,6 +15,7 @@ import { detectAspects } from '../../astro/aspects.engine'
 import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/transits.utils'
 import { calculatePlanetaryStatus } from '../../astro/planetary-status.engine'
 import type { PlanetaryStatus, PlanetaryStatusLevel } from '../../astro/planetary-status.types'
+import logger from '../../utils/logger'
 // Removido Ephemeris não utilizado
 
 export interface RealPlanetPosition {
@@ -279,7 +280,7 @@ export class RealAstrologyEngine {
     currentDate?: Date,
     options?: { houseSystem?: 'whole'|'equal'|'placidus'; natalLat?: number; natalLon?: number }
   ): Promise<RealAstrologyData> {
-    console.log('🔬 Iniciando cálculos astrológicos REAIS...')
+    logger.info('🔬 Iniciando cálculos astrológicos REAIS...')
     
     const date = currentDate || new Date()
     // Converter hora local de nascimento em UTC usando IANA (se disponível), caso contrário, fallback para aprox.
@@ -325,7 +326,7 @@ export class RealAstrologyEngine {
         natalHouses = bundle.natal.houses
         // Não reatribuir se o backend já enviou as casas dos natais; confiar no backend para consistência 1:1
         natalPlanets = bundle.natal.planets
-        console.log('✅ Backend astro bundle utilizado (posições + casas + natal)')
+        logger.info('✅ Backend astro bundle utilizado (posições + casas + natal)')
       } catch (_e) {
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
@@ -338,23 +339,23 @@ export class RealAstrologyEngine {
         houses = housesLocal
         natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
         natalHouses = natalHousesLocal
-        console.log('⚠️ Fallback local utilizado (posições + casas)')
+        logger.info('⚠️ Fallback local utilizado (posições + casas)')
       }
 
-      console.log(`✅ Calculadas ${realPlanets.length} posições planetárias reais`)
-      console.log('✅ Casas astrológicas disponíveis')
+      logger.info(`✅ Calculadas ${realPlanets.length} posições planetárias reais`)
+      logger.info('✅ Casas astrológicas disponíveis')
 
       // 3. CÁLCULO REAL DOS ASPECTOS
       // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cúspides
       const planetsWithHouses = this.assignHouses(realPlanets, houses)
       if (process.env.NODE_ENV !== 'production') {
         try {
-          console.debug('🏠 DEBUG Casas: ASC/MC', { asc: houses.ascendant, mc: houses.midheaven })
-          console.debug('🏠 DEBUG Cusps', houses.cusps.map((c,i)=>({ casa:i+1, cusp:c.toFixed(4) })))
-          console.debug('🏠 DEBUG Planetas→Casa', planetsWithHouses.map(p=>({ p:p.name, lon:p.longitude.toFixed(4), casa:p.house })))
+          logger.debug('🏠 DEBUG Casas: ASC/MC', { asc: houses.ascendant, mc: houses.midheaven })
+          logger.debug('🏠 DEBUG Cusps', houses.cusps.map((c,i)=>({ casa:i+1, cusp:c.toFixed(4) })))
+          logger.debug('🏠 DEBUG Planetas→Casa', planetsWithHouses.map(p=>({ p:p.name, lon:p.longitude.toFixed(4), casa:p.house })))
         } catch {}
       }
-      console.log('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
+      logger.info('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
         planetsWithHouses.map(p => ({ name: p.name, natal: (natalPlanets.find(n=>n.name===p.name)?.house), current: p.house })))
       // Aspectos Coletivos (momento)
       const aspectsCurrentTT = detectAspects(
@@ -362,7 +363,7 @@ export class RealAstrologyEngine {
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         aspectsConfig
       )
-      console.log(`✅ Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
+      logger.info(`✅ Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
 
       // 🌟 NOVO: CÁLCULO DE STATUS PLANETÁRIOS
       const planetsWithStatus = planetsWithHouses.map(planet => {
@@ -381,7 +382,7 @@ export class RealAstrologyEngine {
           planetaryStatus
         }
       })
-      console.log(`✅ Status planetários calculados para ${planetsWithStatus.length} planetas`)
+      logger.info(`✅ Status planetários calculados para ${planetsWithStatus.length} planetas`)
 
       // Índice Coletivo + fase lunar (cache por dia UTC)
       const dayKey = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0,10)
@@ -424,7 +425,7 @@ export class RealAstrologyEngine {
         natalSetForAspects,
         aspectsConfig
       )
-      console.log(`✅ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
+      logger.info(`✅ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
 
       // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
       // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos Pessoais
@@ -436,26 +437,26 @@ export class RealAstrologyEngine {
       const level = avg >= 80 ? 'excelente' : avg >= 65 ? 'bom' : avg >= 45 ? 'neutro' : avg >= 25 ? 'desafiador' : 'crítico'
       const areaTop = Object.entries(lifeAreas).sort((a,b)=>b[1].percentage-a[1].percentage).slice(0,2).map(([k])=>k)
       const statusPersonal = { score: avg, level: level as any, highlights: areaTop }
-      console.log('✅ Análise real das áreas da vida concluída')
+      logger.info('✅ Análise real das áreas da vida concluída')
 
       // 🌟 5. NATAIS já obtidos (do backend ou fallback)
-      console.log('✅ Posições natais e casas natais prontas')
+      logger.info('✅ Posições natais e casas natais prontas')
 
       // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
       const planetComparisons = this.createPlanetComparisons(natalPlanets, planetsWithHouses, houses)
-      console.log('✅ Comparações planetárias criadas')
+      logger.info('✅ Comparações planetárias criadas')
 
       // 🌟 7. ASPECTOS COM CASAS
       const houseAspects = this.calculateHouseAspects(realPlanets, houses)
-      console.log('✅ Aspectos com casas calculados')
+      logger.info('✅ Aspectos com casas calculados')
 
       // 🌟 8. RESUMO ELEMENTAL E MODAL
       const chartSummary = this.createChartSummary(natalPlanets, planetsWithHouses)
-      console.log('✅ Resumo da carta criado')
+      logger.info('✅ Resumo da carta criado')
 
       // 🌟 9. ANÁLISE GERAL DE STATUS PLANETÁRIOS
       const planetaryStatusAnalysis = this.createPlanetaryStatusAnalysis(planetsWithStatus)
-      console.log('✅ Análise de status planetários criada')
+      logger.info('✅ Análise de status planetários criada')
 
       // Preparar agrupamento para futura UI de Trânsitos Comparativos
       const personalTransits = aspectsTransitsToNatalTN.map(a => {
@@ -546,11 +547,11 @@ export class RealAstrologyEngine {
         }
       }
 
-      console.log('🎯 Cálculos astrológicos REAIS concluídos com sucesso!')
+      logger.info('🎯 Cálculos astrológicos REAIS concluídos com sucesso!')
       return result
 
     } catch (error) {
-      console.error('❌ Erro nos cálculos astrológicos reais:', error)
+      logger.error('❌ Erro nos cálculos astrológicos reais:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       throw new Error(`Falha nos cálculos astrológicos reais: ${errorMessage}`)
     }
@@ -560,8 +561,8 @@ export class RealAstrologyEngine {
    * Calcula posições planetárias REAIS usando Astronomy Engine (precisão NASA)
    */
   private static async calculateRealPlanetPositions(
-    date: Date, 
-    latitude: number, 
+    date: Date,
+    latitude: number,
     longitude: number
   ): Promise<RealPlanetPosition[]> {
     const positions: RealPlanetPosition[] = []
@@ -585,7 +586,7 @@ export class RealAstrologyEngine {
         
         // Verificar se a posição é válida
         if (!position || position.x === undefined || position.y === undefined || position.z === undefined) {
-          console.error(`❌ Posição inválida para ${planetName}:`, position)
+          logger.error(`❌ Posição inválida para ${planetName}:`, position)
           continue
         }
         
@@ -594,23 +595,26 @@ export class RealAstrologyEngine {
         
         // Verificar se coordenadas eclípticas são válidas (astronomy-engine usa 'elon' e 'elat')
         if (!ecliptic || ecliptic.elon === undefined || ecliptic.elat === undefined) {
-          console.error(`❌ Coordenadas eclípticas inválidas para ${planetName}:`, ecliptic)
+          logger.error(`❌ Coordenadas eclípticas inválidas para ${planetName}:`, ecliptic)
           continue
         }
         
-        // Calcular velocidade (diferença de posição em 1 dia)
+        // Calcular velocidade (diferença normalizada em 1 dia)
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
         const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
-        const speed = (nextEcliptic && nextEcliptic.elon !== undefined) ? 
-          nextEcliptic.elon - ecliptic.elon : 0
+        let speed = 0
+        if (nextEcliptic && nextEcliptic.elon !== undefined) {
+          const diff = nextEcliptic.elon - ecliptic.elon
+          speed = RealAstrologyEngine.normalizeLongitudeDiff(diff)
+        }
 
         // Determinar signo e grau
         const signIndex = Math.floor(ecliptic.elon / 30)
         const degree = ecliptic.elon % 30
         const sign = this.SIGNS[signIndex] || 'Áries'
 
-        // Verificar retrogradação
+        // Verificar retrogradação com valor normalizado
         const isRetrograde = speed < 0
 
         const planetData = {
@@ -625,7 +629,7 @@ export class RealAstrologyEngine {
           isRetrograde
         }
         
-        console.log(`🔍 DEBUG ${planetName}:`, {
+        logger.info(`🔍 DEBUG ${planetName}:`, {
           longitude: ecliptic.elon,
           latitude: ecliptic.elat,
           distance: planetData.distance,
@@ -638,11 +642,16 @@ export class RealAstrologyEngine {
         positions.push(planetData)
 
       } catch (error) {
-        console.error(`❌ Erro ao calcular posição de ${planetName}:`, error)
+        logger.error(`❌ Erro ao calcular posição de ${planetName}:`, error)
       }
     }
 
     return positions
+  }
+
+  // Normaliza diferença angular para intervalo [-180, 180]
+  public static normalizeLongitudeDiff(diff: number): number {
+    return ((diff + 180 + 360) % 360) - 180
   }
 
   /**
@@ -716,7 +725,7 @@ export class RealAstrologyEngine {
       }
     } catch {}
 
-    console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
+    logger.info('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
 
     const resp = await fetch(`${backend}/api/astro/positions`, {
       method: 'POST',
@@ -761,7 +770,7 @@ export class RealAstrologyEngine {
         const current = norm(cusps[i] - ascNorm)
         const next = norm(cusps[i + 1] - ascNorm)
         if (next <= current) {
-          console.error(`❌ ${label}: Cúspides desordenadas!`, { 
+          logger.error(`❌ ${label}: Cúspides desordenadas!`, { 
             casa: i + 1, 
             current: cusps[i].toFixed(2), 
             next: cusps[i + 1].toFixed(2),
@@ -773,18 +782,18 @@ export class RealAstrologyEngine {
       }
       
       if (isValid) {
-        console.log(`✅ ${label}: Cúspides ordenadas corretamente`)
+        logger.info(`✅ ${label}: Cúspides ordenadas corretamente`)
       }
       
       return isValid
     }
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
-    console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
+    logger.info('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
     // Validar ordem das cúspides
     validateCuspsOrder(currentHouses.cusps, currentHouses.ascendant, 'Casas ATUAIS')
     
-    console.log('🏠 ASTRO DEBUG - Casas ATUAIS', {
+    logger.info('🏠 ASTRO DEBUG - Casas ATUAIS', {
       system: (currentHouses as any).system || null,
       systemEffective: (currentHouses as any).systemEffective || null,
       approximate: !!(currentHouses as any).approximate,
@@ -793,12 +802,12 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(currentHouses.cusps),
       planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if ((currentHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
+    try { if ((currentHouses as any)._debug) logger.info('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
     
     // Validar ordem das cúspides natais
     validateCuspsOrder(natalHouses.cusps, natalHouses.ascendant, 'Casas NATAIS')
     
-    console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
+    logger.info('🏠 ASTRO DEBUG - Casas NATAIS', {
       system: (natalHouses as any).system || null,
       systemEffective: (natalHouses as any).systemEffective || null,
       approximate: !!(natalHouses as any).approximate,
@@ -807,7 +816,7 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(natalHouses.cusps),
       planets: natalWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if ((natalHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
+    try { if ((natalHouses as any)._debug) logger.info('🧪 ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
 
     return {
       current: { planets: currentWithHouses, houses: currentHouses },
@@ -832,7 +841,7 @@ export class RealAstrologyEngine {
       const res = await computeHousesUTC(currentDate, latitude, longitude, system)
       return { cusps: res.cusps, ascendant: res.asc, midheaven: res.mc, approximate: (res as any).approximate === true }
     } catch (error) {
-      console.error('❌ Erro no cálculo das casas (unificado):', error)
+      logger.error('❌ Erro no cálculo das casas (unificado):', error)
       const ascendant = 0
       const midheaven = 90
       const cusps = Array.from({ length: 12 }, (_, i) => (ascendant + i * 30) % 360)
@@ -1104,7 +1113,7 @@ export class RealAstrologyEngine {
       let mainPlanets: string[] = []
 
       // Analisar planetas relevantes para a área
-      let planetScores: number[] = []
+      let planetScores: Array<[string, number]> = []
       const planetDetails: NonNullable<RealAstrologyData['debug']>['lifeAreas'][string]['planetDetails'] = [] as any
       
       for (const planetName of config.planets) {
@@ -1239,7 +1248,7 @@ export class RealAstrologyEngine {
         planetScore += cond.modifier
         if (cond.tags.length) influences.push(...cond.tags)
 
-        planetScores.push(planetScore)
+        planetScores.push([planetName, planetScore])
 
         planetDetails.push({
           planet: planetName,
@@ -1260,11 +1269,13 @@ export class RealAstrologyEngine {
       }
 
       // Score ponderado por importância planetária
-      const weightedScore = planetScores.reduce((sum, score, i) => {
-        const planetName = config.planets[i]
-        const weight = planetWeights[planetName] || 1.0
+      let totalWeight = 0
+      const weightedSum = planetScores.reduce((sum, [pName, score]) => {
+        const weight = planetWeights[pName] || 1.0
+        totalWeight += weight
         return sum + (score * weight)
-      }, 0) / planetScores.length
+      }, 0)
+      const weightedScore = totalWeight > 0 ? weightedSum / totalWeight : 0
 
       // Score final baseado na lógica astrológica real
       const finalScore = weightedScore
@@ -1616,14 +1627,16 @@ export class RealAstrologyEngine {
     houses: { cusps: number[], ascendant: number, midheaven: number }
   ): PlanetComparison[] {
     const comparisons: PlanetComparison[] = []
+    const allAspects = this.calculateRealAspects(currentPlanets)
 
     for (const currentPlanet of currentPlanets) {
       const natalPlanet = natalPlanets.find(p => p.name === currentPlanet.name)
       if (!natalPlanet) continue
 
       // Aspectos planetários para este planeta
-      const planetaryAspects = this.calculateRealAspects(currentPlanets)
-        .filter(aspect => aspect.planet1 === currentPlanet.name || aspect.planet2 === currentPlanet.name)
+      const planetaryAspects = allAspects.filter(
+        aspect => aspect.planet1 === currentPlanet.name || aspect.planet2 === currentPlanet.name
+      )
 
       // Aspectos com casas
       const houseAspects = this.calculateHouseAspects([currentPlanet], houses)
