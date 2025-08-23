@@ -64,6 +64,7 @@ export interface LifeAreaCalculation {
     houseScore: number
     dignityScore: number
     transitScore: number
+    transitAspects?: Aspect[] // Para auditoria
   }
   confidence: number
   detailedBreakdown: string[]
@@ -279,8 +280,18 @@ export class AstrologyCalculator {
       config.primaryPlanets
     )
 
-    // 5. PONTUAÇÃO DE TRÂNSITOS (placeholder para dados reais)
-    const transitScore = AstrologyCalculator.calculateTransitScore(astrologyData.planets)
+    // 5. PONTUAÇÃO DE TRÂNSITOS (real, usando aspectos de trânsito)
+    // Filtra aspectos de trânsito reais (ex: vindos do backend/Prokerala)
+    const transitAspects = astrologyData.aspects?.filter(a => (a as any).isTransit || (a as any).is_transit || false) || [];
+    console.log(`[AUDIT] Aspectos de trânsito detectados: ${transitAspects.length}`);
+    if (transitAspects.length > 0) {
+      transitAspects.slice(0, 5).forEach((a, i) => {
+        console.log(`[AUDIT] [Exemplo ${i+1}] ${a.planet1} - ${a.planet2} (${a.aspect}), orb: ${a.orb}, applying: ${a.applying}`);
+      });
+    } else {
+      console.log('[AUDIT] Nenhum aspecto de trânsito detectado para o cálculo.');
+    }
+    const transitScore = AstrologyCalculator.calculateTransitScore(transitAspects, config.aspectMultiplier)
 
     // SCORE FINAL COM SISTEMA DE PESOS
     const rawScore = config.baseScore + 
@@ -315,7 +326,8 @@ export class AstrologyCalculator {
         aspectScore,
         houseScore,
         dignityScore,
-        transitScore
+        transitScore,
+        transitAspects // Para auditoria
       },
       confidence,
       detailedBreakdown
@@ -513,10 +525,40 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação de trânsitos (placeholder para dados reais).
    */
-  private static calculateTransitScore(planets: PlanetPosition[]): number {
-    // Por enquanto, usa dados simulados baseados nas posições atuais
-    // No futuro, isso será calculado com trânsitos reais
-    return Math.floor(Math.random() * 10) - 5
+  private static calculateTransitScore(
+    transitAspects: Aspect[],
+    multipliers: Record<string, number> = {}
+  ): number {
+    if (!transitAspects || transitAspects.length === 0) return 0;
+    let score = 0;
+    // Lógica semelhante à dos aspectos natais, mas com peso reduzido
+    transitAspects.forEach(aspect => {
+      const planet1 = normalizePlanet(aspect.planet1);
+      const planet2 = normalizePlanet(aspect.planet2);
+      const aspectName = aspect.aspect.toLowerCase();
+      // Peso e orbe do aspecto
+    const orbMax = ASPECT_ORBS[aspectName as AspectName] || 1;
+    const weight = ASPECT_WEIGHTS[aspectName as AspectName] || 1;
+      const orbFactor = Math.max(0, 1 - (aspect.orb / orbMax));
+      let aspectStrength = 8 * weight * orbFactor; // Peso base menor que aspectos natais
+      // Multiplicadores dos planetas
+      const multiplier1 = multipliers[planet1] || 1;
+      const multiplier2 = multipliers[planet2] || 1;
+      const avgMultiplier = (multiplier1 + multiplier2) / 2;
+      aspectStrength *= avgMultiplier;
+      // Bônus se está aplicando
+      if (aspect.applying) aspectStrength *= 1.1;
+      // Harmônicos vs desafiadores
+      if (["trígono", "sextil", "conjunção"].includes(aspectName)) {
+        score += aspectStrength;
+      } else if (["quadratura", "oposição"].includes(aspectName)) {
+        score -= aspectStrength * 0.7;
+      } else {
+        score += aspectStrength * 0.4;
+      }
+    });
+    // Limitar score para evitar extremos
+    return Math.max(-15, Math.min(15, Math.round(score)));
   }
 
   /**
