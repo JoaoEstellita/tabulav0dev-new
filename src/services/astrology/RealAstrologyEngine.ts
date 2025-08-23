@@ -11,6 +11,7 @@
 
 import * as Astronomy from 'astronomy-engine'
 import aspectsConfig from '../../astro/aspects.config'
+import { normalizePlanet, normalizeSign, normalizeHouse } from '../../astro/normalize'
 import { detectAspects } from '../../astro/aspects.engine'
 import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/transits.utils'
 import { calculatePlanetaryStatus } from '../../astro/planetary-status.engine'
@@ -126,7 +127,7 @@ export interface RealAstrologyData {
   ascendant: number
   midheaven: number
   housesApproximate?: boolean
-  houseSystem?: 'whole'|'equal'|'placidus'
+  houseSystem?: 'equal'|'placidus'
   // Índice Coletivo (T→T) e fase lunar
   collective?: {
     positive: number
@@ -277,7 +278,7 @@ export class RealAstrologyEngine {
     latitude: number,  // localização ATUAL para casas do momento
     longitude: number,
     currentDate?: Date,
-    options?: { houseSystem?: 'whole'|'equal'|'placidus'; natalLat?: number; natalLon?: number }
+  options?: { houseSystem?: 'equal'|'placidus'; natalLat?: number; natalLon?: number }
   ): Promise<RealAstrologyData> {
     console.log('🔬 Iniciando cálculos astrológicos REAIS...')
     
@@ -329,11 +330,11 @@ export class RealAstrologyEngine {
       } catch (_e) {
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
-        const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude, options?.houseSystem)
+  const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude, options?.houseSystem as 'equal'|'placidus'|undefined)
         const natalLat = (typeof options?.natalLat === 'number') ? options!.natalLat! : latitude
         const natalLon = (typeof options?.natalLon === 'number') ? options!.natalLon! : longitude
         const natalPlanetsRaw = await this.calculateRealPlanetPositions(birthDateTime, natalLat, natalLon)
-        const natalHousesLocal = await this.calculateRealHouses(birthDateTime, birthDateTime, natalLat, natalLon, options?.houseSystem)
+  const natalHousesLocal = await this.calculateRealHouses(birthDateTime, birthDateTime, natalLat, natalLon, options?.houseSystem as 'equal'|'placidus'|undefined)
         realPlanets = planetsLocal
         houses = housesLocal
         natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
@@ -823,12 +824,12 @@ export class RealAstrologyEngine {
     _birthDate: Date, 
     latitude: number, 
     longitude: number,
-    houseSystem?: 'whole'|'equal'|'placidus'
+  houseSystem?: 'equal'|'placidus'
   ): Promise<{ cusps: number[], ascendant: number, midheaven: number, approximate?: boolean }> {
     // Delegar para módulo unificado de casas do app (garante monotonicidade e fallback)
     try {
       const { computeHousesUTC } = await import('../../astro/houses')
-      const system = (houseSystem || (globalThis as any).__userHouseSystem || 'placidus') as 'whole'|'equal'|'placidus'
+  const system = (houseSystem || (globalThis as any).__userHouseSystem || 'placidus') as 'equal'|'placidus'
       const res = await computeHousesUTC(currentDate, latitude, longitude, system)
       return { cusps: res.cusps, ascendant: res.asc, midheaven: res.mc, approximate: (res as any).approximate === true }
     } catch (error) {
@@ -853,7 +854,7 @@ export class RealAstrologyEngine {
   /** Índice coletivo do dia (T→T) e fase lunar */
   private static computeCollectiveIndex(aspectsTT: RealAspect[], planets: RealPlanetPosition[]): NonNullable<RealAstrologyData['collective']> {
     const angleOf = (type: string): number => {
-      const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
+  const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
       return def?.angle ?? 0
     }
     const maxOrbForPair = (type: string, p1Name: string, p2Name: string): number => {
@@ -861,14 +862,14 @@ export class RealAstrologyEngine {
       const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
       let eff = def?.baseOrb ?? 5
       const ang = def?.angle ?? angleOf(type)
-      const pa = (aspectsConfig as any).planetAspectOrbs?.[p1Name]?.[ang]
-      const pb = (aspectsConfig as any).planetAspectOrbs?.[p2Name]?.[ang]
+  const pa = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p1Name)]?.[ang]
+  const pb = (aspectsConfig as any).planetAspectOrbs?.[normalizePlanet(p2Name)]?.[ang]
       if (pa !== undefined || pb !== undefined) eff = Math.min(eff, pa ?? eff, pb ?? eff)
-      const ovrA = (aspectsConfig as any).overrides?.[p1Name]?.[p2Name]
-      const ovrB = (aspectsConfig as any).overrides?.[p2Name]?.[p1Name]
+  const ovrA = (aspectsConfig as any).overrides?.[normalizePlanet(p1Name)]?.[normalizePlanet(p2Name)]
+  const ovrB = (aspectsConfig as any).overrides?.[normalizePlanet(p2Name)]?.[normalizePlanet(p1Name)]
       if (ovrA !== undefined || ovrB !== undefined) eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
-      const orbA = (aspectsConfig as any).planetOrbs?.[p1Name]
-      const orbB = (aspectsConfig as any).planetOrbs?.[p2Name]
+  const orbA = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p1Name)]
+  const orbB = (aspectsConfig as any).planetOrbs?.[normalizePlanet(p2Name)]
       if (orbA !== undefined || orbB !== undefined) eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
       return Math.max(0, Math.min(cap, eff))
     }

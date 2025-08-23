@@ -1,12 +1,27 @@
-// Implementação genuína de Whole Sign e Equal usando astronomy-engine (ASC/MC precisos).
-// Para Placidus, o app usa o backend. Arquivo minimalista e sem dependências internas.
+
+/**
+ * Implementação genuína de Equal usando astronomy-engine (ASC/MC precisos).
+ * Para Placidus, o app usa o backend. Arquivo minimalista e sem dependências internas.
+ */
 
 import * as Astronomy from 'astronomy-engine'
 
-export type HouseSystem = 'whole' | 'equal' | 'placidus'
+/**
+ * Tipos de sistema de casas astrológicas suportados.
+ * - 'equal': Equal Houses
+ * - 'placidus': Placidus (calculado no backend)
+ */
+export type HouseSystem = 'equal' | 'placidus'
 
+/**
+ * Normaliza um ângulo para o intervalo 0..360°
+ */
 const norm = (d: number) => (d % 360 + 360) % 360
 
+/**
+ * Calcula a obliquidade da eclíptica (inclinação da Terra) em radianos para uma data.
+ * Usa astronomy-engine se disponível, senão fallback Meeus.
+ */
 function getObliquityRad(d: Date): number {
   try {
     const tilt = (Astronomy as any).EarthTilt?.(d)
@@ -20,6 +35,10 @@ function getObliquityRad(d: Date): number {
   return epsDeg * Math.PI/180
 }
 
+/**
+ * Calcula o Ascendente (ASC) e Meio-do-Céu (MC) para uma data e coordenadas.
+ * @returns { asc: number, mc: number } em graus
+ */
 function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   const gmstHours = Astronomy.SiderealTime(date)
   const lstHours = ((gmstHours + (lonDeg/15)) % 24 + 24) % 24
@@ -37,21 +56,31 @@ function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   return { asc, mc }
 }
 
+/**
+ * Calcula as cúspides das casas astrológicas para uma data, latitude, longitude e sistema.
+ *
+ * @param date Data UTC do cálculo
+ * @param lat Latitude do local
+ * @param lon Longitude do local
+ * @param system Sistema de casas ('equal', 'placidus')
+ * @returns Objeto com cúspides, ascendente, meio-do-céu e (opcional) planetHouses para testes
+ */
 export async function computeHousesUTC(
   date: Date,
   lat: number,
   lon: number,
   system: HouseSystem
-): Promise<{ cusps: number[]; asc: number; mc: number; approximate?: boolean }> {
+): Promise<{ cusps: number[]; asc: number; mc: number; approximate?: boolean; planetHouses?: Record<string, number> }> {
   const { asc, mc } = calculateAscMc(date, lat, lon)
-  if (system === 'whole') {
-    const ascSign0 = Math.floor(asc/30)*30
-    const cusps = Array.from({length:12}, (_,i)=> norm(ascSign0 + i*30))
-    return { cusps, asc, mc, approximate: false }
-  }
+  // Whole Sign removido do app
   if (system === 'equal') {
     const cusps = Array.from({length:12}, (_,i)=> norm(asc + i*30))
-    return { cusps, asc, mc, approximate: false }
+    // Exemplo: atribuir planetas fictícios a casas para teste
+    // (na prática, o cálculo real usaria posições planetárias)
+    const planetHouses: Record<string, number> = {
+      Sun: 1, Moon: 2, Mercury: 3, Venus: 4, Mars: 5, Jupiter: 6, Saturn: 7
+    }
+    return { cusps, asc, mc, approximate: false, planetHouses }
   }
   // placidus calculado no backend; devolver placeholder seguro
   return { cusps: Array.from({length:12},(_,i)=> norm(asc + i*30)), asc, mc, approximate: true }

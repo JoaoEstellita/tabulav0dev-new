@@ -1,3 +1,4 @@
+import { normalizePlanet, normalizeSign, normalizeHouse } from '../../astro/normalize';
 import axios from 'axios'
 import AstrologyCalculator, { AstrologyData } from '../astrology/AstrologyCalculator'
 import AstrologyCacheService, { CacheStatus } from '../astrology/AstrologyCacheService'
@@ -470,8 +471,8 @@ class TransitService {
     
     const relevantPlanets = areaMapping[areaName] || []
     return relevantPlanets.some(planet => 
-      aspect.planet1.toLowerCase().includes(planet) || 
-      aspect.planet2.toLowerCase().includes(planet)
+      normalizePlanet(aspect.planet1).toLowerCase().includes(normalizePlanet(planet).toLowerCase()) || 
+      normalizePlanet(aspect.planet2).toLowerCase().includes(normalizePlanet(planet).toLowerCase())
     )
   }
 

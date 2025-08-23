@@ -1,8 +1,19 @@
+import { normalizePlanet, normalizeSign, normalizeHouse } from '../../astro/normalize';
+import { ASPECT_ORBS, ASPECT_WEIGHTS } from '../../astro/aspect-config';
+import type { AspectName } from '../../astro/aspects.types';
 import type { BirthData } from "../../screens/onboarding/BirthDataForm"
 
-// ✨ SISTEMA AVANÇADO DE PRECISÃO ASTROLÓGICA
-// Baseado em técnicas profissionais de Astrosignature
 
+/**
+ * ✨ SISTEMA AVANÇADO DE PRECISÃO ASTROLÓGICA
+ * Baseado em técnicas profissionais de Astrosignature
+ *
+ * Este módulo centraliza o cálculo de áreas da vida, dignidades, aspectos e parser de dados externos.
+ */
+
+/**
+ * Representa a posição de um planeta no mapa astrológico.
+ */
 export interface PlanetPosition {
   name: string
   longitude: number
@@ -14,6 +25,9 @@ export interface PlanetPosition {
   retrograde: boolean
 }
 
+/**
+ * Representa um aspecto astrológico entre dois planetas.
+ */
 export interface Aspect {
   planet1: string
   planet2: string
@@ -24,6 +38,9 @@ export interface Aspect {
   strength: number // 0-10
 }
 
+/**
+ * Estrutura de dados astrológicos padronizada para cálculos internos.
+ */
 export interface AstrologyData {
   planets: PlanetPosition[]
   aspects: Aspect[]
@@ -34,6 +51,9 @@ export interface AstrologyData {
   }[]
 }
 
+/**
+ * Resultado do cálculo de uma área da vida.
+ */
 export interface LifeAreaCalculation {
   name: string
   rawScore: number
@@ -104,18 +124,29 @@ const PLANETARY_DIGNITIES: Record<string, Record<string, number>> = {
   }
 }
 
-// ASPECTOS E SUAS FORÇAS (com orbes tradicionais)
-const ASPECT_CONFIG = {
-  conjunction: { degrees: 0, orb: 8, strength: 10 },
-  opposition: { degrees: 180, orb: 8, strength: 8 },
-  trine: { degrees: 120, orb: 8, strength: 9 },
-  square: { degrees: 90, orb: 7, strength: 7 },
-  sextile: { degrees: 60, orb: 6, strength: 6 },
-  semisextile: { degrees: 30, orb: 3, strength: 3 },
-  semisquare: { degrees: 45, orb: 3, strength: 4 },
-  sesquiquadrate: { degrees: 135, orb: 3, strength: 4 },
-  quincunx: { degrees: 150, orb: 3, strength: 3 }
-}
+
+// Mapeamento de nomes de aspectos em inglês para o padrão do app (português)
+const ASPECT_NAME_MAP: Record<string, AspectName> = {
+  conjunction: 'conjunção',
+  opposition: 'oposição',
+  trine: 'trígono',
+  square: 'quadratura',
+  sextile: 'sextil',
+  quincunx: 'quincúncio',
+  semisextile: 'semissextil',
+  semisquare: 'semiquadratura',
+  sesquiquadrate: 'sesquiquadratura',
+  // fallback para nomes já em português
+  'conjunção': 'conjunção',
+  'oposição': 'oposição',
+  'trígono': 'trígono',
+  'quadratura': 'quadratura',
+  'sextil': 'sextil',
+  'quincúncio': 'quincúncio',
+  'semissextil': 'semissextil',
+  'semiquadratura': 'semiquadratura',
+  'sesquiquadratura': 'sesquiquadratura',
+};
 
 // ÁREAS DA VIDA E SUAS CORRESPONDÊNCIAS ASTROLÓGICAS
 const LIFE_AREAS_CONFIG = {
@@ -194,10 +225,20 @@ const LIFE_AREAS_CONFIG = {
   }
 }
 
+/**
+ * Centralizador dos cálculos astrológicos avançados do app.
+ * Inclui métodos para cálculo de áreas da vida, parser de dados externos e breakdown detalhado.
+ */
 export class AstrologyCalculator {
   
   /**
    * Calcula o status de uma área da vida usando dados astrológicos reais
+   */
+  /**
+   * Calcula o status de uma área da vida usando dados astrológicos reais.
+   * @param areaName Nome da área (ex: 'love', 'career')
+   * @param astrologyData Dados astrológicos padronizados
+   * @returns Resultado detalhado do cálculo da área
    */
   static calculateLifeAreaStatus(
     areaName: keyof typeof LIFE_AREAS_CONFIG,
@@ -284,6 +325,9 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação planetária baseada em posições e dignidades
    */
+  /**
+   * Calcula pontuação planetária baseada em posições e dignidades.
+   */
   private static calculatePlanetaryScore(
     planets: PlanetPosition[],
     primaryPlanets: string[],
@@ -292,11 +336,12 @@ export class AstrologyCalculator {
   ): number {
     let score = 0
 
+
     planets.forEach(planet => {
-      const planetName = planet.name.toLowerCase()
+      const planetName = normalizePlanet(planet.name)
       const multiplier = multipliers[planetName] || 1
 
-      if (primaryPlanets.includes(planetName)) {
+      if (primaryPlanets.map(normalizePlanet).includes(planetName)) {
         // Planeta primário tem peso maior
         let planetScore = 8 * multiplier
 
@@ -310,8 +355,7 @@ export class AstrologyCalculator {
         planetScore *= speedFactor
 
         score += planetScore
-        
-      } else if (secondaryPlanets.includes(planetName)) {
+      } else if (secondaryPlanets.map(normalizePlanet).includes(planetName)) {
         // Planeta secundário tem peso menor
         let planetScore = 4 * multiplier
 
@@ -328,6 +372,9 @@ export class AstrologyCalculator {
 
   /**
    * Calcula fator de velocidade planetária
+   */
+  /**
+   * Calcula fator de velocidade planetária para ajuste de força.
    */
   private static calculateSpeedFactor(planet: PlanetPosition): number {
     const speedRanges = {
@@ -363,6 +410,9 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação dos aspectos com orbes precisos
    */
+  /**
+   * Calcula pontuação dos aspectos com orbes precisos.
+   */
   private static calculateAspectScore(
     aspects: Aspect[],
     relevantPlanets: string[],
@@ -370,51 +420,48 @@ export class AstrologyCalculator {
   ): number {
     let score = 0
 
+
     aspects.forEach(aspect => {
-      const planet1 = aspect.planet1.toLowerCase()
-      const planet2 = aspect.planet2.toLowerCase()
-      
+      const planet1 = normalizePlanet(aspect.planet1)
+      const planet2 = normalizePlanet(aspect.planet2)
+      // Converte nome do aspecto para padrão do app
+      const aspectName = ASPECT_NAME_MAP[aspect.aspect.toLowerCase()] || aspect.aspect.toLowerCase();
       // Verifica se pelo menos um planeta é relevante
-      const isRelevant = relevantPlanets.includes(planet1) || relevantPlanets.includes(planet2)
-      
-      if (isRelevant) {
-        const aspectConfig = ASPECT_CONFIG[aspect.aspect as keyof typeof ASPECT_CONFIG]
-        if (!aspectConfig) return
-
-        // Calcula força baseada no orbe
-        const orbFactor = Math.max(0, 1 - (aspect.orb / aspectConfig.orb))
-        
-        // Força base do aspecto
-        let aspectStrength = aspectConfig.strength * orbFactor
-
+      const isRelevant = relevantPlanets.map(normalizePlanet).includes(planet1) || relevantPlanets.map(normalizePlanet).includes(planet2)
+      if (isRelevant && ASPECT_ORBS[aspectName as AspectName]) {
+        // Força base do aspecto (usando peso do config global)
+        const orbMax = ASPECT_ORBS[aspectName as AspectName] || 1;
+        const weight = ASPECT_WEIGHTS[aspectName as AspectName] || 1;
+        const orbFactor = Math.max(0, 1 - (aspect.orb / orbMax));
+        let aspectStrength = 10 * weight * orbFactor;
         // Aplica multiplicadores dos planetas
-        const multiplier1 = multipliers[planet1] || 1
-        const multiplier2 = multipliers[planet2] || 1
-        const avgMultiplier = (multiplier1 + multiplier2) / 2
-
-        aspectStrength *= avgMultiplier
-
+        const multiplier1 = multipliers[planet1] || 1;
+        const multiplier2 = multipliers[planet2] || 1;
+        const avgMultiplier = (multiplier1 + multiplier2) / 2;
+        aspectStrength *= avgMultiplier;
         // Bônus se está aplicando
         if (aspect.applying) {
-          aspectStrength *= 1.2
+          aspectStrength *= 1.2;
         }
-
         // Aspectos harmônicos vs desafiadores
-        if (['trine', 'sextile', 'conjunction'].includes(aspect.aspect)) {
-          score += aspectStrength
-        } else if (['square', 'opposition'].includes(aspect.aspect)) {
-          score -= aspectStrength * 0.6 // Desafiadores são menos negativos
+        if (['trígono', 'sextil', 'conjunção'].includes(aspectName)) {
+          score += aspectStrength;
+        } else if (['quadratura', 'oposição'].includes(aspectName)) {
+          score -= aspectStrength * 0.6; // Desafiadores são menos negativos
         } else {
-          score += aspectStrength * 0.5 // Aspectos menores
+          score += aspectStrength * 0.5; // Aspectos menores
         }
       }
-    })
+    });
 
     return Math.min(30, Math.max(-30, score))
   }
 
   /**
    * Calcula pontuação das casas astrológicas
+   */
+  /**
+   * Calcula pontuação das casas astrológicas.
    */
   private static calculateHouseScore(
     planets: PlanetPosition[],
@@ -424,9 +471,8 @@ export class AstrologyCalculator {
     let score = 0
 
     planets.forEach(planet => {
-      const planetName = planet.name.toLowerCase()
-      
-      if (relevantPlanets.includes(planetName) && relevantHouses.includes(planet.house)) {
+      const planetName = normalizePlanet(planet.name)
+      if (relevantPlanets.map(normalizePlanet).includes(planetName) && relevantHouses.includes(planet.house)) {
         // Planeta relevante em casa relevante = bônus
         score += 6
       }
@@ -438,6 +484,9 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação de dignidade planetária
    */
+  /**
+   * Calcula pontuação de dignidade planetária.
+   */
   private static calculateDignityScore(
     planets: PlanetPosition[],
     relevantPlanets: string[]
@@ -445,12 +494,10 @@ export class AstrologyCalculator {
     let score = 0
 
     planets.forEach(planet => {
-      const planetName = planet.name.toLowerCase()
-      
-      if (relevantPlanets.includes(planetName)) {
-        const signName = planet.sign.toLowerCase()
+      const planetName = normalizePlanet(planet.name)
+      if (relevantPlanets.map(normalizePlanet).includes(planetName)) {
+        const signName = normalizeSign(planet.sign)
         const dignities = PLANETARY_DIGNITIES[planetName]
-        
         if (dignities && dignities[signName]) {
           score += dignities[signName] * 2 // Multiplica por 2 para dar mais peso
         }
@@ -463,6 +510,9 @@ export class AstrologyCalculator {
   /**
    * Calcula pontuação de trânsitos (placeholder para dados reais)
    */
+  /**
+   * Calcula pontuação de trânsitos (placeholder para dados reais).
+   */
   private static calculateTransitScore(planets: PlanetPosition[]): number {
     // Por enquanto, usa dados simulados baseados nas posições atuais
     // No futuro, isso será calculado com trânsitos reais
@@ -471,6 +521,9 @@ export class AstrologyCalculator {
 
   /**
    * Calcula confiança baseada na quantidade de dados disponíveis
+   */
+  /**
+   * Calcula confiança baseada na quantidade de dados disponíveis.
    */
   private static calculateConfidence(
     astrologyData: AstrologyData,
@@ -483,7 +536,7 @@ export class AstrologyCalculator {
     config.primaryPlanets.forEach((planetName: string) => {
       maxDataPoints += 2
       const planet = astrologyData.planets.find(p => 
-        p.name.toLowerCase() === planetName
+        normalizePlanet(p.name) === normalizePlanet(planetName)
       )
       if (planet) {
         dataPoints += 1
@@ -505,6 +558,9 @@ export class AstrologyCalculator {
   /**
    * Gera breakdown detalhado dos cálculos
    */
+  /**
+   * Gera breakdown detalhado dos cálculos.
+   */
   private static generateDetailedBreakdown(
     factors: any,
     areaName: string
@@ -524,11 +580,16 @@ export class AstrologyCalculator {
   /**
    * Converte dados da API Prokerala para formato interno
    */
+  /**
+   * Converte dados da API Prokerala para formato interno padronizado.
+   * @param prokeralaData Dados brutos da API externa
+   * @returns Dados astrológicos padronizados
+   */
   static convertProkeralaData(prokeralaData: any): AstrologyData {
     // Conversão dos dados da Prokerala para formato padronizado
     const planets: PlanetPosition[] = []
     const aspects: Aspect[] = []
-    const houses = []
+  const houses: { number: number; sign: string; cusp: number }[] = []
 
     console.log('🔍 Convertendo dados da Prokerala:', {
       hasTransitDetails: !!(prokeralaData.transit_details),
@@ -609,11 +670,11 @@ export class AstrologyCalculator {
       planetData.forEach((planet: any, index: number) => {
         // Baseado nos logs reais, a estrutura é:
         // { name: "Sun", longitude: 123.45, latitude: 0, speed: 1.0, sign: { name: "Leo" }, house: { number: 5 } }
-        const planetName = planet.name || planet.planet || 'Unknown'
+        const planetName = normalizePlanet(planet.name || planet.planet || 'Unknown')
         const longitude = planet.longitude || planet.long || 0
         const latitude = planet.latitude || planet.lat || 0
         const speed = planet.speed || planet.velocity || 0
-        const signName = planet.sign?.name || planet.sign || 'Unknown'
+        const signName = normalizeSign(planet.sign?.name || planet.sign || 'Unknown')
         const houseNumber = planet.house?.number || planet.house || 1
         
         console.log(`📍 Planeta ${index + 1}: ${planetName} em ${signName} (casa ${houseNumber})`)
@@ -635,10 +696,9 @@ export class AstrologyCalculator {
 
     // Adiciona dignidades baseadas nos signos
     planets.forEach(planet => {
-      const planetName = planet.name.toLowerCase()
-      const signName = planet.sign.toLowerCase()
+      const planetName = normalizePlanet(planet.name)
+      const signName = normalizeSign(planet.sign)
       const dignities = PLANETARY_DIGNITIES[planetName]
-      
       if (dignities && dignities[signName]) {
         planet.dignity = dignities[signName]
       }
@@ -754,12 +814,14 @@ export class AstrologyCalculator {
       aspectData.forEach((aspect: any) => {
         // Baseado nos logs reais, a estrutura é:
         // { planet_one: { name: "Sun" }, planet_two: { name: "Moon" }, aspect: { name: "Conjunction" }, orb: 1.5 }
-        const planet1 = aspect.planet_one?.name || aspect.planet1?.name || aspect.planet_1?.name || 'Unknown'
-        const planet2 = aspect.planet_two?.name || aspect.planet2?.name || aspect.planet_2?.name || 'Unknown'
-        const aspectType = aspect.aspect?.name || aspect.aspect_name || aspect.aspect || 'unknown'
-        const orb = aspect.orb || aspect.orb_value || 0
+        const planet1 = normalizePlanet(aspect.planet_one?.name || aspect.planet1?.name || aspect.planet_1?.name || 'Unknown')
+        const planet2 = normalizePlanet(aspect.planet_two?.name || aspect.planet2?.name || aspect.planet_2?.name || 'Unknown')
+        // Converte nome do aspecto para padrão do app
+        const aspectTypeRaw = (aspect.aspect?.name || aspect.aspect_name || aspect.aspect || 'unknown').toLowerCase();
+        const aspectType = ASPECT_NAME_MAP[aspectTypeRaw] || aspectTypeRaw;
+        const orb = aspect.orb || aspect.orb_value || 0;
         
-        console.log(`🔗 Aspecto: ${planet1}-${planet2} ${aspectType} (orb: ${orb})`)
+        console.log(`🔗 Aspecto: ${planet1}-${planet2} ${aspectType} (orb: ${orb})`);
         
         aspects.push({
           planet1,
@@ -769,8 +831,8 @@ export class AstrologyCalculator {
           exact: aspect.exact || aspect.exact_aspect || 0,
           applying: aspect.is_applying || aspect.applying || false,
           strength: Math.max(0, 10 - orb) // Força baseada no orb
-        })
-      })
+        });
+      });
     }
 
     console.log(`✅ Conversão concluída: ${planets.length} planetas, ${aspects.length} aspectos`)
@@ -783,7 +845,7 @@ export class AstrologyCalculator {
       console.log(`🔗 Aspectos processados: ${aspects.map(a => `${a.planet1}-${a.planet2}(${a.aspect})`).slice(0, 3).join(', ')}`)
     }
 
-    return { planets, aspects, houses }
+  return { planets, aspects, houses }
   }
 }
 

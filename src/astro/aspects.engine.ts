@@ -1,3 +1,4 @@
+import { normalizePlanet } from './normalize';
 import { AspectInputBody, DetectedAspect, AspectsConfig, AspectName } from './aspects.types'
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -9,23 +10,25 @@ function angularSeparation(a: number, b: number): number {
 
 function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBody, baseOrb: number, angle: number): number {
   const cap = config.maxOrbCap ?? 12
-  // Base do aspecto
   let eff = baseOrb
+  // Normalizar nomes para garantir busca correta
+  const aName = normalizePlanet(a.name)
+  const bName = normalizePlanet(b.name)
   // Planet-specific por aspecto (se disponível)
-  const pa = config.planetAspectOrbs?.[a.name]?.[angle]
-  const pb = config.planetAspectOrbs?.[b.name]?.[angle]
+  const pa = config.planetAspectOrbs?.[aName]?.[angle]
+  const pb = config.planetAspectOrbs?.[bName]?.[angle]
   if (pa !== undefined || pb !== undefined) {
     eff = Math.min(eff, pa ?? eff, pb ?? eff)
   }
   // Overrides específicos por par (compatibilidade legada)
-  const ovrA = config.overrides?.[a.name]?.[b.name]
-  const ovrB = config.overrides?.[b.name]?.[a.name]
+  const ovrA = config.overrides?.[aName]?.[bName]
+  const ovrB = config.overrides?.[bName]?.[aName]
   if (ovrA !== undefined || ovrB !== undefined) {
     eff = Math.min(eff, ovrA ?? eff, ovrB ?? eff)
   }
   // planetOrbs legado (cap global por planeta)
-  const orbA = config.planetOrbs?.[a.name]
-  const orbB = config.planetOrbs?.[b.name]
+  const orbA = config.planetOrbs?.[aName]
+  const orbB = config.planetOrbs?.[bName]
   if (orbA !== undefined || orbB !== undefined) {
     eff = Math.min(eff, orbA ?? eff, orbB ?? eff)
   }
