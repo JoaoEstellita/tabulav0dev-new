@@ -152,8 +152,9 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
   { sign: 'Gêmeos' as SignName, house: 3, expectedStrength: 1 }, // Cadente
   { sign: 'Câncer' as SignName, house: 4, expectedStrength: 5 }, // Angular
   { sign: 'Leão' as SignName, house: 5, expectedStrength: 3 }, // Sucedente
-  { sign: 'Virgem' as SignName, house: 6, expectedStrength: 1 }, // Cadente
-  { sign: 'Peixes' as SignName, house: 12, expectedStrength: 1 }, // Cadente (antes era -5)
+  { sign: 'Virgem' as SignName, house: 6, expectedStrength: -1 }, // Cadente (desafiadora)
+  { sign: 'Escorpião' as SignName, house: 8, expectedStrength: 0 }, // Sucedente (neutra/desafiadora)
+  { sign: 'Peixes' as SignName, house: 12, expectedStrength: -2 }, // Cadente (desafiadora)
     ]
     
     testCases.forEach(({ sign, house, expectedStrength }) => {

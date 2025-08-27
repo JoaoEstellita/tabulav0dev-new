@@ -121,12 +121,12 @@ export const HOUSE_STRENGTH_SYSTEM = {
   // Casas Sucedentes (força média)
   2: { strength: 3, category: 'succedent', description: 'Valores e recursos' },
   5: { strength: 3, category: 'succedent', description: 'Criatividade e autoexpressão' },
-  8: { strength: 2, category: 'succedent', description: 'Transformação e recursos compartilhados' },
   11: { strength: 4, category: 'succedent', description: 'Amizades e aspirações' },
   
   // Casas Cadentes (força reduzida, mas nunca negativa)
   3: { strength: 1, category: 'cadent', description: 'Comunicação e aprendizado' },
-  6: { strength: 1, category: 'cadent', description: 'Trabalho e saúde' },
   9: { strength: 2, category: 'cadent', description: 'Expansão e filosofia' },
-  12: { strength: 1, category: 'cadent', description: 'Subconsciente e espiritualidade' }
+    8: { strength: 0, category: 'succedent', description: 'Transformação e recursos compartilhados (neutra/desafiadora)' },
+    6: { strength: -1, category: 'cadent', description: 'Trabalho e saúde (desafiadora)' },
+    12: { strength: -2, category: 'cadent', description: 'Subconsciente e espiritualidade (desafiadora)' }
 }

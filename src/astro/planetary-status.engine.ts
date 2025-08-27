@@ -68,19 +68,27 @@ export function calculateSignHouseHarmony(planetSign: SignName, houseNumber: num
   
   // Planeta no signo natural da casa = máxima harmonia
   if (planetSign === naturalSign) return 3
-  
+
   // Verificar compatibilidade elementar
   const planetElement = ELEMENTAL_MODALITY_SYSTEM[planetSign]?.element
   const houseElement = ELEMENTAL_MODALITY_SYSTEM[naturalSign]?.element
-  
+
   if (planetElement === houseElement) return 2
-  
+  if (planetElement && houseElement && planetElement !== houseElement) {
+    // Penalidade explícita para desarmonia elementar
+    return -1
+  }
+
   // Verificar compatibilidade modal
   const planetModality = ELEMENTAL_MODALITY_SYSTEM[planetSign]?.modality
   const houseModality = ELEMENTAL_MODALITY_SYSTEM[naturalSign]?.modality
-  
+
   if (planetModality === houseModality) return 1
-  
+  if (planetModality && houseModality && planetModality !== houseModality) {
+    // Penalidade leve para desarmonia modal
+    return -0.5
+  }
+
   return 0
 }
 
@@ -121,10 +129,10 @@ export function calculateAspectStrength(planet: PlanetName, aspects: DetectedAsp
     }
   }
 
-  // Limitar a soma dos aspectos menores para nunca ultrapassar a dos maiores
-  const minorCapped = Math.min(minorTotal, majorTotal)
+  // Limitar a soma dos aspectos menores para nunca ultrapassar o peso de um trígono
+  // Isso evita que muitos aspectos menores distorçam o resultado
+  const minorCapped = Math.min(minorTotal, ASPECT_WEIGHTS['trígono'])
 
-  // Documentação: a força total dos aspectos é a soma dos maiores + menores (limitados)
   return majorTotal + minorCapped
 }
 
@@ -173,26 +181,26 @@ export function calculateSpecialConditions(
   // Retrógrado: energia internalizada (pode ser positiva ou negativa)
   if (isRetrograde) {
     // Dependendo do planeta, retrógrado pode ser benéfico
-    const retrogradePlanets: PlanetName[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
+    const retrogradePlanets: PlanetName[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'] as PlanetName[];
     if (retrogradePlanets.includes(planet)) {
-      total -= 0.5 // Leve enfraquecimento
+      total -= 0.3 // Penalidade mais leve
     } else {
-      total -= 1 // Enfraquecimento padrão
+      total -= 0.7 // Penalidade moderada
     }
   }
-  
+
   // Velocidade muito baixa: planeta estacionário (mais forte)
-  if (Math.abs(speed) < 0.1) total += 2
-  
+  if (Math.abs(speed) < 0.1) total += 1.5
+
   // Velocidade muito alta: planeta em movimento rápido
-  if (Math.abs(speed) > 2.0) total += 1
-  
+  if (Math.abs(speed) > 2.0) total += 0.7
+
   // Velocidade moderada: planeta em ritmo normal
-  if (Math.abs(speed) >= 0.1 && Math.abs(speed) <= 1.0) total += 0.5
-  
+  if (Math.abs(speed) >= 0.1 && Math.abs(speed) <= 1.0) total += 0.3
+
   // Condições especiais por planeta
   total += calculatePlanetSpecificConditions(planet, aspects)
-  
+
   return total
 }
 
@@ -239,26 +247,28 @@ function calculatePlanetSpecificConditions(planet: PlanetName, aspects: Detected
     }
   }
   
-  // Planetas pessoais: aspectos entre si
-  const personalPlanets = ['Mercury', 'Venus', 'Mars']
+  // Planetas pessoais: aspectos entre si (teto máximo de 1.2)
+  const personalPlanets: PlanetName[] = ['Mercury', 'Venus', 'Mars'] as PlanetName[];
   if (personalPlanets.includes(planet)) {
     const personalAspects = aspects.filter(a => 
       (a.planet1 === planet || a.planet2 === planet) &&
-      personalPlanets.includes(a.planet1 === planet ? a.planet2 : a.planet1)
+      personalPlanets.includes((a.planet1 === planet ? a.planet2 : a.planet1) as PlanetName)
     )
-    total += personalAspects.length * 0.3
+    const bonus = Math.min(personalAspects.length * 0.3, 1.2)
+    total += bonus
   }
-  
-  // Planetas sociais: aspectos com luminares
-  const socialPlanets = ['Jupiter', 'Saturn']
+
+  // Planetas sociais: aspectos com luminares (teto máximo de 1.2)
+  const socialPlanets: PlanetName[] = ['Jupiter', 'Saturn'] as PlanetName[];
   if (socialPlanets.includes(planet)) {
     const luminaryAspects = aspects.filter(a => 
       (a.planet1 === planet || a.planet2 === planet) &&
       (a.planet1 === 'Sun' || a.planet2 === 'Sun' || a.planet1 === 'Moon' || a.planet2 === 'Moon')
     )
-    total += luminaryAspects.length * 0.4
+    const bonus = Math.min(luminaryAspects.length * 0.4, 1.2)
+    total += bonus
   }
-  
+
   return total
 }
 
@@ -293,14 +303,14 @@ export function calculatePlanetaryStatus(
   // 6. Condições especiais (estado do planeta) - peso médio
   const specialConditions = calculateSpecialConditions(planet, aspects, isRetrograde, speed)
   
-  // 7. Total ponderado (soma balanceada com pesos ajustados)
-  // Usar pesos que mantenham a proporção mas resultem em scores na escala correta
-  const total = (essential * 0.8) + 
-                (houseStrength * 0.8) + 
-                (signHouseHarmony * 0.6) + 
+  // 7. Total ponderado (soma balanceada com pesos revisados)
+  // Pesos ajustados para maior equilíbrio entre fatores
+  const total = (essential * 0.6) + 
+                (houseStrength * 0.6) + 
+                (signHouseHarmony * 0.5) + 
                 (elementalStrength * 0.4) + 
                 (aspectStrength * 0.6) + 
-                (specialConditions * 0.4)
+                (specialConditions * 0.5)
   
   // 8. Classificação do status (sistema refinado)
   const level = classifyPlanetaryStatus(total)
@@ -321,8 +331,8 @@ export function calculatePlanetaryStatus(
       elementalStrength,
       aspectStrength,
       specialConditions,
-      // total agora reflete exatamente o cálculo do score, com pesos
-      total: (essential * 1.0) + (houseStrength * 0.8) + (signHouseHarmony * 0.6) + (elementalStrength * 0.4) + (aspectStrength * 0.6) + (specialConditions * 0.4)
+      // total agora reflete exatamente o cálculo do score, com os novos pesos
+      total: (essential * 0.6) + (houseStrength * 0.6) + (signHouseHarmony * 0.5) + (elementalStrength * 0.4) + (aspectStrength * 0.6) + (specialConditions * 0.5)
     },
     interpretation,
     aspectAnalysis
@@ -379,7 +389,7 @@ function analyzePlanetAspects(planet: PlanetName, aspects: DetectedAspect[]): {
  * Sistema de 6 níveis para precisão astrológica
  */
 function classifyPlanetaryStatus(score: number): PlanetaryStatusLevel {
-  if (score >= 11) return 'Muito Forte'
+  if (score >= 10) return 'Muito Forte'
   if (score >= 7) return 'Forte'
   if (score >= 3) return 'Moderado'
   if (score >= 0) return 'Neutro'
