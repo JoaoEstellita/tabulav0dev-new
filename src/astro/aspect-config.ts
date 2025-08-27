@@ -10,19 +10,13 @@
 //
 // Normalização: soma dos menores nunca ultrapassa a dos maiores (ver planetary-status.engine.ts)
 // ============================================================================
-import { AspectName } from './aspects.types';
 
-export const ASPECT_ORBS: Record<AspectName, number> = {
-  'conjunção': 8,
-  'oposição': 8,
-  'trígono': 6,
-  'quadratura': 6,
-  'sextil': 4,
-  'quincúncio': 3,
-  'semissextil': 2,
-  'semiquadratura': 2,
-  'sesquiquadratura': 2,
-};
+import aspectsConfig from './aspects.config';
+
+// Deriva ASPECT_ORBS da config principal para evitar duplicidade
+export const ASPECT_ORBS: Record<AspectName, number> = Object.fromEntries(
+  aspectsConfig.aspects.map(a => [a.name, a.baseOrb])
+);
 
 export const ASPECT_WEIGHTS: Record<AspectName, number> = {
   'conjunção': 1.0,

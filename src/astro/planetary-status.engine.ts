@@ -28,7 +28,6 @@ import { ASPECT_WEIGHTS } from './aspect-config';
 import { EssentialDignity, PlanetaryScore, PlanetaryStatus, PlanetaryStatusLevel, PlanetName, SignName } from './planetary-status.types'
 import { ESSENTIAL_DIGNITIES_LOOKUP, ELEMENTAL_MODALITY_SYSTEM, HOUSE_STRENGTH_SYSTEM } from './planetary-status.config'
 import { DetectedAspect, AspectName } from './aspects.types'
-import { detectAspects } from './aspects.engine'
 import aspectsConfig from './aspects.config'
 
 /**
@@ -135,7 +134,7 @@ export function calculateAspectStrength(planet: PlanetName, aspects: DetectedAsp
  */
 function calculateAspectValue(aspect: DetectedAspect): number {
   // Usar pesos centralizados do aspect-config
-  const baseValue = ASPECT_WEIGHTS[aspect.type as import('./aspects.types').AspectName] || 0
+  const baseValue = ASPECT_WEIGHTS[aspect.type] || 0
   
   // Fator de orbe: orbe menor = mais forte (baseado na configuração)
   const maxOrb = getMaxOrbForAspect(aspect.type)
@@ -174,7 +173,7 @@ export function calculateSpecialConditions(
   // Retrógrado: energia internalizada (pode ser positiva ou negativa)
   if (isRetrograde) {
     // Dependendo do planeta, retrógrado pode ser benéfico
-    const retrogradePlanets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
+    const retrogradePlanets: PlanetName[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
     if (retrogradePlanets.includes(planet)) {
       total -= 0.5 // Leve enfraquecimento
     } else {
@@ -322,7 +321,8 @@ export function calculatePlanetaryStatus(
       elementalStrength,
       aspectStrength,
       specialConditions,
-      total: essential + houseStrength + signHouseHarmony + elementalStrength + aspectStrength + specialConditions
+      // total agora reflete exatamente o cálculo do score, com pesos
+      total: (essential * 1.0) + (houseStrength * 0.8) + (signHouseHarmony * 0.6) + (elementalStrength * 0.4) + (aspectStrength * 0.6) + (specialConditions * 0.4)
     },
     interpretation,
     aspectAnalysis
