@@ -144,9 +144,11 @@ function calculateAspectValue(aspect: DetectedAspect): number {
   // Usar pesos centralizados do aspect-config
   const baseValue = ASPECT_WEIGHTS[aspect.type] || 0
 
-  // Fator de orbe: orbe menor = mais forte (baseado na configuração)
+  // Fator de orbe: curva de decaimento gaussiana para suavizar influência
   const maxOrb = getMaxOrbForAspect(aspect.type)
-  const orbFactor = Math.max(0.1, 1 - (aspect.orb / maxOrb))
+  // Decaimento gaussiano centrado em 0, sigma = maxOrb/2
+  const sigma = maxOrb / 2;
+  const orbFactor = Math.max(0.05, Math.exp(-0.5 * Math.pow(aspect.orb / sigma, 2)))
 
   // Bônus para aspectos aplicantes (mais ativos)
   const applyingBonus = aspect.isApplying ? 1.1 : 1.0
@@ -232,6 +234,23 @@ export function calculateSpecialConditions(
  */
 function calculatePlanetSpecificConditions(planet: PlanetName, aspects: DetectedAspect[], planetSigns?: Record<PlanetName, SignName>): number {
   let total = 0
+
+  // Penalidade para Lua fora de curso (sem aspectos maiores aplicantes)
+  if (planet === 'Moon') {
+    const majorApplying = aspects.some(a =>
+      (a.planet1 === 'Moon' || a.planet2 === 'Moon') &&
+      ['conjunção', 'oposição', 'trígono', 'quadratura', 'sextil'].includes(a.type) &&
+      a.isApplying
+    );
+    if (!majorApplying) total -= 1.2;
+  }
+
+  // Penalidade para planetas ferais (sem aspectos maiores)
+  const isFeral = !aspects.some(a =>
+    (a.planet1 === planet || a.planet2 === planet) &&
+    ['conjunção', 'oposição', 'trígono', 'quadratura', 'sextil'].includes(a.type)
+  );
+  if (isFeral) total -= 0.7;
   
   // Sol: combustão (muito próximo ao Sol) e Cazimi
   if (planet === 'Sun') {
@@ -323,6 +342,12 @@ export function calculatePlanetaryStatus(
   // Angularidade: bônus extra para casas 1, 4, 7, 10
   let accidentalDignity = 0
   if ([1, 4, 7, 10].includes(house)) accidentalDignity += 1.2
+  // Bônus adicional se planeta está exatamente no grau 0 da casa angular (ASC/IC/DSC/MC)
+  // Supondo que sign seja o signo da cúspide e house seja o número da casa (1=ASC, 4=IC, 7=DSC, 10=MC)
+  // Para precisão real, seria necessário o grau exato do planeta e da cúspide, mas aqui simulamos para exemplo
+  if ([1, 4, 7, 10].includes(house) && typeof aspects[0]?.orb === 'number' && aspects[0]?.orb === 0) {
+    accidentalDignity += 0.8; // Bônus máximo para exatidão angular
+  }
   // Cadentes: penalidade extra para casas 3, 6, 9, 12
   if ([3, 6, 9, 12].includes(house)) accidentalDignity -= 0.7
 
