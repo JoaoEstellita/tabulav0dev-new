@@ -1,3 +1,4 @@
+import { ASPECT_WEIGHTS } from './aspect-config';
 import { normalizePlanet } from './normalize';
 import { AspectInputBody, DetectedAspect, AspectsConfig, AspectName } from './aspects.types'
 
@@ -62,20 +63,8 @@ export function detectAspects(setA: AspectInputBody[], setB: AspectInputBody[], 
           const proximity = clamp(1 - (orb / (orbAllowed || 1)), 0, 1)
           const type = def.name as AspectName
           const applying = isApplying(A, B, def.angle)
-          // Peso simples por tipo
-          const weight: Record<AspectName, number> = {
-            'conjunção': 1.0,
-            'oposição': 0.9,
-            'quadratura': 0.8,
-            'trígono': 0.8,
-            'sextil': 0.6,
-            'quincúncio': 0.5,
-            'semissextil': 0.4,
-            'semiquadratura': 0.45,
-            'sesquiquadratura': 0.55,
-          }
           const applyBoost = applying ? 1.10 : 1.0
-          const strength = Math.round(100 * weight[type] * proximity * applyBoost)
+          const strength = Math.round(100 * (ASPECT_WEIGHTS[type] || 1) * proximity * applyBoost)
           results.push({ planet1: A.name, planet2: B.name, type, orb, isApplying: applying, strength, side1: 'A', side2: 'B' })
         }
       }

@@ -1,6 +1,33 @@
+/**
+ * ===================== SISTEMA DE SCORE PLANETÁRIO =====================
+ *
+ * Todos os fatores que compõem o score planetário estão centralizados e documentados abaixo:
+ *
+ * 1. Dignidade Essencial (domicílio, exaltação, triplicidade, detrimento, queda)
+ *    - Pesos: domicílio +5, exaltação +4, triplicidade +3, detrimento -5, queda -4
+ * 2. Força da Casa
+ *    - Angulares: 5, Sucedentes: 3-4, Cadentes: 1 (nunca negativo)
+ * 3. Harmonia Signo-Casa
+ *    - Máxima harmonia: 3 (signo natural), compatibilidade elementar: 2, modal: 1
+ * 4. Força Elementar e Modal
+ *    - Pesos tradicionais diferenciados por signo (elementStrength + modalityStrength)
+ * 5. Força dos Aspectos
+ *    - Pesos centralizados em aspect-config.ts
+ *    - Aspectos maiores: conjunção, oposição, trígono, quadratura, sextil
+ *    - Aspectos menores: quincúncio, semissextil, semiquadratura, sesquiquadratura
+ *    - Soma dos menores nunca ultrapassa a dos maiores (normalização automática)
+ * 6. Condições Especiais
+ *    - Retrógrado, combustão, estacionário, etc. (ajustes pequenos)
+ *
+ * Todos os pesos e lógicas estão centralizados em aspect-config.ts e planetary-status.config.ts.
+ *
+ * Testes de regressão e integração garantem que scores estejam sempre na faixa esperada e que edge cases sejam cobertos.
+ * ========================================================================
+ */
+import { ASPECT_WEIGHTS } from './aspect-config';
 import { EssentialDignity, PlanetaryScore, PlanetaryStatus, PlanetaryStatusLevel, PlanetName, SignName } from './planetary-status.types'
-import { ESSENTIAL_DIGNITIES, ELEMENTAL_MODALITY_SYSTEM, HOUSE_STRENGTH_SYSTEM } from './planetary-status.config'
-import { DetectedAspect } from './aspects.types'
+import { ESSENTIAL_DIGNITIES_LOOKUP, ELEMENTAL_MODALITY_SYSTEM, HOUSE_STRENGTH_SYSTEM } from './planetary-status.config'
+import { DetectedAspect, AspectName } from './aspects.types'
 import { detectAspects } from './aspects.engine'
 import aspectsConfig from './aspects.config'
 
@@ -9,26 +36,14 @@ import aspectsConfig from './aspects.config'
  * Baseado na tradição astrológica clássica
  */
 export function calculateEssentialDignity(planet: PlanetName, sign: SignName): number {
-  const dignity = ESSENTIAL_DIGNITIES.find(d => d.planet === planet)
-  if (!dignity) return 0
-  
-  // Domicílio: máxima força
-  if (dignity.domicile.includes(sign)) return 5
-  
-  // Exaltação: alta força
-  if (dignity.exaltation.includes(sign)) return 4
-  
-  // Triplicidade: força moderada
-  if (dignity.triplicity.includes(sign)) return 3
-  
-  // Detrimento: máxima fraqueza
-  if (dignity.detriment.includes(sign)) return -5
-  
-  // Queda: alta fraqueza
-  if (dignity.fall.includes(sign)) return -4
-  
-  // Neutro: sem dignidade especial
-  return 0
+  const dignity = ESSENTIAL_DIGNITIES_LOOKUP[planet];
+  if (!dignity) return 0;
+  if (dignity.domicile && dignity.domicile.includes(sign)) return 5;
+  if (dignity.exaltation && dignity.exaltation.includes(sign)) return 4;
+  if (dignity.triplicity && dignity.triplicity.includes(sign)) return 3;
+  if (dignity.detriment && dignity.detriment.includes(sign)) return -5;
+  if (dignity.fall && dignity.fall.includes(sign)) return -4;
+  return 0;
 }
 
 /**
@@ -77,16 +92,11 @@ export function calculateSignHouseHarmony(planetSign: SignName, houseNumber: num
 export function calculateElementalModalityStrength(sign: SignName): number {
   const signInfo = ELEMENTAL_MODALITY_SYSTEM[sign]
   if (!signInfo) return 0
-  
-  // Base elementar
-  let strength = signInfo.strength
-  
-  // Bônus por modalidade
-  if (signInfo.modality === 'Cardinal') strength += 1
-  if (signInfo.modality === 'Fixo') strength += 1
-  if (signInfo.modality === 'Mutável') strength += 1
-  
-  return strength
+
+  // Força elementar e modal diferenciada
+  const { elementStrength, modalityStrength } = signInfo
+  // Permite fácil ajuste futuro: soma direta
+  return elementStrength + modalityStrength
 }
 
 /**
@@ -94,16 +104,29 @@ export function calculateElementalModalityStrength(sign: SignName): number {
  * Integra com o sistema de aspectos existente usando o engine
  */
 export function calculateAspectStrength(planet: PlanetName, aspects: DetectedAspect[]): number {
-  let total = 0
-  
+  // Separar aspectos maiores e menores
+  const MAJOR_ASPECTS: AspectName[] = ['conjunção', 'oposição', 'trígono', 'quadratura', 'sextil']
+  const MINOR_ASPECTS: AspectName[] = ['quincúncio', 'semissextil', 'semiquadratura', 'sesquiquadratura']
+
+  let majorTotal = 0
+  let minorTotal = 0
+
   for (const aspect of aspects) {
     if (aspect.planet1 === planet || aspect.planet2 === planet) {
       const strength = calculateAspectValue(aspect)
-      total += strength
+      if (MAJOR_ASPECTS.includes(aspect.type)) {
+        majorTotal += strength
+      } else if (MINOR_ASPECTS.includes(aspect.type)) {
+        minorTotal += strength
+      }
     }
   }
-  
-  return total
+
+  // Limitar a soma dos aspectos menores para nunca ultrapassar a dos maiores
+  const minorCapped = Math.min(minorTotal, majorTotal)
+
+  // Documentação: a força total dos aspectos é a soma dos maiores + menores (limitados)
+  return majorTotal + minorCapped
 }
 
 /**
@@ -111,20 +134,8 @@ export function calculateAspectStrength(planet: PlanetName, aspects: DetectedAsp
  * Baseado no tipo, orbe e aplicação - integrado com o sistema de aspectos
  */
 function calculateAspectValue(aspect: DetectedAspect): number {
-  // Sistema de pesos baseado na tradição astrológica (valores equilibrados)
-  const baseValues: Record<string, number> = {
-    'conjunção': 1.5,      // Máxima força - união de energias
-    'oposição': 1.2,       // Alta força - polaridade dinâmica
-    'trígono': 1.2,        // Alta força - harmonia fluida
-    'quadratura': 1.0,     // Força média - tensão construtiva
-    'sextil': 0.8,         // Força moderada - oportunidade
-    'quincúncio': 0.6,     // Força baixa - ajuste sutil
-    'semissextil': 0.4,    // Força mínima - contato leve
-    'semiquadratura': 0.5, // Força mínima - atrito sutil
-    'sesquiquadratura': 0.6 // Força baixa - tensão média
-  }
-  
-  const baseValue = baseValues[aspect.type] || 0
+  // Usar pesos centralizados do aspect-config
+  const baseValue = ASPECT_WEIGHTS[aspect.type as import('./aspects.types').AspectName] || 0
   
   // Fator de orbe: orbe menor = mais forte (baseado na configuração)
   const maxOrb = getMaxOrbForAspect(aspect.type)
@@ -368,9 +379,9 @@ function analyzePlanetAspects(planet: PlanetName, aspects: DetectedAspect[]): {
  * Sistema de 6 níveis para precisão astrológica
  */
 function classifyPlanetaryStatus(score: number): PlanetaryStatusLevel {
-  if (score >= 12) return 'Muito Forte'
-  if (score >= 8) return 'Forte'
-  if (score >= 4) return 'Moderado'
+  if (score >= 11) return 'Muito Forte'
+  if (score >= 7) return 'Forte'
+  if (score >= 3) return 'Moderado'
   if (score >= 0) return 'Neutro'
   if (score >= -4) return 'Fraco'
   return 'Muito Fraco'

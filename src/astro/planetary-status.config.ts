@@ -1,7 +1,11 @@
 import { EssentialDignity, PlanetName, SignName } from './planetary-status.types'
 
 // Tabela completa de dignidades essenciais baseada na tradição astrológica
+// Para lookup rápido por planeta
 export const ESSENTIAL_DIGNITIES: EssentialDignity[] = [
+
+// Objeto de lookup para dignidades essenciais (para uso otimizado)
+// (Removido duplicidade, exportação única ao final do arquivo)
   {
     planet: 'Sun',
     domicile: ['Leão'],
@@ -82,22 +86,28 @@ export const ESSENTIAL_DIGNITIES: EssentialDignity[] = [
     fall: ['Câncer'],
     triplicity: ['Escorpião', 'Peixes', 'Câncer'] // Água
   }
-]
+];
+
+// Objeto de lookup para dignidades essenciais (para uso otimizado)
+export const ESSENTIAL_DIGNITIES_LOOKUP: Partial<Record<PlanetName, EssentialDignity>> = Object.fromEntries(
+  ESSENTIAL_DIGNITIES.map(d => [d.planet, d])
+);
 
 // Sistema de elementos e modalidades
-export const ELEMENTAL_MODALITY_SYSTEM: Record<SignName, { element: string, modality: string, strength: number }> = {
-  'Áries': { element: 'Fogo', modality: 'Cardinal', strength: 1 },
-  'Touro': { element: 'Terra', modality: 'Fixo', strength: 1 },
-  'Gêmeos': { element: 'Ar', modality: 'Mutável', strength: 1 },
-  'Câncer': { element: 'Água', modality: 'Cardinal', strength: 1 },
-  'Leão': { element: 'Fogo', modality: 'Fixo', strength: 1 },
-  'Virgem': { element: 'Terra', modality: 'Mutável', strength: 1 },
-  'Libra': { element: 'Ar', modality: 'Cardinal', strength: 1 },
-  'Escorpião': { element: 'Água', modality: 'Fixo', strength: 1 },
-  'Sagitário': { element: 'Fogo', modality: 'Mutável', strength: 1 },
-  'Capricórnio': { element: 'Terra', modality: 'Cardinal', strength: 1 },
-  'Aquário': { element: 'Ar', modality: 'Fixo', strength: 1 },
-  'Peixes': { element: 'Água', modality: 'Mutável', strength: 1 }
+// Tabela tradicional de elementos e modalidades com pesos
+export const ELEMENTAL_MODALITY_SYSTEM: Record<SignName, { element: string, modality: string, elementStrength: number, modalityStrength: number }> = {
+  'Áries':       { element: 'Fogo',    modality: 'Cardinal', elementStrength: 2, modalityStrength: 2 },
+  'Touro':       { element: 'Terra',   modality: 'Fixo',     elementStrength: 2, modalityStrength: 2 },
+  'Gêmeos':      { element: 'Ar',      modality: 'Mutável',  elementStrength: 2, modalityStrength: 2 },
+  'Câncer':      { element: 'Água',    modality: 'Cardinal', elementStrength: 2, modalityStrength: 2 },
+  'Leão':        { element: 'Fogo',    modality: 'Fixo',     elementStrength: 3, modalityStrength: 3 },
+  'Virgem':      { element: 'Terra',   modality: 'Mutável',  elementStrength: 2, modalityStrength: 2 },
+  'Libra':       { element: 'Ar',      modality: 'Cardinal', elementStrength: 2, modalityStrength: 2 },
+  'Escorpião':   { element: 'Água',    modality: 'Fixo',     elementStrength: 3, modalityStrength: 3 },
+  'Sagitário':   { element: 'Fogo',    modality: 'Mutável',  elementStrength: 2, modalityStrength: 2 },
+  'Capricórnio': { element: 'Terra',   modality: 'Cardinal', elementStrength: 2, modalityStrength: 2 },
+  'Aquário':     { element: 'Ar',      modality: 'Fixo',     elementStrength: 2, modalityStrength: 2 },
+  'Peixes':      { element: 'Água',    modality: 'Mutável',  elementStrength: 2, modalityStrength: 2 },
 }
 
 // Sistema de força das casas
@@ -114,9 +124,9 @@ export const HOUSE_STRENGTH_SYSTEM = {
   8: { strength: 2, category: 'succedent', description: 'Transformação e recursos compartilhados' },
   11: { strength: 4, category: 'succedent', description: 'Amizades e aspirações' },
   
-  // Casas Cadentes (força reduzida)
+  // Casas Cadentes (força reduzida, mas nunca negativa)
   3: { strength: 1, category: 'cadent', description: 'Comunicação e aprendizado' },
-  6: { strength: -2, category: 'cadent', description: 'Trabalho e saúde' },
+  6: { strength: 1, category: 'cadent', description: 'Trabalho e saúde' },
   9: { strength: 2, category: 'cadent', description: 'Expansão e filosofia' },
-  12: { strength: -5, category: 'cadent', description: 'Subconsciente e espiritualidade' }
+  12: { strength: 1, category: 'cadent', description: 'Subconsciente e espiritualidade' }
 }

@@ -147,12 +147,13 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
     
     // Testar diferentes tipos de casas
     const testCases = [
-      { sign: 'Áries' as SignName, house: 1, expectedStrength: 5 }, // Angular
-      { sign: 'Touro' as SignName, house: 2, expectedStrength: 3 }, // Sucedente
-      { sign: 'Gêmeos' as SignName, house: 3, expectedStrength: 1 }, // Cadente
-      { sign: 'Câncer' as SignName, house: 4, expectedStrength: 5 }, // Angular
-      { sign: 'Leão' as SignName, house: 5, expectedStrength: 3 }, // Sucedente
-      { sign: 'Virgem' as SignName, house: 6, expectedStrength: -2 }, // Cadente
+  { sign: 'Áries' as SignName, house: 1, expectedStrength: 5 }, // Angular
+  { sign: 'Touro' as SignName, house: 2, expectedStrength: 3 }, // Sucedente
+  { sign: 'Gêmeos' as SignName, house: 3, expectedStrength: 1 }, // Cadente
+  { sign: 'Câncer' as SignName, house: 4, expectedStrength: 5 }, // Angular
+  { sign: 'Leão' as SignName, house: 5, expectedStrength: 3 }, // Sucedente
+  { sign: 'Virgem' as SignName, house: 6, expectedStrength: 1 }, // Cadente
+  { sign: 'Peixes' as SignName, house: 12, expectedStrength: 1 }, // Cadente (antes era -5)
     ]
     
     testCases.forEach(({ sign, house, expectedStrength }) => {
