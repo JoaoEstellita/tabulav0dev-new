@@ -603,8 +603,10 @@ export class RealAstrologyEngine {
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
         const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
-        const speed = (nextEcliptic && nextEcliptic.elon !== undefined) ? 
-          nextEcliptic.elon - ecliptic.elon : 0
+        const diff = (nextEcliptic && nextEcliptic.elon !== undefined)
+          ? nextEcliptic.elon - ecliptic.elon
+          : 0
+        const speed = ((diff + 180 + 360) % 360) - 180
 
         // Determinar signo e grau
         const signIndex = Math.floor(ecliptic.elon / 30)
