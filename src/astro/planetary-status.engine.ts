@@ -143,18 +143,21 @@ export function calculateAspectStrength(planet: PlanetName, aspects: DetectedAsp
 function calculateAspectValue(aspect: DetectedAspect): number {
   // Usar pesos centralizados do aspect-config
   const baseValue = ASPECT_WEIGHTS[aspect.type] || 0
-  
+
   // Fator de orbe: orbe menor = mais forte (baseado na configuração)
   const maxOrb = getMaxOrbForAspect(aspect.type)
   const orbFactor = Math.max(0.1, 1 - (aspect.orb / maxOrb))
-  
+
   // Bônus para aspectos aplicantes (mais ativos)
   const applyingBonus = aspect.isApplying ? 1.1 : 1.0
-  
+
   // Bônus por força do aspecto (baseado no engine) - reduzido
   const strengthBonus = (aspect.strength / 100) * 0.3 + 0.7
-  
-  return baseValue * orbFactor * applyingBonus * strengthBonus
+
+  // Bônus para aspectos exatos (partis): orbe < 0.5°
+  const partisBonus = aspect.orb < 0.5 ? 1.2 : 1.0
+
+  return baseValue * orbFactor * applyingBonus * strengthBonus * partisBonus
 }
 
 /**
@@ -174,7 +177,8 @@ export function calculateSpecialConditions(
   planet: PlanetName, 
   aspects: DetectedAspect[], 
   isRetrograde: boolean, 
-  speed: number
+  speed: number,
+  planetSigns?: Record<PlanetName, SignName>
 ): number {
   let total = 0
   
@@ -198,8 +202,26 @@ export function calculateSpecialConditions(
   // Velocidade moderada: planeta em ritmo normal
   if (Math.abs(speed) >= 0.1 && Math.abs(speed) <= 1.0) total += 0.3
 
-  // Condições especiais por planeta
-  total += calculatePlanetSpecificConditions(planet, aspects)
+  // Bônus de recepção mútua: se planeta está no domicílio de outro planeta e vice-versa
+  total += calculatePlanetSpecificConditions(planet, aspects, planetSigns)
+
+  // Detecção de recepção mútua (apenas para planetas clássicos)
+  if (planetSigns) {
+    const doms = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn'] as PlanetName[];
+    if (doms.includes(planet)) {
+      for (const other of doms) {
+        if (other !== planet) {
+          const planetSign = planetSigns[planet];
+          const otherSign = planetSigns[other];
+          const planetDoms = ESSENTIAL_DIGNITIES_LOOKUP[planet]?.domicile || [];
+          const otherDoms = ESSENTIAL_DIGNITIES_LOOKUP[other]?.domicile || [];
+          if (planetDoms.includes(otherSign) && otherDoms.includes(planetSign)) {
+            total += 1.2; // Bônus de recepção mútua
+          }
+        }
+      }
+    }
+  }
 
   return total
 }
@@ -208,21 +230,22 @@ export function calculateSpecialConditions(
  * Calcula condições específicas por planeta
  * Considera características únicas de cada planeta
  */
-function calculatePlanetSpecificConditions(planet: PlanetName, aspects: DetectedAspect[]): number {
+function calculatePlanetSpecificConditions(planet: PlanetName, aspects: DetectedAspect[], planetSigns?: Record<PlanetName, SignName>): number {
   let total = 0
   
-  // Sol: combustão (muito próximo ao Sol)
+  // Sol: combustão (muito próximo ao Sol) e Cazimi
   if (planet === 'Sun') {
     const sunAspects = aspects.filter(a => 
       (a.planet1 === 'Sun' || a.planet2 === 'Sun') && a.type === 'conjunção'
     )
     for (const aspect of sunAspects) {
-      if (aspect.orb < 1) total -= 2 // Combustão severa
+      if (aspect.orb < 0.17) total += 1.5 // Cazimi: fortalecimento máximo
+      else if (aspect.orb < 1) total -= 2 // Combustão severa
       else if (aspect.orb < 3) total -= 1 // Combustão leve
     }
   }
-  
-  // Mercúrio: combustão quando próximo ao Sol
+
+  // Mercúrio: combustão e Cazimi quando próximo ao Sol
   if (planet === 'Mercury') {
     const sunMercuryAspects = aspects.filter(a => 
       ((a.planet1 === 'Sun' && a.planet2 === 'Mercury') || 
@@ -230,7 +253,8 @@ function calculatePlanetSpecificConditions(planet: PlanetName, aspects: Detected
       a.type === 'conjunção'
     )
     for (const aspect of sunMercuryAspects) {
-      if (aspect.orb < 1) total -= 2 // Combustão severa
+      if (aspect.orb < 0.17) total += 1.5 // Cazimi
+      else if (aspect.orb < 1) total -= 2 // Combustão severa
       else if (aspect.orb < 3) total -= 1 // Combustão leve
     }
   }
@@ -276,20 +300,35 @@ function calculatePlanetSpecificConditions(planet: PlanetName, aspects: Detected
  * Função principal para calcular o status planetário completo
  * Integra todos os parâmetros de forma balanceada e sofisticada
  */
+export type LifeAreaContext = 'love' | 'career' | 'health' | 'general';
+
 export function calculatePlanetaryStatus(
   planet: PlanetName,
   sign: SignName,
   house: number,
   aspects: DetectedAspect[],
   isRetrograde: boolean,
-  speed: number
+  speed: number,
+  planetSigns?: Record<PlanetName, SignName>,
+  context: LifeAreaContext = 'general'
 ): PlanetaryStatus {
   
   // 1. Dignidades essenciais (base fundamental) - peso alto
   const essential = calculateEssentialDignity(planet, sign)
-  
+
   // 2. Força da casa (posição no mapa) - peso alto
   const houseStrength = calculateHouseStrength(house)
+
+  // 2b. Dignidade acidental avançada
+  // Angularidade: bônus extra para casas 1, 4, 7, 10
+  let accidentalDignity = 0
+  if ([1, 4, 7, 10].includes(house)) accidentalDignity += 1.2
+  // Cadentes: penalidade extra para casas 3, 6, 9, 12
+  if ([3, 6, 9, 12].includes(house)) accidentalDignity -= 0.7
+
+  // Velocidade: bônus se acima de 1.5, penalidade se entre 0.1 e 0.3 (exceto estacionário)
+  if (Math.abs(speed) > 1.5) accidentalDignity += 0.5
+  if (Math.abs(speed) > 0.1 && Math.abs(speed) < 0.3) accidentalDignity -= 0.5
   
   // 3. Harmonia signo-casa (compatibilidade) - peso médio
   const signHouseHarmony = calculateSignHouseHarmony(sign, house)
@@ -301,41 +340,103 @@ export function calculatePlanetaryStatus(
   const aspectStrength = calculateAspectStrength(planet, aspects)
   
   // 6. Condições especiais (estado do planeta) - peso médio
-  const specialConditions = calculateSpecialConditions(planet, aspects, isRetrograde, speed)
+  const specialConditions = calculateSpecialConditions(planet, aspects, isRetrograde, speed, planetSigns)
   
   // 7. Total ponderado (soma balanceada com pesos revisados)
   // Pesos ajustados para maior equilíbrio entre fatores
-  const total = (essential * 0.6) + 
-                (houseStrength * 0.6) + 
-                (signHouseHarmony * 0.5) + 
-                (elementalStrength * 0.4) + 
-                (aspectStrength * 0.6) + 
-                (specialConditions * 0.5)
-  
-  // 8. Classificação do status (sistema refinado)
-  const level = classifyPlanetaryStatus(total)
-  
+  // Limitar impacto de fatores secundários
+  const cappedAspectStrength = Math.min(aspectStrength, 4)
+  const cappedSpecialConditions = Math.max(Math.min(specialConditions, 2), -2)
+  const cappedSignHouseHarmony = Math.max(Math.min(signHouseHarmony, 3), -2)
+  const cappedElementalStrength = Math.max(Math.min(elementalStrength, 4), 0)
+
+  // Pesos padrão
+  let weights = {
+    essential: 0.6,
+    houseStrength: 0.6,
+    accidentalDignity: 0.5,
+    signHouseHarmony: 0.5,
+    elementalStrength: 0.4,
+    aspectStrength: 0.6,
+    specialConditions: 0.5
+  };
+
+  // Ajuste de pesos por contexto
+  if (context === 'love') {
+    if (planet === 'Venus' || planet === 'Moon') weights.essential += 0.2;
+    if (planet === 'Mars') weights.aspectStrength += 0.1;
+    weights.houseStrength += 0.1;
+  } else if (context === 'career') {
+    if (planet === 'Saturn' || planet === 'Sun' || planet === 'Jupiter') weights.essential += 0.2;
+    weights.houseStrength += 0.15;
+    weights.accidentalDignity += 0.1;
+  } else if (context === 'health') {
+    if (planet === 'Mercury' || planet === 'Moon') weights.essential += 0.15;
+    weights.specialConditions += 0.1;
+  }
+
+  let total = (essential * weights.essential) + 
+              (houseStrength * weights.houseStrength) +
+              (accidentalDignity * weights.accidentalDignity) +
+              (cappedSignHouseHarmony * weights.signHouseHarmony) + 
+              (cappedElementalStrength * weights.elementalStrength) + 
+              (cappedAspectStrength * weights.aspectStrength) + 
+              (cappedSpecialConditions * weights.specialConditions)
+
+  // Saturação: planeta em exílio/detrimento nunca pode ser 'Muito Forte'
+  let level = classifyPlanetaryStatus(total)
+  if ((essential === -5 || essential === -4) && level === 'Muito Forte') {
+    level = 'Forte'
+    total = Math.min(total, 7.5)
+  }
+
   // 9. Interpretação baseada no status
   const interpretation = generatePlanetaryInterpretation(planet, level, sign, house, total)
-  
+
   // 10. Análise detalhada dos aspectos
   const aspectAnalysis = analyzePlanetAspects(planet, aspects)
-  
+
+  // Explicação detalhada do breakdown
+  const breakdownExplanation: string[] = [];
+  if (essential >= 4) breakdownExplanation.push('Dignidade essencial muito forte (domicílio/exaltação).');
+  else if (essential > 0) breakdownExplanation.push('Dignidade essencial positiva.');
+  else if (essential < 0) breakdownExplanation.push('Dignidade essencial negativa (exílio/queda).');
+
+  if (houseStrength >= 5) breakdownExplanation.push('Casa angular: máxima força acidental.');
+  else if (houseStrength >= 3) breakdownExplanation.push('Casa sucedente: força média.');
+  else if (houseStrength < 0) breakdownExplanation.push('Casa desafiadora: penalidade aplicada.');
+
+  if (accidentalDignity > 0.5) breakdownExplanation.push('Bônus de angularidade ou velocidade.');
+  else if (accidentalDignity < 0) breakdownExplanation.push('Penalidade por cadência ou lentidão.');
+
+  if (cappedSignHouseHarmony > 1) breakdownExplanation.push('Harmonia signo-casa elevada.');
+  else if (cappedSignHouseHarmony < 0) breakdownExplanation.push('Desarmonia signo-casa penaliza o status.');
+
+  if (cappedElementalStrength > 2) breakdownExplanation.push('Força elementar/modal acima da média.');
+  else if (cappedElementalStrength === 0) breakdownExplanation.push('Força elementar/modal neutra.');
+
+  if (cappedAspectStrength > 2) breakdownExplanation.push('Aspectos muito favoráveis fortalecem o planeta.');
+  else if (cappedAspectStrength < 1) breakdownExplanation.push('Poucos aspectos relevantes.');
+
+  if (cappedSpecialConditions > 1) breakdownExplanation.push('Condições especiais muito favoráveis (ex: Cazimi, recepção mútua).');
+  else if (cappedSpecialConditions < 0) breakdownExplanation.push('Condições especiais desfavoráveis (ex: combustão, retrógrado).');
+
   return {
     level,
     score: total,
     breakdown: {
       essential,
       houseStrength,
-      signHouseHarmony,
-      elementalStrength,
-      aspectStrength,
-      specialConditions,
-      // total agora reflete exatamente o cálculo do score, com os novos pesos
-      total: (essential * 0.6) + (houseStrength * 0.6) + (signHouseHarmony * 0.5) + (elementalStrength * 0.4) + (aspectStrength * 0.6) + (specialConditions * 0.5)
+      accidentalDignity,
+      signHouseHarmony: cappedSignHouseHarmony,
+      elementalStrength: cappedElementalStrength,
+      aspectStrength: cappedAspectStrength,
+      specialConditions: cappedSpecialConditions,
+      total
     },
     interpretation,
-    aspectAnalysis
+    aspectAnalysis,
+    breakdownExplanation
   }
 }
 

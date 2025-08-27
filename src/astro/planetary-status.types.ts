@@ -22,6 +22,7 @@ export interface EssentialDignity {
 export interface PlanetaryScore {
   essential: number
   houseStrength: number
+  accidentalDignity: number
   signHouseHarmony: number
   elementalStrength: number
   aspectStrength: number
@@ -51,4 +52,5 @@ export interface PlanetaryStatus {
   breakdown: PlanetaryScore
   interpretation: string
   aspectAnalysis: AspectAnalysis
+  breakdownExplanation: string[]
 }
