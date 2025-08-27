@@ -5,7 +5,7 @@ import type {
   SimplifiedTransitView,
   SimplifiedElementsView 
 } from './dual-view.types'
-import type { PlanetaryStatus, DetectedAspect } from './planetary-status.types'
+import type { PlanetaryStatus, DetectedAspect, PlanetName } from './planetary-status.types'
 import { AstrologicalTranslator } from './astrological-translator'
 
 // Engine para gerar insights simplificados baseados em dados astrológicos técnicos
@@ -61,12 +61,12 @@ export class SimplifiedInsightsEngine {
     
     if (strongPlanets.length > 0) {
       const planet = strongPlanets[0]
-      return `Aproveite a força de ${this.getPlanetName(planet)} para ${this.getPlanetAction(planet)}`
+      return `Aproveite a força de ${this.getPlanetName(planet.planet)} para ${this.getPlanetAction(planet.planet)}`
     }
     
     if (weakPlanets.length > 0) {
       const planet = weakPlanets[0]
-      return `Foque em desenvolver ${this.getPlanetName(planet)} através de ${this.getPlanetDevelopment(planet)}`
+      return `Foque em desenvolver ${this.getPlanetName(planet.planet)} através de ${this.getPlanetDevelopment(planet.planet)}`
     }
     
     return 'Mantenha o equilíbrio e observe os sinais ao seu redor'
@@ -221,21 +221,21 @@ export class SimplifiedInsightsEngine {
     const strongestAspect = status.aspectAnalysis.strongestAspect
     
     if (strongestAspect) {
-      const planet1 = this.getPlanetName({ level: 'Moderado', score: 0 } as any)
-      const planet2 = this.getPlanetName({ level: 'Moderado', score: 0 } as any)
+      const planet1 = this.getPlanetName(strongestAspect.planet1 as PlanetName)
+      const planet2 = this.getPlanetName(strongestAspect.planet2 as PlanetName)
       const aspectType = AstrologicalTranslator.translate(strongestAspect.type)
-      
+
       return {
         planet: planet1,
         description: `${aspectType.simple} com ${planet2}`,
         impact: aspectType.practical
       }
     }
-    
+
     const dignity = this.getDignityDescription(status.breakdown.essential)
-    
+
     return {
-      planet: 'Influência',
+      planet: this.getPlanetName(status.planet),
       description: dignity,
       impact: 'Influencia diretamente esta área da vida'
     }
@@ -258,49 +258,52 @@ export class SimplifiedInsightsEngine {
   }
 
   // === FUNÇÕES AUXILIARES ===
-  private static getPlanetName(status: any): string {
-    // Mapeamento simplificado de nomes de planetas
-    const planetNames: Record<string, string> = {
-      'Sun': 'Sol', 'Moon': 'Lua', 'Mercury': 'Mercúrio', 'Venus': 'Vênus',
-      'Mars': 'Marte', 'Jupiter': 'Júpiter', 'Saturn': 'Saturno',
-      'Uranus': 'Urano', 'Neptune': 'Netuno', 'Pluto': 'Plutão'
+  private static getPlanetName(planet: PlanetName): string {
+    const planetNames: Record<PlanetName, string> = {
+      Sun: 'Sol',
+      Moon: 'Lua',
+      Mercury: 'Mercúrio',
+      Venus: 'Vênus',
+      Mars: 'Marte',
+      Jupiter: 'Júpiter',
+      Saturn: 'Saturno',
+      Uranus: 'Urano',
+      Neptune: 'Netuno',
+      Pluto: 'Plutão',
     }
-    
-    return planetNames[status.planet] || 'Planeta'
+    return planetNames[planet] || 'Planeta'
   }
 
-  private static getPlanetAction(status: any): string {
-    const actions: Record<string, string> = {
-      'Sun': 'expressar sua identidade e liderança',
-      'Moon': 'conectar com suas emoções e intuição',
-      'Mercury': 'comunicar suas ideias e aprender',
-      'Venus': 'criar harmonia e beleza',
-      'Mars': 'tomar ação e defender seus interesses',
-      'Jupiter': 'expandir seus horizontes e otimismo',
-      'Saturn': 'estruturar seus objetivos e responsabilidades',
-      'Uranus': 'inovação e quebra de padrões',
-      'Neptune': 'inspiração e espiritualidade',
-      'Pluto': 'transformação profunda e poder'
+  private static getPlanetAction(planet: PlanetName): string {
+    const actions: Record<PlanetName, string> = {
+      Sun: 'expressar sua identidade e liderança',
+      Moon: 'conectar com suas emoções e intuição',
+      Mercury: 'comunicar suas ideias e aprender',
+      Venus: 'criar harmonia e beleza',
+      Mars: 'tomar ação e defender seus interesses',
+      Jupiter: 'expandir seus horizontes e otimismo',
+      Saturn: 'estruturar seus objetivos e responsabilidades',
+      Uranus: 'inovação e quebra de padrões',
+      Neptune: 'inspiração e espiritualidade',
+      Pluto: 'transformação profunda e poder',
     }
-    
-    return actions[status.planet] || 'desenvolver suas qualidades'
+    return actions[planet] || 'desenvolver suas qualidades'
   }
 
-  private static getPlanetDevelopment(status: any): string {
-    const developments: Record<string, string> = {
-      'Sun': 'autoconhecimento e confiança',
-      'Moon': 'cuidado emocional e intuição',
-      'Mercury': 'estudo e comunicação clara',
-      'Venus': 'autoestima e relacionamentos',
-      'Mars': 'coragem e assertividade',
-      'Jupiter': 'fé e expansão de horizontes',
-      'Saturn': 'disciplina e responsabilidade',
-      'Uranus': 'originalidade e independência',
-      'Neptune': 'intuição e compaixão',
-      'Pluto': 'transformação e poder pessoal'
+  private static getPlanetDevelopment(planet: PlanetName): string {
+    const developments: Record<PlanetName, string> = {
+      Sun: 'autoconhecimento e confiança',
+      Moon: 'cuidado emocional e intuição',
+      Mercury: 'estudo e comunicação clara',
+      Venus: 'autoestima e relacionamentos',
+      Mars: 'coragem e assertividade',
+      Jupiter: 'fé e expansão de horizontes',
+      Saturn: 'disciplina e responsabilidade',
+      Uranus: 'originalidade e independência',
+      Neptune: 'intuição e compaixão',
+      Pluto: 'transformação e poder pessoal',
     }
-    
-    return developments[status.planet] || 'desenvolvimento pessoal'
+    return developments[planet] || 'desenvolvimento pessoal'
   }
 
   private static getDignityDescription(score: number): string {

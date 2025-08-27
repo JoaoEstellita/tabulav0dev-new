@@ -313,6 +313,7 @@ export function calculatePlanetaryStatus(
   const aspectAnalysis = analyzePlanetAspects(planet, aspects)
   
   return {
+    planet,
     level,
     score: total,
     breakdown: {
