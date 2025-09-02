@@ -2,10 +2,10 @@ export class TimezoneService {
   static async resolveOffsetSeconds(lat: number, lon: number, timestampSec: number): Promise<{ offsetSec: number; timeZoneId?: string } | null> {
     try {
       // Preferir endpoint backend (não expõe chave no cliente)
-      const endpoint = process.env.EXPO_PUBLIC_TZ_API_ENDPOINT
-      if (endpoint) {
+      const backend = process.env.EXPO_PUBLIC_BACKEND_URL
+      if (backend) {
         try {
-          const r = await fetch(`${endpoint}?lat=${lat}&lon=${lon}&ts=${timestampSec}`)
+          const r = await fetch(`${backend}/api/public?action=timezone&lat=${lat}&lon=${lon}&ts=${timestampSec}`)
           if (r.ok) {
             const j = await r.json()
             if (j && typeof j.offsetSec === 'number') {
