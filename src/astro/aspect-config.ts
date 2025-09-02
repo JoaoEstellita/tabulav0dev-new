@@ -14,7 +14,12 @@
 import { AspectName, AspectsConfig } from './aspects.types';
 
 // Definições dos aspectos (nome, ângulo, orbe base)
-export const ASPECT_DEFINITIONS = [
+export interface AspectDefinition {
+  name: AspectName;
+  angle: number;
+  baseOrb: number;
+}
+export const ASPECT_DEFINITIONS: AspectDefinition[] = [
   { name: 'conjunção', angle: 0, baseOrb: 9 },
   { name: 'oposição', angle: 180, baseOrb: 9 },
   { name: 'trígono', angle: 120, baseOrb: 8 },
@@ -70,7 +75,7 @@ export const ASPECT_WEIGHTS: Record<AspectName, number> = {
 // Orbes por nome de aspecto
 export const ASPECT_ORBS: Record<AspectName, number> = Object.fromEntries(
   ASPECT_DEFINITIONS.map(a => [a.name, a.baseOrb])
-);
+) as Record<AspectName, number>;
 
 // Configuração unificada para uso na engine
 export const ASPECTS_CONFIG: AspectsConfig = {

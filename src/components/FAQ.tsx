@@ -275,30 +275,33 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
-    {
-      question: 'Quais tradições astrológicas posso escolher no app? O que muda nos cálculos?',
-      answer: `Você pode escolher entre três abordagens astrológicas:
   content: {
     flex: 1,
-    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  intro: {
+    fontSize: 15,
     color: '#666',
+    marginBottom: 16,
     fontStyle: 'italic',
   },
+  faqItem: {
     marginBottom: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
     overflow: 'hidden',
-    shadowOpacity: 0.1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
     shadowRadius: 3,
-    },
-    {
-      question: 'Como funciona a transparência dos cálculos? Onde vejo os parâmetros usados?',
-      answer: `O app oferece total transparência dos cálculos astrológicos:
+    elevation: 1,
   },
   questionContainer: {
     justifyContent: 'space-between',
     padding: 16,
+  },
   question: {
     fontSize: 16,
-    },
     fontWeight: '600',
     color: '#2D1B69',
     flex: 1,
