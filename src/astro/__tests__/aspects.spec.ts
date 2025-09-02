@@ -3,6 +3,27 @@ import aspectsConfig from '../aspects.config'
 import { detectAspects } from '../aspects.engine'
 
 describe('aspects.engine detectAspects', () => {
+
+  it('detecta aspectos de trânsito com MC e IC', () => {
+    // MC at 200°, IC at 20° (opposite)
+    const transit = [
+      { name: 'Mars', longitude: 200, speed: 0.8 },
+      { name: 'Venus', longitude: 20, speed: 1.2 }
+    ];
+    const natal = [
+      { name: 'MC', longitude: 200, speed: 0 },
+      { name: 'IC', longitude: 20, speed: 0 }
+    ];
+    const res = detectAspects(transit, natal, aspectsConfig);
+    // Mars conjunct MC
+    const marsMc = res.find(r => r.type === 'conjunção' && r.planet1 === 'Mars' && r.planet2 === 'MC');
+    expect(marsMc).toBeTruthy();
+    expect(marsMc!.orb).toBeLessThanOrEqual(1);
+    // Venus conjunct IC
+    const venusIc = res.find(r => r.type === 'conjunção' && r.planet1 === 'Venus' && r.planet2 === 'IC');
+    expect(venusIc).toBeTruthy();
+    expect(venusIc!.orb).toBeLessThanOrEqual(1);
+  });
   it('detecta conjunção com orbe pequena', () => {
     const A = [{ name: 'Sun', longitude: 10, speed: 1.0 }]
     const B = [{ name: 'Moon', longitude: 12, speed: 12.0 }]

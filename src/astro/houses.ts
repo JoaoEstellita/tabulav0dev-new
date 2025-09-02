@@ -47,7 +47,12 @@ function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   const phi = latDeg * Math.PI/180
   const sin = Math.sin, cos = Math.cos, tan = Math.tan
   // MC
-  const alphaMC = Math.atan2(tan(theta), cos(eps))
+  let alphaMC = Math.atan2(tan(theta), cos(eps))
+  // Correção: garantir MC no hemisfério correto da eclíptica
+  // Se cos(LST) < 0 (LST entre 90° e 270°), somar 180° a alphaMC
+  if (Math.cos(theta) < 0) {
+    alphaMC += Math.PI
+  }
   let mc = Math.atan2(sin(alphaMC)/cos(eps), Math.cos(alphaMC)) * 180/Math.PI
   mc = norm(mc)
   // Ascendente

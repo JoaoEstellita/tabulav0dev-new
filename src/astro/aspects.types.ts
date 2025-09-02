@@ -32,6 +32,7 @@ export interface AspectInputBody {
   name: string
   longitude: number // graus 0..360
   speed?: number // graus/dia
+  retrograde?: boolean // movimento retrógrado (opcional)
 }
 
 export interface DetectedAspect {

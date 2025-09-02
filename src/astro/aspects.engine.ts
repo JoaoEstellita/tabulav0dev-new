@@ -37,12 +37,49 @@ function resolveOrb(config: AspectsConfig, a: AspectInputBody, b: AspectInputBod
 }
 
 function isApplying(a: AspectInputBody, b: AspectInputBody, exactAngle: number): boolean {
-  // Aproximação determinística: se a diferença angular está diminuindo, é aplicante.
-  // Usar velocidades quando disponíveis.
+  // Refino: considerar movimento relativo e retrogradação
+  // Se a diferença angular está diminuindo, é aplicante
   const speedA = a.speed ?? 0
   const speedB = b.speed ?? 0
-  // Heurística: planeta mais rápido aproximando do alvo em relação ao mais lento
-  // Não sofisticamos com direção retrógrada aqui; simplificação robusta para UI.
+  const posA = a.longitude ?? 0
+  const posB = b.longitude ?? 0
+  let diff = ((posB - posA + 360) % 360)
+
+  // Caso especial: conjunção (angle 0)
+  if (exactAngle === 0) {
+    // Se ambos diretos
+    if (!(a.retrograde || b.retrograde)) {
+      return (diff > 0 && diff < 1) && (speedA > speedB)
+    }
+    // Se A retrógrado e B direto
+    if (a.retrograde && !b.retrograde) {
+      return (diff > 0 && diff < 1) && (speedA < speedB)
+    }
+    // Se B retrógrado e A direto
+    if (!a.retrograde && b.retrograde) {
+      return (diff > 0 && diff < 1) && (speedA > speedB)
+    }
+    // Se ambos retrógrados
+    if (a.retrograde && b.retrograde) {
+      return (diff > 0 && diff < 1) && (speedA < speedB)
+    }
+    // Fallback
+    return speedA > speedB
+  }
+
+  // Demais aspectos
+  if (!(a.retrograde || b.retrograde)) {
+    return (diff > 0 && diff < exactAngle) && (speedA > speedB)
+  }
+  if (a.retrograde && !b.retrograde) {
+    return (diff > 0 && diff < exactAngle) && (speedA < speedB)
+  }
+  if (!a.retrograde && b.retrograde) {
+    return (diff > 0 && diff < exactAngle) && (speedA > speedB)
+  }
+  if (a.retrograde && b.retrograde) {
+    return (diff > 0 && diff < exactAngle) && (speedA < speedB)
+  }
   return speedA > speedB
 }
 

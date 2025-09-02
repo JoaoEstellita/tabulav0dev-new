@@ -165,6 +165,14 @@ Nosso app supera em precisão a maioria dos aplicativos gratuitos e até mesmo a
   {
     question: 'Por que às vezes aparece "aprox"?',
     answer: 'Aparece apenas quando não há timezone histórico confiável ou em geometrias extremas. Em condições normais, as casas são exatas e o aviso não aparece.'
+  },
+  {
+    question: 'Quais tradições astrológicas posso escolher no app? O que muda nos cálculos?',
+    answer: `Você pode escolher entre três abordagens astrológicas:\n\n🌟 **Moderna Ocidental:**\n- Usa todos os aspectos maiores e menores\n- Orbes e pesos baseados em consenso moderno\n- Interpretação flexível e adaptada ao século XXI\n\n🏛️ **Tradicional:**\n- Foco nos aspectos clássicos (conjunção, oposição, trígono, quadratura, sextil)\n- Orbes e pesos mais restritos, dignidades essenciais com peso maior\n- Thresholds e regras inspiradas em autores clássicos\n\n🕉️ **Védica (ocidentalizada):**\n- Orbes mais amplos para conjunção/oposição\n- Pesos diferentes para aspectos, maior ênfase em casas e dignidade acidental\n- Thresholds e lógica adaptadas à tradição védica\n\n**O que muda?**\n- Os pesos, orbes e regras de classificação são ajustados conforme a tradição escolhida.\n- Você pode trocar o preset nas configurações a qualquer momento.\n- A explicação detalhada dos cálculos sempre reflete o preset ativo.\n\nPara ver os detalhes técnicos de cada preset, consulte a seção de transparência abaixo.`
+  },
+  {
+    question: 'Como funciona a transparência dos cálculos? Onde vejo os parâmetros usados?',
+    answer: `O app oferece total transparência dos cálculos astrológicos:\n\n📄 **Documentação Técnica:**\n- Todos os pesos, orbes e regras de cada preset estão documentados na seção "Transparência dos Cálculos" dentro deste FAQ.\n- Você pode comparar os parâmetros de cada tradição e entender como cada fator influencia o resultado.\n\n🔍 **Como acessar:**\n- Abra o FAQ e procure pela seção "Transparência dos Cálculos".\n- Sempre que trocar de preset, a documentação é atualizada automaticamente.\n\nSe você é estudante ou profissional, pode usar essa documentação para auditar, comparar ou sugerir melhorias!`
   }
 ]
 
@@ -267,38 +275,30 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+    {
+      question: 'Quais tradições astrológicas posso escolher no app? O que muda nos cálculos?',
+      answer: `Você pode escolher entre três abordagens astrológicas:
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-  },
-  intro: {
     fontSize: 16,
     color: '#666',
-    lineHeight: 24,
-    marginVertical: 20,
-    textAlign: 'center',
     fontStyle: 'italic',
   },
-  faqItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    },
+    {
+      question: 'Como funciona a transparência dos cálculos? Onde vejo os parâmetros usados?',
+      answer: `O app oferece total transparência dos cálculos astrológicos:
   },
   questionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
   question: {
     fontSize: 16,
+    },
     fontWeight: '600',
     color: '#2D1B69',
     flex: 1,

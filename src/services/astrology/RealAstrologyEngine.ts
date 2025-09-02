@@ -419,6 +419,8 @@ export class RealAstrologyEngine {
       const natalSetForAspects = [
         ...natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
         { name: 'Asc', longitude: natalHouses.ascendant, speed: 0 },
+        { name: 'MC', longitude: natalHouses.midheaven, speed: 0 },
+        { name: 'IC', longitude: (natalHouses.midheaven + 180) % 360, speed: 0 },
       ]
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
