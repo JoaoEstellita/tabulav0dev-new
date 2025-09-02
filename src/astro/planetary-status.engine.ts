@@ -28,7 +28,7 @@ import { ASPECT_WEIGHTS } from './aspect-config';
 import { EssentialDignity, PlanetaryScore, PlanetaryStatus, PlanetaryStatusLevel, PlanetName, SignName } from './planetary-status.types'
 import { ESSENTIAL_DIGNITIES_LOOKUP, ELEMENTAL_MODALITY_SYSTEM, HOUSE_STRENGTH_SYSTEM } from './planetary-status.config'
 import { DetectedAspect, AspectName } from './aspects.types'
-import aspectsConfig from './aspects.config'
+import { ASPECTS_CONFIG } from './aspect-config'
 
 /**
  * Calcula a dignidade essencial de um planeta em um signo
@@ -167,7 +167,7 @@ function calculateAspectValue(aspect: DetectedAspect): number {
  * Usa a configuração do sistema de aspectos
  */
 function getMaxOrbForAspect(aspectType: string): number {
-  const aspect = aspectsConfig.aspects.find(a => a.name === aspectType)
+  const aspect = ASPECTS_CONFIG.aspects.find((a: any) => a.name === aspectType)
   return aspect ? aspect.baseOrb : 6 // fallback padrão
 }
 

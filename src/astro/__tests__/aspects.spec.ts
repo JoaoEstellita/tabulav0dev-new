@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import aspectsConfig from '../aspects.config'
+import { ASPECTS_CONFIG } from '../aspect-config'
 import { detectAspects } from '../aspects.engine'
 
 describe('aspects.engine detectAspects', () => {
@@ -14,7 +14,7 @@ describe('aspects.engine detectAspects', () => {
       { name: 'MC', longitude: 200, speed: 0 },
       { name: 'IC', longitude: 20, speed: 0 }
     ];
-    const res = detectAspects(transit, natal, aspectsConfig);
+  const res = detectAspects(transit, natal, ASPECTS_CONFIG);
     // Mars conjunct MC
     const marsMc = res.find(r => r.type === 'conjunção' && r.planet1 === 'Mars' && r.planet2 === 'MC');
     expect(marsMc).toBeTruthy();
@@ -27,7 +27,7 @@ describe('aspects.engine detectAspects', () => {
   it('detecta conjunção com orbe pequena', () => {
     const A = [{ name: 'Sun', longitude: 10, speed: 1.0 }]
     const B = [{ name: 'Moon', longitude: 12, speed: 12.0 }]
-    const res = detectAspects(A, B, aspectsConfig)
+  const res = detectAspects(A, B, ASPECTS_CONFIG)
     const conj = res.find(r => r.type === 'conjunção' && r.planet1 === 'Sun' && r.planet2 === 'Moon')
     expect(conj).toBeTruthy()
     expect(conj!.orb).toBeCloseTo(2, 5)
@@ -36,7 +36,7 @@ describe('aspects.engine detectAspects', () => {
   it('detecta quadratura próxima de 90°', () => {
     const A = [{ name: 'Mars', longitude: 50, speed: 0.6 }]
     const B = [{ name: 'Venus', longitude: 140, speed: 1.2 }]
-    const res = detectAspects(A, B, aspectsConfig)
+  const res = detectAspects(A, B, ASPECTS_CONFIG)
     const quad = res.find(r => r.type === 'quadratura')
     expect(quad).toBeTruthy()
     expect(quad!.orb).toBeLessThanOrEqual(6)
@@ -47,7 +47,7 @@ describe('aspects.engine detectAspects', () => {
     // Usar posições dentro desse orbe
     const A = [{ name: 'Mercury', longitude: 0, speed: 1.4 }]
     const B = [{ name: 'Jupiter', longitude: 63, speed: 0.2 }]
-    const res = detectAspects(A, B, aspectsConfig)
+  const res = detectAspects(A, B, ASPECTS_CONFIG)
     const sext = res.find(r => r.type === 'sextil')
     expect(sext).toBeTruthy()
     expect(sext!.orb).toBeLessThanOrEqual(3.89)
@@ -56,7 +56,7 @@ describe('aspects.engine detectAspects', () => {
   it('marca aplicante quando planeta A é mais rápido que B', () => {
     const A = [{ name: 'Moon', longitude: 100, speed: 13.0 }]
     const B = [{ name: 'Saturn', longitude: 100.5, speed: 0.05 }]
-    const res = detectAspects(A, B, aspectsConfig)
+  const res = detectAspects(A, B, ASPECTS_CONFIG)
     const conj = res.find(r => r.type === 'conjunção')
     expect(conj).toBeTruthy()
     expect(conj!.isApplying).toBe(true)

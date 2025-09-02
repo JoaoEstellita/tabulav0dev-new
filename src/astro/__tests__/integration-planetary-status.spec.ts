@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { calculatePlanetaryStatus } from '../planetary-status.engine'
 import { detectAspects } from '../aspects.engine'
-import aspectsConfig from '../aspects.config'
+import { ASPECTS_CONFIG } from '../aspect-config'
 import type { SignName, PlanetName } from '../planetary-status.types'
 
 describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
@@ -19,7 +19,7 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
 
   it('✅ Sistema completo de status planetários funciona end-to-end', () => {
     // 1. Detectar aspectos
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     expect(aspects.length).toBeGreaterThan(0)
     console.log(`🔍 Aspectos detectados: ${aspects.length}`)
 
@@ -109,7 +109,7 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
   })
 
   it('✅ Validação de dignidades essenciais específicas', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Sol em Áries (exaltação)
     const sunStatus = calculatePlanetaryStatus(
@@ -143,7 +143,7 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
   })
 
   it('✅ Validação de sistema de casas', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Testar diferentes tipos de casas
     const testCases = [
@@ -174,7 +174,7 @@ describe('🌟 INTEGRAÇÃO COMPLETA - Sistema de Status Planetários', () => {
   })
 
   it('✅ Validação de condições especiais', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Planeta estacionário
     const stationaryStatus = calculatePlanetaryStatus(

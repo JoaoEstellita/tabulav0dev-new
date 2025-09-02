@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import AstrologyCalculator, { AstrologyData } from '../../services/astrology/AstrologyCalculator'
 import { calculateTransits } from '../aspect-engine'
-import aspectsConfig from '../aspects.config'
+import { ASPECTS_CONFIG } from '../aspect-config'
 
 // Exemplo de dados de teste realistas
 const planets = [
@@ -48,7 +48,7 @@ describe('🔬 Regressão dos cálculos de áreas da vida', () => {
   it('calcula trânsitos realistas sem erro', () => {
     const natal = planets.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed }))
     const transit = planets.map(p => ({ name: p.name, longitude: p.longitude + 10, speed: p.speed }))
-    const transits = calculateTransits(natal, transit, undefined, aspectsConfig)
+    const transits = calculateTransits(natal, transit, undefined, ASPECTS_CONFIG)
     expect(Array.isArray(transits)).toBe(true)
     expect(transits.length).toBeGreaterThan(0)
   })

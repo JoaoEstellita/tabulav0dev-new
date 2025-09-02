@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { calculatePlanetaryStatus } from '../planetary-status.engine'
 import { detectAspects } from '../aspects.engine'
-import aspectsConfig from '../aspects.config'
+import { ASPECTS_CONFIG } from '../aspect-config'
 import type { SignName } from '../planetary-status.types'
 
 describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
@@ -18,7 +18,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   ]
 
   it('detecta aspectos entre planetas de teste', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Deve encontrar aspectos entre os planetas
     expect(aspects.length).toBeGreaterThan(0)
@@ -34,7 +34,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('calcula status planetário com aspectos integrados', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Testar Sol em Áries (exaltação + aspectos)
     const sunStatus = calculatePlanetaryStatus(
@@ -62,7 +62,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('calcula status de planeta com aspectos aplicantes', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Lua em Touro (exaltação) com aspectos
     const moonStatus = calculatePlanetaryStatus(
@@ -89,7 +89,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('calcula status de planeta em detrimento com aspectos', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Marte em Touro (detrimento) mas com aspectos
     const marsStatus = calculatePlanetaryStatus(
@@ -116,7 +116,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('analisa aspectos detalhadamente por planeta', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     const jupiterStatus = calculatePlanetaryStatus(
       'Jupiter',
@@ -139,7 +139,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('calcula condições especiais por planeta', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Mercúrio próximo ao Sol (combustão)
     const mercuryStatus = calculatePlanetaryStatus(
@@ -174,7 +174,7 @@ describe('Planetary Status Phase 3 - Sistema de Aspectos Integrado', () => {
   })
 
   it('integra todos os sistemas de cálculo', () => {
-    const aspects = detectAspects(testPlanets, testPlanets, aspectsConfig)
+  const aspects = detectAspects(testPlanets, testPlanets, ASPECTS_CONFIG)
     
     // Teste completo de todos os planetas
     const allStatuses = testPlanets.map(planet => {
