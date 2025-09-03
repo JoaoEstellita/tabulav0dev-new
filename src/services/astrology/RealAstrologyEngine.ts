@@ -584,7 +584,7 @@ export class RealAstrologyEngine {
                     Astronomy.Body.Pluto
 
         // Posição geocêntrica REAL
-        const position = Astronomy.GeoVector(body, date, false)
+  const position = Astronomy.GeoVector(body, date, false)
         
         // Verificar se a posição é válida
         if (!position || position.x === undefined || position.y === undefined || position.z === undefined) {
@@ -603,7 +603,7 @@ export class RealAstrologyEngine {
         
         // Calcular velocidade (diferença de posição em 1 dia)
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
-        const nextPosition = Astronomy.GeoVector(body, nextDay, false)
+  const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
         const speed = (nextEcliptic && nextEcliptic.elon !== undefined) ? 
           nextEcliptic.elon - ecliptic.elon : 0
