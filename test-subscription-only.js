@@ -10,7 +10,7 @@ async function testSubscriptionStatus() {
   
   try {
     const url = `${BACKEND_URL}/api/subscription`;
-    const data = { userId: TEST_USER_ID, action: 'debug' };
+    const data = { userId: TEST_USER_ID, action: 'status' };
     const headers = { 'Content-Type': 'application/json' };
     
     console.log('🔍 URL:', url);

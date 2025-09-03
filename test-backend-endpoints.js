@@ -5,14 +5,15 @@ const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev
 
 
 async function testEndpoint(desc, method, path, data = {}, headers = {}) {
+  const url = `${BACKEND_URL}${path}`;
+  // Adiciona Content-Type e x-user-id se relevante
+  const finalHeaders = {
+    ...headers,
+    ...(method !== 'get' ? { 'Content-Type': 'application/json' } : {}),
+    ...(data && data.userId ? { 'x-user-id': data.userId } : {})
+  };
+  
   try {
-    const url = `${BACKEND_URL}${path}`;
-    // Adiciona Content-Type e x-user-id se relevante
-    const finalHeaders = {
-      ...headers,
-      ...(method !== 'get' ? { 'Content-Type': 'application/json' } : {}),
-      ...(data && data.userId ? { 'x-user-id': data.userId } : {})
-    };
     const response = await axios({
       method,
       url,
@@ -30,7 +31,7 @@ async function testEndpoint(desc, method, path, data = {}, headers = {}) {
       console.error('📄 Detalhes:', error.response.data);
     }
     if (error.response?.status === 500) {
-      console.error('🔍 URL testada:', `${BACKEND_URL}${path}`);
+      console.error('🔍 URL testada:', url);
       console.error('🔍 Dados enviados:', JSON.stringify(data, null, 2));
       console.error('🔍 Headers:', JSON.stringify(finalHeaders, null, 2));
     }
