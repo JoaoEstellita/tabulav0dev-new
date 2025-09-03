@@ -142,7 +142,11 @@ export class MercadoPagoService {
    */
   static async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription?action=status&userId=${userId}`)
+      const response = await fetch(`${this.BACKEND_URL}/api/subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'status', userId })
+      })
       
       if (!response.ok) {
         throw new Error(`Erro HTTP: ${response.status}`)
@@ -178,12 +182,12 @@ export class MercadoPagoService {
    */
   static async startFreeTrial(userId: string, planId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription?action=start-trial&userId=${userId}`, {
+      const response = await fetch(`${this.BACKEND_URL}/api/subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ planId })
+        body: JSON.stringify({ action: 'start-trial', userId, planId })
       })
       
       return response.ok
@@ -199,11 +203,12 @@ export class MercadoPagoService {
    */
   static async cancelSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription?action=cancel&userId=${userId}`, {
+      const response = await fetch(`${this.BACKEND_URL}/api/subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({ action: 'cancel', userId })
       })
       
       return response.ok
@@ -219,11 +224,12 @@ export class MercadoPagoService {
    */
   static async reactivateSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription?action=reactivate&userId=${userId}`, {
+      const response = await fetch(`${this.BACKEND_URL}/api/subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({ action: 'reactivate', userId })
       })
       
       return response.ok

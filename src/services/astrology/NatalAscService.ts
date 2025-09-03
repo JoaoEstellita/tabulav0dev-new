@@ -39,7 +39,7 @@ export class NatalAscService {
 			debug: false,
 		}
 
-	const resp = await fetch(`${BACKEND_URL}/api?route=public&action=astro-positions`, {
+	const resp = await fetch(`${BACKEND_URL}/api/astro/positions`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body)
