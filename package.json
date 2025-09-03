@@ -29,7 +29,7 @@
     "astronomy-engine": "^2.1.19",
     "axios": "^1.11.0",
     "ephemeris": "^2.2.0",
-    "expo": "~53.0.20",
+    "expo": "53.0.22",
     "expo-constants": "^17.1.7",
     "expo-device": "^7.1.4",
     "expo-file-system": "^18.1.11",
