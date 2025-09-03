@@ -52,7 +52,72 @@ async function testEndpoint(endpoint, params = {}) {
 
 async function runTests() {
   console.log('🚀 Iniciando testes dos endpoints do backend...')
-  
+
+  // --- TESTES DO ENDPOINT CONSOLIDADO ---
+  const fetch = require('node-fetch');
+  // Preencha abaixo com os valores REAIS do seu ambiente para garantir testes corretos:
+  const BASE_URL = 'https://tabulav0dev-backend.vercel.app/api/'; // URL do backend no Vercel
+  const TEST_USER_ID = 'gdRXHrfxS0QTvTmDJttW4e7pIrl2'; // userId real do Firestore
+  const TEST_GROUP_ID = 'OwZiFrYSs0l0RuZgMf3l'; // groupId real do Firestore
+  const TEST_TOKEN = '1697524896535986548523649517594'; // BACKEND_SECRET/API_TOKEN do Vercel
+  const TEST_CRON_SECRET = 'tabula-estelar-cron-2025'; // CRON_SECRET_TOKEN do Vercel
+
+  async function testUnified(desc, url, options = {}) {
+    try {
+      const res = await fetch(url, options);
+      const data = await res.json().catch(() => ({}));
+      console.log(`\n[${desc}]`);
+      console.log('Status:', res.status);
+      console.log('Response:', data);
+    } catch (e) {
+      console.error(`Erro em ${desc}:`, e.message);
+    }
+  }
+
+  // Subscription
+  await testUnified('Subscription Status', `${BASE_URL}?route=subscription&action=status&userId=${TEST_USER_ID}`);
+  await testUnified('Subscription Start Trial', `${BASE_URL}?route=subscription&action=start-trial`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: TEST_USER_ID, planId: 'monthly' })
+  });
+  await testUnified('Subscription Cancel', `${BASE_URL}?route=subscription&action=cancel`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: TEST_USER_ID })
+  });
+  await testUnified('Subscription Reactivate', `${BASE_URL}?route=subscription&action=reactivate`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: TEST_USER_ID })
+  });
+
+  // Notification
+  await testUnified('Notification Send', `${BASE_URL}?route=notification&action=send`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TEST_TOKEN}` },
+    body: JSON.stringify({ token: 'FCM_TOKEN_AQUI', title: 'Teste', body: 'Mensagem de teste' })
+  });
+  await testUnified('Notification Webpush', `${BASE_URL}?route=notification&action=webpush`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TEST_TOKEN}` },
+    body: JSON.stringify({ userId: TEST_USER_ID, title: 'Webpush', body: 'Mensagem webpush' })
+  });
+  await testUnified('Notification Cron Daily', `${BASE_URL}?route=notification&action=cron-daily`, {
+    method: 'POST', headers: { Authorization: TEST_CRON_SECRET }
+  });
+
+  // Public
+  await testUnified('Public Group Notify', `${BASE_URL}?route=public&action=group-notify`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ groupId: TEST_GROUP_ID, title: 'Alerta', body: 'Mensagem de grupo' })
+  });
+  await testUnified('Public Upload Profile Photo', `${BASE_URL}?route=public&action=upload-profile-photo`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: TEST_USER_ID, dataUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...' })
+  });
+  await testUnified('Public Astro Positions', `${BASE_URL}?route=public&action=astro-positions`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ datetimeISO: '2025-09-02T12:00:00Z', lat: -23.5, lon: -46.6 })
+  });
+  await testUnified('Public Timezone', `${BASE_URL}?route=public&action=timezone&lat=-23.5&lon=-46.6&ts=1756785600`);
+
+  // --- TESTES EXISTENTES ---
   // Parâmetros de teste (usar dados reais de exemplo)
   // Parâmetros FLAT conforme proxy premium
   const nowISO = '2024-01-15T12:00:00'

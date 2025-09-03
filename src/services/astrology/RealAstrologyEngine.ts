@@ -658,7 +658,7 @@ export class RealAstrologyEngine {
   ): Promise<RealPlanetPosition[]> {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!backend) throw new Error('No backend url')
-    const resp = await fetch(`${backend}/api/public?action=astro-positions`, {
+  const resp = await fetch(`${backend}/api?route=public&action=astro-positions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ datetimeISO: date.toISOString(), lat: latitude, lon: longitude, bodies: RealAstrologyEngine.PLANETS })
@@ -721,7 +721,7 @@ export class RealAstrologyEngine {
 
     console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
 
-    const resp = await fetch(`${backend}/api/public?action=astro-positions`, {
+  const resp = await fetch(`${backend}/api?route=public&action=astro-positions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)

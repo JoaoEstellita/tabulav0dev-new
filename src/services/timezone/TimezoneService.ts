@@ -5,7 +5,7 @@ export class TimezoneService {
       const backend = process.env.EXPO_PUBLIC_BACKEND_URL
       if (backend) {
         try {
-          const r = await fetch(`${backend}/api/public?action=timezone&lat=${lat}&lon=${lon}&ts=${timestampSec}`)
+          const r = await fetch(`${backend}/api?route=public&action=timezone&lat=${lat}&lon=${lon}&ts=${timestampSec}`)
           if (r.ok) {
             const j = await r.json()
             if (j && typeof j.offsetSec === 'number') {
