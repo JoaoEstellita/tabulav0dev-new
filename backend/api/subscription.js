@@ -1,6 +1,7 @@
 // Utilitário CORS universal
 const { serialize } = require('./_lib/serialize');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+// TESTE: alteração feita por GitHub Copilot em 02/09/2025
 const mercadopago = require('mercadopago');
 const { db } = require('../../src/config/firebase');
 function setCors(req, res, methods = 'POST, GET, OPTIONS') {
