@@ -46,7 +46,8 @@ function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   const eps = getObliquityRad(date)
   const phi = latDeg * Math.PI/180
   const sin = Math.sin, cos = Math.cos, tan = Math.tan
-  // MC
+  
+  // MC - fórmula padrão
   let alphaMC = Math.atan2(tan(theta), cos(eps))
   // Correção: garantir MC no hemisfério correto da eclíptica
   // Se cos(LST) < 0 (LST entre 90° e 270°), somar 180° a alphaMC
@@ -55,9 +56,13 @@ function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   }
   let mc = Math.atan2(sin(alphaMC)/cos(eps), Math.cos(alphaMC)) * 180/Math.PI
   mc = norm(mc)
-  // Ascendente
-  let asc = Math.atan2(-cos(theta), (sin(theta)*cos(eps)) - (tan(phi)*Math.sin(eps))) * 180/Math.PI
+  
+  // 🎯 ASCENDENTE - FÓRMULA CORRETA DE MEEUS
+  // Referência: "Astronomical Algorithms" por Jean Meeus, página 99
+  // tan(ASC) = cos(θ) / (-sin(θ)*cos(ε) + tan(φ)*sin(ε))
+  let asc = Math.atan2(cos(theta), -sin(theta)*cos(eps) + tan(phi)*sin(eps)) * 180/Math.PI
   asc = norm(asc)
+  
   return { asc, mc }
 }
 
