@@ -21,13 +21,18 @@ async function testEndpoint(desc, method, path, data = {}, headers = {}) {
       timeout: 30000
     });
     console.log(`\n[${desc}]`);
-    console.log('Status:', response.status);
-    console.log('Response:', response.data);
+    console.log('✅ Status:', response.status);
+    console.log('📊 Response:', response.data);
   } catch (error) {
     console.error(`\n[${desc}]`);
     console.error('❌ Erro:', error.response?.status || error.message);
     if (error.response?.data) {
       console.error('📄 Detalhes:', error.response.data);
+    }
+    if (error.response?.status === 500) {
+      console.error('🔍 URL testada:', `${BACKEND_URL}${path}`);
+      console.error('🔍 Dados enviados:', JSON.stringify(data, null, 2));
+      console.error('🔍 Headers:', JSON.stringify(finalHeaders, null, 2));
     }
   }
 }
@@ -40,10 +45,13 @@ async function runTests() {
   const TEST_TOKEN = 'F1697524896535986548523649517594';
   const TEST_CRON_SECRET = 'tabula-estelar-cron-2025';
 
+  // Preparando dados de teste
+  console.log('📝 Preparando dados de teste...');
 
-  // Subscription endpoints
-  await testEndpoint('Subscription', 'post', '/api/subscription', { userId: TEST_USER_ID, action: 'status' });
+
+  // Subscription endpoints (ordem importante: start-trial cria o usuário)
   await testEndpoint('Start Trial', 'post', '/api/subscription', { userId: TEST_USER_ID, planId: 'monthly', action: 'start-trial' });
+  await testEndpoint('Subscription Status', 'post', '/api/subscription', { userId: TEST_USER_ID, action: 'status' });
   await testEndpoint('Cancel Subscription', 'post', '/api/subscription', { userId: TEST_USER_ID, action: 'cancel' });
   await testEndpoint('Reactivate Subscription', 'post', '/api/subscription', { userId: TEST_USER_ID, action: 'reactivate' });
 
@@ -75,7 +83,7 @@ async function runTests() {
   await testEndpoint('Timezone', 'get', `/api/timezone?lat=-23.5&lon=-46.6&ts=1756785600`);
 
   // Cron daily notifications (corrigido: header de autorização)
-  await testEndpoint('Cron Daily Notifications', 'post', '/api/cron-daily-notifications', {}, { Authorization: TEST_CRON_SECRET });
+  await testEndpoint('Cron Daily Notifications', 'post', '/api/cron-daily-notifications', {}, { 'Authorization': `Bearer ${TEST_CRON_SECRET}` });
 
   // Create payment preference (corrigido: todos os campos obrigatórios)
   await testEndpoint('Create Payment Preference', 'post', '/api/mercado-pago/create-preference', {
@@ -84,9 +92,9 @@ async function runTests() {
     payer: { email: 'user@email.com', name: 'Test User' },
     items: [{ title: 'Plano Mensal', quantity: 1, unit_price: 10 }],
     back_urls: {
-      success: 'https://seusite.com/success',
-      failure: 'https://seusite.com/failure',
-      pending: 'https://seusite.com/pending'
+      success: 'https://tabulaestelar.com.br/payment/success',
+      failure: 'https://tabulaestelar.com.br/payment/failure', 
+      pending: 'https://tabulaestelar.com.br/payment/pending'
     },
     auto_return: 'approved'
   });
