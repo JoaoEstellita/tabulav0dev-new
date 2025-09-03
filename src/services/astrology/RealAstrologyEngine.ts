@@ -746,8 +746,39 @@ export class RealAstrologyEngine {
     const currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
       data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
     const natalPlanets = ((data.natal?.positions) || []).map(toPlanet)
-    const natalHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
-      data.natal?.houses || currentHouses
+    // 🌟 CORREÇÃO: Calcular casas natais localmente se o backend não as forneceu
+    let natalHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string }
+    
+    if (data.natal?.houses) {
+      // Backend forneceu casas natais - usar
+      natalHouses = data.natal.houses
+      console.log('✅ Backend forneceu casas natais')
+    } else {
+      // Backend não forneceu casas natais - calcular localmente
+      console.log('⚠️ Backend não forneceu casas natais - calculando localmente...')
+      try {
+        const natalLat = options?.natalLat || latitude
+        const natalLon = options?.natalLon || longitude
+        const system = ((globalThis as any).__userHouseSystem || 'placidus') as 'equal'|'placidus'
+        
+        const { computeHousesUTC } = await import('../../astro/houses')
+        const res = await computeHousesUTC(natalDate, natalLat, natalLon, system)
+        natalHouses = { 
+          cusps: res.cusps, 
+          ascendant: res.asc, 
+          midheaven: res.mc, 
+          approximate: (res as any).approximate === true,
+          system: system,
+          systemEffective: system
+        }
+        console.log('✅ Casas natais calculadas localmente')
+      } catch (error) {
+        console.error('❌ Erro ao calcular casas natais localmente:', error)
+        // Fallback para casas atuais (não ideal, mas funcional)
+        natalHouses = currentHouses
+        console.log('⚠️ Usando casas atuais como fallback para casas natais')
+      }
+    }
 
     // Reatribuir SEMPRE as casas no cliente usando as cúspides do backend
     // para garantir consistência de partição (ASC-ancorado, CCW, fronteira eps)
