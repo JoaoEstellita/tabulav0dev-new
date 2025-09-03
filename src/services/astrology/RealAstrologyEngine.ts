@@ -291,8 +291,9 @@ export class RealAstrologyEngine {
         const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
         // Usar meio-dia UTC para resolver TZ histórico e evitar bordas de alteração de DST
         const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
-        const { TimezoneService } = await import('../timezone/TimezoneService')
-        resolvedTz = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
+        const { getTimezoneData } = await import('../timezone/TimezoneService')
+        const tzData = await getTimezoneData(latitude, longitude, ts)
+        resolvedTz = { offsetSec: tzData.offsetSec, timeZoneId: tzData.timeZoneId }
         if (resolvedTz && typeof resolvedTz.offsetSec === 'number') {
           const offsetHours = resolvedTz.offsetSec / 3600
           return new Date(Date.UTC(y, (m - 1), d, hh - offsetHours, mm, 0))
@@ -691,8 +692,7 @@ export class RealAstrologyEngine {
     current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } },
     natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } },
   }> {
-    const backend = process.env.EXPO_PUBLIC_BACKEND_URL
-    if (!backend) throw new Error('No backend url')
+    const backend = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
     const ascOverrideDeg = Number((globalThis as any).__ascOverrideDeg)
     const natalAscOverrideDeg = Number((globalThis as any).__natalAscOverrideDeg)
     const requestBody: any = {
