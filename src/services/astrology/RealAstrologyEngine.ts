@@ -16,6 +16,7 @@ import { detectAspects } from '../../astro/aspects.engine'
 import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/transits.utils'
 import { calculatePlanetaryStatus } from '../../astro/planetary-status.engine'
 import type { PlanetaryStatus, PlanetaryStatusLevel } from '../../astro/planetary-status.types'
+import { computeHousesUTC } from '../../astro/houses'
 // Removido Ephemeris não utilizado
 
 export interface RealPlanetPosition {
@@ -761,8 +762,7 @@ export class RealAstrologyEngine {
         const natalLon = options?.natalLon || longitude
         const system = ((globalThis as any).__userHouseSystem || 'placidus') as 'equal'|'placidus'
         
-        const { computeHousesUTC } = await import('../../astro/houses')
-        const res = await computeHousesUTC(natalDate, natalLat, natalLon, system)
+                const res = await computeHousesUTC(natalDate, natalLat, natalLon, system)
         natalHouses = { 
           cusps: res.cusps, 
           ascendant: res.asc, 
@@ -894,8 +894,7 @@ export class RealAstrologyEngine {
   ): Promise<{ cusps: number[], ascendant: number, midheaven: number, approximate?: boolean }> {
     // Delegar para módulo unificado de casas do app (garante monotonicidade e fallback)
     try {
-      const { computeHousesUTC } = await import('../../astro/houses')
-  const system = (houseSystem || (globalThis as any).__userHouseSystem || 'placidus') as 'equal'|'placidus'
+        const system = (houseSystem || (globalThis as any).__userHouseSystem || 'placidus') as 'equal'|'placidus'
       const res = await computeHousesUTC(currentDate, latitude, longitude, system)
       return { cusps: res.cusps, ascendant: res.asc, midheaven: res.mc, approximate: (res as any).approximate === true }
     } catch (error) {
@@ -1993,3 +1992,4 @@ export class RealAstrologyEngine {
 }
 
 export default RealAstrologyEngine
+
