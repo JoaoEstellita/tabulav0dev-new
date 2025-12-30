@@ -241,15 +241,8 @@ export default function HomeScreen() {
       console.log('🔍 criticalAreas: safeEntries retornou', entries.length, 'entradas')
       
       const filtered = entries.filter(([_, area]) => {
-        const value = typeof area?.percentage === 'number'
-          ? area.percentage
-          : (typeof area?.status === 'number' ? area.status : null)
-
-        if (typeof value !== 'number') {
-          console.warn('criticalAreas: area invalida:', area)
-          return false
-        }
-
+        const value = typeof area?.percentage === 'number' ? area.percentage : null
+        if (typeof value !== 'number') return false
         return value < 30
       })
       
@@ -580,7 +573,7 @@ export default function HomeScreen() {
               midheaven={transitData.currentTransits.midheaven}
               natalAscendant={transitData.currentTransits.natalAscendant}
               natalMidheaven={transitData.currentTransits.natalMidheaven}
-              housesCusps={transitData.currentTransits.houses}
+              housesCusps={transitData.currentTransits.natalHouses || transitData.currentTransits.houses}
             />
           </AnimatedMount>
         )}

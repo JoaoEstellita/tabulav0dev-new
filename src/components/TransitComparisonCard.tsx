@@ -19,18 +19,16 @@ interface TransitComparisonCardProps {
   natalMidheaven?: number
   housesCusps?: number[]
 }
-
-// 🌍 Ícones dos Elementos
 const ELEMENT_ICONS = {
-  fire: '🔥',
-  earth: '🌍', 
-  air: '💨',
-  water: '💧',
-  // Português
-  fogo: '🔥',
-  terra: '🌍',
-  ar: '💨',
-  agua: '💧'
+  fire: '??',
+  earth: '??',
+  air: '??',
+  water: '??',
+  // Portugues
+  fogo: '??',
+  terra: '??',
+  ar: '??',
+  agua: '??'
 } as const
 
 // ⚡ Ícones das Modalidades
@@ -131,10 +129,7 @@ export default function TransitComparisonCard({
       'Pluto': 'Plutão'
     }
     return translations[planetName] || planetName
-  }
-
-  // 🌍 TRADUÇÃO DOS ELEMENTOS
-  const translateElement = (element: string): string => {
+  }\n\n  const translateElement = (element: string): string => {
     const translations: { [key: string]: string } = {
       'fire': 'Fogo',
       'earth': 'Terra',
@@ -217,7 +212,7 @@ export default function TransitComparisonCard({
 
         {/* Análise Elemental */}
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>🌍 Elementos:</Text>
+                <Text style={styles.analysisLabel}>Elementos:</Text>
           <View style={styles.elementalGrid}>
             <View style={styles.elementalComparison}>
               <Text style={styles.comparisonLabel}>Natal:</Text>
@@ -326,7 +321,7 @@ export default function TransitComparisonCard({
               </Text>
             </View>
 
-            {/* Comparação Natal vs Atual */}
+            {/* Comparacao Natal vs Transito */}
             <View style={styles.comparisonGrid}>
               {/* Coluna Natal */}
               <View style={styles.comparisonColumn}>
@@ -344,9 +339,9 @@ export default function TransitComparisonCard({
                 </View>
               </View>
 
-              {/* Coluna Atual */}
+              {/* Coluna Transito */}
               <View style={styles.comparisonColumn}>
-                <Text style={styles.columnTitle}>🌍 Atual</Text>
+                <Text style={styles.columnTitle}>Transito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {comparison.current.sign}
                   {comparison.current.isRetrograde && ' ℞'}
@@ -365,7 +360,7 @@ export default function TransitComparisonCard({
             {/* Linha de resumo explícita das casas + badge "próx. cúspide" */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
               <Text style={[styles.positionText, { opacity: 0.9 }]}>
-                Casa natal {comparison.natal.house} → atual {comparison.current.house}
+                Casa natal {comparison.natal.house} → transito {comparison.current.house}
               </Text>
               {(() => {
                 const info = nearestCuspInfo(comparison.current.longitude)
@@ -441,9 +436,9 @@ export default function TransitComparisonCard({
                       </View>
                     </View>
                 ))}
-                {/* Casa natal -> atual apenas */}
+                {/* Casa natal -> transito apenas */}
                 <Text style={{ color:'#A0A0A0', fontSize:12, marginTop:4 }}>
-                  Casa natal {Number(comparison.natal.house || 0)} → atual {Number(comparison.current.house || 0)}
+                  Casa natal {Number(comparison.natal.house || 0)} → transito {Number(comparison.current.house || 0)}
                 </Text>
               </View>
             )}
@@ -713,3 +708,6 @@ const styles = StyleSheet.create({
   },
   // 🌌 Estilos das casas removidos (não implementadas)
 })
+
+
+

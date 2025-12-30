@@ -192,6 +192,7 @@ export interface RealAstrologyData {
   natalAscendant: number // Ascendente natal
   natalMidheaven: number // Meio do CÃ©u natal
   natalHousesApproximate?: boolean
+  natalHouses?: number[]
   planetComparisons: PlanetComparison[] // ComparaÃ§Ã£o natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
@@ -451,7 +452,7 @@ export class RealAstrologyEngine {
       console.log('âœ… PosiÃ§Ãµes natais e casas natais prontas')
 
       // ðŸŒŸ 6. COMPARAÃ‡ÃƒO NATAL vs ATUAL
-      const planetComparisons = this.createPlanetComparisons(natalPlanets, planetsWithHouses, houses)
+      const planetComparisons = this.createPlanetComparisons(natalPlanets, currentOnNatalHouses, natalHouses)
       console.log('âœ… ComparaÃ§Ãµes planetÃ¡rias criadas')
 
       // ðŸŒŸ 7. ASPECTOS COM CASAS
@@ -544,6 +545,7 @@ export class RealAstrologyEngine {
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
         natalHousesApproximate: (natalHouses as any).approximate === true,
+        natalHouses: natalHouses.cusps,
         planetComparisons,
         chartSummary,
         houseAspects,
@@ -789,11 +791,18 @@ export class RealAstrologyEngine {
     const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
-    // CRÃTICO: Validar ordem das cÃºspides
-    const validateCuspsOrder = (cusps: number[], label: string) => {
+    // CRITICO: validar ordem das cuspides (somente em debug)
+    const debugEnabled = typeof window !== 'undefined' && window.location.search.includes('debug=1')
+    const validateCuspsOrder = (cusps: number[], label: string, systemRaw?: HouseSystem | string) => {
+      const system = normalizeHouseSystem(systemRaw || (globalThis as any).__userHouseSystem || 'placidus')
+      if (system !== 'placidus') {
+        return true
+      }
       const norm = (d: number) => (d % 360 + 360) % 360
       if (!Array.isArray(cusps) || cusps.length < 12) {
-        console.error(`${label}: cusps invalid`, { length: Array.isArray(cusps) ? cusps.length : null })
+        if (debugEnabled) {
+          console.error(`${label}: cusps invalid`, { length: Array.isArray(cusps) ? cusps.length : null })
+        }
         return false
       }
 
@@ -808,20 +817,24 @@ export class RealAstrologyEngine {
         if (step <= 0 || step > 120) {
           isValid = false
           errosDetectados.push(`Casa ${i}->${i + 1}`)
-          console.error(`${label}: cusps out of order`, {
-            casa: i,
-            current: cusps[i - 1].toFixed(2),
-            next: cusps[i].toFixed(2),
-            step: step.toFixed(2)
-          })
+          if (debugEnabled) {
+            console.error(`${label}: cusps out of order`, {
+              casa: i,
+              current: cusps[i - 1].toFixed(2),
+              next: cusps[i].toFixed(2),
+              step: step.toFixed(2)
+            })
+          }
         }
         unwrapped.push(v)
       }
 
-      if (isValid) {
-        console.log(`${label}: cusps ordered`)
-      } else {
-        console.log(`${label}: ${errosDetectados.length} erros detectados: ${errosDetectados.join(', ')}`)
+      if (debugEnabled) {
+        if (isValid) {
+          console.log(`${label}: cusps ordered`)
+        } else {
+          console.log(`${label}: ${errosDetectados.length} erros detectados: ${errosDetectados.join(', ')}`)
+        }
       }
 
       return isValid
@@ -833,15 +846,15 @@ export class RealAstrologyEngine {
         return houses
       }
 
-      if (!validateCuspsOrder(houses.cusps, label)) {
-        console.log(`${label}: applying equal-house autocorrect`)
+      if (!validateCuspsOrder(houses.cusps, label, system)) {
+        if (debugEnabled) console.log(`${label}: applying equal-house autocorrect`)
         const newCusps = []
         for (let i = 0; i < 12; i++) {
           newCusps[i] = (houses.ascendant + (i * 30)) % 360
         }
 
-        console.log(`${label}: houses autocorrected`)
-        validateCuspsOrder(newCusps, `${label} CORRIGIDAS`)
+        if (debugEnabled) console.log(`${label}: houses autocorrected`)
+        validateCuspsOrder(newCusps, `${label} CORRIGIDAS`, system)
 
         return {
           ...houses,
@@ -854,12 +867,14 @@ export class RealAstrologyEngine {
     }
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
-    console.log('ðŸ“¦ ASTRO DEBUG - Backend payload meta', data?.meta || null)
+    if (debugEnabled) {
+      console.log('ðŸ“¦ ASTRO DEBUG - Backend payload meta', data?.meta || null)
+    }
     
     // ðŸš€ APLICAR AUTO-CORREÃ‡ÃƒO SE NECESSÃRIO
     currentHouses = autoCorrectHouses(currentHouses, 'Casas ATUAIS')
     
-    console.log('ðŸ  ASTRO DEBUG - Casas ATUAIS', {
+    if (debugEnabled) console.log('ðŸ  ASTRO DEBUG - Casas ATUAIS', {
       system: (currentHouses as any).system || null,
       systemEffective: (currentHouses as any).systemEffective || null,
       approximate: !!(currentHouses as any).approximate,
@@ -868,12 +883,12 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(currentHouses.cusps),
       planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if ((currentHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
+    try { if (debugEnabled && (currentHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
     
     // ðŸš€ APLICAR AUTO-CORREÃ‡ÃƒO PARA CASAS NATAIS SE NECESSÃRIO
     natalHouses = autoCorrectHouses(natalHouses, 'Casas NATAIS')
     
-    console.log('ðŸ  ASTRO DEBUG - Casas NATAIS', {
+    if (debugEnabled) console.log('ðŸ  ASTRO DEBUG - Casas NATAIS', {
       system: (natalHouses as any).system || null,
       systemEffective: (natalHouses as any).systemEffective || null,
       approximate: !!(natalHouses as any).approximate,
@@ -882,11 +897,11 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(natalHouses.cusps),
       planets: natalWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if ((natalHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
+    try { if (debugEnabled && (natalHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
     
     // âœ… VALIDAÃ‡Ã•ES FINAIS GARANTEM QUALIDADE 100%
-    validateCuspsOrder(currentHouses.cusps, 'Casas ATUAIS FINAIS')
-    validateCuspsOrder(natalHouses.cusps, 'Casas NATAIS FINAIS')
+    validateCuspsOrder(currentHouses.cusps, 'Casas ATUAIS FINAIS', (currentHouses as any).systemEffective || (currentHouses as any).system)
+    validateCuspsOrder(natalHouses.cusps, 'Casas NATAIS FINAIS', (natalHouses as any).systemEffective || (natalHouses as any).system)
 
     return {
       current: { planets: currentWithHouses, houses: currentHouses },
