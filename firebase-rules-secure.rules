@@ -55,6 +55,27 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && 
                               request.auth.uid == resource.data.createdBy;
     }
+
+    // ===== REGRAS PARA CONFIGURACOES DE MEMBRO NO GRUPO =====
+    match /groupMemberSettings/{docId} {
+      // Usuario pode ler apenas suas configuracoes no grupo
+      allow read: if request.auth != null &&
+                     request.auth.uid == resource.data.userId &&
+                     request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members;
+
+      // Usuario pode criar configuracoes apenas para si e em grupo que participa
+      allow create: if request.auth != null &&
+                       request.auth.uid == request.resource.data.userId &&
+                       request.auth.uid in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.members;
+
+      // Usuario pode atualizar apenas suas configuracoes no grupo
+      allow update: if request.auth != null &&
+                       request.auth.uid == resource.data.userId &&
+                       request.auth.uid == request.resource.data.userId &&
+                       request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members;
+
+      allow delete: if false;
+    }
     
     // ===== REGRAS PARA RELACIONAMENTOS DE CASAL =====
     match /coupleRelationships/{relationshipId} {
