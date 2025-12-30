@@ -20,45 +20,57 @@ interface TransitComparisonCardProps {
   housesCusps?: number[]
 }
 const ELEMENT_ICONS = {
-  fire: 'F',
-  earth: 'E',
-  air: 'A',
-  water: 'W',
+  fire: '\uD83D\uDD25',
+  earth: '\uD83C\uDF0D',
+  air: '\uD83D\uDCA8',
+  water: '\uD83D\uDCA7',
   // Portugues
-  fogo: 'F',
-  terra: 'T',
-  ar: 'A',
-  agua: 'W'
+  fogo: '\uD83D\uDD25',
+  terra: '\uD83C\uDF0D',
+  ar: '\uD83D\uDCA8',
+  agua: '\uD83D\uDCA7'
 } as const
 
-// ⚡ Ícones das Modalidades
 const MODALITY_ICONS = {
-  cardinal: '⚡',
-  fixed: '🔒',
-  mutable: '🔄',
-  // Português
-  cardeal: '⚡',
-  fixo: '🔒',
-  mutavel: '🔄'
+  cardinal: '\u26A1',
+  fixed: '\u25A0',
+  mutable: '\uD83D\uDD04',
+  // Portugues
+  cardeal: '\u26A1',
+  fixo: '\u25A0',
+  mutavel: '\uD83D\uDD04'
 } as const
 
-// ⭐ Ícones dos Aspectos
 const ASPECT_ICONS = {
-  'conjunção': '☌',
-  'sextil': '⚹', 
-  'quadratura': '□',
-  'trígono': '△',
-  'oposição': '☍'
+  conjuncao: '\u260C',
+  sextil: '\u2736',
+  quadratura: '\u25A1',
+  trigono: '\u25B3',
+  oposicao: '\u260D',
+  quincuncio: '\u26BB'
 } as const
 
-// 🎨 Cores dos Aspectos
 const ASPECT_COLORS = {
-  'conjunção': '#FFD700',
-  'sextil': '#10B981',
-  'quadratura': '#EF4444',
-  'trígono': '#3B82F6',
-  'oposição': '#F59E0B'
+  conjuncao: '#FFD700',
+  sextil: '#10B981',
+  quadratura: '#EF4444',
+  trigono: '#3B82F6',
+  oposicao: '#F59E0B',
+  quincuncio: '#8B5CF6'
 } as const
+
+const PLANET_ICONS: Record<string, string> = {
+  Sun: '\u2609',
+  Moon: '\u263D',
+  Mercury: '\u263F',
+  Venus: '\u2640',
+  Mars: '\u2642',
+  Jupiter: '\u2643',
+  Saturn: '\u2644',
+  Uranus: '\u2645',
+  Neptune: '\u2646',
+  Pluto: '\u2647'
+}
 
 export default function TransitComparisonCard({ 
   planetComparisons, 
@@ -76,7 +88,7 @@ export default function TransitComparisonCard({
     normalizeHouseSystem(settings?.houseSystem || 'placidus')
   )
 
-  // Sincronizar quando as configurações carregarem/alterarem
+    // Sincronizar quando as configuracoes carregarem/alterarem
   React.useEffect(() => {
     if (settings?.houseSystem) {
       setHouseSystem(normalizeHouseSystem(settings.houseSystem))
@@ -94,7 +106,7 @@ export default function TransitComparisonCard({
       }
     } catch {}
   }, [])
-  const showApprox = false // placeholder: card não recebe props de housesApproximate aqui
+  const showApprox = false // placeholder: card nao recebe props de housesApproximate aqui
   const personalByTransitPlanet = React.useMemo(() => {
     const map: Record<string, typeof personal> = {}
     for (const item of personal) {
@@ -104,56 +116,57 @@ export default function TransitComparisonCard({
     return map
   }, [personal])
   
-  const formatDegree = (longitude: number): string => {
-    return `${longitude.toFixed(1)}°`
+    const formatDegree = (longitude: number): string => {
+    return `${longitude.toFixed(1)} deg`
   }
 
-  // 🎯 CONVERTER GRAUS PARA 0°-30° POR SIGNO
+  // Converter graus para 0-30 por signo
   const formatDegreeInSign = (longitude: number): string => {
     const degreeInSign = longitude % 30
-    return `${degreeInSign.toFixed(1)}°`
+    return `${degreeInSign.toFixed(1)} deg`
   }
 
-  // 🌟 TRADUÇÃO DOS PLANETAS
+  // Traducao dos planetas
   const translatePlanetName = (planetName: string): string => {
     const translations: { [key: string]: string } = {
-      'Sun': 'Sol',
-      'Moon': 'Lua', 
-      'Mercury': 'Mercúrio',
-      'Venus': 'Vênus',
-      'Mars': 'Marte',
-      'Jupiter': 'Júpiter',
-      'Saturn': 'Saturno',
-      'Uranus': 'Urano',
-      'Neptune': 'Netuno',
-      'Pluto': 'Plutão'
+      Sun: 'Sol',
+      Moon: 'Lua',
+      Mercury: 'Mercurio',
+      Venus: 'Venus',
+      Mars: 'Marte',
+      Jupiter: 'Jupiter',
+      Saturn: 'Saturno',
+      Uranus: 'Urano',
+      Neptune: 'Netuno',
+      Pluto: 'Plutao'
     }
     return translations[planetName] || planetName
   }
 
   const translateElement = (element: string): string => {
     const translations: { [key: string]: string } = {
-      'fire': 'Fogo',
-      'earth': 'Terra',
-      'air': 'Ar', 
-      'water': 'Água'
+      fire: 'Fogo',
+      earth: 'Terra',
+      air: 'Ar',
+      water: 'Agua'
     }
     return translations[element] || element
   }
 
-  // ⚡ TRADUÇÃO DAS MODALIDADES
   const translateModality = (modality: string): string => {
     const translations: { [key: string]: string } = {
-      'cardinal': 'Cardeal',
-      'fixed': 'Fixo',
-      'mutable': 'Mutável'
+      cardinal: 'Cardeal',
+      fixed: 'Fixo',
+      mutable: 'Mutavel'
     }
     return translations[modality] || modality
   }
 
   const getSignFromDegree = (degree: number): string => {
-    const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 
-                   'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+    const signs = [
+      'Aries', 'Touro', 'Gemeos', 'Cancer', 'Leao', 'Virgem',
+      'Libra', 'Escorpiao', 'Sagitario', 'Capricornio', 'Aquario', 'Peixes'
+    ]
     const signIndex = Math.floor(degree / 30) % 12
     return signs[signIndex]
   }
@@ -162,13 +175,22 @@ export default function TransitComparisonCard({
 
   // 🌌 Funções auxiliares removidas (casas astrológicas não implementadas)
 
+    const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
+    const base = aspect
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+    return base as keyof typeof ASPECT_COLORS
+  }
+
   const getAspectColor = (aspect: string): string => {
-    return ASPECT_COLORS[aspect as keyof typeof ASPECT_COLORS] || '#6B7280'
+    return ASPECT_COLORS[normalizeAspectKey(aspect)] || '#6B7280'
   }
 
   const getAspectIcon = (aspect: string): string => {
-    return ASPECT_ICONS[aspect as keyof typeof ASPECT_ICONS] || '•'
+    return ASPECT_ICONS[normalizeAspectKey(aspect)] || '\u2022'
   }
+
 
   // 🏷️ Distância até a cúspide mais próxima (casas ATUAIS)
   const nearestCuspInfo = React.useCallback((longitude: number): { house: number, distance: number } | null => {
@@ -202,17 +224,17 @@ export default function TransitComparisonCard({
           </Text>
         </View>
       )}
-      {/* 📊 Resumo Elemental e Modal */}
+      {/* Analise Elemental */}
       <View style={styles.summarySection}>
         <View style={styles.sectionHeader}>
           <Ionicons name="analytics" size={20} color="#FFD700" />
-          <Text style={styles.sectionTitle}>📝 Resumo da Carta</Text>
+          <Text style={styles.sectionTitle}>Resumo da Carta</Text>
           {showApprox && (
             <Text style={{ color:'#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text>
           )}
         </View>
 
-        {/* Análise Elemental */}
+        {/* Analise Elemental */}
         <View style={styles.analysisRow}>
                 <Text style={styles.analysisLabel}>Elementos:</Text>
           <View style={styles.elementalGrid}>
@@ -241,7 +263,7 @@ export default function TransitComparisonCard({
 
         {/* Análise de Modalidades */}
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>⚡ Modalidades:</Text>
+          <Text style={styles.analysisLabel}>Modalidades:</Text>
           <View style={styles.elementalGrid}>
             <View style={styles.elementalComparison}>
               <Text style={styles.comparisonLabel}>Natal:</Text>
@@ -269,7 +291,7 @@ export default function TransitComparisonCard({
         {/* Mudanças Detectadas */}
         {(chartSummary.elemental.changes.length > 0 || chartSummary.modality.changes.length > 0) && (
           <View style={styles.changesSection}>
-            <Text style={styles.changesTitle}>📈 Mudanças Detectadas:</Text>
+            <Text style={styles.changesTitle}>Mudancas Detectadas:</Text>
             {chartSummary.elemental.changes.filter(Boolean).map((change, index) => (
               <Text key={`elemental-${index}`} style={styles.changeItem}>• {change}</Text>
             ))}
@@ -310,16 +332,7 @@ export default function TransitComparisonCard({
             {/* Cabeçalho do Planeta */}
             <View style={styles.planetHeader}>
               <Text style={styles.planetName}>
-                {comparison.name === 'Sun' ? '☉' : 
-                 comparison.name === 'Moon' ? '☽' :
-                 comparison.name === 'Mercury' ? '☿' :
-                 comparison.name === 'Venus' ? '♀' :
-                 comparison.name === 'Mars' ? '♂' :
-                 comparison.name === 'Jupiter' ? '♃' :
-                 comparison.name === 'Saturn' ? '♄' :
-                 comparison.name === 'Uranus' ? '♅' :
-                 comparison.name === 'Neptune' ? '♆' :
-                 comparison.name === 'Pluto' ? '♇' : '●'} {translatePlanetName(comparison.name)}
+                {(PLANET_ICONS[comparison.name] || '?')} {translatePlanetName(comparison.name)}
               </Text>
             </View>
 
@@ -327,9 +340,9 @@ export default function TransitComparisonCard({
             <View style={styles.comparisonGrid}>
               {/* Coluna Natal */}
               <View style={styles.comparisonColumn}>
-                <Text style={styles.columnTitle}>🌟 Natal</Text>
+                <Text style={styles.columnTitle}>Natal</Text>
                 <Text style={styles.positionText}>
-                  {formatDegreeInSign(comparison.natal.longitude)} {comparison.natal.sign}
+                  {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
                 </Text>
                 <View style={styles.attributesRow}>
                   <Text style={styles.attributeChip}>
@@ -345,7 +358,7 @@ export default function TransitComparisonCard({
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>Transito</Text>
                 <Text style={styles.positionText}>
-                  {formatDegreeInSign(comparison.current.longitude)} {comparison.current.sign}
+                  {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
                 <View style={styles.attributesRow}>
@@ -359,34 +372,53 @@ export default function TransitComparisonCard({
               </View>
             </View>
 
-            {/* Linha de resumo explícita das casas + badge "próx. cúspide" */}
+            {/* Linha de resumo explicita das casas + badge "prox. cuspide" */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
               <Text style={[styles.positionText, { opacity: 0.9 }]}>
-                Casa natal {comparison.natal.house} → transito {comparison.current.house}
+                Casa natal {comparison.natal.house} -> transito {comparison.current.house}
               </Text>
               {(() => {
                 const info = nearestCuspInfo(comparison.current.longitude)
                 if (info && info.distance <= 0.5) {
                   return (
-                    <Text style={styles.nearCuspChip}>{`próx. cúspide ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
+                    <Text style={styles.nearCuspChip}>{`prox. cuspide ${info.house} (${info.distance.toFixed(2)} deg)`}</Text>
                   )
                 }
                 return null
               })()}
             </View>
 
+            {/* Transitos Pessoais para este planeta em transito */}
+            {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>Transitos Pessoais:</Text>
+                {personalByTransitPlanet[comparison.name]
+                  .slice(0,3)
+                  .map((t, idx) => (
+                    <View key={idx} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
+                      <Text style={styles.aspectText}>
+                        {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
+                        {' '}({t.orb.toFixed(1)} deg{t.isApplying ? ', aplicante' : ', separante'})
+                      </Text>
+                      <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
+                        <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
+                      </View>
+                    </View>
+                ))}
+              </View>
+            )}
+
             {/* Aspectos do Momento (Coletivo) para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>✨ Aspectos Coletivos:</Text>
+                <Text style={styles.aspectsTitle}>Aspectos Coletivos:</Text>
                 {comparison.planetaryAspects.slice(0, 3).map((aspect, aspectIndex) => (
                   <View key={aspectIndex} style={styles.aspectItem}>
-                    <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>
-                      {getAspectIcon(aspect.type)}
-                    </Text>
+                    <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
                     <Text style={styles.aspectText}>
-                      {translatePlanetName(aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1)} 
-                      ({aspect.orb.toFixed(1)}° orbe)
+                      {translatePlanetName(aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1)}
+                      ({aspect.orb.toFixed(1)} deg orbe)
                     </Text>
                     <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(aspect.type) }]}>
                       <Text style={styles.aspectStrengthText}>{aspect.strength.toFixed(0)}%</Text>
@@ -399,49 +431,19 @@ export default function TransitComparisonCard({
             {/* Aspectos com Casas */}
             {comparison.houseAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>🏠 Aspectos com Casas:</Text>
+                <Text style={styles.aspectsTitle}>Aspectos com Casas:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => (
                   <View key={houseIndex} style={styles.aspectItem}>
-                    <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>
-                      {getAspectIcon(houseAspect.aspect)}
-                    </Text>
+                    <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
                     <Text style={styles.aspectText}>
-                      Casa {houseAspect.house} - {houseAspect.meaning} 
-                      ({houseAspect.orb.toFixed(1)}° orbe)
+                      Casa {houseAspect.house} - {houseAspect.meaning}
+                      ({houseAspect.orb.toFixed(1)} deg orbe)
                     </Text>
                     <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(houseAspect.aspect) }]}>
                       <Text style={styles.aspectStrengthText}>{houseAspect.strength.toFixed(0)}%</Text>
                     </View>
                   </View>
                 ))}
-              </View>
-            )}
-
-            {/* Trânsitos Pessoais para este planeta em trânsito */}
-            {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
-              <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>⭐ Trânsitos Pessoais:</Text>
-                {personalByTransitPlanet[comparison.name]
-                  .slice(0,3)
-                  .map((t, idx) => (
-                    <View key={idx} style={styles.aspectItem}>
-                      <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>
-                        {getAspectIcon(t.type)}
-                      </Text>
-                      <Text style={styles.aspectText}>
-                        {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
-                        {' '}({t.orb.toFixed(1)}°{t.isApplying ? ', aplicante' : ', separante'})
-                      </Text>
-                      {/* Remover contactIndex - não existe na interface */}
-                      <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
-                        <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
-                      </View>
-                    </View>
-                ))}
-                {/* Casa natal -> transito apenas */}
-                <Text style={{ color:'#A0A0A0', fontSize:12, marginTop:4 }}>
-                  Casa natal {Number(comparison.natal.house || 0)} → transito {Number(comparison.current.house || 0)}
-                </Text>
               </View>
             )}
           </View>
@@ -710,6 +712,18 @@ const styles = StyleSheet.create({
   },
   // 🌌 Estilos das casas removidos (não implementadas)
 })
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
