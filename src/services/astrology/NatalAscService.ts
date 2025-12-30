@@ -1,5 +1,7 @@
 import { TimezoneService } from '../timezone/TimezoneService'
 import UserService from '../firebase/UserService'
+import type { HouseSystem } from '../../astro/houseSystem'
+import { normalizeHouseSystem } from '../../astro/houseSystem'
 
 export interface NatalAscResult {
 	ascendant: number
@@ -12,7 +14,7 @@ export interface NatalAscResult {
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
 
 export class NatalAscService {
-	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: 'whole'|'equal'|'placidus' = 'placidus'): Promise<NatalAscResult> {
+	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'placidus'): Promise<NatalAscResult> {
 		// Resolve timezone histórico no dia do nascimento (00:00 UTC)
 		const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
 		// Meio-dia UTC para evitar bordas de DST
@@ -30,7 +32,7 @@ export class NatalAscService {
 			lat: latitude,
 			lon: longitude,
 			includeHouses: true,
-			system,
+			system: normalizeHouseSystem(system),
 			natalLocal: localISO,
 			natalTimezone: tz?.timeZoneId || undefined,
 			natalLat: latitude,
@@ -57,14 +59,14 @@ export class NatalAscService {
 		}
 	}
 
-	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: 'whole'|'equal'|'placidus' = 'placidus') {
+	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'placidus') {
 		try {
 			const result = await this.computeNatalAsc(birthDate, birthTime, latitude, longitude, system)
 			await UserService.saveNatalAsc(userId, {
 				natalAscDeg: result.ascendant,
 				natalMcDeg: result.midheaven,
 				natalCusps: result.cusps,
-				natalSystem: system,
+				natalSystem: system: normalizeHouseSystem(system),
 				natalApproximate: result.approximate,
 				natalTimeZoneId: result.timeZoneId,
 			})
@@ -77,5 +79,6 @@ export class NatalAscService {
 }
 
 export default NatalAscService
+
 
 

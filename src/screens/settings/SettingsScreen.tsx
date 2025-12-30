@@ -23,6 +23,9 @@ import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 // Removidos itens de preview e comparativos da Configuração (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
+import UserService from '../../services/firebase/UserService';
+import type { HouseSystem } from '../../astro/houseSystem';
+import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
 
 const { width } = Dimensions.get('window');
 
@@ -49,7 +52,7 @@ export default function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
-  const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>('placidus');
+  const [houseSystem, setHouseSystem] = useState<HouseSystem>('placidus');
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -257,6 +260,12 @@ export default function SettingsScreen() {
     loadSettings();
   }, []);
 
+  useEffect(() => {
+    if (userSettings?.houseSystem) {
+      setHouseSystem(normalizeHouseSystem(userSettings.houseSystem));
+    }
+  }, [userSettings?.houseSystem]);
+
   // (Removido) Overrides de ASC – agora cálculo é sempre automático
 
   const loadSettings = async () => {
@@ -269,6 +278,15 @@ export default function SettingsScreen() {
   };
 
   // Reprocessar Casas Natais removido desta tela conforme solicitado
+
+  const handleHouseSystemChange = async (system: HouseSystem) => {
+    const normalized = normalizeHouseSystem(system);
+    setHouseSystem(normalized);
+    await updateSettings({ houseSystem: normalized });
+    if (user?.uid) {
+      try { await UserService.setHouseSystem(user.uid, normalized); } catch {}
+    }
+  };
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -547,8 +565,35 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Removidos: Sistema de Casas e Trânsitos Comparativos desta tela */}
-
+          {/* Sistema de Casas */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sistema de Casas</Text>
+            <View style={styles.sectionContent}>
+              {HOUSE_SYSTEMS.map((system) => {
+                const active = houseSystem === system;
+                return (
+                  <TouchableOpacity
+                    key={system}
+                    style={styles.settingsItem}
+                    onPress={() => handleHouseSystemChange(system)}
+                  >
+                    <View style={styles.itemLeft}>
+                      <View style={styles.iconContainer}>
+                        <Ionicons name="home" size={20} color="#FFD700" />
+                      </View>
+                      <View style={styles.itemText}>
+                        <Text style={styles.itemTitle}>{formatHouseSystemLabel(system)}</Text>
+                        <Text style={styles.itemSubtitle}>Aplicar ao mapa natal e transitos</Text>
+                      </View>
+                    </View>
+                    <View style={styles.itemRight}>
+                      <Ionicons name={active ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={active ? '#22C55E' : '#b0b0b0'} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
           {/* Settings Sections */}
           {settingsSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
@@ -779,3 +824,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+
+

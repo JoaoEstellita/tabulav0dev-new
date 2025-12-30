@@ -49,7 +49,7 @@ export interface UserProfile {
   natalAscDeg?: number
   natalMcDeg?: number
   natalCusps?: number[]
-  natalSystem?: 'whole'|'equal'|'placidus'
+  natalSystem?: import('../../astro/houseSystem').HouseSystem
   natalApproximate?: boolean
   natalTimeZoneId?: string
 }
@@ -208,23 +208,22 @@ class UserService {
     }
   }
 
-  async getHouseSystem(userId: string): Promise<'whole'|'equal'|'placidus'|null> {
+  async getHouseSystem(userId: string): Promise<import('../../astro/houseSystem').HouseSystem | null> {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId))
       if (!userDoc.exists()) return null
       const data = userDoc.data() as any
-      return (
-        data?.preferences?.houseSystem ||
-        data?.houseSystem ||
-        null
-      )
+      const raw = data?.preferences?.houseSystem || data?.houseSystem
+      if (!raw) return null
+      const { normalizeHouseSystem } = await import('../../astro/houseSystem')
+      return normalizeHouseSystem(raw)
     } catch (error) {
       console.error('Erro ao obter houseSystem do usuário:', error)
       return null
     }
   }
 
-  async setHouseSystem(userId: string, system: 'whole'|'equal'|'placidus'): Promise<void> {
+  async setHouseSystem(userId: string, system: import('../../astro/houseSystem').HouseSystem): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)
       await updateDoc(userRef, {
@@ -240,7 +239,7 @@ class UserService {
     natalAscDeg: number
     natalMcDeg: number
     natalCusps: number[]
-    natalSystem: 'whole'|'equal'|'placidus'
+    natalSystem: import('../../astro/houseSystem').HouseSystem
     natalApproximate: boolean
     natalTimeZoneId?: string
   }): Promise<void> {
@@ -278,3 +277,4 @@ class UserService {
 }
 
 export default new UserService()
+

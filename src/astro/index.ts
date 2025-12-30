@@ -1,5 +1,7 @@
 export { computeHousesUTC } from './houses'
-export { degToSign } from './houses.math'
+export { degToSign, getPlanetHouse } from './houses.math'
+export type { HouseSystem } from './houseSystem'
+export { normalizeHouseSystem, formatHouseSystemLabel } from './houseSystem'
 export type { Planet } from './planets'
 
 // Novas exportações para status planetários

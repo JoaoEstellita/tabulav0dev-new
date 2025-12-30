@@ -32,6 +32,8 @@ import { AnimatedMount, animateOnMountWeb } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
 // import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
+import type { HouseSystem } from '../../astro/houseSystem'
+import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
@@ -50,7 +52,7 @@ export default function HomeScreen() {
     const { user } = useAuth()
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings, updateSettings } = useUserSettings()
-    const [houseSystem, setHouseSystem] = useState<'whole'|'equal'|'placidus'>(settings?.houseSystem || 'placidus')
+    const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
     const navigation = useNavigation<any>()
 
     // Foco da Home via deep link (pessoal/coletivo/resumo)
@@ -66,7 +68,9 @@ export default function HomeScreen() {
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
       if (settings?.houseSystem) {
-        ;(globalThis as any).__userHouseSystem = settings.houseSystem
+        const normalized = normalizeHouseSystem(settings.houseSystem)
+        setHouseSystem(normalized)
+        ;(globalThis as any).__userHouseSystem = normalized
       }
     }, [settings?.houseSystem])
 

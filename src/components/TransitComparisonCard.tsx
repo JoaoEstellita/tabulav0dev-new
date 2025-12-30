@@ -7,6 +7,8 @@ import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
 import UserService from '../services/firebase/UserService'
 import { useAuth } from '../hooks/useAuth'
+import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
+import type { HouseSystem } from '../astro/houseSystem'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -72,22 +74,23 @@ export default function TransitComparisonCard({
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
   const { user } = useAuth()
-  const [houseSystem, setHouseSystem] = React.useState<'equal'|'placidus'>(
-    (settings?.houseSystem === 'placidus' ? 'placidus' : 'equal')
+  const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
+    normalizeHouseSystem(settings?.houseSystem || 'placidus')
   )
 
   // Sincronizar quando as configurações carregarem/alterarem
   React.useEffect(() => {
-    if (settings?.houseSystem === 'placidus' || settings?.houseSystem === 'equal') {
-      setHouseSystem(settings.houseSystem)
+    if (settings?.houseSystem) {
+      setHouseSystem(normalizeHouseSystem(settings.houseSystem))
     }
   }, [settings?.houseSystem])
-  const applyHouseSystem = React.useCallback(async (sys: 'equal'|'placidus') => {
+  const applyHouseSystem = React.useCallback(async (sys: HouseSystem) => {
     try {
-      setHouseSystem(sys)
+      const normalized = normalizeHouseSystem(sys)
+      setHouseSystem(normalized)
       await updateSettings({ houseSystem: sys })
-      ;(globalThis as any).__userHouseSystem = sys
-      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, sys) } catch {} }
+      ;(globalThis as any).__userHouseSystem = normalized
+      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, normalized) } catch {} }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }
@@ -289,13 +292,17 @@ export default function TransitComparisonCard({
         </View>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
-            onPress={() => applyHouseSystem(houseSystem === 'placidus' ? 'equal' : 'placidus')}
+            onPress={() => {
+              const idx = HOUSE_SYSTEMS.indexOf(houseSystem)
+              const next = HOUSE_SYSTEMS[(idx + 1) % HOUSE_SYSTEMS.length]
+              applyHouseSystem(next)
+            }}
             style={[styles.toggleBtn, styles.toggleBtnActive]}
             accessibilityRole="button"
             accessibilityLabel="Alternar sistema de casas"
           >
             <Text style={[styles.toggleText, styles.toggleTextActive]}>
-              {houseSystem === 'equal' ? 'Casas Inteiras' : 'Placidus'}
+              {formatHouseSystemLabel(houseSystem)}
             </Text>
           </TouchableOpacity>
         </View>

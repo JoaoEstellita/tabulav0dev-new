@@ -1,53 +1,45 @@
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import UserService from '../services/firebase/UserService';
-import { useAuth } from './useAuth';
+﻿import { useState, useEffect } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import UserService from '../services/firebase/UserService'
+import AstrologyCacheService from '../services/astrology/AstrologyCacheService'
+import { normalizeHouseSystem } from '../astro/houseSystem'
+import type { HouseSystem } from '../astro/houseSystem'
+import { useAuth } from './useAuth'
 
 export interface UserSettings {
-  dataSync: boolean;
-  analytics: boolean;
-  locationSharing: boolean;
-  theme: 'light' | 'dark';
-  language: string;
-  timezone: string;
-  currency: string;
-  houseSystem?: 'whole' | 'equal' | 'placidus';
-  ascOverrideDeg?: number;
-  natalAscOverrideDeg?: number;
+  dataSync: boolean
+  analytics: boolean
+  locationSharing: boolean
+  theme: 'light' | 'dark'
+  language: string
+  timezone: string
+  currency: string
+  houseSystem?: HouseSystem
+  ascOverrideDeg?: number
+  natalAscOverrideDeg?: number
 }
 
-const STORAGE_KEY = '@tabula_estelar:user_settings';
+const STORAGE_KEY = '@tabula_estelar:user_settings'
 
 export function useUserSettings() {
-  const { user } = useAuth() as any;
-  const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth() as any
+  const [settings, setSettings] = useState<UserSettings | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    loadSettings()
+  }, [])
 
   const loadSettings = async () => {
     try {
-      // TODO: Implementar quando tivermos contexto de usuário
-      // const response = await fetch(`${BACKEND_URL}/user-settings?userId=${userId}`);
-      // if (response.ok) {
-      //   const data = await response.json();
-      //   if (data.success) {
-      //     setSettings(data.settings);
-      //     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.settings));
-      //   }
-      // }
-      
-      // Por enquanto, usar localStorage
-      // Preferir preferência do usuário no Firestore quando logado
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const stored = await AsyncStorage.getItem(STORAGE_KEY)
       if (stored) {
-        const parsed = JSON.parse(stored);
-        setSettings(parsed);
-        try { (globalThis as any).__userHouseSystem = parsed.houseSystem || 'placidus' } catch {}
+        const parsed = JSON.parse(stored)
+        const normalized = normalizeHouseSystem(parsed.houseSystem || 'placidus')
+        const merged = { ...parsed, houseSystem: normalized }
+        setSettings(merged)
+        try { (globalThis as any).__userHouseSystem = normalized } catch {}
       } else {
-        // Configurações padrão
         const defaultSettings: UserSettings = {
           dataSync: true,
           analytics: true,
@@ -56,18 +48,18 @@ export function useUserSettings() {
           language: 'pt-BR',
           timezone: 'America/Sao_Paulo',
           currency: 'BRL',
-          houseSystem: 'placidus',
-        };
-        setSettings(defaultSettings);
+          houseSystem: 'placidus'
+        }
+        setSettings(defaultSettings)
         try { (globalThis as any).__userHouseSystem = defaultSettings.houseSystem } catch {}
-        await saveSettings(defaultSettings);
+        await saveSettings(defaultSettings)
       }
-      // Se logado, tentar puxar preferência persistida
+
       try {
         if (user?.uid) {
           const hs = await UserService.getHouseSystem(user.uid)
-          if (hs === 'placidus' || hs === 'equal' || hs === 'whole') {
-            const normalized = (hs === 'whole') ? 'equal' : hs
+          if (hs) {
+            const normalized = normalizeHouseSystem(hs)
             const merged = { ...(settings || JSON.parse(stored || '{}')), houseSystem: normalized }
             try { (globalThis as any).__userHouseSystem = normalized } catch {}
             await saveSettings(merged)
@@ -75,8 +67,7 @@ export function useUserSettings() {
         }
       } catch {}
     } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-      // Fallback para configurações padrão
+      console.error('Erro ao carregar configuracoes:', error)
       const defaultSettings: UserSettings = {
         dataSync: true,
         analytics: true,
@@ -85,42 +76,43 @@ export function useUserSettings() {
         language: 'pt-BR',
         timezone: 'America/Sao_Paulo',
         currency: 'BRL',
-        houseSystem: 'placidus',
-      };
-      setSettings(defaultSettings);
+        houseSystem: 'placidus'
+      }
+      setSettings(defaultSettings)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const saveSettings = async (newSettings: UserSettings) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
-      setSettings(newSettings);
-      
-      // TODO: Sincronizar com backend quando tivermos contexto de usuário
-      // const response = await fetch(`${BACKEND_URL}/user-settings?userId=${userId}`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ settings: newSettings })
-      // });
-      // if (!response.ok) {
-      //   console.error('Erro ao sincronizar com backend');
-      // }
-      
-      return true;
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings))
+      setSettings(newSettings)
+      return true
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
-      return false;
+      console.error('Erro ao salvar configuracoes:', error)
+      return false
     }
-  };
+  }
 
   const updateSettings = async (updates: Partial<UserSettings>) => {
-    if (!settings) return false;
+    if (!settings) return false
 
-    const newSettings = { ...settings, ...updates };
-    return await saveSettings(newSettings);
-  };
+    const newSettings = { ...settings, ...updates }
+    if (updates.houseSystem) {
+      const normalized = normalizeHouseSystem(updates.houseSystem)
+      newSettings.houseSystem = normalized
+      try { (globalThis as any).__userHouseSystem = normalized } catch {}
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('house-system-changed'))
+      }
+      if (user?.uid) {
+        try { await AstrologyCacheService.clearCache(user.uid) } catch {}
+      }
+    }
+
+    return await saveSettings(newSettings)
+  }
 
   const resetSettings = async () => {
     const defaultSettings: UserSettings = {
@@ -131,28 +123,29 @@ export function useUserSettings() {
       language: 'pt-BR',
       timezone: 'America/Sao_Paulo',
       currency: 'BRL',
-    };
-    return await saveSettings(defaultSettings);
-  };
+      houseSystem: 'placidus'
+    }
+    return await saveSettings(defaultSettings)
+  }
 
   const toggleTheme = async () => {
-    if (!settings) return false;
-    
-    const newTheme = settings.theme === 'dark' ? 'light' : 'dark';
-    return await updateSettings({ theme: newTheme });
-  };
+    if (!settings) return false
+
+    const newTheme = settings.theme === 'dark' ? 'light' : 'dark'
+    return await updateSettings({ theme: newTheme })
+  }
 
   const updateLanguage = async (language: string) => {
-    return await updateSettings({ language });
-  };
+    return await updateSettings({ language })
+  }
 
   const updateTimezone = async (timezone: string) => {
-    return await updateSettings({ timezone });
-  };
+    return await updateSettings({ timezone })
+  }
 
   const updateCurrency = async (currency: string) => {
-    return await updateSettings({ currency });
-  };
+    return await updateSettings({ currency })
+  }
 
   return {
     settings,
@@ -162,6 +155,6 @@ export function useUserSettings() {
     toggleTheme,
     updateLanguage,
     updateTimezone,
-    updateCurrency,
-  };
+    updateCurrency
+  }
 }

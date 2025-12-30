@@ -1,36 +1,84 @@
-// Testes básicos sem runner dedicado (mantém compatível com repo atual)
-import { describe, it, expect } from 'vitest'
-import { computeHousesUTC } from '../../astro'
-import { makeMonotonicCuspsFromAsc } from '../../astro/houses.math'
+﻿import { describe, it, expect } from 'vitest'
+import { getPlanetHouse } from '../../astro'
+import type { HouseSystem } from '../../astro'
 
-const RIO = { lat: -22.9068, lon: -43.1729 }
+const ascLongitude = 80.0 // Gemini
 
-describe('Houses basic properties', () => {
+const planetLongitudes = {
+  Sun: 20.39405510181004,      // Aries
+  Moon: 77.45668877355062,     // Gemini
+  Mercury: 26.661837868503998, // Aries
+  Venus: 21.75696860211736,    // Aries
+  Mars: 78.33693177642418,     // Gemini
+  Jupiter: 65.23845920988846,  // Gemini
+  Saturn: 283.7954437916226,   // Capricorn
+  Uranus: 275.3307562541403,   // Capricorn
+  Neptune: 282.3791405451524,  // Capricorn
+  Pluto: 224.44512326725635    // Scorpio
+}
 
+type ExpectedMap = Record<keyof typeof planetLongitudes, number>
 
-  it('equal: planeta cai em exatamente 1 casa', async () => {
-    const res = await computeHousesUTC(new Date('2025-08-08T23:59:00Z'), RIO.lat, RIO.lon, 'equal')
-    const seen = new Set()
-    if (res.planetHouses) {
-    for (const [p,h] of Object.entries(res.planetHouses)){
-      expect(h).toBeGreaterThanOrEqual(1)
-      expect(h).toBeLessThanOrEqual(12)
-      const key = p+':'+h
-      expect(seen.has(key)).toBe(false)
-      seen.add(key)
+describe('getPlanetHouse - house systems', () => {
+  it('whole-sign matches expected natal mapping', () => {
+    const expected: ExpectedMap = {
+      Sun: 11,
+      Moon: 1,
+      Mercury: 11,
+      Venus: 11,
+      Mars: 1,
+      Jupiter: 1,
+      Saturn: 8,
+      Uranus: 8,
+      Neptune: 8,
+      Pluto: 6
     }
+
+    for (const [name, longitude] of Object.entries(planetLongitudes)) {
+      const house = getPlanetHouse({
+        planetLongitude: longitude,
+        ascLongitude,
+        houseCusps: null,
+        system: 'whole-sign'
+      })
+      expect(house).toBe(expected[name as keyof ExpectedMap])
     }
   })
 
-  it('placidus: retorna 12 cúspides e arcos plausíveis', async () => {
-    const res = await computeHousesUTC(new Date('2025-08-08T23:59:00Z'), RIO.lat, RIO.lon, 'placidus')
-    expect(res.cusps).toHaveLength(12)
-    const mono = makeMonotonicCuspsFromAsc(res.cusps.map(x => ((x%360)+360)%360))
-    const arcs = mono.map((c,i)=> (i<11?mono[i+1]:mono[0]+360) - c)
-    expect(arcs.every(a=>a>0 && a<180)).toBe(true)
-    const sum = arcs.reduce((a,b)=>a+b,0)
-    expect(Math.abs(sum - 360)).toBeLessThan(0.2)
+  it('psychological-shift matches expected natal mapping', () => {
+    const expected: ExpectedMap = {
+      Sun: 12,
+      Moon: 2,
+      Mercury: 12,
+      Venus: 12,
+      Mars: 2,
+      Jupiter: 2,
+      Saturn: 9,
+      Uranus: 9,
+      Neptune: 9,
+      Pluto: 7
+    }
+
+    for (const [name, longitude] of Object.entries(planetLongitudes)) {
+      const house = getPlanetHouse({
+        planetLongitude: longitude,
+        ascLongitude,
+        houseCusps: null,
+        system: 'psychological-shift'
+      })
+      expect(house).toBe(expected[name as keyof ExpectedMap])
+    }
+  })
+
+  it('placidus falls back when cusps are missing', () => {
+    const system: HouseSystem = 'placidus'
+    const house = getPlanetHouse({
+      planetLongitude: planetLongitudes.Sun,
+      ascLongitude,
+      houseCusps: null,
+      system
+    })
+    expect(house).toBeGreaterThanOrEqual(1)
+    expect(house).toBeLessThanOrEqual(12)
   })
 })
-
-

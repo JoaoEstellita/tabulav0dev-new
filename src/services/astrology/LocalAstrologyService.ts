@@ -17,6 +17,7 @@ import { publishAstrologyData } from '../../context/AstrologyDataProvider'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import AstrologyCacheService from './AstrologyCacheService'
+import { normalizeHouseSystem } from '../../astro/houseSystem'
 
 export interface LocalTransitData {
   currentTransits: RealAstrologyData
@@ -95,7 +96,7 @@ export class LocalAstrologyService {
       // 2. Calcular dados REAIS usando engine local
       console.log('🔬 Calculando dados astrológicos REAIS localmente...')
       // Ler sistema de casas persistido (fallback placidus)
-      const houseSystem = (globalThis as any).__userHouseSystem || 'placidus'
+      const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
 
       // Determinar localização atual para casas do momento
       let currentLat = birthData.birthLocation.latitude
@@ -137,7 +138,7 @@ export class LocalAstrologyService {
             midheaven: userProfile.natalMcDeg || realData.midheaven,
             cusps: userProfile.natalCusps,
             approximate: !!userProfile.natalApproximate,
-            system: (userProfile.natalSystem || houseSystem)
+            system: normalizeHouseSystem(userProfile.natalSystem || houseSystem)
           }
         }
       } catch {}

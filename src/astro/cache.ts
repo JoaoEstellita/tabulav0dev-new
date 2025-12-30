@@ -1,5 +1,5 @@
 import type { HouseResult } from './houses'
-import type { HouseSystem } from './houses'
+import type { HouseSystem } from './houseSystem'
 
 const mem = new Map<string, HouseResult>()
 

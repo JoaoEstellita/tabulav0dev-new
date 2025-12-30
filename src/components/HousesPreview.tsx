@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { computeHousesUTC, degToSign } from '../astro'
+import { computeHousesUTC, degToSign, formatHouseSystemLabel } from '../astro'
 import type { HouseSystem } from '../astro'
 
 type Props = { dateUTC: Date; lat: number; lon: number; system: HouseSystem }
@@ -39,7 +39,7 @@ export default function HousesPreview({ dateUTC, lat, lon, system }: Props) {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Sistema: {system === 'equal' ? 'casas inteiras' : system}</Text>
+      <Text style={styles.title}>Sistema: {formatHouseSystemLabel(system)}</Text>
       <Text style={styles.item}>ASC: {format(asc)} | MC: {format(mc)}</Text>
       {state.system === 'placidus' && approximate && (
         <Text style={{ color:'#FFD700', marginBottom: 8 }}>Placidus (aprox)</Text>
