@@ -274,6 +274,21 @@ export class RealAstrologyEngine {
     transformacao: { houses: [8, 12], planets: ['Pluto', 'Uranus'], weight: 1.0 }
   }
 
+  private static readonly HOUSE_RULERS: Record<number, string[]> = {
+    1: ['Mars'],
+    2: ['Venus'],
+    3: ['Mercury'],
+    4: ['Moon'],
+    5: ['Sun'],
+    6: ['Mercury'],
+    7: ['Venus'],
+    8: ['Mars'],
+    9: ['Jupiter'],
+    10: ['Saturn'],
+    11: ['Saturn', 'Uranus'],
+    12: ['Jupiter', 'Neptune']
+  }
+
   /**
    * Calcula dados astrológicos REAIS para uma data e local específicos
    */
@@ -509,8 +524,17 @@ export class RealAstrologyEngine {
 
       // Agrupar trânsitos pessoais por área da vida com base nas casas significadoras
       const byArea: Record<string, typeof personalTransits> = {}
+      const natalHouseByName = this.buildNatalHouseLookup(natalPlanets)
       for (const [areaName, cfg] of Object.entries(this.LIFE_AREAS)) {
-        byArea[areaName] = personalTransits.filter(t => cfg.houses.includes(t.natalHouseImpacted))
+        byArea[areaName] = personalTransits.filter(t => {
+          if (!cfg.planets.includes(t.transitPlanet)) return false
+          return this.isTransitRelevantToArea(
+            t.natalPlanet,
+            t.natalHouseImpacted,
+            cfg.houses,
+            natalHouseByName
+          )
+        })
       }
 
       const result: RealAstrologyData = {
@@ -1168,6 +1192,7 @@ export class RealAstrologyEngine {
     const degDiff = (a:number,b:number)=>{ const d=Math.abs(((a-b+540)%360)-180); return d }
     const within = (x:number, target:number, tol:number)=> Math.abs(x-target) <= tol
     const natalByName = new Map(natalPlanets.map(p=>[p.name,p]))
+    const natalHouseByName = this.buildNatalHouseLookup(natalPlanets)
     const countByNatal: Record<string, number> = {}
     aspects.forEach(a=>{ countByNatal[a.planet2]=(countByNatal[a.planet2]||0)+1 })
     const tnPatternBoost: Map<string, number> = new Map()
@@ -1234,7 +1259,10 @@ export class RealAstrologyEngine {
 
         // Influências dos aspectos
         // Considerar aspectos T→N onde este planeta é o trânsito (detectAspects mantém planet1 como trânsito)
-        const planetAspects = aspects.filter(a => a.planet1 === planetName)
+        const planetAspects = aspects.filter(a =>
+          a.planet1 === planetName &&
+          this.isTransitRelevantToArea(a.planet2, planet.house, config.houses, natalHouseByName)
+        )
         
         let aspectScoreSum = 0
         let aspectCount = 0
@@ -1280,10 +1308,7 @@ export class RealAstrologyEngine {
           const transitInRelevantHouse = config.houses.includes(planet.house)
           const relevantHouseBoost = transitInRelevantHouse ? 1.10 : 1.0
           // Regências de casa: pequeno boost quando o trânsito aspecta regente de casa-chave da área
-          const houseRulers: Record<number, string[]> = {
-            1:['Mars'], 2:['Venus'], 3:['Mercury'], 4:['Moon'], 5:['Sun'], 6:['Mercury'], 7:['Venus'], 8:['Mars'], 9:['Jupiter'], 10:['Saturn'], 11:['Saturn','Uranus'], 12:['Jupiter','Neptune']
-          }
-          const areaRulers = new Set(config.houses.flatMap(h => houseRulers[h] || []))
+          const areaRulers = new Set(config.houses.flatMap(h => RealAstrologyEngine.HOUSE_RULERS[h] || []))
           const rulerBoost = areaRulers.has(other) ? 1.06 : 1.0
 
           // Padrões Pessoais
@@ -1666,6 +1691,34 @@ export class RealAstrologyEngine {
     return 1.0
   }
 
+  private static buildNatalHouseLookup(natalPlanets: RealPlanetPosition[]): Map<string, number> {
+    const byName = new Map<string, number>()
+    natalPlanets.forEach(p => byName.set(p.name, p.house))
+    byName.set('Asc', 1)
+    byName.set('MC', 10)
+    byName.set('IC', 4)
+    return byName
+  }
+
+  private static isTransitRelevantToArea(
+    natalTarget: string,
+    transitHouseNatal: number,
+    relevantHouses: number[],
+    natalHouseByName: Map<string, number>
+  ): boolean {
+    if (!relevantHouses.length) return false
+    const transitInRelevantHouse = relevantHouses.includes(transitHouseNatal)
+    const natalTargetHouse = natalHouseByName.get(natalTarget) || 0
+    const natalInRelevantHouse = relevantHouses.includes(natalTargetHouse)
+    const angleRelevant =
+      (natalTarget === 'Asc' && relevantHouses.includes(1)) ||
+      (natalTarget === 'MC' && relevantHouses.includes(10)) ||
+      (natalTarget === 'IC' && relevantHouses.includes(4))
+    const isRuler = relevantHouses.some(h => (RealAstrologyEngine.HOUSE_RULERS[h] || []).includes(natalTarget))
+
+    return transitInRelevantHouse || natalInRelevantHouse || angleRelevant || isRuler
+  }
+
   // Peso por duração/inércia do par de planetas (privilegia lentos, atenua muito rápidos)
   private static getPlanetDurationWeight(transitName: string, natalName: string): number {
     const slow: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
@@ -2032,6 +2085,8 @@ export class RealAstrologyEngine {
 }
 
 export default RealAstrologyEngine
+
+
 
 
 

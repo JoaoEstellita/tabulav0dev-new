@@ -163,17 +163,27 @@ const TRANSLATIONS = {
   // 🔍 FUNÇÃO AUXILIAR PARA ORBE MÁXIMO POR TIPO DE ASPECTO
   const getMaxOrbForAspect = (aspectType: string): number => {
     const maxOrbs: Record<string, number> = {
-      'conjunction': 8,    // Conjunção: 8°
-      'opposition': 8,     // Oposição: 8°
-      'square': 6,         // Quadratura: 6°
-      'trine': 6,          // Trígono: 6°
-      'sextile': 4,        // Sextil: 4°
-      'quincunx': 3,      // Quincúncio: 3°
-      'semisextile': 3,    // Semissextil: 3°
-      'semisquare': 2,     // Semiquadratura: 2°
-      'sesquiquadrate': 2  // Sesquiquadratura: 2°
+      'conjunction': 8,
+      'opposition': 8,
+      'square': 6,
+      'trine': 6,
+      'sextile': 4,
+      'quincunx': 3,
+      'semisextile': 3,
+      'semisquare': 2,
+      'sesquiquadrate': 2,
+      'conjuncao': 8,
+      'oposicao': 8,
+      'quadratura': 6,
+      'trigono': 6,
+      'sextil': 4,
+      'quincuncio': 3,
+      'semissextil': 3,
+      'semiquadratura': 2,
+      'sesquiquadratura': 2
     }
-    return maxOrbs[aspectType] || 5
+    const normalized = (aspectType || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return maxOrbs[aspectType] || maxOrbs[normalized] || 5
   }
 
 // 🎨 SISTEMA DE DESIGN SIMPLIFICADO
@@ -673,7 +683,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         suggestion = `Aproveite a harmonia entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Iniciar projetos, expandir relacionamentos'
       } else if (isChallenging) {
-        suggestion = `Gerencie a tensão entre ${transit.transitPlanet} e ${transit.natalPlanet}`
+        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Revisar planos, buscar equilíbrio'
       } else if (isNeutral) {
         suggestion = `Integre as energias de ${transit.transitPlanet} e ${transit.natalPlanet}`
@@ -697,10 +707,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     aspects.forEach((aspect, index) => {
       // 🎯 CORREÇÃO: Sugestões baseadas na natureza real do aspecto
       const suggestion = aspect.isHarmonious 
-        ? `Aproveite a harmonia natal entre ${aspect.planet1} e ${aspect.planet2}`
+        ? `Aproveite a harmonia do transito entre ${aspect.planet1} e ${aspect.planet2}`
         : aspect.isChallenging
-        ? `Gerencie a tensão natal entre ${aspect.planet1} e ${aspect.planet2}`
-        : `Integre as energias natais entre ${aspect.planet1} e ${aspect.planet2}`
+        ? `Gerencie a tensao do transito entre ${aspect.planet1} e ${aspect.planet2}`
+        : `Integre as energias do transito entre ${aspect.planet1} e ${aspect.planet2}`
       
       const action = aspect.isHarmonious
         ? 'Desenvolver talentos naturais, fortalecer relacionamentos'
@@ -712,9 +722,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         transitId: `natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`,
         suggestion,
         action,
-                 influencePeriod: 'Constante (Natal)',
+                 influencePeriod: 'Variavel (Transito)',
          priority: 'média',
-        basedOn: `Aspecto Natal: ${aspect.type} ${aspect.planet1} → ${aspect.planet2}`
+        basedOn: `Aspecto de Transito: ${aspect.type} ${aspect.planet1} → ${aspect.planet2}`
       })
     })
 
@@ -792,7 +802,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderTransitsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS E ASPECTOS NATAIS</Text>
+      <Text style={styles.sectionTitle}>TRANSITOS ATIVOS E ASPECTOS DE TRANSITO</Text>
       
       {/* Subseção: Trânsitos Ativos */}
       <View style={styles.subsection}>
@@ -817,7 +827,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusColor = DESIGN_SYSTEM.colors.positive
               statusText = 'Harmônico'
             } else if (isChallenging) {
-              statusColor = DESIGN_SYSTEM.colors.negative
+        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
               statusText = 'Desafiador'
             } else if (isNeutral) {
               statusColor = DESIGN_SYSTEM.colors.neutral
@@ -898,11 +908,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
       {/* Subseção: Aspectos Natais */}
       <View style={styles.subsection}>
-        <Text style={styles.subsectionTitle}>🔗 ASPECTOS NATAIS RELEVANTES</Text>
+        <Text style={styles.subsectionTitle}>ASPECTOS DE TRANSITO RELEVANTES</Text>
         
         {natalAspects.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Nenhum aspecto natal relevante para esta área</Text>
+            <Text style={styles.emptyText}>Nenhum aspecto de transito relevante para esta area</Text>
           </View>
         ) : (
           natalAspects.map((aspect, index) => {
@@ -1061,7 +1071,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Aspectos Natais */}
             {planet.natalAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>🔗 Aspectos Natais:</Text>
+                <Text style={styles.aspectsTitle}>🔗 Aspectos de Tr�nsito:</Text>
                 {planet.natalAspects.map((aspect, aspectIndex) => {
                   // 🎯 CORREÇÃO: Mostrar natureza real do aspecto
                   const isHarmonious = ['trígono', 'sextil'].includes(aspect.type)
@@ -1074,7 +1084,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     aspectIcon = '🌿'
                     aspectColor = DESIGN_SYSTEM.colors.positive
                   } else if (isChallenging) {
-                    aspectIcon = '⚡'
+        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
                     aspectColor = DESIGN_SYSTEM.colors.negative
                   }
                   
@@ -1835,3 +1845,11 @@ const styles = StyleSheet.create({
     color: DESIGN_SYSTEM.colors.positive
   }
 })
+
+
+
+
+
+
+
+
