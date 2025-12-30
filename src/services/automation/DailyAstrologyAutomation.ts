@@ -12,7 +12,7 @@
  */
 
 import LocalAstrologyService, { LocalTransitData } from '../astrology/LocalAstrologyService'
-import NotificationService from '../firebase/NotificationService'
+import GroupNotificationService from '../notifications/GroupNotificationService'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 
@@ -153,6 +153,7 @@ export class DailyAstrologyAutomation {
   ): Promise<{ groupsNotified: number, alertsSent: number }> {
     let groupsNotified = 0
     let alertsSent = 0
+    const systemSenderId = 'system_daily_automation'
 
     try {
       // Buscar todos os grupos ativos
@@ -170,7 +171,12 @@ export class DailyAstrologyAutomation {
             const groupMessage = this.generateGroupMessage(group, membersWithAlerts)
             
             // Enviar notificação para o grupo
-            await NotificationService.sendGroupNotification(group.id, groupMessage)
+            await GroupNotificationService.sendDailyGroupEnergy(
+              group.id,
+              systemSenderId,
+              'daily_summary',
+              groupMessage
+            )
             
             groupsNotified++
             alertsSent += membersWithAlerts.length
