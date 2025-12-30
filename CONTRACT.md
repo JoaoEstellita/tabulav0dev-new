@@ -9,6 +9,8 @@ The frontend prefers `positions` and `natal.houses` when available:
 - `positions[]` with `{ body, lon, lat, dist, speed, house, retrograde }`
 - `houses` with `{ system, systemEffective, cusps, ascendant, midheaven, approximate }`
 - `natal.houses` same shape as `houses`
+- `natal.positions[]` with `{ body, lon, lat, dist, speed, house, retrograde }` (when provided)
+- `natal.planets[]` with `{ name, position, house }` (legacy alias)
 
 ## Backward Compatibility
 If `positions` is missing, the frontend falls back to:

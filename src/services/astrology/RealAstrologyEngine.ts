@@ -773,7 +773,7 @@ export class RealAstrologyEngine {
     };
 
     const currentPlanets = ((data.positions || data.planets) || []).map(toPlanet)
-    const currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
+    let currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
       data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
     const natalPlanets = ((data.natal?.positions || data.natal?.planets) || []).map(toPlanet)
     // 🌟 CORREÇÃO: Calcular casas natais localmente se o backend não as forneceu
