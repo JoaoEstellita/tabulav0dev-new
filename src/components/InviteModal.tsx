@@ -35,6 +35,22 @@ export interface InviteModalProps {
 
 const { width: screenWidth } = Dimensions.get('window')
 
+const LIFE_AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Financas',
+  saude: 'Saude',
+  familia: 'Familia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicacao',
+  transformacao: 'Transformacao',
+}
+
+const formatLifeAreas = (areas?: string[]) => {
+  if (!areas || areas.length === 0) return 'Todas as areas'
+  return areas.map((area) => LIFE_AREA_LABELS[area] || area).join(', ')
+}
+
 export default function InviteModal({
   visible,
   group,
@@ -50,13 +66,18 @@ export default function InviteModal({
   const inviteCode = group.inviteCode || 'ABC123' // Fallback
   const inviteLink = InviteService.generateInviteLink(inviteCode)
   const qrData = InviteService.generateQRCodeData(group.name, inviteCode)
+  const sharedAreasText = formatLifeAreas(group.sharedLifeAreas)
+  const notifiedAreasText = formatLifeAreas(group.notifiedLifeAreas)
 
   /**
    * Compartilha convite completo
    */
   const handleShare = async () => {
     try {
-      const success = await InviteService.shareInvite(group.name, inviteCode)
+      const success = await InviteService.shareInvite(group.name, inviteCode, {
+        sharedLifeAreas: group.sharedLifeAreas,
+        notifiedLifeAreas: group.notifiedLifeAreas,
+      })
       if (success && onInviteSent) {
         onInviteSent()
       }
@@ -214,6 +235,15 @@ export default function InviteModal({
                   <Ionicons name="share" size={20} color="#FFFFFF" />
                   <Text style={styles.primaryButtonText}>Compartilhar Link</Text>
                 </TouchableOpacity>
+              </View>
+
+              <View style={styles.inviteInfoBox}>
+                <Text style={styles.inviteInfoTitle}>Areas compartilhadas no grupo</Text>
+                <Text style={styles.inviteInfoText}>{sharedAreasText}</Text>
+              </View>
+              <View style={styles.inviteInfoBox}>
+                <Text style={styles.inviteInfoTitle}>Areas notificadas no grupo</Text>
+                <Text style={styles.inviteInfoText}>{notifiedAreasText}</Text>
               </View>
             </View>
           )}
@@ -534,6 +564,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  inviteInfoBox: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+  },
+  inviteInfoTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  inviteInfoText: {
+    color: '#888',
+    fontSize: 13,
+    lineHeight: 18,
   },
   disabledButton: {
     backgroundColor: '#555',

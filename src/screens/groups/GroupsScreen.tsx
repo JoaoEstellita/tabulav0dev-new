@@ -22,6 +22,26 @@ import { useNotificationPreferences } from "../../hooks/useNotificationPreferenc
 import GroupCard from "../../components/GroupCard"
 import GroupDetailModal from "../../components/GroupDetailModal"
 
+const LIFE_AREA_OPTIONS = [
+  { key: "amor", label: "Amor" },
+  { key: "carreira", label: "Carreira" },
+  { key: "financas", label: "Financas" },
+  { key: "saude", label: "Saude" },
+  { key: "familia", label: "Familia" },
+  { key: "espiritualidade", label: "Espiritualidade" },
+  { key: "comunicacao", label: "Comunicacao" },
+  { key: "transformacao", label: "Transformacao" },
+]
+
+const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
+
+const formatLifeAreas = (areas?: string[]) => {
+  if (!areas || areas.length === 0) return "Todas as areas"
+  return areas
+    .map((area) => LIFE_AREA_OPTIONS.find((option) => option.key === area)?.label || area)
+    .join(", ")
+}
+
 export default function GroupsScreen() {
   const { user } = useAuth()
   const { preferences } = useNotificationPreferences()
@@ -39,7 +59,12 @@ export default function GroupsScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [newGroupName, setNewGroupName] = useState("")
   const [newGroupDescription, setNewGroupDescription] = useState("")
+  const [newGroupSharedLifeAreas, setNewGroupSharedLifeAreas] = useState<string[]>(LIFE_AREA_KEYS)
+  const [newGroupNotifiedLifeAreas, setNewGroupNotifiedLifeAreas] = useState<string[]>(LIFE_AREA_KEYS)
   const [inviteCode, setInviteCode] = useState("")
+  const [invitePreview, setInvitePreview] = useState<Group | null>(null)
+  const [invitePreviewLoading, setInvitePreviewLoading] = useState(false)
+  const [invitePreviewError, setInvitePreviewError] = useState("")
   
   // Estados para casais
   const [coupleRelationship, setCoupleRelationship] = useState<CoupleRelationship | null>(null)
@@ -69,6 +94,46 @@ export default function GroupsScreen() {
       loadGroupData()
     }
   }, [selectedGroup])
+
+  useEffect(() => {
+    const cleanedCode = inviteCode.trim().toUpperCase()
+    if (cleanedCode.length !== 6) {
+      setInvitePreview(null)
+      setInvitePreviewError("")
+      setInvitePreviewLoading(false)
+      return
+    }
+
+    let isActive = true
+    setInvitePreviewLoading(true)
+
+    GroupService.getGroupByInviteCode(cleanedCode)
+      .then((group) => {
+        if (!isActive) return
+        setInvitePreview(group)
+        setInvitePreviewError(group ? "" : "Codigo nao encontrado")
+      })
+      .catch(() => {
+        if (!isActive) return
+        setInvitePreview(null)
+        setInvitePreviewError("Nao foi possivel validar o codigo")
+      })
+      .finally(() => {
+        if (!isActive) return
+        setInvitePreviewLoading(false)
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [inviteCode])
+
+  const toggleLifeArea = (areas: string[], key: string) => {
+    if (areas.includes(key)) {
+      return areas.filter((area) => area !== key)
+    }
+    return [...areas, key]
+  }
 
   const loadUserGroups = async () => {
     try {
@@ -187,10 +252,15 @@ export default function GroupsScreen() {
     }
 
     try {
-      await GroupService.createGroup(newGroupName, newGroupDescription, user!.uid)
+      await GroupService.createGroup(newGroupName, newGroupDescription, user!.uid, false, {
+        sharedLifeAreas: newGroupSharedLifeAreas,
+        notifiedLifeAreas: newGroupNotifiedLifeAreas,
+      })
       setShowCreateModal(false)
       setNewGroupName("")
       setNewGroupDescription("")
+      setNewGroupSharedLifeAreas(LIFE_AREA_KEYS)
+      setNewGroupNotifiedLifeAreas(LIFE_AREA_KEYS)
       await loadUserGroups()
       Alert.alert("Sucesso", "Grupo criado com sucesso!")
     } catch (error: any) {
@@ -208,11 +278,13 @@ export default function GroupsScreen() {
       await GroupService.joinGroupByCode(inviteCode.toUpperCase(), user!.uid)
       setShowJoinModal(false)
       setInviteCode("")
+      setInvitePreview(null)
+      setInvitePreviewError("")
       await loadUserGroups()
       
       // Notificar grupo sobre novo membro
-      if (selectedGroup) {
-        await GroupNotificationService.sendMemberJoined(selectedGroup.id, user!.uid)
+      if (invitePreview) {
+        await GroupNotificationService.sendMemberJoined(invitePreview.id, user!.uid)
       }
       
       Alert.alert("Sucesso", "Você entrou no grupo!")
@@ -553,9 +625,57 @@ export default function GroupsScreen() {
               multiline
               numberOfLines={3}
             />
+            <Text style={styles.modalLabel}>Areas compartilhadas (padrao do grupo)</Text>
+            <View style={styles.lifeAreaOptions}>
+              {LIFE_AREA_OPTIONS.map((area) => {
+                const active = newGroupSharedLifeAreas.includes(area.key)
+                return (
+                  <TouchableOpacity
+                    key={`shared-${area.key}`}
+                    style={[styles.lifeAreaOption, active && styles.lifeAreaOptionActive]}
+                    onPress={() =>
+                      setNewGroupSharedLifeAreas((prev) => toggleLifeArea(prev, area.key))
+                    }
+                  >
+                    <Text style={[styles.lifeAreaOptionText, active && styles.lifeAreaOptionTextActive]}>
+                      {area.label}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+
+            <Text style={styles.modalLabel}>Areas notificadas (padrao do grupo)</Text>
+            <View style={styles.lifeAreaOptions}>
+              {LIFE_AREA_OPTIONS.map((area) => {
+                const active = newGroupNotifiedLifeAreas.includes(area.key)
+                return (
+                  <TouchableOpacity
+                    key={`notified-${area.key}`}
+                    style={[styles.lifeAreaOption, active && styles.lifeAreaOptionActive]}
+                    onPress={() =>
+                      setNewGroupNotifiedLifeAreas((prev) => toggleLifeArea(prev, area.key))
+                    }
+                  >
+                    <Text style={[styles.lifeAreaOptionText, active && styles.lifeAreaOptionTextActive]}>
+                      {area.label}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={() => setShowCreateModal(false)}>
+              <TouchableOpacity
+                style={styles.modalButtonCancel}
+                onPress={() => {
+                  setShowCreateModal(false)
+                  setNewGroupName("")
+                  setNewGroupDescription("")
+                  setNewGroupSharedLifeAreas(LIFE_AREA_KEYS)
+                  setNewGroupNotifiedLifeAreas(LIFE_AREA_KEYS)
+                }}
+              >
                 <Text style={styles.modalButtonCancelText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={createGroup}>
@@ -580,9 +700,36 @@ export default function GroupsScreen() {
               onChangeText={setInviteCode}
               autoCapitalize="characters"
             />
+            {invitePreviewLoading && (
+              <Text style={styles.invitePreviewText}>Carregando grupo...</Text>
+            )}
+
+            {invitePreview && (
+              <View style={styles.invitePreviewBox}>
+                <Text style={styles.invitePreviewTitle}>{invitePreview.name}</Text>
+                <Text style={styles.invitePreviewText}>
+                  Areas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
+                </Text>
+                <Text style={styles.invitePreviewText}>
+                  Areas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
+                </Text>
+              </View>
+            )}
+
+            {!!invitePreviewError && (
+              <Text style={styles.invitePreviewError}>{invitePreviewError}</Text>
+            )}
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={() => setShowJoinModal(false)}>
+              <TouchableOpacity
+                style={styles.modalButtonCancel}
+                onPress={() => {
+                  setShowJoinModal(false)
+                  setInviteCode("")
+                  setInvitePreview(null)
+                  setInvitePreviewError("")
+                }}
+              >
                 <Text style={styles.modalButtonCancelText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={joinGroup}>
@@ -1091,6 +1238,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     marginTop: 16,
+  },
+  lifeAreaOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+    gap: 8,
+  },
+  lifeAreaOption: {
+    backgroundColor: "#2C2C2E",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  lifeAreaOptionActive: {
+    backgroundColor: "#FFD700",
+  },
+  lifeAreaOptionText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  lifeAreaOptionTextActive: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  invitePreviewBox: {
+    backgroundColor: "#1C1C1E",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  invitePreviewTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  invitePreviewText: {
+    color: "#888",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  invitePreviewError: {
+    color: "#FF4444",
+    fontSize: 12,
+    marginBottom: 12,
   },
   relationshipTypes: {
     flexDirection: "row",

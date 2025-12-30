@@ -22,6 +22,7 @@ export class GroupNotificationService {
     try {
       console.log('📢 Enviando notificação de grupo:', data.notificationType)
 
+      // TODO: apply per-member group settings (shared/notified areas) before sending.
       const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
       const response = await fetch(`${base}/api/group/notify`, {
         method: 'POST',
@@ -46,6 +47,7 @@ export class GroupNotificationService {
       }
       console.log('✅ Notificação de grupo enviada:', result.sent)
 
+      // TODO: apply per-member group settings (shared/notified areas) before sending.
     } catch (error) {
       console.error('❌ Erro ao enviar notificação de grupo:', error)
       throw error

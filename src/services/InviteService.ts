@@ -23,14 +23,25 @@ export class InviteService {
   
   // Base URL do app (será configurada para produção)
   private static readonly BASE_URL = 'https://tabulaestelar.com.br'
-  
+
+  private static readonly LIFE_AREA_LABELS: Record<string, string> = {
+    amor: 'Amor',
+    carreira: 'Carreira',
+    financas: 'Financas',
+    saude: 'Saude',
+    familia: 'Familia',
+    espiritualidade: 'Espiritualidade',
+    comunicacao: 'Comunicacao',
+    transformacao: 'Transformacao',
+  }
+
   /**
    * Gera link de convite dinâmico
    */
   static generateInviteLink(inviteCode: string): string {
     return `${this.BASE_URL}/join/${inviteCode}`
   }
-  
+
   /**
    * Gera dados para QR Code
    */
@@ -44,15 +55,19 @@ export class InviteService {
     
     return JSON.stringify(inviteData)
   }
-  
+
   /**
    * Compartilha convite usando Share API nativo
    */
-  static async shareInvite(groupName: string, inviteCode: string): Promise<boolean> {
+  static async shareInvite(
+    groupName: string,
+    inviteCode: string,
+    options?: { sharedLifeAreas?: string[]; notifiedLifeAreas?: string[] }
+  ): Promise<boolean> {
     try {
       const inviteLink = this.generateInviteLink(inviteCode)
       
-      const message = this.buildInviteMessage(groupName, inviteCode, inviteLink)
+      const message = this.buildInviteMessage(groupName, inviteCode, inviteLink, options)
       
       const result = await Share.share({
         message,
@@ -68,23 +83,37 @@ export class InviteService {
       return false
     }
   }
-  
+
   /**
    * Constrói mensagem de convite personalizada
    */
-  private static buildInviteMessage(groupName: string, inviteCode: string, inviteLink: string): string {
-    return `🌟 Você foi convidado para o grupo "${groupName}" no Tábula Estelar!
+  private static buildInviteMessage(
+    groupName: string,
+    inviteCode: string,
+    inviteLink: string,
+    options?: { sharedLifeAreas?: string[]; notifiedLifeAreas?: string[] }
+  ): string {
+    const sharedAreas = this.formatLifeAreas(options?.sharedLifeAreas)
+    const notifiedAreas = this.formatLifeAreas(options?.notifiedLifeAreas)
 
-✨ Descubra como os astros influenciam nosso grupo e compartilhe energia positiva com todos os membros.
+    return `Voce foi convidado para o grupo "${groupName}" no Tabula Estelar.
 
-📱 Para entrar:
-1. Baixe o app Tábula Estelar
-2. Use o código: ${inviteCode}
+Areas compartilhadas: ${sharedAreas}
+Areas notificadas: ${notifiedAreas}
+
+Para entrar:
+1. Baixe o app Tabula Estelar
+2. Use o codigo: ${inviteCode}
 3. Ou acesse: ${inviteLink}
 
-🔮 Junte-se a nós na jornada astrológica!`
+Junte-se a nos na jornada astrologica.`
   }
-  
+
+  private static formatLifeAreas(areas?: string[]): string {
+    if (!areas || areas.length === 0) return 'Todas as areas'
+    return areas.map((area) => this.LIFE_AREA_LABELS[area] || area).join(', ')
+  }
+
   /**
    * Valida código de convite
    */
@@ -93,7 +122,7 @@ export class InviteService {
     const codeRegex = /^[A-Z0-9]{6}$/
     return codeRegex.test(code.toUpperCase())
   }
-  
+
   /**
    * Processa deep link de convite
    */
@@ -120,7 +149,7 @@ export class InviteService {
       return { inviteCode: null, isValid: false }
     }
   }
-  
+
   /**
    * Processa dados de QR Code
    */
@@ -155,7 +184,7 @@ export class InviteService {
       return { inviteCode: null, groupName: null, isValid: false }
     }
   }
-  
+
   /**
    * Copia código para clipboard com feedback
    */
@@ -170,7 +199,7 @@ export class InviteService {
       Alert.alert('Erro', 'Não foi possível copiar')
     }
   }
-  
+
   /**
    * Gera novo código de convite
    */
@@ -184,7 +213,7 @@ export class InviteService {
     
     return result
   }
-  
+
   /**
    * Formata código para exibição (ABC-123)
    */
@@ -194,7 +223,7 @@ export class InviteService {
     }
     return code
   }
-  
+
   /**
    * Remove formatação do código (ABC-123 -> ABC123)
    */

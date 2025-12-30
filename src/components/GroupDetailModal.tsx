@@ -24,6 +24,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import Avatar from './Avatar'
 import InviteModal from './InviteModal'
+import GroupNotificationSettings from './GroupNotificationSettings'
 import type { Group, GroupMember } from '../services/firebase/GroupService'
 
 export interface GroupDetailModalProps {
@@ -69,6 +70,22 @@ function generateInviteLink(groupId: string, inviteCode: string): string {
   return `https://tabulaestelar.com.br/join/${inviteCode}`
 }
 
+const LIFE_AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Financas',
+  saude: 'Saude',
+  familia: 'Familia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicacao',
+  transformacao: 'Transformacao',
+}
+
+const formatLifeAreas = (areas?: string[]) => {
+  if (!areas || areas.length === 0) return 'Todas as areas'
+  return areas.map((area) => LIFE_AREA_LABELS[area] || area).join(', ')
+}
+
 export default function GroupDetailModal({
   visible,
   group,
@@ -81,17 +98,20 @@ export default function GroupDetailModal({
 }: GroupDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showGroupSettings, setShowGroupSettings] = useState(false)
   
   if (!group) return null
   
   const isGroupOwner = group.createdBy === currentUserId
   const inviteLink = group.inviteCode ? generateInviteLink(group.id, group.inviteCode) : ''
+  const sharedAreasText = formatLifeAreas(group.sharedLifeAreas)
+  const notifiedAreasText = formatLifeAreas(group.notifiedLifeAreas)
   
   const handleShare = async () => {
     try {
       if (group.inviteCode) {
         await Share.share({
-          message: `Junte-se ao meu grupo "${group.name}" no Tábula Estelar!\n\n🔗 Link: ${inviteLink}\n📱 Código: ${group.inviteCode}\n\n✨ Descubra como os astros influenciam nosso grupo!`,
+          message: `Junte-se ao meu grupo "${group.name}" no Tabula Estelar.\n\nLink: ${inviteLink}\nCodigo: ${group.inviteCode}\n\nAreas compartilhadas: ${sharedAreasText}\nAreas notificadas: ${notifiedAreasText}\n\nBaixe o app Tabula Estelar para entrar no grupo.`,
           title: `Convite - ${group.name}`
         })
       }
@@ -300,6 +320,20 @@ export default function GroupDetailModal({
                     <Ionicons name="share" size={20} color="#FFFFFF" />
                     <Text style={styles.shareButtonText}>Compartilhar Convite</Text>
                   </TouchableOpacity>
+
+                  <View style={styles.inviteInfoBox}>
+                    <Text style={styles.inviteInfoTitle}>Areas compartilhadas no grupo</Text>
+                    <Text style={styles.inviteInfoText}>{sharedAreasText}</Text>
+                  </View>
+                  <View style={styles.inviteInfoBox}>
+                    <Text style={styles.inviteInfoTitle}>Areas notificadas no grupo</Text>
+                    <Text style={styles.inviteInfoText}>{notifiedAreasText}</Text>
+                  </View>
+
+                  <TouchableOpacity style={styles.settingsButton} onPress={() => setShowGroupSettings(true)}>
+                    <Ionicons name="options" size={18} color="#FFFFFF" />
+                    <Text style={styles.settingsButtonText}>Preferencias de compartilhamento</Text>
+                  </TouchableOpacity>
                 </>
               )}
             </View>
@@ -363,6 +397,13 @@ export default function GroupDetailModal({
           setShowInviteModal(false)
           if (onInvite) onInvite()
         }}
+      />
+
+      <GroupNotificationSettings
+        visible={showGroupSettings}
+        group={group}
+        currentUserId={currentUserId}
+        onClose={() => setShowGroupSettings(false)}
       />
     </Modal>
   )
@@ -592,6 +633,38 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  inviteInfoBox: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+  },
+  inviteInfoTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  inviteInfoText: {
+    color: '#888',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  settingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+    gap: 8,
+  },
+  settingsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
   },
   activityContainer: {

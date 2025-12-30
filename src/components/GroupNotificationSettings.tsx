@@ -1,14 +1,4 @@
-/**
- * ⚙️ GROUP NOTIFICATION SETTINGS ⚙️
- * 
- * Configurações granulares de notificações por grupo
- * - Filtros por área de vida
- * - Horários personalizados
- * - Tipos de alertas
- * - Configurações avançadas
- */
-
-import React, { useState, useEffect } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -20,11 +10,12 @@ import {
   StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import type { Group } from '../services/firebase/GroupService'
+import GroupService, { type Group } from '../services/firebase/GroupService'
 
 export interface GroupNotificationSettingsProps {
   visible: boolean
   group: Group | null
+  currentUserId: string
   onClose: () => void
   onSave?: (settings: GroupNotificationSettings) => void
 }
@@ -37,7 +28,17 @@ export interface GroupNotificationSettings {
     memberUpdates: boolean
     groupMessages: boolean
   }
-  lifeAreas: {
+  sharedLifeAreas: {
+    amor: boolean
+    carreira: boolean
+    financas: boolean
+    saude: boolean
+    familia: boolean
+    espiritualidade: boolean
+    comunicacao: boolean
+    transformacao: boolean
+  }
+  notifiedLifeAreas: {
     amor: boolean
     carreira: boolean
     financas: boolean
@@ -49,10 +50,23 @@ export interface GroupNotificationSettings {
   }
   schedule: {
     doNotDisturb: boolean
-    startTime: string // HH:MM
-    endTime: string // HH:MM
+    startTime: string
+    endTime: string
   }
   priority: 'all' | 'critical_only' | 'none'
+}
+
+type LifeAreaState = GroupNotificationSettings['sharedLifeAreas']
+
+const defaultLifeAreas: LifeAreaState = {
+  amor: true,
+  carreira: true,
+  financas: true,
+  saude: true,
+  familia: true,
+  espiritualidade: true,
+  comunicacao: true,
+  transformacao: true,
 }
 
 const defaultSettings: GroupNotificationSettings = {
@@ -63,16 +77,8 @@ const defaultSettings: GroupNotificationSettings = {
     memberUpdates: true,
     groupMessages: true,
   },
-  lifeAreas: {
-    amor: true,
-    carreira: true,
-    financas: true,
-    saude: true,
-    familia: true,
-    espiritualidade: true,
-    comunicacao: true,
-    transformacao: true,
-  },
+  sharedLifeAreas: { ...defaultLifeAreas },
+  notifiedLifeAreas: { ...defaultLifeAreas },
   schedule: {
     doNotDisturb: false,
     startTime: '22:00',
@@ -81,84 +87,156 @@ const defaultSettings: GroupNotificationSettings = {
   priority: 'all'
 }
 
-const lifeAreaLabels = {
-  amor: { label: 'Amor', icon: '❤️', color: '#FF69B4' },
-  carreira: { label: 'Carreira', icon: '💼', color: '#4A90E2' },
-  financas: { label: 'Finanças', icon: '💰', color: '#4CAF50' },
-  saude: { label: 'Saúde', icon: '🏥', color: '#FF9800' },
-  familia: { label: 'Família', icon: '👨‍👩‍👧‍👦', color: '#9C27B0' },
-  espiritualidade: { label: 'Espiritualidade', icon: '🙏', color: '#673AB7' },
-  comunicacao: { label: 'Comunicação', icon: '💬', color: '#00BCD4' },
-  transformacao: { label: 'Transformação', icon: '🔄', color: '#FF5722' },
+const lifeAreaLabels: Record<keyof LifeAreaState, { label: string; icon: string; color: string }> = {
+  amor: { label: 'Amor', icon: 'heart', color: '#FF69B4' },
+  carreira: { label: 'Carreira', icon: 'briefcase', color: '#4A90E2' },
+  financas: { label: 'Financas', icon: 'cash', color: '#4CAF50' },
+  saude: { label: 'Saude', icon: 'medkit', color: '#FF9800' },
+  familia: { label: 'Familia', icon: 'home', color: '#9C27B0' },
+  espiritualidade: { label: 'Espiritualidade', icon: 'sparkles', color: '#673AB7' },
+  comunicacao: { label: 'Comunicacao', icon: 'chatbubble', color: '#00BCD4' },
+  transformacao: { label: 'Transformacao', icon: 'sync', color: '#FF5722' },
 }
+
+const LIFE_AREAS = Object.keys(defaultLifeAreas)
+
+const buildLifeAreasState = (enabled?: string[]): LifeAreaState => ({
+  amor: enabled ? enabled.includes('amor') : true,
+  carreira: enabled ? enabled.includes('carreira') : true,
+  financas: enabled ? enabled.includes('financas') : true,
+  saude: enabled ? enabled.includes('saude') : true,
+  familia: enabled ? enabled.includes('familia') : true,
+  espiritualidade: enabled ? enabled.includes('espiritualidade') : true,
+  comunicacao: enabled ? enabled.includes('comunicacao') : true,
+  transformacao: enabled ? enabled.includes('transformacao') : true,
+})
+
+const toLifeAreasList = (lifeAreas: LifeAreaState) =>
+  Object.entries(lifeAreas)
+    .filter(([, value]) => value)
+    .map(([key]) => key)
 
 export default function GroupNotificationSettings({
   visible,
   group,
+  currentUserId,
   onClose,
-  onSave
+  onSave,
 }: GroupNotificationSettingsProps) {
   const [settings, setSettings] = useState<GroupNotificationSettings>(defaultSettings)
   const [hasChanges, setHasChanges] = useState(false)
 
   useEffect(() => {
-    // Aqui carregaríamos as configurações salvas do grupo
-    // Por enquanto, usamos as configurações padrão
-    setSettings(defaultSettings)
-    setHasChanges(false)
-  }, [group])
+    if (!group) return
+
+    let isActive = true
+
+    const loadSettings = async () => {
+      const sharedDefaults = group.sharedLifeAreas || LIFE_AREAS
+      const notifiedDefaults = group.notifiedLifeAreas || LIFE_AREAS
+
+      const memberSettings = await GroupService.getMemberSettings(group.id, currentUserId)
+      const sharedLifeAreas = memberSettings?.sharedLifeAreas || sharedDefaults
+      const notifiedLifeAreas = memberSettings?.notifiedLifeAreas || notifiedDefaults
+
+      if (!isActive) return
+
+      setSettings({
+        ...defaultSettings,
+        sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
+        notifiedLifeAreas: buildLifeAreasState(notifiedLifeAreas),
+      })
+      setHasChanges(false)
+    }
+
+    loadSettings()
+
+    return () => {
+      isActive = false
+    }
+  }, [group, currentUserId])
 
   const updateSettings = (updates: Partial<GroupNotificationSettings>) => {
-    setSettings(prev => ({ ...prev, ...updates }))
+    setSettings((prev) => ({ ...prev, ...updates }))
     setHasChanges(true)
   }
 
   const updateType = (type: keyof GroupNotificationSettings['types'], value: boolean) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      types: { ...prev.types, [type]: value }
+      types: { ...prev.types, [type]: value },
     }))
     setHasChanges(true)
   }
 
-  const updateLifeArea = (area: keyof GroupNotificationSettings['lifeAreas'], value: boolean) => {
-    setSettings(prev => ({
+  const updateSharedLifeArea = (area: keyof LifeAreaState, value: boolean) => {
+    setSettings((prev) => ({
       ...prev,
-      lifeAreas: { ...prev.lifeAreas, [area]: value }
+      sharedLifeAreas: { ...prev.sharedLifeAreas, [area]: value },
+    }))
+    setHasChanges(true)
+  }
+
+  const updateNotifiedLifeArea = (area: keyof LifeAreaState, value: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      notifiedLifeAreas: { ...prev.notifiedLifeAreas, [area]: value },
     }))
     setHasChanges(true)
   }
 
   const updateSchedule = (updates: Partial<GroupNotificationSettings['schedule']>) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      schedule: { ...prev.schedule, ...updates }
+      schedule: { ...prev.schedule, ...updates },
     }))
     setHasChanges(true)
   }
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave(settings)
+  const handleSave = async () => {
+    if (!group) return
+
+    try {
+      await GroupService.setMemberSettings(group.id, currentUserId, {
+        sharedLifeAreas: toLifeAreasList(settings.sharedLifeAreas),
+        notifiedLifeAreas: toLifeAreasList(settings.notifiedLifeAreas),
+      })
+
+      if (onSave) {
+        onSave(settings)
+      }
+
+      setHasChanges(false)
+      Alert.alert('Sucesso', 'Configuracoes salvas com sucesso!')
+    } catch (error) {
+      console.error('Erro ao salvar configuracoes do grupo:', error)
+      Alert.alert('Erro', 'Nao foi possivel salvar as configuracoes')
     }
-    setHasChanges(false)
-    Alert.alert('Sucesso', 'Configurações salvas com sucesso!')
   }
 
   const handleReset = () => {
+    if (!group) return
+
     Alert.alert(
-      'Restaurar Padrões',
-      'Deseja restaurar as configurações padrão?',
+      'Restaurar padroes',
+      'Deseja restaurar as configuracoes padrao do grupo?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Restaurar',
           style: 'destructive',
           onPress: () => {
-            setSettings(defaultSettings)
+            const sharedDefaults = group.sharedLifeAreas || LIFE_AREAS
+            const notifiedDefaults = group.notifiedLifeAreas || LIFE_AREAS
+
+            setSettings((prev) => ({
+              ...prev,
+              sharedLifeAreas: buildLifeAreasState(sharedDefaults),
+              notifiedLifeAreas: buildLifeAreasState(notifiedDefaults),
+            }))
             setHasChanges(true)
-          }
-        }
+          },
+        },
       ]
     )
   }
@@ -166,11 +244,11 @@ export default function GroupNotificationSettings({
   const handleClose = () => {
     if (hasChanges) {
       Alert.alert(
-        'Alterações não salvas',
-        'Você tem alterações não salvas. Deseja sair mesmo assim?',
+        'Alteracoes nao salvas',
+        'Voce tem alteracoes nao salvas. Deseja sair mesmo assim?',
         [
           { text: 'Cancelar', style: 'cancel' },
-          { text: 'Sair', style: 'destructive', onPress: onClose }
+          { text: 'Sair', style: 'destructive', onPress: onClose },
         ]
       )
     } else {
@@ -181,43 +259,36 @@ export default function GroupNotificationSettings({
   if (!group) return null
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          
+
           <View style={styles.headerInfo}>
-            <Text style={styles.title}>⚙️ Configurações</Text>
+            <Text style={styles.title}>Configuracoes</Text>
             <Text style={styles.groupName}>{group.name}</Text>
           </View>
-          
-          <TouchableOpacity 
-            onPress={handleSave} 
+
+          <TouchableOpacity
+            onPress={handleSave}
             style={[styles.saveButton, !hasChanges && styles.saveButtonDisabled]}
             disabled={!hasChanges}
           >
-            <Ionicons name="checkmark" size={20} color={hasChanges ? "#000" : "#666"} />
+            <Ionicons name="checkmark" size={20} color={hasChanges ? '#000' : '#666'} />
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          
-          {/* Controle Geral */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔔 Controle Geral</Text>
-            
+            <Text style={styles.sectionTitle}>Controle geral</Text>
+
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Receber Notificações</Text>
+                <Text style={styles.settingLabel}>Receber notificacoes</Text>
                 <Text style={styles.settingDescription}>
-                  Ativar/desativar todas as notificações deste grupo
+                  Ativar ou desativar todas as notificacoes deste grupo
                 </Text>
               </View>
               <Switch
@@ -231,9 +302,7 @@ export default function GroupNotificationSettings({
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Prioridade</Text>
-                <Text style={styles.settingDescription}>
-                  Controle quais tipos de notificação receber
-                </Text>
+                <Text style={styles.settingDescription}>Controle quais tipos de notificacao receber</Text>
               </View>
               <View style={styles.priorityButtons}>
                 {['all', 'critical_only', 'none'].map((priority) => (
@@ -241,16 +310,17 @@ export default function GroupNotificationSettings({
                     key={priority}
                     style={[
                       styles.priorityButton,
-                      settings.priority === priority && styles.priorityButtonActive
+                      settings.priority === priority && styles.priorityButtonActive,
                     ]}
                     onPress={() => updateSettings({ priority: priority as any })}
                   >
-                    <Text style={[
-                      styles.priorityButtonText,
-                      settings.priority === priority && styles.priorityButtonTextActive
-                    ]}>
-                      {priority === 'all' ? 'Todas' : 
-                       priority === 'critical_only' ? 'Críticas' : 'Nenhuma'}
+                    <Text
+                      style={[
+                        styles.priorityButtonText,
+                        settings.priority === priority && styles.priorityButtonTextActive,
+                      ]}
+                    >
+                      {priority === 'all' ? 'Todas' : priority === 'critical_only' ? 'Criticas' : 'Nenhuma'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -258,20 +328,35 @@ export default function GroupNotificationSettings({
             </View>
           </View>
 
-          {/* Tipos de Notificação */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📱 Tipos de Notificação</Text>
-            
+            <Text style={styles.sectionTitle}>Tipos de notificacao</Text>
+
             {Object.entries({
-              criticalAlerts: { label: 'Alertas Críticos', icon: '⚠️', desc: 'Quando membros passam por momentos difíceis' },
-              favorableEvents: { label: 'Eventos Favoráveis', icon: '✨', desc: 'Quando membros têm energias positivas' },
-              memberUpdates: { label: 'Atualizações de Membros', icon: '👤', desc: 'Quando membros atualizam seus status' },
-              groupMessages: { label: 'Mensagens do Grupo', icon: '💬', desc: 'Mensagens enviadas pelos membros' },
+              criticalAlerts: {
+                label: 'Alertas criticos',
+                icon: 'warning',
+                desc: 'Quando membros passam por momentos dificeis',
+              },
+              favorableEvents: {
+                label: 'Eventos favoraveis',
+                icon: 'sparkles',
+                desc: 'Quando membros tem energias positivas',
+              },
+              memberUpdates: {
+                label: 'Atualizacoes de membros',
+                icon: 'people',
+                desc: 'Quando membros atualizam seus status',
+              },
+              groupMessages: {
+                label: 'Mensagens do grupo',
+                icon: 'chatbubble-ellipses',
+                desc: 'Mensagens enviadas pelos membros',
+              },
             }).map(([key, config]) => (
               <View key={key} style={styles.settingItem}>
                 <View style={styles.settingInfo}>
                   <View style={styles.settingHeader}>
-                    <Text style={styles.settingIcon}>{config.icon}</Text>
+                    <Ionicons name={config.icon as any} size={16} color="#FFD700" />
                     <Text style={styles.settingLabel}>{config.label}</Text>
                   </View>
                   <Text style={styles.settingDescription}>{config.desc}</Text>
@@ -287,33 +372,76 @@ export default function GroupNotificationSettings({
             ))}
           </View>
 
-          {/* Áreas de Vida */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>💝 Áreas de Vida</Text>
+            <Text style={styles.sectionTitle}>Areas de vida</Text>
             <Text style={styles.sectionDescription}>
-              Escolha quais áreas você quer receber notificações
+              Escolha o que voce compartilha e o que deseja receber neste grupo
             </Text>
-            
+
+            <Text style={styles.subsectionTitle}>Compartilhar com o grupo</Text>
             <View style={styles.lifeAreasGrid}>
               {Object.entries(lifeAreaLabels).map(([key, config]) => (
                 <TouchableOpacity
-                  key={key}
+                  key={`shared-${key}`}
                   style={[
                     styles.lifeAreaItem,
-                    settings.lifeAreas[key as keyof typeof settings.lifeAreas] && styles.lifeAreaItemActive,
-                    !settings.enabled && styles.lifeAreaItemDisabled
+                    settings.sharedLifeAreas[key as keyof LifeAreaState] && styles.lifeAreaItemActive,
+                    !settings.enabled && styles.lifeAreaItemDisabled,
                   ]}
-                  onPress={() => updateLifeArea(key as keyof typeof settings.lifeAreas, !settings.lifeAreas[key as keyof typeof settings.lifeAreas])}
+                  onPress={() =>
+                    updateSharedLifeArea(
+                      key as keyof LifeAreaState,
+                      !settings.sharedLifeAreas[key as keyof LifeAreaState]
+                    )
+                  }
                   disabled={!settings.enabled}
                 >
-                  <Text style={styles.lifeAreaIcon}>{config.icon}</Text>
-                  <Text style={[
-                    styles.lifeAreaLabel,
-                    settings.lifeAreas[key as keyof typeof settings.lifeAreas] && styles.lifeAreaLabelActive
-                  ]}>
+                  <Ionicons name={config.icon as any} size={20} color={config.color} />
+                  <Text
+                    style={[
+                      styles.lifeAreaLabel,
+                      settings.sharedLifeAreas[key as keyof LifeAreaState] && styles.lifeAreaLabelActive,
+                    ]}
+                  >
                     {config.label}
                   </Text>
-                  {settings.lifeAreas[key as keyof typeof settings.lifeAreas] && (
+                  {settings.sharedLifeAreas[key as keyof LifeAreaState] && (
+                    <View style={styles.lifeAreaCheck}>
+                      <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.subsectionTitle}>Receber notificacoes</Text>
+            <View style={styles.lifeAreasGrid}>
+              {Object.entries(lifeAreaLabels).map(([key, config]) => (
+                <TouchableOpacity
+                  key={`notified-${key}`}
+                  style={[
+                    styles.lifeAreaItem,
+                    settings.notifiedLifeAreas[key as keyof LifeAreaState] && styles.lifeAreaItemActive,
+                    !settings.enabled && styles.lifeAreaItemDisabled,
+                  ]}
+                  onPress={() =>
+                    updateNotifiedLifeArea(
+                      key as keyof LifeAreaState,
+                      !settings.notifiedLifeAreas[key as keyof LifeAreaState]
+                    )
+                  }
+                  disabled={!settings.enabled}
+                >
+                  <Ionicons name={config.icon as any} size={20} color={config.color} />
+                  <Text
+                    style={[
+                      styles.lifeAreaLabel,
+                      settings.notifiedLifeAreas[key as keyof LifeAreaState] && styles.lifeAreaLabelActive,
+                    ]}
+                  >
+                    {config.label}
+                  </Text>
+                  {settings.notifiedLifeAreas[key as keyof LifeAreaState] && (
                     <View style={styles.lifeAreaCheck}>
                       <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                     </View>
@@ -323,16 +451,13 @@ export default function GroupNotificationSettings({
             </View>
           </View>
 
-          {/* Horários */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⏰ Não Perturbe</Text>
-            
+            <Text style={styles.sectionTitle}>Nao perturbe</Text>
+
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Modo Não Perturbe</Text>
-                <Text style={styles.settingDescription}>
-                  Silenciar notificações durante certas horas
-                </Text>
+                <Text style={styles.settingLabel}>Modo nao perturbe</Text>
+                <Text style={styles.settingDescription}>Silenciar notificacoes durante certas horas</Text>
               </View>
               <Switch
                 value={settings.schedule.doNotDisturb}
@@ -345,15 +470,15 @@ export default function GroupNotificationSettings({
 
             {settings.schedule.doNotDisturb && (
               <View style={styles.timeRangeContainer}>
-                <Text style={styles.timeRangeLabel}>Horário de silêncio:</Text>
+                <Text style={styles.timeRangeLabel}>Horario de silencio:</Text>
                 <View style={styles.timeRangeRow}>
                   <View style={styles.timeInput}>
                     <Text style={styles.timeInputLabel}>De:</Text>
                     <Text style={styles.timeInputValue}>{settings.schedule.startTime}</Text>
                   </View>
-                  <Text style={styles.timeRangeSeparator}>até</Text>
+                  <Text style={styles.timeRangeSeparator}>ate</Text>
                   <View style={styles.timeInput}>
-                    <Text style={styles.timeInputLabel}>Até:</Text>
+                    <Text style={styles.timeInputLabel}>Ate:</Text>
                     <Text style={styles.timeInputValue}>{settings.schedule.endTime}</Text>
                   </View>
                 </View>
@@ -361,11 +486,10 @@ export default function GroupNotificationSettings({
             )}
           </View>
 
-          {/* Ações */}
           <View style={styles.section}>
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
               <Ionicons name="refresh" size={20} color="#FF4444" />
-              <Text style={styles.resetButtonText}>Restaurar Padrões</Text>
+              <Text style={styles.resetButtonText}>Restaurar padroes</Text>
             </TouchableOpacity>
           </View>
 
@@ -437,6 +561,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 8,
   },
+  subsectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    marginTop: 12,
+  },
   sectionDescription: {
     fontSize: 14,
     color: '#888',
@@ -459,10 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
-  },
-  settingIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    gap: 8,
   },
   settingLabel: {
     fontSize: 16,
@@ -520,15 +648,12 @@ const styles = StyleSheet.create({
   lifeAreaItemDisabled: {
     opacity: 0.5,
   },
-  lifeAreaIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
   lifeAreaLabel: {
     fontSize: 12,
     fontWeight: '500',
     color: '#888',
     textAlign: 'center',
+    marginTop: 8,
   },
   lifeAreaLabelActive: {
     color: '#FFFFFF',

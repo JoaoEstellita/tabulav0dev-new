@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   addDoc,
+  setDoc,
   updateDoc,
   getDocs,
   getDoc,
@@ -26,6 +27,8 @@ export interface Group {
   createdAt: Date
   isPrivate: boolean
   inviteCode?: string
+  sharedLifeAreas?: string[]
+  notifiedLifeAreas?: string[]
 }
 
 export interface GroupMember {
@@ -52,9 +55,33 @@ export interface GroupAlert {
   isRead: boolean
 }
 
+export interface GroupMemberSettings {
+  groupId: string
+  userId: string
+  sharedLifeAreas: string[]
+  notifiedLifeAreas: string[]
+  updatedAt: Date
+}
+
 class GroupService {
+  private readonly LIFE_AREAS = [
+    "amor",
+    "carreira",
+    "financas",
+    "saude",
+    "familia",
+    "espiritualidade",
+    "comunicacao",
+    "transformacao",
+  ]
   // Criar grupo
-  async createGroup(name: string, description: string, createdBy: string, isPrivate = false): Promise<string> {
+  async createGroup(
+    name: string,
+    description: string,
+    createdBy: string,
+    isPrivate = false,
+    settings?: { sharedLifeAreas?: string[]; notifiedLifeAreas?: string[] }
+  ): Promise<string> {
     try {
       const groupData: any = {
         name,
@@ -63,6 +90,8 @@ class GroupService {
         members: [createdBy],
         createdAt: Timestamp.now(),
         isPrivate,
+        sharedLifeAreas: settings?.sharedLifeAreas || this.LIFE_AREAS,
+        notifiedLifeAreas: settings?.notifiedLifeAreas || this.LIFE_AREAS,
       }
 
       // Só adicionar inviteCode se for grupo privado
@@ -71,6 +100,11 @@ class GroupService {
       }
 
       const docRef = await addDoc(collection(db, "groups"), groupData)
+
+      await this.setMemberSettings(docRef.id, createdBy, {
+        sharedLifeAreas: groupData.sharedLifeAreas,
+        notifiedLifeAreas: groupData.notifiedLifeAreas,
+      })
 
       return docRef.id
     } catch (error) {
@@ -120,6 +154,10 @@ class GroupService {
       await updateDoc(doc(db, "groups", groupDoc.id), {
         members: arrayUnion(userId),
       })
+
+      const sharedLifeAreas = groupData.sharedLifeAreas || this.LIFE_AREAS
+      const notifiedLifeAreas = groupData.notifiedLifeAreas || this.LIFE_AREAS
+      await this.setMemberSettings(groupDoc.id, userId, { sharedLifeAreas, notifiedLifeAreas })
 
       return true
     } catch (error) {
@@ -270,6 +308,55 @@ class GroupService {
     })
   }
 
+  async getGroupByInviteCode(inviteCode: string): Promise<Group | null> {
+    try {
+      const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode))
+      const querySnapshot = await getDocs(q)
+      if (querySnapshot.empty) return null
+      const docSnap = querySnapshot.docs[0]
+      return {
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt: docSnap.data().createdAt?.toDate() || new Date(),
+      } as Group
+    } catch (error) {
+      console.error("Erro ao buscar grupo por convite:", error)
+      return null
+    }
+  }
+
+  async getMemberSettings(groupId: string, userId: string): Promise<GroupMemberSettings | null> {
+    try {
+      const settingsDoc = await getDoc(doc(db, "groupMemberSettings", `${groupId}_${userId}`))
+      if (!settingsDoc.exists()) return null
+      const data = settingsDoc.data()
+      return {
+        groupId,
+        userId,
+        sharedLifeAreas: data.sharedLifeAreas || this.LIFE_AREAS,
+        notifiedLifeAreas: data.notifiedLifeAreas || this.LIFE_AREAS,
+        updatedAt: data.updatedAt?.toDate?.() || new Date(),
+      } as GroupMemberSettings
+    } catch (error) {
+      console.error("Erro ao buscar settings do membro:", error)
+      return null
+    }
+  }
+
+  async setMemberSettings(
+    groupId: string,
+    userId: string,
+    settings: { sharedLifeAreas: string[]; notifiedLifeAreas: string[] }
+  ): Promise<void> {
+    await setDoc(doc(db, "groupMemberSettings", `${groupId}_${userId}`), {
+      groupId,
+      userId,
+      sharedLifeAreas: settings.sharedLifeAreas || this.LIFE_AREAS,
+      notifiedLifeAreas: settings.notifiedLifeAreas || this.LIFE_AREAS,
+      updatedAt: Timestamp.now(),
+    })
+  }
+
   private generateInviteCode(): string {
     return Math.random().toString(36).substring(2, 8).toUpperCase()
   }
@@ -346,3 +433,5 @@ class GroupService {
 }
 
 export default new GroupService()
+
+
