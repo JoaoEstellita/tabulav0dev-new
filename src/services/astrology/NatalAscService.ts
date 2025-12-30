@@ -66,7 +66,7 @@ export class NatalAscService {
 				natalAscDeg: result.ascendant,
 				natalMcDeg: result.midheaven,
 				natalCusps: result.cusps,
-				natalSystem: system: normalizeHouseSystem(system),
+				natalSystem: normalizeHouseSystem(system),
 				natalApproximate: result.approximate,
 				natalTimeZoneId: result.timeZoneId,
 			})
