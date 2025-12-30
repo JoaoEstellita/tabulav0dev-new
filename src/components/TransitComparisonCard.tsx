@@ -20,15 +20,15 @@ interface TransitComparisonCardProps {
   housesCusps?: number[]
 }
 const ELEMENT_ICONS = {
-  fire: '??',
-  earth: '??',
-  air: '??',
-  water: '??',
+  fire: 'F',
+  earth: 'E',
+  air: 'A',
+  water: 'W',
   // Portugues
-  fogo: '??',
-  terra: '??',
-  ar: '??',
-  agua: '??'
+  fogo: 'F',
+  terra: 'T',
+  ar: 'A',
+  agua: 'W'
 } as const
 
 // ⚡ Ícones das Modalidades
@@ -129,7 +129,9 @@ export default function TransitComparisonCard({
       'Pluto': 'Plutão'
     }
     return translations[planetName] || planetName
-  }\n\n  const translateElement = (element: string): string => {
+  }
+
+  const translateElement = (element: string): string => {
     const translations: { [key: string]: string } = {
       'fire': 'Fogo',
       'earth': 'Terra',
@@ -708,6 +710,7 @@ const styles = StyleSheet.create({
   },
   // 🌌 Estilos das casas removidos (não implementadas)
 })
+
 
 
 
