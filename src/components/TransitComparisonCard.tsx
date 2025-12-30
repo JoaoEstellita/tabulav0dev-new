@@ -116,14 +116,14 @@ export default function TransitComparisonCard({
     return map
   }, [personal])
   
-    const formatDegree = (longitude: number): string => {
-    return `${longitude.toFixed(1)} deg`
+  const formatDegree = (longitude: number): string => {
+    return `${longitude.toFixed(1)}\u00B0`
   }
 
   // Converter graus para 0-30 por signo
   const formatDegreeInSign = (longitude: number): string => {
     const degreeInSign = longitude % 30
-    return `${degreeInSign.toFixed(1)} deg`
+    return `${degreeInSign.toFixed(1)}\u00B0`
   }
 
   // Traducao dos planetas
