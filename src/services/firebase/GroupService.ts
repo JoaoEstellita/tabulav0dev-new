@@ -14,7 +14,6 @@ import {
   Timestamp,
 } from "firebase/firestore"
 import { db } from "../../config/firebase"
-import NotificationService from "./NotificationService"
 import GroupNotificationService from "../notifications/GroupNotificationService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 
@@ -211,7 +210,7 @@ class GroupService {
           isRead: false,
         })
 
-        // Enviar notificações para outros membros do grupo
+        // Enviar notificacoes push para membros do grupo
         await this.sendNotificationsToGroupMembers(group, userId, status, message)
       }
     } catch (error) {
@@ -219,7 +218,7 @@ class GroupService {
     }
   }
 
-  // Enviar notificações push para membros do grupo
+  // Enviar notificacoes push para membros do grupo
   private async sendNotificationsToGroupMembers(
     group: Group,
     alertUserId: string,
@@ -227,25 +226,20 @@ class GroupService {
     message: string,
   ): Promise<void> {
     try {
-      // Enviar para todos os membros exceto quem gerou o alerta
-      const otherMembers = group.members.filter((memberId) => memberId !== alertUserId)
-
-      for (const memberId of otherMembers) {
-        await NotificationService.sendNotificationToUser(memberId, {
-          title: `🚨 Alerta no grupo ${group.name}`,
-          body: message,
-          data: {
-            screen: "Groups",
-            groupId: group.id,
-            alertType: status.overall,
-          },
-        })
-      }
+      await GroupNotificationService.sendGroupNotification({
+        groupId: group.id,
+        senderId: alertUserId,
+        notificationType:
+          status.overall === "critical" || status.overall === "challenging"
+            ? "critical_alert"
+            : "favorable_event",
+        customMessage: message,
+        eventData: { area: "energia_geral", status: status.overall },
+      })
     } catch (error) {
-      console.error("Erro ao enviar notificações:", error)
+      console.error("Erro ao enviar notificacoes:", error)
     }
   }
-
   // Buscar membros do grupo com status
   async getGroupMembersWithStatus(groupId: string): Promise<GroupMember[]> {
     try {
