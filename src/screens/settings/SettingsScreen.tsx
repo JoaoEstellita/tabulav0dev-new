@@ -568,6 +568,9 @@ export default function SettingsScreen() {
           {/* Sistema de Casas */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sistema de Casas</Text>
+            <Text style={styles.sectionNote}>
+              Afeta mapas e analises; sistemas diferentes mudam as casas e os significados.
+            </Text>
             <View style={styles.sectionContent}>
               {HOUSE_SYSTEMS.map((system) => {
                 const active = houseSystem === system;
@@ -703,6 +706,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFD700',
     marginBottom: 15,
+    paddingLeft: 5,
+  },
+  sectionNote: {
+    fontSize: 12,
+    color: '#b0b0b0',
+    marginBottom: 10,
     paddingLeft: 5,
   },
   sectionContent: {

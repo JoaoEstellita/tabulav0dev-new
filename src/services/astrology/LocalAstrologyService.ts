@@ -132,13 +132,18 @@ export class LocalAstrologyService {
       try {
         const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
         if (userProfile?.natalAscDeg && Array.isArray(userProfile?.natalCusps)) {
-          ;(realData as any).natal = (realData as any).natal || {}
-          ;(realData as any).natal.houses = {
-            ascendant: userProfile.natalAscDeg,
-            midheaven: userProfile.natalMcDeg || realData.midheaven,
-            cusps: userProfile.natalCusps,
-            approximate: !!userProfile.natalApproximate,
-            system: normalizeHouseSystem(userProfile.natalSystem || houseSystem)
+          const persistedSystem = normalizeHouseSystem(userProfile.natalSystem || houseSystem)
+          if (persistedSystem === houseSystem) {
+            ;(realData as any).natal = (realData as any).natal || {}
+            ;(realData as any).natal.houses = {
+              ascendant: userProfile.natalAscDeg,
+              midheaven: userProfile.natalMcDeg || realData.midheaven,
+              cusps: userProfile.natalCusps,
+              approximate: !!userProfile.natalApproximate,
+              system: persistedSystem
+            }
+          } else {
+            console.log('Cache natal ignorado: sistema de casas diferente do atual')
           }
         }
       } catch {}
@@ -438,6 +443,10 @@ export class LocalAstrologyService {
       const cache = await AstrologyCacheService.getCache(userId)
       
       if (cache && cache.calculatedData) {
+        const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
+        if (cache.houseSystem && cache.houseSystem !== currentSystem) {
+          return null
+        }
         const hoursOld = (Date.now() - new Date(cache.lastUpdate).getTime()) / (1000 * 60 * 60)
         
         // Cache válido por 12 horas

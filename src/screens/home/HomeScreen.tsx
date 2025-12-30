@@ -33,7 +33,7 @@ import StarLoader from '../../components/StarLoader'
 // import { getAspectDescription, getPairNote } from '../../astro/aspects.dictionary'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import type { HouseSystem } from '../../astro/houseSystem'
-import { normalizeHouseSystem } from '../../astro/houseSystem'
+import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
@@ -346,6 +346,9 @@ export default function HomeScreen() {
             <View style={styles.headerContent}>
               <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
               <Text style={styles.date}>{formatDate()}</Text>
+              <Text style={styles.houseSystemLabel}>
+                Sistema: {formatHouseSystemLabel(houseSystem)}
+              </Text>
             </View>
           </View>
           
@@ -727,6 +730,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0A0',
     textTransform: 'capitalize',
+  },
+  houseSystemLabel: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 2,
   },
   notificationButton: {
     position: 'relative',
