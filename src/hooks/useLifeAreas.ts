@@ -184,6 +184,20 @@ export function useLifeAreas(): UseLifeAreasReturn {
 }
 
 // Funções auxiliares
+const DEFAULT_LIFE_AREAS = [
+  'amor',
+  'carreira',
+  'financas',
+  'saude',
+  'familia',
+  'espiritualidade',
+  'comunicacao',
+  'transformacao',
+]
+
+const getLifeAreasOrDefault = (areas: any, fallback: string[]) =>
+  Array.isArray(areas) && areas.length > 0 ? areas : fallback
+
 async function getUserGroups(userId: string): Promise<string[]> {
   try {
     // Buscar grupos onde o usuário é membro
@@ -225,28 +239,51 @@ async function sendAlertToGroup(groupId: string, alert: any) {
 
 async function sendPushNotificationsToGroup(groupId: string, notification: any) {
   try {
-    // Buscar membros do grupo
     const groupDoc = await getDoc(doc(db, 'groups', groupId))
     if (!groupDoc.exists()) return
 
-    const groupData = groupDoc.data()
+    const groupData = groupDoc.data() || {}
     const members = groupData.members || []
-    
-    // Enviar notificação para cada membro (exceto o remetente)
+    const area = notification?.data?.area
+    const sharedDefaults = getLifeAreasOrDefault(groupData.sharedLifeAreas, DEFAULT_LIFE_AREAS)
+    const notifiedDefaults = getLifeAreasOrDefault(groupData.notifiedLifeAreas, DEFAULT_LIFE_AREAS)
+
+    if (area && notification?.data?.userId) {
+      const senderSettings = await getDoc(doc(db, 'groupMemberSettings', `${groupId}_${notification.data.userId}`))
+      const senderShared = senderSettings.exists()
+        ? getLifeAreasOrDefault(senderSettings.data().sharedLifeAreas, sharedDefaults)
+        : sharedDefaults
+
+      if (!senderShared.includes(area)) {
+        console.log('Notification skipped: sender not sharing area', area)
+        return
+      }
+    }
+
     const promises = members
       .filter((memberId: string) => memberId !== notification.data.userId)
-      .map((memberId: string) => 
-        NotificationService.sendNotificationToUser(memberId, {
+      .map(async (memberId: string) => {
+        if (area) {
+          const memberSettings = await getDoc(doc(db, 'groupMemberSettings', `${groupId}_${memberId}`))
+          const notifiedAreas = memberSettings.exists()
+            ? getLifeAreasOrDefault(memberSettings.data().notifiedLifeAreas, notifiedDefaults)
+            : notifiedDefaults
+
+          if (!notifiedAreas.includes(area)) return null
+        }
+
+        return NotificationService.sendNotificationToUser(memberId, {
           title: notification.title,
           body: notification.body,
-          data: notification.data
+          data: notification.data,
         })
-      )
-    
-    await Promise.all(promises)
-    console.log(`📱 Notificações enviadas para ${promises.length} membros do grupo`)
+      })
+
+    const results = await Promise.all(promises)
+    const sentCount = results.filter(Boolean).length
+    console.log(`Notificacoes enviadas para ${sentCount} membros do grupo`)
   } catch (error) {
-    console.error('Erro ao enviar notificações push:', error)
+    console.error('Erro ao enviar notificacoes push:', error)
   }
 }
 
