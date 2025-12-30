@@ -35,6 +35,7 @@ export interface GroupMember {
   userId: string
   email: string
   displayName: string
+  profilePhoto?: string
   joinedAt: Date
   astrologicalStatus?: AstrologicalStatus
   lastStatusUpdate?: Date
@@ -252,22 +253,31 @@ class GroupService {
       if (!groupDoc.exists()) return []
 
       const group = groupDoc.data() as Group
-      const members: GroupMember[] = []
+      const members = await Promise.all(
+        (group.members || []).map(async (memberId) => {
+          const [statusDoc, userDoc] = await Promise.all([
+            getDoc(doc(db, "userStatus", memberId)),
+            getDoc(doc(db, "users", memberId)),
+          ])
 
-      for (const memberId of group.members) {
-        const statusDoc = await getDoc(doc(db, "userStatus", memberId))
-        const statusData = statusDoc.exists() ? statusDoc.data() : null
+          const statusData = statusDoc.exists() ? statusDoc.data() : null
+          const userData = userDoc.exists() ? userDoc.data() : {}
+          const displayName =
+            userData.displayName || userData.fullName || memberId.split("@")[0] || memberId
+          const email = userData.email || memberId
 
-        members.push({
-          userId: memberId,
-          email: memberId.split("@")[0], // Buscar dados reais do usuário depois
-          displayName: memberId.split("@")[0],
-          joinedAt: new Date(),
-          astrologicalStatus: statusData?.astrologicalStatus,
-          lastStatusUpdate: statusData?.lastStatusUpdate?.toDate() || new Date(),
-          birthData: statusData?.birthData,
+          return {
+            userId: memberId,
+            email,
+            displayName,
+            profilePhoto: userData.profilePhoto,
+            joinedAt: new Date(),
+            astrologicalStatus: statusData?.astrologicalStatus,
+            lastStatusUpdate: statusData?.lastStatusUpdate?.toDate() || new Date(),
+            birthData: statusData?.birthData,
+          } as GroupMember
         })
-      }
+      )
 
       return members
     } catch (error) {
