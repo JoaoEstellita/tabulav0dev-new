@@ -790,58 +790,66 @@ export class RealAstrologyEngine {
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
     // CRÃTICO: Validar ordem das cÃºspides
-    const validateCuspsOrder = (cusps: number[], asc: number, label: string) => {
+    const validateCuspsOrder = (cusps: number[], label: string) => {
       const norm = (d: number) => (d % 360 + 360) % 360
-      const ascNorm = norm(asc)
+      if (!Array.isArray(cusps) || cusps.length < 12) {
+        console.error(`${label}: cusps invalid`, { length: Array.isArray(cusps) ? cusps.length : null })
+        return false
+      }
+
+      const unwrapped = [norm(cusps[0])]
       let isValid = true
-      let errosDetectados = []
-      
-      for (let i = 0; i < 11; i++) {
-        const current = norm(cusps[i] - ascNorm)
-        const next = norm(cusps[i + 1] - ascNorm)
-        if (next <= current) {
-          console.error(`âŒ ${label}: CÃºspides desordenadas!`, { 
-            casa: i + 1, 
-            current: cusps[i].toFixed(2), 
-            next: cusps[i + 1].toFixed(2),
-            currentDist: current.toFixed(2),
-            nextDist: next.toFixed(2)
-          })
-          errosDetectados.push(`Casa ${i + 1}â†’${i + 2}`)
+      const errosDetectados: string[] = []
+
+      for (let i = 1; i < 12; i++) {
+        let v = norm(cusps[i])
+        while (v < unwrapped[i - 1]) v += 360
+        const step = v - unwrapped[i - 1]
+        if (step <= 0 || step > 120) {
           isValid = false
+          errosDetectados.push(`Casa ${i}->${i + 1}`)
+          console.error(`${label}: cusps out of order`, {
+            casa: i,
+            current: cusps[i - 1].toFixed(2),
+            next: cusps[i].toFixed(2),
+            step: step.toFixed(2)
+          })
         }
+        unwrapped.push(v)
       }
-      
+
       if (isValid) {
-        console.log(`âœ… ${label}: CÃºspides ordenadas corretamente`)
+        console.log(`${label}: cusps ordered`)
       } else {
-        console.log(`âŒ ${label}: ${errosDetectados.length} erros detectados: ${errosDetectados.join(', ')}`)
+        console.log(`${label}: ${errosDetectados.length} erros detectados: ${errosDetectados.join(', ')}`)
       }
-      
+
       return isValid
     }
 
-    // ðŸš€ NOVA FUNÃ‡ÃƒO: Auto-correÃ§Ã£o de casas desordenadas
     const autoCorrectHouses = (houses: { cusps: number[], ascendant: number, midheaven: number }, label: string) => {
-      if (!validateCuspsOrder(houses.cusps, houses.ascendant, label)) {
-        console.log(`ðŸ”§ ${label}: Aplicando auto-correÃ§Ã£o com CASAS IGUAIS...`)
-        
-        // Fallback: gerar casas iguais (30Â° cada)
+      const system = (houses as any).systemEffective || (houses as any).system || 'placidus'
+      if (system !== 'placidus') {
+        return houses
+      }
+
+      if (!validateCuspsOrder(houses.cusps, label)) {
+        console.log(`${label}: applying equal-house autocorrect`)
         const newCusps = []
         for (let i = 0; i < 12; i++) {
           newCusps[i] = (houses.ascendant + (i * 30)) % 360
         }
-        
-        console.log(`âœ… ${label}: Casas corrigidas automaticamente`)
-        validateCuspsOrder(newCusps, houses.ascendant, `${label} CORRIGIDAS`)
-        
+
+        console.log(`${label}: houses autocorrected`)
+        validateCuspsOrder(newCusps, `${label} CORRIGIDAS`)
+
         return {
           ...houses,
           cusps: newCusps,
-          systemEffective: (houses as any).systemEffective + '-autocorrected'
+          systemEffective: `${system}-autocorrected`
         }
       }
-      
+
       return houses
     }
 
@@ -877,8 +885,8 @@ export class RealAstrologyEngine {
     try { if ((natalHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
     
     // âœ… VALIDAÃ‡Ã•ES FINAIS GARANTEM QUALIDADE 100%
-    validateCuspsOrder(currentHouses.cusps, currentHouses.ascendant, 'Casas ATUAIS FINAIS')
-    validateCuspsOrder(natalHouses.cusps, natalHouses.ascendant, 'Casas NATAIS FINAIS')
+    validateCuspsOrder(currentHouses.cusps, 'Casas ATUAIS FINAIS')
+    validateCuspsOrder(natalHouses.cusps, 'Casas NATAIS FINAIS')
 
     return {
       current: { planets: currentWithHouses, houses: currentHouses },

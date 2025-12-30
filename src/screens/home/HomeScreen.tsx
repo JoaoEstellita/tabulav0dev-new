@@ -241,11 +241,16 @@ export default function HomeScreen() {
       console.log('🔍 criticalAreas: safeEntries retornou', entries.length, 'entradas')
       
       const filtered = entries.filter(([_, area]) => {
-        if (!area || typeof area.percentage !== 'number') {
-          console.warn('⚠️ criticalAreas: área inválida:', area)
+        const value = typeof area?.percentage === 'number'
+          ? area.percentage
+          : (typeof area?.status === 'number' ? area.status : null)
+
+        if (typeof value !== 'number') {
+          console.warn('criticalAreas: area invalida:', area)
           return false
         }
-        return area.percentage < 30
+
+        return value < 30
       })
       
       const mapped = filtered.map(([name, area]) => ({ name, ...area }))

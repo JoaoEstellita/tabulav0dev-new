@@ -115,8 +115,18 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       // Encontrar áreas críticas (abaixo de 30%)
       const criticalAreas = Object.entries(transitData.lifeAreas)
-        .filter(([_, area]) => area.percentage < 30)
-        .map(([name, area]) => ({ name, status: area.percentage }))
+        .filter(([_, area]) => {
+          const value = typeof area?.percentage === 'number'
+            ? area.percentage
+            : (typeof area?.status === 'number' ? area.status : null)
+          return typeof value === 'number' && value < 30
+        })
+        .map(([name, area]) => ({
+          name,
+          status: typeof area?.percentage === 'number'
+            ? area.percentage
+            : (typeof area?.status === 'number' ? area.status : null)
+        }))
 
       if (criticalAreas.length === 0) {
         console.log('✅ Nenhuma área crítica encontrada')
