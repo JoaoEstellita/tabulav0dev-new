@@ -3,8 +3,8 @@ import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
 import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
 import UserService from '../services/firebase/UserService'
-import NotificationService from '../services/firebase/NotificationService'
-import { doc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
+import GroupNotificationService from '../services/notifications/GroupNotificationService'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
 export interface UseLifeAreasReturn {
@@ -139,28 +139,21 @@ export function useLifeAreas(): UseLifeAreasReturn {
         
         // Enviar para todos os grupos do usuário
         for (const groupId of userGroups) {
-          // Salvar alerta no Firestore
-          await sendAlertToGroup(groupId, {
-            userId: user.uid,
-            userName,
-            area: area.name,
-            message,
-            status: area.status,
-            timestamp: new Date(),
-            type: 'critical_area'
-          })
-
-          // Enviar notificações push para outros membros do grupo
-          await sendPushNotificationsToGroup(groupId, {
-            title: `⚠️ Alerta de ${getAreaDisplayName(area.name)}`,
-            body: `${userName} está passando por um momento crítico em ${getAreaDisplayName(area.name)} (${area.status}%)`,
-            data: {
-              type: 'critical_area_alert',
-              userId: user.uid,
-              area: area.name,
-              status: area.status
-            }
-          })
+          try {
+            await GroupNotificationService.sendGroupNotification({
+              groupId,
+              senderId: user.uid,
+              notificationType: 'critical_alert',
+              customMessage: message,
+              eventData: {
+                area: area.name,
+                percentage: area.status,
+                senderName: userName,
+              },
+            })
+          } catch (error) {
+            console.error('Erro ao enviar alerta para grupo:', error)
+          }
         }
       }
 
@@ -184,20 +177,6 @@ export function useLifeAreas(): UseLifeAreasReturn {
 }
 
 // Funções auxiliares
-const DEFAULT_LIFE_AREAS = [
-  'amor',
-  'carreira',
-  'financas',
-  'saude',
-  'familia',
-  'espiritualidade',
-  'comunicacao',
-  'transformacao',
-]
-
-const getLifeAreasOrDefault = (areas: any, fallback: string[]) =>
-  Array.isArray(areas) && areas.length > 0 ? areas : fallback
-
 async function getUserGroups(userId: string): Promise<string[]> {
   try {
     // Buscar grupos onde o usuário é membro
@@ -219,84 +198,6 @@ async function getUserGroups(userId: string): Promise<string[]> {
     console.error('Erro ao buscar grupos do usuário:', error)
     return []
   }
-}
-
-async function sendAlertToGroup(groupId: string, alert: any) {
-  try {
-    // Salvar alerta na coleção groupAlerts
-    await addDoc(collection(db, 'groupAlerts'), {
-      ...alert,
-      groupId,
-      createdAt: new Date(),
-      read: false
-    })
-    
-    console.log(`📢 Alerta salvo para grupo ${groupId}:`, alert.area)
-  } catch (error) {
-    console.error('Erro ao enviar alerta para grupo:', error)
-  }
-}
-
-async function sendPushNotificationsToGroup(groupId: string, notification: any) {
-  try {
-    const groupDoc = await getDoc(doc(db, 'groups', groupId))
-    if (!groupDoc.exists()) return
-
-    const groupData = groupDoc.data() || {}
-    const members = groupData.members || []
-    const area = notification?.data?.area
-    const sharedDefaults = getLifeAreasOrDefault(groupData.sharedLifeAreas, DEFAULT_LIFE_AREAS)
-    const notifiedDefaults = getLifeAreasOrDefault(groupData.notifiedLifeAreas, DEFAULT_LIFE_AREAS)
-
-    if (area && notification?.data?.userId) {
-      const senderSettings = await getDoc(doc(db, 'groupMemberSettings', `${groupId}_${notification.data.userId}`))
-      const senderShared = senderSettings.exists()
-        ? getLifeAreasOrDefault(senderSettings.data().sharedLifeAreas, sharedDefaults)
-        : sharedDefaults
-
-      if (!senderShared.includes(area)) {
-        console.log('Notification skipped: sender not sharing area', area)
-        return
-      }
-    }
-
-    const promises = members
-      .filter((memberId: string) => memberId !== notification.data.userId)
-      .map(async (memberId: string) => {
-        if (area) {
-          const memberSettings = await getDoc(doc(db, 'groupMemberSettings', `${groupId}_${memberId}`))
-          const notifiedAreas = memberSettings.exists()
-            ? getLifeAreasOrDefault(memberSettings.data().notifiedLifeAreas, notifiedDefaults)
-            : notifiedDefaults
-
-          if (!notifiedAreas.includes(area)) return null
-        }
-
-        return NotificationService.sendNotificationToUser(memberId, {
-          title: notification.title,
-          body: notification.body,
-          data: notification.data,
-        })
-      })
-
-    const results = await Promise.all(promises)
-    const sentCount = results.filter(Boolean).length
-    console.log(`Notificacoes enviadas para ${sentCount} membros do grupo`)
-  } catch (error) {
-    console.error('Erro ao enviar notificacoes push:', error)
-  }
-}
-
-function getAreaDisplayName(areaName: string): string {
-  const displayNames = {
-    love: 'Amor',
-    career: 'Carreira', 
-    health: 'Saúde',
-    family: 'Família',
-    spirituality: 'Espiritualidade'
-  }
-  
-  return displayNames[areaName as keyof typeof displayNames] || areaName
 }
 
 function getDefaultMessage(area: string): string {
