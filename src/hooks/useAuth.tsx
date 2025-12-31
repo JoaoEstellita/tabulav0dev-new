@@ -13,7 +13,7 @@ import {
   signInWithPopup,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
 
 interface AuthContextType {
   user: User | null
@@ -34,6 +34,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [birthDataComplete, setBirthDataComplete] = useState(false)
 
+  const syncPublicProfile = async (authUser: User) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', authUser.uid))
+      const userData = userDoc.exists() ? userDoc.data() : {}
+      const displayName =
+        userData.displayName ||
+        userData.fullName ||
+        authUser.displayName ||
+        authUser.email?.split('@')[0] ||
+        'Usuario'
+      const profilePhoto = userData.profilePhoto || authUser.photoURL || null
+
+      await setDoc(
+        doc(db, 'userPublicProfiles', authUser.uid),
+        {
+          displayName,
+          profilePhoto,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      )
+    } catch (error) {
+      console.warn('Falha ao sincronizar perfil publico:', error)
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('🔐 Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
@@ -41,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user)
       if (user) {
         console.log('⏳ Aguardando verificação de dados...')
+        syncPublicProfile(user)
         // Aguardar um pouco para garantir que o documento existe
         setTimeout(async () => {
           try {
