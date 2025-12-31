@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { useUserSettings } from '../../hooks/useUserSettings';
@@ -47,6 +48,7 @@ interface SettingsItem {
 
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
+  const navigation = useNavigation<any>();
   const { preferences, updatePreferences } = useNotificationPreferences();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
@@ -357,8 +359,7 @@ export default function SettingsScreen() {
   // Funções removidas pois agora usam os hooks
 
   const editProfile = () => {
-    // TODO: Navegar para tela de edição de perfil
-    Alert.alert('Editar Perfil', 'Funcionalidade em desenvolvimento.');
+    navigation.navigate('Profile');
   };
 
   const exportData = () => {

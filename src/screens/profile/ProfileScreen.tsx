@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "../../config/firebase"
@@ -15,6 +17,7 @@ import SubscriptionScreen from "../subscription/SubscriptionScreen"
 
 interface UserProfile {
   displayName: string
+  profilePhoto?: string
   birthDate: string
   birthTime: string
   birthLocation: {
@@ -55,6 +58,25 @@ export default function ProfileScreen() {
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showFAQ, setShowFAQ] = useState(false)
   const [showSubscription, setShowSubscription] = useState(false)
+  const [savingPhoto, setSavingPhoto] = useState(false)
+
+  const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
+    try {
+      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+      if (!base) return null
+      const response = await fetch(`${base}/api/upload/profile-photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, dataUrl }),
+      })
+      if (!response.ok) return null
+      const payload = await response.json()
+      return payload?.url || null
+    } catch (error) {
+      console.warn('Falha ao enviar foto:', error)
+      return null
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -115,29 +137,24 @@ export default function ProfileScreen() {
     }
   }
 
-  // saveProfile simplificado (sem reprocesso manual de casas)
-  const saveProfile = async () => {
-    try {
-      if (!user || !profile) return
-      await setDoc(doc(db, "users", user.uid), profile, { merge: true })
-      Alert.alert('Sucesso', 'Perfil atualizado!')
-      await loadUserProfile()
-    } catch (e) {
-      console.error('Erro ao salvar perfil:', e)
-      Alert.alert('Erro', 'Não foi possível salvar seu perfil agora.')
-    }
-  }
-
   const saveProfile = async () => {
     if (!profile) return
 
     try {
-      await updateDoc(doc(db, "users", user!.uid), profile)
+      let updatedPhoto = profile.profilePhoto || null
+      if (user && updatedPhoto && updatedPhoto.startsWith('data:')) {
+        setSavingPhoto(true)
+        const uploaded = await uploadProfilePhoto(user.uid, updatedPhoto)
+        updatedPhoto = uploaded || updatedPhoto
+      }
+
+      const payload = { ...profile, profilePhoto: updatedPhoto }
+      await updateDoc(doc(db, "users", user!.uid), payload)
       await setDoc(
         doc(db, "userPublicProfiles", user!.uid),
         {
           displayName: profile.displayName || "Usuario",
-          profilePhoto: profile.profilePhoto || null,
+          profilePhoto: updatedPhoto || null,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -147,6 +164,112 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error("Erro ao salvar perfil:", error)
       Alert.alert("Erro", "Não foi possível salvar o perfil")
+    } finally {
+      setSavingPhoto(false)
+    }
+  }
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      return false
+    }
+    return true
+  }
+
+  const selectPhoto = async () => {
+    if (!profile || !user) return
+
+    if (typeof window !== 'undefined') {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = async (event: any) => {
+        const file = event.target.files[0]
+        if (!file) return
+
+        const compressToDataUrl = async (file: File): Promise<string> => {
+          const img = document.createElement('img')
+          const objectUrl = URL.createObjectURL(file)
+          await new Promise((res) => {
+            img.onload = () => res(null as any)
+            img.src = objectUrl
+          })
+          const canvas = document.createElement('canvas')
+          const maxSize = 600
+          const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+          canvas.width = Math.round(img.width * scale)
+          canvas.height = Math.round(img.height * scale)
+          const ctx = canvas.getContext('2d')!
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          URL.revokeObjectURL(objectUrl)
+          return canvas.toDataURL('image/jpeg', 0.82)
+        }
+
+        const dataUrl = await compressToDataUrl(file)
+        setProfile({ ...profile, profilePhoto: dataUrl })
+      }
+      input.click()
+      return
+    }
+
+    const hasPermission = await requestPermissions()
+    if (!hasPermission) return
+
+    Alert.alert(
+      'Escolher Foto',
+      'Como você gostaria de adicionar sua foto?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Galeria', onPress: () => pickImage('gallery') },
+        { text: 'Câmera', onPress: () => pickImage('camera') },
+      ]
+    )
+  }
+
+  const pickImage = async (source: 'gallery' | 'camera') => {
+    if (!profile) return
+
+    try {
+      let result
+
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync()
+        if (status !== 'granted') {
+          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          return
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        })
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        })
+      }
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0]
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 600, height: 600 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        )
+        const dataUrl = manipulatedImage.base64
+          ? `data:image/jpeg;base64,${manipulatedImage.base64}`
+          : manipulatedImage.uri
+        setProfile({ ...profile, profilePhoto: dataUrl })
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar foto:', error)
+      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
     }
   }
 
@@ -270,9 +393,16 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header do Perfil */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <Ionicons name="person-circle" size={80} color="#FFD700" />
-          </View>
+          <TouchableOpacity style={styles.avatarContainer} onPress={selectPhoto} disabled={savingPhoto}>
+            {profile.profilePhoto ? (
+              <Image source={{ uri: profile.profilePhoto }} style={styles.avatarImage} />
+            ) : (
+              <Ionicons name="person-circle" size={80} color="#FFD700" />
+            )}
+            <View style={styles.avatarEditBadge}>
+              <Ionicons name="camera" size={14} color="#000" />
+            </View>
+          </TouchableOpacity>
           <Text style={styles.displayName}>{profile.displayName}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           {profile.zodiacSign && <Text style={styles.zodiacSign}>♈ {profile.zodiacSign}</Text>}
@@ -557,6 +687,24 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  avatarEditBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#FFD700",
+    alignItems: "center",
+    justifyContent: "center",
   },
   displayName: {
     fontSize: 24,
