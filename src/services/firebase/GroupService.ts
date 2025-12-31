@@ -6,11 +6,13 @@ import {
   updateDoc,
   getDocs,
   getDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
   onSnapshot,
   arrayUnion,
+  arrayRemove,
   Timestamp,
 } from "firebase/firestore"
 import { auth, db } from "../../config/firebase"
@@ -612,6 +614,86 @@ class GroupService {
       customAlertMessages: settings.customAlertMessages || null,
       updatedAt: Timestamp.now(),
     })
+  }
+
+  async removeMember(groupId: string, memberId: string, requesterId: string): Promise<void> {
+    if (!groupId || !memberId || !requesterId) return
+
+    if (BACKEND_URL) {
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        const response = await fetch(`${BACKEND_URL}/api/group/remove-member`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ groupId, memberId }),
+        })
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}))
+          throw new Error(payload?.error || "Nao foi possivel remover o membro")
+        }
+        return
+      } catch (error) {
+        console.warn("Remove member via backend falhou, tentando direto:", error)
+      }
+    }
+
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+    if (memberId === groupData.createdBy) throw new Error("Nao e possivel remover o administrador")
+
+    await updateDoc(groupRef, { members: arrayRemove(memberId) })
+    await deleteDoc(doc(db, "groupMemberSettings", `${groupId}_${memberId}`))
+  }
+
+  async leaveGroup(groupId: string, userId: string): Promise<void> {
+    if (!groupId || !userId) return
+
+    if (BACKEND_URL) {
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        const response = await fetch(`${BACKEND_URL}/api/group/leave`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ groupId }),
+        })
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}))
+          throw new Error(payload?.error || "Nao foi possivel sair do grupo")
+        }
+        return
+      } catch (error) {
+        console.warn("Leave via backend falhou, tentando direto:", error)
+      }
+    }
+
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    const members = Array.isArray(groupData.members) ? groupData.members : []
+    if (!members.includes(userId)) return
+
+    const remaining = members.filter((member) => member !== userId)
+    if (remaining.length === 0) {
+      await deleteDoc(groupRef)
+    } else {
+      const updates: Partial<Group> = { members: remaining }
+      if (groupData.createdBy === userId) {
+        updates.createdBy = remaining[0]
+      }
+      await updateDoc(groupRef, updates)
+    }
+
+    await deleteDoc(doc(db, "groupMemberSettings", `${groupId}_${userId}`))
   }
 
   private generateInviteCode(): string {

@@ -36,6 +36,7 @@ export interface GroupDetailModalProps {
   onClose: () => void
   onInvite: () => void
   onLeaveGroup: () => void
+  onRemoveMember?: (member: GroupMember) => void
   onMemberProfile: (member: GroupMember) => void
 }
 
@@ -109,6 +110,7 @@ export default function GroupDetailModal({
   onClose,
   onInvite,
   onLeaveGroup,
+  onRemoveMember,
   onMemberProfile
 }: GroupDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
@@ -296,8 +298,30 @@ export default function GroupDetailModal({
                       </Text>
                     )}
                   </View>
-                  
-                  <Ionicons name="chevron-forward" size={16} color="#888" />
+
+                  {isGroupOwner && member.userId !== currentUserId && onRemoveMember ? (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => {
+                        Alert.alert(
+                          'Remover membro',
+                          `Remover ${member.displayName} do grupo?`,
+                          [
+                            { text: 'Cancelar', style: 'cancel' },
+                            {
+                              text: 'Remover',
+                              style: 'destructive',
+                              onPress: () => onRemoveMember(member),
+                            },
+                          ]
+                        )
+                      }}
+                    >
+                      <Ionicons name="trash" size={16} color="#FF4444" />
+                    </TouchableOpacity>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={16} color="#888" />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -395,24 +419,25 @@ export default function GroupDetailModal({
 
         {/* Footer Actions */}
         <View style={styles.footer}>
-          {!isGroupOwner && (
-            <TouchableOpacity 
-              style={styles.leaveButton} 
-              onPress={() => {
-                Alert.alert(
-                  'Sair do Grupo',
-                  'Tem certeza que deseja sair deste grupo?',
-                  [
-                    { text: 'Cancelar', style: 'cancel' },
-                    { text: 'Sair', style: 'destructive', onPress: onLeaveGroup }
-                  ]
-                )
-              }}
-            >
-              <Ionicons name="exit" size={16} color="#FF4444" />
-              <Text style={styles.leaveButtonText}>Sair do Grupo</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity 
+            style={styles.leaveButton} 
+            onPress={() => {
+              const message = isGroupOwner
+                ? 'Voce e o admin. Ao sair, a administracao passa para outro membro.'
+                : 'Tem certeza que deseja sair deste grupo?'
+              Alert.alert(
+                'Sair do Grupo',
+                message,
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Sair', style: 'destructive', onPress: onLeaveGroup }
+                ]
+              )
+            }}
+          >
+            <Ionicons name="exit" size={16} color="#FF4444" />
+            <Text style={styles.leaveButtonText}>Sair do Grupo</Text>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -740,5 +765,13 @@ const styles = StyleSheet.create({
     color: '#FF4444',
     fontSize: 16,
     fontWeight: '500',
+  },
+  removeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2C1B1B',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

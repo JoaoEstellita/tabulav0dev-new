@@ -419,6 +419,34 @@ export default function GroupsScreen() {
     )
   }
 
+  const handleRemoveMember = async (memberId: string) => {
+    if (!selectedGroup || !user) return
+    try {
+      await GroupService.removeMember(selectedGroup.id, memberId, user.uid)
+      await loadGroupData()
+      await loadUserGroups()
+      Alert.alert("Sucesso", "Membro removido do grupo")
+    } catch (error: any) {
+      console.error("Erro ao remover membro:", error)
+      Alert.alert("Erro", error?.message || "Nao foi possivel remover o membro")
+    }
+  }
+
+  const handleLeaveGroup = async () => {
+    if (!selectedGroup || !user) return
+    try {
+      await GroupService.leaveGroup(selectedGroup.id, user.uid)
+      setShowGroupDetail(false)
+      setSelectedGroupForDetail(null)
+      await loadUserGroups()
+      setSelectedGroup(null)
+      Alert.alert("Sucesso", "Voce saiu do grupo")
+    } catch (error: any) {
+      console.error("Erro ao sair do grupo:", error)
+      Alert.alert("Erro", error?.message || "Nao foi possivel sair do grupo")
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "critical":
@@ -497,9 +525,52 @@ export default function GroupsScreen() {
 
         {selectedGroup && (
           <>
+            {/* Visao geral do grupo */}
+            <View style={styles.groupFocusCard}>
+              <View style={styles.groupFocusHeader}>
+                <View>
+                  <Text style={styles.groupFocusTitle}>{selectedGroup.name}</Text>
+                  <Text style={styles.groupFocusSubtitle}>
+                    {selectedGroup.description || "Grupo astrologico"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.groupFocusManage}
+                  onPress={() => {
+                    setSelectedGroupForDetail(selectedGroup)
+                    setShowGroupDetail(true)
+                  }}
+                >
+                  <Ionicons name="options" size={18} color="#0a0e27" />
+                  <Text style={styles.groupFocusManageText}>Gerenciar</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.groupFocusMeta}>
+                <View style={styles.groupMetaChip}>
+                  <Ionicons name="people" size={14} color="#FFD700" />
+                  <Text style={styles.groupMetaText}>
+                    {selectedGroup.members?.length || groupMembers.length} membros
+                  </Text>
+                </View>
+                <View style={styles.groupMetaChip}>
+                  <Ionicons name="share-social" size={14} color="#FFD700" />
+                  <Text style={styles.groupMetaText}>
+                    {formatLifeAreas(selectedGroup.sharedLifeAreas)}
+                  </Text>
+                </View>
+                <View style={styles.groupMetaChip}>
+                  <Ionicons name="notifications" size={14} color="#FFD700" />
+                  <Text style={styles.groupMetaText}>
+                    {formatLifeAreas(selectedGroup.notifiedLifeAreas)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
             {/* Acoes de Notificacao */}
             <View style={styles.notificationActionsSection}>
-            <Text style={styles.sectionTitle}>Acoes do Grupo</Text>
+              <Text style={styles.sectionTitle}>Acoes do Grupo</Text>
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity 
                   style={[styles.actionButton, styles.messageButton]} 
@@ -831,10 +902,8 @@ export default function GroupsScreen() {
           // Acao de convite sera implementada na proxima etapa
           Alert.alert('Em breve', 'Sistema de convites em desenvolvimento!')
         }}
-        onLeaveGroup={() => {
-          // Acao de sair do grupo
-          Alert.alert('Sair do grupo', 'Funcionalidade em desenvolvimento!')
-        }}
+        onLeaveGroup={handleLeaveGroup}
+        onRemoveMember={(member) => handleRemoveMember(member.userId)}
         onMemberProfile={(member) => {
           // Acao de ver perfil do membro
           Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)
@@ -1431,6 +1500,62 @@ const styles = StyleSheet.create({
   },
   groupsCardsSection: {
     marginBottom: 24,
+  },
+  groupFocusCard: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.2)",
+  },
+  groupFocusHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 12,
+  },
+  groupFocusTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  groupFocusSubtitle: {
+    color: "#888",
+    fontSize: 13,
+    marginTop: 4,
+  },
+  groupFocusManage: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+  },
+  groupFocusManageText: {
+    color: "#0a0e27",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  groupFocusMeta: {
+    gap: 8,
+  },
+  groupMetaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  groupMetaText: {
+    color: "#E5E5E5",
+    fontSize: 12,
+    flexShrink: 1,
   },
 })
 
