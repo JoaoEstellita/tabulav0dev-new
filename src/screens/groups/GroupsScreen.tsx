@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
-import GroupService, { type Group, type GroupMember, type GroupAlert } from "../../services/firebase/GroupService"
+import GroupService, { type Group, type GroupMember, type GroupAlert, type GroupActivity } from "../../services/firebase/GroupService"
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
@@ -56,6 +56,7 @@ export default function GroupsScreen() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([])
   const [groupAlerts, setGroupAlerts] = useState<GroupAlert[]>([])
+  const [groupActivities, setGroupActivities] = useState<GroupActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
@@ -67,6 +68,7 @@ export default function GroupsScreen() {
   const [invitePreview, setInvitePreview] = useState<Group | null>(null)
   const [invitePreviewLoading, setInvitePreviewLoading] = useState(false)
   const [invitePreviewError, setInvitePreviewError] = useState("")
+  const [updatingInvite, setUpdatingInvite] = useState(false)
   
   // Estados para casais
   const [coupleRelationship, setCoupleRelationship] = useState<CoupleRelationship | null>(null)
@@ -183,13 +185,15 @@ export default function GroupsScreen() {
     if (!selectedGroup) return
 
     try {
-      const [members, alerts] = await Promise.all([
+      const [members, alerts, activities] = await Promise.all([
         GroupService.getGroupMembersWithStatus(selectedGroup.id, user?.uid),
         GroupService.getGroupAlerts(selectedGroup.id),
+        GroupService.getGroupActivities(selectedGroup.id),
       ])
 
       setGroupMembers(members)
       setGroupAlerts(alerts)
+      setGroupActivities(activities)
     } catch (error) {
       console.error("Erro ao carregar dados do grupo:", error)
     }
@@ -299,6 +303,11 @@ export default function GroupsScreen() {
   const joinGroup = async () => {
     if (!inviteCode.trim()) {
       Alert.alert("Erro", "Codigo de convite e obrigatorio")
+      return
+    }
+
+    if (invitePreview && (invitePreview.inviteEnabled === false || invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now())) {
+      Alert.alert("Convite indisponivel", "Este convite esta desativado ou expirado.")
       return
     }
 
@@ -417,6 +426,26 @@ export default function GroupsScreen() {
         }
       ]
     )
+  }
+
+  const handleUpdateInviteSettings = async (updates: { inviteEnabled?: boolean; inviteExpiresAt?: Date | null; rotate?: boolean }) => {
+    if (!selectedGroup || !user) return
+    try {
+      setUpdatingInvite(true)
+      const result = await GroupService.updateInviteSettings(selectedGroup.id, user.uid, updates)
+      setSelectedGroup((prev) =>
+        prev ? { ...prev, inviteCode: result.inviteCode, inviteEnabled: result.inviteEnabled, inviteExpiresAt: result.inviteExpiresAt } : prev
+      )
+      setSelectedGroupForDetail((prev) =>
+        prev ? { ...prev, inviteCode: result.inviteCode, inviteEnabled: result.inviteEnabled, inviteExpiresAt: result.inviteExpiresAt } : prev
+      )
+      Alert.alert("Sucesso", "Convite atualizado")
+    } catch (error: any) {
+      console.error("Erro ao atualizar convite:", error)
+      Alert.alert("Erro", error?.message || "Nao foi possivel atualizar convite")
+    } finally {
+      setUpdatingInvite(false)
+    }
   }
 
   const handleRemoveMember = async (memberId: string) => {
@@ -812,6 +841,12 @@ export default function GroupsScreen() {
                 <Text style={styles.invitePreviewText}>
                   Areas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
                 </Text>
+                {invitePreview.inviteEnabled === false && (
+                  <Text style={styles.invitePreviewError}>Convite desativado pelo admin</Text>
+                )}
+                {invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now() && (
+                  <Text style={styles.invitePreviewError}>Convite expirado</Text>
+                )}
               </View>
             )}
 
@@ -893,6 +928,7 @@ export default function GroupsScreen() {
         visible={showGroupDetail}
         group={selectedGroupForDetail}
         members={selectedGroupForDetail?.id === selectedGroup?.id ? groupMembers : []}
+        activities={selectedGroupForDetail?.id === selectedGroup?.id ? groupActivities : []}
         currentUserId={user?.uid || ''}
         onClose={() => {
           setShowGroupDetail(false)
@@ -904,6 +940,7 @@ export default function GroupsScreen() {
         }}
         onLeaveGroup={handleLeaveGroup}
         onRemoveMember={(member) => handleRemoveMember(member.userId)}
+        onUpdateInviteSettings={handleUpdateInviteSettings}
         onMemberProfile={(member) => {
           // Acao de ver perfil do membro
           Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)

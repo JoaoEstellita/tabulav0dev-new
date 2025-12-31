@@ -64,6 +64,8 @@ export interface GroupNotificationSettings {
     startTime: string
     endTime: string
   }
+  shareStatus: boolean
+  cooldownMinutes: number
   priority: 'all' | 'critical_only' | 'none'
 }
 
@@ -105,7 +107,9 @@ const defaultSettings: GroupNotificationSettings = {
     startTime: '22:00',
     endTime: '07:00',
   },
-  priority: 'all'
+  shareStatus: true,
+  cooldownMinutes: 0,
+  priority: 'all',
 }
 
 const lifeAreaLabels: Record<keyof LifeAreaState, { label: string; icon: string; color: string }> = {
@@ -179,6 +183,8 @@ export default function GroupNotificationSettings({
         types: memberSettings?.types || defaultSettings.types,
         schedule: memberSettings?.schedule || defaultSettings.schedule,
         priority: memberSettings?.priority || defaultSettings.priority,
+        shareStatus: memberSettings?.shareStatus ?? defaultSettings.shareStatus,
+        cooldownMinutes: memberSettings?.cooldownMinutes ?? defaultSettings.cooldownMinutes,
         customAlertMessages: buildMessageState(memberSettings?.customAlertMessages),
         sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
         notifiedLifeAreas: buildLifeAreasState(notifiedLifeAreas),
@@ -249,6 +255,8 @@ export default function GroupNotificationSettings({
         types: settings.types,
         schedule: settings.schedule,
         priority: settings.priority,
+        shareStatus: settings.shareStatus,
+        cooldownMinutes: settings.cooldownMinutes,
         customAlertMessages: settings.customAlertMessages,
       })
 
@@ -285,6 +293,8 @@ export default function GroupNotificationSettings({
               types: defaultSettings.types,
               schedule: defaultSettings.schedule,
               priority: defaultSettings.priority,
+              shareStatus: defaultSettings.shareStatus,
+              cooldownMinutes: defaultSettings.cooldownMinutes,
               customAlertMessages: defaultSettings.customAlertMessages,
               sharedLifeAreas: buildLifeAreasState(sharedDefaults),
               notifiedLifeAreas: buildLifeAreasState(notifiedDefaults),
@@ -356,8 +366,25 @@ export default function GroupNotificationSettings({
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Compartilhar status</Text>
+                <Text style={styles.settingDescription}>
+                  Permitir que membros vejam seu status neste grupo
+                </Text>
+              </View>
+              <Switch
+                value={settings.shareStatus}
+                onValueChange={(value) => updateSettings({ shareStatus: value })}
+                trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
+                thumbColor={settings.shareStatus ? '#000' : '#f4f3f4'}
+              />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Prioridade</Text>
-                <Text style={styles.settingDescription}>Controle quais tipos de notificacao receber</Text>
+                <Text style={styles.settingDescription}>
+                  Controle quais tipos de notificacao receber
+                </Text>
               </View>
               <View style={styles.priorityButtons}>
                 {['all', 'critical_only', 'none'].map((priority) => (
@@ -376,6 +403,36 @@ export default function GroupNotificationSettings({
                       ]}
                     >
                       {priority === 'all' ? 'Todas' : priority === 'critical_only' ? 'Criticas' : 'Nenhuma'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Cooldown por area</Text>
+                <Text style={styles.settingDescription}>
+                  Evita alertas repetidos para a mesma area
+                </Text>
+              </View>
+              <View style={styles.priorityButtons}>
+                {[0, 30, 120, 360, 720].map((minutes) => (
+                  <TouchableOpacity
+                    key={`cooldown-${minutes}`}
+                    style={[
+                      styles.priorityButton,
+                      settings.cooldownMinutes === minutes && styles.priorityButtonActive,
+                    ]}
+                    onPress={() => updateSettings({ cooldownMinutes: minutes })}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityButtonText,
+                        settings.cooldownMinutes === minutes && styles.priorityButtonTextActive,
+                      ]}
+                    >
+                      {minutes === 0 ? 'Sem' : minutes >= 60 ? `${minutes / 60}h` : `${minutes}m`}
                     </Text>
                   </TouchableOpacity>
                 ))}

@@ -1,13 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ===== REGRAS PARA USUÁRIOS =====
+    // ===== REGRAS PARA USUARIOS =====
     match /users/{userId} {
-      // Usuário pode ler/escrever apenas seus próprios dados
+      // Usuario pode ler/escrever apenas seus proprios dados
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Permitir criação de perfil durante onboarding
+
+      // Permitir criacao de perfil durante onboarding
       allow create: if request.auth != null && request.auth.uid == userId;
     }
 
@@ -21,50 +20,60 @@ service cloud.firestore {
 
       allow delete: if false;
     }
-    
+
     // ===== REGRAS PARA ASSINATURAS =====
     match /subscriptions/{subscriptionId} {
-      // Usuário pode ler/escrever apenas suas próprias assinaturas
-      allow read, write: if request.auth != null && 
+      // Usuario pode ler/escrever apenas suas proprias assinaturas
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
-      
-      // Permitir criação de assinatura
-      allow create: if request.auth != null && 
+
+      // Permitir criacao de assinatura
+      allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.userId;
     }
-    
+
     // ===== REGRAS PARA GRUPOS =====
     match /groups/{groupId} {
       // Membros podem ler o grupo
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                      request.auth.uid in resource.data.members;
-      
+
       // Apenas o criador pode criar grupo
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.createdBy;
-      
+
       // Membros podem atualizar o grupo
-      allow update: if request.auth != null && 
+      allow update: if request.auth != null &&
                        request.auth.uid in resource.data.members;
-      
+
       // Apenas o criador pode deletar o grupo
-      allow delete: if request.auth != null && 
+      allow delete: if request.auth != null &&
                        request.auth.uid == resource.data.createdBy;
     }
-    
+
     // ===== REGRAS PARA ALERTAS DE GRUPOS =====
     match /groupAlerts/{alertId} {
       // Membros do grupo podem ler alertas
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                      request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members;
-      
-      // Usuário pode criar alertas para grupos que participa
-      allow create: if request.auth != null && 
+
+      // Usuario pode criar alertas para grupos que participa
+      allow create: if request.auth != null &&
                        request.auth.uid in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.members;
-      
+
       // Apenas o criador pode atualizar/deletar alerta
-      allow update, delete: if request.auth != null && 
+      allow update, delete: if request.auth != null &&
                               request.auth.uid == resource.data.createdBy;
+    }
+
+    // ===== REGRAS PARA ATIVIDADES DE GRUPO =====
+    match /groupActivities/{activityId} {
+      // Membros do grupo podem ler atividades
+      allow read: if request.auth != null &&
+                     request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members;
+
+      // Somente backend grava atividades
+      allow create, update, delete: if false;
     }
 
     // ===== REGRAS PARA CONFIGURACOES DE MEMBRO NO GRUPO =====
@@ -94,16 +103,16 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // ===== REGRAS PARA RELACIONAMENTOS DE CASAL =====
     match /coupleRelationships/{relationshipId} {
-      // Usuários podem ler/escrever apenas seus próprios relacionamentos
-      allow read, write: if request.auth != null && 
-                           (request.auth.uid == resource.data.userId || 
+      // Usuarios podem ler/escrever apenas seus proprios relacionamentos
+      allow read, write: if request.auth != null &&
+                           (request.auth.uid == resource.data.userId ||
                             request.auth.uid == resource.data.partnerId);
-      
-      // Permitir criação de relacionamento
-      allow create: if request.auth != null && 
+
+      // Permitir criacao de relacionamento
+      allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.userId;
     }
 
@@ -116,74 +125,74 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.partner1.userId;
     }
-    
-    // ===== REGRAS PARA CACHE ASTROLÓGICO =====
+
+    // ===== REGRAS PARA CACHE ASTROLOGICO =====
     match /astrologyCache/{cacheId} {
-      // Usuário pode ler/escrever apenas seu próprio cache
-      allow read, write: if request.auth != null && 
+      // Usuario pode ler/escrever apenas seu proprio cache
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
-      
-      // Permitir criação de cache
-      allow create: if request.auth != null && 
+
+      // Permitir criacao de cache
+      allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.userId;
     }
-    
-    // ===== REGRAS PARA NOTIFICAÇÕES =====
+
+    // ===== REGRAS PARA NOTIFICACOES =====
     match /notifications/{notificationId} {
-      // Usuário pode ler apenas suas próprias notificações
-      allow read: if request.auth != null && 
+      // Usuario pode ler apenas suas proprias notificacoes
+      allow read: if request.auth != null &&
                      request.auth.uid == resource.data.userId;
-      
-      // Sistema pode criar notificações para usuários
+
+      // Sistema pode criar notificacoes para usuarios
       allow create: if request.auth != null;
-      
-      // Usuário pode marcar como lida
-      allow update: if request.auth != null && 
+
+      // Usuario pode marcar como lida
+      allow update: if request.auth != null &&
                        request.auth.uid == resource.data.userId;
     }
-    
-    // ===== REGRAS PARA CONFIGURAÇÕES DE ALERTA =====
+
+    // ===== REGRAS PARA CONFIGURACOES DE ALERTA =====
     match /alertSettings/{settingId} {
-      // Usuário pode ler/escrever apenas suas próprias configurações
-      allow read, write: if request.auth != null && 
+      // Usuario pode ler/escrever apenas suas proprias configuracoes
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
-      
-      // Permitir criação de configurações
-      allow create: if request.auth != null && 
+
+      // Permitir criacao de configuracoes
+      allow create: if request.auth != null &&
                        request.auth.uid == request.resource.data.userId;
     }
-    
+
     // ===== REGRAS PARA LOGS DE SISTEMA =====
     match /systemLogs/{logId} {
       // Apenas leitura para logs do sistema
       allow read: if request.auth != null;
-      
+
       // Sistema pode criar logs
       allow create: if request.auth != null;
     }
-    
-    // ===== REGRAS PARA DADOS PÚBLICOS =====
+
+    // ===== REGRAS PARA DADOS PUBLICOS =====
     match /publicData/{docId} {
-      // Dados públicos podem ser lidos por qualquer usuário autenticado
+      // Dados publicos podem ser lidos por qualquer usuario autenticado
       allow read: if request.auth != null;
-      
-      // Apenas administradores podem escrever dados públicos
-      allow write: if request.auth != null && 
+
+      // Apenas administradores podem escrever dados publicos
+      allow write: if request.auth != null &&
                      request.auth.uid in get(/databases/$(database)/documents/admin/users).data.adminUsers;
     }
-    
+
     // ===== REGRAS PARA ADMINISTRADORES =====
     match /admin/{collection}/{docId} {
       // Apenas administradores podem acessar dados administrativos
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.uid in get(/databases/$(database)/documents/admin/users).data.adminUsers;
     }
-    
-    // ===== REGRAS PARA BACKUP E MIGRAÇÃO =====
+
+    // ===== REGRAS PARA BACKUP E MIGRACAO =====
     match /backup/{backupId} {
       // Apenas sistema pode acessar backups
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.token.admin == true;
     }
   }
-} 
+}

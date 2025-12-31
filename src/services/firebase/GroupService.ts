@@ -31,6 +31,8 @@ export interface Group {
   createdAt: Date
   isPrivate: boolean
   inviteCode?: string
+  inviteEnabled?: boolean
+  inviteExpiresAt?: Date | null
   sharedLifeAreas?: string[]
   notifiedLifeAreas?: string[]
 }
@@ -67,6 +69,9 @@ export interface GroupMemberSettings {
   userId: string
   sharedLifeAreas: string[]
   notifiedLifeAreas: string[]
+  shareStatus?: boolean
+  cooldownMinutes?: number
+  lastAlertByArea?: Record<string, any>
   enabled?: boolean
   types?: {
     criticalAlerts?: boolean
@@ -82,6 +87,17 @@ export interface GroupMemberSettings {
   priority?: 'all' | 'critical_only' | 'none'
   customAlertMessages?: Record<string, string>
   updatedAt: Date
+}
+
+export interface GroupActivity {
+  id: string
+  groupId: string
+  type: string
+  actorId?: string
+  targetId?: string
+  message?: string
+  area?: string | null
+  createdAt: Date
 }
 
 class GroupService {
@@ -113,6 +129,8 @@ class GroupService {
         isPrivate,
         sharedLifeAreas: settings?.sharedLifeAreas || this.LIFE_AREAS,
         notifiedLifeAreas: settings?.notifiedLifeAreas || this.LIFE_AREAS,
+        inviteEnabled: true,
+        inviteExpiresAt: null,
       }
       // Gerar inviteCode para convites
       groupData.inviteCode = this.generateInviteCode()
@@ -207,6 +225,16 @@ class GroupService {
 
       const groupDoc = querySnapshot.docs[0]
       const groupData = groupDoc.data() as Group
+
+      if (groupData.inviteEnabled === false) {
+        throw new Error("Convite desativado")
+      }
+      if (groupData.inviteExpiresAt && (groupData.inviteExpiresAt as any).toDate) {
+        const expiresAt = (groupData.inviteExpiresAt as any).toDate()
+        if (expiresAt.getTime() < Date.now()) {
+          throw new Error("Convite expirado")
+        }
+      }
 
       if (groupData.members.includes(userId)) {
         throw new Error("Voce ja e membro deste grupo")
@@ -499,6 +527,8 @@ class GroupService {
                 createdAt: payload.group.createdAt ? new Date(payload.group.createdAt) : new Date(),
                 isPrivate: !!payload.group.isPrivate,
                 inviteCode: payload.group.inviteCode,
+                inviteEnabled: payload.group.inviteEnabled !== false,
+                inviteExpiresAt: payload.group.inviteExpiresAt ? new Date(payload.group.inviteExpiresAt) : null,
                 sharedLifeAreas: payload.group.sharedLifeAreas || [],
                 notifiedLifeAreas: payload.group.notifiedLifeAreas || [],
               }
@@ -513,10 +543,14 @@ class GroupService {
       const querySnapshot = await getDocs(q)
       if (querySnapshot.empty) return null
       const docSnap = querySnapshot.docs[0]
+      const data = docSnap.data() as any
+      const inviteExpiresAt = data.inviteExpiresAt?.toDate?.() || null
       return {
         id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt?.toDate() || new Date(),
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || new Date(),
+        inviteEnabled: data.inviteEnabled !== false,
+        inviteExpiresAt,
       } as Group
     } catch (error) {
       console.error("Erro ao buscar grupo por convite:", error)
@@ -556,6 +590,9 @@ class GroupService {
         userId,
         sharedLifeAreas: data.sharedLifeAreas || this.LIFE_AREAS,
         notifiedLifeAreas: data.notifiedLifeAreas || this.LIFE_AREAS,
+        shareStatus: data.shareStatus ?? true,
+        cooldownMinutes: data.cooldownMinutes || 0,
+        lastAlertByArea: data.lastAlertByArea || {},
         enabled: data.enabled ?? true,
         types: data.types || null,
         schedule: data.schedule || null,
@@ -579,6 +616,9 @@ class GroupService {
         userId,
         sharedLifeAreas: defaults.sharedLifeAreas,
         notifiedLifeAreas: defaults.notifiedLifeAreas,
+        shareStatus: true,
+        cooldownMinutes: 0,
+        lastAlertByArea: {},
         enabled: true,
         types: null,
         schedule: null,
@@ -589,12 +629,42 @@ class GroupService {
     }
   }
 
+  async getGroupActivities(groupId: string): Promise<GroupActivity[]> {
+    try {
+      const q = query(
+        collection(db, "groupActivities"),
+        where("groupId", "==", groupId),
+        orderBy("createdAt", "desc")
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map((docSnap) => {
+        const data = docSnap.data() || {}
+        const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date()
+        return {
+          id: docSnap.id,
+          groupId,
+          type: data.type || "event",
+          actorId: data.actorId,
+          targetId: data.targetId,
+          message: data.message,
+          area: data.area || null,
+          createdAt,
+        }
+      })
+    } catch (error) {
+      console.error("Erro ao buscar atividades do grupo:", error)
+      return []
+    }
+  }
+
   async setMemberSettings(
     groupId: string,
     userId: string,
     settings: {
       sharedLifeAreas: string[]
       notifiedLifeAreas: string[]
+      shareStatus?: boolean
+      cooldownMinutes?: number
       enabled?: boolean
       types?: GroupMemberSettings['types']
       schedule?: GroupMemberSettings['schedule']
@@ -607,6 +677,8 @@ class GroupService {
       userId,
       sharedLifeAreas: settings.sharedLifeAreas || this.LIFE_AREAS,
       notifiedLifeAreas: settings.notifiedLifeAreas || this.LIFE_AREAS,
+      shareStatus: settings.shareStatus ?? true,
+      cooldownMinutes: settings.cooldownMinutes ?? 0,
       enabled: settings.enabled ?? true,
       types: settings.types || null,
       schedule: settings.schedule || null,
@@ -614,6 +686,70 @@ class GroupService {
       customAlertMessages: settings.customAlertMessages || null,
       updatedAt: Timestamp.now(),
     })
+  }
+
+  async updateInviteSettings(
+    groupId: string,
+    requesterId: string,
+    settings: { inviteEnabled?: boolean; inviteExpiresAt?: Date | null; rotate?: boolean }
+  ): Promise<Group> {
+    if (!groupId || !requesterId) throw new Error("Dados incompletos")
+
+    if (BACKEND_URL) {
+      const token = await auth.currentUser?.getIdToken()
+      const response = await fetch(`${BACKEND_URL}/api/group/invite-settings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          groupId,
+          inviteEnabled: settings.inviteEnabled,
+          inviteExpiresAt: settings.inviteExpiresAt ? settings.inviteExpiresAt.toISOString() : null,
+          rotate: settings.rotate === true,
+        }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error || "Nao foi possivel atualizar convite")
+      }
+      const payload = await response.json()
+      return {
+        id: groupId,
+        name: "",
+        description: "",
+        createdBy: requesterId,
+        members: [],
+        createdAt: new Date(),
+        isPrivate: false,
+        inviteCode: payload?.group?.inviteCode,
+        inviteEnabled: payload?.group?.inviteEnabled !== false,
+        inviteExpiresAt: payload?.group?.inviteExpiresAt ? new Date(payload.group.inviteExpiresAt) : null,
+      }
+    }
+
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+
+    const updates: any = {}
+    if (typeof settings.inviteEnabled === "boolean") updates.inviteEnabled = settings.inviteEnabled
+    if (settings.inviteExpiresAt === null) updates.inviteExpiresAt = null
+    if (settings.inviteExpiresAt) updates.inviteExpiresAt = Timestamp.fromDate(settings.inviteExpiresAt)
+    if (settings.rotate) updates.inviteCode = this.generateInviteCode()
+    if (Object.keys(updates).length) await updateDoc(groupRef, updates)
+
+    const refreshed = await getDoc(groupRef)
+    const refreshedData = refreshed.data() as Group
+    return {
+      ...refreshedData,
+      id: groupId,
+      createdAt: refreshedData.createdAt?.toDate ? refreshedData.createdAt.toDate() : new Date(),
+      inviteExpiresAt: refreshedData.inviteExpiresAt?.toDate ? refreshedData.inviteExpiresAt.toDate() : null,
+    } as Group
   }
 
   async removeMember(groupId: string, memberId: string, requesterId: string): Promise<void> {

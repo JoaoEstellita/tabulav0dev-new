@@ -26,17 +26,19 @@ import Avatar from './Avatar'
 import InviteModal from './InviteModal'
 import GroupNotificationSettings from './GroupNotificationSettings'
 import InviteService from '../services/InviteService'
-import type { Group, GroupMember } from '../services/firebase/GroupService'
+import type { Group, GroupMember, GroupActivity } from '../services/firebase/GroupService'
 
 export interface GroupDetailModalProps {
   visible: boolean
   group: Group | null
   members: GroupMember[]
+  activities?: GroupActivity[]
   currentUserId: string
   onClose: () => void
   onInvite: () => void
   onLeaveGroup: () => void
   onRemoveMember?: (member: GroupMember) => void
+  onUpdateInviteSettings?: (updates: { inviteEnabled?: boolean; inviteExpiresAt?: Date | null; rotate?: boolean }) => void
   onMemberProfile: (member: GroupMember) => void
 }
 
@@ -106,11 +108,13 @@ export default function GroupDetailModal({
   visible,
   group,
   members,
+  activities = [],
   currentUserId,
   onClose,
   onInvite,
   onLeaveGroup,
   onRemoveMember,
+  onUpdateInviteSettings,
   onMemberProfile
 }: GroupDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
@@ -123,6 +127,9 @@ export default function GroupDetailModal({
   const inviteLink = group.inviteCode ? generateInviteLink(group.id, group.inviteCode) : ''
   const sharedAreasText = formatLifeAreas(group.sharedLifeAreas)
   const notifiedAreasText = formatLifeAreas(group.notifiedLifeAreas)
+  const inviteEnabled = group.inviteEnabled !== false
+  const inviteExpiresAt = group.inviteExpiresAt ? new Date(group.inviteExpiresAt) : null
+  const inviteExpired = inviteExpiresAt ? inviteExpiresAt.getTime() < Date.now() : false
   
   const copyToClipboard = async (text: string, successMessage: string) => {
     if (!text) return
@@ -331,8 +338,24 @@ export default function GroupDetailModal({
           {activeTab === 'invite' && (
             <View style={styles.inviteContainer}>
               <Text style={styles.sectionTitle}>Convidar Pessoas</Text>
+
+              {!inviteEnabled && (
+                <View style={styles.inviteWarning}>
+                  <Ionicons name="warning" size={16} color="#FF4444" />
+                  <Text style={styles.inviteWarningText}>Convites desativados pelo admin</Text>
+                </View>
+              )}
+
+              {inviteExpired && (
+                <View style={styles.inviteWarning}>
+                  <Ionicons name="time" size={16} color="#FF4444" />
+                  <Text style={styles.inviteWarningText}>
+                    Convite expirado em {inviteExpiresAt?.toLocaleDateString('pt-BR')}
+                  </Text>
+                </View>
+              )}
               
-              {group.inviteCode && (
+              {group.inviteCode && inviteEnabled && !inviteExpired && (
                 <>
                   <View style={styles.inviteOption}>
                     <View style={styles.inviteHeader}>
@@ -388,6 +411,54 @@ export default function GroupDetailModal({
                   </TouchableOpacity>
                 </>
               )}
+
+              {isGroupOwner && onUpdateInviteSettings && (
+                <View style={styles.inviteAdminBox}>
+                  <Text style={styles.inviteAdminTitle}>Configuracoes de convite</Text>
+                  <View style={styles.inviteAdminRow}>
+                    <TouchableOpacity
+                      style={[styles.inviteAdminButton, inviteEnabled ? styles.inviteAdminButtonActive : null]}
+                      onPress={() => onUpdateInviteSettings({ inviteEnabled: !inviteEnabled })}
+                    >
+                      <Text style={[styles.inviteAdminButtonText, inviteEnabled ? styles.inviteAdminButtonTextActive : null]}>
+                        {inviteEnabled ? 'Desativar convites' : 'Ativar convites'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.inviteAdminButton}
+                      onPress={() => onUpdateInviteSettings({ rotate: true })}
+                    >
+                      <Text style={styles.inviteAdminButtonText}>Regenerar codigo</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.inviteAdminRow}>
+                    <TouchableOpacity
+                      style={styles.inviteAdminButton}
+                      onPress={() => onUpdateInviteSettings({ inviteExpiresAt: null })}
+                    >
+                      <Text style={styles.inviteAdminButtonText}>Sem expiracao</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.inviteAdminButton}
+                      onPress={() => {
+                        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                        onUpdateInviteSettings({ inviteExpiresAt: expiresAt })
+                      }}
+                    >
+                      <Text style={styles.inviteAdminButtonText}>Expira em 7d</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.inviteAdminButton}
+                      onPress={() => {
+                        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                        onUpdateInviteSettings({ inviteExpiresAt: expiresAt })
+                      }}
+                    >
+                      <Text style={styles.inviteAdminButtonText}>Expira em 30d</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           )}
 
@@ -405,14 +476,27 @@ export default function GroupDetailModal({
                   {formatRelativeTime(group.createdAt)}
                 </Text>
               </View>
-              
-              {/* Placeholder para atividades futuras */}
-              <View style={styles.emptyActivity}>
-                <Ionicons name="pulse" size={32} color="#888" />
-                <Text style={styles.emptyText}>
-                  As atividades do grupo aparecerao aqui
-                </Text>
-              </View>
+
+              {activities.length === 0 && (
+                <View style={styles.emptyActivity}>
+                  <Ionicons name="pulse" size={32} color="#888" />
+                  <Text style={styles.emptyText}>
+                    As atividades do grupo aparecerao aqui
+                  </Text>
+                </View>
+              )}
+
+              {activities.map((activity) => (
+                <View key={activity.id} style={styles.activityItem}>
+                  <Ionicons name="flash" size={16} color="#FFD700" />
+                  <Text style={styles.activityText}>
+                    {activity.message || 'Atualizacao no grupo'}
+                  </Text>
+                  <Text style={styles.activityTime}>
+                    {formatRelativeTime(activity.createdAt)}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
         </ScrollView>
@@ -705,6 +789,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  inviteWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#2C1B1B',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  inviteWarningText: {
+    color: '#FF8888',
+    fontSize: 13,
+  },
   settingsButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -719,6 +816,41 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  inviteAdminBox: {
+    marginTop: 16,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 14,
+  },
+  inviteAdminTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  inviteAdminRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  inviteAdminButton: {
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  inviteAdminButtonActive: {
+    backgroundColor: '#FFD700',
+  },
+  inviteAdminButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  inviteAdminButtonTextActive: {
+    color: '#0a0e27',
   },
   activityContainer: {
     paddingBottom: 20,

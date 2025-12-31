@@ -1,8 +1,8 @@
 /**
- * 👥 GROUP NOTIFICATION SERVICE 👥
+ *  GROUP NOTIFICATION SERVICE 
  * 
- * Serviço para envio de notificações de grupos
- * Conecta com backend FCM v1 para notificações em massa
+ * Servico para envio de notificacoes de grupos
+ * Conecta com backend FCM v1 para notificacoes em massa
  */
 
 export interface GroupNotificationData {
@@ -16,11 +16,11 @@ export interface GroupNotificationData {
 export class GroupNotificationService {
   
   /**
-   * Envia notificação para todos os membros de um grupo
+   * Envia notificacao para todos os membros de um grupo
    */
   static async sendGroupNotification(data: GroupNotificationData): Promise<void> {
     try {
-      console.log('📢 Enviando notificação de grupo:', data.notificationType)
+      console.log('Enviando notificacao de grupo:', data.notificationType)
 
       const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
       const response = await fetch(`${base}/api/group/notify`, {
@@ -30,7 +30,7 @@ export class GroupNotificationService {
         },
         body: JSON.stringify({
           groupId: data.groupId,
-          title: data.notificationType === 'custom_message' ? 'Mensagem do grupo' : 'Tábula Estelar',
+          title: data.notificationType === 'custom_message' ? 'Mensagem do grupo' : 'Tabula Estelar',
           body: data.customMessage || 'Alerta do grupo',
           data: (() => {
             const eventData = data.eventData || {}
@@ -48,10 +48,11 @@ export class GroupNotificationService {
 
       const result = await response.json()
       if (!result.ok) {
-        throw new Error(result.error || 'Erro ao enviar notificação de grupo')
+        throw new Error(result.error || 'Erro ao enviar notificacao de grupo')
       }
-      console.log('✅ Notificação de grupo enviada:', result.sent)    } catch (error) {
-      console.error('❌ Erro ao enviar notificação de grupo:', error)
+      console.log('Notificacao de grupo enviada:', result.sent)
+    } catch (error) {
+      console.error('Erro ao enviar notificacao de grupo:', error)
       throw error
     }
   }
@@ -69,7 +70,7 @@ export class GroupNotificationService {
   }
 
   /**
-   * Envia alerta crítico para o grupo
+   * Envia alerta critico para o grupo
    */
   static async sendCriticalAlert(groupId: string, senderId: string, alertMessage?: string): Promise<void> {
     await this.sendGroupNotification({
@@ -81,7 +82,7 @@ export class GroupNotificationService {
   }
 
   /**
-   * Envia notificação de evento favorável
+   * Envia notificacao de evento favoravel
    */
   static async sendFavorableEvent(groupId: string, senderId: string, eventMessage?: string): Promise<void> {
     await this.sendGroupNotification({
@@ -93,7 +94,7 @@ export class GroupNotificationService {
   }
 
   /**
-   * Notifica sobre atualização de compatibilidade
+   * Notifica sobre atualizacao de compatibilidade
    */
   static async sendCompatibilityUpdate(groupId: string, senderId: string, updateInfo?: string): Promise<void> {
     await this.sendGroupNotification({
@@ -116,7 +117,7 @@ export class GroupNotificationService {
   }
 
   /**
-   * Envia energia diária do grupo
+   * Envia energia diaria do grupo
    */
   static async sendDailyGroupEnergy(groupId: string, senderId: string, groupEnergy: string, message?: string): Promise<void> {
     await this.sendGroupNotification({
@@ -129,17 +130,17 @@ export class GroupNotificationService {
   }
 
   /**
-   * Envia notificação baseada em evento astrológico crítico automaticamente
+   * Envia notificacao baseada em evento astrologico critico automaticamente
    */
   static async sendAutomaticCriticalAlert(groupId: string, criticalData: {
     area: string
     percentage: number
     description: string
   }): Promise<void> {
-    // Usar um ID de sistema para alertas automáticos
+    // Usar um ID de sistema para alertas automaticos
     const systemSenderId = 'system_astrology_alert'
     
-    const message = `⚠️ Alerta automático: ${criticalData.area} em ${criticalData.percentage}%. ${criticalData.description}`
+    const message = `Alerta automatico: ${criticalData.area} em ${criticalData.percentage}%. ${criticalData.description}`
 
     await this.sendGroupNotification({
       groupId,
@@ -151,17 +152,17 @@ export class GroupNotificationService {
   }
 
   /**
-   * Envia notificação baseada em evento astrológico favorável automaticamente
+   * Envia notificacao baseada em evento astrologico favoravel automaticamente
    */
   static async sendAutomaticFavorableAlert(groupId: string, favorableData: {
     area: string
     percentage: number
     description: string
   }): Promise<void> {
-    // Usar um ID de sistema para alertas automáticos
+    // Usar um ID de sistema para alertas automaticos
     const systemSenderId = 'system_astrology_alert'
     
-    const message = `✨ Energia favorável: ${favorableData.area} em ${favorableData.percentage}%. ${favorableData.description}`
+    const message = `Energia favoravel: ${favorableData.area} em ${favorableData.percentage}%. ${favorableData.description}`
 
     await this.sendGroupNotification({
       groupId,
