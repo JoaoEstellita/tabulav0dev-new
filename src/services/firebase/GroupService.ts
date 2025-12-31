@@ -134,179 +134,71 @@ class GroupService {
     }
   }
 
-  // Entrar em grupo por código
-  async joinGroupByCode(inviteCode: string, userId: string): Promise<boolean> {
-    try {
-      const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode))
-      const querySnapshot = await getDocs(q)
-
-      if (querySnapshot.empty) {
-        throw new Error("Código de convite inválido")
-      }
-
-      const groupDoc = querySnapshot.docs[0]
-      const groupData = groupDoc.data()
-
-      if (groupData.members.includes(userId)) {
-        throw new Error("Você já é membro deste grupo")
-      }
-
-      await updateDoc(doc(db, "groups", groupDoc.id), {
-        members: arrayUnion(userId),
-      })
-
-      const sharedLifeAreas = groupData.sharedLifeAreas || this.LIFE_AREAS
-      const notifiedLifeAreas = groupData.notifiedLifeAreas || this.LIFE_AREAS
-      await this.setMemberSettings(groupDoc.id, userId, { sharedLifeAreas, notifiedLifeAreas })
-
-      return true
-    } catch (error) {
-      console.error("Erro ao entrar no grupo:", error)
-      throw error
-    }
-  }
-
-  // Atualizar status astrológico do usuário
-  async updateUserStatus(userId: string, status: AstrologicalStatus, birthData?: any): Promise<void> {
-    try {
-      const userStatusRef = doc(db, "userStatus", userId)
-
-      await updateDoc(userStatusRef, {
-        astrologicalStatus: status,
-        lastStatusUpdate: Timestamp.now(),
-        birthData,
-      })
-
-      // Se status crítico, criar alerta para grupos E enviar notificações
-      if (status.overall === "critical" || status.overall === "challenging") {
-        await this.createGroupAlertsWithNotifications(userId, status)
-      }
-      
-      // Se status favorável, enviar notificação positiva
-      if (status.overall === "excellent" || status.overall === "positive") {
-        await this.createFavorableGroupNotifications(userId, status)
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error)
-    }
-  }
-
-  // Criar alertas para grupos E enviar notificações push
-  private async createGroupAlertsWithNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
-    try {
-      const userGroups = await this.getUserGroups(userId)
-
-      for (const group of userGroups) {
-        const message = this.generateAlertMessage(status)
-
-        // Criar alerta no Firestore
-        await addDoc(collection(db, "groupAlerts"), {
-          groupId: group.id,
-          userId,
-          userName: "Usuário", // Buscar nome real depois
-          status: status.overall,
-          message,
-          createdAt: Timestamp.now(),
-          isRead: false,
-        })
-
-        // Enviar notificacoes push para membros do grupo
-        await this.sendNotificationsToGroupMembers(group, userId, status, message)
-      }
-    } catch (error) {
-      console.error("Erro ao criar alertas:", error)
-    }
-  }
-
-  // Enviar notificacoes push para membros do grupo
-  private async sendNotificationsToGroupMembers(
-    group: Group,
-    alertUserId: string,
-    status: AstrologicalStatus,
-    message: string,
-  ): Promise<void> {
-    try {
-      await GroupNotificationService.sendGroupNotification({
-        groupId: group.id,
-        senderId: alertUserId,
-        notificationType:
-          status.overall === "critical" || status.overall === "challenging"
-            ? "critical_alert"
-            : "favorable_event",
-        customMessage: message,
-        eventData: { area: "energia_geral", status: status.overall },
-      })
-    } catch (error) {
-      console.error("Erro ao enviar notificacoes:", error)
-    }
-  }
-  // Buscar membros do grupo com status
-  async getGroupMembersWithStatus(groupId: string): Promise<GroupMember[]> {
-    try {
-      const groupDoc = await getDoc(doc(db, "groups", groupId))
-      if (!groupDoc.exists()) return []
-
-      const group = groupDoc.data() as Group
-      const members = await Promise.all(
-        (group.members || []).map(async (memberId) => {
-          const [statusDoc, userDoc] = await Promise.all([
-            getDoc(doc(db, "userStatus", memberId)),
-            getDoc(doc(db, "users", memberId)),
-          ])
-
-          const statusData = statusDoc.exists() ? statusDoc.data() : null
-          const userData = userDoc.exists() ? userDoc.data() : {}
-          const displayName =
-            userData.displayName || userData.fullName || memberId.split("@")[0] || memberId
-          const email = userData.email || memberId
-
-          return {
-            userId: memberId,
-            email,
-            displayName,
-            profilePhoto: userData.profilePhoto,
-            joinedAt: new Date(),
-            astrologicalStatus: statusData?.astrologicalStatus,
-            lastStatusUpdate: statusData?.lastStatusUpdate?.toDate() || new Date(),
-            birthData: statusData?.birthData,
-          } as GroupMember
-        })
-      )
-
-      return members
-    } catch (error) {
-      console.error("Erro ao buscar membros:", error)
-      return []
-    }
-  }
-
   // Buscar alertas do grupo
   async getGroupAlerts(groupId: string): Promise<GroupAlert[]> {
     try {
       const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
 
       const querySnapshot = await getDocs(q)
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-      })) as GroupAlert[]
+      const alerts = querySnapshot.docs.map((doc) => {
+        const data = doc.data() || {}
+        const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date()
+        const status =
+          data.status ||
+          (data.type === "critical_alert"
+            ? "critical"
+            : data.type === "favorable_event" || data.type === "daily_group_energy"
+            ? "positive"
+            : "neutral")
+        const message = data.message || data.body || ""
+        const userName = data.userName || data.senderName || "Usuario"
+        const userId = data.userId || data.senderId || ""
+        return {
+          id: doc.id,
+          ...data,
+          userId,
+          userName,
+          status,
+          message,
+          isRead: data.isRead ?? false,
+          createdAt,
+        }
+      }) as GroupAlert[]
+      return alerts
     } catch (error) {
       console.error("Erro ao buscar alertas:", error)
       return []
     }
   }
-
   // Escutar mudanças em tempo real
   subscribeToGroupAlerts(groupId: string, callback: (alerts: GroupAlert[]) => void) {
     const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
 
     return onSnapshot(q, (querySnapshot) => {
-      const alerts = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-      })) as GroupAlert[]
+      const alerts = querySnapshot.docs.map((doc) => {
+        const data = doc.data() || {}
+        const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date()
+        const status =
+          data.status ||
+          (data.type === "critical_alert"
+            ? "critical"
+            : data.type === "favorable_event" || data.type === "daily_group_energy"
+            ? "positive"
+            : "neutral")
+        const message = data.message || data.body || ""
+        const userName = data.userName || data.senderName || "Usuario"
+        const userId = data.userId || data.senderId || ""
+        return {
+          id: doc.id,
+          ...data,
+          userId,
+          userName,
+          status,
+          message,
+          isRead: data.isRead ?? false,
+          createdAt,
+        }
+      }) as GroupAlert[]
 
       callback(alerts)
     })
