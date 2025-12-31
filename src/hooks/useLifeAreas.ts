@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
 import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
 import UserService from '../services/firebase/UserService'
 import GroupNotificationService from '../services/notifications/GroupNotificationService'
+import GroupService from '../services/firebase/GroupService'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
@@ -26,6 +27,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
   // Forçar um recálculo fresco na primeira carga para refletir correções de casas
   const [firstLoad, setFirstLoad] = useState(true)
+  const lastStatusKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -64,6 +66,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setCacheStatus(result.cacheStatus)
       setIsUsingLocalEngine(true)
       if (firstLoad) setFirstLoad(false)
+      const statusKey = `${user.uid}:${result.data.currentTransits?.timestamp || result.cacheStatus.cacheSource}`
+      if (lastStatusKeyRef.current !== statusKey) {
+        lastStatusKeyRef.current = statusKey
+        GroupService.updateUserStatusFromLifeAreas(user.uid, result.data, birthData)
+      }
 
       console.log('📊 Dados astrológicos REAIS carregados:', {
         lifeAreas: Object.keys(result.data.lifeAreas).length,

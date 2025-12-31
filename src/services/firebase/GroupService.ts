@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore"
 import { auth, db } from "../../config/firebase"
 import GroupNotificationService from "../notifications/GroupNotificationService"
+import type { LocalTransitData } from "../astrology/LocalAstrologyService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
@@ -40,6 +41,8 @@ export interface GroupMember {
   joinedAt: Date
   astrologicalStatus?: AstrologicalStatus
   lastStatusUpdate?: Date
+  sharedLifeAreas?: string[]
+  lifeAreas?: Record<string, { percentage: number; status: string; influences?: string[]; mainPlanets?: string[] }>
   birthData?: {
     datetime: string
     coordinates: { latitude: number; longitude: number }
@@ -233,6 +236,37 @@ class GroupService {
     }
   }
 
+  // Atualizar status a partir das áreas da vida (engine local)
+  async updateUserStatusFromLifeAreas(userId: string, transitData: LocalTransitData, birthData?: any): Promise<void> {
+    try {
+      const statusPersonal = transitData.currentTransits?.statusPersonal
+      const overall = this.mapLevelToOverall(statusPersonal?.level)
+
+      const status: AstrologicalStatus = {
+        overall,
+        mood: statusPersonal?.level || "neutro",
+        energy: statusPersonal?.score || 50,
+        challenges: [],
+        opportunities: [],
+        criticalTransits: [],
+      }
+
+      await setDoc(
+        doc(db, "userStatus", userId),
+        {
+          astrologicalStatus: status,
+          statusPersonal,
+          lifeAreas: transitData.lifeAreas,
+          lastStatusUpdate: Timestamp.now(),
+          birthData,
+        },
+        { merge: true }
+      )
+    } catch (error) {
+      console.error("Erro ao atualizar status por areas:", error)
+    }
+  }
+
   // Criar alertas para grupos e enviar notificações push
   private async createGroupAlertsWithNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
     try {
@@ -290,6 +324,39 @@ class GroupService {
   // Buscar membros do grupo com status (apenas do próprio usuário)
   async getGroupMembersWithStatus(groupId: string, viewerId?: string): Promise<GroupMember[]> {
     try {
+      if (BACKEND_URL) {
+        try {
+          const token = await auth.currentUser?.getIdToken()
+          const response = await fetch(`${BACKEND_URL}/api/group/status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ groupId }),
+          })
+
+          if (response.ok) {
+            const payload = await response.json()
+            if (payload?.ok && Array.isArray(payload.members)) {
+              return payload.members.map((member: any) => ({
+                userId: member.userId,
+                email: member.email || member.userId,
+                displayName: member.displayName || member.userId,
+                profilePhoto: member.profilePhoto || undefined,
+                joinedAt: new Date(),
+                astrologicalStatus: member.astrologicalStatus || undefined,
+                lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
+                sharedLifeAreas: member.sharedLifeAreas,
+                lifeAreas: member.astrologicalStatus?.lifeAreas,
+              })) as GroupMember[]
+            }
+          }
+        } catch (error) {
+          console.warn("Status via backend falhou, tentando direto:", error)
+        }
+      }
+
       const groupDoc = await getDoc(doc(db, "groups", groupId))
       if (!groupDoc.exists()) return []
 
@@ -580,6 +647,24 @@ class GroupService {
     
     const statusMessages = favorableMessages[status.overall as keyof typeof favorableMessages] || favorableMessages.positive
     return statusMessages[Math.floor(Math.random() * statusMessages.length)]
+  }
+
+  private mapLevelToOverall(level?: string): AstrologicalStatus["overall"] {
+    switch ((level || "").toLowerCase()) {
+      case "excelente":
+        return "excellent"
+      case "bom":
+        return "positive"
+      case "neutro":
+        return "neutral"
+      case "desafiador":
+        return "challenging"
+      case "critico":
+      case "crítico":
+        return "critical"
+      default:
+        return "neutral"
+    }
   }
 }
 
