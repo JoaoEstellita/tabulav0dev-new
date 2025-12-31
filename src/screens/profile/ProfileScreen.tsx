@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
@@ -49,6 +49,18 @@ interface UserProfile {
   }
 }
 
+interface UnifiedNotification {
+  id: string
+  title: string
+  body: string
+  createdAt: Date | null
+  source: "user" | "group"
+  groupId?: string
+  groupName?: string
+  status?: string | null
+  isRead?: boolean
+}
+
 export default function ProfileScreen() {
   const { user, logout } = useAuth()
   const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
@@ -59,6 +71,9 @@ export default function ProfileScreen() {
   const [showFAQ, setShowFAQ] = useState(false)
   const [showSubscription, setShowSubscription] = useState(false)
   const [savingPhoto, setSavingPhoto] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<UnifiedNotification[]>([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
@@ -136,6 +151,112 @@ export default function ProfileScreen() {
       setLoading(false)
     }
   }
+
+  const loadNotifications = async () => {
+    if (!user) return
+    try {
+      setLoadingNotifications(true)
+      const items: UnifiedNotification[] = []
+
+      const userNotificationsQuery = query(
+        collection(db, "notifications"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(30)
+      )
+      const userSnapshot = await getDocs(userNotificationsQuery)
+      userSnapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data() || {}
+        items.push({
+          id: `user_${docSnap.id}`,
+          title: data.title || "Notificacao",
+          body: data.body || data.message || "",
+          createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
+          source: "user",
+          status: data.status || null,
+          isRead: data.isRead ?? false,
+        })
+      })
+
+      const groupsQuery = query(collection(db, "groups"), where("members", "array-contains", user.uid))
+      const groupsSnapshot = await getDocs(groupsQuery)
+      const groupDocs = groupsSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        name: docSnap.data()?.name || docSnap.id,
+      }))
+
+      const groupsById = groupDocs.reduce((acc, group) => {
+        acc[group.id] = group.name
+        return acc
+      }, {} as Record<string, string>)
+
+      for (const group of groupDocs) {
+        const alertsQuery = query(
+          collection(db, "groupAlerts"),
+          where("groupId", "==", group.id),
+          orderBy("createdAt", "desc"),
+          limit(10)
+        )
+        const alertSnapshot = await getDocs(alertsQuery)
+        alertSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data() || {}
+          const groupId = data.groupId || ""
+          items.push({
+            id: `group_${docSnap.id}`,
+            title: data.title || "Alerta do grupo",
+            body: data.message || data.body || "",
+            createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
+            source: "group",
+            groupId,
+            groupName: groupsById[groupId],
+            status: data.status || data.type || null,
+            isRead: data.isRead ?? false,
+          })
+        })
+      }
+
+      items.sort((a, b) => {
+        const at = a.createdAt ? a.createdAt.getTime() : 0
+        const bt = b.createdAt ? b.createdAt.getTime() : 0
+        return bt - at
+      })
+
+      setNotifications(items)
+    } catch (error) {
+      console.error("Erro ao carregar notificacoes:", error)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      loadNotifications()
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (showNotifications) {
+      loadNotifications()
+    }
+  }, [showNotifications])
+
+  const formatNotificationTime = (value: Date | null) => {
+    if (!value) return ""
+    const diffMs = Date.now() - value.getTime()
+    const diffMins = Math.floor(diffMs / (1000 * 60))
+    if (diffMins < 2) return "Agora"
+    if (diffMins < 60) return `${diffMins} min`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours} h`
+    return value.toLocaleDateString()
+  }
+
+  const notificationBadgeCount = notifications.filter((item) => {
+    if (!item.createdAt) return false
+    const diffMs = Date.now() - item.createdAt.getTime()
+    return diffMs < 24 * 60 * 60 * 1000
+  }).length
 
   const saveProfile = async () => {
     if (!profile) return
@@ -393,6 +514,17 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header do Perfil */}
         <View style={styles.profileHeader}>
+          <View style={styles.profileHeaderTop}>
+            <View style={styles.profileHeaderSpacer} />
+            <TouchableOpacity style={styles.notificationBell} onPress={() => setShowNotifications(true)}>
+              <Ionicons name="notifications-outline" size={22} color="#FFD700" />
+              {notificationBadgeCount > 0 && (
+                <View style={styles.notificationBellBadge}>
+                  <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={styles.avatarContainer} onPress={selectPhoto} disabled={savingPhoto}>
             {profile.profilePhoto ? (
               <Image source={{ uri: profile.profilePhoto }} style={styles.avatarImage} />
@@ -651,6 +783,55 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
+
+      {showNotifications && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.notificationModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Notificacoes</Text>
+              <TouchableOpacity onPress={() => setShowNotifications(false)}>
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.notificationList} showsVerticalScrollIndicator={false}>
+              {loadingNotifications ? (
+                <Text style={styles.notificationEmpty}>Carregando notificacoes...</Text>
+              ) : notifications.length === 0 ? (
+                <Text style={styles.notificationEmpty}>Sem notificacoes no momento</Text>
+              ) : (
+                notifications.map((item) => (
+                  <View key={item.id} style={styles.notificationItem}>
+                    <View style={styles.notificationIcon}>
+                      <Ionicons
+                        name={item.source === "group" ? "people" : "sparkles"}
+                        size={18}
+                        color="#FFD700"
+                      />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationTitle}>{item.title}</Text>
+                      <Text style={styles.notificationBody}>{item.body}</Text>
+                      <View style={styles.notificationMeta}>
+                        {item.groupName && (
+                          <View style={styles.notificationTag}>
+                            <Text style={styles.notificationTagText}>{item.groupName}</Text>
+                          </View>
+                        )}
+                        {item.status && (
+                          <View style={styles.notificationTag}>
+                            <Text style={styles.notificationTagText}>{item.status}</Text>
+                          </View>
+                        )}
+                        <Text style={styles.notificationTime}>{formatNotificationTime(item.createdAt)}</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </LinearGradient>
   )
 }
@@ -684,6 +865,42 @@ const styles = StyleSheet.create({
   profileHeader: {
     alignItems: "center",
     paddingVertical: 32,
+  },
+  profileHeaderTop: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  profileHeaderSpacer: {
+    width: 24,
+  },
+  notificationBell: {
+    alignSelf: "flex-end",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#1C1C1E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBellBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    paddingHorizontal: 4,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#FF4444",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBellBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   avatarContainer: {
     marginBottom: 16,
@@ -963,5 +1180,74 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  notificationModal: {
+    backgroundColor: "#0F0F23",
+    borderRadius: 16,
+    width: "90%",
+    maxHeight: "80%",
+    overflow: "hidden",
+  },
+  notificationList: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  notificationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2C2C2E",
+  },
+  notificationIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#1C1C1E",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  notificationBody: {
+    color: "#B8B8C3",
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  notificationMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  notificationTag: {
+    backgroundColor: "#2C2C2E",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  notificationTagText: {
+    color: "#FFD700",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  notificationTime: {
+    color: "#8A8AA8",
+    fontSize: 10,
+    marginLeft: "auto",
+  },
+  notificationEmpty: {
+    color: "#888",
+    textAlign: "center",
+    paddingVertical: 24,
   },
 })
