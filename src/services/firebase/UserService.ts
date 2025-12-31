@@ -55,6 +55,31 @@ export interface UserProfile {
 }
 
 class UserService {
+  private async upsertPublicProfile(
+    userId: string,
+    data: { displayName?: string; profilePhoto?: string }
+  ): Promise<void> {
+    try {
+      const payload: { displayName: string; profilePhoto?: string | null; updatedAt: ReturnType<typeof serverTimestamp> } =
+        {
+          displayName: data.displayName || 'Usuario',
+          updatedAt: serverTimestamp(),
+        }
+
+      if (data.profilePhoto !== undefined) {
+        payload.profilePhoto = data.profilePhoto || null
+      }
+
+      await setDoc(
+        doc(db, 'userPublicProfiles', userId),
+        payload,
+        { merge: true }
+      )
+    } catch (error) {
+      console.warn('Falha ao atualizar perfil publico:', error)
+    }
+  }
+
   private async uploadProfilePhoto(userId: string, photo: string): Promise<string> {
     const fileName = `profile-${Date.now()}.jpg`
     const storageRef = ref(storage, `users/${userId}/${fileName}`)
@@ -160,6 +185,11 @@ class UserService {
 
         await setDoc(userRef, newUserData)
       }
+
+      await this.upsertPublicProfile(userId, {
+        displayName: updateData.displayName || birthData.fullName,
+        profilePhoto: updateData.profilePhoto,
+      })
 
       console.log('✅ Dados de nascimento salvos com sucesso!')
       console.log('📝 Nome:', birthData.fullName)

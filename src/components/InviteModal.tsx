@@ -9,7 +9,7 @@
  * - Interface moderna e intuitiva
  */
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import QRCodeGenerator from './QRCodeGenerator'
+import GroupService from '../services/firebase/GroupService'
 import InviteService from '../services/InviteService'
 import type { Group } from '../services/firebase/GroupService'
 
@@ -60,12 +61,30 @@ export default function InviteModal({
   const [activeTab, setActiveTab] = useState<'link' | 'qr' | 'code' | 'email'>('link')
   const [emailText, setEmailText] = useState('')
   const [customMessage, setCustomMessage] = useState('')
+  const [resolvedInviteCode, setResolvedInviteCode] = useState<string | null>(group.inviteCode || null)
+
+  useEffect(() => {
+    if (!group) return
+    let isActive = true
+
+    setResolvedInviteCode(group.inviteCode || null)
+
+    if (!group.inviteCode) {
+      GroupService.ensureInviteCode(group.id).then((code) => {
+        if (isActive && code) setResolvedInviteCode(code)
+      })
+    }
+
+    return () => {
+      isActive = false
+    }
+  }, [group?.id, group?.inviteCode])
 
   if (!group) return null
 
-  const inviteCode = group.inviteCode || 'ABC123' // Fallback
-  const inviteLink = InviteService.generateInviteLink(inviteCode)
-  const qrData = InviteService.generateQRCodeData(group.name, inviteCode)
+  const inviteCode = resolvedInviteCode
+  const inviteLink = inviteCode ? InviteService.generateInviteLink(inviteCode) : ''
+  const qrData = inviteCode ? InviteService.generateQRCodeData(group.name, inviteCode) : ''
   const sharedAreasText = formatLifeAreas(group.sharedLifeAreas)
   const notifiedAreasText = formatLifeAreas(group.notifiedLifeAreas)
 
@@ -74,6 +93,10 @@ export default function InviteModal({
    */
   const handleShare = async () => {
     try {
+      if (!inviteCode) {
+        Alert.alert('Aguarde', 'Gerando codigo de convite...')
+        return
+      }
       const success = await InviteService.shareInvite(group.name, inviteCode, {
         sharedLifeAreas: group.sharedLifeAreas,
         notifiedLifeAreas: group.notifiedLifeAreas,
@@ -90,6 +113,10 @@ export default function InviteModal({
    * Copia link para clipboard
    */
   const handleCopyLink = () => {
+    if (!inviteCode) {
+      Alert.alert('Aguarde', 'Gerando codigo de convite...')
+      return
+    }
     InviteService.copyToClipboard(inviteLink, 'Link copiado!')
   }
 
@@ -97,7 +124,11 @@ export default function InviteModal({
    * Copia código para clipboard
    */
   const handleCopyCode = () => {
-    InviteService.copyToClipboard(inviteCode, 'Código copiado!')
+    if (!inviteCode) {
+      Alert.alert('Aguarde', 'Gerando codigo de convite...')
+      return
+    }
+    InviteService.copyToClipboard(inviteCode, 'Codigo copiado!')
   }
 
   /**
@@ -223,7 +254,7 @@ export default function InviteModal({
 
               <View style={styles.linkContainer}>
                 <Text style={styles.linkText} numberOfLines={2}>
-                  {inviteLink}
+                  {inviteLink || 'Gerando link...'}
                 </Text>
                 <TouchableOpacity onPress={handleCopyLink} style={styles.copyButton}>
                   <Ionicons name="copy" size={20} color="#4A90E2" />

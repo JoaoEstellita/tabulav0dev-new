@@ -134,9 +134,12 @@ Junte-se a nos na jornada astrologica.`
       // https://tabulaestelar.com.br/join/ABC123
       // tabulaestelar://join/ABC123
       
-      if (parsedUrl.path?.includes('/join/')) {
-        const inviteCode = parsedUrl.path.split('/join/')[1]
-        
+      const path = parsedUrl.path || ''
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+      if (normalizedPath.includes('/join/')) {
+        const inviteCode = normalizedPath.split('/join/')[1].split('/')[0]
+
         if (this.validateInviteCode(inviteCode)) {
           return { inviteCode: inviteCode.toUpperCase(), isValid: true }
         }

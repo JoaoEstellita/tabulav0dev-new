@@ -10,6 +10,17 @@ service cloud.firestore {
       // Permitir criação de perfil durante onboarding
       allow create: if request.auth != null && request.auth.uid == userId;
     }
+
+    // ===== REGRAS PARA PERFIS PUBLICOS =====
+    match /userPublicProfiles/{userId} {
+      // Qualquer usuario autenticado pode ler
+      allow read: if request.auth != null;
+
+      // Usuario pode criar/atualizar apenas o proprio perfil publico
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+
+      allow delete: if false;
+    }
     
     // ===== REGRAS PARA ASSINATURAS =====
     match /subscriptions/{subscriptionId} {
@@ -76,6 +87,12 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // ===== REGRAS PARA STATUS PUBLICO =====
+    match /userStatus/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
     
     // ===== REGRAS PARA RELACIONAMENTOS DE CASAL =====
     match /coupleRelationships/{relationshipId} {
@@ -87,6 +104,16 @@ service cloud.firestore {
       // Permitir criação de relacionamento
       allow create: if request.auth != null && 
                        request.auth.uid == request.resource.data.userId;
+    }
+
+    // ===== REGRAS PARA CASAIS (COLLECTION ATUAL) =====
+    match /couples/{relationshipId} {
+      allow read, write: if request.auth != null &&
+                           (request.auth.uid == resource.data.partner1.userId ||
+                            request.auth.uid == resource.data.partner2.userId);
+
+      allow create: if request.auth != null &&
+                       request.auth.uid == request.resource.data.partner1.userId;
     }
     
     // ===== REGRAS PARA CACHE ASTROLÓGICO =====

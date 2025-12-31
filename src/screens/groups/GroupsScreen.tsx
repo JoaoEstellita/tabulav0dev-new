@@ -13,6 +13,7 @@ import {
   RefreshControl,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import * as Linking from "expo-linking"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 import GroupService, { type Group, type GroupMember, type GroupAlert } from "../../services/firebase/GroupService"
@@ -21,6 +22,7 @@ import GroupNotificationService from "../../services/notifications/GroupNotifica
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import GroupCard from "../../components/GroupCard"
 import GroupDetailModal from "../../components/GroupDetailModal"
+import InviteService from "../../services/InviteService"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -86,6 +88,32 @@ export default function GroupsScreen() {
     if (user) {
       loadUserGroups()
       loadCoupleRelationship()
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+
+    let isActive = true
+
+    const handleInviteUrl = (url: string) => {
+      const result = InviteService.processInviteDeepLink(url)
+      if (!isActive || !result.isValid || !result.inviteCode) return
+      setInviteCode(result.inviteCode)
+      setShowJoinModal(true)
+    }
+
+    Linking.getInitialURL()
+      .then((url) => {
+        if (url) handleInviteUrl(url)
+      })
+      .catch(() => {})
+
+    const subscription = Linking.addEventListener("url", ({ url }) => handleInviteUrl(url))
+
+    return () => {
+      isActive = false
+      subscription?.remove?.()
     }
   }, [user])
 
@@ -156,7 +184,7 @@ export default function GroupsScreen() {
 
     try {
       const [members, alerts] = await Promise.all([
-        GroupService.getGroupMembersWithStatus(selectedGroup.id),
+        GroupService.getGroupMembersWithStatus(selectedGroup.id, user?.uid),
         GroupService.getGroupAlerts(selectedGroup.id),
       ])
 

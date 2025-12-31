@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
@@ -133,6 +133,15 @@ export default function ProfileScreen() {
 
     try {
       await updateDoc(doc(db, "users", user!.uid), profile)
+      await setDoc(
+        doc(db, "userPublicProfiles", user!.uid),
+        {
+          displayName: profile.displayName || "Usuario",
+          profilePhoto: profile.profilePhoto || null,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      )
       setEditing(false)
       Alert.alert("Sucesso", "Perfil atualizado com sucesso!")
     } catch (error) {

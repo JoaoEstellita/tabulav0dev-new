@@ -38,6 +38,7 @@ function OnboardingStack() {
 function MainTabs() {
   return (
     <Tab.Navigator
+      lazy={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap

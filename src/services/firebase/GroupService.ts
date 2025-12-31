@@ -13,9 +13,11 @@ import {
   arrayUnion,
   Timestamp,
 } from "firebase/firestore"
-import { db } from "../../config/firebase"
+import { auth, db } from "../../config/firebase"
 import GroupNotificationService from "../notifications/GroupNotificationService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
+
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
 
 export interface Group {
   id: string
@@ -93,11 +95,8 @@ class GroupService {
         sharedLifeAreas: settings?.sharedLifeAreas || this.LIFE_AREAS,
         notifiedLifeAreas: settings?.notifiedLifeAreas || this.LIFE_AREAS,
       }
-
-      // Só adicionar inviteCode se for grupo privado
-      if (isPrivate) {
-        groupData.inviteCode = this.generateInviteCode()
-      }
+      // Gerar inviteCode para convites
+      groupData.inviteCode = this.generateInviteCode()
 
       const docRef = await addDoc(collection(db, "groups"), groupData)
 
@@ -130,6 +129,200 @@ class GroupService {
       })) as Group[]
     } catch (error) {
       console.error("Erro ao buscar grupos:", error)
+      return []
+    }
+  }
+
+  // Garantir que o grupo tenha inviteCode
+  async ensureInviteCode(groupId: string): Promise<string | null> {
+    try {
+      const groupRef = doc(db, "groups", groupId)
+      const groupDoc = await getDoc(groupRef)
+      if (!groupDoc.exists()) return null
+
+      const data = groupDoc.data() as Group
+      if (data.inviteCode) return data.inviteCode
+
+      const inviteCode = this.generateInviteCode()
+      await updateDoc(groupRef, { inviteCode })
+      return inviteCode
+    } catch (error) {
+      console.error("Erro ao garantir inviteCode:", error)
+      return null
+    }
+  }
+
+  // Entrar em grupo por código
+  async joinGroupByCode(inviteCode: string, userId: string): Promise<boolean> {
+    try {
+      if (BACKEND_URL) {
+        try {
+          const token = await auth.currentUser?.getIdToken()
+          const response = await fetch(`${BACKEND_URL}/api/group/join`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ inviteCode, userId }),
+          })
+
+          if (response.ok) {
+            const payload = await response.json()
+            if (payload?.ok) return true
+          } else {
+            const payload = await response.json().catch(() => ({}))
+            throw new Error(payload?.error || "Nao foi possivel entrar no grupo")
+          }
+        } catch (error) {
+          console.warn("Join via backend falhou, tentando direto:", error)
+        }
+      }
+
+      const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        throw new Error("Código de convite inválido")
+      }
+
+      const groupDoc = querySnapshot.docs[0]
+      const groupData = groupDoc.data() as Group
+
+      if (groupData.members.includes(userId)) {
+        throw new Error("Você já é membro deste grupo")
+      }
+
+      await updateDoc(doc(db, "groups", groupDoc.id), {
+        members: arrayUnion(userId),
+      })
+
+      const sharedLifeAreas = groupData.sharedLifeAreas || this.LIFE_AREAS
+      const notifiedLifeAreas = groupData.notifiedLifeAreas || this.LIFE_AREAS
+      await this.setMemberSettings(groupDoc.id, userId, { sharedLifeAreas, notifiedLifeAreas })
+
+      return true
+    } catch (error) {
+      console.error("Erro ao entrar no grupo:", error)
+      throw error
+    }
+  }
+
+  // Atualizar status astrológico do usuário
+  async updateUserStatus(userId: string, status: AstrologicalStatus, birthData?: any): Promise<void> {
+    try {
+      const userStatusRef = doc(db, "userStatus", userId)
+
+      await setDoc(userStatusRef, {
+        astrologicalStatus: status,
+        lastStatusUpdate: Timestamp.now(),
+        birthData,
+      }, { merge: true })
+
+      // Se status crítico, criar alerta para grupos e enviar notificações
+      if (status.overall === "critical" || status.overall === "challenging") {
+        await this.createGroupAlertsWithNotifications(userId, status)
+      }
+
+      // Se status favorável, enviar notificação positiva
+      if (status.overall === "excellent" || status.overall === "positive") {
+        await this.createFavorableGroupNotifications(userId, status)
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error)
+    }
+  }
+
+  // Criar alertas para grupos e enviar notificações push
+  private async createGroupAlertsWithNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
+    try {
+      const userGroups = await this.getUserGroups(userId)
+      const userDoc = await getDoc(doc(db, "users", userId))
+      const userData = userDoc.exists() ? userDoc.data() : {}
+      const userName = userData.displayName || userData.fullName || userData.name || "Usuario"
+
+      for (const group of userGroups) {
+        const message = this.generateAlertMessage(status)
+
+        // Criar alerta no Firestore
+        await addDoc(collection(db, "groupAlerts"), {
+          groupId: group.id,
+          userId,
+          userName,
+          status: status.overall,
+          message,
+          createdAt: Timestamp.now(),
+          isRead: false,
+        })
+
+        // Enviar notificacoes push para membros do grupo
+        await this.sendNotificationsToGroupMembers(group, userId, status, message, userName)
+      }
+    } catch (error) {
+      console.error("Erro ao criar alertas:", error)
+    }
+  }
+
+  // Enviar notificacoes push para membros do grupo
+  private async sendNotificationsToGroupMembers(
+    group: Group,
+    alertUserId: string,
+    status: AstrologicalStatus,
+    message: string,
+    senderName: string,
+  ): Promise<void> {
+    try {
+      await GroupNotificationService.sendGroupNotification({
+        groupId: group.id,
+        senderId: alertUserId,
+        notificationType:
+          status.overall === "critical" || status.overall === "challenging"
+            ? "critical_alert"
+            : "favorable_event",
+        customMessage: message,
+        eventData: { area: "energia_geral", status: status.overall, senderName },
+      })
+    } catch (error) {
+      console.error("Erro ao enviar notificacoes:", error)
+    }
+  }
+
+  // Buscar membros do grupo com status (apenas do próprio usuário)
+  async getGroupMembersWithStatus(groupId: string, viewerId?: string): Promise<GroupMember[]> {
+    try {
+      const groupDoc = await getDoc(doc(db, "groups", groupId))
+      if (!groupDoc.exists()) return []
+
+      const group = groupDoc.data() as Group
+      const members = await Promise.all(
+        (group.members || []).map(async (memberId) => {
+          const shouldLoadStatus = viewerId && viewerId === memberId
+          const [publicDoc, statusDoc] = await Promise.all([
+            getDoc(doc(db, "userPublicProfiles", memberId)),
+            shouldLoadStatus ? getDoc(doc(db, "userStatus", memberId)) : Promise.resolve(null),
+          ])
+
+          const publicData = publicDoc.exists() ? publicDoc.data() : {}
+          const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
+          const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
+          const email = publicData.email || memberId
+
+          return {
+            userId: memberId,
+            email,
+            displayName,
+            profilePhoto: publicData.profilePhoto,
+            joinedAt: new Date(),
+            astrologicalStatus: statusData?.astrologicalStatus,
+            lastStatusUpdate: statusData?.lastStatusUpdate?.toDate?.() || undefined,
+            birthData: statusData?.birthData,
+          } as GroupMember
+        })
+      )
+
+      return members
+    } catch (error) {
+      console.error("Erro ao buscar membros:", error)
       return []
     }
   }
@@ -206,6 +399,36 @@ class GroupService {
 
   async getGroupByInviteCode(inviteCode: string): Promise<Group | null> {
     try {
+      if (BACKEND_URL) {
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/group/invite`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ inviteCode }),
+          })
+
+          if (response.ok) {
+            const payload = await response.json()
+            if (payload?.group) {
+              return {
+                id: payload.group.id,
+                name: payload.group.name,
+                description: payload.group.description || "",
+                createdBy: payload.group.createdBy || "",
+                members: payload.group.members || [],
+                createdAt: payload.group.createdAt ? new Date(payload.group.createdAt) : new Date(),
+                isPrivate: !!payload.group.isPrivate,
+                inviteCode: payload.group.inviteCode,
+                sharedLifeAreas: payload.group.sharedLifeAreas || [],
+                notifiedLifeAreas: payload.group.notifiedLifeAreas || [],
+              }
+            }
+          }
+        } catch (error) {
+          console.warn("Invite via backend falhou, tentando direto:", error)
+        }
+      }
+
       const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode))
       const querySnapshot = await getDocs(q)
       if (querySnapshot.empty) return null
@@ -224,7 +447,24 @@ class GroupService {
   async getMemberSettings(groupId: string, userId: string): Promise<GroupMemberSettings | null> {
     try {
       const settingsDoc = await getDoc(doc(db, "groupMemberSettings", `${groupId}_${userId}`))
-      if (!settingsDoc.exists()) return null
+      if (!settingsDoc.exists()) {
+        const defaults = {
+          sharedLifeAreas: this.LIFE_AREAS,
+          notifiedLifeAreas: this.LIFE_AREAS,
+        }
+        try {
+          await this.setMemberSettings(groupId, userId, defaults)
+        } catch (error) {
+          console.warn("Nao foi possivel criar settings padrao:", error)
+        }
+        return {
+          groupId,
+          userId,
+          sharedLifeAreas: defaults.sharedLifeAreas,
+          notifiedLifeAreas: defaults.notifiedLifeAreas,
+          updatedAt: new Date(),
+        } as GroupMemberSettings
+      }
       const data = settingsDoc.data()
       return {
         groupId,
@@ -235,7 +475,22 @@ class GroupService {
       } as GroupMemberSettings
     } catch (error) {
       console.error("Erro ao buscar settings do membro:", error)
-      return null
+      const defaults = {
+        sharedLifeAreas: this.LIFE_AREAS,
+        notifiedLifeAreas: this.LIFE_AREAS,
+      }
+      try {
+        await this.setMemberSettings(groupId, userId, defaults)
+      } catch (createError) {
+        console.warn("Nao foi possivel criar settings padrao:", createError)
+      }
+      return {
+        groupId,
+        userId,
+        sharedLifeAreas: defaults.sharedLifeAreas,
+        notifiedLifeAreas: defaults.notifiedLifeAreas,
+        updatedAt: new Date(),
+      } as GroupMemberSettings
     }
   }
 

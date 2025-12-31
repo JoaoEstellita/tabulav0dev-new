@@ -133,6 +133,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date(),
         birthDataComplete: false,
       })
+
+      await setDoc(doc(db, 'userPublicProfiles', result.user.uid), {
+        displayName: result.user.displayName || email.split('@')[0],
+        profilePhoto: result.user.photoURL || null,
+        updatedAt: new Date(),
+      })
       
       console.log('✅ Cadastro bem-sucedido:', result.user.uid)
     } catch (error: any) {
@@ -159,6 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             displayName: result.user.displayName || result.user.email?.split('@')[0],
             createdAt: new Date(),
             birthDataComplete: false,
+          })
+
+          await setDoc(doc(db, 'userPublicProfiles', result.user.uid), {
+            displayName: result.user.displayName || result.user.email?.split('@')[0],
+            profilePhoto: result.user.photoURL || null,
+            updatedAt: new Date(),
           })
         }
         
