@@ -692,30 +692,6 @@ export default function GroupsScreen() {
             </View>
             
             {/* Alertas Criticos */}
-            {groupAlerts.filter((alert) => alert.status === "critical").length > 0 && (
-              <View style={styles.criticalAlertsSection}>
-              <Text style={styles.sectionTitle}>Alertas Criticos</Text>
-                {(groupAlerts || [])
-                  .filter((alert) => alert.status === "critical")
-                  .slice(0, 3)
-                  .map((alert) => (
-                    <View key={alert.id} style={styles.criticalAlert}>
-                      <Ionicons name="warning" size={20} color="#FF4444" />
-                      <View style={styles.alertContent}>
-                        <Text style={styles.alertText}>
-                          <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
-                        </Text>
-                        <Text style={styles.alertTime}>
-                          {alert.createdAt?.toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }) || "Agora"}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-              </View>
-            )}
 
             {/* NOVA INTERFACE: Cards de Grupos Modernos */}
             <View style={styles.groupsCardsSection}>
@@ -775,8 +751,8 @@ export default function GroupsScreen() {
             </View>
 
             {/* Feed de Alertas */}
-          <View style={styles.alertsSection}>
-            <Text style={styles.sectionTitle}>Feed do Grupo</Text>
+            <View style={styles.alertsSection}>
+              <Text style={styles.sectionTitle}>Feed do Grupo</Text>
             <View style={styles.feedTabs}>
               {[
                 { key: "all", label: "Todos" },
@@ -807,15 +783,15 @@ export default function GroupsScreen() {
                 <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
                 <View style={styles.alertContent}>
                   <View style={styles.alertMeta}>
-                    <View
-                        style={[
-                          styles.alertTag,
-                          { borderColor: getStatusColor(alert.status), backgroundColor: "#2C2C2E" },
-                        ]}
-                      >
-                        <Text style={[styles.alertTagText, { color: getStatusColor(alert.status) }]}>
-                          {getStatusLabel(alert.status)}
-                        </Text>
+                    <View style={[styles.alertTag, styles.alertTagType]}>
+                      <Text style={[styles.alertTagText, styles.alertTagTypeText]}>
+                        {(alert.type || "event") === "custom_message" ? "Mensagem" : "Alerta"}
+                      </Text>
+                    </View>
+                    <View style={[styles.alertTag, { borderColor: getStatusColor(alert.status), backgroundColor: "#2C2C2E" }]}>
+                      <Text style={[styles.alertTagText, { color: getStatusColor(alert.status) }]}>
+                        {getStatusLabel(alert.status)}
+                      </Text>
                     </View>
                   </View>
                   <Text style={styles.alertText}>
@@ -1281,9 +1257,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 2,
   },
+  alertTagType: {
+    borderColor: "#4A90E2",
+    backgroundColor: "rgba(74, 144, 226, 0.12)",
+  },
   alertTagText: {
     fontSize: 11,
     fontWeight: "600",
+  },
+  alertTagTypeText: {
+    color: "#4A90E2",
   },
   emptyState: {
     flex: 1,
