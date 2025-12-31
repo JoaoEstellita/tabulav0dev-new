@@ -87,6 +87,7 @@ export default function GroupsScreen() {
   const [showGroupDetail, setShowGroupDetail] = useState(false)
   const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
+  const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
 
   useEffect(() => {
     if (user) {
@@ -471,6 +472,19 @@ export default function GroupsScreen() {
     return "neutral"
   }
 
+  const formatRelativeTime = (value?: Date | null) => {
+    if (!value) return "Agora"
+    const date = value instanceof Date ? value : new Date(value)
+    const diffMs = Date.now() - date.getTime()
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    if (diffMinutes < 1) return "Agora"
+    if (diffMinutes < 60) return `${diffMinutes} min`
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) return `${diffHours} h`
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays} d`
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "critical":
@@ -606,15 +620,18 @@ export default function GroupsScreen() {
             {/* Painel de status */}
             <View style={styles.statusPanel}>
               <View style={styles.statusHeader}>
-                <Text style={styles.sectionTitle}>Status do Grupo</Text>
-                <Text style={styles.statusUpdated}>
-                  {lastStatusUpdate
-                    ? `Atualizado ${lastStatusUpdate.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}`
-                    : "Sem atualizacao recente"}
-                </Text>
+                <View>
+                  <Text style={styles.sectionTitle}>Status do Grupo</Text>
+                  <Text style={styles.statusUpdated}>
+                    {lastStatusUpdate
+                      ? `Atualizado ha ${formatRelativeTime(lastStatusUpdate)}`
+                      : "Sem atualizacao recente"}
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.statusActionButton} onPress={openGroupSettings}>
+                  <Ionicons name="options" size={16} color="#FFD700" />
+                  <Text style={styles.statusActionText}>Preferencias</Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.statusCounters}>
                 <View style={[styles.statusCounter, styles.statusCounterCritical]}>
@@ -672,15 +689,6 @@ export default function GroupsScreen() {
                   <Text style={styles.actionButtonText}>Mensagem</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.settingsShortcut} onPress={openGroupSettings}>
-                <Ionicons name="options" size={18} color="#FFD700" />
-                <View style={styles.settingsShortcutText}>
-                  <Text style={styles.settingsShortcutTitle}>Preferencias de compartilhamento</Text>
-                  <Text style={styles.settingsShortcutSubtitle}>
-                    Suas configuracoes pessoais neste grupo
-                  </Text>
-                </View>
-              </TouchableOpacity>
             </View>
             
             {/* Alertas Criticos */}
@@ -711,9 +719,9 @@ export default function GroupsScreen() {
 
             {/* NOVA INTERFACE: Cards de Grupos Modernos */}
             <View style={styles.groupsCardsSection}>
-              <View style={styles.membersSection}>
-                <Text style={styles.sectionTitle}>Membros</Text>
-                {sortedMembers.map((member) => (
+            <View style={styles.membersSection}>
+              <Text style={styles.sectionTitle}>Membros</Text>
+              {sortedMembers.map((member) => (
                   <TouchableOpacity
                     key={member.userId}
                     style={styles.memberRow}
@@ -755,29 +763,51 @@ export default function GroupsScreen() {
                         </View>
                       </View>
                       <Text style={styles.memberRowMeta}>{member.email}</Text>
-                      <Text style={styles.memberRowUpdate}>
-                        {member.lastStatusUpdate
-                          ? `Atualizado ${new Date(member.lastStatusUpdate).toLocaleTimeString("pt-BR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}`
-                          : "Sem atualizacao recente"}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    <Text style={styles.memberRowUpdate}>
+                      {member.lastStatusUpdate
+                        ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                        : "Sem atualizacao recente"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
             </View>
 
             {/* Feed de Alertas */}
-            <View style={styles.alertsSection}>
-              <Text style={styles.sectionTitle}>Feed do Grupo</Text>
-              {(groupAlerts || []).slice(0, 10).map((alert) => (
-                <View key={alert.id} style={styles.alertCard}>
-                  <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
-                  <View style={styles.alertContent}>
-                    <View style={styles.alertMeta}>
-                      <View
+          <View style={styles.alertsSection}>
+            <Text style={styles.sectionTitle}>Feed do Grupo</Text>
+            <View style={styles.feedTabs}>
+              {[
+                { key: "all", label: "Todos" },
+                { key: "messages", label: "Mensagens" },
+                { key: "alerts", label: "Alertas" },
+              ].map((tab) => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.feedTab, feedFilter === tab.key && styles.feedTabActive]}
+                  onPress={() => setFeedFilter(tab.key as typeof feedFilter)}
+                >
+                  <Text style={[styles.feedTabText, feedFilter === tab.key && styles.feedTabTextActive]}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {(groupAlerts || [])
+              .filter((alert) => {
+                if (feedFilter === "all") return true
+                const type = alert.type || "event"
+                const isMessage = type === "custom_message"
+                return feedFilter === "messages" ? isMessage : !isMessage
+              })
+              .slice(0, 10)
+              .map((alert) => (
+              <View key={alert.id} style={styles.alertCard}>
+                <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
+                <View style={styles.alertContent}>
+                  <View style={styles.alertMeta}>
+                    <View
                         style={[
                           styles.alertTag,
                           { borderColor: getStatusColor(alert.status), backgroundColor: "#2C2C2E" },
@@ -786,13 +816,13 @@ export default function GroupsScreen() {
                         <Text style={[styles.alertTagText, { color: getStatusColor(alert.status) }]}>
                           {getStatusLabel(alert.status)}
                         </Text>
-                      </View>
                     </View>
-                    <Text style={styles.alertText}>
-                      <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
-                    </Text>
-                    <Text style={styles.alertTime}>
-                      {alert.createdAt?.toLocaleDateString("pt-BR")} s{" "}
+                  </View>
+                  <Text style={styles.alertText}>
+                    <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
+                  </Text>
+                  <Text style={styles.alertTime}>
+                    {alert.createdAt?.toLocaleDateString("pt-BR")} s{" "}
                       {alert.createdAt?.toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -1616,30 +1646,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  settingsShortcut: {
-    marginTop: 12,
+  feedTabs: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    gap: 8,
+    marginBottom: 12,
+  },
+  feedTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 215, 0, 0.25)",
+    backgroundColor: "#2C2C2E",
   },
-  settingsShortcutText: {
-    flex: 1,
+  feedTabActive: {
+    backgroundColor: "#FFD700",
   },
-  settingsShortcutTitle: {
-    color: "#FFFFFF",
-    fontSize: 14,
+  feedTabText: {
+    color: "#AAAAAA",
+    fontSize: 12,
     fontWeight: "600",
   },
-  settingsShortcutSubtitle: {
-    color: "#888",
-    fontSize: 12,
-    marginTop: 2,
+  feedTabTextActive: {
+    color: "#0a0e27",
   },
   
   // Estilos para modal de mensagem
@@ -1771,6 +1798,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
+  },
+  statusActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.25)",
+  },
+  statusActionText: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "600",
   },
   statusUpdated: {
     color: "#888",
