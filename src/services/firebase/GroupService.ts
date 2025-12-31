@@ -379,8 +379,7 @@ class GroupService {
         (group.members || []).map(async (memberId) => {
           const publicDoc = await getDoc(doc(db, "userPublicProfiles", memberId))
           const publicData = publicDoc.exists() ? publicDoc.data() : {}
-          const canSeeStatus = memberId === viewerId || publicData?.privacy?.showStatusToGroups !== false
-          const shouldLoadStatus = !!viewerId && canSeeStatus
+          const shouldLoadStatus = memberId === viewerId
           const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
