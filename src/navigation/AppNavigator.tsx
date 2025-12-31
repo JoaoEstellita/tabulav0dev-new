@@ -11,7 +11,6 @@ import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
 import GroupsScreen from "../screens/groups/GroupsScreen"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
-import ProfileScreen from "../screens/profile/ProfileScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
@@ -106,11 +105,6 @@ function RootNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
-      <RootStack.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ headerShown: true, title: "Perfil", headerStyle:{ backgroundColor:"#0F0F23" }, headerTintColor:"#FFFFFF" }}
-      />
       <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} options={{ headerShown: true, title: 'Detalhe do Trânsito', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PersonalTransits" component={require('../screens/transits/PersonalTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Pessoais', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="CollectiveTransits" component={require('../screens/transits/CollectiveTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Coletivos', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />

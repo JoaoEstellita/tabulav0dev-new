@@ -11,11 +11,14 @@ import {
   Dimensions,
   Platform,
   ToastAndroid,
+  TextInput,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { useUserSettings } from '../../hooks/useUserSettings';
@@ -27,6 +30,8 @@ import { subscribeWebPush } from '../../webpush/subscribe';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 const { width } = Dimensions.get('window');
 
@@ -48,13 +53,23 @@ interface SettingsItem {
 
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
-  const navigation = useNavigation<any>();
   const { preferences, updatePreferences } = useNotificationPreferences();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
   const [houseSystem, setHouseSystem] = useState<HouseSystem>('placidus');
+  const [profileName, setProfileName] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+      setProfilePrivacy({
+        showStatusToGroups: data.preferences?.privacy?.showStatusToGroups !== false,
+        allowGroupInvites: data.preferences?.privacy?.allowGroupInvites !== false,
+      });
+  const [profilePrivacy, setProfilePrivacy] = useState({
+    showStatusToGroups: true,
+    allowGroupInvites: true,
+  });
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -223,13 +238,6 @@ export default function SettingsScreen() {
       title: 'ðŸ‘¤ Conta',
       items: [
         {
-          id: 'profile',
-          title: 'Editar Perfil',
-          subtitle: 'Nome, foto e informaÃ§Ãµes',
-          icon: 'person',
-          type: 'button',
-          onPress: () => editProfile(),
-        },
         {
           id: 'export_data',
           title: 'Exportar Dados',
@@ -260,6 +268,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadSettings();
+    loadProfile();
   }, []);
 
   useEffect(() => {
@@ -276,6 +285,172 @@ export default function SettingsScreen() {
       // TODO: Implementar carregamento de configuraÃ§Ãµes do backend
     } catch (error) {
       console.error('Erro ao carregar configuraÃ§Ãµes:', error);
+    }
+  };
+  const loadProfile = async () => {
+    if (!user?.uid) return;
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) return;
+      const data = userDoc.data() || {};
+      setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
+      setProfilePhoto(data.profilePhoto || null);
+    } catch (error) {
+      console.warn("Erro ao carregar perfil:", error);
+    }
+  };
+
+  const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
+    try {
+      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\\/$/, "");
+      if (!base) return null;
+      const response = await fetch(base + "/api/upload/profile-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, dataUrl }),
+      });
+      if (!response.ok) return null;
+      const payload = await response.json();
+      return payload?.url || null;
+    } catch (error) {
+      console.warn("Falha ao enviar foto:", error);
+      return null;
+    }
+  };
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permissão Necessária", "Precisamos de acesso à galeria para selecionar sua foto.");
+      return false;
+    }
+    return true;
+  };
+
+  const pickImage = async (source: "gallery" | "camera") => {
+    if (!user?.uid) return;
+    try {
+      let result;
+      if (source === "camera") {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permissão Necessária", "Precisamos de acesso à câmera.");
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      }
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 600, height: 600 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        const dataUrl = manipulatedImage.base64
+          ? "data:image/jpeg;base64," + manipulatedImage.base64
+          : manipulatedImage.uri;
+        setProfilePhoto(dataUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao selecionar foto:", error);
+      Alert.alert("Erro", "Não foi possível selecionar a foto. Tente novamente.");
+    }
+  };
+
+  const selectPhoto = async () => {
+    if (typeof window !== "undefined") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async (event: any) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const compressToDataUrl = async (file: File): Promise<string> => {
+          const img = document.createElement("img");
+          const objectUrl = URL.createObjectURL(file);
+          await new Promise((res) => {
+            img.onload = () => res(null as any);
+            img.src = objectUrl;
+          });
+          const canvas = document.createElement("canvas");
+          const maxSize = 600;
+          const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d")!;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(objectUrl);
+          return canvas.toDataURL("image/jpeg", 0.82);
+        };
+
+        const dataUrl = await compressToDataUrl(file);
+        setProfilePhoto(dataUrl);
+      };
+      input.click();
+      return;
+    }
+
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    Alert.alert("Escolher Foto", "Como você gostaria de adicionar sua foto?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Galeria", onPress: () => pickImage("gallery") },
+      { text: "Câmera", onPress: () => pickImage("camera") },
+    ]);
+  };
+
+  const saveProfile = async () => {
+    if (!user?.uid) return;
+    try {
+      setSavingProfile(true);
+      let updatedPhoto = profilePhoto;
+      if (updatedPhoto && updatedPhoto.startsWith("data:")) {
+        const uploaded = await uploadProfilePhoto(user.uid, updatedPhoto);
+        updatedPhoto = uploaded || updatedPhoto;
+      }
+
+      const payload = {
+        displayName: profileName || user.email?.split("@")[0] || "Usuario",
+        profilePhoto: updatedPhoto || null,
+      };
+  const updatePrivacyPreference = async (key: "showStatusToGroups" | "allowGroupInvites", value: boolean) => {
+    if (!user?.uid) return;
+    setProfilePrivacy((prev) => ({ ...prev, [key]: value }));
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        [`preferences.privacy.${key}`]: value,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar privacidade:", error);
+    }
+  };
+
+      await updateDoc(doc(db, "users", user.uid), payload);
+      await setDoc(doc(db, "userPublicProfiles", user.uid), {
+        ...payload,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      Alert.alert("Sucesso", "Perfil atualizado!");
+    } catch (error) {
+      console.error("Erro ao salvar perfil:", error);
+      Alert.alert("Erro", "Não foi possível salvar seu perfil agora.");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -358,9 +533,6 @@ export default function SettingsScreen() {
 
   // FunÃ§Ãµes removidas pois agora usam os hooks
 
-  const editProfile = () => {
-    navigation.navigate('Profile');
-  };
 
   const exportData = () => {
     Alert.alert(
@@ -549,20 +721,36 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          {/* User Info */}
+          {/* Perfil (edição rápida) */}
           <View style={styles.userInfo}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-              </Text>
-            </View>
+            <TouchableOpacity style={styles.avatarContainer} onPress={selectPhoto} disabled={savingProfile}>
+              {profilePhoto ? (
+                <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {profileName?.charAt(0) || user?.email?.charAt(0) || "U"}
+                </Text>
+              )}
+              <View style={styles.avatarEditBadge}>
+                <Ionicons name="camera" size={14} color="#000" />
+              </View>
+            </TouchableOpacity>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>
-                {user?.displayName || 'UsuÃ¡rio'}
-              </Text>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Seu nome"
+                placeholderTextColor="#888"
+                value={profileName}
+                onChangeText={setProfileName}
+              />
               <Text style={styles.userEmail}>
-                {user?.email || 'usuario@email.com'}
+                {user?.email || "usuario@email.com"}
               </Text>
+              <TouchableOpacity style={styles.saveProfileButton} onPress={saveProfile} disabled={savingProfile}>
+                <Text style={styles.saveProfileText}>
+                  {savingProfile ? "Salvando..." : "Salvar perfil"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -598,6 +786,51 @@ export default function SettingsScreen() {
               })}
             </View>
           </View>
+          {/* Privacidade nos Grupos */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Privacidade nos Grupos</Text>
+            <View style={styles.sectionContent}>
+              <View style={styles.settingsItem}>
+                <View style={styles.itemLeft}>
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="eye" size={20} color="#FFD700" />
+                  </View>
+                  <View style={styles.itemText}>
+                    <Text style={styles.itemTitle}>Compartilhar status</Text>
+                    <Text style={styles.itemSubtitle}>Permitir que membros vejam seu status</Text>
+                  </View>
+                </View>
+                <View style={styles.itemRight}>
+                  <Switch
+                    value={profilePrivacy.showStatusToGroups}
+                    onValueChange={(value) => updatePrivacyPreference("showStatusToGroups", value)}
+                    trackColor={{ false: "#3C3C3E", true: "#FFD700" }}
+                    thumbColor={profilePrivacy.showStatusToGroups ? "#0a0e27" : "#f4f3f4"}
+                  />
+                </View>
+              </View>
+              <View style={styles.settingsItem}>
+                <View style={styles.itemLeft}>
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="mail" size={20} color="#FFD700" />
+                  </View>
+                  <View style={styles.itemText}>
+                    <Text style={styles.itemTitle}>Permitir convites</Text>
+                    <Text style={styles.itemSubtitle}>Receber convites para grupos</Text>
+                  </View>
+                </View>
+                <View style={styles.itemRight}>
+                  <Switch
+                    value={profilePrivacy.allowGroupInvites}
+                    onValueChange={(value) => updatePrivacyPreference("allowGroupInvites", value)}
+                    trackColor={{ false: "#3C3C3E", true: "#FFD700" }}
+                    thumbColor={profilePrivacy.allowGroupInvites ? "#0a0e27" : "#f4f3f4"}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
           {/* Settings Sections */}
           {settingsSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
@@ -678,6 +911,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  avatarEditBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#FFD700",
+    alignItems: "center",
+    justifyContent: "center",
+  },
     marginRight: 15,
   },
   avatarText: {
@@ -694,11 +943,32 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginBottom: 4,
   },
+  nameInput: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFD700",
+    marginBottom: 6,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+  },
   userEmail: {
     fontSize: 14,
     color: '#b0b0b0',
   },
   section: {
+  saveProfileButton: {
+    marginTop: 10,
+    backgroundColor: "#2C2C2E",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  saveProfileText: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "600",
+  },
     marginBottom: 30,
     paddingHorizontal: 20,
   },
