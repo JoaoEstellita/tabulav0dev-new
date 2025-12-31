@@ -22,6 +22,7 @@ import GroupNotificationService from "../../services/notifications/GroupNotifica
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import GroupCard from "../../components/GroupCard"
 import GroupDetailModal from "../../components/GroupDetailModal"
+import GroupNotificationSettings from "../../components/GroupNotificationSettings"
 import InviteService from "../../services/InviteService"
 
 const LIFE_AREA_OPTIONS = [
@@ -85,6 +86,7 @@ export default function GroupsScreen() {
   // Estados para modal de detalhes
   const [showGroupDetail, setShowGroupDetail] = useState(false)
   const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
+  const [showGroupSettings, setShowGroupSettings] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -359,73 +361,9 @@ export default function GroupsScreen() {
     }
   }
   
-  const sendCriticalAlert = async () => {
+  const openGroupSettings = () => {
     if (!selectedGroup) return
-
-    Alert.alert(
-      "Alerta Critico",
-      "Deseja enviar um alerta critico para todos os membros do grupo?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Enviar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setSendingNotification(true)
-              
-              await GroupNotificationService.sendCriticalAlert(
-                selectedGroup.id,
-                user!.uid,
-                "Alerta enviado pelo usuario. Verifique seu mapa astral!"
-              )
-              
-              Alert.alert("Sucesso", "Alerta critico enviado!")
-              
-            } catch (error: any) {
-              console.error('Erro ao enviar alerta:', error)
-              Alert.alert("Erro", "Nao foi possivel enviar o alerta")
-            } finally {
-              setSendingNotification(false)
-            }
-          }
-        }
-      ]
-    )
-  }
-  
-  const sendFavorableEvent = async () => {
-    if (!selectedGroup) return
-
-    Alert.alert(
-      "Energia Favoravel",
-      "Deseja compartilhar uma energia favoravel com o grupo?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Compartilhar",
-          onPress: async () => {
-            try {
-              setSendingNotification(true)
-              
-              await GroupNotificationService.sendFavorableEvent(
-                selectedGroup.id,
-                user!.uid,
-                "Energia positiva detectada! Aproveitem este momento!"
-              )
-              
-              Alert.alert("Sucesso", "Energia favoravel compartilhada!")
-              
-            } catch (error: any) {
-              console.error('Erro ao compartilhar energia:', error)
-              Alert.alert("Erro", "Nao foi possivel compartilhar")
-            } finally {
-              setSendingNotification(false)
-            }
-          }
-        }
-      ]
-    )
+    setShowGroupSettings(true)
   }
 
   const handleUpdateInviteSettings = async (updates: { inviteEnabled?: boolean; inviteExpiresAt?: Date | null; rotate?: boolean }) => {
@@ -609,25 +547,16 @@ export default function GroupsScreen() {
                   <Ionicons name="chatbubble" size={20} color="#FFFFFF" />
                   <Text style={styles.actionButtonText}>Mensagem</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.alertButton]} 
-                  onPress={sendCriticalAlert}
-                  disabled={sendingNotification}
-                >
-                  <Ionicons name="warning" size={20} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Alerta</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.favorableButton]} 
-                  onPress={sendFavorableEvent}
-                  disabled={sendingNotification}
-                >
-                  <Ionicons name="star" size={20} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Energia+</Text>
-                </TouchableOpacity>
               </View>
+              <TouchableOpacity style={styles.settingsShortcut} onPress={openGroupSettings}>
+                <Ionicons name="options" size={18} color="#FFD700" />
+                <View style={styles.settingsShortcutText}>
+                  <Text style={styles.settingsShortcutTitle}>Preferencias de compartilhamento</Text>
+                  <Text style={styles.settingsShortcutSubtitle}>
+                    Suas configuracoes pessoais neste grupo
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
             
             {/* Alertas Criticos */}
@@ -694,7 +623,7 @@ export default function GroupsScreen() {
 
             {/* Feed de Alertas */}
             <View style={styles.alertsSection}>
-              <Text style={styles.sectionTitle}>Feed de Alertas</Text>
+              <Text style={styles.sectionTitle}>Feed do Grupo</Text>
               {(groupAlerts || []).slice(0, 10).map((alert) => (
                 <View key={alert.id} style={styles.alertCard}>
                   <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
@@ -945,6 +874,13 @@ export default function GroupsScreen() {
           // Acao de ver perfil do membro
           Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)
         }}
+      />
+
+      <GroupNotificationSettings
+        visible={showGroupSettings}
+        group={selectedGroup}
+        currentUserId={user?.uid || ""}
+        onClose={() => setShowGroupSettings(false)}
       />
     </LinearGradient>
   )
@@ -1466,16 +1402,35 @@ const styles = StyleSheet.create({
   messageButton: {
     backgroundColor: "#4A90E2",
   },
-  alertButton: {
-    backgroundColor: "#FF4444",
-  },
-  favorableButton: {
-    backgroundColor: "#28A745",
-  },
   actionButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
+  },
+  settingsShortcut: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.25)",
+  },
+  settingsShortcutText: {
+    flex: 1,
+  },
+  settingsShortcutTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  settingsShortcutSubtitle: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 2,
   },
   
   // Estilos para modal de mensagem
