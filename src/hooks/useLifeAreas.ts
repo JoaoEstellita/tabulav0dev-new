@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
 import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
@@ -142,11 +142,16 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       // Enviar alertas para cada área crítica
       for (const area of criticalAreas) {
-        const message = alertMessages?.[area.name] || getDefaultMessage(area.name)
-        
-        // Enviar para todos os grupos do usuário
         for (const groupId of userGroups) {
           try {
+            const memberSettings = await GroupService.getMemberSettings(groupId, user.uid)
+            if (memberSettings?.enabled === false) continue
+            if (memberSettings?.types?.criticalAlerts === false) continue
+            if (memberSettings?.priority === 'none') continue
+
+            const customMessage = memberSettings?.customAlertMessages?.[area.name]
+            const message = customMessage || alertMessages?.[area.name] || getDefaultMessage(area.name)
+
             await GroupNotificationService.sendGroupNotification({
               groupId,
               senderId: user.uid,
@@ -218,3 +223,5 @@ function getDefaultMessage(area: string): string {
 
   return defaultMessages[area] || `Estou passando por um momento crítico em ${area}. Pedindo energias positivas!`
 }
+
+

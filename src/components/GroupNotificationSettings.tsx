@@ -28,6 +28,16 @@ export interface GroupNotificationSettings {
     memberUpdates: boolean
     groupMessages: boolean
   }
+  customAlertMessages: {
+    amor: string
+    carreira: string
+    financas: string
+    saude: string
+    familia: string
+    espiritualidade: string
+    comunicacao: string
+    transformacao: string
+  }
   sharedLifeAreas: {
     amor: boolean
     carreira: boolean
@@ -77,6 +87,16 @@ const defaultSettings: GroupNotificationSettings = {
     memberUpdates: true,
     groupMessages: true,
   },
+  customAlertMessages: {
+    amor: '',
+    carreira: '',
+    financas: '',
+    saude: '',
+    familia: '',
+    espiritualidade: '',
+    comunicacao: '',
+    transformacao: '',
+  },
   sharedLifeAreas: { ...defaultLifeAreas },
   notifiedLifeAreas: { ...defaultLifeAreas },
   schedule: {
@@ -111,6 +131,17 @@ const buildLifeAreasState = (enabled?: string[]): LifeAreaState => ({
   transformacao: enabled ? enabled.includes('transformacao') : true,
 })
 
+const buildMessageState = (messages?: Record<string, string>): GroupNotificationSettings['customAlertMessages'] => ({
+  amor: messages?.amor || '',
+  carreira: messages?.carreira || '',
+  financas: messages?.financas || '',
+  saude: messages?.saude || '',
+  familia: messages?.familia || '',
+  espiritualidade: messages?.espiritualidade || '',
+  comunicacao: messages?.comunicacao || '',
+  transformacao: messages?.transformacao || '',
+})
+
 const toLifeAreasList = (lifeAreas: LifeAreaState) =>
   Object.entries(lifeAreas)
     .filter(([, value]) => value)
@@ -143,6 +174,11 @@ export default function GroupNotificationSettings({
 
       setSettings({
         ...defaultSettings,
+        enabled: memberSettings?.enabled ?? true,
+        types: memberSettings?.types || defaultSettings.types,
+        schedule: memberSettings?.schedule || defaultSettings.schedule,
+        priority: memberSettings?.priority || defaultSettings.priority,
+        customAlertMessages: buildMessageState(memberSettings?.customAlertMessages),
         sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
         notifiedLifeAreas: buildLifeAreasState(notifiedLifeAreas),
       })
@@ -185,6 +221,14 @@ export default function GroupNotificationSettings({
     setHasChanges(true)
   }
 
+  const updateCustomMessage = (area: keyof GroupNotificationSettings['customAlertMessages'], value: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      customAlertMessages: { ...prev.customAlertMessages, [area]: value },
+    }))
+    setHasChanges(true)
+  }
+
   const updateSchedule = (updates: Partial<GroupNotificationSettings['schedule']>) => {
     setSettings((prev) => ({
       ...prev,
@@ -200,6 +244,11 @@ export default function GroupNotificationSettings({
       await GroupService.setMemberSettings(group.id, currentUserId, {
         sharedLifeAreas: toLifeAreasList(settings.sharedLifeAreas),
         notifiedLifeAreas: toLifeAreasList(settings.notifiedLifeAreas),
+        enabled: settings.enabled,
+        types: settings.types,
+        schedule: settings.schedule,
+        priority: settings.priority,
+        customAlertMessages: settings.customAlertMessages,
       })
 
       if (onSave) {
@@ -231,6 +280,11 @@ export default function GroupNotificationSettings({
 
             setSettings((prev) => ({
               ...prev,
+              enabled: true,
+              types: defaultSettings.types,
+              schedule: defaultSettings.schedule,
+              priority: defaultSettings.priority,
+              customAlertMessages: defaultSettings.customAlertMessages,
               sharedLifeAreas: buildLifeAreasState(sharedDefaults),
               notifiedLifeAreas: buildLifeAreasState(notifiedDefaults),
             }))
@@ -452,6 +506,33 @@ export default function GroupNotificationSettings({
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mensagens para alertas criticos</Text>
+            <Text style={styles.sectionDescription}>
+              Personalize a mensagem enviada ao grupo quando uma area ficar critica.
+            </Text>
+            {Object.entries(lifeAreaLabels).map(([key, config]) => (
+              <View key={`message-${key}`} style={styles.messageBlock}>
+                <View style={styles.messageHeader}>
+                  <Ionicons name={config.icon as any} size={16} color={config.color} />
+                  <Text style={styles.messageTitle}>{config.label}</Text>
+                </View>
+                <TextInput
+                  style={styles.messageInput}
+                  placeholder={`Mensagem para ${config.label.toLowerCase()}`}
+                  placeholderTextColor="#666"
+                  value={settings.customAlertMessages[key as keyof GroupNotificationSettings['customAlertMessages']]}
+                  onChangeText={(value) =>
+                    updateCustomMessage(key as keyof GroupNotificationSettings['customAlertMessages'], value)
+                  }
+                  maxLength={180}
+                  multiline
+                  editable={settings.enabled}
+                />
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Nao perturbe</Text>
 
             <View style={styles.settingItem}>
@@ -573,6 +654,32 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 16,
     lineHeight: 20,
+  },
+  messageBlock: {
+    backgroundColor: '#1C1C1E',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  messageTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  messageInput: {
+    backgroundColor: '#2C2C2E',
+    color: '#FFFFFF',
+    fontSize: 13,
+    padding: 10,
+    borderRadius: 8,
+    minHeight: 64,
+    textAlignVertical: 'top',
   },
   settingItem: {
     flexDirection: 'row',

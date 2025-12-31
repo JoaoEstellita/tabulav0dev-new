@@ -65,6 +65,20 @@ export interface GroupMemberSettings {
   userId: string
   sharedLifeAreas: string[]
   notifiedLifeAreas: string[]
+  enabled?: boolean
+  types?: {
+    criticalAlerts?: boolean
+    favorableEvents?: boolean
+    memberUpdates?: boolean
+    groupMessages?: boolean
+  }
+  schedule?: {
+    doNotDisturb?: boolean
+    startTime?: string
+    endTime?: string
+  }
+  priority?: 'all' | 'critical_only' | 'none'
+  customAlertMessages?: Record<string, string>
   updatedAt: Date
 }
 
@@ -529,6 +543,11 @@ class GroupService {
           userId,
           sharedLifeAreas: defaults.sharedLifeAreas,
           notifiedLifeAreas: defaults.notifiedLifeAreas,
+          enabled: true,
+          types: null,
+          schedule: null,
+          priority: null,
+          customAlertMessages: {},
           updatedAt: new Date(),
         } as GroupMemberSettings
       }
@@ -538,6 +557,11 @@ class GroupService {
         userId,
         sharedLifeAreas: data.sharedLifeAreas || this.LIFE_AREAS,
         notifiedLifeAreas: data.notifiedLifeAreas || this.LIFE_AREAS,
+        enabled: data.enabled ?? true,
+        types: data.types || null,
+        schedule: data.schedule || null,
+        priority: data.priority || null,
+        customAlertMessages: data.customAlertMessages || {},
         updatedAt: data.updatedAt?.toDate?.() || new Date(),
       } as GroupMemberSettings
     } catch (error) {
@@ -556,6 +580,11 @@ class GroupService {
         userId,
         sharedLifeAreas: defaults.sharedLifeAreas,
         notifiedLifeAreas: defaults.notifiedLifeAreas,
+        enabled: true,
+        types: null,
+        schedule: null,
+        priority: null,
+        customAlertMessages: {},
         updatedAt: new Date(),
       } as GroupMemberSettings
     }
@@ -564,13 +593,26 @@ class GroupService {
   async setMemberSettings(
     groupId: string,
     userId: string,
-    settings: { sharedLifeAreas: string[]; notifiedLifeAreas: string[] }
+    settings: {
+      sharedLifeAreas: string[]
+      notifiedLifeAreas: string[]
+      enabled?: boolean
+      types?: GroupMemberSettings['types']
+      schedule?: GroupMemberSettings['schedule']
+      priority?: GroupMemberSettings['priority']
+      customAlertMessages?: Record<string, string>
+    }
   ): Promise<void> {
     await setDoc(doc(db, "groupMemberSettings", `${groupId}_${userId}`), {
       groupId,
       userId,
       sharedLifeAreas: settings.sharedLifeAreas || this.LIFE_AREAS,
       notifiedLifeAreas: settings.notifiedLifeAreas || this.LIFE_AREAS,
+      enabled: settings.enabled ?? true,
+      types: settings.types || null,
+      schedule: settings.schedule || null,
+      priority: settings.priority || null,
+      customAlertMessages: settings.customAlertMessages || null,
       updatedAt: Timestamp.now(),
     })
   }
