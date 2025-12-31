@@ -1,12 +1,12 @@
-/**
- * 🏠 GROUP DETAIL MODAL 🏠
+﻿/**
+ *  GROUP DETAIL MODAL 
  * 
  * Modal completo com todos os detalhes do grupo:
- * - Informações do grupo
+ * - Informacoes do grupo
  * - Lista de membros com avatars e status
- * - Histórico de atividades
+ * - Historico de atividades
  * - Sistema de convites
- * - Configurações de notificação
+ * - Configuracoes de notificacao
  */
 
 import React, { useState } from 'react'
@@ -19,12 +19,13 @@ import {
   Alert,
   StyleSheet,
   Share,
-  Clipboard
+  Platform
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Avatar from './Avatar'
 import InviteModal from './InviteModal'
 import GroupNotificationSettings from './GroupNotificationSettings'
+import InviteService from '../services/InviteService'
 import type { Group, GroupMember } from '../services/firebase/GroupService'
 
 export interface GroupDetailModalProps {
@@ -43,22 +44,36 @@ interface ExtendedGroupMember extends GroupMember {
   profilePhoto?: string
 }
 
+function normalizeDate(value: unknown): Date | null {
+  if (value instanceof Date) return value
+  if (value && typeof (value as { toDate?: () => Date }).toDate === 'function') {
+    return (value as { toDate: () => Date }).toDate()
+  }
+  if (typeof value === 'number' || typeof value === 'string') {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) return parsed
+  }
+  return null
+}
+
 /**
- * Formata tempo relativo (ex: "2 horas atrás")
+ * Formata tempo relativo (ex: "2 horas atras")
  */
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: unknown): string {
+  const normalizedDate = normalizeDate(date)
+  if (!normalizedDate) return 'Agora'
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
+  const diffMs = now.getTime() - normalizedDate.getTime()
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   
   if (diffMinutes < 1) return 'Agora'
-  if (diffMinutes < 60) return `${diffMinutes}min atrás`
+  if (diffMinutes < 60) return `${diffMinutes}min atras`
   
   const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}h atrás`
+  if (diffHours < 24) return `${diffHours}h atras`
   
   const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return `${diffDays}d atrás`
+  if (diffDays < 7) return `${diffDays}d atras`
   
   return date.toLocaleDateString('pt-BR')
 }
@@ -107,6 +122,21 @@ export default function GroupDetailModal({
   const sharedAreasText = formatLifeAreas(group.sharedLifeAreas)
   const notifiedAreasText = formatLifeAreas(group.notifiedLifeAreas)
   
+  const copyToClipboard = async (text: string, successMessage: string) => {
+    if (!text) return
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text)
+        Alert.alert('Sucesso', successMessage)
+        return
+      } catch (error) {
+        console.error('Erro ao copiar no navegador:', error)
+      }
+    }
+
+    await InviteService.copyToClipboard(text, successMessage)
+  }
+
   const handleShare = async () => {
     try {
       if (group.inviteCode) {
@@ -122,15 +152,13 @@ export default function GroupDetailModal({
   
   const handleCopyCode = () => {
     if (group.inviteCode) {
-      Clipboard.setString(group.inviteCode)
-      Alert.alert('Sucesso', 'Código copiado para a área de transferência!')
+      copyToClipboard(group.inviteCode, 'Codigo copiado para a area de transferencia!')
     }
   }
   
   const handleCopyLink = () => {
     if (inviteLink) {
-      Clipboard.setString(inviteLink)
-      Alert.alert('Sucesso', 'Link copiado para a área de transferência!')
+      copyToClipboard(inviteLink, 'Link copiado para a area de transferencia!')
     }
   }
 
@@ -207,7 +235,7 @@ export default function GroupDetailModal({
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           
-          {/* Descrição do grupo */}
+          {/* Descricao do grupo */}
           {group.description && (
             <View style={styles.descriptionSection}>
               <Text style={styles.description}>{group.description}</Text>
@@ -257,7 +285,7 @@ export default function GroupDetailModal({
                           }
                         ]} />
                         <Text style={styles.statusText}>
-                          {member.astrologicalStatus.mood || 'Status não disponível'}
+                          {member.astrologicalStatus.mood || 'Status nao disponivel'}
                         </Text>
                       </View>
                     )}
@@ -278,7 +306,7 @@ export default function GroupDetailModal({
           {/* Tab: Convites */}
           {activeTab === 'invite' && (
             <View style={styles.inviteContainer}>
-              <Text style={styles.sectionTitle}>🔗 Convidar Pessoas</Text>
+              <Text style={styles.sectionTitle}>Convidar Pessoas</Text>
               
               {group.inviteCode && (
                 <>
@@ -303,10 +331,10 @@ export default function GroupDetailModal({
                   <View style={styles.inviteOption}>
                     <View style={styles.inviteHeader}>
                       <Ionicons name="keypad" size={20} color="#FFD700" />
-                      <Text style={styles.inviteTitle}>Código de Convite</Text>
+                      <Text style={styles.inviteTitle}>Codigo de Convite</Text>
                     </View>
                     <Text style={styles.inviteDescription}>
-                      Digite este código no app
+                      Digite este codigo no app
                     </Text>
                     <View style={styles.codeContainer}>
                       <Text style={styles.codeText}>{group.inviteCode}</Text>
@@ -342,7 +370,7 @@ export default function GroupDetailModal({
           {/* Tab: Atividade */}
           {activeTab === 'activity' && (
             <View style={styles.activityContainer}>
-              <Text style={styles.sectionTitle}>📊 Atividade Recente</Text>
+              <Text style={styles.sectionTitle}>Atividade Recente</Text>
               
               <View style={styles.activityItem}>
                 <Ionicons name="person-add" size={16} color="#4CAF50" />
@@ -358,7 +386,7 @@ export default function GroupDetailModal({
               <View style={styles.emptyActivity}>
                 <Ionicons name="pulse" size={32} color="#888" />
                 <Text style={styles.emptyText}>
-                  As atividades do grupo aparecerão aqui
+                  As atividades do grupo aparecerao aqui
                 </Text>
               </View>
             </View>

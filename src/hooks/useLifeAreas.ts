@@ -25,7 +25,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
-  // Forçar um recálculo fresco na primeira carga para refletir correções de casas
+  // Forcar um recalculo fresco na primeira carga para refletir correcoes de casas
   const [firstLoad, setFirstLoad] = useState(true)
   const lastStatusKeyRef = useRef<string | null>(null)
 
@@ -42,7 +42,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setLoading(true)
       setError(null)
 
-      // Buscar dados de nascimento do usuário
+      // Buscar dados de nascimento do usuario
       const userProfile = await UserService.getUserProfile(user.uid)
       
       if (!userProfile?.birthDate || !userProfile?.birthTime || !userProfile?.birthLocation) {
@@ -57,9 +57,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
         birthLocation: userProfile.birthLocation,
       }
 
-      // 🚀 USAR NOVO SISTEMA LOCAL (dados 100% reais, performance instantânea)
-      console.log('🔬 Usando cálculos astrológicos LOCAIS (dados reais)...')
-      // Regra: primeira carga ignora cache para refletir correções recentes de casas; depois volta ao fluxo normal
+      //  USAR NOVO SISTEMA LOCAL (dados 100% reais, performance instantanea)
+      console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
+      // Regra: primeira carga ignora cache para refletir correes recentes de casas; depois volta ao fluxo normal
       const effectiveForce = forceRefresh || firstLoad || (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
       const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, effectiveForce)
       setTransitData(result.data)
@@ -72,7 +72,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         GroupService.updateUserStatusFromLifeAreas(user.uid, result.data, birthData)
       }
 
-      console.log('📊 Dados astrológicos REAIS carregados:', {
+      console.log(' Dados astrologicos REAIS carregados:', {
         lifeAreas: Object.keys(result.data.lifeAreas).length,
         cacheSource: result.cacheStatus.cacheSource,
         hoursOld: result.cacheStatus.hoursOld,
@@ -80,8 +80,8 @@ export function useLifeAreas(): UseLifeAreasReturn {
         engine: 'LOCAL (dados reais)'
       })
     } catch (err) {
-      console.error('❌ Erro ao carregar dados de trânsito:', err)
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrológicos')
+      console.error(' Erro ao carregar dados de transito:', err)
+      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')
     } finally {
       setLoading(false)
     }
@@ -95,32 +95,32 @@ export function useLifeAreas(): UseLifeAreasReturn {
     if (!transitData || !user) return
 
     try {
-      // Verificar se deve enviar alertas críticos usando o novo sistema
+      // Verificar se deve enviar alertas criticos usando o novo sistema
       const shouldAlert = LocalAstrologyService.shouldSendCriticalAlert(transitData)
       
       if (!shouldAlert) {
-        console.log('✅ Nenhuma situação crítica detectada')
+        console.log(' Nenhuma situacao critica detectada')
         return
       }
 
       // Gerar mensagem personalizada
       const alertMessage = LocalAstrologyService.generateAlertMessage(transitData)
-      console.log(`🚨 Alerta crítico detectado: ${alertMessage}`)
+      console.log(` Alerta critico detectado: ${alertMessage}`)
 
-      // Buscar grupos do usuário
+      // Buscar grupos do usuario
       const userGroups = await getUserGroups(user.uid)
       
       if (userGroups.length === 0) {
-        console.log('ℹ️ Usuário não participa de nenhum grupo')
+        console.log(' Usuario nao participa de nenhum grupo')
         return
       }
 
-      // Buscar mensagens personalizadas do usuário
+      // Buscar mensagens personalizadas do usuario
       const userProfile = await UserService.getUserProfile(user.uid)
       const alertMessages = userProfile?.alertMessages
-      const userName = userProfile?.displayName || userProfile?.fullName || 'Usuário'
+      const userName = userProfile?.displayName || userProfile?.fullName || 'Usuario'
 
-      // Encontrar áreas críticas (abaixo de 30%)
+      // Encontrar areas criticas (abaixo de 30%)
       const criticalAreas = Object.entries(transitData.lifeAreas)
         .filter(([_, area]) => {
           const value = typeof area?.percentage === 'number'
@@ -136,11 +136,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
         }))
 
       if (criticalAreas.length === 0) {
-        console.log('✅ Nenhuma área crítica encontrada')
+        console.log(' Nenhuma area critica encontrada')
         return
       }
 
-      // Enviar alertas para cada área crítica
+      // Enviar alertas para cada area critica
       for (const area of criticalAreas) {
         for (const groupId of userGroups) {
           try {
@@ -169,9 +169,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
         }
       }
 
-      console.log(`✅ Alertas enviados para ${criticalAreas.length} áreas críticas`)
+      console.log(` Alertas enviados para ${criticalAreas.length} areas criticas`)
     } catch (err) {
-      console.error('❌ Erro ao enviar alertas críticos:', err)
+      console.error(' Erro ao enviar alertas crticos:', err)
     }
   }
 
@@ -188,10 +188,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
   }
 }
 
-// Funções auxiliares
+// Funcoes auxiliares
 async function getUserGroups(userId: string): Promise<string[]> {
   try {
-    // Buscar grupos onde o usuário é membro
+    // Buscar grupos onde o usuario e membro
     const groupsQuery = query(
       collection(db, 'groups'),
       where('members', 'array-contains', userId)
@@ -204,24 +204,27 @@ async function getUserGroups(userId: string): Promise<string[]> {
       groups.push(doc.id)
     })
     
-    console.log(`👥 Usuário participa de ${groups.length} grupo(s)`)
+    console.log(` Usuario participa de ${groups.length} grupo(s)`)
     return groups
   } catch (error) {
-    console.error('Erro ao buscar grupos do usuário:', error)
+    console.error('Erro ao buscar grupos do usuario:', error)
     return []
   }
 }
 
 function getDefaultMessage(area: string): string {
   const defaultMessages: { [key: string]: string } = {
-    love: "Meus trânsitos amorosos estão em fase crítica. Preciso de apoio!",
-    career: "Minha carreira passa por um momento desafiador. Pedindo energias positivas!",
-    health: "Minha saúde precisa de atenção especial agora. Enviando amor e luz!",
-    family: "Questões familiares requerem minha atenção. Gratidão pelo suporte!",
-    spirituality: "Meu crescimento espiritual está intenso. Compartilhando essa energia!",
+    amor: "Meus transitos amorosos estao em fase critica. Preciso de apoio!",
+    carreira: "Minha carreira passa por um momento desafiador. Pedindo energias positivas!",
+    saude: "Minha saude precisa de atencao especial agora. Enviando amor e luz!",
+    familia: "Questoes familiares requerem minha atencao. Gratidao pelo suporte!",
+    espiritualidade: "Meu crescimento espiritual esta intenso. Compartilhando essa energia!",
+    comunicacao: "Minha comunicacao pede atencao agora. Conto com seu apoio!",
+    transformacao: "Estou em fase de transformacao intensa. Energia positiva e bem-vinda!",
+    financas: "Minhas financas pedem cautela agora. Agradeco o suporte!",
   }
 
-  return defaultMessages[area] || `Estou passando por um momento crítico em ${area}. Pedindo energias positivas!`
+  return defaultMessages[area] || `Estou passando por um momento critico em ${area}. Pedindo energias positivas!`
 }
 
 

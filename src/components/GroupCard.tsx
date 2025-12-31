@@ -1,12 +1,12 @@
-/**
- * 💳 GROUP CARD COMPONENT 💳
+﻿/**
+ *  GROUP CARD COMPONENT 
  * 
  * Card premium para exibir grupos com:
  * - Visual moderno e informativo
- * - Ícone/foto do grupo
+ * - icone/foto do grupo
  * - Status dos membros
  * - Indicadores visuais
- * - Ação de clique para detalhes
+ * - acao de clique para detalhes
  */
 
 import React from 'react'
@@ -29,7 +29,7 @@ interface ExtendedGroupMember extends GroupMember {
 }
 
 /**
- * Calcula estatísticas dos membros
+ * Calcula estatisticas dos membros
  */
 function calculateMemberStats(members: GroupMember[]) {
   const stats = {
@@ -63,18 +63,18 @@ function calculateMemberStats(members: GroupMember[]) {
 }
 
 /**
- * Gera ícone do grupo baseado no nome/tipo
+ * Gera icone do grupo baseado no nome/tipo
  */
 function getGroupIcon(groupName: string): string {
   const name = groupName.toLowerCase()
   
-  if (name.includes('família') || name.includes('family')) return '👨‍👩‍👧‍👦'
-  if (name.includes('casal') || name.includes('couple')) return '💑'
-  if (name.includes('amigo') || name.includes('friend')) return '👯‍♀️'
-  if (name.includes('trabalho') || name.includes('work')) return '💼'
-  if (name.includes('estudo') || name.includes('study')) return '📚'
+  if (name.includes('familia') || name.includes('family')) return 'F'
+  if (name.includes('casal') || name.includes('couple')) return 'C'
+  if (name.includes('amigo') || name.includes('friend')) return 'A'
+  if (name.includes('trabalho') || name.includes('work')) return 'T'
+  if (name.includes('estudo') || name.includes('study')) return 'E'
   
-  return '🌟' // Ícone padrão
+  return 'G' // icone padrao
 }
 
 export default function GroupCard({
@@ -97,7 +97,7 @@ export default function GroupCard({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Header com ícone e nome */}
+      {/* Header com icone e nome */}
       <View style={styles.header}>
         <View style={styles.groupIcon}>
           <Text style={styles.groupIconText}>{groupIcon}</Text>
@@ -108,7 +108,7 @@ export default function GroupCard({
             {group.name}
           </Text>
           <Text style={styles.groupDescription} numberOfLines={1}>
-            {group.description || 'Grupo astrológico'}
+            {group.description || 'Grupo astrologico'}
           </Text>
         </View>
         
@@ -157,19 +157,19 @@ export default function GroupCard({
         </Text>
       </View>
 
-      {/* Estatísticas de status */}
+      {/* Estatisticas de status */}
       <View style={styles.statsSection}>
         <View style={styles.statItem}>
           <View style={[styles.statDot, { backgroundColor: '#FF4444' }]} />
           <Text style={styles.statText}>
-            {stats.critical} crítico{stats.critical !== 1 ? 's' : ''}
+            {stats.critical} critico{stats.critical !== 1 ? 's' : ''}
           </Text>
         </View>
         
         <View style={styles.statItem}>
           <View style={[styles.statDot, { backgroundColor: '#4CAF50' }]} />
           <Text style={styles.statText}>
-            {stats.excellent} ótimo{stats.excellent !== 1 ? 's' : ''}
+            {stats.excellent} otimo{stats.excellent !== 1 ? 's' : ''}
           </Text>
         </View>
         
@@ -181,12 +181,12 @@ export default function GroupCard({
         </View>
       </View>
 
-      {/* Footer com última atividade */}
+      {/* Footer com ultima atividade */}
       <View style={styles.footer}>
         <View style={styles.activityInfo}>
           <Ionicons name="time-outline" size={14} color="#888" />
           <Text style={styles.lastActivity}>
-            Última atividade: {lastActivity}
+            Ultima atividade: {lastActivity}
           </Text>
         </View>
         

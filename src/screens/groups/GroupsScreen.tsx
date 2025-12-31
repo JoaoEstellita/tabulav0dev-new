@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import {
@@ -75,7 +75,7 @@ export default function GroupsScreen() {
   const [partnerEmail, setPartnerEmail] = useState("")
   const [relationshipType, setRelationshipType] = useState<CoupleRelationship['relationshipType']>("dating")
   
-  // Estados para notificações de grupo
+  // Estados para notificacoes de grupo
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [groupMessage, setGroupMessage] = useState("")
   const [sendingNotification, setSendingNotification] = useState(false)
@@ -195,7 +195,7 @@ export default function GroupsScreen() {
     }
   }
   
-  // === FUNÇÕES DE CASAIS ===
+  // === FUNCOES DE CASAIS ===
   
   const loadCoupleRelationship = async () => {
     if (!user) return
@@ -205,7 +205,7 @@ export default function GroupsScreen() {
       const relationship = await CoupleService.getUserCoupleRelationship(user.uid)
       setCoupleRelationship(relationship)
       
-      // Se existe relacionamento, atualizar compatibilidade se necessário
+      // Se existe relacionamento, atualizar compatibilidade se necessario
       if (relationship) {
         const lastUpdate = relationship.dailyCompatibility?.lastUpdated
         const now = new Date()
@@ -237,17 +237,17 @@ export default function GroupsScreen() {
       setCoupleLoading(true)
       
       // TODO: Buscar partner por email
-      // Por enquanto, vou simular com um ID fictício
+      // Por enquanto, vou simular com um ID ficticio
       Alert.alert(
         'Funcionalidade em desenvolvimento',
-        'Em breve você poderá convidar seu parceiro pelo email. Por enquanto, peça para ele/ela criar uma conta no app.'
+        'Em breve voce podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
       )
       
       setShowCreateCoupleModal(false)
       setPartnerEmail('')
     } catch (error) {
       console.error('Erro ao criar relacionamento:', error)
-      Alert.alert('Erro', 'Não foi possível criar o relacionamento')
+      Alert.alert('Erro', 'Nao foi possivel criar o relacionamento')
     } finally {
       setCoupleLoading(false)
     }
@@ -267,7 +267,7 @@ export default function GroupsScreen() {
       Alert.alert('Sucesso', 'Compatibilidade atualizada!')
     } catch (error) {
       console.error('Erro ao atualizar compatibilidade:', error)
-      Alert.alert('Erro', 'Não foi possível atualizar a compatibilidade')
+      Alert.alert('Erro', 'Nao foi possivel atualizar a compatibilidade')
     } finally {
       setCoupleLoading(false)
     }
@@ -275,7 +275,7 @@ export default function GroupsScreen() {
 
   const createGroup = async () => {
     if (!newGroupName.trim()) {
-      Alert.alert("Erro", "Nome do grupo é obrigatório")
+      Alert.alert("Erro", "Nome do grupo e obrigatorio")
       return
     }
 
@@ -298,7 +298,7 @@ export default function GroupsScreen() {
 
   const joinGroup = async () => {
     if (!inviteCode.trim()) {
-      Alert.alert("Erro", "Código de convite é obrigatório")
+      Alert.alert("Erro", "Codigo de convite e obrigatorio")
       return
     }
 
@@ -315,17 +315,17 @@ export default function GroupsScreen() {
         await GroupNotificationService.sendMemberJoined(invitePreview.id, user!.uid)
       }
       
-      Alert.alert("Sucesso", "Você entrou no grupo!")
+      Alert.alert("Sucesso", "Voce entrou no grupo!")
     } catch (error: any) {
       Alert.alert("Erro", error.message)
     }
   }
   
-  // === FUNÇÕES DE NOTIFICAÇÕES ===
+  // === FUNCOES DE NOTIFICACOES ===
   
   const sendGroupMessage = async () => {
     if (!selectedGroup || !groupMessage.trim()) {
-      Alert.alert("Erro", "Mensagem é obrigatória")
+      Alert.alert("Erro", "Mensagem e obrigatoria")
       return
     }
 
@@ -344,7 +344,7 @@ export default function GroupsScreen() {
       
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error)
-      Alert.alert("Erro", "Não foi possível enviar a mensagem")
+      Alert.alert("Erro", "Nao foi possivel enviar a mensagem")
     } finally {
       setSendingNotification(false)
     }
@@ -354,8 +354,8 @@ export default function GroupsScreen() {
     if (!selectedGroup) return
 
     Alert.alert(
-      "Alerta Crítico",
-      "Deseja enviar um alerta crítico para todos os membros do grupo?",
+      "Alerta Critico",
+      "Deseja enviar um alerta critico para todos os membros do grupo?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -368,14 +368,14 @@ export default function GroupsScreen() {
               await GroupNotificationService.sendCriticalAlert(
                 selectedGroup.id,
                 user!.uid,
-                "Alerta enviado pelo usuário. Verifique seu mapa astral!"
+                "Alerta enviado pelo usuario. Verifique seu mapa astral!"
               )
               
-              Alert.alert("Sucesso", "Alerta crítico enviado!")
+              Alert.alert("Sucesso", "Alerta critico enviado!")
               
             } catch (error: any) {
               console.error('Erro ao enviar alerta:', error)
-              Alert.alert("Erro", "Não foi possível enviar o alerta")
+              Alert.alert("Erro", "Nao foi possivel enviar o alerta")
             } finally {
               setSendingNotification(false)
             }
@@ -389,8 +389,8 @@ export default function GroupsScreen() {
     if (!selectedGroup) return
 
     Alert.alert(
-      "Energia Favorável",
-      "Deseja compartilhar uma energia favorável com o grupo?",
+      "Energia Favoravel",
+      "Deseja compartilhar uma energia favoravel com o grupo?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -405,11 +405,11 @@ export default function GroupsScreen() {
                 "Energia positiva detectada! Aproveitem este momento!"
               )
               
-              Alert.alert("Sucesso", "Energia favorável compartilhada!")
+              Alert.alert("Sucesso", "Energia favoravel compartilhada!")
               
             } catch (error: any) {
               console.error('Erro ao compartilhar energia:', error)
-              Alert.alert("Erro", "Não foi possível compartilhar")
+              Alert.alert("Erro", "Nao foi possivel compartilhar")
             } finally {
               setSendingNotification(false)
             }
@@ -497,9 +497,9 @@ export default function GroupsScreen() {
 
         {selectedGroup && (
           <>
-            {/* Ações de Notificação */}
+            {/* Acoes de Notificacao */}
             <View style={styles.notificationActionsSection}>
-              <Text style={styles.sectionTitle}>📢 Ações do Grupo</Text>
+            <Text style={styles.sectionTitle}>Acoes do Grupo</Text>
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity 
                   style={[styles.actionButton, styles.messageButton]} 
@@ -530,10 +530,10 @@ export default function GroupsScreen() {
               </View>
             </View>
             
-            {/* Alertas Críticos */}
+            {/* Alertas Criticos */}
             {groupAlerts.filter((alert) => alert.status === "critical").length > 0 && (
               <View style={styles.criticalAlertsSection}>
-                <Text style={styles.sectionTitle}>🚨 Alertas Críticos</Text>
+              <Text style={styles.sectionTitle}>Alertas Criticos</Text>
                 {(groupAlerts || [])
                   .filter((alert) => alert.status === "critical")
                   .slice(0, 3)
@@ -558,7 +558,7 @@ export default function GroupsScreen() {
 
             {/* NOVA INTERFACE: Cards de Grupos Modernos */}
             <View style={styles.groupsCardsSection}>
-              <Text style={styles.sectionTitle}>👥 Membros do Grupo</Text>
+              <Text style={styles.sectionTitle}>Membros do Grupo</Text>
               
               {/* Card do Grupo Atual */}
               <GroupCard
@@ -603,7 +603,7 @@ export default function GroupsScreen() {
                       <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
                     </Text>
                     <Text style={styles.alertTime}>
-                      {alert.createdAt?.toLocaleDateString("pt-BR")} às{" "}
+                      {alert.createdAt?.toLocaleDateString("pt-BR")} s{" "}
                       {alert.createdAt?.toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -621,7 +621,7 @@ export default function GroupsScreen() {
             <Ionicons name="people-outline" size={64} color="#666" />
             <Text style={styles.emptyStateTitle}>Nenhum grupo encontrado</Text>
             <Text style={styles.emptyStateText}>
-              Crie seu primeiro grupo ou entre em um existente usando um código de convite
+              Crie seu primeiro grupo ou entre em um existente usando um cdigo de convite
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
               <Text style={styles.createFirstGroupButtonText}>Criar Primeiro Grupo</Text>
@@ -646,7 +646,7 @@ export default function GroupsScreen() {
 
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Descrição (opcional)"
+              placeholder="Descricao (opcional)"
               placeholderTextColor="#888"
               value={newGroupDescription}
               onChangeText={setNewGroupDescription}
@@ -722,7 +722,7 @@ export default function GroupsScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Código de convite"
+              placeholder="Codigo de convite"
               placeholderTextColor="#888"
               value={inviteCode}
               onChangeText={setInviteCode}
@@ -772,10 +772,10 @@ export default function GroupsScreen() {
       <Modal visible={showMessageModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>📢 Enviar Mensagem para o Grupo</Text>
+              <Text style={styles.modalTitle}>Enviar Mensagem para o Grupo</Text>
             
             <Text style={styles.modalSubtitle}>
-              Todos os membros do grupo receberão uma notificação
+              Todos os membros do grupo receberao uma notificacao
             </Text>
 
             <TextInput
@@ -828,15 +828,15 @@ export default function GroupsScreen() {
           setSelectedGroupForDetail(null)
         }}
         onInvite={() => {
-          // Ação de convite será implementada na próxima etapa
+          // Acao de convite sera implementada na proxima etapa
           Alert.alert('Em breve', 'Sistema de convites em desenvolvimento!')
         }}
         onLeaveGroup={() => {
-          // Ação de sair do grupo
+          // Acao de sair do grupo
           Alert.alert('Sair do grupo', 'Funcionalidade em desenvolvimento!')
         }}
         onMemberProfile={(member) => {
-          // Ação de ver perfil do membro
+          // Acao de ver perfil do membro
           Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)
         }}
       />
@@ -1338,7 +1338,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   
-  // Estilos para ações de notificação
+  // Estilos para acoes de notificacao
   notificationActionsSection: {
     marginBottom: 24,
   },
@@ -1433,3 +1433,4 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 })
+

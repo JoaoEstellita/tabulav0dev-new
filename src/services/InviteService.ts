@@ -1,15 +1,15 @@
 /**
- * 🔗 INVITE SERVICE 🔗
+ *  INVITE SERVICE 
  * 
- * Serviço para gerenciamento de convites de grupos
- * - Geração de links dinâmicos
- * - Códigos QR automáticos
- * - Validação de convites
+ * Servico para gerenciamento de convites de grupos
+ * - Geracao de links dinamicos
+ * - Codigos QR automaticos
+ * - Validacao de convites
  * - Deep linking
  */
 
 import * as Linking from 'expo-linking'
-import { Share, Alert } from 'react-native'
+import { Share, Alert, Platform } from 'react-native'
 
 export interface InviteData {
   groupId: string
@@ -21,7 +21,7 @@ export interface InviteData {
 
 export class InviteService {
   
-  // Base URL do app (será configurada para produção)
+  // Base URL do app (sera configurada para producao)
   private static readonly BASE_URL = 'https://tabulaestelar.com.br'
 
   private static readonly LIFE_AREA_LABELS: Record<string, string> = {
@@ -36,7 +36,7 @@ export class InviteService {
   }
 
   /**
-   * Gera link de convite dinâmico
+   * Gera link de convite dinamico
    */
   static generateInviteLink(inviteCode: string): string {
     return `${this.BASE_URL}/join/${inviteCode}`
@@ -72,20 +72,20 @@ export class InviteService {
       const result = await Share.share({
         message,
         title: `Convite - ${groupName}`,
-        url: inviteLink // iOS específico
+        url: inviteLink // iOS especifico
       })
       
       return result.action === Share.sharedAction
       
     } catch (error) {
       console.error('Erro ao compartilhar convite:', error)
-      Alert.alert('Erro', 'Não foi possível compartilhar o convite')
+      Alert.alert('Erro', 'Nao foi possivel compartilhar o convite')
       return false
     }
   }
 
   /**
-   * Constrói mensagem de convite personalizada
+   * Constroi mensagem de convite personalizada
    */
   private static buildInviteMessage(
     groupName: string,
@@ -115,10 +115,10 @@ Junte-se a nos na jornada astrologica.`
   }
 
   /**
-   * Valida código de convite
+   * Valida codigo de convite
    */
   static validateInviteCode(code: string): boolean {
-    // Códigos devem ter 6 caracteres alfanuméricos
+    // Codigos devem ter 6 caracteres alfanumericos
     const codeRegex = /^[A-Z0-9]{6}$/
     return codeRegex.test(code.toUpperCase())
   }
@@ -175,7 +175,7 @@ Junte-se a nos na jornada astrologica.`
       return { inviteCode: null, groupName: null, isValid: false }
       
     } catch (error) {
-      // Se não for JSON válido, tenta como código simples
+      // Se nao for JSON valido, tenta como codigo simples
       if (this.validateInviteCode(qrData)) {
         return {
           inviteCode: qrData.toUpperCase(),
@@ -189,22 +189,27 @@ Junte-se a nos na jornada astrologica.`
   }
 
   /**
-   * Copia código para clipboard com feedback
+   * Copia codigo para clipboard com feedback
    */
   static async copyToClipboard(text: string, successMessage: string = 'Copiado!'): Promise<void> {
     try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        Alert.alert('Sucesso', successMessage)
+        return
+      }
       // No React Native, usamos o Clipboard da react-native
       const { Clipboard } = await import('react-native')
       Clipboard.setString(text)
       Alert.alert('Sucesso', successMessage)
     } catch (error) {
       console.error('Erro ao copiar:', error)
-      Alert.alert('Erro', 'Não foi possível copiar')
+      Alert.alert('Erro', 'Nao foi possivel copiar')
     }
   }
 
   /**
-   * Gera novo código de convite
+   * Gera novo codigo de convite
    */
   static generateInviteCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -218,7 +223,7 @@ Junte-se a nos na jornada astrologica.`
   }
 
   /**
-   * Formata código para exibição (ABC-123)
+   * Formata codigo para exibicao (ABC-123)
    */
   static formatCodeForDisplay(code: string): string {
     if (code.length === 6) {
@@ -228,7 +233,7 @@ Junte-se a nos na jornada astrologica.`
   }
 
   /**
-   * Remove formatação do código (ABC-123 -> ABC123)
+   * Remove formatacao do codigo (ABC-123 -> ABC123)
    */
   static cleanCode(code: string): string {
     return code.replace(/[^A-Z0-9]/g, '').toUpperCase()
@@ -236,3 +241,5 @@ Junte-se a nos na jornada astrologica.`
 }
 
 export default InviteService
+
+

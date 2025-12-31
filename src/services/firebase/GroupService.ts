@@ -125,11 +125,11 @@ class GroupService {
       return docRef.id
     } catch (error) {
       console.error("Erro ao criar grupo:", error)
-      throw new Error("Não foi possível criar o grupo")
+      throw new Error("Nao foi possivel criar o grupo")
     }
   }
 
-  // Buscar grupos do usuário
+  // Buscar grupos do usuario
   async getUserGroups(userId: string): Promise<Group[]> {
     try {
       const q = query(
@@ -169,7 +169,7 @@ class GroupService {
     }
   }
 
-  // Entrar em grupo por código
+  // Entrar em grupo por codigo
   async joinGroupByCode(inviteCode: string, userId: string): Promise<boolean> {
     try {
       if (BACKEND_URL) {
@@ -200,14 +200,14 @@ class GroupService {
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
-        throw new Error("Código de convite inválido")
+        throw new Error("Codigo de convite invalido")
       }
 
       const groupDoc = querySnapshot.docs[0]
       const groupData = groupDoc.data() as Group
 
       if (groupData.members.includes(userId)) {
-        throw new Error("Você já é membro deste grupo")
+        throw new Error("Voce ja e membro deste grupo")
       }
 
       await updateDoc(doc(db, "groups", groupDoc.id), {
@@ -225,7 +225,7 @@ class GroupService {
     }
   }
 
-  // Atualizar status astrológico do usuário
+  // Atualizar status astrologico do usuario
   async updateUserStatus(userId: string, status: AstrologicalStatus, birthData?: any): Promise<void> {
     try {
       const userStatusRef = doc(db, "userStatus", userId)
@@ -236,12 +236,12 @@ class GroupService {
         birthData,
       }, { merge: true })
 
-      // Se status crítico, criar alerta para grupos e enviar notificações
+      // Se status critico, criar alerta para grupos e enviar notificacoes
       if (status.overall === "critical" || status.overall === "challenging") {
         await this.createGroupAlertsWithNotifications(userId, status)
       }
 
-      // Se status favorável, enviar notificação positiva
+      // Se status favoravel, enviar notificacao positiva
       if (status.overall === "excellent" || status.overall === "positive") {
         await this.createFavorableGroupNotifications(userId, status)
       }
@@ -250,7 +250,7 @@ class GroupService {
     }
   }
 
-  // Atualizar status a partir das áreas da vida (engine local)
+  // Atualizar status a partir das reas da vida (engine local)
   async updateUserStatusFromLifeAreas(userId: string, transitData: LocalTransitData, birthData?: any): Promise<void> {
     try {
       const statusPersonal = transitData.currentTransits?.statusPersonal
@@ -281,7 +281,7 @@ class GroupService {
     }
   }
 
-  // Criar alertas para grupos e enviar notificações push
+  // Criar alertas para grupos e enviar notificacoes push
   private async createGroupAlertsWithNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
     try {
       const userGroups = await this.getUserGroups(userId)
@@ -335,7 +335,7 @@ class GroupService {
     }
   }
 
-  // Buscar membros do grupo com status (apenas do próprio usuário)
+  // Buscar membros do grupo com status (apenas do proprio usuario)
   async getGroupMembersWithStatus(groupId: string, viewerId?: string): Promise<GroupMember[]> {
     try {
       if (BACKEND_URL) {
@@ -377,13 +377,11 @@ class GroupService {
       const group = groupDoc.data() as Group
       const members = await Promise.all(
         (group.members || []).map(async (memberId) => {
-          const shouldLoadStatus = viewerId && viewerId === memberId
-          const [publicDoc, statusDoc] = await Promise.all([
-            getDoc(doc(db, "userPublicProfiles", memberId)),
-            shouldLoadStatus ? getDoc(doc(db, "userStatus", memberId)) : Promise.resolve(null),
-          ])
-
+          const publicDoc = await getDoc(doc(db, "userPublicProfiles", memberId))
           const publicData = publicDoc.exists() ? publicDoc.data() : {}
+          const canSeeStatus = memberId === viewerId || publicData?.privacy?.showStatusToGroups !== false
+          const shouldLoadStatus = !!viewerId && canSeeStatus
+          const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
           const email = publicData.email || memberId
@@ -444,7 +442,7 @@ class GroupService {
       return []
     }
   }
-  // Escutar mudanças em tempo real
+  // Escutar mudanas em tempo real
   subscribeToGroupAlerts(groupId: string, callback: (alerts: GroupAlert[]) => void) {
     const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
 
@@ -624,14 +622,14 @@ class GroupService {
   private generateAlertMessage(status: AstrologicalStatus): string {
     const messages = {
       critical: [
-        "está passando por um momento astrológico intenso e pode precisar de apoio",
-        "tem trânsitos desafiadores hoje - que tal enviar uma mensagem carinhosa?",
-        "está enfrentando energias difíceis - sua presença pode fazer a diferença",
+        "esta passando por um momento astrologico intenso e pode precisar de apoio",
+        "tem transitos desafiadores hoje - que tal enviar uma mensagem carinhosa?",
+        "esta enfrentando energias dificeis - sua presenca pode fazer a diferenca",
       ],
       challenging: [
-        "tem alguns desafios astrológicos hoje - considere oferecer apoio",
-        "pode estar se sentindo mais sensível devido aos trânsitos atuais",
-        "está navegando por águas astrológicas agitadas - sua amizade é importante",
+        "tem alguns desafios astrologicos hoje - considere oferecer apoio",
+        "pode estar se sentindo mais sensivel devido aos transitos atuais",
+        "esta navegando por aguas astrologicas agitadas - sua amizade e importante",
       ],
     }
 
@@ -639,12 +637,12 @@ class GroupService {
     return statusMessages[Math.floor(Math.random() * statusMessages.length)]
   }
   
-  // Criar notificações favoráveis para grupos
+  // Criar notificacoes favoraveis para grupos
   private async createFavorableGroupNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
     try {
       const userGroups = await this.getUserGroups(userId)
       
-      // Buscar dados do usuário
+      // Buscar dados do usuario
       const userDoc = await getDoc(doc(db, 'users', userId))
       if (!userDoc.exists()) return
       
@@ -654,7 +652,7 @@ class GroupService {
       for (const group of userGroups) {
         const favorableMessage = this.generateFavorableMessage(status, userName)
         
-        // Enviar notificação favorável via backend
+        // Enviar notificacao favoravel via backend
         try {
           await GroupNotificationService.sendAutomaticFavorableAlert(group.id, {
             area: 'energia_geral',
@@ -662,28 +660,28 @@ class GroupService {
             description: favorableMessage
           })
           
-          console.log(`✨ Notificação favorável enviada para grupo ${group.name}`)
+          console.log(` Notificacao favoravel enviada para grupo ${group.name}`)
         } catch (notificationError) {
-          console.error('Erro ao enviar notificação favorável:', notificationError)
+          console.error('Erro ao enviar notificacao favoravel:', notificationError)
         }
       }
     } catch (error) {
-      console.error('Erro ao criar notificações favoráveis:', error)
+      console.error('Erro ao criar notificacoes favoraveis:', error)
     }
   }
   
-  // Gerar mensagem favorável
+  // Gerar mensagem favoravel
   private generateFavorableMessage(status: AstrologicalStatus, userName: string): string {
     const favorableMessages = {
       excellent: [
-        `${userName} está com energias incríveis hoje! ✨`,
-        `${userName} tem trânsitos muito favoráveis - é um ótimo momento!`,
-        `${userName} está radiante astrologicamente - aproveitem essa energia!`,
+        `${userName} esta com energias incriveis hoje!`,
+        `${userName} tem transitos muito favoraveis - e um otimo momento!`,
+        `${userName} esta radiante astrologicamente - aproveitem essa energia!`,
       ],
       positive: [
-        `${userName} tem boas energias hoje - momento favorável para projetos!`,
-        `${userName} está com trânsitos positivos - é hora de agir!`,
-        `${userName} tem o cosmos a seu favor hoje! 🌟`,
+        `${userName} tem boas energias hoje - momento favoravel para projetos!`,
+        `${userName} esta com transitos positivos - e hora de agir!`,
+        `${userName} tem o cosmos a seu favor hoje!`,
       ],
     }
     
@@ -702,7 +700,7 @@ class GroupService {
       case "desafiador":
         return "challenging"
       case "critico":
-      case "crítico":
+      case "critico":
         return "critical"
       default:
         return "neutral"
@@ -711,5 +709,6 @@ class GroupService {
 }
 
 export default new GroupService()
+
 
 
