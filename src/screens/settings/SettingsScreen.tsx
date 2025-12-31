@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
-// Removidos itens de preview e comparativos da Configuração (foram para Home)
+// Removidos itens de preview e comparativos da Configura├º├úo (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
@@ -62,10 +62,6 @@ export default function SettingsScreen() {
   const [profileName, setProfileName] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
-      setProfilePrivacy({
-        showStatusToGroups: data.preferences?.privacy?.showStatusToGroups !== false,
-        allowGroupInvites: data.preferences?.privacy?.allowGroupInvites !== false,
-      });
   const [profilePrivacy, setProfilePrivacy] = useState({
     showStatusToGroups: true,
     allowGroupInvites: true,
@@ -73,12 +69,12 @@ export default function SettingsScreen() {
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
-      title: '🔔 Notificações',
+      title: '­ƒöö Notifica├º├Áes',
       items: [
         {
           id: 'daily_notifications',
-          title: 'Notificações Diárias',
-          subtitle: 'Receba insights astrológicos diários',
+          title: 'Notifica├º├Áes Di├írias',
+          subtitle: 'Receba insights astrol├│gicos di├írios',
           icon: 'notifications',
           type: 'toggle',
           value: preferences?.dailyNotifications ?? true,
@@ -87,11 +83,11 @@ export default function SettingsScreen() {
         {
           id: 'register_webpush',
           title: 'Registrar Web Push',
-          subtitle: 'Ativar notificações no navegador',
+          subtitle: 'Ativar notifica├º├Áes no navegador',
           icon: 'notifications-outline',
           type: 'button',
           onPress: async () => {
-            if (!user?.uid) return Alert.alert('Erro', 'Faça login para registrar')
+            if (!user?.uid) return Alert.alert('Erro', 'Fa├ºa login para registrar')
             try {
               await subscribeWebPush(user.uid)
               Alert.alert('Sucesso', 'Web Push registrado!')
@@ -102,7 +98,7 @@ export default function SettingsScreen() {
         },
         {
           id: 'critical_alerts',
-          title: 'Alertas Críticos',
+          title: 'Alertas Cr├¡ticos',
           subtitle: 'Aspectos importantes e oportunidades',
           icon: 'warning',
           type: 'toggle',
@@ -111,7 +107,7 @@ export default function SettingsScreen() {
         },
         {
           id: 'group_notifications',
-          title: 'Notificações de Grupos',
+          title: 'Notifica├º├Áes de Grupos',
           subtitle: 'Atividades e mensagens dos grupos',
           icon: 'people',
           type: 'toggle',
@@ -120,8 +116,8 @@ export default function SettingsScreen() {
         },
         {
           id: 'quiet_hours',
-          title: 'Horário Silencioso',
-          subtitle: 'Não perturbe das 22h às 8h',
+          title: 'Hor├írio Silencioso',
+          subtitle: 'N├úo perturbe das 22h ├ás 8h',
           icon: 'moon',
           type: 'toggle',
           value: preferences?.quietHours ?? false,
@@ -130,7 +126,7 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: '💎 Assinatura',
+      title: '­ƒÆÄ Assinatura',
       items: [
         {
           id: 'subscription_status',
@@ -142,8 +138,8 @@ export default function SettingsScreen() {
         },
         {
           id: 'billing_info',
-          title: 'Informações de Pagamento',
-          subtitle: 'Ver histórico e faturas',
+          title: 'Informa├º├Áes de Pagamento',
+          subtitle: 'Ver hist├│rico e faturas',
           icon: 'card',
           type: 'button',
           onPress: () => openBillingInfo(),
@@ -151,12 +147,12 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: '🔒 Privacidade e Segurança',
+      title: '­ƒöÆ Privacidade e Seguran├ºa',
       items: [
         {
           id: 'data_sync',
-          title: 'Sincronização de Dados',
-          subtitle: 'Backup automático na nuvem',
+          title: 'Sincroniza├º├úo de Dados',
+          subtitle: 'Backup autom├ítico na nuvem',
           icon: 'cloud',
           type: 'toggle',
           value: userSettings?.dataSync ?? true,
@@ -164,7 +160,7 @@ export default function SettingsScreen() {
         },
         {
           id: 'analytics',
-          title: 'Analytics Anônimos',
+          title: 'Analytics An├┤nimos',
           subtitle: 'Ajudar a melhorar o app',
           icon: 'analytics',
           type: 'toggle',
@@ -173,8 +169,8 @@ export default function SettingsScreen() {
         },
         {
           id: 'location_sharing',
-          title: 'Compartilhar Localização',
-          subtitle: 'Para cálculos astrológicos precisos',
+          title: 'Compartilhar Localiza├º├úo',
+          subtitle: 'Para c├ílculos astrol├│gicos precisos',
           icon: 'location',
           type: 'toggle',
           value: userSettings?.locationSharing ?? true,
@@ -183,11 +179,11 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: '📱 Aplicativo',
+      title: '­ƒô▒ Aplicativo',
       items: [
         {
           id: 'app_version',
-          title: 'Versão do App',
+          title: 'Vers├úo do App',
           subtitle: '1.0.0',
           icon: 'information-circle',
           type: 'link',
@@ -210,7 +206,7 @@ export default function SettingsScreen() {
         },
         {
           id: 'privacy_policy',
-          title: 'Política de Privacidade',
+          title: 'Pol├¡tica de Privacidade',
           subtitle: 'Como protegemos seus dados',
           icon: 'shield-checkmark',
           type: 'button',
@@ -227,7 +223,7 @@ export default function SettingsScreen() {
         {
           id: 'feedback',
           title: 'Enviar Feedback',
-          subtitle: 'Sua opinião é importante',
+          subtitle: 'Sua opini├úo ├® importante',
           icon: 'chatbubble-ellipses',
           type: 'button',
           onPress: () => openFeedback(),
@@ -235,13 +231,12 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: '👤 Conta',
+      title: '­ƒæñ Conta',
       items: [
-        {
         {
           id: 'export_data',
           title: 'Exportar Dados',
-          subtitle: 'Baixar seus dados astrológicos',
+          subtitle: 'Baixar seus dados astrol├│gicos',
           icon: 'download',
           type: 'button',
           onPress: () => exportData(),
@@ -277,14 +272,14 @@ export default function SettingsScreen() {
     }
   }, [userSettings?.houseSystem]);
 
-  // (Removido) Overrides de ASC – agora cálculo é sempre automático
+  // (Removido) Overrides de ASC ÔÇô agora c├ílculo ├® sempre autom├ítico
 
   const loadSettings = async () => {
     try {
-      // Carregar configurações salvas
-      // TODO: Implementar carregamento de configurações do backend
+      // Carregar configura├º├Áes salvas
+      // TODO: Implementar carregamento de configura├º├Áes do backend
     } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
+      console.error('Erro ao carregar configura├º├Áes:', error);
     }
   };
   const loadProfile = async () => {
@@ -295,6 +290,10 @@ export default function SettingsScreen() {
       const data = userDoc.data() || {};
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
       setProfilePhoto(data.profilePhoto || null);
+      setProfilePrivacy({
+        showStatusToGroups: data.preferences?.privacy?.showStatusToGroups !== false,
+        allowGroupInvites: data.preferences?.privacy?.allowGroupInvites !== false,
+      });
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
     }
@@ -302,7 +301,7 @@ export default function SettingsScreen() {
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
-      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\\/$/, "");
+      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
       if (!base) return null;
       const response = await fetch(base + "/api/upload/profile-photo", {
         method: "POST",
@@ -321,7 +320,7 @@ export default function SettingsScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permiss�o Necess�ria", "Precisamos de acesso � galeria para selecionar sua foto.");
+      Alert.alert("PermissÒo Necessßria", "Precisamos de acesso Ó galeria para selecionar sua foto.");
       return false;
     }
     return true;
@@ -334,7 +333,7 @@ export default function SettingsScreen() {
       if (source === "camera") {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== "granted") {
-          Alert.alert("Permiss�o Necess�ria", "Precisamos de acesso � c�mera.");
+          Alert.alert("PermissÒo Necessßria", "Precisamos de acesso Ó cÔmera.");
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -366,7 +365,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error("Erro ao selecionar foto:", error);
-      Alert.alert("Erro", "N�o foi poss�vel selecionar a foto. Tente novamente.");
+      Alert.alert("Erro", "NÒo foi possÝvel selecionar a foto. Tente novamente.");
     }
   };
 
@@ -407,10 +406,10 @@ export default function SettingsScreen() {
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
 
-    Alert.alert("Escolher Foto", "Como voc� gostaria de adicionar sua foto?", [
+    Alert.alert("Escolher Foto", "Como vocÛ gostaria de adicionar sua foto?", [
       { text: "Cancelar", style: "cancel" },
       { text: "Galeria", onPress: () => pickImage("gallery") },
-      { text: "C�mera", onPress: () => pickImage("camera") },
+      { text: "CÔmera", onPress: () => pickImage("camera") },
     ]);
   };
 
@@ -428,17 +427,6 @@ export default function SettingsScreen() {
         displayName: profileName || user.email?.split("@")[0] || "Usuario",
         profilePhoto: updatedPhoto || null,
       };
-  const updatePrivacyPreference = async (key: "showStatusToGroups" | "allowGroupInvites", value: boolean) => {
-    if (!user?.uid) return;
-    setProfilePrivacy((prev) => ({ ...prev, [key]: value }));
-    try {
-      await updateDoc(doc(db, "users", user.uid), {
-        [`preferences.privacy.${key}`]: value,
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar privacidade:", error);
-    }
-  };
 
       await updateDoc(doc(db, "users", user.uid), payload);
       await setDoc(doc(db, "userPublicProfiles", user.uid), {
@@ -448,9 +436,24 @@ export default function SettingsScreen() {
       Alert.alert("Sucesso", "Perfil atualizado!");
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
-      Alert.alert("Erro", "N�o foi poss�vel salvar seu perfil agora.");
+      Alert.alert("Erro", "NÒo foi possÝvel salvar seu perfil agora.");
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const updatePrivacyPreference = async (
+    key: "showStatusToGroups" | "allowGroupInvites",
+    value: boolean
+  ) => {
+    if (!user?.uid) return;
+    setProfilePrivacy((prev) => ({ ...prev, [key]: value }));
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        [`preferences.privacy.${key}`]: value,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar privacidade:", error);
     }
   };
 
@@ -470,7 +473,7 @@ export default function SettingsScreen() {
       setIsLoading(true);
       
       if (!user?.uid) {
-        Alert.alert('Erro', 'Usuário não identificado.');
+        Alert.alert('Erro', 'Usu├írio n├úo identificado.');
         return;
       }
 
@@ -483,7 +486,7 @@ export default function SettingsScreen() {
           new Date(status.expiresAt).toLocaleDateString('pt-BR') : 'N/A';
         
         Alert.alert(
-          '✅ Assinatura Ativa',
+          'Ô£à Assinatura Ativa',
           `Plano: ${planName}\nExpira em: ${expiresAt}\n\nDeseja gerenciar sua assinatura?`,
           [
             { text: 'Cancelar', style: 'cancel' },
@@ -493,8 +496,8 @@ export default function SettingsScreen() {
       } else if (MercadoPagoService.isInTrial(status)) {
         const daysRemaining = MercadoPagoService.getTrialDaysRemaining(status);
         Alert.alert(
-          '🆓 Período de Teste',
-          `Você está no período de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
+          '­ƒåô Per├¡odo de Teste',
+          `Voc├¬ est├í no per├¡odo de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
@@ -502,8 +505,8 @@ export default function SettingsScreen() {
         );
       } else {
         Alert.alert(
-          '💎 Assinatura Premium',
-          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e análises avançadas!',
+          '­ƒÆÄ Assinatura Premium',
+          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e an├ílises avan├ºadas!',
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
@@ -512,7 +515,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Erro ao verificar assinatura:', error);
-      Alert.alert('Erro', 'Não foi possível verificar o status da assinatura.');
+      Alert.alert('Erro', 'N├úo foi poss├¡vel verificar o status da assinatura.');
     } finally {
       setIsLoading(false);
     }
@@ -531,17 +534,17 @@ export default function SettingsScreen() {
     Linking.openURL('https://www.mercadopago.com.br');
   };
 
-  // Funções removidas pois agora usam os hooks
+  // Fun├º├Áes removidas pois agora usam os hooks
 
 
   const exportData = () => {
     Alert.alert(
       'Exportar Dados',
-      'Seus dados astrológicos serão exportados em formato JSON. Deseja continuar?',
+      'Seus dados astrol├│gicos ser├úo exportados em formato JSON. Deseja continuar?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Exportar', onPress: () => {
-          // TODO: Implementar exportação de dados
+          // TODO: Implementar exporta├º├úo de dados
           Alert.alert('Sucesso', 'Dados exportados com sucesso!');
         }}
       ]
@@ -550,18 +553,18 @@ export default function SettingsScreen() {
 
   const deleteAccount = () => {
     Alert.alert(
-      '⚠️ Excluir Conta',
-      'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.',
+      'ÔÜá´©Å Excluir Conta',
+      'Tem certeza que deseja excluir sua conta? Esta a├º├úo n├úo pode ser desfeita e todos os seus dados ser├úo perdidos permanentemente.',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Excluir', style: 'destructive', onPress: async () => {
           try {
             setIsLoading(true);
             await deleteUserAccount();
-            Alert.alert('✅ Conta Excluída', 'Sua conta foi excluída com sucesso.');
+            Alert.alert('Ô£à Conta Exclu├¡da', 'Sua conta foi exclu├¡da com sucesso.');
           } catch (error) {
             console.error('Erro ao excluir conta:', error);
-            Alert.alert('❌ Erro', 'Não foi possível excluir a conta. Tente novamente.');
+            Alert.alert('ÔØî Erro', 'N├úo foi poss├¡vel excluir a conta. Tente novamente.');
           } finally {
             setIsLoading(false);
           }
@@ -571,9 +574,9 @@ export default function SettingsScreen() {
   };
 
   const handleSignOut = () => {
-    console.log('🔍 handleSignOut chamado')
-    console.log('👤 Usuário atual:', user?.uid)
-    console.log('🔧 Função logout disponível:', !!logout)
+    console.log('­ƒöì handleSignOut chamado')
+    console.log('­ƒæñ Usu├írio atual:', user?.uid)
+    console.log('­ƒöº Fun├º├úo logout dispon├¡vel:', !!logout)
     
     if (Platform.OS === 'web') {
       try {
@@ -583,11 +586,11 @@ export default function SettingsScreen() {
         if (!ok) return
         setIsLoading(true)
         logout()
-          .then(() => console.log('✅ Logout (web) realizado com sucesso'))
-          .catch((error) => console.error('❌ Erro no logout (web):', error))
+          .then(() => console.log('Ô£à Logout (web) realizado com sucesso'))
+          .catch((error) => console.error('ÔØî Erro no logout (web):', error))
           .finally(() => setIsLoading(false))
       } catch (error) {
-        console.error('❌ Erro no fluxo de logout (web):', error)
+        console.error('ÔØî Erro no fluxo de logout (web):', error)
       }
       return
     }
@@ -599,14 +602,14 @@ export default function SettingsScreen() {
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Sair', style: 'destructive', onPress: async () => {
           try {
-            console.log('🚪 Iniciando processo de logout...')
+            console.log('­ƒÜ¬ Iniciando processo de logout...')
             setIsLoading(true);
             await logout();
-            console.log('✅ Logout realizado com sucesso');
-            Alert.alert('✅ Sucesso', 'Logout realizado com sucesso!');
+            console.log('Ô£à Logout realizado com sucesso');
+            Alert.alert('Ô£à Sucesso', 'Logout realizado com sucesso!');
           } catch (error) {
-            console.error('❌ Erro no logout:', error);
-            Alert.alert('❌ Erro', 'Não foi possível fazer logout. Tente novamente.');
+            console.error('ÔØî Erro no logout:', error);
+            Alert.alert('ÔØî Erro', 'N├úo foi poss├¡vel fazer logout. Tente novamente.');
           } finally {
             setIsLoading(false);
           }
@@ -641,7 +644,7 @@ export default function SettingsScreen() {
       }))
     );
 
-    // Executar ação específica
+    // Executar a├º├úo espec├¡fica
     const item = settingsSections.flatMap(s => s.items).find(i => i.id === itemId);
     if (item?.onToggle) {
       item.onToggle(value);
@@ -715,13 +718,13 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>⚙️ Configurações</Text>
+            <Text style={styles.title}>ÔÜÖ´©Å Configura├º├Áes</Text>
             <Text style={styles.subtitle}>
-              Personalize sua experiência no Tábula Estelar
+              Personalize sua experi├¬ncia no T├íbula Estelar
             </Text>
           </View>
 
-          {/* Perfil (edi��o r�pida) */}
+          {/* Perfil (ediþÒo rßpida) */}
           <View style={styles.userInfo}>
             <TouchableOpacity style={styles.avatarContainer} onPress={selectPhoto} disabled={savingProfile}>
               {profilePhoto ? (
@@ -841,15 +844,15 @@ export default function SettingsScreen() {
             </View>
           ))}
 
-          {/* Seção de Casas removida */}
+          {/* Se├º├úo de Casas removida */}
 
           {/* App Info */}
           <View style={styles.appInfo}>
             <Text style={styles.appInfoText}>
-              Tábula Estelar v1.0.0
+              T├íbula Estelar v1.0.0
             </Text>
             <Text style={styles.appInfoSubtext}>
-              Desenvolvido com ❤️ para sua jornada astrológica
+              Desenvolvido com ÔØñ´©Å para sua jornada astrol├│gica
             </Text>
           </View>
         </ScrollView>
@@ -911,23 +914,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
+  },
   avatarImage: {
     width: 60,
     height: 60,
     borderRadius: 30,
   },
   avatarEditBadge: {
-    position: "absolute",
+    position: 'absolute',
     right: -2,
     bottom: -2,
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#FFD700",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-    marginRight: 15,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarText: {
     fontSize: 24,
@@ -955,20 +958,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#b0b0b0',
   },
-  section: {
   saveProfileButton: {
     marginTop: 10,
-    backgroundColor: "#2C2C2E",
+    backgroundColor: '#2C2C2E',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
   },
   saveProfileText: {
-    color: "#FFD700",
+    color: '#FFD700',
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
+  section: {
     marginBottom: 30,
     paddingHorizontal: 20,
   },
@@ -1104,6 +1107,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-
-
