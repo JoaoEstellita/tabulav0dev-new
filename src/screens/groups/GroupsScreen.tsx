@@ -20,10 +20,10 @@ import GroupService, { type Group, type GroupMember, type GroupAlert, type Group
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
-import GroupCard from "../../components/GroupCard"
 import GroupDetailModal from "../../components/GroupDetailModal"
 import GroupNotificationSettings from "../../components/GroupNotificationSettings"
 import InviteService from "../../services/InviteService"
+import Avatar from "../../components/Avatar"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -431,6 +431,46 @@ export default function GroupsScreen() {
     }
   }
 
+  const getStatusRank = (status?: string) => {
+    switch (status) {
+      case "critical":
+        return 0
+      case "challenging":
+        return 1
+      case "neutral":
+        return 2
+      case "positive":
+        return 3
+      case "excellent":
+        return 4
+      default:
+        return 5
+    }
+  }
+
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case "critical":
+        return "Critico"
+      case "challenging":
+        return "Desafiador"
+      case "neutral":
+        return "Neutro"
+      case "positive":
+        return "Positivo"
+      case "excellent":
+        return "Otimo"
+      default:
+        return "Neutro"
+    }
+  }
+
+  const getStatusBucket = (status?: string) => {
+    if (status === "critical" || status === "challenging") return "critical"
+    if (status === "positive" || status === "excellent") return "positive"
+    return "neutral"
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "critical":
@@ -447,6 +487,34 @@ export default function GroupsScreen() {
         return "help-circle"
     }
   }
+
+  const sortedMembers = [...groupMembers].sort((a, b) => {
+    const aStatus = a.astrologicalStatus?.overall
+    const bStatus = b.astrologicalStatus?.overall
+    const rankDiff = getStatusRank(aStatus) - getStatusRank(bStatus)
+    if (rankDiff !== 0) return rankDiff
+    return a.displayName.localeCompare(b.displayName)
+  })
+
+  const statusCounts = sortedMembers.reduce(
+    (acc, member) => {
+      const bucket = getStatusBucket(member.astrologicalStatus?.overall)
+      acc[bucket] += 1
+      return acc
+    },
+    { critical: 0, neutral: 0, positive: 0 }
+  )
+
+  const lastStatusUpdate = sortedMembers.reduce<Date | null>((latest, member) => {
+    const update = member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : null
+    if (!update || Number.isNaN(update.getTime())) return latest
+    if (!latest || update.getTime() > latest.getTime()) return update
+    return latest
+  }, null)
+
+  const highlightMembers = sortedMembers
+    .filter((member) => getStatusBucket(member.astrologicalStatus?.overall) === "critical")
+    .slice(0, 3)
 
   if (loading) {
     return (
@@ -535,9 +603,65 @@ export default function GroupsScreen() {
               </View>
             </View>
 
+            {/* Painel de status */}
+            <View style={styles.statusPanel}>
+              <View style={styles.statusHeader}>
+                <Text style={styles.sectionTitle}>Status do Grupo</Text>
+                <Text style={styles.statusUpdated}>
+                  {lastStatusUpdate
+                    ? `Atualizado ${lastStatusUpdate.toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
+                    : "Sem atualizacao recente"}
+                </Text>
+              </View>
+              <View style={styles.statusCounters}>
+                <View style={[styles.statusCounter, styles.statusCounterCritical]}>
+                  <Text style={styles.statusCounterValue}>{statusCounts.critical}</Text>
+                  <Text style={styles.statusCounterLabel}>Criticos</Text>
+                </View>
+                <View style={[styles.statusCounter, styles.statusCounterNeutral]}>
+                  <Text style={styles.statusCounterValue}>{statusCounts.neutral}</Text>
+                  <Text style={styles.statusCounterLabel}>Neutros</Text>
+                </View>
+                <View style={[styles.statusCounter, styles.statusCounterPositive]}>
+                  <Text style={styles.statusCounterValue}>{statusCounts.positive}</Text>
+                  <Text style={styles.statusCounterLabel}>Otimos</Text>
+                </View>
+              </View>
+              <View style={styles.statusHighlights}>
+                <Text style={styles.statusHighlightTitle}>Precisa de atencao</Text>
+                {highlightMembers.length === 0 ? (
+                  <Text style={styles.statusEmpty}>Sem membros criticos agora</Text>
+                ) : (
+                  highlightMembers.map((member) => (
+                    <View key={member.userId} style={styles.statusHighlightRow}>
+                      <Text style={styles.statusHighlightName}>{member.displayName}</Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { borderColor: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusBadgeText,
+                            { color: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
+                          ]}
+                        >
+                          {getStatusLabel(member.astrologicalStatus?.overall)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
+            </View>
+
             {/* Acoes de Notificacao */}
             <View style={styles.notificationActionsSection}>
-              <Text style={styles.sectionTitle}>Acoes do Grupo</Text>
+              <Text style={styles.sectionTitle}>Mensagem do Grupo</Text>
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity 
                   style={[styles.actionButton, styles.messageButton]} 
@@ -587,38 +711,62 @@ export default function GroupsScreen() {
 
             {/* NOVA INTERFACE: Cards de Grupos Modernos */}
             <View style={styles.groupsCardsSection}>
-              <Text style={styles.sectionTitle}>Membros do Grupo</Text>
-              
-              {/* Card do Grupo Atual */}
-              <GroupCard
-                group={selectedGroup}
-                members={groupMembers}
-                onPress={() => {
-                  setSelectedGroupForDetail(selectedGroup)
-                  setShowGroupDetail(true)
-                }}
-              />
-
-              {/* Cards dos Membros */}
-              {groupMembers.map((member) => (
-                <GroupCard
-                  key={member.userId}
-                  group={{
-                    id: member.userId,
-                    name: member.displayName,
-                    description: member.email,
-                    createdAt: new Date(),
-                    createdBy: member.userId,
-                    members: [member.userId],
-                    isPrivate: false
-                  }}
-                  members={[member]}
-                  onPress={() => {
-                    // Abrir modal de detalhes do membro
-                    Alert.alert('Perfil do Membro', `Ver detalhes de ${member.displayName}`)
-                  }}
-                />
-              ))}
+              <View style={styles.membersSection}>
+                <Text style={styles.sectionTitle}>Membros</Text>
+                {sortedMembers.map((member) => (
+                  <TouchableOpacity
+                    key={member.userId}
+                    style={styles.memberRow}
+                    onPress={() => {
+                      Alert.alert("Perfil do Membro", `Ver detalhes de ${member.displayName}`)
+                    }}
+                  >
+                    <Avatar
+                      photoUrl={member.profilePhoto}
+                      name={member.displayName}
+                      size="medium"
+                      showStatus
+                      status={
+                        member.astrologicalStatus?.overall === "critical"
+                          ? "busy"
+                          : member.astrologicalStatus?.overall === "positive" ||
+                            member.astrologicalStatus?.overall === "excellent"
+                          ? "online"
+                          : "offline"
+                      }
+                    />
+                    <View style={styles.memberRowInfo}>
+                      <View style={styles.memberRowHeader}>
+                        <Text style={styles.memberRowName}>{member.displayName}</Text>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            { borderColor: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusBadgeText,
+                              { color: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
+                            ]}
+                          >
+                            {getStatusLabel(member.astrologicalStatus?.overall)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.memberRowMeta}>{member.email}</Text>
+                      <Text style={styles.memberRowUpdate}>
+                        {member.lastStatusUpdate
+                          ? `Atualizado ${new Date(member.lastStatusUpdate).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}`
+                          : "Sem atualizacao recente"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             {/* Feed de Alertas */}
@@ -628,6 +776,18 @@ export default function GroupsScreen() {
                 <View key={alert.id} style={styles.alertCard}>
                   <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
                   <View style={styles.alertContent}>
+                    <View style={styles.alertMeta}>
+                      <View
+                        style={[
+                          styles.alertTag,
+                          { borderColor: getStatusColor(alert.status), backgroundColor: "#2C2C2E" },
+                        ]}
+                      >
+                        <Text style={[styles.alertTagText, { color: getStatusColor(alert.status) }]}>
+                          {getStatusLabel(alert.status)}
+                        </Text>
+                      </View>
+                    </View>
                     <Text style={styles.alertText}>
                       <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
                     </Text>
@@ -993,6 +1153,40 @@ const styles = StyleSheet.create({
   membersSection: {
     marginBottom: 24,
   },
+  memberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#1C1C1E",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  memberRowInfo: {
+    flex: 1,
+  },
+  memberRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  memberRowName: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "600",
+    flex: 1,
+  },
+  memberRowMeta: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  memberRowUpdate: {
+    color: "#666",
+    fontSize: 11,
+    marginTop: 4,
+  },
   memberCard: {
     backgroundColor: "#1C1C1E",
     borderRadius: 12,
@@ -1045,6 +1239,21 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+  },
+  alertMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  alertTag: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  alertTagText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
   emptyState: {
     flex: 1,
@@ -1548,6 +1757,95 @@ const styles = StyleSheet.create({
     color: "#E5E5E5",
     fontSize: 12,
     flexShrink: 1,
+  },
+  statusPanel: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+  },
+  statusHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  statusUpdated: {
+    color: "#888",
+    fontSize: 12,
+  },
+  statusCounters: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+  },
+  statusCounter: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  statusCounterCritical: {
+    borderColor: "rgba(255, 68, 68, 0.6)",
+    backgroundColor: "rgba(255, 68, 68, 0.08)",
+  },
+  statusCounterNeutral: {
+    borderColor: "rgba(136, 136, 136, 0.6)",
+    backgroundColor: "rgba(136, 136, 136, 0.08)",
+  },
+  statusCounterPositive: {
+    borderColor: "rgba(68, 170, 68, 0.6)",
+    backgroundColor: "rgba(68, 170, 68, 0.08)",
+  },
+  statusCounterValue: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  statusCounterLabel: {
+    color: "#CCCCCC",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  statusHighlights: {
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderRadius: 12,
+    padding: 12,
+  },
+  statusHighlightTitle: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  statusHighlightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  statusHighlightName: {
+    color: "#E5E5E5",
+    fontSize: 13,
+    flex: 1,
+    marginRight: 8,
+  },
+  statusEmpty: {
+    color: "#888",
+    fontSize: 12,
+  },
+  statusBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
 })
 
