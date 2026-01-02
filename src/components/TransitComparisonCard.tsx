@@ -20,27 +20,25 @@ interface TransitComparisonCardProps {
   housesCusps?: number[]
   lifeAreas?: Record<string, any>
 }
-const ELEMENT_ICONS = {
-  fire: '\uD83D\uDD25',
-  earth: '\uD83C\uDF0D',
-  air: '\uD83D\uDCA8',
-  water: '\uD83D\uDCA7',
-  // Portugues
-  fogo: '\uD83D\uDD25',
-  terra: '\uD83C\uDF0D',
-  ar: '\uD83D\uDCA8',
-  agua: '\uD83D\uDCA7'
-} as const
+const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  fire: 'flame',
+  earth: 'leaf',
+  air: 'cloud',
+  water: 'water',
+  fogo: 'flame',
+  terra: 'leaf',
+  ar: 'cloud',
+  agua: 'water'
+}
 
-const MODALITY_ICONS = {
-  cardinal: '\u26A1',
-  fixed: '\u25A0',
-  mutable: '\uD83D\uDD04',
-  // Portugues
-  cardeal: '\u26A1',
-  fixo: '\u25A0',
-  mutavel: '\uD83D\uDD04'
-} as const
+const MODALITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  cardinal: 'flash',
+  fixed: 'square',
+  mutable: 'repeat',
+  cardeal: 'flash',
+  fixo: 'square',
+  mutavel: 'repeat'
+}
 
 const ASPECT_ICONS = {
   conjuncao: '\u260C',
@@ -156,24 +154,40 @@ export default function TransitComparisonCard({
     return translations[planetName] || planetName
   }
 
+  const normalizeKey = (value: string): string => {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   const translateElement = (element: string): string => {
     const translations: { [key: string]: string } = {
       fire: 'Fogo',
       earth: 'Terra',
       air: 'Ar',
-      water: 'Agua'
+      water: 'Agua',
+      fogo: 'Fogo',
+      terra: 'Terra',
+      ar: 'Ar',
+      agua: 'Agua'
     }
-    return translations[element] || element
+    const key = normalizeKey(element)
+    return translations[key] || element
   }
 
-const translateModality = (modality: string): string => {
+  const translateModality = (modality: string): string => {
     const translations: { [key: string]: string } = {
       cardinal: 'Cardeal',
       fixed: 'Fixo',
-      mutable: 'Mutavel'
+      mutable: 'Mutavel',
+      cardeal: 'Cardeal',
+      fixo: 'Fixo',
+      mutavel: 'Mutavel'
     }
-  return translations[modality] || modality
-}
+    const key = normalizeKey(modality)
+    return translations[key] || modality
+  }
 
   const formatStatusLabel = (status: string | null) => {
     if (!status) return ''
@@ -189,8 +203,8 @@ const translateModality = (modality: string): string => {
 
   const getSignFromDegree = (degree: number): string => {
     const signs = [
-      'Aries', 'Touro', 'Gemeos', 'Cancer', 'Leao', 'Virgem',
-      'Libra', 'Escorpiao', 'Sagitario', 'Capricornio', 'Aquario', 'Peixes'
+      '\u00c1ries', 'Touro', 'G\u00eameos', 'C\u00e2ncer', 'Le\u00e3o', 'Virgem',
+      'Libra', 'Escorpi\u00e3o', 'Sagit\u00e1rio', 'Capric\u00f3rnio', 'Aqu\u00e1rio', 'Peixes'
     ]
     const signIndex = Math.floor(degree / 30) % 12
     return signs[signIndex]
@@ -308,9 +322,10 @@ const translateModality = (modality: string): string => {
               <Text style={styles.comparisonLabel}>Natal:</Text>
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
-                  <Text key={element} style={styles.elementalItem}>
-                    {ELEMENT_ICONS[element as keyof typeof ELEMENT_ICONS]}{count}
-                  </Text>
+                  <View key={element} style={styles.elementalItem}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeKey(element)] || 'help'} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -318,9 +333,10 @@ const translateModality = (modality: string): string => {
               <Text style={styles.comparisonLabel}>Atual:</Text>
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
-                  <Text key={element} style={styles.elementalItem}>
-                    {ELEMENT_ICONS[element as keyof typeof ELEMENT_ICONS]}{count}
-                  </Text>
+                  <View key={element} style={styles.elementalItem}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeKey(element)] || 'help'} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -335,9 +351,10 @@ const translateModality = (modality: string): string => {
               <Text style={styles.comparisonLabel}>Natal:</Text>
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
-                  <Text key={modality} style={styles.elementalItem}>
-                    {MODALITY_ICONS[modality as keyof typeof MODALITY_ICONS]}{count}
-                  </Text>
+                  <View key={modality} style={styles.elementalItem}>
+                    <Ionicons name={MODALITY_ICONS[normalizeKey(modality)] || 'help'} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -345,9 +362,10 @@ const translateModality = (modality: string): string => {
               <Text style={styles.comparisonLabel}>Atual:</Text>
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
-                  <Text key={modality} style={styles.elementalItem}>
-                    {MODALITY_ICONS[modality as keyof typeof MODALITY_ICONS]}{count}
-                  </Text>
+                  <View key={modality} style={styles.elementalItem}>
+                    <Ionicons name={MODALITY_ICONS[normalizeKey(modality)] || 'help'} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -411,12 +429,14 @@ const translateModality = (modality: string): string => {
                   {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
                 </Text>
                 <View style={styles.attributesRow}>
-                  <Text style={styles.attributeChip}>
-                    {ELEMENT_ICONS[comparison.natal.element]} {translateElement(comparison.natal.element)}
-                  </Text>
-                  <Text style={styles.attributeChip}>
-                    {MODALITY_ICONS[comparison.natal.modality]} {translateModality(comparison.natal.modality)}
-                  </Text>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeKey(comparison.natal.element)] || 'help'} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateElement(comparison.natal.element)}</Text>
+                  </View>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={MODALITY_ICONS[normalizeKey(comparison.natal.modality)] || 'help'} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateModality(comparison.natal.modality)}</Text>
+                  </View>
                 </View>
               </View>
 
@@ -428,12 +448,14 @@ const translateModality = (modality: string): string => {
                   {comparison.current.isRetrograde && ' ℞'}
                 </Text>
                 <View style={styles.attributesRow}>
-                  <Text style={styles.attributeChip}>
-                    {ELEMENT_ICONS[comparison.current.element]} {translateElement(comparison.current.element)}
-                  </Text>
-                  <Text style={styles.attributeChip}>
-                    {MODALITY_ICONS[comparison.current.modality]} {translateModality(comparison.current.modality)}
-                  </Text>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeKey(comparison.current.element)] || 'help'} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateElement(comparison.current.element)}</Text>
+                  </View>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={MODALITY_ICONS[normalizeKey(comparison.current.modality)] || 'help'} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateModality(comparison.current.modality)}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -447,7 +469,7 @@ const translateModality = (modality: string): string => {
                 const info = nearestCuspInfo(comparison.current.longitude)
                 if (info && info.distance <= 0.5) {
                   return (
-                    <Text style={styles.nearCuspChip}>{`prox. cuspide ${info.house} (${info.distance.toFixed(2)} deg)`}</Text>
+                    <Text style={styles.nearCuspChip}>{`prox. cuspide ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
                   )
                 }
                 return null
@@ -465,7 +487,7 @@ const translateModality = (modality: string): string => {
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
                       <Text style={styles.aspectText}>
                         {translatePlanetName(t.transitPlanet)} {t.type} {translatePlanetName(t.natalPlanet)}
-                        {' '}({t.orb.toFixed(1)} deg{t.isApplying ? ', aplicante' : ', separante'})
+                        {' '}({t.orb.toFixed(1)}°{t.isApplying ? ', aplicante' : ', separante'})
                       </Text>
                       <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
                         <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
@@ -484,7 +506,7 @@ const translateModality = (modality: string): string => {
                     <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
                     <Text style={styles.aspectText}>
                       {translatePlanetName(aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1)}
-                      ({aspect.orb.toFixed(1)} deg orbe)
+                      ({aspect.orb.toFixed(1)}° orbe)
                     </Text>
                     <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(aspect.type) }]}>
                       <Text style={styles.aspectStrengthText}>{aspect.strength.toFixed(0)}%</Text>
@@ -503,7 +525,7 @@ const translateModality = (modality: string): string => {
                     <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
                     <Text style={styles.aspectText}>
                       Casa {houseAspect.house} - {houseAspect.meaning}
-                      ({houseAspect.orb.toFixed(1)} deg orbe)
+                      ({houseAspect.orb.toFixed(1)}° orbe)
                     </Text>
                     <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(houseAspect.aspect) }]}>
                       <Text style={styles.aspectStrengthText}>{houseAspect.strength.toFixed(0)}%</Text>
@@ -595,10 +617,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   elementalItem: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 8,
     marginBottom: 2,
+  },
+  elementalItemText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginLeft: 4,
   },
   changesSection: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -671,14 +698,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   attributeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: '#FFFFFF',
-    fontSize: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginRight: 4,
     marginBottom: 2,
+  },
+  attributeChipText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    marginLeft: 4,
   },
   aspectsSection: {
     marginTop: 12,
@@ -817,6 +849,13 @@ const styles = StyleSheet.create({
   },
   // 🌌 Estilos das casas removidos (não implementadas)
 })
+
+
+
+
+
+
+
 
 
 

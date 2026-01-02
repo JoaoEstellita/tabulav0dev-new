@@ -1,4 +1,4 @@
-Ôªøimport React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -61,7 +61,7 @@ export default function HomeScreen() {
       [transitData?.currentTransits, transitData?.lifeAreas]
     )
 
-    // üéØ Fun√ß√£o para abrir modal de detalhes
+    // ?? FunÁ„o para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
       setSelectedArea({
         name: areaName,
@@ -73,7 +73,7 @@ export default function HomeScreen() {
     const safeWarnings = React.useMemo(() => {
       if (!transitData?.warnings) return []
       if (!Array.isArray(transitData.warnings)) {
-        console.warn('‚ö†Ô∏è safeWarnings: warnings n√£o √© array:', typeof transitData.warnings)
+        console.warn('?? safeWarnings: warnings n„o È array:', typeof transitData.warnings)
         return []
       }
       return transitData.warnings
@@ -120,11 +120,11 @@ export default function HomeScreen() {
       if (!user) return
 
       try {
-        console.log('üì± Inicializando notifica√ß√µes push...')
-        // TODO: Implementar notifica√ß√µes push quando o servi√ßo estiver dispon√≠vel
-        console.log('‚úÖ Notifica√ß√µes push configuradas com sucesso')
+        console.log('?? Inicializando notificaÁıes push...')
+        // TODO: Implementar notificaÁıes push quando o serviÁo estiver disponÌvel
+        console.log('? NotificaÁıes push configuradas com sucesso')
       } catch (error) {
-        console.error('‚ùå Erro ao inicializar notifica√ß√µes:', error)
+        console.error('? Erro ao inicializar notificaÁıes:', error)
       }
     }
 
@@ -136,12 +136,12 @@ export default function HomeScreen() {
         if (userDoc.exists()) {
           const userData = userDoc.data()
           setUserProfile({
-            displayName: userData.displayName || userData.fullName || 'Usu√°rio',
+            displayName: userData.displayName || userData.fullName || 'Usu·rio',
             profilePhoto: userData.profilePhoto
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do usu√°rio:', error)
+        console.error('Erro ao carregar perfil do usu·rio:', error)
       }
     }
 
@@ -156,13 +156,13 @@ export default function HomeScreen() {
         await sendCriticalAlerts()
         Alert.alert(
           'Alertas Enviados',
-          'Seus alertas cr√≠ticos foram enviados para todos os grupos!',
+          'Seus alertas crÌticos foram enviados para todos os grupos!',
           [{ text: 'OK', style: 'default' }]
         )
       } catch (error) {
         Alert.alert(
           'Erro',
-          'N√£o foi poss√≠vel enviar os alertas. Tente novamente.',
+          'N„o foi possÌvel enviar os alertas. Tente novamente.',
           [{ text: 'OK', style: 'default' }]
         )
       }
@@ -172,7 +172,7 @@ export default function HomeScreen() {
       if (userProfile?.displayName) return userProfile.displayName
       if (user?.displayName) return user.displayName
       if (user?.email) return user.email.split('@')[0]
-      return 'Usu√°rio'
+      return 'Usu·rio'
     }
 
     const formatDate = () => {
@@ -185,13 +185,13 @@ export default function HomeScreen() {
 
     const criticalAreas = React.useMemo(() => {
       if (!transitData?.lifeAreas) {
-        console.log('üîç criticalAreas: transitData.lifeAreas √© undefined')
+        console.log('?? criticalAreas: transitData.lifeAreas È undefined')
         return []
       }
 
       try {
         const entries = safeEntries(transitData.lifeAreas)
-        console.log('üîç criticalAreas: safeEntries retornou', entries.length, 'entradas')
+        console.log('?? criticalAreas: safeEntries retornou', entries.length, 'entradas')
 
         const filtered = entries.filter(([_, area]) => {
           const value = typeof area?.percentage === 'number' ? area.percentage : null
@@ -200,10 +200,10 @@ export default function HomeScreen() {
         })
 
         const mapped = filtered.map(([name, area]) => ({ name, ...area }))
-        console.log('üîç criticalAreas: encontradas', mapped.length, '√°reas cr√≠ticas')
+        console.log('?? criticalAreas: encontradas', mapped.length, '·reas crÌticas')
         return mapped
       } catch (error) {
-        console.error('‚ùå criticalAreas: erro ao processar:', error)
+        console.error('? criticalAreas: erro ao processar:', error)
         return []
       }
     }, [transitData?.lifeAreas])
@@ -213,7 +213,7 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.loadingContainer}>
             <StarLoader size={36} color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando seus tr√¢nsitos...</Text>
+            <Text style={styles.loadingText}>Carregando seus tr‚nsitos...</Text>
           </View>
         </LinearGradient>
       )
@@ -276,7 +276,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Ol√°, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>Ol·, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
@@ -301,20 +301,37 @@ export default function HomeScreen() {
             })()}
           </View>
 
-          {/* Status das √Åreas de Vida */}
+          {transitData && (
+            <AnimatedMount>
+              <View style={styles.topImpactBlock}>
+                <HomeImpactSummary
+                  impactNodes={impactNodes}
+                  lifeAreas={transitData.lifeAreas}
+                />
+                <TouchableOpacity
+                  style={styles.timelineCta}
+                  onPress={() => navigation.navigate('PlanetTimeline')}
+                >
+                  <Text style={styles.timelineCtaText}>Linha do tempo planetaria</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
+                </TouchableOpacity>
+              </View>
+            </AnimatedMount>
+          )}
+          {/* Status das ¡reas de Vida */}
           {transitData?.lifeAreas && (
             <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="grid" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Status das √Åreas de Vida</Text>
+                <Text style={styles.sectionTitle}>Status das ¡reas de Vida</Text>
               </View>
 
               <View style={styles.lifeAreasGrid}>
                 {safeEntries(transitData.lifeAreas).map(([name, area], index) => {
-                  // üõ°Ô∏è Prote√ß√£o extra para cada √°rea
+                  // ??? ProteÁ„o extra para cada ·rea
                   if (!area || typeof area !== 'object') {
-                    console.warn('‚ö†Ô∏è LifeArea inv√°lida:', { name, area })
+                    console.warn('?? LifeArea inv·lida:', { name, area })
                     return null
                   }
 
@@ -333,14 +350,6 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
-          {transitData && (
-            <AnimatedMount>
-              <HomeImpactSummary
-                impactNodes={impactNodes}
-                lifeAreas={transitData.lifeAreas}
-              />
-            </AnimatedMount>
-          )}
 
           {transitData?.currentTransits?.planetComparisons &&
           transitData?.currentTransits?.chartSummary && (
@@ -360,17 +369,18 @@ export default function HomeScreen() {
                   housesCusps={transitData.currentTransits.houses}
                   lifeAreas={transitData.lifeAreas}
                 />
+                
               </View>
             </AnimatedMount>
           )}
 
-          {/* Alertas Cr√≠ticos */}
+          {/* Alertas CrÌticos */}
           {criticalAreas.length > 0 && (
             <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="warning" size={20} color="#EF4444" />
-                <Text style={styles.sectionTitle}>√Åreas Cr√≠ticas</Text>
+                <Text style={styles.sectionTitle}>¡reas CrÌticas</Text>
               </View>
 
               <LinearGradient
@@ -378,11 +388,11 @@ export default function HomeScreen() {
                 style={styles.alertCard}
               >
                 <Text style={styles.alertTitle}>
-                  {criticalAreas.length} {criticalAreas.length === 1 ? '√°rea precisa' : '√°reas precisam'} de aten√ß√£o
+                  {criticalAreas.length} {criticalAreas.length === 1 ? '·rea precisa' : '·reas precisam'} de atenÁ„o
                 </Text>
 
                 <Text style={styles.alertDescription}>
-                  Seus tr√¢nsitos indicam desafios em algumas √°reas. Compartilhe com seu grupo para receber apoio!
+                  Seus tr‚nsitos indicam desafios em algumas ·reas. Compartilhe com seu grupo para receber apoio!
                 </Text>
 
                 {(() => {
@@ -401,12 +411,12 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
-          {/* Orienta√ß√µes */}
+          {/* OrientaÁıes */}
           {safeWarnings.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="information-circle" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Orienta√ß√µes</Text>
+                <Text style={styles.sectionTitle}>OrientaÁıes</Text>
               </View>
 
               {safeWarnings.map((warning, index) => (
@@ -418,11 +428,11 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Espa√ßamento final */}
+          {/* EspaÁamento final */}
           <View style={styles.bottomSpacing} />
         </ScrollView>
 
-        {/* üéØ MODAL DE DETALHES DA √ÅREA */}
+        {/* ?? MODAL DE DETALHES DA ¡REA */}
         <LifeAreaDetailModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -437,7 +447,7 @@ export default function HomeScreen() {
       </LinearGradient>
     )
   } catch (error) {
-    console.error('üö® ERRO CR√çTICO NO HOMESCREEN:', error)
+    console.error('?? ERRO CRÕTICO NO HOMESCREEN:', error)
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -678,6 +688,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  timelineCta: {
+    marginTop: 12,
+    backgroundColor: '#FDE68A',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timelineCtaText: {
+    color: '#0F0F23',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  topImpactBlock: {
+    marginBottom: 12,
+  },
   lifeAreasGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -753,3 +781,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   }
 })
+
+
+
+
+
+
+
+
+
+
