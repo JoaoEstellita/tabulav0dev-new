@@ -358,6 +358,7 @@ export default function HomeScreen() {
                   natalAscendant={transitData.currentTransits.natalAscendant}
                   natalMidheaven={transitData.currentTransits.natalMidheaven}
                   housesCusps={transitData.currentTransits.houses}
+                  lifeAreas={transitData.lifeAreas}
                 />
               </View>
             </AnimatedMount>

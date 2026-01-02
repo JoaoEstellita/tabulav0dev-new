@@ -18,6 +18,7 @@ interface TransitComparisonCardProps {
   natalAscendant?: number
   natalMidheaven?: number
   housesCusps?: number[]
+  lifeAreas?: Record<string, any>
 }
 const ELEMENT_ICONS = {
   fire: '\uD83D\uDD25',
@@ -72,6 +73,17 @@ const PLANET_ICONS: Record<string, string> = {
   Pluto: '\u2647'
 }
 
+const AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Financas',
+  saude: 'Saude',
+  familia: 'Familia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicacao',
+  transformacao: 'Transformacao'
+}
+
 export default function TransitComparisonCard({ 
   planetComparisons, 
   chartSummary,
@@ -79,7 +91,8 @@ export default function TransitComparisonCard({
   midheaven,
   natalAscendant,
   natalMidheaven,
-  housesCusps
+  housesCusps,
+  lifeAreas
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
@@ -210,6 +223,34 @@ export default function TransitComparisonCard({
       return null
     }
   }, [housesCusps])
+
+  const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
+    if (!lifeAreas || typeof lifeAreas !== 'object') return []
+    const translated = translatePlanetName(planetName).toLowerCase()
+    return Object.entries(lifeAreas)
+      .map(([areaKey, data]) => {
+        const influences = Array.isArray((data as any)?.influences) ? (data as any).influences : []
+        const mainPlanets = Array.isArray((data as any)?.mainPlanets) ? (data as any).mainPlanets : []
+        const matchMain = mainPlanets.includes(planetName)
+        const matchInfluence = influences.filter((text: string) => {
+          const lower = String(text || '').toLowerCase()
+          return lower.includes(planetName.toLowerCase()) || lower.includes(translated)
+        })
+        if (!matchMain && matchInfluence.length === 0) return null
+        return {
+          areaKey,
+          percentage: typeof (data as any)?.percentage === 'number' ? (data as any).percentage : null,
+          status: (data as any)?.status || null,
+          influences: matchInfluence.length ? matchInfluence : influences.slice(0, 2)
+        }
+      })
+      .filter(Boolean) as Array<{
+        areaKey: string
+        percentage: number | null
+        status: string | null
+        influences: string[]
+      }>
+  }, [lifeAreas])
 
   return (
     <LinearGradient
@@ -446,6 +487,29 @@ export default function TransitComparisonCard({
                 ))}
               </View>
             )}
+
+            {(() => {
+              const areaInfluences = getAreaInfluencesForPlanet(comparison.name)
+              if (!areaInfluences.length) return null
+              return (
+                <View style={styles.aspectsSection}>
+                  <Text style={styles.aspectsTitle}>Influencias nas areas:</Text>
+                  {areaInfluences.map((area, areaIndex) => (
+                    <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
+                      <Text style={styles.influenceArea}>
+                        {AREA_LABELS[area.areaKey] || area.areaKey}
+                        {typeof area.percentage === 'number' ? ` (${Math.round(area.percentage)}%)` : ''}
+                      </Text>
+                      {area.influences.slice(0, 2).map((text, idx) => (
+                        <Text key={`${area.areaKey}-inf-${idx}`} style={styles.influenceText}>
+                          • {text}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              )
+            })()}
           </View>
         ))}
 
@@ -598,6 +662,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  influenceRow: {
+    marginBottom: 8,
+  },
+  influenceArea: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  influenceText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    marginLeft: 2,
+    marginBottom: 2,
   },
   toggleGroup: {
     flexDirection: 'row',

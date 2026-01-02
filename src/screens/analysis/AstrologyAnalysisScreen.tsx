@@ -2,6 +2,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
+import { Ionicons } from '@expo/vector-icons'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import PlanetaryFlowMap from './PlanetaryFlowMap'
 import PredictiveTimeline from './PredictiveTimeline'
@@ -34,6 +35,13 @@ export default function AstrologyAnalysisScreen() {
             Relacao qualitativa entre planetas e areas impactadas (apoio ou pressao).
           </Text>
           <PlanetaryFlowMap impactNodes={impactNodes} />
+          <TouchableOpacity
+            style={styles.timelineButton}
+            onPress={() => navigation.navigate('PlanetTimeline')}
+          >
+            <Text style={styles.timelineButtonText}>Abrir linha do tempo planetaria</Text>
+            <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -108,6 +116,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
+    color: '#0F0F23',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timelineButton: {
+    marginTop: 12,
+    backgroundColor: '#FDE68A',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timelineButtonText: {
     color: '#0F0F23',
     fontSize: 13,
     fontWeight: '700',
