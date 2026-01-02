@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
-import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, orderBy, limit } from "firebase/firestore"
+import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
@@ -57,6 +57,7 @@ interface UnifiedNotification {
   source: "user" | "group"
   groupId?: string
   groupName?: string
+  area?: string | null
   status?: string | null
   isRead?: boolean
 }
@@ -161,8 +162,7 @@ export default function ProfileScreen() {
       const userNotificationsQuery = query(
         collection(db, "notifications"),
         where("userId", "==", user.uid),
-        orderBy("createdAt", "desc"),
-        limit(30)
+        limit(40)
       )
       const userSnapshot = await getDocs(userNotificationsQuery)
       userSnapshot.docs.forEach((docSnap) => {
@@ -173,6 +173,7 @@ export default function ProfileScreen() {
           body: data.body || data.message || "",
           createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
           source: "user",
+          area: data.area || data.lifeArea || null,
           status: data.status || null,
           isRead: data.isRead ?? false,
         })
@@ -194,8 +195,7 @@ export default function ProfileScreen() {
         const alertsQuery = query(
           collection(db, "groupAlerts"),
           where("groupId", "==", group.id),
-          orderBy("createdAt", "desc"),
-          limit(10)
+          limit(20)
         )
         const alertSnapshot = await getDocs(alertsQuery)
         alertSnapshot.docs.forEach((docSnap) => {
@@ -209,6 +209,7 @@ export default function ProfileScreen() {
             source: "group",
             groupId,
             groupName: groupsById[groupId],
+            area: data.area || data.lifeArea || data.life_area || null,
             status: data.status || data.type || null,
             isRead: data.isRead ?? false,
           })
@@ -815,6 +816,11 @@ export default function ProfileScreen() {
                         {item.groupName && (
                           <View style={styles.notificationTag}>
                             <Text style={styles.notificationTagText}>{item.groupName}</Text>
+                          </View>
+                        )}
+                        {item.area && (
+                          <View style={styles.notificationTag}>
+                            <Text style={styles.notificationTagText}>{item.area}</Text>
                           </View>
                         )}
                         {item.status && (

@@ -38,6 +38,11 @@ const LIFE_AREA_OPTIONS = [
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
 
+const LIFE_AREA_LABELS = LIFE_AREA_OPTIONS.reduce((acc, area) => {
+  acc[area.key] = area.label
+  return acc
+}, {} as Record<string, string>)
+
 const formatLifeAreas = (areas?: string[]) => {
   if (!areas || areas.length === 0) return "Todas as areas"
   return areas
@@ -502,21 +507,100 @@ export default function GroupsScreen() {
     }
   }
 
+  const resolveMemberLifeAreas = (member: GroupMember) => {
+    return member.lifeAreas || member.astrologicalStatus?.lifeAreas || {}
+  }
+
+  const resolveSharedAreas = (member: GroupMember) => {
+    if (member.sharedLifeAreas && member.sharedLifeAreas.length) return member.sharedLifeAreas
+    if (selectedGroup?.sharedLifeAreas && selectedGroup.sharedLifeAreas.length) return selectedGroup.sharedLifeAreas
+    return LIFE_AREA_KEYS
+  }
+
+  const mapPercentageToBucket = (percentage?: number | null) => {
+    if (typeof percentage !== "number") return "neutral"
+    if (percentage >= 60) return "positive"
+    if (percentage >= 40) return "attention"
+    return "critical"
+  }
+
+  const mapBucketToColor = (bucket: string) => {
+    switch (bucket) {
+      case "critical":
+        return "#FF6B6B"
+      case "attention":
+        return "#F2B94B"
+      case "positive":
+        return "#3CCF91"
+      default:
+        return "#888888"
+    }
+  }
+
+  const buildMemberAreaEntries = (member: GroupMember) => {
+    const lifeAreas = resolveMemberLifeAreas(member)
+    const sharedAreas = resolveSharedAreas(member)
+    return sharedAreas
+      .map((key) => {
+        const data = (lifeAreas as any)?.[key]
+        if (!data) return null
+        const percentage = typeof data.percentage === "number" ? data.percentage : null
+        const bucket = mapPercentageToBucket(percentage)
+        return {
+          key,
+          label: LIFE_AREA_LABELS[key] || key,
+          percentage,
+          bucket,
+        }
+      })
+      .filter((entry): entry is { key: string; label: string; percentage: number | null; bucket: string } => !!entry)
+  }
+
+  const getMemberWorstArea = (member: GroupMember) => {
+    const entries = buildMemberAreaEntries(member).filter((entry) => typeof entry.percentage === "number")
+    if (!entries.length) return null
+    return entries.reduce((worst, entry) => (entry.percentage! < worst.percentage! ? entry : worst), entries[0])
+  }
+
+  const getMemberSummaryBucket = (member: GroupMember) => {
+    const worst = getMemberWorstArea(member)
+    if (worst && typeof worst.percentage === "number") {
+      return mapPercentageToBucket(worst.percentage)
+    }
+    const overall = member.astrologicalStatus?.overall
+    if (overall === "critical" || overall === "challenging") return "critical"
+    if (overall === "positive" || overall === "excellent") return "positive"
+    return "attention"
+  }
+
+  const getSummaryRank = (bucket: string) => {
+    switch (bucket) {
+      case "critical":
+        return 0
+      case "attention":
+        return 1
+      case "positive":
+        return 2
+      default:
+        return 3
+    }
+  }
+
   const sortedMembers = [...groupMembers].sort((a, b) => {
-    const aStatus = a.astrologicalStatus?.overall
-    const bStatus = b.astrologicalStatus?.overall
-    const rankDiff = getStatusRank(aStatus) - getStatusRank(bStatus)
+    const aBucket = getMemberSummaryBucket(a)
+    const bBucket = getMemberSummaryBucket(b)
+    const rankDiff = getSummaryRank(aBucket) - getSummaryRank(bBucket)
     if (rankDiff !== 0) return rankDiff
     return a.displayName.localeCompare(b.displayName)
   })
 
   const statusCounts = sortedMembers.reduce(
     (acc, member) => {
-      const bucket = getStatusBucket(member.astrologicalStatus?.overall)
+      const bucket = getMemberSummaryBucket(member)
       acc[bucket] += 1
       return acc
     },
-    { critical: 0, neutral: 0, positive: 0 }
+    { critical: 0, attention: 0, positive: 0 }
   )
 
   const lastStatusUpdate = sortedMembers.reduce<Date | null>((latest, member) => {
@@ -527,7 +611,7 @@ export default function GroupsScreen() {
   }, null)
 
   const highlightMembers = sortedMembers
-    .filter((member) => getStatusBucket(member.astrologicalStatus?.overall) === "critical")
+    .filter((member) => getMemberSummaryBucket(member) === "critical")
     .slice(0, 3)
 
   if (loading) {
@@ -574,28 +658,23 @@ export default function GroupsScreen() {
 
         {selectedGroup && (
           <>
-            {/* Visao geral do grupo */}
-            <View style={styles.groupFocusCard}>
-              <View style={styles.groupFocusHeader}>
-                <View>
-                  <Text style={styles.groupFocusTitle}>{selectedGroup.name}</Text>
-                  <Text style={styles.groupFocusSubtitle}>
-                    {selectedGroup.description || "Grupo astrologico"}
-                  </Text>
+            <View style={styles.groupHeaderCard}>
+              <View style={styles.groupHeaderTop}>
+                <View style={styles.groupHeaderTitles}>
+                  <Text style={styles.groupHeaderTitle}>{selectedGroup.name}</Text>
+                  <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrologico"}</Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.groupFocusManage}
+                  style={styles.groupHeaderManage}
                   onPress={() => {
                     setSelectedGroupForDetail(selectedGroup)
                     setShowGroupDetail(true)
                   }}
                 >
-                  <Ionicons name="options" size={18} color="#0a0e27" />
-                  <Text style={styles.groupFocusManageText}>Gerenciar</Text>
+                  <Ionicons name="ellipsis-horizontal" size={18} color="#0a0e27" />
                 </TouchableOpacity>
               </View>
-
-              <View style={styles.groupFocusMeta}>
+              <View style={styles.groupHeaderMeta}>
                 <View style={styles.groupMetaChip}>
                   <Ionicons name="people" size={14} color="#FFD700" />
                   <Text style={styles.groupMetaText}>
@@ -603,101 +682,117 @@ export default function GroupsScreen() {
                   </Text>
                 </View>
                 <View style={styles.groupMetaChip}>
-                  <Ionicons name="share-social" size={14} color="#FFD700" />
+                  <Ionicons name="grid" size={14} color="#FFD700" />
                   <Text style={styles.groupMetaText}>
-                    {formatLifeAreas(selectedGroup.sharedLifeAreas)}
-                  </Text>
-                </View>
-                <View style={styles.groupMetaChip}>
-                  <Ionicons name="notifications" size={14} color="#FFD700" />
-                  <Text style={styles.groupMetaText}>
-                    {formatLifeAreas(selectedGroup.notifiedLifeAreas)}
+                    {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} areas
                   </Text>
                 </View>
               </View>
             </View>
 
-            {/* Painel de status */}
-            <View style={styles.statusPanel}>
-              <View style={styles.statusHeader}>
-                <View>
-                  <Text style={styles.sectionTitle}>Status do Grupo</Text>
-                  <Text style={styles.statusUpdated}>
-                    {lastStatusUpdate
-                      ? `Atualizado ha ${formatRelativeTime(lastStatusUpdate)}`
-                      : "Sem atualizacao recente"}
-                  </Text>
-                </View>
+            <View style={styles.groupSummaryCard}>
+              <View style={styles.groupSummaryHeader}>
+                <Text style={styles.sectionTitle}>Status geral</Text>
                 <TouchableOpacity style={styles.statusActionButton} onPress={openGroupSettings}>
-                  <Ionicons name="options" size={16} color="#FFD700" />
+                  <Ionicons name="options" size={14} color="#FFD700" />
                   <Text style={styles.statusActionText}>Preferencias</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.statusCounters}>
-                <View style={[styles.statusCounter, styles.statusCounterCritical]}>
-                  <Text style={styles.statusCounterValue}>{statusCounts.critical}</Text>
-                  <Text style={styles.statusCounterLabel}>Criticos</Text>
+              <Text style={styles.statusUpdated}>
+                Atualizado {lastStatusUpdate ? `ha ${formatRelativeTime(lastStatusUpdate)}` : "agora"}
+              </Text>
+              <View style={styles.groupSummaryCounters}>
+                <View style={[styles.groupSummaryCounter, styles.summaryCritical]}>
+                  <Text style={styles.groupSummaryValue}>{statusCounts.critical}</Text>
+                  <Text style={styles.groupSummaryLabel}>Criticos</Text>
                 </View>
-                <View style={[styles.statusCounter, styles.statusCounterNeutral]}>
-                  <Text style={styles.statusCounterValue}>{statusCounts.neutral}</Text>
-                  <Text style={styles.statusCounterLabel}>Neutros</Text>
+                <View style={[styles.groupSummaryCounter, styles.summaryAttention]}>
+                  <Text style={styles.groupSummaryValue}>{statusCounts.attention}</Text>
+                  <Text style={styles.groupSummaryLabel}>Atencao</Text>
                 </View>
-                <View style={[styles.statusCounter, styles.statusCounterPositive]}>
-                  <Text style={styles.statusCounterValue}>{statusCounts.positive}</Text>
-                  <Text style={styles.statusCounterLabel}>Otimos</Text>
+                <View style={[styles.groupSummaryCounter, styles.summaryPositive]}>
+                  <Text style={styles.groupSummaryValue}>{statusCounts.positive}</Text>
+                  <Text style={styles.groupSummaryLabel}>Positivos</Text>
                 </View>
               </View>
-              <View style={styles.statusHighlights}>
-                <Text style={styles.statusHighlightTitle}>Precisa de atencao</Text>
-                {highlightMembers.length === 0 ? (
-                  <Text style={styles.statusEmpty}>Sem membros criticos agora</Text>
-                ) : (
-                  highlightMembers.map((member) => (
-                    <View key={member.userId} style={styles.statusHighlightRow}>
-                      <Text style={styles.statusHighlightName}>{member.displayName}</Text>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          { borderColor: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusBadgeText,
-                            { color: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
-                          ]}
-                        >
-                          {getStatusLabel(member.astrologicalStatus?.overall)}
-                        </Text>
-                      </View>
-                    </View>
-                  ))
-                )}
-              </View>
+              {statusCounts.critical > 0 ? (
+                <Text style={styles.groupSummaryHint}>Precisa de atencao</Text>
+              ) : (
+                <Text style={styles.groupSummaryHint}>Sem membros em status critico-social</Text>
+              )}
             </View>
 
-            {/* Acoes de Notificacao */}
-            <View style={styles.notificationActionsSection}>
-              <Text style={styles.sectionTitle}>Mensagem do Grupo</Text>
+            {highlightMembers.length > 0 && (
+              <View style={styles.attentionCard}>
+                <View style={styles.attentionHeader}>
+                  <Text style={styles.sectionTitle}>Precisa de atencao</Text>
+                  {sortedMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
+                    <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
+                      <Text style={styles.attentionLink}>Ver todos</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {highlightMembers.map((member) => {
+                  const worst = getMemberWorstArea(member)
+                  const percentage = typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null
+                  const bucket = worst ? worst.bucket : getMemberSummaryBucket(member)
+                  return (
+                    <View key={member.userId} style={styles.attentionRow}>
+                      <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
+                      <View style={styles.attentionInfo}>
+                        <Text style={styles.attentionName}>{member.displayName}</Text>
+                        <Text style={styles.attentionMeta}>
+                          {worst ? worst.label : "Area indisponivel"}{" "}
+                          {percentage !== null ? `• ${percentage}%` : ""}
+                        </Text>
+                      </View>
+                      <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
+                        {member.lastStatusUpdate
+                          ? `${formatRelativeTime(member.lastStatusUpdate)}`
+                          : "Agora"}
+                      </Text>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+
+            <View style={styles.groupActionsCard}>
+              <Text style={styles.sectionTitle}>Acoes do grupo</Text>
               <View style={styles.actionButtonsRow}>
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.messageButton]} 
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.messageButton]}
                   onPress={() => setShowMessageModal(true)}
                   disabled={sendingNotification}
                 >
-                  <Ionicons name="chatbubble" size={20} color="#FFFFFF" />
+                  <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
                   <Text style={styles.actionButtonText}>Mensagem</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.alertButton]}
+                  onPress={() => setFeedFilter("alerts")}
+                >
+                  <Ionicons name="notifications" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Alertas</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.settingsButton]}
+                  onPress={openGroupSettings}
+                >
+                  <Ionicons name="settings" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Preferencias</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            
-            {/* Alertas Criticos */}
 
-            {/* NOVA INTERFACE: Cards de Grupos Modernos */}
-            <View style={styles.groupsCardsSection}>
             <View style={styles.membersSection}>
               <Text style={styles.sectionTitle}>Membros</Text>
-              {sortedMembers.map((member) => (
+              {sortedMembers.map((member) => {
+                const entries = buildMemberAreaEntries(member)
+                const chips = entries.slice(0, 5)
+                const extra = entries.length - chips.length
+                const summaryBucket = getMemberSummaryBucket(member)
+                return (
                   <TouchableOpacity
                     key={member.userId}
                     style={styles.memberRow}
@@ -705,108 +800,100 @@ export default function GroupsScreen() {
                       Alert.alert("Perfil do Membro", `Ver detalhes de ${member.displayName}`)
                     }}
                   >
-                    <Avatar
-                      photoUrl={member.profilePhoto}
-                      name={member.displayName}
-                      size="medium"
-                      showStatus
-                      status={
-                        member.astrologicalStatus?.overall === "critical"
-                          ? "busy"
-                          : member.astrologicalStatus?.overall === "positive" ||
-                            member.astrologicalStatus?.overall === "excellent"
-                          ? "online"
-                          : "offline"
-                      }
-                    />
+                    <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="medium" />
                     <View style={styles.memberRowInfo}>
                       <View style={styles.memberRowHeader}>
                         <Text style={styles.memberRowName}>{member.displayName}</Text>
-                        <View
-                          style={[
-                            styles.statusBadge,
-                            { borderColor: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
-                          ]}
-                        >
-                          <Text
+                        <View style={[styles.memberStatusDot, { backgroundColor: mapBucketToColor(summaryBucket) }]} />
+                      </View>
+                      <Text style={styles.memberRowUpdate}>
+                        {member.lastStatusUpdate
+                          ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                          : "Sem atualizacao recente"}
+                      </Text>
+                      <View style={styles.memberAreaRow}>
+                        {chips.map((entry) => (
+                          <View
+                            key={`${member.userId}-${entry.key}`}
                             style={[
-                              styles.statusBadgeText,
-                              { color: getStatusColor(member.astrologicalStatus?.overall || "neutral") },
+                              styles.memberAreaChip,
+                              { borderColor: mapBucketToColor(entry.bucket) },
                             ]}
                           >
-                            {getStatusLabel(member.astrologicalStatus?.overall)}
-                          </Text>
-                        </View>
+                            <Text style={[styles.memberAreaText, { color: mapBucketToColor(entry.bucket) }]}>
+                              {entry.label}
+                            </Text>
+                          </View>
+                        ))}
+                        {extra > 0 && (
+                          <View style={styles.memberAreaChip}>
+                            <Text style={styles.memberAreaText}>+{extra}</Text>
+                          </View>
+                        )}
                       </View>
-                      <Text style={styles.memberRowMeta}>{member.email}</Text>
-                    <Text style={styles.memberRowUpdate}>
-                      {member.lastStatusUpdate
-                        ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                        : "Sem atualizacao recente"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
             </View>
 
-            {/* Feed de Alertas */}
             <View style={styles.alertsSection}>
-              <Text style={styles.sectionTitle}>Feed do Grupo</Text>
-            <View style={styles.feedTabs}>
-              {[
-                { key: "all", label: "Todos" },
-                { key: "messages", label: "Mensagens" },
-                { key: "alerts", label: "Alertas" },
-              ].map((tab) => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[styles.feedTab, feedFilter === tab.key && styles.feedTabActive]}
-                  onPress={() => setFeedFilter(tab.key as typeof feedFilter)}
-                >
-                  <Text style={[styles.feedTabText, feedFilter === tab.key && styles.feedTabTextActive]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {(groupAlerts || [])
-              .filter((alert) => {
-                if (feedFilter === "all") return true
-                const type = alert.type || "event"
-                const isMessage = type === "custom_message"
-                return feedFilter === "messages" ? isMessage : !isMessage
-              })
-              .slice(0, 10)
-              .map((alert) => (
-              <View key={alert.id} style={styles.alertCard}>
-                <Ionicons name={getStatusIcon(alert.status) as any} size={20} color={getStatusColor(alert.status)} />
-                <View style={styles.alertContent}>
-                  <View style={styles.alertMeta}>
-                    <View style={[styles.alertTag, styles.alertTagType]}>
-                      <Text style={[styles.alertTagText, styles.alertTagTypeText]}>
-                        {(alert.type || "event") === "custom_message" ? "Mensagem" : "Alerta"}
-                      </Text>
-                    </View>
-                    <View style={[styles.alertTag, { borderColor: getStatusColor(alert.status), backgroundColor: "#2C2C2E" }]}>
-                      <Text style={[styles.alertTagText, { color: getStatusColor(alert.status) }]}>
-                        {getStatusLabel(alert.status)}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.alertText}>
-                    <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
-                  </Text>
-                  <Text style={styles.alertTime}>
-                    {alert.createdAt?.toLocaleDateString("pt-BR")} s{" "}
-                      {alert.createdAt?.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }) || "Agora"}
+              <Text style={styles.sectionTitle}>Feed do grupo</Text>
+              <View style={styles.feedTabs}>
+                {[
+                  { key: "all", label: "Todos" },
+                  { key: "messages", label: "Mensagens" },
+                  { key: "alerts", label: "Alertas" },
+                ].map((tab) => (
+                  <TouchableOpacity
+                    key={tab.key}
+                    style={[styles.feedTab, feedFilter === tab.key && styles.feedTabActive]}
+                    onPress={() => setFeedFilter(tab.key as typeof feedFilter)}
+                  >
+                    <Text style={[styles.feedTabText, feedFilter === tab.key && styles.feedTabTextActive]}>
+                      {tab.label}
                     </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {(groupAlerts || [])
+                .filter((alert) => {
+                  if (feedFilter === "all") return true
+                  const type = alert.type || "event"
+                  const isMessage = type === "custom_message"
+                  return feedFilter === "messages" ? isMessage : !isMessage
+                })
+                .slice(0, 10)
+                .map((alert) => (
+                  <View key={alert.id} style={styles.feedItem}>
+                    <View style={styles.feedIcon}>
+                      <Ionicons name={getStatusIcon(alert.status) as any} size={16} color={getStatusColor(alert.status)} />
+                    </View>
+                    <View style={styles.feedContent}>
+                      <View style={styles.feedMeta}>
+                        <View style={[styles.feedTag, styles.feedTagType]}>
+                          <Text style={[styles.feedTagText, styles.feedTagTypeText]}>
+                            {(alert.type || "event") === "custom_message" ? "Mensagem" : "Alerta"}
+                          </Text>
+                        </View>
+                        <View style={[styles.feedTag, { borderColor: getStatusColor(alert.status) }]}>
+                          <Text style={[styles.feedTagText, { color: getStatusColor(alert.status) }]}>
+                            {getStatusLabel(alert.status)}
+                          </Text>
+                        </View>
+                        {alert.area && (
+                          <View style={styles.feedTag}>
+                            <Text style={styles.feedTagText}>{LIFE_AREA_LABELS[alert.area] || alert.area}</Text>
+                          </View>
+                        )}
+                        <Text style={styles.feedTime}>{formatRelativeTime(alert.createdAt)}</Text>
+                      </View>
+                      <Text style={styles.feedMessage}>
+                        <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
             </View>
           </>
         )}
@@ -1177,6 +1264,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
+  memberStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
   memberRowName: {
     color: "#FFFFFF",
     fontSize: 15,
@@ -1192,6 +1284,24 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 11,
     marginTop: 4,
+  },
+  memberAreaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  memberAreaChip: {
+    borderWidth: 1,
+    borderColor: "#2C2C2E",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  memberAreaText: {
+    color: "#CCCCCC",
+    fontSize: 10,
+    fontWeight: "600",
   },
   memberCard: {
     backgroundColor: "#1C1C1E",
@@ -1245,6 +1355,62 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+  },
+  feedItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#1C1C1E",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  feedIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#2C2C2E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  feedContent: {
+    flex: 1,
+  },
+  feedMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 6,
+  },
+  feedTag: {
+    borderWidth: 1,
+    borderColor: "#2C2C2E",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  feedTagType: {
+    borderColor: "#4A90E2",
+    backgroundColor: "rgba(74, 144, 226, 0.12)",
+  },
+  feedTagText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#CCCCCC",
+  },
+  feedTagTypeText: {
+    color: "#4A90E2",
+  },
+  feedTime: {
+    color: "#8A8AA8",
+    fontSize: 10,
+    marginLeft: "auto",
+  },
+  feedMessage: {
+    color: "#E5E5E5",
+    fontSize: 12,
+    lineHeight: 16,
   },
   alertMeta: {
     flexDirection: "row",
@@ -1624,6 +1790,12 @@ const styles = StyleSheet.create({
   messageButton: {
     backgroundColor: "#4A90E2",
   },
+  alertButton: {
+    backgroundColor: "#E67E22",
+  },
+  settingsButton: {
+    backgroundColor: "#6C63FF",
+  },
   actionButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
@@ -1719,6 +1891,47 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "rgba(255, 215, 0, 0.2)",
+  },
+  groupHeaderCard: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+  },
+  groupHeaderTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 12,
+  },
+  groupHeaderTitles: {
+    flex: 1,
+  },
+  groupHeaderTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  groupHeaderSubtitle: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  groupHeaderManage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFD700",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  groupHeaderMeta: {
+    flexDirection: "row",
+    gap: 10,
+    flexWrap: "wrap",
   },
   groupFocusHeader: {
     flexDirection: "row",
@@ -1825,6 +2038,109 @@ const styles = StyleSheet.create({
   statusCounterPositive: {
     borderColor: "rgba(68, 170, 68, 0.6)",
     backgroundColor: "rgba(68, 170, 68, 0.08)",
+  },
+  groupSummaryCard: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+  },
+  groupSummaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  groupSummaryCounters: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  groupSummaryCounter: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  summaryCritical: {
+    borderColor: "rgba(255, 107, 107, 0.5)",
+    backgroundColor: "rgba(255, 107, 107, 0.08)",
+  },
+  summaryAttention: {
+    borderColor: "rgba(242, 185, 75, 0.5)",
+    backgroundColor: "rgba(242, 185, 75, 0.08)",
+  },
+  summaryPositive: {
+    borderColor: "rgba(60, 207, 145, 0.5)",
+    backgroundColor: "rgba(60, 207, 145, 0.08)",
+  },
+  groupSummaryValue: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  groupSummaryLabel: {
+    color: "#CCCCCC",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  groupSummaryHint: {
+    color: "#AAAAAA",
+    fontSize: 12,
+    marginTop: 12,
+  },
+  attentionCard: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.2)",
+  },
+  attentionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  attentionLink: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  attentionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+  },
+  attentionInfo: {
+    flex: 1,
+  },
+  attentionName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  attentionMeta: {
+    color: "#AAAAAA",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  attentionStatus: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  groupActionsCard: {
+    backgroundColor: "#14142b",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   statusCounterValue: {
     color: "#FFFFFF",
