@@ -6,7 +6,6 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import PlanetaryFlowMap from './PlanetaryFlowMap'
 import PredictiveTimeline from './PredictiveTimeline'
 import { buildImpactNodes } from '../home/impact/buildImpactNodes'
-import TransitComparisonCard from '../../components/TransitComparisonCard'
 
 export default function AstrologyAnalysisScreen() {
   const navigation = useNavigation<any>()
@@ -27,29 +26,6 @@ export default function AstrologyAnalysisScreen() {
           <Text style={styles.helper}>
             Tudo aqui indica tendencias em movimento, nunca determinacoes.
           </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tabela de transitos planetarios</Text>
-          <Text style={styles.sectionBody}>
-            Leitura comparativa entre posicoes natais e atuais, com aspectos ativos e casas envolvidas.
-          </Text>
-          {transitData?.currentTransits?.planetComparisons &&
-          transitData?.currentTransits?.chartSummary ? (
-            <TransitComparisonCard
-              planetComparisons={transitData.currentTransits.planetComparisons}
-              chartSummary={transitData.currentTransits.chartSummary}
-              ascendant={transitData.currentTransits.ascendant}
-              midheaven={transitData.currentTransits.midheaven}
-              natalAscendant={transitData.currentTransits.natalAscendant}
-              natalMidheaven={transitData.currentTransits.natalMidheaven}
-              housesCusps={transitData.currentTransits.houses}
-            />
-          ) : (
-            <Text style={styles.sectionBody}>
-              Sem dados suficientes para montar a tabela agora. Atualize seus dados astrológicos.
-            </Text>
-          )}
         </View>
 
         <View style={styles.section}>

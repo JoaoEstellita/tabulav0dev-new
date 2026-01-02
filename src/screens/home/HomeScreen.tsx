@@ -30,6 +30,7 @@ import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseS
 import { usePressScale } from '../../ui/motion/native/micro'
 import HomeImpactSummary from './impact/HomeImpactSummary'
 import { buildImpactNodes } from './impact/buildImpactNodes'
+import TransitComparisonCard from '../../components/TransitComparisonCard'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -341,29 +342,23 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
-          {transitData?.currentTransits && (
+          {transitData?.currentTransits?.planetComparisons &&
+          transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="swap-horizontal" size={20} color="#FFD700" />
                   <Text style={styles.sectionTitle}>Transitos comparativos</Text>
                 </View>
-                <View style={styles.transitSummaryCard}>
-                  <Text style={styles.transitSummaryText}>
-                    Planetas comparados: {transitData.currentTransits.planetComparisons?.length || 0}
-                  </Text>
-                  <Text style={styles.transitSummaryText}>
-                    Aspectos ativos: {transitData.currentTransits.aspects?.length || 0}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.transitSummaryButton}
-                    onPress={() => navigation.navigate('AstrologyAnalysis')}
-                  >
-                    <Text style={styles.transitSummaryButtonText}>
-                      Ver analise completa dos transitos
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <TransitComparisonCard
+                  planetComparisons={transitData.currentTransits.planetComparisons}
+                  chartSummary={transitData.currentTransits.chartSummary}
+                  ascendant={transitData.currentTransits.ascendant}
+                  midheaven={transitData.currentTransits.midheaven}
+                  natalAscendant={transitData.currentTransits.natalAscendant}
+                  natalMidheaven={transitData.currentTransits.natalMidheaven}
+                  housesCusps={transitData.currentTransits.houses}
+                />
               </View>
             </AnimatedMount>
           )}
@@ -681,32 +676,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  transitSummaryCard: {
-    margin: 16,
-    borderRadius: 14,
-    padding: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  transitSummaryText: {
-    color: '#E2E8F0',
-    fontSize: 13,
-    marginBottom: 6,
-  },
-  transitSummaryButton: {
-    marginTop: 8,
-    backgroundColor: '#FDE68A',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  transitSummaryButtonText: {
-    color: '#0F0F23',
-    fontSize: 12,
-    fontWeight: '700',
   },
   lifeAreasGrid: {
     flexDirection: 'row',
