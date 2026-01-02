@@ -1,12 +1,12 @@
-/**
- * 🌟 REAL ASTROLOGY ENGINE 🌟
+﻿/**
+ * ðŸŒŸ REAL ASTROLOGY ENGINE ðŸŒŸ
  * 
- * Sistema de cálculos astrológicos com dados REAIS usando:
- * - Astronomy Engine: Precisão NASA para posições planetárias
- * - Ephemeris: Cálculos astronômicos profissionais
- * - Algoritmos astrológicos tradicionais
+ * Sistema de cÃ¡lculos astrolÃ³gicos com dados REAIS usando:
+ * - Astronomy Engine: PrecisÃ£o NASA para posiÃ§Ãµes planetÃ¡rias
+ * - Ephemeris: CÃ¡lculos astronÃ´micos profissionais
+ * - Algoritmos astrolÃ³gicos tradicionais
  * 
- * GARANTIA: Dados 100% reais, sem simulações ou aproximações
+ * GARANTIA: Dados 100% reais, sem simulaÃ§Ãµes ou aproximaÃ§Ãµes
  */
 
 import * as Astronomy from 'astronomy-engine'
@@ -20,47 +20,47 @@ import { computeHousesUTC } from '../../astro/houses'
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { getPlanetHouse } from '../../astro/houses.math'
-// Removido Ephemeris não utilizado
+// Removido Ephemeris nÃ£o utilizado
 
 export interface RealPlanetPosition {
   name: string
-  longitude: number // Graus eclípticos (0-360)
+  longitude: number // Graus eclÃ­pticos (0-360)
   latitude: number
-  distance: number // UA (Unidades Astronômicas)
+  distance: number // UA (Unidades AstronÃ´micas)
   speed: number // Graus por dia
   sign: string // Signo zodiacal
   degree: number // Grau dentro do signo (0-30)
-  house: number // Casa astrológica (1-12)
+  house: number // Casa astrolÃ³gica (1-12)
   isRetrograde: boolean
-  // 🌟 NOVO: Status planetário integrado
+  // ðŸŒŸ NOVO: Status planetÃ¡rio integrado
   planetaryStatus?: PlanetaryStatus
 }
 
 export interface RealAspect {
   planet1: string
   planet2: string
-  type: string // conjunção, oposição, trígono, quadratura, sextil
-  orb: number // Diferença em graus do aspecto exato
-  isApplying: boolean // Se o aspecto está se formando ou se separando
-  strength: number // Força do aspecto (0-100)
+  type: string // conjunÃ§Ã£o, oposiÃ§Ã£o, trÃ­gono, quadratura, sextil
+  orb: number // DiferenÃ§a em graus do aspecto exato
+  isApplying: boolean // Se o aspecto estÃ¡ se formando ou se separando
+  strength: number // ForÃ§a do aspecto (0-100)
 }
 
-// 🌍 Análise Elemental
+// ðŸŒ AnÃ¡lise Elemental
 export interface ElementalAnalysis {
-  fire: number    // 🔥 Planetas em signos de fogo
-  earth: number   // 🌍 Planetas em signos de terra  
-  air: number     // 💨 Planetas em signos de ar
-  water: number   // 💧 Planetas em signos de água
+  fire: number    // ðŸ”¥ Planetas em signos de fogo
+  earth: number   // ðŸŒ Planetas em signos de terra  
+  air: number     // ðŸ’¨ Planetas em signos de ar
+  water: number   // ðŸ’§ Planetas em signos de Ã¡gua
 }
 
-// ⚡ Análise de Modalidades
+// âš¡ AnÃ¡lise de Modalidades
 export interface ModalityAnalysis {
-  cardinal: number  // ⚡ Planetas em signos cardinais
-  fixed: number     // 🔒 Planetas em signos fixos
-  mutable: number   // 🔄 Planetas em signos mutáveis
+  cardinal: number  // âš¡ Planetas em signos cardinais
+  fixed: number     // ðŸ”’ Planetas em signos fixos
+  mutable: number   // ðŸ”„ Planetas em signos mutÃ¡veis
 }
 
-// 🏠 Aspectos com Casas
+// ðŸ  Aspectos com Casas
 export interface HouseAspect {
   house: number
   cusp: number
@@ -70,7 +70,7 @@ export interface HouseAspect {
   strength: number
 }
 
-// 📊 Comparação Completa de Planetas
+// ðŸ“Š ComparaÃ§Ã£o Completa de Planetas
 export interface PlanetComparison {
   name: string
   natal: {
@@ -93,7 +93,7 @@ export interface PlanetComparison {
   houseAspects: HouseAspect[]
 }
 
-// 🌟 Resumo da Carta
+// ðŸŒŸ Resumo da Carta
 export interface ChartSummary {
   elemental: {
     natal: ElementalAnalysis
@@ -107,7 +107,7 @@ export interface ChartSummary {
   }
 }
 
-// 🌟 NOVO: Análise de Status Planetários
+// ðŸŒŸ NOVO: AnÃ¡lise de Status PlanetÃ¡rios
 export interface PlanetaryStatusAnalysis {
   overallScore: number
   overallLevel: PlanetaryStatusLevel
@@ -127,12 +127,12 @@ export interface RealAstrologyData {
   timestamp: string
   planets: RealPlanetPosition[]
   aspects: RealAspect[]
-  houses: number[] // Cúspides das casas
+  houses: number[] // CÃºspides das casas
   ascendant: number
   midheaven: number
   housesApproximate?: boolean
   houseSystem?: HouseSystem
-  // Índice Coletivo (T→T) e fase lunar
+  // Ãndice Coletivo (Tâ†’T) e fase lunar
   collective?: {
     positive: number
     negative: number
@@ -140,7 +140,7 @@ export interface RealAstrologyData {
     lunarPhase: {
       name: 'Nova' | 'Crescente' | 'Cheia' | 'Minguante'
       waxing: boolean
-      elongation: number // 0..180 distância Sol-Lua
+      elongation: number // 0..180 distÃ¢ncia Sol-Lua
     }
   }
   collectiveWeekly?: { key: string, keyAspects: Array<RealAspect & { orbAllowed?: number; relSpeed?: number; windowDays?: number }> }
@@ -157,7 +157,7 @@ export interface RealAstrologyData {
       isApplying: boolean
       strength: number
       natalHouseImpacted: number
-      durationClass?: 'curto' | 'médio' | 'longo'
+      durationClass?: 'curto' | 'mÃ©dio' | 'longo'
       seriesId?: string
       contactPhase?: 'direct' | 'retro'
       isMaster?: boolean
@@ -171,34 +171,34 @@ export interface RealAstrologyData {
       isApplying: boolean
       strength: number
       natalHouseImpacted: number
-      durationClass?: 'curto' | 'médio' | 'longo'
+      durationClass?: 'curto' | 'mÃ©dio' | 'longo'
     }>>
   }
   statusPersonal?: {
     score: number
-    level: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crítico'
+    level: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crÃ­tico'
     highlights: string[]
   }
   lifeAreas: {
     [area: string]: {
       percentage: number
-      status: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crítico'
+      status: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'crÃ­tico'
       influences: string[]
       mainPlanets: string[]
     }
   }
-  // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
-  natalPlanets: RealPlanetPosition[] // Posições natais
+  // ðŸŒŸ NOVAS FUNCIONALIDADES GRATUITAS
+  natalPlanets: RealPlanetPosition[] // PosiÃ§Ãµes natais
   natalAscendant: number // Ascendente natal
-  natalMidheaven: number // Meio do Céu natal
+  natalMidheaven: number // Meio do CÃ©u natal
   natalHousesApproximate?: boolean
   natalHouses?: number[]
-  planetComparisons: PlanetComparison[] // Comparação natal vs atual
+  planetComparisons: PlanetComparison[] // ComparaÃ§Ã£o natal vs atual
   chartSummary: ChartSummary // Resumo elemental e modalidades
   houseAspects: HouseAspect[] // Aspectos com casas
-  // 🌟 NOVO: Análise completa de status planetários
+  // ðŸŒŸ NOVO: AnÃ¡lise completa de status planetÃ¡rios
   planetaryStatusAnalysis?: PlanetaryStatusAnalysis
-  // 🧭 Logs estruturados para UI (detalhamento por área)
+  // ðŸ§­ Logs estruturados para UI (detalhamento por Ã¡rea)
   debug?: {
     lifeAreas: {
       [area: string]: {
@@ -231,33 +231,33 @@ export class RealAstrologyEngine {
   ]
 
   private static readonly SIGNS = [
-    'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
-    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
+    'Ãries', 'Touro', 'GÃªmeos', 'CÃ¢ncer', 'LeÃ£o', 'Virgem',
+    'Libra', 'EscorpiÃ£o', 'SagitÃ¡rio', 'CapricÃ³rnio', 'AquÃ¡rio', 'Peixes'
   ]
 
-  // 🌍 Classificação dos Elementos
+  // ðŸŒ ClassificaÃ§Ã£o dos Elementos
   private static readonly SIGN_ELEMENTS = {
-    'Áries': 'fire', 'Leão': 'fire', 'Sagitário': 'fire',
-    'Touro': 'earth', 'Virgem': 'earth', 'Capricórnio': 'earth',
-    'Gêmeos': 'air', 'Libra': 'air', 'Aquário': 'air',
-    'Câncer': 'water', 'Escorpião': 'water', 'Peixes': 'water'
+    'Ãries': 'fire', 'LeÃ£o': 'fire', 'SagitÃ¡rio': 'fire',
+    'Touro': 'earth', 'Virgem': 'earth', 'CapricÃ³rnio': 'earth',
+    'GÃªmeos': 'air', 'Libra': 'air', 'AquÃ¡rio': 'air',
+    'CÃ¢ncer': 'water', 'EscorpiÃ£o': 'water', 'Peixes': 'water'
   } as const
 
-  // ⚡ Classificação das Modalidades
+  // âš¡ ClassificaÃ§Ã£o das Modalidades
   private static readonly SIGN_MODALITIES = {
-    'Áries': 'cardinal', 'Câncer': 'cardinal', 'Libra': 'cardinal', 'Capricórnio': 'cardinal',
-    'Touro': 'fixed', 'Leão': 'fixed', 'Escorpião': 'fixed', 'Aquário': 'fixed',
-    'Gêmeos': 'mutable', 'Virgem': 'mutable', 'Sagitário': 'mutable', 'Peixes': 'mutable'
+    'Ãries': 'cardinal', 'CÃ¢ncer': 'cardinal', 'Libra': 'cardinal', 'CapricÃ³rnio': 'cardinal',
+    'Touro': 'fixed', 'LeÃ£o': 'fixed', 'EscorpiÃ£o': 'fixed', 'AquÃ¡rio': 'fixed',
+    'GÃªmeos': 'mutable', 'Virgem': 'mutable', 'SagitÃ¡rio': 'mutable', 'Peixes': 'mutable'
   } as const
 
-  // 🏠 Significados das Casas
+  // ðŸ  Significados das Casas
   private static readonly HOUSE_MEANINGS = {
-    1: 'Identidade', 2: 'Recursos', 3: 'Comunicação', 4: 'Lar', 
-    5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'Transformação',
-    9: 'Expansão', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
+    1: 'Identidade', 2: 'Recursos', 3: 'ComunicaÃ§Ã£o', 4: 'Lar', 
+    5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'TransformaÃ§Ã£o',
+    9: 'ExpansÃ£o', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
   } as const
 
-  // Cache simples do índice coletivo por dia (UTC)
+  // Cache simples do Ã­ndice coletivo por dia (UTC)
   private static _collectiveCache: Map<string, NonNullable<RealAstrologyData['collective']>> = new Map()
   // Cache Coletivo semanal/mensal (chaves: YYYY-Www e YYYY-MM)
   private static _weeklyTTCache: Map<string, RealAspect[]> = new Map()
@@ -290,26 +290,26 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Calcula dados astrológicos REAIS para uma data e local específicos
+   * Calcula dados astrolÃ³gicos REAIS para uma data e local especÃ­ficos
    */
   static async calculateRealAstrology(
     birthDate: string, // YYYY-MM-DD
     birthTime: string, // HH:MM
-    latitude: number,  // localização ATUAL para casas do momento
+    latitude: number,  // localizaÃ§Ã£o ATUAL para casas do momento
     longitude: number,
     currentDate?: Date,
   options?: { houseSystem?: HouseSystem; natalLat?: number; natalLon?: number }
   ): Promise<RealAstrologyData> {
-    console.log('🔬 Iniciando cálculos astrológicos REAIS...')
+    console.log('ðŸ”¬ Iniciando cÃ¡lculos astrolÃ³gicos REAIS...')
     
     const date = currentDate || new Date()
-    // Converter hora local de nascimento em UTC usando IANA (se disponível), caso contrário, fallback para aprox.
+    // Converter hora local de nascimento em UTC usando IANA (se disponÃ­vel), caso contrÃ¡rio, fallback para aprox.
     let resolvedTz: { offsetSec: number; timeZoneId?: string } | null = null
     const birthDateTime = await (async () => {
       try {
         const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
         const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
-        // Usar meio-dia UTC para resolver TZ histórico e evitar bordas de alteração de DST
+        // Usar meio-dia UTC para resolver TZ histÃ³rico e evitar bordas de alteraÃ§Ã£o de DST
         const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
         const { getTimezoneData } = await import('../timezone/TimezoneService')
         const tzData = await getTimezoneData(latitude, longitude, ts)
@@ -327,14 +327,14 @@ export class RealAstrologyEngine {
     })()
     
     try {
-      // 1-2. TENTAR BACKEND PRECISO: posições + casas + pacote natal
+      // 1-2. TENTAR BACKEND PRECISO: posiÃ§Ãµes + casas + pacote natal
       let realPlanets: RealPlanetPosition[]
-      let houses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean }
+      let houses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean; system?: HouseSystem | string; systemEffective?: HouseSystem | string }
       let natalPlanets: RealPlanetPosition[]
-      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean }
+      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean; system?: HouseSystem | string; systemEffective?: HouseSystem | string }
 
       try {
-        // Enviar horário LOCAL de nascimento e TZ resolvido para unificar conversão no backend
+        // Enviar horÃ¡rio LOCAL de nascimento e TZ resolvido para unificar conversÃ£o no backend
         const natalLocalStr = `${birthDate}T${birthTime}:00`
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
           natalLocal: natalLocalStr,
@@ -345,9 +345,9 @@ export class RealAstrologyEngine {
         realPlanets = bundle.current.planets
         houses = bundle.current.houses
         natalHouses = bundle.natal.houses
-        // Não reatribuir se o backend já enviou as casas dos natais; confiar no backend para consistência 1:1
+        // NÃ£o reatribuir se o backend jÃ¡ enviou as casas dos natais; confiar no backend para consistÃªncia 1:1
         natalPlanets = bundle.natal.planets
-        console.log('✅ Backend astro bundle utilizado (posições + casas + natal)')
+        console.log('âœ… Backend astro bundle utilizado (posiÃ§Ãµes + casas + natal)')
       } catch (_e) {
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
@@ -360,24 +360,24 @@ export class RealAstrologyEngine {
         houses = housesLocal
         natalPlanets = this.assignHouses(natalPlanetsRaw, natalHousesLocal)
         natalHouses = natalHousesLocal
-        console.log('⚠️ Fallback local utilizado (posições + casas)')
+        console.log('âš ï¸ Fallback local utilizado (posiÃ§Ãµes + casas)')
       }
 
-      console.log(`✅ Calculadas ${realPlanets.length} posições planetárias reais`)
-      console.log('✅ Casas astrológicas disponíveis')
+      console.log(`âœ… Calculadas ${realPlanets.length} posiÃ§Ãµes planetÃ¡rias reais`)
+      console.log('âœ… Casas astrolÃ³gicas disponÃ­veis')
 
-      // 3. CÁLCULO REAL DOS ASPECTOS
-      // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cúspides
+      // 3. CÃLCULO REAL DOS ASPECTOS
+      // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cÃºspides
       const planetsWithHouses = this.assignHouses(realPlanets, houses)
       if (process.env.NODE_ENV !== 'production') {
         try {
           const debugSystem = normalizeHouseSystem(houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus')
           console.debug('DEBUG Casas: ASC/MC', { asc: houses.ascendant, mc: houses.midheaven, system: debugSystem })
-          console.debug('🏠 DEBUG Cusps', houses.cusps.map((c,i)=>({ casa:i+1, cusp:c.toFixed(4) })))
-          console.debug('🏠 DEBUG Planetas→Casa', planetsWithHouses.map(p=>({ p:p.name, lon:p.longitude.toFixed(4), casa:p.house })))
+          console.debug('ðŸ  DEBUG Cusps', houses.cusps.map((c,i)=>({ casa:i+1, cusp:c.toFixed(4) })))
+          console.debug('ðŸ  DEBUG Planetasâ†’Casa', planetsWithHouses.map(p=>({ p:p.name, lon:p.longitude.toFixed(4), casa:p.house })))
         } catch {}
       }
-      console.log('🔎 ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
+      console.log('ðŸ”Ž ASTRO DEBUG - Comparativo casas (natal vs atual) por planeta',
         planetsWithHouses.map(p => ({ name: p.name, natal: (natalPlanets.find(n=>n.name===p.name)?.house), current: p.house })))
       // Aspectos Coletivos (momento)
       const aspectsCurrentTT = detectAspects(
@@ -385,9 +385,9 @@ export class RealAstrologyEngine {
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
         aspectsConfig
       )
-      console.log(`✅ Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
+      console.log(`âœ… Aspectos Coletivos calculados: ${aspectsCurrentTT.length}`)
 
-      // 🌟 NOVO: CÁLCULO DE STATUS PLANETÁRIOS
+      // ðŸŒŸ NOVO: CÃLCULO DE STATUS PLANETÃRIOS
       const planetsWithStatus = planetsWithHouses.map(planet => {
         const sign = planet.sign as any // Converter para SignName
         const planetaryStatus = calculatePlanetaryStatus(
@@ -404,9 +404,9 @@ export class RealAstrologyEngine {
           planetaryStatus
         }
       })
-      console.log(`✅ Status planetários calculados para ${planetsWithStatus.length} planetas`)
+      console.log(`âœ… Status planetÃ¡rios calculados para ${planetsWithStatus.length} planetas`)
 
-      // Índice Coletivo + fase lunar (cache por dia UTC)
+      // Ãndice Coletivo + fase lunar (cache por dia UTC)
       const dayKey = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString().slice(0,10)
       let collective = RealAstrologyEngine._collectiveCache.get(dayKey)
       if (!collective) {
@@ -414,7 +414,7 @@ export class RealAstrologyEngine {
         RealAstrologyEngine._collectiveCache.set(dayKey, collective)
       }
 
-      // Pré‑cálculo semanal e mensal Coletivo (cache): guardar snapshot representativo
+      // PrÃ©â€‘cÃ¡lculo semanal e mensal Coletivo (cache): guardar snapshot representativo
       let weekKey: string | undefined
       let monthKey: string | undefined
       try {
@@ -437,7 +437,7 @@ export class RealAstrologyEngine {
         }
       } catch {}
 
-      // Aspectos Pessoais (T→N) – detectAspects deve manter planet1 do primeiro conjunto (trânsitos)
+      // Aspectos Pessoais (Tâ†’N) â€“ detectAspects deve manter planet1 do primeiro conjunto (trÃ¢nsitos)
       const natalSetForAspects = [
         ...natalPlanets.map(p => ({ name: p.name, longitude: p.longitude, speed: 0 })),
         { name: 'Asc', longitude: natalHouses.ascendant, speed: 0 },
@@ -449,53 +449,53 @@ export class RealAstrologyEngine {
         natalSetForAspects,
         aspectsConfig
       )
-      console.log(`✅ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
+      console.log(`âœ… Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
 
-      // 4. ANÁLISE REAL DAS ÁREAS DA VIDA
+      // 4. ANÃLISE REAL DAS ÃREAS DA VIDA
       // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos Pessoais
       const currentOnNatalHouses = this.assignHouses(realPlanets, natalHouses)
       const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, natalPlanets, birthDateTime, latitude, longitude)
       // Derivar um status agregado pessoal simplificado a partir de lifeAreas
       const areaScores = Object.values(lifeAreas).map(a => a.percentage)
       const avg = areaScores.length ? Math.round(areaScores.reduce((s,n)=>s+n,0)/areaScores.length) : 50
-      const level = avg >= 80 ? 'excelente' : avg >= 65 ? 'bom' : avg >= 45 ? 'neutro' : avg >= 25 ? 'desafiador' : 'crítico'
+      const level = avg >= 80 ? 'excelente' : avg >= 65 ? 'bom' : avg >= 45 ? 'neutro' : avg >= 25 ? 'desafiador' : 'crÃ­tico'
       const areaTop = Object.entries(lifeAreas).sort((a,b)=>b[1].percentage-a[1].percentage).slice(0,2).map(([k])=>k)
       const statusPersonal = { score: avg, level: level as any, highlights: areaTop }
-      console.log('✅ Análise real das áreas da vida concluída')
+      console.log('âœ… AnÃ¡lise real das Ã¡reas da vida concluÃ­da')
 
-      // 🌟 5. NATAIS já obtidos (do backend ou fallback)
-      console.log('✅ Posições natais e casas natais prontas')
+      // ðŸŒŸ 5. NATAIS jÃ¡ obtidos (do backend ou fallback)
+      console.log('âœ… PosiÃ§Ãµes natais e casas natais prontas')
 
-      // 🌟 6. COMPARAÇÃO NATAL vs ATUAL
+      // ðŸŒŸ 6. COMPARAÃ‡ÃƒO NATAL vs ATUAL
       const planetComparisons = this.createPlanetComparisons(natalPlanets, currentOnNatalHouses, natalHouses)
-      console.log('✅ Comparações planetárias criadas')
+      console.log('âœ… ComparaÃ§Ãµes planetÃ¡rias criadas')
 
-      // 🌟 7. ASPECTOS COM CASAS
+      // ðŸŒŸ 7. ASPECTOS COM CASAS
       const houseAspects = this.calculateHouseAspects(realPlanets, houses)
-      console.log('✅ Aspectos com casas calculados')
+      console.log('âœ… Aspectos com casas calculados')
 
-      // 🌟 8. RESUMO ELEMENTAL E MODAL
+      // ðŸŒŸ 8. RESUMO ELEMENTAL E MODAL
       const chartSummary = this.createChartSummary(natalPlanets, planetsWithHouses)
-      console.log('✅ Resumo da carta criado')
+      console.log('âœ… Resumo da carta criado')
 
-      // 🌟 9. ANÁLISE GERAL DE STATUS PLANETÁRIOS
+      // ðŸŒŸ 9. ANÃLISE GERAL DE STATUS PLANETÃRIOS
       const planetaryStatusAnalysis = this.createPlanetaryStatusAnalysis(planetsWithStatus)
-      console.log('✅ Análise de status planetários criada')
+      console.log('âœ… AnÃ¡lise de status planetÃ¡rios criada')
 
-      // Preparar agrupamento para futura UI de Trânsitos Comparativos
+      // Preparar agrupamento para futura UI de TrÃ¢nsitos Comparativos
       const personalTransits = aspectsTransitsToNatalTN.map(a => {
-        // Lado A = trânsito por construção
+        // Lado A = trÃ¢nsito por construÃ§Ã£o
         const transitName = a.planet1
         const natalName = a.planet2
-        // Casa natal impactada: onde o planeta em trânsito cai nas casas NATAIS
+        // Casa natal impactada: onde o planeta em trÃ¢nsito cai nas casas NATAIS
         const transitHouseNatal = currentOnNatalHouses.find(p => p.name === transitName)?.house || 0
-        // Série retrógrada (marcação heurística): id por par + tipo
+        // SÃ©rie retrÃ³grada (marcaÃ§Ã£o heurÃ­stica): id por par + tipo
         const seriesId = `${transitName}:${natalName}:${a.type}`
         const contactPhase: 'direct'|'retro' = (planetsWithHouses.find(p=>p.name===transitName)?.isRetrograde ? 'retro' : 'direct')
-        // Aspecto‑mestre (heurística): forte e envolvendo planetas lentos ou ângulos
+        // Aspectoâ€‘mestre (heurÃ­stica): forte e envolvendo planetas lentos ou Ã¢ngulos
         const slowSet = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto'])
         const isMaster = a.strength >= 80 || slowSet.has(transitName)
-        // Índice do contato (heurística por orbe decrescente dentro da série)
+        // Ãndice do contato (heurÃ­stica por orbe decrescente dentro da sÃ©rie)
         let contactIndex: 1|2|3 = 1
         try {
           const sameSeries = aspectsTransitsToNatalTN
@@ -522,7 +522,7 @@ export class RealAstrologyEngine {
       })
       const personalSummary = summarizePersonalTransits(personalTransits)
 
-      // Agrupar trânsitos pessoais por área da vida com base nas casas significadoras
+      // Agrupar trÃ¢nsitos pessoais por Ã¡rea da vida com base nas casas significadoras
       const byArea: Record<string, typeof personalTransits> = {}
       const natalHouseByName = this.buildNatalHouseLookup(natalPlanets)
       for (const [areaName, cfg] of Object.entries(this.LIFE_AREAS)) {
@@ -565,7 +565,7 @@ export class RealAstrologyEngine {
         },
         statusPersonal,
         lifeAreas,
-        // 🌟 NOVAS FUNCIONALIDADES GRATUITAS
+        // ðŸŒŸ NOVAS FUNCIONALIDADES GRATUITAS
         natalPlanets,
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
@@ -574,26 +574,26 @@ export class RealAstrologyEngine {
         planetComparisons,
         chartSummary,
         houseAspects,
-        // 🌟 NOVO: Análise completa de status planetários
+        // ðŸŒŸ NOVO: AnÃ¡lise completa de status planetÃ¡rios
         planetaryStatusAnalysis,
         debug: {
           lifeAreas: ((this as any)._debugLifeAreas) || {},
-          // Remover personalTransitsSummary - não está na interface
+          // Remover personalTransitsSummary - nÃ£o estÃ¡ na interface
         }
       }
 
-      console.log('🎯 Cálculos astrológicos REAIS concluídos com sucesso!')
+      console.log('ðŸŽ¯ CÃ¡lculos astrolÃ³gicos REAIS concluÃ­dos com sucesso!')
       return result
 
     } catch (error) {
-      console.error('❌ Erro nos cálculos astrológicos reais:', error)
+      console.error('âŒ Erro nos cÃ¡lculos astrolÃ³gicos reais:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
-      throw new Error(`Falha nos cálculos astrológicos reais: ${errorMessage}`)
+      throw new Error(`Falha nos cÃ¡lculos astrolÃ³gicos reais: ${errorMessage}`)
     }
   }
 
   /**
-   * Calcula posições planetárias REAIS usando Astronomy Engine (precisão NASA)
+   * Calcula posiÃ§Ãµes planetÃ¡rias REAIS usando Astronomy Engine (precisÃ£o NASA)
    */
   private static async calculateRealPlanetPositions(
     date: Date, 
@@ -604,7 +604,7 @@ export class RealAstrologyEngine {
     
     for (const planetName of this.PLANETS) {
       try {
-        // Usar Astronomy Engine para posições REAIS
+        // Usar Astronomy Engine para posiÃ§Ãµes REAIS
         const body = planetName === 'Sun' ? Astronomy.Body.Sun :
                     planetName === 'Moon' ? Astronomy.Body.Moon :
                     planetName === 'Mercury' ? Astronomy.Body.Mercury :
@@ -616,25 +616,25 @@ export class RealAstrologyEngine {
                     planetName === 'Neptune' ? Astronomy.Body.Neptune :
                     Astronomy.Body.Pluto
 
-        // Posição geocêntrica REAL
+        // PosiÃ§Ã£o geocÃªntrica REAL
   const position = Astronomy.GeoVector(body, date, false)
         
-        // Verificar se a posição é válida
+        // Verificar se a posiÃ§Ã£o Ã© vÃ¡lida
         if (!position || position.x === undefined || position.y === undefined || position.z === undefined) {
-          console.error(`❌ Posição inválida para ${planetName}:`, position)
+          console.error(`âŒ PosiÃ§Ã£o invÃ¡lida para ${planetName}:`, position)
           continue
         }
         
-        // Converter para coordenadas eclípticas
+        // Converter para coordenadas eclÃ­pticas
         const ecliptic = Astronomy.Ecliptic(position)
         
-        // Verificar se coordenadas eclípticas são válidas (astronomy-engine usa 'elon' e 'elat')
+        // Verificar se coordenadas eclÃ­pticas sÃ£o vÃ¡lidas (astronomy-engine usa 'elon' e 'elat')
         if (!ecliptic || ecliptic.elon === undefined || ecliptic.elat === undefined) {
-          console.error(`❌ Coordenadas eclípticas inválidas para ${planetName}:`, ecliptic)
+          console.error(`âŒ Coordenadas eclÃ­pticas invÃ¡lidas para ${planetName}:`, ecliptic)
           continue
         }
         
-        // Calcular velocidade (diferença de posição em 1 dia)
+        // Calcular velocidade (diferenÃ§a de posiÃ§Ã£o em 1 dia)
         const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000)
   const nextPosition = Astronomy.GeoVector(body, nextDay, false)
         const nextEcliptic = Astronomy.Ecliptic(nextPosition)
@@ -644,9 +644,9 @@ export class RealAstrologyEngine {
         // Determinar signo e grau
         const signIndex = Math.floor(ecliptic.elon / 30)
         const degree = ecliptic.elon % 30
-        const sign = this.SIGNS[signIndex] || 'Áries'
+        const sign = this.SIGNS[signIndex] || 'Ãries'
 
-        // Verificar retrogradação
+        // Verificar retrogradaÃ§Ã£o
         const isRetrograde = speed < 0
 
         const planetData = {
@@ -657,11 +657,11 @@ export class RealAstrologyEngine {
           speed,
           sign,
           degree,
-          house: 1, // Será calculado posteriormente
+          house: 1, // SerÃ¡ calculado posteriormente
           isRetrograde
         }
         
-        console.log(`🔍 DEBUG ${planetName}:`, {
+        console.log(`ðŸ” DEBUG ${planetName}:`, {
           longitude: ecliptic.elon,
           latitude: ecliptic.elat,
           distance: planetData.distance,
@@ -674,7 +674,7 @@ export class RealAstrologyEngine {
         positions.push(planetData)
 
       } catch (error) {
-        console.error(`❌ Erro ao calcular posição de ${planetName}:`, error)
+        console.error(`âŒ Erro ao calcular posiÃ§Ã£o de ${planetName}:`, error)
       }
     }
 
@@ -682,7 +682,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Backend de alta precisão (Placidus/efemérides robustas)
+   * Backend de alta precisÃ£o (Placidus/efemÃ©rides robustas)
    */
   private static async fetchBackendPositions(
     date: Date,
@@ -698,7 +698,7 @@ export class RealAstrologyEngine {
     })
     if (!resp.ok) throw new Error('backend error')
     const data = await resp.json()
-    // Adaptar para RealPlanetPosition esperado se o backend já fornecer eclípticas
+    // Adaptar para RealPlanetPosition esperado se o backend jÃ¡ fornecer eclÃ­pticas
     const planets: RealPlanetPosition[] = data.positions.map((p: any) => ({
       name: p.body,
       longitude: p.lon,
@@ -713,7 +713,7 @@ export class RealAstrologyEngine {
     return planets
   }
 
-  /** Bundle: posições + casas + natal, via backend */
+  /** Bundle: posiÃ§Ãµes + casas + natal, via backend */
   private static async fetchBackendBundle(
     currentDate: Date,
     natalDate: Date,
@@ -732,7 +732,7 @@ export class RealAstrologyEngine {
       lat: latitude,
       lon: longitude,
       includeHouses: true,
-      // Respeitar sistema de casas escolhido pelo usuário (fallback 'placidus')
+      // Respeitar sistema de casas escolhido pelo usuÃ¡rio (fallback 'placidus')
         system: normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus'),
       natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
       natalLocal: options?.natalLocal,
@@ -751,7 +751,7 @@ export class RealAstrologyEngine {
       }
     } catch {}
 
-    console.log('🛰️ ASTRO DEBUG - Request posições/houses (backend)', requestBody)
+    console.log('ðŸ›°ï¸ ASTRO DEBUG - Request posiÃ§Ãµes/houses (backend)', requestBody)
 
   const resp = await fetch(`${backend}/api/astro/positions`, {
       method: 'POST',
@@ -800,17 +800,17 @@ export class RealAstrologyEngine {
     let currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string } =
       data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
     const natalPlanets = ((data.natal?.positions || data.natal?.planets) || []).map(toPlanet)
-    // 🌟 CORREÇÃO: Calcular casas natais localmente se o backend não as forneceu
+    // ðŸŒŸ CORREÃ‡ÃƒO: Calcular casas natais localmente se o backend nÃ£o as forneceu
     let natalHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: string, systemEffective?: string }
     
     const backendNatalHouses = data.natal?.houses || data.natalHouses
     if (backendNatalHouses) {
       // Backend forneceu casas natais - usar
       natalHouses = backendNatalHouses
-      console.log('✅ Backend forneceu casas natais')
+      console.log('âœ… Backend forneceu casas natais')
     } else {
-      // Backend não forneceu casas natais - calcular localmente
-      console.log('⚠️ Backend não forneceu casas natais - calculando localmente...')
+      // Backend nÃ£o forneceu casas natais - calcular localmente
+      console.log('âš ï¸ Backend nÃ£o forneceu casas natais - calculando localmente...')
       try {
         const natalLat = options?.natalLat || latitude
         const natalLon = options?.natalLon || longitude
@@ -825,17 +825,17 @@ export class RealAstrologyEngine {
           system: system,
           systemEffective: (res as any).systemEffective || system
         }
-        console.log('✅ Casas natais calculadas localmente')
+        console.log('âœ… Casas natais calculadas localmente')
       } catch (error) {
-        console.error('❌ Erro ao calcular casas natais localmente:', error)
-        // Fallback para casas atuais (não ideal, mas funcional)
+        console.error('âŒ Erro ao calcular casas natais localmente:', error)
+        // Fallback para casas atuais (nÃ£o ideal, mas funcional)
         natalHouses = currentHouses
-        console.log('⚠️ Usando casas atuais como fallback para casas natais')
+        console.log('âš ï¸ Usando casas atuais como fallback para casas natais')
       }
     }
 
-    // Reatribuir SEMPRE as casas no cliente usando as cúspides do backend
-    // para garantir consistência de partição (ASC-ancorado, CCW, fronteira eps)
+    // Reatribuir SEMPRE as casas no cliente usando as cÃºspides do backend
+    // para garantir consistÃªncia de partiÃ§Ã£o (ASC-ancorado, CCW, fronteira eps)
     const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
@@ -916,13 +916,13 @@ export class RealAstrologyEngine {
 
     const fmtCusps = (cusps: number[]) => cusps.map((c, i) => ({ casa: i + 1, cusp: Number(c.toFixed ? c.toFixed(2) : c) }))
     if (debugEnabled) {
-      console.log('📦 ASTRO DEBUG - Backend payload meta', data?.meta || null)
+      console.log('ðŸ“¦ ASTRO DEBUG - Backend payload meta', data?.meta || null)
     }
     
-    // 🚀 APLICAR AUTO-CORREÇÃO SE NECESSÁRIO
+    // ðŸš€ APLICAR AUTO-CORREÃ‡ÃƒO SE NECESSÃRIO
     currentHouses = autoCorrectHouses(currentHouses, 'Casas ATUAIS')
     
-    if (debugEnabled) console.log('🏠 ASTRO DEBUG - Casas ATUAIS', {
+    if (debugEnabled) console.log('ðŸ  ASTRO DEBUG - Casas ATUAIS', {
       system: (currentHouses as any).system || null,
       systemEffective: (currentHouses as any).systemEffective || null,
       approximate: !!(currentHouses as any).approximate,
@@ -931,12 +931,12 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(currentHouses.cusps),
       planets: currentWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if (debugEnabled && (currentHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
+    try { if (debugEnabled && (currentHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas ATUAIS _debug', (currentHouses as any)._debug) } catch {}
     
-    // 🚀 APLICAR AUTO-CORREÇÃO PARA CASAS NATAIS SE NECESSÁRIO
+    // ðŸš€ APLICAR AUTO-CORREÃ‡ÃƒO PARA CASAS NATAIS SE NECESSÃRIO
     natalHouses = autoCorrectHouses(natalHouses, 'Casas NATAIS')
     
-    if (debugEnabled) console.log('🏠 ASTRO DEBUG - Casas NATAIS', {
+    if (debugEnabled) console.log('ðŸ  ASTRO DEBUG - Casas NATAIS', {
       system: (natalHouses as any).system || null,
       systemEffective: (natalHouses as any).systemEffective || null,
       approximate: !!(natalHouses as any).approximate,
@@ -945,9 +945,9 @@ export class RealAstrologyEngine {
       cusps: fmtCusps(natalHouses.cusps),
       planets: natalWithHouses.map(p => ({ planeta: p.name, lon: Number(p.longitude.toFixed ? p.longitude.toFixed(2) : p.longitude), casa: p.house }))
     })
-    try { if (debugEnabled && (natalHouses as any)._debug) console.log('🧪 ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
+    try { if (debugEnabled && (natalHouses as any)._debug) console.log('ðŸ§ª ASTRO DEBUG - Casas NATAIS _debug', (natalHouses as any)._debug) } catch {}
     
-    // ✅ VALIDAÇÕES FINAIS GARANTEM QUALIDADE 100%
+    // âœ… VALIDAÃ‡Ã•ES FINAIS GARANTEM QUALIDADE 100%
     validateCuspsOrder(currentHouses.cusps, 'Casas ATUAIS FINAIS', (currentHouses as any).systemEffective || (currentHouses as any).system)
     validateCuspsOrder(natalHouses.cusps, 'Casas NATAIS FINAIS', (natalHouses as any).systemEffective || (natalHouses as any).system)
 
@@ -958,7 +958,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Calcula casas astrológicas REAIS usando sistema Placidus
+   * Calcula casas astrolÃ³gicas REAIS usando sistema Placidus
    */
   private static async calculateRealHouses(
     currentDate: Date,
@@ -967,7 +967,7 @@ export class RealAstrologyEngine {
     longitude: number,
   houseSystem?: HouseSystem
     ): Promise<{ cusps: number[], ascendant: number, midheaven: number, approximate?: boolean, system?: HouseSystem, systemEffective?: HouseSystem }> {
-    // Delegar para módulo unificado de casas do app (garante monotonicidade e fallback)
+    // Delegar para mÃ³dulo unificado de casas do app (garante monotonicidade e fallback)
     try {
         const system = normalizeHouseSystem(houseSystem || (globalThis as any).__userHouseSystem || 'placidus')
         const res = await computeHousesUTC(currentDate, latitude, longitude, system)
@@ -980,7 +980,7 @@ export class RealAstrologyEngine {
           systemEffective: res.systemEffective
         }
       } catch (error) {
-      console.error('❌ Erro no cálculo das casas (unificado):', error)
+      console.error('âŒ Erro no cÃ¡lculo das casas (unificado):', error)
       const ascendant = 0
       const midheaven = 90
       const cusps = Array.from({ length: 12 }, (_, i) => (ascendant + i * 30) % 360)
@@ -992,13 +992,13 @@ export class RealAstrologyEngine {
    * Calcula aspectos REAIS entre planetas
    */
   private static calculateRealAspects(planets: RealPlanetPosition[]): RealAspect[] {
-    // Usar engine unificada com orbes configuráveis
+    // Usar engine unificada com orbes configurÃ¡veis
     const A = planets.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed }))
     const res = detectAspects(A, A, aspectsConfig)
     return res.map(r => ({ planet1: r.planet1, planet2: r.planet2, type: r.type, orb: r.orb, isApplying: r.isApplying, strength: r.strength }))
   }
 
-  /** Índice coletivo do dia (T→T) e fase lunar */
+  /** Ãndice coletivo do dia (Tâ†’T) e fase lunar */
   private static computeCollectiveIndex(aspectsTT: RealAspect[], planets: RealPlanetPosition[]): NonNullable<RealAstrologyData['collective']> {
     const angleOf = (type: string): number => {
   const def = (aspectsConfig as any).aspects?.find((d: any) => d.name === type)
@@ -1024,8 +1024,8 @@ export class RealAstrologyEngine {
     const get = (name: string) => planets.find(p => p.name === name)
     const slowBoost: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
     const fastPenalty: Record<string, number> = { Moon:0.9 }
-    const hardTypes = new Set(['quadratura','oposição','semiquadratura','sesquiquadratura'])
-    const softTypes = new Set(['trígono','sextil'])
+    const hardTypes = new Set(['quadratura','oposiÃ§Ã£o','semiquadratura','sesquiquadratura'])
+    const softTypes = new Set(['trÃ­gono','sextil'])
 
 
     const scored = aspectsTT.map(a => {
@@ -1037,8 +1037,8 @@ export class RealAstrologyEngine {
       let sign = 0
       if (softTypes.has(a.type)) sign = +1
       else if (hardTypes.has(a.type)) sign = -1
-      else if (a.type === 'conjunção') {
-        // Conjunção: neutra → avaliar pares clássicos
+      else if (a.type === 'conjunÃ§Ã£o') {
+        // ConjunÃ§Ã£o: neutra â†’ avaliar pares clÃ¡ssicos
         const malefics = new Set(['Mars','Saturn'])
         const benefics = new Set(['Venus','Jupiter'])
         if ((p1 && malefics.has(p1.name)) || (p2 && malefics.has(p2.name))) sign = -1
@@ -1047,7 +1047,7 @@ export class RealAstrologyEngine {
       const strength = a.strength ?? 50
       const score = Math.max(0, Math.min(100, strength * w))
 
-      // Estimar janela de vigência a partir da orbe máxima e velocidade relativa
+      // Estimar janela de vigÃªncia a partir da orbe mÃ¡xima e velocidade relativa
       const orbAllowed = maxOrbForPair(a.type, a.planet1, a.planet2)
       const relSpeed = Math.max(0.02, Math.abs((p1?.speed ?? 0) - (p2?.speed ?? 0))) // deg/dia; piso para evitar /0
       let windowDays = (2 * orbAllowed) / relSpeed
@@ -1059,7 +1059,7 @@ export class RealAstrologyEngine {
       return { a: { ...a, orbAllowed, relSpeed, windowDays }, score, sign }
     })
 
-    // Detectar padrões aspectuais (simplificado)
+    // Detectar padrÃµes aspectuais (simplificado)
     const keyFor = (x: string, y: string) => x < y ? `${x}|${y}` : `${y}|${x}`
     const hasPair = (list: RealAspect[], type: string, p: string, q: string) => list.some(a => a.type === type && keyFor(a.planet1,a.planet2) === keyFor(p,q))
     const idxOf = (list: RealAspect[], type: string, p: string, q: string): number | undefined => {
@@ -1069,44 +1069,44 @@ export class RealAstrologyEngine {
     const uniqPlanets = Array.from(new Set(aspectsTT.flatMap(a => [a.planet1, a.planet2])))
     const boostIdx = new Map<number, number>()
 
-    // T‑Square: A□B, A□C, B☍C
+    // Tâ€‘Square: Aâ–¡B, Aâ–¡C, Bâ˜C
     for (const a of uniqPlanets) {
       for (let i = 0; i < uniqPlanets.length; i++) {
         for (let j = i+1; j < uniqPlanets.length; j++) {
           const b = uniqPlanets[i], c = uniqPlanets[j]
-          if (hasPair(aspectsTT,'quadratura',a,b) && hasPair(aspectsTT,'quadratura',a,c) && hasPair(aspectsTT,'oposição',b,c)) {
+          if (hasPair(aspectsTT,'quadratura',a,b) && hasPair(aspectsTT,'quadratura',a,c) && hasPair(aspectsTT,'oposiÃ§Ã£o',b,c)) {
             const i1 = idxOf(aspectsTT,'quadratura',a,b)
             const i2 = idxOf(aspectsTT,'quadratura',a,c)
-            const i3 = idxOf(aspectsTT,'oposição',b,c)
+            const i3 = idxOf(aspectsTT,'oposiÃ§Ã£o',b,c)
             ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.15, boostIdx.get(ix)||1)) })
           }
         }
       }
     }
 
-    // Grande Trígono: A△B, A△C, B△C
+    // Grande TrÃ­gono: Aâ–³B, Aâ–³C, Bâ–³C
     for (let i = 0; i < uniqPlanets.length; i++) {
       for (let j = i+1; j < uniqPlanets.length; j++) {
         for (let k = j+1; k < uniqPlanets.length; k++) {
           const a = uniqPlanets[i], b = uniqPlanets[j], c = uniqPlanets[k]
-          if (hasPair(aspectsTT,'trígono',a,b) && hasPair(aspectsTT,'trígono',a,c) && hasPair(aspectsTT,'trígono',b,c)) {
-            const i1 = idxOf(aspectsTT,'trígono',a,b)
-            const i2 = idxOf(aspectsTT,'trígono',a,c)
-            const i3 = idxOf(aspectsTT,'trígono',b,c)
+          if (hasPair(aspectsTT,'trÃ­gono',a,b) && hasPair(aspectsTT,'trÃ­gono',a,c) && hasPair(aspectsTT,'trÃ­gono',b,c)) {
+            const i1 = idxOf(aspectsTT,'trÃ­gono',a,b)
+            const i2 = idxOf(aspectsTT,'trÃ­gono',a,c)
+            const i3 = idxOf(aspectsTT,'trÃ­gono',b,c)
             ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.12, boostIdx.get(ix)||1)) })
           }
         }
       }
     }
 
-    // Yod: A⚻B, A⚻C e B✶C
+    // Yod: Aâš»B, Aâš»C e Bâœ¶C
     for (let i = 0; i < uniqPlanets.length; i++) {
       for (let j = 0; j < uniqPlanets.length; j++) if (j!==i) {
         for (let k = 0; k < uniqPlanets.length; k++) if (k!==i && k!==j) {
           const a = uniqPlanets[i], b = uniqPlanets[j], c = uniqPlanets[k]
-          if (hasPair(aspectsTT,'quincúncio',a,b) && hasPair(aspectsTT,'quincúncio',a,c) && hasPair(aspectsTT,'sextil',b,c)) {
-            const i1 = idxOf(aspectsTT,'quincúncio',a,b)
-            const i2 = idxOf(aspectsTT,'quincúncio',a,c)
+          if (hasPair(aspectsTT,'quincÃºncio',a,b) && hasPair(aspectsTT,'quincÃºncio',a,c) && hasPair(aspectsTT,'sextil',b,c)) {
+            const i1 = idxOf(aspectsTT,'quincÃºncio',a,b)
+            const i2 = idxOf(aspectsTT,'quincÃºncio',a,c)
             const i3 = idxOf(aspectsTT,'sextil',b,c)
             ;[i1,i2,i3].forEach(ix=>{ if(ix!==undefined) boostIdx.set(ix, Math.max(1.10, boostIdx.get(ix)||1)) })
           }
@@ -1152,7 +1152,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Atribui casa a cada planeta com base nas cúspides calculadas
+   * Atribui casa a cada planeta com base nas cÃºspides calculadas
    */
   private static assignHouses(
     planets: RealPlanetPosition[],
@@ -1172,7 +1172,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Calcula status REAL das áreas da vida baseado em planetas e aspectos
+   * Calcula status REAL das Ã¡reas da vida baseado em planetas e aspectos
    */
   /**
    * LifeAreas calcula o status por area usando transitos em casas natais
@@ -1197,7 +1197,7 @@ export class RealAstrologyEngine {
     const sun = planets.find(p => p.name === 'Sun')
     const natalAlmuten = this.getNatalAlmuten(natalPlanets)
 
-    // Helpers para padrões Pessoais envolvendo pontos natais
+    // Helpers para padrÃµes Pessoais envolvendo pontos natais
     const degDiff = (a:number,b:number)=>{ const d=Math.abs(((a-b+540)%360)-180); return d }
     const within = (x:number, target:number, tol:number)=> Math.abs(x-target) <= tol
     const natalByName = new Map(natalPlanets.map(p=>[p.name,p]))
@@ -1209,7 +1209,7 @@ export class RealAstrologyEngine {
       const k = `${t}|${n}`
       tnPatternBoost.set(k, Math.max(m, tnPatternBoost.get(k)||1))
     }
-    // Escanear por transit hitting dois natais para padrões: T‑Square, Grande Trígono, Yod
+    // Escanear por transit hitting dois natais para padrÃµes: Tâ€‘Square, Grande TrÃ­gono, Yod
     const byTransit: Record<string, RealAspect[]> = {}
     for (const a of aspects) {
       (byTransit[a.planet1] ||= []).push(a)
@@ -1220,18 +1220,18 @@ export class RealAstrologyEngine {
         const n1 = natalByName.get(A.planet2), n2 = natalByName.get(B.planet2)
         if (!n1 || !n2) continue
         const dd = degDiff(n1.longitude, n2.longitude)
-        // T‑Square: t□n1 e t□n2 com n1☍n2
+        // Tâ€‘Square: tâ–¡n1 e tâ–¡n2 com n1â˜n2
         if (A.type==='quadratura' && B.type==='quadratura' && within(dd,180,6)) {
           markBoost(tName, A.planet2, 1.15)
           markBoost(tName, B.planet2, 1.15)
         }
-        // Grande Trígono: t△n1 e t△n2 com n1△n2
-        if (A.type==='trígono' && B.type==='trígono' && within(dd,120,6)) {
+        // Grande TrÃ­gono: tâ–³n1 e tâ–³n2 com n1â–³n2
+        if (A.type==='trÃ­gono' && B.type==='trÃ­gono' && within(dd,120,6)) {
           markBoost(tName, A.planet2, 1.12)
           markBoost(tName, B.planet2, 1.12)
         }
-        // Yod: t⚻n1 e t⚻n2 com n1✶n2
-        if (A.type==='quincúncio' && B.type==='quincúncio' && within(dd,60,4)) {
+        // Yod: tâš»n1 e tâš»n2 com n1âœ¶n2
+        if (A.type==='quincÃºncio' && B.type==='quincÃºncio' && within(dd,60,4)) {
           markBoost(tName, A.planet2, 1.10)
           markBoost(tName, B.planet2, 1.10)
         }
@@ -1243,7 +1243,7 @@ export class RealAstrologyEngine {
       let influences: string[] = []
       let mainPlanets: string[] = []
 
-      // Analisar planetas relevantes para a área
+      // Analisar planetas relevantes para a Ã¡rea
       let planetScores: number[] = []
       const planetDetails: NonNullable<RealAstrologyData['debug']>['lifeAreas'][string]['planetDetails'] = [] as any
       
@@ -1255,19 +1255,19 @@ export class RealAstrologyEngine {
 
         let planetScore = 0
 
-        // Pontuação baseada no signo (dignidades essenciais)
+        // PontuaÃ§Ã£o baseada no signo (dignidades essenciais)
         const signScore = this.getPlanetSignScore(planet)
         planetScore += signScore * 0.30
         if (signScore >= 70) influences.push(`${planetName} em ${planet.sign} (dignidade)`) 
         if (signScore <= 35) influences.push(`${planetName} em ${planet.sign} (debilidade)`) 
 
-        // Pontuação baseada na casa (acidentais iniciais)
+        // PontuaÃ§Ã£o baseada na casa (acidentais iniciais)
         const houseScore = this.getPlanetHouseScore(planet, config.houses)
         planetScore += houseScore * 0.30
         if (houseScore >= 65) influences.push(`${planetName} na casa ${planet.house}`)
 
-        // Influências dos aspectos
-        // Considerar aspectos T→N onde este planeta é o trânsito (detectAspects mantém planet1 como trânsito)
+        // InfluÃªncias dos aspectos
+        // Considerar aspectos Tâ†’N onde este planeta Ã© o trÃ¢nsito (detectAspects mantÃ©m planet1 como trÃ¢nsito)
         const planetAspects = aspects.filter(a =>
           a.planet1 === planetName &&
           this.isTransitRelevantToArea(a.planet2, planet.house, config.houses, natalHouseByName)
@@ -1283,28 +1283,28 @@ export class RealAstrologyEngine {
           const otherNatal = natalPlanets.find(p => p.name === other)
           const baseScore = this.getAspectScoreAdvanced(aspect, planets, natalPlanets)
 
-          // Benéficos/Maléficos do alvo natal
+          // BenÃ©ficos/MalÃ©ficos do alvo natal
           const benefics = ['Venus', 'Jupiter']
           const malefics = ['Mars', 'Saturn']
-          const harmonious = aspect.type === 'trígono' || aspect.type === 'sextil'
-          const hard = aspect.type === 'quadratura' || aspect.type === 'oposição'
+          const harmonious = aspect.type === 'trÃ­gono' || aspect.type === 'sextil'
+          const hard = aspect.type === 'quadratura' || aspect.type === 'oposiÃ§Ã£o'
           let delta = 0
           if (benefics.includes(other)) {
             if (harmonious) delta += 10
-            else if (aspect.type === 'conjunção') delta += 5
+            else if (aspect.type === 'conjunÃ§Ã£o') delta += 5
           }
           if (malefics.includes(other)) {
             if (hard) delta -= 10
-            else if (aspect.type === 'conjunção') delta -= 5
+            else if (aspect.type === 'conjunÃ§Ã£o') delta -= 5
           }
 
-          // Recepção mútua simples (domicílio/exaltação)
+          // RecepÃ§Ã£o mÃºtua simples (domicÃ­lio/exaltaÃ§Ã£o)
           const receptionMult = this.getReceptionMultiplier(
             planets.find(p=>p.name===planetName)!,
             otherNatal || undefined
           )
 
-          // Peso por importância do alvo natal
+          // Peso por importÃ¢ncia do alvo natal
           const natalWeights: Record<string, number> = {
             Sun: 1.15, Moon: 1.15,
             Mercury: 1.0, Venus: 1.05, Mars: 1.05,
@@ -1316,16 +1316,16 @@ export class RealAstrologyEngine {
           // Casa natal relevante
           const transitInRelevantHouse = config.houses.includes(planet.house)
           const relevantHouseBoost = transitInRelevantHouse ? 1.10 : 1.0
-          // Regências de casa: pequeno boost quando o trânsito aspecta regente de casa-chave da área
+          // RegÃªncias de casa: pequeno boost quando o trÃ¢nsito aspecta regente de casa-chave da Ã¡rea
           const areaRulers = new Set(config.houses.flatMap(h => RealAstrologyEngine.HOUSE_RULERS[h] || []))
           const rulerBoost = areaRulers.has(other) ? 1.06 : 1.0
 
-          // Padrões Pessoais
+          // PadrÃµes Pessoais
           const pattMult = tnPatternBoost.get(`${planetName}|${other}`) || 1.0
-          // Cluster: múltiplos hits ao mesmo natal
+          // Cluster: mÃºltiplos hits ao mesmo natal
           const clusterMult = (countByNatal[other]||0) >= 2 ? 1.10 : 1.0
 
-          // Casa angularidade – multiplicador acidental pelo local do trânsito nas casas NATAIS
+          // Casa angularidade â€“ multiplicador acidental pelo local do trÃ¢nsito nas casas NATAIS
           const angularMult = this.getHouseAngularMultiplier(planet.house)
 
           // Almuten (peso extra quando envolvido)
@@ -1334,7 +1334,7 @@ export class RealAstrologyEngine {
             baseScore * natalWeight * relevantHouseBoost * rulerBoost * receptionMult * angularMult * almutenMult * pattMult * clusterMult + delta
           ))
 
-          // Peso de duração por ciclo planetário (Lua/Mercúrio < 1; lentos > 1)
+          // Peso de duraÃ§Ã£o por ciclo planetÃ¡rio (Lua/MercÃºrio < 1; lentos > 1)
           aspectScore *= this.getPlanetDurationWeight(planetName, other)
 
           // Estimativa de tempo ao pico (aplicante) ou desde o pico (separante)
@@ -1361,20 +1361,20 @@ export class RealAstrologyEngine {
           aspectCount++
           
           if (aspectScore > 60) {
-            const tagExtra = delta > 0 ? ' (apoio)' : delta < 0 ? ' (tensão)' : ''
+            const tagExtra = delta > 0 ? ' (apoio)' : delta < 0 ? ' (tensÃ£o)' : ''
             const houseTag = transitInRelevantHouse ? ` [casa ${planet.house}]` : ''
             influences.push(`${aspect.type} ${other}${tagExtra}${houseTag}`)
           }
         }
         
-        // Média dos aspectos em vez de soma
+        // MÃ©dia dos aspectos em vez de soma
         if (aspectCount > 0) {
           planetScore += (aspectScoreSum / aspectCount) * 0.40
         } else {
-          planetScore += 50 * 0.40 // Neutro se não há aspectos
+          planetScore += 50 * 0.40 // Neutro se nÃ£o hÃ¡ aspectos
         }
 
-        // Condições planetárias (retrógrado/combustão/velocidade)
+        // CondiÃ§Ãµes planetÃ¡rias (retrÃ³grado/combustÃ£o/velocidade)
         const cond = this.getAccidentalConditionsModifier(planet, sun?.longitude ?? undefined)
         planetScore += cond.modifier
         if (cond.tags.length) influences.push(...cond.tags)
@@ -1391,43 +1391,43 @@ export class RealAstrologyEngine {
         })
       }
 
-      // Sistema de pesos por planeta (importância astrológica)
+      // Sistema de pesos por planeta (importÃ¢ncia astrolÃ³gica)
       const planetWeights: Record<string, number> = {
-        'Sun': 1.2, 'Moon': 1.2,        // Luminares (máxima importância)
+        'Sun': 1.2, 'Moon': 1.2,        // Luminares (mÃ¡xima importÃ¢ncia)
         'Mercury': 1.0, 'Venus': 1.0, 'Mars': 1.0,  // Pessoais
         'Jupiter': 1.1, 'Saturn': 1.1,              // Sociais
         'Uranus': 0.9, 'Neptune': 0.9, 'Pluto': 0.9 // Transpessoais
       }
 
-      // Score ponderado por importância planetária
+      // Score ponderado por importÃ¢ncia planetÃ¡ria
       const weightedScore = planetScores.reduce((sum, score, i) => {
         const planetName = config.planets[i]
         const weight = planetWeights[planetName] || 1.0
         return sum + (score * weight)
       }, 0) / planetScores.length
 
-      // Score final baseado na lógica astrológica real
+      // Score final baseado na lÃ³gica astrolÃ³gica real
       const finalScore = weightedScore
       // Normalizacao 0-100: percentage representa o saldo final do area
       // depois de ponderar planetas (signo, casa, condicoes) e aspectos.
       // Esse percentual e a base para thresholds do produto.
 
-      // Normalização baseada na lógica astrológica (0-100%)
+      // NormalizaÃ§Ã£o baseada na lÃ³gica astrolÃ³gica (0-100%)
       const percentage = Math.max(0, Math.min(100, finalScore))
       
-      // Determinar status baseado na pontuação
+      // Determinar status baseado na pontuaÃ§Ã£o
       // Rotulo interno (nao muda a matematica do percentual):
       // >= 80 excelente, >= 65 bom, >= 45 neutro, >= 25 desafiador, < 25 critico.
       // O produto pode aplicar outros thresholds sobre o percentual.
       const status = percentage >= 80 ? 'excelente' :
                     percentage >= 65 ? 'bom' :
                     percentage >= 45 ? 'neutro' :
-                    percentage >= 25 ? 'desafiador' : 'crítico'
+                    percentage >= 25 ? 'desafiador' : 'crÃ­tico'
 
       lifeAreas[areaName] = {
         percentage: Math.round(percentage),
         status,
-        influences: influences.slice(0, 4), // Top influências
+        influences: influences.slice(0, 4), // Top influÃªncias
         mainPlanets
       }
 
@@ -1442,21 +1442,21 @@ export class RealAstrologyEngine {
     return lifeAreas
   }
 
-  private static classifyTransitDuration(planetName: string): 'curto' | 'médio' | 'longo' {
-    // Heurística baseada em velocidade média/orbital
+  private static classifyTransitDuration(planetName: string): 'curto' | 'mÃ©dio' | 'longo' {
+    // HeurÃ­stica baseada em velocidade mÃ©dia/orbital
     if (planetName === 'Sun' || planetName === 'Moon' || planetName === 'Mercury' || planetName === 'Venus' || planetName === 'Mars') {
       return 'curto'
     }
     if (planetName === 'Jupiter' || planetName === 'Saturn') {
-      return 'médio'
+      return 'mÃ©dio'
     }
     return 'longo'
   }
 
-  // 🎯 MÉTODOS PARA CÁLCULOS DETERMINÍSTICOS
-  // Removidos hashes determinísticos: não usados em produção
+  // ðŸŽ¯ MÃ‰TODOS PARA CÃLCULOS DETERMINÃSTICOS
+  // Removidos hashes determinÃ­sticos: nÃ£o usados em produÃ§Ã£o
 
-  // Métodos auxiliares para cálculos astronômicos
+  // MÃ©todos auxiliares para cÃ¡lculos astronÃ´micos
   private static dateToJulianDay(date: Date): number {
     return (date.getTime() / 86400000) + 2440587.5
   }
@@ -1469,7 +1469,7 @@ export class RealAstrologyEngine {
   }
 
   private static calculateAscendant(lst: number, latitude: number): number {
-    // Simplificado - em produção usaria cálculo completo
+    // Simplificado - em produÃ§Ã£o usaria cÃ¡lculo completo
     return (lst * 15) % 360
   }
 
@@ -1485,7 +1485,7 @@ export class RealAstrologyEngine {
       } else if (i === 6) {
         cusps.push((midheaven + 180) % 360)
       } else {
-        // Interpolação para outras casas
+        // InterpolaÃ§Ã£o para outras casas
         cusps.push((ascendant + i * 30) % 360)
       }
     }
@@ -1494,28 +1494,28 @@ export class RealAstrologyEngine {
   }
 
   private static isAspectApplying(planet1: RealPlanetPosition, planet2: RealPlanetPosition, targetAngle: number): boolean {
-    // Verificar se os planetas estão se aproximando do aspecto exato
+    // Verificar se os planetas estÃ£o se aproximando do aspecto exato
     return planet1.speed > planet2.speed
   }
 
   private static getPlanetSignScore(planet: RealPlanetPosition): number {
-    // Dignidades essenciais (inclui domicílio/exaltação/detrimento/queda + triplicidade + termos/faces clássicos)
+    // Dignidades essenciais (inclui domicÃ­lio/exaltaÃ§Ã£o/detrimento/queda + triplicidade + termos/faces clÃ¡ssicos)
     const essentials: Record<string, {
       domicile?: string[]; exaltation?: string[]; detriment?: string[]; fall?: string[]
       triplicity?: string[]; // signos onde o planeta participa da triplicidade
-      terms?: string[];      // aproximação: signos em que comumente recebe algum termo
+      terms?: string[];      // aproximaÃ§Ã£o: signos em que comumente recebe algum termo
       faces?: string[];      // faces/decanatos aproximados por signo
     }> = {
-      Sun:    { domicile: ['Leão'],    exaltation: ['Áries'],     detriment: ['Aquário'],  fall: ['Libra'] },
-      Moon:   { domicile: ['Câncer'],  exaltation: ['Touro'],     detriment: ['Capricórnio'], fall: ['Escorpião'] },
-      Mercury:{ domicile: ['Gêmeos','Virgem'], exaltation: [],    detriment: ['Sagitário','Peixes'], fall: [], triplicity:['Gêmeos','Virgem'], faces:['Gêmeos','Virgem'] },
-      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['Escorpião','Áries'], fall: ['Virgem'], triplicity:['Touro','Libra'], faces:['Touro','Libra'] },
-      Mars:   { domicile: ['Áries','Escorpião'], exaltation: ['Capricórnio'], detriment: ['Libra','Touro'], fall: ['Câncer'], triplicity:['Áries','Escorpião'] },
-      Jupiter:{ domicile: ['Sagitário','Peixes'], exaltation: ['Câncer'], detriment: ['Gêmeos','Virgem'], fall: ['Capricórnio'], triplicity:['Sagitário','Peixes'] },
-      Saturn: { domicile: ['Capricórnio','Aquário'], exaltation: ['Libra'], detriment: ['Câncer','Leão'], fall: ['Áries'], triplicity:['Aquário','Libra'] },
-      Uranus: { domicile: ['Aquário'], triplicity:['Aquário'] },
+      Sun:    { domicile: ['LeÃ£o'],    exaltation: ['Ãries'],     detriment: ['AquÃ¡rio'],  fall: ['Libra'] },
+      Moon:   { domicile: ['CÃ¢ncer'],  exaltation: ['Touro'],     detriment: ['CapricÃ³rnio'], fall: ['EscorpiÃ£o'] },
+      Mercury:{ domicile: ['GÃªmeos','Virgem'], exaltation: [],    detriment: ['SagitÃ¡rio','Peixes'], fall: [], triplicity:['GÃªmeos','Virgem'], faces:['GÃªmeos','Virgem'] },
+      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['EscorpiÃ£o','Ãries'], fall: ['Virgem'], triplicity:['Touro','Libra'], faces:['Touro','Libra'] },
+      Mars:   { domicile: ['Ãries','EscorpiÃ£o'], exaltation: ['CapricÃ³rnio'], detriment: ['Libra','Touro'], fall: ['CÃ¢ncer'], triplicity:['Ãries','EscorpiÃ£o'] },
+      Jupiter:{ domicile: ['SagitÃ¡rio','Peixes'], exaltation: ['CÃ¢ncer'], detriment: ['GÃªmeos','Virgem'], fall: ['CapricÃ³rnio'], triplicity:['SagitÃ¡rio','Peixes'] },
+      Saturn: { domicile: ['CapricÃ³rnio','AquÃ¡rio'], exaltation: ['Libra'], detriment: ['CÃ¢ncer','LeÃ£o'], fall: ['Ãries'], triplicity:['AquÃ¡rio','Libra'] },
+      Uranus: { domicile: ['AquÃ¡rio'], triplicity:['AquÃ¡rio'] },
       Neptune:{ domicile: ['Peixes'], triplicity:['Peixes'] },
-      Pluto:  { domicile: ['Escorpião'], triplicity:['Escorpião'] },
+      Pluto:  { domicile: ['EscorpiÃ£o'], triplicity:['EscorpiÃ£o'] },
     }
 
     const e = essentials[planet.name]
@@ -1527,15 +1527,15 @@ export class RealAstrologyEngine {
     if (inList(e.exaltation)) score += 24
     if (inList(e.detriment)) score -= 28
     if (inList(e.fall)) score -= 24
-    // Triplicidade (bônus moderado)
+    // Triplicidade (bÃ´nus moderado)
     if (inList(e.triplicity)) score += 6
-    // Termos/Faces clássicos por grau (bounds egípcios + faces caldeias)
+    // Termos/Faces clÃ¡ssicos por grau (bounds egÃ­pcios + faces caldeias)
     try {
       const { getTermRuler, getFaceRuler } = require('../../astro/dignities.classical')
       const termRuler = getTermRuler(planet.sign, planet.degree)
       const faceRuler = getFaceRuler(planet.sign, planet.degree)
       if (termRuler) {
-        // Bônus pequeno quando o planeta é regente do termo
+        // BÃ´nus pequeno quando o planeta Ã© regente do termo
         if (termRuler === planet.name) score += 4
         // Penalidade suave se inimigo tradicional (Marte/Saturno) rege o termo do planeta
         if ((termRuler === 'Marte' || termRuler === 'Saturno') && (planet.name === 'Moon' || planet.name === 'Venus')) score -= 2
@@ -1545,7 +1545,7 @@ export class RealAstrologyEngine {
       }
     } catch {}
 
-    // Clamp 0–100
+    // Clamp 0â€“100
     return Math.max(0, Math.min(100, score))
   }
 
@@ -1560,13 +1560,13 @@ export class RealAstrologyEngine {
     else if (succedent.includes(planet.house)) base += 5
     else if (cadent.includes(planet.house)) base -= 10
 
-    // Relevância para a área (se for uma das casas significadoras aumenta)
+    // RelevÃ¢ncia para a Ã¡rea (se for uma das casas significadoras aumenta)
     if (relevantHouses.includes(planet.house)) base += 15
 
     return Math.max(0, Math.min(100, base))
   }
 
-  /** Condições acidentais extra: retrógrado, combustão, velocidade */
+  /** CondiÃ§Ãµes acidentais extra: retrÃ³grado, combustÃ£o, velocidade */
   private static getAccidentalConditionsModifier(
     planet: RealPlanetPosition,
     sunLongitude?: number
@@ -1574,13 +1574,13 @@ export class RealAstrologyEngine {
     let mod = 0
     const tags: string[] = []
 
-    // Retrógrado
+    // RetrÃ³grado
     if (planet.isRetrograde) {
       mod -= 4
-      tags.push(`${planet.name} retrógrado`)
+      tags.push(`${planet.name} retrÃ³grado`)
     }
 
-    // Combustão e Cazimi (aprox: dentro de 8° do Sol para combustão; <= 0.3° para cazimi) e "sob os raios" (até ~15°)
+    // CombustÃ£o e Cazimi (aprox: dentro de 8Â° do Sol para combustÃ£o; <= 0.3Â° para cazimi) e "sob os raios" (atÃ© ~15Â°)
     if (sunLongitude !== undefined && planet.name !== 'Sun' && planet.name !== 'Moon') {
       const diff = Math.abs(((planet.longitude - sunLongitude + 540) % 360) - 180)
       const deg = diff
@@ -1597,7 +1597,7 @@ export class RealAstrologyEngine {
       }
     }
 
-    // Orientalidade/occidentalidade (aproximação)
+    // Orientalidade/occidentalidade (aproximaÃ§Ã£o)
     if (sunLongitude !== undefined && planet.name !== 'Sun' && planet.name !== 'Moon') {
       const norm = (d:number)=>((d%360)+360)%360
       const d = norm(planet.longitude - sunLongitude) // 0..360
@@ -1615,7 +1615,7 @@ export class RealAstrologyEngine {
       }
     }
 
-    // Velocidade normalizada por planeta (aprox média): lento/rápido
+    // Velocidade normalizada por planeta (aprox mÃ©dia): lento/rÃ¡pido
     const meanSpeed: Record<string, number> = {
       Sun: 0.9856, Moon: 13.176, Mercury: 1.2, Venus: 1.18, Mars: 0.524,
       Jupiter: 0.083, Saturn: 0.033, Uranus: 0.011, Neptune: 0.006, Pluto: 0.004
@@ -1629,28 +1629,28 @@ export class RealAstrologyEngine {
     return { modifier: mod, tags }
   }
 
-  // Avançado: score de aspecto com aplicação/separação, orbes por tipo e peso por Sol/Lua
+  // AvanÃ§ado: score de aspecto com aplicaÃ§Ã£o/separaÃ§Ã£o, orbes por tipo e peso por Sol/Lua
   private static getAspectScoreAdvanced(aspect: RealAspect, currentPlanets: RealPlanetPosition[], natalPlanets: RealPlanetPosition[]): number {
     const typeWeights: Record<string, number> = {
-      'conjunção': 1.0,      // Neutro (depende dos planetas)
-      'oposição': -0.6,      // Negativo (tensão)
+      'conjunÃ§Ã£o': 1.0,      // Neutro (depende dos planetas)
+      'oposiÃ§Ã£o': -0.6,      // Negativo (tensÃ£o)
       'quadratura': -0.8,    // Negativo (desafio)
-      'trígono': 0.8,        // Positivo (harmonia)
+      'trÃ­gono': 0.8,        // Positivo (harmonia)
       'sextil': 0.6,         // Positivo (oportunidade)
-      'quincúncio': -0.2,    // Levemente negativo
+      'quincÃºncio': -0.2,    // Levemente negativo
       'semissextil': 0.3,    // Levemente positivo
       'semiquadratura': -0.4, // Negativo leve
-      'sesquiquadratura': -0.5, // Negativo médio
+      'sesquiquadratura': -0.5, // Negativo mÃ©dio
     }
     const maxOrbByType: Record<string, number> = {
-      'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4, 'quincúncio': 3
+      'conjunÃ§Ã£o': 8, 'oposiÃ§Ã£o': 8, 'quadratura': 6, 'trÃ­gono': 6, 'sextil': 4, 'quincÃºncio': 3
     }
     const w = typeWeights[aspect.type] ?? 0.5
     const maxOrb = maxOrbByType[aspect.type] ?? 5
     const proximity = Math.max(0, 1 - aspect.orb / maxOrb)
     const applyingBonus = aspect.isApplying ? 1.15 : 0.95
     let score = 50 + 50 * w * proximity * applyingBonus
-    // Peso extra se envolve Sol/Lua (influência larga)
+    // Peso extra se envolve Sol/Lua (influÃªncia larga)
     const involvesLuminary = (p: string) => p === 'Sun' || p === 'Moon'
     if (involvesLuminary(aspect.planet1) || involvesLuminary(aspect.planet2)) score *= 1.05
     return Math.max(0, Math.min(100, score))
@@ -1665,20 +1665,20 @@ export class RealAstrologyEngine {
     return best?.name
   }
 
-  // Recepção mútua (simplificada): se trânsito/natal estão em signos de domicílio/exaltação um do outro => boost; em detrimento/queda => penalidade
+  // RecepÃ§Ã£o mÃºtua (simplificada): se trÃ¢nsito/natal estÃ£o em signos de domicÃ­lio/exaltaÃ§Ã£o um do outro => boost; em detrimento/queda => penalidade
   private static getReceptionMultiplier(transit: RealPlanetPosition | undefined, natal: RealPlanetPosition | undefined): number {
     if (!transit || !natal) return 1.0
     const domicile: Record<string, string[]> = {
-      Sun:['Leão'], Moon:['Câncer'], Mercury:['Gêmeos','Virgem'], Venus:['Touro','Libra'], Mars:['Áries','Escorpião'], Jupiter:['Sagitário','Peixes'], Saturn:['Capricórnio','Aquário']
+      Sun:['LeÃ£o'], Moon:['CÃ¢ncer'], Mercury:['GÃªmeos','Virgem'], Venus:['Touro','Libra'], Mars:['Ãries','EscorpiÃ£o'], Jupiter:['SagitÃ¡rio','Peixes'], Saturn:['CapricÃ³rnio','AquÃ¡rio']
     }
     const exalt: Record<string, string[]> = {
-      Sun:['Áries'], Moon:['Touro'], Mercury:[], Venus:['Peixes'], Mars:['Capricórnio'], Jupiter:['Câncer'], Saturn:['Libra']
+      Sun:['Ãries'], Moon:['Touro'], Mercury:[], Venus:['Peixes'], Mars:['CapricÃ³rnio'], Jupiter:['CÃ¢ncer'], Saturn:['Libra']
     }
     const detr: Record<string, string[]> = {
-      Sun:['Aquário'], Moon:['Capricórnio'], Mercury:['Sagitário','Peixes'], Venus:['Áries','Escorpião'], Mars:['Libra','Touro'], Jupiter:['Gêmeos','Virgem'], Saturn:['Câncer','Leão']
+      Sun:['AquÃ¡rio'], Moon:['CapricÃ³rnio'], Mercury:['SagitÃ¡rio','Peixes'], Venus:['Ãries','EscorpiÃ£o'], Mars:['Libra','Touro'], Jupiter:['GÃªmeos','Virgem'], Saturn:['CÃ¢ncer','LeÃ£o']
     }
     const fall: Record<string, string[]> = {
-      Sun:['Libra'], Moon:['Escorpião'], Mercury:[], Venus:['Virgem'], Mars:['Câncer'], Jupiter:['Capricórnio'], Saturn:['Áries']
+      Sun:['Libra'], Moon:['EscorpiÃ£o'], Mercury:[], Venus:['Virgem'], Mars:['CÃ¢ncer'], Jupiter:['CapricÃ³rnio'], Saturn:['Ãries']
     }
     const isIn = (tbl: Record<string,string[]>, name: string, sign: string) => (tbl[name]||[]).includes(sign)
     const tDom = isIn(domicile, transit.name, transit.sign)
@@ -1734,55 +1734,55 @@ export class RealAstrologyEngine {
     return transitInRelevantHouse || natalInRelevantHouse || angleRelevant || isRuler
   }
 
-  // Peso por duração/inércia do par de planetas (privilegia lentos, atenua muito rápidos)
+  // Peso por duraÃ§Ã£o/inÃ©rcia do par de planetas (privilegia lentos, atenua muito rÃ¡pidos)
   private static getPlanetDurationWeight(transitName: string, natalName: string): number {
     const slow: Record<string, number> = { Jupiter:1.1, Saturn:1.2, Uranus:1.25, Neptune:1.25, Pluto:1.25 }
     const fast: Record<string, number> = { Moon:0.85, Mercury:0.9 }
     let w = 1.0
     if (slow[transitName]) w *= slow[transitName]
     if (fast[transitName]) w *= fast[transitName]
-    // leve reforço se alvo natal é luminar
+    // leve reforÃ§o se alvo natal Ã© luminar
     if (natalName === 'Sun' || natalName === 'Moon') w *= 1.05
     return w
   }
 
   private static getAspectScore(aspect: RealAspect): number {
-              // Peso por tipo (corrigido para lógica astrológica)
+              // Peso por tipo (corrigido para lÃ³gica astrolÃ³gica)
           const weights: Record<string, number> = {
-            'conjunção': 1.0,      // Neutro
-            'oposição': -0.6,      // Negativo
+            'conjunÃ§Ã£o': 1.0,      // Neutro
+            'oposiÃ§Ã£o': -0.6,      // Negativo
             'quadratura': -0.8,    // Negativo
-            'trígono': 0.8,        // Positivo
+            'trÃ­gono': 0.8,        // Positivo
             'sextil': 0.6,         // Positivo
-            'quincúncio': -0.2,    // Levemente negativo
+            'quincÃºncio': -0.2,    // Levemente negativo
             'semissextil': 0.3,    // Levemente positivo
             'semiquadratura': -0.4, // Negativo leve
-            'sesquiquadratura': -0.5, // Negativo médio
+            'sesquiquadratura': -0.5, // Negativo mÃ©dio
           }
           const w = weights[aspect.type] ?? 0.0
 
-          // Aplicante ganha bônus
+          // Aplicante ganha bÃ´nus
           const applyingBonus = aspect.isApplying ? 1.15 : 1.0
           // Proximidade do aspecto (orb menor = mais forte)
           // Orbe base por tipo
           const baseOrb: Record<string, number> = {
-            'conjunção': 8, 'oposição': 8, 'quadratura': 6, 'trígono': 6, 'sextil': 4,
-            'quincúncio': 5, 'semissextil': 3, 'semiquadratura': 2, 'sesquiquadratura': 2,
+            'conjunÃ§Ã£o': 8, 'oposiÃ§Ã£o': 8, 'quadratura': 6, 'trÃ­gono': 6, 'sextil': 4,
+            'quincÃºncio': 5, 'semissextil': 3, 'semiquadratura': 2, 'sesquiquadratura': 2,
           }
           const maxOrb = baseOrb[aspect.type] ?? 5
           const proximity = Math.max(0, 1 - aspect.orb / maxOrb)
           
           // Score baseado no peso do aspecto (pode ser negativo)
           const baseScore = w * proximity * applyingBonus
-          const score = 50 + (baseScore * 50) // 50 é o centro neutro
+          const score = 50 + (baseScore * 50) // 50 Ã© o centro neutro
 
     return Math.max(0, Math.min(100, score))
   }
 
-  // 🌟 NOVOS MÉTODOS PARA FUNCIONALIDADES GRATUITAS
+  // ðŸŒŸ NOVOS MÃ‰TODOS PARA FUNCIONALIDADES GRATUITAS
 
   /**
-   * Cria comparações entre posições natais e atuais
+   * Cria comparaÃ§Ãµes entre posiÃ§Ãµes natais e atuais
    */
   private static createPlanetComparisons(
     natalPlanets: RealPlanetPosition[],
@@ -1795,7 +1795,7 @@ export class RealAstrologyEngine {
       const natalPlanet = natalPlanets.find(p => p.name === currentPlanet.name)
       if (!natalPlanet) continue
 
-      // Aspectos planetários para este planeta
+      // Aspectos planetÃ¡rios para este planeta
       const planetaryAspects = this.calculateRealAspects(currentPlanets)
         .filter(aspect => aspect.planet1 === currentPlanet.name || aspect.planet2 === currentPlanet.name)
 
@@ -1839,13 +1839,13 @@ export class RealAstrologyEngine {
   ): HouseAspect[] {
     const houseAspects: HouseAspect[] = []
     const aspectTypes = [
-      // Orbe fixo para casas: 0.5°
-      { name: 'conjunção', degrees: 0, orb: 0.5 },
+      // Orbe fixo para casas: 0.5Â°
+      { name: 'conjunÃ§Ã£o', degrees: 0, orb: 0.5 },
       { name: 'sextil', degrees: 60, orb: 0.5 },
       { name: 'quadratura', degrees: 90, orb: 0.5 },
-      { name: 'trígono', degrees: 120, orb: 0.5 },
-      { name: 'oposição', degrees: 180, orb: 0.5 },
-      { name: 'quincúncio', degrees: 150, orb: 0.5 },
+      { name: 'trÃ­gono', degrees: 120, orb: 0.5 },
+      { name: 'oposiÃ§Ã£o', degrees: 180, orb: 0.5 },
+      { name: 'quincÃºncio', degrees: 150, orb: 0.5 },
       { name: 'semissextil', degrees: 30, orb: 0.5 },
     ]
 
@@ -1911,28 +1911,28 @@ export class RealAstrologyEngine {
     const natalModality = analyzeModalities(natalPlanets)
     const currentModality = analyzeModalities(currentPlanets)
 
-    // Detectar mudanças significativas, sempre com emoji
+    // Detectar mudanÃ§as significativas, sempre com emoji
     const elementalChanges: string[] = []
     const modalityChanges: string[] = []
 
-    // Análise elemental
+    // AnÃ¡lise elemental
     Object.keys(natalElemental).forEach(element => {
       const key = element as keyof ElementalAnalysis
       const diff = currentElemental[key] - natalElemental[key]
       if (diff !== 0) {
-        const emoji = element === 'fire' ? '🔥' : element === 'earth' ? '🌍' : element === 'air' ? '💨' : '💧'
-        const translatedElement = element === 'fire' ? 'fogo' : element === 'earth' ? 'terra' : element === 'air' ? 'ar' : 'água'
+        const emoji = element === 'fire' ? 'ðŸ”¥' : element === 'earth' ? 'ðŸŒ' : element === 'air' ? 'ðŸ’¨' : 'ðŸ’§'
+        const translatedElement = element === 'fire' ? 'fogo' : element === 'earth' ? 'terra' : element === 'air' ? 'ar' : 'Ã¡gua'
         elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${translatedElement}`)
       }
     })
 
-    // Análise de modalidades
+    // AnÃ¡lise de modalidades
     Object.keys(natalModality).forEach(modality => {
       const key = modality as keyof ModalityAnalysis
       const diff = currentModality[key] - natalModality[key]
       if (diff !== 0) {
-        const icon = modality === 'cardinal' ? '⚡' : modality === 'fixed' ? '🔒' : '🔄'
-        const translatedModality = modality === 'cardinal' ? 'cardeal' : modality === 'fixed' ? 'fixo' : 'mutável'
+        const icon = modality === 'cardinal' ? 'âš¡' : modality === 'fixed' ? 'ðŸ”’' : 'ðŸ”„'
+        const translatedModality = modality === 'cardinal' ? 'cardeal' : modality === 'fixed' ? 'fixo' : 'mutÃ¡vel'
         modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${icon} ${translatedModality}`)
       }
     })
@@ -1952,12 +1952,12 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * 🌟 NOVO: Cria análise completa de status planetários
+   * ðŸŒŸ NOVO: Cria anÃ¡lise completa de status planetÃ¡rios
    */
   private static createPlanetaryStatusAnalysis(
     planetsWithStatus: RealPlanetPosition[]
   ): PlanetaryStatusAnalysis {
-    // Filtrar planetas que têm status calculado
+    // Filtrar planetas que tÃªm status calculado
     const planetsWithValidStatus = planetsWithStatus.filter(p => p.planetaryStatus)
     
     if (planetsWithValidStatus.length === 0) {
@@ -1974,11 +1974,11 @@ export class RealAstrologyEngine {
           'Fraco': [],
           'Muito Fraco': []
         },
-        recommendations: ['Status planetários não disponíveis']
+        recommendations: ['Status planetÃ¡rios nÃ£o disponÃ­veis']
       }
     }
 
-    // Calcular score geral (média ponderada)
+    // Calcular score geral (mÃ©dia ponderada)
     const totalScore = planetsWithValidStatus.reduce((sum, planet) => {
       return sum + (planet.planetaryStatus?.score || 0)
     }, 0)
@@ -2002,7 +2002,7 @@ export class RealAstrologyEngine {
       status: sortedByScore[sortedByScore.length - 1].planetaryStatus!
     }
 
-    // Agrupar planetas por nível
+    // Agrupar planetas por nÃ­vel
     const planetsByLevel: Record<PlanetaryStatusLevel, string[]> = {
       'Muito Forte': [],
       'Forte': [],
@@ -2019,7 +2019,7 @@ export class RealAstrologyEngine {
       }
     })
 
-    // Gerar recomendações baseadas na análise
+    // Gerar recomendaÃ§Ãµes baseadas na anÃ¡lise
     const recommendations = this.generatePlanetaryRecommendations(planetsByLevel, overallLevel, strongestPlanet, weakestPlanet)
 
     return {
@@ -2033,7 +2033,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Classifica o nível geral baseado no score médio
+   * Classifica o nÃ­vel geral baseado no score mÃ©dio
    */
   private static classifyOverallPlanetaryLevel(score: number): PlanetaryStatusLevel {
     if (score >= 8) return 'Muito Forte'
@@ -2045,7 +2045,7 @@ export class RealAstrologyEngine {
   }
 
   /**
-   * Gera recomendações baseadas na análise planetária
+   * Gera recomendaÃ§Ãµes baseadas na anÃ¡lise planetÃ¡ria
    */
   private static generatePlanetaryRecommendations(
     planetsByLevel: Record<PlanetaryStatusLevel, string[]>,
@@ -2055,44 +2055,44 @@ export class RealAstrologyEngine {
   ): string[] {
     const recommendations: string[] = []
 
-    // Recomendações baseadas no nível geral
+    // RecomendaÃ§Ãµes baseadas no nÃ­vel geral
     if (overallLevel === 'Muito Forte') {
-      recommendations.push('🌟 Excelente momento para iniciativas importantes e tomada de decisões')
-      recommendations.push('💪 Aproveite a força planetária para projetos desafiadores')
+      recommendations.push('ðŸŒŸ Excelente momento para iniciativas importantes e tomada de decisÃµes')
+      recommendations.push('ðŸ’ª Aproveite a forÃ§a planetÃ¡ria para projetos desafiadores')
     } else if (overallLevel === 'Forte') {
-      recommendations.push('✅ Bom momento para avançar em objetivos pessoais')
-      recommendations.push('🎯 Foque em áreas onde você se sente mais confiante')
+      recommendations.push('âœ… Bom momento para avanÃ§ar em objetivos pessoais')
+      recommendations.push('ðŸŽ¯ Foque em Ã¡reas onde vocÃª se sente mais confiante')
     } else if (overallLevel === 'Moderado') {
-      recommendations.push('⚖️ Momento equilibrado - mantenha consistência em suas ações')
-      recommendations.push('🔄 Aproveite para revisar e ajustar estratégias')
+      recommendations.push('âš–ï¸ Momento equilibrado - mantenha consistÃªncia em suas aÃ§Ãµes')
+      recommendations.push('ðŸ”„ Aproveite para revisar e ajustar estratÃ©gias')
     } else if (overallLevel === 'Neutro') {
-      recommendations.push('🌱 Período de estabilidade - ideal para manutenção e planejamento')
-      recommendations.push('📋 Foque em tarefas rotineiras e organização')
+      recommendations.push('ðŸŒ± PerÃ­odo de estabilidade - ideal para manutenÃ§Ã£o e planejamento')
+      recommendations.push('ðŸ“‹ Foque em tarefas rotineiras e organizaÃ§Ã£o')
     } else if (overallLevel === 'Fraco') {
-      recommendations.push('⚠️ Momento desafiador - evite decisões importantes')
-      recommendations.push('🛡️ Foque em autocuidado e proteção')
+      recommendations.push('âš ï¸ Momento desafiador - evite decisÃµes importantes')
+      recommendations.push('ðŸ›¡ï¸ Foque em autocuidado e proteÃ§Ã£o')
     } else {
-      recommendations.push('🚨 Período crítico - priorize segurança e estabilidade')
-      recommendations.push('🙏 Busque apoio e evite riscos desnecessários')
+      recommendations.push('ðŸš¨ PerÃ­odo crÃ­tico - priorize seguranÃ§a e estabilidade')
+      recommendations.push('ðŸ™ Busque apoio e evite riscos desnecessÃ¡rios')
     }
 
-    // Recomendações específicas por planeta
+    // RecomendaÃ§Ãµes especÃ­ficas por planeta
     if (strongestPlanet.status.level === 'Muito Forte') {
-      recommendations.push(`🚀 ${strongestPlanet.name} está excepcional - aproveite sua energia máxima`)
+      recommendations.push(`ðŸš€ ${strongestPlanet.name} estÃ¡ excepcional - aproveite sua energia mÃ¡xima`)
     }
     
     if (weakestPlanet.status.level === 'Muito Fraco') {
-      recommendations.push(`💡 ${weakestPlanet.name} precisa de atenção especial - trabalhe suas limitações`)
+      recommendations.push(`ðŸ’¡ ${weakestPlanet.name} precisa de atenÃ§Ã£o especial - trabalhe suas limitaÃ§Ãµes`)
     }
 
-    // Recomendações baseadas na distribuição
+    // RecomendaÃ§Ãµes baseadas na distribuiÃ§Ã£o
     const strongPlanets = planetsByLevel['Muito Forte'].length + planetsByLevel['Forte'].length
     const weakPlanets = planetsByLevel['Fraco'].length + planetsByLevel['Muito Fraco'].length
 
     if (strongPlanets > weakPlanets) {
-      recommendations.push('🎉 Maioria dos planetas está forte - momento propício para expansão')
+      recommendations.push('ðŸŽ‰ Maioria dos planetas estÃ¡ forte - momento propÃ­cio para expansÃ£o')
     } else if (weakPlanets > strongPlanets) {
-      recommendations.push('🔧 Maioria dos planetas está fraca - foco em recuperação e fortalecimento')
+      recommendations.push('ðŸ”§ Maioria dos planetas estÃ¡ fraca - foco em recuperaÃ§Ã£o e fortalecimento')
     }
 
     return recommendations
@@ -2100,6 +2100,7 @@ export class RealAstrologyEngine {
 }
 
 export default RealAstrologyEngine
+
 
 
 

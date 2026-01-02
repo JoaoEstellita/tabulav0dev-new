@@ -1,7 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import Svg, { Path } from 'react-native-svg'
 import type { ImpactAreaNode, ImpactContributor } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 
@@ -47,6 +47,12 @@ const toIntensity = (ratio: number) => {
   if (ratio >= 0.66) return 'forte'
   if (ratio >= 0.33) return 'moderada'
   return 'leve'
+}
+
+const FLOW_WIDTHS: Record<FlowEntry['intensity'], number> = {
+  leve: 140,
+  moderada: 190,
+  forte: 240,
 }
 
 const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
@@ -141,7 +147,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                 {translatePlanetPT(planet)}
               </Text>
             </TouchableOpacity>
-          )}
+          )
         })}
       </View>
 
@@ -158,7 +164,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                 {AREA_LABELS[area] || area}
               </Text>
             </TouchableOpacity>
-          )}
+          )
         })}
       </View>
 
@@ -171,12 +177,19 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               <Text style={styles.flowArea}>{AREA_LABELS[flow.areaKey] || flow.areaKey}</Text>
             </View>
             <View style={styles.flowLineWrap}>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.08)', directionColor(flow.direction)]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={[styles.flowLine, styles[`flowLine_${flow.intensity}`]]}
-              />
+              <Svg
+                width={FLOW_WIDTHS[flow.intensity]}
+                height={24}
+                viewBox={`0 0 ${FLOW_WIDTHS[flow.intensity]} 24`}
+              >
+                <Path
+                  d={`M2 12 C ${FLOW_WIDTHS[flow.intensity] * 0.35} 4 ${FLOW_WIDTHS[flow.intensity] * 0.65} 20 ${FLOW_WIDTHS[flow.intensity] - 2} 12`}
+                  stroke={directionColor(flow.direction)}
+                  strokeWidth={4}
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </Svg>
               <View style={styles.flowMetaRow}>
                 <Text style={styles.flowMeta}>{directionLabel(flow.direction)}</Text>
                 <Text style={styles.flowMeta}>{flow.intensity}</Text>
@@ -254,19 +267,6 @@ const styles = StyleSheet.create({
   },
   flowLineWrap: {
     marginTop: 8,
-  },
-  flowLine: {
-    height: 6,
-    borderRadius: 999,
-  },
-  flowLine_leve: {
-    width: '30%',
-  },
-  flowLine_moderada: {
-    width: '60%',
-  },
-  flowLine_forte: {
-    width: '100%',
   },
   flowMetaRow: {
     marginTop: 6,
