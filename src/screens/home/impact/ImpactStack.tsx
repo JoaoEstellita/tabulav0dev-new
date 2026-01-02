@@ -8,6 +8,9 @@ interface ImpactStackProps {
   impactNodes: ImpactAreaNode[]
   lifeAreas?: Record<string, any> | null
   isLoading?: boolean
+  title?: string
+  subtitle?: string
+  showHeader?: boolean
 }
 
 const toLabel = (key: string) =>
@@ -17,6 +20,9 @@ export default function ImpactStack({
   impactNodes,
   lifeAreas,
   isLoading = false,
+  title = 'Como esse momento se forma',
+  subtitle = 'Entenda as principais forcas (apoio e pressao) que moldam seus status agora.',
+  showHeader = true,
 }: ImpactStackProps) {
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
@@ -28,8 +34,12 @@ export default function ImpactStack({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Como esse momento se forma</Text>
-        <Text style={styles.subtitle}>Carregando detalhes do impacto...</Text>
+        {showHeader && (
+          <>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>Carregando detalhes do impacto...</Text>
+          </>
+        )}
       </View>
     )
   }
@@ -37,20 +47,26 @@ export default function ImpactStack({
   if (!impactNodes.length) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Como esse momento se forma</Text>
-        <Text style={styles.subtitle}>
-          Sem dados de impacto por agora. Tente atualizar em alguns instantes.
-        </Text>
+        {showHeader && (
+          <>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>
+              Sem dados de impacto por agora. Tente atualizar em alguns instantes.
+            </Text>
+          </>
+        )}
       </View>
     )
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Como esse momento se forma</Text>
-      <Text style={styles.subtitle}>
-        Entenda as principais forcas (apoio e pressao) que moldam seus status agora.
-      </Text>
+      {showHeader && (
+        <>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </>
+      )}
       {!hasBreakdown && (
         <Text style={styles.limitedText}>
           Modo resumido: explicacao limitada nesta versao.

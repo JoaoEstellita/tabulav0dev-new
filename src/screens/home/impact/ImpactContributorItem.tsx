@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { translatePlanetPT } from '../../../utils/astro/pt'
@@ -60,7 +60,7 @@ export default function ImpactContributorItem({
             contributor.topAspects.map((aspect, index) => (
               <Text key={`${contributor.id}-asp-${index}`} style={styles.detailText}>
                 {aspect.type} com {translatePlanetPT(aspect.with)}
-                {typeof aspect.orb === 'number' ? ` (orb ${aspect.orb.toFixed(1)}°)` : ''}
+                {typeof aspect.orb === 'number' ? ` (orb ${aspect.orb.toFixed(1)}deg)` : ''}
               </Text>
             ))
           ) : (
@@ -129,3 +129,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 })
+

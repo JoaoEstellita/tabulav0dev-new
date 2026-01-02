@@ -68,9 +68,14 @@ const buildFromDebug = (
       .slice()
       .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
       .map((detail, index) => {
+        const safeTotal = Number.isFinite(detail.total) ? detail.total : 0
         const topAspects = (detail.aspects || [])
           .slice()
-          .sort((a, b) => Math.abs(b.finalScore) - Math.abs(a.finalScore))
+          .sort((a, b) => {
+            const aScore = Number.isFinite(a.finalScore) ? Math.abs(a.finalScore) : 0
+            const bScore = Number.isFinite(b.finalScore) ? Math.abs(b.finalScore) : 0
+            return bScore - aScore
+          })
           .slice(0, 2)
           .map((aspect) => ({
             type: aspect.type,
@@ -84,8 +89,8 @@ const buildFromDebug = (
         return {
           id: `${areaKey}:${detail.planet}:${index}`,
           planet: detail.planet,
-          score: detail.total,
-          direction: toDirection(detail.total),
+          score: safeTotal,
+          direction: toDirection(safeTotal),
           tags,
           topAspects,
           reason: tags[0],
