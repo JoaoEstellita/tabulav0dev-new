@@ -31,6 +31,7 @@ export default function PlanetTimelineScreen() {
   const { transitData } = useLifeAreas()
   const planets = transitData?.currentTransits?.planets || []
   const byArea = transitData?.currentTransits?.transits?.byArea || {}
+  const personalTransits = transitData?.currentTransits?.transits?.personal || []
 
   const areasByPlanet = useMemo(() => {
     const map: Record<string, string[]> = {}
@@ -44,6 +45,29 @@ export default function PlanetTimelineScreen() {
     })
     return map
   }, [byArea])
+
+  const durationByPlanet = useMemo(() => {
+    const counts: Record<string, Record<string, number>> = {}
+    personalTransits.forEach((item: any) => {
+      if (!item?.transitPlanet) return
+      if (!counts[item.transitPlanet]) counts[item.transitPlanet] = {}
+      const key = item.durationClass || 'medio'
+      counts[item.transitPlanet][key] = (counts[item.transitPlanet][key] || 0) + 1
+    })
+    const pick = (planet: string) => {
+      const entry = counts[planet]
+      if (!entry) return 'medio'
+      const sorted = Object.entries(entry).sort((a, b) => b[1] - a[1])
+      return sorted[0]?.[0] || 'medio'
+    }
+    return { pick }
+  }, [personalTransits])
+
+  const durationLabel = (key: string) => {
+    if (key === 'longo') return 'estrutural'
+    if (key === 'curto') return 'passageiro'
+    return 'em desenvolvimento'
+  }
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -77,12 +101,26 @@ export default function PlanetTimelineScreen() {
                   {formatDegree(planet.longitude)} {getSignFromDegree(planet.longitude)} · Casa {planet.house}
                   {planet.isRetrograde ? ' · Retrogrado' : ''}
                 </Text>
-                <Text style={styles.planetFlowTitle}>Tendencia temporal</Text>
-                <Text style={styles.planetFlowText}>
-                  Identifique se este fluxo parece passageiro, em desenvolvimento ou estrutural.
-                </Text>
-                {areaKeys.length > 0 && (
-                  <View style={styles.areaList}>
+            <Text style={styles.planetFlowTitle}>Tendencia temporal</Text>
+            <Text style={styles.planetFlowText}>
+              Indicacao qualitativa baseada na duracao dos aspectos pessoais.
+            </Text>
+            <View style={styles.timelineRow}>
+              <View style={styles.timelineChip}>
+                <Text style={styles.timelineChipText}>Agora</Text>
+              </View>
+              <View style={styles.timelineChip}>
+                <Text style={styles.timelineChipText}>Curto prazo</Text>
+              </View>
+              <View style={styles.timelineChip}>
+                <Text style={styles.timelineChipText}>Medio prazo</Text>
+              </View>
+            </View>
+            <Text style={styles.timelineLabel}>
+              Classificacao: {durationLabel(durationByPlanet.pick(planet.name))}
+            </Text>
+            {areaKeys.length > 0 && (
+              <View style={styles.areaList}>
                     <Text style={styles.areaTitle}>Areas mais impactadas</Text>
                     {areaKeys.map((areaKey) => (
                       <Text key={`${planet.name}-${areaKey}`} style={styles.areaItem}>
@@ -168,6 +206,28 @@ const styles = StyleSheet.create({
     color: '#CBD5F5',
     fontSize: 11,
     marginTop: 4,
+  },
+  timelineRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  timelineChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.35)',
+  },
+  timelineChipText: {
+    color: '#CBD5F5',
+    fontSize: 10,
+  },
+  timelineLabel: {
+    marginTop: 6,
+    color: '#94A3B8',
+    fontSize: 11,
   },
   areaList: {
     marginTop: 10,

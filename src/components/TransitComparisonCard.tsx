@@ -166,13 +166,25 @@ export default function TransitComparisonCard({
     return translations[element] || element
   }
 
-  const translateModality = (modality: string): string => {
+const translateModality = (modality: string): string => {
     const translations: { [key: string]: string } = {
       cardinal: 'Cardeal',
       fixed: 'Fixo',
       mutable: 'Mutavel'
     }
-    return translations[modality] || modality
+  return translations[modality] || modality
+}
+
+  const formatStatusLabel = (status: string | null) => {
+    if (!status) return ''
+    const map: Record<string, string> = {
+      excelente: 'Excelente',
+      bom: 'Bom',
+      neutro: 'Neutro',
+      desafiador: 'Desafiador',
+      critico: 'Critico'
+    }
+    return map[String(status).toLowerCase()] || status
   }
 
   const getSignFromDegree = (degree: number): string => {
@@ -239,13 +251,26 @@ export default function TransitComparisonCard({
         if (!matchMain && matchInfluence.length === 0) return null
         return {
           areaKey,
+          matchMain,
+          matchCount: matchInfluence.length,
           percentage: typeof (data as any)?.percentage === 'number' ? (data as any).percentage : null,
           status: (data as any)?.status || null,
           influences: matchInfluence.length ? matchInfluence : influences.slice(0, 2)
         }
       })
-      .filter(Boolean) as Array<{
+      .filter(Boolean)
+      .sort((a, b) => {
+        if (a.matchMain !== b.matchMain) return a.matchMain ? -1 : 1
+        if (a.matchCount !== b.matchCount) return b.matchCount - a.matchCount
+        if (typeof a.percentage === 'number' && typeof b.percentage === 'number') {
+          return a.percentage - b.percentage
+        }
+        return 0
+      })
+      .slice(0, 2) as Array<{
         areaKey: string
+        matchMain: boolean
+        matchCount: number
         percentage: number | null
         status: string | null
         influences: string[]
@@ -493,12 +518,13 @@ export default function TransitComparisonCard({
               if (!areaInfluences.length) return null
               return (
                 <View style={styles.aspectsSection}>
-                  <Text style={styles.aspectsTitle}>Influencias nas areas:</Text>
+                  <Text style={styles.aspectsTitle}>Influencia nos status:</Text>
                   {areaInfluences.map((area, areaIndex) => (
                     <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
                       <Text style={styles.influenceArea}>
                         {AREA_LABELS[area.areaKey] || area.areaKey}
                         {typeof area.percentage === 'number' ? ` (${Math.round(area.percentage)}%)` : ''}
+                        {area.status ? ` · ${formatStatusLabel(area.status)}` : ''}
                       </Text>
                       {area.influences.slice(0, 2).map((text, idx) => (
                         <Text key={`${area.areaKey}-inf-${idx}`} style={styles.influenceText}>
