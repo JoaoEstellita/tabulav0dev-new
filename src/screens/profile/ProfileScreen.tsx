@@ -58,6 +58,7 @@ interface UnifiedNotification {
   groupId?: string
   groupName?: string
   area?: string | null
+  percentage?: number | null
   status?: string | null
   isRead?: boolean
 }
@@ -174,6 +175,7 @@ export default function ProfileScreen() {
           createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
           source: "user",
           area: data.area || data.lifeArea || null,
+          percentage: typeof data.percentage === "number" ? data.percentage : data.meta?.percentage || null,
           status: data.status || null,
           isRead: data.isRead ?? false,
         })
@@ -210,6 +212,7 @@ export default function ProfileScreen() {
             groupId,
             groupName: groupsById[groupId],
             area: data.area || data.lifeArea || data.life_area || null,
+            percentage: typeof data.percentage === "number" ? data.percentage : data.meta?.percentage || null,
             status: data.status || data.type || null,
             isRead: data.isRead ?? false,
           })
@@ -821,6 +824,11 @@ export default function ProfileScreen() {
                         {item.area && (
                           <View style={styles.notificationTag}>
                             <Text style={styles.notificationTagText}>{item.area}</Text>
+                          </View>
+                        )}
+                        {typeof item.percentage === "number" && (
+                          <View style={styles.notificationTag}>
+                            <Text style={styles.notificationTagText}>{Math.round(item.percentage)}%</Text>
                           </View>
                         )}
                         {item.status && (

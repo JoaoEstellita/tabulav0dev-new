@@ -62,6 +62,9 @@ export interface GroupAlert {
   message: string
   createdAt: Date
   isRead: boolean
+  type?: string
+  area?: string | null
+  percentage?: number | null
 }
 
 export interface GroupMemberSettings {
@@ -463,6 +466,9 @@ class GroupService {
           message,
           isRead: data.isRead ?? false,
           createdAt,
+          type: data.type,
+          area: data.area || data.lifeArea || data.life_area || null,
+          percentage: typeof data.percentage === "number" ? data.percentage : null,
         }
       }) as GroupAlert[]
       return alerts
@@ -498,6 +504,9 @@ class GroupService {
           message,
           isRead: data.isRead ?? false,
           createdAt,
+          type: data.type,
+          area: data.area || data.lifeArea || data.life_area || null,
+          percentage: typeof data.percentage === "number" ? data.percentage : null,
         }
       }) as GroupAlert[]
 
