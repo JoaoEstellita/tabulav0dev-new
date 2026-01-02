@@ -35,6 +35,8 @@ import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotificatio
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
+import ImpactStack from './impact/ImpactStack'
+import { buildImpactNodes } from './impact/buildImpactNodes'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 let unmountStarfield: any = null
@@ -78,6 +80,10 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
+    const impactNodes = React.useMemo(
+      () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas),
+      [transitData?.currentTransits, transitData?.lifeAreas]
+    )
 
     // 🎯 Função para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -563,6 +569,16 @@ export default function HomeScreen() {
               })}
             </View>
           </View>
+          </AnimatedMount>
+        )}
+
+        {transitData && (
+          <AnimatedMount>
+            <ImpactStack
+              impactNodes={impactNodes}
+              lifeAreas={transitData.lifeAreas}
+              isLoading={loading}
+            />
           </AnimatedMount>
         )}
 
