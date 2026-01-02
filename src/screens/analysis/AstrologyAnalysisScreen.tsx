@@ -8,6 +8,20 @@ import PlanetaryFlowMap from './PlanetaryFlowMap'
 import PredictiveTimeline from './PredictiveTimeline'
 import { buildImpactNodes } from '../home/impact/buildImpactNodes'
 
+const AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Financas',
+  saude: 'Saude',
+  familia: 'Familia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicacao',
+  transformacao: 'Transformacao',
+}
+
+const formatAreaList = (areas: string[]) =>
+  areas.map((area) => AREA_LABELS[area] || area).join(' e ')
+
 export default function AstrologyAnalysisScreen() {
   const navigation = useNavigation<any>()
   const { transitData, loading } = useLifeAreas()
@@ -43,7 +57,7 @@ export default function AstrologyAnalysisScreen() {
             Leitura profunda dos transitos, aspectos e seus fluxos atuais.
           </Text>
           <Text style={styles.helper}>
-            Tudo aqui representa tendencias em movimento, nao definicoes permanentes.
+            Tudo aqui indica tendencias em movimento, nunca determinacoes.
           </Text>
         </View>
 
@@ -70,8 +84,8 @@ export default function AstrologyAnalysisScreen() {
           <Text style={styles.sectionTitle}>Sintese final</Text>
           {synthesis ? (
             <Text style={styles.sectionBody}>
-              O momento pede atencao em {synthesis.pressured.join(' e ') || 'algumas areas'},
-              com apoio consistente em {synthesis.supported.join(' e ') || 'outras areas'}.
+              O momento pede atencao em {formatAreaList(synthesis.pressured) || 'algumas areas'},
+              com apoio consistente em {formatAreaList(synthesis.supported) || 'outras areas'}.
               Essa leitura muda conforme os fluxos avancam.
             </Text>
           ) : (

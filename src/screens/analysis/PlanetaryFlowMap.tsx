@@ -1,5 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import type { ImpactAreaNode, ImpactContributor } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 
@@ -123,7 +125,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
     <View>
       <Text style={styles.sectionTitle}>Fluxos planetarios</Text>
       <Text style={styles.sectionSubtitle}>
-        Toque em um planeta ou area para focar nos fluxos principais.
+        Mapa qualitativo de como os planetas direcionam apoio e pressao.
       </Text>
 
       <View style={styles.selectorRow}>
@@ -139,7 +141,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                 {translatePlanetPT(planet)}
               </Text>
             </TouchableOpacity>
-          )
+          )}
         })}
       </View>
 
@@ -156,32 +158,33 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                 {AREA_LABELS[area] || area}
               </Text>
             </TouchableOpacity>
-          )
+          )}
         })}
       </View>
 
       <View style={styles.flowList}>
         {visibleFlows.map((flow) => (
           <View key={`${flow.planet}-${flow.areaKey}`} style={styles.flowRow}>
-            <Text style={styles.flowPlanet}>{translatePlanetPT(flow.planet)}</Text>
-            <View style={styles.flowLineWrap}>
-              <View
-                style={[
-                  styles.flowLine,
-                  styles[`flowLine_${flow.intensity}`],
-                  { backgroundColor: directionColor(flow.direction) },
-                ]}
-              />
-              <Text style={styles.flowMeta}>
-                {directionLabel(flow.direction)} {flow.intensity}
-              </Text>
+            <View style={styles.flowHeaderRow}>
+              <Text style={styles.flowPlanet}>{translatePlanetPT(flow.planet)}</Text>
+              <Ionicons name="arrow-forward" size={14} color="#64748B" />
+              <Text style={styles.flowArea}>{AREA_LABELS[flow.areaKey] || flow.areaKey}</Text>
             </View>
-            <Text style={styles.flowArea}>{AREA_LABELS[flow.areaKey] || flow.areaKey}</Text>
-            {flow.reason ? (
-              <Text style={styles.flowReason}>{flow.reason}</Text>
-            ) : (
-              <Text style={styles.flowReason}>Influencia em movimento.</Text>
-            )}
+            <View style={styles.flowLineWrap}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.08)', directionColor(flow.direction)]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={[styles.flowLine, styles[`flowLine_${flow.intensity}`]]}
+              />
+              <View style={styles.flowMetaRow}>
+                <Text style={styles.flowMeta}>{directionLabel(flow.direction)}</Text>
+                <Text style={styles.flowMeta}>{flow.intensity}</Text>
+              </View>
+            </View>
+            <Text style={styles.flowReason}>
+              {flow.reason ? flow.reason : 'Influencia em movimento.'}
+            </Text>
           </View>
         ))}
       </View>
@@ -234,10 +237,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
   },
+  flowHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   flowPlanet: {
     color: '#E2E8F0',
     fontSize: 13,
     fontWeight: '700',
+  },
+  flowArea: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '600',
   },
   flowLineWrap: {
     marginTop: 8,
@@ -255,19 +268,17 @@ const styles = StyleSheet.create({
   flowLine_forte: {
     width: '100%',
   },
-  flowMeta: {
+  flowMetaRow: {
     marginTop: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  flowMeta: {
     color: '#94A3B8',
     fontSize: 11,
   },
-  flowArea: {
-    marginTop: 8,
-    color: '#FDE68A',
-    fontSize: 12,
-    fontWeight: '600',
-  },
   flowReason: {
-    marginTop: 4,
+    marginTop: 8,
     color: '#CBD5F5',
     fontSize: 11,
   },

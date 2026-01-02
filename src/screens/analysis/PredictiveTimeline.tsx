@@ -91,7 +91,7 @@ export default function PredictiveTimeline({
     <View>
       <Text style={styles.sectionTitle}>Linha do tempo</Text>
       <Text style={styles.sectionSubtitle}>
-        Tendencias qualitativas baseadas no ritmo dos planetas.
+        Fases qualitativas guiadas pelo ritmo dos planetas.
       </Text>
       <ScrollView
         horizontal
