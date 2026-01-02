@@ -289,6 +289,26 @@ export class RealAstrologyEngine {
     12: ['Jupiter', 'Neptune']
   }
 
+  private static normalizeHouseMeta(
+    houses: {
+      cusps: number[]
+      ascendant: number
+      midheaven: number
+      approximate?: boolean
+      system?: HouseSystem | string
+      systemEffective?: HouseSystem | string
+    }
+  ) {
+    const system = normalizeHouseSystem(
+      houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus'
+    )
+    return {
+      ...houses,
+      system,
+      systemEffective: system,
+    }
+  }
+
   /**
    * Calcula dados astrolÃ³gicos REAIS para uma data e local especÃ­ficos
    */
@@ -368,7 +388,7 @@ export class RealAstrologyEngine {
 
       // 3. CÃLCULO REAL DOS ASPECTOS
       // Antes de aspectos, precisamos atribuir casas aos planetas com base nas cÃºspides
-      const planetsWithHouses = this.assignHouses(realPlanets, houses)
+      const planetsWithHouses = this.assignHouses(realPlanets, this.normalizeHouseMeta(houses))
       if (process.env.NODE_ENV !== 'production') {
         try {
           const debugSystem = normalizeHouseSystem(houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus')
@@ -453,7 +473,7 @@ export class RealAstrologyEngine {
 
       // 4. ANÃLISE REAL DAS ÃREAS DA VIDA
       // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos Pessoais
-      const currentOnNatalHouses = this.assignHouses(realPlanets, natalHouses)
+      const currentOnNatalHouses = this.assignHouses(realPlanets, this.normalizeHouseMeta(natalHouses))
       const lifeAreas = this.calculateRealLifeAreas(currentOnNatalHouses, aspectsTransitsToNatalTN, natalHouses, natalPlanets, birthDateTime, latitude, longitude)
       // Derivar um status agregado pessoal simplificado a partir de lifeAreas
       const areaScores = Object.values(lifeAreas).map(a => a.percentage)
@@ -836,8 +856,8 @@ export class RealAstrologyEngine {
 
     // Reatribuir SEMPRE as casas no cliente usando as cÃºspides do backend
     // para garantir consistÃªncia de partiÃ§Ã£o (ASC-ancorado, CCW, fronteira eps)
-    const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
-    const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
+    const currentWithHouses = this.assignHouses(currentPlanets, this.normalizeHouseMeta(currentHouses))
+    const natalWithHouses = this.assignHouses(natalPlanets, this.normalizeHouseMeta(natalHouses))
 
     // CRITICO: validar ordem das cuspides (somente em debug)
     const debugEnabled = typeof window !== 'undefined' && window.location.search.includes('debug=1')

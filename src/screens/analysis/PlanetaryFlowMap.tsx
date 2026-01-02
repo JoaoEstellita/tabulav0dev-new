@@ -50,9 +50,9 @@ const toIntensity = (ratio: number) => {
 }
 
 const FLOW_WIDTHS: Record<FlowEntry['intensity'], number> = {
-  leve: 140,
-  moderada: 190,
-  forte: 240,
+  leve: 110,
+  moderada: 150,
+  forte: 190,
 }
 
 const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
@@ -179,13 +179,13 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
             <View style={styles.flowLineWrap}>
               <Svg
                 width={FLOW_WIDTHS[flow.intensity]}
-                height={24}
-                viewBox={`0 0 ${FLOW_WIDTHS[flow.intensity]} 24`}
+                height={22}
+                viewBox={`0 0 ${FLOW_WIDTHS[flow.intensity]} 22`}
               >
                 <Path
-                  d={`M2 12 C ${FLOW_WIDTHS[flow.intensity] * 0.35} 4 ${FLOW_WIDTHS[flow.intensity] * 0.65} 20 ${FLOW_WIDTHS[flow.intensity] - 2} 12`}
+                  d={`M2 11 C ${FLOW_WIDTHS[flow.intensity] * 0.25} 4 ${FLOW_WIDTHS[flow.intensity] * 0.45} 18 ${FLOW_WIDTHS[flow.intensity] * 0.6} 11 C ${FLOW_WIDTHS[flow.intensity] * 0.72} 4 ${FLOW_WIDTHS[flow.intensity] * 0.9} 18 ${FLOW_WIDTHS[flow.intensity] - 2} 11`}
                   stroke={directionColor(flow.direction)}
-                  strokeWidth={4}
+                  strokeWidth={3}
                   strokeLinecap="round"
                   fill="none"
                 />
