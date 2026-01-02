@@ -1176,7 +1176,14 @@ export class RealAstrologyEngine {
    */
   private static assignHouses(
     planets: RealPlanetPosition[],
-    houses: { cusps: number[], ascendant: number, midheaven: number, approximate?: boolean, system?: HouseSystem, systemEffective?: HouseSystem }
+    houses: {
+      cusps: number[]
+      ascendant: number
+      midheaven: number
+      approximate?: boolean
+      system?: HouseSystem | string
+      systemEffective?: HouseSystem | string
+    }
   ): RealPlanetPosition[] {
     const asc = Number.isFinite(houses.ascendant) ? houses.ascendant : houses.cusps[0]
     const system = normalizeHouseSystem(houses.system || houses.systemEffective || (globalThis as any).__userHouseSystem || 'placidus')

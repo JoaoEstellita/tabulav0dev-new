@@ -3,50 +3,18 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
-import AnalysisImpactStack from './AnalysisImpactStack'
 import PlanetaryFlowMap from './PlanetaryFlowMap'
 import PredictiveTimeline from './PredictiveTimeline'
 import { buildImpactNodes } from '../home/impact/buildImpactNodes'
-
-const AREA_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Financas',
-  saude: 'Saude',
-  familia: 'Familia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicacao',
-  transformacao: 'Transformacao',
-}
-
-const formatAreaList = (areas: string[]) =>
-  areas.map((area) => AREA_LABELS[area] || area).join(' e ')
+import TransitComparisonCard from '../../components/TransitComparisonCard'
 
 export default function AstrologyAnalysisScreen() {
   const navigation = useNavigation<any>()
-  const { transitData, loading } = useLifeAreas()
+  const { transitData } = useLifeAreas()
   const impactNodes = useMemo(
     () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas),
     [transitData?.currentTransits, transitData?.lifeAreas]
   )
-
-  const synthesis = useMemo(() => {
-    if (!transitData?.lifeAreas) return null
-    const entries = Object.entries(transitData.lifeAreas)
-    const pressured = entries
-      .filter(([, area]) => typeof area?.percentage === 'number')
-      .sort((a, b) => (a[1].percentage || 0) - (b[1].percentage || 0))
-      .slice(0, 2)
-      .map(([key]) => key)
-    const supported = entries
-      .filter(([, area]) => typeof area?.percentage === 'number')
-      .sort((a, b) => (b[1].percentage || 0) - (a[1].percentage || 0))
-      .slice(0, 1)
-      .map(([key]) => key)
-
-    if (!pressured.length && !supported.length) return null
-    return { pressured, supported }
-  }, [transitData?.lifeAreas])
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -54,7 +22,7 @@ export default function AstrologyAnalysisScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Analise Astrologica do Momento</Text>
           <Text style={styles.subtitle}>
-            Leitura profunda dos transitos, aspectos e seus fluxos atuais.
+            Leitura tecnica dos transitos, aspectos e casas ativadas.
           </Text>
           <Text style={styles.helper}>
             Tudo aqui indica tendencias em movimento, nunca determinacoes.
@@ -62,37 +30,45 @@ export default function AstrologyAnalysisScreen() {
         </View>
 
         <View style={styles.section}>
-          <AnalysisImpactStack
-            impactNodes={impactNodes}
-            lifeAreas={transitData?.lifeAreas}
-            isLoading={loading}
-          />
+          <Text style={styles.sectionTitle}>Tabela de transitos planetarios</Text>
+          <Text style={styles.sectionBody}>
+            Leitura comparativa entre posicoes natais e atuais, com aspectos ativos e casas envolvidas.
+          </Text>
+          {transitData?.currentTransits?.planetComparisons &&
+          transitData?.currentTransits?.chartSummary ? (
+            <TransitComparisonCard
+              planetComparisons={transitData.currentTransits.planetComparisons}
+              chartSummary={transitData.currentTransits.chartSummary}
+              ascendant={transitData.currentTransits.ascendant}
+              midheaven={transitData.currentTransits.midheaven}
+              natalAscendant={transitData.currentTransits.natalAscendant}
+              natalMidheaven={transitData.currentTransits.natalMidheaven}
+              housesCusps={transitData.currentTransits.houses}
+            />
+          ) : (
+            <Text style={styles.sectionBody}>
+              Sem dados suficientes para montar a tabela agora. Atualize seus dados astrológicos.
+            </Text>
+          )}
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Fluxos planetarios</Text>
+          <Text style={styles.sectionBody}>
+            Relacao qualitativa entre planetas e areas impactadas (apoio ou pressao).
+          </Text>
           <PlanetaryFlowMap impactNodes={impactNodes} />
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tempo e evolucao</Text>
+          <Text style={styles.sectionBody}>
+            Classificacao qualitativa do momento: passageiro, em desenvolvimento ou estrutural.
+          </Text>
           <PredictiveTimeline
             impactNodes={impactNodes}
             currentTransits={transitData?.currentTransits}
           />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sintese final</Text>
-          {synthesis ? (
-            <Text style={styles.sectionBody}>
-              O momento pede atencao em {formatAreaList(synthesis.pressured) || 'algumas areas'},
-              com apoio consistente em {formatAreaList(synthesis.supported) || 'outras areas'}.
-              Essa leitura muda conforme os fluxos avancam.
-            </Text>
-          ) : (
-            <Text style={styles.sectionBody}>
-              Essa leitura muda conforme os fluxos avancam. Atualize seus dados para uma sintese mais precisa.
-            </Text>
-          )}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.navigate('Tabs', { screen: 'Home' })}

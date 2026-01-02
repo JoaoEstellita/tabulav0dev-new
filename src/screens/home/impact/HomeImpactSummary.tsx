@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
 import { translatePlanetPT } from '../../../utils/astro/pt'
 import type { ImpactAreaNode } from './buildImpactNodes'
 
@@ -134,8 +133,6 @@ const SummaryRow = ({
 }
 
 export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpactSummaryProps) {
-  const navigation = useNavigation<any>()
-
   const summaryRows = useMemo(() => {
     if (!impactNodes.length) return []
 
@@ -242,13 +239,6 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
           )
         })}
       </View>
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={() => navigation.navigate('AstrologyAnalysis')}
-      >
-        <Text style={styles.ctaText}>Ver analise completa dos transitos</Text>
-        <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
-      </TouchableOpacity>
     </View>
   )
 }
@@ -324,20 +314,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#94A3B8',
     fontSize: 11,
-  },
-  ctaButton: {
-    marginTop: 12,
-    backgroundColor: '#FDE68A',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  ctaText: {
-    color: '#0F0F23',
-    fontSize: 13,
-    fontWeight: '700',
   },
 })
