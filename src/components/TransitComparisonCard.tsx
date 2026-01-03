@@ -154,11 +154,15 @@ export default function TransitComparisonCard({
     return translations[planetName] || planetName
   }
 
-  const normalizeKey = (value: string): string => {
-    return String(value || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+  
+
+  const sanitizeChangeText = (text: string): string => {
+    if (!text) return ''
+    const cleaned = String(text)
+      .replace(/[^\\x20-\\x7E]/g, ' ')
+      .replace(/\\s+/g, ' ')
+      .trim()
+    return cleaned
   }
 
   const translateElement = (element: string): string => {
@@ -375,12 +379,12 @@ export default function TransitComparisonCard({
         {/* Mudanças Detectadas */}
         {(chartSummary.elemental.changes.length > 0 || chartSummary.modality.changes.length > 0) && (
           <View style={styles.changesSection}>
-            <Text style={styles.changesTitle}>Mudancas Detectadas:</Text>
+            <Text style={styles.changesTitle}>Mudancas detectadas:</Text>
             {chartSummary.elemental.changes.filter(Boolean).map((change, index) => (
-              <Text key={`elemental-${index}`} style={styles.changeItem}>• {change}</Text>
+              <Text key={`elemental-${index}`} style={styles.changeItem}>- {sanitizeChangeText(change)}</Text>
             ))}
             {chartSummary.modality.changes.filter(Boolean).map((change, index) => (
-              <Text key={`modality-${index}`} style={styles.changeItem}>• {change}</Text>
+              <Text key={`modality-${index}`} style={styles.changeItem}>- {sanitizeChangeText(change)}</Text>
             ))}
           </View>
         )}
@@ -391,7 +395,7 @@ export default function TransitComparisonCard({
       <View style={styles.sectionHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Ionicons name="planet" size={20} color="#FFD700" />
-          <Text style={styles.sectionTitle}>Trânsitos Comparativos</Text>
+          <Text style={styles.sectionTitle}>Planetas em transito</Text>
         </View>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
@@ -445,7 +449,7 @@ export default function TransitComparisonCard({
                 <Text style={styles.columnTitle}>Transito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
-                  {comparison.current.isRetrograde && ' ℞'}
+                  {comparison.current.isRetrograde && ' (Rx)'}
                 </Text>
                 <View style={styles.attributesRow}>
                   <View style={styles.attributeChip}>
@@ -849,6 +853,13 @@ const styles = StyleSheet.create({
   },
   // 🌌 Estilos das casas removidos (não implementadas)
 })
+
+
+
+
+
+
+
 
 
 

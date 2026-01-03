@@ -39,7 +39,7 @@ export default function TransitsComparativePanel() {
   return (
     <LinearGradient colors={['#1E1E2E', '#2A2A3E']} style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Trânsitos Comparativos</Text>
+        <Text style={styles.title}>Transitos comparativos</Text>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             onPress={() => {
@@ -61,9 +61,9 @@ export default function TransitsComparativePanel() {
         )}
       </View>
 
-      <Text style={styles.sectionTitle}>⭐ Pessoais</Text>
+      <Text style={styles.sectionTitle}>Pessoais</Text>
       {topPersonal.length === 0 ? (
-        <Text style={styles.emptyText}>Sem trânsitos pessoais relevantes.</Text>
+        <Text style={styles.emptyText}>Sem transitos pessoais relevantes.</Text>
       ) : (
         <FlatList
           data={topPersonal}
@@ -71,25 +71,22 @@ export default function TransitsComparativePanel() {
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
               <Text style={styles.itemText}>
-                {translate(item.transitPlanet)} {item.type} {translate(item.natalPlanet)} • orbe {item.orb.toFixed(1)}° • {item.isApplying ? 'aplicante' : 'separante'}
+                {translate(item.transitPlanet)} {item.type} {translate(item.natalPlanet)} - orbe {item.orb.toFixed(1)} deg - {item.isApplying ? 'aplicante' : 'separante'}
               </Text>
-              <Text style={styles.metaText}>Casa natal {item.natalHouseImpacted} • {item.durationClass}</Text>
+              <Text style={styles.metaText}>Casa natal {item.natalHouseImpacted} - {item.durationClass}</Text>
             </View>
           )}
         />
       )}
 
-      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>✨ Coletivos (do Momento)</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Coletivos (do momento)</Text>
       <Text style={styles.metaText}>{general.length} aspectos ativos</Text>
     </LinearGradient>
   )
 }
 
 function translate(p: string): string {
-  const m: Record<string,string> = {
-    Sun: 'Sol', Moon: 'Lua', Mercury: 'Mercúrio', Venus: 'Vênus', Mars: 'Marte',
-    Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Netuno', Pluto: 'Plutão'
-  }
+  const m: Record<string,string> = {\r\n    Sun: 'Sol', Moon: 'Lua', Mercury: 'Mercurio', Venus: 'Venus', Mars: 'Marte',\r\n    Jupiter: 'Jupiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Netuno', Pluto: 'Plutao'\r\n  }
   return m[p] ?? p
 }
 
@@ -135,5 +132,8 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
 })
+
+
+
 
 

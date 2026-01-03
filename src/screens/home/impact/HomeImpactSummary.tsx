@@ -23,12 +23,6 @@ const AREA_ICONS: Record<string, string> = {
 const toLabel = (key: string) =>
   key ? key.charAt(0).toUpperCase() + key.slice(1) : ''
 
-const toDirectionLabel = (direction: 'apoio' | 'pressao' | 'neutro') => {
-  if (direction === 'pressao') return 'pressao'
-  if (direction === 'apoio') return 'apoio'
-  return 'equilibrio'
-}
-
 const getStatusText = (value: number) => {
   if (value >= 70) return 'Excelente'
   if (value >= 40) return 'Moderado'
@@ -89,6 +83,7 @@ const SummaryRow = ({
   neutralDominance,
   phrase,
   planets,
+  accent,
 }: {
   label: string
   areaKey: string
@@ -99,13 +94,14 @@ const SummaryRow = ({
   neutralDominance: boolean
   phrase: string
   planets: string[]
+  accent: string
 }) => {
   const iconName = (AREA_ICONS[areaKey] || 'help-circle') as any
   return (
     <View style={styles.rowCard}>
       <View style={styles.rowHeader}>
         <View style={styles.rowTitle}>
-          <Ionicons name={iconName} size={14} color="#FDE68A" />
+          <Ionicons name={iconName} size={14} color={accent} />
           <Text style={styles.rowLabel}>{label}</Text>
         </View>
         <Text style={styles.rowStatus}>
@@ -179,7 +175,7 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
     pressured.forEach((item, index) => {
       usedKeys.add(item.areaKey)
       rows.push({
-        label: `${toLabel(item.areaKey)} (${toDirectionLabel('pressao')})`,
+        label: `${toLabel(item.areaKey)}`,
         areaKey: item.areaKey,
         node: item.node,
         areaData: item.areaData,
@@ -190,7 +186,7 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
     supported.forEach((item) => {
       if (usedKeys.has(item.areaKey)) return
       rows.push({
-        label: `${toLabel(item.areaKey)} (${toDirectionLabel('apoio')})`,
+        label: `${toLabel(item.areaKey)}`,
         areaKey: item.areaKey,
         node: item.node,
         areaData: item.areaData,
@@ -204,40 +200,78 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
   if (!summaryRows.length) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Forcas do momento</Text>
+        <Text style={styles.title}>Pulso do momento</Text>
         <Text style={styles.subtitle}>Sem dados suficientes para resumir agora.</Text>
       </View>
     )
   }
 
+  const pressuredRows = summaryRows.filter((row) => row.direction === 'pressao')
+  const supportedRows = summaryRows.filter((row) => row.direction === 'apoio')
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Forcas do momento</Text>
-      <Text style={styles.subtitle}>
-        Principais areas com apoio e pressao neste instante.
-      </Text>
-      <View style={styles.rows}>
-        {summaryRows.map((row) => {
-          const statusValue = getAreaScore(row.areaData)
-          const statusText = getStatusText(statusValue)
-          const planets = getTopPlanets(row.node, row.areaData)
-          const phrase = buildPhrase(row.direction, planets)
-          const neutralDominance = row.node.neutralDominance
-          return (
-            <SummaryRow
-              key={`summary-${row.areaKey}-${row.label}`}
-              label={row.label}
-              areaKey={row.areaKey}
-              statusValue={statusValue}
-              statusText={statusText}
-              positivePct={row.node.positivePct}
-              negativePct={row.node.negativePct}
-              neutralDominance={neutralDominance}
-              phrase={phrase}
-              planets={planets}
-            />
-          )
-        })}
+      <Text style={styles.title}>Pulso do momento</Text>
+      <Text style={styles.subtitle}>Onde ha mais movimento agora.</Text>
+      <View style={styles.group}>
+        <View style={styles.groupHeader}>
+          <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
+          <Text style={styles.groupTitle}>Em ajuste</Text>
+        </View>
+        <View style={styles.rows}>
+          {pressuredRows.map((row) => {
+            const statusValue = getAreaScore(row.areaData)
+            const statusText = getStatusText(statusValue)
+            const planets = getTopPlanets(row.node, row.areaData)
+            const phrase = buildPhrase(row.direction, planets)
+            const neutralDominance = row.node.neutralDominance
+            return (
+              <SummaryRow
+                key={`summary-${row.areaKey}-${row.label}-pressao`}
+                label={row.label}
+                areaKey={row.areaKey}
+                statusValue={statusValue}
+                statusText={statusText}
+                positivePct={row.node.positivePct}
+                negativePct={row.node.negativePct}
+                neutralDominance={neutralDominance}
+                phrase={phrase}
+                planets={planets}
+                accent="#FCA5A5"
+              />
+            )
+          })}
+        </View>
+      </View>
+      <View style={styles.group}>
+        <View style={styles.groupHeader}>
+          <Ionicons name="heart" size={14} color="#6EE7B7" />
+          <Text style={styles.groupTitle}>Em apoio</Text>
+        </View>
+        <View style={styles.rows}>
+          {supportedRows.map((row) => {
+            const statusValue = getAreaScore(row.areaData)
+            const statusText = getStatusText(statusValue)
+            const planets = getTopPlanets(row.node, row.areaData)
+            const phrase = buildPhrase(row.direction, planets)
+            const neutralDominance = row.node.neutralDominance
+            return (
+              <SummaryRow
+                key={`summary-${row.areaKey}-${row.label}-apoio`}
+                label={row.label}
+                areaKey={row.areaKey}
+                statusValue={statusValue}
+                statusText={statusText}
+                positivePct={row.node.positivePct}
+                negativePct={row.node.negativePct}
+                neutralDominance={neutralDominance}
+                phrase={phrase}
+                planets={planets}
+                accent="#6EE7B7"
+              />
+            )
+          })}
+        </View>
       </View>
     </View>
   )
@@ -258,8 +292,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 6,
   },
-  rows: {
+  group: {
     marginTop: 12,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  groupTitle: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  rows: {
     gap: 10,
   },
   rowCard: {

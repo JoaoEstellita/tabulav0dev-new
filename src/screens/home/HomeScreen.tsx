@@ -136,12 +136,12 @@ export default function HomeScreen() {
         if (userDoc.exists()) {
           const userData = userDoc.data()
           setUserProfile({
-            displayName: userData.displayName || userData.fullName || 'Usuário',
+            displayName: userData.displayName || userData.fullName || 'Usuario',
             profilePhoto: userData.profilePhoto
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do usuário:', error)
+        console.error('Erro ao carregar perfil do usuario:', error)
       }
     }
 
@@ -156,13 +156,13 @@ export default function HomeScreen() {
         await sendCriticalAlerts()
         Alert.alert(
           'Alertas Enviados',
-          'Seus alertas críticos foram enviados para todos os grupos!',
+          'Seus alertas criticos foram enviados para todos os grupos!',
           [{ text: 'OK', style: 'default' }]
         )
       } catch (error) {
         Alert.alert(
           'Erro',
-          'Não foi possível enviar os alertas. Tente novamente.',
+          'Nao foi possivel enviar os alertas. Tente novamente.',
           [{ text: 'OK', style: 'default' }]
         )
       }
@@ -172,7 +172,7 @@ export default function HomeScreen() {
       if (userProfile?.displayName) return userProfile.displayName
       if (user?.displayName) return user.displayName
       if (user?.email) return user.email.split('@')[0]
-      return 'Usuário'
+      return 'Usuario'
     }
 
     const formatDate = () => {
@@ -213,7 +213,7 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.loadingContainer}>
             <StarLoader size={36} color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
+            <Text style={styles.loadingText}>Carregando seus transitos...</Text>
           </View>
         </LinearGradient>
       )
@@ -276,7 +276,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>Ola, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
@@ -318,13 +318,13 @@ export default function HomeScreen() {
               </View>
             </AnimatedMount>
           )}
-          {/* Status das Áreas de Vida */}
+          {/* Status das Areas de Vida */}
           {transitData?.lifeAreas && (
             <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="grid" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
+                <Text style={styles.sectionTitle}>Status das Areas de Vida</Text>
               </View>
 
               <View style={styles.lifeAreasGrid}>
@@ -380,7 +380,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="warning" size={20} color="#EF4444" />
-                <Text style={styles.sectionTitle}>Áreas Críticas</Text>
+                <Text style={styles.sectionTitle}>Areas Criticas</Text>
               </View>
 
               <LinearGradient
@@ -388,11 +388,11 @@ export default function HomeScreen() {
                 style={styles.alertCard}
               >
                 <Text style={styles.alertTitle}>
-                  {criticalAreas.length} {criticalAreas.length === 1 ? 'área precisa' : 'áreas precisam'} de atenção
+                  {criticalAreas.length} {criticalAreas.length === 1 ? 'Area precisa' : 'Areas precisam'} de atencao
                 </Text>
 
                 <Text style={styles.alertDescription}>
-                  Seus trânsitos indicam desafios em algumas áreas. Compartilhe com seu grupo para receber apoio!
+                  Seus transitos indicam desafios em algumas areas. Compartilhe com seu grupo para receber apoio!
                 </Text>
 
                 {(() => {
@@ -416,7 +416,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="information-circle" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Orientações</Text>
+                <Text style={styles.sectionTitle}>Orientacoes</Text>
               </View>
 
               {safeWarnings.map((warning, index) => (
@@ -452,7 +452,7 @@ export default function HomeScreen() {
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
           <Ionicons name="warning" size={48} color="#EF4444" />
-          <Text style={styles.loadingText}>Erro inesperado</Text>
+          <Text style={styles.loadingText}>Carregando seus transitos...</Text>
           <Text style={styles.errorText}>
             {error instanceof Error ? error.message : 'Erro desconhecido'}
           </Text>
@@ -781,6 +781,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   }
 })
+
+
+
+
+
 
 
 
