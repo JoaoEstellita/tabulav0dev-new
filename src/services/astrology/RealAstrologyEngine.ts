@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ðŸŒŸ REAL ASTROLOGY ENGINE ðŸŒŸ
  * 
  * Sistema de cÃ¡lculos astrolÃ³gicos com dados REAIS usando:
@@ -45,7 +45,7 @@ export interface RealAspect {
   strength: number // ForÃ§a do aspecto (0-100)
 }
 
-// ðŸŒ AnÃ¡lise Elemental
+// ðŸŒ Analise elemental
 export interface ElementalAnalysis {
   fire: number    // ðŸ”¥ Planetas em signos de fogo
   earth: number   // ðŸŒ Planetas em signos de terra  
@@ -53,7 +53,7 @@ export interface ElementalAnalysis {
   water: number   // ðŸ’§ Planetas em signos de Ã¡gua
 }
 
-// âš¡ AnÃ¡lise de Modalidades
+// âš¡ Analise de modalidades
 export interface ModalityAnalysis {
   cardinal: number  // âš¡ Planetas em signos cardinais
   fixed: number     // ðŸ”’ Planetas em signos fixos
@@ -230,40 +230,30 @@ export class RealAstrologyEngine {
     'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'
   ]
 
-  private static readonly SIGNS = [
-    'Ãries', 'Touro', 'GÃªmeos', 'CÃ¢ncer', 'LeÃ£o', 'Virgem',
-    'Libra', 'EscorpiÃ£o', 'SagitÃ¡rio', 'CapricÃ³rnio', 'AquÃ¡rio', 'Peixes'
+      private static readonly SIGNS = [
+    'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
   ]
 
-  // ðŸŒ ClassificaÃ§Ã£o dos Elementos
   private static readonly SIGN_ELEMENTS = {
-    'Ãries': 'fire', 'LeÃ£o': 'fire', 'SagitÃ¡rio': 'fire',
-    'Touro': 'earth', 'Virgem': 'earth', 'CapricÃ³rnio': 'earth',
-    'GÃªmeos': 'air', 'Libra': 'air', 'AquÃ¡rio': 'air',
-    'CÃ¢ncer': 'water', 'EscorpiÃ£o': 'water', 'Peixes': 'water'
+    'Áries': 'fire', 'Leão': 'fire', 'Sagitário': 'fire',
+    'Touro': 'earth', 'Virgem': 'earth', 'Capricórnio': 'earth',
+    'Gêmeos': 'air', 'Libra': 'air', 'Aquário': 'air',
+    'Câncer': 'water', 'Escorpião': 'water', 'Peixes': 'water'
   } as const
 
-  // âš¡ ClassificaÃ§Ã£o das Modalidades
   private static readonly SIGN_MODALITIES = {
-    'Ãries': 'cardinal', 'CÃ¢ncer': 'cardinal', 'Libra': 'cardinal', 'CapricÃ³rnio': 'cardinal',
-    'Touro': 'fixed', 'LeÃ£o': 'fixed', 'EscorpiÃ£o': 'fixed', 'AquÃ¡rio': 'fixed',
-    'GÃªmeos': 'mutable', 'Virgem': 'mutable', 'SagitÃ¡rio': 'mutable', 'Peixes': 'mutable'
+    'Áries': 'cardinal', 'Câncer': 'cardinal', 'Libra': 'cardinal', 'Capricórnio': 'cardinal',
+    'Touro': 'fixed', 'Leão': 'fixed', 'Escorpião': 'fixed', 'Aquário': 'fixed',
+    'Gêmeos': 'mutable', 'Virgem': 'mutable', 'Sagitário': 'mutable', 'Peixes': 'mutable'
   } as const
 
-  // ðŸ  Significados das Casas
   private static readonly HOUSE_MEANINGS = {
-    1: 'Identidade', 2: 'Recursos', 3: 'ComunicaÃ§Ã£o', 4: 'Lar', 
-    5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'TransformaÃ§Ã£o',
-    9: 'ExpansÃ£o', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
+    1: 'Identidade', 2: 'Recursos', 3: 'Comunicação', 4: 'Lar',
+    5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'Transformação',
+    9: 'Expansão', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
   } as const
-
-  // Cache simples do Ã­ndice coletivo por dia (UTC)
-  private static _collectiveCache: Map<string, NonNullable<RealAstrologyData['collective']>> = new Map()
-  // Cache Coletivo semanal/mensal (chaves: YYYY-Www e YYYY-MM)
-  private static _weeklyTTCache: Map<string, RealAspect[]> = new Map()
-  private static _monthlyTTCache: Map<string, RealAspect[]> = new Map()
-
-  private static readonly LIFE_AREAS = {
+private static readonly LIFE_AREAS = {
     amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
     carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'], weight: 1.0 },
     financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'], weight: 1.0 },
@@ -664,7 +654,7 @@ export class RealAstrologyEngine {
         // Determinar signo e grau
         const signIndex = Math.floor(ecliptic.elon / 30)
         const degree = ecliptic.elon % 30
-        const sign = this.SIGNS[signIndex] || 'Ãries'
+        const sign = this.SIGNS[signIndex] || 'Áries'
 
         // Verificar retrogradaÃ§Ã£o
         const isRetrograde = speed < 0
@@ -1533,13 +1523,13 @@ export class RealAstrologyEngine {
       terms?: string[];      // aproximaÃ§Ã£o: signos em que comumente recebe algum termo
       faces?: string[];      // faces/decanatos aproximados por signo
     }> = {
-      Sun:    { domicile: ['LeÃ£o'],    exaltation: ['Ãries'],     detriment: ['AquÃ¡rio'],  fall: ['Libra'] },
+      Sun:    { domicile: ['LeÃ£o'],    exaltation: ['Áries'],     detriment: ['AquÃ¡rio'],  fall: ['Libra'] },
       Moon:   { domicile: ['CÃ¢ncer'],  exaltation: ['Touro'],     detriment: ['CapricÃ³rnio'], fall: ['EscorpiÃ£o'] },
       Mercury:{ domicile: ['GÃªmeos','Virgem'], exaltation: [],    detriment: ['SagitÃ¡rio','Peixes'], fall: [], triplicity:['GÃªmeos','Virgem'], faces:['GÃªmeos','Virgem'] },
-      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['EscorpiÃ£o','Ãries'], fall: ['Virgem'], triplicity:['Touro','Libra'], faces:['Touro','Libra'] },
-      Mars:   { domicile: ['Ãries','EscorpiÃ£o'], exaltation: ['CapricÃ³rnio'], detriment: ['Libra','Touro'], fall: ['CÃ¢ncer'], triplicity:['Ãries','EscorpiÃ£o'] },
+      Venus:  { domicile: ['Touro','Libra'],  exaltation: ['Peixes'], detriment: ['EscorpiÃ£o','Áries'], fall: ['Virgem'], triplicity:['Touro','Libra'], faces:['Touro','Libra'] },
+      Mars:   { domicile: ['Áries','EscorpiÃ£o'], exaltation: ['CapricÃ³rnio'], detriment: ['Libra','Touro'], fall: ['CÃ¢ncer'], triplicity:['Áries','EscorpiÃ£o'] },
       Jupiter:{ domicile: ['SagitÃ¡rio','Peixes'], exaltation: ['CÃ¢ncer'], detriment: ['GÃªmeos','Virgem'], fall: ['CapricÃ³rnio'], triplicity:['SagitÃ¡rio','Peixes'] },
-      Saturn: { domicile: ['CapricÃ³rnio','AquÃ¡rio'], exaltation: ['Libra'], detriment: ['CÃ¢ncer','LeÃ£o'], fall: ['Ãries'], triplicity:['AquÃ¡rio','Libra'] },
+      Saturn: { domicile: ['CapricÃ³rnio','AquÃ¡rio'], exaltation: ['Libra'], detriment: ['CÃ¢ncer','LeÃ£o'], fall: ['Áries'], triplicity:['AquÃ¡rio','Libra'] },
       Uranus: { domicile: ['AquÃ¡rio'], triplicity:['AquÃ¡rio'] },
       Neptune:{ domicile: ['Peixes'], triplicity:['Peixes'] },
       Pluto:  { domicile: ['EscorpiÃ£o'], triplicity:['EscorpiÃ£o'] },
@@ -1696,16 +1686,16 @@ export class RealAstrologyEngine {
   private static getReceptionMultiplier(transit: RealPlanetPosition | undefined, natal: RealPlanetPosition | undefined): number {
     if (!transit || !natal) return 1.0
     const domicile: Record<string, string[]> = {
-      Sun:['LeÃ£o'], Moon:['CÃ¢ncer'], Mercury:['GÃªmeos','Virgem'], Venus:['Touro','Libra'], Mars:['Ãries','EscorpiÃ£o'], Jupiter:['SagitÃ¡rio','Peixes'], Saturn:['CapricÃ³rnio','AquÃ¡rio']
+      Sun:['LeÃ£o'], Moon:['CÃ¢ncer'], Mercury:['GÃªmeos','Virgem'], Venus:['Touro','Libra'], Mars:['Áries','EscorpiÃ£o'], Jupiter:['SagitÃ¡rio','Peixes'], Saturn:['CapricÃ³rnio','AquÃ¡rio']
     }
     const exalt: Record<string, string[]> = {
-      Sun:['Ãries'], Moon:['Touro'], Mercury:[], Venus:['Peixes'], Mars:['CapricÃ³rnio'], Jupiter:['CÃ¢ncer'], Saturn:['Libra']
+      Sun:['Áries'], Moon:['Touro'], Mercury:[], Venus:['Peixes'], Mars:['CapricÃ³rnio'], Jupiter:['CÃ¢ncer'], Saturn:['Libra']
     }
     const detr: Record<string, string[]> = {
-      Sun:['AquÃ¡rio'], Moon:['CapricÃ³rnio'], Mercury:['SagitÃ¡rio','Peixes'], Venus:['Ãries','EscorpiÃ£o'], Mars:['Libra','Touro'], Jupiter:['GÃªmeos','Virgem'], Saturn:['CÃ¢ncer','LeÃ£o']
+      Sun:['AquÃ¡rio'], Moon:['CapricÃ³rnio'], Mercury:['SagitÃ¡rio','Peixes'], Venus:['Áries','EscorpiÃ£o'], Mars:['Libra','Touro'], Jupiter:['GÃªmeos','Virgem'], Saturn:['CÃ¢ncer','LeÃ£o']
     }
     const fall: Record<string, string[]> = {
-      Sun:['Libra'], Moon:['EscorpiÃ£o'], Mercury:[], Venus:['Virgem'], Mars:['CÃ¢ncer'], Jupiter:['CapricÃ³rnio'], Saturn:['Ãries']
+      Sun:['Libra'], Moon:['EscorpiÃ£o'], Mercury:[], Venus:['Virgem'], Mars:['CÃ¢ncer'], Jupiter:['CapricÃ³rnio'], Saturn:['Áries']
     }
     const isIn = (tbl: Record<string,string[]>, name: string, sign: string) => (tbl[name]||[]).includes(sign)
     const tDom = isIn(domicile, transit.name, transit.sign)
@@ -1938,29 +1928,32 @@ export class RealAstrologyEngine {
     const natalModality = analyzeModalities(natalPlanets)
     const currentModality = analyzeModalities(currentPlanets)
 
-    // Detectar mudanÃ§as significativas, sempre com emoji
+    // Detectar mudancas significativas
     const elementalChanges: string[] = []
     const modalityChanges: string[] = []
 
-    // AnÃ¡lise elemental
+    // Analise elemental
     Object.keys(natalElemental).forEach(element => {
       const key = element as keyof ElementalAnalysis
       const diff = currentElemental[key] - natalElemental[key]
       if (diff !== 0) {
-        const emoji = element === 'fire' ? 'ðŸ”¥' : element === 'earth' ? 'ðŸŒ' : element === 'air' ? 'ðŸ’¨' : 'ðŸ’§'
-        const translatedElement = element === 'fire' ? 'fogo' : element === 'earth' ? 'terra' : element === 'air' ? 'ar' : 'Ã¡gua'
-        elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${emoji} ${translatedElement}`)
+        const translatedElement =
+          element === 'fire' ? 'fogo' :
+          element === 'earth' ? 'terra' :
+          element === 'air' ? 'ar' : 'agua'
+        elementalChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${translatedElement}`)
       }
     })
 
-    // AnÃ¡lise de modalidades
+    // Analise de modalidades
     Object.keys(natalModality).forEach(modality => {
       const key = modality as keyof ModalityAnalysis
       const diff = currentModality[key] - natalModality[key]
       if (diff !== 0) {
-        const icon = modality === 'cardinal' ? 'âš¡' : modality === 'fixed' ? 'ðŸ”’' : 'ðŸ”„'
-        const translatedModality = modality === 'cardinal' ? 'cardeal' : modality === 'fixed' ? 'fixo' : 'mutÃ¡vel'
-        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${icon} ${translatedModality}`)
+        const translatedModality =
+          modality === 'cardinal' ? 'cardeal' :
+          modality === 'fixed' ? 'fixo' : 'mutavel'
+        modalityChanges.push(`${diff > 0 ? 'Mais' : 'Menos'} ${translatedModality}`)
       }
     })
 
@@ -2127,6 +2120,8 @@ export class RealAstrologyEngine {
 }
 
 export default RealAstrologyEngine
+
+
 
 
 

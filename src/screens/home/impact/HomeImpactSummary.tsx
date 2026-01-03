@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+﻿import React, { useMemo } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { translatePlanetPT } from '../../../utils/astro/pt'
 import type { ImpactAreaNode } from './buildImpactNodes'
@@ -7,6 +7,8 @@ import type { ImpactAreaNode } from './buildImpactNodes'
 interface HomeImpactSummaryProps {
   impactNodes: ImpactAreaNode[]
   lifeAreas?: Record<string, any> | null
+  lunarPhaseLabel?: string | null
+  onOpenList?: () => void
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -20,13 +22,23 @@ const AREA_ICONS: Record<string, string> = {
   transformacao: 'refresh',
 }
 
-const toLabel = (key: string) =>
-  key ? key.charAt(0).toUpperCase() + key.slice(1) : ''
+const AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Finanças',
+  saude: 'Saúde',
+  familia: 'Família',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicação',
+  transformacao: 'Transformação',
+}
+
+const toLabel = (key: string) => AREA_LABELS[key] || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '')
 
 const getStatusText = (value: number) => {
   if (value >= 70) return 'Excelente'
   if (value >= 40) return 'Moderado'
-  return 'Critico'
+  return 'Crítico'
 }
 
 const buildMagnitude = (node: ImpactAreaNode) => {
@@ -63,14 +75,14 @@ const buildPhrase = (direction: 'apoio' | 'pressao' | 'neutro', planets: string[
   const translated = planets.map((name) => translatePlanetPT(name))
   const leader = translated[0]
   const second = translated[1]
-  if (!leader) return 'Sem predominancia clara agora.'
+  if (!leader) return 'Sem predominância clara agora.'
   if (direction === 'pressao') {
     return second ? `${leader} e ${second} pedem ajustes.` : `${leader} pede ajustes.`
   }
   if (direction === 'apoio') {
-    return second ? `${leader} e ${second} sustentam avancos.` : `${leader} sustenta avancos.`
+    return second ? `${leader} e ${second} sustentam avanços.` : `${leader} sustenta avanços.`
   }
-  return 'Sem predominancia clara agora.'
+  return 'Sem predominância clara agora.'
 }
 
 const SummaryRow = ({
@@ -84,6 +96,7 @@ const SummaryRow = ({
   phrase,
   planets,
   accent,
+  badge,
 }: {
   label: string
   areaKey: string
@@ -95,6 +108,7 @@ const SummaryRow = ({
   phrase: string
   planets: string[]
   accent: string
+  badge: string
 }) => {
   const iconName = (AREA_ICONS[areaKey] || 'help-circle') as any
   return (
@@ -108,6 +122,7 @@ const SummaryRow = ({
           {Math.round(statusValue)}% {statusText}
         </Text>
       </View>
+      <Text style={styles.rowBadge}>{badge}</Text>
       <View style={styles.stackTrack}>
         {neutralDominance ? (
           <View style={styles.stackNeutral} />
@@ -128,7 +143,7 @@ const SummaryRow = ({
   )
 }
 
-export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpactSummaryProps) {
+export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLabel, onOpenList }: HomeImpactSummaryProps) {
   const summaryRows = useMemo(() => {
     if (!impactNodes.length) return []
 
@@ -172,7 +187,7 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
       direction: 'apoio' | 'pressao' | 'neutro'
     }> = []
 
-    pressured.forEach((item, index) => {
+    pressured.forEach((item) => {
       usedKeys.add(item.areaKey)
       rows.push({
         label: `${toLabel(item.areaKey)}`,
@@ -194,6 +209,21 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
       })
     })
 
+    const balanced =
+      [...base]
+        .filter((item) => !usedKeys.has(item.areaKey))
+        .sort((a, b) => Math.abs(a.score - 50) - Math.abs(b.score - 50))[0] || null
+
+    if (balanced) {
+      rows.push({
+        label: `${toLabel(balanced.areaKey)}`,
+        areaKey: balanced.areaKey,
+        node: balanced.node,
+        areaData: balanced.areaData,
+        direction: 'neutro',
+      })
+    }
+
     return rows
   }, [impactNodes, lifeAreas])
 
@@ -208,71 +238,100 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas }: HomeImpact
 
   const pressuredRows = summaryRows.filter((row) => row.direction === 'pressao')
   const supportedRows = summaryRows.filter((row) => row.direction === 'apoio')
+  const balancedRows = summaryRows.filter((row) => row.direction === 'neutro')
+  const metaParts = [
+    `${pressuredRows.length} em ajuste`,
+    `${supportedRows.length} em apoio`,
+    balancedRows.length ? `${balancedRows.length} em equilíbrio` : '',
+  ].filter(Boolean)
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pulso do momento</Text>
-      <Text style={styles.subtitle}>Onde ha mais movimento agora.</Text>
-      <View style={styles.group}>
-        <View style={styles.groupHeader}>
-          <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
-          <Text style={styles.groupTitle}>Em ajuste</Text>
-        </View>
-        <View style={styles.rows}>
-          {pressuredRows.map((row) => {
-            const statusValue = getAreaScore(row.areaData)
-            const statusText = getStatusText(statusValue)
-            const planets = getTopPlanets(row.node, row.areaData)
-            const phrase = buildPhrase(row.direction, planets)
-            const neutralDominance = row.node.neutralDominance
-            return (
-              <SummaryRow
-                key={`summary-${row.areaKey}-${row.label}-pressao`}
-                label={row.label}
-                areaKey={row.areaKey}
-                statusValue={statusValue}
-                statusText={statusText}
-                positivePct={row.node.positivePct}
-                negativePct={row.node.negativePct}
-                neutralDominance={neutralDominance}
-                phrase={phrase}
-                planets={planets}
-                accent="#FCA5A5"
-              />
-            )
-          })}
-        </View>
+      <Text style={styles.subtitle}>Onde há mais movimento agora.</Text>
+      <View style={styles.metaRow}>
+        <Text style={styles.metaLine}>{metaParts.join(' • ')}</Text>
+        {lunarPhaseLabel ? (
+          <Text style={styles.lunarLine}>Fase lunar: {lunarPhaseLabel}</Text>
+        ) : null}
       </View>
-      <View style={styles.group}>
-        <View style={styles.groupHeader}>
-          <Ionicons name="heart" size={14} color="#6EE7B7" />
-          <Text style={styles.groupTitle}>Em apoio</Text>
-        </View>
-        <View style={styles.rows}>
-          {supportedRows.map((row) => {
-            const statusValue = getAreaScore(row.areaData)
-            const statusText = getStatusText(statusValue)
-            const planets = getTopPlanets(row.node, row.areaData)
-            const phrase = buildPhrase(row.direction, planets)
-            const neutralDominance = row.node.neutralDominance
-            return (
-              <SummaryRow
-                key={`summary-${row.areaKey}-${row.label}-apoio`}
-                label={row.label}
-                areaKey={row.areaKey}
-                statusValue={statusValue}
-                statusText={statusText}
-                positivePct={row.node.positivePct}
-                negativePct={row.node.negativePct}
-                neutralDominance={neutralDominance}
-                phrase={phrase}
-                planets={planets}
-                accent="#6EE7B7"
-              />
-            )
-          })}
-        </View>
+      <View style={styles.rows}>
+        {pressuredRows.map((row) => {
+          const statusValue = getAreaScore(row.areaData)
+          const statusText = getStatusText(statusValue)
+          const planets = getTopPlanets(row.node, row.areaData)
+          const phrase = buildPhrase(row.direction, planets)
+          const neutralDominance = row.node.neutralDominance
+          return (
+            <SummaryRow
+              key={`summary-${row.areaKey}-${row.label}-pressao`}
+              label={row.label}
+              areaKey={row.areaKey}
+              statusValue={statusValue}
+              statusText={statusText}
+              positivePct={row.node.positivePct}
+              negativePct={row.node.negativePct}
+              neutralDominance={neutralDominance}
+              phrase={phrase}
+              planets={planets}
+              accent="#FCA5A5"
+              badge="Pressão principal"
+            />
+          )
+        })}
+        {supportedRows.map((row) => {
+          const statusValue = getAreaScore(row.areaData)
+          const statusText = getStatusText(statusValue)
+          const planets = getTopPlanets(row.node, row.areaData)
+          const phrase = buildPhrase(row.direction, planets)
+          const neutralDominance = row.node.neutralDominance
+          return (
+            <SummaryRow
+              key={`summary-${row.areaKey}-${row.label}-apoio`}
+              label={row.label}
+              areaKey={row.areaKey}
+              statusValue={statusValue}
+              statusText={statusText}
+              positivePct={row.node.positivePct}
+              negativePct={row.node.negativePct}
+              neutralDominance={neutralDominance}
+              phrase={phrase}
+              planets={planets}
+              accent="#6EE7B7"
+              badge="Apoio principal"
+            />
+          )
+        })}
+        {balancedRows.map((row) => {
+          const statusValue = getAreaScore(row.areaData)
+          const statusText = getStatusText(statusValue)
+          const planets = getTopPlanets(row.node, row.areaData)
+          const phrase = buildPhrase(row.direction, planets)
+          const neutralDominance = row.node.neutralDominance
+          return (
+            <SummaryRow
+              key={`summary-${row.areaKey}-${row.label}-neutro`}
+              label={row.label}
+              areaKey={row.areaKey}
+              statusValue={statusValue}
+              statusText={statusText}
+              positivePct={row.node.positivePct}
+              negativePct={row.node.negativePct}
+              neutralDominance={neutralDominance}
+              phrase={phrase}
+              planets={planets}
+              accent="#CBD5F5"
+              badge="Equilíbrio geral"
+            />
+          )
+        })}
       </View>
+      {onOpenList && (
+        <TouchableOpacity style={styles.listButton} onPress={onOpenList}>
+          <Ionicons name="list" size={16} color="#0F0F23" />
+          <Text style={styles.listButtonText}>Ver trânsitos em lista</Text>
+        </TouchableOpacity>
+      )}
     </View>
   )
 }
@@ -292,22 +351,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 6,
   },
-  group: {
-    marginTop: 12,
+  metaRow: {
+    marginTop: 6,
   },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+  metaLine: {
+    color: '#94A3B8',
+    fontSize: 12,
   },
-  groupTitle: {
+  lunarLine: {
     color: '#E2E8F0',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    marginTop: 4,
   },
   rows: {
     gap: 10,
+    marginTop: 12,
+  },
+  listButton: {
+    marginTop: 14,
+    backgroundColor: '#FFE082',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  listButtonText: {
+    color: '#0F0F23',
+    fontWeight: '700',
+    fontSize: 13,
   },
   rowCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
@@ -334,6 +408,13 @@ const styles = StyleSheet.create({
     color: '#FDE68A',
     fontSize: 12,
     fontWeight: '600',
+  },
+  rowBadge: {
+    color: '#94A3B8',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   stackTrack: {
     height: 6,
@@ -363,3 +444,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
 })
+
+

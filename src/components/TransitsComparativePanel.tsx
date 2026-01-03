@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import UserService from '../services/firebase/UserService'
@@ -7,6 +7,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import { useAuth } from '../hooks/useAuth'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
+import { translatePlanetPT } from '../utils/astro/pt'
 
 export default function TransitsComparativePanel() {
   const { personal, general, statusPersonal } = useTransits(null)
@@ -35,11 +36,47 @@ export default function TransitsComparativePanel() {
   }, [])
 
   const topPersonal = [...personal].sort((a,b)=>b.strength-a.strength).slice(0,8)
+  const formatStatusLabel = (status: string | null) => {
+    if (!status) return ''
+    const map: Record<string, string> = {
+      excelente: 'Excelente',
+      bom: 'Bom',
+      neutro: 'Neutro',
+      desafiador: 'Desafiador',
+      critico: 'Crítico'
+    }
+    return map[String(status).toLowerCase()] || status
+  }
+
+  const normalizeKey = (value: string): string =>
+    String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+  const translateAspectLabel = (type: string): string => {
+    const key = normalizeKey(type)
+    const map: Record<string, string> = {
+      conjuncao: 'conjunção',
+      conjunction: 'conjunção',
+      sextil: 'sextil',
+      sextile: 'sextil',
+      quadratura: 'quadratura',
+      square: 'quadratura',
+      trigono: 'trígono',
+      trine: 'trígono',
+      oposicao: 'oposição',
+      opposition: 'oposição',
+      quincuncio: 'quincúncio',
+      quincunx: 'quincúncio'
+    }
+    return map[key] || type
+  }
 
   return (
     <LinearGradient colors={['#1E1E2E', '#2A2A3E']} style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Transitos comparativos</Text>
+        <Text style={styles.title}>Trânsitos comparativos</Text>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             onPress={() => {
@@ -57,13 +94,13 @@ export default function TransitsComparativePanel() {
           </TouchableOpacity>
         </View>
         {statusPersonal && (
-          <Text style={styles.status}>Status: {statusPersonal.level} ({statusPersonal.score}%)</Text>
+          <Text style={styles.status}>Status: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)</Text>
         )}
       </View>
 
       <Text style={styles.sectionTitle}>Pessoais</Text>
       {topPersonal.length === 0 ? (
-        <Text style={styles.emptyText}>Sem transitos pessoais relevantes.</Text>
+        <Text style={styles.emptyText}>Sem trânsitos pessoais relevantes.</Text>
       ) : (
         <FlatList
           data={topPersonal}
@@ -71,7 +108,7 @@ export default function TransitsComparativePanel() {
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
               <Text style={styles.itemText}>
-                {translate(item.transitPlanet)} {item.type} {translate(item.natalPlanet)} - orbe {item.orb.toFixed(1)} deg - {item.isApplying ? 'aplicante' : 'separante'}
+                {translatePlanetPT(item.transitPlanet)} {translateAspectLabel(item.type)} {translatePlanetPT(item.natalPlanet)} - orbe {item.orb.toFixed(1)} graus - {item.isApplying ? 'aplicante' : 'separante'}
               </Text>
               <Text style={styles.metaText}>Casa natal {item.natalHouseImpacted} - {item.durationClass}</Text>
             </View>
@@ -85,10 +122,7 @@ export default function TransitsComparativePanel() {
   )
 }
 
-function translate(p: string): string {
-  const m: Record<string,string> = {\r\n    Sun: 'Sol', Moon: 'Lua', Mercury: 'Mercurio', Venus: 'Venus', Mars: 'Marte',\r\n    Jupiter: 'Jupiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Netuno', Pluto: 'Plutao'\r\n  }
-  return m[p] ?? p
-}
+
 
 const styles = StyleSheet.create({
   container: {
@@ -132,6 +166,8 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
 })
+
+
 
 
 

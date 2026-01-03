@@ -129,9 +129,9 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Fluxos planetarios</Text>
+      <Text style={styles.sectionTitle}>Fluxos planetários</Text>
       <Text style={styles.sectionSubtitle}>
-        Mapa qualitativo de como os planetas direcionam apoio e pressao.
+        Mapa qualitativo de como os planetas direcionam apoio e pressão.
       </Text>
 
       <View style={styles.selectorRow}>
@@ -196,7 +196,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               </View>
             </View>
             <Text style={styles.flowReason}>
-              {flow.reason ? flow.reason : 'Influencia em movimento.'}
+              {flow.reason ? flow.reason : 'Influência em movimento.'}
             </Text>
           </View>
         ))}
@@ -290,3 +290,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 })
+

@@ -60,7 +60,7 @@ export default function ImpactContributorItem({
             contributor.topAspects.map((aspect, index) => (
               <Text key={`${contributor.id}-asp-${index}`} style={styles.detailText}>
                 {aspect.type} com {translatePlanetPT(aspect.with)}
-                {typeof aspect.orb === 'number' ? ` (orb ${aspect.orb.toFixed(1)}deg)` : ''}
+                {typeof aspect.orb === 'number' ? ` (orbe ${aspect.orb.toFixed(1)} graus)` : ''}
               </Text>
             ))
           ) : (
