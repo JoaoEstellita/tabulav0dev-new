@@ -137,6 +137,13 @@ export default function TransitComparisonCard({
     return `${degreeInSign.toFixed(1)}\u00B0`
   }
 
+  const normalizeKey = (value: string): string => {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
   // Traducao dos planetas
   const translatePlanetName = (planetName: string): string => {
     const translations: { [key: string]: string } = {
