@@ -8,7 +8,7 @@ interface HomeImpactSummaryProps {
   impactNodes: ImpactAreaNode[]
   lifeAreas?: Record<string, any> | null
   lunarPhaseLabel?: string | null
-  onOpenList?: () => void
+  onScrollToTransits?: () => void
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -25,12 +25,12 @@ const AREA_ICONS: Record<string, string> = {
 const AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',
-  financas: 'Finanças',
-  saude: 'Saúde',
-  familia: 'Família',
+  financas: 'Finan\u00E7as',
+  saude: 'Sa\u00FAde',
+  familia: 'Fam\u00EDlia',
   espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicação',
-  transformacao: 'Transformação',
+  comunicacao: 'Comunica\u00E7\u00E3o',
+  transformacao: 'Transforma\u00E7\u00E3o',
 }
 
 const toLabel = (key: string) => AREA_LABELS[key] || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '')
@@ -38,7 +38,7 @@ const toLabel = (key: string) => AREA_LABELS[key] || (key ? key.charAt(0).toUppe
 const getStatusText = (value: number) => {
   if (value >= 70) return 'Excelente'
   if (value >= 40) return 'Moderado'
-  return 'Crítico'
+  return 'Cr\u00EDtico'
 }
 
 const buildMagnitude = (node: ImpactAreaNode) => {
@@ -75,14 +75,14 @@ const buildPhrase = (direction: 'apoio' | 'pressao' | 'neutro', planets: string[
   const translated = planets.map((name) => translatePlanetPT(name))
   const leader = translated[0]
   const second = translated[1]
-  if (!leader) return 'Sem predominância clara agora.'
+  if (!leader) return 'Sem predomin\u00E2ncia clara agora.'
   if (direction === 'pressao') {
     return second ? `${leader} e ${second} pedem ajustes.` : `${leader} pede ajustes.`
   }
   if (direction === 'apoio') {
-    return second ? `${leader} e ${second} sustentam avanços.` : `${leader} sustenta avanços.`
+    return second ? `${leader} e ${second} sustentam avan\u00E7os.` : `${leader} sustenta avan\u00E7os.`
   }
-  return 'Sem predominância clara agora.'
+  return 'Sem predomin\u00E2ncia clara agora.'
 }
 
 const SummaryRow = ({
@@ -143,7 +143,23 @@ const SummaryRow = ({
   )
 }
 
-export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLabel, onOpenList }: HomeImpactSummaryProps) {
+export default function HomeImpactSummary({
+  impactNodes,
+  lifeAreas,
+  lunarPhaseLabel,
+  onScrollToTransits,
+}: HomeImpactSummaryProps) {
+  const avgScore = useMemo(() => {
+    if (!lifeAreas || typeof lifeAreas !== 'object') return null
+    const values = Object.values(lifeAreas)
+      .map((area: any) => (typeof area?.percentage === 'number' ? area.percentage : null))
+      .filter((value): value is number => typeof value === 'number')
+    if (!values.length) return null
+    const total = values.reduce((sum, value) => sum + value, 0)
+    return Math.round(total / values.length)
+  }, [lifeAreas])
+
+  const avgLabel = avgScore !== null ? getStatusText(avgScore) : null
   const summaryRows = useMemo(() => {
     if (!impactNodes.length) return []
 
@@ -240,22 +256,29 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLa
   const supportedRows = summaryRows.filter((row) => row.direction === 'apoio')
   const balancedRows = summaryRows.filter((row) => row.direction === 'neutro')
   const metaParts = [
-    `${pressuredRows.length} em ajuste`,
-    `${supportedRows.length} em apoio`,
-    balancedRows.length ? `${balancedRows.length} em equilíbrio` : '',
+    pressuredRows.length ? `${pressuredRows.length} em ajuste` : '',
+    supportedRows.length ? `${supportedRows.length} em apoio` : '',
+    balancedRows.length ? `${balancedRows.length} em equil\u00EDbrio` : '',
   ].filter(Boolean)
+  const metaSummary = metaParts.length ? metaParts.join(' \u2022 ') : 'Sem predomin\u00E2ncia clara.'
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pulso do momento</Text>
-      <Text style={styles.subtitle}>Onde há mais movimento agora.</Text>
+      <Text style={styles.subtitle}>Onde h\u00E1 mais movimento agora.</Text>
       <View style={styles.metaRow}>
-        <Text style={styles.metaLine}>{metaParts.join(' • ')}</Text>
+        <Text style={styles.metaLine}>{metaSummary}</Text>
+        {avgLabel && avgScore !== null ? (
+          <Text style={styles.metaLine}>M\u00E9dia geral: {avgScore}% {avgLabel}</Text>
+        ) : null}
         {lunarPhaseLabel ? (
           <Text style={styles.lunarLine}>Fase lunar: {lunarPhaseLabel}</Text>
         ) : null}
       </View>
       <View style={styles.rows}>
+        {pressuredRows.length > 0 && (
+          <Text style={styles.sectionLabel}>Em ajuste</Text>
+        )}
         {pressuredRows.map((row) => {
           const statusValue = getAreaScore(row.areaData)
           const statusText = getStatusText(statusValue)
@@ -275,10 +298,13 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLa
               phrase={phrase}
               planets={planets}
               accent="#FCA5A5"
-              badge="Pressão principal"
+              badge="Press\u00E3o principal"
             />
           )
         })}
+        {supportedRows.length > 0 && (
+          <Text style={styles.sectionLabel}>Em apoio</Text>
+        )}
         {supportedRows.map((row) => {
           const statusValue = getAreaScore(row.areaData)
           const statusText = getStatusText(statusValue)
@@ -302,6 +328,9 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLa
             />
           )
         })}
+        {balancedRows.length > 0 && (
+          <Text style={styles.sectionLabel}>Em equil\u00EDbrio</Text>
+        )}
         {balancedRows.map((row) => {
           const statusValue = getAreaScore(row.areaData)
           const statusText = getStatusText(statusValue)
@@ -321,15 +350,14 @@ export default function HomeImpactSummary({ impactNodes, lifeAreas, lunarPhaseLa
               phrase={phrase}
               planets={planets}
               accent="#CBD5F5"
-              badge="Equilíbrio geral"
+              badge="Equil\u00EDbrio geral"
             />
           )
         })}
       </View>
-      {onOpenList && (
-        <TouchableOpacity style={styles.listButton} onPress={onOpenList}>
-          <Ionicons name="list" size={16} color="#0F0F23" />
-          <Text style={styles.listButtonText}>Ver trânsitos em lista</Text>
+      {onScrollToTransits && (
+        <TouchableOpacity style={styles.ctaRow} onPress={onScrollToTransits}>
+          <Text style={styles.ctaText}>Ver tr\u00E2nsitos em lista</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -367,37 +395,26 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
   },
-  listButton: {
-    marginTop: 14,
-    backgroundColor: '#FFE082',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  listButtonText: {
-    color: '#0F0F23',
-    fontWeight: '700',
-    fontSize: 13,
+  sectionLabel: {
+    color: '#A78BFA',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
   },
   rowCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    borderRadius: 14,
     padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   rowHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   rowTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   rowLabel: {
     color: '#E2E8F0',
@@ -405,44 +422,53 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   rowStatus: {
-    color: '#FDE68A',
+    color: '#F8FAFC',
     fontSize: 12,
     fontWeight: '600',
   },
   rowBadge: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    marginTop: 4,
   },
   stackTrack: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
     flexDirection: 'row',
+    marginTop: 8,
   },
   stackPositive: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#6EE7B7',
+    height: '100%',
   },
   stackNegative: {
-    backgroundColor: '#F97316',
+    backgroundColor: '#FCA5A5',
+    height: '100%',
   },
   stackNeutral: {
-    flex: 1,
-    backgroundColor: 'rgba(148,163,184,0.4)',
+    backgroundColor: '#CBD5F5',
+    height: '100%',
+    width: '100%',
   },
   rowPhrase: {
-    marginTop: 8,
-    color: '#F8FAFC',
+    color: '#E2E8F0',
     fontSize: 12,
+    marginTop: 8,
   },
   rowPlanets: {
-    marginTop: 4,
     color: '#94A3B8',
     fontSize: 11,
+    marginTop: 2,
+  },
+  ctaRow: {
+    marginTop: 12,
+    alignItems: 'flex-start',
+  },
+  ctaText: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '600',
   },
 })
-
-

@@ -42,7 +42,7 @@ const buildSummary = (node: ImpactAreaNode) => {
   }
 
   if (mainNegative.length === 0 && mainPositive.length === 0) {
-    return 'Forcas principais indisponiveis no momento.'
+    return 'For\u00E7as principais indispon\u00EDveis no momento.'
   }
 
   const negativeText = mainNegative.length ? `Pressao de ${mainNegative.join(' e ')}` : ''
@@ -112,7 +112,7 @@ export default function ImpactStackRow({
             <View style={styles.stackMarker} />
           </View>
           <Text style={styles.stackCaption}>
-            Forcas principais (intensidade relativa)
+            For\u00E7as principais (intensidade relativa)
           </Text>
         </View>
       </TouchableOpacity>

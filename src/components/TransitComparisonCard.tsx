@@ -1,9 +1,10 @@
-﻿import React from 'react'
+import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
 import { translatePlanetPT } from '../utils/astro/pt'
+import { normalizeKey } from '../utils/astro/normalizeKey'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
 import UserService from '../services/firebase/UserService'
@@ -76,22 +77,15 @@ const PLANET_ICONS: Record<string, string> = {
 const AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',
-  financas: 'Finanças',
-  saude: 'Saúde',
-  familia: 'Família',
+  financas: 'Finan\u00E7as',
+  saude: 'Sa\u00FAde',
+  familia: 'Fam\u00EDlia',
   espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicação',
-  transformacao: 'Transformação'
+  comunicacao: 'Comunica\u00E7\u00E3o',
+  transformacao: 'Transforma\u00E7\u00E3o'
 }
 
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
-
-const normalizeKey = (value: string): string => {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-}
 
 export default function TransitComparisonCard({ 
   planetComparisons, 
@@ -152,7 +146,16 @@ export default function TransitComparisonCard({
   const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
 
   const translatePlanetTokens = (text: string): string =>
-  String(text || '').replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
+    String(text || '')
+      .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
+      .replace(/\bdeg\b/gi, '\u00B0')
+
+const sanitizeChangeText = (value: string): string => {
+  return String(value || '')
+    .replace(/[^\u0020-\u007E\u00C0-\u017F]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
 
 const buildChangeList = (
   natal: Record<string, number>,
@@ -162,8 +165,11 @@ const buildChangeList = (
   return Object.keys(natal).reduce<string[]>((acc, key) => {
     const diff = (current[key] ?? 0) - (natal[key] ?? 0)
     if (!diff) return acc
-    const label = labels[normalizeKey(key)] || key
-    acc.push(`${diff > 0 ? 'Mais' : 'Menos'} ${label}`)
+    const normalized = normalizeKey(key)
+    const label = labels[normalized] || labels[key] || normalized
+    const pretty = sanitizeChangeText(label.charAt(0).toUpperCase() + label.slice(1))
+    if (!pretty || pretty.length <= 1) return acc
+    acc.push(`${diff > 0 ? 'Mais' : 'Menos'} ${pretty}`)
     return acc
   }, [])
 }
@@ -173,11 +179,11 @@ const translateElement = (element: string): string => {
     fire: 'Fogo',
     earth: 'Terra',
     air: 'Ar',
-    water: 'Água',
+    water: '\u00C1gua',
     fogo: 'Fogo',
     terra: 'Terra',
     ar: 'Ar',
-    agua: 'Água'
+    agua: '\u00C1gua'
   }
   const key = normalizeKey(element)
   return translations[key] || element
@@ -187,10 +193,10 @@ const translateModality = (modality: string): string => {
   const translations: { [key: string]: string } = {
     cardinal: 'Cardeal',
     fixed: 'Fixo',
-    mutable: 'Mutável',
+    mutable: 'Mut\u00E1vel',
     cardeal: 'Cardeal',
     fixo: 'Fixo',
-    mutavel: 'Mutável'
+    mutavel: 'Mut\u00E1vel'
   }
   const key = normalizeKey(modality)
   return translations[key] || modality
@@ -203,40 +209,50 @@ const formatStatusLabel = (status: string | null) => {
     bom: 'Bom',
     neutro: 'Neutro',
     desafiador: 'Desafiador',
-    critico: 'Crítico'
+    critico: 'Cr\u00EDtico'
   }
   return map[String(status).toLowerCase()] || status
 }
-const elementalChanges = React.useMemo(() => {
+  const elementalChanges = React.useMemo(() => {
     const labels: Record<string, string> = {
       fire: 'Fogo',
       earth: 'Terra',
       air: 'Ar',
-      water: 'Água',
+      water: '\u00C1gua',
       fogo: 'Fogo',
       terra: 'Terra',
       ar: 'Ar',
-      agua: 'Água'
+      agua: '\u00C1gua'
     }
-    return buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
-  }, [chartSummary.elemental.natal, chartSummary.elemental.current])
+    const computed = buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
+    if (computed.length) return computed
+    const fallback = (chartSummary.elemental?.changes || [])
+      .map((entry) => sanitizeChangeText(entry))
+      .filter((entry) => entry.length > 1)
+    return fallback
+  }, [chartSummary.elemental.natal, chartSummary.elemental.current, chartSummary.elemental?.changes])
 
   const modalityChanges = React.useMemo(() => {
     const labels: Record<string, string> = {
       cardinal: 'Cardeal',
       fixed: 'Fixo',
-      mutable: 'Mutável',
+      mutable: 'Mut\u00E1vel',
       cardeal: 'Cardeal',
       fixo: 'Fixo',
-      mutavel: 'Mutável'
+      mutavel: 'Mut\u00E1vel'
     }
-    return buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
-  }, [chartSummary.modality.natal, chartSummary.modality.current])
+    const computed = buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
+    if (computed.length) return computed
+    const fallback = (chartSummary.modality?.changes || [])
+      .map((entry) => sanitizeChangeText(entry))
+      .filter((entry) => entry.length > 1)
+    return fallback
+  }, [chartSummary.modality.natal, chartSummary.modality.current, chartSummary.modality?.changes])
 
   const getSignFromDegree = (degree: number): string => {
     const signs = [
-      'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
-      'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
+      '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
+      'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes'
     ]
     const signIndex = Math.floor(degree / 30) % 12
     return signs[signIndex]
@@ -245,25 +261,25 @@ const elementalChanges = React.useMemo(() => {
   const translateAspectLabel = (type: string): string => {
     const key = normalizeKey(type)
     const map: Record<string, string> = {
-      conjuncao: 'conjunção',
-      conjunction: 'conjunção',
+      conjuncao: 'conjun\u00E7\u00E3o',
+      conjunction: 'conjun\u00E7\u00E3o',
       sextil: 'sextil',
       sextile: 'sextil',
       quadratura: 'quadratura',
       square: 'quadratura',
-      trigono: 'trígono',
-      trine: 'trígono',
-      oposicao: 'oposição',
-      opposition: 'oposição',
-      quincuncio: 'quincúncio',
-      quincunx: 'quincúncio'
+      trigono: 'tr\u00EDgono',
+      trine: 'tr\u00EDgono',
+      oposicao: 'oposi\u00E7\u00E3o',
+      opposition: 'oposi\u00E7\u00E3o',
+      quincuncio: 'quinc\u00FAncio',
+      quincunx: 'quinc\u00FAncio'
     }
     return map[key] || type
   }
 
-  // âš¡ Velocidade removida para melhor UX - informaÃ§Ã£o desnecessÃ¡ria
+  // \u00E2\u0161\u00A1 Velocidade removida para melhor UX - informa\u00C3\u00A7\u00C3\u00A3o desnecess\u00C3\u00A1ria
 
-  // ðŸŒŒ FunÃ§Ãµes auxiliares removidas (casas astrolÃ³gicas nÃ£o implementadas)
+  // \u00F0\u0178\u0152\u0152 Fun\u00C3\u00A7\u00C3\u00B5es auxiliares removidas (casas astrol\u00C3\u00B3gicas n\u00C3\u00A3o implementadas)
 
     const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const base = aspect
@@ -282,7 +298,7 @@ const elementalChanges = React.useMemo(() => {
   }
 
 
-  // ðŸ·ï¸ DistÃ¢ncia atÃ© a cÃºspide mais prÃ³xima (casas ATUAIS)
+  // \u00F0\u0178\u008F\u00B7\u00EF\u00B8\u008F Dist\u00C3\u00A2ncia at\u00C3\u00A9 a c\u00C3\u00BAspide mais pr\u00C3\u00B3xima (casas ATUAIS)
   const nearestCuspInfo = React.useCallback((longitude: number): { house: number, distance: number } | null => {
     try {
       if (!housesCusps || housesCusps.length !== 12) return null
@@ -342,11 +358,15 @@ const elementalChanges = React.useMemo(() => {
       }>
   }, [lifeAreas])
 
-    return (
+  return (
     <LinearGradient
       colors={['#1E1E2E', '#2A2A3E']}
       style={styles.container}
     >
+      <View style={styles.cardHeader}>
+        <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
+        <Text style={styles.cardTitle}>Tr\u00E2nsitos comparativos</Text>
+      </View>
       {/* Status pessoal agregado */}
       {statusPersonal && (
         <View style={{ marginBottom: 8 }}>
@@ -356,7 +376,7 @@ const elementalChanges = React.useMemo(() => {
         </View>
       )}
 
-      {/* Análise Elemental */}
+      {/* An\u00E1lise Elemental */}
       <View style={styles.summarySection}>
         <View style={styles.sectionHeader}>
           <Ionicons name="analytics" size={20} color="#FFD700" />
@@ -366,7 +386,7 @@ const elementalChanges = React.useMemo(() => {
           )}
         </View>
 
-        {/* Análise Elemental */}
+        {/* An\u00E1lise Elemental */}
         <View style={styles.analysisRow}>
           <Text style={styles.analysisLabel}>Elementos:</Text>
           <View style={styles.elementalGrid}>
@@ -395,7 +415,7 @@ const elementalChanges = React.useMemo(() => {
           </View>
         </View>
 
-        {/* Análise de Modalidades */}
+        {/* An\u00E1lise de Modalidades */}
         <View style={styles.analysisRow}>
           <Text style={styles.analysisLabel}>Modalidades:</Text>
           <View style={styles.elementalGrid}>
@@ -424,26 +444,30 @@ const elementalChanges = React.useMemo(() => {
           </View>
         </View>
 
-        {/* Mudanças detectadas */}
-        {(elementalChanges.length > 0 || modalityChanges.length > 0) && (
-          <View style={styles.changesSection}>
-            <Text style={styles.changesTitle}>Mudanças detectadas:</Text>
-            {elementalChanges.map((change, index) => (
-              <Text key={`elemental-${index}`} style={styles.changeItem}>- {change}</Text>
-            ))}
-            {modalityChanges.map((change, index) => (
-              <Text key={`modality-${index}`} style={styles.changeItem}>- {change}</Text>
-            ))}
-          </View>
-        )}
+        {/* Mudan\u00E7as detectadas */}
+        <View style={styles.changesSection}>
+          <Text style={styles.changesTitle}>Mudan\u00E7as detectadas:</Text>
+          {elementalChanges.length === 0 && modalityChanges.length === 0 ? (
+            <Text style={styles.changeItem}>Sem mudan\u00E7as relevantes.</Text>
+          ) : (
+            <>
+              {elementalChanges.map((change, index) => (
+                <Text key={`elemental-${index}`} style={styles.changeItem}>- {change}</Text>
+              ))}
+              {modalityChanges.map((change, index) => (
+                <Text key={`modality-${index}`} style={styles.changeItem}>- {change}</Text>
+              ))}
+            </>
+          )}
+        </View>
       </View>
 
-      {/* Comparações Planetárias */}
+      {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
+            <Text style={styles.sectionTitle}>Planetas em tr\u00E2nsito</Text>
           </View>
           <View style={styles.toggleGroup}>
             <TouchableOpacity
@@ -465,14 +489,14 @@ const elementalChanges = React.useMemo(() => {
 
         {planetComparisons.map((comparison) => (
           <View key={comparison.name} style={styles.planetCard}>
-            {/* Cabeçalho do Planeta */}
+            {/* Cabe\u00E7alho do Planeta */}
             <View style={styles.planetHeader}>
               <Text style={styles.planetName}>
                 {(PLANET_ICONS[comparison.name] || '?')} {translatePlanetName(comparison.name)}
               </Text>
             </View>
 
-            {/* Comparação Natal vs Trânsito */}
+            {/* Compara\u00E7\u00E3o Natal vs Tr\u00E2nsito */}
             <View style={styles.comparisonGrid}>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>Natal</Text>
@@ -492,7 +516,7 @@ const elementalChanges = React.useMemo(() => {
               </View>
 
               <View style={styles.comparisonColumn}>
-                <Text style={styles.columnTitle}>Trânsito</Text>
+                <Text style={styles.columnTitle}>Tr\u00E2nsito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' (Rx)'}
@@ -510,26 +534,26 @@ const elementalChanges = React.useMemo(() => {
               </View>
             </View>
 
-            {/* Linha de resumo explícita das casas + badge "próx. cúspide" */}
+            {/* Linha de resumo expl\u00EDcita das casas + badge "pr\u00F3x. c\u00FAspide" */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
               <Text style={[styles.positionText, { opacity: 0.9 }]}>
-                Casa natal {comparison.natal.house} -> trânsito {comparison.current.house}
+                Casa natal {comparison.natal.house} -> tr\u00E2nsito {comparison.current.house}
               </Text>
               {(() => {
                 const info = nearestCuspInfo(comparison.current.longitude)
                 if (info && info.distance <= 0.5) {
                   return (
-                    <Text style={styles.nearCuspChip}>{`próx. cúspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
+                    <Text style={styles.nearCuspChip}>{`pr\u00F3x. c\u00FAspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
                   )
                 }
                 return null
               })()}
             </View>
 
-            {/* Trânsitos pessoais para este planeta em trânsito */}
+            {/* Tr\u00E2nsitos pessoais para este planeta em tr\u00E2nsito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Trânsitos pessoais:</Text>
+                <Text style={styles.aspectsTitle}>Tr\u00E2nsitos pessoais:</Text>
                 {personalByTransitPlanet[comparison.name]
                   .slice(0, 3)
                   .map((t, idx) => (
@@ -590,7 +614,7 @@ const elementalChanges = React.useMemo(() => {
               if (!areaInfluences.length) return null
               return (
                 <View style={styles.aspectsSection}>
-                  <Text style={styles.aspectsTitle}>Influência nos status:</Text>
+                  <Text style={styles.aspectsTitle}>Influ\u00EAncia nos status:</Text>
                   {areaInfluences.map((area, areaIndex) => (
                     <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
                       <Text style={styles.influenceArea}>
@@ -616,9 +640,9 @@ const elementalChanges = React.useMemo(() => {
             style={styles.timelineCta}
             onPress={onOpenTimeline}
             accessibilityRole="button"
-            accessibilityLabel="Abrir linha do tempo planetária"
+            accessibilityLabel="Abrir linha do tempo planet\u00E1ria"
           >
-            <Text style={styles.timelineCtaText}>Linha do tempo planetária</Text>
+            <Text style={styles.timelineCtaText}>Linha do tempo planet\u00E1ria</Text>
             <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
           </TouchableOpacity>
         )}
@@ -634,6 +658,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 16,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  cardTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
   summarySection: {
     marginBottom: 20,
@@ -854,7 +889,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // ðŸŽ¯ ESTILOS PARA ASCENDENTE E MEIO DO CÃ‰U
+  // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {
     marginTop: 20,
     paddingTop: 16,
@@ -923,7 +958,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
-  // ðŸŒŒ Estilos das casas removidos (nÃ£o implementadas)
+  // \u00F0\u0178\u0152\u0152 Estilos das casas removidos (n\u00C3\u00A3o implementadas)
 })
 
 

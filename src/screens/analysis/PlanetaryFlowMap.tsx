@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Svg, { Path } from 'react-native-svg'
@@ -23,12 +23,12 @@ type FlowEntry = {
 const AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',
-  financas: 'Financas',
-  saude: 'Saude',
-  familia: 'Familia',
+  financas: 'Finan\u00E7as',
+  saude: 'Sa\u00FAde',
+  familia: 'Fam\u00EDlia',
   espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicacao',
-  transformacao: 'Transformacao',
+  comunicacao: 'Comunica\u00E7\u00E3o',
+  transformacao: 'Transforma\u00E7\u00E3o',
 }
 
 const directionColor = (direction: FlowDirection) => {
@@ -39,7 +39,7 @@ const directionColor = (direction: FlowDirection) => {
 
 const directionLabel = (direction: FlowDirection) => {
   if (direction === 'apoio') return 'Apoio'
-  if (direction === 'pressao') return 'Pressao'
+  if (direction === 'pressao') return 'Press\u00E3o'
   return 'Misto'
 }
 
@@ -50,9 +50,24 @@ const toIntensity = (ratio: number) => {
 }
 
 const FLOW_WIDTHS: Record<FlowEntry['intensity'], number> = {
-  leve: 110,
-  moderada: 150,
-  forte: 190,
+  leve: 90,
+  moderada: 130,
+  forte: 165,
+}
+
+const FLOW_WAVES: Record<FlowEntry['intensity'], number> = {
+  leve: 3,
+  moderada: 5,
+  forte: 7,
+}
+
+const buildFlowPath = (width: number, wave: number) => {
+  const w1 = Math.round(width * 0.25)
+  const w2 = Math.round(width * 0.5)
+  const w3 = Math.round(width * 0.75)
+  const end = Math.max(width - 2, 2)
+  const mid = 11
+  return `M2 ${mid} C ${w1} ${mid - wave} ${w2} ${mid + wave} ${w3} ${mid - wave} S ${end - 6} ${mid + wave} ${end} ${mid}`
 }
 
 const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
@@ -129,9 +144,9 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Fluxos planetários</Text>
+      <Text style={styles.sectionTitle}>Fluxos planet\u00E1rios</Text>
       <Text style={styles.sectionSubtitle}>
-        Mapa qualitativo de como os planetas direcionam apoio e pressão.
+        Mapa qualitativo de como os planetas direcionam apoio e press\u00E3o.
       </Text>
 
       <View style={styles.selectorRow}>
@@ -183,9 +198,10 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                 viewBox={`0 0 ${FLOW_WIDTHS[flow.intensity]} 22`}
               >
                 <Path
-                  d={`M2 11 C ${FLOW_WIDTHS[flow.intensity] * 0.25} 4 ${FLOW_WIDTHS[flow.intensity] * 0.45} 18 ${FLOW_WIDTHS[flow.intensity] * 0.6} 11 C ${FLOW_WIDTHS[flow.intensity] * 0.72} 4 ${FLOW_WIDTHS[flow.intensity] * 0.9} 18 ${FLOW_WIDTHS[flow.intensity] - 2} 11`}
+                  d={buildFlowPath(FLOW_WIDTHS[flow.intensity], FLOW_WAVES[flow.intensity])}
                   stroke={directionColor(flow.direction)}
-                  strokeWidth={3}
+                  strokeWidth={2}
+                  strokeOpacity={0.8}
                   strokeLinecap="round"
                   fill="none"
                 />
@@ -196,7 +212,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               </View>
             </View>
             <Text style={styles.flowReason}>
-              {flow.reason ? flow.reason : 'Influência em movimento.'}
+              {flow.reason ? flow.reason : 'Influ\u00EAncia em movimento.'}
             </Text>
           </View>
         ))}
@@ -208,86 +224,86 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
 const styles = StyleSheet.create({
   sectionTitle: {
     color: '#F8FAFC',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
   sectionSubtitle: {
-    color: '#C7D2FE',
+    color: '#94A3B8',
     fontSize: 12,
-    marginTop: 6,
+    marginTop: 4,
+    marginBottom: 12,
   },
   selectorRow: {
-    marginTop: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 10,
   },
   selectorChip: {
-    paddingHorizontal: 10,
     paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   selectorChipActive: {
-    backgroundColor: 'rgba(253,230,138,0.2)',
-    borderColor: '#FDE68A',
+    backgroundColor: 'rgba(255,215,0,0.2)',
   },
   selectorText: {
-    color: '#CBD5F5',
-    fontSize: 11,
+    color: '#E2E8F0',
+    fontSize: 12,
   },
   selectorTextActive: {
-    color: '#FDE68A',
-    fontWeight: '700',
+    color: '#FFD700',
+    fontWeight: '600',
   },
   flowList: {
-    marginTop: 12,
     gap: 12,
+    marginTop: 6,
   },
   flowRow: {
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    borderRadius: 12,
     padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   flowHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    marginBottom: 6,
   },
   flowPlanet: {
     color: '#E2E8F0',
     fontSize: 13,
-    fontWeight: '700',
-  },
-  flowArea: {
-    color: '#FDE68A',
-    fontSize: 12,
     fontWeight: '600',
   },
+  flowArea: {
+    color: '#CBD5F5',
+    fontSize: 12,
+  },
   flowLineWrap: {
-    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   flowMetaRow: {
-    marginTop: 6,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 4,
   },
   flowMeta: {
     color: '#94A3B8',
     fontSize: 11,
   },
   flowReason: {
-    marginTop: 8,
+    marginTop: 6,
     color: '#CBD5F5',
-    fontSize: 11,
+    fontSize: 12,
   },
   emptyState: {
-    paddingVertical: 12,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   emptyText: {
     color: '#94A3B8',
     fontSize: 12,
   },
 })
-

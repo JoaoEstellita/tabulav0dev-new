@@ -3,22 +3,22 @@
 const PLANET_PT: Record<string, string> = {
   sun: 'Sol',
   moon: 'Lua',
-  mercury: 'Mercúrio',
-  venus: 'Vênus',
+  mercury: 'Merc\u00FArio',
+  venus: 'V\u00EAnus',
   mars: 'Marte',
-  jupiter: 'Júpiter',
+  jupiter: 'J\u00FApiter',
   saturn: 'Saturno',
   uranus: 'Urano',
   neptune: 'Netuno',
-  pluto: 'Plutão',
+  pluto: 'Plut\u00E3o',
 }
 
 const ASPECT_SYMBOL: Record<AspectType, string> = {
-  conjuncao: '☌',
-  sextil: '⚹',
-  quadratura: '□',
-  trigono: '△',
-  oposicao: '☍',
+  conjuncao: '\u260C',
+  sextil: '\u2736',
+  quadratura: '\u25A1',
+  trigono: '\u25B3',
+  oposicao: '\u260D',
 }
 
 const normalizeText = (value: string): string =>
@@ -65,7 +65,7 @@ export function formatPeakETA(window?: { start?: string | Date; exact?: string |
   const days = Math.floor(abs / (24 * 60 * 60 * 1000))
   const hours = Math.floor((abs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
   const label = days > 0 ? `${days}d` : `${hours}h`
-  return sign >= 0 ? `pico em ${label}` : `pico há ${label}`
+  return sign >= 0 ? `pico em ${label}` : `pico h\u00E1 ${label}`
 }
 
 export function aspectNature(type: string): 'harmonico' | 'desafiador' | 'conjuncao' | 'outro' {

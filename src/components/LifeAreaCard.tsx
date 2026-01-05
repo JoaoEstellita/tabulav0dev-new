@@ -72,12 +72,23 @@ const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptu
 const translatePlanetTokens = (text: string): string =>
   String(text || '').replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
 
+const normalizeInfluenceText = (text: string): string =>
+  translatePlanetTokens(text).replace(/\bdeg\b/gi, '\u00B0')
+
 const translateAreaName = (name: string) => {
   const translations = {
+    amor: 'Amor',
+    carreira: 'Carreira',
+    financas: 'Finan\u00E7as',
+    saude: 'Sa\u00FAde',
+    familia: 'Fam\u00EDlia',
+    espiritualidade: 'Espiritualidade',
+    comunicacao: 'Comunica\u00E7\u00E3o',
+    transformacao: 'Transforma\u00E7\u00E3o',
     love: 'Amor e Relacionamentos',
-    career: 'Carreira e Financas',
-    health: 'Saude e Bem-estar',
-    family: 'Familia e Amizades',
+    career: 'Carreira e Finan\u00E7as',
+    health: 'Sa\u00FAde e Bem-estar',
+    family: 'Fam\u00EDlia e Amizades',
     spirituality: 'Espiritualidade e Crescimento',
   }
   return translations[name as keyof typeof translations] || name
@@ -97,7 +108,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
   const getStatusText = (status: number) => {
     if (status >= 70) return 'Excelente'
     if (status >= 40) return 'Moderado'
-    return 'Critico'
+    return 'Cr\u00EDtico'
   }
 
   const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
@@ -105,8 +116,8 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
   const trendIcon = TREND_ICONS[area.trend] || 'remove'
   const trendColor = TREND_COLORS[area.trend] || '#6B7280'
 
-  const baseDescription = area.description || (hints.length ? `Fatores-chave: ${hints.join(' - ')}` : 'Area da vida')
-  const descriptionText = translatePlanetTokens(baseDescription)
+  const baseDescription = area.description || (hints.length ? `Fatores-chave: ${hints.join(' - ')}` : '\u00C1rea da vida')
+  const descriptionText = normalizeInfluenceText(baseDescription)
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -158,7 +169,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
         {area.criticalLevel && (
           <View style={styles.criticalBadge}>
             <Ionicons name="warning" size={12} color="#FFFFFF" />
-            <Text style={styles.criticalText}>Critico</Text>
+            <Text style={styles.criticalText}>Cr\u00EDtico</Text>
           </View>
         )}
       </LinearGradient>
