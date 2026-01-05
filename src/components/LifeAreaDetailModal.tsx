@@ -53,6 +53,42 @@ const AREA_COLORS: Record<string, string[]> = {
   transformation: ['#F472B6', '#EC4899'],
 }
 
+const DESIGN_SYSTEM = {
+  colors: {
+    white: '#FFFFFF',
+    primary: '#FBBF24',
+    secondary: '#F59E0B',
+    positive: '#22C55E',
+    negative: '#EF4444',
+    neutral: '#F59E0B',
+    warning: '#F97316',
+    info: '#38BDF8',
+    border: 'rgba(255,255,255,0.12)',
+    light: 'rgba(255,255,255,0.08)'
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16
+  },
+  shadows: {
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      elevation: 3
+    }
+  }
+}
+
 // Sistema completo de traducoes para o modal
 const TRANSLATIONS = {
   // Planetas
