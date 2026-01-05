@@ -7,7 +7,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import { useAuth } from '../hooks/useAuth'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
-import { translatePlanetPT } from '../utils/astro/pt'
+import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
 
 export default function TransitsComparativePanel() {
@@ -37,33 +37,33 @@ export default function TransitsComparativePanel() {
   }, [])
 
   const topPersonal = [...personal].sort((a, b) => b.strength - a.strength).slice(0, 8)
-  const formatStatusLabel = (status: string | null) => {
+    const formatStatusLabel = (status: string | null) => {
     if (!status) return ''
     const map: Record<string, string> = {
       excelente: 'Excelente',
       bom: 'Bom',
       neutro: 'Neutro',
       desafiador: 'Desafiador',
-      critico: 'Cr\u00EDtico'
+      critico: 'Crítico'
     }
-    return map[String(status).toLowerCase()] || status
+    return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
   }
 
-  const translateAspectLabel = (type: string): string => {
+    const translateAspectLabel = (type: string): string => {
     const key = normalizeKey(type)
     const map: Record<string, string> = {
-      conjuncao: 'conjun\u00E7\u00E3o',
-      conjunction: 'conjun\u00E7\u00E3o',
+      conjuncao: 'conjunção',
+      conjunction: 'conjunção',
       sextil: 'sextil',
       sextile: 'sextil',
       quadratura: 'quadratura',
       square: 'quadratura',
-      trigono: 'tr\u00EDgono',
-      trine: 'tr\u00EDgono',
-      oposicao: 'oposi\u00E7\u00E3o',
-      opposition: 'oposi\u00E7\u00E3o',
-      quincuncio: 'quinc\u00FAncio',
-      quincunx: 'quinc\u00FAncio'
+      trigono: 'trígono',
+      trine: 'trígono',
+      oposicao: 'oposição',
+      opposition: 'oposição',
+      quincuncio: 'quincúncio',
+      quincunx: 'quincúncio'
     }
     return map[key] || type
   }
@@ -71,7 +71,7 @@ export default function TransitsComparativePanel() {
   return (
     <LinearGradient colors={['#1E1E2E', '#2A2A3E']} style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Tr\u00E2nsitos comparativos</Text>
+        <Text style={styles.title}>Trânsitos comparativos</Text>
         <View style={styles.toggleGroup}>
           <TouchableOpacity
             onPress={() => {
@@ -95,7 +95,7 @@ export default function TransitsComparativePanel() {
 
       <Text style={styles.sectionTitle}>Pessoais</Text>
       {topPersonal.length === 0 ? (
-        <Text style={styles.emptyText}>Sem tr\u00E2nsitos pessoais relevantes.</Text>
+        <Text style={styles.emptyText}>Sem trânsitos pessoais relevantes.</Text>
       ) : (
         <FlatList
           data={topPersonal}
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  title: { color: '#FFD700', fontWeight: 'bold', fontSize: 16 },
+  title: { color: '#E2E8F0', fontWeight: 'bold', fontSize: 16 },
   status: { color: '#FFFFFF', opacity: 0.85, fontSize: 12 },
   sectionTitle: { color: '#FFFFFF', fontWeight: '600', marginTop: 8, marginBottom: 6 },
   emptyText: { color: '#A0A0A0', fontSize: 12 },

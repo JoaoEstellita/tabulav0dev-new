@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+﻿import React, { useEffect, useState, useRef } from 'react'
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ import { usePressScale } from '../../ui/motion/native/micro'
 import HomeImpactSummary from './impact/HomeImpactSummary'
 import { buildImpactNodes } from './impact/buildImpactNodes'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
+import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -62,6 +63,18 @@ export default function HomeScreen() {
       () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas),
       [transitData?.currentTransits, transitData?.lifeAreas]
     )
+    const recentTransits = React.useMemo(() => {
+      const list = transitData?.currentTransits?.transits?.personal || []
+      return [...list]
+        .sort((a, b) => {
+          if (a.isApplying !== b.isApplying) return a.isApplying ? -1 : 1
+          if (typeof a.orb === 'number' && typeof b.orb === 'number') {
+            if (a.orb !== b.orb) return a.orb - b.orb
+          }
+          return (b.strength || 0) - (a.strength || 0)
+        })
+        .slice(0, 5)
+    }, [transitData?.currentTransits?.transits?.personal])
     const lunarPhaseLabel = React.useMemo(() => {
       const phase = transitData?.currentTransits?.collective?.lunarPhase?.name
       if (!phase) return null
@@ -153,7 +166,7 @@ export default function HomeScreen() {
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do usuario:', error)
+        console.error('Erro ao carregar perfil do Usuário:', error)
       }
     }
 
@@ -181,10 +194,12 @@ export default function HomeScreen() {
     }
 
     const getUserDisplayName = () => {
-      if (userProfile?.displayName) return userProfile.displayName
-      if (user?.displayName) return user.displayName
-      if (user?.email) return user.email.split('@')[0]
-      return 'Usu\u00E1rio'
+      const raw =
+        userProfile?.displayName ||
+        user?.displayName ||
+        (user?.email ? user.email.split('@')[0] : '') ||
+        'Usuário'
+      return decodeUnicodeEscapes(raw)
     }
 
     const formatDate = () => {
@@ -225,7 +240,7 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.loadingContainer}>
             <StarLoader size={36} color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando seus tr\u00E2nsitos...</Text>
+            <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
           </View>
         </LinearGradient>
       )
@@ -289,7 +304,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Ol\u00E1, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
@@ -322,17 +337,18 @@ export default function HomeScreen() {
                   lifeAreas={transitData.lifeAreas}
                   lunarPhaseLabel={lunarPhaseLabel}
                   onScrollToTransits={handleScrollToTransits}
+                  recentTransits={recentTransits}
                 />
               </View>
             </AnimatedMount>
           )}
-          {/* Status das \u00C1reas de Vida */}
+          {/* Status das Areas de Vida */}
           {transitData?.lifeAreas && (
             <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="grid" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Status das \u00C1reas de Vida</Text>
+                <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
               </View>
 
               <View style={styles.lifeAreasGrid}>
@@ -785,6 +801,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   }
 })
+
+
 
 
 

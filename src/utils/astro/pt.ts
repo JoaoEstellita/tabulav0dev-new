@@ -3,22 +3,22 @@
 const PLANET_PT: Record<string, string> = {
   sun: 'Sol',
   moon: 'Lua',
-  mercury: 'Merc\u00FArio',
-  venus: 'V\u00EAnus',
+  mercury: 'Mercúrio',
+  venus: 'Vênus',
   mars: 'Marte',
-  jupiter: 'J\u00FApiter',
+  jupiter: 'Júpiter',
   saturn: 'Saturno',
   uranus: 'Urano',
   neptune: 'Netuno',
-  pluto: 'Plut\u00E3o',
+  pluto: 'Plutão',
 }
 
 const ASPECT_SYMBOL: Record<AspectType, string> = {
-  conjuncao: '\u260C',
-  sextil: '\u2736',
-  quadratura: '\u25A1',
-  trigono: '\u25B3',
-  oposicao: '\u260D',
+  conjuncao: '☌',
+  sextil: '✶',
+  quadratura: '□',
+  trigono: '△',
+  oposicao: '☍',
 }
 
 const normalizeText = (value: string): string =>
@@ -27,9 +27,16 @@ const normalizeText = (value: string): string =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
 
+export function decodeUnicodeEscapes(value: string): string {
+  return String(value || '').replace(/\\u([0-9a-fA-F]{4})/g, (_match, code) =>
+    String.fromCharCode(parseInt(code, 16))
+  )
+}
+
 export function translatePlanetPT(name: string): string {
-  const key = normalizeText(name)
-  return PLANET_PT[key] || name
+  const decoded = decodeUnicodeEscapes(name)
+  const key = normalizeText(decoded)
+  return PLANET_PT[key] || decoded
 }
 
 export function getAspectSymbol(type: string): string {
@@ -65,7 +72,7 @@ export function formatPeakETA(window?: { start?: string | Date; exact?: string |
   const days = Math.floor(abs / (24 * 60 * 60 * 1000))
   const hours = Math.floor((abs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
   const label = days > 0 ? `${days}d` : `${hours}h`
-  return sign >= 0 ? `pico em ${label}` : `pico h\u00E1 ${label}`
+  return sign >= 0 ? `pico em ${label}` : `pico há ${label}`
 }
 
 export function aspectNature(type: string): 'harmonico' | 'desafiador' | 'conjuncao' | 'outro' {

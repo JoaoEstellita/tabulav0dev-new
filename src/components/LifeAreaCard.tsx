@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
-import { translatePlanetPT } from '../utils/astro/pt'
+import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 
 interface LifeAreaCardProps {
   area: LifeArea
@@ -73,22 +73,22 @@ const translatePlanetTokens = (text: string): string =>
   String(text || '').replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
 
 const normalizeInfluenceText = (text: string): string =>
-  translatePlanetTokens(text).replace(/\bdeg\b/gi, '\u00B0')
+  translatePlanetTokens(decodeUnicodeEscapes(text)).replace(/\bdeg\b/gi, '°')
 
 const translateAreaName = (name: string) => {
   const translations = {
     amor: 'Amor',
     carreira: 'Carreira',
-    financas: 'Finan\u00E7as',
-    saude: 'Sa\u00FAde',
-    familia: 'Fam\u00EDlia',
+    financas: 'Finanças',
+    saude: 'Saúde',
+    familia: 'Família',
     espiritualidade: 'Espiritualidade',
-    comunicacao: 'Comunica\u00E7\u00E3o',
-    transformacao: 'Transforma\u00E7\u00E3o',
+    comunicacao: 'Comunicação',
+    transformacao: 'Transformação',
     love: 'Amor e Relacionamentos',
-    career: 'Carreira e Finan\u00E7as',
-    health: 'Sa\u00FAde e Bem-estar',
-    family: 'Fam\u00EDlia e Amizades',
+    career: 'Carreira e Finanças',
+    health: 'Saúde e Bem-estar',
+    family: 'Família e Amizades',
     spirituality: 'Espiritualidade e Crescimento',
   }
   return translations[name as keyof typeof translations] || name
@@ -108,7 +108,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
   const getStatusText = (status: number) => {
     if (status >= 70) return 'Excelente'
     if (status >= 40) return 'Moderado'
-    return 'Cr\u00EDtico'
+    return 'Crítico'
   }
 
   const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
@@ -116,7 +116,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
   const trendIcon = TREND_ICONS[area.trend] || 'remove'
   const trendColor = TREND_COLORS[area.trend] || '#6B7280'
 
-  const baseDescription = area.description || (hints.length ? `Fatores-chave: ${hints.join(' - ')}` : '\u00C1rea da vida')
+  const baseDescription = area.description || (hints.length ? `Fatores-chave: ${hints.join(' - ')}` : 'Área da vida')
   const descriptionText = normalizeInfluenceText(baseDescription)
 
   return (
@@ -169,7 +169,7 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
         {area.criticalLevel && (
           <View style={styles.criticalBadge}>
             <Ionicons name="warning" size={12} color="#FFFFFF" />
-            <Text style={styles.criticalText}>Cr\u00EDtico</Text>
+            <Text style={styles.criticalText}>Crítico</Text>
           </View>
         )}
       </LinearGradient>

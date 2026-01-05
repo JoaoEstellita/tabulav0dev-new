@@ -1,9 +1,9 @@
-import React from 'react'
+﻿import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
-import { translatePlanetPT } from '../utils/astro/pt'
+import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
@@ -77,14 +77,13 @@ const PLANET_ICONS: Record<string, string> = {
 const AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',
-  financas: 'Finan\u00E7as',
-  saude: 'Sa\u00FAde',
-  familia: 'Fam\u00EDlia',
+  financas: 'Finanças',
+  saude: 'Saúde',
+  familia: 'Família',
   espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunica\u00E7\u00E3o',
-  transformacao: 'Transforma\u00E7\u00E3o'
+  comunicacao: 'Comunicação',
+  transformacao: 'Transformação'
 }
-
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 
 export default function TransitComparisonCard({ 
@@ -145,13 +144,13 @@ export default function TransitComparisonCard({
 
   const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
 
-  const translatePlanetTokens = (text: string): string =>
-    String(text || '')
-      .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
-      .replace(/\bdeg\b/gi, '\u00B0')
+const translatePlanetTokens = (text: string): string =>
+  decodeUnicodeEscapes(String(text || ''))
+    .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
+    .replace(/\bdeg\b/gi, '°')
 
 const sanitizeChangeText = (value: string): string => {
-  return String(value || '')
+  return decodeUnicodeEscapes(String(value || ''))
     .replace(/[^\u0020-\u007E\u00C0-\u017F]/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
@@ -175,28 +174,28 @@ const buildChangeList = (
 }
 
 const translateElement = (element: string): string => {
-  const translations: { [key: string]: string } = {
+  const translations: Record<string, string> = {
     fire: 'Fogo',
     earth: 'Terra',
     air: 'Ar',
-    water: '\u00C1gua',
+    water: 'Água',
     fogo: 'Fogo',
     terra: 'Terra',
     ar: 'Ar',
-    agua: '\u00C1gua'
+    agua: 'Água'
   }
   const key = normalizeKey(element)
   return translations[key] || element
 }
 
 const translateModality = (modality: string): string => {
-  const translations: { [key: string]: string } = {
+  const translations: Record<string, string> = {
     cardinal: 'Cardeal',
     fixed: 'Fixo',
-    mutable: 'Mut\u00E1vel',
+    mutable: 'Mutável',
     cardeal: 'Cardeal',
     fixo: 'Fixo',
-    mutavel: 'Mut\u00E1vel'
+    mutavel: 'Mutável'
   }
   const key = normalizeKey(modality)
   return translations[key] || modality
@@ -209,79 +208,78 @@ const formatStatusLabel = (status: string | null) => {
     bom: 'Bom',
     neutro: 'Neutro',
     desafiador: 'Desafiador',
-    critico: 'Cr\u00EDtico'
+    critico: 'Crítico'
   }
-  return map[String(status).toLowerCase()] || status
+  return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
 }
-  const elementalChanges = React.useMemo(() => {
-    const labels: Record<string, string> = {
-      fire: 'Fogo',
-      earth: 'Terra',
-      air: 'Ar',
-      water: '\u00C1gua',
-      fogo: 'Fogo',
-      terra: 'Terra',
-      ar: 'Ar',
-      agua: '\u00C1gua'
-    }
-    const computed = buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
-    if (computed.length) return computed
-    const fallback = (chartSummary.elemental?.changes || [])
-      .map((entry) => sanitizeChangeText(entry))
-      .filter((entry) => entry.length > 1)
-    return fallback
-  }, [chartSummary.elemental.natal, chartSummary.elemental.current, chartSummary.elemental?.changes])
 
-  const modalityChanges = React.useMemo(() => {
-    const labels: Record<string, string> = {
-      cardinal: 'Cardeal',
-      fixed: 'Fixo',
-      mutable: 'Mut\u00E1vel',
-      cardeal: 'Cardeal',
-      fixo: 'Fixo',
-      mutavel: 'Mut\u00E1vel'
-    }
-    const computed = buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
-    if (computed.length) return computed
-    const fallback = (chartSummary.modality?.changes || [])
-      .map((entry) => sanitizeChangeText(entry))
-      .filter((entry) => entry.length > 1)
-    return fallback
-  }, [chartSummary.modality.natal, chartSummary.modality.current, chartSummary.modality?.changes])
-
-  const getSignFromDegree = (degree: number): string => {
-    const signs = [
-      '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
-      'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes'
-    ]
-    const signIndex = Math.floor(degree / 30) % 12
-    return signs[signIndex]
+const elementalChanges = React.useMemo(() => {
+  const labels: Record<string, string> = {
+    fire: 'Fogo',
+    earth: 'Terra',
+    air: 'Ar',
+    water: 'Água',
+    fogo: 'Fogo',
+    terra: 'Terra',
+    ar: 'Ar',
+    agua: 'Água'
   }
+  const computed = buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
+  if (computed.length) return computed
+  const fallback = (chartSummary.elemental?.changes || [])
+    .map((entry) => sanitizeChangeText(entry))
+    .filter((entry) => entry.length > 1)
+  return fallback
+}, [chartSummary.elemental.natal, chartSummary.elemental.current, chartSummary.elemental?.changes])
 
-  const translateAspectLabel = (type: string): string => {
-    const key = normalizeKey(type)
-    const map: Record<string, string> = {
-      conjuncao: 'conjun\u00E7\u00E3o',
-      conjunction: 'conjun\u00E7\u00E3o',
-      sextil: 'sextil',
-      sextile: 'sextil',
-      quadratura: 'quadratura',
-      square: 'quadratura',
-      trigono: 'tr\u00EDgono',
-      trine: 'tr\u00EDgono',
-      oposicao: 'oposi\u00E7\u00E3o',
-      opposition: 'oposi\u00E7\u00E3o',
-      quincuncio: 'quinc\u00FAncio',
-      quincunx: 'quinc\u00FAncio'
-    }
-    return map[key] || type
+const modalityChanges = React.useMemo(() => {
+  const labels: Record<string, string> = {
+    cardinal: 'Cardeal',
+    fixed: 'Fixo',
+    mutable: 'Mutável',
+    cardeal: 'Cardeal',
+    fixo: 'Fixo',
+    mutavel: 'Mutável'
   }
+  const computed = buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
+  if (computed.length) return computed
+  const fallback = (chartSummary.modality?.changes || [])
+    .map((entry) => sanitizeChangeText(entry))
+    .filter((entry) => entry.length > 1)
+  return fallback
+}, [chartSummary.modality.natal, chartSummary.modality.current, chartSummary.modality?.changes])
 
-  // \u00E2\u0161\u00A1 Velocidade removida para melhor UX - informa\u00C3\u00A7\u00C3\u00A3o desnecess\u00C3\u00A1ria
+const getSignFromDegree = (degree: number): string => {
+  const signs = [
+    'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
+  ]
+  const signIndex = Math.floor(degree / 30) % 12
+  return signs[signIndex]
+}
 
-  // \u00F0\u0178\u0152\u0152 Fun\u00C3\u00A7\u00C3\u00B5es auxiliares removidas (casas astrol\u00C3\u00B3gicas n\u00C3\u00A3o implementadas)
+const translateAspectLabel = (type: string): string => {
+  const key = normalizeKey(type)
+  const map: Record<string, string> = {
+    conjuncao: 'conjunção',
+    conjunction: 'conjunção',
+    sextil: 'sextil',
+    sextile: 'sextil',
+    quadratura: 'quadratura',
+    square: 'quadratura',
+    trigono: 'trígono',
+    trine: 'trígono',
+    oposicao: 'oposição',
+    opposition: 'oposição',
+    quincuncio: 'quincúncio',
+    quincunx: 'quincúncio'
+  }
+  return map[key] || type
+}
 
-    const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
+// Velocidade removida para melhor UX - informacao desnecessaria
+
+const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const base = aspect
       .toLowerCase()
       .normalize('NFD')
@@ -365,7 +363,7 @@ const formatStatusLabel = (status: string | null) => {
     >
       <View style={styles.cardHeader}>
         <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-        <Text style={styles.cardTitle}>Tr\u00E2nsitos comparativos</Text>
+        <Text style={styles.cardTitle}>Trânsitos comparativos</Text>
       </View>
       {/* Status pessoal agregado */}
       {statusPersonal && (
@@ -446,9 +444,9 @@ const formatStatusLabel = (status: string | null) => {
 
         {/* Mudan\u00E7as detectadas */}
         <View style={styles.changesSection}>
-          <Text style={styles.changesTitle}>Mudan\u00E7as detectadas:</Text>
+          <Text style={styles.changesTitle}>Mudanças detectadas:</Text>
           {elementalChanges.length === 0 && modalityChanges.length === 0 ? (
-            <Text style={styles.changeItem}>Sem mudan\u00E7as relevantes.</Text>
+            <Text style={styles.changeItem}>Sem mudanças relevantes.</Text>
           ) : (
             <>
               {elementalChanges.map((change, index) => (
@@ -467,7 +465,7 @@ const formatStatusLabel = (status: string | null) => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Planetas em tr\u00E2nsito</Text>
+            <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
           </View>
           <View style={styles.toggleGroup}>
             <TouchableOpacity
@@ -516,7 +514,7 @@ const formatStatusLabel = (status: string | null) => {
               </View>
 
               <View style={styles.comparisonColumn}>
-                <Text style={styles.columnTitle}>Tr\u00E2nsito</Text>
+              <Text style={styles.columnTitle}>Trânsito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' (Rx)'}
@@ -689,7 +687,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   analysisLabel: {
-    color: '#FFD700',
+    color: '#E2E8F0',
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
@@ -723,13 +721,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   changesSection: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
   },
   changesTitle: {
-    color: '#FFD700',
+    color: '#E2E8F0',
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
@@ -754,7 +752,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   planetName: {
-    color: '#FFD700',
+    color: '#F8FAFC',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -960,6 +958,10 @@ const styles = StyleSheet.create({
   },
   // \u00F0\u0178\u0152\u0152 Estilos das casas removidos (n\u00C3\u00A3o implementadas)
 })
+
+
+
+
 
 
 
