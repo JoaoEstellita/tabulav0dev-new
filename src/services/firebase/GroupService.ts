@@ -46,6 +46,9 @@ export interface GroupMember {
   astrologicalStatus?: AstrologicalStatus
   lastStatusUpdate?: Date
   sharedLifeAreas?: string[]
+  notifiedLifeAreas?: string[]
+  shareEnabled?: boolean
+  shareStatus?: boolean
   lifeAreas?: Record<string, { percentage: number; status: string; influences?: string[]; mainPlanets?: string[] }>
   birthData?: {
     datetime: string
@@ -114,6 +117,18 @@ class GroupService {
     "comunicacao",
     "transformacao",
   ]
+
+  private filterLifeAreas(
+    lifeAreas: Record<string, { percentage?: number; status?: string; influences?: string[]; mainPlanets?: string[] }> | undefined,
+    allowedAreas: string[] | undefined
+  ) {
+    if (!lifeAreas) return {}
+    const allowed = new Set(allowedAreas && allowedAreas.length ? allowedAreas : this.LIFE_AREAS)
+    return Object.entries(lifeAreas).reduce((acc, [key, value]) => {
+      if (allowed.has(key)) acc[key] = value
+      return acc
+    }, {} as Record<string, { percentage?: number; status?: string; influences?: string[]; mainPlanets?: string[] }>)
+  }
   // Criar grupo
   async createGroup(
     name: string,
@@ -309,8 +324,52 @@ class GroupService {
         },
         { merge: true }
       )
+
+      await this.updateGroupMemberStatus(userId, transitData)
     } catch (error) {
       console.error("Erro ao atualizar status por areas:", error)
+    }
+  }
+
+  private async updateGroupMemberStatus(userId: string, transitData: LocalTransitData): Promise<void> {
+    try {
+      const userGroups = await this.getUserGroups(userId)
+      if (!userGroups.length) return
+
+      await Promise.all(
+        userGroups.map(async (group) => {
+          const settings = await this.getMemberSettings(group.id, userId)
+          if (settings?.enabled === false || settings?.shareStatus === false) {
+            await setDoc(
+              doc(db, "groups", group.id, "memberStatus", userId),
+              {
+                userId,
+                lifeAreas: {},
+                sharedLifeAreas: settings?.sharedLifeAreas || group.sharedLifeAreas || this.LIFE_AREAS,
+                lastStatusUpdate: Timestamp.now(),
+              },
+              { merge: true }
+            )
+            return
+          }
+
+          const sharedLifeAreas = settings?.sharedLifeAreas || group.sharedLifeAreas || this.LIFE_AREAS
+          const filteredLifeAreas = this.filterLifeAreas(transitData.lifeAreas as any, sharedLifeAreas)
+
+          await setDoc(
+            doc(db, "groups", group.id, "memberStatus", userId),
+            {
+              userId,
+              lifeAreas: filteredLifeAreas,
+              sharedLifeAreas,
+              lastStatusUpdate: Timestamp.now(),
+            },
+            { merge: true }
+          )
+        })
+      )
+    } catch (error) {
+      console.warn("Erro ao atualizar status do membro no grupo:", error)
     }
   }
 
@@ -413,13 +472,18 @@ class GroupService {
       const group = groupDoc.data() as Group
       const members = await Promise.all(
         (group.members || []).map(async (memberId) => {
-          const publicDoc = await getDoc(doc(db, "userPublicProfiles", memberId))
+          const [publicDoc, memberStatusDoc] = await Promise.all([
+            getDoc(doc(db, "userPublicProfiles", memberId)),
+            getDoc(doc(db, "groups", groupId, "memberStatus", memberId)),
+          ])
           const publicData = publicDoc.exists() ? publicDoc.data() : {}
+          const memberStatus = memberStatusDoc.exists() ? memberStatusDoc.data() : {}
           const shouldLoadStatus = memberId === viewerId
           const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
           const email = publicData.email || memberId
+          const lifeAreas = memberStatus?.lifeAreas || statusData?.lifeAreas
 
           return {
             userId: memberId,
@@ -428,7 +492,9 @@ class GroupService {
             profilePhoto: publicData.profilePhoto,
             joinedAt: new Date(),
             astrologicalStatus: statusData?.astrologicalStatus,
-            lastStatusUpdate: statusData?.lastStatusUpdate?.toDate?.() || undefined,
+            lastStatusUpdate: memberStatus?.lastStatusUpdate?.toDate?.() || statusData?.lastStatusUpdate?.toDate?.() || undefined,
+            sharedLifeAreas: memberStatus?.sharedLifeAreas || group.sharedLifeAreas || this.LIFE_AREAS,
+            lifeAreas,
             birthData: statusData?.birthData,
           } as GroupMember
         })

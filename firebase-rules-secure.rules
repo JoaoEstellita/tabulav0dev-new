@@ -35,7 +35,7 @@ service cloud.firestore {
     // ===== REGRAS PARA GRUPOS =====
     match /groups/{groupId} {
       // Membros podem ler o grupo
-      allow read: if request.auth != null &&
+      allow read: if request.auth != null && 
                      request.auth.uid in resource.data.members;
 
       // Apenas o criador pode criar grupo
@@ -47,8 +47,20 @@ service cloud.firestore {
                        request.auth.uid in resource.data.members;
 
       // Apenas o criador pode deletar o grupo
-      allow delete: if request.auth != null &&
+      allow delete: if request.auth != null && 
                        request.auth.uid == resource.data.createdBy;
+    }
+
+    // ===== REGRAS PARA STATUS DE MEMBRO NO GRUPO =====
+    match /groups/{groupId}/memberStatus/{userId} {
+      // Membros do grupo podem ler o status compartilhado
+      allow read: if request.auth != null &&
+                     request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+
+      // Usuario pode escrever apenas o proprio status no grupo
+      allow write: if request.auth != null &&
+                      request.auth.uid == userId &&
+                      request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
     }
 
     // ===== REGRAS PARA ALERTAS DE GRUPOS =====

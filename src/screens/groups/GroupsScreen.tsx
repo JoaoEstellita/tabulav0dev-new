@@ -512,9 +512,16 @@ export default function GroupsScreen() {
   }
 
   const resolveSharedAreas = (member: GroupMember) => {
+    const lifeAreas = resolveMemberLifeAreas(member)
     if (member.sharedLifeAreas && member.sharedLifeAreas.length) return member.sharedLifeAreas
+    if (lifeAreas && Object.keys(lifeAreas).length) return Object.keys(lifeAreas)
     if (selectedGroup?.sharedLifeAreas && selectedGroup.sharedLifeAreas.length) return selectedGroup.sharedLifeAreas
     return LIFE_AREA_KEYS
+  }
+
+  const hasVisibleStatus = (member: GroupMember) => {
+    const lifeAreas = resolveMemberLifeAreas(member)
+    return !!lifeAreas && Object.keys(lifeAreas).length > 0
   }
 
   const mapPercentageToBucket = (percentage?: number | null) => {
@@ -563,6 +570,7 @@ export default function GroupsScreen() {
   }
 
   const getMemberSummaryBucket = (member: GroupMember) => {
+    if (!hasVisibleStatus(member)) return "neutral"
     const worst = getMemberWorstArea(member)
     if (worst && typeof worst.percentage === "number") {
       return mapPercentageToBucket(worst.percentage)
@@ -594,7 +602,9 @@ export default function GroupsScreen() {
     return a.displayName.localeCompare(b.displayName)
   })
 
-  const statusCounts = sortedMembers.reduce(
+  const visibleMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
+
+  const statusCounts = visibleMembers.reduce(
     (acc, member) => {
       const bucket = getMemberSummaryBucket(member)
       acc[bucket] += 1
@@ -610,7 +620,7 @@ export default function GroupsScreen() {
     return latest
   }, null)
 
-  const highlightMembers = sortedMembers
+  const highlightMembers = visibleMembers
     .filter((member) => getMemberSummaryBucket(member) === "critical")
     .slice(0, 3)
 
@@ -715,7 +725,9 @@ export default function GroupsScreen() {
                   <Text style={styles.groupSummaryLabel}>Positivos</Text>
                 </View>
               </View>
-              {statusCounts.critical > 0 ? (
+              {visibleMembers.length === 0 ? (
+                <Text style={styles.groupSummaryHint}>Sem status compartilhado no grupo</Text>
+              ) : statusCounts.critical > 0 ? (
                 <Text style={styles.groupSummaryHint}>Precisa de atencao</Text>
               ) : (
                 <Text style={styles.groupSummaryHint}>Sem membros em status critico-social</Text>
@@ -788,7 +800,8 @@ export default function GroupsScreen() {
             <View style={styles.membersSection}>
               <Text style={styles.sectionTitle}>Membros</Text>
               {sortedMembers.map((member) => {
-                const entries = buildMemberAreaEntries(member)
+                const hasStatus = hasVisibleStatus(member)
+                const entries = hasStatus ? buildMemberAreaEntries(member) : []
                 const chips = entries.slice(0, 5)
                 const extra = entries.length - chips.length
                 const summaryBucket = getMemberSummaryBucket(member)
@@ -804,10 +817,17 @@ export default function GroupsScreen() {
                     <View style={styles.memberRowInfo}>
                       <View style={styles.memberRowHeader}>
                         <Text style={styles.memberRowName}>{member.displayName}</Text>
-                        <View style={[styles.memberStatusDot, { backgroundColor: mapBucketToColor(summaryBucket) }]} />
+                        <View
+                          style={[
+                            styles.memberStatusDot,
+                            { backgroundColor: hasStatus ? mapBucketToColor(summaryBucket) : "#555" },
+                          ]}
+                        />
                       </View>
                       <Text style={styles.memberRowUpdate}>
-                        {member.lastStatusUpdate
+                        {!hasStatus
+                          ? "Status privado"
+                          : member.lastStatusUpdate
                           ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
                           : "Sem atualizacao recente"}
                       </Text>
