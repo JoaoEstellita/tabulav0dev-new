@@ -93,6 +93,7 @@ export default function GroupsScreen() {
   const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -544,6 +545,19 @@ export default function GroupsScreen() {
     }
   }
 
+  const mapBucketToLabel = (bucket: string) => {
+    switch (bucket) {
+      case "critical":
+        return "Critico"
+      case "attention":
+        return "Atencao"
+      case "positive":
+        return "Positivo"
+      default:
+        return "Neutro"
+    }
+  }
+
   const getBucketPriority = (bucket: string) => {
     switch (bucket) {
       case "critical":
@@ -582,6 +596,19 @@ export default function GroupsScreen() {
         }
         return a.label.localeCompare(b.label)
       })
+  }
+
+  const getMemberAreaDetail = (member: GroupMember, key: string) => {
+    const lifeAreas = resolveMemberLifeAreas(member)
+    return (lifeAreas as any)?.[key]
+  }
+
+  const formatAreaInfluences = (detail: any) => {
+    const main = Array.isArray(detail?.mainPlanets) ? detail.mainPlanets : []
+    const infl = Array.isArray(detail?.influences) ? detail.influences : []
+    const source = main.length ? main : infl
+    if (!source.length) return ""
+    return source.slice(0, 3).join(", ")
   }
 
   const getMemberWorstArea = (member: GroupMember) => {
@@ -725,7 +752,7 @@ export default function GroupsScreen() {
                     key={member.userId}
                     style={styles.memberRow}
                     onPress={() => {
-                      Alert.alert("Perfil do Membro", `Ver detalhes de ${member.displayName}`)
+                      setExpandedMemberId((prev) => (prev === member.userId ? null : member.userId))
                     }}
                   >
                     <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="medium" />
@@ -761,13 +788,13 @@ export default function GroupsScreen() {
                                 { borderColor: chipColor, backgroundColor: `${chipColor}22` },
                               ]}
                             >
-                            <Text
-                              style={[styles.memberAreaText, { color: chipColor }]}
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                            >
-                              {chipLabel}
-                            </Text>
+                              <Text
+                                style={[styles.memberAreaText, { color: chipColor }]}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                              >
+                                {chipLabel}
+                              </Text>
                             </View>
                           )
                         })}
@@ -777,6 +804,41 @@ export default function GroupsScreen() {
                           </View>
                         )}
                       </View>
+                      {expandedMemberId === member.userId && (
+                        <View style={styles.memberDetails}>
+                          {!hasStatus ? (
+                            <Text style={styles.memberDetailEmpty}>Status privado para este grupo.</Text>
+                          ) : (
+                            entries.map((entry) => {
+                              const detail = getMemberAreaDetail(member, entry.key)
+                              const percentage =
+                                typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
+                              const influences = formatAreaInfluences(detail)
+                              return (
+                                <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
+                                  <View style={styles.memberDetailHeader}>
+                                    <Text style={styles.memberDetailTitle}>{entry.label}</Text>
+                                    <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
+                                      {percentage !== null ? `${percentage}%` : "--"} {mapBucketToLabel(entry.bucket)}
+                                    </Text>
+                                  </View>
+                                  {detail?.trend && (
+                                    <Text style={styles.memberDetailMeta}>Tendencia: {detail.trend}</Text>
+                                  )}
+                                  {detail?.description && (
+                                    <Text style={styles.memberDetailMeta} numberOfLines={2}>
+                                      {detail.description}
+                                    </Text>
+                                  )}
+                                  {influences ? (
+                                    <Text style={styles.memberDetailMeta}>Planetas: {influences}</Text>
+                                  ) : null}
+                                </View>
+                              )
+                            })
+                          )}
+                        </View>
+                      )}
                     </View>
                   </TouchableOpacity>
                 )
@@ -1348,6 +1410,43 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     maxWidth: 134,
+  },
+  memberDetails: {
+    marginTop: 10,
+    gap: 8,
+  },
+  memberDetailRow: {
+    backgroundColor: "#15151B",
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#232333",
+  },
+  memberDetailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 4,
+  },
+  memberDetailTitle: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    flex: 1,
+  },
+  memberDetailStatus: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  memberDetailMeta: {
+    color: "#9B9BA5",
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  memberDetailEmpty: {
+    color: "#888",
+    fontSize: 12,
   },
   memberCard: {
     backgroundColor: "#1C1C1E",
