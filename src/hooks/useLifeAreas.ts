@@ -71,6 +71,8 @@ export function useLifeAreas(): UseLifeAreasReturn {
       const statusKey = `${user.uid}:${activeHouseSystem || "placidus"}:${result.data.currentTransits?.timestamp || result.cacheStatus.cacheSource}`
       if (lastStatusKeyRef.current !== statusKey) {
         lastStatusKeyRef.current = statusKey
+        // Atualiza status do membro nos grupos quando o app abre/atualiza dados,
+        // quando o sistema de casas muda ou quando ha novo recalculo de lifeAreas.
         GroupService.updateUserStatusFromLifeAreas(user.uid, result.data, birthData)
       }
 

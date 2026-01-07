@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import {
@@ -28,12 +28,12 @@ import Avatar from "../../components/Avatar"
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
   { key: "carreira", label: "Carreira" },
-  { key: "financas", label: "Financas" },
-  { key: "saude", label: "Saude" },
-  { key: "familia", label: "Familia" },
+  { key: "financas", label: "Finanças" },
+  { key: "saude", label: "Saúde" },
+  { key: "familia", label: "Família" },
   { key: "espiritualidade", label: "Espiritualidade" },
-  { key: "comunicacao", label: "Comunicacao" },
-  { key: "transformacao", label: "Transformacao" },
+  { key: "comunicacao", label: "Comunicação" },
+  { key: "transformacao", label: "Transformação" },
 ]
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
@@ -150,12 +150,12 @@ export default function GroupsScreen() {
       .then((group) => {
         if (!isActive) return
         setInvitePreview(group)
-        setInvitePreviewError(group ? "" : "Codigo nao encontrado")
+        setInvitePreviewError(group ? "" : "Código não encontrado")
       })
       .catch(() => {
         if (!isActive) return
         setInvitePreview(null)
-        setInvitePreviewError("Não foi possível validar o codigo")
+        setInvitePreviewError("Não foi possível validar o código")
       })
       .finally(() => {
         if (!isActive) return
@@ -253,7 +253,7 @@ export default function GroupsScreen() {
       // Por enquanto, vou simular com um ID ficticio
       Alert.alert(
         'Funcionalidade em desenvolvimento',
-        'Em breve você podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
+        'Em breve você poderá convidar seu parceiro pelo email. Por enquanto, peça para ele/ela criar uma conta no app.'
       )
       
       setShowCreateCoupleModal(false)
@@ -288,7 +288,7 @@ export default function GroupsScreen() {
 
   const createGroup = async () => {
     if (!newGroupName.trim()) {
-      Alert.alert("Erro", "Nome do grupo e obrigatorio")
+      Alert.alert("Erro", "Nome do grupo é obrigatório")
       return
     }
 
@@ -311,7 +311,7 @@ export default function GroupsScreen() {
 
   const joinGroup = async () => {
     if (!inviteCode.trim()) {
-      Alert.alert("Erro", "Codigo de convite e obrigatorio")
+      Alert.alert("Erro", "Código de convite é obrigatório")
       return
     }
 
@@ -333,7 +333,7 @@ export default function GroupsScreen() {
         await GroupNotificationService.sendMemberJoined(invitePreview.id, user!.uid)
       }
       
-      Alert.alert("Sucesso", "Voce entrou no grupo!")
+      Alert.alert("Sucesso", "Você entrou no grupo!")
     } catch (error: any) {
       Alert.alert("Erro", error.message)
     }
@@ -343,7 +343,7 @@ export default function GroupsScreen() {
   
   const sendGroupMessage = async () => {
     if (!selectedGroup || !groupMessage.trim()) {
-      Alert.alert("Erro", "Mensagem e obrigatoria")
+      Alert.alert("Erro", "Mensagem é obrigatória")
       return
     }
 
@@ -414,7 +414,7 @@ export default function GroupsScreen() {
       setSelectedGroupForDetail(null)
       await loadUserGroups()
       setSelectedGroup(null)
-      Alert.alert("Sucesso", "Voce saiu do grupo")
+      Alert.alert("Sucesso", "Você saiu do grupo")
     } catch (error: any) {
       console.error("Erro ao sair do grupo:", error)
       Alert.alert("Erro", error?.message || "Não foi possível sair do grupo")
@@ -466,7 +466,7 @@ export default function GroupsScreen() {
       case "positive":
         return "Positivo"
       case "excellent":
-        return "Otimo"
+        return "Ótimo"
       default:
         return "Neutro"
     }
@@ -509,7 +509,13 @@ export default function GroupsScreen() {
   }
 
   const resolveMemberLifeAreas = (member: GroupMember) => {
-    return member.lifeAreas || member.astrologicalStatus?.lifeAreas || {}
+    if (member.lifeAreas && !Array.isArray(member.lifeAreas) && typeof member.lifeAreas === "object") {
+      return member.lifeAreas
+    }
+    if (member.astrologicalStatus?.lifeAreas && typeof member.astrologicalStatus.lifeAreas === "object") {
+      return member.astrologicalStatus.lifeAreas as Record<string, any>
+    }
+    return {}
   }
 
   const resolveSharedAreas = (member: GroupMember) => {
@@ -533,80 +539,71 @@ export default function GroupsScreen() {
   }
 
   const mapBucketToColor = (bucket: string) => {
-    switch (bucket) {
-      case "critical":
-        return "#FF6B6B"
-      case "attention":
-        return "#F2B94B"
-      case "positive":
-        return "#3CCF91"
-      default:
-        return "#888888"
-    }
+  switch (bucket) {
+    case "critical":
+      return "#F87171"
+    case "attention":
+      return "#FBBF24"
+    case "positive":
+      return "#34D399"
+    default:
+      return "#9CA3AF"
   }
+}
 
-  const mapBucketToLabel = (bucket: string) => {
-    switch (bucket) {
-      case "critical":
-        return "Crítico"
-      case "attention":
-        return "Atenção"
-      case "positive":
-        return "Positivo"
-      default:
-        return "Neutro"
-    }
+const mapBucketToLabel = (bucket: string) => {
+  switch (bucket) {
+    case "critical":
+      return "Crítico"
+    case "attention":
+      return "Atenção"
+    case "positive":
+      return "Positivo"
+    default:
+      return "Neutro"
   }
+}
 
-  const mapTrendLabel = (trend?: string) => {
-    if (!trend) return ""
-    const normalized = trend.toLowerCase()
-    switch (normalized) {
-      case "stable":
-        return "Estável"
-      case "rising":
-      case "up":
-        return "Em alta"
-      case "falling":
-      case "down":
-        return "Em queda"
-      case "positive":
-        return "Positiva"
-      case "neutral":
-        return "Neutra"
-      case "negative":
-        return "Negativa"
-      default:
-        return trend
-    }
+const mapTrendLabel = (trend?: string) => {
+  switch (trend) {
+    case "stable":
+      return "Estável"
+    case "rising":
+      return "Em alta"
+    case "falling":
+      return "Em queda"
+    default:
+      return ""
   }
+}
 
-  const getBucketPriority = (bucket: string) => {
-    switch (bucket) {
-      case "critical":
-        return 0
-      case "attention":
-        return 1
-      case "positive":
-        return 2
-      default:
-        return 3
-    }
+const getBucketPriority = (bucket: string) => {
+  switch (bucket) {
+    case "critical":
+      return 0
+    case "attention":
+      return 1
+    case "positive":
+      return 2
+    default:
+      return 3
   }
-
-  const buildMemberAreaEntries = (member: GroupMember) => {
+}
+const buildMemberAreaEntries = (member: GroupMember) => {
     const lifeAreas = resolveMemberLifeAreas(member)
     const sharedAreas = resolveSharedAreas(member)
+    const coerceNumber = (value: unknown) => {
+      if (typeof value === "number" && Number.isFinite(value)) return value
+      if (typeof value === "string") {
+        const parsed = Number(value)
+        return Number.isFinite(parsed) ? parsed : null
+      }
+      return null
+    }
     return sharedAreas
       .map((key) => {
-        const data = (lifeAreas as any)?.[key]
-        if (!data) return null
-        const percentage =
-          typeof data.percentage === "number"
-            ? data.percentage
-            : typeof data.status === "number"
-            ? data.status
-            : null
+        const data = (lifeAreas as any)?.[key] ?? {}
+        const percentage = coerceNumber(data.percentage ?? data.status)
         const bucket = mapPercentageToBucket(percentage ?? undefined)
         return {
           key,
@@ -615,7 +612,6 @@ export default function GroupsScreen() {
           bucket,
         }
       })
-      .filter((entry): entry is { key: string; label: string; percentage: number | null; bucket: string } => !!entry)
       .sort((a, b) => {
         const priorityDiff = getBucketPriority(a.bucket) - getBucketPriority(b.bucket)
         if (priorityDiff !== 0) return priorityDiff
@@ -771,7 +767,8 @@ export default function GroupsScreen() {
               <Text style={styles.sectionTitle}>Membros</Text>
               {sortedMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
-                const entries = hasStatus ? buildMemberAreaEntries(member) : []                const summaryBucket = getMemberSummaryBucket(member)
+                const entries = hasStatus ? buildMemberAreaEntries(member) : [];
+                const summaryBucket = getMemberSummaryBucket(member);
                 const bucketCounts = entries.reduce(
                   (acc, entry) => {
                     acc[entry.bucket] += 1
@@ -817,25 +814,30 @@ export default function GroupsScreen() {
                           ]}
                         />
                       </View>
-                        <Text style={styles.memberRowUpdate}>
-                          {!hasStatus
-                            ? "Status privado"
-                            : member.lastStatusUpdate
-                            ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                            : "Sem atualização recente"}
+                      <Text style={styles.memberRowUpdate}>
+                        {!hasStatus
+                          ? "Status privado"
+                          : member.lastStatusUpdate
+                          ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                          : "Sem atualização recente"}
+                      </Text>
+                      {hasStatus && (
+                        <Text style={styles.memberBadgeLegend}>
+                          C = Crítico | A = Atenção | P = positivo
                         </Text>
-                        {hasStatus && (
-                          <Text style={styles.memberBadgeLegend}>
-                            C = crítico · A = atenção · P = positivo
-                          </Text>
-                        )}
-                        <View style={styles.memberStatusGrid}>
+                      )}
+                      <View style={styles.memberStatusGrid}>
                           {entries.map((entry) => {
                             const chipColor = mapBucketToColor(entry.bucket)
+                            const tileBorder =
+                              entry.bucket === "critical" || entry.bucket === "attention" ? chipColor : "transparent"
                             const percentage =
                               typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
                             return (
-                              <View key={`${member.userId}-${entry.key}`} style={styles.memberStatusTile}>
+                              <View
+                                key={`${member.userId}-${entry.key}`}
+                                style={[styles.memberStatusTile, { borderColor: tileBorder }]}
+                              >
                                 <Text style={styles.memberStatusTitle} numberOfLines={1} ellipsizeMode="tail">
                                   {entry.label}
                                 </Text>
@@ -861,9 +863,9 @@ export default function GroupsScreen() {
                                 const detail = getMemberAreaDetail(member, entry.key)
                                 const percentage =
                                   typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
-                          const influences = formatAreaInfluences(detail)
-                          return (
-                            <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
+                                const influences = formatAreaInfluences(detail)
+                                return (
+                                  <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
                                     <View style={styles.memberDetailHeader}>
                                       <Text style={styles.memberDetailTitle}>{entry.label}</Text>
                                       <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
@@ -875,19 +877,19 @@ export default function GroupsScreen() {
                                         Tendência: {mapTrendLabel(detail.trend)}
                                       </Text>
                                     )}
-                              {detail?.description && (
-                                <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
-                                  {detail.description}
-                                </Text>
-                              )}
-                              {influences ? (
-                                <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
-                                  Planetas: {influences}
-                                </Text>
-                              ) : null}
-                            </View>
-                          )
-                        })}
+                                    {detail?.description && (
+                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
+                                        {detail.description}
+                                      </Text>
+                                    )}
+                                    {influences ? (
+                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
+                                        Planetas: {influences}
+                                      </Text>
+                                    ) : null}
+                                  </View>
+                                )
+                              })}
                             </View>
                           )}
                         </View>
@@ -926,16 +928,16 @@ export default function GroupsScreen() {
               {visibleMembers.length === 0 ? (
                 <Text style={styles.groupSummaryHint}>Sem status compartilhado no grupo</Text>
               ) : statusCounts.critical > 0 ? (
-                <Text style={styles.groupSummaryHint}>Precisa de atenção</Text>
+                <Text style={styles.groupSummaryHint}>Precisa de Atenção</Text>
               ) : (
-                <Text style={styles.groupSummaryHint}>Sem membros em status crítico-social</Text>
+                <Text style={styles.groupSummaryHint}>Sem membros em status Crítico-social</Text>
               )}
             </View>
 
             {highlightMembers.length > 0 && (
               <View style={styles.attentionCard}>
                 <View style={styles.attentionHeader}>
-                  <Text style={styles.sectionTitle}>Precisa de atenção</Text>
+                  <Text style={styles.sectionTitle}>Precisa de Atenção</Text>
                   {sortedMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
                     <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
                       <Text style={styles.attentionLink}>Ver todos</Text>
@@ -1093,7 +1095,7 @@ export default function GroupsScreen() {
               multiline
               numberOfLines={3}
             />
-            <Text style={styles.modalLabel}>Áreas compartilhadas (padrão do grupo)</Text>
+            <Text style={styles.modalLabel}>áreas compartilhadas (padrão do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupSharedLifeAreas.includes(area.key)
@@ -1113,7 +1115,7 @@ export default function GroupsScreen() {
               })}
             </View>
 
-            <Text style={styles.modalLabel}>Áreas notificadas (padrão do grupo)</Text>
+            <Text style={styles.modalLabel}>áreas notificadas (padrão do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupNotifiedLifeAreas.includes(area.key)
@@ -1162,7 +1164,7 @@ export default function GroupsScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Codigo de convite"
+              placeholder="Código de convite"
               placeholderTextColor="#888"
               value={inviteCode}
               onChangeText={setInviteCode}
@@ -1176,10 +1178,10 @@ export default function GroupsScreen() {
               <View style={styles.invitePreviewBox}>
                 <Text style={styles.invitePreviewTitle}>{invitePreview.name}</Text>
                 <Text style={styles.invitePreviewText}>
-                  Áreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
+                  áreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
                 </Text>
                 <Text style={styles.invitePreviewText}>
-                  Áreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
+                  áreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
                 </Text>
                 {invitePreview.inviteEnabled === false && (
                   <Text style={styles.invitePreviewError}>Convite desativado pelo admin</Text>
@@ -1319,7 +1321,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   groupSelector: {
     flex: 1,
@@ -1478,18 +1480,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    justifyContent: "space-between",
   },
   memberStatusTile: {
-    width: "48%",
+    flexBasis: "48%",
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 140,
+    maxWidth: "49%",
+    maxWidth: "48%",
+    minWidth: 140,
     backgroundColor: "rgba(255, 255, 255, 0.03)",
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   memberStatusTitle: {
     color: "#E8E8F6",
     fontSize: 12,
     fontWeight: "600",
+    maxWidth: "100%",
   },
   memberStatusMeta: {
     marginTop: 4,
@@ -2453,6 +2465,45 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
