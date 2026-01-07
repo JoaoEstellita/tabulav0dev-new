@@ -66,7 +66,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setCacheStatus(result.cacheStatus)
       setIsUsingLocalEngine(true)
       if (firstLoad) setFirstLoad(false)
-      const statusKey = `${user.uid}:${result.data.currentTransits?.timestamp || result.cacheStatus.cacheSource}`
+      const activeHouseSystem =
+        (globalThis as any).__userHouseSystem || userProfile?.preferences?.houseSystem || userProfile?.houseSystem
+      const statusKey = `${user.uid}:${activeHouseSystem || "placidus"}:${result.data.currentTransits?.timestamp || result.cacheStatus.cacheSource}`
       if (lastStatusKeyRef.current !== statusKey) {
         lastStatusKeyRef.current = statusKey
         GroupService.updateUserStatusFromLifeAreas(user.uid, result.data, birthData)

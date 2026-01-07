@@ -544,6 +544,19 @@ export default function GroupsScreen() {
     }
   }
 
+  const getBucketPriority = (bucket: string) => {
+    switch (bucket) {
+      case "critical":
+        return 0
+      case "attention":
+        return 1
+      case "positive":
+        return 2
+      default:
+        return 3
+    }
+  }
+
   const buildMemberAreaEntries = (member: GroupMember) => {
     const lifeAreas = resolveMemberLifeAreas(member)
     const sharedAreas = resolveSharedAreas(member)
@@ -561,6 +574,14 @@ export default function GroupsScreen() {
         }
       })
       .filter((entry): entry is { key: string; label: string; percentage: number | null; bucket: string } => !!entry)
+      .sort((a, b) => {
+        const priorityDiff = getBucketPriority(a.bucket) - getBucketPriority(b.bucket)
+        if (priorityDiff !== 0) return priorityDiff
+        if (typeof a.percentage === "number" && typeof b.percentage === "number") {
+          return a.percentage - b.percentage
+        }
+        return a.label.localeCompare(b.label)
+      })
   }
 
   const getMemberWorstArea = (member: GroupMember) => {
@@ -582,16 +603,7 @@ export default function GroupsScreen() {
   }
 
   const getSummaryRank = (bucket: string) => {
-    switch (bucket) {
-      case "critical":
-        return 0
-      case "attention":
-        return 1
-      case "positive":
-        return 2
-      default:
-        return 3
-    }
+    return getBucketPriority(bucket)
   }
 
   const sortedMembers = [...groupMembers].sort((a, b) => {
@@ -700,6 +712,77 @@ export default function GroupsScreen() {
               </View>
             </View>
 
+            <View style={styles.membersSection}>
+              <Text style={styles.sectionTitle}>Membros</Text>
+              {sortedMembers.map((member) => {
+                const hasStatus = hasVisibleStatus(member)
+                const entries = hasStatus ? buildMemberAreaEntries(member) : []
+                const chips = entries.slice(0, 5)
+                const extra = entries.length - chips.length
+                const summaryBucket = getMemberSummaryBucket(member)
+                return (
+                  <TouchableOpacity
+                    key={member.userId}
+                    style={styles.memberRow}
+                    onPress={() => {
+                      Alert.alert("Perfil do Membro", `Ver detalhes de ${member.displayName}`)
+                    }}
+                  >
+                    <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="medium" />
+                    <View style={styles.memberRowInfo}>
+                      <View style={styles.memberRowHeader}>
+                        <Text style={styles.memberRowName}>{member.displayName}</Text>
+                        <View
+                          style={[
+                            styles.memberStatusDot,
+                            { backgroundColor: hasStatus ? mapBucketToColor(summaryBucket) : "#555" },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.memberRowUpdate}>
+                        {!hasStatus
+                          ? "Status privado"
+                          : member.lastStatusUpdate
+                          ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                          : "Sem atualizacao recente"}
+                      </Text>
+                      <View style={styles.memberAreaRow}>
+                        {chips.map((entry) => {
+                          const chipColor = mapBucketToColor(entry.bucket)
+                          const chipLabel =
+                            typeof entry.percentage === "number"
+                              ? `${entry.label} ${Math.round(entry.percentage)}%`
+                              : entry.label
+                          return (
+                            <View
+                              key={`${member.userId}-${entry.key}`}
+                              style={[
+                                styles.memberAreaChip,
+                                { borderColor: chipColor, backgroundColor: `${chipColor}22` },
+                              ]}
+                            >
+                            <Text
+                              style={[styles.memberAreaText, { color: chipColor }]}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                            >
+                              {chipLabel}
+                            </Text>
+                            </View>
+                          )
+                        })}
+                        {extra > 0 && (
+                          <View style={styles.memberAreaChip}>
+                            <Text style={styles.memberAreaText}>+{extra}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+
             <View style={styles.groupSummaryCard}>
               <View style={styles.groupSummaryHeader}>
                 <Text style={styles.sectionTitle}>Status geral</Text>
@@ -769,94 +852,6 @@ export default function GroupsScreen() {
               </View>
             )}
 
-            <View style={styles.groupActionsCard}>
-              <Text style={styles.sectionTitle}>Acoes do grupo</Text>
-              <View style={styles.actionButtonsRow}>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.messageButton]}
-                  onPress={() => setShowMessageModal(true)}
-                  disabled={sendingNotification}
-                >
-                  <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Mensagem</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.alertButton]}
-                  onPress={() => setFeedFilter("alerts")}
-                >
-                  <Ionicons name="notifications" size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Alertas</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.settingsButton]}
-                  onPress={openGroupSettings}
-                >
-                  <Ionicons name="settings" size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Preferencias</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.membersSection}>
-              <Text style={styles.sectionTitle}>Membros</Text>
-              {sortedMembers.map((member) => {
-                const hasStatus = hasVisibleStatus(member)
-                const entries = hasStatus ? buildMemberAreaEntries(member) : []
-                const chips = entries.slice(0, 5)
-                const extra = entries.length - chips.length
-                const summaryBucket = getMemberSummaryBucket(member)
-                return (
-                  <TouchableOpacity
-                    key={member.userId}
-                    style={styles.memberRow}
-                    onPress={() => {
-                      Alert.alert("Perfil do Membro", `Ver detalhes de ${member.displayName}`)
-                    }}
-                  >
-                    <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="medium" />
-                    <View style={styles.memberRowInfo}>
-                      <View style={styles.memberRowHeader}>
-                        <Text style={styles.memberRowName}>{member.displayName}</Text>
-                        <View
-                          style={[
-                            styles.memberStatusDot,
-                            { backgroundColor: hasStatus ? mapBucketToColor(summaryBucket) : "#555" },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.memberRowUpdate}>
-                        {!hasStatus
-                          ? "Status privado"
-                          : member.lastStatusUpdate
-                          ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                          : "Sem atualizacao recente"}
-                      </Text>
-                      <View style={styles.memberAreaRow}>
-                        {chips.map((entry) => (
-                          <View
-                            key={`${member.userId}-${entry.key}`}
-                            style={[
-                              styles.memberAreaChip,
-                              { borderColor: mapBucketToColor(entry.bucket) },
-                            ]}
-                          >
-                            <Text style={[styles.memberAreaText, { color: mapBucketToColor(entry.bucket) }]}>
-                              {entry.label}
-                            </Text>
-                          </View>
-                        ))}
-                        {extra > 0 && (
-                          <View style={styles.memberAreaChip}>
-                            <Text style={styles.memberAreaText}>+{extra}</Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-
             <View style={styles.alertsSection}>
               <Text style={styles.sectionTitle}>Feed do grupo</Text>
               <View style={styles.feedTabs}>
@@ -914,6 +909,34 @@ export default function GroupsScreen() {
                     </View>
                   </View>
                 ))}
+            </View>
+
+            <View style={styles.groupActionsCard}>
+              <Text style={styles.sectionTitle}>Acoes do grupo</Text>
+              <View style={styles.actionButtonsRow}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.messageButton]}
+                  onPress={() => setShowMessageModal(true)}
+                  disabled={sendingNotification}
+                >
+                  <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Mensagem</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.alertButton]}
+                  onPress={() => setFeedFilter("alerts")}
+                >
+                  <Ionicons name="notifications" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Alertas</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.settingsButton]}
+                  onPress={openGroupSettings}
+                >
+                  <Ionicons name="settings" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Preferencias</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </>
         )}
@@ -1317,11 +1340,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
+    maxWidth: 150,
+    flexShrink: 1,
   },
   memberAreaText: {
     color: "#CCCCCC",
     fontSize: 10,
     fontWeight: "600",
+    maxWidth: 134,
   },
   memberCard: {
     backgroundColor: "#1C1C1E",
@@ -2210,4 +2236,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
 
