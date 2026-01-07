@@ -95,17 +95,25 @@ export function useLifeAreas(): UseLifeAreasReturn {
     if (!transitData || !user) return
 
     try {
-      // Verificar se deve enviar alertas criticos usando o novo sistema
-      const shouldAlert = LocalAstrologyService.shouldSendCriticalAlert(transitData)
-      
-      if (!shouldAlert) {
-        console.log(' Nenhuma situacao critica detectada')
+      // Encontrar areas criticas (abaixo de 40%)
+      const criticalAreas = Object.entries(transitData.lifeAreas)
+        .filter(([_, area]) => {
+          const value = typeof area?.percentage === 'number'
+            ? area.percentage
+            : (typeof area?.status === 'number' ? area.status : null)
+          return typeof value === 'number' && value < 40
+        })
+        .map(([name, area]) => ({
+          name,
+          status: typeof area?.percentage === 'number'
+            ? area.percentage
+            : (typeof area?.status === 'number' ? area.status : null)
+        }))
+
+      if (criticalAreas.length === 0) {
+        console.log(' Nenhuma area critica encontrada')
         return
       }
-
-      // Gerar mensagem personalizada
-      const alertMessage = LocalAstrologyService.generateAlertMessage(transitData)
-      console.log(` Alerta critico detectado: ${alertMessage}`)
 
       // Buscar grupos do usuario
       const userGroups = await getUserGroups(user.uid)
@@ -120,34 +128,18 @@ export function useLifeAreas(): UseLifeAreasReturn {
       const alertMessages = userProfile?.alertMessages
       const userName = userProfile?.displayName || userProfile?.fullName || 'Usuario'
 
-      // Encontrar areas criticas (abaixo de 30%)
-      const criticalAreas = Object.entries(transitData.lifeAreas)
-        .filter(([_, area]) => {
-          const value = typeof area?.percentage === 'number'
-            ? area.percentage
-            : (typeof area?.status === 'number' ? area.status : null)
-          return typeof value === 'number' && value < 30
-        })
-        .map(([name, area]) => ({
-          name,
-          status: typeof area?.percentage === 'number'
-            ? area.percentage
-            : (typeof area?.status === 'number' ? area.status : null)
-        }))
-
-      if (criticalAreas.length === 0) {
-        console.log(' Nenhuma area critica encontrada')
-        return
-      }
-
       // Enviar alertas para cada area critica
       for (const area of criticalAreas) {
         for (const groupId of userGroups) {
           try {
             const memberSettings = await GroupService.getMemberSettings(groupId, user.uid)
             if (memberSettings?.enabled === false) continue
+            if (memberSettings?.shareStatus === false) continue
             if (memberSettings?.types?.criticalAlerts === false) continue
             if (memberSettings?.priority === 'none') continue
+            if (memberSettings?.notifiedLifeAreas && !memberSettings.notifiedLifeAreas.includes(area.name)) {
+              continue
+            }
 
             const customMessage = memberSettings?.customAlertMessages?.[area.name]
             const message = customMessage || alertMessages?.[area.name] || getDefaultMessage(area.name)

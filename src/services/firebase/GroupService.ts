@@ -386,17 +386,20 @@ class GroupService {
           if (response.ok) {
             const payload = await response.json()
             if (payload?.ok && Array.isArray(payload.members)) {
-              return payload.members.map((member: any) => ({
-                userId: member.userId,
-                email: member.email || member.userId,
-                displayName: member.displayName || member.userId,
-                profilePhoto: member.profilePhoto || undefined,
-                joinedAt: new Date(),
-                astrologicalStatus: member.astrologicalStatus || undefined,
-                lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
-                sharedLifeAreas: member.sharedLifeAreas,
-                lifeAreas: member.astrologicalStatus?.lifeAreas,
-              })) as GroupMember[]
+              return payload.members.map((member: any) => {
+                const lifeAreas = member.lifeAreas || member.astrologicalStatus?.lifeAreas || undefined
+                return {
+                  userId: member.userId,
+                  email: member.email || member.userId,
+                  displayName: member.displayName || member.userId,
+                  profilePhoto: member.profilePhoto || undefined,
+                  joinedAt: new Date(),
+                  astrologicalStatus: member.astrologicalStatus || undefined,
+                  lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
+                  sharedLifeAreas: member.sharedLifeAreas,
+                  lifeAreas,
+                }
+              }) as GroupMember[]
             }
           }
         } catch (error) {
