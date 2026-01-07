@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import {
@@ -155,7 +155,7 @@ export default function GroupsScreen() {
       .catch(() => {
         if (!isActive) return
         setInvitePreview(null)
-        setInvitePreviewError("Nao foi possivel validar o codigo")
+        setInvitePreviewError("Não foi possível validar o codigo")
       })
       .finally(() => {
         if (!isActive) return
@@ -253,14 +253,14 @@ export default function GroupsScreen() {
       // Por enquanto, vou simular com um ID ficticio
       Alert.alert(
         'Funcionalidade em desenvolvimento',
-        'Em breve voce podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
+        'Em breve você podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
       )
       
       setShowCreateCoupleModal(false)
       setPartnerEmail('')
     } catch (error) {
       console.error('Erro ao criar relacionamento:', error)
-      Alert.alert('Erro', 'Nao foi possivel criar o relacionamento')
+      Alert.alert('Erro', 'Não foi possível criar o relacionamento')
     } finally {
       setCoupleLoading(false)
     }
@@ -280,7 +280,7 @@ export default function GroupsScreen() {
       Alert.alert('Sucesso', 'Compatibilidade atualizada!')
     } catch (error) {
       console.error('Erro ao atualizar compatibilidade:', error)
-      Alert.alert('Erro', 'Nao foi possivel atualizar a compatibilidade')
+      Alert.alert('Erro', 'Não foi possível atualizar a compatibilidade')
     } finally {
       setCoupleLoading(false)
     }
@@ -362,7 +362,7 @@ export default function GroupsScreen() {
       
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error)
-      Alert.alert("Erro", "Nao foi possivel enviar a mensagem")
+      Alert.alert("Erro", "Não foi possível enviar a mensagem")
     } finally {
       setSendingNotification(false)
     }
@@ -387,7 +387,7 @@ export default function GroupsScreen() {
       Alert.alert("Sucesso", "Convite atualizado")
     } catch (error: any) {
       console.error("Erro ao atualizar convite:", error)
-      Alert.alert("Erro", error?.message || "Nao foi possivel atualizar convite")
+      Alert.alert("Erro", error?.message || "Não foi possível atualizar convite")
     } finally {
       setUpdatingInvite(false)
     }
@@ -402,7 +402,7 @@ export default function GroupsScreen() {
       Alert.alert("Sucesso", "Membro removido do grupo")
     } catch (error: any) {
       console.error("Erro ao remover membro:", error)
-      Alert.alert("Erro", error?.message || "Nao foi possivel remover o membro")
+      Alert.alert("Erro", error?.message || "Não foi possível remover o membro")
     }
   }
 
@@ -417,7 +417,7 @@ export default function GroupsScreen() {
       Alert.alert("Sucesso", "Voce saiu do grupo")
     } catch (error: any) {
       console.error("Erro ao sair do grupo:", error)
-      Alert.alert("Erro", error?.message || "Nao foi possivel sair do grupo")
+      Alert.alert("Erro", error?.message || "Não foi possível sair do grupo")
     }
   }
 
@@ -558,6 +558,29 @@ export default function GroupsScreen() {
     }
   }
 
+  const mapTrendLabel = (trend?: string) => {
+    if (!trend) return ""
+    const normalized = trend.toLowerCase()
+    switch (normalized) {
+      case "stable":
+        return "Estável"
+      case "rising":
+      case "up":
+        return "Em alta"
+      case "falling":
+      case "down":
+        return "Em queda"
+      case "positive":
+        return "Positiva"
+      case "neutral":
+        return "Neutra"
+      case "negative":
+        return "Negativa"
+      default:
+        return trend
+    }
+  }
+
   const getBucketPriority = (bucket: string) => {
     switch (bucket) {
       case "critical":
@@ -578,8 +601,13 @@ export default function GroupsScreen() {
       .map((key) => {
         const data = (lifeAreas as any)?.[key]
         if (!data) return null
-        const percentage = typeof data.percentage === "number" ? data.percentage : null
-        const bucket = mapPercentageToBucket(percentage)
+        const percentage =
+          typeof data.percentage === "number"
+            ? data.percentage
+            : typeof data.status === "number"
+            ? data.status
+            : null
+        const bucket = mapPercentageToBucket(percentage ?? undefined)
         return {
           key,
           label: LIFE_AREA_LABELS[key] || key,
@@ -743,10 +771,7 @@ export default function GroupsScreen() {
               <Text style={styles.sectionTitle}>Membros</Text>
               {sortedMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
-                const entries = hasStatus ? buildMemberAreaEntries(member) : []
-                const chips = entries.slice(0, 4)
-                const extra = entries.length - chips.length
-                const summaryBucket = getMemberSummaryBucket(member)
+                const entries = hasStatus ? buildMemberAreaEntries(member) : []                const summaryBucket = getMemberSummaryBucket(member)
                 const bucketCounts = entries.reduce(
                   (acc, entry) => {
                     acc[entry.bucket] += 1
@@ -792,44 +817,40 @@ export default function GroupsScreen() {
                           ]}
                         />
                       </View>
-                      <Text style={styles.memberRowUpdate}>
-                        {!hasStatus
-                          ? "Status privado"
-                          : member.lastStatusUpdate
-                          ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                          : "Sem atualização recente"}
-                      </Text>
-                      <View style={styles.memberAreaRow}>
-                        {chips.map((entry) => {
-                          const chipColor = mapBucketToColor(entry.bucket)
-                          const chipLabel =
-                            typeof entry.percentage === "number"
-                              ? `${entry.label} ${Math.round(entry.percentage)}%`
-                              : entry.label
-                          return (
-                            <View
-                              key={`${member.userId}-${entry.key}`}
-                              style={[
-                                styles.memberAreaChip,
-                                { borderColor: chipColor, backgroundColor: `${chipColor}22` },
-                              ]}
-                            >
-                              <Text
-                                style={[styles.memberAreaText, { color: chipColor }]}
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                              >
-                                {chipLabel}
-                              </Text>
-                            </View>
-                          )
-                        })}
-                        {extra > 0 && (
-                          <View style={styles.memberAreaChip}>
-                            <Text style={styles.memberAreaText}>+{extra}</Text>
-                          </View>
+                        <Text style={styles.memberRowUpdate}>
+                          {!hasStatus
+                            ? "Status privado"
+                            : member.lastStatusUpdate
+                            ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                            : "Sem atualização recente"}
+                        </Text>
+                        {hasStatus && (
+                          <Text style={styles.memberBadgeLegend}>
+                            C = crítico · A = atenção · P = positivo
+                          </Text>
                         )}
-                      </View>
+                        <View style={styles.memberStatusGrid}>
+                          {entries.map((entry) => {
+                            const chipColor = mapBucketToColor(entry.bucket)
+                            const percentage =
+                              typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
+                            return (
+                              <View key={`${member.userId}-${entry.key}`} style={styles.memberStatusTile}>
+                                <Text style={styles.memberStatusTitle} numberOfLines={1} ellipsizeMode="tail">
+                                  {entry.label}
+                                </Text>
+                                <View style={styles.memberStatusMeta}>
+                                  <Text style={[styles.memberStatusValue, { color: chipColor }]}>
+                                    {percentage !== null ? `${percentage}%` : "--"}
+                                  </Text>
+                                  <Text style={[styles.memberStatusPill, { color: chipColor }]}>
+                                    {mapBucketToLabel(entry.bucket)}
+                                  </Text>
+                                </View>
+                              </View>
+                            )
+                          })}
+                        </View>
                       {expandedMemberId === member.userId && (
                         <View style={styles.memberDetails}>
                           {!hasStatus ? (
@@ -840,9 +861,9 @@ export default function GroupsScreen() {
                                 const detail = getMemberAreaDetail(member, entry.key)
                                 const percentage =
                                   typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
-                                const influences = formatAreaInfluences(detail)
-                                return (
-                                  <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
+                          const influences = formatAreaInfluences(detail)
+                          return (
+                            <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
                                     <View style={styles.memberDetailHeader}>
                                       <Text style={styles.memberDetailTitle}>{entry.label}</Text>
                                       <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
@@ -850,19 +871,23 @@ export default function GroupsScreen() {
                                       </Text>
                                     </View>
                                     {detail?.trend && (
-                                      <Text style={styles.memberDetailMeta}>Tendência: {detail.trend}</Text>
-                                    )}
-                                    {detail?.description && (
-                                      <Text style={styles.memberDetailMeta} numberOfLines={2}>
-                                        {detail.description}
+                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
+                                        Tendência: {mapTrendLabel(detail.trend)}
                                       </Text>
                                     )}
-                                    {influences ? (
-                                      <Text style={styles.memberDetailMeta}>Planetas: {influences}</Text>
-                                    ) : null}
-                                  </View>
-                                )
-                              })}
+                              {detail?.description && (
+                                <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
+                                  {detail.description}
+                                </Text>
+                              )}
+                              {influences ? (
+                                <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
+                                  Planetas: {influences}
+                                </Text>
+                              ) : null}
+                            </View>
+                          )
+                        })}
                             </View>
                           )}
                         </View>
@@ -1061,7 +1086,7 @@ export default function GroupsScreen() {
 
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Descricao (opcional)"
+              placeholder="Descrição (opcional)"
               placeholderTextColor="#888"
               value={newGroupDescription}
               onChangeText={setNewGroupDescription}
@@ -1402,6 +1427,25 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
+  memberBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  memberBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+    opacity: 0.8,
+  },
+  memberBadgeText: {
+    color: "#0B0B0F",
+    fontSize: 10,
+    fontWeight: "700",
+  },
   memberRowName: {
     color: "#FFFFFF",
     fontSize: 15,
@@ -1418,11 +1462,49 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
+  memberBadgeLegend: {
+    color: "#6B6B74",
+    fontSize: 10,
+    marginTop: 4,
+  },
   memberAreaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
     marginTop: 8,
+  },
+  memberStatusGrid: {
+    marginTop: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  memberStatusTile: {
+    width: "48%",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  memberStatusTitle: {
+    color: "#E8E8F6",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  memberStatusMeta: {
+    marginTop: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  memberStatusValue: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  memberStatusPill: {
+    fontSize: 11,
+    fontWeight: "600",
+    opacity: 0.85,
   },
   memberAreaChip: {
     borderWidth: 1,
