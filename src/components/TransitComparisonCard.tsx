@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -31,7 +31,14 @@ const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   fogo: 'flame',
   terra: 'leaf',
   ar: 'cloud',
-  agua: 'water'
+  agua: 'water',
+  '🔥': 'flame',
+  '🌍': 'leaf',
+  '🌎': 'leaf',
+  '🌏': 'leaf',
+  '💨': 'cloud',
+  '💧': 'water',
+  '💦': 'water'
 }
 
 const MODALITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -40,8 +47,13 @@ const MODALITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   mutable: 'repeat',
   cardeal: 'flash',
   fixo: 'square',
-  mutavel: 'repeat'
+  mutavel: 'repeat',
+  '⚡': 'flash',
+  '🔒': 'square',
+  '🔁': 'repeat'
 }
+
+const FALLBACK_ICON: keyof typeof Ionicons.glyphMap = 'help-circle'
 
 const ASPECT_ICONS = {
   conjuncao: '\u260C',
@@ -77,16 +89,17 @@ const PLANET_ICONS: Record<string, string> = {
 const AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',
-  financas: 'Finanças',
-  saude: 'Saúde',
-  familia: 'Família',
+  financas: 'Finan\u00E7as',
+  saude: 'Sa\u00FAde',
+  familia: 'Fam\u00EDlia',
   espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicação',
-  transformacao: 'Transformação'
+  comunicacao: 'Comunica\u00E7\u00E3o',
+  transformacao: 'Transforma\u00E7\u00E3o'
 }
+
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 
-export default function TransitComparisonCard({ 
+export default function TransitComparisonCard({
   planetComparisons, 
   chartSummary,
   ascendant,
@@ -147,11 +160,23 @@ export default function TransitComparisonCard({
 const translatePlanetTokens = (text: string): string =>
   decodeUnicodeEscapes(String(text || ''))
     .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
-    .replace(/\bdeg\b/gi, '°')
+    .replace(/\bdeg\b/gi, '\u00B0')
+
+const replaceEmojiTokens = (value: string): string => {
+  return String(value || '')
+    .replace(/\u{1F525}/gu, 'Fogo')
+    .replace(/\u{1F30D}/gu, 'Terra')
+    .replace(/\u{1F4A8}/gu, 'Ar')
+    .replace(/\u{1F4A7}/gu, '\u00C1gua')
+    .replace(/\u{26A1}/gu, 'Cardeal')
+    .replace(/\u{1F512}/gu, 'Fixo')
+    .replace(/\u{1F504}/gu, 'Mut\u00E1vel')
+}
 
 const sanitizeChangeText = (value: string): string => {
-  return decodeUnicodeEscapes(String(value || ''))
-    .replace(/[^\u0020-\u007E\u00C0-\u017F]/g, '')
+  return replaceEmojiTokens(decodeUnicodeEscapes(String(value || '')))
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -173,32 +198,52 @@ const buildChangeList = (
   }, [])
 }
 
+const normalizeChangePhrase = (value: string): string => {
+  const cleaned = sanitizeChangeText(value)
+  if (!cleaned) return ''
+  return cleaned
+    .replace(/\b(fire|fogo)\b/gi, 'Fogo')
+    .replace(/\b(earth|terra)\b/gi, 'Terra')
+    .replace(/\b(air|ar)\b/gi, 'Ar')
+    .replace(/\b(water|agua)\b/gi, '\u00C1gua')
+    .replace(/\b(cardinal|cardeal)\b/gi, 'Cardeal')
+    .replace(/\b(fixed|fixo)\b/gi, 'Fixo')
+    .replace(/\b(mutable|mutavel)\b/gi, 'Mut\u00E1vel')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 const translateElement = (element: string): string => {
   const translations: Record<string, string> = {
     fire: 'Fogo',
     earth: 'Terra',
     air: 'Ar',
-    water: 'Água',
+    water: '\u00C1gua',
     fogo: 'Fogo',
     terra: 'Terra',
     ar: 'Ar',
-    agua: 'Água'
+    agua: '\u00C1gua'
   }
-  const key = normalizeKey(element)
-  return translations[key] || element
+  const cleaned = sanitizeChangeText(element)
+  const key = normalizeKey(cleaned)
+  return translations[key] || cleaned
 }
+
+const normalizeElementKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
+const normalizeModalityKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
 
 const translateModality = (modality: string): string => {
   const translations: Record<string, string> = {
     cardinal: 'Cardeal',
     fixed: 'Fixo',
-    mutable: 'Mutável',
+    mutable: 'Mut\u00E1vel',
     cardeal: 'Cardeal',
     fixo: 'Fixo',
-    mutavel: 'Mutável'
+    mutavel: 'Mut\u00E1vel'
   }
-  const key = normalizeKey(modality)
-  return translations[key] || modality
+  const decoded = decodeUnicodeEscapes(modality)
+  const key = normalizeKey(decoded)
+  return translations[key] || decoded
 }
 
 const formatStatusLabel = (status: string | null) => {
@@ -208,7 +253,7 @@ const formatStatusLabel = (status: string | null) => {
     bom: 'Bom',
     neutro: 'Neutro',
     desafiador: 'Desafiador',
-    critico: 'Crítico'
+    critico: 'Cr\u00EDtico'
   }
   return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
 }
@@ -227,7 +272,7 @@ const elementalChanges = React.useMemo(() => {
   const computed = buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
   if (computed.length) return computed
   const fallback = (chartSummary.elemental?.changes || [])
-    .map((entry) => sanitizeChangeText(entry))
+    .map((entry) => normalizeChangePhrase(entry))
     .filter((entry) => entry.length > 1)
   return fallback
 }, [chartSummary.elemental.natal, chartSummary.elemental.current, chartSummary.elemental?.changes])
@@ -244,15 +289,15 @@ const modalityChanges = React.useMemo(() => {
   const computed = buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
   if (computed.length) return computed
   const fallback = (chartSummary.modality?.changes || [])
-    .map((entry) => sanitizeChangeText(entry))
+    .map((entry) => normalizeChangePhrase(entry))
     .filter((entry) => entry.length > 1)
   return fallback
 }, [chartSummary.modality.natal, chartSummary.modality.current, chartSummary.modality?.changes])
 
 const getSignFromDegree = (degree: number): string => {
   const signs = [
-    'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
-    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'
+    '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
+    'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes'
   ]
   const signIndex = Math.floor(degree / 30) % 12
   return signs[signIndex]
@@ -261,24 +306,21 @@ const getSignFromDegree = (degree: number): string => {
 const translateAspectLabel = (type: string): string => {
   const key = normalizeKey(type)
   const map: Record<string, string> = {
-    conjuncao: 'conjunção',
-    conjunction: 'conjunção',
+    conjuncao: 'conjun\u00E7\u00E3o',
+    conjunction: 'conjun\u00E7\u00E3o',
     sextil: 'sextil',
     sextile: 'sextil',
     quadratura: 'quadratura',
     square: 'quadratura',
-    trigono: 'trígono',
-    trine: 'trígono',
-    oposicao: 'oposição',
-    opposition: 'oposição',
-    quincuncio: 'quincúncio',
-    quincunx: 'quincúncio'
+    trigono: 'tr\u00EDgono',
+    trine: 'tr\u00EDgono',
+    oposicao: 'oposi\u00E7\u00E3o',
+    opposition: 'oposi\u00E7\u00E3o',
+    quincuncio: 'quinc\u00FAncio',
+    quincunx: 'quinc\u00FAncio'
   }
-  return map[key] || type
+  return map[key] || decodeUnicodeEscapes(type)
 }
-
-// Velocidade removida para melhor UX - informacao desnecessaria
-
 const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const base = aspect
       .toLowerCase()
@@ -393,7 +435,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
                   <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeKey(element)] || 'help'} size={14} color="#FFD700" />
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
                     <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
                   </View>
                 ))}
@@ -404,7 +446,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
                   <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeKey(element)] || 'help'} size={14} color="#FFD700" />
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
                     <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
                   </View>
                 ))}
@@ -422,7 +464,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
                   <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeKey(modality)] || 'help'} size={14} color="#FFD700" />
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
                     <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
                   </View>
                 ))}
@@ -433,7 +475,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.elementalRow}>
                 {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
                   <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeKey(modality)] || 'help'} size={14} color="#FFD700" />
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
                     <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
                   </View>
                 ))}
@@ -494,7 +536,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </Text>
             </View>
 
-            {/* Compara\u00E7\u00E3o Natal vs Tr\u00E2nsito */}
+            {/* Compara\u00E7\u00E3o Natal vs Trânsito */}
             <View style={styles.comparisonGrid}>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>Natal</Text>
@@ -503,11 +545,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 </Text>
                 <View style={styles.attributesRow}>
                   <View style={styles.attributeChip}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeKey(comparison.natal.element)] || 'help'} size={12} color="#FFD700" />
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.natal.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
                     <Text style={styles.attributeChipText}>{translateElement(comparison.natal.element)}</Text>
                   </View>
                   <View style={styles.attributeChip}>
-                    <Ionicons name={MODALITY_ICONS[normalizeKey(comparison.natal.modality)] || 'help'} size={12} color="#FFD700" />
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(comparison.natal.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
                     <Text style={styles.attributeChipText}>{translateModality(comparison.natal.modality)}</Text>
                   </View>
                 </View>
@@ -521,37 +563,37 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 </Text>
                 <View style={styles.attributesRow}>
                   <View style={styles.attributeChip}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeKey(comparison.current.element)] || 'help'} size={12} color="#FFD700" />
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.current.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
                     <Text style={styles.attributeChipText}>{translateElement(comparison.current.element)}</Text>
                   </View>
                   <View style={styles.attributeChip}>
-                    <Ionicons name={MODALITY_ICONS[normalizeKey(comparison.current.modality)] || 'help'} size={12} color="#FFD700" />
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(comparison.current.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
                     <Text style={styles.attributeChipText}>{translateModality(comparison.current.modality)}</Text>
                   </View>
                 </View>
               </View>
             </View>
 
-            {/* Linha de resumo expl\u00EDcita das casas + badge "pr\u00F3x. c\u00FAspide" */}
+            {/* Linha de resumo expl\u00EDcita das caSa\\u00FAde" */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
               <Text style={[styles.positionText, { opacity: 0.9 }]}>
-                Casa natal {comparison.natal.house} -> tr\u00E2nsito {comparison.current.house}
+                Casa natal {comparison.natal.house} -> Trânsito {comparison.current.house}
               </Text>
               {(() => {
                 const info = nearestCuspInfo(comparison.current.longitude)
                 if (info && info.distance <= 0.5) {
                   return (
-                    <Text style={styles.nearCuspChip}>{`pr\u00F3x. c\u00FAspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
+                    <Text style={styles.nearCuspChip}>{`pr\u00F3x. cúspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
                   )
                 }
                 return null
               })()}
             </View>
 
-            {/* Tr\u00E2nsitos pessoais para este planeta em tr\u00E2nsito */}
+            {/* Trânsitos pessoais para este planeta em Trânsito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Tr\u00E2nsitos pessoais:</Text>
+                <Text style={styles.aspectsTitle}>Trânsitos pessoais:</Text>
                 {personalByTransitPlanet[comparison.name]
                   .slice(0, 3)
                   .map((t, idx) => (
@@ -612,7 +654,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               if (!areaInfluences.length) return null
               return (
                 <View style={styles.aspectsSection}>
-                  <Text style={styles.aspectsTitle}>Influ\u00EAncia nos status:</Text>
+                  <Text style={styles.aspectsTitle}>Influência nos status:</Text>
                   {areaInfluences.map((area, areaIndex) => (
                     <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
                       <Text style={styles.influenceArea}>
@@ -638,9 +680,9 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             style={styles.timelineCta}
             onPress={onOpenTimeline}
             accessibilityRole="button"
-            accessibilityLabel="Abrir linha do tempo planet\u00E1ria"
+            accessibilityLabel="Abrir Linha do tempo planetária"
           >
-            <Text style={styles.timelineCtaText}>Linha do tempo planet\u00E1ria</Text>
+            <Text style={styles.timelineCtaText}>Linha do tempo planetária</Text>
             <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
           </TouchableOpacity>
         )}
@@ -809,7 +851,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   aspectsTitle: {
-    color: '#FFD700',
+    color: '#FCD34D',
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -958,6 +1000,24 @@ const styles = StyleSheet.create({
   },
   // \u00F0\u0178\u0152\u0152 Estilos das casas removidos (n\u00C3\u00A3o implementadas)
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

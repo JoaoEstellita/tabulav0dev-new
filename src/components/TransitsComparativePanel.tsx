@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import UserService from '../services/firebase/UserService'
@@ -17,6 +17,7 @@ export default function TransitsComparativePanel() {
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
     normalizeHouseSystem(settings?.houseSystem || 'placidus')
   )
+
   React.useEffect(() => {
     if (settings?.houseSystem) {
       setHouseSystem(normalizeHouseSystem(settings.houseSystem))
@@ -29,7 +30,11 @@ export default function TransitsComparativePanel() {
       setHouseSystem(normalized)
       await updateSettings({ houseSystem: sys })
       ;(globalThis as any).__userHouseSystem = normalized
-      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, normalized) } catch {} }
+      if (user?.uid) {
+        try {
+          await UserService.setHouseSystem(user.uid, normalized)
+        } catch {}
+      }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }
@@ -37,35 +42,36 @@ export default function TransitsComparativePanel() {
   }, [])
 
   const topPersonal = [...personal].sort((a, b) => b.strength - a.strength).slice(0, 8)
-    const formatStatusLabel = (status: string | null) => {
+
+  const formatStatusLabel = (status: string | null) => {
     if (!status) return ''
     const map: Record<string, string> = {
       excelente: 'Excelente',
       bom: 'Bom',
       neutro: 'Neutro',
       desafiador: 'Desafiador',
-      critico: 'Crítico'
+      critico: 'Cr\u00EDtico'
     }
     return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
   }
 
-    const translateAspectLabel = (type: string): string => {
+  const translateAspectLabel = (type: string): string => {
     const key = normalizeKey(type)
     const map: Record<string, string> = {
-      conjuncao: 'conjunção',
-      conjunction: 'conjunção',
+      conjuncao: 'conjun\u00E7\u00E3o',
+      conjunction: 'conjun\u00E7\u00E3o',
       sextil: 'sextil',
       sextile: 'sextil',
       quadratura: 'quadratura',
       square: 'quadratura',
-      trigono: 'trígono',
-      trine: 'trígono',
-      oposicao: 'oposição',
-      opposition: 'oposição',
-      quincuncio: 'quincúncio',
-      quincunx: 'quincúncio'
+      trigono: 'tr\u00EDgono',
+      trine: 'tr\u00EDgono',
+      oposicao: 'oposi\u00E7\u00E3o',
+      opposition: 'oposi\u00E7\u00E3o',
+      quincuncio: 'quinc\u00FAncio',
+      quincunx: 'quinc\u00FAncio'
     }
-    return map[key] || type
+    return map[key] || decodeUnicodeEscapes(type)
   }
 
   return (
@@ -89,7 +95,9 @@ export default function TransitsComparativePanel() {
           </TouchableOpacity>
         </View>
         {statusPersonal && (
-          <Text style={styles.status}>Status: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)</Text>
+          <Text style={styles.status}>
+            Status: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
+          </Text>
         )}
       </View>
 
@@ -159,3 +167,8 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
 })
+
+
+
+
+

@@ -1,6 +1,5 @@
-﻿import React, { useMemo } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import React, { useMemo } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
 import { decodeUnicodeEscapes, translatePlanetPT } from '../../../utils/astro/pt'
 import { normalizeKey } from '../../../utils/astro/normalizeKey'
 import type { ImpactAreaNode } from './buildImpactNodes'
@@ -9,7 +8,6 @@ interface HomeImpactSummaryProps {
   impactNodes: ImpactAreaNode[]
   lifeAreas?: Record<string, any> | null
   lunarPhaseLabel?: string | null
-  onScrollToTransits?: () => void
   recentTransits?: Array<{
     transitPlanet: string
     natalPlanet: string
@@ -23,32 +21,31 @@ interface HomeImpactSummaryProps {
 const translateAspectLabel = (type: string): string => {
   const key = normalizeKey(type)
   const map: Record<string, string> = {
-    conjuncao: 'conjunção',
-    conjunction: 'conjunção',
+    conjuncao: 'conjun\u00E7\u00E3o',
+    conjunction: 'conjun\u00E7\u00E3o',
     sextil: 'sextil',
     sextile: 'sextil',
     quadratura: 'quadratura',
     square: 'quadratura',
-    trigono: 'trígono',
-    trine: 'trígono',
-    oposicao: 'oposição',
-    opposition: 'oposição',
-    quincuncio: 'quincúncio',
-    quincunx: 'quincúncio',
+    trigono: 'tr\u00EDgono',
+    trine: 'tr\u00EDgono',
+    oposicao: 'oposi\u00E7\u00E3o',
+    opposition: 'oposi\u00E7\u00E3o',
+    quincuncio: 'quinc\u00FAncio',
+    quincunx: 'quinc\u00FAncio',
   }
-  return map[key] || type
+  return map[key] || decodeUnicodeEscapes(type)
 }
 
 const formatOrb = (orb?: number) => {
   if (typeof orb !== 'number') return ''
-  return `${orb.toFixed(1)}°`
+  return `${orb.toFixed(1)}\u00B0`
 }
 
 export default function HomeImpactSummary({
   impactNodes,
   lifeAreas,
   lunarPhaseLabel,
-  onScrollToTransits,
   recentTransits,
 }: HomeImpactSummaryProps) {
   const recentItems = useMemo(() => {
@@ -93,7 +90,7 @@ export default function HomeImpactSummary({
               <View key={`${item.transitPlanet}-${item.natalPlanet}-${index}`} style={styles.transitItem}>
                 <Text style={styles.transitTitle}>{label}</Text>
                 {orbLabel ? (
-                  <Text style={styles.transitMeta}>Orbe {orbLabel}{item.isApplying ? ' • aplicante' : ' • separante'}</Text>
+                  <Text style={styles.transitMeta}>Orbe {orbLabel}{item.isApplying ? ' - aplicante' : ' - separante'}</Text>
                 ) : null}
               </View>
             )
@@ -101,11 +98,6 @@ export default function HomeImpactSummary({
         </View>
       ) : (
         <Text style={styles.subtitle}>Sem trânsitos recentes para exibir.</Text>
-      )}
-      {onScrollToTransits && (
-        <TouchableOpacity style={styles.ctaRow} onPress={onScrollToTransits}>
-          <Text style={styles.ctaText}>Ver trânsitos em lista</Text>
-        </TouchableOpacity>
       )}
     </View>
   )
@@ -173,3 +165,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 })
+
+
+
+
+
+

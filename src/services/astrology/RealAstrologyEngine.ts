@@ -224,17 +224,35 @@ export interface RealAstrologyData {
   }
 }
 
+type HouseMeta = {
+  cusps: number[]
+  ascendant: number
+  midheaven: number
+  approximate?: boolean
+  system?: HouseSystem | string
+  systemEffective?: HouseSystem | string
+}
+
+type NormalizedHouseMeta = {
+  cusps: number[]
+  ascendant: number
+  midheaven: number
+  approximate?: boolean
+  system?: HouseSystem
+  systemEffective?: HouseSystem
+}
+
 export class RealAstrologyEngine {
   private static readonly PLANETS = [
     'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
     'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'
   ]
 
-  private static readonly _weeklyTTCache: Map<string, RealAspect[]> = new Map()
-  private static readonly _monthlyTTCache: Map<string, RealAspect[]> = new Map()
-  private static readonly _collectiveCache: Map<string, RealAstrologyData['collective']> = new Map()
+  private static readonly _weeklyTTCache = new Map<string, RealAspect[]>()
+  private static readonly _monthlyTTCache = new Map<string, RealAspect[]>()
+  private static readonly _collectiveCache = new Map<string, RealAstrologyData['collective']>()
 
-      private static readonly SIGNS = [
+  private static readonly SIGNS = [
     '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
     'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes'
   ]
@@ -257,7 +275,8 @@ export class RealAstrologyEngine {
     5: 'Criatividade', 6: 'Trabalho', 7: 'Parcerias', 8: 'Transforma\u00E7\u00E3o',
     9: 'Expans\u00E3o', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
   } as const
-private static readonly LIFE_AREAS = {
+
+  private static readonly LIFE_AREAS = {
     amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
     carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'], weight: 1.0 },
     financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'], weight: 1.0 },
@@ -283,16 +302,7 @@ private static readonly LIFE_AREAS = {
     12: ['Jupiter', 'Neptune']
   }
 
-  private static normalizeHouseMeta(
-    houses: {
-      cusps: number[]
-      ascendant: number
-      midheaven: number
-      approximate?: boolean
-      system?: HouseSystem | string
-      systemEffective?: HouseSystem | string
-    }
-  ) {
+  private static normalizeHouseMeta(houses: HouseMeta): NormalizedHouseMeta {
     const system = normalizeHouseSystem(
       houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus'
     )
@@ -343,9 +353,9 @@ private static readonly LIFE_AREAS = {
     try {
       // 1-2. TENTAR BACKEND PRECISO: posiÃƒÂ§ÃƒÂµes + casas + pacote natal
       let realPlanets: RealPlanetPosition[]
-      let houses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean; system?: HouseSystem | string; systemEffective?: HouseSystem | string }
+      let houses: HouseMeta
       let natalPlanets: RealPlanetPosition[]
-      let natalHouses: { cusps: number[]; ascendant: number; midheaven: number; approximate?: boolean; system?: HouseSystem | string; systemEffective?: HouseSystem | string }
+      let natalHouses: HouseMeta
 
       try {
         // Enviar horÃƒÂ¡rio LOCAL de nascimento e TZ resolvido para unificar conversÃƒÂ£o no backend
@@ -735,8 +745,8 @@ private static readonly LIFE_AREAS = {
     longitude: number,
     options?: { natalLocal?: string; natalTimezone?: string; natalLat?: number; natalLon?: number }
   ): Promise<{
-    current: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: HouseSystem | string, systemEffective?: HouseSystem | string } },
-    natal: { planets: RealPlanetPosition[]; houses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: HouseSystem | string, systemEffective?: HouseSystem | string } },
+    current: { planets: RealPlanetPosition[]; houses: NormalizedHouseMeta }
+    natal: { planets: RealPlanetPosition[]; houses: NormalizedHouseMeta }
   }> {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
     const ascOverrideDeg = Number((globalThis as any).__ascOverrideDeg)
@@ -811,16 +821,16 @@ private static readonly LIFE_AREAS = {
     };
 
     const currentPlanets = ((data.positions || data.planets) || []).map(toPlanet)
-    let currentHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: HouseSystem | string, systemEffective?: HouseSystem | string } =
+    let currentHousesRaw: HouseMeta =
       data.houses || { cusps: Array.from({ length: 12 }, (_, i) => i * 30), ascendant: 0, midheaven: 90 }
     const natalPlanets = ((data.natal?.positions || data.natal?.planets) || []).map(toPlanet)
     // Ã°Å¸Å’Å¸ CORREÃƒâ€¡ÃƒÆ’O: Calcular casas natais localmente se o backend nÃƒÂ£o as forneceu
-    let natalHouses: { cusps: number[]; ascendant: number; midheaven: number, approximate?: boolean, system?: HouseSystem | string, systemEffective?: HouseSystem | string }
+    let natalHousesRaw: HouseMeta
     
     const backendNatalHouses = data.natal?.houses || data.natalHouses
     if (backendNatalHouses) {
       // Backend forneceu casas natais - usar
-      natalHouses = backendNatalHouses
+      natalHousesRaw = backendNatalHouses
       console.log('Ã¢Å“â€¦ Backend forneceu casas natais')
     } else {
       // Backend nÃƒÂ£o forneceu casas natais - calcular localmente
@@ -831,7 +841,7 @@ private static readonly LIFE_AREAS = {
         const system = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
         
         const res = await computeHousesUTC(natalDate, natalLat, natalLon, system)
-        natalHouses = { 
+        natalHousesRaw = { 
           cusps: res.cusps, 
           ascendant: res.asc, 
           midheaven: res.mc, 
@@ -843,15 +853,15 @@ private static readonly LIFE_AREAS = {
       } catch (error) {
         console.error('Ã¢ÂÅ’ Erro ao calcular casas natais localmente:', error)
         // Fallback para casas atuais (nÃƒÂ£o ideal, mas funcional)
-        natalHouses = currentHouses
+        natalHousesRaw = currentHousesRaw
         console.log('Ã¢Å¡Â Ã¯Â¸Â Usando casas atuais como fallback para casas natais')
       }
     }
 
     // Reatribuir SEMPRE as casas no cliente usando as cÃƒÂºspides do backend
     // para garantir consistÃƒÂªncia de partiÃƒÂ§ÃƒÂ£o (ASC-ancorado, CCW, fronteira eps)
-    currentHouses = this.normalizeHouseMeta(currentHouses)
-    natalHouses = this.normalizeHouseMeta(natalHouses)
+    let currentHouses = this.normalizeHouseMeta(currentHousesRaw)
+    let natalHouses = this.normalizeHouseMeta(natalHousesRaw)
     const currentWithHouses = this.assignHouses(currentPlanets, currentHouses)
     const natalWithHouses = this.assignHouses(natalPlanets, natalHouses)
 
@@ -905,9 +915,9 @@ private static readonly LIFE_AREAS = {
     }
 
     const autoCorrectHouses = (
-      houses: { cusps: number[], ascendant: number, midheaven: number, system?: HouseSystem | string, systemEffective?: HouseSystem | string },
+      houses: NormalizedHouseMeta,
       label: string
-    ) => {
+    ): NormalizedHouseMeta => {
       const system = (houses as any).systemEffective || (houses as any).system || 'placidus'
       if (system !== 'placidus') {
         return houses
@@ -926,7 +936,7 @@ private static readonly LIFE_AREAS = {
         return {
           ...houses,
           cusps: newCusps,
-          systemEffective: `${system}-autocorrected`
+          systemEffective: system
         }
       }
 
@@ -985,7 +995,7 @@ private static readonly LIFE_AREAS = {
     latitude: number, 
     longitude: number,
     houseSystem?: HouseSystem
-    ): Promise<{ cusps: number[], ascendant: number, midheaven: number, approximate?: boolean, system?: HouseSystem | string, systemEffective?: HouseSystem | string }> {
+    ): Promise<NormalizedHouseMeta> {
     // Delegar para mÃƒÂ³dulo unificado de casas do app (garante monotonicidade e fallback)
     try {
         const system = normalizeHouseSystem(houseSystem || (globalThis as any).__userHouseSystem || 'placidus')
@@ -1175,14 +1185,7 @@ private static readonly LIFE_AREAS = {
    */
   private static assignHouses(
     planets: RealPlanetPosition[],
-    houses: {
-      cusps: number[]
-      ascendant: number
-      midheaven: number
-      approximate?: boolean
-      system?: HouseSystem | string
-      systemEffective?: HouseSystem | string
-    }
+    houses: NormalizedHouseMeta
   ): RealPlanetPosition[] {
     const asc = Number.isFinite(houses.ascendant) ? houses.ascendant : houses.cusps[0]
     const system = normalizeHouseSystem(houses.system || houses.systemEffective || (globalThis as any).__userHouseSystem || 'placidus')
