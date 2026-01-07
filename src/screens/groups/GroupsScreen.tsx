@@ -44,7 +44,7 @@ const LIFE_AREA_LABELS = LIFE_AREA_OPTIONS.reduce((acc, area) => {
 }, {} as Record<string, string>)
 
 const formatLifeAreas = (areas?: string[]) => {
-  if (!areas || areas.length === 0) return "Todas as areas"
+  if (!areas || areas.length === 0) return "Todas as áreas"
   return areas
     .map((area) => LIFE_AREA_OPTIONS.find((option) => option.key === area)?.label || area)
     .join(", ")
@@ -316,7 +316,7 @@ export default function GroupsScreen() {
     }
 
     if (invitePreview && (invitePreview.inviteEnabled === false || invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now())) {
-      Alert.alert("Convite indisponivel", "Este convite esta desativado ou expirado.")
+      Alert.alert("Convite indisponível", "Este convite está desativado ou expirado.")
       return
     }
 
@@ -458,7 +458,7 @@ export default function GroupsScreen() {
   const getStatusLabel = (status?: string) => {
     switch (status) {
       case "critical":
-        return "Critico"
+        return "Crítico"
       case "challenging":
         return "Desafiador"
       case "neutral":
@@ -548,9 +548,9 @@ export default function GroupsScreen() {
   const mapBucketToLabel = (bucket: string) => {
     switch (bucket) {
       case "critical":
-        return "Critico"
+        return "Crítico"
       case "attention":
-        return "Atencao"
+        return "Atenção"
       case "positive":
         return "Positivo"
       default:
@@ -711,7 +711,7 @@ export default function GroupsScreen() {
               <View style={styles.groupHeaderTop}>
                 <View style={styles.groupHeaderTitles}>
                   <Text style={styles.groupHeaderTitle}>{selectedGroup.name}</Text>
-                  <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrologico"}</Text>
+                  <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrológico"}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.groupHeaderManage}
@@ -733,7 +733,7 @@ export default function GroupsScreen() {
                 <View style={styles.groupMetaChip}>
                   <Ionicons name="grid" size={14} color="#FFD700" />
                   <Text style={styles.groupMetaText}>
-                    {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} areas
+                    {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} áreas
                   </Text>
                 </View>
               </View>
@@ -744,9 +744,16 @@ export default function GroupsScreen() {
               {sortedMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
                 const entries = hasStatus ? buildMemberAreaEntries(member) : []
-                const chips = entries.slice(0, 5)
+                const chips = entries.slice(0, 4)
                 const extra = entries.length - chips.length
                 const summaryBucket = getMemberSummaryBucket(member)
+                const bucketCounts = entries.reduce(
+                  (acc, entry) => {
+                    acc[entry.bucket] += 1
+                    return acc
+                  },
+                  { critical: 0, attention: 0, positive: 0, neutral: 0 }
+                )
                 return (
                   <TouchableOpacity
                     key={member.userId}
@@ -759,6 +766,25 @@ export default function GroupsScreen() {
                     <View style={styles.memberRowInfo}>
                       <View style={styles.memberRowHeader}>
                         <Text style={styles.memberRowName}>{member.displayName}</Text>
+                        {hasStatus && (
+                          <View style={styles.memberBadgeRow}>
+                            {bucketCounts.critical > 0 && (
+                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("critical") }]}>
+                                <Text style={styles.memberBadgeText}>{bucketCounts.critical}</Text>
+                              </View>
+                            )}
+                            {bucketCounts.attention > 0 && (
+                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("attention") }]}>
+                                <Text style={styles.memberBadgeText}>{bucketCounts.attention}</Text>
+                              </View>
+                            )}
+                            {bucketCounts.positive > 0 && (
+                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("positive") }]}>
+                                <Text style={styles.memberBadgeText}>{bucketCounts.positive}</Text>
+                              </View>
+                            )}
+                          </View>
+                        )}
                         <View
                           style={[
                             styles.memberStatusDot,
@@ -770,8 +796,8 @@ export default function GroupsScreen() {
                         {!hasStatus
                           ? "Status privado"
                           : member.lastStatusUpdate
-                          ? `Atualizado ha ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                          : "Sem atualizacao recente"}
+                          ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                          : "Sem atualização recente"}
                       </Text>
                       <View style={styles.memberAreaRow}>
                         {chips.map((entry) => {
@@ -809,33 +835,35 @@ export default function GroupsScreen() {
                           {!hasStatus ? (
                             <Text style={styles.memberDetailEmpty}>Status privado para este grupo.</Text>
                           ) : (
-                            entries.map((entry) => {
-                              const detail = getMemberAreaDetail(member, entry.key)
-                              const percentage =
-                                typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
-                              const influences = formatAreaInfluences(detail)
-                              return (
-                                <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
-                                  <View style={styles.memberDetailHeader}>
-                                    <Text style={styles.memberDetailTitle}>{entry.label}</Text>
-                                    <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
-                                      {percentage !== null ? `${percentage}%` : "--"} {mapBucketToLabel(entry.bucket)}
-                                    </Text>
+                            <View style={styles.memberDetailsGrid}>
+                              {entries.map((entry) => {
+                                const detail = getMemberAreaDetail(member, entry.key)
+                                const percentage =
+                                  typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
+                                const influences = formatAreaInfluences(detail)
+                                return (
+                                  <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
+                                    <View style={styles.memberDetailHeader}>
+                                      <Text style={styles.memberDetailTitle}>{entry.label}</Text>
+                                      <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
+                                        {percentage !== null ? `${percentage}%` : "--"} {mapBucketToLabel(entry.bucket)}
+                                      </Text>
+                                    </View>
+                                    {detail?.trend && (
+                                      <Text style={styles.memberDetailMeta}>Tendência: {detail.trend}</Text>
+                                    )}
+                                    {detail?.description && (
+                                      <Text style={styles.memberDetailMeta} numberOfLines={2}>
+                                        {detail.description}
+                                      </Text>
+                                    )}
+                                    {influences ? (
+                                      <Text style={styles.memberDetailMeta}>Planetas: {influences}</Text>
+                                    ) : null}
                                   </View>
-                                  {detail?.trend && (
-                                    <Text style={styles.memberDetailMeta}>Tendencia: {detail.trend}</Text>
-                                  )}
-                                  {detail?.description && (
-                                    <Text style={styles.memberDetailMeta} numberOfLines={2}>
-                                      {detail.description}
-                                    </Text>
-                                  )}
-                                  {influences ? (
-                                    <Text style={styles.memberDetailMeta}>Planetas: {influences}</Text>
-                                  ) : null}
-                                </View>
-                              )
-                            })
+                                )
+                              })}
+                            </View>
                           )}
                         </View>
                       )}
@@ -850,20 +878,20 @@ export default function GroupsScreen() {
                 <Text style={styles.sectionTitle}>Status geral</Text>
                 <TouchableOpacity style={styles.statusActionButton} onPress={openGroupSettings}>
                   <Ionicons name="options" size={14} color="#FFD700" />
-                  <Text style={styles.statusActionText}>Preferencias</Text>
+                  <Text style={styles.statusActionText}>Preferências</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.statusUpdated}>
-                Atualizado {lastStatusUpdate ? `ha ${formatRelativeTime(lastStatusUpdate)}` : "agora"}
+                Atualizado {lastStatusUpdate ? `há ${formatRelativeTime(lastStatusUpdate)}` : "agora"}
               </Text>
               <View style={styles.groupSummaryCounters}>
                 <View style={[styles.groupSummaryCounter, styles.summaryCritical]}>
                   <Text style={styles.groupSummaryValue}>{statusCounts.critical}</Text>
-                  <Text style={styles.groupSummaryLabel}>Criticos</Text>
+                  <Text style={styles.groupSummaryLabel}>Críticos</Text>
                 </View>
                 <View style={[styles.groupSummaryCounter, styles.summaryAttention]}>
                   <Text style={styles.groupSummaryValue}>{statusCounts.attention}</Text>
-                  <Text style={styles.groupSummaryLabel}>Atencao</Text>
+                  <Text style={styles.groupSummaryLabel}>Atenção</Text>
                 </View>
                 <View style={[styles.groupSummaryCounter, styles.summaryPositive]}>
                   <Text style={styles.groupSummaryValue}>{statusCounts.positive}</Text>
@@ -873,16 +901,16 @@ export default function GroupsScreen() {
               {visibleMembers.length === 0 ? (
                 <Text style={styles.groupSummaryHint}>Sem status compartilhado no grupo</Text>
               ) : statusCounts.critical > 0 ? (
-                <Text style={styles.groupSummaryHint}>Precisa de atencao</Text>
+                <Text style={styles.groupSummaryHint}>Precisa de atenção</Text>
               ) : (
-                <Text style={styles.groupSummaryHint}>Sem membros em status critico-social</Text>
+                <Text style={styles.groupSummaryHint}>Sem membros em status crítico-social</Text>
               )}
             </View>
 
             {highlightMembers.length > 0 && (
               <View style={styles.attentionCard}>
                 <View style={styles.attentionHeader}>
-                  <Text style={styles.sectionTitle}>Precisa de atencao</Text>
+                  <Text style={styles.sectionTitle}>Precisa de atenção</Text>
                   {sortedMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
                     <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
                       <Text style={styles.attentionLink}>Ver todos</Text>
@@ -899,7 +927,7 @@ export default function GroupsScreen() {
                       <View style={styles.attentionInfo}>
                         <Text style={styles.attentionName}>{member.displayName}</Text>
                         <Text style={styles.attentionMeta}>
-                          {worst ? worst.label : "Area indisponivel"}{" "}
+                          {worst ? worst.label : "Área indisponível"}{" "}
                           {percentage !== null ? `• ${percentage}%` : ""}
                         </Text>
                       </View>
@@ -974,7 +1002,7 @@ export default function GroupsScreen() {
             </View>
 
             <View style={styles.groupActionsCard}>
-              <Text style={styles.sectionTitle}>Acoes do grupo</Text>
+              <Text style={styles.sectionTitle}>Ações do grupo</Text>
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.messageButton]}
@@ -996,7 +1024,7 @@ export default function GroupsScreen() {
                   onPress={openGroupSettings}
                 >
                   <Ionicons name="settings" size={18} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Preferencias</Text>
+                  <Text style={styles.actionButtonText}>Preferências</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1008,7 +1036,7 @@ export default function GroupsScreen() {
             <Ionicons name="people-outline" size={64} color="#666" />
             <Text style={styles.emptyStateTitle}>Nenhum grupo encontrado</Text>
             <Text style={styles.emptyStateText}>
-              Crie seu primeiro grupo ou entre em um existente usando um cdigo de convite
+              Crie seu primeiro grupo ou entre em um existente usando um código de convite
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
               <Text style={styles.createFirstGroupButtonText}>Criar Primeiro Grupo</Text>
@@ -1040,7 +1068,7 @@ export default function GroupsScreen() {
               multiline
               numberOfLines={3}
             />
-            <Text style={styles.modalLabel}>Areas compartilhadas (padrao do grupo)</Text>
+            <Text style={styles.modalLabel}>Áreas compartilhadas (padrão do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupSharedLifeAreas.includes(area.key)
@@ -1060,7 +1088,7 @@ export default function GroupsScreen() {
               })}
             </View>
 
-            <Text style={styles.modalLabel}>Areas notificadas (padrao do grupo)</Text>
+            <Text style={styles.modalLabel}>Áreas notificadas (padrão do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupNotifiedLifeAreas.includes(area.key)
@@ -1123,10 +1151,10 @@ export default function GroupsScreen() {
               <View style={styles.invitePreviewBox}>
                 <Text style={styles.invitePreviewTitle}>{invitePreview.name}</Text>
                 <Text style={styles.invitePreviewText}>
-                  Areas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
+                  Áreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
                 </Text>
                 <Text style={styles.invitePreviewText}>
-                  Areas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
+                  Áreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
                 </Text>
                 {invitePreview.inviteEnabled === false && (
                   <Text style={styles.invitePreviewError}>Convite desativado pelo admin</Text>
@@ -1415,12 +1443,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 8,
   },
+  memberDetailsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
   memberDetailRow: {
     backgroundColor: "#15151B",
     borderRadius: 10,
     padding: 10,
     borderWidth: 1,
     borderColor: "#232333",
+    flexGrow: 1,
+    flexBasis: "48%",
+    minWidth: 180,
   },
   memberDetailHeader: {
     flexDirection: "row",
@@ -2335,5 +2371,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
+
+
 
 
