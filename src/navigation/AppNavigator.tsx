@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons"
 import LoginScreen from "../screens/auth/LoginScreen"
 import HomeScreen from "../screens/home/HomeScreen"
 import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
-import GroupsScreen from "../screens/groups/GroupsScreen"
+import GroupsAccessGuard from "../screens/groups/GroupsAccessGuard"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
@@ -81,7 +81,7 @@ function MainTabs() {
       <Tab.Screen name="Groups" options={{ title: "Grupos" }}>
         {() => (
           <ErrorBoundary>
-            <GroupsScreen />
+            <GroupsAccessGuard />
           </ErrorBoundary>
         )}
       </Tab.Screen>

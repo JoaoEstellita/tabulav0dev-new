@@ -1,9 +1,13 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const SUBSCRIPTION_URL = 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c93808497f5fad10197f707d574005d';
+interface SubscriptionModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSubscribe?: () => void;
+}
 
-export default function SubscriptionModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
@@ -12,7 +16,7 @@ export default function SubscriptionModal({ visible, onClose }: { visible: boole
           <Text style={styles.text}>
             Seu período de teste grátis terminou. Para continuar usando todos os recursos do app, faça sua assinatura.
           </Text>
-          <TouchableOpacity style={styles.button} onPress={() => Linking.openURL(SUBSCRIPTION_URL)}>
+          <TouchableOpacity style={styles.button} onPress={onSubscribe || onClose}>
             <Text style={styles.buttonText}>Assinar agora</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
