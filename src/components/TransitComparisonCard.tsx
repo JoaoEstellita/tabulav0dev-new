@@ -21,6 +21,7 @@ interface TransitComparisonCardProps {
   natalMidheaven?: number
   housesCusps?: number[]
   lifeAreas?: Record<string, any>
+  lifeAreasDebug?: Record<string, any>
   personalWindows?: Array<{
     transitPlanet: string
     natalPlanet: string
@@ -113,6 +114,7 @@ export default function TransitComparisonCard({
   natalMidheaven,
   housesCusps,
   lifeAreas,
+  lifeAreasDebug,
   personalWindows
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
@@ -228,6 +230,15 @@ const formatStatusLabel = (status: string | null) => {
   return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
 }
 
+const formatAreaStatus = (value: string | number | null | undefined) => {
+  if (typeof value === 'number') {
+    if (value >= 70) return 'Excelente'
+    if (value >= 40) return 'Moderado'
+    return 'Crítico'
+  }
+  return formatStatusLabel(value || null)
+}
+
 const getSignFromDegree = (degree: number): string => {
   const signs = [
     '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
@@ -321,45 +332,69 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   }, [housesCusps])
 
   const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
-    if (!lifeAreas || typeof lifeAreas !== 'object') return []
-    const translated = translatePlanetName(planetName).toLowerCase()
-    return Object.entries(lifeAreas)
-      .map(([areaKey, data]) => {
-        const influences = Array.isArray((data as any)?.influences) ? (data as any).influences : []
-        const mainPlanets = Array.isArray((data as any)?.mainPlanets) ? (data as any).mainPlanets : []
-        const matchMain = mainPlanets.includes(planetName)
-        const matchInfluence = influences.filter((text: string) => {
-          const lower = String(text || '').toLowerCase()
-          return lower.includes(planetName.toLowerCase()) || lower.includes(translated)
-        })
-        if (!matchMain && matchInfluence.length === 0) return null
-        return {
-          areaKey,
-          matchMain,
-          matchCount: matchInfluence.length,
-          percentage: typeof (data as any)?.percentage === 'number' ? (data as any).percentage : null,
-          status: (data as any)?.status || null,
-          influences: matchInfluence.length ? matchInfluence : influences.slice(0, 2)
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => {
-        if (a.matchMain !== b.matchMain) return a.matchMain ? -1 : 1
-        if (a.matchCount !== b.matchCount) return b.matchCount - a.matchCount
-        if (typeof a.percentage === 'number' && typeof b.percentage === 'number') {
-          return a.percentage - b.percentage
-        }
-        return 0
-      })
-      .slice(0, 2) as Array<{
-        areaKey: string
-        matchMain: boolean
-        matchCount: number
-        percentage: number | null
-        status: string | null
-        influences: string[]
-      }>
-  }, [lifeAreas])
+  if (!lifeAreasDebug || typeof lifeAreasDebug !== 'object') return []
+  return Object.entries(lifeAreasDebug)
+    .map(([areaKey, data]) => {
+      const details = (data as any)?.planetDetails || []
+      const planetDetail = details.find((entry: any) => entry.planet === planetName)
+      if (!planetDetail) return null
+
+      const statusValue = (lifeAreas as any)?.[areaKey]?.status ?? null
+      const statusLabel = formatAreaStatus(statusValue)
+      const signScore = Number(planetDetail.signScore || 0)
+      const houseScore = Number(planetDetail.houseScore || 0)
+      const houseLabel = planetDetail.house ? `Casa ${planetDetail.house}` : null
+      const signLabel = planetDetail.sign ? `Signo ${decodeUnicodeEscapes(planetDetail.sign)}` : null
+
+      const houseImpact =
+        houseScore >= 65 ? 'relevante' : houseScore <= 35 ? 'pouco relevante' : 'moderada'
+      const signImpact =
+        signScore >= 70 ? 'dignidade' : signScore <= 35 ? 'debilidade' : 'neutro'
+
+      const conditionTags = Array.isArray(planetDetail.conditions?.tags)
+        ? planetDetail.conditions.tags
+        : []
+      const aspects = Array.isArray(planetDetail.aspects) ? planetDetail.aspects : []
+      const isHarmonious = (type: string) => ['trigono', 'sextil'].includes(normalizeKey(type))
+      const isChallenging = (type: string) =>
+        ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(normalizeKey(type))
+      const isNeutral = (type: string) => normalizeKey(type) === 'conjuncao'
+
+      const harmoniousCount = aspects.filter((a: any) => isHarmonious(a.type)).length
+      const challengingCount = aspects.filter((a: any) => isChallenging(a.type)).length
+      const neutralCount = aspects.filter((a: any) => isNeutral(a.type)).length
+
+      const reasonLine = [
+        houseLabel ? `${houseLabel} (${houseImpact})` : null,
+        signLabel ? `${signLabel} (${signImpact})` : null
+      ]
+        .filter(Boolean)
+        .join(' | ')
+
+      const conditionLine = conditionTags.length
+        ? `Condições: ${conditionTags.join(', ')}`
+        : 'Condições: nenhuma destacada'
+
+      const aspectLine = `Aspectos: ${harmoniousCount} harmônicos, ${challengingCount} desafiadores${
+        neutralCount ? `, ${neutralCount} neutros` : ''
+      }`
+
+      return {
+        areaKey,
+        statusLabel,
+        totalScore: Number(planetDetail.total || 0),
+        lines: [reasonLine, conditionLine, aspectLine].filter(Boolean)
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b as any).totalScore - (a as any).totalScore)
+    .slice(0, 2) as Array<{
+      areaKey: string
+      statusLabel: string
+      totalScore: number
+      lines: string[]
+    }>
+}, [lifeAreasDebug, lifeAreas])
 
   return (
     <LinearGradient
@@ -622,15 +657,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               if (!areaInfluences.length) return null
               return (
                 <View style={styles.aspectsSection}>
-                  <Text style={styles.aspectsTitle}>InfluÃªncia nos status:</Text>
+                  <Text style={styles.aspectsTitle}>Influencia nos status:</Text>
                   {areaInfluences.map((area, areaIndex) => (
                     <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
                       <Text style={styles.influenceArea}>
                         {AREA_LABELS[area.areaKey] || area.areaKey}
-                        {typeof area.percentage === 'number' ? ` (${Math.round(area.percentage)}%)` : ''}
-                        {area.status ? ` - ${formatStatusLabel(area.status)}` : ''}
+                        {area.statusLabel ? ` - ${area.statusLabel}` : ""}
                       </Text>
-                      {area.influences.slice(0, 2).map((entry, idx) => (
+                      {area.lines.map((entry, idx) => (
                         <Text key={`${area.areaKey}-inf-${idx}`} style={styles.influenceText}>
                           - {translatePlanetTokens(entry)}
                         </Text>

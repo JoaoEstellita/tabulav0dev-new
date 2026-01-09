@@ -206,8 +206,10 @@ export interface RealAstrologyData {
       [area: string]: {
         finalScore: number
         planetDetails: Array<{
-          planet: string
-          signScore: number
+            planet: string
+            house: number
+            sign: string
+            signScore: number
           houseScore: number
           conditions: { modifier: number; tags: string[] }
           aspects: Array<{
@@ -1445,7 +1447,9 @@ export class RealAstrologyEngine {
         planetScores.push(planetScore)
 
         planetDetails.push({
-          planet: planetName,
+            planet: planetName,
+            house: planet.house,
+            sign: planet.sign,
           signScore,
           houseScore,
           conditions: cond,
