@@ -344,12 +344,16 @@ export default function HomeScreen() {
                     return null
                   }
 
+                  const transitCount =
+                    transitData?.currentTransits?.transits?.byArea?.[name]?.length || 0
+
                   return (
                     <View key={name} style={styles.lifeAreaItem}>
                       <LifeAreaCard
                         area={{name, ...area}}
                         onPress={() => handleAreaPress(name, area)}
                         calculationFactors={getLifeAreaFactors(name)}
+                        transitCount={transitCount}
                       />
                     </View>
                   )
@@ -373,6 +377,7 @@ export default function HomeScreen() {
                   natalMidheaven={transitData.currentTransits.natalMidheaven}
                   housesCusps={transitData.currentTransits.houses}
                   lifeAreas={transitData.lifeAreas}
+                  lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
                 />
               </View>
@@ -696,7 +701,7 @@ const styles = StyleSheet.create({
   lifeAreasGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   lifeAreaItem: {
     width: '50%',

@@ -8,6 +8,7 @@ interface LifeAreaCardProps {
   area: LifeArea
   onPress?: () => void
   calculationFactors?: string[]
+  transitCount?: number
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -67,8 +68,13 @@ const translateAreaName = (name: string) => {
   return translations[name as keyof typeof translations] || name
 }
 
-export default function LifeAreaCard({ area, onPress, calculationFactors }: LifeAreaCardProps) {
-    const getStatusColor = (status: number) => {
+export default function LifeAreaCard({
+  area,
+  onPress,
+  calculationFactors,
+  transitCount = 0,
+}: LifeAreaCardProps) {
+  const getStatusColor = (status: number) => {
     if (status >= 70) return '#10B981'
     if (status >= 40) return '#F59E0B'
     return '#EF4444'
@@ -77,20 +83,13 @@ export default function LifeAreaCard({ area, onPress, calculationFactors }: Life
   const getStatusText = (status: number) => {
     if (status >= 70) return 'Excelente'
     if (status >= 40) return 'Moderado'
-    return 'Crítico'
+    return 'Cr¡tico'
   }
 
-    const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
+  const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
   const areaIcon = AREA_ICONS[area.name] || 'help-circle'
-  const baseFactors = calculationFactors?.length
-    ? calculationFactors
-    : [
-        'Dignidade no signo (forca essencial do planeta).',
-        'Casa astrologica ocupada e relevancia para a area.',
-        'Condicoes acidentais (retrogrado, combustao, velocidade).',
-        'Aspectos considerados (harmonicos e desafiadores).',
-        'Peso planetario (luminares/sociais ajustam a influencia).'
-      ]
+  const statusValue = area.status || 0
+  const statusColor = getStatusColor(statusValue)
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -100,23 +99,40 @@ export default function LifeAreaCard({ area, onPress, calculationFactors }: Life
       >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Ionicons name={areaIcon as any} size={24} color="#FFFFFF" />
+            <Ionicons name={areaIcon as any} size={20} color="#FFFFFF" />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={styles.areaName} numberOfLines={1}>
+              {translateAreaName(area.name)}
+            </Text>
+            <Text style={styles.transitMeta} numberOfLines={1}>
+              Transitos: {transitCount}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.areaName}>{translateAreaName(area.name)}</Text>
-
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusNumber}>{area.status || 0}%</Text>
-          <Text style={[styles.statusText, { color: getStatusColor(area.status || 0) }]}>
-            {getStatusText(area.status || 0)}
+        <View style={styles.statusRow}>
+          <Text style={styles.statusNumber}>{statusValue}%</Text>
+          <Text style={[styles.statusText, { color: statusColor }]}>
+            {getStatusText(statusValue)}
           </Text>
         </View>
-        <View style={styles.factorsSection}>
-          <Text style={styles.factorsTitle}>Fatores do calculo</Text>
-          {baseFactors.map((factor, idx) => (
-            <Text key={idx} style={styles.factorText}>- {factor}</Text>
-          ))}
+
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${Math.min(100, Math.max(0, statusValue))}%`,
+                backgroundColor: statusColor,
+              },
+            ]}
+          />
+        </View>
+
+        <View style={styles.ctaRow}>
+          <Text style={styles.ctaText}>Ver justificativas</Text>
+          <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
         </View>
       </LinearGradient>
     </TouchableOpacity>
@@ -125,15 +141,15 @@ export default function LifeAreaCard({ area, onPress, calculationFactors }: Life
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 16,
-    margin: 8,
+    borderRadius: 14,
+    padding: 12,
+    margin: 6,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    minHeight: 160,
+    minHeight: 110,
   },
   criticalCard: {
     borderWidth: 2,
@@ -141,57 +157,69 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 8,
+  },
+  headerText: {
+    flex: 1,
   },
   areaName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 12,
   },
-  statusContainer: {
+  transitMeta: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   statusNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginRight: 8,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderRadius: 8,
   },
-  factorsSection: {
-    marginTop: 8,
+  progressTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    overflow: 'hidden',
+    marginBottom: 8,
   },
-  factorsTitle: {
-    color: '#FFFFFF',
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ctaText: {
     fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  factorText: {
     color: '#FFFFFF',
-    fontSize: 11,
-    lineHeight: 14,
-    opacity: 0.92,
-    marginBottom: 2,
+    fontWeight: '600',
   },
 })
