@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tabula-estelar-v2';
+﻿const CACHE_NAME = 'tabula-estelar-v2';
 const urlsToCache = [
   '/',
   '/app',
@@ -47,15 +47,15 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 });
 
-// Push: exibir título/corpo vindos do payload
+// Push: exibir tÃ­tulo/corpo vindos do payload
 self.addEventListener('push', (event) => {
   const data = (event.data && (() => { try { return event.data.json() } catch { return {} } })()) || {}
-  const title = data.title || 'Tábula Estelar'
+  const title = data.title || 'TÃ¡bula Estelar'
   const body = data.body || ''
   event.waitUntil(self.registration.showNotification(title, {
     body,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     data
   }))
 })
@@ -65,3 +65,4 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(clients.openWindow('/app'))
 })
+

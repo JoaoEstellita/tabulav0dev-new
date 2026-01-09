@@ -1,19 +1,31 @@
-{
-  "name": "T�bula Estelar - Seu Guia Astrol�gico Pessoal",
-  "short_name": "T�bula Estelar",
-  "description": "Descubra seu mapa astral, compatibilidade e hor�scopo personalizado",
+﻿{
+  "name": "Tábula Estelar - Seu Guia Astrológico Pessoal",
+  "short_name": "Tábula Estelar",
+  "description": "Descubra seu mapa astral, compatibilidade e horóscopo personalizado",
   "start_url": "/app",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#FFD700",
   "orientation": "portrait-primary",
-  "scope": "/app",
+  "scope": "/",
   "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192-maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512-maskable.png",
@@ -33,24 +45,22 @@
       "url": "/app?shortcut=mapa",
       "icons": [
         {
-          "src": "/icons/icon-192-maskable.png",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/png",
-          "purpose": "any maskable"
+          "type": "image/png"
         }
       ]
     },
     {
-      "name": "Tr�nsitos",
-      "short_name": "Tr�nsitos",
-      "description": "Ver tr�nsitos atuais",
+      "name": "Trânsitos",
+      "short_name": "Trânsitos",
+      "description": "Ver trânsitos atuais",
       "url": "/app?shortcut=transitos",
       "icons": [
         {
-          "src": "/icons/icon-192-maskable.png",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/png",
-          "purpose": "any maskable"
+          "type": "image/png"
         }
       ]
     }
