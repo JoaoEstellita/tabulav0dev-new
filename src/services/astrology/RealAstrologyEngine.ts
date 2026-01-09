@@ -552,9 +552,8 @@ export class RealAstrologyEngine {
           if (idx >= 2) contactIndex = 3
           } catch {}
           const transitPlanetMeta = planetsWithHouses.find(p => p.name===transitName)
-          const natalPlanetMeta = natalPlanets.find(p => p.name===natalName)
           const orbAllowed = this.getAspectOrbAllowed(a.type, transitName, natalName)
-          const relSpeed = this.getRelativeSpeed(transitPlanetMeta?.speed, natalPlanetMeta?.speed)
+          const relSpeed = Math.max(0.02, Math.abs(transitPlanetMeta?.speed ?? 0))
           const windowInfo = this.computeAspectWindow({
             orb: a.orb,
             isApplying: a.isApplying,

@@ -760,8 +760,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   houseText: {
-    color: '#A0A0A0',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   speedText: {

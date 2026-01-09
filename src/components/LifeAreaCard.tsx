@@ -3,12 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
-import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 
 interface LifeAreaCardProps {
   area: LifeArea
   onPress?: () => void
-  onViewReasons?: () => void
+  calculationFactors?: string[]
 }
 
 const AREA_ICONS: Record<string, string> = {
@@ -49,32 +48,6 @@ const AREA_COLORS: Record<string, string[]> = {
   transformation: ['#F472B6', '#EC4899'],
 }
 
-const TREND_ICONS: Record<string, string> = {
-  rising: 'trending-up',
-  falling: 'trending-down',
-  stable: 'remove',
-  crescente: 'trending-up',
-  decrescente: 'trending-down',
-  estavel: 'remove',
-}
-
-const TREND_COLORS: Record<string, string> = {
-  rising: '#10B981',
-  falling: '#EF4444',
-  stable: '#6B7280',
-  crescente: '#10B981',
-  decrescente: '#EF4444',
-  estavel: '#6B7280',
-}
-
-const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
-
-const translatePlanetTokens = (text: string): string =>
-  String(text || '').replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
-
-const normalizeInfluenceText = (text: string): string =>
-  translatePlanetTokens(decodeUnicodeEscapes(text)).replace(/\bdeg\b/gi, '°')
-
 const translateAreaName = (name: string) => {
   const translations = {
     amor: 'Amor',
@@ -94,12 +67,8 @@ const translateAreaName = (name: string) => {
   return translations[name as keyof typeof translations] || name
 }
 
-export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaCardProps) {
-  const hints: string[] = Array.isArray((area as any)?.influences)
-    ? ((area as any).influences as string[]).slice(0, 2)
-    : []
-
-  const getStatusColor = (status: number) => {
+export default function LifeAreaCard({ area, onPress, calculationFactors }: LifeAreaCardProps) {
+    const getStatusColor = (status: number) => {
     if (status >= 70) return '#10B981'
     if (status >= 40) return '#F59E0B'
     return '#EF4444'
@@ -111,13 +80,17 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
     return 'Crítico'
   }
 
-  const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
+    const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
   const areaIcon = AREA_ICONS[area.name] || 'help-circle'
-  const trendIcon = TREND_ICONS[area.trend] || 'remove'
-  const trendColor = TREND_COLORS[area.trend] || '#6B7280'
-
-  const baseDescription = area.description || (hints.length ? `Fatores-chave: ${hints.join(' - ')}` : 'Área da vida')
-  const descriptionText = normalizeInfluenceText(baseDescription)
+  const baseFactors = calculationFactors?.length
+    ? calculationFactors
+    : [
+        'Dignidade no signo (forca essencial do planeta).',
+        'Casa astrologica ocupada e relevancia para a area.',
+        'Condicoes acidentais (retrogrado, combustao, velocidade).',
+        'Aspectos considerados (harmonicos e desafiadores).',
+        'Peso planetario (luminares/sociais ajustam a influencia).'
+      ]
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -129,10 +102,6 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
           <View style={styles.iconContainer}>
             <Ionicons name={areaIcon as any} size={24} color="#FFFFFF" />
           </View>
-
-          <View style={styles.trendContainer}>
-            <Ionicons name={trendIcon as any} size={16} color={trendColor} />
-          </View>
         </View>
 
         <Text style={styles.areaName}>{translateAreaName(area.name)}</Text>
@@ -143,35 +112,12 @@ export default function LifeAreaCard({ area, onPress, onViewReasons }: LifeAreaC
             {getStatusText(area.status || 0)}
           </Text>
         </View>
-
-        <View style={styles.progressBarContainer}>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${area.status || 0}%`,
-                  backgroundColor: getStatusColor(area.status || 0),
-                },
-              ]}
-            />
-          </View>
+        <View style={styles.factorsSection}>
+          <Text style={styles.factorsTitle}>Fatores do calculo</Text>
+          {baseFactors.map((factor, idx) => (
+            <Text key={idx} style={styles.factorText}>- {factor}</Text>
+          ))}
         </View>
-
-        <Text style={styles.description}>{descriptionText}</Text>
-
-        {onViewReasons && (
-          <TouchableOpacity onPress={onViewReasons} style={styles.reasonsButton}>
-            <Text style={styles.reasonsText}>Ver justificativas</Text>
-          </TouchableOpacity>
-        )}
-
-        {area.criticalLevel && (
-          <View style={styles.criticalBadge}>
-            <Ionicons name="warning" size={12} color="#FFFFFF" />
-            <Text style={styles.criticalText}>Crítico</Text>
-          </View>
-        )}
       </LinearGradient>
     </TouchableOpacity>
   )
@@ -207,11 +153,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  trendContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 4,
-  },
   areaName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -237,53 +178,20 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
-  progressBarContainer: {
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  description: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    opacity: 0.9,
-    lineHeight: 18,
-    flex: 1,
-  },
-  reasonsButton: {
+  factorsSection: {
     marginTop: 8,
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
   },
-  reasonsText: {
+  factorsTitle: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  criticalBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  criticalText: {
+  factorText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 4,
+    lineHeight: 14,
+    opacity: 0.92,
+    marginBottom: 2,
   },
 })

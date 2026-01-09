@@ -73,6 +73,35 @@ export default function HomeScreen() {
       return transitData.warnings
     }, [transitData?.warnings])
 
+    const getLifeAreaFactors = React.useCallback((areaName: string): string[] => {
+      const debugArea = transitData?.currentTransits?.debug?.lifeAreas?.[areaName]
+      const planetDetails = debugArea?.planetDetails || []
+      if (!planetDetails.length) return []
+      const avg = (values: number[]) =>
+        Math.round(values.reduce((sum, val) => sum + val, 0) / Math.max(1, values.length))
+      const avgSign = avg(planetDetails.map((p: any) => Number(p.signScore || 0)))
+      const avgHouse = avg(planetDetails.map((p: any) => Number(p.houseScore || 0)))
+      const tags = Array.from(
+        new Set(
+          planetDetails
+            .flatMap((p: any) => (p.conditions?.tags || []))
+            .map((tag: string) => String(tag || '').trim())
+            .filter((tag: string) => tag.length > 0)
+        )
+      )
+      const aspectsCount = planetDetails.reduce((sum: number, p: any) => {
+        const count = Array.isArray(p.aspects) ? p.aspects.length : 0
+        return sum + count
+      }, 0)
+      return [
+        `Dignidade no signo: media ${avgSign} (forca essencial do planeta).`,
+        `Casa astrologica: media ${avgHouse} (relevancia da casa).`,
+        `Condicoes acidentais: ${tags.length ? tags.join(', ') : 'nenhuma destacada'}.`,
+        `Aspectos considerados: ${aspectsCount} (harmonicos e desafiadores).`,
+        'Peso planetario: luminares/sociais/transpessoais ajustam a influencia.'
+      ]
+    }, [transitData?.currentTransits?.debug?.lifeAreas])
+
     const [userProfile, setUserProfile] = useState<{
       displayName: string
       profilePhoto?: string
@@ -320,7 +349,7 @@ export default function HomeScreen() {
                       <LifeAreaCard
                         area={{name, ...area}}
                         onPress={() => handleAreaPress(name, area)}
-                        onViewReasons={() => handleAreaPress(name, area)}
+                        calculationFactors={getLifeAreaFactors(name)}
                       />
                     </View>
                   )
