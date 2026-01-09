@@ -61,13 +61,10 @@ export default function SettingsScreen() {
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
   const [houseSystem, setHouseSystem] = useState<HouseSystem>('placidus');
   const [profileName, setProfileName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
-  const [profilePrivacy, setProfilePrivacy] = useState({
-    showStatusToGroups: true,
-    allowGroupInvites: true,
-  });
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -149,38 +146,6 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: 'Privacidade e Seguranca',
-      items: [
-        {
-          id: 'data_sync',
-          title: 'Sincronizacao de Dados',
-          subtitle: 'Backup automatico na nuvem',
-          icon: 'cloud',
-          type: 'toggle',
-          value: userSettings?.dataSync ?? true,
-          onToggle: (value) => updateSettings({ dataSync: value }),
-        },
-        {
-          id: 'analytics',
-          title: 'Analytics Anonimos',
-          subtitle: 'Ajudar a melhorar o app',
-          icon: 'analytics',
-          type: 'toggle',
-          value: userSettings?.analytics ?? true,
-          onToggle: (value) => updateSettings({ analytics: value }),
-        },
-        {
-          id: 'location_sharing',
-          title: 'Compartilhar Localizacao',
-          subtitle: 'Para calculos astrologicos precisos',
-          icon: 'location',
-          type: 'toggle',
-          value: userSettings?.locationSharing ?? true,
-          onToggle: (value) => updateSettings({ locationSharing: value }),
-        },
-      ],
-    },
-    {
       title: 'Aplicativo',
       items: [
         {
@@ -217,7 +182,7 @@ export default function SettingsScreen() {
         {
           id: 'support',
           title: 'Suporte',
-          subtitle: 'Precisa de ajuda?',
+          subtitle: 'WhatsApp e email de suporte',
           icon: 'help-circle',
           type: 'button',
           onPress: () => openSupport(),
@@ -225,7 +190,7 @@ export default function SettingsScreen() {
         {
           id: 'feedback',
           title: 'Enviar Feedback',
-          subtitle: 'Sua opiniao e importante',
+          subtitle: 'Sugestoes via WhatsApp',
           icon: 'chatbubble-ellipses',
           type: 'button',
           onPress: () => openFeedback(),
@@ -235,14 +200,6 @@ export default function SettingsScreen() {
     {
       title: 'Conta',
       items: [
-        {
-          id: 'export_data',
-          title: 'Exportar Dados',
-          subtitle: 'Baixar seus dados astrologicos',
-          icon: 'download',
-          type: 'button',
-          onPress: () => exportData(),
-        },
         {
           id: 'delete_account',
           title: 'Excluir Conta',
@@ -367,11 +324,8 @@ export default function SettingsScreen() {
       if (!userDoc.exists()) return;
       const data = userDoc.data() || {};
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
+      setBirthDate(data.birthDate || "");
       setProfilePhoto(data.profilePhoto || null);
-      setProfilePrivacy({
-        showStatusToGroups: data.preferences?.privacy?.showStatusToGroups !== false,
-        allowGroupInvites: data.preferences?.privacy?.allowGroupInvites !== false,
-      });
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
     }
@@ -495,20 +449,23 @@ export default function SettingsScreen() {
     if (!user?.uid) return;
     try {
       setSavingProfile(true);
+      if (birthDate && !isValidBirthDate(birthDate)) {
+        Alert.alert("Data invalida", "Use o formato AAAA-MM-DD.");
+        return;
+      }
       let updatedPhoto = profilePhoto;
       if (updatedPhoto && updatedPhoto.startsWith("data:")) {
         const uploaded = await uploadProfilePhoto(user.uid, updatedPhoto);
         updatedPhoto = uploaded || updatedPhoto;
       }
 
-      const payload = {
+      const payload: Record<string, any> = {
         displayName: profileName || user.email?.split("@")[0] || "Usuario",
         profilePhoto: updatedPhoto || null,
-        privacy: {
-          showStatusToGroups: profilePrivacy.showStatusToGroups,
-          allowGroupInvites: profilePrivacy.allowGroupInvites,
-        },
       };
+      if (birthDate) {
+        payload.birthDate = birthDate;
+      }
 
       await updateDoc(doc(db, "users", user.uid), payload);
       await setDoc(
@@ -528,32 +485,15 @@ export default function SettingsScreen() {
     }
   };
 
-  const updatePrivacyPreference = async (
-    key: "showStatusToGroups" | "allowGroupInvites",
-    value: boolean
-  ) => {
-    if (!user?.uid) return;
-    setProfilePrivacy((prev) => ({ ...prev, [key]: value }));
-    try {
-      await updateDoc(doc(db, "users", user.uid), {
-        [`preferences.privacy.${key}`]: value,
-      });
-      await setDoc(
-        doc(db, "userPublicProfiles", user.uid),
-        {
-          privacy: {
-            showStatusToGroups:
-              key === "showStatusToGroups" ? value : profilePrivacy.showStatusToGroups,
-            allowGroupInvites:
-              key === "allowGroupInvites" ? value : profilePrivacy.allowGroupInvites,
-          },
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error("Erro ao atualizar privacidade:", error);
-    }
+  const isValidBirthDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split("-").map((part) => parseInt(part, 10));
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() + 1 === month &&
+      date.getUTCDate() === day
+    );
   };
 
   // Reprocessar Casas Natais removido desta tela conforme solicitado
@@ -635,21 +575,6 @@ export default function SettingsScreen() {
 
   // Funcoes removidas pois agora usam os hooks
 
-
-  const exportData = () => {
-    Alert.alert(
-      'Exportar Dados',
-      'Seus dados astrologicos serao exportados em formato JSON. Deseja continuar?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Exportar', onPress: () => {
-          // TODO: Implementar exportacao de dados
-          Alert.alert('Sucesso', 'Dados exportados com sucesso!');
-        }}
-      ]
-    );
-  };
-
   const deleteAccount = () => {
     Alert.alert(
       'Excluir Conta',
@@ -726,11 +651,15 @@ export default function SettingsScreen() {
   };
 
   const openSupport = () => {
-    Linking.openURL('mailto:suporte@tabulaestelar.com');
+    Alert.alert('Suporte', 'Escolha como falar com a equipe:', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'WhatsApp', onPress: () => Linking.openURL('https://w.app/tabulaestelar') },
+      { text: 'Email', onPress: () => Linking.openURL('mailto:contato@tabulaestelar.com.br') },
+    ]);
   };
 
   const openFeedback = () => {
-    Linking.openURL('mailto:feedback@tabulaestelar.com');
+    Linking.openURL('https://w.app/tabulaestelar_sugestao');
   };
 
   const handleToggle = (itemId: string, value: boolean) => {
@@ -838,16 +767,24 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
             <View style={styles.userDetails}>
-              <TextInput
-                style={styles.nameInput}
-                placeholder="Seu nome"
-                placeholderTextColor="#888"
-                value={profileName}
-                onChangeText={setProfileName}
-              />
-              <Text style={styles.userEmail}>
-                {user?.email || "usuario@email.com"}
-              </Text>
+            <TextInput
+              style={styles.nameInput}
+              placeholder="Seu nome"
+              placeholderTextColor="#888"
+              value={profileName}
+              onChangeText={setProfileName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Data de nascimento (AAAA-MM-DD)"
+              placeholderTextColor="#888"
+              value={birthDate}
+              onChangeText={setBirthDate}
+            />
+            <Text style={styles.helperText}>Use o formato AAAA-MM-DD.</Text>
+            <Text style={styles.userEmail}>
+              {user?.email || "usuario@email.com"}
+            </Text>
               <TouchableOpacity style={styles.saveProfileButton} onPress={saveProfile} disabled={savingProfile}>
                 <Text style={styles.saveProfileText}>
                   {savingProfile ? "Salvando..." : "Salvar perfil"}
@@ -888,51 +825,6 @@ export default function SettingsScreen() {
               })}
             </View>
           </View>
-          {/* Privacidade nos Grupos */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Privacidade nos Grupos</Text>
-            <View style={styles.sectionContent}>
-              <View style={styles.settingsItem}>
-                <View style={styles.itemLeft}>
-                  <View style={styles.iconContainer}>
-                    <Ionicons name="eye" size={20} color="#FFD700" />
-                  </View>
-                  <View style={styles.itemText}>
-                    <Text style={styles.itemTitle}>Compartilhar status</Text>
-                    <Text style={styles.itemSubtitle}>Permitir que membros vejam seu status</Text>
-                  </View>
-                </View>
-                <View style={styles.itemRight}>
-                  <Switch
-                    value={profilePrivacy.showStatusToGroups}
-                    onValueChange={(value) => updatePrivacyPreference("showStatusToGroups", value)}
-                    trackColor={{ false: "#3C3C3E", true: "#FFD700" }}
-                    thumbColor={profilePrivacy.showStatusToGroups ? "#0a0e27" : "#f4f3f4"}
-                  />
-                </View>
-              </View>
-              <View style={styles.settingsItem}>
-                <View style={styles.itemLeft}>
-                  <View style={styles.iconContainer}>
-                    <Ionicons name="mail" size={20} color="#FFD700" />
-                  </View>
-                  <View style={styles.itemText}>
-                    <Text style={styles.itemTitle}>Permitir convites</Text>
-                    <Text style={styles.itemSubtitle}>Receber convites para grupos</Text>
-                  </View>
-                </View>
-                <View style={styles.itemRight}>
-                  <Switch
-                    value={profilePrivacy.allowGroupInvites}
-                    onValueChange={(value) => updatePrivacyPreference("allowGroupInvites", value)}
-                    trackColor={{ false: "#3C3C3E", true: "#FFD700" }}
-                    thumbColor={profilePrivacy.allowGroupInvites ? "#0a0e27" : "#f4f3f4"}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-
           {/* Settings Sections */}
           {settingsSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
