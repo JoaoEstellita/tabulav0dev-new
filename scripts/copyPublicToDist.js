@@ -52,7 +52,7 @@ function ensurePwaHooks(htmlPath) {
   if (!html.includes('rel="manifest"')) {
     html = html.replace(
       /<\/head>/i,
-      '  <link rel="manifest" href="/manifest.json">\\n  <meta name="theme-color" content="#FFD700">\\n</head>'
+      `  <link rel="manifest" href="/manifest.json">\n  <meta name="theme-color" content="#FFD700">\n</head>`
     )
   }
   if (!html.includes("serviceWorker.register('/sw.js')")) {
@@ -61,6 +61,7 @@ function ensurePwaHooks(htmlPath) {
       `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js').catch(() => {});\n      });\n    }\n  </script>\n</body>`
     )
   }
+  html = html.replace(/\\n\s*/g, '')
   fs.writeFileSync(htmlPath, html)
   console.log(`Ensured manifest + SW registration in ${htmlPath}`)
 }
