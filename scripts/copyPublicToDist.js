@@ -58,7 +58,7 @@ function ensurePwaHooks(htmlPath) {
   if (!html.includes("serviceWorker.register('/sw.js')")) {
     html = html.replace(
       /<\/body>/i,
-      `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js').catch(() => {});\n      });\n    }\n  </script>\n</body>`
+      `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js').catch(() => {});\n      });\n      navigator.serviceWorker.addEventListener('controllerchange', () => {\n        if (sessionStorage.getItem('sw-reloaded')) return;\n        sessionStorage.setItem('sw-reloaded', '1');\n        window.location.reload();\n      });\n    }\n  </script>\n</body>`
     )
   }
   html = html.replace(/\\n\s*/g, '')

@@ -681,13 +681,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       let priority: 'alta' | 'media' | 'baixa' = 'alta'
 
       if (isHarmonious) {
-        suggestion = `Aproveite a harmonia entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Iniciar projetos, expandir relacionamentos'
       } else if (isChallenging) {
-        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Revisar planos, buscar equilibrio'
       } else if (isNeutral) {
-        suggestion = `Integre as energias de ${transit.transitPlanet} e ${transit.natalPlanet}`
         action = 'Refletir, planejar, integrar'
       }
 
@@ -830,7 +827,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusColor = DESIGN_SYSTEM.colors.positive
               statusText = 'HarmÃ´nico'
             } else if (isChallenging) {
-        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
               statusText = 'Desafiador'
             } else if (isNeutral) {
               statusColor = DESIGN_SYSTEM.colors.neutral
@@ -1094,7 +1090,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     aspectIcon = 'âœ“'
                     aspectColor = DESIGN_SYSTEM.colors.positive
                   } else if (isChallenging) {
-        suggestion = `Gerencie a tensao entre ${transit.transitPlanet} e ${transit.natalPlanet}`
                     aspectColor = DESIGN_SYSTEM.colors.negative
                   }
                   
@@ -1855,6 +1850,7 @@ const styles = StyleSheet.create({
     color: DESIGN_SYSTEM.colors.positive
   }
 })
+
 
 
 
