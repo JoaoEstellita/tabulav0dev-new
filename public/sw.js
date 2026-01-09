@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'tabula-estelar-v2';
+﻿const CACHE_NAME = 'tabula-estelar-v3';
 const urlsToCache = [
   '/',
   '/app',
@@ -15,17 +15,33 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
 });
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  const accept = request.headers.get('accept') || '';
+  const isHtmlRequest = request.mode === 'navigate' || accept.includes('text/html');
+
+  if (isHtmlRequest) {
+    // Network-first for HTML to avoid stale bundle references after deploys.
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Cache-first for other assets.
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      }
-    )
+    caches.match(request)
+      .then((response) => response || fetch(request))
   );
 });
 
@@ -47,10 +63,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 });
 
-// Push: exibir tÃ­tulo/corpo vindos do payload
+// Push: exibir titulo/corpo vindos do payload
 self.addEventListener('push', (event) => {
   const data = (event.data && (() => { try { return event.data.json() } catch { return {} } })()) || {}
-  const title = data.title || 'TÃ¡bula Estelar'
+  const title = data.title || 'Tabula Estelar'
   const body = data.body || ''
   event.waitUntil(self.registration.showNotification(title, {
     body,
@@ -65,4 +81,3 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(clients.openWindow('/app'))
 })
-
