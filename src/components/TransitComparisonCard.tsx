@@ -537,22 +537,24 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>Transitos pessoais:</Text>
                 {personalByTransitPlanet[comparison.name].map((t, idx) => {
                   const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
-                  const windowInfo = resolveWindowInfo(personalWindowMap.get(key))
+                  const windowInfo = resolveWindowInfo((t as any).window || personalWindowMap.get(key))
                   return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
                       <View style={styles.aspectBody}>
-                        <Text style={styles.aspectText}>
-                          {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
-                        </Text>
-                        {windowInfo ? (
-                          <Text style={styles.aspectMeta}>
-                            {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
-                            Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>
+                            {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
                           </Text>
-                        ) : (
-                          <Text style={styles.aspectMeta}>Datas reais indisponiveis.</Text>
-                        )}
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
                       </View>
                     </View>
                   )
@@ -564,13 +566,24 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
                 {comparison.planetaryAspects.map((aspect, aspectIndex) => {
+                  const windowInfo = resolveWindowInfo((aspect as any).window)
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
                       <View style={styles.aspectBody}>
-                        <Text style={styles.aspectText}>
-                          {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
-                        </Text>
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>
+                            {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
+                          </Text>
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
                       </View>
                     </View>
                   )
@@ -582,11 +595,22 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
+                  const windowInfo = resolveWindowInfo((houseAspect as any).window)
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
                       <View style={styles.aspectBody}>
-                        <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
                       </View>
                     </View>
                   )
@@ -832,14 +856,20 @@ const styles = StyleSheet.create({
   aspectBody: {
     flex: 1,
   },
+  aspectLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   aspectText: {
     color: '#FFFFFF',
     fontSize: 12,
-    marginBottom: 2,
+    flex: 1,
   },
-  aspectMeta: {
+  aspectMetaInline: {
     color: '#94A3B8',
     fontSize: 11,
+    marginLeft: 8,
+    textAlign: 'right',
   },
   // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {

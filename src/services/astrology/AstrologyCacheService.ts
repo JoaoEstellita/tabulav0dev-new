@@ -40,7 +40,7 @@ class AstrologyCacheService {
   private readonly CACHE_DURATION_HOURS = 12
   private readonly MIN_REFRESH_HOURS = 6
   private readonly MAX_DAILY_REQUESTS = 2
-  private readonly DATA_VERSION = '1.0'
+  private readonly DATA_VERSION = '1.1'
   
   // Cache local (AsyncStorage) para acesso r+ípido
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'
@@ -87,6 +87,20 @@ class AstrologyCacheService {
         }
       }
       
+      if (cache.dataVersion !== this.DATA_VERSION) {
+        console.log('Cache invalidado: versao de dados mudou')
+        return {
+          isValid: false,
+          isExpired: true,
+          canRefresh: true,
+          hoursOld: Infinity,
+          requestsToday: 0,
+          maxRequests: this.MAX_DAILY_REQUESTS,
+          nextRefreshAvailable: null,
+          cacheSource: 'invalidated',
+          lastUpdate: cache.lastUpdate
+        }
+      }
       // Verificar se os dados de nascimento mudaram
       const currentHash = this.generateBirthDataHash(birthData)
       if (cache.birthDataHash !== currentHash) {
