@@ -58,7 +58,7 @@ function ensurePwaHooks(htmlPath) {
   if (!html.includes("serviceWorker.register('/sw.js')")) {
     html = html.replace(
       /<\/body>/i,
-      '  <script>\\n    if (\\'serviceWorker\\' in navigator) {\\n      window.addEventListener(\\'load\\', () => {\\n        navigator.serviceWorker.register(\\'/sw.js\\').catch(() => {});\\n      });\\n    }\\n  </script>\\n</body>'
+      `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js').catch(() => {});\n      });\n    }\n  </script>\n</body>`
     )
   }
   fs.writeFileSync(htmlPath, html)
