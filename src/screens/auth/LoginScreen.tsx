@@ -13,6 +13,7 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  Linking,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
@@ -44,6 +45,19 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const { signIn, signUp, signInWithGoogle } = useAuth()
+  const isEmbeddedBrowser =
+    Platform.OS === 'web' &&
+    typeof navigator !== 'undefined' &&
+    /Electron|WebView|wv|Cursor/i.test(navigator.userAgent || '')
+
+  const openExternalLogin = async () => {
+    const targetUrl = 'https://www.tabulaestelar.com.br/login'
+    if (Platform.OS === 'web') {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    await Linking.openURL(targetUrl)
+  }
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -86,6 +100,17 @@ export default function LoginScreen() {
     try {
       await signInWithGoogle()
     } catch (error: any) {
+      if (error?.code === 'auth/popup-blocked') {
+        Alert.alert(
+          "Pop-up bloqueado",
+          "O login com Google foi bloqueado pelo navegador embutido. Abra no navegador normal para continuar.",
+          [
+            { text: "Cancelar", style: "cancel" },
+            { text: "Abrir no navegador", onPress: openExternalLogin },
+          ]
+        )
+        return
+      }
       Alert.alert("Erro", error.message)
     } finally {
       setGoogleLoading(false)
@@ -173,6 +198,17 @@ export default function LoginScreen() {
                   {googleLoading ? "Carregando..." : "Continuar com Google"}
                 </Text>
               </TouchableOpacity>
+              {isEmbeddedBrowser && (
+                <TouchableOpacity
+                  style={[styles.googleButton, styles.externalGoogleButton]}
+                  onPress={openExternalLogin}
+                >
+                  <Ionicons name="open-outline" size={20} color="#000" />
+                  <Text style={styles.googleButtonText}>
+                    Continuar com Google (abrir no navegador)
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.switchButton}
@@ -290,6 +326,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
     height: 50,
+  },
+  externalGoogleButton: {
+    backgroundColor: '#F0F0F0',
   },
   googleButtonText: {
     color: '#000',
