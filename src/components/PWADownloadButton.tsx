@@ -1,63 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+﻿import React, { useEffect, useRef, useState } from 'react'
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
 
 export default function PWADownloadButton() {
-  const [showButton, setShowButton] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [showButton, setShowButton] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [canInstall, setCanInstall] = useState(false)
+  const [isIos, setIsIos] = useState(false)
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    // Verificar se está no navegador web
-    if (typeof window !== 'undefined') {
-      // Verificar se já está instalado
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      setIsInstalled(isStandalone);
+    if (typeof window === 'undefined') return
 
-      // Mostrar botão se não estiver instalado
-      if (!isStandalone) {
-        setShowButton(true);
+    const ua = window.navigator.userAgent || ''
+    const ios = /iphone|ipad|ipod/i.test(ua) && !(window as any).MSStream
+    setIsIos(ios)
+
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+
+    setIsInstalled(standalone)
+    setShowButton(!standalone)
+
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      deferredPromptRef.current = e as BeforeInstallPromptEvent
+      setCanInstall(true)
+      setShowButton(true)
+    }
+
+    const onAppInstalled = () => {
+      deferredPromptRef.current = null
+      setCanInstall(false)
+      setIsInstalled(true)
+      setShowButton(false)
+    }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+  }, [])
+
+  const getPwaDebug = async () => {
+    if (typeof window === 'undefined') {
+      return {
+        userAgent: '',
+        isIOS: false,
+        isStandalone: false,
+        hasDeferredPrompt: false,
+        hasServiceWorkerRegistration: false,
+        manifestLinkFound: false,
+        origin: '',
+        isHttps: false,
       }
-
-      // Escutar evento de instalação
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        setShowButton(true);
-      });
     }
-  }, []);
 
-  const handleInstall = () => {
-    if (typeof window !== 'undefined') {
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    const manifestLinkFound = !!document.querySelector('link[rel="manifest"]')
+    const regs = await window.navigator.serviceWorker?.getRegistrations?.()
+
+    return {
+      userAgent: window.navigator.userAgent || '',
+      isIOS: isIos,
+      isStandalone,
+      hasDeferredPrompt: !!deferredPromptRef.current,
+      hasServiceWorkerRegistration: !!(regs && regs.length),
+      manifestLinkFound,
+      origin: window.location.origin,
+      isHttps: window.location.protocol === 'https:' || window.location.hostname === 'localhost',
+    }
+  }
+
+  const handleInstall = async () => {
+    if (typeof window === 'undefined') return
+
+    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : false
+    const shouldLog = isDev || (globalThis as any).__PWA_DEBUG__ === true
+    const debugInfo = await getPwaDebug()
+
+    if (shouldLog) {
+      console.log('[PWA Install Debug]', debugInfo)
+    }
+
+    if (debugInfo.isStandalone) {
+      setShowButton(false)
+      return
+    }
+
+    if (debugInfo.isIOS) {
       Alert.alert(
-        '📱 Instalar App',
-        'Para instalar o Tábula Estelar:\n\n1. Clique no ícone de instalação na barra de endereços\n2. Ou use o menu do navegador (⋮) > "Instalar app"\n\nIsso permitirá usar o app offline e como um app nativo!',
-        [
-          { text: 'Entendi', style: 'default' },
-          { 
-            text: 'Ver Tutorial', 
-            onPress: () => {
-              // Abrir tutorial ou landing page
-              window.open('https://tabulaestelar.com.br', '_blank');
-            }
-          }
-        ]
-      );
+        'Instalar no iPhone',
+        'No Safari: toque em Compartilhar e depois em "Adicionar à Tela de Início".',
+        [{ text: 'OK', style: 'default' }]
+      )
+      return
     }
-  };
+
+    if (deferredPromptRef.current) {
+      const promptEvent = deferredPromptRef.current
+      await promptEvent.prompt()
+      const choice = await promptEvent.userChoice
+      if (shouldLog) {
+        console.log('[PWA Install Choice]', choice?.outcome)
+      }
+      deferredPromptRef.current = null
+      setCanInstall(false)
+      return
+    }
+
+    Alert.alert(
+      'Instalação indisponível agora',
+      'Para instalar, use o Chrome e confirme que o app tem manifest válido e service worker ativo. Se acabou de fazer deploy, pode ser cache: feche e reabra o navegador.',
+      [{ text: 'OK', style: 'default' }]
+    )
+  }
 
   if (!showButton || isInstalled) {
-    return null;
+    return null
   }
 
   return (
     <TouchableOpacity style={styles.container} onPress={handleInstall}>
       <View style={styles.content}>
         <Ionicons name="download" size={20} color="#FFD700" />
-        <Text style={styles.text}>🌟 Instalar App</Text>
+        <Text style={styles.text}>Instalar App</Text>
         <Ionicons name="chevron-forward" size={16} color="#FFD700" />
       </View>
     </TouchableOpacity>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -85,4 +167,4 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-});
+})
