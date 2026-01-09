@@ -465,6 +465,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             </View>
           </View>
         </View>
+      </View>
 
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
