@@ -36,14 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [birthDataComplete, setBirthDataComplete] = useState(false)
 
-  const isEmbeddedBrowser = () => {
-    if (typeof navigator === 'undefined') {
-      return false
-    }
-    const userAgent = navigator.userAgent || ''
-    return /Electron|WebView|wv|Cursor/i.test(userAgent)
-  }
-
   const ensureUserDocuments = async (authUser: User) => {
     const userDoc = await getDoc(doc(db, 'users', authUser.uid))
     if (!userDoc.exists()) {
@@ -220,10 +212,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
-        if (isEmbeddedBrowser()) {
-          await signInWithRedirect(auth, provider)
-          return
-        }
         const result = await signInWithPopup(auth, provider)
         await ensureUserDocuments(result.user)
         console.log('✅ Login Google bem-sucedido:', result.user.uid)
