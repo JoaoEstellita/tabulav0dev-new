@@ -60,7 +60,7 @@ export default function PWADownloadButton() {
     )
   }
 
-  if (!showButton || pwaState.isInstalled) {
+  if (!showButton || pwaState.isInstalled || !pwaState.isMobile) {
     return null
   }
 

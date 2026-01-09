@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as Notifications from 'expo-notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { useUserSettings } from '../../hooks/useUserSettings';
@@ -62,6 +63,7 @@ export default function SettingsScreen() {
   const [profileName, setProfileName] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const [profilePrivacy, setProfilePrivacy] = useState({
     showStatusToGroups: true,
     allowGroupInvites: true,
@@ -264,6 +266,7 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadSettings();
     loadProfile();
+    refreshNotificationPermission();
   }, []);
 
   useEffect(() => {
@@ -271,6 +274,31 @@ export default function SettingsScreen() {
       setHouseSystem(normalizeHouseSystem(userSettings.houseSystem));
     }
   }, [userSettings?.houseSystem]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    const shouldShowPermissionButton = notificationPermission !== 'granted';
+    setSettingsSections(prevSettings =>
+      prevSettings.map(section => {
+        if (section.title !== 'Notificacoes') return section;
+
+        const items = section.items.filter(item => item.id !== 'mobile_notifications_permission');
+        if (shouldShowPermissionButton) {
+          items.unshift({
+            id: 'mobile_notifications_permission',
+            title: 'Ativar notificacoes no celular',
+            subtitle: 'Permitir alertas e lembretes do app',
+            icon: 'notifications-outline',
+            type: 'button',
+            onPress: () => handleNotificationPermissionPress(),
+          });
+        }
+
+        return { ...section, items };
+      })
+    );
+  }, [notificationPermission]);
 
   // (Removido) Overrides de ASC - agora calculo e sempre automatico
 
@@ -280,6 +308,56 @@ export default function SettingsScreen() {
       // TODO: Implementar carregamento de configuracoes do backend
     } catch (error) {
       console.error('Erro ao carregar configuracoes:', error);
+    }
+  };
+
+  const refreshNotificationPermission = async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setNotificationPermission(status);
+    } catch (error) {
+      console.warn('Nao foi possivel verificar permissao de notificacoes', error);
+      setNotificationPermission('unknown');
+    }
+  };
+
+  const handleNotificationPermissionPress = async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status === 'granted') {
+        setNotificationPermission(status);
+        return;
+      }
+
+      if (status === 'denied') {
+        Alert.alert(
+          'Ativar notificacoes',
+          'As notificacoes estao bloqueadas. Abra os ajustes do sistema para permitir.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
+          ]
+        );
+        return;
+      }
+
+      const request = await Notifications.requestPermissionsAsync();
+      setNotificationPermission(request.status);
+      if (request.status !== 'granted') {
+        Alert.alert(
+          'Permissao nao concedida',
+          'Se quiser ativar depois, use os ajustes do sistema.',
+          [
+            { text: 'OK', style: 'default' },
+            { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao solicitar permissao de notificacoes', error);
+      Alert.alert('Erro', 'Nao foi possivel solicitar permissao de notificacoes.');
     }
   };
   const loadProfile = async () => {

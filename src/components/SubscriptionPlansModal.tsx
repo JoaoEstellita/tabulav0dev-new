@@ -9,10 +9,11 @@ import {
   Alert,
   Dimensions,
   Linking,
+  Image,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { MercadoPagoService } from '../services/payment/MercadoPagoService'
-import { createPixRequest } from '../services/payment/PixService'
+import { createPixPayment } from '../services/payment/PixService'
 import { useAuth } from '../hooks/useAuth'
 
 const { width } = Dimensions.get('window')
@@ -42,6 +43,13 @@ const CARD_PLAN: PaymentPlan = {
 
 const PIX_PLANS: PaymentPlan[] = [
   {
+    id: 'premium_pix_1m',
+    name: 'PIX 1 mes',
+    price: 19.90,
+    months: 1,
+    type: 'pix'
+  },
+  {
     id: 'premium_pix_3m',
     name: 'PIX 3 meses',
     price: 53.70,
@@ -69,13 +77,16 @@ const PIX_PLANS: PaymentPlan[] = [
   }
 ]
 
-const PIX_KEY = 'contato@tabulaestelar.com.br'
-const PIX_HOLDER = 'Joao Estellita - Mercado Pago'
-
 export default function SubscriptionPlansModal({ visible, onClose }: SubscriptionPlansModalProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [pixDetails, setPixDetails] = useState<{ requestId: string; plan: PaymentPlan } | null>(null)
+  const [pixDetails, setPixDetails] = useState<{
+    plan: PaymentPlan
+    paymentId: number
+    qrCode?: string
+    qrCodeBase64?: string
+    ticketUrl?: string
+  } | null>(null)
 
   const openPaymentLink = async (url: string) => {
     const opener = (globalThis as any)?.open
@@ -144,16 +155,25 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
 
     try {
       setLoading(true)
-      const response = await createPixRequest({
+      const externalReference = MercadoPagoService.generateExternalReference(user.uid, plan.id)
+      const response = await createPixPayment({
         userId: user.uid,
         planId: plan.id,
         months: plan.months,
         amount: plan.price,
         payerEmail: user.email || undefined,
-        payerName: user.displayName || undefined
+        payerName: user.displayName || undefined,
+        description: `${plan.name} - Tabula Estelar`,
+        externalReference
       })
 
-      setPixDetails({ requestId: response.requestId, plan })
+      setPixDetails({
+        plan,
+        paymentId: response.id,
+        qrCode: response.qrCode,
+        qrCodeBase64: response.qrCodeBase64,
+        ticketUrl: response.ticketUrl
+      })
     } catch (error) {
       console.error('Erro ao criar solicitacao PIX:', error)
       Alert.alert('Erro', 'Nao foi possivel gerar o pagamento via PIX.')
@@ -240,11 +260,9 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
           {PIX_PLANS.map(renderPlanCard)}
 
           <View style={styles.pixInfoBox}>
-            <Text style={styles.pixInfoTitle}>Dados do PIX</Text>
-            <Text style={styles.pixInfoText}>Chave: {PIX_KEY}</Text>
-            <Text style={styles.pixInfoText}>Titular: {PIX_HOLDER}</Text>
-            <Text style={styles.pixInfoHint}>
-              Depois do pagamento, envie o comprovante com o ID do pedido.
+            <Text style={styles.pixInfoTitle}>PIX automatico</Text>
+            <Text style={styles.pixInfoText}>
+              Ao escolher o PIX, voce recebe o QR Code para pagamento imediato.
             </Text>
           </View>
         </ScrollView>
@@ -258,12 +276,25 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
               <>
                 <Text style={styles.pixModalText}>Plano: {pixDetails.plan.name}</Text>
                 <Text style={styles.pixModalText}>Valor: {MercadoPagoService.formatPrice(pixDetails.plan.price)}</Text>
-                <Text style={styles.pixModalText}>Chave: {PIX_KEY}</Text>
-                <Text style={styles.pixModalText}>Titular: {PIX_HOLDER}</Text>
-                <Text style={styles.pixModalText}>ID do pedido: {pixDetails.requestId}</Text>
+                {pixDetails.qrCodeBase64 ? (
+                  <Image
+                    source={{ uri: `data:image/png;base64,${pixDetails.qrCodeBase64}` }}
+                    style={styles.qrImage}
+                  />
+                ) : null}
+                {pixDetails.qrCode ? (
+                  <Text style={styles.pixModalCode} selectable>
+                    {pixDetails.qrCode}
+                  </Text>
+                ) : null}
                 <Text style={styles.pixModalHint}>
-                  Envie o comprovante e o ID do pedido para liberar o acesso.
+                  A aprovacao ocorre automaticamente assim que o pagamento for confirmado.
                 </Text>
+                {pixDetails.ticketUrl ? (
+                  <TouchableOpacity style={styles.modalButtonAlt} onPress={() => openPaymentLink(pixDetails.ticketUrl!)}>
+                    <Text style={styles.modalButtonAltText}>Abrir link do PIX</Text>
+                  </TouchableOpacity>
+                ) : null}
               </>
             )}
             <TouchableOpacity style={styles.modalButton} onPress={() => setPixDetails(null)}>
@@ -428,6 +459,17 @@ const styles = StyleSheet.create({
     padding: 20,
     width: width - 48,
   },
+  qrImage: {
+    width: 220,
+    height: 220,
+    alignSelf: 'center',
+    marginVertical: 12,
+  },
+  pixModalCode: {
+    color: '#e0e0e0',
+    fontSize: 12,
+    marginBottom: 8,
+  },
   pixModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -455,5 +497,17 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#000',
     fontWeight: 'bold',
+  },
+  modalButtonAlt: {
+    marginTop: 8,
+    backgroundColor: '#2d1b69',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonAltText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 13,
   },
 })

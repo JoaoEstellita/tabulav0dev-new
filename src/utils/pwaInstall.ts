@@ -7,6 +7,7 @@ export type PwaInstallState = {
   canInstall: boolean
   isInstalled: boolean
   isIos: boolean
+  isMobile: boolean
   deferredPrompt: BeforeInstallPromptEvent | null
 }
 
@@ -17,6 +18,7 @@ const state: PwaInstallState = {
   canInstall: false,
   isInstalled: false,
   isIos: false,
+  isMobile: false,
   deferredPrompt: null,
 }
 
@@ -38,6 +40,7 @@ const init = () => {
 
   const ua = window.navigator.userAgent || ''
   state.isIos = /iphone|ipad|ipod/i.test(ua) && !(window as any).MSStream
+  state.isMobile = /android|iphone|ipad|ipod/i.test(ua)
   state.isInstalled = computeStandalone()
   state.canInstall = false
   state.deferredPrompt = null
@@ -119,6 +122,7 @@ export const getPwaDebug = async () => {
   return {
     userAgent: window.navigator.userAgent || '',
     isIOS: state.isIos,
+    isMobile: state.isMobile,
     isStandalone: computeStandalone(),
     hasDeferredPrompt: !!state.deferredPrompt,
     hasServiceWorkerRegistration: !!(regs && regs.length),
