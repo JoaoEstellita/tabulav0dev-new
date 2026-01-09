@@ -3,9 +3,16 @@ import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
+const defaultAuthDomain =
+  process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "tabula-estelar-84fdc.firebaseapp.com"
+const runtimeAuthDomain =
+  typeof window !== 'undefined' && /(^|\.)tabulaestelar\.com\.br$/i.test(window.location.hostname)
+    ? window.location.hostname
+    : defaultAuthDomain
+
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM",
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "tabula-estelar-84fdc.firebaseapp.com",
+  authDomain: runtimeAuthDomain,
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "tabula-estelar-84fdc",
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "tabula-estelar-84fdc.appspot.com",
   messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "729037358278",

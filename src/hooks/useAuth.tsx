@@ -225,25 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
         const result = await signInWithPopup(auth, provider)
-        
-        // Verificar se usuário já existe no Firestore
-        const userDoc = await getDoc(doc(db, 'users', result.user.uid))
-        if (!userDoc.exists()) {
-          // Criar documento para novo usuário Google
-          await setDoc(doc(db, 'users', result.user.uid), {
-            email: result.user.email,
-            displayName: result.user.displayName || result.user.email?.split('@')[0],
-            createdAt: new Date(),
-            birthDataComplete: false,
-          })
-
-          await setDoc(doc(db, 'userPublicProfiles', result.user.uid), {
-            displayName: result.user.displayName || result.user.email?.split('@')[0],
-            profilePhoto: result.user.photoURL || null,
-            updatedAt: new Date(),
-          })
-        }
-        
+        await ensureUserDocuments(result.user)
         console.log('✅ Login Google bem-sucedido:', result.user.uid)
       } else {
         throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
