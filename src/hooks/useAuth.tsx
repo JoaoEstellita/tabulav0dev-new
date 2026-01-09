@@ -1,7 +1,7 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
 import {
   type User,
   onAuthStateChanged,
@@ -35,6 +35,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [birthDataComplete, setBirthDataComplete] = useState(false)
+  const loadingRef = useRef(true)
+
+  useEffect(() => {
+    loadingRef.current = loading
+  }, [loading])
 
   const ensureUserDocuments = async (authUser: User) => {
     const userDoc = await getDoc(doc(db, 'users', authUser.uid))
@@ -92,21 +97,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn('Falha ao processar retorno do Google:', error)
         })
     }
+
+    const watchdog = setTimeout(() => {
+      if (!loadingRef.current) return
+      console.warn('Auth loading timeout. Forcing UI to recover.')
+      setUser(auth.currentUser ?? null)
+      setBirthDataComplete(false)
+      setLoading(false)
+    }, 6000)
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('🔐 Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
-      
+      console.log('Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
+
       setUser(user)
       if (user) {
-        console.log('⏳ Aguardando verificação de dados...')
+        console.log('Aguardando verificacao de dados...')
         syncPublicProfile(user)
         // Aguardar um pouco para garantir que o documento existe
         setTimeout(async () => {
           try {
             const isComplete = await checkBirthDataComplete(user.uid)
-            console.log('✅ Verificação completa, resultado:', isComplete)
+            console.log('Verificacao completa, resultado:', isComplete)
             setBirthDataComplete(isComplete)
           } catch (error) {
-            console.error('❌ Erro na verificação:', error)
+            console.error('Erro na verificacao:', error)
             setBirthDataComplete(false)
           } finally {
             setLoading(false)
@@ -118,51 +132,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    return unsubscribe
+    return () => {
+      clearTimeout(watchdog)
+      unsubscribe()
+    }
   }, [])
 
   const checkBirthDataComplete = async (userId?: string): Promise<boolean> => {
     const currentUser = user || auth.currentUser
     const targetUserId = userId || currentUser?.uid
-    
+
     if (!targetUserId) {
-      console.log('❌ Nenhum usuário para verificar')
+      console.log('Nenhum usuario para verificar')
       setBirthDataComplete(false)
       return false
     }
 
     try {
-      console.log('🔍 Iniciando verificação para usuário:', targetUserId.substring(0, 8) + '...')
+      console.log('Iniciando verificacao para usuario:', targetUserId.substring(0, 8) + '...')
       const userDoc = await getDoc(doc(db, 'users', targetUserId))
-      
+
       if (userDoc.exists()) {
         const userData = userDoc.data()
-        
-        // Verificar tanto o flag quanto os dados específicos
+
+        // Verificar tanto o flag quanto os dados especificos
         const hasFlag = userData.birthDataComplete === true
         const hasData = !!(userData.birthDate && userData.birthTime && userData.birthLocation && userData.displayName)
         const isComplete = hasFlag && hasData
-        
-        console.log('🔍 Verificação dados de nascimento:', {
-          userId: targetUserId.substring(0, 8) + '...',
-          hasFlag,
-          hasData,
-          isComplete,
-          birthDate: !!userData.birthDate,
-          birthTime: !!userData.birthTime,
-          birthLocation: !!userData.birthLocation,
-          displayName: !!userData.displayName
+
+        console.log('Verificacao dados de nascimento:', {
+          userId: targetUserId.substring(0, 8) + '...'
         })
-        
+
         setBirthDataComplete(isComplete)
         return isComplete
       }
-      
-      console.log('❌ Documento do usuário não existe')
+
+      console.log('Documento do usuario nao existe')
       setBirthDataComplete(false)
       return false
     } catch (error) {
-      console.error('❌ Erro ao verificar dados de nascimento:', error)
+      console.error('Erro ao verificar dados de nascimento:', error)
       setBirthDataComplete(false)
       return false
     }
@@ -170,21 +180,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 Tentando login com email:', email)
+      console.log('Tentando login com email:', email)
       const result = await signInWithEmailAndPassword(auth, email, password)
-      console.log('✅ Login bem-sucedido:', result.user.uid)
+      console.log('Login bem-sucedido:', result.user.uid)
     } catch (error: any) {
-      console.error('❌ Erro no login:', error.message)
+      console.error('Erro no login:', error.message)
       throw error
     }
   }
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log('📝 Tentando cadastro com email:', email)
+      console.log('Tentando cadastro com email:', email)
       const result = await createUserWithEmailAndPassword(auth, email, password)
-      
-      // Criar documento do usuário no Firestore
+
+      // Criar documento do usuario no Firestore
       await setDoc(doc(db, 'users', result.user.uid), {
         email: result.user.email,
         displayName: result.user.displayName || email.split('@')[0],
@@ -197,29 +207,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profilePhoto: result.user.photoURL || null,
         updatedAt: new Date(),
       })
-      
-      console.log('✅ Cadastro bem-sucedido:', result.user.uid)
+
+      console.log('Cadastro bem-sucedido:', result.user.uid)
     } catch (error: any) {
-      console.error('❌ Erro no cadastro:', error.message)
+      console.error('Erro no cadastro:', error.message)
       throw error
     }
   }
 
   const signInWithGoogle = async () => {
     try {
-      console.log('🔐 Tentando login com Google')
+      console.log('Tentando login com Google')
       // Para web, usar popup
       if (typeof window !== 'undefined') {
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
         const result = await signInWithPopup(auth, provider)
         await ensureUserDocuments(result.user)
-        console.log('✅ Login Google bem-sucedido:', result.user.uid)
+        console.log('Login Google bem-sucedido:', result.user.uid)
       } else {
-        throw new Error('Google Sign-In não disponível no Expo Go. Use um development build.')
+        throw new Error('Google Sign-In nao disponivel no Expo Go. Use um development build.')
       }
     } catch (error: any) {
-      console.error('❌ Erro no login Google:', error.message)
+      console.error('Erro no login Google:', error.message)
       if (
         typeof window !== 'undefined' &&
         (error.code === 'auth/popup-blocked' ||
@@ -232,38 +242,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      
-      // Tratamento específico para domínio não autorizado
+      // Tratamento especifico para dominio nao autorizado
       if (error.code === 'auth/unauthorized-domain') {
-        throw new Error('Domínio não autorizado. Adicione tabulaestelar.com.br nas configurações do Firebase.')
+        throw new Error('Dominio nao autorizado. Adicione tabulaestelar.com.br nas configuracoes do Firebase.')
       }
-      
+
       throw error
     }
   }
 
   const logout = async () => {
     try {
-      console.log('🚪 Iniciando logout...')
-      console.log('👤 Usuário atual:', auth.currentUser?.uid)
-      
+      console.log('Iniciando logout...')
+      console.log('Usuario atual:', auth.currentUser?.uid)
+
       if (!auth.currentUser) {
-        console.log('⚠️ Nenhum usuário logado')
+        console.log('Nenhum usuario logado')
         setUser(null)
         setBirthDataComplete(false)
         return
       }
-      
+
       await signOut(auth)
-      // Forçar estado local imediatamente para refletir na navegação
+      // Forcar estado local imediatamente para refletir na navegacao
       setUser(null)
       setBirthDataComplete(false)
       ;(globalThis as any).__userHouseSystem = undefined
-      console.log('✅ Logout realizado com sucesso (estado limpo)')
-      
+      console.log('Logout realizado com sucesso (estado limpo)')
+
     } catch (error) {
-      console.error('❌ Erro no logout:', error)
-      // Ainda assim limpar estado local para evitar travar o usuário logado
+      console.error('Erro no logout:', error)
+      // Ainda assim limpar estado local para evitar travar o usuario logado
       setUser(null)
       setBirthDataComplete(false)
       throw error
@@ -274,21 +283,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const currentUser = auth.currentUser
       if (!currentUser) {
-        throw new Error('Nenhum usuário logado')
+        throw new Error('Nenhum usuario logado')
       }
 
-      console.log('🗑️ Iniciando exclusão de conta...')
-      
+      console.log('Iniciando exclusao de conta...')
+
       // Deletar dados do Firestore primeiro
       await deleteDoc(doc(db, 'users', currentUser.uid))
-      console.log('✅ Dados do Firestore deletados')
-      
+      console.log('Dados do Firestore deletados')
+
       // Deletar conta do Firebase Auth
       await deleteUser(currentUser)
-      console.log('✅ Conta deletada com sucesso')
-      
+      console.log('Conta deletada com sucesso')
+
     } catch (error) {
-      console.error('❌ Erro ao deletar conta:', error)
+      console.error('Erro ao deletar conta:', error)
       throw error
     }
   }
