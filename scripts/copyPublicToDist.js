@@ -43,6 +43,30 @@ if (fs.existsSync(iconsDir)) {
   }
 }
 
+function ensurePwaHooks(htmlPath) {
+  if (!fs.existsSync(htmlPath)) {
+    console.warn(`Skip (not found): ${htmlPath}`)
+    return
+  }
+  let html = fs.readFileSync(htmlPath, 'utf8')
+  if (!html.includes('rel="manifest"')) {
+    html = html.replace(
+      /<\/head>/i,
+      '  <link rel="manifest" href="/manifest.json">\\n  <meta name="theme-color" content="#FFD700">\\n</head>'
+    )
+  }
+  if (!html.includes("serviceWorker.register('/sw.js')")) {
+    html = html.replace(
+      /<\/body>/i,
+      '  <script>\\n    if (\\'serviceWorker\\' in navigator) {\\n      window.addEventListener(\\'load\\', () => {\\n        navigator.serviceWorker.register(\\'/sw.js\\').catch(() => {});\\n      });\\n    }\\n  </script>\\n</body>'
+    )
+  }
+  fs.writeFileSync(htmlPath, html)
+  console.log(`Ensured manifest + SW registration in ${htmlPath}`)
+}
+
+ensurePwaHooks(path.join(process.cwd(), 'dist', 'index.html'))
+
 console.log('Public assets copied to dist/')
 
 
