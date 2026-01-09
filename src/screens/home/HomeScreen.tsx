@@ -12,7 +12,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
@@ -28,8 +27,6 @@ import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotificatio
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
-import HomeImpactSummary from './impact/HomeImpactSummary'
-import { buildImpactNodes } from './impact/buildImpactNodes'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 // Web-only effects (no-op on native)
@@ -43,7 +40,6 @@ export default function HomeScreen() {
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
-    const navigation = useNavigation<any>()
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
@@ -58,33 +54,6 @@ export default function HomeScreen() {
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
     const scrollRef = useRef<ScrollView>(null)
-    const [transitsOffset, setTransitsOffset] = useState<number | null>(null)
-    const impactNodes = React.useMemo(
-      () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas),
-      [transitData?.currentTransits, transitData?.lifeAreas]
-    )
-    const recentTransits = React.useMemo(() => {
-      const list = transitData?.currentTransits?.transits?.personal || []
-      return [...list]
-        .sort((a, b) => {
-          if (a.isApplying !== b.isApplying) return a.isApplying ? -1 : 1
-          if (typeof a.orb === 'number' && typeof b.orb === 'number') {
-            if (a.orb !== b.orb) return a.orb - b.orb
-          }
-          return (b.strength || 0) - (a.strength || 0)
-        })
-        .slice(0, 5)
-    }, [transitData?.currentTransits?.transits?.personal])
-    const lunarPhaseLabel = React.useMemo(() => {
-      const phase = transitData?.currentTransits?.collective?.lunarPhase?.name
-      if (!phase) return null
-      return String(phase)
-    }, [transitData?.currentTransits?.collective?.lunarPhase?.name])
-
-    const handleScrollToTransits = React.useCallback(() => {
-      if (transitsOffset === null) return
-      scrollRef.current?.scrollTo({ y: Math.max(transitsOffset - 12, 0), animated: true })
-    }, [transitsOffset])
 
     // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -329,19 +298,6 @@ export default function HomeScreen() {
             })()}
           </View>
 
-          {transitData && (
-            <AnimatedMount>
-              <View style={styles.topImpactBlock}>
-                <HomeImpactSummary
-                  impactNodes={impactNodes}
-                  lifeAreas={transitData.lifeAreas}
-                  lunarPhaseLabel={lunarPhaseLabel}
-                  onScrollToTransits={handleScrollToTransits}
-                  recentTransits={recentTransits}
-                />
-              </View>
-            </AnimatedMount>
-          )}
           {/* Status das Areas de Vida */}
           {transitData?.lifeAreas && (
             <AnimatedMount>
@@ -378,7 +334,7 @@ export default function HomeScreen() {
           {transitData?.currentTransits?.planetComparisons &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
-              <View style={styles.section} onLayout={(event) => setTransitsOffset(event.nativeEvent.layout.y)}>
+              <View style={styles.section}>
                 <TransitComparisonCard
                   planetComparisons={transitData.currentTransits.planetComparisons}
                   chartSummary={transitData.currentTransits.chartSummary}
@@ -388,7 +344,7 @@ export default function HomeScreen() {
                   natalMidheaven={transitData.currentTransits.natalMidheaven}
                   housesCusps={transitData.currentTransits.houses}
                   lifeAreas={transitData.lifeAreas}
-                  onOpenTimeline={() => navigation.navigate('PlanetTimeline')}
+                  personalWindows={transitData.dailyOverview?.personalTodayRich || []}
                 />
               </View>
             </AnimatedMount>
@@ -707,24 +663,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  timelineCta: {
-    marginTop: 12,
-    backgroundColor: '#FDE68A',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  timelineCtaText: {
-    color: '#0F0F23',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  topImpactBlock: {
-    marginBottom: 12,
   },
   lifeAreasGrid: {
     flexDirection: 'row',

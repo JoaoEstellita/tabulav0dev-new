@@ -21,7 +21,12 @@ interface TransitComparisonCardProps {
   natalMidheaven?: number
   housesCusps?: number[]
   lifeAreas?: Record<string, any>
-  onOpenTimeline?: () => void
+  personalWindows?: Array<{
+    transitPlanet: string
+    natalPlanet: string
+    type: string
+    window?: { start?: string; exact?: string; end?: string; days?: number }
+  }>
 }
 const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   fire: 'flame',
@@ -108,7 +113,7 @@ export default function TransitComparisonCard({
   natalMidheaven,
   housesCusps,
   lifeAreas,
-  onOpenTimeline
+  personalWindows
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
@@ -145,10 +150,6 @@ export default function TransitComparisonCard({
     return map
   }, [personal])
   
-  const formatDegree = (longitude: number): string => {
-    return `${longitude.toFixed(1)}\u00B0`
-  }
-
   // Converter graus para 0-30 por signo
   const formatDegreeInSign = (longitude: number): string => {
     const degreeInSign = longitude % 30
@@ -181,37 +182,6 @@ const sanitizeChangeText = (value: string): string => {
     .trim()
 }
 
-const buildChangeList = (
-  natal: Record<string, number>,
-  current: Record<string, number>,
-  labels: Record<string, string>
-): string[] => {
-  return Object.keys(natal).reduce<string[]>((acc, key) => {
-    const diff = (current[key] ?? 0) - (natal[key] ?? 0)
-    if (!diff) return acc
-    const normalized = normalizeKey(key)
-    const label = labels[normalized] || labels[key] || normalized
-    const pretty = sanitizeChangeText(label.charAt(0).toUpperCase() + label.slice(1))
-    if (!pretty || pretty.length <= 1) return acc
-    acc.push(`${diff > 0 ? 'Mais' : 'Menos'} ${pretty}`)
-    return acc
-  }, [])
-}
-
-const normalizeChangePhrase = (value: string): string => {
-  const cleaned = sanitizeChangeText(value)
-  if (!cleaned) return ''
-  return cleaned
-    .replace(/\b(fire|fogo)\b/gi, 'Fogo')
-    .replace(/\b(earth|terra)\b/gi, 'Terra')
-    .replace(/\b(air|ar)\b/gi, 'Ar')
-    .replace(/\b(water|agua)\b/gi, '\u00C1gua')
-    .replace(/\b(cardinal|cardeal)\b/gi, 'Cardeal')
-    .replace(/\b(fixed|fixo)\b/gi, 'Fixo')
-    .replace(/\b(mutable|mutavel)\b/gi, 'Mut\u00E1vel')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-}
 
 const translateElement = (element: string): string => {
   const translations: Record<string, string> = {
@@ -258,42 +228,6 @@ const formatStatusLabel = (status: string | null) => {
   return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
 }
 
-const elementalChanges = React.useMemo(() => {
-  const labels: Record<string, string> = {
-    fire: 'Fogo',
-    earth: 'Terra',
-    air: 'Ar',
-    water: 'Água',
-    fogo: 'Fogo',
-    terra: 'Terra',
-    ar: 'Ar',
-    agua: 'Água'
-  }
-  const computed = buildChangeList(chartSummary.elemental.natal, chartSummary.elemental.current, labels)
-  if (computed.length) return computed
-  const fallback = (chartSummary.elemental?.changes || [])
-    .map((entry) => normalizeChangePhrase(entry))
-    .filter((entry) => entry.length > 1)
-  return fallback
-}, [chartSummary.elemental.natal, chartSummary.elemental.current, chartSummary.elemental?.changes])
-
-const modalityChanges = React.useMemo(() => {
-  const labels: Record<string, string> = {
-    cardinal: 'Cardeal',
-    fixed: 'Fixo',
-    mutable: 'Mutável',
-    cardeal: 'Cardeal',
-    fixo: 'Fixo',
-    mutavel: 'Mutável'
-  }
-  const computed = buildChangeList(chartSummary.modality.natal, chartSummary.modality.current, labels)
-  if (computed.length) return computed
-  const fallback = (chartSummary.modality?.changes || [])
-    .map((entry) => normalizeChangePhrase(entry))
-    .filter((entry) => entry.length > 1)
-  return fallback
-}, [chartSummary.modality.natal, chartSummary.modality.current, chartSummary.modality?.changes])
-
 const getSignFromDegree = (degree: number): string => {
   const signs = [
     '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
@@ -335,6 +269,54 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
   const getAspectIcon = (aspect: string): string => {
     return ASPECT_ICONS[normalizeAspectKey(aspect)] || '\u2022'
+  }
+
+  const personalWindowMap = React.useMemo(() => {
+    const map = new Map<string, { start?: string; exact?: string; end?: string; days?: number }>()
+    if (!personalWindows?.length) return map
+    for (const item of personalWindows) {
+      const key = `${item.transitPlanet}|${item.type}|${item.natalPlanet}`
+      if (item.window) map.set(key, item.window)
+    }
+    return map
+  }, [personalWindows])
+
+  const estimateDurationDays = (durationClass?: string, orb?: number): number => {
+    if (durationClass === 'curto') return 7
+    if (durationClass === 'medio') return 30
+    if (durationClass === 'longo') return 90
+    if (typeof orb === 'number') {
+      if (orb <= 1.5) return 7
+      if (orb <= 3) return 14
+      if (orb <= 5) return 30
+      return 45
+    }
+    return 14
+  }
+
+  const formatDate = (date: Date | null): string | null => {
+    if (!date || Number.isNaN(date.getTime())) return null
+    return date.toLocaleDateString('pt-BR')
+  }
+
+  const resolveWindowInfo = (
+    window: { start?: string; end?: string; days?: number } | undefined,
+    fallbackDays: number
+  ): { days: number; startLabel: string | null; endLabel: string | null } => {
+    const now = new Date()
+    let startDate = window?.start ? new Date(window.start) : null
+    let endDate = window?.end ? new Date(window.end) : null
+    const days = window?.days ?? fallbackDays
+    if ((!startDate || !endDate) && days) {
+      const halfWindow = Math.max(1, Math.round(days / 2))
+      if (!startDate) startDate = new Date(now.getTime() - halfWindow * 86400000)
+      if (!endDate) endDate = new Date(now.getTime() + halfWindow * 86400000)
+    }
+    return {
+      days,
+      startLabel: formatDate(startDate),
+      endLabel: formatDate(endDate)
+    }
   }
 
 
@@ -484,24 +466,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           </View>
         </View>
 
-        {/* Mudan\u00E7as detectadas */}
-        <View style={styles.changesSection}>
-          <Text style={styles.changesTitle}>Mudanças detectadas:</Text>
-          {elementalChanges.length === 0 && modalityChanges.length === 0 ? (
-            <Text style={styles.changeItem}>Sem mudanças relevantes.</Text>
-          ) : (
-            <>
-              {elementalChanges.map((change, index) => (
-                <Text key={`elemental-${index}`} style={styles.changeItem}>- {change}</Text>
-              ))}
-              {modalityChanges.map((change, index) => (
-                <Text key={`modality-${index}`} style={styles.changeItem}>- {change}</Text>
-              ))}
-            </>
-          )}
-        </View>
-      </View>
-
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
         <View style={styles.sectionHeader}>
@@ -543,6 +507,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
                 </Text>
+                <Text style={styles.houseText}>Casa {comparison.natal.house}</Text>
                 <View style={styles.attributesRow}>
                   <View style={styles.attributeChip}>
                     <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.natal.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
@@ -561,6 +526,16 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' (Rx)'}
                 </Text>
+                <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
+                {(() => {
+                  const info = nearestCuspInfo(comparison.current.longitude)
+                  if (info && info.distance <= 0.5) {
+                    return (
+                      <Text style={styles.nearCuspChip}>{`pr\u00F3x. cÇ§spide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
+                    )
+                  }
+                  return null
+                })()}
                 <View style={styles.attributesRow}>
                   <View style={styles.attributeChip}>
                     <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.current.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
@@ -574,82 +549,78 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </View>
             </View>
 
-            {/* Linha de resumo expl\u00EDcita das caSa\\u00FAde" */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-              <Text style={[styles.positionText, { opacity: 0.9 }]}>
-                Casa natal {comparison.natal.house} -> Trânsito {comparison.current.house}
-              </Text>
-              {(() => {
-                const info = nearestCuspInfo(comparison.current.longitude)
-                if (info && info.distance <= 0.5) {
-                  return (
-                    <Text style={styles.nearCuspChip}>{`pr\u00F3x. cúspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
-                  )
-                }
-                return null
-              })()}
-            </View>
-
-            {/* Trânsitos pessoais para este planeta em Trânsito */}
+                        {/* Transitos pessoais para este planeta em transito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Trânsitos pessoais:</Text>
-                {personalByTransitPlanet[comparison.name]
-                  .slice(0, 3)
-                  .map((t, idx) => (
+                <Text style={styles.aspectsTitle}>Transitos pessoais:</Text>
+                {personalByTransitPlanet[comparison.name].map((t, idx) => {
+                  const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
+                  const windowInfo = resolveWindowInfo(
+                    personalWindowMap.get(key),
+                    estimateDurationDays(t.durationClass, t.orb)
+                  )
+                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
+                  const startLabel = windowInfo.startLabel || '-'
+                  const endLabel = windowInfo.endLabel || '-'
+                  return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
-                      <Text style={styles.aspectText}>
-                        {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
-                        {' '}({t.orb.toFixed(1)} graus{t.isApplying ? ', aplicante' : ', separante'})
-                      </Text>
-                      <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(t.type) }]}>
-                        <Text style={styles.aspectStrengthText}>{t.strength.toFixed(0)}%</Text>
+                      <View style={styles.aspectBody}>
+                        <Text style={styles.aspectText}>
+                          {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
+                        </Text>
+                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
                       </View>
                     </View>
-                  ))}
+                  )
+                })}
               </View>
             )}
-
             {/* Aspectos coletivos do momento para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
-                {comparison.planetaryAspects.slice(0, 3).map((aspect, aspectIndex) => (
-                  <View key={aspectIndex} style={styles.aspectItem}>
-                    <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
-                    <Text style={styles.aspectText}>
-                      {translatePlanetName(aspect.planet1 === comparison.name ? aspect.planet2 : aspect.planet1)}
-                      ({aspect.orb.toFixed(1)} graus de orbe)
-                    </Text>
-                    <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(aspect.type) }]}>
-                      <Text style={styles.aspectStrengthText}>{aspect.strength.toFixed(0)}%</Text>
+                {comparison.planetaryAspects.map((aspect, aspectIndex) => {
+                  const windowInfo = resolveWindowInfo(undefined, estimateDurationDays(undefined, aspect.orb))
+                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
+                  const startLabel = windowInfo.startLabel || '-'
+                  const endLabel = windowInfo.endLabel || '-'
+                  return (
+                    <View key={aspectIndex} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
+                      <View style={styles.aspectBody}>
+                        <Text style={styles.aspectText}>
+                          {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
+                        </Text>
+                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             )}
-
             {/* Aspectos com casas */}
             {comparison.houseAspects.length > 0 && (
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
-                {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => (
-                  <View key={houseIndex} style={styles.aspectItem}>
-                    <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
-                    <Text style={styles.aspectText}>
-                      Casa {houseAspect.house} - {houseAspect.meaning}
-                      ({houseAspect.orb.toFixed(1)} graus de orbe)
-                    </Text>
-                    <View style={[styles.aspectStrength, { backgroundColor: getAspectColor(houseAspect.aspect) }]}>
-                      <Text style={styles.aspectStrengthText}>{houseAspect.strength.toFixed(0)}%</Text>
+                {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
+                  const windowInfo = resolveWindowInfo(undefined, estimateDurationDays(undefined, houseAspect.orb))
+                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
+                  const startLabel = windowInfo.startLabel || '-'
+                  const endLabel = windowInfo.endLabel || '-'
+                  return (
+                    <View key={houseIndex} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
+                      <View style={styles.aspectBody}>
+                        <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
+                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             )}
-
-            {(() => {
+{(() => {
               const areaInfluences = getAreaInfluencesForPlanet(comparison.name)
               if (!areaInfluences.length) return null
               return (
@@ -675,17 +646,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           </View>
         ))}
 
-        {onOpenTimeline && (
-          <TouchableOpacity
-            style={styles.timelineCta}
-            onPress={onOpenTimeline}
-            accessibilityRole="button"
-            accessibilityLabel="Abrir Linha do tempo planetária"
-          >
-            <Text style={styles.timelineCtaText}>Linha do tempo planetária</Text>
-            <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
-          </TouchableOpacity>
-        )}
+        
       </View>
     </LinearGradient>
   )
@@ -761,23 +722,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     marginLeft: 4,
-  },
-  changesSection: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  changesTitle: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  changeItem: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    marginBottom: 2,
   },
   planetsSection: {
     flex: 1,
@@ -903,7 +847,7 @@ const styles = StyleSheet.create({
   },
   aspectItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 6,
   },
   aspectIcon: {
@@ -912,22 +856,17 @@ const styles = StyleSheet.create({
     width: 20,
     textAlign: 'center',
   },
+  aspectBody: {
+    flex: 1,
+  },
   aspectText: {
     color: '#FFFFFF',
     fontSize: 12,
-    flex: 1,
+    marginBottom: 2,
   },
-  aspectStrength: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    minWidth: 40,
-  },
-  aspectStrengthText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  aspectMeta: {
+    color: '#94A3B8',
+    fontSize: 11,
   },
   // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {
@@ -982,24 +921,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginHorizontal: 16,
   },
-  timelineCta: {
-    marginTop: 4,
-    backgroundColor: '#FFE082',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  timelineCtaText: {
-    color: '#0F0F23',
-    fontWeight: '700',
-    fontSize: 13,
-  },
   // \u00F0\u0178\u0152\u0152 Estilos das casas removidos (n\u00C3\u00A3o implementadas)
 })
+
+
+
+
+
+
+
 
 
 

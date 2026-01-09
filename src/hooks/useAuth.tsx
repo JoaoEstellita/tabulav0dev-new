@@ -16,6 +16,7 @@ import {
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
+import LoadingScreen from "../components/LoadingScreen"
 
 interface AuthContextType {
   user: User | null
@@ -312,6 +313,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     deleteAccount,
     checkBirthDataComplete,
+  }
+
+  if (loading) {
+    return <LoadingScreen />
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
