@@ -56,11 +56,11 @@ const AREA_COLORS: Record<string, string[]> = {
 const DESIGN_SYSTEM = {
   colors: {
     white: '#FFFFFF',
-    primary: '#FBBF24',
-    secondary: '#F59E0B',
+    primary: '#B45309',
+    secondary: '#475569',
     positive: '#22C55E',
     negative: '#EF4444',
-    neutral: '#F59E0B',
+    neutral: '#D97706',
     warning: '#F97316',
     info: '#38BDF8',
     border: 'rgba(255,255,255,0.12)',
@@ -95,25 +95,25 @@ const TRANSLATIONS = {
     planets: {
     Sun: "Sol",
     Moon: "Lua",
-    Mercury: "MercÃºrio",
-    Venus: "VÃªnus",
+    Mercury: "Mercúrio",
+    Venus: "Vênus",
     Mars: "Marte",
-    Jupiter: "JÃºpiter",
+    Jupiter: "Júpiter",
     Saturn: "Saturno",
     Uranus: "Urano",
     Neptune: "Netuno",
-    Pluto: "PlutÃ£o",
+    Pluto: "Plutão",
     Asc: "Ascendente",
-    MC: "Meio do CÃ©u",
+    MC: "Meio do Céu",
   },
   // Aspectos
     aspects: {
-    conjunction: "conjunÃ§Ã£o",
-    opposition: "oposiÃ§Ã£o",
+    conjunction: "conjunção",
+    opposition: "oposição",
     square: "quadratura",
-    trine: "trÃ­gono",
+    trine: "trígono",
     sextile: "sextil",
-    quincunx: "quincÃºncio",
+    quincunx: "quincúncio",
     semisextile: "semissextil",
     semisquare: "semiquadratura",
     sesquiquadrate: "sesquiquadratura",
@@ -121,20 +121,20 @@ const TRANSLATIONS = {
   // Prioridades
   priorities: {
     high: 'Alta',
-    medium: 'MÃ©dia',
+    medium: 'Média',
     low: 'Baixa',
   },
   // Casas astrologicas
   houses: {
     1: 'Identidade',
     2: 'Recursos',
-    3: 'ComunicaÃ§Ã£o',
+    3: 'Comunicação',
     4: 'Lar',
     5: 'Criatividade',
     6: 'Trabalho',
     7: 'Parcerias',
-    8: 'TransformaÃ§Ã£o',
-    9: 'ExpansÃ£o',
+    8: 'Transformação',
+    9: 'Expansão',
     10: 'Carreira',
     11: 'Amizades',
     12: 'Espiritual',
@@ -142,7 +142,7 @@ const TRANSLATIONS = {
   // Duracoes
   durations: {
     curto: 'Curto',
-    medio: 'MÃ©dio',
+    medio: 'Médio',
     longo: 'Longo',
   },
 }
@@ -167,14 +167,14 @@ const getTransitDuration = (transit: RealTransitData): string => {
   const planetSpeeds: Record<string, number> = {
     Sun: 0.9856,      // Sol: ~1 grau por dia
     Moon: 13.176,     // Lua: ~13 graus por dia
-    Mercury: 1.2,     // MercÃºrio: ~1.2 graus por dia
-    Venus: 1.18,      // VÃªnus: ~1.18 graus por dia
+    Mercury: 1.2,     // Mercúrio: ~1.2 graus por dia
+    Venus: 1.18,      // Vênus: ~1.18 graus por dia
     Mars: 0.524,      // Marte: ~0.5 graus por dia
-    Jupiter: 0.083,   // JÃºpiter: ~0.08 graus por dia
+    Jupiter: 0.083,   // Júpiter: ~0.08 graus por dia
     Saturn: 0.033,    // Saturno: ~0.03 graus por dia
     Uranus: 0.011,    // Urano: ~0.01 graus por dia
     Neptune: 0.006,   // Netuno: ~0.006 graus por dia
-    Pluto: 0.004      // PlutÃ£o: ~0.004 graus por dia
+    Pluto: 0.004      // Plutão: ~0.004 graus por dia
   }
 
   const speed = planetSpeeds[transit.transitPlanet] || 1.0
@@ -441,7 +441,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     if (score >= 15) return 'Casa Angular (+15)'
     if (score >= 10) return 'Casa Succedente (+10)'
     if (score >= 5) return 'Casa Cadente (+5)'
-    return 'Sem influencia da casa (0)'
+    return 'Sem influência da casa (0)'
   }
 
   const getAccidentalConditions = (planet: string, conditions?: { modifier: number; tags: string[] }): Array<{ condition: string; score: number; description: string }> => {
@@ -453,7 +453,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       conditionsList.push({
         condition: 'Modificador',
         score: conditions.modifier,
-        description: `CondiÃ§Ãµes acidentais de ${planet}`
+        description: `Condições acidentais de ${planet}`
       })
     }
 
@@ -556,13 +556,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       multipliers.push({
         name: 'Casa Relevante',
         value: relevantHouseBoost,
-        description: `Transito na casa ${planet.house} (relevante para ${areaData.name})`,
+        description: `Trânsito na casa ${planet.house} (relevante para ${areaData.name})`,
         impact: 'Aumenta'
       })
-      calculationSteps.push(`Casa relevante: aâ€”${relevantHouseBoost}`)
+      calculationSteps.push(`Casa relevante: x ${relevantHouseBoost}`)
     }
 
-    //  MULTIPLICADOR 3: Regencia de Casa
+    //  MULTIPLICADOR 3: Regência de Casa
     const houseRulers: Record<number, string[]> = {
       1:['Mars'], 2:['Venus'], 3:['Mercury'], 4:['Moon'], 5:['Sun'], 6:['Mercury'], 
       7:['Venus'], 8:['Mars'], 9:['Jupiter'], 10:['Saturn'], 11:['Saturn','Uranus'], 12:['Jupiter','Neptune']
@@ -571,12 +571,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const rulerBoost = areaRulers.has(planet.planet) ? 1.06 : 1.0
     if (rulerBoost > 1.0) {
       multipliers.push({
-        name: 'Regencia de Casa',
+        name: 'Regência de Casa',
         value: rulerBoost,
-        description: `${planet.planet} rege uma das casas da area ${areaData.name}`,
+        description: `${planet.planet} rege uma das casas da área ${areaData.name}`,
         impact: 'Aumenta'
       })
-      calculationSteps.push(`Regencia de casa: aâ€”${rulerBoost}`)
+      calculationSteps.push(`Regência de casa: x ${rulerBoost}`)
     }
 
     //  MULTIPLICADOR 4: Angularidade da Casa
@@ -588,31 +588,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         description: `Casa ${planet.house} e ${angularMult > 1 ? 'angular' : angularMult < 1 ? 'cadente' : 'succedente'}`,
         impact: angularMult > 1 ? 'Aumenta' : 'Reduz'
       })
-      calculationSteps.push(`Angularidade: aâ€”${angularMult}`)
+      calculationSteps.push(`Angularidade: x ${angularMult}`)
     }
 
-    //  MULTIPLICADOR 5: Recepcao Mutua
+    //  MULTIPLICADOR 5: Recepção Mutua
     const receptionMult = getReceptionMultiplier(planet, allPlanets.find(p => p.planet === planet.planet))
     if (receptionMult !== 1.0) {
       multipliers.push({
-        name: 'Recepcao Mutua',
+        name: 'Recepção Mutua',
         value: receptionMult,
         description: receptionMult > 1 ? 'Planetas em dignidades mutuas' : 'Planetas em detrimentos mutuos',
         impact: receptionMult > 1 ? 'Aumenta' : 'Reduz'
       })
-      calculationSteps.push(`Recepcao: aâ€”${receptionMult}`)
+      calculationSteps.push(`Recepção: x ${receptionMult}`)
     }
 
-    //  MULTIPLICADOR 6: Padroes Aspectuais
+    //  MULTIPLICADOR 6: Padrões Aspectuais
     const patternMult = getPatternMultiplier(planet, allPlanets)
     if (patternMult > 1.0) {
       multipliers.push({
-        name: 'Padroes Aspectuais',
+        name: 'Padrões Aspectuais',
         value: patternMult,
         description: 'T-Square, Grande Trigono ou Yod detectado',
         impact: 'Aumenta'
       })
-      calculationSteps.push(`Padroes: aâ€”${patternMult}`)
+      calculationSteps.push(`Padrões: x ${patternMult}`)
     }
 
     //  MULTIPLICADOR 7: Cluster de Aspectos
@@ -621,22 +621,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       multipliers.push({
         name: 'Cluster de Aspectos',
         value: clusterMult,
-        description: 'Multiplos aspectos com o mesmo planeta natal',
+        description: 'Múltiplos aspectos com o mesmo planeta natal',
         impact: 'Aumenta'
       })
-      calculationSteps.push(`Cluster: aâ€”${clusterMult}`)
+      calculationSteps.push(`Cluster: x ${clusterMult}`)
     }
 
-    //  MULTIPLICADOR 8: Peso por Duracao
+    //  MULTIPLICADOR 8: Peso por Duração
     const durationWeight = getPlanetDurationWeight(planet.planet, aspects[0]?.with || '')
     if (durationWeight !== 1.0) {
       multipliers.push({
-        name: 'Peso por Duracao',
+        name: 'Peso por Duração',
         value: durationWeight,
-        description: durationWeight > 1 ? 'Planeta lento (maior influencia)' : 'Planeta rapido (menor influencia)',
+        description: durationWeight > 1 ? 'Planeta lento (maior influência)' : 'Planeta rápido (menor influência)',
         impact: durationWeight > 1 ? 'Aumenta' : 'Reduz'
       })
-      calculationSteps.push(`Duracao: aâ€”${durationWeight}`)
+      calculationSteps.push(`Duração: x ${durationWeight}`)
     }
 
     //  CALCULAR SCORE FINAL
@@ -648,11 +648,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       calculationSteps.push(`${mult.name}: ${finalScore.toFixed(2)}`)
     })
 
-    //  ADICIONAR DELTAS DE BENaâ€°FICOS/MALaâ€°FICOS
+    //  ADICIONAR DELTAS DE BENEFICOS/MALEFICOS
     const beneficMaleficDelta = calculateBeneficMaleficDelta(planet)
     if (beneficMaleficDelta !== 0) {
       finalScore += beneficMaleficDelta
-      calculationSteps.push(`Delta benefico/malefico: ${finalScore.toFixed(2)}`)
+      calculationSteps.push(`Delta benéfico/maléfico: ${finalScore.toFixed(2)}`)
     }
 
     return {
@@ -669,8 +669,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     
     const suggestions: RealSuggestionData[] = []
 
-    // SugestÃµes baseadas em transitos ativos
-    transits.forEach((transit, index) => {
+    // Sugestões baseadas em trânsitos ativos
+    transits.forEach((transit) => {
       //  CORRECAO: Classificacao mais abrangente
       const isHarmonious = ['trigono', 'sextil'].includes(transit.type)
       const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
@@ -681,10 +681,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       let priority: 'alta' | 'media' | 'baixa' = 'alta'
 
       if (isHarmonious) {
+        suggestion = 'Momento favorável para aproveitar oportunidades ligadas a esta área.'
         action = 'Iniciar projetos, expandir relacionamentos'
       } else if (isChallenging) {
-        action = 'Revisar planos, buscar equilibrio'
+        suggestion = 'Período de ajustes e atenção, com aprendizados importantes.'
+        action = 'Revisar planos, buscar equilíbrio'
       } else if (isNeutral) {
+        suggestion = 'Fase de integração e observação das mudanças.'
         action = 'Refletir, planejar, integrar'
       }
 
@@ -697,39 +700,39 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         action,
         influencePeriod,
         priority,
-        basedOn: `Transito: ${transit.type} ${transit.transitPlanet} â€ â€™ ${transit.natalPlanet}`
+        basedOn: `Trânsito: ${transit.type} ${transit.transitPlanet} com ${transit.natalPlanet}`
       })
     })
 
-    // SugestÃµes baseadas em aspectos natais
+    // Sugestões baseadas em aspectos natais
     aspects.forEach((aspect, index) => {
-      //  CORRECAO: SugestÃµes baseadas na natureza real do aspecto
+      //  CORRECAO: Sugestões baseadas na natureza real do aspecto
       const suggestion = aspect.isHarmonious 
-        ? `Aproveite a harmonia do transito entre ${aspect.planet1} e ${aspect.planet2}`
+        ? `Aproveite a harmonia do trânsito entre ${aspect.planet1} e ${aspect.planet2}`
         : aspect.isChallenging
-        ? `Gerencie a tensao do transito entre ${aspect.planet1} e ${aspect.planet2}`
-        : `Integre as energias do transito entre ${aspect.planet1} e ${aspect.planet2}`
+        ? `Gerencie a tensão do trânsito entre ${aspect.planet1} e ${aspect.planet2}`
+        : `Integre as energias do trânsito entre ${aspect.planet1} e ${aspect.planet2}`
       
       const action = aspect.isHarmonious
         ? 'Desenvolver talentos naturais, fortalecer relacionamentos'
         : aspect.isChallenging
-        ? 'Trabalhar equilibrio, transformar desafios em oportunidades'
-        : 'Refletir sobre a natureza da relacao entre estes planetas'
+        ? 'Trabalhar equilíbrio, transformar desafios em oportunidades'
+        : 'Refletir sobre a natureza da relação entre estes planetas'
 
       suggestions.push({
         transitId: `natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`,
         suggestion,
         action,
-                 influencePeriod: 'Variavel (Transito)',
-         priority: 'media',
-        basedOn: `Aspecto de Transito: ${aspect.type} ${aspect.planet1} â€ â€™ ${aspect.planet2}`
+        influencePeriod: 'Variável (Trânsito)',
+        priority: 'media',
+        basedOn: `Aspecto de Trânsito: ${aspect.type} ${aspect.planet1} com ${aspect.planet2}`
       })
     })
 
-         return suggestions.sort((a, b) => {
-       const priorityOrder = { alta: 3, media: 2, baixa: 1 }
-       return priorityOrder[b.priority] - priorityOrder[a.priority]
-     })
+    return suggestions.sort((a, b) => {
+      const priorityOrder = { alta: 3, media: 2, baixa: 1 }
+      return priorityOrder[b.priority] - priorityOrder[a.priority]
+    })
   }
 
   const getRealCalculations = (): RealCalculationData => {
@@ -738,7 +741,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const debugData = astrologyData?.debug?.lifeAreas?.[areaData.name]
 
     // Formula real baseada no RealAstrologyEngine
-    const formula = 'Score final = soma(Peso do Planeta x (Dignidade + Casa + Aspectos + CondiÃ§Ãµes))'
+    const formula = 'Score final = soma(Peso do Planeta x (Dignidade + Casa + Aspectos + Condições))'
 
     // Breakdown real se disponivel
     let breakdown: Array<{ step: string; value: number; description: string }> = []
@@ -752,21 +755,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       }))
       total = safeNumber(debugData.finalScore)
     } else {
-      // Fallback baseado nos transitos
+      // Fallback baseado nos trânsitos
       breakdown = transits.map(transit => {
         const strength = safeNumber(transit.strength)
         const aspectValue = strength * (transit.isApplying ? 1.15 : 0.95)
         return {
-          step: `${transit.type} ${transit.transitPlanet} â€ â€™ ${transit.natalPlanet}`,
+          step: `${transit.type} ${transit.transitPlanet} com ${transit.natalPlanet}`,
           value: Math.round(aspectValue),
-          description: `ForÃ§a: ${strength}, Orb: ${safeFixed(transit.orb)} graus, ${transit.isApplying ? 'Aplicante' : 'Separando'}`
+          description: `Força: ${strength}, Orb: ${safeFixed(transit.orb)} graus, ${transit.isApplying ? 'Aplicante' : 'Separando'}`
         }
       })
     }
 
-    const validation = 'Score calculado com base em dignidades essenciais, forca das casas, aspectos planetarios e condicoes acidentais.'
+    const validation = 'Score calculado com base em dignidades essenciais, força das casas, aspectos planetários e condições acidentais.'
     
-    const astrologicalBasis = 'A pontuacao considera a tradicao astrologica classica: domicilios (+28), exaltacoes (+24), casas angulares (+15), aspectos harmonicos (trigonos/sextis) e desafiadores (quadraturas/oposicoes).'
+    const astrologicalBasis = 'A pontuação considera a tradição astrológica clássica: domicílios (+28), exaltações (+24), casas angulares (+15), aspectos harmônicos (trígonos/sextis) e desafiadores (quadraturas/oposições).'
 
     return {
       formula,
@@ -802,244 +805,151 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderTransitsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>TRANSITOS ATIVOS E ASPECTOS DE TRANSITO</Text>
-      
-      {/* Subsecao: Transitos Ativos */}
-      <View style={styles.subsection}>
-        <Text style={styles.subsectionTitle}>TRÃ‚NSITOS ATIVOS</Text>
-        
-        {activeTransits.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Nenhum transito ativo para esta area no momento</Text>
-          </View>
-        ) : (
-          activeTransits.map((transit, index) => {
-            //  CORRECAO: Classificacao mais abrangente dos aspectos
-            const isHarmonious = ['trigono', 'sextil'].includes(transit.type)
-            const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
-            const isNeutral = transit.type === 'conjuncao'
-            
-            //  CORRECAO: Cores e status baseados na natureza real
-            let statusColor: string
-            let statusText: string
-            
-            if (isHarmonious) {
-              statusColor = DESIGN_SYSTEM.colors.positive
-              statusText = 'HarmÃ´nico'
-            } else if (isChallenging) {
-              statusText = 'Desafiador'
-            } else if (isNeutral) {
-              statusColor = DESIGN_SYSTEM.colors.neutral
-              statusText = 'Neutro'
-            } else {
-              statusColor = DESIGN_SYSTEM.colors.secondary
-              statusText = 'Neutro'
-            }
+      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
 
-            const strengthValue = safeNumber(transit.strength)
-            const orbValue = safeNumber(transit.orb)
-            const contribution =
-              totalTransitStrength > 0
-                ? Math.round((strengthValue / totalTransitStrength) * 100)
-                : 0
+      {activeTransits.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
+        </View>
+      ) : (
+        activeTransits.map((transit, index) => {
+          const isHarmonious = ['trigono', 'sextil'].includes(transit.type)
+          const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
+          const isNeutral = transit.type === 'conjuncao'
 
-            return (
-              <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
-                <View style={styles.transitHeader}>
-                  <Text style={styles.transitNumber}>#{index + 1}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                    <Text style={styles.statusText}>
-                      {statusText}
-                    </Text>
-                  </View>
-                </View>
-                
-                                 <Text style={styles.transitName}>
-                   {translate('planets', transit.transitPlanet)} em {translate('aspects', transit.type)} com {translate('planets', transit.natalPlanet)}
-                 </Text>
-                
-                <View style={styles.transitDetails}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>ForÃ§a:</Text>
-                    <Text style={styles.detailValue}>{strengthValue}</Text>
-                    <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
-                      <View style={[styles.strengthFill, { 
-                        width: `${strengthValue}%`, 
-                        backgroundColor: statusColor 
-                      }]} />
-                    </View>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Orb:</Text>
-                    <Text style={styles.detailValue}>{safeFixed(orbValue)} graus</Text>
-                  </View>
-                  
-                                     <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Planetas:</Text>
-                     <Text style={styles.detailValue}>{translate('planets', transit.transitPlanet)} + {translate('planets', transit.natalPlanet)}</Text>
-                   </View>
-                   
-                   <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Tipo:</Text>
-                     <Text style={styles.detailValue}>{translate('aspects', transit.type)}</Text>
-                   </View>
-                  
-                                     <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Casa:</Text>
-                     <Text style={styles.detailValue}>
-                       {transit.natalHouseImpacted} ({TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses]})
-                     </Text>
-                   </View>
-                   
-                   <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Duracao:</Text>
-                     <Text style={styles.detailValue}>
-                       {getTransitDuration(transit)}
-                     </Text>
-                   </View>
-                   
-                   <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Contribuicao:</Text>
-                     <Text style={styles.detailValue}>
-                       {contribution}%
-                     </Text>
-                   </View>
+          let statusColor: string
+          let statusText: string
+
+          if (isHarmonious) {
+            statusColor = DESIGN_SYSTEM.colors.positive
+            statusText = 'Harmônico'
+          } else if (isChallenging) {
+            statusColor = DESIGN_SYSTEM.colors.negative
+            statusText = 'Desafiador'
+          } else if (isNeutral) {
+            statusColor = DESIGN_SYSTEM.colors.neutral
+            statusText = 'Neutro'
+          } else {
+            statusColor = DESIGN_SYSTEM.colors.secondary
+            statusText = 'Neutro'
+          }
+
+          const strengthValue = safeNumber(transit.strength)
+          const orbValue = safeNumber(transit.orb)
+          const contribution =
+            totalTransitStrength > 0
+              ? Math.round((strengthValue / totalTransitStrength) * 100)
+              : 0
+          const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
+          const summaryParts = [
+            `Força ${strengthValue}`,
+            `Orb ${safeFixed(orbValue)}°`,
+            `Casa ${transit.natalHouseImpacted} (${houseName})`,
+            `Duração ${getTransitDuration(transit)}`
+          ]
+          if (contribution > 0) {
+            summaryParts.push(`Contribuição ${contribution}%`)
+          }
+
+          return (
+            <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
+              <View style={styles.transitHeader}>
+                <Text style={styles.transitNumber}>#{index + 1}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={styles.statusText}>{statusText}</Text>
                 </View>
               </View>
-            )
-          })
-        )}
-      </View>
 
-      {/* Subsecao: Aspectos Natais */}
-      <View style={styles.subsection}>
-        <Text style={styles.subsectionTitle}>ASPECTOS DE TRANSITO RELEVANTES</Text>
-        
-        {natalAspects.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Nenhum aspecto de transito relevante para esta area</Text>
-          </View>
-        ) : (
-          natalAspects.map((aspect, index) => {
-            //  CORRECAO: Cores e status baseados na natureza real do aspecto
-            let statusColor: string
-            let statusText: string
-            
-            if (aspect.isHarmonious) {
-              statusColor = DESIGN_SYSTEM.colors.positive
-              statusText = 'HarmÃ´nico'
-            } else if (aspect.isChallenging) {
-              statusColor = DESIGN_SYSTEM.colors.negative
-              statusText = 'Desafiador'
-            } else if (aspect.isNeutral) {
-              statusColor = DESIGN_SYSTEM.colors.neutral
-              statusText = 'Neutro'
-            } else {
-              statusColor = DESIGN_SYSTEM.colors.secondary
-              statusText = 'Neutro'
-            }
+              <Text style={styles.transitName}>
+                {translate('planets', transit.transitPlanet)} em {translate('aspects', transit.type)} com {translate('planets', transit.natalPlanet)}
+              </Text>
 
-            return (
-              <View key={`natal-${aspect.planet1}-${aspect.planet2}-${aspect.type}`} style={styles.transitCard}>
-                <View style={styles.transitHeader}>
-                  <Text style={styles.transitNumber}>#{index + 1}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                    <Text style={styles.statusText}>
-                      {statusText}
-                    </Text>
-                  </View>
-                </View>
-                
-                                 <Text style={styles.transitName}>
-                   {translate('planets', aspect.planet1)} em {translate('aspects', aspect.type)} com {translate('planets', aspect.planet2)}
-                 </Text>
-                
-                <View style={styles.transitDetails}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>ForÃ§a:</Text>
-                    <Text style={styles.detailValue}>{aspect.score}</Text>
-                    <View style={[styles.strengthBar, { backgroundColor: DESIGN_SYSTEM.colors.border }]}>
-                      <View style={[styles.strengthFill, { 
-                        width: `${Math.min(aspect.score, 100)}%`, 
-                        backgroundColor: statusColor 
-                      }]} />
-                    </View>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Orb:</Text>
-                    <Text style={styles.detailValue}>{safeFixed(aspect.orb)} graus</Text>
-                  </View>
-                  
-                                     <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Planetas:</Text>
-                     <Text style={styles.detailValue}>{translate('planets', aspect.planet1)} + {translate('planets', aspect.planet2)}</Text>
-                   </View>
-                   
-                   <View style={styles.detailRow}>
-                     <Text style={styles.detailLabel}>Tipo:</Text>
-                     <Text style={styles.detailValue}>{translate('aspects', aspect.type)}</Text>
-                   </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Natureza:</Text>
-                    <Text style={styles.detailValue}>
-                      {aspect.isHarmonious ? 'HarmÃ´nico' : 'Neutro'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )
-          })
-        )}
-      </View>
+              <Text style={styles.transitSummary}>{summaryParts.join(' • ')}</Text>
+            </View>
+          )
+        })
+      )}
     </View>
   )
 
   const renderSuggestionsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>SUGESTÃ•ES ESPECÃFICAS POR TRÃ‚NSITO</Text>
-      
+      <Text style={styles.sectionTitle}>SUGESTÕES POR TRÂNSITO</Text>
+
       {realSuggestions.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Nenhuma sugestao disponivel no momento</Text>
+          <Text style={styles.emptyText}>Nenhuma sugestão disponível no momento</Text>
         </View>
       ) : (
-        realSuggestions.map((suggestion, index) => (
-          <View key={suggestion.transitId} style={styles.suggestionCard}>
-            <View style={styles.suggestionHeader}>
-              <Text style={styles.suggestionNumber}>#{index + 1}</Text>
-                             <View style={[styles.priorityBadge, { 
-                 backgroundColor: suggestion.priority === 'alta' ? DESIGN_SYSTEM.colors.warning : 
-                                suggestion.priority === 'media' ? DESIGN_SYSTEM.colors.info : 
-                                DESIGN_SYSTEM.colors.secondary 
-               }]}>
-                 <Text style={styles.priorityText}>{suggestion.priority.toUpperCase()}</Text>
-               </View>
+        realSuggestions.map((suggestion, index) => {
+          const transit = activeTransits.find(
+            (item) => `transit-${item.transitPlanet}-${item.natalPlanet}-${item.type}` === suggestion.transitId
+          )
+          const aspect = natalAspects.find(
+            (item) => `natal-${item.planet1}-${item.planet2}-${item.type}` === suggestion.transitId
+          )
+
+          const sourceType = transit ? transit.type : aspect?.type
+          const isHarmonious = sourceType ? ['trigono', 'sextil'].includes(sourceType) : false
+          const isChallenging = sourceType ? ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(sourceType) : false
+          const isNeutral = sourceType === 'conjuncao'
+
+          let statusColor = DESIGN_SYSTEM.colors.secondary
+          let statusText = 'Neutro'
+          if (isHarmonious) {
+            statusColor = DESIGN_SYSTEM.colors.positive
+            statusText = 'Harmônico'
+          } else if (isChallenging) {
+            statusColor = DESIGN_SYSTEM.colors.negative
+            statusText = 'Desafiador'
+          } else if (isNeutral) {
+            statusColor = DESIGN_SYSTEM.colors.neutral
+          }
+
+          let transitTitle = 'Trânsito'
+          let transitMeta = ''
+          if (transit) {
+            const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
+            transitTitle = `${translate('planets', transit.transitPlanet)} em ${translate('aspects', transit.type)} com ${translate('planets', transit.natalPlanet)}`
+            transitMeta = `Força ${safeNumber(transit.strength)} • Orb ${safeFixed(transit.orb)}° • Casa ${transit.natalHouseImpacted} (${houseName}) • Duração ${getTransitDuration(transit)}`
+          } else if (aspect) {
+            transitTitle = `${translate('planets', aspect.planet1)} em ${translate('aspects', aspect.type)} com ${translate('planets', aspect.planet2)}`
+            transitMeta = `Força ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
+          }
+
+          return (
+            <View key={suggestion.transitId} style={styles.suggestionCard}>
+              <View style={styles.suggestionHeader}>
+                <Text style={styles.suggestionNumber}>#{index + 1}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={styles.statusText}>{statusText}</Text>
+                </View>
+              </View>
+
+              <Text style={styles.suggestionTransitTitle}>{transitTitle}</Text>
+              {transitMeta ? <Text style={styles.suggestionTransitMeta}>{transitMeta}</Text> : null}
+              <Text style={styles.suggestionText}>{suggestion.suggestion}</Text>
+              <Text style={styles.suggestionMeta}>
+                Ação: {suggestion.action} • Período: {suggestion.influencePeriod}
+              </Text>
             </View>
-            
-            <Text style={styles.suggestionText}>{suggestion.suggestion}</Text>
-            <Text style={styles.actionText}>AÃ§Ã£o: {suggestion.action}</Text>
-            <Text style={styles.periodText}>PerÃ­odo: {suggestion.influencePeriod}</Text>
-            <Text style={styles.basedOnText}>Baseado em: {suggestion.basedOn}</Text>
-          </View>
-        ))
+          )
+        })
       )}
     </View>
   )
 
   const renderCalculationsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>CaÂLCULOS Taâ€°CNICOS E BASE ASTROLaâ€œGICA</Text>
+      <Text style={styles.sectionTitle}>CÁLCULOS TÉCNICOS E BASE ASTROLÓGICA</Text>
       
       <View style={styles.calculationCard}>
-        <Text style={styles.formulaTitle}>Formula de CÃ¡lculo:</Text>
+        <Text style={styles.formulaTitle}>Fórmula de Cálculo:</Text>
         <Text style={styles.formulaText}>{realCalculations.formula}</Text>
         
-        <Text style={styles.breakdownTitle}>Breakdown Matematico Detalhado:</Text>
+        <Text style={styles.breakdownTitle}>Detalhamento matemático:</Text>
         
-        {/* Breakdown em aÂrvore por Planeta */}
+        {/* Breakdown em árvore por Planeta */}
         {planetBreakdown.map((planet, index) => (
           <View key={planet.planet} style={styles.planetBreakdownCard}>
             <View style={styles.planetHeader}>
@@ -1061,10 +971,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
             </View>
             
-            {/* ForÃ§a da Casa */}
+            {/* Força da Casa */}
             <View style={styles.breakdownRow}>
               <View style={styles.breakdownLabel}>
-                <Text style={styles.breakdownLabelText}>ForÃ§a da casa:</Text>
+                <Text style={styles.breakdownLabelText}>Força da casa:</Text>
               </View>
               <View style={styles.breakdownValue}>
                 <Text style={styles.breakdownValueText}>+{planet.houseScore}</Text>
@@ -1077,17 +987,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Aspectos Natais */}
             {planet.natalAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Aspectos de trÃ¢nsito:</Text>
+                <Text style={styles.aspectsTitle}>Aspectos de trânsito:</Text>
                 {planet.natalAspects.map((aspect, aspectIndex) => {
                   //  CORRECAO: Mostrar natureza real do aspecto
                   const isHarmonious = ['trigono', 'sextil'].includes(aspect.type)
                   const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(aspect.type)
                   
-                  let aspectIcon = 'Å¡Âª'
+                  let aspectIcon = '*'
                   let aspectColor = DESIGN_SYSTEM.colors.secondary
                   
                   if (isHarmonious) {
-                    aspectIcon = 'âœ“'
+                    aspectIcon = '*'
                     aspectColor = DESIGN_SYSTEM.colors.positive
                   } else if (isChallenging) {
                     aspectColor = DESIGN_SYSTEM.colors.negative
@@ -1107,7 +1017,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                       </View>
                       <View style={styles.aspectDescription}>
                         <Text style={styles.aspectDescriptionText}>
-                          Orb: {safeFixed(aspect.orb)} graus - {isHarmonious ? 'HarmÃ´nico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                          Orb: {safeFixed(aspect.orb)} graus - {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
                         </Text>
                       </View>
                     </View>
@@ -1116,10 +1026,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
             )}
             
-            {/* CondiÃ§Ãµes Acidentais */}
+            {/* Condições Acidentais */}
             {planet.accidentalConditions.length > 0 && (
               <View style={styles.conditionsSection}>
-                <Text style={styles.conditionsTitle}>CondiÃ§Ãµes acidentais:</Text>
+                <Text style={styles.conditionsTitle}>Condições acidentais:</Text>
                 {planet.accidentalConditions.map((condition, conditionIndex) => (
                   <View key={conditionIndex} style={styles.conditionRow}>
                     <View style={styles.conditionLabel}>
@@ -1149,7 +1059,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
              {/*  NOVO: BREAKDOWN DETALHADO COM MULTIPLICADORES */}
              {planet.detailedBreakdown && (
                <View style={styles.detailedBreakdownSection}>
-                 <Text style={styles.detailedBreakdownTitle}>CÃ¡lculo detalhado:</Text>
+                 <Text style={styles.detailedBreakdownTitle}>Cálculo detalhado:</Text>
                  
                  {/* Score Base */}
                  <View style={styles.breakdownRow}>
@@ -1178,7 +1088,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                        <Text style={[styles.multiplierValueText, { 
                          color: mult.impact === 'Aumenta' ? DESIGN_SYSTEM.colors.positive : DESIGN_SYSTEM.colors.negative 
                        }]}>
-                         aâ€”{mult.value}
+                         x {mult.value}
                        </Text>
                      </View>
                      <View style={styles.multiplierDescription}>
@@ -1189,9 +1099,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                    </View>
                  ))}
 
-                 {/* Passos do CÃ¡lculo */}
+                 {/* Passos do Cálculo */}
                  <View style={styles.calculationStepsSection}>
-                   <Text style={styles.calculationStepsTitle}>Passos do cÃ¡lculo:</Text>
+                   <Text style={styles.calculationStepsTitle}>Passos do cálculo:</Text>
                    {planet.detailedBreakdown.calculationSteps.map((step, stepIndex) => (
                      <Text key={stepIndex} style={styles.calculationStepText}>
                        {stepIndex + 1}. {step}
@@ -1216,26 +1126,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           <Text style={styles.totalValue}>{realCalculations.total}</Text>
         </View>
         
-        <Text style={styles.validationTitle}>ValidaÃ§Ã£o:</Text>
+        <Text style={styles.validationTitle}>Validação:</Text>
         <Text style={styles.validationText}>{realCalculations.validation}</Text>
         
-        <Text style={styles.basisTitle}>Base AstrolÃ³gica:</Text>
+        <Text style={styles.basisTitle}>Base Astrológica:</Text>
         <Text style={styles.basisText}>{realCalculations.astrologicalBasis}</Text>
         
         {/*  NOTA EXPLICATIVA SOBRE SCORES */}
         <View style={styles.explanationCard}>
-          <Text style={styles.explanationTitle}>â€žÂ¹Ã¯Â¸Â Como Interpretar os Scores:</Text>
+          <Text style={styles.explanationTitle}>Como interpretar os scores:</Text>
           <Text style={styles.explanationText}>
-            - <Text style={{ color: DESIGN_SYSTEM.colors.positive }}>Scores positivos</Text> indicam influÃªncias favorÃ¡veis
+            - <Text style={{ color: DESIGN_SYSTEM.colors.positive }}>Scores positivos</Text> indicam influências favoráveis
           </Text>
           <Text style={styles.explanationText}>
             - <Text style={{ color: DESIGN_SYSTEM.colors.negative }}>Scores negativos</Text> indicam desafios a serem superados
           </Text>
           <Text style={styles.explanationText}>
-            - <Text style={{ color: DESIGN_SYSTEM.colors.neutral }}>Scores neutros</Text> indicam influÃªncias equilibradas
+            - <Text style={{ color: DESIGN_SYSTEM.colors.neutral }}>Scores neutros</Text> indicam influências equilibradas
           </Text>
           <Text style={styles.explanationText}>
-            - A <Text style={{ fontWeight: 'bold' }}>natureza do aspecto</Text> (HarmÃ´nico/Desafiador/Neutro) Ã© baseada no tipo astrolÃ³gico, nÃ£o no score numÃ©rico
+            - A <Text style={{ fontWeight: 'bold' }}>natureza do aspecto</Text> (Harmônico/Desafiador/Neutro) é baseada no tipo astrológico, não no score numérico
           </Text>
         </View>
       </View>
@@ -1355,9 +1265,9 @@ const styles = StyleSheet.create({
   },
   transitCard: {
     backgroundColor: DESIGN_SYSTEM.colors.white,
-    padding: DESIGN_SYSTEM.spacing.md,
+    padding: DESIGN_SYSTEM.spacing.sm,
     borderRadius: DESIGN_SYSTEM.borderRadius.md,
-    marginBottom: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
     ...DESIGN_SYSTEM.shadows.card
   },
   transitHeader: {
@@ -1386,13 +1296,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   transitName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: DESIGN_SYSTEM.spacing.md
+    marginBottom: DESIGN_SYSTEM.spacing.xs
   },
   transitDetails: {
     gap: DESIGN_SYSTEM.spacing.sm
+  },
+  transitSummary: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary,
+    lineHeight: 16
   },
   detailRow: {
     flexDirection: 'row',
@@ -1422,9 +1337,9 @@ const styles = StyleSheet.create({
   },
   suggestionCard: {
     backgroundColor: DESIGN_SYSTEM.colors.white,
-    padding: DESIGN_SYSTEM.spacing.md,
+    padding: DESIGN_SYSTEM.spacing.sm,
     borderRadius: DESIGN_SYSTEM.borderRadius.md,
-    marginBottom: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
     ...DESIGN_SYSTEM.shadows.card
   },
   suggestionHeader: {
@@ -1453,10 +1368,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   suggestionText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: DESIGN_SYSTEM.colors.primary,
     marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  suggestionTransitTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
+  },
+  suggestionTransitMeta: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
+  },
+  suggestionMeta: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary
   },
   actionText: {
     fontSize: 14,

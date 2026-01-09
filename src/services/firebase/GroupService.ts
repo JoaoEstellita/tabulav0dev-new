@@ -50,6 +50,17 @@ export interface GroupMember {
   shareEnabled?: boolean
   shareStatus?: boolean
   lifeAreas?: Record<string, { percentage: number; status: string; influences?: string[]; mainPlanets?: string[] }>
+  areaTransits?: Record<string, Array<{
+    transitPlanet: string
+    natalPlanet: string
+    type: string
+    orb: number
+    isApplying: boolean
+    strength: number
+    durationClass?: 'curto' | 'medio' | 'longo'
+    window?: { start?: string; exact?: string; end?: string; days?: number }
+    windowDays?: number
+  }>>
   birthData?: {
     datetime: string
     coordinates: { latitude: number; longitude: number }
@@ -457,6 +468,7 @@ class GroupService {
                   lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
                   sharedLifeAreas: member.sharedLifeAreas,
                   lifeAreas,
+                  areaTransits: member.areaTransits || undefined,
                 }
               }) as GroupMember[]
             }
