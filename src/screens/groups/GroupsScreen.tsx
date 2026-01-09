@@ -955,7 +955,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         <Text style={styles.attentionName}>{member.displayName}</Text>
                         <Text style={styles.attentionMeta}>
                           {worst ? worst.label : "Área indisponível"}{" "}
-                          {percentage !== null ? `• ${percentage}%` : ""}
+                          {percentage !== null ? ` ${percentage}%` : ""}
                         </Text>
                       </View>
                       <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
@@ -1066,7 +1066,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               Crie seu primeiro grupo ou entre em um existente usando um código de convite
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
-              <Text style={styles.createFirstGroupButtonText}>Criar Primeiro Grupo</Text>
+              <Text style={styles.createFirstGroupButtonText}>Criar primeiro grupo</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -2465,6 +2465,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
 
 
 

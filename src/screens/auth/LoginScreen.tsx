@@ -32,8 +32,6 @@ const Logo = () => (
         resizeMode="contain"
       />
     </View>
-    <Text style={styles.title}>TÁBULA</Text>
-    <Text style={styles.subtitle}>ESTELAR</Text>
     <Text style={styles.tagline}>Seu guia astrológico pessoal</Text>
   </View>
 )
@@ -217,30 +215,15 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoImageContainer: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 180,
+    height: 180,
+    marginBottom: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoImage: {
     width: '100%',
     height: '100%',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    letterSpacing: 2,
-    marginTop: -5,
-    textAlign: 'center',
   },
   tagline: {
     fontSize: 14,
@@ -327,3 +310,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 })
+
+
