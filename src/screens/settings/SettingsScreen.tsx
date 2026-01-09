@@ -33,6 +33,7 @@ import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import LocationService, { type LocationSuggestion } from '../../services/LocationService';
 
 const { width } = Dimensions.get('window');
 
@@ -62,9 +63,31 @@ export default function SettingsScreen() {
   const [houseSystem, setHouseSystem] = useState<HouseSystem>('placidus');
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [birthTime, setBirthTime] = useState('');
+  const [birthLocation, setBirthLocation] = useState<{
+    city?: string;
+    state?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    displayName?: string;
+  } | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
+  const [profileSnapshot, setProfileSnapshot] = useState<{
+    name: string;
+    birthDate: string;
+    birthTime: string;
+    birthLocation: typeof birthLocation;
+    locationQuery: string;
+  } | null>(null);
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -325,6 +348,14 @@ export default function SettingsScreen() {
       const data = userDoc.data() || {};
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
       setBirthDate(data.birthDate || "");
+      setBirthTime(data.birthTime || "");
+      setBirthLocation(data.birthLocation || null);
+      if (data.birthLocation?.city) {
+        const display = data.birthLocation.state
+          ? `${data.birthLocation.city}, ${data.birthLocation.state}`
+          : `${data.birthLocation.city}, ${data.birthLocation.country || ""}`.trim();
+        setLocationQuery(display);
+      }
       setProfilePhoto(data.profilePhoto || null);
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
@@ -453,6 +484,14 @@ export default function SettingsScreen() {
         Alert.alert("Data invalida", "Use o formato AAAA-MM-DD.");
         return;
       }
+      if (birthTime && !isValidBirthTime(birthTime)) {
+        Alert.alert("Horario invalido", "Use o formato HH:MM.");
+        return;
+      }
+      if (isEditingProfile && locationQuery && !selectedLocation && !birthLocation) {
+        Alert.alert("Local de nascimento", "Selecione uma cidade da lista.");
+        return;
+      }
       let updatedPhoto = profilePhoto;
       if (updatedPhoto && updatedPhoto.startsWith("data:")) {
         const uploaded = await uploadProfilePhoto(user.uid, updatedPhoto);
@@ -466,6 +505,16 @@ export default function SettingsScreen() {
       if (birthDate) {
         payload.birthDate = birthDate;
       }
+      if (birthTime) {
+        payload.birthTime = birthTime;
+      }
+      if (birthLocation) {
+        payload.birthLocation = birthLocation;
+      }
+      if (birthDate && birthTime && birthLocation?.latitude && birthLocation?.longitude) {
+        payload.birthDataComplete = true;
+        payload.lastBirthDataEdit = serverTimestamp();
+      }
 
       await updateDoc(doc(db, "users", user.uid), payload);
       await setDoc(
@@ -476,6 +525,9 @@ export default function SettingsScreen() {
         },
         { merge: true }
       );
+      setIsEditingProfile(false);
+      setProfileSnapshot(null);
+      setShowLocationSuggestions(false);
       Alert.alert("Sucesso", "Perfil atualizado!");
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
@@ -494,6 +546,75 @@ export default function SettingsScreen() {
       date.getUTCMonth() + 1 === month &&
       date.getUTCDate() === day
     );
+  };
+
+  const isValidBirthTime = (value: string) => {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  };
+
+  const formatBirthLocation = (location: typeof birthLocation) => {
+    if (!location?.city) return "Nao informado";
+    if (location.state) return `${location.city}, ${location.state}`;
+    if (location.country) return `${location.city}, ${location.country}`;
+    return location.city;
+  };
+
+  const handleEditProfile = async () => {
+    if (isEditingProfile) {
+      if (profileSnapshot) {
+        setProfileName(profileSnapshot.name);
+        setBirthDate(profileSnapshot.birthDate);
+        setBirthTime(profileSnapshot.birthTime);
+        setBirthLocation(profileSnapshot.birthLocation);
+        setLocationQuery(profileSnapshot.locationQuery);
+        setSelectedLocation(null);
+      }
+      setIsEditingProfile(false);
+      return;
+    }
+
+    setProfileSnapshot({
+      name: profileName,
+      birthDate,
+      birthTime,
+      birthLocation,
+      locationQuery,
+    });
+    setIsEditingProfile(true);
+
+    if (locationSuggestions.length === 0) {
+      const suggestions = await LocationService.searchLocations('');
+      setLocationSuggestions(suggestions);
+    }
+  };
+
+  const handleLocationQueryChange = async (text: string) => {
+    setLocationQuery(text);
+    setSelectedLocation(null);
+    setSearchingLocation(true);
+    try {
+      const suggestions = await LocationService.searchLocations(text);
+      setLocationSuggestions(suggestions);
+      setShowLocationSuggestions(true);
+    } catch (error) {
+      console.warn("Erro ao buscar local:", error);
+    } finally {
+      setSearchingLocation(false);
+    }
+  };
+
+  const handleLocationSelect = (location: LocationSuggestion) => {
+    setSelectedLocation(location);
+    setBirthLocation({
+      city: location.city,
+      state: location.state,
+      country: location.country,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      displayName: location.displayName,
+    });
+    setLocationQuery(location.displayName);
+    setShowLocationSuggestions(false);
   };
 
   // Reprocessar Casas Natais removido desta tela conforme solicitado
@@ -767,29 +888,102 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
             <View style={styles.userDetails}>
-            <TextInput
-              style={styles.nameInput}
-              placeholder="Seu nome"
-              placeholderTextColor="#888"
-              value={profileName}
-              onChangeText={setProfileName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Data de nascimento (AAAA-MM-DD)"
-              placeholderTextColor="#888"
-              value={birthDate}
-              onChangeText={setBirthDate}
-            />
-            <Text style={styles.helperText}>Use o formato AAAA-MM-DD.</Text>
-            <Text style={styles.userEmail}>
-              {user?.email || "usuario@email.com"}
-            </Text>
-              <TouchableOpacity style={styles.saveProfileButton} onPress={saveProfile} disabled={savingProfile}>
-                <Text style={styles.saveProfileText}>
-                  {savingProfile ? "Salvando..." : "Salvar perfil"}
-                </Text>
-              </TouchableOpacity>
+              {isEditingProfile ? (
+                <>
+                  <TextInput
+                    style={styles.nameInput}
+                    placeholder="Seu nome"
+                    placeholderTextColor="#888"
+                    value={profileName}
+                    onChangeText={setProfileName}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Data de nascimento (AAAA-MM-DD)"
+                    placeholderTextColor="#888"
+                    value={birthDate}
+                    onChangeText={setBirthDate}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Horario de nascimento (HH:MM)"
+                    placeholderTextColor="#888"
+                    value={birthTime}
+                    onChangeText={setBirthTime}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Local de nascimento"
+                    placeholderTextColor="#888"
+                    value={locationQuery}
+                    onChangeText={handleLocationQueryChange}
+                    onFocus={() => setShowLocationSuggestions(true)}
+                  />
+                  <Text style={styles.helperText}>Use o formato AAAA-MM-DD e HH:MM.</Text>
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <View style={styles.suggestionsContainer}>
+                      {locationSuggestions.map((item, idx) => (
+                        <TouchableOpacity
+                          key={`${item.latitude}-${item.longitude}-${idx}`}
+                          style={styles.suggestionItem}
+                          onPress={() => handleLocationSelect(item)}
+                        >
+                          <Text style={styles.suggestionText}>{item.displayName}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.userName}>{profileName || "Usuario"}</Text>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Data:</Text>
+                    <Text style={styles.infoValue}>{birthDate || "Nao informado"}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Horario:</Text>
+                    <Text style={styles.infoValue}>{birthTime || "Nao informado"}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Local:</Text>
+                    <Text style={styles.infoValue}>{formatBirthLocation(birthLocation)}</Text>
+                  </View>
+                </>
+              )}
+
+              <Text style={styles.userEmail}>
+                {user?.email || "usuario@email.com"}
+              </Text>
+              <View style={styles.profileActions}>
+                <TouchableOpacity
+                  style={styles.editProfileButton}
+                  onPress={handleEditProfile}
+                  disabled={savingProfile}
+                >
+                  <Ionicons
+                    name={isEditingProfile ? "close" : "pencil"}
+                    size={14}
+                    color="#0a0e27"
+                  />
+                  <Text style={styles.editProfileText}>
+                    {isEditingProfile ? "Cancelar" : "Editar"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.saveProfileButton,
+                    !isEditingProfile && styles.saveProfileButtonDisabled,
+                  ]}
+                  onPress={saveProfile}
+                  disabled={savingProfile || !isEditingProfile}
+                >
+                  <Ionicons name="checkmark" size={14} color="#0a0e27" />
+                  <Text style={styles.saveProfileText}>
+                    {savingProfile ? "Salvando..." : "Salvar"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -937,6 +1131,21 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginBottom: 4,
   },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  infoLabel: {
+    color: '#b0b0b0',
+    fontSize: 12,
+    width: 60,
+  },
+  infoValue: {
+    color: '#e0e0e0',
+    fontSize: 12,
+    flex: 1,
+  },
   nameInput: {
     fontSize: 18,
     fontWeight: "bold",
@@ -949,13 +1158,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#b0b0b0',
   },
+  suggestionsContainer: {
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    maxHeight: 160,
+  },
+  suggestionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  suggestionText: {
+    color: '#e0e0e0',
+    fontSize: 12,
+  },
+  profileActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 10,
+  },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  editProfileText: {
+    color: '#0a0e27',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   saveProfileButton: {
-    marginTop: 10,
     backgroundColor: '#2C2C2E',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  saveProfileButtonDisabled: {
+    opacity: 0.5,
   },
   saveProfileText: {
     color: '#FFD700',
