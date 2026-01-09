@@ -11,6 +11,8 @@ import {
   deleteUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
@@ -33,6 +35,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [birthDataComplete, setBirthDataComplete] = useState(false)
+
+  const isEmbeddedBrowser = () => {
+    if (typeof navigator === 'undefined') {
+      return false
+    }
+    const userAgent = navigator.userAgent || ''
+    return /Electron|WebView|wv|Cursor/i.test(userAgent)
+  }
+
+  const ensureUserDocuments = async (authUser: User) => {
+    const userDoc = await getDoc(doc(db, 'users', authUser.uid))
+    if (!userDoc.exists()) {
+      await setDoc(doc(db, 'users', authUser.uid), {
+        email: authUser.email,
+        displayName: authUser.displayName || authUser.email?.split('@')[0],
+        createdAt: new Date(),
+        birthDataComplete: false,
+      })
+
+      await setDoc(doc(db, 'userPublicProfiles', authUser.uid), {
+        displayName: authUser.displayName || authUser.email?.split('@')[0],
+        profilePhoto: authUser.photoURL || null,
+        updatedAt: new Date(),
+      })
+    }
+  }
 
   const syncPublicProfile = async (authUser: User) => {
     try {
@@ -61,6 +89,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (result?.user) {
+            await ensureUserDocuments(result.user)
+          }
+        })
+        .catch((error) => {
+          console.warn('Falha ao processar retorno do Google:', error)
+        })
+    }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('🔐 Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
       
@@ -181,6 +220,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
+        if (isEmbeddedBrowser()) {
+          await signInWithRedirect(auth, provider)
+          return
+        }
         const result = await signInWithPopup(auth, provider)
         
         // Verificar se usuário já existe no Firestore
@@ -207,6 +250,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('❌ Erro no login Google:', error.message)
+      if (
+        typeof window !== 'undefined' &&
+        (error.code === 'auth/popup-blocked' ||
+          error.code === 'auth/popup-closed-by-user' ||
+          error.code === 'auth/cancelled-popup-requested')
+      ) {
+        const provider = new GoogleAuthProvider()
+        provider.setCustomParameters({ prompt: 'select_account' })
+        await signInWithRedirect(auth, provider)
+        return
+      }
+
       
       // Tratamento específico para domínio não autorizado
       if (error.code === 'auth/unauthorized-domain') {
