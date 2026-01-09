@@ -43,6 +43,17 @@ const LIFE_AREA_LABELS = LIFE_AREA_OPTIONS.reduce((acc, area) => {
   return acc
 }, {} as Record<string, string>)
 
+const LIFE_AREA_COLORS: Record<string, string[]> = {
+  amor: ["#FF6B9D", "#FF8E8E"],
+  carreira: ["#4ECDC4", "#44A08D"],
+  financas: ["#FFD93D", "#FF9F40"],
+  saude: ["#96E6A1", "#7BC142"],
+  familia: ["#FF9F40", "#FFD93D"],
+  espiritualidade: ["#B19CD9", "#8B5CF6"],
+  comunicacao: ["#60A5FA", "#3B82F6"],
+  transformacao: ["#F472B6", "#EC4899"],
+}
+
 const formatLifeAreas = (areas?: string[]) => {
   if (!areas || areas.length === 0) return "Todas as áreas"
   return areas
@@ -93,7 +104,11 @@ export default function GroupsScreen() {
   const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
-  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null)
+  const [selectedMemberArea, setSelectedMemberArea] = useState<{
+    member: GroupMember
+    key: string
+  } | null>(null)
+  const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -519,15 +534,17 @@ export default function GroupsScreen() {
   }
 
   const resolveSharedAreas = (member: GroupMember) => {
-    const lifeAreas = resolveMemberLifeAreas(member)
-    if (member.sharedLifeAreas && member.sharedLifeAreas.length) return member.sharedLifeAreas
-    if (lifeAreas && Object.keys(lifeAreas).length) return Object.keys(lifeAreas)
+    if (member.shareStatus === false || member.shareEnabled === false) return []
+    if (Array.isArray(member.sharedLifeAreas)) return member.sharedLifeAreas
     if (selectedGroup?.sharedLifeAreas && selectedGroup.sharedLifeAreas.length) return selectedGroup.sharedLifeAreas
     return LIFE_AREA_KEYS
   }
 
   const hasVisibleStatus = (member: GroupMember) => {
+    if (member.shareStatus === false || member.shareEnabled === false) return false
     const lifeAreas = resolveMemberLifeAreas(member)
+    const sharedAreas = resolveSharedAreas(member)
+    if (!sharedAreas.length) return false
     return !!lifeAreas && Object.keys(lifeAreas).length > 0
   }
 
@@ -548,32 +565,6 @@ export default function GroupsScreen() {
       return "#34D399"
     default:
       return "#9CA3AF"
-  }
-}
-
-const mapBucketToLabel = (bucket: string) => {
-  switch (bucket) {
-    case "critical":
-      return "Crítico"
-    case "attention":
-      return "Atenção"
-    case "positive":
-      return "Positivo"
-    default:
-      return "Neutro"
-  }
-}
-
-const mapTrendLabel = (trend?: string) => {
-  switch (trend) {
-    case "stable":
-      return "Estável"
-    case "rising":
-      return "Em alta"
-    case "falling":
-      return "Em queda"
-    default:
-      return ""
   }
 }
 
@@ -600,9 +591,11 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       }
       return null
     }
-    return sharedAreas
+    const orderedKeys = LIFE_AREA_KEYS.filter((key) => sharedAreas.includes(key))
+    return orderedKeys
       .map((key) => {
-        const data = (lifeAreas as any)?.[key] ?? {}
+        const data = (lifeAreas as any)?.[key]
+        if (!data) return null
         const percentage = coerceNumber(data.percentage ?? data.status)
         const bucket = mapPercentageToBucket(percentage ?? undefined)
         return {
@@ -612,14 +605,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
           bucket,
         }
       })
-      .sort((a, b) => {
-        const priorityDiff = getBucketPriority(a.bucket) - getBucketPriority(b.bucket)
-        if (priorityDiff !== 0) return priorityDiff
-        if (typeof a.percentage === "number" && typeof b.percentage === "number") {
-          return a.percentage - b.percentage
-        }
-        return a.label.localeCompare(b.label)
-      })
+      .filter(Boolean) as Array<{
+        key: string
+        label: string
+        percentage: number | null
+        bucket: string
+      }>
   }
 
   const getMemberAreaDetail = (member: GroupMember, key: string) => {
@@ -767,135 +758,69 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               <Text style={styles.sectionTitle}>Membros</Text>
               {sortedMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
-                const entries = hasStatus ? buildMemberAreaEntries(member) : [];
-                const summaryBucket = getMemberSummaryBucket(member);
-                const bucketCounts = entries.reduce(
-                  (acc, entry) => {
-                    acc[entry.bucket] += 1
-                    return acc
-                  },
-                  { critical: 0, attention: 0, positive: 0, neutral: 0 }
-                )
+                const entries = hasStatus ? buildMemberAreaEntries(member) : []
                 return (
-                  <TouchableOpacity
-                    key={member.userId}
-                    style={styles.memberRow}
-                    onPress={() => {
-                      setExpandedMemberId((prev) => (prev === member.userId ? null : member.userId))
-                    }}
-                  >
-                    <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="medium" />
-                    <View style={styles.memberRowInfo}>
-                      <View style={styles.memberRowHeader}>
-                        <Text style={styles.memberRowName}>{member.displayName}</Text>
-                        {hasStatus && (
-                          <View style={styles.memberBadgeRow}>
-                            {bucketCounts.critical > 0 && (
-                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("critical") }]}>
-                                <Text style={styles.memberBadgeText}>{bucketCounts.critical}</Text>
-                              </View>
-                            )}
-                            {bucketCounts.attention > 0 && (
-                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("attention") }]}>
-                                <Text style={styles.memberBadgeText}>{bucketCounts.attention}</Text>
-                              </View>
-                            )}
-                            {bucketCounts.positive > 0 && (
-                              <View style={[styles.memberBadge, { backgroundColor: mapBucketToColor("positive") }]}>
-                                <Text style={styles.memberBadgeText}>{bucketCounts.positive}</Text>
-                              </View>
-                            )}
-                          </View>
-                        )}
-                        <View
-                          style={[
-                            styles.memberStatusDot,
-                            { backgroundColor: hasStatus ? mapBucketToColor(summaryBucket) : "#555" },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.memberRowUpdate}>
-                        {!hasStatus
-                          ? "Status privado"
-                          : member.lastStatusUpdate
-                          ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                          : "Sem atualização recente"}
-                      </Text>
-                      {hasStatus && (
-                        <Text style={styles.memberBadgeLegend}>
-                          C = Crítico | A = Atenção | P = positivo
+                  <View key={member.userId} style={styles.memberCardCompact}>
+                    <View style={styles.memberHeaderCompact}>
+                      <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
+                      <View style={styles.memberHeaderInfo}>
+                        <Text style={styles.memberRowName} numberOfLines={1}>
+                          {member.displayName}
                         </Text>
-                      )}
-                      <View style={styles.memberStatusGrid}>
-                          {entries.map((entry) => {
-                            const chipColor = mapBucketToColor(entry.bucket)
-                            const tileBorder =
-                              entry.bucket === "critical" || entry.bucket === "attention" ? chipColor : "transparent"
-                            const percentage =
-                              typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
-                            return (
-                              <View
-                                key={`${member.userId}-${entry.key}`}
-                                style={[styles.memberStatusTile, { borderColor: tileBorder }]}
-                              >
-                                <Text style={styles.memberStatusTitle} numberOfLines={1} ellipsizeMode="tail">
+                        <Text style={styles.memberRowUpdate} numberOfLines={1}>
+                          {!hasStatus
+                            ? "Status privado"
+                            : member.lastStatusUpdate
+                            ? `Atualizado h ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
+                            : "Sem atualizacao recente"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {hasStatus && entries.length > 0 ? (
+                      <View style={styles.memberStatusGridCompact}>
+                        {entries.map((entry) => {
+                          const percentage =
+                            typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
+                          const fillColor = mapBucketToColor(entry.bucket)
+                          const cardColors = LIFE_AREA_COLORS[entry.key] || ["#4B5563", "#6B7280"]
+                          return (
+                            <TouchableOpacity
+                              key={`${member.userId}-${entry.key}`}
+                              style={styles.memberStatusMiniCard}
+                              activeOpacity={0.8}
+                              onPress={() => {
+                                setSelectedMemberArea({ member, key: entry.key })
+                                setShowMemberAreaModal(true)
+                              }}
+                            >
+                              <LinearGradient colors={cardColors} style={styles.memberStatusMiniInner}>
+                                <Text style={styles.memberStatusMiniLabel} numberOfLines={1}>
                                   {entry.label}
                                 </Text>
-                                <View style={styles.memberStatusMeta}>
-                                  <Text style={[styles.memberStatusValue, { color: chipColor }]}>
-                                    {percentage !== null ? `${percentage}%` : "--"}
-                                  </Text>
-                                  <Text style={[styles.memberStatusPill, { color: chipColor }]}>
-                                    {mapBucketToLabel(entry.bucket)}
-                                  </Text>
+                                <Text style={styles.memberStatusMiniValue}>
+                                  {percentage !== null ? `${percentage}%` : "--"}
+                                </Text>
+                                <View style={styles.memberStatusMiniTrack}>
+                                  <View
+                                    style={[
+                                      styles.memberStatusMiniFill,
+                                      {
+                                        width: `${Math.min(100, Math.max(0, percentage || 0))}%`,
+                                        backgroundColor: fillColor,
+                                      },
+                                    ]}
+                                  />
                                 </View>
-                              </View>
-                            )
-                          })}
-                        </View>
-                      {expandedMemberId === member.userId && (
-                        <View style={styles.memberDetails}>
-                          {!hasStatus ? (
-                            <Text style={styles.memberDetailEmpty}>Status privado para este grupo.</Text>
-                          ) : (
-                            <View style={styles.memberDetailsGrid}>
-                              {entries.map((entry) => {
-                                const detail = getMemberAreaDetail(member, entry.key)
-                                const percentage =
-                                  typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
-                                const influences = formatAreaInfluences(detail)
-                                return (
-                                  <View key={`${member.userId}-detail-${entry.key}`} style={styles.memberDetailRow}>
-                                    <View style={styles.memberDetailHeader}>
-                                      <Text style={styles.memberDetailTitle}>{entry.label}</Text>
-                                      <Text style={[styles.memberDetailStatus, { color: mapBucketToColor(entry.bucket) }]}>
-                                        {percentage !== null ? `${percentage}%` : "--"} {mapBucketToLabel(entry.bucket)}
-                                      </Text>
-                                    </View>
-                                    {detail?.trend && (
-                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
-                                        Tendência: {mapTrendLabel(detail.trend)}
-                                      </Text>
-                                    )}
-                                    {detail?.description && (
-                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
-                                        {detail.description}
-                                      </Text>
-                                    )}
-                                    {influences ? (
-                                      <Text style={styles.memberDetailMeta} numberOfLines={1} ellipsizeMode="tail">
-                                        Planetas: {influences}
-                                      </Text>
-                                    ) : null}
-                                  </View>
-                                )
-                              })}
-                            </View>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
+                              </LinearGradient>
+                            </TouchableOpacity>
+                          )
+                        })}
+                      </View>
+                    ) : (
+                      <Text style={styles.memberDetailEmpty}>Status privado para este grupo.</Text>
+                    )}
+                  </View>
                 )
               })}
             </View>
@@ -1266,6 +1191,106 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       </Modal>
       
       {/* Modal de Detalhes do Grupo */}
+      <Modal
+        visible={showMemberAreaModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowMemberAreaModal(false)
+          setSelectedMemberArea(null)
+        }}
+      >
+        <View style={styles.memberAreaBackdrop}>
+          <View style={styles.memberAreaCard}>
+            {(() => {
+              if (!selectedMemberArea) return null
+              const { member, key } = selectedMemberArea
+              const detail = getMemberAreaDetail(member, key) || {}
+              const percentageRaw =
+                typeof detail?.percentage === "number"
+                  ? detail.percentage
+                  : typeof detail?.status === "number"
+                  ? detail.status
+                  : null
+              const percentage =
+                typeof percentageRaw === "number" ? Math.round(percentageRaw) : null
+              const bucket = mapPercentageToBucket(percentageRaw ?? undefined)
+              const barColor = mapBucketToColor(bucket)
+              const aspects = Array.isArray(detail?.influences) ? detail.influences : []
+              const mainPlanets = Array.isArray(detail?.mainPlanets) ? detail.mainPlanets : []
+              const fallbackAspects = Array.isArray(member.astrologicalStatus?.criticalTransits)
+                ? member.astrologicalStatus?.criticalTransits.map(
+                    (item) => `${item.planet} ${item.aspect}: ${item.description}`
+                  )
+                : []
+              const resolvedAspects = aspects.length ? aspects : fallbackAspects
+              const cardColors = LIFE_AREA_COLORS[key] || ["#4B5563", "#6B7280"]
+
+              return (
+                <>
+                  <LinearGradient colors={cardColors} style={styles.memberAreaHeader}>
+                    <Text style={styles.memberAreaTitle}>{LIFE_AREA_LABELS[key] || key}</Text>
+                    <Text style={styles.memberAreaPercent}>
+                      {percentage !== null ? `${percentage}%` : "--"}
+                    </Text>
+                    <View style={styles.memberAreaBarTrack}>
+                      <View
+                        style={[
+                          styles.memberAreaBarFill,
+                          {
+                            width: `${Math.min(100, Math.max(0, percentage || 0))}%`,
+                            backgroundColor: barColor,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </LinearGradient>
+
+                  <ScrollView
+                    style={styles.memberAreaContent}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <Text style={styles.memberAreaSectionTitle}>Aspectos</Text>
+                    {resolvedAspects.length ? (
+                      resolvedAspects.map((item, index) => (
+                        <Text key={`aspect-${index}`} style={styles.memberAreaText}>
+                          - {String(item)}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text style={styles.memberAreaEmpty}>
+                        Sem aspectos compartilhados para esta area.
+                      </Text>
+                    )}
+
+                    <Text style={styles.memberAreaSectionTitle}>Justificativas</Text>
+                    {mainPlanets.length ? (
+                      <Text style={styles.memberAreaText}>
+                        Planetas: {mainPlanets.slice(0, 5).join(", ")}
+                      </Text>
+                    ) : (
+                      <Text style={styles.memberAreaEmpty}>
+                        Sem justificativas compartilhadas para esta area.
+                      </Text>
+                    )}
+                  </ScrollView>
+                </>
+              )
+            })()}
+
+            <TouchableOpacity
+              style={styles.memberAreaClose}
+              onPress={() => {
+                setShowMemberAreaModal(false)
+                setSelectedMemberArea(null)
+              }}
+            >
+              <Text style={styles.memberAreaCloseText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <GroupDetailModal
         visible={showGroupDetail}
         group={selectedGroupForDetail}
@@ -1406,177 +1431,144 @@ const styles = StyleSheet.create({
   membersSection: {
     marginBottom: 24,
   },
-  memberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  memberCardCompact: {
     backgroundColor: "#1C1C1E",
-    padding: 14,
+    padding: 10,
     borderRadius: 12,
     marginBottom: 10,
   },
-  memberRowInfo: {
-    flex: 1,
-  },
-  memberRowHeader: {
+  memberHeaderCompact: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: 8,
+    marginBottom: 8,
   },
-  memberStatusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  memberBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  memberBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-    opacity: 0.8,
-  },
-  memberBadgeText: {
-    color: "#0B0B0F",
-    fontSize: 10,
-    fontWeight: "700",
+  memberHeaderInfo: {
+    flex: 1,
   },
   memberRowName: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600",
     flex: 1,
-  },
-  memberRowMeta: {
-    color: "#888",
-    fontSize: 12,
-    marginTop: 4,
   },
   memberRowUpdate: {
-    color: "#666",
-    fontSize: 11,
-    marginTop: 4,
-  },
-  memberBadgeLegend: {
-    color: "#6B6B74",
+    color: "#777",
     fontSize: 10,
-    marginTop: 4,
+    marginTop: 2,
   },
-  memberAreaRow: {
+  memberStatusGridCompact: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
-    marginTop: 8,
+    justifyContent: "flex-start",
   },
-  memberStatusGrid: {
-    marginTop: 10,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    justifyContent: "space-between",
+  memberStatusMiniCard: {
+    flexBasis: "23%",
+    maxWidth: "23%",
   },
-  memberStatusTile: {
-    flexBasis: "48%",
-    flexGrow: 1,
-    flexShrink: 1,
-    minWidth: 140,
-    maxWidth: "49%",
-    maxWidth: "48%",
-    minWidth: 140,
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    overflow: "hidden",
+  memberStatusMiniInner: {
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
   },
-  memberStatusTitle: {
-    color: "#E8E8F6",
-    fontSize: 12,
-    fontWeight: "600",
-    maxWidth: "100%",
-  },
-  memberStatusMeta: {
-    marginTop: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  memberStatusValue: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  memberStatusPill: {
-    fontSize: 11,
-    fontWeight: "600",
-    opacity: 0.85,
-  },
-  memberAreaChip: {
-    borderWidth: 1,
-    borderColor: "#2C2C2E",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    maxWidth: 150,
-    flexShrink: 1,
-  },
-  memberAreaText: {
-    color: "#CCCCCC",
-    fontSize: 10,
-    fontWeight: "600",
-    maxWidth: 134,
-  },
-  memberDetails: {
-    marginTop: 10,
-    gap: 8,
-  },
-  memberDetailsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  memberDetailRow: {
-    backgroundColor: "#15151B",
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#232333",
-    flexGrow: 1,
-    flexBasis: "48%",
-    minWidth: 180,
-  },
-  memberDetailHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    marginBottom: 4,
-  },
-  memberDetailTitle: {
+  memberStatusMiniLabel: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-    flex: 1,
+    fontSize: 9,
+    fontWeight: "600",
   },
-  memberDetailStatus: {
-    fontSize: 12,
+  memberStatusMiniValue: {
+    color: "#FFFFFF",
+    fontSize: 10,
     fontWeight: "700",
+    marginTop: 2,
   },
-  memberDetailMeta: {
-    color: "#9B9BA5",
-    fontSize: 11,
-    lineHeight: 16,
+  memberStatusMiniTrack: {
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    overflow: "hidden",
+    marginTop: 4,
+  },
+  memberStatusMiniFill: {
+    height: "100%",
+    borderRadius: 999,
   },
   memberDetailEmpty: {
     color: "#888",
+    fontSize: 11,
+    marginTop: 4,
+  },
+  memberAreaBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  memberAreaCard: {
+    width: "100%",
+    maxHeight: "80%",
+    backgroundColor: "#14141F",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  memberAreaHeader: {
+    padding: 14,
+  },
+  memberAreaTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  memberAreaPercent: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  memberAreaBarTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    overflow: "hidden",
+    marginTop: 8,
+  },
+  memberAreaBarFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+  memberAreaContent: {
+    padding: 14,
+  },
+  memberAreaSectionTitle: {
+    color: "#FFFFFF",
     fontSize: 12,
+    fontWeight: "700",
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  memberAreaText: {
+    color: "#C9C9D6",
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: 4,
+  },
+  memberAreaEmpty: {
+    color: "#9A9AA5",
+    fontSize: 11,
+    marginBottom: 6,
+  },
+  memberAreaClose: {
+    borderTopWidth: 1,
+    borderTopColor: "#242433",
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  memberAreaCloseText: {
+    color: "#FFD700",
+    fontSize: 13,
+    fontWeight: "600",
   },
   memberCard: {
     backgroundColor: "#1C1C1E",

@@ -373,7 +373,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
       const conditionLine = conditionTags.length
         ? `Condições: ${conditionTags.join(', ')}`
-        : 'Condições: nenhuma destacada'
+        : null
 
       const aspectLine = `Aspectos: ${harmoniousCount} harmônicos, ${challengingCount} desafiadores${
         neutralCount ? `, ${neutralCount} neutros` : ''
@@ -657,7 +657,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               if (!areaInfluences.length) return null
               return (
                 <View style={styles.aspectsSection}>
-                  <Text style={styles.aspectsTitle}>Influencia nos status:</Text>
+                  <Text style={styles.aspectsTitle}>Influência nos status:</Text>
                   {areaInfluences.map((area, areaIndex) => (
                     <View key={`${comparison.name}-area-${area.areaKey}-${areaIndex}`} style={styles.influenceRow}>
                       <Text style={styles.influenceArea}>
