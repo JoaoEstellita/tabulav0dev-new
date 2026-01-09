@@ -281,39 +281,20 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return map
   }, [personalWindows])
 
-  const estimateDurationDays = (durationClass?: string, orb?: number): number => {
-    if (durationClass === 'curto') return 7
-    if (durationClass === 'medio') return 30
-    if (durationClass === 'longo') return 90
-    if (typeof orb === 'number') {
-      if (orb <= 1.5) return 7
-      if (orb <= 3) return 14
-      if (orb <= 5) return 30
-      return 45
-    }
-    return 14
-  }
-
   const formatDate = (date: Date | null): string | null => {
     if (!date || Number.isNaN(date.getTime())) return null
     return date.toLocaleDateString('pt-BR')
   }
 
   const resolveWindowInfo = (
-    window: { start?: string; end?: string; days?: number } | undefined,
-    fallbackDays: number
-  ): { days: number; startLabel: string | null; endLabel: string | null } => {
-    const now = new Date()
-    let startDate = window?.start ? new Date(window.start) : null
-    let endDate = window?.end ? new Date(window.end) : null
-    const days = window?.days ?? fallbackDays
-    if ((!startDate || !endDate) && days) {
-      const halfWindow = Math.max(1, Math.round(days / 2))
-      if (!startDate) startDate = new Date(now.getTime() - halfWindow * 86400000)
-      if (!endDate) endDate = new Date(now.getTime() + halfWindow * 86400000)
-    }
+    window: { start?: string; end?: string; days?: number } | undefined
+  ): { days: number | null; startLabel: string | null; endLabel: string | null } | null => {
+    if (!window) return null
+    const startDate = window.start ? new Date(window.start) : null
+    const endDate = window.end ? new Date(window.end) : null
+    if (!startDate && !endDate && !window.days) return null
     return {
-      days,
+      days: typeof window.days === 'number' ? window.days : null,
       startLabel: formatDate(startDate),
       endLabel: formatDate(endDate)
     }
@@ -556,13 +537,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>Transitos pessoais:</Text>
                 {personalByTransitPlanet[comparison.name].map((t, idx) => {
                   const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
-                  const windowInfo = resolveWindowInfo(
-                    personalWindowMap.get(key),
-                    estimateDurationDays(t.durationClass, t.orb)
-                  )
-                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
-                  const startLabel = windowInfo.startLabel || '-'
-                  const endLabel = windowInfo.endLabel || '-'
+                  const windowInfo = resolveWindowInfo(personalWindowMap.get(key))
                   return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
@@ -570,7 +545,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         <Text style={styles.aspectText}>
                           {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
                         </Text>
-                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
+                        {windowInfo ? (
+                          <Text style={styles.aspectMeta}>
+                            {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                            Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                          </Text>
+                        ) : (
+                          <Text style={styles.aspectMeta}>Datas reais indisponiveis.</Text>
+                        )}
                       </View>
                     </View>
                   )
@@ -582,10 +564,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
                 {comparison.planetaryAspects.map((aspect, aspectIndex) => {
-                  const windowInfo = resolveWindowInfo(undefined, estimateDurationDays(undefined, aspect.orb))
-                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
-                  const startLabel = windowInfo.startLabel || '-'
-                  const endLabel = windowInfo.endLabel || '-'
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
@@ -593,7 +571,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         <Text style={styles.aspectText}>
                           {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
                         </Text>
-                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
                       </View>
                     </View>
                   )
@@ -605,16 +582,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               <View style={styles.aspectsSection}>
                 <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
-                  const windowInfo = resolveWindowInfo(undefined, estimateDurationDays(undefined, houseAspect.orb))
-                  const durationLabel = windowInfo.days ? `${windowInfo.days} dias` : 'em andamento'
-                  const startLabel = windowInfo.startLabel || '-'
-                  const endLabel = windowInfo.endLabel || '-'
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
                       <View style={styles.aspectBody}>
                         <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
-                        <Text style={styles.aspectMeta}>Duracao: {durationLabel} | Inicio: {startLabel} | Fim: {endLabel}</Text>
                       </View>
                     </View>
                   )
