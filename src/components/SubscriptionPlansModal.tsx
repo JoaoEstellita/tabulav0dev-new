@@ -91,10 +91,15 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
   const openPaymentLink = async (url: string) => {
     const opener = (globalThis as any)?.open
     if (typeof opener === 'function') {
-      opener(url, '_blank', 'noopener,noreferrer')
-      return
+      const win = opener(url, '_blank', 'noopener,noreferrer')
+      return !!win
     }
-    await Linking.openURL(url)
+    try {
+      await Linking.openURL(url)
+      return true
+    } catch {
+      return false
+    }
   }
 
   const handleCardSubscribe = async (plan: PaymentPlan) => {
@@ -124,13 +129,16 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
         return
       }
 
+      const opened = await openPaymentLink(preference.init_point)
+      if (opened) return
+
       Alert.alert(
         'Pagamento',
-        'Voce sera redirecionado para o Mercado Pago para finalizar a assinatura.',
+        'Nao foi possivel abrir automaticamente. Quer abrir o link agora?',
         [
           { text: 'Cancelar', style: 'cancel' },
           {
-            text: 'Continuar',
+            text: 'Abrir',
             onPress: () => {
               openPaymentLink(preference.init_point).catch(() => {
                 Alert.alert('Erro', 'Nao foi possivel abrir o link de pagamento.')
