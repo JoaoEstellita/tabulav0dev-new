@@ -329,10 +329,11 @@ export default function SettingsScreen() {
   }
 
   const houseSystemDescriptions: Record<HouseSystem, string> = {
-    placidus: 'Divisao baseada no tempo; popular e equilibrada.',
+    placidus: 'Placidus (tempo/quadrantes): calcula as cúspides pelas divisões de tempo do “arco diurno” (o quanto um ponto leva para ir do horizonte ao Meio do Céu, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do horário.',
+    'whole-sign': 'Casas Inteiras: a Casa 1 é o signo inteiro que contém o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30°), com uma divisão bem “limpa” e constante.',
+    'psychological-shift': 'Psicológico (Casas Naturais / Casa 1 = Áries): fixa a sequência Casa 1 = Áries, Casa 2 = Touro… (todas de 30°), como um modelo simbólico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
     equal: 'Casas iguais de 30°; simples e direta.',
     porphyry: 'Divide entre Ascendente e MC; boa para iniciantes.',
-    whole_sign: 'Cada signo vira uma casa; leitura clara.',
     regiomontanus: 'Baseada na esfera celeste; tradicional.',
     koch: 'Foco na latitude e tempo; detalhada.',
     campanus: 'Divide o ceu em 12; visual e intuitiva.',
