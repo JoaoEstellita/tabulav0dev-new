@@ -252,6 +252,19 @@ export class RealAstrologyEngine {
     'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'
   ]
 
+  private static readonly PLANET_MEAN_SPEEDS: Record<string, number> = {
+    Sun: 0.9856,
+    Moon: 13.176,
+    Mercury: 1.2,
+    Venus: 1.18,
+    Mars: 0.524,
+    Jupiter: 0.083,
+    Saturn: 0.033,
+    Uranus: 0.011,
+    Neptune: 0.006,
+    Pluto: 0.004
+  }
+
   private static readonly _weeklyTTCache = new Map<string, RealAspect[]>()
   private static readonly _monthlyTTCache = new Map<string, RealAspect[]>()
   private static readonly _collectiveCache = new Map<string, RealAstrologyData['collective']>()
@@ -842,17 +855,22 @@ export class RealAstrologyEngine {
     const toPlanet = (p: any): RealPlanetPosition => {
       const body = normalizeBackendBody(p.body || p.name);
       const lon = typeof p.lon === 'number' ? p.lon : (typeof p.position === 'number' ? p.position : 0);
+      const speedRaw = typeof p.speed === 'number' ? p.speed : undefined;
+      const fallbackSpeed = RealAstrologyEngine.PLANET_MEAN_SPEEDS[body] ?? 0;
+      const speed = (typeof speedRaw === 'number' && Math.abs(speedRaw) > 0.0001)
+        ? speedRaw
+        : fallbackSpeed;
       return {
         name: body,
         longitude: lon,
         latitude: p.lat ?? 0,
         distance: p.dist ?? 1,
-        speed: p.speed ?? 0,
+        speed: speed,
         sign: RealAstrologyEngine.SIGNS[Math.floor((lon % 360) / 30)],
         degree: (lon % 360) % 30,
         // Confiar na casa do backend quando presente; fallback para 0 para reatribuicao local
         house: typeof p.house === 'number' ? p.house : (0 as unknown as number),
-        isRetrograde: !!p.retrograde,
+        isRetrograde: typeof p.retrograde === 'boolean' ? p.retrograde : speed < 0,
       };
     };
 
