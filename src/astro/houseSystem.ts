@@ -15,7 +15,7 @@ export function formatHouseSystemLabel(system: HouseSystem): string {
     case 'whole-sign':
       return 'Casas Inteiras'
     case 'psychological-shift':
-      return 'Psicologico (Shift +1)'
+      return 'Psicologico'
     case 'placidus':
     default:
       return 'Placidus'
