@@ -30,6 +30,7 @@ export interface UserProfile {
     privacy?: {
       showStatusToGroups: boolean
       allowGroupInvites: boolean
+      shareTransitDurations?: boolean
     }
   }
   stats?: {
@@ -166,6 +167,7 @@ class UserService {
             privacy: {
               showStatusToGroups: true,
               allowGroupInvites: true,
+              shareTransitDurations: false,
             }
           },
           stats: {

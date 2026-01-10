@@ -37,6 +37,7 @@ interface UserProfile {
     privacy: {
       showStatusToGroups: boolean
       allowGroupInvites: boolean
+      shareTransitDurations: boolean
       shareLocation: boolean
     }
     theme: "dark" | "light" | "auto"
@@ -131,6 +132,7 @@ export default function ProfileScreen() {
             privacy: {
               showStatusToGroups: true,
               allowGroupInvites: true,
+              shareTransitDurations: false,
               shareLocation: false,
             },
             theme: "dark",
@@ -744,6 +746,21 @@ export default function ProfileScreen() {
               onValueChange={(value) => updatePrivacyPreference("showStatusToGroups", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
               thumbColor={profile.preferences?.privacy?.showStatusToGroups ? "#000" : "#888"}
+            />
+          </View>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>Compartilhar duração dos trânsitos</Text>
+              <Text style={styles.preferenceDescription}>
+                Permitir que membros vejam a duração exata dos aspectos no grupo
+              </Text>
+            </View>
+            <Switch
+              value={profile.preferences?.privacy?.shareTransitDurations || false}
+              onValueChange={(value) => updatePrivacyPreference("shareTransitDurations", value)}
+              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
+              thumbColor={profile.preferences?.privacy?.shareTransitDurations ? "#000" : "#888"}
             />
           </View>
 
