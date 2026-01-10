@@ -132,7 +132,7 @@ export default function ProfileScreen() {
             privacy: {
               showStatusToGroups: true,
               allowGroupInvites: true,
-              shareTransitDurations: false,
+              shareTransitDurations: true,
               shareLocation: false,
             },
             theme: "dark",
@@ -757,7 +757,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Switch
-              value={profile.preferences?.privacy?.shareTransitDurations || false}
+              value={profile.preferences?.privacy?.shareTransitDurations ?? true}
               onValueChange={(value) => updatePrivacyPreference("shareTransitDurations", value)}
               trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
               thumbColor={profile.preferences?.privacy?.shareTransitDurations ? "#000" : "#888"}

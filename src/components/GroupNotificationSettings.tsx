@@ -11,7 +11,9 @@ import {
   StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import GroupService, { type Group } from '../services/firebase/GroupService'
+import { db } from '../config/firebase'
 
 export interface GroupNotificationSettingsProps {
   visible: boolean
@@ -161,6 +163,8 @@ export default function GroupNotificationSettings({
 }: GroupNotificationSettingsProps) {
   const [settings, setSettings] = useState<GroupNotificationSettings>(defaultSettings)
   const [hasChanges, setHasChanges] = useState(false)
+  const [shareTransitDurationsPref, setShareTransitDurationsPref] = useState(true)
+  const [shareTransitDurationsDirty, setShareTransitDurationsDirty] = useState(false)
 
   useEffect(() => {
     if (!group) return
@@ -171,9 +175,14 @@ export default function GroupNotificationSettings({
       const sharedDefaults = group.sharedLifeAreas || LIFE_AREAS
       const notifiedDefaults = group.notifiedLifeAreas || LIFE_AREAS
 
-      const memberSettings = await GroupService.getMemberSettings(group.id, currentUserId)
+      const [memberSettings, userDoc] = await Promise.all([
+        GroupService.getMemberSettings(group.id, currentUserId),
+        getDoc(doc(db, 'users', currentUserId)),
+      ])
       const sharedLifeAreas = memberSettings?.sharedLifeAreas || sharedDefaults
       const notifiedLifeAreas = memberSettings?.notifiedLifeAreas || notifiedDefaults
+      const userData = userDoc.exists() ? userDoc.data() : {}
+      const shareDurations = userData?.preferences?.privacy?.shareTransitDurations !== false
 
       if (!isActive) return
 
@@ -189,6 +198,8 @@ export default function GroupNotificationSettings({
         sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
         notifiedLifeAreas: buildLifeAreasState(notifiedLifeAreas),
       })
+      setShareTransitDurationsPref(shareDurations)
+      setShareTransitDurationsDirty(false)
       setHasChanges(false)
     }
 
@@ -259,6 +270,13 @@ export default function GroupNotificationSettings({
         cooldownMinutes: settings.cooldownMinutes,
         customAlertMessages: settings.customAlertMessages,
       })
+
+      if (shareTransitDurationsDirty) {
+        await updateDoc(doc(db, 'users', currentUserId), {
+          'preferences.privacy.shareTransitDurations': shareTransitDurationsPref,
+        })
+        setShareTransitDurationsDirty(false)
+      }
 
       if (onSave) {
         onSave(settings)
@@ -376,6 +394,25 @@ export default function GroupNotificationSettings({
                 onValueChange={(value) => updateSettings({ shareStatus: value })}
                 trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
                 thumbColor={settings.shareStatus ? '#000' : '#f4f3f4'}
+              />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Compartilhar duracao dos transitos</Text>
+                <Text style={styles.settingDescription}>
+                  Permitir que membros vejam a duracao exata dos aspectos
+                </Text>
+              </View>
+              <Switch
+                value={shareTransitDurationsPref}
+                onValueChange={(value) => {
+                  setShareTransitDurationsPref(value)
+                  setShareTransitDurationsDirty(true)
+                  setHasChanges(true)
+                }}
+                trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
+                thumbColor={shareTransitDurationsPref ? '#000' : '#f4f3f4'}
               />
             </View>
 

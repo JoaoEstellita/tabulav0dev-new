@@ -167,7 +167,7 @@ class UserService {
             privacy: {
               showStatusToGroups: true,
               allowGroupInvites: true,
-              shareTransitDurations: false,
+              shareTransitDurations: true,
             }
           },
           stats: {
