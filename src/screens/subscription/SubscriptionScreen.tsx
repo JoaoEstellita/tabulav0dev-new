@@ -1,28 +1,16 @@
 /**
- * 💎 SUBSCRIPTION SCREEN 💎
- * 
- * Tela completa de assinaturas com:
- * - Planos visuais e atrativos
- * - Trial gratuito
- * - Fluxo de pagamento integrado
- * - Gestão de assinaturas ativas
+ * SUBSCRIPTION SCREEN
+ *
+ * Screen for premium plans and Mercado Pago checkout.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert,
-  Linking,
-  Dimensions,
-  RefreshControl,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Alert, Linking, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SubscriptionPlanCard } from '../../components/SubscriptionPlanCard';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
+import { useAuth } from '../../hooks/useAuth';
 
 const { width, height } = Dimensions.get('window');
 
@@ -40,87 +28,44 @@ interface SubscriptionPlan {
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
-    id: 'monthly',
+    id: 'premium_monthly',
     name: 'Plano Mensal',
     price: 19.90,
-    period: 'mês',
+    period: 'mes',
     features: [
-      '🤖 IA Conversacional Astrológica',
-      '📊 Análises Detalhadas Avançadas',
-      '🔮 Previsões Personalizadas',
-      '💫 Trânsitos em Tempo Real',
-      '👥 Grupos Astrológicos Ilimitados',
-      '📱 Notificações Personalizadas',
-      '🔄 Sincronização em Nuvem',
-      '🎯 Relatórios Mensais'
+      'IA conversacional astrologica',
+      'Analises detalhadas',
+      'Previsoes personalizadas',
+      'Transitos em tempo real',
+      'Grupos astrologicos ilimitados'
     ],
     originalPrice: 29.90,
     discount: 33,
   },
   {
-    id: 'yearly',
+    id: 'premium_yearly',
     name: 'Plano Anual',
     price: 119.90,
     period: 'ano',
     features: [
-      '🤖 IA Conversacional Astrológica',
-      '📊 Análises Detalhadas Avançadas',
-      '🔮 Previsões Personalizadas',
-      '💫 Trânsitos em Tempo Real',
-      '👥 Grupos Astrológicos Ilimitados',
-      '📱 Notificações Personalizadas',
-      '🔄 Sincronização em Nuvem',
-      '🎯 Relatórios Mensais',
-      '🌟 2 meses grátis',
-      '💰 Economia de R$ 118,90'
+      'IA conversacional astrologica',
+      'Analises detalhadas',
+      'Previsoes personalizadas',
+      'Transitos em tempo real',
+      'Grupos astrologicos ilimitados',
+      '2 meses gratis'
     ],
     isPopular: true,
     isPremium: true,
     originalPrice: 238.80,
     discount: 50,
-  },
-  {
-    id: 'lifetime',
-    name: 'Acesso Vitalício',
-    price: 299.90,
-    period: 'único',
-    features: [
-      '🤖 IA Conversacional Astrológica',
-      '📊 Análises Detalhadas Avançadas',
-      '🔮 Previsões Personalizadas',
-      '💫 Trânsitos em Tempo Real',
-      '👥 Grupos Astrológicos Ilimitados',
-      '📱 Notificações Personalizadas',
-      '🔄 Sincronização em Nuvem',
-      '🎯 Relatórios Mensais',
-      '🌟 Acesso para sempre',
-      '🆕 Atualizações futuras inclusas',
-      '💎 Suporte prioritário'
-    ],
-    isPremium: true,
-    originalPrice: 599.90,
-    discount: 50,
   }
 ];
 
 export default function SubscriptionScreen() {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    checkCurrentSubscription();
-  }, []);
-
-  const checkCurrentSubscription = async () => {
-    try {
-      // Verificar se usuário tem assinatura ativa
-      // Por enquanto, vamos simular que não tem
-      // TODO: Implementar verificação real quando backend estiver pronto
-    } catch (error) {
-      console.error('Erro ao verificar assinatura:', error);
-    }
-  };
 
   const handleSubscribe = async (planId: string) => {
     try {
@@ -129,32 +74,36 @@ export default function SubscriptionScreen() {
 
       const plan = subscriptionPlans.find(p => p.id === planId);
       if (!plan) {
-        Alert.alert('Erro', 'Plano não encontrado.');
+        Alert.alert('Erro', 'Plano nao encontrado.');
+        return;
+      }
+
+      if (!user?.uid) {
+        Alert.alert('Erro', 'Usuario nao identificado.');
         return;
       }
 
       const paymentData = {
-        userId: 'current_user', // TODO: Pegar do contexto de auth
+        userId: user.uid,
         planId: planId,
-        email: 'user@example.com', // TODO: Pegar do contexto de auth
-        name: 'Usuário', // TODO: Pegar do contexto de auth
+        email: user.email || '',
+        name: user.displayName || 'Usuario',
         amount: plan.price,
-        description: `Assinatura ${plan.name} do Tábula Estelar`,
-        externalReference: `subscription_${planId}`,
+        description: `Assinatura ${plan.name} do Tabula Estelar`,
+        externalReference: MercadoPagoService.generateExternalReference(user.uid, planId),
       };
 
       const result = await MercadoPagoService.createPaymentPreference(paymentData);
 
       if (result.init_point) {
-        // Abrir link de pagamento
         const supported = await Linking.canOpenURL(result.init_point);
         if (supported) {
           await Linking.openURL(result.init_point);
         } else {
-          Alert.alert('Erro', 'Não foi possível abrir o link de pagamento.');
+          Alert.alert('Erro', 'Nao foi possivel abrir o link de pagamento.');
         }
       } else {
-        Alert.alert('Erro', 'Não foi possível processar o pagamento. Tente novamente.');
+        Alert.alert('Erro', 'Nao foi possivel processar o pagamento. Tente novamente.');
       }
     } catch (error) {
       console.error('Erro ao assinar:', error);
@@ -167,15 +116,14 @@ export default function SubscriptionScreen() {
 
   const manageSubscription = async () => {
     try {
-      // TODO: Implementar quando backend estiver pronto
       Alert.alert(
         'Gerenciar Assinatura',
-        'Funcionalidade em desenvolvimento. Em breve você poderá gerenciar sua assinatura aqui.',
+        'Funcionalidade em desenvolvimento. Em breve voce podera gerenciar sua assinatura aqui.',
         [{ text: 'OK' }]
       );
     } catch (error) {
       console.error('Erro ao gerenciar assinatura:', error);
-      Alert.alert('Erro', 'Não foi possível acessar os detalhes da assinatura.');
+      Alert.alert('Erro', 'Nao foi possivel acessar os detalhes da assinatura.');
     }
   };
 
@@ -201,12 +149,6 @@ export default function SubscriptionScreen() {
     );
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await checkCurrentSubscription();
-    setRefreshing(false);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -216,50 +158,17 @@ export default function SubscriptionScreen() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>🌟 Planos Premium</Text>
+            <Text style={styles.title}>Planos Premium</Text>
             <Text style={styles.subtitle}>
-              Desbloqueie todo o potencial astrológico do Tábula Estelar
+              Desbloqueie todo o potencial astrologico do Tabula Estelar
             </Text>
           </View>
 
-          {/* Benefícios Premium */}
-          <View style={styles.benefitsContainer}>
-            <Text style={styles.benefitsTitle}>✨ O que você ganha:</Text>
-            <View style={styles.benefitsList}>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>🤖</Text>
-                <Text style={styles.benefitText}>IA Conversacional Astrológica</Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>📊</Text>
-                <Text style={styles.benefitText}>Análises Detalhadas Avançadas</Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>🔮</Text>
-                <Text style={styles.benefitText}>Previsões Personalizadas</Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>💫</Text>
-                <Text style={styles.benefitText}>Trânsitos em Tempo Real</Text>
-              </View>
-              <View style={styles.benefitItem}>
-                <Text style={styles.benefitIcon}>👥</Text>
-                <Text style={styles.benefitText}>Grupos Astrológicos Ilimitados</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Planos de Assinatura */}
           <View style={styles.plansContainer}>
-            <Text style={styles.plansTitle}>📋 Escolha seu plano:</Text>
-            
+            <Text style={styles.plansTitle}>Escolha seu plano:</Text>
             {subscriptionPlans.map((plan) => (
               <SubscriptionPlanCard
                 key={plan.id}
@@ -270,41 +179,13 @@ export default function SubscriptionScreen() {
             ))}
           </View>
 
-          {/* Informações Adicionais */}
           <View style={styles.infoContainer}>
-            <Text style={styles.infoTitle}>ℹ️ Informações Importantes:</Text>
+            <Text style={styles.infoTitle}>Informacoes importantes:</Text>
             <View style={styles.infoList}>
-              <Text style={styles.infoText}>• Pagamento seguro via Mercado Pago</Text>
-              <Text style={styles.infoText}>• Cancelamento a qualquer momento</Text>
-              <Text style={styles.infoText}>• Acesso imediato após confirmação</Text>
-              <Text style={styles.infoText}>• Suporte 24/7 para assinantes</Text>
-              <Text style={styles.infoText}>• Atualizações automáticas inclusas</Text>
-            </View>
-          </View>
-
-          {/* FAQ */}
-          <View style={styles.faqContainer}>
-            <Text style={styles.faqTitle}>❓ Perguntas Frequentes:</Text>
-            
-            <View style={styles.faqItem}>
-              <Text style={styles.faqQuestion}>Como funciona o período de teste?</Text>
-              <Text style={styles.faqAnswer}>
-                O plano anual inclui 2 meses grátis, totalizando 14 meses de acesso pelo preço de 12.
-              </Text>
-            </View>
-            
-            <View style={styles.faqItem}>
-              <Text style={styles.faqQuestion}>Posso cancelar a qualquer momento?</Text>
-              <Text style={styles.faqAnswer}>
-                Sim! Você pode cancelar sua assinatura a qualquer momento através das configurações do app.
-              </Text>
-            </View>
-            
-            <View style={styles.faqItem}>
-              <Text style={styles.faqQuestion}>O que acontece se eu cancelar?</Text>
-              <Text style={styles.faqAnswer}>
-                Você manterá acesso até o final do período pago, depois voltará ao plano gratuito.
-              </Text>
+              <Text style={styles.infoText}>Pagamento seguro via Mercado Pago</Text>
+              <Text style={styles.infoText}>Cancelamento a qualquer momento</Text>
+              <Text style={styles.infoText}>Acesso imediato apos confirmacao</Text>
+              <Text style={styles.infoText}>Suporte para assinantes</Text>
             </View>
           </View>
         </ScrollView>
@@ -340,104 +221,40 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#e0e0e0',
+    color: '#E0E0E0',
     textAlign: 'center',
-    lineHeight: 24,
-  },
-  benefitsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginHorizontal: 20,
-    marginBottom: 30,
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
-  },
-  benefitsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  benefitsList: {
-    gap: 12,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  benefitIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  benefitText: {
-    fontSize: 16,
-    color: '#e0e0e0',
-    flex: 1,
   },
   plansContainer: {
     paddingHorizontal: 20,
-    marginBottom: 30,
+    marginTop: 10,
   },
   plansTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    marginBottom: 12,
   },
   infoContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginHorizontal: 20,
-    marginBottom: 30,
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    marginTop: 30,
+    paddingHorizontal: 20,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  infoList: {
-    gap: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#e0e0e0',
-    lineHeight: 20,
-  },
-  faqContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginHorizontal: 20,
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
-  },
-  faqTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  faqItem: {
-    marginBottom: 20,
-  },
-  faqQuestion: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 8,
+    color: '#FFFFFF',
+    marginBottom: 10,
   },
-  faqAnswer: {
-    fontSize: 14,
-    color: '#e0e0e0',
-    lineHeight: 20,
+  infoList: {
+    gap: 6,
+  },
+  infoText: {
+    color: '#D1D5DB',
+  },
+  // Styles used by SubscriptionPlanCard
+  cardWidth: {
+    width: width - 40,
+  },
+  cardHeight: {
+    minHeight: height * 0.25,
   },
 });
