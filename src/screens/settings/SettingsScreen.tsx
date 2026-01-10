@@ -13,6 +13,7 @@ import {
   ToastAndroid,
   TextInput,
   Image,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +22,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '../../hooks/useAuth';
-import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
@@ -55,7 +55,6 @@ interface SettingsItem {
 
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
-  const { preferences, updatePreferences } = useNotificationPreferences();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
@@ -75,6 +74,7 @@ export default function SettingsScreen() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
+  const webPushScale = React.useRef(new Animated.Value(1)).current;
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
@@ -94,56 +94,12 @@ export default function SettingsScreen() {
       title: 'Notificacoes',
       items: [
         {
-          id: 'daily_notifications',
-          title: 'Notificacoes Diarias',
-          subtitle: 'Receba insights astrologicos diarios',
-          icon: 'notifications',
-          type: 'toggle',
-          value: preferences?.dailyNotifications ?? true,
-          onToggle: (value) => updatePreferences({ dailyNotifications: value }),
-        },
-        {
           id: 'register_webpush',
           title: 'Registrar Web Push',
           subtitle: 'Ativar notificacoes no navegador',
           icon: 'notifications-outline',
           type: 'button',
-          onPress: async () => {
-            if (!user?.uid) return Alert.alert('Erro', 'Faca login para registrar')
-            try {
-              await subscribeWebPush(user.uid)
-              Alert.alert('Sucesso', 'Web Push registrado!')
-            } catch (e: any) {
-              Alert.alert('Erro', e?.message || 'Falha ao registrar Web Push')
-            }
-          }
-        },
-        {
-          id: 'critical_alerts',
-          title: 'Alertas Criticos',
-          subtitle: 'Aspectos importantes e oportunidades',
-          icon: 'warning',
-          type: 'toggle',
-          value: preferences?.criticalAlerts ?? true,
-          onToggle: (value) => updatePreferences({ criticalAlerts: value }),
-        },
-        {
-          id: 'group_notifications',
-          title: 'Notificacoes de Grupos',
-          subtitle: 'Atividades e mensagens dos grupos',
-          icon: 'people',
-          type: 'toggle',
-          value: preferences?.groupNotifications ?? true,
-          onToggle: (value) => updatePreferences({ groupNotifications: value }),
-        },
-        {
-          id: 'quiet_hours',
-          title: 'Horario Silencioso',
-          subtitle: 'Nao perturbe das 22h as 8h',
-          icon: 'moon',
-          type: 'toggle',
-          value: preferences?.quietHours ?? false,
-          onToggle: (value) => updatePreferences({ quietHours: value }),
+          onPress: () => handleWebPushPress(),
         },
       ],
     },
@@ -339,6 +295,48 @@ export default function SettingsScreen() {
       console.error('Erro ao solicitar permissao de notificacoes', error);
       Alert.alert('Erro', 'Nao foi possivel solicitar permissao de notificacoes.');
     }
+  };
+
+  function isNotificationsActive() {
+    if (Platform.OS === 'web') {
+      const webNotification = (globalThis as any).Notification;
+      if (!webNotification) return false;
+      return webNotification.permission === 'granted';
+    }
+    return notificationPermission === 'granted';
+  }
+
+  function bounceWebPushButton() {
+    webPushScale.setValue(1);
+    Animated.sequence([
+      Animated.timing(webPushScale, { toValue: 1.06, duration: 120, useNativeDriver: true }),
+      Animated.timing(webPushScale, { toValue: 0.98, duration: 120, useNativeDriver: true }),
+      Animated.timing(webPushScale, { toValue: 1, duration: 120, useNativeDriver: true }),
+    ]).start();
+  }
+
+  async function handleWebPushPress() {
+    if (!isNotificationsActive()) {
+      bounceWebPushButton();
+    }
+    if (!user?.uid) return Alert.alert('Erro', 'Faca login para registrar');
+    try {
+      await subscribeWebPush(user.uid);
+      Alert.alert('Sucesso', 'Web Push registrado!');
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message || 'Falha ao registrar Web Push');
+    }
+  }
+
+  const houseSystemDescriptions: Record<HouseSystem, string> = {
+    placidus: 'Divisao baseada no tempo; popular e equilibrada.',
+    equal: 'Casas iguais de 30°; simples e direta.',
+    porphyry: 'Divide entre Ascendente e MC; boa para iniciantes.',
+    whole_sign: 'Cada signo vira uma casa; leitura clara.',
+    regiomontanus: 'Baseada na esfera celeste; tradicional.',
+    koch: 'Foco na latitude e tempo; detalhada.',
+    campanus: 'Divide o ceu em 12; visual e intuitiva.',
+    topocentric: 'Variante moderna; busca precisao.',
   };
   const loadProfile = async () => {
     if (!user?.uid) return;
@@ -803,10 +801,10 @@ export default function SettingsScreen() {
   const renderSettingsItem = (item: SettingsItem) => {
     const isDanger = item.type === 'danger';
     const isLink = item.type === 'link';
+    const isWebPush = item.id === 'register_webpush';
 
-    return (
+    const content = (
       <TouchableOpacity
-        key={item.id}
         style={[
           styles.settingsItem,
           isDanger && styles.dangerItem,
@@ -853,7 +851,68 @@ export default function SettingsScreen() {
         </View>
       </TouchableOpacity>
     );
+
+    if (!isWebPush) {
+      return (
+        <TouchableOpacity
+          key={item.id}
+          style={[
+            styles.settingsItem,
+            isDanger && styles.dangerItem,
+            isLink && styles.linkItem
+          ]}
+          onPress={item.onPress}
+          disabled={item.type === 'toggle' || isLink}
+        >
+          <View style={styles.itemLeft}>
+            <View style={[styles.iconContainer, isDanger && styles.dangerIcon]}>
+              <Ionicons 
+                name={item.icon as any} 
+                size={20} 
+                color={isDanger ? '#FF4444' : '#FFD700'} 
+              />
+            </View>
+            <View style={styles.itemText}>
+              <Text style={[styles.itemTitle, isDanger && styles.dangerText]}>
+                {item.title}
+              </Text>
+              {item.subtitle && (
+                <Text style={[styles.itemSubtitle, isDanger && styles.dangerSubtitle]}>
+                  {item.subtitle}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.itemRight}>
+            {item.type === 'toggle' ? (
+              <Switch
+                value={item.value}
+                onValueChange={(value) => handleToggle(item.id, value)}
+                trackColor={{ false: '#3C3C3E', true: '#FFD700' }}
+                thumbColor={item.value ? '#0a0e27' : '#f4f3f4'}
+              />
+            ) : (
+              <Ionicons 
+                name={isLink ? 'chevron-forward' : 'chevron-forward'} 
+                size={20} 
+                color={isDanger ? '#FF4444' : '#b0b0b0'} 
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <Animated.View key={item.id} style={{ transform: [{ scale: webPushScale }] }}>
+        {content}
+      </Animated.View>
+    );
   };
+
+  const notificationSection = settingsSections.find((section) => section.title === 'Notificacoes');
+  const otherSections = settingsSections.filter((section) => section.title !== 'Notificacoes');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -987,6 +1046,15 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {notificationSection && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{notificationSection.title}</Text>
+              <View style={styles.sectionContent}>
+                {notificationSection.items.map(renderSettingsItem)}
+              </View>
+            </View>
+          )}
+
           {/* Sistema de Casas */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sistema de Casas</Text>
@@ -1008,7 +1076,9 @@ export default function SettingsScreen() {
                       </View>
                       <View style={styles.itemText}>
                         <Text style={styles.itemTitle}>{formatHouseSystemLabel(system)}</Text>
-                        <Text style={styles.itemSubtitle}>Aplicar ao mapa natal e transitos</Text>
+                        <Text style={styles.itemSubtitle}>
+                          {houseSystemDescriptions[system] || 'Aplicar ao mapa natal e transitos'}
+                        </Text>
                       </View>
                     </View>
                     <View style={styles.itemRight}>
@@ -1020,7 +1090,7 @@ export default function SettingsScreen() {
             </View>
           </View>
           {/* Settings Sections */}
-          {settingsSections.map((section, sectionIndex) => (
+          {otherSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <View style={styles.sectionContent}>
