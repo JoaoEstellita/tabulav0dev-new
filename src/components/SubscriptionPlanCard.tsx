@@ -14,11 +14,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  Alert,
-} from 'react-native';
+  Dimensions,} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MercadoPagoService } from '../services/payment/MercadoPagoService';
 
 interface SubscriptionPlan {
   id: string;
@@ -48,24 +45,9 @@ export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const handleSubscribe = async () => {
     try {
       if (isLoading) return;
-      
-      const result = await MercadoPagoService.createPreference({
-        title: `Tábula Estelar - ${plan.name}`,
-        price: plan.price,
-        quantity: 1,
-        currency_id: 'BRL',
-        description: `Assinatura ${plan.name} do Tábula Estelar`,
-        external_reference: `subscription_${plan.id}`,
-      });
-
-      if (result.success && result.init_point) {
-        onSubscribe(plan.id);
-      } else {
-        Alert.alert('Erro', 'Não foi possível processar o pagamento. Tente novamente.');
-      }
+      onSubscribe(plan.id);
     } catch (error) {
-      console.error('Erro ao criar preferência:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar o pagamento.');
+      console.error('Erro ao criar preferencia:', error);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { checkUserSubscription } from '../services/MercadoPagoService'
+import { MercadoPagoService } from '../services/payment/MercadoPagoService'
 import { useAuth } from './useAuth'
 import { db } from '../config/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -51,9 +51,10 @@ export function useSubscriptionCheck() {
 
       setTrialActive(false)
 
-      const result = await checkUserSubscription(user.uid)
+      const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
+      const result = { active: status.isActive, status: status.status }
       setSubscription(result)
-      setShowModal(!result.active && !adminFlag)
+      setShowModal(!status.isActive && !adminFlag)
       setLoading(false)
     }
 
