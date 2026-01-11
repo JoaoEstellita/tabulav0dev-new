@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -36,13 +36,13 @@ const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   terra: 'leaf',
   ar: 'cloud',
   agua: 'water',
-  '🔥': 'flame',
-  '🌍': 'leaf',
-  '🌎': 'leaf',
-  '🌏': 'leaf',
-  '💨': 'cloud',
-  '💧': 'water',
-  '💦': 'water'
+  '­ƒöÑ': 'flame',
+  '­ƒîì': 'leaf',
+  '­ƒîÄ': 'leaf',
+  '­ƒîÅ': 'leaf',
+  '­ƒÆ¿': 'cloud',
+  '­ƒÆº': 'water',
+  '­ƒÆª': 'water'
 }
 
 const MODALITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -52,9 +52,9 @@ const MODALITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   cardeal: 'flash',
   fixo: 'square',
   mutavel: 'repeat',
-  '⚡': 'flash',
-  '🔒': 'square',
-  '🔁': 'repeat'
+  'ÔÜí': 'flash',
+  '­ƒöÆ': 'square',
+  '­ƒöü': 'repeat'
 }
 
 const FALLBACK_ICON: keyof typeof Ionicons.glyphMap = 'help-circle'
@@ -309,7 +309,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     >
       <View style={styles.cardHeader}>
         <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-        <Text style={styles.cardTitle}>Trânsitos comparativos</Text>
+        <Text style={styles.cardTitle}>Tr├ónsitos comparativos</Text>
       </View>
       {/* Status pessoal agregado */}
       {statusPersonal && (
@@ -394,7 +394,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
+            <Text style={styles.sectionTitle}>Planetas em tr├ónsito</Text>
           </View>
           <View style={styles.toggleGroup}>
             <TouchableOpacity
@@ -423,7 +423,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </Text>
             </View>
 
-            {/* Compara\u00E7\u00E3o Natal vs Trânsito */}
+            {/* Compara\u00E7\u00E3o Natal vs Tr├ónsito */}
             <View style={styles.comparisonGrid}>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>Natal</Text>
@@ -444,7 +444,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </View>
 
               <View style={styles.comparisonColumn}>
-              <Text style={styles.columnTitle}>Trânsito</Text>
+              <Text style={styles.columnTitle}>Tr├ónsito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' (Rx)'}
@@ -722,7 +722,6 @@ const styles = StyleSheet.create({
   },
   // \u00F0\u0178\u0152\u0152 Estilos das casas removidos (n\u00C3\u00A3o implementadas)
 })
-
 
 
 
