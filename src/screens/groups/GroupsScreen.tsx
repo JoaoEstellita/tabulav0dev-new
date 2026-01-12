@@ -1577,7 +1577,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -1682,7 +1682,7 @@ const styles = StyleSheet.create({
   },
   memberCardCompact: {
     backgroundColor: "#1C1C1E",
-    padding: 10,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 10,
   },
@@ -2482,15 +2482,15 @@ const styles = StyleSheet.create({
   },
   groupHeaderTitle: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
   },
   groupHeaderSubtitle: {
     color: "#888",
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 4,
   },
-    groupHeaderActionsRow: {
+  groupHeaderActionsRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -2628,7 +2628,7 @@ const styles = StyleSheet.create({
   groupSummaryCard: {
     backgroundColor: "#14142b",
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
@@ -2646,7 +2646,7 @@ const styles = StyleSheet.create({
   },
   groupSummaryCounter: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 10,
     alignItems: "center",
     borderWidth: 1,
@@ -2681,7 +2681,7 @@ const styles = StyleSheet.create({
   attentionCard: {
     backgroundColor: "#14142b",
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 107, 107, 0.2)",
@@ -2776,7 +2776,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
-
 
 
 
