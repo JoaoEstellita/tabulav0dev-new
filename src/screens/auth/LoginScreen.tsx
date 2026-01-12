@@ -51,12 +51,17 @@ export default function LoginScreen() {
     /Electron|WebView|wv|Cursor/i.test(navigator.userAgent || '')
 
   const openExternalLogin = async () => {
-    const targetUrl = 'https://www.tabulaestelar.com.br/login'
+    const baseUrl =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://www.tabulaestelar.com.br'
+    const targetUrl = `${baseUrl}/`
+    const openUrl = `${baseUrl}/abrir?to=${encodeURIComponent(targetUrl)}`
     if (Platform.OS === 'web') {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+      window.open(openUrl, '_blank', 'noopener,noreferrer')
       return
     }
-    await Linking.openURL(targetUrl)
+    await Linking.openURL(openUrl)
   }
 
   const handleAuth = async () => {

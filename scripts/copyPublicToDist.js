@@ -27,6 +27,7 @@ function copyIfExists(relPath) {
 copyIfExists('landing.html')
 copyIfExists('manifest.json')
 copyIfExists('sw.js')
+copyIfExists(path.join('abrir', 'index.html'))
 
 // Icons (both svg and png variants if present)
 copyIfExists('icon-192.png')

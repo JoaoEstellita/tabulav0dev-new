@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tabula Estelar - Abrir no navegador</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: radial-gradient(1200px 600px at 50% -10%, #24304f 0%, #15182a 55%, #0f0f23 100%);
+        color: #ffffff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      .card {
+        max-width: 520px;
+        width: 100%;
+        background: rgba(17, 20, 35, 0.9);
+        border: 1px solid rgba(255, 215, 0, 0.25);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 10px 0;
+        color: #ffd700;
+      }
+      p {
+        margin: 0 0 14px 0;
+        line-height: 1.4;
+        color: #d6d6d6;
+      }
+      .hint {
+        background: rgba(255, 215, 0, 0.08);
+        border: 1px dashed rgba(255, 215, 0, 0.35);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+      .btn {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        background: #ffd700;
+        color: #0f0f23;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .target {
+        margin-top: 12px;
+        font-size: 12px;
+        color: #8e8e93;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Abrir no navegador</h1>
+      <p>Para continuar com o Google, abra este site fora do navegador do Instagram.</p>
+      <div class="hint">
+        No Instagram, toque em <strong>⋯</strong> e escolha <strong>Abrir no navegador</strong> (Chrome/Safari).
+      </div>
+      <button class="btn" id="open-btn">Abrir no navegador</button>
+      <div class="target" id="target"></div>
+    </div>
+    <script>
+      (function () {
+        var allowedHosts = new Set(['tabulaestelar.com.br', 'www.tabulaestelar.com.br'])
+        var fallback = 'https://www.tabulaestelar.com.br/'
+        var params = new URLSearchParams(window.location.search)
+        var rawTo = params.get('to') || ''
+
+        function resolveTarget(to) {
+          if (!to) return fallback
+          if (to.startsWith('/') && !to.startsWith('//')) {
+            var base = allowedHosts.has(window.location.hostname)
+              ? window.location.origin
+              : fallback
+            return new URL(to, base).href
+          }
+          try {
+            var url = new URL(to)
+            if (allowedHosts.has(url.hostname)) {
+              return url.href
+            }
+          } catch (e) {
+            return fallback
+          }
+          return fallback
+        }
+
+        var targetUrl = resolveTarget(rawTo)
+        var targetEl = document.getElementById('target')
+        if (targetEl) {
+          targetEl.textContent = 'Destino: ' + targetUrl
+        }
+
+        function isAndroid() {
+          return /Android/i.test(navigator.userAgent || '')
+        }
+        function isInstagram() {
+          return /Instagram/i.test(navigator.userAgent || '')
+        }
+
+        function openTarget() {
+          if (isAndroid() && isInstagram()) {
+            var noScheme = targetUrl.replace(/^https?:\/\//i, '')
+            window.location.href =
+              'intent://' + noScheme + '#Intent;scheme=https;package=com.android.chrome;end'
+            setTimeout(function () {
+              window.location.href = targetUrl
+            }, 600)
+            return
+          }
+          window.location.href = targetUrl
+        }
+
+        document.getElementById('open-btn').addEventListener('click', openTarget)
+        setTimeout(openTarget, 700)
+      })()
+    </script>
+  </body>
+</html>
