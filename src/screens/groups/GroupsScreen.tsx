@@ -1,4 +1,4 @@
-"use client"
+ï»¿"use client"
 
 import { useEffect, useState } from "react"
 import {
@@ -30,12 +30,12 @@ import { db } from "../../config/firebase"
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
   { key: "carreira", label: "Carreira" },
-  { key: "financas", label: "Finanças" },
-  { key: "saude", label: "Saúde" },
-  { key: "familia", label: "Família" },
+  { key: "financas", label: "FinanÃ¾as" },
+  { key: "saude", label: "SaÂ·de" },
+  { key: "familia", label: "FamÃlia" },
   { key: "espiritualidade", label: "Espiritualidade" },
-  { key: "comunicacao", label: "Comunicação" },
-  { key: "transformacao", label: "Transformação" },
+  { key: "comunicacao", label: "ComunicaÃ¾Ã’o" },
+  { key: "transformacao", label: "TransformaÃ¾Ã’o" },
 ]
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
@@ -57,7 +57,7 @@ const LIFE_AREA_COLORS: Record<string, string[]> = {
 }
 
 const formatLifeAreas = (areas?: string[]) => {
-  if (!areas || areas.length === 0) return "Todas as áreas"
+  if (!areas || areas.length === 0) return "Todas as ÃŸreas"
   return areas
     .map((area) => LIFE_AREA_OPTIONS.find((option) => option.key === area)?.label || area)
     .join(", ")
@@ -173,12 +173,12 @@ export default function GroupsScreen() {
       .then((group) => {
         if (!isActive) return
         setInvitePreview(group)
-        setInvitePreviewError(group ? "" : "Código não encontrado")
+        setInvitePreviewError(group ? "" : "CÂ¾digo nÃ’o encontrado")
       })
       .catch(() => {
         if (!isActive) return
         setInvitePreview(null)
-        setInvitePreviewError("Não foi possível validar o código")
+        setInvitePreviewError("NÃ’o foi possÃvel validar o cÂ¾digo")
       })
       .finally(() => {
         if (!isActive) return
@@ -345,14 +345,14 @@ export default function GroupsScreen() {
       // Por enquanto, vou simular com um ID ficticio
       Alert.alert(
         'Funcionalidade em desenvolvimento',
-        'Em breve você poderá convidar seu parceiro pelo email. Por enquanto, peça para ele/ela criar uma conta no app.'
+        'Em breve vocÃ› poderÃŸ convidar seu parceiro pelo email. Por enquanto, peÃ¾a para ele/ela criar uma conta no app.'
       )
       
       setShowCreateCoupleModal(false)
       setPartnerEmail('')
     } catch (error) {
       console.error('Erro ao criar relacionamento:', error)
-      Alert.alert('Erro', 'Não foi possível criar o relacionamento')
+      Alert.alert('Erro', 'NÃ’o foi possÃvel criar o relacionamento')
     } finally {
       setCoupleLoading(false)
     }
@@ -372,7 +372,7 @@ export default function GroupsScreen() {
       Alert.alert('Sucesso', 'Compatibilidade atualizada!')
     } catch (error) {
       console.error('Erro ao atualizar compatibilidade:', error)
-      Alert.alert('Erro', 'Não foi possível atualizar a compatibilidade')
+      Alert.alert('Erro', 'NÃ’o foi possÃvel atualizar a compatibilidade')
     } finally {
       setCoupleLoading(false)
     }
@@ -380,7 +380,7 @@ export default function GroupsScreen() {
 
   const createGroup = async () => {
     if (!newGroupName.trim()) {
-      Alert.alert("Erro", "Nome do grupo é obrigatório")
+      Alert.alert("Erro", "Nome do grupo Ãš obrigatÂ¾rio")
       return
     }
 
@@ -403,12 +403,12 @@ export default function GroupsScreen() {
 
   const joinGroup = async () => {
     if (!inviteCode.trim()) {
-      Alert.alert("Erro", "Código de convite é obrigatório")
+      Alert.alert("Erro", "CÂ¾digo de convite Ãš obrigatÂ¾rio")
       return
     }
 
     if (invitePreview && (invitePreview.inviteEnabled === false || invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now())) {
-      Alert.alert("Convite indisponível", "Este convite está desativado ou expirado.")
+      Alert.alert("Convite indisponÃvel", "Este convite estÃŸ desativado ou expirado.")
       return
     }
 
@@ -425,7 +425,7 @@ export default function GroupsScreen() {
         await GroupNotificationService.sendMemberJoined(invitePreview.id, user!.uid)
       }
       
-      Alert.alert("Sucesso", "Você entrou no grupo!")
+      Alert.alert("Sucesso", "VocÃ› entrou no grupo!")
     } catch (error: any) {
       Alert.alert("Erro", error.message)
     }
@@ -435,7 +435,7 @@ export default function GroupsScreen() {
   
   const sendGroupMessage = async () => {
     if (!selectedGroup || !groupMessage.trim()) {
-      Alert.alert("Erro", "Mensagem é obrigatória")
+      Alert.alert("Erro", "Mensagem Ãš obrigatÂ¾ria")
       return
     }
 
@@ -454,7 +454,7 @@ export default function GroupsScreen() {
       
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error)
-      Alert.alert("Erro", "Não foi possível enviar a mensagem")
+      Alert.alert("Erro", "NÃ’o foi possÃvel enviar a mensagem")
     } finally {
       setSendingNotification(false)
     }
@@ -479,7 +479,7 @@ export default function GroupsScreen() {
       Alert.alert("Sucesso", "Convite atualizado")
     } catch (error: any) {
       console.error("Erro ao atualizar convite:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível atualizar convite")
+      Alert.alert("Erro", error?.message || "NÃ’o foi possÃvel atualizar convite")
     } finally {
       setUpdatingInvite(false)
     }
@@ -494,7 +494,7 @@ export default function GroupsScreen() {
       Alert.alert("Sucesso", "Membro removido do grupo")
     } catch (error: any) {
       console.error("Erro ao remover membro:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível remover o membro")
+      Alert.alert("Erro", error?.message || "NÃ’o foi possÃvel remover o membro")
     }
   }
 
@@ -506,10 +506,10 @@ export default function GroupsScreen() {
       setSelectedGroupForDetail(null)
       await loadUserGroups()
       setSelectedGroup(null)
-      Alert.alert("Sucesso", "Você saiu do grupo")
+      Alert.alert("Sucesso", "VocÃ› saiu do grupo")
     } catch (error: any) {
       console.error("Erro ao sair do grupo:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível sair do grupo")
+      Alert.alert("Erro", error?.message || "NÃ’o foi possÃvel sair do grupo")
     }
   }
 
@@ -550,7 +550,7 @@ export default function GroupsScreen() {
   const getStatusLabel = (status?: string) => {
     switch (status) {
       case "critical":
-        return "Crítico"
+        return "CrÃtico"
       case "challenging":
         return "Desafiador"
       case "neutral":
@@ -558,7 +558,7 @@ export default function GroupsScreen() {
       case "positive":
         return "Positivo"
       case "excellent":
-        return "Ótimo"
+        return "Ã‹timo"
       default:
         return "Neutro"
     }
@@ -855,14 +855,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             ))}
           </ScrollView>
 
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerIconButton} onPress={openGroupOrder}>
-              <Ionicons name="swap-vertical" size={18} color="#FFD700" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIconButton} onPress={openGroupActions}>
-              <Ionicons name="add" size={20} color="#FFD700" />
-            </TouchableOpacity>
-          </View>
+          
         </View>
 
         {selectedGroup && (
@@ -873,21 +866,29 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   <Text style={styles.groupHeaderTitle}>{selectedGroup.name}</Text>
                   <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrologico"}</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.groupHeaderManage}
-                  onPress={() => {
-                    setSelectedGroupForDetail(selectedGroup)
-                    setShowGroupDetail(true)
-                  }}
-                >
-                  <Ionicons name="ellipsis-horizontal" size={18} color="#FFD700" />
-                </TouchableOpacity>
+                <View style={styles.groupHeaderActionsRow}>
+                  <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
+                    <Ionicons name="swap-vertical" size={18} color="#FFD700" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupActions}>
+                    <Ionicons name="add" size={20} color="#FFD700" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.groupHeaderActionButton}
+                    onPress={() => {
+                      setSelectedGroupForDetail(selectedGroup)
+                      setShowGroupDetail(true)
+                    }}
+                  >
+                    <Ionicons name="ellipsis-horizontal" size={18} color="#FFD700" />
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.groupHeaderMetaRow}>
                 <Text style={styles.groupMetaTextInline}>
                   {selectedGroup.members?.length || groupMembers.length} membros
                 </Text>
-                <Text style={styles.groupMetaDot}>•</Text>
+                <Text style={styles.groupMetaDot}>Ã²</Text>
                 <Text style={styles.groupMetaTextInline}>
                   {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} areas
                 </Text>
@@ -942,7 +943,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         <Text style={styles.attentionName}>{member.displayName}</Text>
                         <Text style={styles.attentionMeta}>
                           {worst ? worst.label : "Area indisponivel"}{" "}
-                          {percentage !== null ? `• ${percentage}%` : ""}
+                          {percentage !== null ? `Ã² ${percentage}%` : ""}
                         </Text>
                       </View>
                       <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
@@ -1101,7 +1102,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             <Ionicons name="people-outline" size={64} color="#666" />
             <Text style={styles.emptyStateTitle}>Nenhum grupo encontrado</Text>
             <Text style={styles.emptyStateText}>
-              Crie seu primeiro grupo ou entre em um existente usando um código de convite
+              Crie seu primeiro grupo ou entre em um existente usando um cÂ¾digo de convite
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
               <Text style={styles.createFirstGroupButtonText}>Criar primeiro grupo</Text>
@@ -1252,14 +1253,14 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Descrição (opcional)"
+              placeholder="DescriÃ¾Ã’o (opcional)"
               placeholderTextColor="#888"
               value={newGroupDescription}
               onChangeText={setNewGroupDescription}
               multiline
               numberOfLines={3}
             />
-            <Text style={styles.modalLabel}>áreas compartilhadas (padrão do grupo)</Text>
+            <Text style={styles.modalLabel}>ÃŸreas compartilhadas (padrÃ’o do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupSharedLifeAreas.includes(area.key)
@@ -1279,7 +1280,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               })}
             </View>
 
-            <Text style={styles.modalLabel}>áreas notificadas (padrão do grupo)</Text>
+            <Text style={styles.modalLabel}>ÃŸreas notificadas (padrÃ’o do grupo)</Text>
             <View style={styles.lifeAreaOptions}>
               {LIFE_AREA_OPTIONS.map((area) => {
                 const active = newGroupNotifiedLifeAreas.includes(area.key)
@@ -1328,7 +1329,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Código de convite"
+              placeholder="CÂ¾digo de convite"
               placeholderTextColor="#888"
               value={inviteCode}
               onChangeText={setInviteCode}
@@ -1342,10 +1343,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               <View style={styles.invitePreviewBox}>
                 <Text style={styles.invitePreviewTitle}>{invitePreview.name}</Text>
                 <Text style={styles.invitePreviewText}>
-                  áreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
+                  ÃŸreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
                 </Text>
                 <Text style={styles.invitePreviewText}>
-                  áreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
+                  ÃŸreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
                 </Text>
                 {invitePreview.inviteEnabled === false && (
                   <Text style={styles.invitePreviewError}>Convite desativado pelo admin</Text>
@@ -1615,11 +1616,6 @@ const styles = StyleSheet.create({
   },
   groupTabTextActive: {
     color: "#000000",
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
   },
   headerIconButton: {
     width: 34,
@@ -2494,7 +2490,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  groupHeaderManage: {
+    groupHeaderActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  groupHeaderActionButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -2775,7 +2776,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
-
 
 
 
