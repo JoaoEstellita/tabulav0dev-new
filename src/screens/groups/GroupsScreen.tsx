@@ -801,23 +801,18 @@ const buildMemberAreaEntries = (member: GroupMember) => {
     return a.displayName.localeCompare(b.displayName)
   })
 
-  const visibleMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
+  const otherMembers = sortedMembers.filter((member) => member.userId !== user?.uid)
+  const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
 
   const statusCounts = visibleMembers.reduce(
     (acc, member) => {
       const bucket = getMemberSummaryBucket(member)
-      acc[bucket] += 1
+      if (bucket === "critical") acc.critical += 1
+      if (bucket === "positive") acc.positive += 1
       return acc
     },
-    { critical: 0, attention: 0, positive: 0 }
+    { critical: 0, positive: 0 }
   )
-
-  const lastStatusUpdate = sortedMembers.reduce<Date | null>((latest, member) => {
-    const update = member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : null
-    if (!update || Number.isNaN(update.getTime())) return latest
-    if (!latest || update.getTime() > latest.getTime()) return update
-    return latest
-  }, null)
 
   const highlightMembers = visibleMembers
     .filter((member) => getMemberSummaryBucket(member) === "critical")
@@ -866,21 +861,27 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   <Text style={styles.groupHeaderTitle}>{selectedGroup.name}</Text>
                   <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrologico"}</Text>
                 </View>
-                <View style={styles.groupHeaderActionsRow}>
-                  <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
-                    <Ionicons name="swap-vertical" size={18} color="#FFD700" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupActions}>
-                    <Ionicons name="add" size={20} color="#FFD700" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.groupHeaderActionButton}
-                    onPress={() => {
-                      setSelectedGroupForDetail(selectedGroup)
-                      setShowGroupDetail(true)
-                    }}
-                  >
-                    <Ionicons name="ellipsis-horizontal" size={18} color="#FFD700" />
+                <View style={styles.groupHeaderActionsColumn}>
+                  <View style={styles.groupHeaderActionsRow}>
+                    <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
+                      <Ionicons name="swap-vertical" size={18} color="#FFD700" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupActions}>
+                      <Ionicons name="add" size={20} color="#FFD700" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.groupHeaderActionButton}
+                      onPress={() => {
+                        setSelectedGroupForDetail(selectedGroup)
+                        setShowGroupDetail(true)
+                      }}
+                    >
+                      <Ionicons name="ellipsis-horizontal" size={18} color="#FFD700" />
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity style={styles.groupHeaderPreferencesButton} onPress={openGroupSettings}>
+                    <Ionicons name="options" size={12} color="#FFD700" />
+                    <Text style={styles.groupHeaderPreferencesText}>Preferencias</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -898,35 +899,21 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             <View style={styles.groupSummaryCard}>
               <View style={styles.groupSummaryHeader}>
                 <Text style={styles.sectionTitle}>Status geral</Text>
-                <TouchableOpacity style={styles.statusActionButton} onPress={openGroupSettings}>
-                  <Ionicons name="options" size={14} color="#FFD700" />
-                  <Text style={styles.statusActionText}>Preferencias</Text>
-                </TouchableOpacity>
               </View>
-              <Text style={styles.statusUpdated}>
-                Atualizado {lastStatusUpdate ? `h ${formatRelativeTime(lastStatusUpdate)}` : "agora"}
-              </Text>
               <View style={styles.groupSummaryCounters}>
-                <View style={[styles.groupSummaryCounter, styles.summaryCritical]}>
-                  <Text style={styles.groupSummaryValue}>{statusCounts.critical}</Text>
-                  <Text style={styles.groupSummaryLabel}>Criticos</Text>
+                <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
+                  <Text style={styles.groupSummaryValueCompact}>{statusCounts.critical}</Text>
+                  <Text style={styles.groupSummaryLabelCompact}>Criticos</Text>
                 </View>
-                <View style={[styles.groupSummaryCounter, styles.summaryAttention]}>
-                  <Text style={styles.groupSummaryValue}>{statusCounts.attention}</Text>
-                  <Text style={styles.groupSummaryLabel}>Atencao</Text>
-                </View>
-                <View style={[styles.groupSummaryCounter, styles.summaryPositive]}>
-                  <Text style={styles.groupSummaryValue}>{statusCounts.positive}</Text>
-                  <Text style={styles.groupSummaryLabel}>Positivos</Text>
+                <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
+                  <Text style={styles.groupSummaryValueCompact}>{statusCounts.positive}</Text>
+                  <Text style={styles.groupSummaryLabelCompact}>Positivos</Text>
                 </View>
               </View>
-            </View>
-
-            {highlightMembers.length > 0 && (
-              <View style={styles.attentionCard}>
-                <View style={styles.attentionHeader}>
+              {highlightMembers.length > 0 && (
+                <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
                   <Text style={styles.sectionTitle}>Precisa de atencao</Text>
-                  {sortedMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
+                  {visibleMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
                     <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
                       <Text style={styles.attentionLink}>Ver todos</Text>
                     </TouchableOpacity>
@@ -952,8 +939,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     </View>
                   )
                 })}
-              </View>
-            )}
+              )}
+            </View>
 
             <View style={styles.membersSection}>
               <View style={styles.sectionTitleRow}>
@@ -962,7 +949,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   <Ionicons name="swap-vertical" size={16} color="#FFD700" />
                 </TouchableOpacity>
               </View>
-              {sortedMembers.map((member) => {
+              {otherMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
                 const entries = hasStatus ? buildMemberAreaEntries(member) : []
                 return (
@@ -2495,6 +2482,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  groupHeaderActionsColumn: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
   groupHeaderActionButton: {
     width: 32,
     height: 32,
@@ -2504,6 +2495,22 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 215, 0, 0.2)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  groupHeaderPreferencesButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.25)",
+    backgroundColor: "rgba(255, 215, 0, 0.08)",
+  },
+  groupHeaderPreferencesText: {
+    color: "#FFD700",
+    fontSize: 11,
+    fontWeight: "600",
   },
   groupHeaderMetaRow: {
     flexDirection: "row",
@@ -2651,6 +2658,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
+  groupSummaryCounterCompact: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 1,
+  },
   summaryCritical: {
     borderColor: "rgba(255, 107, 107, 0.5)",
     backgroundColor: "rgba(255, 107, 107, 0.08)",
@@ -2673,6 +2687,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 2,
   },
+  groupSummaryValueCompact: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  groupSummaryLabelCompact: {
+    color: "#CCCCCC",
+    fontSize: 9,
+    marginTop: 2,
+  },
   groupSummaryHint: {
     color: "#AAAAAA",
     fontSize: 12,
@@ -2691,6 +2715,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+  },
+  attentionHeaderCompact: {
+    marginTop: 14,
   },
   attentionLink: {
     color: "#FFD700",
