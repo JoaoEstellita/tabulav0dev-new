@@ -72,6 +72,7 @@ export default function SettingsScreen() {
     displayName?: string;
   } | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhotoDirty, setProfilePhotoDirty] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
@@ -87,6 +88,7 @@ export default function SettingsScreen() {
     birthTime: string;
     birthLocation: typeof birthLocation;
     locationQuery: string;
+    photo: string | null;
   } | null>(null);
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
@@ -356,6 +358,7 @@ export default function SettingsScreen() {
         setLocationQuery(display);
       }
       setProfilePhoto(data.profilePhoto || null);
+      setProfilePhotoDirty(false);
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
     }
@@ -424,6 +427,7 @@ export default function SettingsScreen() {
           ? "data:image/jpeg;base64," + manipulatedImage.base64
           : manipulatedImage.uri;
         setProfilePhoto(dataUrl);
+        setProfilePhotoDirty(true);
       }
     } catch (error) {
       console.error("Erro ao selecionar foto:", error);
@@ -460,6 +464,7 @@ export default function SettingsScreen() {
 
         const dataUrl = await compressToDataUrl(file);
         setProfilePhoto(dataUrl);
+        setProfilePhotoDirty(true);
       };
       input.click();
       return;
@@ -527,6 +532,7 @@ export default function SettingsScreen() {
       setIsEditingProfile(false);
       setProfileSnapshot(null);
       setShowLocationSuggestions(false);
+      setProfilePhotoDirty(false);
       Alert.alert("Sucesso", "Perfil atualizado!");
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
@@ -566,8 +572,10 @@ export default function SettingsScreen() {
         setBirthTime(profileSnapshot.birthTime);
         setBirthLocation(profileSnapshot.birthLocation);
         setLocationQuery(profileSnapshot.locationQuery);
+        setProfilePhoto(profileSnapshot.photo);
         setSelectedLocation(null);
       }
+      setProfilePhotoDirty(false);
       setIsEditingProfile(false);
       return;
     }
@@ -578,6 +586,7 @@ export default function SettingsScreen() {
       birthTime,
       birthLocation,
       locationQuery,
+      photo: profilePhoto,
     });
     setIsEditingProfile(true);
 
@@ -1033,10 +1042,10 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={[
                     styles.saveProfileButton,
-                    !isEditingProfile && styles.saveProfileButtonDisabled,
+                    !(isEditingProfile || profilePhotoDirty) && styles.saveProfileButtonDisabled,
                   ]}
                   onPress={saveProfile}
-                  disabled={savingProfile || !isEditingProfile}
+                  disabled={savingProfile || !(isEditingProfile || profilePhotoDirty)}
                 >
                   <Ionicons name="checkmark" size={14} color="#0a0e27" />
                   <Text style={styles.saveProfileText}>
