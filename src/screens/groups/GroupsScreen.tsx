@@ -1577,7 +1577,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
   loadingContainer: {
     flex: 1,
@@ -1718,17 +1718,17 @@ const styles = StyleSheet.create({
   },
   memberStatusMiniInner: {
     borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 7,
   },
   memberStatusMiniLabel: {
     color: "#FFFFFF",
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "600",
   },
   memberStatusMiniValue: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
     marginTop: 2,
   },
