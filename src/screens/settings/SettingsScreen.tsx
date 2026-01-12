@@ -182,14 +182,6 @@ export default function SettingsScreen() {
       title: 'Conta',
       items: [
         {
-          id: 'delete_account',
-          title: 'Excluir Conta',
-          subtitle: 'Remover permanentemente',
-          icon: 'trash',
-          type: 'danger',
-          onPress: () => deleteAccount(),
-        },
-        {
           id: 'sign_out',
           title: 'Sair da Conta',
           subtitle: 'Fazer logout',
