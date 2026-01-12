@@ -120,6 +120,24 @@ export default function GroupDetailModal({
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
+
+  const confirmAction = (
+    title: string,
+    message: string,
+    confirmLabel: string,
+    onConfirm: () => void
+  ) => {
+    if (Platform.OS === 'web') {
+      const ok = window.confirm(`${title}\n\n${message}`)
+      if (ok) onConfirm()
+      return
+    }
+
+    Alert.alert(title, message, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: confirmLabel, style: 'destructive', onPress: onConfirm },
+    ])
+  }
   
   if (!group) return null
   
@@ -310,17 +328,11 @@ export default function GroupDetailModal({
                     <TouchableOpacity
                       style={styles.removeButton}
                       onPress={() => {
-                        Alert.alert(
+                        confirmAction(
                           'Remover membro',
                           `Remover ${member.displayName} do grupo?`,
-                          [
-                            { text: 'Cancelar', style: 'cancel' },
-                            {
-                              text: 'Remover',
-                              style: 'destructive',
-                              onPress: () => onRemoveMember(member),
-                            },
-                          ]
+                          'Remover',
+                          () => onRemoveMember(member)
                         )
                       }}
                     >
@@ -509,14 +521,7 @@ export default function GroupDetailModal({
               const message = isGroupOwner
                 ? 'Voce e o admin. Ao sair, a administracao passa para outro membro.'
                 : 'Tem certeza que deseja sair deste grupo?'
-              Alert.alert(
-                'Sair do Grupo',
-                message,
-                [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Sair', style: 'destructive', onPress: onLeaveGroup }
-                ]
-              )
+              confirmAction('Sair do Grupo', message, 'Sair', onLeaveGroup)
             }}
           >
             <Ionicons name="exit" size={16} color="#FF4444" />

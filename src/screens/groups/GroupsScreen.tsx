@@ -888,7 +888,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 <Text style={styles.groupMetaTextInline}>
                   {selectedGroup.members?.length || groupMembers.length} membros
                 </Text>
-                <Text style={styles.groupMetaDot}>ò</Text>
+                <Text style={styles.groupMetaDot}>•</Text>
                 <Text style={styles.groupMetaTextInline}>
                   {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} areas
                 </Text>
@@ -943,7 +943,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         <Text style={styles.attentionName}>{member.displayName}</Text>
                         <Text style={styles.attentionMeta}>
                           {worst ? worst.label : "Area indisponivel"}{" "}
-                          {percentage !== null ? `ò ${percentage}%` : ""}
+                          {percentage !== null ? `• ${percentage}%` : ""}
                         </Text>
                       </View>
                       <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
@@ -1577,7 +1577,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -1723,12 +1723,12 @@ const styles = StyleSheet.create({
   },
   memberStatusMiniLabel: {
     color: "#FFFFFF",
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "600",
   },
   memberStatusMiniValue: {
     color: "#FFFFFF",
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "700",
     marginTop: 2,
   },
