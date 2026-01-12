@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -56,6 +56,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     latitude: 0,
     longitude: 0,
   })
+  const [birthDateDisplay, setBirthDateDisplay] = useState('')
+  const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
 
   // Estados para DateTimePicker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -63,12 +65,58 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [tempDate, setTempDate] = useState(new Date())
   const [tempTime, setTempTime] = useState(new Date())
 
-  // Estados para busca de localização
+  // Estados para busca de localizaÃ§Ã£o
   const [locationQuery, setLocationQuery] = useState('')
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([])
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [searchingLocation, setSearchingLocation] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null)
+
+  const formatDateDisplay = (isoDate: string) => {
+    if (!isoDate) return ''
+    const parts = isoDate.split('-')
+    if (parts.length !== 3) return isoDate
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+
+  const formatDateInput = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8)
+    if (digits.length <= 2) return digits
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+  }
+
+  const toIsoDateFromDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length !== 8) return null
+    const day = parseInt(digits.slice(0, 2), 10)
+    const month = parseInt(digits.slice(2, 4), 10)
+    const year = parseInt(digits.slice(4, 8), 10)
+    if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null
+    if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) return null
+    const check = new Date(Date.UTC(year, month - 1, day))
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() + 1 !== month || check.getUTCDate() !== day) return null
+    const iso = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
+      .toString()
+      .padStart(2, '0')}`
+    return iso
+  }
+
+  const formatTimeInput = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4)
+    if (digits.length <= 2) return digits
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`
+  }
+
+  const toTimeFromDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length !== 4) return null
+    const hours = parseInt(digits.slice(0, 2), 10)
+    const minutes = parseInt(digits.slice(2, 4), 10)
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return null
+    if (hours > 23 || minutes > 59) return null
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  }
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || tempDate
@@ -76,10 +124,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setTempDate(currentDate)
     
     if (Platform.OS !== 'ios') {
+      const iso = currentDate.toISOString().split('T')[0]
       setFormData(prev => ({
         ...prev,
-        birthDate: currentDate.toISOString().split('T')[0]
+        birthDate: iso
       }))
+      setBirthDateDisplay(formatDateDisplay(iso))
     }
   }
 
@@ -91,39 +141,45 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     if (Platform.OS !== 'ios') {
       const hours = currentTime.getHours().toString().padStart(2, '0')
       const minutes = currentTime.getMinutes().toString().padStart(2, '0')
+      const timeValue = `${hours}:${minutes}`
       setFormData(prev => ({
         ...prev,
-        birthTime: `${hours}:${minutes}`
+        birthTime: timeValue
       }))
+      setBirthTimeDisplay(timeValue)
     }
   }
 
   const confirmDate = () => {
+    const iso = tempDate.toISOString().split('T')[0]
     setFormData(prev => ({
       ...prev,
-      birthDate: tempDate.toISOString().split('T')[0]
+      birthDate: iso
     }))
+    setBirthDateDisplay(formatDateDisplay(iso))
     setShowDatePicker(false)
   }
 
   const confirmTime = () => {
     const hours = tempTime.getHours().toString().padStart(2, '0')
     const minutes = tempTime.getMinutes().toString().padStart(2, '0')
+    const timeValue = `${hours}:${minutes}`
     setFormData(prev => ({
       ...prev,
-      birthTime: `${hours}:${minutes}`
+      birthTime: timeValue
     }))
+    setBirthTimeDisplay(timeValue)
     setShowTimePicker(false)
   }
 
-  // Carregar sugestões iniciais quando o componente monta
+  // Carregar sugestÃµes iniciais quando o componente monta
   useEffect(() => {
     const loadInitialSuggestions = async () => {
       try {
         const initialSuggestions = await LocationService.searchLocations('')
         setLocationSuggestions(initialSuggestions)
       } catch (error) {
-        console.error('Erro ao carregar sugestões iniciais:', error)
+        console.error('Erro ao carregar sugestÃµes iniciais:', error)
       }
     }
     loadInitialSuggestions()
@@ -136,12 +192,28 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           ...prev,
           profilePhoto: savedPhoto,
         }))
-        console.log('✅ Foto carregada do localStorage')
+        console.log('âœ… Foto carregada do localStorage')
       }
     }
   }, [])
 
-  // Busca de localização com debounce
+  useEffect(() => {
+    if (formData.birthDate) {
+      setBirthDateDisplay(formatDateDisplay(formData.birthDate))
+    } else if (birthDateDisplay) {
+      setBirthDateDisplay('')
+    }
+  }, [formData.birthDate])
+
+  useEffect(() => {
+    if (formData.birthTime) {
+      setBirthTimeDisplay(formData.birthTime)
+    } else if (birthTimeDisplay) {
+      setBirthTimeDisplay('')
+    }
+  }, [formData.birthTime])
+
+  // Busca de localizaÃ§Ã£o com debounce
   useEffect(() => {
     if (locationQuery.length >= 2) {
       const timeoutId = setTimeout(async () => {
@@ -150,9 +222,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           const suggestions = await LocationService.searchLocations(locationQuery)
           setLocationSuggestions(suggestions)
           setShowLocationSuggestions(true)
-          console.log('Sugestões encontradas:', suggestions.length)
+          console.log('SugestÃµes encontradas:', suggestions.length)
         } catch (error) {
-          console.error('Erro ao buscar localizações:', error)
+          console.error('Erro ao buscar localizaÃ§Ãµes:', error)
         } finally {
           setSearchingLocation(false)
         }
@@ -160,13 +232,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       return () => clearTimeout(timeoutId)
     } else if (locationQuery.length === 0) {
-      // Se campo vazio, carrega sugestões padrão
+      // Se campo vazio, carrega sugestÃµes padrÃ£o
       const loadDefaultSuggestions = async () => {
         try {
           const defaultSuggestions = await LocationService.searchLocations('')
           setLocationSuggestions(defaultSuggestions)
         } catch (error) {
-          console.error('Erro ao carregar sugestões padrão:', error)
+          console.error('Erro ao carregar sugestÃµes padrÃ£o:', error)
         }
       }
       loadDefaultSuggestions()
@@ -193,7 +265,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setLocationQuery(text)
     setSelectedLocation(null)
     
-    // Se o usuário limpar o campo, limpa também os dados
+    // Se o usuÃ¡rio limpar o campo, limpa tambÃ©m os dados
     if (!text) {
       setFormData(prev => ({
         ...prev,
@@ -205,11 +277,51 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }
 
-  // Funções para manipulação de foto
+  const handleBirthDateInput = (text: string) => {
+    const formatted = formatDateInput(text)
+    setBirthDateDisplay(formatted)
+
+    if (!formatted) {
+      setFormData(prev => ({ ...prev, birthDate: '' }))
+      return
+    }
+
+    const iso = toIsoDateFromDisplay(formatted)
+    if (iso) {
+      setFormData(prev => ({ ...prev, birthDate: iso }))
+    }
+  }
+
+  const handleBirthTimeInput = (text: string) => {
+    const formatted = formatTimeInput(text)
+    setBirthTimeDisplay(formatted)
+
+    if (!formatted) {
+      setFormData(prev => ({ ...prev, birthTime: '' }))
+      return
+    }
+
+    const timeValue = toTimeFromDisplay(formatted)
+    if (timeValue) {
+      setFormData(prev => ({ ...prev, birthTime: timeValue }))
+    }
+  }
+
+  const openDatePicker = () => {
+    if (Platform.OS === 'web') return
+    setShowDatePicker(true)
+  }
+
+  const openTimePicker = () => {
+    if (Platform.OS === 'web') return
+    setShowTimePicker(true)
+  }
+
+  // FunÃ§Ãµes para manipulaÃ§Ã£o de foto
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  galeria para selecionar sua foto.')
       return false
     }
     return true
@@ -246,7 +358,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               profilePhoto: dataUrl,
             }))
             localStorage.setItem('tempProfilePhoto', dataUrl)
-            console.log('✅ Foto selecionada na web (comprimida)')
+            console.log('âœ… Foto selecionada na web (comprimida)')
           } catch {
             // Se algo falhar no localStorage, apenas ignore
           }
@@ -262,11 +374,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
     Alert.alert(
       'Escolher Foto',
-      'Como você gostaria de adicionar sua foto?',
+      'Como vocÃª gostaria de adicionar sua foto?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'Câmera', onPress: () => pickImage('camera') },
+        { text: 'CÃ¢mera', onPress: () => pickImage('camera') },
       ]
     )
   }
@@ -278,7 +390,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  cÃ¢mera.')
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -298,7 +410,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0]
-        console.log('📸 Foto selecionada:', asset.uri)
+        console.log('ðŸ“¸ Foto selecionada:', asset.uri)
         
         // Redimensionar a imagem para otimizar
         const manipulatedImage = await ImageManipulator.manipulateAsync(
@@ -312,11 +424,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           profilePhoto: manipulatedImage.uri,
         }))
 
-        console.log('✅ Foto processada e salva')
+        console.log('âœ… Foto processada e salva')
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
+      Alert.alert('Erro', 'NÃ£o foi possÃ­vel selecionar a foto. Tente novamente.')
     }
   }
 
@@ -337,11 +449,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep1 = () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe seu nome completo.')
+      Alert.alert('Atencao', 'Por favor, informe seu nome completo.')
       return false
     }
     if (formData.fullName.trim().length < 3) {
-      Alert.alert('Atenção', 'O nome deve ter pelo menos 3 caracteres.')
+      Alert.alert('Atencao', 'O nome deve ter pelo menos 3 caracteres.')
       return false
     }
     return true
@@ -349,7 +461,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep2 = () => {
     if (!formData.birthDate) {
-      Alert.alert('Atenção', 'Por favor, selecione sua data de nascimento.')
+      Alert.alert('Atencao', 'Por favor, selecione sua data de nascimento.')
       return false
     }
     return true
@@ -357,25 +469,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep3 = () => {
     if (!formData.birthTime) {
-      Alert.alert('Atenção', 'Por favor, informe sua hora de nascimento.')
+      Alert.alert('Atencao', 'Por favor, informe sua hora de nascimento.')
       return false
     }
     return true
   }
 
   const validateStep4 = () => {
-    // Aceita tanto localização selecionada quanto texto livre
+    // Aceita tanto localizaÃ§Ã£o selecionada quanto texto livre
     if (!selectedLocation && !locationQuery.trim()) {
-      Alert.alert('Atenção', 'Por favor, informe sua cidade de nascimento.')
+      Alert.alert('Atencao', 'Por favor, informe a cidade e o estado de nascimento.')
       return false
     }
 
-    // Se tem texto mas não selecionou nenhuma cidade, usa os dados do texto
+    // Se tem texto mas nÃ£o selecionou nenhuma cidade, usa os dados do texto
     if (!selectedLocation && locationQuery.trim()) {
       setFormData(prev => ({
         ...prev,
         city: locationQuery.trim(),
-        country: 'Brasil', // Padrão para texto livre
+        country: 'Brasil', // PadrÃ£o para texto livre
         latitude: -15.7942, // Coordenadas do centro do Brasil
         longitude: -47.8825,
       }))
@@ -410,9 +522,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const handleComplete = () => {
+    let profilePhoto = formData.profilePhoto
+    if (!profilePhoto && typeof window !== 'undefined') {
+      const savedPhoto = localStorage.getItem('tempProfilePhoto')
+      if (savedPhoto) {
+        profilePhoto = savedPhoto
+      }
+    }
+
     const birthData: BirthData = {
       fullName: formData.fullName.trim(),
-      profilePhoto: formData.profilePhoto,
+      profilePhoto,
       birthDate: formData.birthDate,
       birthTime: formData.birthTime,
       birthLocation: {
@@ -432,7 +552,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       
       <Text style={styles.stepTitle}>Vamos nos conhecer!</Text>
       <Text style={styles.stepDescription}>
-        Como você gostaria de ser chamado? E que tal adicionar uma foto?
+        Como vocÃª gostaria de ser chamado? E que tal adicionar uma foto?
       </Text>
 
       {/* Foto de Perfil */}
@@ -468,7 +588,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       </View>
 
       <Text style={styles.helpText}>
-        👋 Este nome aparecerá em seu perfil e para outros usuários
+        ðŸ‘‹ Este nome aparecerÃ¡ em seu perfil e para outros usuÃ¡rios
       </Text>
     </View>
   )
@@ -477,50 +597,30 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="calendar-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
-      <Text style={styles.stepTitle}>Quando você nasceu?</Text>
+      <Text style={styles.stepTitle}>Quando voce nasceu?</Text>
       <Text style={styles.stepDescription}>
-        Sua data de nascimento é essencial para calcular seu mapa astral
+        Sua data de nascimento e essencial para calcular seu mapa astral
       </Text>
 
-      {/* Para web, usar input date nativo */}
-      {typeof window !== 'undefined' ? (
-        <View style={styles.dateInputContainer}>
-          <Ionicons name="calendar" size={20} color="#FFD700" style={styles.inputIcon} />
-          <input
-            type="date"
-            value={formData.birthDate}
-            onChange={(e) => {
-              setFormData(prev => ({
-                ...prev,
-                birthDate: e.target.value
-              }))
-              console.log('✅ Data selecionada:', e.target.value)
-            }}
-            max={new Date().toISOString().split('T')[0]}
-            min="1900-01-01"
-            style={{
-              backgroundColor: '#2C2C2E',
-              color: '#FFFFFF',
-              fontSize: FONT_SIZES.md,
-              padding: `${SPACING.md}px`,
-              borderRadius: 12,
-              border: '1px solid #444',
-              flex: 1,
-              outline: 'none',
-              borderColor: '#FFD700'
-            }}
-          />
-        </View>
-      ) : (
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+      <View style={styles.inputContainer}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={openDatePicker}>
           <Ionicons name="calendar" size={20} color="#FFD700" />
-          <Text style={styles.dateButtonText}>
-            {formData.birthDate || 'Selecionar data de nascimento'}
-          </Text>
         </TouchableOpacity>
-      )}
+        <TextInput
+          style={styles.dateInput}
+          placeholder="DD/MM/AAAA"
+          placeholderTextColor="#8E8E93"
+          value={birthDateDisplay}
+          onChangeText={handleBirthDateInput}
+          keyboardType={Platform.OS === 'web' ? 'default' : 'number-pad'}
+          returnKeyType="next"
+        />
+        <TouchableOpacity style={styles.inputIconButton} onPress={openDatePicker}>
+          <Ionicons name="calendar-outline" size={20} color="#FFD700" />
+        </TouchableOpacity>
+      </View>
 
-      {showDatePicker && (
+      {showDatePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
           <DateTimePicker
             value={tempDate}
@@ -554,48 +654,30 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="time-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
-      <Text style={styles.stepTitle}>Que horas você nasceu?</Text>
+      <Text style={styles.stepTitle}>Que horas voce nasceu?</Text>
       <Text style={styles.stepDescription}>
-        A hora exata é crucial para determinar seu ascendente e casas astrológicas
+        A hora exata e crucial para determinar seu ascendente e casas astrologicas
       </Text>
 
-      {/* Para web, usar input time nativo */}
-      {typeof window !== 'undefined' ? (
-        <View style={styles.dateInputContainer}>
-          <Ionicons name="time" size={20} color="#FFD700" style={styles.inputIcon} />
-          <input
-            type="time"
-            value={formData.birthTime}
-            onChange={(e) => {
-              setFormData(prev => ({
-                ...prev,
-                birthTime: e.target.value
-              }))
-              console.log('✅ Hora selecionada:', e.target.value)
-            }}
-            style={{
-              backgroundColor: '#2C2C2E',
-              color: '#FFFFFF',
-              fontSize: FONT_SIZES.md,
-              padding: `${SPACING.md}px`,
-              borderRadius: 12,
-              border: '1px solid #444',
-              flex: 1,
-              outline: 'none',
-              borderColor: '#FFD700'
-            }}
-          />
-        </View>
-      ) : (
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowTimePicker(true)}>
+      <View style={styles.inputContainer}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={openTimePicker}>
           <Ionicons name="time" size={20} color="#FFD700" />
-          <Text style={styles.dateButtonText}>
-            {formData.birthTime || 'Selecionar hora de nascimento'}
-          </Text>
         </TouchableOpacity>
-      )}
+        <TextInput
+          style={styles.dateInput}
+          placeholder="HH:MM"
+          placeholderTextColor="#8E8E93"
+          value={birthTimeDisplay}
+          onChangeText={handleBirthTimeInput}
+          keyboardType={Platform.OS === 'web' ? 'default' : 'number-pad'}
+          returnKeyType="next"
+        />
+        <TouchableOpacity style={styles.inputIconButton} onPress={openTimePicker}>
+          <Ionicons name="time-outline" size={20} color="#FFD700" />
+        </TouchableOpacity>
+      </View>
 
-      {showTimePicker && (
+      {showTimePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
           <DateTimePicker
             value={tempTime}
@@ -618,65 +700,44 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       )}
 
       <Text style={styles.helpText}>
-        💡 Se não souber a hora exata, consulte sua certidão de nascimento
+        Se nao souber a hora exata, consulte sua certidao de nascimento
       </Text>
     </View>
   )
 
   const renderStep4 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Text style={styles.stepTitle}>📍 Local de Nascimento</Text>
+      <Text style={styles.stepTitle}>Local de nascimento</Text>
       <Text style={styles.stepDescription}>
-        Informe a cidade onde você nasceu para cálculos astrológicos precisos
+        Informe a cidade e o estado (UF) onde voce nasceu para calculos mais precisos
       </Text>
 
-      {/* Lista de sugestões - AGORA ACIMA DO CAMPO */}
-      {showLocationSuggestions && locationSuggestions.length > 0 && (
-        <View style={[styles.suggestionsContainer, styles.suggestionsAbove]}>
-          <Text style={styles.suggestionsTitle}>
-            ✨ Cidades disponíveis - Toque para selecionar:
-          </Text>
-          {locationSuggestions.slice(0, 6).map((item, index) => (
-            <TouchableOpacity 
-              key={`${item.city}-${index}`}
-              style={styles.suggestionItem}
-              onPress={() => handleLocationSelect(item)}
-            >
-              <Ionicons name="location" size={18} color="#FFD700" />
-              <Text style={styles.suggestionText}>{item.displayName}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#666" />
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* Campo de busca de localização */}
       <View style={styles.inputContainer}>
-        <Ionicons name="search" size={20} color="#FFD700" style={styles.inputIcon} />
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowLocationSuggestions(true)}>
+          <Ionicons name="search" size={20} color="#FFD700" />
+        </TouchableOpacity>
         <TextInput
           style={styles.locationInput}
-          placeholder="Digite o nome da cidade..."
+          placeholder="Cidade e estado (ex: Rio de Janeiro, RJ)"
           placeholderTextColor="#8E8E93"
           value={locationQuery}
           onChangeText={handleLocationQueryChange}
           onFocus={() => {
             setShowLocationSuggestions(true)
             if (locationSuggestions.length === 0) {
-              // Carregar sugestões padrão
               LocationService.searchLocations('').then(suggestions => {
                 setLocationSuggestions(suggestions)
               }).catch(error => {
-                console.error('Erro ao carregar sugestões padrão:', error)
+                console.error('Erro ao carregar sugestoes padrao:', error)
               })
             }
           }}
           onBlur={() => {
-            // Pequeno delay para permitir toque nas sugestões
-            setTimeout(() => setShowLocationSuggestions(false), 200)
+            setTimeout(() => setShowLocationSuggestions(false), 150)
           }}
         />
         {locationQuery.length > 0 && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.clearButton}
             onPress={() => {
               setLocationQuery('')
@@ -688,22 +749,41 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         )}
       </View>
 
-      {/* Mensagem para mostrar sugestões */}
-      {!selectedLocation && !showLocationSuggestions && (
-        <View style={styles.suggestionPrompt}>
-          <Ionicons name="information-circle" size={20} color="#FFD700" />
-          <Text style={styles.suggestionPromptText}>
-            Toque no campo acima para ver as cidades disponíveis
-          </Text>
+      {showLocationSuggestions && locationSuggestions.length > 0 && (
+        <View style={styles.suggestionsContainer}>
+          <Text style={styles.suggestionsTitle}>Cidades e estados disponiveis</Text>
+          <FlatList
+            data={locationSuggestions.slice(0, 8)}
+            keyExtractor={(item, index) => `${item.city}-${index}`}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.suggestionItem}
+                onPress={() => handleLocationSelect(item)}
+              >
+                <Ionicons name="location" size={18} color="#FFD700" />
+                <Text style={styles.suggestionText}>{item.displayName}</Text>
+                <Ionicons name="chevron-forward" size={16} color="#666" />
+              </TouchableOpacity>
+            )}
+          />
         </View>
       )}
 
-      {/* Confirmação da localização selecionada */}
+      {!selectedLocation && !showLocationSuggestions && (
+        <TouchableOpacity style={styles.suggestionPrompt} onPress={() => setShowLocationSuggestions(true)}>
+          <Ionicons name="information-circle" size={20} color="#FFD700" />
+          <Text style={styles.suggestionPromptText}>
+            Toque para ver sugestoes de cidades e estados
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {selectedLocation && (
         <View style={styles.selectedLocationContainer}>
           <Ionicons name="checkmark-circle" size={24} color="#10B981" />
           <View style={styles.selectedLocationTextContainer}>
-            <Text style={styles.selectedLocationLabel}>Cidade selecionada:</Text>
+            <Text style={styles.selectedLocationLabel}>Local selecionado:</Text>
             <Text style={styles.selectedLocationText}>
               {selectedLocation.displayName}
             </Text>
@@ -712,15 +792,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       )}
 
       <Text style={styles.helpText}>
-        {selectedLocation 
-          ? "✅ Perfeito! Agora você pode finalizar" 
-          : "🔍 Digite pelo menos 2 letras ou toque no campo para ver opções"
+        {selectedLocation
+          ? "Pronto. Voce pode finalizar."
+          : "Digite pelo menos 2 letras para filtrar as opcoes."
         }
       </Text>
     </View>
   )
-
-  const renderProgressBar = () => (
+const renderProgressBar = () => (
     <View style={styles.progressContainer}>
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${(currentStep / 4) * 100}%` }]} />
@@ -731,7 +810,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <ResponsiveContainer>
           {renderProgressBar()}
           
@@ -766,7 +850,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               ) : (
                 <>
                   <Text style={styles.nextButtonText}>
-                    {currentStep === 4 ? 'Finalizar' : 'Próximo'}
+                    {currentStep === 4 ? 'Finalizar' : 'PrÃ³ximo'}
                   </Text>
                   <Ionicons name="arrow-forward" size={20} color="#000" />
                 </>
@@ -774,7 +858,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             </TouchableOpacity>
           </View>
 
-          {/* Botão para voltar ao login */}
+          {/* BotÃ£o para voltar ao login */}
           <TouchableOpacity 
             style={styles.backToLoginButton} 
             onPress={async () => { await hardSignOut(); logout(); }}
@@ -796,7 +880,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 80,
   },
   progressContainer: {
     marginBottom: 40,
@@ -820,8 +904,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
+    flexGrow: 1,
+    justifyContent: 'flex-start',
   },
   stepContainer: {
     alignItems: 'center',
@@ -881,6 +965,16 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 12,
+  },
+  inputIconButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: 4,
+  },
+  dateInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: FONT_SIZES.md,
+    paddingVertical: SPACING.md,
   },
   locationInput: {
     flex: 1,
@@ -969,7 +1063,7 @@ const styles = StyleSheet.create({
   suggestionsAbove: {
     marginTop: 0,
     marginBottom: 8,
-    // Sombra para destacar que está "flutuando" acima
+    // Sombra para destacar que estÃ¡ "flutuando" acima
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1148,3 +1242,6 @@ const styles = StyleSheet.create({
     minWidth: '100%',
   },
 })
+
+
+

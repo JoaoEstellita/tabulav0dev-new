@@ -89,7 +89,20 @@ export default function LoginScreen() {
         await signUp(email, password)
       }
     } catch (error: any) {
-      Alert.alert("Erro", error.message)
+      const code = error?.code || ''
+      if (code === 'auth/email-already-in-use') {
+        Alert.alert("Email ja cadastrado", "Esse email ja esta em uso. Tente entrar ou recuperar a senha.")
+        return
+      }
+      if (code === 'auth/invalid-email') {
+        Alert.alert("Email invalido", "Verifique o formato do email e tente novamente.")
+        return
+      }
+      if (code === 'auth/weak-password') {
+        Alert.alert("Senha fraca", "Use uma senha com pelo menos 6 caracteres.")
+        return
+      }
+      Alert.alert("Erro", error.message || "Nao foi possivel concluir. Tente novamente.")
     } finally {
       setLoading(false)
     }
