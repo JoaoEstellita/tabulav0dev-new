@@ -899,15 +899,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             <View style={styles.groupSummaryCard}>
               <View style={styles.groupSummaryHeader}>
                 <Text style={styles.sectionTitle}>Status geral</Text>
-              </View>
-              <View style={styles.groupSummaryCounters}>
-                <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
-                  <Text style={styles.groupSummaryValueCompact}>{statusCounts.critical}</Text>
-                  <Text style={styles.groupSummaryLabelCompact}>Criticos</Text>
-                </View>
-                <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
-                  <Text style={styles.groupSummaryValueCompact}>{statusCounts.positive}</Text>
-                  <Text style={styles.groupSummaryLabelCompact}>Positivos</Text>
+                <View style={styles.groupSummaryCounters}>
+                  <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
+                    <Text style={styles.groupSummaryValueCompact}>{statusCounts.critical}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>Criticos</Text>
+                  </View>
+                  <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
+                    <Text style={styles.groupSummaryValueCompact}>{statusCounts.positive}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>Positivos</Text>
+                  </View>
                 </View>
               </View>
               {highlightMembers.length > 0 && (
@@ -2651,7 +2651,8 @@ const styles = StyleSheet.create({
   groupSummaryCounters: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 10,
+    marginTop: 0,
+    alignItems: "center",
   },
   groupSummaryCounter: {
     flex: 1,
@@ -2661,8 +2662,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   groupSummaryCounterCompact: {
-    flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 12,
+    minWidth: 72,
     borderRadius: 10,
     alignItems: "center",
     borderWidth: 1,
