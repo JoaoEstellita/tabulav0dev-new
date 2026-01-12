@@ -889,7 +889,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 <Text style={styles.groupMetaTextInline}>
                   {selectedGroup.members?.length || groupMembers.length} membros
                 </Text>
-                <Text style={styles.groupMetaDot}>•</Text>
+                <Text style={styles.groupMetaDot}>-</Text>
                 <Text style={styles.groupMetaTextInline}>
                   {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} areas
                 </Text>
@@ -911,34 +911,36 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 </View>
               </View>
               {highlightMembers.length > 0 && (
-                <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
-                  <Text style={styles.sectionTitle}>Precisa de atencao</Text>
-                  {visibleMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
-                    <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
-                      <Text style={styles.attentionLink}>Ver todos</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                {highlightMembers.map((member) => {
-                  const worst = getMemberWorstArea(member)
-                  const percentage = typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null
-                  const bucket = worst ? worst.bucket : getMemberSummaryBucket(member)
-                  return (
-                    <View key={member.userId} style={styles.attentionRow}>
-                      <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
-                      <View style={styles.attentionInfo}>
-                        <Text style={styles.attentionName}>{member.displayName}</Text>
-                        <Text style={styles.attentionMeta}>
-                          {worst ? worst.label : "Area indisponivel"}{" "}
-                          {percentage !== null ? `• ${percentage}%` : ""}
+                <>
+                  <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
+                    <Text style={styles.sectionTitle}>Precisa de atencao</Text>
+                    {visibleMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
+                      <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
+                        <Text style={styles.attentionLink}>Ver todos</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {highlightMembers.map((member) => {
+                    const worst = getMemberWorstArea(member)
+                    const percentage = typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null
+                    const bucket = worst ? worst.bucket : getMemberSummaryBucket(member)
+                    return (
+                      <View key={member.userId} style={styles.attentionRow}>
+                        <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
+                        <View style={styles.attentionInfo}>
+                          <Text style={styles.attentionName}>{member.displayName}</Text>
+                          <Text style={styles.attentionMeta}>
+                            {worst ? worst.label : "Area indisponivel"}{" "}
+                            {percentage !== null ? `- ${percentage}%` : ""}
+                          </Text>
+                        </View>
+                        <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
+                          {member.lastStatusUpdate ? `${formatRelativeTime(member.lastStatusUpdate)}` : "Agora"}
                         </Text>
                       </View>
-                      <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
-                        {member.lastStatusUpdate ? `${formatRelativeTime(member.lastStatusUpdate)}` : "Agora"}
-                      </Text>
-                    </View>
-                  )
-                })}
+                    )
+                  })}
+                </>
               )}
             </View>
 
@@ -2803,6 +2805,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
+
 
 
 
