@@ -403,7 +403,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     >
       <View style={styles.cardHeader}>
         <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-        <Text style={styles.cardTitle}>Tr├ónsitos comparativos</Text>
+        <Text style={styles.cardTitle}>Trânsitos comparativos</Text>
       </View>
       {/* Status pessoal agregado */}
       {statusPersonal && (
@@ -488,7 +488,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Planetas em tr├ónsito</Text>
+            <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
           </View>
           <View style={styles.toggleGroup}>
             <TouchableOpacity
@@ -517,7 +517,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </Text>
             </View>
 
-            {/* Compara\u00E7\u00E3o Natal vs Tr├ónsito */}
+            {/* Compara\u00E7\u00E3o Natal vs Trânsito */}
             <View style={styles.comparisonGrid}>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.columnTitle}>Natal</Text>
@@ -538,7 +538,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </View>
 
               <View style={styles.comparisonColumn}>
-              <Text style={styles.columnTitle}>Tr├ónsito</Text>
+              <Text style={styles.columnTitle}>Trânsito</Text>
                 <Text style={styles.positionText}>
                   {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
                   {comparison.current.isRetrograde && ' (Rx)'}
@@ -548,7 +548,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   const info = nearestCuspInfo(comparison.current.longitude)
                   if (info && info.distance <= 0.5) {
                     return (
-                      <Text style={styles.nearCuspChip}>{`pr\u00F3x. c├ç┬ºspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
+                      <Text style={styles.nearCuspChip}>{`pr\u00F3x. cúspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
                     )
                   }
                   return null
