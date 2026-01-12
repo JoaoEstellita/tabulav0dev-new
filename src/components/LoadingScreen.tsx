@@ -1,6 +1,9 @@
 import React from 'react'
-import { Image, StyleSheet, View } from 'react-native'
+import { Image, StyleSheet, View, Dimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+
+const { width } = Dimensions.get('window')
+const LOADING_SIZE = Math.min(220, Math.round(width * 0.55))
 
 export default function LoadingScreen() {
   return (
@@ -19,13 +22,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   center: {
-    width: 140,
-    height: 140,
+    width: LOADING_SIZE,
+    height: LOADING_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
-    width: 140,
-    height: 140,
+    width: LOADING_SIZE,
+    height: LOADING_SIZE,
   },
 })
