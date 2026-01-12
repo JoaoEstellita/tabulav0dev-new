@@ -20,6 +20,8 @@ interface TransitComparisonCardProps {
   natalAscendant?: number
   natalMidheaven?: number
   housesCusps?: number[]
+  lifeAreas?: Record<string, any>
+  lifeAreasDebug?: Record<string, any>
   personalWindows?: Array<{
     transitPlanet: string
     natalPlanet: string
@@ -90,6 +92,17 @@ const PLANET_ICONS: Record<string, string> = {
   Pluto: '\u2647'
 }
 
+const AREA_LABELS: Record<string, string> = {
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Finan\u00E7as',
+  saude: 'Sa\u00FAde',
+  familia: 'Fam\u00EDlia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunica\u00E7\u00E3o',
+  transformacao: 'Transforma\u00E7\u00E3o'
+}
+
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 
 export default function TransitComparisonCard({
@@ -100,6 +113,8 @@ export default function TransitComparisonCard({
   natalAscendant,
   natalMidheaven,
   housesCusps,
+  lifeAreas,
+  lifeAreasDebug,
   personalWindows
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
@@ -144,6 +159,11 @@ export default function TransitComparisonCard({
   }
 
   const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
+
+const translatePlanetTokens = (text: string): string =>
+  decodeUnicodeEscapes(String(text || ''))
+    .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
+    .replace(/\bdeg\b/gi, '\u00B0')
 
 const replaceEmojiTokens = (value: string): string => {
   return String(value || '')
@@ -208,6 +228,15 @@ const formatStatusLabel = (status: string | null) => {
     critico: 'Cr\u00EDtico'
   }
   return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
+}
+
+const formatAreaStatus = (value: string | number | null | undefined) => {
+  if (typeof value === 'number') {
+    if (value >= 70) return 'Excelente'
+    if (value >= 40) return 'Moderado'
+    return 'CrÝtico'
+  }
+  return formatStatusLabel(value || null)
 }
 
 const getSignFromDegree = (degree: number): string => {
@@ -301,6 +330,71 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       return null
     }
   }, [housesCusps])
+
+  const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
+  if (!lifeAreasDebug || typeof lifeAreasDebug !== 'object') return []
+  return Object.entries(lifeAreasDebug)
+    .map(([areaKey, data]) => {
+      const details = (data as any)?.planetDetails || []
+      const planetDetail = details.find((entry: any) => entry.planet === planetName)
+      if (!planetDetail) return null
+
+      const statusValue = (lifeAreas as any)?.[areaKey]?.status ?? null
+      const statusLabel = formatAreaStatus(statusValue)
+      const signScore = Number(planetDetail.signScore || 0)
+      const houseScore = Number(planetDetail.houseScore || 0)
+      const houseLabel = planetDetail.house ? `Casa ${planetDetail.house}` : null
+      const signLabel = planetDetail.sign ? `Signo ${decodeUnicodeEscapes(planetDetail.sign)}` : null
+
+      const houseImpact =
+        houseScore >= 65 ? 'relevante' : houseScore <= 35 ? 'pouco relevante' : 'moderada'
+      const signImpact =
+        signScore >= 70 ? 'dignidade' : signScore <= 35 ? 'debilidade' : 'neutro'
+
+      const conditionTags = Array.isArray(planetDetail.conditions?.tags)
+        ? planetDetail.conditions.tags
+        : []
+      const aspects = Array.isArray(planetDetail.aspects) ? planetDetail.aspects : []
+      const isHarmonious = (type: string) => ['trigono', 'sextil'].includes(normalizeKey(type))
+      const isChallenging = (type: string) =>
+        ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(normalizeKey(type))
+      const isNeutral = (type: string) => normalizeKey(type) === 'conjuncao'
+
+      const harmoniousCount = aspects.filter((a: any) => isHarmonious(a.type)).length
+      const challengingCount = aspects.filter((a: any) => isChallenging(a.type)).length
+      const neutralCount = aspects.filter((a: any) => isNeutral(a.type)).length
+
+      const reasonLine = [
+        houseLabel ? `${houseLabel} (${houseImpact})` : null,
+        signLabel ? `${signLabel} (${signImpact})` : null
+      ]
+        .filter(Boolean)
+        .join(' | ')
+
+      const conditionLine = conditionTags.length
+        ? `Condiþ§es: ${conditionTags.join(', ')}`
+        : null
+
+      const aspectLine = `Aspectos: ${harmoniousCount} harm¶nicos, ${challengingCount} desafiadores${
+        neutralCount ? `, ${neutralCount} neutros` : ''
+      }`
+
+      return {
+        areaKey,
+        statusLabel,
+        totalScore: Number(planetDetail.total || 0),
+        lines: [reasonLine, conditionLine, aspectLine].filter(Boolean)
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b as any).totalScore - (a as any).totalScore)
+    .slice(0, 2) as Array<{
+      areaKey: string
+      statusLabel: string
+      totalScore: number
+      lines: string[]
+    }>
+}, [lifeAreasDebug, lifeAreas])
 
   return (
     <LinearGradient
@@ -450,6 +544,114 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   {comparison.current.isRetrograde && ' (Rx)'}
                 </Text>
                 <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
+                {(() => {
+                  const info = nearestCuspInfo(comparison.current.longitude)
+                  if (info && info.distance <= 0.5) {
+                    return (
+                      <Text style={styles.nearCuspChip}>{`pr\u00F3x. c├ç┬ºspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
+                    )
+                  }
+                  return null
+                })()}
+                <View style={styles.attributesRow}>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.current.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateElement(comparison.current.element)}</Text>
+                  </View>
+                  <View style={styles.attributeChip}>
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(comparison.current.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                    <Text style={styles.attributeChipText}>{translateModality(comparison.current.modality)}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+                        {/* Transitos pessoais para este planeta em transito */}
+            {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>Transitos pessoais:</Text>
+                {personalByTransitPlanet[comparison.name].map((t, idx) => {
+                  const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
+                  const windowInfo = resolveWindowInfo((t as any).window || personalWindowMap.get(key))
+                  return (
+                    <View key={idx} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
+                      <View style={styles.aspectBody}>
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>
+                            {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
+                          </Text>
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+            {/* Aspectos coletivos do momento para este planeta */}
+            {comparison.planetaryAspects.length > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
+                {comparison.planetaryAspects.map((aspect, aspectIndex) => {
+                  const windowInfo = resolveWindowInfo((aspect as any).window)
+                  return (
+                    <View key={aspectIndex} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
+                      <View style={styles.aspectBody}>
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>
+                            {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
+                          </Text>
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
+            {/* Aspectos com casas */}
+            {comparison.houseAspects.length > 0 && (
+              <View style={styles.aspectsSection}>
+                <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
+                {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
+                  const windowInfo = resolveWindowInfo((houseAspect as any).window)
+                  return (
+                    <View key={houseIndex} style={styles.aspectItem}>
+                      <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
+                      <View style={styles.aspectBody}>
+                        <View style={styles.aspectLine}>
+                          <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
+                          {windowInfo ? (
+                            <Text style={styles.aspectMetaInline}>
+                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
+                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
+                            </Text>
+                          ) : (
+                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
           </View>
         ))}
 
@@ -607,6 +809,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  influenceRow: {
+    marginBottom: 8,
+  },
+  influenceArea: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  influenceText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    marginLeft: 2,
+    marginBottom: 2,
   },
   toggleGroup: {
     flexDirection: 'row',
