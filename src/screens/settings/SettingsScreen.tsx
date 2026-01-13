@@ -31,7 +31,7 @@ import { subscribeWebPush } from '../../webpush/subscribe';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
 
@@ -76,6 +76,12 @@ export default function SettingsScreen() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
+  const [pushStatus, setPushStatus] = useState({
+    hasWebPush: false,
+    hasFcmToken: false,
+    permission: 'unknown' as Notifications.PermissionStatus | 'unknown',
+  });
+  const [pushStatusLoading, setPushStatusLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
@@ -200,6 +206,11 @@ export default function SettingsScreen() {
   }, []);
 
   useEffect(() => {
+    if (!user?.uid) return;
+    loadPushStatus();
+  }, [user?.uid, notificationPermission]);
+
+  useEffect(() => {
     if (userSettings?.houseSystem) {
       setHouseSystem(normalizeHouseSystem(userSettings.houseSystem));
     }
@@ -249,6 +260,35 @@ export default function SettingsScreen() {
     } catch (error) {
       console.warn('Nao foi possivel verificar permissao de notificacoes', error);
       setNotificationPermission('unknown');
+    }
+  };
+
+  const loadPushStatus = async () => {
+    if (!user?.uid) return;
+    setPushStatusLoading(true);
+    try {
+      const fcmSnap = await getDocs(
+        query(collection(db, 'users', user.uid, 'fcmTokens'), limit(1))
+      );
+      const webPushSnap = await getDocs(
+        query(collection(db, 'users', user.uid, 'webPushSubscriptions'), limit(1))
+      );
+      let permission: Notifications.PermissionStatus | 'unknown' = 'unknown';
+      if (Platform.OS === 'web') {
+        const webNotification = (globalThis as any).Notification;
+        permission = webNotification ? webNotification.permission : 'unknown';
+      } else {
+        permission = notificationPermission;
+      }
+      setPushStatus({
+        hasWebPush: webPushSnap.size > 0,
+        hasFcmToken: fcmSnap.size > 0,
+        permission,
+      });
+    } catch (error) {
+      console.warn('Nao foi possivel verificar status de notificacoes', error);
+    } finally {
+      setPushStatusLoading(false);
     }
   };
 
@@ -317,6 +357,7 @@ export default function SettingsScreen() {
     try {
       await subscribeWebPush(user.uid);
       Alert.alert('Sucesso', 'Web Push registrado!');
+      loadPushStatus();
     } catch (e: any) {
       Alert.alert('Erro', e?.message || 'Falha ao registrar Web Push');
     }
@@ -804,6 +845,11 @@ export default function SettingsScreen() {
     const isDanger = item.type === 'danger';
     const isLink = item.type === 'link';
     const isWebPush = item.id === 'register_webpush';
+    const permissionLabel = pushStatus.permission === 'granted'
+      ? 'Permitido'
+      : pushStatus.permission === 'denied'
+        ? 'Bloqueado'
+        : 'Nao definido';
 
     const content = (
       <TouchableOpacity
@@ -909,6 +955,26 @@ export default function SettingsScreen() {
     return (
       <Animated.View key={item.id} style={{ transform: [{ scale: webPushScale }] }}>
         {content}
+        <View style={styles.pushStatusCard}>
+          <View style={styles.pushStatusRow}>
+            <View style={[styles.pushStatusDot, pushStatus.permission === 'granted' ? styles.pushStatusOk : styles.pushStatusWarn]} />
+            <Text style={styles.pushStatusLabel}>Permissao:</Text>
+            <Text style={styles.pushStatusValue}>{permissionLabel}</Text>
+          </View>
+          <View style={styles.pushStatusRow}>
+            <View style={[styles.pushStatusDot, pushStatus.hasFcmToken ? styles.pushStatusOk : styles.pushStatusWarn]} />
+            <Text style={styles.pushStatusLabel}>Token Mobile:</Text>
+            <Text style={styles.pushStatusValue}>{pushStatus.hasFcmToken ? 'Registrado' : 'Ausente'}</Text>
+          </View>
+          <View style={styles.pushStatusRow}>
+            <View style={[styles.pushStatusDot, pushStatus.hasWebPush ? styles.pushStatusOk : styles.pushStatusWarn]} />
+            <Text style={styles.pushStatusLabel}>Web Push:</Text>
+            <Text style={styles.pushStatusValue}>{pushStatus.hasWebPush ? 'Registrado' : 'Ausente'}</Text>
+          </View>
+          {pushStatusLoading && (
+            <Text style={styles.pushStatusLoading}>Atualizando...</Text>
+          )}
+        </View>
       </Animated.View>
     );
   };
@@ -1420,6 +1486,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888888',
     textAlign: 'center',
+  },
+  pushStatusCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.18)',
+  },
+  pushStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  pushStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  pushStatusOk: {
+    backgroundColor: '#4CD964',
+  },
+  pushStatusWarn: {
+    backgroundColor: '#FFD700',
+  },
+  pushStatusLabel: {
+    color: '#b0b0b0',
+    fontSize: 12,
+    marginRight: 6,
+  },
+  pushStatusValue: {
+    color: '#e0e0e0',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pushStatusLoading: {
+    marginTop: 4,
+    color: '#9aa0b1',
+    fontSize: 11,
   },
 });
 
