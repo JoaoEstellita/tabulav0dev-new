@@ -7,6 +7,7 @@ import {
   promptInstall,
   subscribePwaInstall,
 } from '../utils/pwaInstall'
+import { trackPwaInstallClick } from '../services/analytics/PwaInstallTracker'
 
 export default function PWADownloadButton() {
   const [pwaState, setPwaState] = useState(getPwaState())
@@ -46,13 +47,21 @@ export default function PWADownloadButton() {
     const isAndroid = /android/i.test(ua)
     const isInstagram = /instagram/i.test(ua)
 
+    await trackPwaInstallClick('install_button', {
+      isStandalone: debugInfo.isStandalone,
+      hasDeferredPrompt: debugInfo.hasDeferredPrompt,
+      isIos: debugInfo.isIOS,
+      isHttps: debugInfo.isHttps,
+      origin: debugInfo.origin,
+    })
+
     if (debugInfo.isIOS) {
       setShowIosHelp(true)
       return
     }
 
-    if (isAndroid && isInstagram && !debugInfo.hasDeferredPrompt) {
-      setShowAndroidHelp(true)
+    if (isAndroid && isInstagram) {
+      openInstallInBrowser()
       return
     }
 

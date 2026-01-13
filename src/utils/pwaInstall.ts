@@ -46,6 +46,15 @@ const init = () => {
   state.deferredPrompt = null
   emit()
 
+  import('../services/analytics/PwaInstallTracker')
+    .then(({ initPwaInstallTracking, trackPwaInstalled }) => {
+      initPwaInstallTracking()
+      if (state.isInstalled) {
+        trackPwaInstalled('standalone-detected')
+      }
+    })
+    .catch(() => {})
+
   const onBeforeInstallPrompt = (e: Event) => {
     e.preventDefault()
     state.deferredPrompt = e as BeforeInstallPromptEvent
@@ -58,6 +67,9 @@ const init = () => {
     state.canInstall = false
     state.isInstalled = true
     emit()
+    import('../services/analytics/PwaInstallTracker')
+      .then(({ trackPwaInstalled }) => trackPwaInstalled('appinstalled'))
+      .catch(() => {})
   }
 
   window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
