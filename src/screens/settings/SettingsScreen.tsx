@@ -268,14 +268,10 @@ export default function SettingsScreen() {
   const loadPushStatus = async () => {
     if (!user?.uid) return;
     setPushStatusLoading(true);
+    let hasFcmToken = false;
+    let hasWebPush = false;
+    let permission: PushPermission = 'unknown';
     try {
-      const fcmSnap = await getDocs(
-        query(collection(db, 'users', user.uid, 'fcmTokens'), limit(1))
-      );
-      const webPushSnap = await getDocs(
-        query(collection(db, 'users', user.uid, 'webPushSubscriptions'), limit(1))
-      );
-      let permission: PushPermission = 'unknown';
       if (Platform.OS === 'web') {
         const webNotification = (globalThis as any).Notification;
         if (!webNotification) {
@@ -283,16 +279,41 @@ export default function SettingsScreen() {
         } else {
           permission = webNotification.permission as PushPermission;
         }
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (registration?.pushManager) {
+              const sub = await registration.pushManager.getSubscription();
+              hasWebPush = !!sub;
+            }
+          } catch (error) {
+            console.warn('Falha ao ler subscription local de web push', error);
+          }
+        }
       } else {
         permission = (notificationPermission === 'undetermined' ? 'default' : notificationPermission) as PushPermission;
       }
+      try {
+        const fcmSnap = await getDocs(
+          query(collection(db, 'users', user.uid, 'fcmTokens'), limit(1))
+        );
+        hasFcmToken = fcmSnap.size > 0;
+      } catch (error) {
+        console.warn('Nao foi possivel carregar tokens mobile', error);
+      }
+      try {
+        const webPushSnap = await getDocs(
+          query(collection(db, 'users', user.uid, 'webPushSubscriptions'), limit(1))
+        );
+        hasWebPush = hasWebPush || webPushSnap.size > 0;
+      } catch (error) {
+        console.warn('Nao foi possivel carregar subscriptions web push', error);
+      }
       setPushStatus({
-        hasWebPush: webPushSnap.size > 0,
-        hasFcmToken: fcmSnap.size > 0,
+        hasWebPush,
+        hasFcmToken,
         permission,
       });
-    } catch (error) {
-      console.warn('Nao foi possivel verificar status de notificacoes', error);
     } finally {
       setPushStatusLoading(false);
     }
