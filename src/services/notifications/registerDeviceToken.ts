@@ -44,3 +44,8 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
     return { error: error?.message || 'Erro ao registrar token' }
   }
 }
+
+// Backward-compatible alias for older bundles.
+export async function registerAndroidDeviceToken(userId: string): Promise<RegisterResult> {
+  return registerDeviceToken(userId)
+}
