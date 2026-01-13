@@ -5,7 +5,7 @@ import { useAuth } from './useAuth'
 import { useNotificationPreferences } from './useNotificationPreferences'
 import UserService from '../services/firebase/UserService'
 import AstroNotificationOrchestrator from '../services/notifications/AstroNotificationOrchestrator'
-import { registerAndroidDeviceToken } from '../services/notifications/registerDeviceToken'
+import { registerDeviceToken } from '../services/notifications/registerDeviceToken'
 
 const LAST_SCHEDULE_KEY = '@tabula_estelar:last_auto_schedule_key'
 
@@ -20,7 +20,7 @@ export function useAutoScheduleNotifications() {
         if (Platform.OS === 'web') return
         if (!user?.uid) return
         // Registrar token Android (no-op em iOS)
-        try { await registerAndroidDeviceToken(user.uid) } catch {}
+        try { await registerDeviceToken(user.uid) } catch {}
 
         const last = await AsyncStorage.getItem(LAST_SCHEDULE_KEY)
         const today = new Date().toISOString().slice(0,10)

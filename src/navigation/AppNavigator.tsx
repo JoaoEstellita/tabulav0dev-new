@@ -18,7 +18,7 @@ import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
-import { registerAndroidDeviceToken } from "../services/notifications/registerDeviceToken"
+import { registerDeviceToken } from "../services/notifications/registerDeviceToken"
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
@@ -124,8 +124,8 @@ export default function AppNavigator() {
 
   useEffect(() => {
     if (!user?.uid) return
-    if (Platform.OS !== "android") return
-    registerAndroidDeviceToken(user.uid).catch(() => {})
+    if (Platform.OS !== "android" && Platform.OS !== "ios") return
+    registerDeviceToken(user.uid).catch(() => {})
   }, [user?.uid])
 
   console.log('🧭 AppNavigator render:', {

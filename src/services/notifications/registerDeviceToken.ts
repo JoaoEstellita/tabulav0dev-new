@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications'
+﻿import * as Notifications from 'expo-notifications'
 import { Platform } from 'react-native'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -9,27 +9,30 @@ type RegisterResult = {
   error?: string
 }
 
-export async function registerAndroidDeviceToken(userId: string): Promise<RegisterResult> {
+export async function registerDeviceToken(userId: string): Promise<RegisterResult> {
   try {
-    if (!userId) return { error: 'Usuário inválido' }
-    if (Platform.OS !== 'android') return { error: 'Somente Android' }
+    if (!userId) return { error: 'Usuario invalido' }
+    if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+      return { error: 'Somente Android ou iOS' }
+    }
 
     const perm = await Notifications.requestPermissionsAsync()
     if (perm.status !== 'granted') {
-      return { error: 'Permissão negada' }
+      return { error: 'Permissao negada' }
     }
 
-    const pushToken = await Notifications.getDevicePushTokenAsync()
-    const token = pushToken.data
+    const token =
+      Platform.OS === 'ios'
+        ? (await Notifications.getExpoPushTokenAsync({ projectId: 'tabula-estelar-84fdc' })).data
+        : (await Notifications.getDevicePushTokenAsync()).data
 
-    // Gerar deviceId estável a partir do token
     const deviceId = Buffer.from(token).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
 
     await setDoc(
       doc(db, `users/${userId}/fcmTokens/${deviceId}`),
       {
         token,
-        platform: 'android',
+        platform: Platform.OS,
         deviceId,
         lastUpdated: serverTimestamp(),
       },
@@ -41,5 +44,3 @@ export async function registerAndroidDeviceToken(userId: string): Promise<Regist
     return { error: error?.message || 'Erro ao registrar token' }
   }
 }
-
-
