@@ -806,15 +806,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const statusCounts = visibleMembers.reduce(
     (acc, member) => {
-      const overall = member.astrologicalStatus?.overall
-      const bucket =
-        overall === "critical" || overall === "challenging"
-          ? "critical"
-          : overall === "positive" || overall === "excellent"
-          ? "positive"
-          : getMemberSummaryBucket(member)
-      if (bucket === "critical") acc.critical += 1
-      if (bucket === "positive") acc.positive += 1
+      buildMemberAreaEntries(member).forEach((entry) => {
+        if (entry.bucket === "critical") acc.critical += 1
+        if (entry.bucket === "positive") acc.positive += 1
+      })
       return acc
     },
     { critical: 0, positive: 0 }
