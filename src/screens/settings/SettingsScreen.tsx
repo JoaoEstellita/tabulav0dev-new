@@ -28,6 +28,7 @@ import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
+import { registerDeviceToken } from '../../services/notifications/registerDeviceToken';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
@@ -74,12 +75,13 @@ export default function SettingsScreen() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [profilePhotoDirty, setProfilePhotoDirty] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  type PushPermission = 'granted' | 'denied' | 'default' | 'undetermined' | 'unknown' | 'unsupported';
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
   const [pushStatus, setPushStatus] = useState({
     hasWebPush: false,
     hasFcmToken: false,
-    permission: 'unknown' as Notifications.PermissionStatus | 'unknown',
+    permission: 'unknown' as PushPermission,
   });
   const [pushStatusLoading, setPushStatusLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -273,12 +275,16 @@ export default function SettingsScreen() {
       const webPushSnap = await getDocs(
         query(collection(db, 'users', user.uid, 'webPushSubscriptions'), limit(1))
       );
-      let permission: Notifications.PermissionStatus | 'unknown' = 'unknown';
+      let permission: PushPermission = 'unknown';
       if (Platform.OS === 'web') {
         const webNotification = (globalThis as any).Notification;
-        permission = webNotification ? webNotification.permission : 'unknown';
+        if (!webNotification) {
+          permission = 'unsupported';
+        } else {
+          permission = webNotification.permission as PushPermission;
+        }
       } else {
-        permission = notificationPermission;
+        permission = (notificationPermission === 'undetermined' ? 'default' : notificationPermission) as PushPermission;
       }
       setPushStatus({
         hasWebPush: webPushSnap.size > 0,
@@ -355,11 +361,39 @@ export default function SettingsScreen() {
     }
     if (!user?.uid) return Alert.alert('Erro', 'Faca login para registrar');
     try {
-      await subscribeWebPush(user.uid);
-      Alert.alert('Sucesso', 'Web Push registrado!');
+      if (Platform.OS === 'web') {
+        const webNotification = (globalThis as any).Notification;
+        if (!webNotification) {
+          window.alert('Notificacoes nao suportadas neste navegador.');
+          return;
+        }
+        if (webNotification.permission !== 'granted') {
+          const permission = await webNotification.requestPermission();
+          if (permission !== 'granted') {
+            window.alert('Permissao de notificacao nao concedida.');
+            loadPushStatus();
+            return;
+          }
+        }
+        await subscribeWebPush(user.uid);
+        window.alert('Web Push registrado!');
+      } else {
+        const result = await registerDeviceToken(user.uid);
+        if (result?.error) {
+          Alert.alert('Erro', result.error);
+        } else {
+          Alert.alert('Sucesso', 'Notificacoes do celular ativadas!');
+        }
+      }
       loadPushStatus();
+      refreshNotificationPermission();
     } catch (e: any) {
-      Alert.alert('Erro', e?.message || 'Falha ao registrar Web Push');
+      const message = e?.message || 'Falha ao registrar notificacao';
+      if (Platform.OS === 'web') {
+        window.alert(message);
+      } else {
+        Alert.alert('Erro', message);
+      }
     }
   }
 
@@ -849,7 +883,15 @@ export default function SettingsScreen() {
       ? 'Permitido'
       : pushStatus.permission === 'denied'
         ? 'Bloqueado'
-        : 'Nao definido';
+        : pushStatus.permission === 'unsupported'
+          ? 'Indisponivel'
+          : 'Nao definido';
+    const mobileTokenLabel = Platform.OS === 'web'
+      ? 'Nao aplicavel'
+      : (pushStatus.hasFcmToken ? 'Registrado' : 'Ausente');
+    const webPushLabel = Platform.OS !== 'web'
+      ? 'Nao aplicavel'
+      : (pushStatus.hasWebPush ? 'Registrado' : 'Ausente');
 
     const content = (
       <TouchableOpacity
@@ -971,12 +1013,12 @@ export default function SettingsScreen() {
           <View style={styles.pushStatusRow}>
             <View style={[styles.pushStatusDot, pushStatus.hasFcmToken ? styles.pushStatusOk : styles.pushStatusWarn]} />
             <Text style={styles.pushStatusLabel}>Token Mobile:</Text>
-            <Text style={styles.pushStatusValue}>{pushStatus.hasFcmToken ? 'Registrado' : 'Ausente'}</Text>
+            <Text style={styles.pushStatusValue}>{mobileTokenLabel}</Text>
           </View>
           <View style={styles.pushStatusRow}>
             <View style={[styles.pushStatusDot, pushStatus.hasWebPush ? styles.pushStatusOk : styles.pushStatusWarn]} />
             <Text style={styles.pushStatusLabel}>Web Push:</Text>
-            <Text style={styles.pushStatusValue}>{pushStatus.hasWebPush ? 'Registrado' : 'Ausente'}</Text>
+            <Text style={styles.pushStatusValue}>{webPushLabel}</Text>
           </View>
           {pushStatusLoading && (
             <Text style={styles.pushStatusLoading}>Atualizando...</Text>
