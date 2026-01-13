@@ -30,8 +30,8 @@ import { db } from "../../config/firebase"
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
   { key: "carreira", label: "Carreira" },
-  { key: "financas", label: "Finanþas" },
-  { key: "saude", label: "Sa·de" },
+  { key: "financas", label: "Financas" },
+  { key: "saude", label: "Saude" },
   { key: "familia", label: "FamÝlia" },
   { key: "espiritualidade", label: "Espiritualidade" },
   { key: "comunicacao", label: "ComunicaþÒo" },
@@ -806,7 +806,13 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const statusCounts = visibleMembers.reduce(
     (acc, member) => {
-      const bucket = getMemberSummaryBucket(member)
+      const overall = member.astrologicalStatus?.overall
+      const bucket =
+        overall === "critical" || overall === "challenging"
+          ? "critical"
+          : overall === "positive" || overall === "excellent"
+          ? "positive"
+          : getMemberSummaryBucket(member)
       if (bucket === "critical") acc.critical += 1
       if (bucket === "positive") acc.positive += 1
       return acc
@@ -2662,9 +2668,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   groupSummaryCounterCompact: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    minWidth: 72,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    minWidth: 90,
     borderRadius: 10,
     alignItems: "center",
     borderWidth: 1,
@@ -2693,12 +2699,12 @@ const styles = StyleSheet.create({
   },
   groupSummaryValueCompact: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
   },
   groupSummaryLabelCompact: {
     color: "#CCCCCC",
-    fontSize: 9,
+    fontSize: 11,
     marginTop: 2,
   },
   groupSummaryHint: {
