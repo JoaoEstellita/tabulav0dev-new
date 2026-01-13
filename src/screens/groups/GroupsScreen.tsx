@@ -803,8 +803,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const otherMembers = sortedMembers.filter((member) => member.userId !== user?.uid)
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
+  const summaryMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
 
-  const statusCounts = visibleMembers.reduce(
+  const statusCounts = summaryMembers.reduce(
     (acc, member) => {
       buildMemberAreaEntries(member).forEach((entry) => {
         if (entry.bucket === "critical") acc.critical += 1
@@ -815,7 +816,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
     { critical: 0, positive: 0 }
   )
 
-  const highlightMembers = visibleMembers
+  const highlightMembers = summaryMembers
     .filter((member) => getMemberSummaryBucket(member) === "critical")
     .slice(0, 3)
 
