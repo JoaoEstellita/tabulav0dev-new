@@ -176,6 +176,7 @@ export default function ProfileScreen() {
           body: data.body || data.message || "",
           createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
           source: "user",
+          groupName: data.groupName || null,
           area: data.area || data.lifeArea || null,
           percentage: typeof data.percentage === "number" ? data.percentage : data.meta?.percentage || null,
           status: data.status || null,
@@ -259,10 +260,24 @@ export default function ProfileScreen() {
   }
 
   const notificationBadgeCount = notifications.filter((item) => {
-    if (!item.createdAt) return false
-    const diffMs = Date.now() - item.createdAt.getTime()
-    return diffMs < 24 * 60 * 60 * 1000
+    return !item.isRead
   }).length
+
+  const markNotificationRead = async (item: UnifiedNotification) => {
+    if (item.source !== "user" || item.isRead) return
+    const docId = item.id.replace("user_", "")
+    try {
+      await updateDoc(doc(db, "notifications", docId), {
+        isRead: true,
+        readAt: serverTimestamp(),
+      })
+      setNotifications((prev) =>
+        prev.map((entry) => (entry.id === item.id ? { ...entry, isRead: true } : entry))
+      )
+    } catch (error) {
+      console.error("Erro ao marcar notificacao como lida:", error)
+    }
+  }
 
   const saveProfile = async () => {
     if (!profile) return
@@ -821,7 +836,12 @@ export default function ProfileScreen() {
                 <Text style={styles.notificationEmpty}>Sem notificacoes no momento</Text>
               ) : (
                 notifications.map((item) => (
-                  <View key={item.id} style={styles.notificationItem}>
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.notificationItem}
+                    activeOpacity={0.8}
+                    onPress={() => markNotificationRead(item)}
+                  >
                     <View style={styles.notificationIcon}>
                       <Ionicons
                         name={item.source === "group" ? "people" : "sparkles"}
@@ -856,7 +876,7 @@ export default function ProfileScreen() {
                         <Text style={styles.notificationTime}>{formatNotificationTime(item.createdAt)}</Text>
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))
               )}
             </ScrollView>
