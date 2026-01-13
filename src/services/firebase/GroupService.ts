@@ -394,18 +394,6 @@ class GroupService {
 
       for (const group of userGroups) {
         const message = this.generateAlertMessage(status)
-
-        // Criar alerta no Firestore
-        await addDoc(collection(db, "groupAlerts"), {
-          groupId: group.id,
-          userId,
-          userName,
-          status: status.overall,
-          message,
-          createdAt: Timestamp.now(),
-          isRead: false,
-        })
-
         // Enviar notificacoes push para membros do grupo
         await this.sendNotificationsToGroupMembers(group, userId, status, message, userName)
       }
