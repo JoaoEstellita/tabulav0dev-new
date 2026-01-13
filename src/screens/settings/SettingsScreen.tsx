@@ -956,6 +956,13 @@ export default function SettingsScreen() {
       <Animated.View key={item.id} style={{ transform: [{ scale: webPushScale }] }}>
         {content}
         <View style={styles.pushStatusCard}>
+          <View style={styles.pushStatusHeader}>
+            <Text style={styles.pushStatusTitle}>Status de notificacoes</Text>
+            <TouchableOpacity style={styles.pushStatusRefresh} onPress={loadPushStatus}>
+              <Ionicons name="refresh" size={14} color="#FFD700" />
+              <Text style={styles.pushStatusRefreshText}>Atualizar</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.pushStatusRow}>
             <View style={[styles.pushStatusDot, pushStatus.permission === 'granted' ? styles.pushStatusOk : styles.pushStatusWarn]} />
             <Text style={styles.pushStatusLabel}>Permissao:</Text>
@@ -1500,6 +1507,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  pushStatusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  pushStatusTitle: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  pushStatusRefresh: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pushStatusRefreshText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
   },
   pushStatusDot: {
     width: 8,
