@@ -1,4 +1,6 @@
 "use client"
+import { useEffect } from "react"
+import { Platform } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
@@ -16,6 +18,7 @@ import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
+import { registerAndroidDeviceToken } from "../services/notifications/registerDeviceToken"
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
@@ -118,6 +121,12 @@ function RootNavigator() {
 
 export default function AppNavigator() {
   const { user, loading, birthDataComplete } = useAuth()
+
+  useEffect(() => {
+    if (!user?.uid) return
+    if (Platform.OS !== "android") return
+    registerAndroidDeviceToken(user.uid).catch(() => {})
+  }, [user?.uid])
 
   console.log('🧭 AppNavigator render:', {
     user: user ? `${user.uid.substring(0, 8)}...` : 'null',
