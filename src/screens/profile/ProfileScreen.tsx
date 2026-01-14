@@ -260,7 +260,7 @@ export default function ProfileScreen() {
   }
 
   const notificationBadgeCount = notifications.filter((item) => {
-    return !item.isRead
+    return item.source === "user" && !item.isRead
   }).length
 
   const markNotificationRead = async (item: UnifiedNotification) => {
