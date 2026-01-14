@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
+import { View, Text, StyleSheet } from "react-native"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -13,12 +14,14 @@ import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
 import GroupsAccessGuard from "../screens/groups/GroupsAccessGuard"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
+import NotificationsScreen from "../screens/notifications/NotificationsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
 import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 import { registerDeviceToken } from "../services/notifications/registerDeviceToken"
+import { useNotificationStore } from "../context/NotificationStore"
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
@@ -41,6 +44,21 @@ function OnboardingStack() {
 }
 
 function MainTabs() {
+  const { unreadCount } = useNotificationStore()
+
+  const renderStarIcon = (focused: boolean, color: string, size: number) => (
+    <View style={styles.tabIconWrap}>
+      <Ionicons name={focused ? "star" : "star-outline"} size={size} color={color} />
+      {unreadCount > 0 && (
+        <View style={styles.tabBadge}>
+          <Text style={styles.tabBadgeText}>
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  )
+
   return (
     <Tab.Navigator
       lazy={false}
@@ -52,8 +70,10 @@ function MainTabs() {
             iconName = focused ? "person" : "person-outline"
           } else if (route.name === "Groups") {
             iconName = focused ? "people" : "people-outline"
+          } else if (route.name === "Notifications") {
+            return renderStarIcon(focused, color, size)
           } else if (route.name === "Premium") {
-            iconName = focused ? "star" : "star-outline"
+            iconName = focused ? "sparkles" : "sparkles-outline"
           } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline"
           } else {
@@ -88,6 +108,13 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
+      <Tab.Screen name="Notifications" options={{ title: "Notificacoes" }}>
+        {() => (
+          <ErrorBoundary>
+            <NotificationsScreen />
+          </ErrorBoundary>
+        )}
+      </Tab.Screen>
       <Tab.Screen name="Premium" options={{ title: "Premium" }}>
         {() => (
           <ErrorBoundary>
@@ -118,6 +145,32 @@ function RootNavigator() {
     </RootStack.Navigator>
   )
 }
+
+const styles = StyleSheet.create({
+  tabIconWrap: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabBadge: {
+    position: "absolute",
+    top: -6,
+    right: -10,
+    backgroundColor: "#FFD700",
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabBadgeText: {
+    color: "#0F0F23",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+})
 
 export default function AppNavigator() {
   const { user, loading, birthDataComplete } = useAuth()

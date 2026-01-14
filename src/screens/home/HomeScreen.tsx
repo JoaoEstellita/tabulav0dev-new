@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
@@ -29,6 +30,7 @@ import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseS
 import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
+import { useNotificationStore } from '../../context/NotificationStore'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -37,6 +39,8 @@ export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
     const { user } = useAuth()
+    const navigation = useNavigation()
+    const { unreadCount } = useNotificationStore()
     const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
@@ -314,11 +318,18 @@ export default function HomeScreen() {
               const press = usePressScale()
               return (
                 <Animated.View style={press.style}>
-                  <TouchableOpacity style={styles.notificationButton} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
-                    <Ionicons name="notifications-outline" size={24} color="#FFD700" />
-                    {criticalAreas.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.notificationButton}
+                    onPressIn={press.onPressIn}
+                    onPressOut={press.onPressOut}
+                    onPress={() => navigation.navigate('Notifications' as never)}
+                  >
+                    <Ionicons name="star-outline" size={24} color="#FFD700" />
+                    {unreadCount > 0 && (
                       <View style={styles.notificationBadge}>
-                        <Text style={styles.notificationBadgeText}>{criticalAreas.length}</Text>
+                        <Text style={styles.notificationBadgeText}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </Text>
                       </View>
                     )}
                   </TouchableOpacity>

@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
+import { useNotificationStore } from "../../context/NotificationStore"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
@@ -65,7 +67,9 @@ interface UnifiedNotification {
 }
 
 export default function ProfileScreen() {
+  const navigation = useNavigation()
   const { user, logout } = useAuth()
+  const { unreadCount } = useNotificationStore()
   const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -259,9 +263,7 @@ export default function ProfileScreen() {
     return value.toLocaleDateString()
   }
 
-  const notificationBadgeCount = notifications.filter((item) => {
-    return (!item.source || item.source === "user") && !item.isRead
-  }).length
+  const notificationBadgeCount = unreadCount
 
   const markNotificationRead = async (item: UnifiedNotification) => {
     if (item.source !== "user" || item.isRead) return
@@ -537,8 +539,8 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.profileHeaderTop}>
             <View style={styles.profileHeaderSpacer} />
-            <TouchableOpacity style={styles.notificationBell} onPress={() => setShowNotifications(true)}>
-              <Ionicons name="notifications-outline" size={22} color="#FFD700" />
+            <TouchableOpacity style={styles.notificationBell} onPress={() => navigation.navigate("Notifications" as never)}>
+              <Ionicons name="star-outline" size={22} color="#FFD700" />
               {notificationBadgeCount > 0 && (
                 <View style={styles.notificationBellBadge}>
                   <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>

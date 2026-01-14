@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
+import { useRoute } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useAuth } from "../../hooks/useAuth"
@@ -64,6 +65,7 @@ const formatLifeAreas = (areas?: string[]) => {
 }
 
 export default function GroupsScreen() {
+  const route = useRoute<any>()
   const { user } = useAuth()
   const { preferences } = useNotificationPreferences()
   
@@ -117,6 +119,8 @@ export default function GroupsScreen() {
     key: string
   } | null>(null)
   const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
+  const focusHandledRef = useRef(false)
+  const lastFocusKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -156,6 +160,45 @@ export default function GroupsScreen() {
       loadGroupData()
     }
   }, [selectedGroup])
+
+  useEffect(() => {
+    const params = route?.params || {}
+    const focusKey = `${params.groupId || ""}_${params.memberId || ""}_${params.lifeArea || ""}`
+    if (focusKey && lastFocusKeyRef.current !== focusKey) {
+      focusHandledRef.current = false
+      lastFocusKeyRef.current = focusKey
+    }
+  }, [route?.params])
+
+  useEffect(() => {
+    const params = route?.params || {}
+    const focusGroupId = params.groupId
+    if (!focusGroupId || !groups.length) return
+    if (selectedGroup?.id === focusGroupId) return
+    const target = groups.find((group) => group.id === focusGroupId)
+    if (target) {
+      setSelectedGroup(target)
+    }
+  }, [route?.params, groups, selectedGroup?.id])
+
+  useEffect(() => {
+    const params = route?.params || {}
+    const focusGroupId = params.groupId
+    const focusMemberId = params.memberId
+    const focusArea = params.lifeArea
+
+    if (!focusGroupId || !focusMemberId || !focusArea) return
+    if (!selectedGroup || selectedGroup.id !== focusGroupId) return
+    if (!groupMembers.length) return
+    if (focusHandledRef.current) return
+
+    const member = groupMembers.find((entry) => entry.userId === focusMemberId)
+    if (!member) return
+
+    setSelectedMemberArea({ member, key: focusArea })
+    setShowMemberAreaModal(true)
+    focusHandledRef.current = true
+  }, [route?.params, selectedGroup?.id, groupMembers])
 
   useEffect(() => {
     const cleanedCode = inviteCode.trim().toUpperCase()

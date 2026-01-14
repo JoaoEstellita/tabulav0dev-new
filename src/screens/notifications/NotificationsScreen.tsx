@@ -1,0 +1,305 @@
+import React, { useMemo } from "react"
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
+
+const formatDateLabel = (value?: any) => {
+  if (!value?.toDate) return "Sem data"
+  const date = value.toDate()
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+
+  const dateKey = date.toISOString().slice(0, 10)
+  const todayKey = today.toISOString().slice(0, 10)
+  const yesterdayKey = yesterday.toISOString().slice(0, 10)
+
+  if (dateKey === todayKey) return "Hoje"
+  if (dateKey === yesterdayKey) return "Ontem"
+  return date.toLocaleDateString("pt-BR")
+}
+
+const renderTemplate = (template?: NotificationTemplate, vars?: Record<string, any>) => {
+  const safeVars = vars || {}
+  const apply = (text?: string) =>
+    (text || "").replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, key) => {
+      const value = safeVars[key.trim()]
+      return value === undefined || value === null ? "" : String(value)
+    })
+  return {
+    title: apply(template?.title),
+    body: apply(template?.body),
+  }
+}
+
+const getNotificationSeverity = (item: NotificationItem) => {
+  const status = (item.status || item.severity || "").toLowerCase()
+  if (status === "critical" || status === "challenging") return "critical"
+  if (status === "positive" || status === "excellent") return "positive"
+  if ((item.type || "").includes("positive")) return "positive"
+  if ((item.type || "").includes("critical")) return "critical"
+  return "info"
+}
+
+const getSeverityIcon = (severity: string) => {
+  switch (severity) {
+    case "critical":
+      return { name: "alert-circle", color: "#F87171" }
+    case "positive":
+      return { name: "checkmark-circle", color: "#34D399" }
+    default:
+      return { name: "information-circle", color: "#FBBF24" }
+  }
+}
+
+const resolveNotificationText = (
+  item: NotificationItem,
+  templates: Record<string, NotificationTemplate>
+) => {
+  if (item.templateKey && templates[item.templateKey]) {
+    const template = templates[item.templateKey]
+    if (template?.enabled === false) {
+      return { title: item.title || "", body: item.body || "" }
+    }
+    const rendered = renderTemplate(template, item.templateVars || item.meta)
+    return {
+      title: rendered.title || item.title || "",
+      body: rendered.body || item.body || "",
+    }
+  }
+  return { title: item.title || "", body: item.body || "" }
+}
+
+export default function NotificationsScreen() {
+  const navigation = useNavigation()
+  const { notifications, templates, unreadCount, markAsRead, markAllAsRead, loading } =
+    useNotificationStore()
+
+  const grouped = useMemo(() => {
+    const groups = new Map<string, NotificationItem[]>()
+    notifications.forEach((item) => {
+      const label = formatDateLabel(item.createdAt)
+      if (!groups.has(label)) groups.set(label, [])
+      groups.get(label)?.push(item)
+    })
+    return Array.from(groups.entries())
+  }, [notifications])
+
+  const handleOpenNotification = async (item: NotificationItem) => {
+    if (!item.isRead) {
+      await markAsRead(item.id)
+    }
+
+    const deepLink = item.deepLink || item.meta?.deepLink || null
+    if (deepLink?.screen) {
+      navigation.navigate(deepLink.screen as never, (deepLink.params || {}) as never)
+      return
+    }
+    if (item.groupId) {
+      navigation.navigate(
+        "Groups" as never,
+        {
+          groupId: item.groupId,
+          memberId: item.memberId,
+          lifeArea: item.area,
+        } as never
+      )
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Notificacoes</Text>
+          <Text style={styles.subtitle}>
+            {unreadCount > 0
+              ? `${unreadCount} nao lida${unreadCount === 1 ? "" : "s"}`
+              : "Tudo em dia"}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.markAllButton, unreadCount === 0 && styles.markAllButtonDisabled]}
+          onPress={markAllAsRead}
+          disabled={unreadCount === 0}
+        >
+          <Ionicons name="checkmark-done" size={16} color="#0F0F23" />
+          <Text style={styles.markAllButtonText}>Marcar tudo</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <Text style={styles.emptyText}>Carregando notificacoes...</Text>
+        ) : notifications.length === 0 ? (
+          <Text style={styles.emptyText}>Sem notificacoes no momento</Text>
+        ) : (
+          grouped.map(([label, items]) => (
+            <View key={label} style={styles.groupSection}>
+              <Text style={styles.groupTitle}>{label}</Text>
+              {items.map((item) => {
+                const severity = getNotificationSeverity(item)
+                const icon = getSeverityIcon(severity)
+                const text = resolveNotificationText(item, templates)
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.card, !item.isRead && styles.cardUnread]}
+                    onPress={() => handleOpenNotification(item)}
+                  >
+                    <View style={styles.iconWrap}>
+                      <Ionicons name={icon.name as any} size={20} color={icon.color} />
+                    </View>
+                    <View style={styles.content}>
+                      <Text style={styles.cardTitle}>{text.title}</Text>
+                      <Text style={styles.cardBody}>{text.body}</Text>
+                      <View style={styles.tags}>
+                        {item.groupName ? (
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>{item.groupName}</Text>
+                          </View>
+                        ) : null}
+                        {item.area ? (
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>{item.area}</Text>
+                          </View>
+                        ) : null}
+                        {typeof item.percentage === "number" ? (
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>{Math.round(item.percentage)}%</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+                    {!item.isRead && <View style={styles.unreadDot} />}
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#0F0F23",
+    paddingHorizontal: 20,
+    paddingTop: 18,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  subtitle: {
+    color: "#9CA3AF",
+    marginTop: 4,
+  },
+  markAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  markAllButtonDisabled: {
+    opacity: 0.4,
+  },
+  markAllButtonText: {
+    color: "#0F0F23",
+    marginLeft: 6,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  emptyText: {
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginTop: 24,
+  },
+  groupSection: {
+    marginBottom: 20,
+  },
+  groupTitle: {
+    color: "#FFD700",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#1B1B33",
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  cardUnread: {
+    borderColor: "rgba(255,215,0,0.4)",
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginRight: 12,
+  },
+  content: {
+    flex: 1,
+  },
+  cardTitle: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  cardBody: {
+    color: "#CBD5F5",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  tags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+    gap: 6,
+  },
+  tag: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  tagText: {
+    color: "#E5E7EB",
+    fontSize: 11,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFD700",
+    alignSelf: "center",
+    marginLeft: 8,
+  },
+})
