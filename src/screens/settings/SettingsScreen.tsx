@@ -18,6 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Notifications from 'expo-notifications';
@@ -83,7 +84,6 @@ export default function SettingsScreen() {
     hasFcmToken: false,
     permission: 'unknown' as PushPermission,
   });
-  const [pushIncludeMemberName, setPushIncludeMemberName] = useState(false);
   const [pushStatusLoading, setPushStatusLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
@@ -100,19 +100,7 @@ export default function SettingsScreen() {
     photo: string | null;
   } | null>(null);
 
-  const updateNotificationPreference = async (key: string, value: boolean) => {
-    if (!user?.uid) return;
-    setPushIncludeMemberName(value);
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        [`preferences.notifications.${key}`]: value,
-        lastPreferencesUpdate: serverTimestamp(),
-      });
-    } catch (error) {
-      console.warn('Erro ao atualizar preferencia de notificacao:', error);
-      Alert.alert('Erro', 'Nao foi possivel atualizar a preferencia de notificacao.');
-    }
-  };
+  const navigation = useNavigation();
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
@@ -127,13 +115,12 @@ export default function SettingsScreen() {
           onPress: () => handleWebPushPress(),
         },
         {
-          id: 'push_include_member_name',
-          title: 'Nome em Push Critico',
-          subtitle: 'Mostrar nome do membro em alertas criticos enviados por push',
-          icon: 'person-outline',
-          type: 'toggle',
-          value: false,
-          onToggle: (value) => updateNotificationPreference('pushIncludeMemberName', value),
+          id: 'notification_options',
+          title: 'Opcoes de Notificacoes',
+          subtitle: 'Gerenciar tipos e preferencias globais',
+          icon: 'options-outline',
+          type: 'button',
+          onPress: () => navigation.navigate('NotificationPreferences' as never),
         },
       ],
     },
@@ -244,27 +231,9 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
-
-    const shouldShowPermissionButton = notificationPermission !== 'granted';
-    setSettingsSections(prevSettings =>
-      prevSettings.map(section => {
-        if (section.title !== 'Notificacoes') return section;
-
-        const items = section.items.filter(item => item.id !== 'mobile_notifications_permission');
-        if (shouldShowPermissionButton) {
-          items.unshift({
-            id: 'mobile_notifications_permission',
-            title: 'Ativar notificacoes no celular',
-            subtitle: 'Permitir alertas e lembretes do app',
-            icon: 'notifications-outline',
-            type: 'button',
-            onPress: () => handleNotificationPermissionPress(),
-          });
-        }
-
-        return { ...section, items };
-      })
-    );
+    if (notificationPermission !== 'granted') {
+      refreshNotificationPermission();
+    }
   }, [notificationPermission]);
 
   // (Removido) Overrides de ASC - agora calculo e sempre automatico
@@ -470,7 +439,6 @@ export default function SettingsScreen() {
         setLocationQuery(display);
       }
       setProfilePhoto(data.profilePhoto || null);
-      setPushIncludeMemberName(!!data.preferences?.notifications?.pushIncludeMemberName);
       setProfilePhotoDirty(false);
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
@@ -925,7 +893,6 @@ export default function SettingsScreen() {
     const isDanger = item.type === 'danger';
     const isLink = item.type === 'link';
     const isWebPush = item.id === 'register_webpush';
-    const isPushMemberName = item.id === 'push_include_member_name';
     const isPushRegistered = Platform.OS === 'web' ? pushStatus.hasWebPush : pushStatus.hasFcmToken;
     const notificationStatusLabel = isPushRegistered ? 'Registrado' : 'Clique para registrar';
     const displayTitle = isWebPush
@@ -968,10 +935,10 @@ export default function SettingsScreen() {
         <View style={styles.itemRight}>
           {item.type === 'toggle' ? (
             <Switch
-              value={isPushMemberName ? pushIncludeMemberName : item.value}
+              value={item.value}
               onValueChange={(value) => handleToggle(item.id, value)}
               trackColor={{ false: '#3C3C3E', true: '#FFD700' }}
-              thumbColor={(isPushMemberName ? pushIncludeMemberName : item.value) ? '#0a0e27' : '#f4f3f4'}
+              thumbColor={item.value ? '#0a0e27' : '#f4f3f4'}
             />
           ) : (
             <Ionicons 

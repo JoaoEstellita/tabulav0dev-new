@@ -183,6 +183,14 @@ export default function GroupsScreen() {
 
   useEffect(() => {
     const params = route?.params || {}
+    const feedTab = params.feedTab
+    if (feedTab === "messages" || feedTab === "alerts" || feedTab === "all") {
+      setFeedFilter(feedTab)
+    }
+  }, [route?.params])
+
+  useEffect(() => {
+    const params = route?.params || {}
     const focusGroupId = params.groupId
     const focusMemberId = params.memberId
     const focusArea = params.lifeArea

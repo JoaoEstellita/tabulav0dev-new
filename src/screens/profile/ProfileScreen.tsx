@@ -53,20 +53,6 @@ interface UserProfile {
   }
 }
 
-interface UnifiedNotification {
-  id: string
-  title: string
-  body: string
-  createdAt: Date | null
-  source: "user" | "group"
-  groupId?: string
-  groupName?: string
-  area?: string | null
-  percentage?: number | null
-  status?: string | null
-  isRead?: boolean
-}
-
 export default function ProfileScreen() {
   const navigation = useNavigation()
   const { user, logout } = useAuth()
@@ -79,9 +65,6 @@ export default function ProfileScreen() {
   const [showFAQ, setShowFAQ] = useState(false)
   const [showSubscription, setShowSubscription] = useState(false)
   const [savingPhoto, setSavingPhoto] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState<UnifiedNotification[]>([])
-  const [loadingNotifications, setLoadingNotifications] = useState(false)
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
@@ -162,126 +145,7 @@ export default function ProfileScreen() {
     }
   }
 
-  const loadNotifications = async () => {
-    if (!user) return
-    try {
-      setLoadingNotifications(true)
-      const items: UnifiedNotification[] = []
-
-      const userNotificationsQuery = query(
-        collection(db, "notifications"),
-        where("userId", "==", user.uid),
-        limit(40)
-      )
-      const userSnapshot = await getDocs(userNotificationsQuery)
-      userSnapshot.docs.forEach((docSnap) => {
-        const data = docSnap.data() || {}
-        items.push({
-          id: `user_${docSnap.id}`,
-          title: data.title || "Notificacao",
-          body: data.body || data.message || "",
-          createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-          source: "user",
-          groupName: data.groupName || null,
-          area: data.area || data.lifeArea || null,
-          percentage: typeof data.percentage === "number" ? data.percentage : data.meta?.percentage || null,
-          status: data.status || null,
-          isRead: data.isRead ?? false,
-        })
-      })
-
-      const groupsQuery = query(collection(db, "groups"), where("members", "array-contains", user.uid))
-      const groupsSnapshot = await getDocs(groupsQuery)
-      const groupDocs = groupsSnapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        name: docSnap.data()?.name || docSnap.id,
-      }))
-
-      const groupsById = groupDocs.reduce((acc, group) => {
-        acc[group.id] = group.name
-        return acc
-      }, {} as Record<string, string>)
-
-      for (const group of groupDocs) {
-        const alertsQuery = query(
-          collection(db, "groupAlerts"),
-          where("groupId", "==", group.id),
-          limit(20)
-        )
-        const alertSnapshot = await getDocs(alertsQuery)
-        alertSnapshot.docs.forEach((docSnap) => {
-          const data = docSnap.data() || {}
-          const groupId = data.groupId || ""
-          items.push({
-            id: `group_${docSnap.id}`,
-            title: data.title || "Alerta do grupo",
-            body: data.message || data.body || "",
-            createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-            source: "group",
-            groupId,
-            groupName: groupsById[groupId],
-            area: data.area || data.lifeArea || data.life_area || null,
-            percentage: typeof data.percentage === "number" ? data.percentage : data.meta?.percentage || null,
-            status: data.status || data.type || null,
-            isRead: data.isRead ?? false,
-          })
-        })
-      }
-
-      items.sort((a, b) => {
-        const at = a.createdAt ? a.createdAt.getTime() : 0
-        const bt = b.createdAt ? b.createdAt.getTime() : 0
-        return bt - at
-      })
-
-      setNotifications(items)
-    } catch (error) {
-      console.error("Erro ao carregar notificacoes:", error)
-    } finally {
-      setLoadingNotifications(false)
-    }
-  }
-
-  useEffect(() => {
-    if (user) {
-      loadNotifications()
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (showNotifications) {
-      loadNotifications()
-    }
-  }, [showNotifications])
-
-  const formatNotificationTime = (value: Date | null) => {
-    if (!value) return ""
-    const diffMs = Date.now() - value.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    if (diffMins < 2) return "Agora"
-    if (diffMins < 60) return `${diffMins} min`
-    const diffHours = Math.floor(diffMins / 60)
-    if (diffHours < 24) return `${diffHours} h`
-    return value.toLocaleDateString()
-  }
-
   const notificationBadgeCount = unreadCount
-
-  const markNotificationRead = async (item: UnifiedNotification) => {
-    if (item.source !== "user" || item.isRead) return
-    const docId = item.id.replace("user_", "")
-    try {
-      await updateDoc(doc(db, "notifications", docId), {
-        isRead: true,
-        readAt: serverTimestamp(),
-      })
-      setNotifications((prev) =>
-        prev.map((entry) => (entry.id === item.id ? { ...entry, isRead: true } : entry))
-      )
-    } catch (error) {
-      console.error("Erro ao marcar notificacao como lida:", error)
-    }
-  }
 
   const saveProfile = async () => {
     if (!profile) return
@@ -451,32 +315,6 @@ export default function ProfileScreen() {
     ])
   }
 
-  const updateNotificationPreference = async (
-    key: keyof UserProfile["preferences"]["notifications"],
-    value: boolean,
-  ) => {
-    if (!profile) return
-
-    const updatedProfile = {
-      ...profile,
-      preferences: {
-        ...profile.preferences,
-        notifications: {
-          ...profile.preferences.notifications,
-          [key]: value,
-        },
-      },
-    }
-
-    setProfile(updatedProfile)
-
-    try {
-      await updateDoc(doc(db, "users", user!.uid), updatedProfile)
-    } catch (error) {
-      console.error("Erro ao atualizar preferência:", error)
-    }
-  }
-
   const updatePrivacyPreference = async (key: keyof UserProfile["preferences"]["privacy"], value: boolean) => {
     if (!profile) return
 
@@ -500,19 +338,6 @@ export default function ProfileScreen() {
     }
   }
 
-  const testNotification = async () => {
-    try {
-      await FCMService.sendNotificationToUser(user!.uid, {
-        title: "🌟 Teste de Notificação",
-        body: "Suas notificações estão funcionando perfeitamente!",
-        data: { type: "test" },
-        priority: "high",
-      })
-      Alert.alert("Sucesso", "Notificação de teste enviada!")
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível enviar notificação de teste")
-    }
-  }
 
   if (loading) {
     return (
@@ -686,83 +511,6 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Preferências de Notificação */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Notificações</Text>
-            <TouchableOpacity 
-              style={styles.advancedButton}
-              onPress={() => {
-                // Navegar para tela de configurações avançadas
-                Alert.alert('🔔 Configurações Avançadas', 'Funcionalidade será implementada em breve!')
-              }}
-            >
-              <Text style={styles.advancedButtonText}>Avançado</Text>
-              <Ionicons name="settings-outline" size={16} color="#FFD700" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Alertas Críticos</Text>
-              <Text style={styles.preferenceDescription}>
-                Receber alertas quando membros do grupo estão em momentos críticos
-              </Text>
-            </View>
-            <Switch
-              value={profile.preferences?.notifications?.criticalAlerts || false}
-              onValueChange={(value) => updateNotificationPreference("criticalAlerts", value)}
-              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences?.notifications?.criticalAlerts ? "#000" : "#888"}
-            />
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Atualizações do Grupo</Text>
-              <Text style={styles.preferenceDescription}>Novos membros, mensagens e atividades do grupo</Text>
-            </View>
-            <Switch
-              value={profile.preferences?.notifications?.groupUpdates || false}
-              onValueChange={(value) => updateNotificationPreference("groupUpdates", value)}
-              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences?.notifications?.groupUpdates ? "#000" : "#888"}
-            />
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Horóscopo Diário</Text>
-              <Text style={styles.preferenceDescription}>Receber seu horóscopo personalizado todos os dias</Text>
-            </View>
-            <Switch
-              value={profile.preferences?.notifications?.dailyHoroscope || false}
-              onValueChange={(value) => updateNotificationPreference("dailyHoroscope", value)}
-              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences?.notifications?.dailyHoroscope ? "#000" : "#888"}
-            />
-          </View>
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Nome em Push Critico</Text>
-              <Text style={styles.preferenceDescription}>
-                Mostrar nome do membro em alertas criticos enviados por push
-              </Text>
-            </View>
-            <Switch
-              value={profile.preferences?.notifications?.pushIncludeMemberName || false}
-              onValueChange={(value) => updateNotificationPreference("pushIncludeMemberName", value)}
-              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
-              thumbColor={profile.preferences?.notifications?.pushIncludeMemberName ? "#000" : "#888"}
-            />
-          </View>
-
-          <TouchableOpacity style={styles.testButton} onPress={testNotification}>
-            <Ionicons name="notifications" size={20} color="#000" />
-            <Text style={styles.testButtonText}>Testar Notificações</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Preferências de Privacidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Privacidade</Text>
@@ -837,73 +585,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
-
-      {showNotifications && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.notificationModal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Notificacoes</Text>
-              <TouchableOpacity onPress={() => setShowNotifications(false)}>
-                <Ionicons name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.notificationList} showsVerticalScrollIndicator={false}>
-              {loadingNotifications ? (
-                <Text style={styles.notificationEmpty}>Carregando notificacoes...</Text>
-              ) : notifications.length === 0 ? (
-                <Text style={styles.notificationEmpty}>Sem notificacoes no momento</Text>
-              ) : (
-                notifications.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.notificationItem}
-                    activeOpacity={0.8}
-                    onPress={() => markNotificationRead(item)}
-                  >
-                    <View style={styles.notificationIcon}>
-                      <Ionicons
-                        name={item.source === "group" ? "people" : "sparkles"}
-                        size={18}
-                        color="#FFD700"
-                      />
-                    </View>
-                    <View style={styles.notificationContent}>
-                      <Text style={styles.notificationTitle}>{item.title}</Text>
-                      <Text style={styles.notificationBody}>{item.body}</Text>
-                      <View style={styles.notificationMeta}>
-                        {item.groupName && (
-                          <View style={styles.notificationTag}>
-                            <Text style={styles.notificationTagText}>{item.groupName}</Text>
-                          </View>
-                        )}
-                        {item.area && (
-                          <View style={styles.notificationTag}>
-                            <Text style={styles.notificationTagText}>{item.area}</Text>
-                          </View>
-                        )}
-                        {typeof item.percentage === "number" && (
-                          <View style={styles.notificationTag}>
-                            <Text style={styles.notificationTagText}>{Math.round(item.percentage)}%</Text>
-                          </View>
-                        )}
-                        {item.status && (
-                          <View style={styles.notificationTag}>
-                            <Text style={styles.notificationTagText}>{item.status}</Text>
-                          </View>
-                        )}
-                        <Text style={styles.notificationTime}>{formatNotificationTime(item.createdAt)}</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      )}
-    </LinearGradient>
-  )
-}
 
 const styles = StyleSheet.create({
   container: {
