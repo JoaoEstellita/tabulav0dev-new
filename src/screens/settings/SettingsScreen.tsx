@@ -83,6 +83,7 @@ export default function SettingsScreen() {
     hasFcmToken: false,
     permission: 'unknown' as PushPermission,
   });
+  const [pushIncludeMemberName, setPushIncludeMemberName] = useState(false);
   const [pushStatusLoading, setPushStatusLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
@@ -99,17 +100,40 @@ export default function SettingsScreen() {
     photo: string | null;
   } | null>(null);
 
+  const updateNotificationPreference = async (key: string, value: boolean) => {
+    if (!user?.uid) return;
+    setPushIncludeMemberName(value);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        [`preferences.notifications.${key}`]: value,
+        lastPreferencesUpdate: serverTimestamp(),
+      });
+    } catch (error) {
+      console.warn('Erro ao atualizar preferencia de notificacao:', error);
+      Alert.alert('Erro', 'Nao foi possivel atualizar a preferencia de notificacao.');
+    }
+  };
+
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
       title: 'Notificacoes',
       items: [
         {
           id: 'register_webpush',
-          title: 'Registrar Web Push',
-          subtitle: 'Ativar notificacoes no navegador',
+          title: 'Registrar Notificacao Mobile',
+          subtitle: 'Ativar notificacoes no celular (PWA)',
           icon: 'notifications-outline',
           type: 'button',
           onPress: () => handleWebPushPress(),
+        },
+        {
+          id: 'push_include_member_name',
+          title: 'Nome em Push Critico',
+          subtitle: 'Mostrar nome do membro em alertas criticos enviados por push',
+          icon: 'person-outline',
+          type: 'toggle',
+          value: false,
+          onToggle: (value) => updateNotificationPreference('pushIncludeMemberName', value),
         },
       ],
     },
@@ -446,6 +470,7 @@ export default function SettingsScreen() {
         setLocationQuery(display);
       }
       setProfilePhoto(data.profilePhoto || null);
+      setPushIncludeMemberName(!!data.preferences?.notifications?.pushIncludeMemberName);
       setProfilePhotoDirty(false);
     } catch (error) {
       console.warn("Erro ao carregar perfil:", error);
@@ -900,19 +925,15 @@ export default function SettingsScreen() {
     const isDanger = item.type === 'danger';
     const isLink = item.type === 'link';
     const isWebPush = item.id === 'register_webpush';
-    const permissionLabel = pushStatus.permission === 'granted'
-      ? 'Permitido'
-      : pushStatus.permission === 'denied'
-        ? 'Bloqueado'
-        : pushStatus.permission === 'unsupported'
-          ? 'Indisponivel'
-          : 'Nao definido';
-    const mobileTokenLabel = Platform.OS === 'web'
-      ? 'Nao aplicavel'
-      : (pushStatus.hasFcmToken ? 'Registrado' : 'Ausente');
-    const webPushLabel = Platform.OS !== 'web'
-      ? 'Nao aplicavel'
-      : (pushStatus.hasWebPush ? 'Registrado' : 'Ausente');
+    const isPushMemberName = item.id === 'push_include_member_name';
+    const isPushRegistered = Platform.OS === 'web' ? pushStatus.hasWebPush : pushStatus.hasFcmToken;
+    const notificationStatusLabel = isPushRegistered ? 'Registrado' : 'Clique para registrar';
+    const displayTitle = isWebPush
+      ? (isPushRegistered ? 'Notificacao Mobile' : 'Registrar Notificacao Mobile')
+      : item.title;
+    const displaySubtitle = isWebPush
+      ? (isPushRegistered ? 'Registrado' : 'Ativar notificacoes no celular (PWA)')
+      : item.subtitle;
 
     const content = (
       <TouchableOpacity
@@ -921,7 +942,7 @@ export default function SettingsScreen() {
           isDanger && styles.dangerItem,
           isLink && styles.linkItem
         ]}
-        onPress={item.onPress}
+        onPress={isWebPush ? (isPushRegistered ? loadPushStatus : handleWebPushPress) : item.onPress}
         disabled={item.type === 'toggle' || isLink}
       >
         <View style={styles.itemLeft}>
@@ -934,11 +955,11 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.itemText}>
             <Text style={[styles.itemTitle, isDanger && styles.dangerText]}>
-              {item.title}
+              {displayTitle}
             </Text>
-            {item.subtitle && (
+            {displaySubtitle && (
               <Text style={[styles.itemSubtitle, isDanger && styles.dangerSubtitle]}>
-                {item.subtitle}
+                {displaySubtitle}
               </Text>
             )}
           </View>
@@ -947,10 +968,10 @@ export default function SettingsScreen() {
         <View style={styles.itemRight}>
           {item.type === 'toggle' ? (
             <Switch
-              value={item.value}
+              value={isPushMemberName ? pushIncludeMemberName : item.value}
               onValueChange={(value) => handleToggle(item.id, value)}
               trackColor={{ false: '#3C3C3E', true: '#FFD700' }}
-              thumbColor={item.value ? '#0a0e27' : '#f4f3f4'}
+              thumbColor={(isPushMemberName ? pushIncludeMemberName : item.value) ? '#0a0e27' : '#f4f3f4'}
             />
           ) : (
             <Ionicons 
@@ -1026,21 +1047,17 @@ export default function SettingsScreen() {
               <Text style={styles.pushStatusRefreshText}>Atualizar</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.pushStatusRow}>
-            <View style={[styles.pushStatusDot, pushStatus.permission === 'granted' ? styles.pushStatusOk : styles.pushStatusWarn]} />
-            <Text style={styles.pushStatusLabel}>Permissao:</Text>
-            <Text style={styles.pushStatusValue}>{permissionLabel}</Text>
-          </View>
-          <View style={styles.pushStatusRow}>
-            <View style={[styles.pushStatusDot, pushStatus.hasFcmToken ? styles.pushStatusOk : styles.pushStatusWarn]} />
-            <Text style={styles.pushStatusLabel}>Token Mobile:</Text>
-            <Text style={styles.pushStatusValue}>{mobileTokenLabel}</Text>
-          </View>
-          <View style={styles.pushStatusRow}>
-            <View style={[styles.pushStatusDot, pushStatus.hasWebPush ? styles.pushStatusOk : styles.pushStatusWarn]} />
-            <Text style={styles.pushStatusLabel}>Web Push:</Text>
-            <Text style={styles.pushStatusValue}>{webPushLabel}</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.pushStatusRow}
+            onPress={isPushRegistered ? undefined : handleWebPushPress}
+            disabled={isPushRegistered}
+          >
+            <View style={[styles.pushStatusDot, isPushRegistered ? styles.pushStatusOk : styles.pushStatusWarn]} />
+            <Text style={styles.pushStatusLabel}>Notificacao do celular:</Text>
+            <Text style={[styles.pushStatusValue, !isPushRegistered && styles.pushStatusCta]}>
+              {notificationStatusLabel}
+            </Text>
+          </TouchableOpacity>
           {pushStatusLoading && (
             <Text style={styles.pushStatusLoading}>Atualizando...</Text>
           )}
@@ -1613,6 +1630,10 @@ const styles = StyleSheet.create({
     color: '#e0e0e0',
     fontSize: 12,
     fontWeight: '600',
+  },
+  pushStatusCta: {
+    color: '#FFD700',
+    textDecorationLine: 'underline',
   },
   pushStatusLoading: {
     marginTop: 4,
