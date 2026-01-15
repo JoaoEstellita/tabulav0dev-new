@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useState } from "react"
 import {
   View,
   Text,
@@ -77,20 +77,40 @@ const resolveNotificationText = (
   return { title: item.title || "", body: item.body || "" }
 }
 
+const isGroupNotification = (item: NotificationItem) => {
+  const type = (item.type || "").toLowerCase()
+  if (item.groupId) return true
+  if (type.startsWith("group") || type.startsWith("member_status")) return true
+  return false
+}
+
+const matchesFilter = (item: NotificationItem, filter: string) => {
+  if (filter === "all") return true
+  if (filter === "critical") return getNotificationSeverity(item) === "critical"
+  if (filter === "personal") return !isGroupNotification(item)
+  if (filter === "group") return isGroupNotification(item)
+  return true
+}
+
 export default function NotificationsScreen() {
   const navigation = useNavigation()
+  const [filter, setFilter] = useState("all")
   const { notifications, templates, unreadCount, markAsRead, markAllAsRead, loading } =
     useNotificationStore()
 
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((item) => matchesFilter(item, filter))
+  }, [notifications, filter])
+
   const grouped = useMemo(() => {
     const groups = new Map<string, NotificationItem[]>()
-    notifications.forEach((item) => {
+    filteredNotifications.forEach((item) => {
       const label = formatDateLabel(item.createdAt)
       if (!groups.has(label)) groups.set(label, [])
       groups.get(label)?.push(item)
     })
     return Array.from(groups.entries())
-  }, [notifications])
+  }, [filteredNotifications])
 
   const handleOpenNotification = async (item: NotificationItem) => {
     if (!item.isRead) {
@@ -135,10 +155,34 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.filters}>
+        {[
+          { key: "all", label: "Todos" },
+          { key: "critical", label: "Criticos" },
+          { key: "personal", label: "Pessoais" },
+          { key: "group", label: "Grupos" },
+        ].map((option) => (
+          <TouchableOpacity
+            key={option.key}
+            style={[styles.filterChip, filter === option.key && styles.filterChipActive]}
+            onPress={() => setFilter(option.key)}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                filter === option.key && styles.filterChipTextActive,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {loading ? (
           <Text style={styles.emptyText}>Carregando notificacoes...</Text>
-        ) : notifications.length === 0 ? (
+        ) : filteredNotifications.length === 0 ? (
           <Text style={styles.emptyText}>Sem notificacoes no momento</Text>
         ) : (
           grouped.map(([label, items]) => (
@@ -202,6 +246,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
+  },
+  filters: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+    flexWrap: "wrap",
+  },
+  filterChip: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  filterChipActive: {
+    backgroundColor: "#FFD700",
+  },
+  filterChipText: {
+    color: "#E5E7EB",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  filterChipTextActive: {
+    color: "#0F0F23",
   },
   title: {
     color: "#FFFFFF",

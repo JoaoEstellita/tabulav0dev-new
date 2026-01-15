@@ -35,6 +35,7 @@ interface UserProfile {
       groupUpdates: boolean
       dailyHoroscope: boolean
       weeklyForecast: boolean
+      pushIncludeMemberName?: boolean
     }
     privacy: {
       showStatusToGroups: boolean
@@ -132,6 +133,7 @@ export default function ProfileScreen() {
               groupUpdates: true,
               dailyHoroscope: true,
               weeklyForecast: false,
+              pushIncludeMemberName: false,
             },
             privacy: {
               showStatusToGroups: true,
