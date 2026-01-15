@@ -742,6 +742,20 @@ export default function ProfileScreen() {
               thumbColor={profile.preferences?.notifications?.dailyHoroscope ? "#000" : "#888"}
             />
           </View>
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>Nome em Push Critico</Text>
+              <Text style={styles.preferenceDescription}>
+                Mostrar nome do membro em alertas criticos enviados por push
+              </Text>
+            </View>
+            <Switch
+              value={profile.preferences?.notifications?.pushIncludeMemberName || false}
+              onValueChange={(value) => updateNotificationPreference("pushIncludeMemberName", value)}
+              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
+              thumbColor={profile.preferences?.notifications?.pushIncludeMemberName ? "#000" : "#888"}
+            />
+          </View>
 
           <TouchableOpacity style={styles.testButton} onPress={testNotification}>
             <Ionicons name="notifications" size={20} color="#000" />
@@ -1306,3 +1320,4 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
 })
+
