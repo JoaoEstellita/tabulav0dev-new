@@ -448,9 +448,9 @@ export default function GroupNotificationSettings({
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Cooldown por area</Text>
+                <Text style={styles.settingLabel}>Cooldown do grupo (push)</Text>
                 <Text style={styles.settingDescription}>
-                  Evita alertas repetidos para a mesma area
+                  Evita varios pushes seguidos deste grupo. Notificacoes internas continuam aparecendo no app.
                 </Text>
               </View>
               <View style={styles.priorityButtons}>
