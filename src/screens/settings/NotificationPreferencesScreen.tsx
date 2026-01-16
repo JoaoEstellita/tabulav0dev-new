@@ -1,114 +1,30 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, ActivityIndicator } from "react-native"
+import React, { useMemo, useState } from "react"
+import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
-import { useAuth } from "../../hooks/useAuth"
-import { db } from "../../config/firebase"
-
-const DEFAULT_PUSH_TYPES = {
-  member_status_critical: true,
-  user_status_critical: true,
-  group_message: false,
-}
-
-const DEFAULT_INAPP_TYPES = {
-  member_status_critical: true,
-  user_status_critical: true,
-  group_message: true,
-}
-
-const buildMergedPreferences = (data) => {
-  const existing = (data?.preferences?.notifications || {}) as any
-  const push = existing.push || {}
-  const inApp = existing.inApp || {}
-  const pushTypes = { ...DEFAULT_PUSH_TYPES, ...(push.types || {}) }
-  const inAppTypes = { ...DEFAULT_INAPP_TYPES, ...(inApp.types || {}) }
-
-  return {
-    ...existing,
-    pushEnabled: existing.pushEnabled !== false,
-    pushIncludeMemberName: existing.pushIncludeMemberName === true,
-    push: {
-      ...push,
-      types: pushTypes,
-    },
-    inApp: {
-      ...inApp,
-      types: inAppTypes,
-    },
-  }
-}
+import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 
 export default function NotificationPreferencesScreen() {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [prefs, setPrefs] = useState<any>({
-    pushEnabled: true,
-    pushIncludeMemberName: false,
-    push: { types: { ...DEFAULT_PUSH_TYPES } },
-    inApp: { types: { ...DEFAULT_INAPP_TYPES } },
-  })
-
-  useEffect(() => {
-    let active = true
-    const load = async () => {
-      if (!user?.uid) return
-      setLoading(true)
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid))
-        const merged = buildMergedPreferences(snap.exists() ? snap.data() : null)
-        if (active) setPrefs(merged)
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      active = false
-    }
-  }, [user?.uid])
+  const { preferences, loading, updatePreferences, defaults } = useNotificationPreferences()
+  const prefs = preferences || defaults
 
   const savePreferences = async (updates: any) => {
-    if (!user?.uid) return
-    const merged = {
-      ...prefs,
-      ...updates,
-      push: {
-        ...(prefs.push || {}),
-        ...(updates.push || {}),
-        types: {
-          ...(prefs.push?.types || {}),
-          ...(updates.push?.types || {}),
-        },
-      },
-      inApp: {
-        ...(prefs.inApp || {}),
-        ...(updates.inApp || {}),
-        types: {
-          ...(prefs.inApp?.types || {}),
-          ...(updates.inApp?.types || {}),
-        },
-      },
-    }
-
-    setPrefs(merged)
     setSaving(true)
-    try {
-      await updateDoc(doc(db, "users", user.uid), {
-        "preferences.notifications": merged,
-        lastPreferencesUpdate: serverTimestamp(),
-      })
-    } finally {
-      setSaving(false)
-    }
+    await updatePreferences(updates)
+    setSaving(false)
   }
 
-  const pushTypes = prefs.push?.types || DEFAULT_PUSH_TYPES
-  const inAppTypes = prefs.inApp?.types || DEFAULT_INAPP_TYPES
+  const pushTypes = prefs.push?.types || defaults.push.types
+  const inAppTypes = prefs.inApp?.types || defaults.inApp.types
+  const quietHours = prefs.quietHours || defaults.quietHours
+
+  const quietHoursLabel = useMemo(() => {
+    if (!quietHours?.enabled) return "Desativado"
+    return `${quietHours.start} - ${quietHours.end}`
+  }, [quietHours])
 
   const renderToggle = (label: string, description: string, value: boolean, onToggle: (next: boolean) => void) => (
     <View style={styles.toggleRow}>
@@ -155,6 +71,58 @@ export default function NotificationPreferencesScreen() {
                 "Inclui o nome do membro em alertas criticos de grupo.",
                 prefs.pushIncludeMemberName === true,
                 (value) => savePreferences({ pushIncludeMemberName: value })
+              )}
+              {renderToggle(
+                "Horario silencioso",
+                `Silencia push nesse periodo. ${quietHoursLabel}`,
+                quietHours?.enabled === true,
+                (value) =>
+                  savePreferences({
+                    quietHours: {
+                      ...(quietHours || {}),
+                      enabled: value,
+                    },
+                  })
+              )}
+              {quietHours?.enabled === true && (
+                <View style={styles.quietHoursRow}>
+                  <View style={styles.quietHoursField}>
+                    <Text style={styles.quietHoursLabel}>Inicio</Text>
+                    <TextInput
+                      style={styles.quietHoursInput}
+                      value={quietHours.start}
+                      placeholder="22:00"
+                      onChangeText={(value) =>
+                        savePreferences({
+                          quietHours: {
+                            ...(quietHours || {}),
+                            start: value,
+                          },
+                        })
+                      }
+                      autoCapitalize="none"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  <View style={styles.quietHoursField}>
+                    <Text style={styles.quietHoursLabel}>Fim</Text>
+                    <TextInput
+                      style={styles.quietHoursInput}
+                      value={quietHours.end}
+                      placeholder="08:00"
+                      onChangeText={(value) =>
+                        savePreferences({
+                          quietHours: {
+                            ...(quietHours || {}),
+                            end: value,
+                          },
+                        })
+                      }
+                      autoCapitalize="none"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
               )}
             </View>
 
@@ -284,6 +252,29 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontSize: 12,
     marginTop: 4,
+  },
+  quietHoursRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  quietHoursField: {
+    flex: 1,
+  },
+  quietHoursLabel: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  quietHoursInput: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderColor: "rgba(255, 215, 0, 0.25)",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: "#FFFFFF",
+    fontSize: 13,
   },
   sectionNote: {
     flexDirection: "row",

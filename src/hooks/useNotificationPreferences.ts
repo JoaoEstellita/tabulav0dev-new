@@ -1,167 +1,252 @@
-/**
- * 🔔 useNotificationPreferences Hook 🔔
- * 
- * Hook para gerenciar preferências de notificações do usuário
- * Sincroniza com backend e localStorage
- */
+﻿import { useEffect, useMemo, useState } from 'react'
+import { doc, getDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { db } from '../config/firebase'
+import { useAuth } from './useAuth'
 
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export interface NotificationPreferences {
-  dailyNotifications: boolean;
-  criticalAlerts: boolean;
-  groupNotifications: boolean;
-  quietHours: boolean;
-  quietHoursStart: string; // "22:00"
-  quietHoursEnd: string; // "08:00"
+export type NotificationPreferences = {
+  pushEnabled: boolean
+  pushIncludeMemberName: boolean
+  quietHours?: {
+    enabled: boolean
+    start: string
+    end: string
+  }
+  push: {
+    types: {
+      member_status_critical: boolean
+      user_status_critical: boolean
+      group_message: boolean
+    }
+    limits?: {
+      member_status_critical?: { dailyLimit: number; throttleMinutes: number }
+      user_status_critical?: { dailyLimit: number; throttleMinutes: number }
+      group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
+    }
+  }
+  inApp: {
+    types: {
+      member_status_critical: boolean
+      user_status_critical: boolean
+      group_message: boolean
+    }
+  }
 }
 
-const STORAGE_KEY = '@tabula_estelar:notification_preferences';
+const DEFAULT_PREFERENCES: NotificationPreferences = {
+  pushEnabled: true,
+  pushIncludeMemberName: false,
+  quietHours: {
+    enabled: false,
+    start: '22:00',
+    end: '08:00',
+  },
+  push: {
+    types: {
+      member_status_critical: true,
+      user_status_critical: true,
+      group_message: false,
+    },
+    limits: {
+      member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },
+      user_status_critical: { dailyLimit: 3, throttleMinutes: 240 },
+      group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
+    },
+  },
+  inApp: {
+    types: {
+      member_status_critical: true,
+      user_status_critical: true,
+      group_message: true,
+    },
+  },
+}
+
+const mergeDeep = (base: any, override: any) => {
+  if (!override) return base
+  const result = Array.isArray(base) ? [...base] : { ...base }
+  Object.keys(override).forEach((key) => {
+    const value = override[key]
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = mergeDeep(base?.[key] || {}, value)
+    } else if (value !== undefined) {
+      result[key] = value
+    }
+  })
+  return result
+}
+
+const isLegacyPreferenceShape = (legacy: any) => {
+  if (!legacy) return false
+  return (
+    legacy.criticalAlerts !== undefined ||
+    legacy.groupUpdates !== undefined ||
+    legacy.groupNotifications !== undefined ||
+    legacy.dailyHoroscope !== undefined ||
+    legacy.dailyNotifications !== undefined ||
+    legacy.quietHours !== undefined ||
+    legacy.quietHoursStart !== undefined ||
+    legacy.quietHoursEnd !== undefined ||
+    legacy.pushEnabled !== undefined ||
+    legacy.pushIncludeMemberName !== undefined
+  )
+}
+
+const mapLegacyPreferences = (legacy: any) => {
+  if (!legacy) return {}
+  const mapped: any = {}
+  if (typeof legacy.criticalAlerts === 'boolean') {
+    mapped.push = { types: { user_status_critical: legacy.criticalAlerts } }
+    mapped.inApp = { types: { user_status_critical: legacy.criticalAlerts } }
+  }
+  const groupFlag =
+    typeof legacy.groupUpdates === 'boolean'
+      ? legacy.groupUpdates
+      : typeof legacy.groupNotifications === 'boolean'
+        ? legacy.groupNotifications
+        : null
+  if (typeof groupFlag === 'boolean') {
+    mapped.push = {
+      ...(mapped.push || {}),
+      types: {
+        ...(mapped.push?.types || {}),
+        member_status_critical: groupFlag,
+      },
+    }
+    mapped.inApp = {
+      ...(mapped.inApp || {}),
+      types: {
+        ...(mapped.inApp?.types || {}),
+        member_status_critical: groupFlag,
+      },
+    }
+  }
+  if (typeof legacy.dailyHoroscope === 'boolean' || typeof legacy.dailyNotifications === 'boolean') {
+    const dailyEnabled = legacy.dailyHoroscope ?? legacy.dailyNotifications
+    mapped.inApp = {
+      ...(mapped.inApp || {}),
+      types: {
+        ...(mapped.inApp?.types || {}),
+        daily_ready: dailyEnabled,
+      },
+    }
+  }
+  if (legacy.quietHours || legacy.quietHoursStart || legacy.quietHoursEnd) {
+    mapped.quietHours = {
+      enabled: legacy.quietHours === true,
+      start: legacy.quietHoursStart || DEFAULT_PREFERENCES.quietHours?.start || '22:00',
+      end: legacy.quietHoursEnd || DEFAULT_PREFERENCES.quietHours?.end || '08:00',
+    }
+  }
+  if (typeof legacy.pushEnabled === 'boolean') {
+    mapped.pushEnabled = legacy.pushEnabled
+  }
+  if (typeof legacy.pushIncludeMemberName === 'boolean') {
+    mapped.pushIncludeMemberName = legacy.pushIncludeMemberName
+  }
+  return mapped
+}
+
+export const loadUserNotificationPreferences = async (
+  userId: string,
+  userData?: any
+): Promise<{ prefs: NotificationPreferences; migrated: boolean }> => {
+  const existing = userData?.preferences?.notifications || null
+  const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
+  let legacyData: any = null
+  let migrated = false
+
+  if (!existing || existingLegacy) {
+    try {
+      const legacySnap = await getDoc(doc(db, 'users', userId, 'preferences', 'notifications'))
+      legacyData = legacySnap.exists() ? legacySnap.data() : null
+    } catch {
+      legacyData = null
+    }
+  }
+
+  const merged = mergeDeep(
+    DEFAULT_PREFERENCES,
+    mergeDeep(existing || {}, mapLegacyPreferences(existingLegacy || legacyData))
+  ) as NotificationPreferences
+
+  if (!existing || existingLegacy || legacyData) {
+    migrated = true
+  }
+
+  return { prefs: merged, migrated }
+}
 
 export function useNotificationPreferences() {
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth()
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadPreferences();
-  }, []);
+    if (!user?.uid) {
+      setPreferences(null)
+      setLoading(false)
+      return
+    }
 
-  const loadPreferences = async () => {
-    try {
-      // TODO: Implementar quando tivermos contexto de usuário
-      // const response = await fetch(`${BACKEND_URL}/notification-preferences?userId=${userId}`);
-      // if (response.ok) {
-      //   const data = await response.json();
-      //   if (data.success) {
-      //     setPreferences(data.preferences);
-      //     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.preferences));
-      //   }
-      // }
-      
-      // Por enquanto, usar localStorage
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setPreferences(parsed);
-      } else {
-        // Preferências padrão
-        const defaultPreferences: NotificationPreferences = {
-          dailyNotifications: true,
-          criticalAlerts: true,
-          groupNotifications: true,
-          quietHours: false,
-          quietHoursStart: "22:00",
-          quietHoursEnd: "08:00",
-        };
-        setPreferences(defaultPreferences);
-        await savePreferences(defaultPreferences);
+    let active = true
+    const unsub = onSnapshot(doc(db, 'users', user.uid), async (snap) => {
+      if (!active) return
+      const data = snap.exists() ? snap.data() : {}
+      const { prefs, migrated } = await loadUserNotificationPreferences(user.uid, data)
+      setPreferences(prefs)
+      if (migrated) {
+        try {
+          await updateDoc(doc(db, 'users', user.uid), {
+            'preferences.notifications': prefs,
+            lastPreferencesUpdate: serverTimestamp(),
+          })
+        } catch {
+          // Best effort
+        }
       }
-    } catch (error) {
-      console.error('Erro ao carregar preferências:', error);
-      // Fallback para preferências padrão
-      const defaultPreferences: NotificationPreferences = {
-        dailyNotifications: true,
-        criticalAlerts: true,
-        groupNotifications: true,
-        quietHours: false,
-        quietHoursStart: "22:00",
-        quietHoursEnd: "08:00",
-      };
-      setPreferences(defaultPreferences);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(false)
+    })
 
-  const savePreferences = async (newPreferences: NotificationPreferences) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
-      setPreferences(newPreferences);
-      
-      // TODO: Sincronizar com backend quando tivermos contexto de usuário
-      // const response = await fetch(`${BACKEND_URL}/notification-preferences?userId=${userId}`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ preferences: newPreferences })
-      // });
-      // if (!response.ok) {
-      //   console.error('Erro ao sincronizar com backend');
-      // }
-      
-      return true;
-    } catch (error) {
-      console.error('Erro ao salvar preferências:', error);
-      return false;
+    return () => {
+      active = false
+      unsub()
     }
-  };
+  }, [user?.uid])
 
   const updatePreferences = async (updates: Partial<NotificationPreferences>) => {
-    if (!preferences) return false;
+    if (!user?.uid || !preferences) return false
+    const merged = mergeDeep(preferences, updates) as NotificationPreferences
+    setPreferences(merged)
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        'preferences.notifications': merged,
+        lastPreferencesUpdate: serverTimestamp(),
+      })
+      return true
+    } catch {
+      return false
+    }
+  }
 
-    const newPreferences = { ...preferences, ...updates };
-    return await savePreferences(newPreferences);
-  };
-
-  const resetPreferences = async () => {
-    const defaultPreferences: NotificationPreferences = {
-      dailyNotifications: true,
-      criticalAlerts: true,
-      groupNotifications: true,
-      quietHours: false,
-      quietHoursStart: "22:00",
-      quietHoursEnd: "08:00",
-    };
-    return await savePreferences(defaultPreferences);
-  };
-
-  const isInQuietHours = (): boolean => {
-    if (!preferences?.quietHours) return false;
-
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    
-    const [startHour, startMinute] = preferences.quietHoursStart.split(':').map(Number);
-    const [endHour, endMinute] = preferences.quietHoursEnd.split(':').map(Number);
-    
-    const startTime = startHour * 60 + startMinute;
-    const endTime = endHour * 60 + endMinute;
-    
-    // Se o horário silencioso cruza a meia-noite
+  const isInQuietHours = useMemo(() => {
+    if (!preferences?.quietHours?.enabled) return false
+    const now = new Date()
+    const currentTime = now.getHours() * 60 + now.getMinutes()
+    const [startHour, startMinute] = preferences.quietHours.start.split(':').map(Number)
+    const [endHour, endMinute] = preferences.quietHours.end.split(':').map(Number)
+    const startTime = startHour * 60 + startMinute
+    const endTime = endHour * 60 + endMinute
     if (startTime > endTime) {
-      return currentTime >= startTime || currentTime <= endTime;
-    } else {
-      return currentTime >= startTime && currentTime <= endTime;
+      return currentTime >= startTime || currentTime <= endTime
     }
-  };
-
-  const shouldSendNotification = (type: keyof NotificationPreferences): boolean => {
-    if (!preferences) return false;
-
-    // Verificar se está em horário silencioso
-    if (preferences.quietHours && isInQuietHours()) {
-      return false;
-    }
-
-    // Verificar se o tipo de notificação está habilitado
-    switch (type) {
-      case 'dailyNotifications':
-        return preferences.dailyNotifications;
-      case 'criticalAlerts':
-        return preferences.criticalAlerts;
-      case 'groupNotifications':
-        return preferences.groupNotifications;
-      default:
-        return true;
-    }
-  };
+    return currentTime >= startTime && currentTime <= endTime
+  }, [preferences])
 
   return {
     preferences,
     loading,
     updatePreferences,
-    resetPreferences,
     isInQuietHours,
-    shouldSendNotification,
-  };
+    defaults: DEFAULT_PREFERENCES,
+  }
 }

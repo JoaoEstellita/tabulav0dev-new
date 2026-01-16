@@ -31,11 +31,36 @@ interface UserProfile {
   zodiacSign: string
   preferences: {
     notifications: {
-      criticalAlerts: boolean
-      groupUpdates: boolean
-      dailyHoroscope: boolean
-      weeklyForecast: boolean
+      pushEnabled?: boolean
       pushIncludeMemberName?: boolean
+      quietHours?: {
+        enabled: boolean
+        start: string
+        end: string
+      }
+      push?: {
+        types?: {
+          member_status_critical?: boolean
+          user_status_critical?: boolean
+          group_message?: boolean
+        }
+        limits?: {
+          member_status_critical?: { dailyLimit: number; throttleMinutes: number }
+          user_status_critical?: { dailyLimit: number; throttleMinutes: number }
+          group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
+        }
+      }
+      inApp?: {
+        types?: {
+          member_status_critical?: boolean
+          user_status_critical?: boolean
+          group_message?: boolean
+        }
+      }
+      criticalAlerts?: boolean
+      groupUpdates?: boolean
+      dailyHoroscope?: boolean
+      weeklyForecast?: boolean
     }
     privacy: {
       showStatusToGroups: boolean
@@ -112,11 +137,28 @@ export default function ProfileScreen() {
           zodiacSign: "",
           preferences: {
             notifications: {
-              criticalAlerts: true,
-              groupUpdates: true,
-              dailyHoroscope: true,
-              weeklyForecast: false,
+              pushEnabled: true,
               pushIncludeMemberName: false,
+              quietHours: { enabled: false, start: "22:00", end: "08:00" },
+              push: {
+                types: {
+                  member_status_critical: true,
+                  user_status_critical: true,
+                  group_message: false,
+                },
+                limits: {
+                  member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },
+                  user_status_critical: { dailyLimit: 3, throttleMinutes: 240 },
+                  group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
+                },
+              },
+              inApp: {
+                types: {
+                  member_status_critical: true,
+                  user_status_critical: true,
+                  group_message: true,
+                },
+              },
             },
             privacy: {
               showStatusToGroups: true,
@@ -158,7 +200,14 @@ export default function ProfileScreen() {
         updatedPhoto = uploaded || updatedPhoto
       }
 
-      const payload = { ...profile, profilePhoto: updatedPhoto }
+      const payload = {
+        displayName: profile.displayName,
+        birthDate: profile.birthDate,
+        birthTime: profile.birthTime,
+        birthLocation: profile.birthLocation,
+        zodiacSign: profile.zodiacSign,
+        profilePhoto: updatedPhoto,
+      }
       await updateDoc(doc(db, "users", user!.uid), payload)
       await setDoc(
         doc(db, "userPublicProfiles", user!.uid),
@@ -332,7 +381,9 @@ export default function ProfileScreen() {
     setProfile(updatedProfile)
 
     try {
-      await updateDoc(doc(db, "users", user!.uid), updatedProfile)
+      await updateDoc(doc(db, "users", user!.uid), {
+        "preferences.privacy": updatedProfile.preferences.privacy,
+      })
     } catch (error) {
       console.error("Erro ao atualizar preferência:", error)
     }
