@@ -310,7 +310,12 @@ class GroupService {
   }
 
   // Atualizar status a partir das reas da vida (engine local)
-  async updateUserStatusFromLifeAreas(userId: string, transitData: LocalTransitData, birthData?: any): Promise<void> {
+  async updateUserStatusFromLifeAreas(
+    userId: string,
+    transitData: LocalTransitData,
+    birthData?: any,
+    lifeAreasSignature?: string
+  ): Promise<void> {
     try {
       const statusPersonal = transitData.currentTransits?.statusPersonal
       const overall = this.mapLevelToOverall(statusPersonal?.level)
@@ -330,7 +335,10 @@ class GroupService {
           astrologicalStatus: status,
           statusPersonal,
           lifeAreas: transitData.lifeAreas,
+          lifeAreasSignature: lifeAreasSignature || null,
+          source: "app",
           lastStatusUpdate: Timestamp.now(),
+          updatedAt: Timestamp.now(),
           birthData,
         },
         { merge: true }

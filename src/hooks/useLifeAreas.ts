@@ -28,6 +28,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   // Forcar um recalculo fresco na primeira carga para refletir correcoes de casas
   const [firstLoad, setFirstLoad] = useState(true)
   const lastStatusKeyRef = useRef<string | null>(null)
+  const statusUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -68,12 +69,22 @@ export function useLifeAreas(): UseLifeAreasReturn {
       if (firstLoad) setFirstLoad(false)
       const activeHouseSystem =
         (globalThis as any).__userHouseSystem || userProfile?.preferences?.houseSystem || userProfile?.houseSystem
-      const statusKey = `${user.uid}:${activeHouseSystem || "placidus"}:${result.data.currentTransits?.timestamp || result.cacheStatus.cacheSource}`
+      const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
+      const statusKey = `${user.uid}:${activeHouseSystem || "placidus"}:${lifeAreasSignature}`
       if (lastStatusKeyRef.current !== statusKey) {
         lastStatusKeyRef.current = statusKey
-        // Atualiza status do membro nos grupos quando o app abre/atualiza dados,
-        // quando o sistema de casas muda ou quando ha novo recalculo de lifeAreas.
-        GroupService.updateUserStatusFromLifeAreas(user.uid, result.data, birthData)
+        if (statusUpdateTimeoutRef.current) {
+          clearTimeout(statusUpdateTimeoutRef.current)
+        }
+        // Debounce para evitar writes repetidas.
+        statusUpdateTimeoutRef.current = setTimeout(() => {
+          GroupService.updateUserStatusFromLifeAreas(
+            user.uid,
+            result.data,
+            birthData,
+            lifeAreasSignature
+          )
+        }, 1200)
       }
 
       console.log(' Dados astrologicos REAIS carregados:', {
@@ -185,6 +196,20 @@ export function useLifeAreas(): UseLifeAreasReturn {
 }
 
 // Funcoes auxiliares
+function buildLifeAreasSignature(lifeAreas: Record<string, any> | undefined): string {
+  if (!lifeAreas) return 'none'
+  const entries = Object.entries(lifeAreas)
+    .map(([key, value]) => {
+      const raw = typeof value?.status === 'number'
+        ? value.status
+        : (typeof value?.percentage === 'number' ? value.percentage : null)
+      const normalized = typeof raw === 'number' ? Math.round(raw) : 'null'
+      return `${key}:${normalized}`
+    })
+    .sort((a, b) => a.localeCompare(b))
+  return entries.join('|')
+}
+
 async function getUserGroups(userId: string): Promise<string[]> {
   try {
     // Buscar grupos onde o usuario e membro
