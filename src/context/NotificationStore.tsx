@@ -98,7 +98,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setNotifications(items)
         setLoading(false)
       },
-      () => setLoading(false)
+      (err) => {
+        console.error("notifications snapshot error", err)
+        setLoading(false)
+      }
     )
 
     const templateRef = doc(db, "settings", "notification_templates")

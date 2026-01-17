@@ -155,12 +155,16 @@ service cloud.firestore {
       allow read: if request.auth != null &&
                      request.auth.uid == resource.data.userId;
 
-      // Sistema pode criar notificacoes para usuarios
-      allow create: if request.auth != null;
+      // Somente backend/service account cria notificacoes
+      allow create: if false;
 
       // Usuario pode marcar como lida
       allow update: if request.auth != null &&
-                       request.auth.uid == resource.data.userId;
+                       request.auth.uid == resource.data.userId &&
+                       request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.diff(resource.data).changedKeys().hasOnly(['isRead', 'readAt']);
+
+      allow delete: if false;
     }
 
     // ===== REGRAS PARA CONFIGURACOES DE ALERTA =====
