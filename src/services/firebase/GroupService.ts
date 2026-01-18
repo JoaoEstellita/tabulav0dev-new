@@ -317,6 +317,13 @@ class GroupService {
     lifeAreasSignature?: string
   ): Promise<void> {
     try {
+      if (lifeAreasSignature) {
+        const existingSnap = await getDoc(doc(db, "userStatus", userId))
+        const existingData = existingSnap.exists() ? existingSnap.data() : null
+        if (existingData?.lifeAreasSignature === lifeAreasSignature) {
+          return
+        }
+      }
       const statusPersonal = transitData.currentTransits?.statusPersonal
       const overall = this.mapLevelToOverall(statusPersonal?.level)
 
