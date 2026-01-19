@@ -47,8 +47,8 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: false,
     },
     limits: {
-      member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },
-      user_status_critical: { dailyLimit: 3, throttleMinutes: 240 },
+      member_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
+      user_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
       group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
     },
   },
@@ -150,8 +150,12 @@ export const loadUserNotificationPreferences = async (
   userId: string,
   userData?: any
 ): Promise<{ prefs: NotificationPreferences; migrated: boolean }> => {
-  const existing = userData?.preferences?.notifications || null
+  const existing = userData?.notifications || null
   const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
+  const legacyPreferences = userData?.preferences?.notifications || null
+  const legacyPreferencesMapped = isLegacyPreferenceShape(legacyPreferences)
+    ? mapLegacyPreferences(legacyPreferences)
+    : legacyPreferences
   let legacyData: any = null
   let migrated = false
 
@@ -166,10 +170,13 @@ export const loadUserNotificationPreferences = async (
 
   const merged = mergeDeep(
     DEFAULT_PREFERENCES,
-    mergeDeep(existing || {}, mapLegacyPreferences(existingLegacy || legacyData))
+    mergeDeep(
+      legacyPreferencesMapped || {},
+      mergeDeep(existing || {}, mapLegacyPreferences(existingLegacy || legacyData))
+    )
   ) as NotificationPreferences
 
-  if (!existing || existingLegacy || legacyData) {
+  if (!existing || existingLegacy || legacyData || legacyPreferences) {
     migrated = true
   }
 
@@ -197,7 +204,7 @@ export function useNotificationPreferences() {
       if (migrated) {
         try {
           await updateDoc(doc(db, 'users', user.uid), {
-            'preferences.notifications': prefs,
+            notifications: prefs,
             lastPreferencesUpdate: serverTimestamp(),
           })
         } catch {
@@ -219,7 +226,7 @@ export function useNotificationPreferences() {
     setPreferences(merged)
     try {
       await updateDoc(doc(db, 'users', user.uid), {
-        'preferences.notifications': merged,
+        notifications: merged,
         lastPreferencesUpdate: serverTimestamp(),
       })
       return true

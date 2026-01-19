@@ -29,10 +29,17 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [firstLoad, setFirstLoad] = useState(true)
   const lastStatusKeyRef = useRef<string | null>(null)
   const statusUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const STATUS_UPDATE_DEBOUNCE_MS = 1200
 
   useEffect(() => {
     if (user) {
       loadTransitData()
+    }
+    return () => {
+      if (statusUpdateTimeoutRef.current) {
+        clearTimeout(statusUpdateTimeoutRef.current)
+        statusUpdateTimeoutRef.current = null
+      }
     }
   }, [user])
 
@@ -84,7 +91,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
             birthData,
             lifeAreasSignature
           )
-        }, 1200)
+        }, STATUS_UPDATE_DEBOUNCE_MS)
       }
 
       console.log(' Dados astrologicos REAIS carregados:', {
