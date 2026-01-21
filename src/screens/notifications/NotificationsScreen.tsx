@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useNavigation } from "@react-navigation/native"
 import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
 
 const formatDateLabel = (value?: any) => {
@@ -93,7 +92,6 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
 }
 
 export default function NotificationsScreen() {
-  const navigation = useNavigation()
   const [filter, setFilter] = useState("all")
   const { notifications, templates, unreadCount, markAsRead, markAllAsRead, loading } =
     useNotificationStore()
@@ -115,22 +113,6 @@ export default function NotificationsScreen() {
   const handleOpenNotification = async (item: NotificationItem) => {
     if (!item.isRead) {
       await markAsRead(item.id)
-    }
-
-    const deepLink = item.deepLink || item.meta?.deepLink || null
-    if (deepLink?.screen) {
-      navigation.navigate(deepLink.screen as never, (deepLink.params || {}) as never)
-      return
-    }
-    if (item.groupId) {
-      navigation.navigate(
-        "Groups" as never,
-        {
-          groupId: item.groupId,
-          memberId: item.memberId,
-          lifeArea: item.area,
-        } as never
-      )
     }
   }
 

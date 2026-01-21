@@ -1,7 +1,7 @@
 "use client"
-import { useEffect } from "react"
-import { Platform } from "react-native"
-import { NavigationContainer } from "@react-navigation/native"
+import { useEffect, useRef } from "react"
+import { Platform, PanResponder, View } from "react-native"
+import { NavigationContainer, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
@@ -27,6 +27,38 @@ import { useNotificationStore } from "../context/NotificationStore"
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
+const TAB_ORDER = ["Home", "Groups", "Notifications", "Premium", "Settings"]
+const SWIPE_THRESHOLD = 40
+
+function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
+  const navigation = useNavigation()
+  const route = useRoute()
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_event, gesture) => {
+        const { dx, dy } = gesture
+        if (Math.abs(dx) < 20) return false
+        if (Math.abs(dx) <= Math.abs(dy) * 1.2) return false
+        return true
+      },
+      onPanResponderRelease: (_event, gesture) => {
+        const { dx, vx } = gesture
+        if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(vx) < 0.2) return
+        const currentIndex = TAB_ORDER.indexOf(route.name)
+        if (currentIndex === -1) return
+        const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1
+        if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) return
+        navigation.navigate(TAB_ORDER[nextIndex] as never)
+      },
+    })
+  ).current
+
+  return (
+    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+      {children}
+    </View>
+  )
+}
 
 function AuthStack() {
   return (
@@ -98,35 +130,45 @@ function MainTabs() {
       <Tab.Screen name="Home" options={{ title: "Perfil" }}>
         {() => (
           <ErrorBoundary>
-            <HomeScreen />
+            <SwipeableTabScreen>
+              <HomeScreen />
+            </SwipeableTabScreen>
           </ErrorBoundary>
         )}
       </Tab.Screen>
       <Tab.Screen name="Groups" options={{ title: "Grupos" }}>
         {() => (
           <ErrorBoundary>
-            <GroupsAccessGuard />
+            <SwipeableTabScreen>
+              <GroupsAccessGuard />
+            </SwipeableTabScreen>
           </ErrorBoundary>
         )}
       </Tab.Screen>
       <Tab.Screen name="Notifications" options={{ title: "Notificacoes" }}>
         {() => (
           <ErrorBoundary>
-            <NotificationsScreen />
+            <SwipeableTabScreen>
+              <NotificationsScreen />
+            </SwipeableTabScreen>
           </ErrorBoundary>
         )}
       </Tab.Screen>
       <Tab.Screen name="Premium" options={{ title: "Premium" }}>
         {() => (
           <ErrorBoundary>
-            <PremiumScreen />
+            <SwipeableTabScreen>
+              <PremiumScreen />
+            </SwipeableTabScreen>
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Settings" options={{ title: "Configurações" }}>
+      <Tab.Screen name="Settings" options={{ title: "Configuracoes" }}>
         {() => (
           <ErrorBoundary>
-            <SettingsScreen />
+            <SwipeableTabScreen>
+              <SettingsScreen />
+            </SwipeableTabScreen>
           </ErrorBoundary>
         )}
       </Tab.Screen>
