@@ -5,7 +5,7 @@ import { NavigationContainer, useNavigation, useRoute } from "@react-navigation/
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
-import { View, Text, StyleSheet } from "react-native"
+import { Text, StyleSheet } from "react-native"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
