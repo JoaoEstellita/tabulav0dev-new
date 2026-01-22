@@ -34,7 +34,7 @@ export type NotificationPreferences = {
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   pushEnabled: true,
-  pushIncludeMemberName: false,
+  pushIncludeMemberName: true,
   quietHours: {
     enabled: false,
     start: '22:00',
