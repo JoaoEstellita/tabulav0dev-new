@@ -150,6 +150,8 @@ export const loadUserNotificationPreferences = async (
   userId: string,
   userData?: any
 ): Promise<{ prefs: NotificationPreferences; migrated: boolean }> => {
+  const migrationVersion = Number(userData?.notificationsMigrationVersion || 0)
+  const migrationDone = migrationVersion >= 1
   const existing = userData?.notifications || null
   const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
   const legacyPreferences = userData?.preferences?.notifications || null
@@ -159,7 +161,7 @@ export const loadUserNotificationPreferences = async (
   let legacyData: any = null
   let migrated = false
 
-  if (!existing || existingLegacy) {
+  if (!migrationDone && (!existing || existingLegacy)) {
     try {
       const legacySnap = await getDoc(doc(db, 'users', userId, 'preferences', 'notifications'))
       legacyData = legacySnap.exists() ? legacySnap.data() : null
@@ -176,7 +178,7 @@ export const loadUserNotificationPreferences = async (
     )
   ) as NotificationPreferences
 
-  if (!existing || existingLegacy || legacyData || legacyPreferences) {
+  if (!migrationDone && (!existing || existingLegacy || legacyData || legacyPreferences)) {
     migrated = true
   }
 
@@ -216,6 +218,7 @@ const startSharedListener = (userId: string) => {
         await updateDoc(doc(db, 'users', userId), {
           notifications: prefs,
           lastPreferencesUpdate: serverTimestamp(),
+          notificationsMigrationVersion: 1,
         })
       } catch {
         // Best effort

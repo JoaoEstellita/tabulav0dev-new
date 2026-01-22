@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
+import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 
 interface LifeAreaCardProps {
   area: LifeArea
@@ -75,14 +76,14 @@ export default function LifeAreaCard({
   transitCount = 0,
 }: LifeAreaCardProps) {
   const getStatusColor = (status: number) => {
-    if (status >= 70) return '#10B981'
-    if (status >= 40) return '#F59E0B'
+    if (status >= STATUS_THRESHOLDS.positiveAbove) return '#10B981'
+    if (status >= STATUS_THRESHOLDS.criticalBelow) return '#F59E0B'
     return '#EF4444'
   }
 
   const getStatusText = (status: number) => {
-    if (status >= 70) return 'Positivo'
-    if (status >= 40) return 'Moderado'
+    if (status >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
+    if (status >= STATUS_THRESHOLDS.criticalBelow) return 'Moderado'
     return 'Crítico'
   }
 

@@ -17,6 +17,7 @@ export interface UseLifeAreasReturn {
   refreshData: (forceRefresh?: boolean) => Promise<void>
   sendCriticalAlerts: () => Promise<void>
   isUsingLocalEngine: boolean
+  localOverrideActive: boolean
 }
 
 export function useLifeAreas(): UseLifeAreasReturn {
@@ -27,15 +28,33 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
+  const [localOverrideActive, setLocalOverrideActive] = useState(false)
+  const localOverrideActiveRef = useRef(false)
   const lastStatusKeyRef = useRef<string | null>(null)
   const statusUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const STATUS_UPDATE_DEBOUNCE_MS = 1200
   const lastHouseSystemRef = useRef<string | null>(null)
+  const lastBackendComputedAtRef = useRef<number | null>(null)
+  const localOverrideStartedAtRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (user) {
-      loadTransitData()
+    if (!user) {
+      setTransitData(null)
+      setCacheStatus(null)
+      setBackendLifeAreas(null)
+      setLoading(false)
+      setError(null)
+      setIsUsingLocalEngine(false)
+      setLocalOverrideActive(false)
+      localOverrideActiveRef.current = false
+      lastStatusKeyRef.current = null
+      lastHouseSystemRef.current = null
+      lastBackendComputedAtRef.current = null
+      localOverrideStartedAtRef.current = null
+      return
     }
+
+    loadTransitData()
     return () => {
       if (statusUpdateTimeoutRef.current) {
         clearTimeout(statusUpdateTimeoutRef.current)
@@ -74,11 +93,21 @@ export function useLifeAreas(): UseLifeAreasReturn {
       lastHouseSystemRef.current = normalizedHouseSystem
 
       let backendLifeAreasValue: Record<string, any> | null = null
+      let backendComputedAtMs: number | null = null
+      let backendValidUntilMs: number | null = null
+      let backendCalcVersion: string | null = null
       try {
         const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
         if (statusSnap.exists()) {
           const statusData = statusSnap.data()
           backendLifeAreasValue = statusData?.lifeAreas || null
+          backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
+          backendComputedAtMs = statusData?.computedAt?.toDate
+            ? statusData.computedAt.toDate().getTime()
+            : (statusData?.computedAt instanceof Date ? statusData.computedAt.getTime() : null)
+          backendValidUntilMs = statusData?.validUntil?.toDate
+            ? statusData.validUntil.toDate().getTime()
+            : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
           setBackendLifeAreas(backendLifeAreasValue)
         } else {
           setBackendLifeAreas(null)
@@ -87,41 +116,76 @@ export function useLifeAreas(): UseLifeAreasReturn {
         console.error('Erro ao carregar userStatus:', statusError)
       }
 
-      //  USAR SISTEMA LOCAL SOMENTE QUANDO NECESSARIO (mudanca de casas/force)
-      console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
-      const effectiveForce =
-        forceRefresh ||
-        houseSystemChanged ||
-        (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
-      const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, effectiveForce)
-      setTransitData(result.data)
-      setCacheStatus(result.cacheStatus)
-      setIsUsingLocalEngine(true)
-      const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
-      const statusKey = `${user.uid}:${normalizedHouseSystem}:${lifeAreasSignature}`
-      if (lastStatusKeyRef.current !== statusKey) {
-        lastStatusKeyRef.current = statusKey
-        if (statusUpdateTimeoutRef.current) {
-          clearTimeout(statusUpdateTimeoutRef.current)
-        }
-        // Debounce para evitar writes repetidas.
-        statusUpdateTimeoutRef.current = setTimeout(() => {
-          GroupService.updateUserStatusFromLifeAreas(
-            user.uid,
-            result.data,
-            birthData,
-            lifeAreasSignature
-          )
-        }, STATUS_UPDATE_DEBOUNCE_MS)
+      const backendFresh =
+        !!backendLifeAreasValue &&
+        !!backendValidUntilMs &&
+        backendValidUntilMs > Date.now() &&
+        !!backendCalcVersion &&
+        backendCalcVersion.startsWith('status-backend-')
+
+      if (houseSystemChanged) {
+        localOverrideActiveRef.current = true
+        setLocalOverrideActive(true)
+        localOverrideStartedAtRef.current = Date.now()
       }
 
-      console.log(' Dados astrologicos REAIS carregados:', {
-        lifeAreas: Object.keys(result.data.lifeAreas).length,
-        cacheSource: result.cacheStatus.cacheSource,
-        hoursOld: result.cacheStatus.hoursOld,
-        requestsToday: `${result.cacheStatus.requestsToday}/${result.cacheStatus.maxRequests}`,
-        engine: 'LOCAL (dados reais)'
-      })
+      if (localOverrideActiveRef.current && backendComputedAtMs && localOverrideStartedAtRef.current) {
+        if (backendComputedAtMs > localOverrideStartedAtRef.current) {
+          localOverrideActiveRef.current = false
+          setLocalOverrideActive(false)
+        }
+      }
+
+      if (backendComputedAtMs && backendComputedAtMs !== lastBackendComputedAtRef.current) {
+        lastBackendComputedAtRef.current = backendComputedAtMs
+      }
+
+      const shouldRunLocal =
+        forceRefresh ||
+        houseSystemChanged ||
+        !backendLifeAreasValue ||
+        !backendFresh ||
+        (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+
+      if (shouldRunLocal) {
+        console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
+        const result = await LocalAstrologyService.getCurrentTransits(
+          birthData,
+          user.uid,
+          forceRefresh || houseSystemChanged || (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+        )
+        setTransitData(result.data)
+        setCacheStatus(result.cacheStatus)
+        setIsUsingLocalEngine(true)
+        const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
+        const statusKey = `${user.uid}:${normalizedHouseSystem}:${lifeAreasSignature}`
+        if (lastStatusKeyRef.current !== statusKey) {
+          lastStatusKeyRef.current = statusKey
+          if (statusUpdateTimeoutRef.current) {
+            clearTimeout(statusUpdateTimeoutRef.current)
+          }
+          // Debounce para evitar writes repetidas.
+          statusUpdateTimeoutRef.current = setTimeout(() => {
+            GroupService.updateUserStatusFromLifeAreas(
+              user.uid,
+              result.data,
+              birthData,
+              lifeAreasSignature
+            )
+          }, STATUS_UPDATE_DEBOUNCE_MS)
+        }
+
+        console.log(' Dados astrologicos REAIS carregados:', {
+          lifeAreas: Object.keys(result.data.lifeAreas).length,
+          cacheSource: result.cacheStatus.cacheSource,
+          hoursOld: result.cacheStatus.hoursOld,
+          requestsToday: `${result.cacheStatus.requestsToday}/${result.cacheStatus.maxRequests}`,
+          engine: 'LOCAL (dados reais)'
+        })
+      } else {
+        setIsUsingLocalEngine(false)
+        console.log(' Usando status do backend (fresh).')
+      }
     } catch (err) {
       console.error(' Erro ao carregar dados de transito:', err)
       const fallbackAllowed = backendLifeAreasValue && Object.keys(backendLifeAreasValue).length > 0
@@ -224,6 +288,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     refreshData,
     sendCriticalAlerts,
     isUsingLocalEngine,
+    localOverrideActive,
   }
 }
 

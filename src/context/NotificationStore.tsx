@@ -3,6 +3,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   limit,
   onSnapshot,
   orderBy,
@@ -132,33 +133,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     )
 
-    const templateRef = doc(db, "settings", "notification_templates")
-    const unsubscribeTemplates = onSnapshot(
-      templateRef,
-      (snapshot) => {
-        const data = snapshot.data()
+    let canceled = false
+    const loadTemplates = async () => {
+      try {
+        const templateRef = doc(db, "settings", "notification_templates")
+        const templatesCollectionRef = collection(db, "settings", "notification_templates", "templates")
+        const [templateSnap, templatesSnap] = await Promise.all([
+          getDoc(templateRef),
+          getDocs(templatesCollectionRef),
+        ])
+        if (canceled) return
+        const data = templateSnap.exists() ? templateSnap.data() : null
         setDocTemplates(templateDocToMap(data))
-      },
-      () => {}
-    )
-
-    const templatesCollectionRef = collection(db, "settings", "notification_templates", "templates")
-    const unsubscribeTemplateCollection = onSnapshot(
-      templatesCollectionRef,
-      (snapshot) => {
         const map: Record<string, NotificationTemplate> = {}
-        snapshot.docs.forEach((docSnap) => {
+        templatesSnap.docs.forEach((docSnap) => {
           map[docSnap.id] = docSnap.data() as NotificationTemplate
         })
         setCollectionTemplates(map)
-      },
-      () => {}
-    )
+      } catch (err) {
+        console.error("templates fetch error", err)
+      }
+    }
+    loadTemplates()
 
     return () => {
       unsubscribeNotifications()
-      unsubscribeTemplates()
-      unsubscribeTemplateCollection()
+      canceled = true
     }
   }, [user?.uid])
 

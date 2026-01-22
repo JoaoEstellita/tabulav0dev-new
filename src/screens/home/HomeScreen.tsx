@@ -31,6 +31,7 @@ import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
+import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -41,7 +42,15 @@ export default function HomeScreen() {
     const { user } = useAuth()
     const navigation = useNavigation()
     const { unreadCount } = useNotificationStore()
-    const { transitData, loading, error, refreshData, sendCriticalAlerts, backendLifeAreas } = useLifeAreas()
+    const {
+      transitData,
+      loading,
+      error,
+      refreshData,
+      sendCriticalAlerts,
+      backendLifeAreas,
+      localOverrideActive
+    } = useLifeAreas()
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
 
@@ -213,8 +222,11 @@ export default function HomeScreen() {
     }
 
     const lifeAreasForDisplay = React.useMemo(() => {
+      if (localOverrideActive && transitData?.lifeAreas) {
+        return transitData.lifeAreas
+      }
       return backendLifeAreas || transitData?.lifeAreas || null
-    }, [backendLifeAreas, transitData?.lifeAreas])
+    }, [backendLifeAreas, transitData?.lifeAreas, localOverrideActive])
 
     const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
       const percentage = typeof area?.percentage === 'number'
@@ -244,7 +256,7 @@ export default function HomeScreen() {
             ? area.percentage
             : (typeof area?.status === 'number' ? area.status : null)
           if (typeof value !== 'number') return false
-          return value < 30
+          return value < STATUS_THRESHOLDS.criticalBelow
         })
 
         const mapped = filtered.map(([name, area]) => normalizeDisplayArea(name, area))
