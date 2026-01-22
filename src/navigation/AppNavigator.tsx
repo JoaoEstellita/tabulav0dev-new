@@ -1,13 +1,12 @@
 "use client"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect } from "react"
 import { Dimensions, Platform, PanResponder, View } from "react-native"
 import { DefaultTheme, NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
-import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -102,19 +101,8 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
       easing: Easing.out(Easing.cubic),
     })
     opacity.value = withTiming(0.9, { duration: SWIPE_ANIMATION_MS })
-    runOnJS(navigateToIndex)(nextIndex, direction)
+    navigateToIndex(nextIndex, direction)
   }
-
-  const pan = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .failOffsetY([-10, 10])
-    .onUpdate((event) => {
-      translateX.value = Math.max(-screenWidth, Math.min(screenWidth, event.translationX))
-      opacity.value = 0.9
-    })
-    .onEnd((event) => {
-      handleSwipeEnd(event.translationX)
-    })
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_event, gesture) => {
@@ -136,24 +124,12 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
     transform: [{ translateX: translateX.value }],
     opacity: opacity.value,
   }))
-  if (Platform.OS === "web") {
-    return (
-      <View style={styles.swipeContainer}>
-        <Animated.View style={[styles.swipeScene, animatedStyle]} {...panResponder.panHandlers}>
-          {children}
-        </Animated.View>
-      </View>
-    )
-  }
-
   return (
-    <GestureDetector gesture={pan}>
-      <View style={styles.swipeContainer}>
-        <Animated.View style={[styles.swipeScene, animatedStyle]}>
-          {children}
-        </Animated.View>
-      </View>
-    </GestureDetector>
+    <View style={styles.swipeContainer}>
+      <Animated.View style={[styles.swipeScene, animatedStyle]} {...panResponder.panHandlers}>
+        {children}
+      </Animated.View>
+    </View>
   )
 }
 
