@@ -14,6 +14,7 @@ import {
   arrayUnion,
   arrayRemove,
   Timestamp,
+  runTransaction,
 } from "firebase/firestore"
 import { auth, db } from "../../config/firebase"
 import GroupNotificationService from "../notifications/GroupNotificationService"
@@ -317,13 +318,6 @@ class GroupService {
     lifeAreasSignature?: string
   ): Promise<void> {
     try {
-      if (lifeAreasSignature) {
-        const existingSnap = await getDoc(doc(db, "userStatus", userId))
-        const existingData = existingSnap.exists() ? existingSnap.data() : null
-        if (existingData?.lifeAreasSignature === lifeAreasSignature) {
-          return
-        }
-      }
       const statusPersonal = transitData.currentTransits?.statusPersonal
       const overall = this.mapLevelToOverall(statusPersonal?.level)
 
@@ -336,22 +330,54 @@ class GroupService {
         criticalTransits: [],
       }
 
-      await setDoc(
-        doc(db, "userStatus", userId),
-        {
-          astrologicalStatus: status,
-          statusPersonal,
-          lifeAreas: transitData.lifeAreas,
-          lifeAreasSignature: lifeAreasSignature || null,
-          source: "app",
-          lastStatusUpdate: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          birthData,
-        },
-        { merge: true }
-      )
+      const userStatusRef = doc(db, "userStatus", userId)
+      const now = Date.now()
 
-      await this.updateGroupMemberStatus(userId, transitData)
+      const wrote = await runTransaction(db, async (tx) => {
+        const snap = await tx.get(userStatusRef)
+        const existing = snap.exists() ? snap.data() : null
+        const validUntil = existing?.validUntil?.toDate
+          ? existing.validUntil.toDate()
+          : existing?.validUntil instanceof Date
+            ? existing.validUntil
+            : null
+        const backendCalcVersion = typeof existing?.calcVersion === "string" &&
+          existing.calcVersion.startsWith("status-backend-")
+        const hasBackend = existing?.source === "backend" || backendCalcVersion
+        const isFresh = hasBackend && validUntil && validUntil.getTime() > now
+        if (isFresh) return false
+
+        const isStale = !validUntil || validUntil.getTime() <= now
+        const allowWrite = !snap.exists() || isStale || !existing?.calcVersion
+        if (!allowWrite) return false
+
+        if (lifeAreasSignature && existing?.lifeAreasSignature === lifeAreasSignature) {
+          return false
+        }
+
+        tx.set(
+          userStatusRef,
+          {
+            astrologicalStatus: status,
+            statusPersonal,
+            lifeAreas: transitData.lifeAreas,
+            lifeAreasSignature: lifeAreasSignature || null,
+            source: "client",
+            clientComputedAt: Timestamp.now(),
+            clientValidUntil: null,
+            clientCalcVersion: "status-client-fallback",
+            lastStatusUpdate: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+            birthData,
+          },
+          { merge: true }
+        )
+        return true
+      })
+
+      if (wrote) {
+        await this.updateGroupMemberStatus(userId, transitData)
+      }
     } catch (error) {
       console.error("Erro ao atualizar status por areas:", error)
     }
