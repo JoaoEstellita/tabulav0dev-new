@@ -5,12 +5,13 @@ import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '
 import UserService from '../services/firebase/UserService'
 import GroupNotificationService from '../services/notifications/GroupNotificationService'
 import GroupService from '../services/firebase/GroupService'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
 export interface UseLifeAreasReturn {
   transitData: LocalTransitData | null
   cacheStatus: CacheStatus | null
+  backendLifeAreas: Record<string, any> | null
   loading: boolean
   error: string | null
   refreshData: (forceRefresh?: boolean) => Promise<void>
@@ -22,14 +23,14 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const { user } = useAuth()
   const [transitData, setTransitData] = useState<LocalTransitData | null>(null)
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
+  const [backendLifeAreas, setBackendLifeAreas] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
-  // Forcar um recalculo fresco na primeira carga para refletir correcoes de casas
-  const [firstLoad, setFirstLoad] = useState(true)
   const lastStatusKeyRef = useRef<string | null>(null)
   const statusUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const STATUS_UPDATE_DEBOUNCE_MS = 1200
+  const lastHouseSystemRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -65,19 +66,39 @@ export function useLifeAreas(): UseLifeAreasReturn {
         birthLocation: userProfile.birthLocation,
       }
 
-      //  USAR NOVO SISTEMA LOCAL (dados 100% reais, performance instantanea)
+      const activeHouseSystem =
+        (globalThis as any).__userHouseSystem || userProfile?.preferences?.houseSystem || userProfile?.houseSystem
+      const normalizedHouseSystem = String(activeHouseSystem || 'placidus')
+      const houseSystemChanged =
+        lastHouseSystemRef.current && lastHouseSystemRef.current !== normalizedHouseSystem
+      lastHouseSystemRef.current = normalizedHouseSystem
+
+      let backendLifeAreasValue: Record<string, any> | null = null
+      try {
+        const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
+        if (statusSnap.exists()) {
+          const statusData = statusSnap.data()
+          backendLifeAreasValue = statusData?.lifeAreas || null
+          setBackendLifeAreas(backendLifeAreasValue)
+        } else {
+          setBackendLifeAreas(null)
+        }
+      } catch (statusError) {
+        console.error('Erro ao carregar userStatus:', statusError)
+      }
+
+      //  USAR SISTEMA LOCAL SOMENTE QUANDO NECESSARIO (mudanca de casas/force)
       console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
-      // Regra: primeira carga ignora cache para refletir correes recentes de casas; depois volta ao fluxo normal
-      const effectiveForce = forceRefresh || firstLoad || (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+      const effectiveForce =
+        forceRefresh ||
+        houseSystemChanged ||
+        (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
       const result = await LocalAstrologyService.getCurrentTransits(birthData, user.uid, effectiveForce)
       setTransitData(result.data)
       setCacheStatus(result.cacheStatus)
       setIsUsingLocalEngine(true)
-      if (firstLoad) setFirstLoad(false)
-      const activeHouseSystem =
-        (globalThis as any).__userHouseSystem || userProfile?.preferences?.houseSystem || userProfile?.houseSystem
       const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
-      const statusKey = `${user.uid}:${activeHouseSystem || "placidus"}:${lifeAreasSignature}`
+      const statusKey = `${user.uid}:${normalizedHouseSystem}:${lifeAreasSignature}`
       if (lastStatusKeyRef.current !== statusKey) {
         lastStatusKeyRef.current = statusKey
         if (statusUpdateTimeoutRef.current) {
@@ -103,7 +124,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
       })
     } catch (err) {
       console.error(' Erro ao carregar dados de transito:', err)
-      setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')
+      const fallbackAllowed = backendLifeAreasValue && Object.keys(backendLifeAreasValue).length > 0
+      if (!fallbackAllowed) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados astrologicos')
+      }
     } finally {
       setLoading(false)
     }
@@ -194,6 +218,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   return {
     transitData,
     cacheStatus,
+    backendLifeAreas,
     loading,
     error,
     refreshData,

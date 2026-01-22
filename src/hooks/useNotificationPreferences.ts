@@ -183,6 +183,71 @@ export const loadUserNotificationPreferences = async (
   return { prefs: merged, migrated }
 }
 
+type SharedState = {
+  preferences: NotificationPreferences | null
+  loading: boolean
+}
+
+type SharedListener = (state: SharedState) => void
+
+const sharedListeners = new Set<SharedListener>()
+let sharedUnsub: null | (() => void) = null
+let sharedUserId: string | null = null
+let sharedState: SharedState = { preferences: null, loading: true }
+
+const notifyShared = () => {
+  sharedListeners.forEach((listener) => listener(sharedState))
+}
+
+const startSharedListener = (userId: string) => {
+  if (!userId) return
+  if (sharedUnsub) sharedUnsub()
+  sharedUserId = userId
+  sharedState = { preferences: null, loading: true }
+  notifyShared()
+
+  sharedUnsub = onSnapshot(doc(db, 'users', userId), async (snap) => {
+    const data = snap.exists() ? snap.data() : {}
+    const { prefs, migrated } = await loadUserNotificationPreferences(userId, data)
+    sharedState = { preferences: prefs, loading: false }
+    notifyShared()
+    if (migrated) {
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          notifications: prefs,
+          lastPreferencesUpdate: serverTimestamp(),
+        })
+      } catch {
+        // Best effort
+      }
+    }
+  })
+}
+
+const stopSharedListenerIfIdle = () => {
+  if (sharedListeners.size > 0) return
+  if (sharedUnsub) {
+    sharedUnsub()
+    sharedUnsub = null
+  }
+  sharedUserId = null
+  sharedState = { preferences: null, loading: true }
+}
+
+const subscribeToSharedPreferences = (userId: string, listener: SharedListener) => {
+  sharedListeners.add(listener)
+  if (sharedUserId !== userId || !sharedUnsub) {
+    startSharedListener(userId)
+  } else {
+    listener(sharedState)
+  }
+
+  return () => {
+    sharedListeners.delete(listener)
+    stopSharedListenerIfIdle()
+  }
+}
+
 export function useNotificationPreferences() {
   const { user } = useAuth()
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null)
@@ -195,28 +260,13 @@ export function useNotificationPreferences() {
       return
     }
 
-    let active = true
-    const unsub = onSnapshot(doc(db, 'users', user.uid), async (snap) => {
-      if (!active) return
-      const data = snap.exists() ? snap.data() : {}
-      const { prefs, migrated } = await loadUserNotificationPreferences(user.uid, data)
-      setPreferences(prefs)
-      if (migrated) {
-        try {
-          await updateDoc(doc(db, 'users', user.uid), {
-            notifications: prefs,
-            lastPreferencesUpdate: serverTimestamp(),
-          })
-        } catch {
-          // Best effort
-        }
-      }
-      setLoading(false)
+    const unsubscribe = subscribeToSharedPreferences(user.uid, (state) => {
+      setPreferences(state.preferences)
+      setLoading(state.loading)
     })
 
     return () => {
-      active = false
-      unsub()
+      unsubscribe()
     }
   }, [user?.uid])
 

@@ -41,7 +41,7 @@ export default function HomeScreen() {
     const { user } = useAuth()
     const navigation = useNavigation()
     const { unreadCount } = useNotificationStore()
-    const { transitData, loading, error, refreshData, sendCriticalAlerts } = useLifeAreas()
+    const { transitData, loading, error, refreshData, sendCriticalAlerts, backendLifeAreas } = useLifeAreas()
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
 
@@ -212,30 +212,49 @@ export default function HomeScreen() {
       })
     }
 
+    const lifeAreasForDisplay = React.useMemo(() => {
+      return backendLifeAreas || transitData?.lifeAreas || null
+    }, [backendLifeAreas, transitData?.lifeAreas])
+
+    const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
+      const percentage = typeof area?.percentage === 'number'
+        ? area.percentage
+        : (typeof area?.status === 'number' ? area.status : null)
+      return {
+        name,
+        ...area,
+        status: typeof percentage === 'number' ? percentage : 0,
+        percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
+        criticalLevel: typeof percentage === 'number' ? percentage < 40 : !!area?.criticalLevel,
+      }
+    }, [])
+
     const criticalAreas = React.useMemo(() => {
-      if (!transitData?.lifeAreas) {
-        console.log('?? criticalAreas: transitData.lifeAreas est\u00E1 undefined')
+      if (!lifeAreasForDisplay) {
+        console.log('?? criticalAreas: lifeAreasForDisplay est\u00E1 undefined')
         return []
       }
 
       try {
-        const entries = safeEntries(transitData.lifeAreas)
+        const entries = safeEntries(lifeAreasForDisplay)
         console.log('?? criticalAreas: safeEntries retornou', entries.length, 'entradas')
 
         const filtered = entries.filter(([_, area]) => {
-          const value = typeof area?.percentage === 'number' ? area.percentage : null
+          const value = typeof area?.percentage === 'number'
+            ? area.percentage
+            : (typeof area?.status === 'number' ? area.status : null)
           if (typeof value !== 'number') return false
           return value < 30
         })
 
-        const mapped = filtered.map(([name, area]) => ({ name, ...area }))
+        const mapped = filtered.map(([name, area]) => normalizeDisplayArea(name, area))
         console.log('?? criticalAreas: encontradas', mapped.length, '\u00E1reas cr\u00EDticas')
         return mapped
       } catch (error) {
         console.error('? criticalAreas: erro ao processar:', error)
         return []
       }
-    }, [transitData?.lifeAreas])
+    }, [lifeAreasForDisplay, normalizeDisplayArea])
 
     if (loading && !transitData) {
       return (
@@ -339,7 +358,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Status das Areas de Vida */}
-          {transitData?.lifeAreas && (
+          {lifeAreasForDisplay && (
             <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -348,7 +367,7 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.lifeAreasGrid}>
-                {safeEntries(transitData.lifeAreas).map(([name, area], index) => {
+                {safeEntries(lifeAreasForDisplay).map(([name, area], index) => {
                   // ??? Prote\u00E7\u00E3o extra para cada \u00E1rea
                   if (!area || typeof area !== 'object') {
                     console.warn('?? LifeArea inv\u00E1lida:', { name, area })
@@ -357,12 +376,13 @@ export default function HomeScreen() {
 
                   const transitCount =
                     transitData?.currentTransits?.transits?.byArea?.[name]?.length || 0
+                  const normalizedArea = normalizeDisplayArea(name, area)
 
                   return (
                     <View key={name} style={styles.lifeAreaItem}>
                       <LifeAreaCard
-                        area={{name, ...area}}
-                        onPress={() => handleAreaPress(name, area)}
+                        area={normalizedArea}
+                        onPress={() => handleAreaPress(name, normalizedArea)}
                         calculationFactors={getLifeAreaFactors(name)}
                         transitCount={transitCount}
                       />
@@ -387,7 +407,7 @@ export default function HomeScreen() {
                   natalAscendant={transitData.currentTransits.natalAscendant}
                   natalMidheaven={transitData.currentTransits.natalMidheaven}
                   housesCusps={transitData.currentTransits.houses}
-                  lifeAreas={transitData.lifeAreas}
+                  lifeAreas={lifeAreasForDisplay || transitData.lifeAreas}
                   lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
                 />
