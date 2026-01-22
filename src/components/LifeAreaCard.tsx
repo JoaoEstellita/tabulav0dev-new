@@ -81,19 +81,15 @@ export default function LifeAreaCard({
   }
 
   const getStatusText = (status: number) => {
-    if (status >= 70) return 'Intensidade alta'
-    if (status >= 40) return 'Intensidade moderada'
-    return 'Intensidade baixa'
+    if (status >= 70) return 'Positivo'
+    if (status >= 40) return 'Moderado'
+    return 'Crítico'
   }
 
   const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
   const areaIcon = AREA_ICONS[area.name] || 'help-circle'
   const statusValue = typeof area.status === 'number' ? area.status : 0
   const statusColor = getStatusColor(statusValue)
-  const processSynthesis =
-    area.processSynthesis || 'Este periodo indica um movimento importante nesta area.'
-  const highlights = Array.isArray(area.highlights) ? area.highlights : []
-  const highlightsPreview = highlights.slice(0, 2)
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -134,38 +130,6 @@ export default function LifeAreaCard({
           />
         </View>
 
-
-        <Text style={styles.intensityHint}>
-          A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.
-        </Text>
-
-        <View style={styles.processBlock}>
-          <Text style={styles.processLabel}>Processo em curso</Text>
-          <Text style={styles.processText} numberOfLines={3}>
-            {processSynthesis}
-          </Text>
-        </View>
-
-        {highlightsPreview.length > 0 && (
-          <View style={styles.highlightsBlock}>
-            <Text style={styles.highlightsLabel}>Destaques do momento</Text>
-            {highlightsPreview.map((item, index) => (
-              <View key={`${item.headline || 'highlight'}-${index}`} style={styles.highlightItem}>
-                <Text style={styles.highlightTitle} numberOfLines={1}>
-                  {item.headline || 'Destaque'}
-                </Text>
-                <Text style={styles.highlightSummary} numberOfLines={2}>
-                  {item.summary || 'Movimento em andamento nesta area.'}
-                </Text>
-              </View>
-            ))}
-            {highlights.length > highlightsPreview.length && (
-              <Text style={styles.moreHighlights}>
-                Ver mais ({highlights.length - highlightsPreview.length})
-              </Text>
-            )}
-          </View>
-        )}
 
         <View style={styles.ctaRow}>
           <Text style={styles.ctaText}>Ver justificativas</Text>
@@ -248,57 +212,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 999,
-  },
-  intensityHint: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginBottom: 8,
-    lineHeight: 14,
-  },
-  processBlock: {
-    marginBottom: 8,
-  },
-  processLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 2,
-  },
-  processText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    lineHeight: 16,
-  },
-  highlightsBlock: {
-    marginBottom: 8,
-  },
-  highlightsLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 4,
-  },
-  highlightItem: {
-    marginBottom: 4,
-  },
-  highlightTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  highlightSummary: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.85)',
-    lineHeight: 14,
-  },
-  moreHighlights: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.75)',
-    marginTop: 4,
   },
   ctaRow: {
     flexDirection: 'row',
