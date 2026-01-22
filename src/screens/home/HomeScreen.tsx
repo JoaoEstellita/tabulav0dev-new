@@ -36,6 +36,17 @@ import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
 
+const LIFE_AREA_ORDER = [
+  'amor',
+  'carreira',
+  'financas',
+  'saude',
+  'familia',
+  'espiritualidade',
+  'comunicacao',
+  'transformacao',
+]
+
 export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
@@ -226,6 +237,13 @@ export default function HomeScreen() {
       return backendLifeAreas || transitData?.lifeAreas || null
     }, [backendLifeAreas, transitData?.lifeAreas])
 
+    const orderedLifeAreas = React.useMemo(() => {
+      if (!lifeAreasForDisplay) return []
+      return LIFE_AREA_ORDER
+        .map((key) => [key, (lifeAreasForDisplay as any)[key]] as const)
+        .filter(([_, area]) => !!area)
+    }, [lifeAreasForDisplay])
+
     const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
       const percentage = typeof area?.percentage === 'number'
         ? area.percentage
@@ -386,7 +404,7 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.lifeAreasGrid}>
-                {safeEntries(lifeAreasForDisplay).map(([name, area], index) => {
+                {orderedLifeAreas.map(([name, area], index) => {
                   // ??? Prote\u00E7\u00E3o extra para cada \u00E1rea
                   if (!area || typeof area !== 'object') {
                     console.warn('?? LifeArea inv\u00E1lida:', { name, area })

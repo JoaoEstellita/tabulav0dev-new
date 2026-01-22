@@ -977,14 +977,20 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     const worst = getMemberWorstArea(member)
                     const percentage = typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null
                     const bucket = worst ? worst.bucket : getMemberSummaryBucket(member)
+                    const criticalEntries = buildMemberAreaEntries(member)
+                      .filter((entry) => entry.bucket === "critical")
+                    const criticalText = criticalEntries
+                      .map((entry) => `${entry.label} ${entry.percentage !== null ? `${Math.round(entry.percentage)}%` : ""}`.trim())
+                      .filter((text) => text.length > 0)
+                      .join(" · ")
                     return (
                       <View key={member.userId} style={styles.attentionRow}>
                         <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
                         <View style={styles.attentionInfo}>
                           <Text style={styles.attentionName}>{member.displayName}</Text>
                           <Text style={styles.attentionMeta}>
-                            {worst ? worst.label : "Area indisponivel"}{" "}
-                            {percentage !== null ? `- ${percentage}%` : ""}
+                            {criticalText || (worst ? worst.label : "Area indisponivel")}{" "}
+                            {!criticalText && percentage !== null ? `- ${percentage}%` : ""}
                           </Text>
                         </View>
                         <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
