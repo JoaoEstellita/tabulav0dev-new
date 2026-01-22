@@ -1,6 +1,6 @@
 "use client"
 import { useCallback, useEffect, useRef } from "react"
-import { Dimensions, Platform, PanResponder } from "react-native"
+import { Dimensions, Platform, PanResponder, View } from "react-native"
 import { NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
