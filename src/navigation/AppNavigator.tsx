@@ -1,11 +1,12 @@
 "use client"
-import { useEffect, useRef } from "react"
-import { Platform, PanResponder, View } from "react-native"
-import { NavigationContainer, useNavigation, useRoute } from "@react-navigation/native"
+import { useCallback, useEffect, useRef } from "react"
+import { Dimensions, Platform, PanResponder } from "react-native"
+import { NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -29,10 +30,37 @@ const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
 const TAB_ORDER = ["Home", "Groups", "Notifications", "Premium", "Settings"]
 const SWIPE_THRESHOLD = 40
+const SWIPE_ANIMATION_MS = 260
+let lastSwipeDirection: "left" | "right" | null = null
 
 function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   const navigation = useNavigation()
   const route = useRoute()
+  const screenWidth = Dimensions.get("window").width
+  const translateX = useSharedValue(0)
+  const opacity = useSharedValue(1)
+
+  useFocusEffect(
+    useCallback(() => {
+      const direction = lastSwipeDirection
+      if (direction === "left") translateX.value = screenWidth
+      if (direction === "right") translateX.value = -screenWidth
+      if (direction) opacity.value = 0.9
+
+      translateX.value = withTiming(0, {
+        duration: SWIPE_ANIMATION_MS,
+        easing: Easing.out(Easing.cubic),
+      })
+      opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+      lastSwipeDirection = null
+      return () => {}
+    }, [opacity, screenWidth, translateX])
+  )
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+    opacity: opacity.value,
+  }))
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_event, gesture) => {
@@ -46,6 +74,7 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
         if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(vx) < 0.2) return
         const currentIndex = TAB_ORDER.indexOf(route.name)
         if (currentIndex === -1) return
+        lastSwipeDirection = dx < 0 ? "left" : "right"
         const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1
         if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) return
         navigation.navigate(TAB_ORDER[nextIndex] as never)
@@ -54,9 +83,9 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   ).current
 
   return (
-    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+    <Animated.View style={[{ flex: 1 }, animatedStyle]} {...panResponder.panHandlers}>
       {children}
-    </View>
+    </Animated.View>
   )
 }
 
