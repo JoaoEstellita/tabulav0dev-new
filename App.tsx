@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/hooks/useAuth';
 import AppNavigator from './src/navigation/AppNavigator';
 import { AstrologyDataProvider } from './src/context/AstrologyDataProvider';
@@ -35,13 +36,15 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <AstrologyDataProvider>
-          <NotificationProvider>
-            <AppContent />
-          </NotificationProvider>
-        </AstrologyDataProvider>
-      </AuthProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <AstrologyDataProvider>
+            <NotificationProvider>
+              <AppContent />
+            </NotificationProvider>
+          </AstrologyDataProvider>
+        </AuthProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }
