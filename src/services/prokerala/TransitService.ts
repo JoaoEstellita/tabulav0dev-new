@@ -40,6 +40,15 @@ export interface LifeArea {
   trend: 'positive' | 'negative' | 'stable'
   description: string
   criticalLevel: boolean
+  processSynthesis?: string
+  highlights?: Array<{
+    headline?: string
+    summary?: string
+    tone?: string
+    experience?: string
+    salience?: number
+    topFactorIds?: string[]
+  }>
 }
 
 interface TransitData {
