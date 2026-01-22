@@ -1,6 +1,6 @@
 "use client"
 import { useCallback, useEffect, useRef } from "react"
-import { Dimensions, Platform, View } from "react-native"
+import { Dimensions, Platform, PanResponder, View } from "react-native"
 import { NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
@@ -63,6 +63,41 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
     navigation.navigate(TAB_ORDER[nextIndex] as never)
   }
 
+  const handleSwipeEnd = (translationX: number) => {
+    const currentIndex = TAB_ORDER.indexOf(route.name)
+    if (currentIndex === -1) {
+      translateX.value = withTiming(0, { duration: SWIPE_ANIMATION_MS })
+      opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+      return
+    }
+    const travel = translationX / screenWidth
+    const shouldSwitch = Math.abs(travel) >= SWIPE_THRESHOLD
+    if (!shouldSwitch) {
+      translateX.value = withTiming(0, {
+        duration: SWIPE_ANIMATION_MS,
+        easing: Easing.out(Easing.cubic),
+      })
+      opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+      return
+    }
+    const direction = translationX < 0 ? "left" : "right"
+    const nextIndex = direction === "left" ? currentIndex + 1 : currentIndex - 1
+    if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) {
+      translateX.value = withTiming(0, {
+        duration: SWIPE_ANIMATION_MS,
+        easing: Easing.out(Easing.cubic),
+      })
+      opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+      return
+    }
+    translateX.value = withTiming(direction === "left" ? -screenWidth : screenWidth, {
+      duration: SWIPE_ANIMATION_MS,
+      easing: Easing.out(Easing.cubic),
+    })
+    opacity.value = withTiming(0.9, { duration: SWIPE_ANIMATION_MS })
+    runOnJS(navigateToIndex)(nextIndex, direction)
+  }
+
   const pan = Gesture.Pan()
     .activeOffsetX([-20, 20])
     .failOffsetY([-10, 10])
@@ -71,44 +106,40 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
       opacity.value = 0.9
     })
     .onEnd((event) => {
-      const currentIndex = TAB_ORDER.indexOf(route.name)
-      if (currentIndex === -1) {
-        translateX.value = withTiming(0, { duration: SWIPE_ANIMATION_MS })
-        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
-        return
-      }
-      const travel = event.translationX / screenWidth
-      const shouldSwitch = Math.abs(travel) >= SWIPE_THRESHOLD
-      if (!shouldSwitch) {
-        translateX.value = withTiming(0, {
-          duration: SWIPE_ANIMATION_MS,
-          easing: Easing.out(Easing.cubic),
-        })
-        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
-        return
-      }
-      const direction = event.translationX < 0 ? "left" : "right"
-      const nextIndex = direction === "left" ? currentIndex + 1 : currentIndex - 1
-      if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) {
-        translateX.value = withTiming(0, {
-          duration: SWIPE_ANIMATION_MS,
-          easing: Easing.out(Easing.cubic),
-        })
-        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
-        return
-      }
-      translateX.value = withTiming(direction === "left" ? -screenWidth : screenWidth, {
-        duration: SWIPE_ANIMATION_MS,
-        easing: Easing.out(Easing.cubic),
-      })
-      opacity.value = withTiming(0.9, { duration: SWIPE_ANIMATION_MS })
-      runOnJS(navigateToIndex)(nextIndex, direction)
+      handleSwipeEnd(event.translationX)
     })
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_event, gesture) => {
+      const { dx, dy } = gesture
+      if (Math.abs(dx) < 20) return false
+      if (Math.abs(dx) <= Math.abs(dy) * 1.2) return false
+      return true
+    },
+    onPanResponderMove: (_event, gesture) => {
+      translateX.value = Math.max(-screenWidth, Math.min(screenWidth, gesture.dx))
+      opacity.value = 0.9
+    },
+    onPanResponderRelease: (_event, gesture) => {
+      handleSwipeEnd(gesture.dx)
+    },
+  })
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
     opacity: opacity.value,
   }))
+  if (Platform.OS === "web") {
+    return (
+      <Animated.View
+        style={[{ flex: 1, backgroundColor: "#0F0F23" }, animatedStyle]}
+        {...panResponder.panHandlers}
+      >
+        {children}
+      </Animated.View>
+    )
+  }
+
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[{ flex: 1, backgroundColor: "#0F0F23" }, animatedStyle]}>
