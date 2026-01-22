@@ -147,6 +147,20 @@ export function useLifeAreas(): UseLifeAreasReturn {
         !backendFresh ||
         (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
 
+      const isTransitDataComplete = (data: LocalTransitData | null) => {
+        const transitsByArea = data?.currentTransits?.transits?.byArea
+        const comparisons = data?.currentTransits?.planetComparisons
+        const chartSummary = data?.currentTransits?.chartSummary
+        return (
+          !!transitsByArea &&
+          typeof transitsByArea === 'object' &&
+          Object.keys(transitsByArea).length > 0 &&
+          Array.isArray(comparisons) &&
+          comparisons.length > 0 &&
+          !!chartSummary
+        )
+      }
+
       if (shouldRunLocal) {
         console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
         const result = await LocalAstrologyService.getCurrentTransits(
@@ -183,6 +197,23 @@ export function useLifeAreas(): UseLifeAreasReturn {
           engine: 'LOCAL (dados reais)'
         })
       } else {
+        // Backend fresco: usar cache local apenas se existir (sem recalcular).
+        const cached = await LocalAstrologyService.getCachedTransits(user.uid)
+        const cachedData = cached?.data || null
+        const cachedComplete = isTransitDataComplete(cachedData)
+        if (cachedData && cachedComplete) {
+          setTransitData(cachedData)
+          setCacheStatus(cached.cacheStatus)
+        } else {
+          // Sem cache local: calcular uma vez para recuperar comparativos.
+          const result = await LocalAstrologyService.getCurrentTransits(
+            birthData,
+            user.uid,
+            true
+          )
+          setTransitData(result.data)
+          setCacheStatus(result.cacheStatus)
+        }
         setIsUsingLocalEngine(false)
         console.log(' Usando status do backend (fresh).')
       }

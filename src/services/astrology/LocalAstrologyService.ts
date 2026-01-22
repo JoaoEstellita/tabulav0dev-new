@@ -73,6 +73,15 @@ export interface CacheStatus {
 export class LocalAstrologyService {
   
   /**
+   * Busca apenas do cache (sem recalculo).
+   */
+  static async getCachedTransits(
+    userId: string
+  ): Promise<{ data: LocalTransitData, cacheStatus: CacheStatus } | null> {
+    return this.getCachedData(userId)
+  }
+
+  /**
    * Obtém dados astrológicos usando cálculos LOCAIS
    * Substitui completamente as APIs externas
    */

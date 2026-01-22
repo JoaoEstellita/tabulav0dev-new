@@ -67,6 +67,7 @@ export default function HomeScreen() {
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
     const scrollRef = useRef<ScrollView>(null)
+    const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
     // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -191,14 +192,14 @@ export default function HomeScreen() {
       try {
         await sendCriticalAlerts()
         Alert.alert(
-          'Alertas Enviados',
-          'Seus alertas cr\u00EDticos foram enviados para todos os grupos!',
+          uiText('Alertas Enviados'),
+          uiText('Seus alertas cr\\u00EDticos foram enviados para todos os grupos!'),
           [{ text: 'OK', style: 'default' }]
         )
       } catch (error) {
         Alert.alert(
-          'Erro',
-          'N\u00E3o foi poss\u00EDvel enviar os alertas. Tente novamente.',
+          uiText('Erro'),
+          uiText('N\\u00E3o foi poss\\u00EDvel enviar os alertas. Tente novamente.'),
           [{ text: 'OK', style: 'default' }]
         )
       }
@@ -273,7 +274,9 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.loadingContainer}>
             <StarLoader size={36} color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
+            <Text style={styles.loadingText}>
+              {uiText('Carregando seus tr\\u00E2nsitos...')}
+            </Text>
           </View>
         </LinearGradient>
       )
@@ -284,10 +287,10 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
-            <Text style={styles.errorTitle}>Ops! Algo deu errado</Text>
+            <Text style={styles.errorTitle}>{uiText('Ops! Algo deu errado')}</Text>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={() => refreshData()}>
-              <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+              <Text style={styles.retryButtonText}>{uiText('Tentar Novamente')}</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -380,7 +383,9 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="grid" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Status das Áreas de Vida</Text>
+                <Text style={styles.sectionTitle}>
+                  {uiText('Status das \\u00C1reas de Vida')}
+                </Text>
               </View>
 
               <View style={styles.lifeAreasGrid}>
@@ -438,7 +443,9 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="warning" size={20} color="#EF4444" />
-                <Text style={styles.sectionTitle}>\u00C1reas Cr\u00EDticas</Text>
+                <Text style={styles.sectionTitle}>
+                  {uiText('\\u00C1reas Cr\\u00EDticas')}
+                </Text>
               </View>
 
               <LinearGradient
@@ -446,11 +453,14 @@ export default function HomeScreen() {
                 style={styles.alertCard}
               >
                 <Text style={styles.alertTitle}>
-                  {criticalAreas.length} {criticalAreas.length === 1 ? '\u00C1rea precisa' : '\u00C1reas precisam'} de aten\u00E7\u00E3o
+                  {criticalAreas.length} {criticalAreas.length === 1
+                    ? uiText('\\u00C1rea precisa')
+                    : uiText('\\u00C1reas precisam')
+                  } {uiText('de aten\\u00E7\\u00E3o')}
                 </Text>
 
                 <Text style={styles.alertDescription}>
-                  Seus tr\u00E2nsitos indicam desafios em algumas \u00E1reas. Compartilhe com seu grupo para receber apoio!
+                  {uiText('Seus tr\\u00E2nsitos indicam desafios em algumas \\u00E1reas. Compartilhe com seu grupo para receber apoio!')}
                 </Text>
 
                 {(() => {
@@ -459,7 +469,9 @@ export default function HomeScreen() {
                     <Animated.View style={press.style}>
                       <TouchableOpacity style={styles.alertButton} onPress={handleSendAlerts} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
                         <Ionicons name="send" size={16} color="#FFFFFF" />
-                        <Text style={styles.alertButtonText}>Enviar alertas para grupos</Text>
+                        <Text style={styles.alertButtonText}>
+                          {uiText('Enviar alertas para grupos')}
+                        </Text>
                       </TouchableOpacity>
                     </Animated.View>
                   )
@@ -474,7 +486,9 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="information-circle" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>Orienta\u00E7\u00F5es</Text>
+                <Text style={styles.sectionTitle}>
+                  {uiText('Orienta\\u00E7\\u00F5es')}
+                </Text>
               </View>
 
               {safeWarnings.map((warning, index) => (
@@ -510,7 +524,9 @@ export default function HomeScreen() {
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
           <Ionicons name="warning" size={48} color="#EF4444" />
-          <Text style={styles.loadingText}>Carregando seus tr\u00E2nsitos...</Text>
+          <Text style={styles.loadingText}>
+            {uiText('Carregando seus tr\\u00E2nsitos...')}
+          </Text>
           <Text style={styles.errorText}>
             {error instanceof Error ? error.message : 'Erro desconhecido'}
           </Text>
