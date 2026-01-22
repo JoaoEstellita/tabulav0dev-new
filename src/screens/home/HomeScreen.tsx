@@ -308,6 +308,11 @@ export default function HomeScreen() {
             style={{ position:'absolute', inset:0 }}
           />
         )}
+        {localOverrideActive && (
+          <View style={styles.statusToast}>
+            <Text style={styles.statusToastText}>Recarregando Status</Text>
+          </View>
+        )}
         <ScrollView
           ref={scrollRef}
           style={styles.scrollView}
@@ -767,6 +772,23 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 32,
+  },
+  statusToast: {
+    position: 'absolute',
+    top: 10,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(15, 15, 35, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    zIndex: 10,
+  },
+  statusToastText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardText: {
     color: '#FFFFFF',
