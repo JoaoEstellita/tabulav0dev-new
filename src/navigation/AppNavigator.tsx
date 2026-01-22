@@ -1,7 +1,7 @@
 "use client"
 import { useCallback, useEffect, useRef } from "react"
 import { Dimensions, Platform, PanResponder, View } from "react-native"
-import { NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
+import { DefaultTheme, NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
@@ -33,6 +33,13 @@ const TAB_ORDER = ["Home", "Groups", "Notifications", "Premium", "Settings"]
 const SWIPE_THRESHOLD = 0.25
 const SWIPE_ANIMATION_MS = 260
 let lastSwipeDirection: "left" | "right" | null = null
+const NAV_THEME = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#0F0F23",
+  },
+}
 
 function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   const navigation = useNavigation()
@@ -131,20 +138,21 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   }))
   if (Platform.OS === "web") {
     return (
-      <Animated.View
-        style={[{ flex: 1, backgroundColor: "#0F0F23" }, animatedStyle]}
-        {...panResponder.panHandlers}
-      >
-        {children}
-      </Animated.View>
+      <View style={styles.swipeContainer}>
+        <Animated.View style={[styles.swipeScene, animatedStyle]} {...panResponder.panHandlers}>
+          {children}
+        </Animated.View>
+      </View>
     )
   }
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View style={[{ flex: 1, backgroundColor: "#0F0F23" }, animatedStyle]}>
-        {children}
-      </Animated.View>
+      <View style={styles.swipeContainer}>
+        <Animated.View style={[styles.swipeScene, animatedStyle]}>
+          {children}
+        </Animated.View>
+      </View>
     </GestureDetector>
   )
 }
@@ -214,6 +222,9 @@ function MainTabs() {
           backgroundColor: "#0F0F23",
         },
         headerTintColor: "#FFFFFF",
+        sceneContainerStyle: {
+          backgroundColor: "#0F0F23",
+        },
       })}
     >
       <Tab.Screen name="Home" options={{ title: "Perfil" }}>
@@ -307,6 +318,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
   },
+  swipeContainer: {
+    flex: 1,
+    backgroundColor: "#0F0F23",
+    overflow: "hidden",
+  },
+  swipeScene: {
+    flex: 1,
+    backgroundColor: "#0F0F23",
+  },
 })
 
 export default function AppNavigator() {
@@ -343,5 +363,5 @@ export default function AppNavigator() {
 
   // Se estiver logado e dados completos, mostra app principal
   console.log('🏠 Showing MainTabs (complete data)')
-  return <NavigationContainer><RootNavigator /></NavigationContainer>
+  return <NavigationContainer theme={NAV_THEME}><RootNavigator /></NavigationContainer>
 }
