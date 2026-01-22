@@ -62,6 +62,12 @@ const resolveNotificationText = (
   item: NotificationItem,
   templates: Record<string, NotificationTemplate>
 ) => {
+  if (item.templateKey === "member_status_critical" && item.templateVars?.summaryText) {
+    return {
+      title: item.title || "",
+      body: item.templateVars.summaryText,
+    }
+  }
   if (item.templateKey && templates[item.templateKey]) {
     const template = templates[item.templateKey]
     if (template?.enabled === false) {
