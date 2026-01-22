@@ -336,10 +336,15 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 }) => {
   if (!areaData) return null
 
+  const [showTechnical, setShowTechnical] = React.useState(false)
+
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
   const areaIcon = AREA_ICONS[areaData.name] || 'help-circle'
   const headerGradient = [areaColors[0], areaColors[1]]
+
+  const processSynthesis = (areaData as any).processSynthesis || 'Este periodo indica um movimento importante nesta area.'
+  const highlights = Array.isArray((areaData as any).highlights) ? (areaData as any).highlights : []
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
   const getActiveTransits = (): RealTransitData[] => {
@@ -803,6 +808,34 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     </View>
   )
 
+  const renderSummarySection = () => (
+    <View style={styles.summarySection}>
+      <View style={styles.summaryBlock}>
+        <Text style={styles.summaryTitle}>Processo em curso</Text>
+        <Text style={styles.summaryText}>{processSynthesis}</Text>
+        <Text style={styles.intensityText}>A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.</Text>
+      </View>
+      {highlights.length > 0 && (
+        <View style={styles.highlightsBlock}>
+          <Text style={styles.highlightsTitle}>Destaques do momento</Text>
+          {highlights.slice(0, 2).map((item: any, index: number) => (
+            <View key={item.clusterId || index} style={styles.highlightItem}>
+              <Text style={styles.highlightHeadline}>{item.headline || 'Movimento em destaque'}</Text>
+              <Text style={styles.highlightSummary}>{item.summary || ''}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+
+  const renderTechnicalToggle = () => (
+    <TouchableOpacity style={styles.technicalToggle} onPress={() => setShowTechnical(!showTechnical)}>
+      <Text style={styles.technicalToggleText}>{showTechnical ? 'Ocultar detalhes tecnicos' : 'Ver detalhes tecnicos'}</Text>
+      <Ionicons name={showTechnical ? 'chevron-up' : 'chevron-down'} size={16} color={DESIGN_SYSTEM.colors.primary} />
+    </TouchableOpacity>
+  )
+
   const renderTransitsSection = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
@@ -1163,9 +1196,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         <View style={styles.modalContent}>
           {renderHeader()}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {renderTransitsSection()}
-            {renderSuggestionsSection()}
-            {renderCalculationsSection()}
+            {renderSummarySection()}
+            {renderTechnicalToggle()}
+            {showTechnical && renderTransitsSection()}
+            {showTechnical && renderSuggestionsSection()}
+            {showTechnical && renderCalculationsSection()}
           </ScrollView>
         </View>
       </View>
@@ -1228,6 +1263,70 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: DESIGN_SYSTEM.spacing.xl
+  },
+  summarySection: {
+    marginBottom: DESIGN_SYSTEM.spacing.lg
+  },
+  summaryBlock: {
+    padding: DESIGN_SYSTEM.spacing.md
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  summaryText: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.secondary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    lineHeight: 20
+  },
+  intensityText: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary,
+    lineHeight: 18
+  },
+  highlightsBlock: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    padding: DESIGN_SYSTEM.spacing.md,
+    backgroundColor: DESIGN_SYSTEM.colors.light,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md
+  },
+  highlightsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  highlightItem: {
+    marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  highlightHeadline: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
+  },
+  highlightSummary: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.secondary,
+    lineHeight: 18
+  },
+  technicalToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: DESIGN_SYSTEM.spacing.xs,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm,
+    backgroundColor: DESIGN_SYSTEM.colors.light
+  },
+  technicalToggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary
   },
   subsection: {
     marginBottom: DESIGN_SYSTEM.spacing.lg,
