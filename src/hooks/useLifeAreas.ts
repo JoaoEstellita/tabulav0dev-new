@@ -171,22 +171,24 @@ export function useLifeAreas(): UseLifeAreasReturn {
         setTransitData(result.data)
         setCacheStatus(result.cacheStatus)
         setIsUsingLocalEngine(true)
-        const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
-        const statusKey = `${user.uid}:${normalizedHouseSystem}:${lifeAreasSignature}`
-        if (lastStatusKeyRef.current !== statusKey) {
-          lastStatusKeyRef.current = statusKey
-          if (statusUpdateTimeoutRef.current) {
-            clearTimeout(statusUpdateTimeoutRef.current)
+        if (!backendFresh) {
+          const lifeAreasSignature = buildLifeAreasSignature(result.data.lifeAreas)
+          const statusKey = `${user.uid}:${normalizedHouseSystem}:${lifeAreasSignature}`
+          if (lastStatusKeyRef.current !== statusKey) {
+            lastStatusKeyRef.current = statusKey
+            if (statusUpdateTimeoutRef.current) {
+              clearTimeout(statusUpdateTimeoutRef.current)
+            }
+            // Debounce para evitar writes repetidas.
+            statusUpdateTimeoutRef.current = setTimeout(() => {
+              GroupService.updateUserStatusFromLifeAreas(
+                user.uid,
+                result.data,
+                birthData,
+                lifeAreasSignature
+              )
+            }, STATUS_UPDATE_DEBOUNCE_MS)
           }
-          // Debounce para evitar writes repetidas.
-          statusUpdateTimeoutRef.current = setTimeout(() => {
-            GroupService.updateUserStatusFromLifeAreas(
-              user.uid,
-              result.data,
-              birthData,
-              lifeAreasSignature
-            )
-          }, STATUS_UPDATE_DEBOUNCE_MS)
         }
 
         console.log(' Dados astrologicos REAIS carregados:', {

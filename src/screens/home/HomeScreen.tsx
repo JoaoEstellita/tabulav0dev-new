@@ -223,11 +223,8 @@ export default function HomeScreen() {
     }
 
     const lifeAreasForDisplay = React.useMemo(() => {
-      if (localOverrideActive && transitData?.lifeAreas) {
-        return transitData.lifeAreas
-      }
       return backendLifeAreas || transitData?.lifeAreas || null
-    }, [backendLifeAreas, transitData?.lifeAreas, localOverrideActive])
+    }, [backendLifeAreas, transitData?.lifeAreas])
 
     const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
       const percentage = typeof area?.percentage === 'number'
