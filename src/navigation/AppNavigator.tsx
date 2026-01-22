@@ -1,12 +1,13 @@
 "use client"
 import { useCallback, useEffect, useRef } from "react"
-import { Dimensions, Platform, PanResponder, View } from "react-native"
+import { Dimensions, Platform, View } from "react-native"
 import { NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -29,7 +30,7 @@ const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
 const TAB_ORDER = ["Home", "Groups", "Notifications", "Premium", "Settings"]
-const SWIPE_THRESHOLD = 40
+const SWIPE_THRESHOLD = 0.25
 const SWIPE_ANIMATION_MS = 260
 let lastSwipeDirection: "left" | "right" | null = null
 
@@ -57,35 +58,63 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
     }, [opacity, screenWidth, translateX])
   )
 
+  const navigateToIndex = (nextIndex: number, direction: "left" | "right") => {
+    lastSwipeDirection = direction
+    navigation.navigate(TAB_ORDER[nextIndex] as never)
+  }
+
+  const pan = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-10, 10])
+    .onUpdate((event) => {
+      translateX.value = Math.max(-screenWidth, Math.min(screenWidth, event.translationX))
+      opacity.value = 0.9
+    })
+    .onEnd((event) => {
+      const currentIndex = TAB_ORDER.indexOf(route.name)
+      if (currentIndex === -1) {
+        translateX.value = withTiming(0, { duration: SWIPE_ANIMATION_MS })
+        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+        return
+      }
+      const travel = event.translationX / screenWidth
+      const shouldSwitch = Math.abs(travel) >= SWIPE_THRESHOLD
+      if (!shouldSwitch) {
+        translateX.value = withTiming(0, {
+          duration: SWIPE_ANIMATION_MS,
+          easing: Easing.out(Easing.cubic),
+        })
+        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+        return
+      }
+      const direction = event.translationX < 0 ? "left" : "right"
+      const nextIndex = direction === "left" ? currentIndex + 1 : currentIndex - 1
+      if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) {
+        translateX.value = withTiming(0, {
+          duration: SWIPE_ANIMATION_MS,
+          easing: Easing.out(Easing.cubic),
+        })
+        opacity.value = withTiming(1, { duration: SWIPE_ANIMATION_MS })
+        return
+      }
+      translateX.value = withTiming(direction === "left" ? -screenWidth : screenWidth, {
+        duration: SWIPE_ANIMATION_MS,
+        easing: Easing.out(Easing.cubic),
+      })
+      opacity.value = withTiming(0.9, { duration: SWIPE_ANIMATION_MS })
+      runOnJS(navigateToIndex)(nextIndex, direction)
+    })
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
     opacity: opacity.value,
   }))
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_event, gesture) => {
-        const { dx, dy } = gesture
-        if (Math.abs(dx) < 20) return false
-        if (Math.abs(dx) <= Math.abs(dy) * 1.2) return false
-        return true
-      },
-      onPanResponderRelease: (_event, gesture) => {
-        const { dx, vx } = gesture
-        if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(vx) < 0.2) return
-        const currentIndex = TAB_ORDER.indexOf(route.name)
-        if (currentIndex === -1) return
-        lastSwipeDirection = dx < 0 ? "left" : "right"
-        const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1
-        if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) return
-        navigation.navigate(TAB_ORDER[nextIndex] as never)
-      },
-    })
-  ).current
-
   return (
-    <Animated.View style={[{ flex: 1 }, animatedStyle]} {...panResponder.panHandlers}>
-      {children}
-    </Animated.View>
+    <GestureDetector gesture={pan}>
+      <Animated.View style={[{ flex: 1, backgroundColor: "#0F0F23" }, animatedStyle]}>
+        {children}
+      </Animated.View>
+    </GestureDetector>
   )
 }
 
