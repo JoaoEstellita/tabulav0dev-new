@@ -7,6 +7,7 @@ import GroupNotificationService from '../services/notifications/GroupNotificatio
 import GroupService from '../services/firebase/GroupService'
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import { publishAstrologyData } from '../context/AstrologyDataProvider'
 
 export interface UseLifeAreasReturn {
   transitData: LocalTransitData | null
@@ -210,6 +211,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
         if (cachedData && cachedComplete) {
           setTransitData(cachedData)
           setCacheStatus(cached.cacheStatus)
+          if (cachedData.currentTransits) {
+            publishAstrologyData(cachedData.currentTransits)
+          }
         } else {
           // Sem cache local: calcular uma vez para recuperar comparativos.
           const result = await LocalAstrologyService.getCurrentTransits(
