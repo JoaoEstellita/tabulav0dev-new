@@ -93,8 +93,17 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
 
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState("all")
-  const { notifications, templates, unreadCount, markAsRead, markAllAsRead, loading } =
-    useNotificationStore()
+  const {
+    notifications,
+    templates,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
+  } = useNotificationStore()
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((item) => matchesFilter(item, filter))
@@ -211,6 +220,17 @@ export default function NotificationsScreen() {
             </View>
           ))
         )}
+        {hasMore && !loading && (
+          <TouchableOpacity
+            style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
+            onPress={loadMore}
+            disabled={loadingMore}
+          >
+            <Text style={styles.loadMoreText}>
+              {loadingMore ? "Carregando..." : "Carregar mais"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   )
@@ -251,6 +271,22 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: "#0F0F23",
+  },
+  loadMoreButton: {
+    marginVertical: 20,
+    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  loadMoreButtonDisabled: {
+    opacity: 0.6,
+  },
+  loadMoreText: {
+    color: "#F8FAFC",
+    fontSize: 12,
+    fontWeight: "600",
   },
   title: {
     color: "#FFFFFF",

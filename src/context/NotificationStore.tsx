@@ -2,10 +2,13 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import {
   collection,
   doc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  startAfter,
   updateDoc,
   where,
   writeBatch,
@@ -52,6 +55,9 @@ type NotificationContextValue = {
   templates: Record<string, NotificationTemplate>
   unreadCount: number
   loading: boolean
+  loadingMore: boolean
+  hasMore: boolean
+  loadMore: () => Promise<void>
   markAsRead: (notificationId: string) => Promise<void>
   markAllAsRead: () => Promise<void>
 }
@@ -72,12 +78,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [docTemplates, setDocTemplates] = useState<Record<string, NotificationTemplate>>({})
   const [collectionTemplates, setCollectionTemplates] = useState<Record<string, NotificationTemplate>>({})
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [lastDoc, setLastDoc] = useState<any>(null)
+  const PAGE_SIZE = 200
 
   useEffect(() => {
     if (!user?.uid) {
       setNotifications([])
       setDocTemplates({})
       setCollectionTemplates({})
+      setLoadingMore(false)
+      setHasMore(true)
+      setLastDoc(null)
       return
     }
 
@@ -85,7 +98,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const notificationsQuery = query(
       collection(db, "notifications"),
       where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(PAGE_SIZE)
     )
 
     const unsubscribeNotifications = onSnapshot(
@@ -95,7 +109,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           id: docSnap.id,
           ...(docSnap.data() as any),
         })) as NotificationItem[]
-        setNotifications(items)
+        setNotifications((prev) => {
+          const map = new Map<string, NotificationItem>()
+          prev.forEach((item) => map.set(item.id, item))
+          items.forEach((item) => map.set(item.id, item))
+          const merged = Array.from(map.values())
+          merged.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0
+            const bTime = b.createdAt?.toMillis?.() || 0
+            return bTime - aTime
+          })
+          return merged
+        })
+        const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null
+        setLastDoc(lastVisible)
+        setHasMore(snapshot.size === PAGE_SIZE)
         setLoading(false)
       },
       (err) => {
@@ -157,18 +185,79 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const markAllAsRead = async () => {
     if (!user?.uid) return
-    const unread = notifications.filter(
-      (item) => (!item.source || item.source === "user") && !item.isRead
+    const baseQuery = query(
+      collection(db, "notifications"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(400)
     )
-    if (!unread.length) return
-    const batch = writeBatch(db)
-    unread.forEach((item) => {
-      batch.update(doc(db, "notifications", item.id), {
-        isRead: true,
-        readAt: serverTimestamp(),
+    let lastVisible: any = null
+    let hasNext = true
+    while (hasNext) {
+      const pageQuery = lastVisible
+        ? query(
+            collection(db, "notifications"),
+            where("userId", "==", user.uid),
+            orderBy("createdAt", "desc"),
+            startAfter(lastVisible),
+            limit(400)
+          )
+        : baseQuery
+      const snap = await getDocs(pageQuery)
+      if (snap.empty) break
+      const batch = writeBatch(db)
+      snap.docs.forEach((docSnap) => {
+        const data = docSnap.data() as any
+        if (data?.isRead) return
+        if (data?.source && data.source !== "user") return
+        batch.update(doc(db, "notifications", docSnap.id), {
+          isRead: true,
+          readAt: serverTimestamp(),
+        })
       })
-    })
-    await batch.commit()
+      await batch.commit()
+      lastVisible = snap.docs[snap.docs.length - 1] || null
+      hasNext = snap.size === 400
+    }
+  }
+
+  const loadMore = async () => {
+    if (!user?.uid || !hasMore || loadingMore) return
+    if (!lastDoc) return
+    setLoadingMore(true)
+    try {
+      const nextQuery = query(
+        collection(db, "notifications"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE)
+      )
+      const snap = await getDocs(nextQuery)
+      const items = snap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...(docSnap.data() as any),
+      })) as NotificationItem[]
+      if (items.length) {
+        setNotifications((prev) => {
+          const map = new Map<string, NotificationItem>()
+          prev.forEach((item) => map.set(item.id, item))
+          items.forEach((item) => map.set(item.id, item))
+          const merged = Array.from(map.values())
+          merged.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0
+            const bTime = b.createdAt?.toMillis?.() || 0
+            return bTime - aTime
+          })
+          return merged
+        })
+      }
+      const lastVisible = snap.docs[snap.docs.length - 1] || lastDoc
+      setLastDoc(lastVisible)
+      setHasMore(snap.size === PAGE_SIZE)
+    } finally {
+      setLoadingMore(false)
+    }
   }
 
   const value = useMemo(
@@ -177,10 +266,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       templates,
       unreadCount,
       loading,
+      loadingMore,
+      hasMore,
+      loadMore,
       markAsRead,
       markAllAsRead,
     }),
-    [notifications, templates, unreadCount, loading]
+    [notifications, templates, unreadCount, loading, loadingMore, hasMore]
   )
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
