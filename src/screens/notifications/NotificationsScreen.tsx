@@ -62,10 +62,22 @@ const resolveNotificationText = (
   item: NotificationItem,
   templates: Record<string, NotificationTemplate>
 ) => {
-  if (item.templateKey === "member_status_critical" && item.templateVars?.summaryText) {
-    return {
-      title: item.title || "",
-      body: item.templateVars.summaryText,
+  if (item.templateKey === "member_status_critical") {
+    const summaryText = item.templateVars?.summaryText
+    if (summaryText) {
+      return { title: item.title || "", body: summaryText }
+    }
+    const items = (item.meta as any)?.items
+    if (Array.isArray(items) && items.length > 0) {
+      const summary = items
+        .map((entry: any) => {
+          const name = entry.memberName || "Membro"
+          if (entry.customMessage) return `${name}: ${entry.customMessage}`
+          const areas = entry.criticalAreasText ? ` (${entry.criticalAreasText})` : ""
+          return `${name}${areas} em crítico`
+        })
+        .join("; ")
+      if (summary) return { title: item.title || "", body: summary }
     }
   }
   if (item.templateKey && templates[item.templateKey]) {
