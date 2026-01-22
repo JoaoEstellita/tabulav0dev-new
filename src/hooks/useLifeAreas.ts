@@ -151,13 +151,17 @@ export function useLifeAreas(): UseLifeAreasReturn {
         const transitsByArea = data?.currentTransits?.transits?.byArea
         const comparisons = data?.currentTransits?.planetComparisons
         const chartSummary = data?.currentTransits?.chartSummary
+        const personalTransits = data?.currentTransits?.transits?.personal
+        const personalWindows = data?.dailyOverview?.personalTodayRich
         return (
           !!transitsByArea &&
           typeof transitsByArea === 'object' &&
           Object.keys(transitsByArea).length > 0 &&
           Array.isArray(comparisons) &&
           comparisons.length > 0 &&
-          !!chartSummary
+          !!chartSummary &&
+          Array.isArray(personalTransits) &&
+          Array.isArray(personalWindows)
         )
       }
 
