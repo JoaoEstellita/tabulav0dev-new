@@ -12,7 +12,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import Svg, { Circle } from "react-native-svg"
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -33,6 +32,14 @@ import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
+import MoonPhaseIcon from '../../components/MoonPhaseIcon'
+import {
+  formatLocalDateTime,
+  formatLocalTime,
+  getMoonPhaseAngle,
+  getMoonPhaseKeyFromAngle,
+  getMoonPhaseLabelFromAngle
+} from '../../utils/moonPhase'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -70,40 +77,7 @@ const extractPhaseKey = (event: any) => {
   return "new"
 }
 
-const getPhaseRenderInfo = (key: string | null) => {
-  switch (key) {
-    case "new":
-      return { fraction: 0, waxing: true }
-    case "waxingCrescent":
-      return { fraction: 0.25, waxing: true }
-    case "firstQuarter":
-      return { fraction: 0.5, waxing: true }
-    case "waxingGibbous":
-      return { fraction: 0.75, waxing: true }
-    case "full":
-      return { fraction: 1, waxing: true }
-    case "waningGibbous":
-      return { fraction: 0.75, waxing: false }
-    case "lastQuarter":
-      return { fraction: 0.5, waxing: false }
-    case "waningCrescent":
-      return { fraction: 0.25, waxing: false }
-    default:
-      return { fraction: 0, waxing: true }
-  }
-}
-
-const MoonPhaseIcon = ({ phaseKey, size = 24 }: { phaseKey: string | null; size?: number }) => {
-  const { fraction, waxing } = getPhaseRenderInfo(phaseKey)
-  const radius = size / 2
-  const offset = (1 - fraction) * radius * 2 * (waxing ? -1 : 1)
-  return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <Circle cx={radius} cy={radius} r={radius} fill="#1C1C1E" />
-      <Circle cx={radius + offset} cy={radius} r={radius} fill="#F5F0C8" />
-    </Svg>
-  )
-}
+const getUserTimezone = (tz?: string | null) => tz || 'America/Sao_Paulo'
 
 const LIFE_AREA_ORDER = [
   'amor',
@@ -134,6 +108,8 @@ export default function HomeScreen() {
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
     const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
+    const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
+    const [moonLine2, setMoonLine2] = useState<string | null>(null)
     const [moonIsVoid, setMoonIsVoid] = useState(false)
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
@@ -273,6 +249,7 @@ export default function HomeScreen() {
         const data = calendarDoc.data()
         const events = Array.isArray(data?.events) ? data.events : []
         const now = new Date()
+        const userTz = getUserTimezone(settings?.timezone)
 
         const toDate = (value: any) => {
           if (!value) return null
@@ -284,6 +261,8 @@ export default function HomeScreen() {
         let currentPhase: any = null
         let bestExact: Date | null = null
         let currentVoid = false
+        let phaseEnd: Date | null = null
+        let voidEnd: Date | null = null
 
         for (const event of events) {
           const type = String(event?.eventType || '').toUpperCase()
@@ -292,23 +271,39 @@ export default function HomeScreen() {
             const end = toDate(event.endAt)
             if (start && end && now >= start && now <= end) {
               currentPhase = event
+              phaseEnd = end
               break
             }
             const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
             if (exact && exact <= now && (!bestExact || exact > bestExact)) {
               bestExact = exact
               currentPhase = event
+              phaseEnd = end || null
             }
           } else if (type.includes('LUNAR_VOID')) {
             const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
             const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
             if (start && end && now >= start && now <= end) {
               currentVoid = true
+              voidEnd = end
             }
           }
         }
 
-        setMoonPhaseKey(currentPhase ? extractPhaseKey(currentPhase) : null)
+        const angle = getMoonPhaseAngle(now)
+        const phaseKey = getMoonPhaseKeyFromAngle(angle)
+        const phaseLabel = getMoonPhaseLabelFromAngle(angle)
+        const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
+        const line2Base = phaseEnd
+          ? `termina em ${formatLocalDateTime(phaseEnd, userTz)}`
+          : 'fase em atualização'
+        const line2 = currentVoid && voidEnd
+          ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
+          : line2Base
+
+        setMoonPhaseKey(currentPhase ? extractPhaseKey(currentPhase) : phaseKey)
+        setMoonPhaseLabel(line1)
+        setMoonLine2(line2)
         setMoonIsVoid(currentVoid)
       } catch (error) {
         console.error('Erro ao carregar fases da lua:', error)
@@ -500,19 +495,32 @@ export default function HomeScreen() {
                     onPressOut={press.onPressOut}
                     onPress={() => navigation.navigate('Notifications' as never)}
                   >
-                    <MoonPhaseIcon phaseKey={moonPhaseKey} />
+                    <View style={styles.moonIconWrap}>
+                      <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+                      {moonIsVoid && (
+                        <View style={styles.moonVoidBadge}>
+                          <Text style={styles.moonVoidBadgeText}>VOC</Text>
+                        </View>
+                      )}
+                      {unreadCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                          <Text style={styles.notificationBadgeText}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     {moonIsVoid && (
-                      <View style={styles.moonVoidBadge}>
-                        <Text style={styles.moonVoidBadgeText}>VOC</Text>
-                      </View>
+                      null
                     )}
-                    {unreadCount > 0 && (
-                      <View style={styles.notificationBadge}>
-                        <Text style={styles.notificationBadgeText}>
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </Text>
-                      </View>
-                    )}
+                    <View style={styles.moonLegend}>
+                      <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                        {moonPhaseLabel || 'Lua'}
+                      </Text>
+                      <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                        {moonLine2 || 'fase em atualização'}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </Animated.View>
               )
@@ -783,6 +791,29 @@ const styles = StyleSheet.create({
   notificationButton: {
     position: 'relative',
     padding: 8,
+    alignItems: 'flex-end',
+  },
+  moonIconWrap: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moonLegend: {
+    marginTop: 6,
+    alignItems: 'flex-end',
+    maxWidth: 140,
+  },
+  moonLegendLine1: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#E6E6E6',
+    lineHeight: 18,
+  },
+  moonLegendLine2: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#A0A0A0',
+    lineHeight: 16,
   },
   notificationBadge: {
     position: 'absolute',
@@ -802,8 +833,8 @@ const styles = StyleSheet.create({
   },
   moonVoidBadge: {
     position: 'absolute',
-    top: -2,
-    right: -4,
+    top: -4,
+    right: -6,
     backgroundColor: '#EF4444',
     borderRadius: 8,
     paddingHorizontal: 4,

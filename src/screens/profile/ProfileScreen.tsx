@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image } from "react-native"
-import Svg, { Circle } from "react-native-svg"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
@@ -16,6 +15,15 @@ import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
 import SubscriptionScreen from "../subscription/SubscriptionScreen"
+import { useUserSettings } from '../../hooks/useUserSettings'
+import MoonPhaseIcon from '../../components/MoonPhaseIcon'
+import {
+  formatLocalDateTime,
+  formatLocalTime,
+  getMoonPhaseAngle,
+  getMoonPhaseKeyFromAngle,
+  getMoonPhaseLabelFromAngle
+} from '../../utils/moonPhase'
 // Removido reprocesso manual de casas natais deste fluxo
 
 interface UserProfile {
@@ -84,6 +92,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth()
   const { unreadCount } = useNotificationStore()
   const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
+  const { settings } = useUserSettings()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -93,6 +102,7 @@ export default function ProfileScreen() {
   const [savingPhoto, setSavingPhoto] = useState(false)
   const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
   const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
+  const [moonLine2, setMoonLine2] = useState<string | null>(null)
   const [moonIsVoid, setMoonIsVoid] = useState(false)
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
@@ -128,11 +138,11 @@ export default function ProfileScreen() {
   const normalizePhaseLabel = (raw?: string | null) => {
     if (!raw) return ""
     return raw.toLowerCase()
-      .replace(/á|à|ã|â/g, "a")
-      .replace(/é|ê/g, "e")
-      .replace(/í/g, "i")
-      .replace(/ó|ô|õ/g, "o")
-      .replace(/ú/g, "u")
+      .replace(/Ã¡|Ã |Ã£|Ã¢/g, "a")
+      .replace(/Ã©|Ãª/g, "e")
+      .replace(/Ã­/g, "i")
+      .replace(/Ã³|Ã´|Ãµ/g, "o")
+      .replace(/Ãº/g, "u")
   }
 
   const extractPhaseKey = (event: any) => {
@@ -158,51 +168,6 @@ export default function ProfileScreen() {
     return "new"
   }
 
-  const phaseKeyToLabel = (key: string | null) => {
-    switch (key) {
-      case "new":
-        return "Lua Nova"
-      case "waxingCrescent":
-        return "Lua Crescente"
-      case "firstQuarter":
-        return "Quarto Crescente"
-      case "waxingGibbous":
-        return "Lua Gibosa Crescente"
-      case "full":
-        return "Lua Cheia"
-      case "waningGibbous":
-        return "Lua Gibosa Minguante"
-      case "lastQuarter":
-        return "Quarto Minguante"
-      case "waningCrescent":
-        return "Lua Minguante"
-      default:
-        return "Lua"
-    }
-  }
-
-  const getPhaseRenderInfo = (key: string | null) => {
-    switch (key) {
-      case "new":
-        return { fraction: 0, waxing: true }
-      case "waxingCrescent":
-        return { fraction: 0.25, waxing: true }
-      case "firstQuarter":
-        return { fraction: 0.5, waxing: true }
-      case "waxingGibbous":
-        return { fraction: 0.75, waxing: true }
-      case "full":
-        return { fraction: 1, waxing: true }
-      case "waningGibbous":
-        return { fraction: 0.75, waxing: false }
-      case "lastQuarter":
-        return { fraction: 0.5, waxing: false }
-      case "waningCrescent":
-        return { fraction: 0.25, waxing: false }
-      default:
-        return { fraction: 0, waxing: true }
-    }
-  }
 
   const loadLunarCalendar = async () => {
     try {
@@ -215,6 +180,7 @@ export default function ProfileScreen() {
       const data = calendarSnap.data() || {}
       const events = Array.isArray(data.events) ? data.events : []
       const now = new Date()
+      const userTz = settings?.timezone || 'America/Sao_Paulo'
       const phaseEvents = events
         .filter((event) => event?.eventType === "LUNAR_PHASE" && (event?.exactAt || event?.peakAt || event?.exact))
         .map((event) => ({
@@ -229,9 +195,9 @@ export default function ProfileScreen() {
         return acc
       }, phaseEvents[0] || null)
 
-      const phaseKey = currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : null
-      setMoonPhaseKey(phaseKey)
-      setMoonPhaseLabel(phaseKeyToLabel(phaseKey))
+      const angle = getMoonPhaseAngle(now)
+      const phaseKey = getMoonPhaseKeyFromAngle(angle)
+      const phaseLabel = getMoonPhaseLabelFromAngle(angle)
 
       const voidEvents = events
         .filter((event) => event?.eventType === "LUNAR_VOID" && event?.startAt && event?.endAt)
@@ -242,23 +208,25 @@ export default function ProfileScreen() {
         }))
         .filter((event) => !Number.isNaN(event.startAt.getTime()) && !Number.isNaN(event.endAt.getTime()))
 
-      const isVoid = voidEvents.some((event) => now >= event.startAt && now <= event.endAt)
+      const currentVoid = voidEvents.find((event) => now >= event.startAt && now <= event.endAt)
+      const isVoid = Boolean(currentVoid)
+
+      const phaseEnd = currentPhaseEvent?.endAt ? new Date(currentPhaseEvent.endAt) : null
+      const line1 = isVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
+      const line2Base = phaseEnd
+        ? `termina em ${formatLocalDateTime(phaseEnd, userTz)}`
+        : 'fase em atualização'
+      const line2 = isVoid && currentVoid?.endAt
+        ? `${line2Base} · Lua Vazia até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
+        : line2Base
+
+      setMoonPhaseKey(currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : phaseKey)
+      setMoonPhaseLabel(line1)
+      setMoonLine2(line2)
       setMoonIsVoid(isVoid)
     } catch (error) {
       console.warn("Falha ao carregar calendario lunar:", error)
     }
-  }
-
-  const MoonPhaseIcon = ({ size = 22 }: { size?: number }) => {
-    const { fraction, waxing } = getPhaseRenderInfo(moonPhaseKey)
-    const radius = size / 2
-    const offset = (1 - fraction) * radius * 2 * (waxing ? -1 : 1)
-    return (
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <Circle cx={radius} cy={radius} r={radius} fill="#1C1C1E" />
-        <Circle cx={radius + offset} cy={radius} r={radius} fill="#F5F0C8" />
-      </Svg>
-    )
   }
 
   const loadUserProfile = async () => {
@@ -269,9 +237,9 @@ export default function ProfileScreen() {
       if (userDoc.exists()) {
         setProfile(userDoc.data() as UserProfile)
       } else {
-        // Criar perfil padrão
+        // Criar perfil padrÃ£o
         const defaultProfile: UserProfile = {
-          displayName: user!.email?.split("@")[0] || "Usuário",
+          displayName: user!.email?.split("@")[0] || "UsuÃ¡rio",
           birthDate: "",
           birthTime: "",
           birthLocation: {
@@ -327,7 +295,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error)
-      Alert.alert("Erro", "Não foi possível carregar o perfil")
+      Alert.alert("Erro", "NÃ£o foi possÃ­vel carregar o perfil")
     } finally {
       setLoading(false)
     }
@@ -368,7 +336,7 @@ export default function ProfileScreen() {
       Alert.alert("Sucesso", "Perfil atualizado com sucesso!")
     } catch (error) {
       console.error("Erro ao salvar perfil:", error)
-      Alert.alert("Erro", "Não foi possível salvar o perfil")
+      Alert.alert("Erro", "NÃ£o foi possÃ­vel salvar o perfil")
     } finally {
       setSavingPhoto(false)
     }
@@ -377,7 +345,7 @@ export default function ProfileScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  galeria para selecionar sua foto.')
       return false
     }
     return true
@@ -424,11 +392,11 @@ export default function ProfileScreen() {
 
     Alert.alert(
       'Escolher Foto',
-      'Como você gostaria de adicionar sua foto?',
+      'Como vocÃª gostaria de adicionar sua foto?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'Câmera', onPress: () => pickImage('camera') },
+        { text: 'CÃ¢mera', onPress: () => pickImage('camera') },
       ]
     )
   }
@@ -442,7 +410,7 @@ export default function ProfileScreen() {
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  cÃ¢mera.')
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -474,7 +442,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
+      Alert.alert('Erro', 'NÃ£o foi possÃ­vel selecionar a foto. Tente novamente.')
     }
   }
 
@@ -531,7 +499,7 @@ export default function ProfileScreen() {
         "preferences.privacy": updatedProfile.preferences.privacy,
       })
     } catch (error) {
-      console.error("Erro ao atualizar preferência:", error)
+      console.error("Erro ao atualizar preferÃªncia:", error)
     }
   }
 
@@ -563,18 +531,28 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.profileHeaderTop}>
             <View style={styles.profileHeaderSpacer} />
-            <TouchableOpacity style={styles.notificationBell} onPress={() => navigation.navigate("Notifications" as never)}>
-              <MoonPhaseIcon />
-              {moonIsVoid && (
-                <View style={styles.moonVoidBadge}>
-                  <Text style={styles.moonVoidBadgeText}>VOC</Text>
-                </View>
-              )}
-              {notificationBadgeCount > 0 && (
-                <View style={styles.notificationBellBadge}>
-                  <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>
-                </View>
-              )}
+            <TouchableOpacity style={styles.moonWidget} onPress={() => navigation.navigate("Notifications" as never)}>
+              <View style={styles.moonIconWrap}>
+                <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+                {moonIsVoid && (
+                  <View style={styles.moonVoidBadge}>
+                    <Text style={styles.moonVoidBadgeText}>VOC</Text>
+                  </View>
+                )}
+                {notificationBadgeCount > 0 && (
+                  <View style={styles.notificationBellBadge}>
+                    <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.moonLegend}>
+                <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                  {moonPhaseLabel || "Lua"}
+                </Text>
+                <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                  {moonLine2 || "fase em atualização"}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.avatarContainer} onPress={selectPhoto} disabled={savingPhoto}>
@@ -589,13 +567,10 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.displayName}>{profile.displayName}</Text>
           <Text style={styles.email}>{user?.email}</Text>
-          {profile.zodiacSign && <Text style={styles.zodiacSign}>♈ {profile.zodiacSign}</Text>}
-          {moonPhaseLabel && (
-            <Text style={styles.moonPhaseLabel}>{moonPhaseLabel}</Text>
-          )}
+          {profile.zodiacSign && <Text style={styles.zodiacSign}>â™ˆ {profile.zodiacSign}</Text>}
         </View>
 
-        {/* Estatísticas */}
+        {/* EstatÃ­sticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.groupsJoined || 0}</Text>
@@ -650,10 +625,10 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Informações Pessoais */}
+        {/* InformaÃ§Ãµes Pessoais */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+            <Text style={styles.sectionTitle}>InformaÃ§Ãµes Pessoais</Text>
             <TouchableOpacity onPress={() => setEditing(!editing)}>
               <Ionicons name={editing ? "checkmark" : "pencil"} size={20} color="#FFD700" />
             </TouchableOpacity>
@@ -663,7 +638,7 @@ export default function ProfileScreen() {
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Nome de exibição"
+                placeholder="Nome de exibiÃ§Ã£o"
                 placeholderTextColor="#888"
                 value={profile.displayName}
                 onChangeText={(text) => setProfile({ ...profile, displayName: text })}
@@ -677,7 +652,7 @@ export default function ProfileScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Horário de nascimento (HH:MM)"
+                placeholder="HorÃ¡rio de nascimento (HH:MM)"
                 placeholderTextColor="#888"
                 value={profile.birthTime}
                 onChangeText={(text) => setProfile({ ...profile, birthTime: text })}
@@ -691,32 +666,32 @@ export default function ProfileScreen() {
                 <Ionicons name="location" size={20} color="#FFD700" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
-                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+                <Text style={styles.saveButtonText}>Salvar AlteraÃ§Ãµes</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.infoContainer}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Data de Nascimento:</Text>
-                <Text style={styles.infoValue}>{profile.birthDate || "Não informado"}</Text>
+                <Text style={styles.infoValue}>{profile.birthDate || "NÃ£o informado"}</Text>
               </View>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Horário:</Text>
-                <Text style={styles.infoValue}>{profile.birthTime || "Não informado"}</Text>
+                <Text style={styles.infoLabel}>HorÃ¡rio:</Text>
+                <Text style={styles.infoValue}>{profile.birthTime || "NÃ£o informado"}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Local:</Text>
                 <Text style={styles.infoValue}>
                   {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
-                    : "Não informado"}
+                    : "NÃ£o informado"}
                 </Text>
               </View>
             </View>
           )}
         </View>
 
-        {/* Preferências de Privacidade */}
+        {/* PreferÃªncias de Privacidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Privacidade</Text>
 
@@ -724,7 +699,7 @@ export default function ProfileScreen() {
             <View style={styles.preferenceInfo}>
               <Text style={styles.preferenceTitle}>Mostrar Status nos Grupos</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros do grupo vejam seu status astrológico
+                Permitir que membros do grupo vejam seu status astrolÃ³gico
               </Text>
             </View>
             <Switch
@@ -737,9 +712,9 @@ export default function ProfileScreen() {
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Compartilhar duração dos trânsitos</Text>
+              <Text style={styles.preferenceTitle}>Compartilhar duraÃ§Ã£o dos trÃ¢nsitos</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros vejam a duração exata dos aspectos no grupo
+                Permitir que membros vejam a duraÃ§Ã£o exata dos aspectos no grupo
               </Text>
             </View>
             <Switch
@@ -764,7 +739,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Ações */}
+        {/* AÃ§Ãµes */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out" size={20} color="#FF4444" />
@@ -831,11 +806,14 @@ const styles = StyleSheet.create({
   profileHeaderSpacer: {
     width: 24,
   },
-  notificationBell: {
-    alignSelf: "flex-end",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  moonWidget: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
+  moonIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center",
@@ -908,11 +886,19 @@ const styles = StyleSheet.create({
     color: "#FFD700",
     fontWeight: "bold",
   },
-  moonPhaseLabel: {
-    marginTop: 6,
+  moonLegend: {
+    alignItems: "flex-end",
+  },
+  moonLegendLine1: {
     fontSize: 12,
     color: "#F5F0C8",
     fontWeight: "600",
+    lineHeight: 16,
+  },
+  moonLegendLine2: {
+    fontSize: 11,
+    color: "#C9C3A2",
+    lineHeight: 14,
   },
   statsContainer: {
     flexDirection: "row",
@@ -1226,4 +1212,5 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
 })
+
 
