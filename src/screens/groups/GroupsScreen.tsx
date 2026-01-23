@@ -1505,6 +1505,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               const bucket = mapPercentageToBucket(percentageRaw ?? undefined)
               const barColor = mapBucketToColor(bucket)
               const mainPlanets = Array.isArray(detail?.mainPlanets) ? detail.mainPlanets : []
+              const suggestionItems = Array.isArray(detail?.suggestions) ? detail.suggestions : []
+              const activeTransitItems = Array.isArray(detail?.activeTransits) ? detail.activeTransits : []
               const areaTransits = Array.isArray(member.areaTransits?.[key])
                 ? member.areaTransits?.[key]
                 : []
@@ -1513,12 +1515,33 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 const duration = formatTransitDuration(transit)
                 return duration ? `${label} (${duration})` : label
               })
+              const activeTransitLabels = activeTransitItems.map((transit) => {
+                const aspectLabel = formatAspectLabel(transit.aspectName || transit.type || "")
+                const targetPlanet = transit.target?.natalPlanet
+                const targetAngle = transit.target?.angle
+                const targetHouse =
+                  typeof transit.target?.house === "number" ? `Casa ${transit.target.house}` : ""
+                const targetLabel =
+                  targetPlanet
+                    ? formatPlanetLabel(targetPlanet)
+                    : targetAngle
+                    ? String(targetAngle)
+                    : targetHouse
+                if (!targetLabel) {
+                  return `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel}`
+                }
+                return `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel} ${targetLabel}`
+              })
               const fallbackAspects = Array.isArray(member.astrologicalStatus?.criticalTransits)
                 ? member.astrologicalStatus?.criticalTransits.map(
                     (item) => `${item.planet} ${item.aspect}: ${item.description}`
                   )
                 : []
               const resolvedAspects = transitAspects.length ? transitAspects : fallbackAspects
+              const resolvedActiveTransits =
+                activeTransitLabels.length || activeTransitItems.length
+                  ? activeTransitLabels
+                  : transitAspects
               const cardColors = LIFE_AREA_COLORS[key] || ["#4B5563", "#6B7280"]
 
               return (
@@ -1545,6 +1568,35 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     style={styles.memberAreaContent}
                     showsVerticalScrollIndicator={false}
                   >
+                    <Text style={styles.memberAreaSectionTitle}>Sugestoes por transito</Text>
+                    {suggestionItems.length ? (
+                      suggestionItems.map((item, index) => (
+                        <View key={item.id || `suggestion-${index}`} style={styles.memberAreaItem}>
+                          <Text style={styles.memberAreaSuggestionTitle}>
+                            {String(item.title || "Sugestao")}
+                          </Text>
+                          <Text style={styles.memberAreaText}>{String(item.text || "")}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.memberAreaEmpty}>
+                        Sem sugestoes disponiveis para esta area.
+                      </Text>
+                    )}
+
+                    <Text style={styles.memberAreaSectionTitle}>Transitos ativos</Text>
+                    {resolvedActiveTransits.length ? (
+                      resolvedActiveTransits.map((item, index) => (
+                        <Text key={`active-${index}`} style={styles.memberAreaText}>
+                          - {String(item)}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text style={styles.memberAreaEmpty}>
+                        Nenhum transito ativo para esta area.
+                      </Text>
+                    )}
+
                     <Text style={styles.memberAreaSectionTitle}>Aspectos</Text>
                     {resolvedAspects.length ? (
                       resolvedAspects.map((item, index) => (
@@ -1844,6 +1896,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 6,
     marginBottom: 6,
+  },
+  memberAreaItem: {
+    marginBottom: 8,
+  },
+  memberAreaSuggestionTitle: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 2,
   },
   memberAreaText: {
     color: "#C9C9D6",
