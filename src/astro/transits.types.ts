@@ -8,6 +8,12 @@ export interface PersonalTransitItem {
   isApplying: boolean
   strength: number
   natalHouseImpacted: number
+  eventType?: string
+  seriesId?: string
+  contactIndex?: number
+  durationClass?: string
+  window?: { start?: string; exact?: string; end?: string; days?: number }
+  windowDays?: number
 }
 
 export interface PersonalTransitFilters {
