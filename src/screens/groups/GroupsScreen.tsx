@@ -1542,6 +1542,39 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 activeTransitLabels.length || activeTransitItems.length
                   ? activeTransitLabels
                   : transitAspects
+              const fallbackSuggestionItems =
+                suggestionItems.length
+                  ? suggestionItems
+                  : (activeTransitItems.length ? activeTransitItems : areaTransits)
+                      .slice(0, 2)
+                      .map((transit, index) => {
+                        const aspectType = String(transit.aspectType || transit.type || "")
+                        const isHarmonious = ["harmonic", "trigono", "sextil"].includes(aspectType)
+                        const isChallenging = [
+                          "tense",
+                          "quadratura",
+                          "oposicao",
+                          "quincuncio",
+                          "semiquadratura",
+                          "sesquiquadratura",
+                        ].includes(aspectType)
+                        const areaLabel = LIFE_AREA_LABELS[key] || key
+                        const title = isHarmonious
+                          ? "Aproveitar oportunidades"
+                          : isChallenging
+                          ? "Rever e ajustar"
+                          : "Organizar e observar"
+                        const text = isHarmonious
+                          ? `Boa fase para fortalecer iniciativas em ${areaLabel}.`
+                          : isChallenging
+                          ? `Periodo de ajustes e revisoes em ${areaLabel}.`
+                          : `Momento de observar sinais e organizar passos em ${areaLabel}.`
+                        return {
+                          id: `fallback-${key}-${index}`,
+                          title,
+                          text,
+                        }
+                      })
               const cardColors = LIFE_AREA_COLORS[key] || ["#4B5563", "#6B7280"]
 
               return (
@@ -1569,8 +1602,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     showsVerticalScrollIndicator={false}
                   >
                     <Text style={styles.memberAreaSectionTitle}>Sugestoes por transito</Text>
-                    {suggestionItems.length ? (
-                      suggestionItems.map((item, index) => (
+                    {fallbackSuggestionItems.length ? (
+                      fallbackSuggestionItems.map((item, index) => (
                         <View key={item.id || `suggestion-${index}`} style={styles.memberAreaItem}>
                           <Text style={styles.memberAreaSuggestionTitle}>
                             {String(item.title || "Sugestao")}
@@ -1597,17 +1630,21 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       </Text>
                     )}
 
-                    <Text style={styles.memberAreaSectionTitle}>Aspectos</Text>
-                    {resolvedAspects.length ? (
-                      resolvedAspects.map((item, index) => (
-                        <Text key={`aspect-${index}`} style={styles.memberAreaText}>
-                          - {String(item)}
-                        </Text>
-                      ))
-                    ) : (
-                      <Text style={styles.memberAreaEmpty}>
-                        Sem aspectos compartilhados para esta area.
-                      </Text>
+                    {resolvedActiveTransits.length === 0 && (
+                      <>
+                        <Text style={styles.memberAreaSectionTitle}>Aspectos</Text>
+                        {resolvedAspects.length ? (
+                          resolvedAspects.map((item, index) => (
+                            <Text key={`aspect-${index}`} style={styles.memberAreaText}>
+                              - {String(item)}
+                            </Text>
+                          ))
+                        ) : (
+                          <Text style={styles.memberAreaEmpty}>
+                            Sem aspectos compartilhados para esta area.
+                          </Text>
+                        )}
+                      </>
                     )}
 
                     <Text style={styles.memberAreaSectionTitle}>Justificativas</Text>
