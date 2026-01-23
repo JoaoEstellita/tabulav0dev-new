@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image } from "react-native"
+import Svg, { Circle } from "react-native-svg"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
@@ -90,6 +91,9 @@ export default function ProfileScreen() {
   const [showFAQ, setShowFAQ] = useState(false)
   const [showSubscription, setShowSubscription] = useState(false)
   const [savingPhoto, setSavingPhoto] = useState(false)
+  const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
+  const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
+  const [moonIsVoid, setMoonIsVoid] = useState(false)
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
@@ -114,6 +118,148 @@ export default function ProfileScreen() {
       loadUserProfile()
     }
   }, [user])
+
+  useEffect(() => {
+    if (user) {
+      loadLunarCalendar()
+    }
+  }, [user])
+
+  const normalizePhaseLabel = (raw?: string | null) => {
+    if (!raw) return ""
+    return raw.toLowerCase()
+      .replace(/á|à|ã|â/g, "a")
+      .replace(/é|ê/g, "e")
+      .replace(/í/g, "i")
+      .replace(/ó|ô|õ/g, "o")
+      .replace(/ú/g, "u")
+  }
+
+  const extractPhaseKey = (event: any) => {
+    const raw = [
+      event?.phase,
+      event?.title,
+      event?.name,
+      event?.label,
+      event?.eventId,
+      event?.summary,
+    ].filter(Boolean).join(" ")
+    const label = normalizePhaseLabel(raw)
+    if (label.includes("new") || label.includes("nova")) return "new"
+    if (label.includes("full") || label.includes("cheia")) return "full"
+    if ((label.includes("first") && label.includes("quarter")) || label.includes("quarto crescente")) return "firstQuarter"
+    if ((label.includes("last") && label.includes("quarter")) || label.includes("quarto minguante")) return "lastQuarter"
+    if (label.includes("waxing") && label.includes("crescent")) return "waxingCrescent"
+    if (label.includes("waning") && label.includes("crescent")) return "waningCrescent"
+    if (label.includes("waxing") && label.includes("gibbous")) return "waxingGibbous"
+    if (label.includes("waning") && label.includes("gibbous")) return "waningGibbous"
+    if (label.includes("crescente")) return "waxingCrescent"
+    if (label.includes("minguante")) return "waningCrescent"
+    return "new"
+  }
+
+  const phaseKeyToLabel = (key: string | null) => {
+    switch (key) {
+      case "new":
+        return "Lua Nova"
+      case "waxingCrescent":
+        return "Lua Crescente"
+      case "firstQuarter":
+        return "Quarto Crescente"
+      case "waxingGibbous":
+        return "Lua Gibosa Crescente"
+      case "full":
+        return "Lua Cheia"
+      case "waningGibbous":
+        return "Lua Gibosa Minguante"
+      case "lastQuarter":
+        return "Quarto Minguante"
+      case "waningCrescent":
+        return "Lua Minguante"
+      default:
+        return "Lua"
+    }
+  }
+
+  const getPhaseRenderInfo = (key: string | null) => {
+    switch (key) {
+      case "new":
+        return { fraction: 0, waxing: true }
+      case "waxingCrescent":
+        return { fraction: 0.25, waxing: true }
+      case "firstQuarter":
+        return { fraction: 0.5, waxing: true }
+      case "waxingGibbous":
+        return { fraction: 0.75, waxing: true }
+      case "full":
+        return { fraction: 1, waxing: true }
+      case "waningGibbous":
+        return { fraction: 0.75, waxing: false }
+      case "lastQuarter":
+        return { fraction: 0.5, waxing: false }
+      case "waningCrescent":
+        return { fraction: 0.25, waxing: false }
+      default:
+        return { fraction: 0, waxing: true }
+    }
+  }
+
+  const loadLunarCalendar = async () => {
+    try {
+      const calendarSnap = await getDoc(doc(db, "settings", "astro_event_calendar"))
+      if (!calendarSnap.exists()) {
+        setMoonPhaseKey(null)
+        setMoonIsVoid(false)
+        return
+      }
+      const data = calendarSnap.data() || {}
+      const events = Array.isArray(data.events) ? data.events : []
+      const now = new Date()
+      const phaseEvents = events
+        .filter((event) => event?.eventType === "LUNAR_PHASE" && (event?.exactAt || event?.peakAt || event?.exact))
+        .map((event) => ({
+          ...event,
+          exactAt: new Date(event.exactAt || event.peakAt || event.exact),
+        }))
+        .filter((event) => !Number.isNaN(event.exactAt.getTime()))
+        .sort((a, b) => a.exactAt.getTime() - b.exactAt.getTime())
+
+      const currentPhaseEvent = phaseEvents.reduce((acc: any, event: any) => {
+        if (event.exactAt.getTime() <= now.getTime()) return event
+        return acc
+      }, phaseEvents[0] || null)
+
+      const phaseKey = currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : null
+      setMoonPhaseKey(phaseKey)
+      setMoonPhaseLabel(phaseKeyToLabel(phaseKey))
+
+      const voidEvents = events
+        .filter((event) => event?.eventType === "LUNAR_VOID" && event?.startAt && event?.endAt)
+        .map((event) => ({
+          ...event,
+          startAt: new Date(event.startAt),
+          endAt: new Date(event.endAt),
+        }))
+        .filter((event) => !Number.isNaN(event.startAt.getTime()) && !Number.isNaN(event.endAt.getTime()))
+
+      const isVoid = voidEvents.some((event) => now >= event.startAt && now <= event.endAt)
+      setMoonIsVoid(isVoid)
+    } catch (error) {
+      console.warn("Falha ao carregar calendario lunar:", error)
+    }
+  }
+
+  const MoonPhaseIcon = ({ size = 22 }: { size?: number }) => {
+    const { fraction, waxing } = getPhaseRenderInfo(moonPhaseKey)
+    const radius = size / 2
+    const offset = (1 - fraction) * radius * 2 * (waxing ? -1 : 1)
+    return (
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={radius} cy={radius} r={radius} fill="#1C1C1E" />
+        <Circle cx={radius + offset} cy={radius} r={radius} fill="#F5F0C8" />
+      </Svg>
+    )
+  }
 
   const loadUserProfile = async () => {
     try {
@@ -418,7 +564,12 @@ export default function ProfileScreen() {
           <View style={styles.profileHeaderTop}>
             <View style={styles.profileHeaderSpacer} />
             <TouchableOpacity style={styles.notificationBell} onPress={() => navigation.navigate("Notifications" as never)}>
-              <Ionicons name="star-outline" size={22} color="#FFD700" />
+              <MoonPhaseIcon />
+              {moonIsVoid && (
+                <View style={styles.moonVoidBadge}>
+                  <Text style={styles.moonVoidBadgeText}>VOC</Text>
+                </View>
+              )}
               {notificationBadgeCount > 0 && (
                 <View style={styles.notificationBellBadge}>
                   <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>
@@ -439,6 +590,9 @@ export default function ProfileScreen() {
           <Text style={styles.displayName}>{profile.displayName}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           {profile.zodiacSign && <Text style={styles.zodiacSign}>♈ {profile.zodiacSign}</Text>}
+          {moonPhaseLabel && (
+            <Text style={styles.moonPhaseLabel}>{moonPhaseLabel}</Text>
+          )}
         </View>
 
         {/* Estatísticas */}
@@ -703,6 +857,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
+  moonVoidBadge: {
+    position: "absolute",
+    bottom: -6,
+    right: -6,
+    backgroundColor: "#FF6B6B",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  moonVoidBadgeText: {
+    color: "#0F0F23",
+    fontSize: 9,
+    fontWeight: "bold",
+  },
   avatarContainer: {
     marginBottom: 16,
     alignItems: "center",
@@ -739,6 +907,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#FFD700",
     fontWeight: "bold",
+  },
+  moonPhaseLabel: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#F5F0C8",
+    fontWeight: "600",
   },
   statsContainer: {
     flexDirection: "row",
