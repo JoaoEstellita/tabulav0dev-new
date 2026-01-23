@@ -735,6 +735,12 @@ const ASPECT_LABELS: Record<string, string> = {
 const formatPlanetLabel = (name: string) => PLANET_LABELS[name] || name
 const formatAspectLabel = (type: string) => ASPECT_LABELS[type] || type
 
+const formatTransitTimingLabel = (transit: any) => {
+  const label = transit?.phaseLabel
+  if (!label || label === "Em andamento") return ""
+  return label
+}
+
 const formatDateShort = (value?: string) => {
   if (!value) return null
   const date = new Date(value)
@@ -1527,10 +1533,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     : targetAngle
                     ? String(targetAngle)
                     : targetHouse
+                const timingLabel = formatTransitTimingLabel(transit)
                 if (!targetLabel) {
-                  return `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel}`
+                  return timingLabel
+                    ? `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel} (${timingLabel})`
+                    : `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel}`
                 }
-                return `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel} ${targetLabel}`
+                return timingLabel
+                  ? `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel} ${targetLabel} (${timingLabel})`
+                  : `${formatPlanetLabel(transit.transitPlanet)} ${aspectLabel} ${targetLabel}`
               })
               const fallbackAspects = Array.isArray(member.astrologicalStatus?.criticalTransits)
                 ? member.astrologicalStatus?.criticalTransits.map(

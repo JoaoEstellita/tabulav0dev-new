@@ -162,6 +162,37 @@ const safeFixed = (value: unknown, digits = 1): string =>
 const safeArray = <T,>(value: T[] | null | undefined): T[] =>
   Array.isArray(value) ? value : []
 
+const formatRelativeDay = (iso?: string | null): string | null => {
+  if (!iso) return null
+  const date = new Date(iso)
+  if (!Number.isFinite(date.getTime())) return null
+  const now = new Date()
+  const diffDays = Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'hoje'
+  if (diffDays === 1) return 'amanha'
+  if (diffDays === -1) return 'ontem'
+  if (diffDays > 1) return `em ${diffDays} dias`
+  return `ha ${Math.abs(diffDays)} dias`
+}
+
+const getTimingLabel = (transit: BackendTransit): string | null => {
+  if (!transit?.phase) return null
+  const startLabel = formatRelativeDay(transit.startAt)
+  const peakLabel = formatRelativeDay(transit.peakAt)
+  const endLabel = formatRelativeDay(transit.endAt)
+  if (transit.phase === 'peak') return peakLabel ? `Pico ${peakLabel}` : 'Pico'
+  if (transit.phase === 'start') return startLabel ? `Inicio ${startLabel}` : 'Inicio'
+  if (transit.phase === 'end') return endLabel ? `Termina ${endLabel}` : 'Fim'
+  return transit.phaseLabel ? transit.phaseLabel : null
+}
+
+const getAspectLabel = (type: string): string => {
+  if (type === 'harmonic') return 'harmônico'
+  if (type === 'tense') return 'desafiador'
+  if (type === 'neutral') return 'neutro'
+  return translate('aspects', type)
+}
+
 const getTransitDuration = (transit: RealTransitData): string => {
   // Velocidades medias dos planetas (graus por dia)
   const planetSpeeds: Record<string, number> = {
@@ -251,6 +282,33 @@ interface RealSuggestionData {
   influencePeriod: string
   priority: 'alta' | 'media' | 'baixa'
   basedOn: string
+}
+
+type BackendTransit = {
+  id?: string
+  transitPlanet?: string
+  target?: {
+    natalPlanet?: string
+    angle?: string
+    house?: number
+  }
+  aspectName?: string
+  aspectType?: string
+  orb?: number | null
+  applying?: boolean
+  impact?: number
+  startAt?: string | null
+  peakAt?: string | null
+  endAt?: string | null
+  phase?: string
+  phaseLabel?: string
+}
+
+type BackendSuggestion = {
+  id?: string
+  title?: string
+  text?: string
+  basedOnId?: string
 }
 
 interface RealCalculationData {
@@ -784,10 +842,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const activeTransits = getActiveTransits()
+  const backendActiveTransits: BackendTransit[] = Array.isArray((areaData as any)?.activeTransits)
+    ? (areaData as any).activeTransits
+    : []
   const natalAspects = getNatalAspects()
   const planetBreakdown = getDetailedPlanetBreakdown()
-  const realSuggestions = getRealSuggestions()
+  const backendSuggestions: BackendSuggestion[] = Array.isArray((areaData as any)?.suggestions)
+    ? (areaData as any).suggestions
+    : []
+  const realSuggestions = backendSuggestions.length ? [] : getRealSuggestions()
   const realCalculations = getRealCalculations()
+  const transitItems = backendActiveTransits.length ? backendActiveTransits : activeTransits
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
   const renderHeader = () => (
@@ -822,15 +887,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
 
-      {activeTransits.length === 0 ? (
+      {transitItems.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
         </View>
       ) : (
-        activeTransits.map((transit, index) => {
-          const isHarmonious = ['trigono', 'sextil'].includes(transit.type)
-          const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
-          const isNeutral = transit.type === 'conjuncao'
+        transitItems.map((transit: any, index: number) => {
+          const aspectType = String(transit.aspectName || transit.type || '')
+          const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
+          const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
+          const isNeutral = aspectType === 'conjuncao' || aspectType === 'neutral'
 
           let statusColor: string
           let statusText: string
@@ -849,22 +915,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             statusText = 'Neutro'
           }
 
-          const strengthValue = safeNumber(transit.strength)
+          const strengthValue = safeNumber(transit.strength ?? transit.impact)
           const orbValue = safeNumber(transit.orb)
           const contribution =
-            totalTransitStrength > 0
+            totalTransitStrength > 0 && Number.isFinite(transit.strength)
               ? Math.round((strengthValue / totalTransitStrength) * 100)
               : 0
-          const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
+          const houseName =
+            TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
           const summaryParts = [
-            `Força ${strengthValue}`,
-            `Orb ${safeFixed(orbValue)}°`,
-            `Casa ${transit.natalHouseImpacted} (${houseName})`,
-            `Duração ${getTransitDuration(transit)}`
-          ]
+            strengthValue ? `Força ${strengthValue}` : null,
+            Number.isFinite(transit.orb) ? `Orb ${safeFixed(orbValue)}°` : null,
+            transit.natalHouseImpacted ? `Casa ${transit.natalHouseImpacted} (${houseName})` : null,
+            transit.durationClass ? `Duração ${getTransitDuration(transit)}` : null
+          ].filter(Boolean) as string[]
           if (contribution > 0) {
             summaryParts.push(`Contribuição ${contribution}%`)
           }
+          const timingLabel = getTimingLabel(transit)
+          const transitTarget =
+            transit.natalPlanet ||
+            transit.target?.natalPlanet ||
+            transit.target?.angle ||
+            (transit.target?.house ? `Casa ${transit.target.house}` : '')
 
           return (
             <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
@@ -876,10 +949,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
 
               <Text style={styles.transitName}>
-                {translate('planets', transit.transitPlanet)} em {translate('aspects', transit.type)} com {translate('planets', transit.natalPlanet)}
+                {translate('planets', transit.transitPlanet)} em {getAspectLabel(aspectType)} com {translate('planets', transitTarget)}
               </Text>
 
-              <Text style={styles.transitSummary}>{summaryParts.join(' • ')}</Text>
+              {summaryParts.length ? (
+                <Text style={styles.transitSummary}>{summaryParts.join(' • ')}</Text>
+              ) : null}
+              {timingLabel ? <Text style={styles.transitTiming}>{timingLabel}</Text> : null}
             </View>
           )
         })
@@ -891,23 +967,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>SUGESTÕES POR TRÂNSITO</Text>
 
-      {realSuggestions.length === 0 ? (
+      {(backendSuggestions.length === 0 && realSuggestions.length === 0) ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Nenhuma sugestão disponível no momento</Text>
         </View>
       ) : (
-        realSuggestions.map((suggestion, index) => {
-          const transit = activeTransits.find(
-            (item) => `transit-${item.transitPlanet}-${item.natalPlanet}-${item.type}` === suggestion.transitId
-          )
-          const aspect = natalAspects.find(
-            (item) => `natal-${item.planet1}-${item.planet2}-${item.type}` === suggestion.transitId
-          )
+        (backendSuggestions.length ? backendSuggestions : realSuggestions).map((suggestion: any, index: number) => {
+          const transit = transitItems.find((item: any) => item.id === suggestion.basedOnId) || null
+          const aspect = !backendSuggestions.length
+            ? natalAspects.find(
+                (item) => `natal-${item.planet1}-${item.planet2}-${item.type}` === suggestion.transitId
+              )
+            : null
 
-          const sourceType = transit ? transit.type : aspect?.type
-          const isHarmonious = sourceType ? ['trigono', 'sextil'].includes(sourceType) : false
-          const isChallenging = sourceType ? ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(sourceType) : false
-          const isNeutral = sourceType === 'conjuncao'
+          const sourceType = transit ? (transit.aspectName || transit.type) : aspect?.type
+          const isHarmonious = sourceType ? ['trigono', 'sextil', 'harmonic'].includes(sourceType) : false
+          const isChallenging = sourceType ? ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(sourceType) : false
+          const isNeutral = sourceType === 'conjuncao' || sourceType === 'neutral'
 
           let statusColor = DESIGN_SYSTEM.colors.secondary
           let statusText = 'Neutro'
@@ -925,15 +1001,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           let transitMeta = ''
           if (transit) {
             const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
-            transitTitle = `${translate('planets', transit.transitPlanet)} em ${translate('aspects', transit.type)} com ${translate('planets', transit.natalPlanet)}`
-            transitMeta = `Força ${safeNumber(transit.strength)} • Orb ${safeFixed(transit.orb)}° • Casa ${transit.natalHouseImpacted} (${houseName}) • Duração ${getTransitDuration(transit)}`
+            const transitTarget =
+              transit.natalPlanet ||
+              transit.target?.natalPlanet ||
+              transit.target?.angle ||
+              (transit.target?.house ? `Casa ${transit.target.house}` : '')
+            transitTitle = `${translate('planets', transit.transitPlanet)} em ${translate('aspects', sourceType)} com ${translate('planets', transitTarget)}`
+            transitMeta = transit.natalHouseImpacted
+              ? `Casa ${transit.natalHouseImpacted} (${houseName})`
+              : ''
           } else if (aspect) {
             transitTitle = `${translate('planets', aspect.planet1)} em ${translate('aspects', aspect.type)} com ${translate('planets', aspect.planet2)}`
             transitMeta = `Força ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
           }
+          const timingLabel = transit ? getTimingLabel(transit) : null
 
           return (
-            <View key={suggestion.transitId} style={styles.suggestionCard}>
+            <View key={suggestion.id || suggestion.transitId} style={styles.suggestionCard}>
               <View style={styles.suggestionHeader}>
                 <Text style={styles.suggestionNumber}>#{index + 1}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -943,10 +1027,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
               <Text style={styles.suggestionTransitTitle}>{transitTitle}</Text>
               {transitMeta ? <Text style={styles.suggestionTransitMeta}>{transitMeta}</Text> : null}
-              <Text style={styles.suggestionText}>{suggestion.suggestion}</Text>
-              <Text style={styles.suggestionMeta}>
-                Ação: {suggestion.action} • Período: {suggestion.influencePeriod}
-              </Text>
+              {timingLabel ? <Text style={styles.suggestionTiming}>{timingLabel}</Text> : null}
+              <Text style={styles.suggestionText}>{suggestion.text || suggestion.suggestion}</Text>
+              {suggestion.action ? (
+                <Text style={styles.suggestionMeta}>
+                  Ação: {suggestion.action} • Período: {suggestion.influencePeriod}
+                </Text>
+              ) : null}
             </View>
           )
         })
@@ -1392,6 +1479,11 @@ const styles = StyleSheet.create({
     color: DESIGN_SYSTEM.colors.secondary,
     lineHeight: 16
   },
+  transitTiming: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.warning,
+    marginTop: DESIGN_SYSTEM.spacing.xs
+  },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1465,6 +1557,11 @@ const styles = StyleSheet.create({
   suggestionTransitMeta: {
     fontSize: 12,
     color: DESIGN_SYSTEM.colors.secondary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs
+  },
+  suggestionTiming: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.warning,
     marginBottom: DESIGN_SYSTEM.spacing.xs
   },
   suggestionMeta: {
