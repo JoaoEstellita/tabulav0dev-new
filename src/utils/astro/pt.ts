@@ -11,6 +11,10 @@ const PLANET_PT: Record<string, string> = {
   uranus: 'Urano',
   neptune: 'Netuno',
   pluto: 'Plut\u00E3o',
+  chiron: 'Quiron',
+  lilith: 'Lilith',
+  northnode: 'Nodo Norte',
+  southnode: 'Nodo Sul',
 }
 
 const ASPECT_SYMBOL: Record<AspectType, string> = {

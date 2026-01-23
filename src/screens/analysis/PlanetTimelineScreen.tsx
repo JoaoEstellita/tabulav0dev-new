@@ -28,8 +28,8 @@ const getSignFromDegree = (degree: number): string => {
 }
 
 export default function PlanetTimelineScreen() {
-  const { transitData } = useLifeAreas()
-  const planets = transitData?.currentTransits?.planets || []
+  const { transitData, backendCurrentTransits } = useLifeAreas()
+  const planets = backendCurrentTransits?.planets || transitData?.currentTransits?.planets || []
   const byArea = transitData?.currentTransits?.transits?.byArea || {}
   const personalTransits = transitData?.currentTransits?.transits?.personal || []
 

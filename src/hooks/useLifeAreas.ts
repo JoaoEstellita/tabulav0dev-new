@@ -13,6 +13,7 @@ export interface UseLifeAreasReturn {
   transitData: LocalTransitData | null
   cacheStatus: CacheStatus | null
   backendLifeAreas: Record<string, any> | null
+  backendCurrentTransits: any | null
   loading: boolean
   error: string | null
   refreshData: (forceRefresh?: boolean) => Promise<void>
@@ -26,6 +27,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [transitData, setTransitData] = useState<LocalTransitData | null>(null)
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
   const [backendLifeAreas, setBackendLifeAreas] = useState<Record<string, any> | null>(null)
+  const [backendCurrentTransits, setBackendCurrentTransits] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
@@ -43,6 +45,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setTransitData(null)
       setCacheStatus(null)
       setBackendLifeAreas(null)
+      setBackendCurrentTransits(null)
       setLoading(false)
       setError(null)
       setIsUsingLocalEngine(false)
@@ -94,6 +97,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       lastHouseSystemRef.current = normalizedHouseSystem
 
       let backendLifeAreasValue: Record<string, any> | null = null
+      let backendCurrentTransitsValue: any | null = null
       let backendComputedAtMs: number | null = null
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
@@ -102,6 +106,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         if (statusSnap.exists()) {
           const statusData = statusSnap.data()
           backendLifeAreasValue = statusData?.lifeAreas || null
+          backendCurrentTransitsValue = statusData?.currentTransits || null
           backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
           backendComputedAtMs = statusData?.computedAt?.toDate
             ? statusData.computedAt.toDate().getTime()
@@ -110,8 +115,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
             ? statusData.validUntil.toDate().getTime()
             : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
           setBackendLifeAreas(backendLifeAreasValue)
+          setBackendCurrentTransits(backendCurrentTransitsValue)
         } else {
           setBackendLifeAreas(null)
+          setBackendCurrentTransits(null)
         }
       } catch (statusError) {
         console.error('Erro ao carregar userStatus:', statusError)
@@ -324,6 +331,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     transitData,
     cacheStatus,
     backendLifeAreas,
+    backendCurrentTransits,
     loading,
     error,
     refreshData,
