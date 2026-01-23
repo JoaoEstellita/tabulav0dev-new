@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import Svg, { Circle } from "react-native-svg"
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -35,6 +36,74 @@ import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
+
+const normalizePhaseLabel = (raw?: string | null) => {
+  if (!raw) return ""
+  return raw.toLowerCase()
+    .replace(/Ã¡|Ã |Ã£|Ã¢/g, "a")
+    .replace(/Ã©|Ãª/g, "e")
+    .replace(/Ã­/g, "i")
+    .replace(/Ã³|Ã´|Ãµ/g, "o")
+    .replace(/Ãº/g, "u")
+}
+
+const extractPhaseKey = (event: any) => {
+  const raw = [
+    event?.phase,
+    event?.title,
+    event?.name,
+    event?.label,
+    event?.eventId,
+    event?.summary,
+  ].filter(Boolean).join(" ")
+  const label = normalizePhaseLabel(raw)
+  if (label.includes("new") || label.includes("nova")) return "new"
+  if (label.includes("full") || label.includes("cheia")) return "full"
+  if ((label.includes("first") && label.includes("quarter")) || label.includes("quarto crescente")) return "firstQuarter"
+  if ((label.includes("last") && label.includes("quarter")) || label.includes("quarto minguante")) return "lastQuarter"
+  if (label.includes("waxing") && label.includes("crescent")) return "waxingCrescent"
+  if (label.includes("waning") && label.includes("crescent")) return "waningCrescent"
+  if (label.includes("waxing") && label.includes("gibbous")) return "waxingGibbous"
+  if (label.includes("waning") && label.includes("gibbous")) return "waningGibbous"
+  if (label.includes("crescente")) return "waxingCrescent"
+  if (label.includes("minguante")) return "waningCrescent"
+  return "new"
+}
+
+const getPhaseRenderInfo = (key: string | null) => {
+  switch (key) {
+    case "new":
+      return { fraction: 0, waxing: true }
+    case "waxingCrescent":
+      return { fraction: 0.25, waxing: true }
+    case "firstQuarter":
+      return { fraction: 0.5, waxing: true }
+    case "waxingGibbous":
+      return { fraction: 0.75, waxing: true }
+    case "full":
+      return { fraction: 1, waxing: true }
+    case "waningGibbous":
+      return { fraction: 0.75, waxing: false }
+    case "lastQuarter":
+      return { fraction: 0.5, waxing: false }
+    case "waningCrescent":
+      return { fraction: 0.25, waxing: false }
+    default:
+      return { fraction: 0, waxing: true }
+  }
+}
+
+const MoonPhaseIcon = ({ phaseKey, size = 24 }: { phaseKey: string | null; size?: number }) => {
+  const { fraction, waxing } = getPhaseRenderInfo(phaseKey)
+  const radius = size / 2
+  const offset = (1 - fraction) * radius * 2 * (waxing ? -1 : 1)
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <Circle cx={radius} cy={radius} r={radius} fill="#1C1C1E" />
+      <Circle cx={radius + offset} cy={radius} r={radius} fill="#F5F0C8" />
+    </Svg>
+  )
+}
 
 const LIFE_AREA_ORDER = [
   'amor',
@@ -64,6 +133,8 @@ export default function HomeScreen() {
     } = useLifeAreas()
     const { settings } = useUserSettings()
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
+    const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
+    const [moonIsVoid, setMoonIsVoid] = useState(false)
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
@@ -135,6 +206,7 @@ export default function HomeScreen() {
     useEffect(() => {
       if (user) {
         loadUserProfile()
+        loadLunarCalendar()
         initializeNotifications()
       }
     }, [user])
@@ -190,6 +262,56 @@ export default function HomeScreen() {
         }
       } catch (error) {
         console.error('Erro ao carregar perfil do Usuário:', error)
+      }
+    }
+
+    const loadLunarCalendar = async () => {
+      try {
+        const calendarDoc = await getDoc(doc(db, 'settings', 'astro_event_calendar'))
+        if (!calendarDoc.exists()) return
+
+        const data = calendarDoc.data()
+        const events = Array.isArray(data?.events) ? data.events : []
+        const now = new Date()
+
+        const toDate = (value: any) => {
+          if (!value) return null
+          if (typeof value?.toDate === 'function') return value.toDate()
+          const parsed = new Date(value)
+          return Number.isNaN(parsed.getTime()) ? null : parsed
+        }
+
+        let currentPhase: any = null
+        let bestExact: Date | null = null
+        let currentVoid = false
+
+        for (const event of events) {
+          const type = String(event?.eventType || '').toUpperCase()
+          if (type === 'LUNAR_PHASE') {
+            const start = toDate(event.startAt)
+            const end = toDate(event.endAt)
+            if (start && end && now >= start && now <= end) {
+              currentPhase = event
+              break
+            }
+            const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
+            if (exact && exact <= now && (!bestExact || exact > bestExact)) {
+              bestExact = exact
+              currentPhase = event
+            }
+          } else if (type.includes('LUNAR_VOID')) {
+            const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
+            const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
+            if (start && end && now >= start && now <= end) {
+              currentVoid = true
+            }
+          }
+        }
+
+        setMoonPhaseKey(currentPhase ? extractPhaseKey(currentPhase) : null)
+        setMoonIsVoid(currentVoid)
+      } catch (error) {
+        console.error('Erro ao carregar fases da lua:', error)
       }
     }
 
@@ -378,7 +500,12 @@ export default function HomeScreen() {
                     onPressOut={press.onPressOut}
                     onPress={() => navigation.navigate('Notifications' as never)}
                   >
-                    <Ionicons name="star-outline" size={24} color="#FFD700" />
+                    <MoonPhaseIcon phaseKey={moonPhaseKey} />
+                    {moonIsVoid && (
+                      <View style={styles.moonVoidBadge}>
+                        <Text style={styles.moonVoidBadgeText}>VOC</Text>
+                      </View>
+                    )}
                     {unreadCount > 0 && (
                       <View style={styles.notificationBadge}>
                         <Text style={styles.notificationBadgeText}>
@@ -673,6 +800,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  moonVoidBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moonVoidBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
   section: {
     marginBottom: 24,
   },
@@ -896,4 +1039,4 @@ const styles = StyleSheet.create({
 
 
 
-
+

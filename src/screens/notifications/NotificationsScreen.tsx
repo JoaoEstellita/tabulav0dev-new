@@ -25,6 +25,12 @@ const formatDateLabel = (value?: any) => {
   return date.toLocaleDateString("pt-BR")
 }
 
+const formatTimeLabel = (value?: any) => {
+  if (!value?.toDate) return ""
+  const date = value.toDate()
+  return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+}
+
 const renderTemplate = (template?: NotificationTemplate, vars?: Record<string, any>) => {
   const safeVars = vars || {}
   const apply = (text?: string) =>
@@ -213,6 +219,9 @@ export default function NotificationsScreen() {
                     <View style={styles.content}>
                       <Text style={styles.cardTitle}>{text.title}</Text>
                       <Text style={styles.cardBody}>{text.body}</Text>
+                      {item.createdAt?.toDate ? (
+                        <Text style={styles.cardTime}>{formatTimeLabel(item.createdAt)}</Text>
+                      ) : null}
                       <View style={styles.tags}>
                         {item.groupName ? (
                           <View style={styles.tag}>
@@ -380,6 +389,11 @@ const styles = StyleSheet.create({
     color: "#CBD5F5",
     fontSize: 13,
     lineHeight: 18,
+  },
+  cardTime: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#9CA3AF",
   },
   tags: {
     flexDirection: "row",
