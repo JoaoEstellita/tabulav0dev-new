@@ -343,9 +343,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const areaIcon = AREA_ICONS[areaData.name] || 'help-circle'
   const headerGradient = [areaColors[0], areaColors[1]]
 
-  const processSynthesis = (areaData as any).processSynthesis || 'Este periodo indica um movimento importante nesta area.'
-  const highlights = Array.isArray((areaData as any).highlights) ? (areaData as any).highlights : []
-
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
   const getActiveTransits = (): RealTransitData[] => {
     if (!astrologyData?.transits?.byArea) return []
@@ -808,31 +805,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     </View>
   )
 
-  const renderSummarySection = () => (
-    <View style={styles.summarySection}>
-      <View style={styles.summaryBlock}>
-        <Text style={styles.summaryTitle}>Processo em curso</Text>
-        <Text style={styles.summaryText}>{processSynthesis}</Text>
-        <Text style={styles.intensityText}>A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.</Text>
-      </View>
-      {highlights.length > 0 && (
-        <View style={styles.highlightsBlock}>
-          <Text style={styles.highlightsTitle}>Destaques do momento</Text>
-          {highlights.slice(0, 2).map((item: any, index: number) => (
-            <View key={item.clusterId || index} style={styles.highlightItem}>
-              <Text style={styles.highlightHeadline}>{item.headline || 'Movimento em destaque'}</Text>
-              <Text style={styles.highlightSummary}>{item.summary || ''}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  )
-
-  const renderTechnicalToggle = () => (
+  const renderCalculationToggle = () => (
     <TouchableOpacity style={styles.technicalToggle} onPress={() => setShowTechnical(!showTechnical)}>
-      <Text style={styles.technicalToggleText}>{showTechnical ? 'Ocultar detalhes tecnicos' : 'Ver detalhes tecnicos'}</Text>
-      <Ionicons name={showTechnical ? 'chevron-up' : 'chevron-down'} size={16} color={DESIGN_SYSTEM.colors.primary} />
+      <Text style={styles.technicalToggleText}>
+        {showTechnical ? 'Ocultar detalhes do calculo' : 'Ver detalhes do calculo'}
+      </Text>
+      <Ionicons
+        name={showTechnical ? 'chevron-up' : 'chevron-down'}
+        size={16}
+        color={DESIGN_SYSTEM.colors.primary}
+      />
     </TouchableOpacity>
   )
 
@@ -1182,6 +1164,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </Text>
         </View>
       </View>
+      <Text style={styles.intensityText}>
+        A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.
+      </Text>
     </View>
   )
 
@@ -1196,10 +1181,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         <View style={styles.modalContent}>
           {renderHeader()}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {renderSummarySection()}
-            {renderTechnicalToggle()}
-            {showTechnical && renderTransitsSection()}
-            {showTechnical && renderSuggestionsSection()}
+            {renderSuggestionsSection()}
+            {renderTransitsSection()}
+            {renderCalculationToggle()}
             {showTechnical && renderCalculationsSection()}
           </ScrollView>
         </View>
