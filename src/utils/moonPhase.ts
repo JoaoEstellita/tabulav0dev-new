@@ -1,4 +1,4 @@
-import * as Astronomy from 'astronomy-engine'
+﻿import * as Astronomy from 'astronomy-engine'
 
 export type MoonPhaseKey =
   | 'new'
@@ -28,10 +28,8 @@ export const getMoonPhaseKeyFromAngle = (angle: number): MoonPhaseKey => {
   return 'waningCrescent'
 }
 
-export const getMoonPhaseLabelFromAngle = (angle: number): string => {
-  const a = clampAngle(angle)
-  if (a >= 315) return 'Lua Bals�mica'
-  switch (getMoonPhaseKeyFromAngle(a)) {
+export const getMoonPhaseLabelFromKey = (key: MoonPhaseKey): string => {
+  switch (key) {
     case 'new':
       return 'Lua Nova'
     case 'waxingCrescent':
@@ -49,6 +47,12 @@ export const getMoonPhaseLabelFromAngle = (angle: number): string => {
     case 'waningCrescent':
       return 'Lua Minguante'
   }
+}
+
+export const getMoonPhaseLabelFromAngle = (angle: number): string => {
+  const a = clampAngle(angle)
+  if (a >= 315) return 'Lua Balsâmica'
+  return getMoonPhaseLabelFromKey(getMoonPhaseKeyFromAngle(a))
 }
 
 export const getMoonPhaseAngle = (date: Date): number => Astronomy.MoonPhase(date)

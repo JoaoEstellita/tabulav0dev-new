@@ -38,7 +38,8 @@ import {
   formatLocalTime,
   getMoonPhaseAngle,
   getMoonPhaseKeyFromAngle,
-  getMoonPhaseLabelFromAngle
+  getMoonPhaseLabelFromAngle,
+  getMoonPhaseLabelFromKey
 } from '../../utils/moonPhase'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
@@ -260,6 +261,7 @@ export default function HomeScreen() {
 
         let currentPhase: any = null
         let bestExact: Date | null = null
+        let nextExact: Date | null = null
         let currentVoid = false
         let phaseEnd: Date | null = null
         let voidEnd: Date | null = null
@@ -267,8 +269,8 @@ export default function HomeScreen() {
         for (const event of events) {
           const type = String(event?.eventType || '').toUpperCase()
           if (type === 'LUNAR_PHASE') {
-            const start = toDate(event.startAt)
-            const end = toDate(event.endAt)
+            const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
+            const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
             if (start && end && now >= start && now <= end) {
               currentPhase = event
               phaseEnd = end
@@ -279,6 +281,8 @@ export default function HomeScreen() {
               bestExact = exact
               currentPhase = event
               phaseEnd = end || null
+            } else if (exact && exact > now && (!nextExact || exact < nextExact)) {
+              nextExact = exact
             }
           } else if (type.includes('LUNAR_VOID')) {
             const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
@@ -291,17 +295,23 @@ export default function HomeScreen() {
         }
 
         const angle = getMoonPhaseAngle(now)
-        const phaseKey = getMoonPhaseKeyFromAngle(angle)
-        const phaseLabel = getMoonPhaseLabelFromAngle(angle)
+        const angleKey = getMoonPhaseKeyFromAngle(angle)
+        const phaseKeyFromEvent = currentPhase ? extractPhaseKey(currentPhase) : null
+        const phaseKey = (phaseKeyFromEvent as any) || angleKey
+        let phaseLabel = phaseKeyFromEvent
+          ? getMoonPhaseLabelFromKey(phaseKey)
+          : getMoonPhaseLabelFromAngle(angle)
+        if (angle >= 315) phaseLabel = 'Lua Balsâmica'
         const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
-        const line2Base = phaseEnd
-          ? `termina em ${formatLocalDateTime(phaseEnd, userTz)}`
+        const line2Base = (phaseEnd || nextExact)
+          ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
           : 'fase em atualização'
         const line2 = currentVoid && voidEnd
           ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
           : line2Base
 
-        setMoonPhaseKey(currentPhase ? extractPhaseKey(currentPhase) : phaseKey)
+        const iconKey = angle >= 315 ? angleKey : phaseKey
+        setMoonPhaseKey(iconKey)
         setMoonPhaseLabel(line1)
         setMoonLine2(line2)
         setMoonIsVoid(currentVoid)
@@ -742,7 +752,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   userSection: {
     flexDirection: 'row',
@@ -779,7 +789,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   date: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#A0A0A0',
     textTransform: 'capitalize',
   },

@@ -22,7 +22,8 @@ import {
   formatLocalTime,
   getMoonPhaseAngle,
   getMoonPhaseKeyFromAngle,
-  getMoonPhaseLabelFromAngle
+  getMoonPhaseLabelFromAngle,
+  getMoonPhaseLabelFromKey
 } from '../../utils/moonPhase'
 // Removido reprocesso manual de casas natais deste fluxo
 
@@ -181,23 +182,46 @@ export default function ProfileScreen() {
       const events = Array.isArray(data.events) ? data.events : []
       const now = new Date()
       const userTz = settings?.timezone || 'America/Sao_Paulo'
-      const phaseEvents = events
-        .filter((event) => event?.eventType === "LUNAR_PHASE" && (event?.exactAt || event?.peakAt || event?.exact))
-        .map((event) => ({
-          ...event,
-          exactAt: new Date(event.exactAt || event.peakAt || event.exact),
-        }))
-        .filter((event) => !Number.isNaN(event.exactAt.getTime()))
-        .sort((a, b) => a.exactAt.getTime() - b.exactAt.getTime())
+      const toDate = (value: any) => {
+        if (!value) return null
+        if (typeof value?.toDate === 'function') return value.toDate()
+        const parsed = new Date(value)
+        return Number.isNaN(parsed.getTime()) ? null : parsed
+      }
 
-      const currentPhaseEvent = phaseEvents.reduce((acc: any, event: any) => {
-        if (event.exactAt.getTime() <= now.getTime()) return event
-        return acc
-      }, phaseEvents[0] || null)
+      let currentPhaseEvent: any = null
+      let bestExact: Date | null = null
+      let nextExact: Date | null = null
+      let phaseEnd: Date | null = null
+
+      for (const event of events) {
+        const type = String(event?.eventType || '').toUpperCase()
+        if (type !== 'LUNAR_PHASE') continue
+        const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
+        const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
+        if (start && end && now >= start && now <= end) {
+          currentPhaseEvent = event
+          phaseEnd = end
+          break
+        }
+        const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
+        if (exact && exact <= now && (!bestExact || exact > bestExact)) {
+          bestExact = exact
+          currentPhaseEvent = event
+          phaseEnd = end || null
+        } else if (exact && exact > now && (!nextExact || exact < nextExact)) {
+          nextExact = exact
+        }
+      }
 
       const angle = getMoonPhaseAngle(now)
-      const phaseKey = getMoonPhaseKeyFromAngle(angle)
-      const phaseLabel = getMoonPhaseLabelFromAngle(angle)
+      const angleKey = getMoonPhaseKeyFromAngle(angle)
+      const phaseKeyFromEvent = currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : null
+      const phaseKey = (phaseKeyFromEvent as any) || angleKey
+      let phaseLabel = phaseKeyFromEvent
+        ? getMoonPhaseLabelFromKey(phaseKey)
+        : getMoonPhaseLabelFromAngle(angle)
+      if (angle >= 315) phaseLabel = 'Lua Balsâmica'
 
       const voidEvents = events
         .filter((event) => event?.eventType === "LUNAR_VOID" && event?.startAt && event?.endAt)
@@ -211,16 +235,16 @@ export default function ProfileScreen() {
       const currentVoid = voidEvents.find((event) => now >= event.startAt && now <= event.endAt)
       const isVoid = Boolean(currentVoid)
 
-      const phaseEnd = currentPhaseEvent?.endAt ? new Date(currentPhaseEvent.endAt) : null
       const line1 = isVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
-      const line2Base = phaseEnd
-        ? `termina em ${formatLocalDateTime(phaseEnd, userTz)}`
+      const line2Base = (phaseEnd || nextExact)
+        ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
         : 'fase em atualização'
       const line2 = isVoid && currentVoid?.endAt
         ? `${line2Base} · Lua Vazia até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
         : line2Base
 
-      setMoonPhaseKey(currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : phaseKey)
+      const iconKey = angle >= 315 ? angleKey : phaseKey
+      setMoonPhaseKey(iconKey)
       setMoonPhaseLabel(line1)
       setMoonLine2(line2)
       setMoonIsVoid(isVoid)
