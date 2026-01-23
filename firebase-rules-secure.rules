@@ -210,5 +210,16 @@ service cloud.firestore {
       allow read, write: if request.auth != null &&
                            request.auth.token.admin == true;
     }
+
+    // ===== REGRAS PARA SETTINGS (READ-ONLY NO CLIENT) =====
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+
+      match /{subCollection}/{subDoc} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
   }
 }
