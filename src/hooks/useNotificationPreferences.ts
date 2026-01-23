@@ -6,6 +6,8 @@ import { useAuth } from './useAuth'
 export type NotificationPreferences = {
   pushEnabled: boolean
   pushIncludeMemberName: boolean
+  astroEventsPersonalEnabled?: boolean
+  astroEventsCollectiveEnabled?: boolean
   quietHours?: {
     enabled: boolean
     start: string
@@ -15,19 +17,29 @@ export type NotificationPreferences = {
     types: {
       member_status_critical: boolean
       user_status_critical: boolean
+      member_status_positive?: boolean
+      user_status_positive?: boolean
       group_message: boolean
+      astro_event_personal?: boolean
     }
     limits?: {
       member_status_critical?: { dailyLimit: number; throttleMinutes: number }
       user_status_critical?: { dailyLimit: number; throttleMinutes: number }
+      member_status_positive?: { dailyLimit: number; throttleMinutes: number }
+      user_status_positive?: { dailyLimit: number; throttleMinutes: number }
       group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
+      astro_event_personal?: { dailyLimit: number; throttleMinutes: number }
     }
   }
   inApp: {
     types: {
       member_status_critical: boolean
       user_status_critical: boolean
+      member_status_positive?: boolean
+      user_status_positive?: boolean
       group_message: boolean
+      astro_event_personal?: boolean
+      astro_event_collective?: boolean
     }
   }
 }
@@ -35,6 +47,8 @@ export type NotificationPreferences = {
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   pushEnabled: true,
   pushIncludeMemberName: true,
+  astroEventsPersonalEnabled: false,
+  astroEventsCollectiveEnabled: false,
   quietHours: {
     enabled: false,
     start: '22:00',
@@ -44,19 +58,29 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     types: {
       member_status_critical: true,
       user_status_critical: true,
-      group_message: false,
+      member_status_positive: true,
+      user_status_positive: true,
+      group_message: true,
+      astro_event_personal: false,
     },
     limits: {
       member_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
       user_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
-      group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
+      member_status_positive: { dailyLimit: 2, throttleMinutes: 60 },
+      user_status_positive: { dailyLimit: 2, throttleMinutes: 60 },
+      group_message: { dailyLimit: 20, throttleMinutes: 1, burstWindowMinutes: 1 },
+      astro_event_personal: { dailyLimit: 5, throttleMinutes: 120 },
     },
   },
   inApp: {
     types: {
       member_status_critical: true,
       user_status_critical: true,
+      member_status_positive: true,
+      user_status_positive: true,
       group_message: true,
+      astro_event_personal: false,
+      astro_event_collective: false,
     },
   },
 }
