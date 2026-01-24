@@ -20,7 +20,6 @@ import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
-import { safeEntries } from '../../utils/safeArray'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
@@ -31,7 +30,6 @@ import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
-import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
 import {
   formatLocalDateTime,
@@ -102,7 +100,6 @@ export default function HomeScreen() {
       loading,
       error,
       refreshData,
-      sendCriticalAlerts,
       backendLifeAreas,
       localOverrideActive
     } = useLifeAreas()
@@ -137,14 +134,6 @@ export default function HomeScreen() {
       setModalVisible(true)
     }
 
-    const safeWarnings = React.useMemo(() => {
-      if (!transitData?.warnings) return []
-      if (!Array.isArray(transitData.warnings)) {
-        console.warn('?? safeWarnings: warnings n\u00E3o \u00E9 array:', typeof transitData.warnings)
-        return []
-      }
-      return transitData.warnings
-    }, [transitData?.warnings])
 
     const getLifeAreaFactors = React.useCallback((areaName: string): string[] => {
       const debugArea = transitData?.currentTransits?.debug?.lifeAreas?.[areaName]
@@ -297,11 +286,12 @@ export default function HomeScreen() {
         const angle = getMoonPhaseAngle(now)
         const angleKey = getMoonPhaseKeyFromAngle(angle)
         const phaseKeyFromEvent = currentPhase ? extractPhaseKey(currentPhase) : null
+        const useEventPhase = Boolean(currentPhase && phaseKeyFromEvent)
         const phaseKey = (phaseKeyFromEvent as any) || angleKey
-        let phaseLabel = phaseKeyFromEvent
+        let phaseLabel = useEventPhase
           ? getMoonPhaseLabelFromKey(phaseKey)
           : getMoonPhaseLabelFromAngle(angle)
-        if (angle >= 315) phaseLabel = 'Lua Balsâmica'
+        if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
         const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
         const line2Base = (phaseEnd || nextExact)
           ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
@@ -310,7 +300,9 @@ export default function HomeScreen() {
           ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
           : line2Base
 
-        const iconKey = angle >= 315 ? angleKey : phaseKey
+        const iconKey = (!useEventPhase && angle >= 315)
+          ? 'waningCrescent'
+          : phaseKey
         setMoonPhaseKey(iconKey)
         setMoonPhaseLabel(line1)
         setMoonLine2(line2)
@@ -324,23 +316,6 @@ export default function HomeScreen() {
       setRefreshing(true)
       await refreshData()
       setRefreshing(false)
-    }
-
-    const handleSendAlerts = async () => {
-      try {
-        await sendCriticalAlerts()
-        Alert.alert(
-          uiText('Alertas Enviados'),
-          uiText('Seus alertas cr\\u00EDticos foram enviados para todos os grupos!'),
-          [{ text: 'OK', style: 'default' }]
-        )
-      } catch (error) {
-        Alert.alert(
-          uiText('Erro'),
-          uiText('N\\u00E3o foi poss\\u00EDvel enviar os alertas. Tente novamente.'),
-          [{ text: 'OK', style: 'default' }]
-        )
-      }
     }
 
     const getUserDisplayName = () => {
@@ -384,32 +359,9 @@ export default function HomeScreen() {
       }
     }, [])
 
-    const criticalAreas = React.useMemo(() => {
-      if (!lifeAreasForDisplay) {
-        console.log('?? criticalAreas: lifeAreasForDisplay est\u00E1 undefined')
-        return []
-      }
-
-      try {
-        const entries = safeEntries(lifeAreasForDisplay)
-        console.log('?? criticalAreas: safeEntries retornou', entries.length, 'entradas')
-
-        const filtered = entries.filter(([_, area]) => {
-          const value = typeof area?.percentage === 'number'
-            ? area.percentage
-            : (typeof area?.status === 'number' ? area.status : null)
-          if (typeof value !== 'number') return false
-          return value < STATUS_THRESHOLDS.criticalBelow
-        })
-
-        const mapped = filtered.map(([name, area]) => normalizeDisplayArea(name, area))
-        console.log('?? criticalAreas: encontradas', mapped.length, '\u00E1reas cr\u00EDticas')
-        return mapped
-      } catch (error) {
-        console.error('? criticalAreas: erro ao processar:', error)
-        return []
-      }
-    }, [lifeAreasForDisplay, normalizeDisplayArea])
+    const aspectLegendText = uiText(
+      'Legenda: \u260C Conjun\u00E7\u00E3o \u00B7 \u25A1 Quadratura \u00B7 \u25B3 Tr\u00EDgono \u00B7 \u2736 Sextil \u00B7 \u260D Oposi\u00E7\u00E3o \u00B7 \u26BB Quinc\u00FAncio'
+    )
 
     if (loading && !transitData) {
       return (
@@ -597,68 +549,15 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
-          {/* Alertas Cr\u00EDticos */}
-          {criticalAreas.length > 0 && (
-            <AnimatedMount>
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="warning" size={20} color="#EF4444" />
-                <Text style={styles.sectionTitle}>
-                  {uiText('\\u00C1reas Cr\\u00EDticas')}
-                </Text>
-              </View>
-
-              <LinearGradient
-                colors={['#2D1B1B', '#3D2626']}
-                style={styles.alertCard}
-              >
-                <Text style={styles.alertTitle}>
-                  {criticalAreas.length} {criticalAreas.length === 1
-                    ? uiText('\\u00C1rea precisa')
-                    : uiText('\\u00C1reas precisam')
-                  } {uiText('de aten\\u00E7\\u00E3o')}
-                </Text>
-
-                <Text style={styles.alertDescription}>
-                  {uiText('Seus tr\\u00E2nsitos indicam desafios em algumas \\u00E1reas. Compartilhe com seu grupo para receber apoio!')}
-                </Text>
-
-                {(() => {
-                  const press = usePressScale()
-                  return (
-                    <Animated.View style={press.style}>
-                      <TouchableOpacity style={styles.alertButton} onPress={handleSendAlerts} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
-                        <Ionicons name="send" size={16} color="#FFFFFF" />
-                        <Text style={styles.alertButtonText}>
-                          {uiText('Enviar alertas para grupos')}
-                        </Text>
-                      </TouchableOpacity>
-                    </Animated.View>
-                  )
-                })()}
-              </LinearGradient>
-            </View>
-            </AnimatedMount>
-          )}
-
-          {/* Orienta\u00E7\u00F5es */}
-          {safeWarnings.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="information-circle" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>
-                  {uiText('Orienta\\u00E7\\u00F5es')}
-                </Text>
-              </View>
-
-              {safeWarnings.map((warning, index) => (
-                <View key={index} style={styles.warningCard}>
-                  <Ionicons name="bulb-outline" size={16} color="#FFD700" />
-                  <Text style={styles.warningText}>{warning}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* Legenda sutil dos s\u00EDmbolos dos aspectos */}
+          <View style={styles.aspectLegendContainer}>
+            <Text style={styles.aspectLegendTitle} numberOfLines={1} ellipsizeMode="tail">
+              {uiText('Legenda dos aspectos')}
+            </Text>
+            <Text style={styles.aspectLegendText} numberOfLines={2} ellipsizeMode="tail">
+              {aspectLegendText}
+            </Text>
+          </View>
 
           {/* Espa\u00E7amento final */}
           <View style={styles.bottomSpacing} />
@@ -789,7 +688,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   date: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#A0A0A0',
     textTransform: 'capitalize',
   },
@@ -968,6 +867,24 @@ const styles = StyleSheet.create({
   },
   lifeAreaItem: {
     width: '50%',
+  },
+  aspectLegendContainer: {
+    marginTop: 8,
+    marginHorizontal: 16,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  aspectLegendTitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  aspectLegendText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   warningCard: {
     flexDirection: 'row',

@@ -217,11 +217,12 @@ export default function ProfileScreen() {
       const angle = getMoonPhaseAngle(now)
       const angleKey = getMoonPhaseKeyFromAngle(angle)
       const phaseKeyFromEvent = currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : null
+      const useEventPhase = Boolean(currentPhaseEvent && phaseKeyFromEvent)
       const phaseKey = (phaseKeyFromEvent as any) || angleKey
-      let phaseLabel = phaseKeyFromEvent
+      let phaseLabel = useEventPhase
         ? getMoonPhaseLabelFromKey(phaseKey)
         : getMoonPhaseLabelFromAngle(angle)
-      if (angle >= 315) phaseLabel = 'Lua Balsâmica'
+      if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
 
       const voidEvents = events
         .filter((event) => event?.eventType === "LUNAR_VOID" && event?.startAt && event?.endAt)
@@ -243,7 +244,9 @@ export default function ProfileScreen() {
         ? `${line2Base} · Lua Vazia até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
         : line2Base
 
-      const iconKey = angle >= 315 ? angleKey : phaseKey
+      const iconKey = (!useEventPhase && angle >= 315)
+        ? 'waningCrescent'
+        : phaseKey
       setMoonPhaseKey(iconKey)
       setMoonPhaseLabel(line1)
       setMoonLine2(line2)
