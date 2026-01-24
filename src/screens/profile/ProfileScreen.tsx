@@ -139,11 +139,11 @@ export default function ProfileScreen() {
   const normalizePhaseLabel = (raw?: string | null) => {
     if (!raw) return ""
     return raw.toLowerCase()
-      .replace(/Ã¡|Ã |Ã£|Ã¢/g, "a")
-      .replace(/Ã©|Ãª/g, "e")
-      .replace(/Ã­/g, "i")
-      .replace(/Ã³|Ã´|Ãµ/g, "o")
-      .replace(/Ãº/g, "u")
+      .replace(/[áàãâ]/g, "a")
+      .replace(/[éê]/g, "e")
+      .replace(/[í]/g, "i")
+      .replace(/[óôõ]/g, "o")
+      .replace(/[ú]/g, "u")
   }
 
   const extractPhaseKey = (event: any) => {
@@ -261,9 +261,9 @@ export default function ProfileScreen() {
       if (userDoc.exists()) {
         setProfile(userDoc.data() as UserProfile)
       } else {
-        // Criar perfil padrÃ£o
+        // Criar perfil padrão
         const defaultProfile: UserProfile = {
-          displayName: user!.email?.split("@")[0] || "UsuÃ¡rio",
+          displayName: user!.email?.split("@")[0] || "Usuário",
           birthDate: "",
           birthTime: "",
           birthLocation: {
@@ -319,7 +319,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error)
-      Alert.alert("Erro", "NÃ£o foi possÃ­vel carregar o perfil")
+      Alert.alert("Erro", "Não foi possível carregar o perfil")
     } finally {
       setLoading(false)
     }
@@ -360,7 +360,7 @@ export default function ProfileScreen() {
       Alert.alert("Sucesso", "Perfil atualizado com sucesso!")
     } catch (error) {
       console.error("Erro ao salvar perfil:", error)
-      Alert.alert("Erro", "NÃ£o foi possÃ­vel salvar o perfil")
+      Alert.alert("Erro", "Não foi possível salvar o perfil")
     } finally {
       setSavingPhoto(false)
     }
@@ -369,7 +369,7 @@ export default function ProfileScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  galeria para selecionar sua foto.')
+      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
       return false
     }
     return true
@@ -416,11 +416,11 @@ export default function ProfileScreen() {
 
     Alert.alert(
       'Escolher Foto',
-      'Como vocÃª gostaria de adicionar sua foto?',
+      'Como você gostaria de adicionar sua foto?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'CÃ¢mera', onPress: () => pickImage('camera') },
+        { text: 'Câmera', onPress: () => pickImage('camera') },
       ]
     )
   }
@@ -434,7 +434,7 @@ export default function ProfileScreen() {
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  cÃ¢mera.')
+          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -466,7 +466,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'NÃ£o foi possÃ­vel selecionar a foto. Tente novamente.')
+      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
     }
   }
 
@@ -523,7 +523,7 @@ export default function ProfileScreen() {
         "preferences.privacy": updatedProfile.preferences.privacy,
       })
     } catch (error) {
-      console.error("Erro ao atualizar preferÃªncia:", error)
+      console.error("Erro ao atualizar preferência:", error)
     }
   }
 
@@ -591,10 +591,10 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.displayName}>{profile.displayName}</Text>
           <Text style={styles.email}>{user?.email}</Text>
-          {profile.zodiacSign && <Text style={styles.zodiacSign}>â™ˆ {profile.zodiacSign}</Text>}
+          {profile.zodiacSign && <Text style={styles.zodiacSign}>♈ {profile.zodiacSign}</Text>}
         </View>
 
-        {/* EstatÃ­sticas */}
+        {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.groupsJoined || 0}</Text>
@@ -649,10 +649,10 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* InformaÃ§Ãµes Pessoais */}
+        {/* Informações Pessoais */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>InformaÃ§Ãµes Pessoais</Text>
+            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
             <TouchableOpacity onPress={() => setEditing(!editing)}>
               <Ionicons name={editing ? "checkmark" : "pencil"} size={20} color="#FFD700" />
             </TouchableOpacity>
@@ -662,7 +662,7 @@ export default function ProfileScreen() {
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Nome de exibiÃ§Ã£o"
+                placeholder="Nome de exibição"
                 placeholderTextColor="#888"
                 value={profile.displayName}
                 onChangeText={(text) => setProfile({ ...profile, displayName: text })}
@@ -676,7 +676,7 @@ export default function ProfileScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="HorÃ¡rio de nascimento (HH:MM)"
+                placeholder="Horário de nascimento (HH:MM)"
                 placeholderTextColor="#888"
                 value={profile.birthTime}
                 onChangeText={(text) => setProfile({ ...profile, birthTime: text })}
@@ -690,32 +690,32 @@ export default function ProfileScreen() {
                 <Ionicons name="location" size={20} color="#FFD700" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
-                <Text style={styles.saveButtonText}>Salvar AlteraÃ§Ãµes</Text>
+                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.infoContainer}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Data de Nascimento:</Text>
-                <Text style={styles.infoValue}>{profile.birthDate || "NÃ£o informado"}</Text>
+                <Text style={styles.infoValue}>{profile.birthDate || "Não informado"}</Text>
               </View>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>HorÃ¡rio:</Text>
-                <Text style={styles.infoValue}>{profile.birthTime || "NÃ£o informado"}</Text>
+                <Text style={styles.infoLabel}>Horário:</Text>
+                <Text style={styles.infoValue}>{profile.birthTime || "Não informado"}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Local:</Text>
                 <Text style={styles.infoValue}>
                   {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
-                    : "NÃ£o informado"}
+                    : "Não informado"}
                 </Text>
               </View>
             </View>
           )}
         </View>
 
-        {/* PreferÃªncias de Privacidade */}
+        {/* Preferências de Privacidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Privacidade</Text>
 
@@ -723,7 +723,7 @@ export default function ProfileScreen() {
             <View style={styles.preferenceInfo}>
               <Text style={styles.preferenceTitle}>Mostrar Status nos Grupos</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros do grupo vejam seu status astrolÃ³gico
+                Permitir que membros do grupo vejam seu status astrológico
               </Text>
             </View>
             <Switch
@@ -736,9 +736,9 @@ export default function ProfileScreen() {
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Compartilhar duraÃ§Ã£o dos trÃ¢nsitos</Text>
+              <Text style={styles.preferenceTitle}>Compartilhar duração dos trânsitos</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros vejam a duraÃ§Ã£o exata dos aspectos no grupo
+                Permitir que membros vejam a duração exata dos aspectos no grupo
               </Text>
             </View>
             <Switch
@@ -763,7 +763,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* AÃ§Ãµes */}
+        {/* Ações */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out" size={20} color="#FF4444" />
@@ -818,7 +818,8 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   profileHeaderTop: {
     width: "100%",
@@ -1236,5 +1237,4 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
 })
-
 
