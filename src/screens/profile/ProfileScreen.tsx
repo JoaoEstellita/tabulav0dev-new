@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
   profileHeaderTop: {
     width: "100%",
