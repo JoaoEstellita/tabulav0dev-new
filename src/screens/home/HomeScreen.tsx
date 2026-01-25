@@ -464,13 +464,6 @@ export default function HomeScreen() {
                           <Text style={styles.moonVoidBadgeText}>VOC</Text>
                         </View>
                       )}
-                      {unreadCount > 0 && (
-                        <View style={styles.notificationBadge}>
-                          <Text style={styles.notificationBadgeText}>
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </Text>
-                        </View>
-                      )}
                     </View>
                     {moonIsVoid && (
                       null
@@ -723,22 +716,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#A0A0A0',
     lineHeight: 16,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: '#EF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
   moonVoidBadge: {
     position: 'absolute',
