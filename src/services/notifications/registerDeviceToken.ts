@@ -34,6 +34,11 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
 
     const deviceId = token.replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
 
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[push] Expo token obtido', { userId, deviceId })
+    }
+
     await setDoc(
       doc(db, `users/${userId}/fcmTokens/${deviceId}`),
       {
@@ -50,7 +55,10 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
       doc(db, 'users', userId),
       {
         notificationTokens: {
-          expo: {
+          expo: token,
+          expoInvalid: false,
+          expoUpdatedAt: serverTimestamp(),
+          expoDevices: {
             [deviceId]: {
               token,
               platform: Platform.OS,
@@ -63,6 +71,11 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
       },
       { merge: true },
     )
+
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[push] Expo token salvo', { userId, deviceId })
+    }
 
     return { token, deviceId }
   } catch (error: any) {
