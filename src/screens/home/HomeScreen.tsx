@@ -459,11 +459,6 @@ export default function HomeScreen() {
                   >
                     <View style={styles.moonIconWrap}>
                       <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
-                      {moonIsVoid && (
-                        <View style={styles.moonVoidBadge}>
-                          <Text style={styles.moonVoidBadgeText}>VOC</Text>
-                        </View>
-                      )}
                     </View>
                     {moonIsVoid && (
                       null
@@ -716,22 +711,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#A0A0A0',
     lineHeight: 16,
-  },
-  moonVoidBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -6,
-    backgroundColor: '#EF4444',
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moonVoidBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: 'bold',
   },
   section: {
     marginBottom: 24,

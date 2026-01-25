@@ -561,11 +561,6 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.moonWidget} onPress={() => navigation.navigate("Notifications" as never)}>
               <View style={styles.moonIconWrap}>
                 <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
-                {moonIsVoid && (
-                  <View style={styles.moonVoidBadge}>
-                    <Text style={styles.moonVoidBadgeText}>VOC</Text>
-                  </View>
-                )}
               </View>
               <View style={styles.moonLegend}>
                 <Text style={styles.moonLegendLine1} numberOfLines={1}>
@@ -840,20 +835,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center",
-  },
-  moonVoidBadge: {
-    position: "absolute",
-    bottom: -6,
-    right: -6,
-    backgroundColor: "#FF6B6B",
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  moonVoidBadgeText: {
-    color: "#0F0F23",
-    fontSize: 9,
-    fontWeight: "bold",
   },
   avatarContainer: {
     marginBottom: 16,

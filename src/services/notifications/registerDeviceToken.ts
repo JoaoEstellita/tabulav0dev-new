@@ -1,5 +1,7 @@
-﻿import * as Notifications from 'expo-notifications'
+import * as Notifications from 'expo-notifications'
 import { Platform } from 'react-native'
+import * as Device from 'expo-device'
+import Constants from 'expo-constants'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 
@@ -15,18 +17,22 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
     if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
       return { error: 'Somente Android ou iOS' }
     }
+    if (!Device.isDevice) {
+      return { error: 'Push requer dispositivo fisico' }
+    }
 
     const perm = await Notifications.requestPermissionsAsync()
     if (perm.status !== 'granted') {
       return { error: 'Permissao negada' }
     }
 
-    const token =
-      Platform.OS === 'ios'
-        ? (await Notifications.getExpoPushTokenAsync({ projectId: 'tabula-estelar-84fdc' })).data
-        : (await Notifications.getDevicePushTokenAsync()).data
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ||
+      Constants.easConfig?.projectId ||
+      undefined
+    const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data
 
-    const deviceId = Buffer.from(token).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
+    const deviceId = token.replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)
 
     await setDoc(
       doc(db, `users/${userId}/fcmTokens/${deviceId}`),
@@ -34,7 +40,26 @@ export async function registerDeviceToken(userId: string): Promise<RegisterResul
         token,
         platform: Platform.OS,
         deviceId,
+        provider: 'expo',
         lastUpdated: serverTimestamp(),
+      },
+      { merge: true },
+    )
+
+    await setDoc(
+      doc(db, 'users', userId),
+      {
+        notificationTokens: {
+          expo: {
+            [deviceId]: {
+              token,
+              platform: Platform.OS,
+              deviceId,
+              isValid: true,
+              updatedAt: serverTimestamp(),
+            },
+          },
+        },
       },
       { merge: true },
     )

@@ -15,7 +15,7 @@ import {
   getRedirectResult,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, runTransaction, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
 
 interface AuthContextType {
@@ -86,6 +86,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const getDatePartsInTimeZone = (date: Date, timeZone: string) => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+    const parts = formatter.formatToParts(date)
+    const lookup: Record<string, string> = {}
+    parts.forEach((part) => {
+      if (part.type !== 'literal') lookup[part.type] = part.value
+    })
+    return {
+      year: Number(lookup.year),
+      month: Number(lookup.month),
+      day: Number(lookup.day),
+    }
+  }
+
+  const getTimeZoneOffsetMinutes = (date: Date, timeZone: string) => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      timeZoneName: 'shortOffset',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    const parts = formatter.formatToParts(date)
+    const tzPart = parts.find((part) => part.type === 'timeZoneName')?.value || 'UTC'
+    const match = tzPart.match(/([+-])(\d{1,2})(?::?(\d{2}))?/)
+    if (!match) return 0
+    const sign = match[1] === '-' ? -1 : 1
+    const hours = Number(match[2] || 0)
+    const minutes = Number(match[3] || 0)
+    return sign * (hours * 60 + minutes)
+  }
+
+  const buildDayKeyAndHotUntil = (now: Date, timeZone: string) => {
+    const parts = getDatePartsInTimeZone(now, timeZone)
+    const dayKey = `${parts.year.toString().padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
+    const endOfDayUtcGuess = Date.UTC(parts.year, parts.month - 1, parts.day, 23, 59, 59, 999)
+    const offsetMinutes = getTimeZoneOffsetMinutes(new Date(endOfDayUtcGuess), timeZone)
+    const endOfDayUtc = new Date(endOfDayUtcGuess - offsetMinutes * 60 * 1000)
+    return { dayKey, endOfDayUtc }
+  }
+
+  const recordUserActivity = async (authUser: User) => {
+    const userRef = doc(db, 'users', authUser.uid)
+    try {
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(userRef)
+        const data = snap.exists() ? snap.data() : {}
+        const timeZone =
+          (data?.settings as any)?.timezone ||
+          (data as any)?.timezone ||
+          'America/Sao_Paulo'
+        const { dayKey, endOfDayUtc } = buildDayKeyAndHotUntil(new Date(), timeZone)
+        const previousDayKey = (data as any)?.dayKey || null
+        const previousCount = typeof (data as any)?.loginCountToday === 'number'
+          ? (data as any).loginCountToday
+          : 0
+        const resetCount = previousDayKey !== dayKey
+        const nextCount = (resetCount ? 0 : previousCount) + 1
+        const shouldHot = nextCount >= 2
+        tx.set(
+          userRef,
+          {
+            lastSeenAt: serverTimestamp(),
+            dayKey,
+            loginCountToday: nextCount,
+            hotUntil: shouldHot ? Timestamp.fromDate(endOfDayUtc) : null,
+          },
+          { merge: true }
+        )
+      })
+    } catch (error) {
+      console.warn('Falha ao registrar atividade do usuario:', error)
+    }
+  }
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       getRedirectResult(auth)
@@ -114,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         console.log('Aguardando verificacao de dados...')
         syncPublicProfile(user)
+        recordUserActivity(user)
         // Aguardar um pouco para garantir que o documento existe
         setTimeout(async () => {
           try {
