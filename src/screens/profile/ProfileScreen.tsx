@@ -566,11 +566,6 @@ export default function ProfileScreen() {
                     <Text style={styles.moonVoidBadgeText}>VOC</Text>
                   </View>
                 )}
-                {notificationBadgeCount > 0 && (
-                  <View style={styles.notificationBellBadge}>
-                    <Text style={styles.notificationBellBadgeText}>{notificationBadgeCount}</Text>
-                  </View>
-                )}
               </View>
               <View style={styles.moonLegend}>
                 <Text style={styles.moonLegendLine1} numberOfLines={1}>
@@ -845,23 +840,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center",
-  },
-  notificationBellBadge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    paddingHorizontal: 4,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#FF4444",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notificationBellBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "bold",
   },
   moonVoidBadge: {
     position: "absolute",
@@ -1240,4 +1218,3 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
 })
-
