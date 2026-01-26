@@ -9,16 +9,24 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
 
+const getLocalDateKey = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 const formatDateLabel = (value?: any) => {
   if (!value?.toDate) return "Sem data"
   const date = value.toDate()
   const today = new Date()
-  const yesterday = new Date()
-  yesterday.setDate(today.getDate() - 1)
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const yesterdayStart = new Date(todayStart)
+  yesterdayStart.setDate(todayStart.getDate() - 1)
 
-  const dateKey = date.toISOString().slice(0, 10)
-  const todayKey = today.toISOString().slice(0, 10)
-  const yesterdayKey = yesterday.toISOString().slice(0, 10)
+  const dateKey = getLocalDateKey(date)
+  const todayKey = getLocalDateKey(todayStart)
+  const yesterdayKey = getLocalDateKey(yesterdayStart)
 
   if (dateKey === todayKey) return "Hoje"
   if (dateKey === yesterdayKey) return "Ontem"
@@ -62,6 +70,46 @@ const getSeverityIcon = (severity: string) => {
     default:
       return { name: "information-circle", color: "#FBBF24" }
   }
+}
+
+const buildLifeAreaTags = (item: NotificationItem) => {
+  const vars = item.templateVars || {}
+  const meta = item.meta || {}
+  const singleLabel =
+    vars.lifeAreaLabel ||
+    vars.primaryLifeAreaLabel ||
+    meta.lifeAreaLabel ||
+    meta.primaryLifeAreaLabel
+  if (singleLabel) return [String(singleLabel)]
+
+  const lifeAreas = vars.lifeAreas || meta.lifeAreas
+  if (Array.isArray(lifeAreas) && lifeAreas.length > 0) {
+    const labels = lifeAreas.map((entry: any) => entry?.label || entry?.key).filter(Boolean)
+    if (labels.length > 2) {
+      return [String(labels[0]), String(labels[1]), `+${labels.length - 2}`]
+    }
+    if (labels.length > 0) return labels.map((label: any) => String(label))
+  }
+
+  const listLabel = vars.lifeAreasLabel || meta.lifeAreasLabel
+  if (listLabel) return [String(listLabel)]
+
+  if (item.area) return [String(item.area)]
+  return ["Geral"]
+}
+
+const resolvePercentageTag = (item: NotificationItem) => {
+  const vars = item.templateVars || {}
+  const meta = item.meta || {}
+  const value =
+    typeof item.percentage === "number"
+      ? item.percentage
+      : typeof vars.status === "number"
+        ? vars.status
+        : typeof meta.status === "number"
+          ? meta.status
+          : null
+  return typeof value === "number" ? Math.round(value) : null
 }
 
 const resolveNotificationText = (
@@ -207,6 +255,8 @@ export default function NotificationsScreen() {
                 const severity = getNotificationSeverity(item)
                 const icon = getSeverityIcon(severity)
                 const text = resolveNotificationText(item, templates)
+                const areaTags = buildLifeAreaTags(item)
+                const percentValue = resolvePercentageTag(item)
                 return (
                   <TouchableOpacity
                     key={item.id}
@@ -228,14 +278,14 @@ export default function NotificationsScreen() {
                             <Text style={styles.tagText}>{item.groupName}</Text>
                           </View>
                         ) : null}
-                        {item.area ? (
-                          <View style={styles.tag}>
-                            <Text style={styles.tagText}>{item.area}</Text>
+                        {areaTags.map((label, index) => (
+                          <View key={`${item.id}_area_${index}`} style={styles.tag}>
+                            <Text style={styles.tagText}>{label}</Text>
                           </View>
-                        ) : null}
-                        {typeof item.percentage === "number" ? (
+                        ))}
+                        {typeof percentValue === "number" ? (
                           <View style={styles.tag}>
-                            <Text style={styles.tagText}>{Math.round(item.percentage)}%</Text>
+                            <Text style={styles.tagText}>{percentValue}%</Text>
                           </View>
                         ) : null}
                       </View>
