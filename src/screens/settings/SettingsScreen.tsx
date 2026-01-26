@@ -287,10 +287,24 @@ export default function SettingsScreen() {
         permission = (notificationPermission === 'undetermined' ? 'default' : notificationPermission) as PushPermission;
       }
       try {
-        const fcmSnap = await getDocs(
-          query(collection(db, 'users', user.uid, 'fcmTokens'), limit(1))
-        );
-        hasFcmToken = fcmSnap.size > 0;
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        const userData = userSnap.exists() ? userSnap.data() : null;
+        const expoToken = userData?.notificationTokens?.expo;
+        if (typeof expoToken === 'string') {
+          hasFcmToken = expoToken.length > 0;
+        } else if (Array.isArray(expoToken)) {
+          hasFcmToken = expoToken.some((entry) => !!entry?.token);
+        }
+      } catch (error) {
+        console.warn('Nao foi possivel carregar tokens expo', error);
+      }
+      try {
+        if (!hasFcmToken) {
+          const fcmSnap = await getDocs(
+            query(collection(db, 'users', user.uid, 'fcmTokens'), limit(1))
+          );
+          hasFcmToken = fcmSnap.size > 0;
+        }
       } catch (error) {
         console.warn('Nao foi possivel carregar tokens mobile', error);
       }
@@ -318,6 +332,10 @@ export default function SettingsScreen() {
       const { status } = await Notifications.getPermissionsAsync();
       if (status === 'granted') {
         setNotificationPermission(status);
+        if (user?.uid) {
+          await registerDeviceToken(user.uid);
+          loadPushStatus();
+        }
         return;
       }
 
@@ -344,6 +362,9 @@ export default function SettingsScreen() {
             { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
           ]
         );
+      } else if (user?.uid) {
+        await registerDeviceToken(user.uid);
+        loadPushStatus();
       }
     } catch (error) {
       console.error('Erro ao solicitar permissao de notificacoes', error);
