@@ -72,6 +72,13 @@ const getSeverityIcon = (severity: string) => {
   }
 }
 
+const formatAreaLabel = (value?: any) => {
+  if (!value) return null
+  const raw = String(value).replace(/_/g, " ").trim()
+  if (!raw) return null
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
 const buildLifeAreaTags = (item: NotificationItem) => {
   const vars = item.templateVars || {}
   const meta = item.meta || {}
@@ -81,6 +88,15 @@ const buildLifeAreaTags = (item: NotificationItem) => {
     meta.lifeAreaLabel ||
     meta.primaryLifeAreaLabel
   if (singleLabel) return [String(singleLabel)]
+
+  const directLabel =
+    item.lifeAreaLabel ||
+    item.lifeAreaKey ||
+    item.area ||
+    meta.lifeAreaKey ||
+    vars.lifeAreaKey
+  const formattedDirect = formatAreaLabel(directLabel)
+  if (formattedDirect) return [formattedDirect]
 
   const lifeAreas = vars.lifeAreas || meta.lifeAreas
   if (Array.isArray(lifeAreas) && lifeAreas.length > 0) {
@@ -104,6 +120,12 @@ const resolvePercentageTag = (item: NotificationItem) => {
   const value =
     typeof item.percentage === "number"
       ? item.percentage
+      : typeof vars.percentage === "number"
+        ? vars.percentage
+        : typeof vars.primaryStatus === "number"
+          ? vars.primaryStatus
+          : typeof vars.primaryLifeAreaStatus === "number"
+            ? vars.primaryLifeAreaStatus
       : typeof vars.status === "number"
         ? vars.status
         : typeof meta.status === "number"

@@ -12,6 +12,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#0a0e27"
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#FFD700"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
