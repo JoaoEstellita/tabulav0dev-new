@@ -84,6 +84,15 @@ export default function SettingsScreen() {
     hasFcmToken: false,
     permission: 'unknown' as PushPermission,
   });
+  const [webPushDiagnostics, setWebPushDiagnostics] = useState({
+    supported: false,
+    permission: 'unknown' as PushPermission,
+    serviceWorkerState: 'unknown' as 'unknown' | 'installing' | 'installed' | 'activating' | 'activated' | 'redundant',
+    pushManagerSupported: false,
+    subscriptionActive: false,
+    subscriptionEndpoint: '',
+    subscriptionExpiration: '' as string | '',
+  });
   const [pushStatusLoading, setPushStatusLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
@@ -264,9 +273,16 @@ export default function SettingsScreen() {
     let hasFcmToken = false;
     let hasWebPush = false;
     let permission: PushPermission = 'unknown';
+    let webSupported = false;
+    let serviceWorkerState: 'unknown' | 'installing' | 'installed' | 'activating' | 'activated' | 'redundant' = 'unknown';
+    let pushManagerSupported = false;
+    let subscriptionActive = false;
+    let subscriptionEndpoint = '';
+    let subscriptionExpiration = '';
     try {
       if (Platform.OS === 'web') {
         const webNotification = (globalThis as any).Notification;
+        webSupported = !!webNotification;
         if (!webNotification) {
           permission = 'unsupported';
         } else {
@@ -275,9 +291,30 @@ export default function SettingsScreen() {
         if ('serviceWorker' in navigator) {
           try {
             const registration = await navigator.serviceWorker.getRegistration();
+            const active = registration?.active;
+            const installing = registration?.installing;
+            const waiting = registration?.waiting;
+            serviceWorkerState =
+              (active?.state as any) ||
+              (installing?.state as any) ||
+              (waiting?.state as any) ||
+              'unknown';
+            pushManagerSupported = !!registration?.pushManager;
             if (registration?.pushManager) {
               const sub = await registration.pushManager.getSubscription();
               hasWebPush = !!sub;
+              subscriptionActive = !!sub;
+              if (sub?.endpoint) {
+                try {
+                  const url = new URL(sub.endpoint);
+                  subscriptionEndpoint = url.origin;
+                } catch {
+                  subscriptionEndpoint = sub.endpoint.slice(0, 42);
+                }
+              }
+              if (sub?.expirationTime) {
+                subscriptionExpiration = new Date(sub.expirationTime).toISOString();
+              }
             }
           } catch (error) {
             console.warn('Falha ao ler subscription local de web push', error);
@@ -321,6 +358,17 @@ export default function SettingsScreen() {
         hasFcmToken,
         permission,
       });
+      if (Platform.OS === 'web') {
+        setWebPushDiagnostics({
+          supported: webSupported,
+          permission,
+          serviceWorkerState,
+          pushManagerSupported,
+          subscriptionActive,
+          subscriptionEndpoint,
+          subscriptionExpiration,
+        });
+      }
     } finally {
       setPushStatusLoading(false);
     }
@@ -1046,6 +1094,43 @@ export default function SettingsScreen() {
               {notificationStatusLabel}
             </Text>
           </TouchableOpacity>
+          {Platform.OS === 'web' && (
+            <View style={styles.pushDiagnostics}>
+              <Text style={styles.pushDiagnosticsTitle}>Diagnostico Web Push</Text>
+              <View style={styles.pushDiagnosticsRow}>
+                <Text style={styles.pushDiagnosticsLabel}>Permissao:</Text>
+                <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.permission}</Text>
+              </View>
+              <View style={styles.pushDiagnosticsRow}>
+                <Text style={styles.pushDiagnosticsLabel}>Service Worker:</Text>
+                <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.serviceWorkerState}</Text>
+              </View>
+              <View style={styles.pushDiagnosticsRow}>
+                <Text style={styles.pushDiagnosticsLabel}>Push Manager:</Text>
+                <Text style={styles.pushDiagnosticsValue}>
+                  {webPushDiagnostics.pushManagerSupported ? 'suportado' : 'nao suportado'}
+                </Text>
+              </View>
+              <View style={styles.pushDiagnosticsRow}>
+                <Text style={styles.pushDiagnosticsLabel}>Subscription:</Text>
+                <Text style={styles.pushDiagnosticsValue}>
+                  {webPushDiagnostics.subscriptionActive ? 'ativa' : 'inativa'}
+                </Text>
+              </View>
+              {webPushDiagnostics.subscriptionEndpoint ? (
+                <View style={styles.pushDiagnosticsRow}>
+                  <Text style={styles.pushDiagnosticsLabel}>Endpoint:</Text>
+                  <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.subscriptionEndpoint}</Text>
+                </View>
+              ) : null}
+              {webPushDiagnostics.subscriptionExpiration ? (
+                <View style={styles.pushDiagnosticsRow}>
+                  <Text style={styles.pushDiagnosticsLabel}>Expira:</Text>
+                  <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.subscriptionExpiration}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
           {pushStatusLoading && (
             <Text style={styles.pushStatusLoading}>Atualizando...</Text>
           )}
@@ -1627,6 +1712,33 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#9aa0b1',
     fontSize: 11,
+  },
+  pushDiagnostics: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  pushDiagnosticsTitle: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  pushDiagnosticsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  pushDiagnosticsLabel: {
+    color: '#9aa0b1',
+    fontSize: 11,
+    width: 110,
+  },
+  pushDiagnosticsValue: {
+    color: '#e0e0e0',
+    fontSize: 11,
+    flex: 1,
   },
 });
 
