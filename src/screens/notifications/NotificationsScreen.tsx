@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  Pressable,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
@@ -170,6 +172,43 @@ const resolveNotificationText = (
   return { title: item.title || "", body: item.body || "" }
 }
 
+const resolveCriticalAreasText = (item: NotificationItem) => {
+  const vars = item.templateVars || {}
+  const meta = item.meta || {}
+  return (
+    vars.criticalAreasText ||
+    meta.criticalAreasText ||
+    vars.lifeAreasLabel ||
+    meta.lifeAreasLabel ||
+    ""
+  )
+}
+
+const resolveLifeAreaEntries = (item: NotificationItem) => {
+  const vars = item.templateVars || {}
+  const meta = item.meta || {}
+  const entries = Array.isArray(vars.lifeAreas)
+    ? vars.lifeAreas
+    : Array.isArray(meta.lifeAreas)
+      ? meta.lifeAreas
+      : []
+  return entries.map((entry: any) => {
+    const label = formatAreaLabel(entry?.label || entry?.key || entry?.area)
+    const rawPercent =
+      typeof entry?.percentage === "number"
+        ? entry.percentage
+        : typeof entry?.status === "number"
+          ? entry.status
+          : typeof entry?.value === "number"
+            ? entry.value
+            : null
+    return {
+      label: label || "Geral",
+      percentage: typeof rawPercent === "number" ? Math.round(rawPercent) : null,
+    }
+  })
+}
+
 const isGroupNotification = (item: NotificationItem) => {
   const type = (item.type || "").toLowerCase()
   if (item.groupId) return true
@@ -187,6 +226,7 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
 
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState("all")
+  const [activeItem, setActiveItem] = useState<NotificationItem | null>(null)
   const {
     notifications,
     templates,
@@ -217,6 +257,7 @@ export default function NotificationsScreen() {
     if (!item.isRead) {
       await markAsRead(item.id)
     }
+    setActiveItem(item)
   }
 
   return (
@@ -331,6 +372,53 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <Modal
+        visible={!!activeItem}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveItem(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setActiveItem(null)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            {activeItem ? (
+              <>
+                <Text style={styles.modalTitle}>
+                  {resolveNotificationText(activeItem, templates).title}
+                </Text>
+                <Text style={styles.modalBody}>
+                  {resolveNotificationText(activeItem, templates).body}
+                </Text>
+                {activeItem.createdAt?.toDate ? (
+                  <Text style={styles.modalTime}>{formatTimeLabel(activeItem.createdAt)}</Text>
+                ) : null}
+
+                {resolveCriticalAreasText(activeItem) ? (
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>Areas criticas</Text>
+                    <Text style={styles.modalSectionText}>
+                      {resolveCriticalAreasText(activeItem)}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {resolveLifeAreaEntries(activeItem).length > 0 ? (
+                  <View style={styles.modalTags}>
+                    {resolveLifeAreaEntries(activeItem).map((entry, index) => (
+                      <View key={`modal_area_${index}`} style={styles.tag}>
+                        <Text style={styles.tagText}>
+                          {entry.label}
+                          {typeof entry.percentage === "number" ? ` ${entry.percentage}%` : ""}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   )
 }
@@ -490,5 +578,53 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFD700",
     alignSelf: "center",
     marginLeft: 8,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 15, 35, 0.8)",
+    padding: 24,
+    justifyContent: "center",
+  },
+  modalCard: {
+    backgroundColor: "#1B1B33",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  modalBody: {
+    color: "#CBD5F5",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  modalTime: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  modalSection: {
+    marginTop: 12,
+  },
+  modalSectionTitle: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  modalSectionText: {
+    color: "#E5E7EB",
+    fontSize: 12,
+  },
+  modalTags: {
+    marginTop: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
   },
 })
