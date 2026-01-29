@@ -3,7 +3,8 @@ const urlsToCache = [
   '/',
   '/app',
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/icons/notification-icon.png'
 ];
 
 // Install event
@@ -68,16 +69,23 @@ self.addEventListener('push', (event) => {
   const data = (event.data && (() => { try { return event.data.json() } catch { return {} } })()) || {}
   const title = data.title || 'Tabula Estelar'
   const body = data.body || ''
+  const notificationIcon = '/icons/notification-icon.png'
   event.waitUntil(self.registration.showNotification(title, {
     body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: notificationIcon,
+    badge: notificationIcon,
     data
   }))
 })
 
 // Click: abrir /app
 self.addEventListener('notificationclick', (event) => {
+  const data = event.notification?.data || {}
+  const targetUrl =
+    data.url ||
+    data.deepLink?.url ||
+    (typeof data.deepLink === 'string' ? data.deepLink : null) ||
+    '/app'
   event.notification.close()
-  event.waitUntil(clients.openWindow('/app'))
+  event.waitUntil(clients.openWindow(targetUrl))
 })
