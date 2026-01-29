@@ -17,6 +17,7 @@ import SettingsScreen from "../screens/settings/SettingsScreen"
 import NotificationPreferencesScreen from "../screens/settings/NotificationPreferencesScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
 import NotificationsScreen from "../screens/notifications/NotificationsScreen"
+import ForecastScreen from "../screens/forecast/ForecastScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
 import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
@@ -28,7 +29,7 @@ import { useNotificationStore } from "../context/NotificationStore"
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
-const TAB_ORDER = ["Home", "Groups", "Notifications", "Premium", "Settings"]
+const TAB_ORDER = ["Home", "Forecast", "Groups", "Notifications", "Premium", "Settings"]
 const SWIPE_THRESHOLD = 0.25
 const SWIPE_ANIMATION_MS = 260
 let lastSwipeDirection: "left" | "right" | null = null
@@ -174,6 +175,8 @@ function MainTabs() {
 
           if (route.name === "Home") {
             iconName = focused ? "person" : "person-outline"
+          } else if (route.name === "Forecast") {
+            iconName = focused ? "calendar" : "calendar-outline"
           } else if (route.name === "Groups") {
             iconName = focused ? "people" : "people-outline"
           } else if (route.name === "Notifications") {
@@ -208,6 +211,15 @@ function MainTabs() {
           <ErrorBoundary>
             <SwipeableTabScreen>
               <HomeScreen />
+            </SwipeableTabScreen>
+          </ErrorBoundary>
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Forecast" options={{ title: "Previsoes" }}>
+        {() => (
+          <ErrorBoundary>
+            <SwipeableTabScreen>
+              <ForecastScreen />
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}
