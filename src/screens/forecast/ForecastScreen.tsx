@@ -62,6 +62,16 @@ const DOMAIN_LABELS: Record<string, string> = {
   comunicacao: 'Comunicacao',
   transformacao: 'Transformacao',
 }
+const DOMAIN_COLORS: Record<string, string> = {
+  amor: '#FF6B9D',
+  carreira: '#4ECDC4',
+  financas: '#FFD93D',
+  saude: '#96E6A1',
+  familia: '#FF9F40',
+  espiritualidade: '#B19CD9',
+  comunicacao: '#60A5FA',
+  transformacao: '#F472B6',
+}
 
 function labelPt(label: string) {
   if (label === 'CRITICO') return 'Critico'
@@ -530,12 +540,18 @@ export default function ForecastScreen() {
                   {availableDomains.map((domain) => {
                     const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
                     const isActive = selectedDomainKey === domain
-                    const chipScore = typeof domainPoint?.score === 'number' ? domainPoint.score : '--'
+                    const fallbackScore = typeof selectedPoint?.score === 'number' ? selectedPoint.score : 50
+                    const chipScore = typeof domainPoint?.score === 'number' ? domainPoint.score : fallbackScore
                     const chipLabel = `${formatDomainLabel(domain)} ${chipScore}`
+                    const chipColor = DOMAIN_COLORS[domain] || '#2A2A2E'
                     return (
                       <TouchableOpacity
                         key={domain}
-                        style={[styles.domainChip, isActive && styles.domainChipActive]}
+                        style={[
+                          styles.domainChip,
+                          { backgroundColor: chipColor },
+                          isActive && styles.domainChipActive,
+                        ]}
                         onPress={() => setSelectedDomain(domain)}
                       >
                         <Text style={[styles.domainChipText, isActive && styles.domainChipTextActive]}>
@@ -866,7 +882,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A2E',
   },
   domainChipActive: {
-    backgroundColor: '#FFD700',
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
   domainChipText: {
     color: '#FFFFFF',
@@ -874,7 +891,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   domainChipTextActive: {
-    color: '#0F0F23',
+    color: '#FFFFFF',
   },
   cta: {
     marginTop: 20,
