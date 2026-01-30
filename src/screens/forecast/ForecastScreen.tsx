@@ -199,6 +199,8 @@ export default function ForecastScreen() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
+  const [showFilterHint, setShowFilterHint] = useState(false)
+  const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -269,6 +271,7 @@ export default function ForecastScreen() {
               nextMap[day.date] = day
             })
             setDayStatusByDate(nextMap)
+            setLastStatusUpdatedAt(new Date().toISOString())
           }
         } catch (rangeError) {
           console.warn('Day status range fetch failed', rangeError)
@@ -640,6 +643,11 @@ export default function ForecastScreen() {
             <Text style={styles.dayPanelTitle}>
               {selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
             </Text>
+            {lastStatusUpdatedAt && (
+              <Text style={styles.updatedAtText}>
+                Atualizado agora
+              </Text>
+            )}
             {selectedPoint ? (
               <View style={styles.dayPanelCard}>
                 <Text style={styles.dayPanelLabel}>Status global do dia</Text>
@@ -702,12 +710,25 @@ export default function ForecastScreen() {
 
             <View style={styles.eventHeaderRow}>
               <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
-              <TouchableOpacity style={styles.filterToggle} onPress={() => setOnlyStrongEvents((prev) => !prev)}>
-                <Text style={styles.filterToggleText}>
-                  {onlyStrongEvents ? 'Eventos fortes' : 'Todos'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.filterActions}>
+                <TouchableOpacity style={styles.filterToggle} onPress={() => setOnlyStrongEvents((prev) => !prev)}>
+                  <Text style={styles.filterToggleText}>
+                    {onlyStrongEvents ? 'Eventos fortes' : 'Todos'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.filterHintButton}
+                  onPress={() => setShowFilterHint((prev) => !prev)}
+                >
+                  <Ionicons name="help-circle" size={14} color="#FFD700" />
+                </TouchableOpacity>
+              </View>
             </View>
+            {showFilterHint && (
+              <Text style={styles.filterHintText}>
+                Eventos fortes = intensidade maior ou igual a 60%.
+              </Text>
+            )}
             {selectedEvents.length === 0 && (
               <Text style={styles.emptyText}>
                 {onlyStrongEvents
@@ -983,6 +1004,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  filterActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   filterToggle: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -993,6 +1019,19 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 11,
     fontWeight: '600',
+  },
+  filterHintButton: {
+    padding: 4,
+  },
+  filterHintText: {
+    color: '#B0B0B0',
+    fontSize: 11,
+    marginTop: 6,
+  },
+  updatedAtText: {
+    color: '#FFD700',
+    fontSize: 11,
+    marginBottom: 8,
   },
   domainRow: {
     flexDirection: 'row',
