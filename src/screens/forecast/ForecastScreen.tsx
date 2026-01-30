@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
 import { Calendar } from 'react-native-calendars'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -86,6 +87,8 @@ const DOMAIN_COLORS: Record<string, string> = {
   comunicacao: '#60A5FA',
   transformacao: '#F472B6',
 }
+
+const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -336,10 +339,27 @@ export default function ForecastScreen() {
 
   useEffect(() => {
     if (!rangeFromStr) return
-    if (!selectedDate || !isDateInRange(selectedDate)) {
-      setSelectedDate(rangeFromStr)
+    const applyDefault = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(FORECAST_SELECTED_DATE_KEY)
+        if (stored && isDateInRange(stored)) {
+          setSelectedDate(stored)
+          return
+        }
+      } catch (_) {
+        // ignore storage errors
+      }
+      if (!selectedDate || !isDateInRange(selectedDate)) {
+        setSelectedDate(rangeFromStr)
+      }
     }
+    applyDefault()
   }, [rangeFromStr, rangeToStr, selectedDate, isDateInRange])
+
+  useEffect(() => {
+    if (!selectedDate) return
+    AsyncStorage.setItem(FORECAST_SELECTED_DATE_KEY, selectedDate).catch(() => null)
+  }, [selectedDate])
 
   const fetchDayStatus = useCallback(async (dateKey: string) => {
     if (!user?.uid) return
@@ -587,6 +607,21 @@ export default function ForecastScreen() {
               <View style={[styles.legendDot, { backgroundColor: '#FFD166' }]} />
               <Text style={styles.legendText}>Misto</Text>
             </View>
+            <TouchableOpacity
+              style={styles.todayButton}
+              onPress={() => {
+                const now = new Date()
+                const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
+                if (isDateInRange(todayKey)) {
+                  setSelectedDate(todayKey)
+                } else if (!isPremium) {
+                  Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                  navigation.navigate('Premium' as never)
+                }
+              }}
+            >
+              <Text style={styles.todayButtonText}>Hoje</Text>
+            </TouchableOpacity>
           </View>
 
           {weeklySummary && (
@@ -887,6 +922,18 @@ const styles = StyleSheet.create({
   legendText: {
     color: '#B0B0B0',
     fontSize: 12,
+  },
+  todayButton: {
+    marginLeft: 'auto',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  todayButtonText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
   },
   weeklySummary: {
     backgroundColor: '#1C1C1E',
