@@ -24,10 +24,18 @@ type ForecastEvent = {
   startAt: string
   exactAt: string
   endAt: string
+  orbMax?: number
   intensity: number
   impact: 'UP' | 'DOWN' | 'MIXED'
   shortText: string
   domains: string[]
+}
+
+type DayStatusResponse = {
+  date: string
+  global: { score: number | null; level: string | null }
+  lifeAreas: Record<string, { percentage: number | null; status: string | null }>
+  meta?: { cached?: boolean; rulesVersion?: string; durationMs?: number }
 }
 
 type ForecastResponse = {
@@ -73,9 +81,10 @@ const DOMAIN_COLORS: Record<string, string> = {
   transformacao: '#F472B6',
 }
 
-function labelPt(label: string) {
-  if (label === 'CRITICO') return 'Critico'
-  if (label === 'POSITIVO') return 'Positivo'
+function labelFromScoreValue(score: number | null) {
+  if (typeof score !== 'number') return '—'
+  if (score < 40) return 'Critico'
+  if (score >= 70) return 'Positivo'
   return 'Neutro'
 }
 
@@ -107,14 +116,6 @@ function formatDateShort(date: Date) {
   const month = MONTHS_PT[date.getUTCMonth()]
   const year = date.getUTCFullYear()
   return `${day} ${month} ${year}`
-}
-
-function formatDateRange(start: Date, end: Date) {
-  const startDay = String(start.getUTCDate()).padStart(2, '0')
-  const startMonth = MONTHS_PT[start.getUTCMonth()]
-  const endDay = String(end.getUTCDate()).padStart(2, '0')
-  const endMonth = MONTHS_PT[end.getUTCMonth()]
-  return `${startDay} ${startMonth} - ${endDay} ${endMonth}`
 }
 
 function formatDateShortNoYear(date: Date) {
@@ -149,6 +150,12 @@ function buildEventPhase(selectedDate: string, event: ForecastEvent) {
   return { label: 'Se afastando', meta: `ha ${Math.abs(delta)} dias` }
 }
 
+function formatEventTiming(label: string, delta: number) {
+  if (delta === 0) return `${label} hoje`
+  if (delta > 0) return `${label} em ${delta} dias`
+  return `${label} ha ${Math.abs(delta)} dias`
+}
+
 function addDaysUTC(date: Date, days: number) {
   const next = new Date(date.getTime())
   next.setUTCDate(next.getUTCDate() + days)
@@ -161,56 +168,6 @@ function startOfWeekUTC(date: Date) {
   return addDaysUTC(date, diff)
 }
 
-function groupEventsByDate(events: ForecastEvent[]) {
-  const map: Record<string, ForecastEvent[]> = {}
-  events.forEach((event) => {
-    const date = event.exactAt.slice(0, 10)
-    if (!map[date]) map[date] = []
-    map[date].push(event)
-  })
-  return Object.entries(map)
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([date, items]) => ({
-      date,
-      items: items.slice().sort((a, b) => b.intensity - a.intensity),
-    }))
-}
-
-function groupEventsByWeek(events: ForecastEvent[]) {
-  const map: Record<string, ForecastEvent[]> = {}
-  events.forEach((event) => {
-    const eventDate = parseUTCDateString(event.exactAt.slice(0, 10))
-    if (!eventDate) return
-    const weekStart = buildDateUTCString(startOfWeekUTC(eventDate))
-    if (!map[weekStart]) map[weekStart] = []
-    map[weekStart].push(event)
-  })
-  return Object.entries(map)
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([date, items]) => ({
-      date,
-      items: items.slice().sort((a, b) => b.intensity - a.intensity),
-    }))
-}
-
-function buildTopInfluences(series: ForecastSeriesPoint[]) {
-  const map = new Map<string, { summary: string; count: number }>()
-  series.forEach((point) => {
-    point.reasons.forEach((reason) => {
-      const key = reason.summary || reason.eventId
-      const current = map.get(key)
-      if (current) {
-        current.count += 1
-      } else {
-        map.set(key, { summary: reason.summary, count: 1 })
-      }
-    })
-  })
-  return Array.from(map.values())
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3)
-}
-
 export default function ForecastScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
@@ -219,10 +176,13 @@ export default function ForecastScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ForecastResponse | null>(null)
+  const [dayStatusByDate, setDayStatusByDate] = useState<Record<string, DayStatusResponse>>({})
+  const [dayStatusLoading, setDayStatusLoading] = useState(false)
   const [limitedBanner, setLimitedBanner] = useState(false)
   const [missingBirthData, setMissingBirthData] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
+  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const skipNextFetchRef = useRef(false)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -294,12 +254,6 @@ export default function ForecastScreen() {
     [series]
   )
   const effectiveGranularity = data?.range?.granularity || granularity
-  const eventsGrouped = useMemo(() => {
-    const events = data?.events || []
-    return effectiveGranularity === 'week' ? groupEventsByWeek(events) : groupEventsByDate(events)
-  }, [data?.events, effectiveGranularity])
-  const topInfluences = useMemo(() => buildTopInfluences(seriesSorted), [seriesSorted])
-  const highlights = data?.highlights || []
   const rangeFrom = data?.range?.from ? parseUTCDateString(data.range.from) : null
   const rangeTo = data?.range?.to ? parseUTCDateString(data.range.to) : null
   const rangeFromStr = data?.range?.from || null
@@ -327,10 +281,6 @@ export default function ForecastScreen() {
     return map
   }, [seriesByDomain])
 
-  const availableDomains = useMemo(() => (
-    Object.keys(seriesByDomain).length ? AREA_ORDER : []
-  ), [seriesByDomain])
-
   const eventsByDate = useMemo(() => {
     const map: Record<string, ForecastEvent[]> = {}
     ;(data?.events || []).forEach((event) => {
@@ -355,6 +305,30 @@ export default function ForecastScreen() {
       setSelectedDate(rangeFromStr)
     }
   }, [rangeFromStr, rangeToStr, selectedDate, isDateInRange])
+
+  const fetchDayStatus = useCallback(async (dateKey: string) => {
+    if (!user?.uid) return
+    if (dayStatusByDate[dateKey]) return
+    setDayStatusLoading(true)
+    try {
+      const token = await user.getIdToken()
+      const url = `${BACKEND_URL}/api/forecast-status-day?userId=${encodeURIComponent(user.uid)}&date=${dateKey}`
+      const resp = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!resp.ok) return
+      const payload: DayStatusResponse = await resp.json()
+      setDayStatusByDate((prev) => ({ ...prev, [dateKey]: payload }))
+    } catch (err: any) {
+      console.warn('Day status fetch failed', err?.message || err)
+    } finally {
+      setDayStatusLoading(false)
+    }
+  }, [user?.uid, dayStatusByDate])
 
   const calendarMarkedDates = useMemo(() => {
     const marks: Record<string, any> = {}
@@ -390,13 +364,61 @@ export default function ForecastScreen() {
   }, [selectedDateKey, effectiveGranularity])
   const selectedPoint = selectedSeriesKey ? seriesByDate[selectedSeriesKey] : null
   const selectedDomainKey = selectedDomain ? normalizeDomain(selectedDomain) : null
-  const selectedDomainPoint = selectedDomainKey && selectedSeriesKey
-    ? domainSeriesByDate[selectedDomainKey]?.[selectedSeriesKey] || null
-    : null
+  const dayStatus = selectedDateKey ? dayStatusByDate[selectedDateKey] : null
   const selectedEventsRaw = selectedDateKey ? (eventsByDate[selectedDateKey] || []) : []
   const selectedEvents = selectedDomainKey
     ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
     : selectedEventsRaw
+
+  useEffect(() => {
+    if (!selectedDateKey) return
+    if (!isDateInRange(selectedDateKey)) return
+    fetchDayStatus(selectedDateKey)
+  }, [selectedDateKey, isDateInRange, fetchDayStatus])
+
+  const formatEventAreas = useCallback((domains: string[]) => {
+    if (!Array.isArray(domains)) return ''
+    const normalized = domains.map((domain) => normalizeDomain(domain)).filter(Boolean)
+    const unique = Array.from(new Set(normalized))
+    const ordered = AREA_ORDER.filter((area) => unique.includes(area))
+    return ordered.map((area) => formatDomainLabel(area)).join(', ')
+  }, [])
+
+  const buildEventDetailLines = useCallback((event: ForecastEvent, dateKey: string | null) => {
+    if (!dateKey) return []
+    const selectedDateObj = parseUTCDateString(dateKey)
+    if (!selectedDateObj) return []
+    const startDateObj = parseUTCDateString(event.startAt.slice(0, 10))
+    const exactDateObj = parseUTCDateString(event.exactAt.slice(0, 10))
+    const endDateObj = parseUTCDateString(event.endAt.slice(0, 10))
+    const lines: string[] = []
+    if (startDateObj && endDateObj) {
+      lines.push(`Janela ${formatDateShortNoYear(startDateObj)} - ${formatDateShortNoYear(endDateObj)}`)
+    }
+    if (startDateObj) {
+      lines.push(formatEventTiming('Comeca', diffDaysUTC(selectedDateObj, startDateObj)))
+    }
+    if (exactDateObj) {
+      lines.push(formatEventTiming('Pico', diffDaysUTC(selectedDateObj, exactDateObj)))
+    }
+    if (endDateObj) {
+      lines.push(formatEventTiming('Termina', diffDaysUTC(selectedDateObj, endDateObj)))
+    }
+    const intensity = Math.round(event.intensity * 100)
+    lines.push(`Intensidade ${intensity}%`)
+    if (typeof event.orbMax === 'number') {
+      lines.push(`Orb ${event.orbMax.toFixed(1)}°`)
+    }
+    const areas = formatEventAreas(event.domains || [])
+    if (areas) {
+      lines.push(`Afeta: ${areas}`)
+    }
+    return lines
+  }, [formatEventAreas])
+
+  const toggleEventDetails = useCallback((eventId: string) => {
+    setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
+  }, [])
 
   const handleSelectPeriod = (days: number) => {
     if (!isPremium && days !== 7) {
@@ -508,61 +530,62 @@ export default function ForecastScreen() {
             {selectedPoint ? (
               <View style={styles.dayPanelCard}>
                 <Text style={styles.dayPanelLabel}>Status global do dia</Text>
-                <Text style={[styles.dayPanelScore, { color: scoreColor(selectedPoint.score) }]}>
-                  {selectedPoint.score} {labelPt(selectedPoint.label)}
-                </Text>
                 {(() => {
-                  const reasons = selectedDomainKey
-                    ? (selectedDomainPoint?.reasons || [])
-                    : selectedPoint.reasons
-                  if (!reasons.length) {
-                    return <Text style={styles.emptyText}>Sem motivos relevantes.</Text>
+                  const score = typeof dayStatus?.global?.score === 'number' ? dayStatus.global.score : selectedPoint.score
+                  if (typeof score !== 'number') {
+                    return <Text style={styles.emptyText}>Sem status para este dia.</Text>
                   }
-                  return reasons.map((reason) => (
-                    <Text key={reason.eventId} style={styles.reasonItem}>- {reason.summary}</Text>
-                  ))
+                  return (
+                    <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
+                      {score} {labelFromScoreValue(score)}
+                    </Text>
+                  )
                 })()}
+                {dayStatusLoading && <Text style={styles.emptyText}>Atualizando status do dia...</Text>}
               </View>
             ) : (
               <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
             )}
 
-            {availableDomains.length > 0 && (
-              <View style={styles.domainSection}>
-                <Text style={styles.dayPanelLabel}>Status por area</Text>
-                <View style={styles.domainRow}>
-                  <TouchableOpacity
-                    style={[styles.domainChip, !selectedDomainKey && styles.domainChipActive]}
-                    onPress={() => setSelectedDomain(null)}
-                  >
-                    <Text style={[styles.domainChipText, !selectedDomainKey && styles.domainChipTextActive]}>Todos</Text>
-                  </TouchableOpacity>
-                  {availableDomains.map((domain) => {
-                    const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
-                    const isActive = selectedDomainKey === domain
-                    const fallbackScore = typeof selectedPoint?.score === 'number' ? selectedPoint.score : 50
-                    const chipScore = typeof domainPoint?.score === 'number' ? domainPoint.score : fallbackScore
-                    const chipLabel = `${formatDomainLabel(domain)} ${chipScore}`
-                    const chipColor = DOMAIN_COLORS[domain] || '#2A2A2E'
-                    return (
-                      <TouchableOpacity
-                        key={domain}
-                        style={[
-                          styles.domainChip,
-                          { backgroundColor: chipColor },
-                          isActive && styles.domainChipActive,
-                        ]}
-                        onPress={() => setSelectedDomain(domain)}
-                      >
-                        <Text style={[styles.domainChipText, isActive && styles.domainChipTextActive]}>
-                          {chipLabel}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
+            <View style={styles.domainSection}>
+              <Text style={styles.dayPanelLabel}>Status por area</Text>
+              <View style={styles.domainRow}>
+                <TouchableOpacity
+                  style={[styles.domainChip, !selectedDomainKey && styles.domainChipActive]}
+                  onPress={() => setSelectedDomain(null)}
+                >
+                  <Text style={[styles.domainChipText, !selectedDomainKey && styles.domainChipTextActive]}>Todos</Text>
+                </TouchableOpacity>
+                {AREA_ORDER.map((domain) => {
+                  const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
+                  const statusArea = dayStatus?.lifeAreas?.[domain]
+                  const fallbackScore = typeof selectedPoint?.score === 'number' ? selectedPoint.score : null
+                  const chipScore = typeof statusArea?.percentage === 'number'
+                    ? statusArea.percentage
+                    : typeof domainPoint?.score === 'number'
+                    ? domainPoint.score
+                    : fallbackScore
+                  const chipLabel = `${formatDomainLabel(domain)} ${typeof chipScore === 'number' ? chipScore : '—'}`
+                  const isActive = selectedDomainKey === domain
+                  const chipColor = DOMAIN_COLORS[domain] || '#2A2A2E'
+                  return (
+                    <TouchableOpacity
+                      key={domain}
+                      style={[
+                        styles.domainChip,
+                        { backgroundColor: chipColor },
+                        isActive && styles.domainChipActive,
+                      ]}
+                      onPress={() => setSelectedDomain(domain)}
+                    >
+                      <Text style={[styles.domainChipText, isActive && styles.domainChipTextActive]}>
+                        {chipLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
               </View>
-            )}
+            </View>
 
             <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
             {selectedEvents.length === 0 && <Text style={styles.emptyText}>Sem eventos.</Text>}
@@ -572,74 +595,29 @@ export default function ForecastScreen() {
                 {selectedDateKey && (() => {
                   const phase = buildEventPhase(selectedDateKey, event)
                   return phase ? (
-                    <Text style={styles.eventPhase}>{phase.label} · {phase.meta}</Text>
+                    <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
                   ) : null
                 })()}
-                <Text style={styles.eventMeta}>Impacto {event.impact} - Intensidade {Math.round(event.intensity * 100)}%</Text>
+                <Text style={styles.eventMeta}>Impacto {event.impact}</Text>
+                {buildEventDetailLines(event, selectedDateKey).map((line) => (
+                  <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
+                ))}
+                <TouchableOpacity style={styles.eventToggle} onPress={() => toggleEventDetails(event.id)}>
+                  <Text style={styles.eventToggleText}>
+                    {expandedEvents[event.id] ? 'Ver menos' : 'Ver mais'}
+                  </Text>
+                </TouchableOpacity>
+                {expandedEvents[event.id] && (
+                  <View style={styles.eventExtra}>
+                    <Text style={styles.eventExtraTitle}>O que fazer</Text>
+                    <Text style={styles.eventExtraText}>Sugestoes praticas em breve.</Text>
+                    <Text style={styles.eventExtraTitle}>Pontos de atencao</Text>
+                    <Text style={styles.eventExtraText}>Dicas de cuidado em breve.</Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
-
-          <Text style={styles.sectionTitle}>Destaques do periodo</Text>
-          {highlights.length === 0 && topInfluences.length === 0 && (
-            <Text style={styles.emptyText}>Sem destaques no periodo.</Text>
-          )}
-          {highlights.length > 0
-            ? highlights.map((item) => (
-              <View key={item.eventId} style={styles.highlightCard}>
-                <Text style={styles.highlightText}>{item.summary}</Text>
-                <Text style={styles.highlightMeta}>Intensidade {Math.round(item.intensity * 100)}%</Text>
-              </View>
-            ))
-            : topInfluences.map((item) => (
-              <View key={item.summary} style={styles.highlightCard}>
-                <Text style={styles.highlightText}>{item.summary}</Text>
-                <Text style={styles.highlightMeta}>Aparece em {item.count} dia(s)/semana(s)</Text>
-              </View>
-            ))}
-
-          <Text style={styles.sectionTitle}>Por que</Text>
-          {seriesSorted.map((point) => {
-            const pointDate = parseUTCDateString(point.date)
-            const pointLabel = pointDate ? formatDateShort(pointDate) : point.date
-            return (
-              <View key={`reasons-${point.date}`} style={styles.reasonsCard}>
-                <Text style={styles.reasonsTitle}>{pointLabel}</Text>
-              {point.reasons.length === 0 && <Text style={styles.emptyText}>Sem motivos relevantes.</Text>}
-              {point.reasons.map((reason) => (
-                <Text key={reason.eventId} style={styles.reasonItem}>- {reason.summary}</Text>
-              ))}
-              </View>
-            )
-          })}
-
-          <Text style={styles.sectionTitle}>Eventos</Text>
-          {eventsGrouped.length === 0 && <Text style={styles.emptyText}>Sem eventos no periodo.</Text>}
-          {eventsGrouped.map((group) => {
-            const groupDate = parseUTCDateString(group.date)
-            const weekStart = groupDate
-            const weekEnd = weekStart ? addDaysUTC(weekStart, 6) : null
-            const headerLabel = effectiveGranularity === 'week' && weekStart
-              ? `Semana de ${formatDateShort(weekStart)}`
-              : groupDate
-                ? formatDateShort(groupDate)
-                : group.date
-            const rangeLabel = effectiveGranularity === 'week' && weekStart && weekEnd
-              ? formatDateRange(weekStart, weekEnd)
-              : null
-            return (
-              <View key={group.date} style={styles.eventGroup}>
-                <Text style={styles.eventDate}>{headerLabel}</Text>
-                {rangeLabel && <Text style={styles.eventRange}>{rangeLabel}</Text>}
-                {group.items.map((event) => (
-                  <View key={event.id} style={styles.eventCard}>
-                    <Text style={styles.eventTitle}>{event.shortText}</Text>
-                    <Text style={styles.eventMeta}>Impacto {event.impact} - Intensidade {Math.round(event.intensity * 100)}%</Text>
-                  </View>
-                ))}
-              </View>
-            )
-          })}
 
           {!isPremium && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
@@ -769,50 +747,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     marginTop: 4,
-  },
-  highlightCard: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#1C1C1E',
-    marginBottom: 10,
-  },
-  highlightText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  highlightMeta: {
-    color: '#B0B0B0',
-    marginTop: 4,
-    fontSize: 12,
-  },
-  reasonsCard: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#1C1C1E',
-    marginBottom: 10,
-  },
-  reasonsTitle: {
-    color: '#FFD700',
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  reasonItem: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  eventGroup: {
-    marginBottom: 16,
-  },
-  eventDate: {
-    color: '#FFD700',
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  eventRange: {
-    color: '#B0B0B0',
-    fontSize: 12,
-    marginBottom: 8,
   },
   eventCard: {
     padding: 12,
