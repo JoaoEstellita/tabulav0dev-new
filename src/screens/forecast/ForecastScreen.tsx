@@ -38,6 +38,12 @@ type DayStatusResponse = {
   meta?: { cached?: boolean; rulesVersion?: string; durationMs?: number }
 }
 
+type DayStatusRangeResponse = {
+  range: { from: string; to: string }
+  days: DayStatusResponse[]
+  meta?: { rulesVersion?: string; durationMs?: number }
+}
+
 type ForecastResponse = {
   rulesVersion: string
   range: { from: string; to: string; granularity: 'day' | 'week' }
@@ -234,6 +240,28 @@ export default function ForecastScreen() {
         if (periodDays !== 7) {
           skipNextFetchRef.current = true
           setPeriodDays(7)
+        }
+      }
+      if (payload.range?.from && payload.range?.to) {
+        const rangeUrl = `${BACKEND_URL}/api/forecast-status-range?userId=${encodeURIComponent(user.uid)}&from=${payload.range.from}&to=${payload.range.to}`
+        try {
+          const rangeResp = await fetch(rangeUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          if (rangeResp.ok) {
+            const rangePayload: DayStatusRangeResponse = await rangeResp.json()
+            const nextMap: Record<string, DayStatusResponse> = {}
+            rangePayload.days.forEach((day) => {
+              nextMap[day.date] = day
+            })
+            setDayStatusByDate(nextMap)
+          }
+        } catch (rangeError) {
+          console.warn('Day status range fetch failed', rangeError)
         }
       }
     } catch (err: any) {
