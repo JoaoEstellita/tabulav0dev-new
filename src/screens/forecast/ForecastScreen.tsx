@@ -134,6 +134,12 @@ function normalizeDomain(value: string) {
   return String(value || '').trim().toLowerCase()
 }
 
+function impactLabel(impact: ForecastEvent['impact']) {
+  if (impact === 'UP') return 'Positivo'
+  if (impact === 'DOWN') return 'Desafiador'
+  return 'Misto'
+}
+
 function formatDomainLabel(domain: string) {
   const key = normalizeDomain(domain)
   if (DOMAIN_LABELS[key]) return DOMAIN_LABELS[key]
@@ -189,6 +195,7 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
   const skipNextFetchRef = useRef(false)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -394,9 +401,12 @@ export default function ForecastScreen() {
   const selectedDomainKey = selectedDomain ? normalizeDomain(selectedDomain) : null
   const dayStatus = selectedDateKey ? dayStatusByDate[selectedDateKey] : null
   const selectedEventsRaw = selectedDateKey ? (eventsByDate[selectedDateKey] || []) : []
-  const selectedEvents = selectedDomainKey
+  const filteredByDomain = selectedDomainKey
     ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
     : selectedEventsRaw
+  const selectedEvents = onlyStrongEvents
+    ? filteredByDomain.filter((event) => event.intensity >= 0.6)
+    : filteredByDomain
 
   useEffect(() => {
     if (!selectedDateKey) return
@@ -456,6 +466,20 @@ export default function ForecastScreen() {
     }
     setPeriodDays(days)
   }
+
+  const weeklySummary = useMemo(() => {
+    if (!seriesSorted.length) return null
+    const withScore = seriesSorted.filter((point) => typeof point.score === 'number')
+    if (!withScore.length) return null
+    const best = withScore.reduce((acc, cur) => (cur.score! > acc.score! ? cur : acc), withScore[0])
+    const worst = withScore.reduce((acc, cur) => (cur.score! < acc.score! ? cur : acc), withScore[0])
+    const bestDate = parseUTCDateString(best.date)
+    const worstDate = parseUTCDateString(worst.date)
+    return {
+      best: { date: bestDate ? formatDateShortNoYear(bestDate) : best.date, score: best.score ?? null },
+      worst: { date: worstDate ? formatDateShortNoYear(worstDate) : worst.date, score: worst.score ?? null },
+    }
+  }, [seriesSorted])
 
   return (
     <View style={styles.container}>
@@ -550,6 +574,32 @@ export default function ForecastScreen() {
               }}
             />
           </View>
+          <View style={styles.calendarLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
+              <Text style={styles.legendText}>Positivo</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
+              <Text style={styles.legendText}>Desafiador</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#FFD166' }]} />
+              <Text style={styles.legendText}>Misto</Text>
+            </View>
+          </View>
+
+          {weeklySummary && (
+            <View style={styles.weeklySummary}>
+              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
+              <Text style={styles.weeklyItem}>
+                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
+              </Text>
+              <Text style={styles.weeklyItem}>
+                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
+              </Text>
+            </View>
+          )}
 
           <View style={styles.dayPanel}>
             <Text style={styles.dayPanelTitle}>
@@ -615,8 +665,21 @@ export default function ForecastScreen() {
               </View>
             </View>
 
-            <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
-            {selectedEvents.length === 0 && <Text style={styles.emptyText}>Sem eventos.</Text>}
+            <View style={styles.eventHeaderRow}>
+              <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
+              <TouchableOpacity style={styles.filterToggle} onPress={() => setOnlyStrongEvents((prev) => !prev)}>
+                <Text style={styles.filterToggleText}>
+                  {onlyStrongEvents ? 'Eventos fortes' : 'Todos'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {selectedEvents.length === 0 && (
+              <Text style={styles.emptyText}>
+                {onlyStrongEvents
+                  ? 'Sem eventos fortes neste dia.'
+                  : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
+              </Text>
+            )}
             {selectedEvents.map((event) => (
               <View key={event.id} style={styles.eventCard}>
                 <Text style={styles.eventTitle}>{event.shortText}</Text>
@@ -626,7 +689,7 @@ export default function ForecastScreen() {
                     <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
                   ) : null
                 })()}
-                <Text style={styles.eventMeta}>Impacto {event.impact}</Text>
+                <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
                 {buildEventDetailLines(event, selectedDateKey).map((line) => (
                   <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
                 ))}
@@ -805,6 +868,42 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
+  calendarLegend: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    color: '#B0B0B0',
+    fontSize: 12,
+  },
+  weeklySummary: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+  },
+  weeklyTitle: {
+    color: '#FFD700',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  weeklyItem: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginBottom: 4,
+  },
   dayPanel: {
     marginTop: 16,
     padding: 12,
@@ -831,6 +930,22 @@ const styles = StyleSheet.create({
   },
   domainSection: {
     marginBottom: 12,
+  },
+  eventHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  filterToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  filterToggleText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
   },
   domainRow: {
     flexDirection: 'row',
