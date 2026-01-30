@@ -9,6 +9,8 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '../config/firebase'
 import { publishAstrologyData } from '../context/AstrologyDataProvider'
 
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+
 export interface UseLifeAreasReturn {
   transitData: LocalTransitData | null
   cacheStatus: CacheStatus | null
@@ -39,6 +41,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const lastHouseSystemRef = useRef<string | null>(null)
   const lastBackendComputedAtRef = useRef<number | null>(null)
   const localOverrideStartedAtRef = useRef<number | null>(null)
+  const statusRefreshInFlightRef = useRef(false)
 
   useEffect(() => {
     if (!user) {
@@ -124,7 +127,48 @@ export function useLifeAreas(): UseLifeAreasReturn {
         console.error('Erro ao carregar userStatus:', statusError)
       }
 
-      const backendFresh =
+      let backendFresh =
+        !!backendLifeAreasValue &&
+        !!backendValidUntilMs &&
+        backendValidUntilMs > Date.now() &&
+        !!backendCalcVersion &&
+        backendCalcVersion.startsWith('status-backend-')
+
+      if (!backendFresh && BACKEND_URL && !statusRefreshInFlightRef.current) {
+        statusRefreshInFlightRef.current = true
+        try {
+          const token = await user.getIdToken()
+          await fetch(`${BACKEND_URL}/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ userId: user.uid }),
+          })
+          const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
+          if (statusSnap.exists()) {
+            const statusData = statusSnap.data()
+            backendLifeAreasValue = statusData?.lifeAreas || null
+            backendCurrentTransitsValue = statusData?.currentTransits || null
+            backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
+            backendComputedAtMs = statusData?.computedAt?.toDate
+              ? statusData.computedAt.toDate().getTime()
+              : (statusData?.computedAt instanceof Date ? statusData.computedAt.getTime() : null)
+            backendValidUntilMs = statusData?.validUntil?.toDate
+              ? statusData.validUntil.toDate().getTime()
+              : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
+            setBackendLifeAreas(backendLifeAreasValue)
+            setBackendCurrentTransits(backendCurrentTransitsValue)
+          }
+        } catch (refreshError) {
+          console.warn('Falha ao atualizar status via backend:', refreshError)
+        } finally {
+          statusRefreshInFlightRef.current = false
+        }
+      }
+
+      backendFresh =
         !!backendLifeAreasValue &&
         !!backendValidUntilMs &&
         backendValidUntilMs > Date.now() &&
