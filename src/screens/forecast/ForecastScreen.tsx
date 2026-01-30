@@ -89,6 +89,7 @@ const DOMAIN_COLORS: Record<string, string> = {
 }
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
+const FORECAST_STRONG_ONLY_KEY = 'forecast_strong_only'
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -363,6 +364,18 @@ export default function ForecastScreen() {
     if (!selectedDate) return
     AsyncStorage.setItem(FORECAST_SELECTED_DATE_KEY, selectedDate).catch(() => null)
   }, [selectedDate])
+
+  useEffect(() => {
+    AsyncStorage.getItem(FORECAST_STRONG_ONLY_KEY)
+      .then((value) => {
+        if (value === '1') setOnlyStrongEvents(true)
+      })
+      .catch(() => null)
+  }, [])
+
+  useEffect(() => {
+    AsyncStorage.setItem(FORECAST_STRONG_ONLY_KEY, onlyStrongEvents ? '1' : '0').catch(() => null)
+  }, [onlyStrongEvents])
 
   const fetchDayStatus = useCallback(async (dateKey: string) => {
     if (!user?.uid) return
@@ -640,9 +653,35 @@ export default function ForecastScreen() {
           )}
 
           <View style={styles.dayPanel}>
-            <Text style={styles.dayPanelTitle}>
-              {selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
-            </Text>
+            <View style={styles.dayTitleRow}>
+              <Text style={styles.dayPanelTitle}>
+                {selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
+              </Text>
+              <View style={styles.dayNavRow}>
+                <TouchableOpacity
+                  style={styles.dayNavButton}
+                  onPress={() => {
+                    if (!selectedDateObj) return
+                    const prevDate = buildDateUTCString(addDaysUTC(selectedDateObj, -1))
+                    if (!isDateInRange(prevDate)) return
+                    setSelectedDate(prevDate)
+                  }}
+                >
+                  <Ionicons name="chevron-back" size={16} color="#FFD700" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dayNavButton}
+                  onPress={() => {
+                    if (!selectedDateObj) return
+                    const nextDate = buildDateUTCString(addDaysUTC(selectedDateObj, 1))
+                    if (!isDateInRange(nextDate)) return
+                    setSelectedDate(nextDate)
+                  }}
+                >
+                  <Ionicons name="chevron-forward" size={16} color="#FFD700" />
+                </TouchableOpacity>
+              </View>
+            </View>
             {lastStatusUpdatedAt && (
               <Text style={styles.updatedAtText}>
                 Atualizado agora
@@ -972,6 +1011,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 4,
   },
+  dayTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   dayPanel: {
     marginTop: 16,
     padding: 12,
@@ -981,7 +1026,16 @@ const styles = StyleSheet.create({
   dayPanelTitle: {
     color: '#FFFFFF',
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 0,
+  },
+  dayNavRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dayNavButton: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: '#2A2A2E',
   },
   dayPanelCard: {
     marginBottom: 12,
