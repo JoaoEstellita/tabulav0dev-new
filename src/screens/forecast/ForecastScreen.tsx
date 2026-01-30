@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
+import { Calendar } from 'react-native-calendars'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -34,12 +35,22 @@ type ForecastResponse = {
   range: { from: string; to: string; granularity: 'day' | 'week' }
   series: ForecastSeriesPoint[]
   events: ForecastEvent[]
+  seriesByDomain?: Record<string, ForecastSeriesPoint[]>
   highlights?: { eventId: string; summary: string; impact: string; intensity: number }[]
   meta?: { cached?: boolean; limited?: boolean; premium?: boolean; rulesVersion?: string; durationMs?: number }
 }
 
 const PERIODS = [7, 30, 90, 365]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const DOMAIN_LABELS: Record<string, string> = {
+  love: 'Amor',
+  work: 'Carreira',
+  money: 'Financas',
+  energy: 'Energia',
+  emotions: 'Emocoes',
+  spirituality: 'Espiritualidade',
+  family: 'Familia',
+}
 
 function labelPt(label: string) {
   if (label === 'CRITICO') return 'Critico'
@@ -89,6 +100,17 @@ function formatDateShortNoYear(date: Date) {
   const day = String(date.getUTCDate()).padStart(2, '0')
   const month = MONTHS_PT[date.getUTCMonth()]
   return `${day} ${month}`
+}
+
+function normalizeDomain(value: string) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function formatDomainLabel(domain: string) {
+  const key = normalizeDomain(domain)
+  if (DOMAIN_LABELS[key]) return DOMAIN_LABELS[key]
+  if (!key) return 'Area'
+  return key.charAt(0).toUpperCase() + key.slice(1)
 }
 
 function addDaysUTC(date: Date, days: number) {
@@ -163,6 +185,8 @@ export default function ForecastScreen() {
   const [data, setData] = useState<ForecastResponse | null>(null)
   const [limitedBanner, setLimitedBanner] = useState(false)
   const [missingBirthData, setMissingBirthData] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -242,6 +266,101 @@ export default function ForecastScreen() {
   const highlights = data?.highlights || []
   const rangeFrom = data?.range?.from ? parseUTCDateString(data.range.from) : null
   const rangeTo = data?.range?.to ? parseUTCDateString(data.range.to) : null
+  const rangeFromStr = data?.range?.from || null
+  const rangeToStr = data?.range?.to || null
+
+  const seriesByDate = useMemo(() => {
+    const map: Record<string, ForecastSeriesPoint> = {}
+    seriesSorted.forEach((point) => {
+      map[point.date] = point
+    })
+    return map
+  }, [seriesSorted])
+
+  const seriesByDomain = data?.seriesByDomain || {}
+  const domainSeriesByDate = useMemo(() => {
+    const map: Record<string, Record<string, ForecastSeriesPoint>> = {}
+    Object.entries(seriesByDomain).forEach(([domain, points]) => {
+      const key = normalizeDomain(domain)
+      if (!key) return
+      map[key] = {}
+      points.forEach((point) => {
+        map[key][point.date] = point
+      })
+    })
+    return map
+  }, [seriesByDomain])
+
+  const availableDomains = useMemo(() => (
+    Object.keys(domainSeriesByDate).sort((a, b) => a.localeCompare(b))
+  ), [domainSeriesByDate])
+
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, ForecastEvent[]> = {}
+    ;(data?.events || []).forEach((event) => {
+      const dateKey = event.exactAt.slice(0, 10)
+      if (!map[dateKey]) map[dateKey] = []
+      map[dateKey].push(event)
+    })
+    Object.keys(map).forEach((key) => {
+      map[key] = map[key].slice().sort((a, b) => b.intensity - a.intensity)
+    })
+    return map
+  }, [data?.events])
+
+  const isDateInRange = useCallback((dateKey: string) => {
+    if (!rangeFromStr || !rangeToStr) return true
+    return dateKey >= rangeFromStr && dateKey <= rangeToStr
+  }, [rangeFromStr, rangeToStr])
+
+  useEffect(() => {
+    if (!rangeFromStr) return
+    if (!selectedDate || !isDateInRange(selectedDate)) {
+      setSelectedDate(rangeFromStr)
+    }
+  }, [rangeFromStr, rangeToStr, selectedDate, isDateInRange])
+
+  const calendarMarkedDates = useMemo(() => {
+    const marks: Record<string, any> = {}
+    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
+      const impacts = new Set(items.map((event) => event.impact))
+      const dots = []
+      if (impacts.has('UP')) dots.push({ color: '#4ECDC4' })
+      if (impacts.has('DOWN')) dots.push({ color: '#FF6B6B' })
+      if (!dots.length) dots.push({ color: '#FFD166' })
+      marks[dateKey] = { marked: true, dots }
+    })
+    if (selectedDate) {
+      marks[selectedDate] = {
+        ...(marks[selectedDate] || {}),
+        selected: true,
+        selectedColor: '#FFD700',
+        selectedTextColor: '#0F0F23',
+      }
+    }
+    return marks
+  }, [eventsByDate, selectedDate])
+
+  const selectedDateKey = selectedDate
+  const selectedDateObj = selectedDateKey ? parseUTCDateString(selectedDateKey) : null
+  const selectedSeriesKey = useMemo(() => {
+    if (!selectedDateKey) return null
+    if (effectiveGranularity === 'week') {
+      const date = parseUTCDateString(selectedDateKey)
+      if (!date) return selectedDateKey
+      return buildDateUTCString(startOfWeekUTC(date))
+    }
+    return selectedDateKey
+  }, [selectedDateKey, effectiveGranularity])
+  const selectedPoint = selectedSeriesKey ? seriesByDate[selectedSeriesKey] : null
+  const selectedDomainKey = selectedDomain ? normalizeDomain(selectedDomain) : null
+  const selectedDomainPoint = selectedDomainKey && selectedSeriesKey
+    ? domainSeriesByDate[selectedDomainKey]?.[selectedSeriesKey] || null
+    : null
+  const selectedEventsRaw = selectedDateKey ? (eventsByDate[selectedDateKey] || []) : []
+  const selectedEvents = selectedDomainKey
+    ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
+    : selectedEventsRaw
 
   const handleSelectPeriod = (days: number) => {
     if (!isPremium && days !== 7) {
@@ -309,6 +428,105 @@ export default function ForecastScreen() {
 
       {!loading && !error && (
         <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.sectionTitle}>Calendario</Text>
+          <View style={styles.calendarWrapper}>
+            <Calendar
+              markingType="multi-dot"
+              current={selectedDateKey || rangeFromStr || undefined}
+              minDate={rangeFromStr || undefined}
+              maxDate={rangeToStr || undefined}
+              markedDates={calendarMarkedDates}
+              onDayPress={(day) => {
+                if (!isDateInRange(day.dateString)) {
+                  if (!isPremium) {
+                    Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                    navigation.navigate('Premium' as never)
+                    return
+                  }
+                  if (data?.meta?.limited) {
+                    Alert.alert('Limite', 'O backend limitou o periodo. Tente outro intervalo.')
+                  }
+                  return
+                }
+                setSelectedDomain(null)
+                setSelectedDate(day.dateString)
+              }}
+              theme={{
+                backgroundColor: '#1C1C1E',
+                calendarBackground: '#1C1C1E',
+                dayTextColor: '#FFFFFF',
+                monthTextColor: '#FFFFFF',
+                textDisabledColor: '#555',
+                arrowColor: '#FFD700',
+                todayTextColor: '#FFD700',
+                selectedDayBackgroundColor: '#FFD700',
+                selectedDayTextColor: '#0F0F23',
+              }}
+            />
+          </View>
+
+          <View style={styles.dayPanel}>
+            <Text style={styles.dayPanelTitle}>
+              {selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
+            </Text>
+            {selectedPoint ? (
+              <View style={styles.dayPanelCard}>
+                <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+                <Text style={[styles.dayPanelScore, { color: scoreColor(selectedPoint.score) }]}>
+                  {selectedPoint.score} {labelPt(selectedPoint.label)}
+                </Text>
+                {(selectedDomainPoint?.reasons?.length || selectedPoint.reasons.length) > 0 ? (
+                  (selectedDomainPoint?.reasons?.length ? selectedDomainPoint.reasons : selectedPoint.reasons).map((reason) => (
+                    <Text key={reason.eventId} style={styles.reasonItem}>- {reason.summary}</Text>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>Sem motivos relevantes.</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
+            )}
+
+            {availableDomains.length > 0 && (
+              <View style={styles.domainSection}>
+                <Text style={styles.dayPanelLabel}>Status por area</Text>
+                <View style={styles.domainRow}>
+                  <TouchableOpacity
+                    style={[styles.domainChip, !selectedDomainKey && styles.domainChipActive]}
+                    onPress={() => setSelectedDomain(null)}
+                  >
+                    <Text style={[styles.domainChipText, !selectedDomainKey && styles.domainChipTextActive]}>Todos</Text>
+                  </TouchableOpacity>
+                  {availableDomains.map((domain) => {
+                    const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
+                    const isActive = selectedDomainKey === domain
+                    const chipLabel = `${formatDomainLabel(domain)}${domainPoint ? ` ${domainPoint.score}` : ''}`
+                    return (
+                      <TouchableOpacity
+                        key={domain}
+                        style={[styles.domainChip, isActive && styles.domainChipActive]}
+                        onPress={() => setSelectedDomain(domain)}
+                      >
+                        <Text style={[styles.domainChipText, isActive && styles.domainChipTextActive]}>
+                          {chipLabel}
+                        </Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              </View>
+            )}
+
+            <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
+            {selectedEvents.length === 0 && <Text style={styles.emptyText}>Sem eventos.</Text>}
+            {selectedEvents.map((event) => (
+              <View key={event.id} style={styles.eventCard}>
+                <Text style={styles.eventTitle}>{event.shortText}</Text>
+                <Text style={styles.eventMeta}>Impacto {event.impact} - Intensidade {Math.round(event.intensity * 100)}%</Text>
+              </View>
+            ))}
+          </View>
+
           <Text style={styles.sectionTitle}>Mini grafico</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.miniGraph}>
             {seriesSorted.map((point) => {
@@ -576,6 +794,60 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#808080',
     fontSize: 12,
+  },
+  calendarWrapper: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 8,
+  },
+  dayPanel: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#1C1C1E',
+  },
+  dayPanelTitle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  dayPanelCard: {
+    marginBottom: 12,
+  },
+  dayPanelLabel: {
+    color: '#B0B0B0',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  dayPanelScore: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  domainSection: {
+    marginBottom: 12,
+  },
+  domainRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  domainChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: '#2A2A2E',
+  },
+  domainChipActive: {
+    backgroundColor: '#FFD700',
+  },
+  domainChipText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  domainChipTextActive: {
+    color: '#0F0F23',
   },
   cta: {
     marginTop: 20,
