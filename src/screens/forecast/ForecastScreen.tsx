@@ -424,6 +424,7 @@ export default function ForecastScreen() {
 
   const selectedDateKey = selectedDate
   const selectedDateObj = selectedDateKey ? parseUTCDateString(selectedDateKey) : null
+  const selectedMonthKey = selectedDateKey ? selectedDateKey.slice(0, 7) : null
   const selectedSeriesKey = useMemo(() => {
     if (!selectedDateKey) return null
     if (effectiveGranularity === 'week') {
@@ -578,7 +579,7 @@ export default function ForecastScreen() {
           <View style={styles.calendarWrapper}>
             <Calendar
               markingType="multi-dot"
-              current={selectedDateKey || rangeFromStr || undefined}
+              current={selectedMonthKey || selectedDateKey || rangeFromStr || undefined}
               minDate={rangeFromStr || undefined}
               maxDate={rangeToStr || undefined}
               markedDates={calendarMarkedDates}
@@ -668,6 +669,21 @@ export default function ForecastScreen() {
                   }}
                 >
                   <Ionicons name="chevron-back" size={16} color="#FFD700" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dayNavButton}
+                  onPress={() => {
+                    const now = new Date()
+                    const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
+                    if (isDateInRange(todayKey)) {
+                      setSelectedDate(todayKey)
+                    } else if (!isPremium) {
+                      Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                      navigation.navigate('Premium' as never)
+                    }
+                  }}
+                >
+                  <Text style={styles.dayNavText}>Hoje</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.dayNavButton}
@@ -1036,6 +1052,12 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 6,
     backgroundColor: '#2A2A2E',
+  },
+  dayNavText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 4,
   },
   dayPanelCard: {
     marginBottom: 12,
