@@ -10,8 +10,8 @@ const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev
 
 type ForecastSeriesPoint = {
   date: string
-  score: number
-  label: string
+  score: number | null
+  label: string | null
   reasons: { eventId: string; summary: string }[]
 }
 
@@ -42,14 +42,25 @@ type ForecastResponse = {
 
 const PERIODS = [7, 30, 90, 365]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const AREA_ORDER = [
+  'amor',
+  'carreira',
+  'financas',
+  'saude',
+  'familia',
+  'espiritualidade',
+  'comunicacao',
+  'transformacao',
+]
 const DOMAIN_LABELS: Record<string, string> = {
-  love: 'Amor',
-  work: 'Carreira',
-  money: 'Financas',
-  energy: 'Energia',
-  emotions: 'Emocoes',
-  spirituality: 'Espiritualidade',
-  family: 'Familia',
+  amor: 'Amor',
+  carreira: 'Carreira',
+  financas: 'Financas',
+  saude: 'Saude',
+  familia: 'Familia',
+  espiritualidade: 'Espiritualidade',
+  comunicacao: 'Comunicacao',
+  transformacao: 'Transformacao',
 }
 
 function labelPt(label: string) {
@@ -111,6 +122,21 @@ function formatDomainLabel(domain: string) {
   if (DOMAIN_LABELS[key]) return DOMAIN_LABELS[key]
   if (!key) return 'Area'
   return key.charAt(0).toUpperCase() + key.slice(1)
+}
+
+function diffDaysUTC(from: Date, to: Date) {
+  const ms = to.getTime() - from.getTime()
+  return Math.round(ms / 86400000)
+}
+
+function buildEventPhase(selectedDate: string, event: ForecastEvent) {
+  const selectedDateObj = parseUTCDateString(selectedDate)
+  const exactDateObj = parseUTCDateString(event.exactAt.slice(0, 10))
+  if (!selectedDateObj || !exactDateObj) return null
+  const delta = diffDaysUTC(selectedDateObj, exactDateObj)
+  if (delta === 0) return { label: 'Pico', meta: 'hoje' }
+  if (delta > 0) return { label: 'Se aproximando', meta: `faltam ${delta} dias` }
+  return { label: 'Se afastando', meta: `ha ${Math.abs(delta)} dias` }
 }
 
 function addDaysUTC(date: Date, days: number) {
@@ -292,8 +318,8 @@ export default function ForecastScreen() {
   }, [seriesByDomain])
 
   const availableDomains = useMemo(() => (
-    Object.keys(domainSeriesByDate).sort((a, b) => a.localeCompare(b))
-  ), [domainSeriesByDate])
+    Object.keys(seriesByDomain).length ? AREA_ORDER : []
+  ), [seriesByDomain])
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, ForecastEvent[]> = {}
@@ -475,13 +501,17 @@ export default function ForecastScreen() {
                 <Text style={[styles.dayPanelScore, { color: scoreColor(selectedPoint.score) }]}>
                   {selectedPoint.score} {labelPt(selectedPoint.label)}
                 </Text>
-                {(selectedDomainPoint?.reasons?.length || selectedPoint.reasons.length) > 0 ? (
-                  (selectedDomainPoint?.reasons?.length ? selectedDomainPoint.reasons : selectedPoint.reasons).map((reason) => (
+                {(() => {
+                  const reasons = selectedDomainKey
+                    ? (selectedDomainPoint?.reasons || [])
+                    : selectedPoint.reasons
+                  if (!reasons.length) {
+                    return <Text style={styles.emptyText}>Sem motivos relevantes.</Text>
+                  }
+                  return reasons.map((reason) => (
                     <Text key={reason.eventId} style={styles.reasonItem}>- {reason.summary}</Text>
                   ))
-                ) : (
-                  <Text style={styles.emptyText}>Sem motivos relevantes.</Text>
-                )}
+                })()}
               </View>
             ) : (
               <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
@@ -500,7 +530,8 @@ export default function ForecastScreen() {
                   {availableDomains.map((domain) => {
                     const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
                     const isActive = selectedDomainKey === domain
-                    const chipLabel = `${formatDomainLabel(domain)}${domainPoint ? ` ${domainPoint.score}` : ''}`
+                    const chipScore = typeof domainPoint?.score === 'number' ? domainPoint.score : '--'
+                    const chipLabel = `${formatDomainLabel(domain)} ${chipScore}`
                     return (
                       <TouchableOpacity
                         key={domain}
@@ -522,25 +553,16 @@ export default function ForecastScreen() {
             {selectedEvents.map((event) => (
               <View key={event.id} style={styles.eventCard}>
                 <Text style={styles.eventTitle}>{event.shortText}</Text>
+                {selectedDateKey && (() => {
+                  const phase = buildEventPhase(selectedDateKey, event)
+                  return phase ? (
+                    <Text style={styles.eventPhase}>{phase.label} · {phase.meta}</Text>
+                  ) : null
+                })()}
                 <Text style={styles.eventMeta}>Impacto {event.impact} - Intensidade {Math.round(event.intensity * 100)}%</Text>
               </View>
             ))}
           </View>
-
-          <Text style={styles.sectionTitle}>Mini grafico</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.miniGraph}>
-            {seriesSorted.map((point) => {
-              const pointDate = parseUTCDateString(point.date)
-              const pointLabel = pointDate ? formatDateShortNoYear(pointDate) : point.date.slice(5)
-              return (
-                <View key={point.date} style={styles.pointCard}>
-                  <Text style={styles.pointDate}>{pointLabel}</Text>
-                  <Text style={[styles.pointScore, { color: scoreColor(point.score) }]}>{point.score}</Text>
-                  <Text style={styles.pointLabel}>{labelPt(point.label)}</Text>
-                </View>
-              )
-            })}
-          </ScrollView>
 
           <Text style={styles.sectionTitle}>Destaques do periodo</Text>
           {highlights.length === 0 && topInfluences.length === 0 && (
@@ -790,6 +812,11 @@ const styles = StyleSheet.create({
     color: '#B0B0B0',
     marginTop: 4,
     fontSize: 12,
+  },
+  eventPhase: {
+    color: '#FFD700',
+    fontSize: 12,
+    marginTop: 4,
   },
   emptyText: {
     color: '#808080',
