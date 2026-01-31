@@ -271,6 +271,13 @@ export default function ForecastScreen() {
   const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
   const granularity = periodDays >= 90 ? 'week' : 'day'
 
+  const handleSelectDate = useCallback((dateKey: string) => {
+    setPendingDate(dateKey)
+    if (dateKey === selectedDate && !dayStatusByDate[dateKey]) {
+      fetchDayStatus(dateKey)
+    }
+  }, [dayStatusByDate, fetchDayStatus, selectedDate])
+
   const fetchForecast = useCallback(async (force: boolean = false) => {
     if (!user?.uid) return
     if (skipNextFetchRef.current) {
@@ -948,7 +955,7 @@ export default function ForecastScreen() {
                   }
                   return
                 }
-                setPendingDate(day.dateString)
+                handleSelectDate(day.dateString)
               }}
               theme={{
                 backgroundColor: '#1C1C1E',
@@ -1059,7 +1066,7 @@ export default function ForecastScreen() {
                 if (!selectedDateObj) return
                 const prevDate = buildDateUTCString(addDaysUTC(selectedDateObj, -1))
                 if (!isDateInRange(prevDate)) return
-                setPendingDate(prevDate)
+                handleSelectDate(prevDate)
               }}
             >
                   <Ionicons name="chevron-back" size={16} color="#FFD700" />
@@ -1070,7 +1077,7 @@ export default function ForecastScreen() {
                     const now = new Date()
                     const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
-                  setPendingDate(todayKey)
+                  handleSelectDate(todayKey)
                 } else if (!hasExtendedForecast) {
                   Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
                   navigation.navigate('Premium' as never)
@@ -1085,7 +1092,7 @@ export default function ForecastScreen() {
                     if (!selectedDateObj) return
                     const nextDate = buildDateUTCString(addDaysUTC(selectedDateObj, 1))
                     if (!isDateInRange(nextDate)) return
-                    setPendingDate(nextDate)
+                    handleSelectDate(nextDate)
                   }}
                 >
                   <Ionicons name="chevron-forward" size={16} color="#FFD700" />
