@@ -229,6 +229,8 @@ const MemoEventCard = React.memo(function MemoEventCard({
   )
 })
 
+const MemoCalendar = React.memo(Calendar as any)
+
 export default function ForecastScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
@@ -251,6 +253,7 @@ export default function ForecastScreen() {
   const [showPeriodEvents, setShowPeriodEvents] = useState(false)
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>('all')
   const [periodEventsPage, setPeriodEventsPage] = useState(0)
+  const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -589,6 +592,8 @@ export default function ForecastScreen() {
     if (hideMixedImpact && event.impact === 'MIXED') return false
     return true
   })
+  const dayEventsLimit = 10
+  const visibleDayEvents = showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
 
   const periodEventsList = useMemo(() => {
     if (!showPeriodEvents) return []
@@ -632,6 +637,16 @@ export default function ForecastScreen() {
     if (!isDateInRange(selectedDateKey)) return
     fetchDayStatus(selectedDateKey)
   }, [selectedDateKey, isDateInRange, fetchDayStatus])
+
+  useEffect(() => {
+    if (!selectedDateKey) return
+    const current = parseUTCDateString(selectedDateKey)
+    if (!current) return
+    const prevKey = buildDateUTCString(addDaysUTC(current, -1))
+    const nextKey = buildDateUTCString(addDaysUTC(current, 1))
+    if (isDateInRange(prevKey)) fetchDayStatus(prevKey)
+    if (isDateInRange(nextKey)) fetchDayStatus(nextKey)
+  }, [selectedDateKey, fetchDayStatus, isDateInRange])
 
   useEffect(() => {
     if (!pendingDate) return
@@ -784,7 +799,7 @@ export default function ForecastScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.sectionTitle}>Calendario</Text>
           <View style={styles.calendarWrapper}>
-            <Calendar
+            <MemoCalendar
               markingType="multi-dot"
               current={selectedMonthKey || selectedDateKey || rangeFromStr || undefined}
               minDate={rangeFromStr || undefined}
@@ -1048,7 +1063,7 @@ export default function ForecastScreen() {
                   : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
               </Text>
             )}
-            {selectedEvents.map((event) => (
+            {visibleDayEvents.map((event) => (
               <MemoEventCard
                 key={event.id}
                 event={event}
@@ -1058,6 +1073,16 @@ export default function ForecastScreen() {
                 buildEventDetailLines={buildEventDetailLines}
               />
             ))}
+            {selectedEvents.length > dayEventsLimit && (
+              <TouchableOpacity
+                style={styles.showMoreButton}
+                onPress={() => setShowAllDayEvents((prev) => !prev)}
+              >
+                <Text style={styles.showMoreText}>
+                  {showAllDayEvents ? 'Ver menos' : `Ver mais (${selectedEvents.length - dayEventsLimit})`}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.periodEventsSection}>
@@ -1567,6 +1592,19 @@ const styles = StyleSheet.create({
   periodPageLabel: {
     color: '#B0B0B0',
     fontSize: 12,
+  },
+  showMoreButton: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  showMoreText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
   },
   filterActions: {
     flexDirection: 'row',
