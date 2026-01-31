@@ -586,6 +586,21 @@ export default function ForecastScreen() {
     }
   }, [dayStatusByDate, fetchDayStatus, selectedDate])
 
+  const handleCalendarPress = useCallback((dateKey: string) => {
+    if (!isDateInRange(dateKey)) {
+      if (!hasExtendedForecast) {
+        Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+        navigation.navigate('Premium' as never)
+        return
+      }
+      if (data?.meta?.limited) {
+        Alert.alert('Limite', 'O backend limitou o periodo. Tente outro intervalo.')
+      }
+      return
+    }
+    handleSelectDate(dateKey)
+  }, [data?.meta?.limited, handleSelectDate, hasExtendedForecast, isDateInRange, navigation])
+
   const calendarMarkedDates = useMemo(() => {
     const marks: Record<string, any> = {}
     Object.entries(eventsByDate).forEach(([dateKey, items]) => {
@@ -614,10 +629,17 @@ export default function ForecastScreen() {
     const isToday = state === 'today'
     const criticalCount = dateKey ? criticalCountsByDate[dateKey] : 0
     const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
+    const badgeScore = dateKey ? data?.dailyBadges?.[dateKey]?.score : null
+    const isCriticalDay = typeof badgeScore === 'number' && badgeScore < 40
     const showCritical = badgeFilter !== 'strong' && typeof criticalCount === 'number' && criticalCount > 0
     const showStrong = badgeFilter !== 'critical' && typeof strongCount === 'number' && strongCount > 0
     return (
-      <View style={styles.dayCell}>
+      <TouchableOpacity
+        style={[styles.dayCell, isCriticalDay && styles.dayCellCritical]}
+        disabled={!dateKey || isDisabled}
+        onPress={() => dateKey && handleCalendarPress(dateKey)}
+        activeOpacity={0.7}
+      >
         <Text
           style={[
             styles.dayText,
@@ -642,9 +664,9 @@ export default function ForecastScreen() {
             )}
           </View>
         )}
-      </View>
+      </TouchableOpacity>
     )
-  }, [badgeFilter, criticalCountsByDate, selectedDate, strongCountsByDate])
+  }, [badgeFilter, criticalCountsByDate, data?.dailyBadges, handleCalendarPress, selectedDate, strongCountsByDate])
 
   const criticalDaysList = useMemo(() => {
     return Object.entries(criticalCountsByDate)
@@ -1014,18 +1036,7 @@ export default function ForecastScreen() {
               markedDates={calendarMarkedDates}
               dayComponent={renderCalendarDay}
               onDayPress={(day) => {
-                if (!isDateInRange(day.dateString)) {
-                  if (!hasExtendedForecast) {
-                    Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
-                    navigation.navigate('Premium' as never)
-                    return
-                  }
-                  if (data?.meta?.limited) {
-                    Alert.alert('Limite', 'O backend limitou o periodo. Tente outro intervalo.')
-                  }
-                  return
-                }
-                handleSelectDate(day.dateString)
+                if (day?.dateString) handleCalendarPress(day.dateString)
               }}
               theme={{
                 backgroundColor: '#1C1C1E',
@@ -1113,10 +1124,13 @@ export default function ForecastScreen() {
                 {criticalDaysList.map((item) => {
                   const dateObj = parseUTCDateString(item.date)
                   const label = dateObj ? formatDateShortNoYear(dateObj) : item.date
+                  const badgeScore = data?.dailyBadges?.[item.date]?.score
+                  const chipColor = typeof badgeScore === 'number' ? scoreColor(badgeScore) : null
+                  const chipTextColor = chipColor ? '#0F0F23' : '#FFFFFF'
                   return (
-                    <View key={item.date} style={styles.criticalChip}>
-                      <Text style={styles.criticalChipText}>{label}</Text>
-                      <Text style={styles.criticalChipCount}>{item.count}</Text>
+                    <View key={item.date} style={[styles.criticalChip, chipColor ? { backgroundColor: chipColor } : null]}>
+                      <Text style={[styles.criticalChipText, { color: chipTextColor }]}>{label}</Text>
+                      <Text style={[styles.criticalChipCount, { color: chipTextColor }]}>{item.count}</Text>
                     </View>
                   )
                 })}
@@ -1670,6 +1684,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 36,
+  },
+  dayCellCritical: {
+    backgroundColor: '#2B1B1B',
+    borderRadius: 10,
   },
   dayText: {
     color: '#FFFFFF',
