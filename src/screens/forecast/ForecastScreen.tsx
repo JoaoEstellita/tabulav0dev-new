@@ -51,6 +51,7 @@ type ForecastResponse = {
   series: ForecastSeriesPoint[]
   events: ForecastEvent[]
   seriesByDomain?: Record<string, ForecastSeriesPoint[]>
+  dailyCounts?: { critical?: Record<string, number>; strong?: Record<string, number> }
   highlights?: { eventId: string; summary: string; impact: string; intensity: number }[]
   meta?: { cached?: boolean; limited?: boolean; premium?: boolean; rulesVersion?: string; durationMs?: number }
 }
@@ -418,26 +419,28 @@ export default function ForecastScreen() {
   }, [data?.events])
 
   const criticalCountsByDate = useMemo(() => {
+    if (data?.dailyCounts?.critical) return data.dailyCounts.critical
     const counts: Record<string, number> = {}
     Object.entries(eventsByDate).forEach(([dateKey, items]) => {
       const criticalCount = items.filter((event) => event.impact === 'DOWN').length
       if (criticalCount > 0) counts[dateKey] = criticalCount
     })
     return counts
-  }, [eventsByDate])
+  }, [data?.dailyCounts?.critical, eventsByDate])
 
   const totalCriticalCount = useMemo(() => {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
   const strongCountsByDate = useMemo(() => {
+    if (data?.dailyCounts?.strong) return data.dailyCounts.strong
     const counts: Record<string, number> = {}
     Object.entries(eventsByDate).forEach(([dateKey, items]) => {
       const strongCount = items.filter((event) => event.intensity >= 0.6).length
       if (strongCount > 0) counts[dateKey] = strongCount
     })
     return counts
-  }, [eventsByDate])
+  }, [data?.dailyCounts?.strong, eventsByDate])
 
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
@@ -1149,6 +1152,18 @@ export default function ForecastScreen() {
             )}
           </View>
 
+          {weeklySummary && periodDays <= 30 && (
+            <View style={styles.weeklySummary}>
+              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
+              <Text style={styles.weeklyItem}>
+                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
+              </Text>
+              <Text style={styles.weeklyItem}>
+                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
+              </Text>
+            </View>
+          )}
+
           <View style={styles.periodEventsSection}>
             <View style={styles.periodEventsHeader}>
               <Text style={styles.sectionTitle}>Eventos do periodo</Text>
@@ -1166,6 +1181,10 @@ export default function ForecastScreen() {
                 data={periodEventsPageItems}
                 keyExtractor={(item) => item.date}
                 scrollEnabled={false}
+                initialNumToRender={3}
+                maxToRenderPerBatch={5}
+                windowSize={5}
+                removeClippedSubviews
                 renderItem={({ item }) => {
                   const dateObj = parseUTCDateString(item.date)
                   const header = dateObj ? formatDateShort(dateObj) : item.date
@@ -1211,18 +1230,6 @@ export default function ForecastScreen() {
               </View>
             )}
           </View>
-
-          {weeklySummary && periodDays <= 30 && (
-            <View style={styles.weeklySummary}>
-              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
-              <Text style={styles.weeklyItem}>
-                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
-              </Text>
-              <Text style={styles.weeklyItem}>
-                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
-              </Text>
-            </View>
-          )}
 
           {!hasExtendedForecast && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
