@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, FlatList, InteractionManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
@@ -194,28 +194,25 @@ function startOfWeekUTC(date: Date) {
 
 const MemoEventCard = React.memo(function MemoEventCard({
   event,
-  selectedDateKey,
+  phase,
+  detailLines,
   expanded,
   onToggle,
-  buildEventDetailLines,
 }: {
   event: ForecastEvent
-  selectedDateKey: string | null
+  phase: { label: string; meta: string } | null
+  detailLines: string[]
   expanded: boolean
   onToggle: () => void
-  buildEventDetailLines: (event: ForecastEvent, dateKey: string | null) => string[]
 }) {
   return (
     <View style={styles.eventCard}>
       <Text style={styles.eventTitle}>{event.shortText}</Text>
-      {selectedDateKey && (() => {
-        const phase = buildEventPhase(selectedDateKey, event)
-        return phase ? (
-          <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
-        ) : null
-      })()}
+      {phase ? (
+        <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
+      ) : null}
       <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-      {buildEventDetailLines(event, selectedDateKey).map((line) => (
+      {detailLines.map((line) => (
         <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
       ))}
       <TouchableOpacity style={styles.eventToggle} onPress={onToggle}>
@@ -626,18 +623,34 @@ export default function ForecastScreen() {
   const selectedPoint = selectedSeriesKey ? seriesByDate[selectedSeriesKey] : null
   const selectedDomainKey = selectedDomain ? normalizeDomain(selectedDomain) : null
   const dayStatus = selectedDateKey ? dayStatusByDate[selectedDateKey] : null
-  const selectedEventsRaw = selectedDateKey ? (eventsByDate[selectedDateKey] || []) : []
-  const filteredByDomain = selectedDomainKey
-    ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
-    : selectedEventsRaw
-  const selectedEvents = filteredByDomain.filter((event) => {
-    if (eventStrengthFilter === 'strong' && event.intensity < 0.6) return false
-    if (eventStrengthFilter === 'light' && event.intensity >= 0.6) return false
-    if (hideMixedImpact && event.impact === 'MIXED') return false
-    return true
-  })
+  const selectedEventsRaw = useMemo(() => {
+    if (!selectedDateKey) return []
+    return eventsByDate[selectedDateKey] || []
+  }, [selectedDateKey, eventsByDate])
+  const selectedEvents = useMemo(() => {
+    const filtered = selectedDomainKey
+      ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
+      : selectedEventsRaw
+    return filtered.filter((event) => {
+      if (eventStrengthFilter === 'strong' && event.intensity < 0.6) return false
+      if (eventStrengthFilter === 'light' && event.intensity >= 0.6) return false
+      if (hideMixedImpact && event.impact === 'MIXED') return false
+      return true
+    })
+  }, [eventStrengthFilter, hideMixedImpact, selectedDomainKey, selectedEventsRaw])
   const dayEventsLimit = 6
-  const visibleDayEvents = showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
+  const visibleDayEvents = useMemo(() => {
+    return showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
+  }, [showAllDayEvents, selectedEvents])
+
+  const eventDisplayData = useMemo(() => {
+    if (!selectedDateKey) return []
+    return visibleDayEvents.map((event) => ({
+      event,
+      phase: buildEventPhase(selectedDateKey, event),
+      detailLines: buildEventDetailLines(event, selectedDateKey),
+    }))
+  }, [buildEventDetailLines, selectedDateKey, visibleDayEvents])
 
   const periodEventsList = useMemo(() => {
     if (periodEventsCachedList) return periodEventsCachedList
@@ -697,10 +710,13 @@ export default function ForecastScreen() {
     if (!pendingDate) return
     if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
     pendingTimerRef.current = setTimeout(() => {
-      setSelectedDomain(null)
-      setSelectedDate(pendingDate)
-      setPendingDate(null)
-    }, 120)
+      const applySelection = () => {
+        setSelectedDomain(null)
+        setSelectedDate(pendingDate)
+        setPendingDate(null)
+      }
+      InteractionManager.runAfterInteractions(applySelection)
+    }, 80)
     return () => {
       if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
     }
@@ -1202,14 +1218,14 @@ export default function ForecastScreen() {
                   : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
               </Text>
             )}
-            {visibleDayEvents.map((event) => (
+            {eventDisplayData.map(({ event, phase, detailLines }) => (
               <MemoEventCard
                 key={event.id}
                 event={event}
-                selectedDateKey={selectedDateKey}
+                phase={phase}
+                detailLines={detailLines}
                 expanded={!!expandedEvents[event.id]}
                 onToggle={() => toggleEventDetails(event.id)}
-                buildEventDetailLines={buildEventDetailLines}
               />
             ))}
             {selectedEvents.length > dayEventsLimit && (
