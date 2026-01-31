@@ -89,9 +89,11 @@ const DOMAIN_COLORS: Record<string, string> = {
 }
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
-const FORECAST_STRONG_ONLY_KEY = 'forecast_strong_only'
+const FORECAST_STRENGTH_FILTER_KEY = 'forecast_strength_filter'
 const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
+const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
+const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -247,7 +249,7 @@ export default function ForecastScreen() {
   const [pendingDate, setPendingDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
-  const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
+  const [eventStrengthFilter, setEventStrengthFilter] = useState<'all' | 'strong' | 'light'>('all')
   const [hideMixedImpact, setHideMixedImpact] = useState(false)
   const [showFilterHint, setShowFilterHint] = useState(false)
   const [showPeriodEvents, setShowPeriodEvents] = useState(false)
@@ -467,20 +469,37 @@ export default function ForecastScreen() {
   }, [selectedDate])
 
   useEffect(() => {
-    AsyncStorage.getItem(FORECAST_STRONG_ONLY_KEY)
+    AsyncStorage.getItem(FORECAST_STRENGTH_FILTER_KEY)
       .then((value) => {
-        if (value === '1') setOnlyStrongEvents(true)
+        if (value === 'strong' || value === 'light' || value === 'all') {
+          setEventStrengthFilter(value)
+        }
       })
       .catch(() => null)
   }, [])
 
   useEffect(() => {
-    AsyncStorage.setItem(FORECAST_STRONG_ONLY_KEY, onlyStrongEvents ? '1' : '0').catch(() => null)
-  }, [onlyStrongEvents])
+    AsyncStorage.setItem(FORECAST_STRENGTH_FILTER_KEY, eventStrengthFilter).catch(() => null)
+  }, [eventStrengthFilter])
 
   const fetchDayStatus = useCallback(async (dateKey: string) => {
     if (!user?.uid) return
     if (dayStatusByDate[dateKey]) return
+    const cacheKey = `${FORECAST_DAY_STATUS_CACHE_PREFIX}:${user.uid}:${dateKey}`
+    try {
+      const cachedRaw = await AsyncStorage.getItem(cacheKey)
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw)
+        const cachedAt = Number(cached?.cachedAt || 0)
+        const cachedPayload = cached?.payload as DayStatusResponse | undefined
+        if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_DAY_STATUS_CACHE_TTL_MS) {
+          setDayStatusByDate((prev) => ({ ...prev, [dateKey]: cachedPayload }))
+          return
+        }
+      }
+    } catch (_) {
+      // ignore cache errors
+    }
     setDayStatusLoading(true)
     try {
       const token = await user.getIdToken()
@@ -495,6 +514,7 @@ export default function ForecastScreen() {
       if (!resp.ok) return
       const payload: DayStatusResponse = await resp.json()
       setDayStatusByDate((prev) => ({ ...prev, [dateKey]: payload }))
+      AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload })).catch(() => null)
     } catch (err: any) {
       console.warn('Day status fetch failed', err?.message || err)
     } finally {
@@ -588,7 +608,8 @@ export default function ForecastScreen() {
     ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
     : selectedEventsRaw
   const selectedEvents = filteredByDomain.filter((event) => {
-    if (onlyStrongEvents && event.intensity < 0.6) return false
+    if (eventStrengthFilter === 'strong' && event.intensity < 0.6) return false
+    if (eventStrengthFilter === 'light' && event.intensity >= 0.6) return false
     if (hideMixedImpact && event.impact === 'MIXED') return false
     return true
   })
@@ -973,7 +994,12 @@ export default function ForecastScreen() {
             {selectedPoint ? (
               <View style={styles.dayPanelCard}>
                 <Text style={styles.dayPanelLabel}>Resumo do dia</Text>
-                {(() => {
+                {(dayStatusLoading || pendingDate) ? (
+                  <View style={styles.daySkeleton}>
+                    <View style={styles.daySkeletonLine} />
+                    <View style={styles.daySkeletonLineShort} />
+                  </View>
+                ) : (() => {
                   const score = typeof dayStatus?.global?.score === 'number' ? dayStatus.global.score : selectedPoint.score
                   if (typeof score !== 'number') {
                     return <Text style={styles.emptyText}>Sem status para este dia.</Text>
@@ -984,7 +1010,6 @@ export default function ForecastScreen() {
                     </Text>
                   )
                 })()}
-                {dayStatusLoading && <Text style={styles.emptyText}>Atualizando status do dia...</Text>}
               </View>
             ) : (
               <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
@@ -1033,9 +1058,46 @@ export default function ForecastScreen() {
             <View style={styles.eventHeaderRow}>
               <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
               <View style={styles.filterActions}>
-                <TouchableOpacity style={styles.filterToggle} onPress={() => setOnlyStrongEvents((prev) => !prev)}>
-                  <Text style={styles.filterToggleText}>
-                    {onlyStrongEvents ? 'Eventos fortes' : 'Todos'}
+                <TouchableOpacity
+                  style={[
+                    styles.filterToggle,
+                    eventStrengthFilter === 'all' && styles.filterToggleActive,
+                  ]}
+                  onPress={() => setEventStrengthFilter('all')}
+                >
+                  <Text style={[
+                    styles.filterToggleText,
+                    eventStrengthFilter === 'all' && styles.filterToggleTextActive,
+                  ]}>
+                    Todos
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.filterToggle,
+                    eventStrengthFilter === 'strong' && styles.filterToggleActive,
+                  ]}
+                  onPress={() => setEventStrengthFilter('strong')}
+                >
+                  <Text style={[
+                    styles.filterToggleText,
+                    eventStrengthFilter === 'strong' && styles.filterToggleTextActive,
+                  ]}>
+                    Fortes
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.filterToggle,
+                    eventStrengthFilter === 'light' && styles.filterToggleActive,
+                  ]}
+                  onPress={() => setEventStrengthFilter('light')}
+                >
+                  <Text style={[
+                    styles.filterToggleText,
+                    eventStrengthFilter === 'light' && styles.filterToggleTextActive,
+                  ]}>
+                    Leves
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.filterToggle} onPress={() => setHideMixedImpact((prev) => !prev)}>
@@ -1053,13 +1115,15 @@ export default function ForecastScreen() {
             </View>
             {showFilterHint && (
               <Text style={styles.filterHintText}>
-                Eventos fortes = intensidade maior ou igual a 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
+                Fortes = intensidade maior ou igual a 60%. Leves = abaixo de 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
               </Text>
             )}
             {selectedEvents.length === 0 && (
               <Text style={styles.emptyText}>
-                {onlyStrongEvents
+                {eventStrengthFilter === 'strong'
                   ? 'Sem eventos fortes neste dia.'
+                  : eventStrengthFilter === 'light'
+                  ? 'Sem eventos leves neste dia.'
                   : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
               </Text>
             )}
@@ -1617,10 +1681,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#2A2A2E',
   },
+  filterToggleActive: {
+    backgroundColor: '#FFD700',
+  },
   filterToggleText: {
     color: '#FFD700',
     fontSize: 11,
     fontWeight: '600',
+  },
+  filterToggleTextActive: {
+    color: '#0F0F23',
   },
   filterHintButton: {
     padding: 4,
@@ -1634,6 +1704,21 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 11,
     marginBottom: 8,
+  },
+  daySkeleton: {
+    marginTop: 6,
+    gap: 6,
+  },
+  daySkeletonLine: {
+    height: 18,
+    borderRadius: 8,
+    backgroundColor: '#2A2A2E',
+  },
+  daySkeletonLineShort: {
+    height: 12,
+    width: '60%',
+    borderRadius: 8,
+    backgroundColor: '#2A2A2E',
   },
   periodIndexText: {
     color: '#B0B0B0',
