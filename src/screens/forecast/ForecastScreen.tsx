@@ -303,13 +303,6 @@ export default function ForecastScreen() {
   const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
   const granularity = periodDays >= 90 ? 'week' : 'day'
 
-  const handleSelectDate = useCallback((dateKey: string) => {
-    setPendingDate(dateKey)
-    if (dateKey === selectedDate && !dayStatusByDate[dateKey]) {
-      fetchDayStatus(dateKey)
-    }
-  }, [dayStatusByDate, fetchDayStatus, selectedDate])
-
   const fetchForecast = useCallback(async (force: boolean = false) => {
     if (!user?.uid) return
     if (skipNextFetchRef.current) {
@@ -585,6 +578,13 @@ export default function ForecastScreen() {
       setDayStatusLoading(false)
     }
   }, [user?.uid, dayStatusByDate])
+
+  const handleSelectDate = useCallback((dateKey: string) => {
+    setPendingDate(dateKey)
+    if (dateKey === selectedDate && !dayStatusByDate[dateKey]) {
+      fetchDayStatus(dateKey)
+    }
+  }, [dayStatusByDate, fetchDayStatus, selectedDate])
 
   const calendarMarkedDates = useMemo(() => {
     const marks: Record<string, any> = {}
