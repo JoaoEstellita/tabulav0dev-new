@@ -5,13 +5,32 @@
  * APIs Prokerala, matching de casais, anÃ¡lises profissionais
  */
 
-import React, { useMemo, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
+
+const HUB_HISTORY_KEY = 'premium_hub_history'
+
+const HUB_ACTIONS: Record<string, { label: string; icon: string }> = {
+  birth: { label: 'Mapa natal', icon: 'star' },
+  transit: { label: 'Transitos', icon: 'pulse' },
+  synastry: { label: 'Sinastria', icon: 'heart' },
+  composite: { label: 'Mapa composto', icon: 'git-compare' },
+  solar: { label: 'Retorno solar', icon: 'sunny' },
+  lunar: { label: 'Retorno lunar', icon: 'moon' },
+}
+
+type HubHistoryItem = {
+  id: string
+  action: string
+  ts: string
+  summary: string
+}
 
 export default function PremiumScreen() {
   const { user } = useAuth()
@@ -31,6 +50,20 @@ export default function PremiumScreen() {
   const [hubResult, setHubResult] = useState<any>(null)
   const [hubMeta, setHubMeta] = useState<any>(null)
   const [lastAction, setLastAction] = useState<string | null>(null)
+  const [showJson, setShowJson] = useState(false)
+  const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
+
+  useEffect(() => {
+    AsyncStorage.getItem(HUB_HISTORY_KEY)
+      .then((raw) => {
+        if (!raw) return
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          setHubHistory(parsed)
+        }
+      })
+      .catch(() => null)
+  }, [])
 
   const subscriptionPlans = [
     {
@@ -98,6 +131,79 @@ export default function PremiumScreen() {
     }
   }
 
+  const extractSummaryLines = (raw: any) => {
+    if (!raw) return []
+    if (typeof raw === 'string') {
+      return raw.split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(0, 6)
+    }
+    if (Array.isArray(raw)) {
+      return raw.map((item) => (typeof item === 'string' ? item : null)).filter(Boolean).slice(0, 6) as string[]
+    }
+    if (typeof raw === 'object') {
+      const keys = Object.keys(raw).slice(0, 6)
+      return keys.map((key) => `${key}`)
+    }
+    return []
+  }
+
+  const buildSummary = (data: any) => {
+    if (!data) return { title: 'Resumo', lines: ['Sem dados disponíveis.'] }
+    if (typeof data === 'string') {
+      const lines = extractSummaryLines(data)
+      return { title: 'Resumo', lines: lines.length ? lines : ['Leitura sem resumo disponível.'] }
+    }
+    if (typeof data === 'object') {
+      const rawText = data.summary || data.context || data.text || data.interpretation || data.description || null
+      const lines = extractSummaryLines(rawText)
+      if (lines.length) return { title: 'Resumo', lines }
+      const keys = Object.keys(data || {}).slice(0, 6)
+      if (keys.length) return { title: 'Campos principais', lines: keys.map((key) => key) }
+      return { title: 'Resumo', lines: ['Leitura sem resumo disponível.'] }
+    }
+    return { title: 'Resumo', lines: ['Leitura sem resumo disponível.'] }
+  }
+
+  const buildKeyHighlights = (data: any) => {
+    if (!data || typeof data !== 'object') return []
+    const candidates: Array<{ key: string; label: string }> = [
+      { key: 'highlights', label: 'Destaques' },
+      { key: 'recommendations', label: 'Recomendacoes' },
+      { key: 'key_points', label: 'Pontos chave' },
+      { key: 'themes', label: 'Temas' },
+      { key: 'warnings', label: 'Atencoes' },
+      { key: 'strengths', label: 'Forcas' },
+      { key: 'challenges', label: 'Desafios' },
+    ]
+    return candidates
+      .filter((item) => data[item.key])
+      .slice(0, 4)
+      .map((item) => ({
+        label: item.label,
+        value: Array.isArray(data[item.key]) ? `${data[item.key].length} itens` : 'ok',
+      }))
+  }
+
+  const getActionMeta = (action: string | null) => {
+    if (!action) return { label: 'Leitura premium', icon: 'sparkles' }
+    return HUB_ACTIONS[action] || { label: 'Leitura premium', icon: 'sparkles' }
+  }
+
+  const copySummary = async () => {
+    if (!hubResult) return
+    const summary = buildSummary(hubResult)
+    const text = `${summary.title}\n- ${summary.lines.join('\n- ')}`
+    try {
+      if (Platform.OS === 'web' && navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        Alert.alert('Copiado', 'Resumo copiado para a área de transferência.')
+      } else {
+        Alert.alert('Copiar', 'Copie manualmente o resumo na tela.')
+      }
+    } catch {
+      Alert.alert('Copiar', 'Não foi possível copiar automaticamente.')
+    }
+  }
+
   const runAction = async (action: string) => {
     if (!user) {
       Alert.alert('Login', 'Faça login para acessar recursos premium.')
@@ -115,8 +221,22 @@ export default function PremiumScreen() {
       if (action === 'composite') response = await AstrologerPremiumService.getCompositeData(token, partnerPayload)
       if (action === 'solar') response = await AstrologerPremiumService.getSolarReturnData(token, targetDate)
       if (action === 'lunar') response = await AstrologerPremiumService.getLunarReturnData(token, targetDate)
-      setHubResult(response?.data ?? response)
+      const payload = response?.data ?? response
+      setHubResult(payload)
       setHubMeta(response?.meta || null)
+      setShowJson(false)
+      const summary = buildSummary(payload)
+      const entry: HubHistoryItem = {
+        id: `${action}-${Date.now()}`,
+        action,
+        ts: new Date().toISOString(),
+        summary: summary.lines[0] || summary.title,
+      }
+      setHubHistory((prev) => {
+        const next = [entry, ...prev].slice(0, 10)
+        AsyncStorage.setItem(HUB_HISTORY_KEY, JSON.stringify(next)).catch(() => null)
+        return next
+      })
     } catch (error) {
       const code = error?.code || 'error'
       setHubError(`${code}: ${error?.message || 'Falha ao consultar premium'}`)
@@ -193,13 +313,86 @@ export default function PremiumScreen() {
             {!hubLoading && !hubError && hubResult && (
               <>
                 <Text style={styles.resultLabel}>Última ação: {lastAction}</Text>
-                <Text style={styles.resultText}>{formatResult(hubResult)}</Text>
+                {(() => {
+                  const actionMeta = getActionMeta(lastAction)
+                  return (
+                    <View style={styles.hubCardsRow}>
+                      <View style={styles.hubCard}>
+                        <Ionicons name={actionMeta.icon as any} size={18} color="#FFD700" />
+                        <Text style={styles.hubCardLabel}>{actionMeta.label}</Text>
+                      </View>
+                      <View style={styles.hubCard}>
+                        <Ionicons name="speedometer" size={18} color="#8B5FBF" />
+                        <Text style={styles.hubCardLabel}>
+                          cache: {hubMeta?.cacheHit ? 'hit' : 'miss'}
+                        </Text>
+                      </View>
+                      <View style={styles.hubCard}>
+                        <Ionicons name="time" size={18} color="#4ECDC4" />
+                        <Text style={styles.hubCardLabel}>
+                          {hubMeta?.durationMs ? `${hubMeta.durationMs}ms` : 'tempo n/d'}
+                        </Text>
+                      </View>
+                    </View>
+                  )
+                })()}
+                {(() => {
+                  const summary = buildSummary(hubResult)
+                  return (
+                    <View style={styles.summaryBox}>
+                      <Text style={styles.summaryTitle}>{summary.title}</Text>
+                      {summary.lines.map((line, idx) => (
+                        <Text key={idx} style={styles.summaryLine}>• {line}</Text>
+                      ))}
+                    </View>
+                  )
+                })()}
+                {(() => {
+                  const highlights = buildKeyHighlights(hubResult)
+                  if (!highlights.length) return null
+                  return (
+                    <View style={styles.keyHighlights}>
+                      {highlights.map((item) => (
+                        <View key={item.label} style={styles.keyHighlightCard}>
+                          <Text style={styles.keyHighlightLabel}>{item.label}</Text>
+                          <Text style={styles.keyHighlightValue}>{item.value}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )
+                })()}
+                <View style={styles.summaryActions}>
+                  <TouchableOpacity style={styles.summaryButton} onPress={copySummary}>
+                    <Text style={styles.summaryButtonText}>Copiar resumo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.summaryButton} onPress={() => setShowJson((prev) => !prev)}>
+                    <Text style={styles.summaryButtonText}>{showJson ? 'Ocultar JSON' : 'Ver JSON'}</Text>
+                  </TouchableOpacity>
+                </View>
+                {showJson && <Text style={styles.resultText}>{formatResult(hubResult)}</Text>}
                 {hubMeta && (
                   <Text style={styles.metaText}>
                     cacheHit: {String(hubMeta.cacheHit)} · quotaRemaining: {hubMeta.quotaRemaining ?? 'n/a'}
                   </Text>
                 )}
               </>
+            )}
+            {!hubLoading && hubHistory.length > 0 && (
+              <View style={styles.historySection}>
+                <Text style={styles.sectionTitle}>Historico recente</Text>
+                {hubHistory.map((item) => {
+                  const actionMeta = getActionMeta(item.action)
+                  return (
+                    <View key={item.id} style={styles.historyItem}>
+                      <Ionicons name={actionMeta.icon as any} size={16} color="#FFD700" />
+                      <View style={styles.historyText}>
+                        <Text style={styles.historyLabel}>{actionMeta.label}</Text>
+                        <Text style={styles.historySummary}>{item.summary}</Text>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
             )}
             {!hubLoading && !hubError && !hubResult && (
               <Text style={styles.emptyText}>Nenhuma leitura executada ainda.</Text>
@@ -453,15 +646,115 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
+  hubCardsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  hubCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#2C2C2E',
+  },
+  hubCardLabel: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+  },
   resultText: {
     color: '#FFFFFF',
     fontSize: 12,
     lineHeight: 18,
   },
+  summaryBox: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  summaryTitle: {
+    color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  summaryLine: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 2,
+  },
+  summaryActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  summaryButton: {
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  summaryButtonText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  keyHighlights: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  keyHighlightCard: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: 120,
+  },
+  keyHighlightLabel: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  keyHighlightValue: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
   metaText: {
     color: '#AAAAAA',
     fontSize: 11,
     marginTop: 8,
+  },
+  historySection: {
+    marginTop: 16,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
+  },
+  historyText: {
+    flex: 1,
+  },
+  historyLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  historySummary: {
+    color: '#AAAAAA',
+    fontSize: 11,
   },
   emptyText: {
     color: '#888',

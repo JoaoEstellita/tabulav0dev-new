@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
@@ -162,8 +162,8 @@ function buildEventPhase(selectedDate: string, event: ForecastEvent) {
   if (!selectedDateObj || !exactDateObj) return null
   const delta = diffDaysUTC(selectedDateObj, exactDateObj)
   if (delta === 0) return { label: 'Pico', meta: 'hoje' }
-  if (delta > 0) return { label: 'Se aproximando', meta: `faltam ${delta} dias` }
-  return { label: 'Se afastando', meta: `ha ${Math.abs(delta)} dias` }
+  if (delta > 0) return { label: 'Em aprox', meta: `faltam ${delta} dias` }
+  return { label: 'Afastando', meta: `ha ${Math.abs(delta)} dias` }
 }
 
 function formatEventTiming(label: string, delta: number) {
@@ -202,6 +202,9 @@ export default function ForecastScreen() {
   const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
   const [hideMixedImpact, setHideMixedImpact] = useState(false)
   const [showFilterHint, setShowFilterHint] = useState(false)
+  const [showPeriodEvents, setShowPeriodEvents] = useState(false)
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>('all')
+  const [periodEventsPage, setPeriodEventsPage] = useState(0)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
 
@@ -337,6 +340,28 @@ export default function ForecastScreen() {
     return map
   }, [data?.events])
 
+  const criticalCountsByDate = useMemo(() => {
+    const counts: Record<string, number> = {}
+    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
+      const criticalCount = items.filter((event) => event.impact === 'DOWN').length
+      if (criticalCount > 0) counts[dateKey] = criticalCount
+    })
+    return counts
+  }, [eventsByDate])
+
+  const totalCriticalCount = useMemo(() => {
+    return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
+  }, [criticalCountsByDate])
+
+  const strongCountsByDate = useMemo(() => {
+    const counts: Record<string, number> = {}
+    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
+      const strongCount = items.filter((event) => event.intensity >= 0.6).length
+      if (strongCount > 0) counts[dateKey] = strongCount
+    })
+    return counts
+  }, [eventsByDate])
+
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
     return dateKey >= rangeFromStr && dateKey <= rangeToStr
@@ -423,6 +448,51 @@ export default function ForecastScreen() {
     return marks
   }, [eventsByDate, selectedDate])
 
+  const renderCalendarDay = useCallback(({ date, state }: any) => {
+    const dateKey = date?.dateString
+    const isSelected = selectedDate === dateKey
+    const isDisabled = state === 'disabled'
+    const isToday = state === 'today'
+    const criticalCount = dateKey ? criticalCountsByDate[dateKey] : 0
+    const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
+    const showCritical = badgeFilter !== 'strong' && typeof criticalCount === 'number' && criticalCount > 0
+    const showStrong = badgeFilter !== 'critical' && typeof strongCount === 'number' && strongCount > 0
+    return (
+      <View style={styles.dayCell}>
+        <Text
+          style={[
+            styles.dayText,
+            isDisabled && styles.dayTextDisabled,
+            isToday && styles.dayTextToday,
+            isSelected && styles.dayTextSelected,
+          ]}
+        >
+          {date?.day}
+        </Text>
+        {(showCritical || showStrong) && (
+          <View style={styles.dayBadges}>
+            {showCritical && (
+              <View style={styles.dayBadgeCritical}>
+                <Text style={styles.dayBadgeText}>{criticalCount}</Text>
+              </View>
+            )}
+            {showStrong && (
+              <View style={styles.dayBadgeStrong}>
+                <Text style={styles.dayBadgeText}>{strongCount}</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+    )
+  }, [badgeFilter, criticalCountsByDate, selectedDate, strongCountsByDate])
+
+  const criticalDaysList = useMemo(() => {
+    return Object.entries(criticalCountsByDate)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [criticalCountsByDate])
+
   const selectedDateKey = selectedDate
   const selectedDateObj = selectedDateKey ? parseUTCDateString(selectedDateKey) : null
   const selectedMonthKey = selectedDateKey ? selectedDateKey.slice(0, 7) : null
@@ -448,11 +518,52 @@ export default function ForecastScreen() {
     return true
   })
 
+  const periodEventsList = useMemo(() => {
+    if (!showPeriodEvents) return []
+    if (!rangeFromStr || !rangeToStr) return []
+    const list: { date: string; events: ForecastEvent[] }[] = []
+    let cursor = parseUTCDateString(rangeFromStr)
+    const end = parseUTCDateString(rangeToStr)
+    if (!cursor || !end) return []
+    while (cursor <= end) {
+      const key = buildDateUTCString(cursor)
+      const items = eventsByDate[key] || []
+      const criticalCount = criticalCountsByDate[key] || 0
+      const strongCount = strongCountsByDate[key] || 0
+      const matchesFilter = badgeFilter === 'all'
+        || (badgeFilter === 'critical' && criticalCount > 0)
+        || (badgeFilter === 'strong' && strongCount > 0)
+      if (items.length && matchesFilter) list.push({ date: key, events: items })
+      cursor = addDaysUTC(cursor, 1)
+    }
+    return list
+  }, [badgeFilter, criticalCountsByDate, eventsByDate, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate])
+
+  const periodEventsPerPage = useMemo(() => {
+    if (periodDays >= 365) return 10
+    if (periodDays >= 90) return 12
+    return 20
+  }, [periodDays])
+
+  const periodEventsPageCount = useMemo(() => {
+    if (!periodEventsList.length) return 0
+    return Math.ceil(periodEventsList.length / periodEventsPerPage)
+  }, [periodEventsList.length, periodEventsPerPage])
+
+  const periodEventsPageItems = useMemo(() => {
+    const start = periodEventsPage * periodEventsPerPage
+    return periodEventsList.slice(start, start + periodEventsPerPage)
+  }, [periodEventsList, periodEventsPage, periodEventsPerPage])
+
   useEffect(() => {
     if (!selectedDateKey) return
     if (!isDateInRange(selectedDateKey)) return
     fetchDayStatus(selectedDateKey)
   }, [selectedDateKey, isDateInRange, fetchDayStatus])
+
+  useEffect(() => {
+    setPeriodEventsPage(0)
+  }, [badgeFilter, periodDays, showPeriodEvents])
 
   const formatEventAreas = useCallback((domains: string[]) => {
     if (!Array.isArray(domains)) return ''
@@ -594,6 +705,7 @@ export default function ForecastScreen() {
               minDate={rangeFromStr || undefined}
               maxDate={rangeToStr || undefined}
               markedDates={calendarMarkedDates}
+              dayComponent={renderCalendarDay}
               onDayPress={(day) => {
                 if (!isDateInRange(day.dateString)) {
                   if (!isPremium) {
@@ -635,6 +747,14 @@ export default function ForecastScreen() {
               <View style={[styles.legendDot, { backgroundColor: '#FFD166' }]} />
               <Text style={styles.legendText}>Misto</Text>
             </View>
+            <View style={styles.legendItem}>
+              <View style={styles.legendBadgeCritical} />
+              <Text style={styles.legendText}>Criticos</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={styles.legendBadgeStrong} />
+              <Text style={styles.legendText}>Fortes</Text>
+            </View>
             <TouchableOpacity
               style={styles.todayButton}
               onPress={() => {
@@ -651,16 +771,50 @@ export default function ForecastScreen() {
               <Text style={styles.todayButtonText}>Hoje</Text>
             </TouchableOpacity>
           </View>
-
-          {weeklySummary && (
-            <View style={styles.weeklySummary}>
-              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
-              <Text style={styles.weeklyItem}>
-                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
+          <View style={styles.calendarFilters}>
+            <TouchableOpacity
+              style={[styles.calendarFilterButton, badgeFilter === 'all' && styles.calendarFilterButtonActive]}
+              onPress={() => setBadgeFilter('all')}
+            >
+              <Text style={[styles.calendarFilterText, badgeFilter === 'all' && styles.calendarFilterTextActive]}>
+                Todos
               </Text>
-              <Text style={styles.weeklyItem}>
-                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calendarFilterButton, badgeFilter === 'critical' && styles.calendarFilterButtonActive]}
+              onPress={() => setBadgeFilter('critical')}
+            >
+              <Text style={[styles.calendarFilterText, badgeFilter === 'critical' && styles.calendarFilterTextActive]}>
+                Criticos
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calendarFilterButton, badgeFilter === 'strong' && styles.calendarFilterButtonActive]}
+              onPress={() => setBadgeFilter('strong')}
+            >
+              <Text style={[styles.calendarFilterText, badgeFilter === 'strong' && styles.calendarFilterTextActive]}>
+                Fortes
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.badgeHint}>
+            Badges: vermelho = criticos, amarelo = fortes (>= 60%).
+          </Text>
+          {criticalDaysList.length > 0 && (
+            <View style={styles.criticalSummary}>
+              <Text style={styles.criticalTitle}>Criticos no periodo: {totalCriticalCount}</Text>
+              <View style={styles.criticalRow}>
+                {criticalDaysList.map((item) => {
+                  const dateObj = parseUTCDateString(item.date)
+                  const label = dateObj ? formatDateShortNoYear(dateObj) : item.date
+                  return (
+                    <View key={item.date} style={styles.criticalChip}>
+                      <Text style={styles.criticalChipText}>{label}</Text>
+                      <Text style={styles.criticalChipCount}>{item.count}</Text>
+                    </View>
+                  )
+                })}
+              </View>
             </View>
           )}
 
@@ -719,7 +873,7 @@ export default function ForecastScreen() {
             )}
             {selectedPoint ? (
               <View style={styles.dayPanelCard}>
-                <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+                <Text style={styles.dayPanelLabel}>Resumo do dia</Text>
                 {(() => {
                   const score = typeof dayStatus?.global?.score === 'number' ? dayStatus.global.score : selectedPoint.score
                   if (typeof score !== 'number') {
@@ -839,6 +993,81 @@ export default function ForecastScreen() {
               </View>
             ))}
           </View>
+
+          <View style={styles.periodEventsSection}>
+            <View style={styles.periodEventsHeader}>
+              <Text style={styles.sectionTitle}>Eventos do periodo</Text>
+              <TouchableOpacity onPress={() => setShowPeriodEvents((prev) => !prev)}>
+                <Text style={styles.periodEventsToggle}>
+                  {showPeriodEvents ? 'Ocultar' : 'Mostrar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {showPeriodEvents && periodEventsList.length === 0 && (
+              <Text style={styles.emptyText}>Sem eventos relevantes no periodo.</Text>
+            )}
+            {showPeriodEvents && (
+              <FlatList
+                data={periodEventsPageItems}
+                keyExtractor={(item) => item.date}
+                scrollEnabled={false}
+                renderItem={({ item }) => {
+                  const dateObj = parseUTCDateString(item.date)
+                  const header = dateObj ? formatDateShort(dateObj) : item.date
+                  return (
+                    <View style={styles.periodDayBlock}>
+                      <Text style={styles.periodDayTitle}>{header}</Text>
+                      {item.events.map((event) => (
+                        <View key={event.id} style={styles.eventCardSmall}>
+                          <Text style={styles.eventTitle}>{event.shortText}</Text>
+                          {(() => {
+                            const phase = buildEventPhase(item.date, event)
+                            return phase ? (
+                              <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
+                            ) : null
+                          })()}
+                          <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )
+                }}
+              />
+            )}
+            {showPeriodEvents && periodEventsPageCount > 1 && (
+              <View style={styles.periodPagination}>
+                <TouchableOpacity
+                  style={[styles.periodPageButton, periodEventsPage === 0 && styles.periodPageButtonDisabled]}
+                  onPress={() => setPeriodEventsPage((prev) => Math.max(0, prev - 1))}
+                  disabled={periodEventsPage === 0}
+                >
+                  <Text style={styles.periodPageText}>Anterior</Text>
+                </TouchableOpacity>
+                <Text style={styles.periodPageLabel}>
+                  {periodEventsPage + 1} de {periodEventsPageCount}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.periodPageButton, periodEventsPage >= periodEventsPageCount - 1 && styles.periodPageButtonDisabled]}
+                  onPress={() => setPeriodEventsPage((prev) => Math.min(periodEventsPageCount - 1, prev + 1))}
+                  disabled={periodEventsPage >= periodEventsPageCount - 1}
+                >
+                  <Text style={styles.periodPageText}>Proxima</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {weeklySummary && (
+            <View style={styles.weeklySummary}>
+              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
+              <Text style={styles.weeklyItem}>
+                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
+              </Text>
+              <Text style={styles.weeklyItem}>
+                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
+              </Text>
+            </View>
+          )}
 
           {!isPremium && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
@@ -1004,10 +1233,56 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
   },
+  criticalSummary: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+  },
+  criticalTitle: {
+    color: '#FF6B6B',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  criticalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  criticalChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#2A2A2E',
+  },
+  criticalChipText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+  },
+  criticalChipCount: {
+    color: '#FF6B6B',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  legendBadgeCritical: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FF6B6B',
+  },
+  legendBadgeStrong: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFD700',
   },
   legendDot: {
     width: 8,
@@ -1017,6 +1292,82 @@ const styles = StyleSheet.create({
   legendText: {
     color: '#B0B0B0',
     fontSize: 12,
+  },
+  calendarFilters: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  calendarFilterButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#1C1C1E',
+  },
+  calendarFilterButtonActive: {
+    backgroundColor: '#FFD700',
+  },
+  calendarFilterText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  calendarFilterTextActive: {
+    color: '#0F0F23',
+  },
+  badgeHint: {
+    color: '#B0B0B0',
+    fontSize: 11,
+    marginBottom: 12,
+  },
+  dayCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+  },
+  dayText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  dayTextDisabled: {
+    color: '#555',
+  },
+  dayTextToday: {
+    color: '#FFD700',
+  },
+  dayTextSelected: {
+    color: '#0F0F23',
+    backgroundColor: '#FFD700',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  dayBadges: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 4,
+  },
+  dayBadgeCritical: {
+    minWidth: 16,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 8,
+    backgroundColor: '#FF6B6B',
+    alignItems: 'center',
+  },
+  dayBadgeStrong: {
+    minWidth: 16,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 8,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+  },
+  dayBadgeText: {
+    color: '#0F0F23',
+    fontSize: 9,
+    fontWeight: '700',
   },
   todayButton: {
     marginLeft: 'auto',
@@ -1087,7 +1438,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   dayPanelScore: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     marginBottom: 6,
   },
@@ -1098,6 +1449,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  periodEventsSection: {
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  periodEventsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  periodEventsToggle: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  periodDayBlock: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: '#1C1C1E',
+  },
+  periodDayTitle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  eventCardSmall: {
+    paddingVertical: 6,
+  },
+  periodPagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  periodPageButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  periodPageButtonDisabled: {
+    opacity: 0.5,
+  },
+  periodPageText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  periodPageLabel: {
+    color: '#B0B0B0',
+    fontSize: 12,
   },
   filterActions: {
     flexDirection: 'row',
