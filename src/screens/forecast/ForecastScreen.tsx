@@ -186,6 +186,49 @@ function startOfWeekUTC(date: Date) {
   return addDaysUTC(date, diff)
 }
 
+const MemoEventCard = React.memo(function MemoEventCard({
+  event,
+  selectedDateKey,
+  expanded,
+  onToggle,
+  buildEventDetailLines,
+}: {
+  event: ForecastEvent
+  selectedDateKey: string | null
+  expanded: boolean
+  onToggle: () => void
+  buildEventDetailLines: (event: ForecastEvent, dateKey: string | null) => string[]
+}) {
+  return (
+    <View style={styles.eventCard}>
+      <Text style={styles.eventTitle}>{event.shortText}</Text>
+      {selectedDateKey && (() => {
+        const phase = buildEventPhase(selectedDateKey, event)
+        return phase ? (
+          <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
+        ) : null
+      })()}
+      <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
+      {buildEventDetailLines(event, selectedDateKey).map((line) => (
+        <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
+      ))}
+      <TouchableOpacity style={styles.eventToggle} onPress={onToggle}>
+        <Text style={styles.eventToggleText}>
+          {expanded ? 'Ver menos' : 'Ver mais'}
+        </Text>
+      </TouchableOpacity>
+      {expanded && (
+        <View style={styles.eventExtra}>
+          <Text style={styles.eventExtraTitle}>O que fazer</Text>
+          <Text style={styles.eventExtraText}>Sugestoes praticas em breve.</Text>
+          <Text style={styles.eventExtraTitle}>Pontos de atencao</Text>
+          <Text style={styles.eventExtraText}>Dicas de cuidado em breve.</Text>
+        </View>
+      )}
+    </View>
+  )
+})
+
 export default function ForecastScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
@@ -199,6 +242,7 @@ export default function ForecastScreen() {
   const [limitedBanner, setLimitedBanner] = useState(false)
   const [missingBirthData, setMissingBirthData] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [pendingDate, setPendingDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
@@ -209,6 +253,7 @@ export default function ForecastScreen() {
   const [periodEventsPage, setPeriodEventsPage] = useState(0)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
+  const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -589,6 +634,19 @@ export default function ForecastScreen() {
   }, [selectedDateKey, isDateInRange, fetchDayStatus])
 
   useEffect(() => {
+    if (!pendingDate) return
+    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
+    pendingTimerRef.current = setTimeout(() => {
+      setSelectedDomain(null)
+      setSelectedDate(pendingDate)
+      setPendingDate(null)
+    }, 120)
+    return () => {
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
+    }
+  }, [pendingDate])
+
+  useEffect(() => {
     setPeriodEventsPage(0)
   }, [badgeFilter, periodDays, showPeriodEvents])
 
@@ -745,8 +803,7 @@ export default function ForecastScreen() {
                   }
                   return
                 }
-                setSelectedDomain(null)
-                setSelectedDate(day.dateString)
+                setPendingDate(day.dateString)
               }}
               theme={{
                 backgroundColor: '#1C1C1E',
@@ -992,32 +1049,14 @@ export default function ForecastScreen() {
               </Text>
             )}
             {selectedEvents.map((event) => (
-              <View key={event.id} style={styles.eventCard}>
-                <Text style={styles.eventTitle}>{event.shortText}</Text>
-                {selectedDateKey && (() => {
-                  const phase = buildEventPhase(selectedDateKey, event)
-                  return phase ? (
-                    <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
-                  ) : null
-                })()}
-                <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-                {buildEventDetailLines(event, selectedDateKey).map((line) => (
-                  <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
-                ))}
-                <TouchableOpacity style={styles.eventToggle} onPress={() => toggleEventDetails(event.id)}>
-                  <Text style={styles.eventToggleText}>
-                    {expandedEvents[event.id] ? 'Ver menos' : 'Ver mais'}
-                  </Text>
-                </TouchableOpacity>
-                {expandedEvents[event.id] && (
-                  <View style={styles.eventExtra}>
-                    <Text style={styles.eventExtraTitle}>O que fazer</Text>
-                    <Text style={styles.eventExtraText}>Sugestoes praticas em breve.</Text>
-                    <Text style={styles.eventExtraTitle}>Pontos de atencao</Text>
-                    <Text style={styles.eventExtraText}>Dicas de cuidado em breve.</Text>
-                  </View>
-                )}
-              </View>
+              <MemoEventCard
+                key={event.id}
+                event={event}
+                selectedDateKey={selectedDateKey}
+                expanded={!!expandedEvents[event.id]}
+                onToggle={() => toggleEventDetails(event.id)}
+                buildEventDetailLines={buildEventDetailLines}
+              />
             ))}
           </View>
 
