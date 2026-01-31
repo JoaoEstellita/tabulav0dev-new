@@ -501,6 +501,7 @@ export default function ForecastScreen() {
   useEffect(() => {
     if (!rangeFromStr) return
     const applyDefault = async () => {
+      if (selectedDate && isDateInRange(selectedDate)) return
       try {
         const stored = await AsyncStorage.getItem(FORECAST_SELECTED_DATE_KEY)
         if (stored && isDateInRange(stored)) {
@@ -515,7 +516,7 @@ export default function ForecastScreen() {
       }
     }
     applyDefault()
-  }, [rangeFromStr, rangeToStr, selectedDate, isDateInRange])
+  }, [rangeFromStr, rangeToStr, isDateInRange])
 
   useEffect(() => {
     if (!selectedDate) return
