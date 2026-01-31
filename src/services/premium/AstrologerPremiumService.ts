@@ -1,0 +1,76 @@
+export interface PremiumResponse<T = any> {
+  ok?: boolean
+  data?: T
+  meta?: {
+    cacheHit?: boolean
+    ttlSeconds?: number | null
+    quotaRemaining?: number | null
+    source?: string
+    durationMs?: number
+  }
+  error?: string
+  message?: string
+}
+
+export class AstrologerPremiumService {
+  private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
+
+  private static async request<T>(path: string, token: string, body: Record<string, any>) {
+    const response = await fetch(`${this.BACKEND_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body || {}),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const error = payload?.error || `HTTP_${response.status}`
+      const message = payload?.message || payload?.error || 'Erro ao consultar premium'
+      const err = new Error(message)
+      ;(err as any).code = error
+      throw err
+    }
+    return payload as PremiumResponse<T>
+  }
+
+  static getBirthChartData(token: string) {
+    return this.request('/premium/astrologer/birth-chart-data', token, {})
+  }
+
+  static getBirthChartContext(token: string) {
+    return this.request('/premium/astrologer/birth-chart-context', token, {})
+  }
+
+  static getTransitData(token: string, targetDate?: string) {
+    return this.request('/premium/astrologer/transit-data', token, { targetDate })
+  }
+
+  static getTransitContext(token: string, targetDate?: string) {
+    return this.request('/premium/astrologer/transit-context', token, { targetDate })
+  }
+
+  static getSynastryData(token: string, partner: Record<string, any>) {
+    return this.request('/premium/astrologer/synastry-data', token, { partner })
+  }
+
+  static getSynastryContext(token: string, partner: Record<string, any>) {
+    return this.request('/premium/astrologer/synastry-context', token, { partner })
+  }
+
+  static getCompositeData(token: string, partner: Record<string, any>) {
+    return this.request('/premium/astrologer/composite-data', token, { partner })
+  }
+
+  static getSolarReturnData(token: string, targetDate?: string) {
+    return this.request('/premium/astrologer/solar-return-data', token, { targetDate })
+  }
+
+  static getLunarReturnData(token: string, targetDate?: string) {
+    return this.request('/premium/astrologer/lunar-return-data', token, { targetDate })
+  }
+}
+
+export default AstrologerPremiumService

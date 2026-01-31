@@ -1,57 +1,74 @@
-/**
- * 💎 PREMIUM SCREEN 💎
+﻿/**
+ * ðŸ’Ž PREMIUM SCREEN ðŸ’Ž
  * 
  * Tela com recursos PREMIUM pagos
- * APIs Prokerala, matching de casais, análises profissionais
+ * APIs Prokerala, matching de casais, anÃ¡lises profissionais
  */
 
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
+import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
+import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 
 export default function PremiumScreen() {
   const { user } = useAuth()
-  const [selectedTab, setSelectedTab] = useState<'features' | 'analysis' | 'matching' | 'reports'>('features')
+  const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
+  const isPremium = isAdmin || trialActive || subscription?.active === true
+  const [selectedTab, setSelectedTab] = useState<'hub' | 'features' | 'analysis' | 'matching' | 'reports'>(isPremium ? 'hub' : 'features')
+  const [targetDate, setTargetDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [partnerBirthDate, setPartnerBirthDate] = useState('')
+  const [partnerBirthTime, setPartnerBirthTime] = useState('')
+  const [partnerLat, setPartnerLat] = useState('')
+  const [partnerLon, setPartnerLon] = useState('')
+  const [partnerTz, setPartnerTz] = useState('America/Sao_Paulo')
+  const [partnerCity, setPartnerCity] = useState('')
+  const [partnerCountry, setPartnerCountry] = useState('')
+  const [hubLoading, setHubLoading] = useState(false)
+  const [hubError, setHubError] = useState<string | null>(null)
+  const [hubResult, setHubResult] = useState<any>(null)
+  const [hubMeta, setHubMeta] = useState<any>(null)
+  const [lastAction, setLastAction] = useState<string | null>(null)
 
   const subscriptionPlans = [
     {
       id: 'basic',
-      name: '🆓 Gratuito',
+      name: 'ðŸ†“ Gratuito',
       price: 0,
       features: [
-        'Cálculos ephemeris locais',
-        'Status das áreas da vida',
-        'Notificações diárias',
-        'Análise básica'
+        'CÃ¡lculos ephemeris locais',
+        'Status das Ã¡reas da vida',
+        'NotificaÃ§Ãµes diÃ¡rias',
+        'AnÃ¡lise bÃ¡sica'
       ],
       color: '#44AA44',
       current: true
     },
     {
       id: 'premium',
-      name: '💎 Premium',
+      name: 'ðŸ’Ž Premium',
       price: 19.90,
       features: [
         'Tudo do Gratuito +',
         'APIs ultra-precisas',
         'Matching de casais',
-        'Análises avançadas',
-        'Suporte prioritário'
+        'AnÃ¡lises avanÃ§adas',
+        'Suporte prioritÃ¡rio'
       ],
       color: '#FFD700',
       current: false
     },
     {
       id: 'ultimate',
-      name: '🌟 Ultimate',
+      name: 'ðŸŒŸ Ultimate',
       price: 39.90,
       features: [
         'Tudo do Premium +',
-        'Relatórios profissionais',
-        'Trânsitos avançados',
-        'Análise de progressões',
+        'RelatÃ³rios profissionais',
+        'TrÃ¢nsitos avanÃ§ados',
+        'AnÃ¡lise de progressÃµes',
         'Acesso antecipado'
       ],
       color: '#FF6B6B',
@@ -60,13 +77,143 @@ export default function PremiumScreen() {
   ]
 
   const handleSubscribe = (planId: string) => {
-    Alert.alert('🚀 Em Breve', 'Sistema de assinaturas será implementado em breve!')
+    Alert.alert('ðŸš€ Em Breve', 'Sistema de assinaturas serÃ¡ implementado em breve!')
   }
+  const partnerPayload = useMemo(() => ({
+    birthDate: partnerBirthDate,
+    birthTime: partnerBirthTime,
+    latitude: partnerLat ? Number(partnerLat) : null,
+    longitude: partnerLon ? Number(partnerLon) : null,
+    timezone: partnerTz,
+    city: partnerCity,
+    country: partnerCountry,
+  }), [partnerBirthDate, partnerBirthTime, partnerLat, partnerLon, partnerTz, partnerCity, partnerCountry])
+
+  const formatResult = (data: any) => {
+    if (typeof data === 'string') return data
+    try {
+      return JSON.stringify(data, null, 2)
+    } catch {
+      return String(data)
+    }
+  }
+
+  const runAction = async (action: string) => {
+    if (!user) {
+      Alert.alert('Login', 'Faça login para acessar recursos premium.')
+      return
+    }
+    setHubLoading(true)
+    setHubError(null)
+    setLastAction(action)
+    try {
+      const token = await user.getIdToken(true)
+      let response = null
+      if (action === 'birth-chart') response = await AstrologerPremiumService.getBirthChartContext(token)
+      if (action === 'transit') response = await AstrologerPremiumService.getTransitContext(token, targetDate)
+      if (action === 'synastry') response = await AstrologerPremiumService.getSynastryContext(token, partnerPayload)
+      if (action === 'composite') response = await AstrologerPremiumService.getCompositeData(token, partnerPayload)
+      if (action === 'solar') response = await AstrologerPremiumService.getSolarReturnData(token, targetDate)
+      if (action === 'lunar') response = await AstrologerPremiumService.getLunarReturnData(token, targetDate)
+      setHubResult(response?.data ?? response)
+      setHubMeta(response?.meta || null)
+    } catch (error) {
+      const code = error?.code || 'error'
+      setHubError(`${code}: ${error?.message || 'Falha ao consultar premium'}`)
+    } finally {
+      setHubLoading(false)
+    }
+  }
+
+  const renderHub = () => (
+    <ScrollView style={styles.tabContent} contentContainerStyle={styles.hubContent}>
+      {!isPremium && (
+        <View style={styles.lockedBox}>
+          <Text style={styles.lockedTitle}>Premium bloqueado</Text>
+          <Text style={styles.lockedText}>Assine para desbloquear o Hub Premium.</Text>
+          <TouchableOpacity style={styles.lockedButton} onPress={() => setSelectedTab('features')}>
+            <Text style={styles.lockedButtonText}>Ver planos</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isPremium && (
+        <>
+          <View style={styles.hubCard}>
+            <Text style={styles.hubTitle}>Ferramentas Premium</Text>
+            <Text style={styles.hubSubtitle}>Selecione uma leitura para gerar agora.</Text>
+            <View style={styles.hubButtonRow}>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('birth-chart')}>
+                <Text style={styles.hubButtonText}>Mapa Natal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('transit')}>
+                <Text style={styles.hubButtonText}>Trânsitos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('solar')}>
+                <Text style={styles.hubButtonText}>Retorno Solar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('lunar')}>
+                <Text style={styles.hubButtonText}>Retorno Lunar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('synastry')}>
+                <Text style={styles.hubButtonText}>Sinastria</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('composite')}>
+                <Text style={styles.hubButtonText}>Composto</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.hubCard}>
+            <Text style={styles.hubTitle}>Data alvo</Text>
+            <TextInput
+              style={styles.input}
+              value={targetDate}
+              onChangeText={setTargetDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#888"
+            />
+          </View>
+
+          <View style={styles.hubCard}>
+            <Text style={styles.hubTitle}>Dados do parceiro (sinastria/composite)</Text>
+            <TextInput style={styles.input} value={partnerBirthDate} onChangeText={setPartnerBirthDate} placeholder="Data (YYYY-MM-DD)" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerBirthTime} onChangeText={setPartnerBirthTime} placeholder="Hora (HH:MM)" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerLat} onChangeText={setPartnerLat} placeholder="Latitude" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerLon} onChangeText={setPartnerLon} placeholder="Longitude" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerTz} onChangeText={setPartnerTz} placeholder="Timezone" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerCity} onChangeText={setPartnerCity} placeholder="Cidade" placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerCountry} onChangeText={setPartnerCountry} placeholder="País" placeholderTextColor="#888" />
+          </View>
+
+          <View style={styles.hubCard}>
+            <Text style={styles.hubTitle}>Resultado</Text>
+            {hubLoading && <ActivityIndicator color="#FFD700" />}
+            {hubError && <Text style={styles.errorText}>{hubError}</Text>}
+            {!hubLoading && !hubError && hubResult && (
+              <>
+                <Text style={styles.resultLabel}>Última ação: {lastAction}</Text>
+                <Text style={styles.resultText}>{formatResult(hubResult)}</Text>
+                {hubMeta && (
+                  <Text style={styles.metaText}>
+                    cacheHit: {String(hubMeta.cacheHit)} · quotaRemaining: {hubMeta.quotaRemaining ?? 'n/a'}
+                  </Text>
+                )}
+              </>
+            )}
+            {!hubLoading && !hubError && !hubResult && (
+              <Text style={styles.emptyText}>Nenhuma leitura executada ainda.</Text>
+            )}
+          </View>
+        </>
+      )}
+    </ScrollView>
+  )
 
   const renderFeatures = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>📋 Planos de Assinatura</Text>
+        <Text style={styles.sectionTitle}>ðŸ“‹ Planos de Assinatura</Text>
         {subscriptionPlans.map(plan => (
           <TouchableOpacity
             key={plan.id}
@@ -80,12 +227,12 @@ export default function PremiumScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                {plan.price === 0 ? 'Grátis' : `R$ ${(plan.price || 0).toFixed(2)}/mês`}
+                {plan.price === 0 ? 'GrÃ¡tis' : `R$ ${(plan.price || 0).toFixed(2)}/mÃªs`}
               </Text>
             </View>
             <View style={styles.planFeatures}>
               {plan.features.map((feature, index) => (
-                <Text key={index} style={styles.planFeature}>✓ {feature}</Text>
+                <Text key={index} style={styles.planFeature}>âœ“ {feature}</Text>
               ))}
             </View>
             {plan.current && (
@@ -116,12 +263,20 @@ export default function PremiumScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Header Premium */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>💎 Premium</Text>
-        <Text style={styles.headerSubtitle}>Recursos avançados e análises profissionais</Text>
+        <Text style={styles.headerTitle}>ðŸ’Ž Premium</Text>
+        <Text style={styles.headerSubtitle}>Recursos avanÃ§ados e anÃ¡lises profissionais</Text>
       </View>
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
+          onPress={() => setSelectedTab('hub')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
+            Hub
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, selectedTab === 'features' && styles.activeTab]}
           onPress={() => setSelectedTab('features')}
@@ -135,7 +290,7 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('analysis')}
         >
           <Text style={[styles.tabText, selectedTab === 'analysis' && styles.activeTabText]}>
-            Análises
+            AnÃ¡lises
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -151,27 +306,28 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('reports')}
         >
           <Text style={[styles.tabText, selectedTab === 'reports' && styles.activeTabText]}>
-            Relatórios
+            RelatÃ³rios
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Content */}
+      {selectedTab === 'hub' && renderHub()}
       {selectedTab === 'features' && renderFeatures()}
       {selectedTab === 'analysis' && renderComingSoon(
-        '🔬', 
-        'Análises Ultra-Precisas', 
-        'APIs profissionais da Prokerala para cálculos com precisão máxima'
+        'ðŸ”¬', 
+        'AnÃ¡lises Ultra-Precisas', 
+        'APIs profissionais da Prokerala para cÃ¡lculos com precisÃ£o mÃ¡xima'
       )}
       {selectedTab === 'matching' && renderComingSoon(
-        '💕', 
+        'ðŸ’•', 
         'Matching de Casais', 
-        'Compatibilidade amorosa avançada com análise de sinastria completa'
+        'Compatibilidade amorosa avanÃ§ada com anÃ¡lise de sinastria completa'
       )}
       {selectedTab === 'reports' && renderComingSoon(
-        '📊', 
-        'Relatórios Profissionais', 
-        'PDFs completos com análises astrológicas detalhadas e personalizadas'
+        'ðŸ“Š', 
+        'RelatÃ³rios Profissionais', 
+        'PDFs completos com anÃ¡lises astrolÃ³gicas detalhadas e personalizadas'
       )}
     </LinearGradient>
   )
@@ -223,6 +379,98 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
+  },
+  hubContent: {
+    paddingBottom: 32,
+  },
+  hubCard: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  hubTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  hubSubtitle: {
+    color: '#AAAAAA',
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  hubButtonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  hubButton: {
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  hubButtonText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  lockedBox: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  lockedTitle: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  lockedText: {
+    color: '#AAAAAA',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  lockedButton: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  lockedButtonText: {
+    color: '#000',
+    fontWeight: '700',
+  },
+  resultLabel: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  resultText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  metaText: {
+    color: '#AAAAAA',
+    fontSize: 11,
+    marginTop: 8,
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 12,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginBottom: 8,
   },
   plansContainer: {
     marginHorizontal: 16,
@@ -316,3 +564,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 })
+
