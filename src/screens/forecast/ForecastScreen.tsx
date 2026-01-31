@@ -263,6 +263,8 @@ export default function ForecastScreen() {
   const skipNextFetchRef = useRef(false)
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
+  const inFlightDayStatusRef = useRef<Set<string>>(new Set())
 
   const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -505,6 +507,8 @@ export default function ForecastScreen() {
   const fetchDayStatus = useCallback(async (dateKey: string) => {
     if (!user?.uid) return
     if (dayStatusByDate[dateKey]) return
+    if (inFlightDayStatusRef.current.has(dateKey)) return
+    inFlightDayStatusRef.current.add(dateKey)
     const cacheKey = `${FORECAST_DAY_STATUS_CACHE_PREFIX}:${user.uid}:${dateKey}`
     try {
       const cachedRaw = await AsyncStorage.getItem(cacheKey)
@@ -538,6 +542,7 @@ export default function ForecastScreen() {
     } catch (err: any) {
       console.warn('Day status fetch failed', err?.message || err)
     } finally {
+      inFlightDayStatusRef.current.delete(dateKey)
       setDayStatusLoading(false)
     }
   }, [user?.uid, dayStatusByDate])
@@ -685,12 +690,16 @@ export default function ForecastScreen() {
 
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
-    return visibleDayEvents.map((event) => ({
-      event,
-      phase: buildEventPhase(selectedDateKey, event),
-      detailLines: buildEventDetailLines(event, selectedDateKey),
-    }))
-  }, [buildEventDetailLines, selectedDateKey, visibleDayEvents])
+    return visibleDayEvents.map((event) => {
+      const expanded = !!expandedEvents[event.id]
+      return {
+        event,
+        expanded,
+        phase: buildEventPhase(selectedDateKey, event),
+        detailLines: expanded ? buildEventDetailLines(event, selectedDateKey) : [],
+      }
+    })
+  }, [buildEventDetailLines, expandedEvents, selectedDateKey, visibleDayEvents])
 
   const periodEventsList = useMemo(() => {
     if (periodEventsCachedList) return periodEventsCachedList
@@ -738,13 +747,22 @@ export default function ForecastScreen() {
 
   useEffect(() => {
     if (!selectedDateKey) return
-    const current = parseUTCDateString(selectedDateKey)
-    if (!current) return
-    const prevKey = buildDateUTCString(addDaysUTC(current, -1))
-    const nextKey = buildDateUTCString(addDaysUTC(current, 1))
-    if (isDateInRange(prevKey)) fetchDayStatus(prevKey)
-    if (isDateInRange(nextKey)) fetchDayStatus(nextKey)
-  }, [selectedDateKey, fetchDayStatus, isDateInRange])
+    if (periodDays > 30) return
+    if (pendingPrefetchRef.current) clearTimeout(pendingPrefetchRef.current)
+    pendingPrefetchRef.current = setTimeout(() => {
+      InteractionManager.runAfterInteractions(() => {
+        const current = parseUTCDateString(selectedDateKey)
+        if (!current) return
+        const prevKey = buildDateUTCString(addDaysUTC(current, -1))
+        const nextKey = buildDateUTCString(addDaysUTC(current, 1))
+        if (isDateInRange(prevKey)) fetchDayStatus(prevKey)
+        if (isDateInRange(nextKey)) fetchDayStatus(nextKey)
+      })
+    }, 200)
+    return () => {
+      if (pendingPrefetchRef.current) clearTimeout(pendingPrefetchRef.current)
+    }
+  }, [selectedDateKey, fetchDayStatus, isDateInRange, periodDays])
 
   useEffect(() => {
     if (!pendingDate) return
@@ -1041,7 +1059,7 @@ export default function ForecastScreen() {
                 if (!selectedDateObj) return
                 const prevDate = buildDateUTCString(addDaysUTC(selectedDateObj, -1))
                 if (!isDateInRange(prevDate)) return
-                setSelectedDate(prevDate)
+                setPendingDate(prevDate)
               }}
             >
                   <Ionicons name="chevron-back" size={16} color="#FFD700" />
@@ -1052,7 +1070,7 @@ export default function ForecastScreen() {
                     const now = new Date()
                     const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
-                  setSelectedDate(todayKey)
+                  setPendingDate(todayKey)
                 } else if (!hasExtendedForecast) {
                   Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
                   navigation.navigate('Premium' as never)
@@ -1067,7 +1085,7 @@ export default function ForecastScreen() {
                     if (!selectedDateObj) return
                     const nextDate = buildDateUTCString(addDaysUTC(selectedDateObj, 1))
                     if (!isDateInRange(nextDate)) return
-                    setSelectedDate(nextDate)
+                    setPendingDate(nextDate)
                   }}
                 >
                   <Ionicons name="chevron-forward" size={16} color="#FFD700" />
