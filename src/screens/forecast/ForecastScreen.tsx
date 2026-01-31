@@ -516,7 +516,7 @@ export default function ForecastScreen() {
       }
     }
     applyDefault()
-  }, [rangeFromStr, rangeToStr, isDateInRange])
+  }, [rangeFromStr, rangeToStr, isDateInRange, selectedDate])
 
   useEffect(() => {
     if (!selectedDate) return
