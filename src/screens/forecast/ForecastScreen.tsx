@@ -296,6 +296,8 @@ export default function ForecastScreen() {
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
   const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
+
   const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
@@ -709,7 +711,6 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return eventsByDate[selectedDateKey] || []
   }, [selectedDateKey, eventsByDate])
-  const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
   const selectedEvents = useMemo(() => {
     const filtered = selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
