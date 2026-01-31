@@ -613,7 +613,7 @@ export default function ForecastScreen() {
     if (hideMixedImpact && event.impact === 'MIXED') return false
     return true
   })
-  const dayEventsLimit = 10
+  const dayEventsLimit = 6
   const visibleDayEvents = showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
 
   const periodEventsList = useMemo(() => {
@@ -1212,7 +1212,7 @@ export default function ForecastScreen() {
             )}
           </View>
 
-          {weeklySummary && (
+          {weeklySummary && periodDays <= 30 && (
             <View style={styles.weeklySummary}>
               <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
               <Text style={styles.weeklyItem}>
