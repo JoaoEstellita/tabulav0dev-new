@@ -51,6 +51,7 @@ type ForecastResponse = {
   series: ForecastSeriesPoint[]
   events: ForecastEvent[]
   seriesByDomain?: Record<string, ForecastSeriesPoint[]>
+  eventPhasesByDate?: Record<string, { eventId: string; label: string; meta?: string; deltaDays?: number }[]>
   dailyCounts?: { critical?: Record<string, number>; strong?: Record<string, number> }
   dailyBadges?: Record<string, { score: number | null; label: string | null; criticalCount: number; strongCount: number }>
   highlights?: { eventId: string; summary: string; impact: string; intensity: number }[]
@@ -97,7 +98,7 @@ const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_PERIOD_EVENTS_CACHE_PREFIX = 'forecast_period_events_v1'
-const FORECAST_PERIOD_EVENTS_CACHE_TTL_MS = 10 * 60 * 1000
+const FORECAST_PERIOD_EVENTS_CACHE_TTL_MS = 30 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -233,6 +234,32 @@ const MemoEventCard = React.memo(function MemoEventCard({
 })
 
 const MemoCalendar = React.memo(Calendar as any)
+const MemoDomainChip = React.memo(function MemoDomainChip({
+  label,
+  active,
+  color,
+  onPress,
+}: {
+  label: string
+  active: boolean
+  color?: string
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.domainChip,
+        color ? { backgroundColor: color } : null,
+        active && styles.domainChipActive,
+      ]}
+      onPress={onPress}
+    >
+      <Text style={[styles.domainChipText, active && styles.domainChipTextActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  )
+})
 
 export default function ForecastScreen() {
   const { user } = useAuth()
@@ -251,6 +278,7 @@ export default function ForecastScreen() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [eventStrengthFilter, setEventStrengthFilter] = useState<'all' | 'strong' | 'light'>('all')
+  const [pendingEventStrengthFilter, setPendingEventStrengthFilter] = useState<'all' | 'strong' | 'light' | null>(null)
   const [hideMixedImpact, setHideMixedImpact] = useState(false)
   const [showFilterHint, setShowFilterHint] = useState(false)
   const [showPeriodEvents, setShowPeriodEvents] = useState(false)
@@ -264,7 +292,9 @@ export default function ForecastScreen() {
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingDayPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
+  const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -679,6 +709,7 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return eventsByDate[selectedDateKey] || []
   }, [selectedDateKey, eventsByDate])
+  const effectiveEventStrengthFilter = pendingEventStrengthFilter || eventStrengthFilter
   const selectedEvents = useMemo(() => {
     const filtered = selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
@@ -695,6 +726,17 @@ export default function ForecastScreen() {
     return showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
   }, [showAllDayEvents, selectedEvents])
 
+  const eventPhaseMap = useMemo(() => {
+    if (!selectedDateKey) return {}
+    const phases = data?.eventPhasesByDate?.[selectedDateKey] || []
+    const map: Record<string, { label: string; meta?: string }> = {}
+    phases.forEach((entry) => {
+      if (!entry?.eventId) return
+      map[entry.eventId] = { label: entry.label, meta: entry.meta }
+    })
+    return map
+  }, [data?.eventPhasesByDate, selectedDateKey])
+
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
     return visibleDayEvents.map((event) => {
@@ -702,11 +744,11 @@ export default function ForecastScreen() {
       return {
         event,
         expanded,
-        phase: buildEventPhase(selectedDateKey, event),
+        phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
         detailLines: expanded ? buildEventDetailLines(event, selectedDateKey) : [],
       }
     })
-  }, [buildEventDetailLines, expandedEvents, selectedDateKey, visibleDayEvents])
+  }, [buildEventDetailLines, eventPhaseMap, expandedEvents, selectedDateKey, visibleDayEvents])
 
   const periodEventsList = useMemo(() => {
     if (periodEventsCachedList) return periodEventsCachedList
@@ -765,11 +807,22 @@ export default function ForecastScreen() {
         if (isDateInRange(prevKey)) fetchDayStatus(prevKey)
         if (isDateInRange(nextKey)) fetchDayStatus(nextKey)
       })
-    }, 200)
+    }, 150)
     return () => {
       if (pendingPrefetchRef.current) clearTimeout(pendingPrefetchRef.current)
     }
   }, [selectedDateKey, fetchDayStatus, isDateInRange, periodDays])
+
+  useEffect(() => {
+    if (!pendingDate) return
+    if (pendingDayPrefetchRef.current) clearTimeout(pendingDayPrefetchRef.current)
+    pendingDayPrefetchRef.current = setTimeout(() => {
+      fetchDayStatus(pendingDate)
+    }, 150)
+    return () => {
+      if (pendingDayPrefetchRef.current) clearTimeout(pendingDayPrefetchRef.current)
+    }
+  }, [pendingDate, fetchDayStatus])
 
   useEffect(() => {
     if (!pendingDate) return
@@ -786,6 +839,18 @@ export default function ForecastScreen() {
       if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
     }
   }, [pendingDate])
+
+  useEffect(() => {
+    if (!pendingEventStrengthFilter) return
+    if (pendingStrengthFilterTimerRef.current) clearTimeout(pendingStrengthFilterTimerRef.current)
+    pendingStrengthFilterTimerRef.current = setTimeout(() => {
+      setEventStrengthFilter(pendingEventStrengthFilter)
+      setPendingEventStrengthFilter(null)
+    }, 150)
+    return () => {
+      if (pendingStrengthFilterTimerRef.current) clearTimeout(pendingStrengthFilterTimerRef.current)
+    }
+  }, [pendingEventStrengthFilter])
 
   useEffect(() => {
     if (!pendingBadgeFilter) return
@@ -844,6 +909,10 @@ export default function ForecastScreen() {
 
   const toggleEventDetails = useCallback((eventId: string) => {
     setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
+  }, [])
+
+  const handleSelectDomain = useCallback((domain: string | null) => {
+    setSelectedDomain(domain)
   }, [])
 
   const handleSelectPeriod = (days: number) => {
@@ -1134,12 +1203,11 @@ export default function ForecastScreen() {
             <View style={styles.domainSection}>
               <Text style={styles.dayPanelLabel}>Status por area</Text>
               <View style={styles.domainRow}>
-                <TouchableOpacity
-                  style={[styles.domainChip, !selectedDomainKey && styles.domainChipActive]}
-                  onPress={() => setSelectedDomain(null)}
-                >
-                  <Text style={[styles.domainChipText, !selectedDomainKey && styles.domainChipTextActive]}>Todos</Text>
-                </TouchableOpacity>
+                <MemoDomainChip
+                  label="Todos"
+                  active={!selectedDomainKey}
+                  onPress={() => handleSelectDomain(null)}
+                />
                 {AREA_ORDER.map((domain) => {
                   const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
                   const statusArea = dayStatus?.lifeAreas?.[domain]
@@ -1153,19 +1221,13 @@ export default function ForecastScreen() {
                   const isActive = selectedDomainKey === domain
                   const chipColor = DOMAIN_COLORS[domain] || '#2A2A2E'
                   return (
-                    <TouchableOpacity
+                    <MemoDomainChip
                       key={domain}
-                      style={[
-                        styles.domainChip,
-                        { backgroundColor: chipColor },
-                        isActive && styles.domainChipActive,
-                      ]}
-                      onPress={() => setSelectedDomain(domain)}
-                    >
-                      <Text style={[styles.domainChipText, isActive && styles.domainChipTextActive]}>
-                        {chipLabel}
-                      </Text>
-                    </TouchableOpacity>
+                      label={chipLabel}
+                      active={isActive}
+                      color={chipColor}
+                      onPress={() => handleSelectDomain(domain)}
+                    />
                   )
                 })}
               </View>
@@ -1177,13 +1239,13 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   style={[
                     styles.filterToggle,
-                    eventStrengthFilter === 'all' && styles.filterToggleActive,
+                    effectiveEventStrengthFilter === 'all' && styles.filterToggleActive,
                   ]}
-                  onPress={() => setEventStrengthFilter('all')}
+                  onPress={() => setPendingEventStrengthFilter('all')}
                 >
                   <Text style={[
                     styles.filterToggleText,
-                    eventStrengthFilter === 'all' && styles.filterToggleTextActive,
+                    effectiveEventStrengthFilter === 'all' && styles.filterToggleTextActive,
                   ]}>
                     Todos
                   </Text>
@@ -1191,13 +1253,13 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   style={[
                     styles.filterToggle,
-                    eventStrengthFilter === 'strong' && styles.filterToggleActive,
+                    effectiveEventStrengthFilter === 'strong' && styles.filterToggleActive,
                   ]}
-                  onPress={() => setEventStrengthFilter('strong')}
+                  onPress={() => setPendingEventStrengthFilter('strong')}
                 >
                   <Text style={[
                     styles.filterToggleText,
-                    eventStrengthFilter === 'strong' && styles.filterToggleTextActive,
+                    effectiveEventStrengthFilter === 'strong' && styles.filterToggleTextActive,
                   ]}>
                     Fortes
                   </Text>
@@ -1205,13 +1267,13 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   style={[
                     styles.filterToggle,
-                    eventStrengthFilter === 'light' && styles.filterToggleActive,
+                    effectiveEventStrengthFilter === 'light' && styles.filterToggleActive,
                   ]}
-                  onPress={() => setEventStrengthFilter('light')}
+                  onPress={() => setPendingEventStrengthFilter('light')}
                 >
                   <Text style={[
                     styles.filterToggleText,
-                    eventStrengthFilter === 'light' && styles.filterToggleTextActive,
+                    effectiveEventStrengthFilter === 'light' && styles.filterToggleTextActive,
                   ]}>
                     Leves
                   </Text>
@@ -1236,23 +1298,31 @@ export default function ForecastScreen() {
             )}
             {selectedEvents.length === 0 && (
               <Text style={styles.emptyText}>
-                {eventStrengthFilter === 'strong'
+                {effectiveEventStrengthFilter === 'strong'
                   ? 'Sem eventos fortes neste dia.'
-                  : eventStrengthFilter === 'light'
+                  : effectiveEventStrengthFilter === 'light'
                   ? 'Sem eventos leves neste dia.'
                   : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
               </Text>
             )}
-            {eventDisplayData.map(({ event, phase, detailLines }) => (
-              <MemoEventCard
-                key={event.id}
-                event={event}
-                phase={phase}
-                detailLines={detailLines}
-                expanded={!!expandedEvents[event.id]}
-                onToggle={() => toggleEventDetails(event.id)}
-              />
-            ))}
+            <FlatList
+              data={eventDisplayData}
+              keyExtractor={(item) => item.event.id}
+              renderItem={({ item }) => (
+                <MemoEventCard
+                  event={item.event}
+                  phase={item.phase}
+                  detailLines={item.detailLines}
+                  expanded={!!expandedEvents[item.event.id]}
+                  onToggle={() => toggleEventDetails(item.event.id)}
+                />
+              )}
+              scrollEnabled={false}
+              removeClippedSubviews
+              windowSize={5}
+              initialNumToRender={6}
+              maxToRenderPerBatch={6}
+            />
             {selectedEvents.length > dayEventsLimit && (
               <TouchableOpacity
                 style={styles.showMoreButton}

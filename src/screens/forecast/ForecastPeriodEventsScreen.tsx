@@ -1,0 +1,193 @@
+import React, { useMemo, useState } from 'react'
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+
+type ForecastEvent = {
+  id: string
+  exactAt: string
+  intensity: number
+  impact: 'UP' | 'DOWN' | 'MIXED'
+  shortText: string
+}
+
+type RouteParams = {
+  events: ForecastEvent[]
+  rangeFrom: string
+  rangeTo: string
+  badgeFilter?: 'all' | 'critical' | 'strong'
+  dailyBadges?: Record<string, { criticalCount: number; strongCount: number }>
+}
+
+const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+function parseUTCDateString(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function formatDateShort(date: Date) {
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = MONTHS_PT[date.getUTCMonth()]
+  const year = date.getUTCFullYear()
+  return `${day} ${month} ${year}`
+}
+
+function impactLabel(impact: ForecastEvent['impact']) {
+  if (impact === 'UP') return 'Positivo'
+  if (impact === 'DOWN') return 'Desafiador'
+  return 'Misto'
+}
+
+export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {
+  const { events, rangeFrom, rangeTo, badgeFilter: initialFilter = 'all', dailyBadges } = route.params || {}
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>(initialFilter)
+
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, ForecastEvent[]> = {}
+    ;(events || []).forEach((event) => {
+      const dateKey = (event.exactAt || '').slice(0, 10)
+      if (!dateKey) return
+      if (!map[dateKey]) map[dateKey] = []
+      map[dateKey].push(event)
+    })
+    Object.keys(map).forEach((key) => {
+      map[key] = map[key].slice().sort((a, b) => b.intensity - a.intensity)
+    })
+    return map
+  }, [events])
+
+  const periodList = useMemo(() => {
+    if (!rangeFrom || !rangeTo) return []
+    const list: { date: string; events: ForecastEvent[] }[] = []
+    let cursor = parseUTCDateString(rangeFrom)
+    const end = parseUTCDateString(rangeTo)
+    if (!cursor || !end) return []
+    while (cursor <= end) {
+      const dateKey = cursor.toISOString().slice(0, 10)
+      const items = eventsByDate[dateKey] || []
+      const badge = dailyBadges?.[dateKey]
+      const criticalCount = badge ? badge.criticalCount : items.filter((event) => event.impact === 'DOWN').length
+      const strongCount = badge ? badge.strongCount : items.filter((event) => event.intensity >= 0.6).length
+      const matchesFilter = badgeFilter === 'all'
+        || (badgeFilter === 'critical' && criticalCount > 0)
+        || (badgeFilter === 'strong' && strongCount > 0)
+      if (items.length && matchesFilter) list.push({ date: dateKey, events: items })
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    }
+    return list
+  }, [badgeFilter, dailyBadges, eventsByDate, rangeFrom, rangeTo])
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Eventos do periodo</Text>
+      <View style={styles.filters}>
+        <TouchableOpacity
+          style={[styles.filterButton, badgeFilter === 'all' && styles.filterButtonActive]}
+          onPress={() => setBadgeFilter('all')}
+        >
+          <Text style={[styles.filterText, badgeFilter === 'all' && styles.filterTextActive]}>Todos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, badgeFilter === 'critical' && styles.filterButtonActive]}
+          onPress={() => setBadgeFilter('critical')}
+        >
+          <Text style={[styles.filterText, badgeFilter === 'critical' && styles.filterTextActive]}>Criticos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, badgeFilter === 'strong' && styles.filterButtonActive]}
+          onPress={() => setBadgeFilter('strong')}
+        >
+          <Text style={[styles.filterText, badgeFilter === 'strong' && styles.filterTextActive]}>Fortes</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={periodList}
+        keyExtractor={(item) => item.date}
+        renderItem={({ item }) => {
+          const dateObj = parseUTCDateString(item.date)
+          const header = dateObj ? formatDateShort(dateObj) : item.date
+          return (
+            <View style={styles.dayBlock}>
+              <Text style={styles.dayTitle}>{header}</Text>
+              {item.events.map((event) => (
+                <View key={event.id} style={styles.eventCard}>
+                  <Text style={styles.eventTitle}>{event.shortText}</Text>
+                  <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
+                </View>
+              ))}
+            </View>
+          )
+        }}
+        ListEmptyComponent={<Text style={styles.emptyText}>Sem eventos no periodo.</Text>}
+      />
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0F0F23',
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#1C1C1E',
+  },
+  filterButtonActive: {
+    backgroundColor: '#FFD700',
+  },
+  filterText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterTextActive: {
+    color: '#0F0F23',
+  },
+  dayBlock: {
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#1C1C1E',
+  },
+  dayTitle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  eventCard: {
+    paddingVertical: 6,
+  },
+  eventTitle: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  eventMeta: {
+    color: '#B0B0B0',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  emptyText: {
+    color: '#808080',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+})

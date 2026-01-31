@@ -18,6 +18,7 @@ import NotificationPreferencesScreen from "../screens/settings/NotificationPrefe
 import PremiumScreen from "../screens/premium/PremiumScreen"
 import NotificationsScreen from "../screens/notifications/NotificationsScreen"
 import ForecastScreen from "../screens/forecast/ForecastScreen"
+import ForecastPeriodEventsScreen from "../screens/forecast/ForecastPeriodEventsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
 import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
@@ -268,6 +269,11 @@ function RootNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
+      <RootStack.Screen
+        name="ForecastPeriodEvents"
+        component={ForecastPeriodEventsScreen}
+        options={{ headerShown: true, title: "Eventos do periodo", headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
+      />
       <RootStack.Screen
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}
