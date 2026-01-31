@@ -518,6 +518,14 @@ export default function ForecastScreen() {
     }
   }, [seriesSorted])
 
+  const periodIndexText = useMemo(() => {
+    if (!selectedDateKey || !rangeFromStr || !rangeToStr) return null
+    const index = diffDaysUTC(parseUTCDateString(rangeFromStr)!, parseUTCDateString(selectedDateKey)!)
+    if (!Number.isFinite(index)) return null
+    const total = diffDaysUTC(parseUTCDateString(rangeFromStr)!, parseUTCDateString(rangeToStr)!) + 1
+    return `Dia ${index + 1} de ${total} no periodo`
+  }, [selectedDateKey, rangeFromStr, rangeToStr])
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -698,6 +706,9 @@ export default function ForecastScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+            {periodIndexText && (
+              <Text style={styles.periodIndexText}>{periodIndexText}</Text>
+            )}
             {lastStatusUpdatedAt && (
               <Text style={styles.updatedAtText}>
                 Atualizado agora
@@ -1108,6 +1119,11 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 11,
     marginBottom: 8,
+  },
+  periodIndexText: {
+    color: '#B0B0B0',
+    fontSize: 11,
+    marginBottom: 4,
   },
   domainRow: {
     flexDirection: 'row',
