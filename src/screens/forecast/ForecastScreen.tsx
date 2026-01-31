@@ -608,6 +608,46 @@ export default function ForecastScreen() {
       .sort((a, b) => a.date.localeCompare(b.date))
   }, [criticalCountsByDate])
 
+  const formatEventAreas = useCallback((domains: string[]) => {
+    if (!Array.isArray(domains)) return ''
+    const normalized = domains.map((domain) => normalizeDomain(domain)).filter(Boolean)
+    const unique = Array.from(new Set(normalized))
+    const ordered = AREA_ORDER.filter((area) => unique.includes(area))
+    return ordered.map((area) => formatDomainLabel(area)).join(', ')
+  }, [])
+
+  const buildEventDetailLines = useCallback((event: ForecastEvent, dateKey: string | null) => {
+    if (!dateKey) return []
+    const selectedDateObj = parseUTCDateString(dateKey)
+    if (!selectedDateObj) return []
+    const startDateObj = parseUTCDateString(event.startAt.slice(0, 10))
+    const exactDateObj = parseUTCDateString(event.exactAt.slice(0, 10))
+    const endDateObj = parseUTCDateString(event.endAt.slice(0, 10))
+    const lines: string[] = []
+    if (startDateObj && endDateObj) {
+      lines.push(`Janela ${formatDateShortNoYear(startDateObj)} - ${formatDateShortNoYear(endDateObj)}`)
+    }
+    if (startDateObj) {
+      lines.push(formatEventTiming('Comeca', diffDaysUTC(selectedDateObj, startDateObj)))
+    }
+    if (exactDateObj) {
+      lines.push(formatEventTiming('Pico', diffDaysUTC(selectedDateObj, exactDateObj)))
+    }
+    if (endDateObj) {
+      lines.push(formatEventTiming('Termina', diffDaysUTC(selectedDateObj, endDateObj)))
+    }
+    const intensity = Math.round(event.intensity * 100)
+    lines.push(`Intensidade ${intensity}%`)
+    if (typeof event.orbMax === 'number') {
+      lines.push(`Orb ${event.orbMax.toFixed(1)} deg`)
+    }
+    const areas = formatEventAreas(event.domains || [])
+    if (areas) {
+      lines.push(`Afeta: ${areas}`)
+    }
+    return lines
+  }, [formatEventAreas])
+
   const selectedDateKey = selectedDate
   const selectedDateObj = selectedDateKey ? parseUTCDateString(selectedDateKey) : null
   const selectedMonthKey = selectedDateKey ? selectedDateKey.slice(0, 7) : null
@@ -776,46 +816,6 @@ export default function ForecastScreen() {
     const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
     AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload: periodEventsList })).catch(() => null)
   }, [showPeriodEvents, periodDays, user?.uid, rangeFromStr, rangeToStr, badgeFilter, periodEventsList])
-
-  const formatEventAreas = useCallback((domains: string[]) => {
-    if (!Array.isArray(domains)) return ''
-    const normalized = domains.map((domain) => normalizeDomain(domain)).filter(Boolean)
-    const unique = Array.from(new Set(normalized))
-    const ordered = AREA_ORDER.filter((area) => unique.includes(area))
-    return ordered.map((area) => formatDomainLabel(area)).join(', ')
-  }, [])
-
-  const buildEventDetailLines = useCallback((event: ForecastEvent, dateKey: string | null) => {
-    if (!dateKey) return []
-    const selectedDateObj = parseUTCDateString(dateKey)
-    if (!selectedDateObj) return []
-    const startDateObj = parseUTCDateString(event.startAt.slice(0, 10))
-    const exactDateObj = parseUTCDateString(event.exactAt.slice(0, 10))
-    const endDateObj = parseUTCDateString(event.endAt.slice(0, 10))
-    const lines: string[] = []
-    if (startDateObj && endDateObj) {
-      lines.push(`Janela ${formatDateShortNoYear(startDateObj)} - ${formatDateShortNoYear(endDateObj)}`)
-    }
-    if (startDateObj) {
-      lines.push(formatEventTiming('Comeca', diffDaysUTC(selectedDateObj, startDateObj)))
-    }
-    if (exactDateObj) {
-      lines.push(formatEventTiming('Pico', diffDaysUTC(selectedDateObj, exactDateObj)))
-    }
-    if (endDateObj) {
-      lines.push(formatEventTiming('Termina', diffDaysUTC(selectedDateObj, endDateObj)))
-    }
-    const intensity = Math.round(event.intensity * 100)
-    lines.push(`Intensidade ${intensity}%`)
-    if (typeof event.orbMax === 'number') {
-      lines.push(`Orb ${event.orbMax.toFixed(1)}°`)
-    }
-    const areas = formatEventAreas(event.domains || [])
-    if (areas) {
-      lines.push(`Afeta: ${areas}`)
-    }
-    return lines
-  }, [formatEventAreas])
 
   const toggleEventDetails = useCallback((eventId: string) => {
     setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
@@ -1855,3 +1855,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 })
+
+
