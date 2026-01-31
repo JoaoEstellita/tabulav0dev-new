@@ -200,6 +200,7 @@ export default function ForecastScreen() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [onlyStrongEvents, setOnlyStrongEvents] = useState(false)
+  const [hideMixedImpact, setHideMixedImpact] = useState(false)
   const [showFilterHint, setShowFilterHint] = useState(false)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
@@ -441,9 +442,11 @@ export default function ForecastScreen() {
   const filteredByDomain = selectedDomainKey
     ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
     : selectedEventsRaw
-  const selectedEvents = onlyStrongEvents
-    ? filteredByDomain.filter((event) => event.intensity >= 0.6)
-    : filteredByDomain
+  const selectedEvents = filteredByDomain.filter((event) => {
+    if (onlyStrongEvents && event.intensity < 0.6) return false
+    if (hideMixedImpact && event.impact === 'MIXED') return false
+    return true
+  })
 
   useEffect(() => {
     if (!selectedDateKey) return
@@ -782,6 +785,11 @@ export default function ForecastScreen() {
                     {onlyStrongEvents ? 'Eventos fortes' : 'Todos'}
                   </Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.filterToggle} onPress={() => setHideMixedImpact((prev) => !prev)}>
+                  <Text style={styles.filterToggleText}>
+                    {hideMixedImpact ? 'Ocultar mistos' : 'Impacto misto'}
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.filterHintButton}
                   onPress={() => setShowFilterHint((prev) => !prev)}
@@ -792,7 +800,7 @@ export default function ForecastScreen() {
             </View>
             {showFilterHint && (
               <Text style={styles.filterHintText}>
-                Eventos fortes = intensidade maior ou igual a 60%.
+                Eventos fortes = intensidade maior ou igual a 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
               </Text>
             )}
             {selectedEvents.length === 0 && (
