@@ -14,6 +14,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import GroupService, { type Group } from '../services/firebase/GroupService'
 import { db } from '../config/firebase'
+import {
+  LIFE_AREA_COLORS,
+  LIFE_AREA_ICONS,
+  LIFE_AREA_LABELS,
+  LIFE_AREA_ORDER,
+} from '../constants/lifeAreas'
 
 export interface GroupNotificationSettingsProps {
   visible: boolean
@@ -114,18 +120,16 @@ const defaultSettings: GroupNotificationSettings = {
   priority: 'all',
 }
 
-const lifeAreaLabels: Record<keyof LifeAreaState, { label: string; icon: string; color: string }> = {
-  amor: { label: 'Amor', icon: 'heart', color: '#FF69B4' },
-  carreira: { label: 'Carreira', icon: 'briefcase', color: '#4A90E2' },
-  financas: { label: 'Financas', icon: 'cash', color: '#4CAF50' },
-  saude: { label: 'Saude', icon: 'medkit', color: '#FF9800' },
-  familia: { label: 'Familia', icon: 'home', color: '#9C27B0' },
-  espiritualidade: { label: 'Espiritualidade', icon: 'sparkles', color: '#673AB7' },
-  comunicacao: { label: 'Comunicacao', icon: 'chatbubble', color: '#00BCD4' },
-  transformacao: { label: 'Transformacao', icon: 'sync', color: '#FF5722' },
-}
+const lifeAreaLabels: Record<keyof LifeAreaState, { label: string; icon: string; color: string }> = LIFE_AREA_ORDER
+  .reduce((acc, key) => {
+    const label = LIFE_AREA_LABELS[key] || key
+    const icon = LIFE_AREA_ICONS[key] || 'help-circle'
+    const color = LIFE_AREA_COLORS[key]?.[0] || '#FFD700'
+    acc[key as keyof LifeAreaState] = { label, icon, color }
+    return acc
+  }, {} as Record<keyof LifeAreaState, { label: string; icon: string; color: string }>)
 
-const LIFE_AREAS = Object.keys(defaultLifeAreas)
+const LIFE_AREAS = LIFE_AREA_ORDER
 
 const buildLifeAreasState = (enabled?: string[]): LifeAreaState => ({
   amor: enabled ? enabled.includes('amor') : true,

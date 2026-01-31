@@ -6,6 +6,13 @@ import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
 import { Calendar } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import LifeAreaCard from '../../components/LifeAreaCard'
+import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
+import {
+  LIFE_AREA_LABELS,
+  LIFE_AREA_ORDER,
+  normalizeLifeArea,
+} from '../../constants/lifeAreas'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -60,36 +67,6 @@ type ForecastResponse = {
 
 const PERIODS = [7, 30, 90, 365]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-const AREA_ORDER = [
-  'amor',
-  'carreira',
-  'financas',
-  'saude',
-  'familia',
-  'espiritualidade',
-  'comunicacao',
-  'transformacao',
-]
-const DOMAIN_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Financas',
-  saude: 'Saude',
-  familia: 'Familia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicacao',
-  transformacao: 'Transformacao',
-}
-const DOMAIN_COLORS: Record<string, string> = {
-  amor: '#FF6B9D',
-  carreira: '#4ECDC4',
-  financas: '#FFD93D',
-  saude: '#96E6A1',
-  familia: '#FF9F40',
-  espiritualidade: '#B19CD9',
-  comunicacao: '#60A5FA',
-  transformacao: '#F472B6',
-}
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
 const FORECAST_STRENGTH_FILTER_KEY = 'forecast_strength_filter'
@@ -97,19 +74,21 @@ const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
+const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
+const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_PERIOD_EVENTS_CACHE_PREFIX = 'forecast_period_events_v1'
 const FORECAST_PERIOD_EVENTS_CACHE_TTL_MS = 30 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
-  if (score < 40) return 'Critico'
-  if (score >= 70) return 'Positivo'
+  if (score < STATUS_THRESHOLDS.criticalBelow) return 'Critico'
+  if (score >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
   return 'Neutro'
 }
 
 function scoreColor(score: number) {
-  if (score < 40) return '#FF6B6B'
-  if (score >= 70) return '#4ECDC4'
+  if (score < STATUS_THRESHOLDS.criticalBelow) return '#FF6B6B'
+  if (score >= STATUS_THRESHOLDS.positiveAbove) return '#4ECDC4'
   return '#FFD166'
 }
 
@@ -143,10 +122,6 @@ function formatDateShortNoYear(date: Date) {
   return `${day} ${month}`
 }
 
-function normalizeDomain(value: string) {
-  return String(value || '').trim().toLowerCase()
-}
-
 function impactLabel(impact: ForecastEvent['impact']) {
   if (impact === 'UP') return 'Positivo'
   if (impact === 'DOWN') return 'Desafiador'
@@ -154,8 +129,8 @@ function impactLabel(impact: ForecastEvent['impact']) {
 }
 
 function formatDomainLabel(domain: string) {
-  const key = normalizeDomain(domain)
-  if (DOMAIN_LABELS[key]) return DOMAIN_LABELS[key]
+  const key = normalizeLifeArea(domain) || String(domain || '').trim().toLowerCase()
+  if (LIFE_AREA_LABELS[key]) return LIFE_AREA_LABELS[key]
   if (!key) return 'Area'
   return key.charAt(0).toUpperCase() + key.slice(1)
 }
@@ -261,6 +236,223 @@ const MemoDomainChip = React.memo(function MemoDomainChip({
   )
 })
 
+const MemoDaySummary = React.memo(function MemoDaySummary({
+  isLoading,
+  dayStatus,
+  selectedPoint,
+  lifeAreaCards,
+  selectedDomainKey,
+  onSelectDomain,
+  lastStatusUpdatedAt,
+}: {
+  isLoading: boolean
+  dayStatus: DayStatusResponse | null
+  selectedPoint: ForecastSeriesPoint | null
+  lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
+  selectedDomainKey: string | null
+  onSelectDomain: (domain: string | null) => void
+  lastStatusUpdatedAt: string | null
+}) {
+  const score = typeof dayStatus?.global?.score === 'number'
+    ? dayStatus.global.score
+    : typeof selectedPoint?.score === 'number'
+    ? selectedPoint.score
+    : null
+
+  return (
+    <View style={styles.dayPanelCard}>
+      <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+      {isLoading ? (
+        <View style={styles.daySkeleton}>
+          <View style={styles.daySkeletonLine} />
+          <View style={styles.daySkeletonLineShort} />
+          <View style={styles.daySkeletonLine} />
+        </View>
+      ) : score !== null ? (
+        <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
+          {score} {labelFromScoreValue(score)}
+        </Text>
+      ) : (
+        <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
+      )}
+      {lastStatusUpdatedAt && (
+        <Text style={styles.updatedAtText}>Atualizado agora</Text>
+      )}
+
+      <View style={styles.domainSection}>
+        <Text style={styles.dayPanelLabel}>Status por area</Text>
+        <View style={styles.domainRow}>
+          <MemoDomainChip
+            label="Todos"
+            active={!selectedDomainKey}
+            onPress={() => onSelectDomain(null)}
+          />
+        </View>
+        <View style={styles.areaCardGrid}>
+          {lifeAreaCards.map((item) => {
+            const isActive = selectedDomainKey === item.domain
+            return (
+              <View
+                key={item.domain}
+                style={[styles.areaCardWrapper, isActive && styles.areaCardSelected]}
+              >
+                <LifeAreaCard
+                  compact
+                  area={{
+                    name: item.domain,
+                    status: item.score as any,
+                    trend: 'stable',
+                    description: '',
+                    criticalLevel: item.critical,
+                  } as any}
+                  transitCount={0}
+                  transitCount={item.transitCount}
+                  onPress={() => onSelectDomain(item.domain)}
+                />
+              </View>
+            )
+          })}
+        </View>
+      </View>
+    </View>
+  )
+})
+
+const MemoDayEvents = React.memo(function MemoDayEvents({
+  effectiveEventStrengthFilter,
+  hideMixedImpact,
+  showFilterHint,
+  selectedEvents,
+  eventDisplayData,
+  expandedEvents,
+  dayEventsLimit,
+  showAllDayEvents,
+  onToggleEvent,
+  onToggleShowAll,
+  onSetStrengthFilter,
+  onToggleMixed,
+  onToggleHint,
+}: {
+  effectiveEventStrengthFilter: 'all' | 'strong' | 'light'
+  hideMixedImpact: boolean
+  showFilterHint: boolean
+  selectedEvents: ForecastEvent[]
+  eventDisplayData: Array<{ event: ForecastEvent; expanded: boolean; phase: { label: string; meta: string } | null; detailLines: string[] }>
+  expandedEvents: Record<string, boolean>
+  dayEventsLimit: number
+  showAllDayEvents: boolean
+  onToggleEvent: (eventId: string) => void
+  onToggleShowAll: () => void
+  onSetStrengthFilter: (value: 'all' | 'strong' | 'light') => void
+  onToggleMixed: () => void
+  onToggleHint: () => void
+}) {
+  return (
+    <View>
+      <View style={styles.eventHeaderRow}>
+        <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
+        <View style={styles.filterActions}>
+          <TouchableOpacity
+            style={[
+              styles.filterToggle,
+              effectiveEventStrengthFilter === 'all' && styles.filterToggleActive,
+            ]}
+            onPress={() => onSetStrengthFilter('all')}
+          >
+            <Text style={[
+              styles.filterToggleText,
+              effectiveEventStrengthFilter === 'all' && styles.filterToggleTextActive,
+            ]}>
+              Todos
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterToggle,
+              effectiveEventStrengthFilter === 'strong' && styles.filterToggleActive,
+            ]}
+            onPress={() => onSetStrengthFilter('strong')}
+          >
+            <Text style={[
+              styles.filterToggleText,
+              effectiveEventStrengthFilter === 'strong' && styles.filterToggleTextActive,
+            ]}>
+              Fortes
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterToggle,
+              effectiveEventStrengthFilter === 'light' && styles.filterToggleActive,
+            ]}
+            onPress={() => onSetStrengthFilter('light')}
+          >
+            <Text style={[
+              styles.filterToggleText,
+              effectiveEventStrengthFilter === 'light' && styles.filterToggleTextActive,
+            ]}>
+              Leves
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterToggle} onPress={onToggleMixed}>
+            <Text style={styles.filterToggleText}>
+              {hideMixedImpact ? 'Ocultar mistos' : 'Impacto misto'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterHintButton}
+            onPress={onToggleHint}
+          >
+            <Ionicons name="help-circle" size={14} color="#FFD700" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      {showFilterHint && (
+        <Text style={styles.filterHintText}>
+          Fortes = intensidade maior ou igual a 60%. Leves = abaixo de 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
+        </Text>
+      )}
+      {selectedEvents.length === 0 && (
+        <Text style={styles.emptyText}>
+          {effectiveEventStrengthFilter === 'strong'
+            ? 'Sem eventos fortes neste dia.'
+            : effectiveEventStrengthFilter === 'light'
+            ? 'Sem eventos leves neste dia.'
+            : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
+        </Text>
+      )}
+      <FlatList
+        data={eventDisplayData}
+        keyExtractor={(item) => item.event.id}
+        renderItem={({ item }) => (
+          <MemoEventCard
+            event={item.event}
+            phase={item.phase}
+            detailLines={item.detailLines}
+            expanded={!!expandedEvents[item.event.id]}
+            onToggle={() => onToggleEvent(item.event.id)}
+          />
+        )}
+        scrollEnabled={false}
+        removeClippedSubviews
+        windowSize={5}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+      />
+      {selectedEvents.length > dayEventsLimit && (
+        <TouchableOpacity
+          style={styles.showMoreButton}
+          onPress={onToggleShowAll}
+        >
+          <Text style={styles.showMoreText}>
+            {showAllDayEvents ? 'Ver menos' : `Ver mais (${selectedEvents.length - dayEventsLimit})`}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  )
+})
+
 export default function ForecastScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
@@ -270,11 +462,10 @@ export default function ForecastScreen() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ForecastResponse | null>(null)
   const [dayStatusByDate, setDayStatusByDate] = useState<Record<string, DayStatusResponse>>({})
-  const [dayStatusLoading, setDayStatusLoading] = useState(false)
+  const [dayStatusLoadingDate, setDayStatusLoadingDate] = useState<string | null>(null)
   const [limitedBanner, setLimitedBanner] = useState(false)
   const [missingBirthData, setMissingBirthData] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [pendingDate, setPendingDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [eventStrengthFilter, setEventStrengthFilter] = useState<'all' | 'strong' | 'light'>('all')
@@ -289,10 +480,8 @@ export default function ForecastScreen() {
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
-  const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
-  const pendingDayPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
   const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -375,6 +564,22 @@ export default function ForecastScreen() {
         }
       }
       if (payload.range?.from && payload.range?.to) {
+        const rangeCacheKey = `${FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX}:${user.uid}:${payload.range.from}:${payload.range.to}`
+        try {
+          const cachedRangeRaw = await AsyncStorage.getItem(rangeCacheKey)
+          if (cachedRangeRaw) {
+            const cachedRange = JSON.parse(cachedRangeRaw)
+            const cachedAt = Number(cachedRange?.cachedAt || 0)
+            const cachedPayload = cachedRange?.payload as Record<string, DayStatusResponse> | undefined
+            if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS) {
+              setDayStatusByDate(cachedPayload)
+              setLastStatusUpdatedAt(new Date().toISOString())
+              return
+            }
+          }
+        } catch (_) {
+          // ignore cache errors
+        }
         const rangeUrl = `${BACKEND_URL}/api/forecast-status-range?userId=${encodeURIComponent(user.uid)}&from=${payload.range.from}&to=${payload.range.to}`
         try {
           const rangeResp = await fetch(rangeUrl, {
@@ -392,6 +597,7 @@ export default function ForecastScreen() {
             })
           setDayStatusByDate(nextMap)
           setLastStatusUpdatedAt(new Date().toISOString())
+          AsyncStorage.setItem(rangeCacheKey, JSON.stringify({ cachedAt: Date.now(), payload: nextMap })).catch(() => null)
         }
       } catch (rangeError) {
         console.warn('Day status range fetch failed', rangeError)
@@ -432,7 +638,7 @@ export default function ForecastScreen() {
   const domainSeriesByDate = useMemo(() => {
     const map: Record<string, Record<string, ForecastSeriesPoint>> = {}
     Object.entries(seriesByDomain).forEach(([domain, points]) => {
-      const key = normalizeDomain(domain)
+      const key = normalizeLifeArea(domain)
       if (!key) return
       map[key] = {}
       points.forEach((point) => {
@@ -537,11 +743,12 @@ export default function ForecastScreen() {
     AsyncStorage.setItem(FORECAST_STRENGTH_FILTER_KEY, eventStrengthFilter).catch(() => null)
   }, [eventStrengthFilter])
 
-  const fetchDayStatus = useCallback(async (dateKey: string) => {
+  const fetchDayStatus = useCallback(async (dateKey: string, markLoading: boolean = false) => {
     if (!user?.uid) return
     if (dayStatusByDate[dateKey]) return
     if (inFlightDayStatusRef.current.has(dateKey)) return
     inFlightDayStatusRef.current.add(dateKey)
+    if (markLoading) setDayStatusLoadingDate(dateKey)
     const cacheKey = `${FORECAST_DAY_STATUS_CACHE_PREFIX}:${user.uid}:${dateKey}`
     try {
       const cachedRaw = await AsyncStorage.getItem(cacheKey)
@@ -551,13 +758,15 @@ export default function ForecastScreen() {
         const cachedPayload = cached?.payload as DayStatusResponse | undefined
         if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_DAY_STATUS_CACHE_TTL_MS) {
           setDayStatusByDate((prev) => ({ ...prev, [dateKey]: cachedPayload }))
+          if (markLoading) {
+            setDayStatusLoadingDate((prev) => (prev === dateKey ? null : prev))
+          }
           return
         }
       }
     } catch (_) {
       // ignore cache errors
     }
-    setDayStatusLoading(true)
     try {
       const token = await user.getIdToken()
       const url = `${BACKEND_URL}/api/forecast-status-day?userId=${encodeURIComponent(user.uid)}&date=${dateKey}`
@@ -576,16 +785,21 @@ export default function ForecastScreen() {
       console.warn('Day status fetch failed', err?.message || err)
     } finally {
       inFlightDayStatusRef.current.delete(dateKey)
-      setDayStatusLoading(false)
+      if (markLoading) {
+        setDayStatusLoadingDate((prev) => (prev === dateKey ? null : prev))
+      }
     }
   }, [user?.uid, dayStatusByDate])
 
   const handleSelectDate = useCallback((dateKey: string) => {
-    setPendingDate(dateKey)
-    if (dateKey === selectedDate && !dayStatusByDate[dateKey]) {
-      fetchDayStatus(dateKey)
+    setSelectedDomain(null)
+    setSelectedDate(dateKey)
+    if (!dayStatusByDate[dateKey]) {
+      fetchDayStatus(dateKey, true)
+    } else {
+      setDayStatusLoadingDate(null)
     }
-  }, [dayStatusByDate, fetchDayStatus, selectedDate])
+  }, [dayStatusByDate, fetchDayStatus])
 
   const handleCalendarPress = useCallback((dateKey: string) => {
     if (!isDateInRange(dateKey)) {
@@ -677,9 +891,9 @@ export default function ForecastScreen() {
 
   const formatEventAreas = useCallback((domains: string[]) => {
     if (!Array.isArray(domains)) return ''
-    const normalized = domains.map((domain) => normalizeDomain(domain)).filter(Boolean)
+    const normalized = domains.map((domain) => normalizeLifeArea(domain)).filter(Boolean)
     const unique = Array.from(new Set(normalized))
-    const ordered = AREA_ORDER.filter((area) => unique.includes(area))
+    const ordered = LIFE_AREA_ORDER.filter((area) => unique.includes(area))
     return ordered.map((area) => formatDomainLabel(area)).join(', ')
   }, [])
 
@@ -728,7 +942,7 @@ export default function ForecastScreen() {
     return selectedDateKey
   }, [selectedDateKey, effectiveGranularity])
   const selectedPoint = selectedSeriesKey ? seriesByDate[selectedSeriesKey] : null
-  const selectedDomainKey = selectedDomain ? normalizeDomain(selectedDomain) : null
+  const selectedDomainKey = selectedDomain ? normalizeLifeArea(selectedDomain) : null
   const dayStatus = selectedDateKey ? dayStatusByDate[selectedDateKey] : null
   const selectedEventsRaw = useMemo(() => {
     if (!selectedDateKey) return []
@@ -736,7 +950,7 @@ export default function ForecastScreen() {
   }, [selectedDateKey, eventsByDate])
   const selectedEvents = useMemo(() => {
     const filtered = selectedDomainKey
-      ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
+      ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeLifeArea(domain) === selectedDomainKey))
       : selectedEventsRaw
     return filtered.filter((event) => {
       if (effectiveEventStrengthFilter === 'strong' && event.intensity < 0.6) return false
@@ -745,6 +959,29 @@ export default function ForecastScreen() {
       return true
     })
   }, [effectiveEventStrengthFilter, hideMixedImpact, selectedDomainKey, selectedEventsRaw])
+  const lifeAreaCards = useMemo(() => {
+    return LIFE_AREA_ORDER.map((domain) => {
+      const statusArea = dayStatus?.lifeAreas?.[domain]
+      const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
+      const fallbackScore = typeof selectedPoint?.score === 'number' ? selectedPoint.score : null
+      const rawScore = typeof statusArea?.percentage === 'number'
+        ? statusArea.percentage
+        : typeof domainPoint?.score === 'number'
+        ? domainPoint.score
+        : fallbackScore
+      const score = typeof rawScore === 'number' ? Math.round(rawScore) : null
+      const transitCount = selectedEventsRaw.filter((event) =>
+        (event.domains || []).some((value) => normalizeLifeArea(value) === domain)
+      ).length
+      return {
+        domain,
+        score,
+        status: statusArea?.status || null,
+        critical: typeof rawScore === 'number' && rawScore < STATUS_THRESHOLDS.criticalBelow,
+        transitCount,
+      }
+    })
+  }, [dayStatus, domainSeriesByDate, selectedEventsRaw, selectedPoint, selectedSeriesKey])
   const dayEventsLimit = 6
   const visibleDayEvents = useMemo(() => {
     return showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
@@ -815,7 +1052,7 @@ export default function ForecastScreen() {
   useEffect(() => {
     if (!selectedDateKey) return
     if (!isDateInRange(selectedDateKey)) return
-    fetchDayStatus(selectedDateKey)
+    fetchDayStatus(selectedDateKey, true)
   }, [selectedDateKey, isDateInRange, fetchDayStatus])
 
   useEffect(() => {
@@ -836,33 +1073,6 @@ export default function ForecastScreen() {
       if (pendingPrefetchRef.current) clearTimeout(pendingPrefetchRef.current)
     }
   }, [selectedDateKey, fetchDayStatus, isDateInRange, periodDays])
-
-  useEffect(() => {
-    if (!pendingDate) return
-    if (pendingDayPrefetchRef.current) clearTimeout(pendingDayPrefetchRef.current)
-    pendingDayPrefetchRef.current = setTimeout(() => {
-      fetchDayStatus(pendingDate)
-    }, 150)
-    return () => {
-      if (pendingDayPrefetchRef.current) clearTimeout(pendingDayPrefetchRef.current)
-    }
-  }, [pendingDate, fetchDayStatus])
-
-  useEffect(() => {
-    if (!pendingDate) return
-    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
-    pendingTimerRef.current = setTimeout(() => {
-      const applySelection = () => {
-        setSelectedDomain(null)
-        setSelectedDate(pendingDate)
-        setPendingDate(null)
-      }
-      InteractionManager.runAfterInteractions(applySelection)
-    }, 80)
-    return () => {
-      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
-    }
-  }, [pendingDate])
 
   useEffect(() => {
     if (!pendingEventStrengthFilter) return
@@ -1079,7 +1289,7 @@ export default function ForecastScreen() {
                 const now = new Date()
                 const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
-                  setSelectedDate(todayKey)
+                  handleSelectDate(todayKey)
                 } else if (!hasExtendedForecast) {
                   Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
                   navigation.navigate('Premium' as never)
@@ -1187,168 +1397,31 @@ export default function ForecastScreen() {
             {periodIndexText && (
               <Text style={styles.periodIndexText}>{periodIndexText}</Text>
             )}
-            {lastStatusUpdatedAt && (
-              <Text style={styles.updatedAtText}>
-                Atualizado agora
-              </Text>
-            )}
-            {selectedPoint ? (
-              <View style={styles.dayPanelCard}>
-                <Text style={styles.dayPanelLabel}>Resumo do dia</Text>
-                {(dayStatusLoading || pendingDate) ? (
-                  <View style={styles.daySkeleton}>
-                    <View style={styles.daySkeletonLine} />
-                    <View style={styles.daySkeletonLineShort} />
-                  </View>
-                ) : (() => {
-                  const score = typeof dayStatus?.global?.score === 'number' ? dayStatus.global.score : selectedPoint.score
-                  if (typeof score !== 'number') {
-                    return <Text style={styles.emptyText}>Sem status para este dia.</Text>
-                  }
-                  return (
-                    <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
-                      {score} {labelFromScoreValue(score)}
-                    </Text>
-                  )
-                })()}
-              </View>
-            ) : (
-              <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
-            )}
-
-            <View style={styles.domainSection}>
-              <Text style={styles.dayPanelLabel}>Status por area</Text>
-              <View style={styles.domainRow}>
-                <MemoDomainChip
-                  label="Todos"
-                  active={!selectedDomainKey}
-                  onPress={() => handleSelectDomain(null)}
-                />
-                {AREA_ORDER.map((domain) => {
-                  const domainPoint = selectedSeriesKey ? domainSeriesByDate[domain]?.[selectedSeriesKey] : null
-                  const statusArea = dayStatus?.lifeAreas?.[domain]
-                  const fallbackScore = typeof selectedPoint?.score === 'number' ? selectedPoint.score : null
-                  const chipScore = typeof statusArea?.percentage === 'number'
-                    ? statusArea.percentage
-                    : typeof domainPoint?.score === 'number'
-                    ? domainPoint.score
-                    : fallbackScore
-                  const chipLabel = `${formatDomainLabel(domain)} ${typeof chipScore === 'number' ? chipScore : '—'}`
-                  const isActive = selectedDomainKey === domain
-                  const chipColor = DOMAIN_COLORS[domain] || '#2A2A2E'
-                  return (
-                    <MemoDomainChip
-                      key={domain}
-                      label={chipLabel}
-                      active={isActive}
-                      color={chipColor}
-                      onPress={() => handleSelectDomain(domain)}
-                    />
-                  )
-                })}
-              </View>
-            </View>
-
-            <View style={styles.eventHeaderRow}>
-              <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
-              <View style={styles.filterActions}>
-                <TouchableOpacity
-                  style={[
-                    styles.filterToggle,
-                    effectiveEventStrengthFilter === 'all' && styles.filterToggleActive,
-                  ]}
-                  onPress={() => setPendingEventStrengthFilter('all')}
-                >
-                  <Text style={[
-                    styles.filterToggleText,
-                    effectiveEventStrengthFilter === 'all' && styles.filterToggleTextActive,
-                  ]}>
-                    Todos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterToggle,
-                    effectiveEventStrengthFilter === 'strong' && styles.filterToggleActive,
-                  ]}
-                  onPress={() => setPendingEventStrengthFilter('strong')}
-                >
-                  <Text style={[
-                    styles.filterToggleText,
-                    effectiveEventStrengthFilter === 'strong' && styles.filterToggleTextActive,
-                  ]}>
-                    Fortes
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterToggle,
-                    effectiveEventStrengthFilter === 'light' && styles.filterToggleActive,
-                  ]}
-                  onPress={() => setPendingEventStrengthFilter('light')}
-                >
-                  <Text style={[
-                    styles.filterToggleText,
-                    effectiveEventStrengthFilter === 'light' && styles.filterToggleTextActive,
-                  ]}>
-                    Leves
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.filterToggle} onPress={() => setHideMixedImpact((prev) => !prev)}>
-                  <Text style={styles.filterToggleText}>
-                    {hideMixedImpact ? 'Ocultar mistos' : 'Impacto misto'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.filterHintButton}
-                  onPress={() => setShowFilterHint((prev) => !prev)}
-                >
-                  <Ionicons name="help-circle" size={14} color="#FFD700" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            {showFilterHint && (
-              <Text style={styles.filterHintText}>
-                Fortes = intensidade maior ou igual a 60%. Leves = abaixo de 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
-              </Text>
-            )}
-            {selectedEvents.length === 0 && (
-              <Text style={styles.emptyText}>
-                {effectiveEventStrengthFilter === 'strong'
-                  ? 'Sem eventos fortes neste dia.'
-                  : effectiveEventStrengthFilter === 'light'
-                  ? 'Sem eventos leves neste dia.'
-                  : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
-              </Text>
-            )}
-            <FlatList
-              data={eventDisplayData}
-              keyExtractor={(item) => item.event.id}
-              renderItem={({ item }) => (
-                <MemoEventCard
-                  event={item.event}
-                  phase={item.phase}
-                  detailLines={item.detailLines}
-                  expanded={!!expandedEvents[item.event.id]}
-                  onToggle={() => toggleEventDetails(item.event.id)}
-                />
-              )}
-              scrollEnabled={false}
-              removeClippedSubviews
-              windowSize={5}
-              initialNumToRender={6}
-              maxToRenderPerBatch={6}
+            <MemoDaySummary
+              isLoading={dayStatusLoadingDate === selectedDateKey}
+              dayStatus={dayStatus}
+              selectedPoint={selectedPoint}
+              lifeAreaCards={lifeAreaCards}
+              selectedDomainKey={selectedDomainKey}
+              onSelectDomain={handleSelectDomain}
+              lastStatusUpdatedAt={lastStatusUpdatedAt}
             />
-            {selectedEvents.length > dayEventsLimit && (
-              <TouchableOpacity
-                style={styles.showMoreButton}
-                onPress={() => setShowAllDayEvents((prev) => !prev)}
-              >
-                <Text style={styles.showMoreText}>
-                  {showAllDayEvents ? 'Ver menos' : `Ver mais (${selectedEvents.length - dayEventsLimit})`}
-                </Text>
-              </TouchableOpacity>
-            )}
+
+            <MemoDayEvents
+              effectiveEventStrengthFilter={effectiveEventStrengthFilter}
+              hideMixedImpact={hideMixedImpact}
+              showFilterHint={showFilterHint}
+              selectedEvents={selectedEvents}
+              eventDisplayData={eventDisplayData}
+              expandedEvents={expandedEvents}
+              dayEventsLimit={dayEventsLimit}
+              showAllDayEvents={showAllDayEvents}
+              onToggleEvent={toggleEventDetails}
+              onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
+              onSetStrengthFilter={setPendingEventStrengthFilter}
+              onToggleMixed={() => setHideMixedImpact((prev) => !prev)}
+              onToggleHint={() => setShowFilterHint((prev) => !prev)}
+            />
           </View>
 
           {weeklySummary && periodDays <= 30 && (
@@ -1939,6 +2012,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  areaCardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  areaCardWrapper: {
+    flexBasis: '48%',
+    maxWidth: '48%',
+  },
+  areaCardSelected: {
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 14,
   },
   domainChip: {
     paddingVertical: 6,

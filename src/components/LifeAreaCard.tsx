@@ -4,69 +4,22 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
+import {
+  LIFE_AREA_COLORS,
+  LIFE_AREA_ICONS,
+  LIFE_AREA_LABELS,
+} from '../constants/lifeAreas'
 
 interface LifeAreaCardProps {
   area: LifeArea
   onPress?: () => void
   calculationFactors?: string[]
   transitCount?: number
-}
-
-const AREA_ICONS: Record<string, string> = {
-  amor: 'heart',
-  carreira: 'briefcase',
-  financas: 'cash',
-  saude: 'fitness',
-  familia: 'people',
-  espiritualidade: 'flower',
-  comunicacao: 'chatbubble',
-  transformacao: 'refresh',
-  love: 'heart',
-  career: 'briefcase',
-  health: 'fitness',
-  family: 'people',
-  spirituality: 'flower',
-  finances: 'cash',
-  communication: 'chatbubble',
-  transformation: 'refresh',
-}
-
-const AREA_COLORS: Record<string, string[]> = {
-  amor: ['#FF6B9D', '#FF8E8E'],
-  carreira: ['#4ECDC4', '#44A08D'],
-  financas: ['#FFD93D', '#FF9F40'],
-  saude: ['#96E6A1', '#7BC142'],
-  familia: ['#FF9F40', '#FFD93D'],
-  espiritualidade: ['#B19CD9', '#8B5CF6'],
-  comunicacao: ['#60A5FA', '#3B82F6'],
-  transformacao: ['#F472B6', '#EC4899'],
-  love: ['#FF6B9D', '#FF8E8E'],
-  career: ['#4ECDC4', '#44A08D'],
-  health: ['#96E6A1', '#7BC142'],
-  family: ['#FFD93D', '#FF9F40'],
-  spirituality: ['#B19CD9', '#8B5CF6'],
-  finances: ['#FFD93D', '#FF9F40'],
-  communication: ['#60A5FA', '#3B82F6'],
-  transformation: ['#F472B6', '#EC4899'],
+  compact?: boolean
 }
 
 const translateAreaName = (name: string) => {
-  const translations = {
-    amor: 'Amor',
-    carreira: 'Carreira',
-    financas: 'Finanças',
-    saude: 'Saúde',
-    familia: 'Família',
-    espiritualidade: 'Espiritualidade',
-    comunicacao: 'Comunicação',
-    transformacao: 'Transformação',
-    love: 'Amor e Relacionamentos',
-    career: 'Carreira e Finanças',
-    health: 'Saúde e Bem-estar',
-    family: 'Família e Amizades',
-    spirituality: 'Espiritualidade e Crescimento',
-  }
-  return translations[name as keyof typeof translations] || name
+  return LIFE_AREA_LABELS[name as keyof typeof LIFE_AREA_LABELS] || name
 }
 
 export default function LifeAreaCard({
@@ -74,6 +27,7 @@ export default function LifeAreaCard({
   onPress,
   calculationFactors,
   transitCount = 0,
+  compact = false,
 }: LifeAreaCardProps) {
   const getStatusColor = (status: number) => {
     if (status >= STATUS_THRESHOLDS.positiveAbove) return '#10B981'
@@ -87,16 +41,17 @@ export default function LifeAreaCard({
     return 'Crítico'
   }
 
-  const areaColors = AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
-  const areaIcon = AREA_ICONS[area.name] || 'help-circle'
-  const statusValue = typeof area.status === 'number' ? area.status : 0
-  const statusColor = getStatusColor(statusValue)
+  const areaColors = LIFE_AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
+  const areaIcon = LIFE_AREA_ICONS[area.name] || 'help-circle'
+  const statusValue = Number.isFinite(area.status) ? area.status : null
+  const statusColor = typeof statusValue === 'number' ? getStatusColor(statusValue) : '#B0B0B0'
+  const statusText = typeof statusValue === 'number' ? getStatusText(statusValue) : '—'
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <LinearGradient
         colors={areaColors as any}
-        style={[styles.card, area.criticalLevel && styles.criticalCard]}
+        style={[styles.card, compact && styles.cardCompact, area.criticalLevel && styles.criticalCard]}
       >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
@@ -106,16 +61,20 @@ export default function LifeAreaCard({
             <Text style={styles.areaName} numberOfLines={1}>
               {translateAreaName(area.name)}
             </Text>
-            <Text style={styles.transitMeta} numberOfLines={1}>
-              Transitos: {transitCount}
-            </Text>
+            {!compact && (
+              <Text style={styles.transitMeta} numberOfLines={1}>
+                Transitos: {transitCount}
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.statusRow}>
-          <Text style={styles.statusNumber}>{statusValue}%</Text>
+        <View style={[styles.statusRow, compact && styles.statusRowCompact]}>
+          <Text style={styles.statusNumber}>
+            {typeof statusValue === 'number' ? `${statusValue}%` : '—'}
+          </Text>
           <Text style={[styles.statusText, { color: statusColor }]}>
-            {getStatusText(statusValue)}
+            {statusText}
           </Text>
         </View>
 
@@ -124,18 +83,19 @@ export default function LifeAreaCard({
             style={[
               styles.progressFill,
               {
-                width: `${Math.min(100, Math.max(0, statusValue))}%`,
+                width: `${typeof statusValue === 'number' ? Math.min(100, Math.max(0, statusValue)) : 0}%`,
                 backgroundColor: statusColor,
               },
             ]}
           />
         </View>
 
-
-        <View style={styles.ctaRow}>
-          <Text style={styles.ctaText}>Ver justificativas</Text>
-          <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-        </View>
+        {!compact && (
+          <View style={styles.ctaRow}>
+            <Text style={styles.ctaText}>Ver justificativas</Text>
+            <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
+          </View>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   )
@@ -152,6 +112,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     minHeight: 110,
+  },
+  cardCompact: {
+    padding: 10,
+    margin: 4,
+    minHeight: 88,
   },
   criticalCard: {
     borderWidth: 2,
@@ -188,6 +153,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     marginBottom: 6,
+  },
+  statusRowCompact: {
+    marginBottom: 4,
   },
   statusNumber: {
     fontSize: 20,
