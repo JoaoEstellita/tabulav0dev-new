@@ -52,6 +52,7 @@ type ForecastResponse = {
   events: ForecastEvent[]
   seriesByDomain?: Record<string, ForecastSeriesPoint[]>
   dailyCounts?: { critical?: Record<string, number>; strong?: Record<string, number> }
+  dailyBadges?: Record<string, { score: number | null; label: string | null; criticalCount: number; strongCount: number }>
   highlights?: { eventId: string; summary: string; impact: string; intensity: number }[]
   meta?: { cached?: boolean; limited?: boolean; premium?: boolean; rulesVersion?: string; durationMs?: number }
 }
@@ -95,6 +96,8 @@ const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
+const FORECAST_PERIOD_EVENTS_CACHE_PREFIX = 'forecast_period_events_v1'
+const FORECAST_PERIOD_EVENTS_CACHE_TTL_MS = 10 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -255,11 +258,14 @@ export default function ForecastScreen() {
   const [showFilterHint, setShowFilterHint] = useState(false)
   const [showPeriodEvents, setShowPeriodEvents] = useState(false)
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>('all')
+  const [pendingBadgeFilter, setPendingBadgeFilter] = useState<'all' | 'critical' | 'strong' | null>(null)
+  const [periodEventsCachedList, setPeriodEventsCachedList] = useState<{ date: string; events: ForecastEvent[] }[] | null>(null)
   const [periodEventsPage, setPeriodEventsPage] = useState(0)
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
@@ -419,6 +425,13 @@ export default function ForecastScreen() {
   }, [data?.events])
 
   const criticalCountsByDate = useMemo(() => {
+    if (data?.dailyBadges) {
+      const map: Record<string, number> = {}
+      Object.entries(data.dailyBadges).forEach(([key, value]) => {
+        if (typeof value?.criticalCount === 'number') map[key] = value.criticalCount
+      })
+      return map
+    }
     if (data?.dailyCounts?.critical) return data.dailyCounts.critical
     const counts: Record<string, number> = {}
     Object.entries(eventsByDate).forEach(([dateKey, items]) => {
@@ -426,13 +439,20 @@ export default function ForecastScreen() {
       if (criticalCount > 0) counts[dateKey] = criticalCount
     })
     return counts
-  }, [data?.dailyCounts?.critical, eventsByDate])
+  }, [data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
 
   const totalCriticalCount = useMemo(() => {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
   const strongCountsByDate = useMemo(() => {
+    if (data?.dailyBadges) {
+      const map: Record<string, number> = {}
+      Object.entries(data.dailyBadges).forEach(([key, value]) => {
+        if (typeof value?.strongCount === 'number') map[key] = value.strongCount
+      })
+      return map
+    }
     if (data?.dailyCounts?.strong) return data.dailyCounts.strong
     const counts: Record<string, number> = {}
     Object.entries(eventsByDate).forEach(([dateKey, items]) => {
@@ -440,7 +460,7 @@ export default function ForecastScreen() {
       if (strongCount > 0) counts[dateKey] = strongCount
     })
     return counts
-  }, [data?.dailyCounts?.strong, eventsByDate])
+  }, [data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
 
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
@@ -620,6 +640,7 @@ export default function ForecastScreen() {
   const visibleDayEvents = showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
 
   const periodEventsList = useMemo(() => {
+    if (periodEventsCachedList) return periodEventsCachedList
     if (!showPeriodEvents) return []
     if (!rangeFromStr || !rangeToStr) return []
     const list: { date: string; events: ForecastEvent[] }[] = []
@@ -638,7 +659,7 @@ export default function ForecastScreen() {
       cursor = addDaysUTC(cursor, 1)
     }
     return list
-  }, [badgeFilter, criticalCountsByDate, eventsByDate, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate])
+  }, [badgeFilter, criticalCountsByDate, eventsByDate, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate, periodEventsCachedList])
 
   const periodEventsPerPage = useMemo(() => {
     if (periodDays >= 365) return 10
@@ -686,8 +707,59 @@ export default function ForecastScreen() {
   }, [pendingDate])
 
   useEffect(() => {
+    if (!pendingBadgeFilter) return
+    if (pendingFilterTimerRef.current) clearTimeout(pendingFilterTimerRef.current)
+    pendingFilterTimerRef.current = setTimeout(() => {
+      setBadgeFilter(pendingBadgeFilter)
+      setPendingBadgeFilter(null)
+    }, 120)
+    return () => {
+      if (pendingFilterTimerRef.current) clearTimeout(pendingFilterTimerRef.current)
+    }
+  }, [pendingBadgeFilter])
+
+  useEffect(() => {
     setPeriodEventsPage(0)
   }, [badgeFilter, periodDays, showPeriodEvents])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    if (!showPeriodEvents) return
+    if (!rangeFromStr || !rangeToStr) return
+    if (periodDays < 90) {
+      setPeriodEventsCachedList(null)
+      return
+    }
+    const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
+    const loadCache = async () => {
+      try {
+        const cachedRaw = await AsyncStorage.getItem(cacheKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const cachedAt = Number(cached?.cachedAt || 0)
+          const cachedPayload = cached?.payload as { date: string; events: ForecastEvent[] }[] | undefined
+          if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_PERIOD_EVENTS_CACHE_TTL_MS) {
+            setPeriodEventsCachedList(cachedPayload)
+            return
+          }
+        }
+      } catch (_) {
+        // ignore cache errors
+      }
+      setPeriodEventsCachedList(null)
+    }
+    loadCache()
+  }, [user?.uid, showPeriodEvents, rangeFromStr, rangeToStr, periodDays, badgeFilter])
+
+  useEffect(() => {
+    if (!showPeriodEvents) return
+    if (periodDays < 90) return
+    if (!user?.uid) return
+    if (!rangeFromStr || !rangeToStr) return
+    if (!periodEventsList.length) return
+    const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
+    AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload: periodEventsList })).catch(() => null)
+  }, [showPeriodEvents, periodDays, user?.uid, rangeFromStr, rangeToStr, badgeFilter, periodEventsList])
 
   const formatEventAreas = useCallback((domains: string[]) => {
     if (!Array.isArray(domains)) return ''
@@ -895,30 +967,30 @@ export default function ForecastScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.calendarFilters}>
-            <TouchableOpacity
-              style={[styles.calendarFilterButton, badgeFilter === 'all' && styles.calendarFilterButtonActive]}
-              onPress={() => setBadgeFilter('all')}
-            >
-              <Text style={[styles.calendarFilterText, badgeFilter === 'all' && styles.calendarFilterTextActive]}>
-                Todos
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.calendarFilterButton, badgeFilter === 'critical' && styles.calendarFilterButtonActive]}
-              onPress={() => setBadgeFilter('critical')}
-            >
-              <Text style={[styles.calendarFilterText, badgeFilter === 'critical' && styles.calendarFilterTextActive]}>
-                Criticos
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.calendarFilterButton, badgeFilter === 'strong' && styles.calendarFilterButtonActive]}
-              onPress={() => setBadgeFilter('strong')}
-            >
-              <Text style={[styles.calendarFilterText, badgeFilter === 'strong' && styles.calendarFilterTextActive]}>
-                Fortes
-              </Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.calendarFilterButton, badgeFilter === 'all' && styles.calendarFilterButtonActive]}
+                  onPress={() => setPendingBadgeFilter('all')}
+                >
+                  <Text style={[styles.calendarFilterText, badgeFilter === 'all' && styles.calendarFilterTextActive]}>
+                    Todos
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.calendarFilterButton, badgeFilter === 'critical' && styles.calendarFilterButtonActive]}
+                  onPress={() => setPendingBadgeFilter('critical')}
+                >
+                  <Text style={[styles.calendarFilterText, badgeFilter === 'critical' && styles.calendarFilterTextActive]}>
+                    Criticos
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.calendarFilterButton, badgeFilter === 'strong' && styles.calendarFilterButtonActive]}
+                  onPress={() => setPendingBadgeFilter('strong')}
+                >
+                  <Text style={[styles.calendarFilterText, badgeFilter === 'strong' && styles.calendarFilterTextActive]}>
+                    Fortes
+                  </Text>
+                </TouchableOpacity>
           </View>
           <Text style={styles.badgeHint}>
             Badges: vermelho = criticos, amarelo = fortes (>= 60%).
