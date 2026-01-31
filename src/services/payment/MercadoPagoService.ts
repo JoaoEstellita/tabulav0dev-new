@@ -50,21 +50,35 @@ export class MercadoPagoService {
 
   static readonly PLANS: SubscriptionPlan[] = [
     {
-      id: 'premium_monthly',
-      name: 'Premium Mensal',
-      description: 'Acesso completo aos recursos premium',
+      id: 'basic_monthly',
+      name: 'Basico Mensal',
+      description: 'Grupos e previsoes essenciais',
       price: 19.90,
       currency: 'BRL',
       frequency: 'monthly',
       duration: 1,
       trialDays: 7,
       features: [
-        'IA Astrologica Conversacional',
-        'Matching Astrologico de Casais',
-        'Relatorios Detalhados',
-        'Previsoes Avancadas',
-        'Analises Personalizadas',
-        'Grupos Astrologicos Ilimitados'
+        'Acesso a grupos',
+        'Previsoes basicas (7 dias)',
+        'Notificacoes essenciais'
+      ]
+    },
+    {
+      id: 'pro_monthly',
+      name: 'Pro Mensal',
+      description: 'Chatbot e previsoes completas',
+      price: 47.90,
+      currency: 'BRL',
+      frequency: 'monthly',
+      duration: 1,
+      trialDays: 7,
+      features: [
+        'Tudo do Basico +',
+        'Chatbot premium',
+        'Previsoes 30/90/365',
+        'Leituras premium (Astrologer)',
+        'Hub premium'
       ]
     }
   ]

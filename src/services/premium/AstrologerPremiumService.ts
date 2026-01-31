@@ -71,6 +71,29 @@ export class AstrologerPremiumService {
   static getLunarReturnData(token: string, targetDate?: string) {
     return this.request('/premium/astrologer/lunar-return-data', token, { targetDate })
   }
+
+  static async exportPdf(token: string, payload: Record<string, any>) {
+    const response = await fetch(`${this.BACKEND_URL}/premium/export-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload || {}),
+    })
+    if (!response.ok) {
+      const payloadError = await response.json().catch(() => ({}))
+      const error = payloadError?.error || `HTTP_${response.status}`
+      const message = payloadError?.message || payloadError?.error || 'Erro ao exportar PDF'
+      const err = new Error(message)
+      ;(err as any).code = error
+      throw err
+    }
+    if (typeof (response as any).blob === 'function') {
+      return (response as any).blob()
+    }
+    return response.arrayBuffer()
+  }
 }
 
 export default AstrologerPremiumService

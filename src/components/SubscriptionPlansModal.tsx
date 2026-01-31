@@ -33,33 +33,49 @@ interface PaymentPlan {
   type: 'card' | 'pix'
 }
 
-const CARD_PLAN: PaymentPlan = {
-  id: 'premium_monthly',
-  name: 'Mensal (cartao)',
-  price: 19.90,
-  months: 1,
-  type: 'card'
-}
+const CARD_PLANS: PaymentPlan[] = [
+  {
+    id: 'basic_monthly',
+    name: 'Basico (cartao)',
+    price: 19.90,
+    months: 1,
+    type: 'card'
+  },
+  {
+    id: 'pro_monthly',
+    name: 'Pro (cartao)',
+    price: 47.90,
+    months: 1,
+    type: 'card'
+  },
+]
 
 const PIX_PLANS: PaymentPlan[] = [
   {
-    id: 'premium_pix_1m',
-    name: 'PIX 1 mes',
+    id: 'basic_pix_1m',
+    name: 'PIX Basico 1 mes',
     price: 19.90,
     months: 1,
     type: 'pix'
   },
   {
-    id: 'premium_pix_3m',
-    name: 'PIX 3 meses',
+    id: 'pro_pix_1m',
+    name: 'PIX Pro 1 mes',
+    price: 47.90,
+    months: 1,
+    type: 'pix'
+  },
+  {
+    id: 'basic_pix_3m',
+    name: 'PIX Basico 3 meses',
     price: 53.70,
     months: 3,
     discountLabel: '10% off',
     type: 'pix'
   },
   {
-    id: 'premium_pix_6m',
-    name: 'PIX 6 meses',
+    id: 'basic_pix_6m',
+    name: 'PIX Basico 6 meses',
     price: 95.90,
     months: 6,
     discountLabel: '20% off',
@@ -67,8 +83,8 @@ const PIX_PLANS: PaymentPlan[] = [
     type: 'pix'
   },
   {
-    id: 'premium_pix_12m',
-    name: 'PIX 12 meses',
+    id: 'basic_pix_12m',
+    name: 'PIX Basico 12 meses',
     price: 168.90,
     months: 12,
     discountLabel: '30% off',
@@ -262,7 +278,7 @@ export default function SubscriptionPlansModal({ visible, onClose }: Subscriptio
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={styles.sectionTitle}>Cartao</Text>
-          {renderPlanCard(CARD_PLAN)}
+          {CARD_PLANS.map(renderPlanCard)}
 
           <Text style={styles.sectionTitle}>PIX com desconto</Text>
           {PIX_PLANS.map(renderPlanCard)}

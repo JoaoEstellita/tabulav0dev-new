@@ -28,37 +28,34 @@ interface SubscriptionPlan {
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
-    id: 'premium_monthly',
-    name: 'Plano Mensal',
+    id: 'basic_monthly',
+    name: 'Plano Basico',
     price: 19.90,
     period: 'mes',
     features: [
-      'IA conversacional astrologica',
-      'Analises detalhadas',
-      'Previsoes personalizadas',
-      'Transitos em tempo real',
-      'Grupos astrologicos ilimitados'
+      'Acesso a grupos',
+      'Previsoes basicas',
+      'Notificacoes essenciais'
     ],
     originalPrice: 29.90,
     discount: 33,
   },
   {
-    id: 'premium_yearly',
-    name: 'Plano Anual',
-    price: 119.90,
-    period: 'ano',
+    id: 'pro_monthly',
+    name: 'Plano Pro',
+    price: 47.90,
+    period: 'mes',
     features: [
-      'IA conversacional astrologica',
-      'Analises detalhadas',
-      'Previsoes personalizadas',
-      'Transitos em tempo real',
-      'Grupos astrologicos ilimitados',
-      '2 meses gratis'
+      'Tudo do Basico +',
+      'Chatbot premium',
+      'Previsoes 30/90/365',
+      'Leituras premium',
+      'Hub premium completo'
     ],
     isPopular: true,
     isPremium: true,
-    originalPrice: 238.80,
-    discount: 50,
+    originalPrice: 79.90,
+    discount: 40,
   }
 ];
 

@@ -35,8 +35,10 @@ type HubHistoryItem = {
 export default function PremiumScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
+  const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
-  const [selectedTab, setSelectedTab] = useState<'hub' | 'features' | 'analysis' | 'matching' | 'reports'>(isPremium ? 'hub' : 'features')
+  const hasHubAccess = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_')) || (planId && String(planId).startsWith('pro_'))
+  const [selectedTab, setSelectedTab] = useState<'hub' | 'features' | 'analysis' | 'matching' | 'reports'>(hasHubAccess ? 'hub' : 'features')
   const [targetDate, setTargetDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [partnerBirthDate, setPartnerBirthDate] = useState('')
   const [partnerBirthTime, setPartnerBirthTime] = useState('')
@@ -52,6 +54,7 @@ export default function PremiumScreen() {
   const [lastAction, setLastAction] = useState<string | null>(null)
   const [showJson, setShowJson] = useState(false)
   const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   useEffect(() => {
     AsyncStorage.getItem(HUB_HISTORY_KEY)
@@ -80,29 +83,28 @@ export default function PremiumScreen() {
       current: true
     },
     {
-      id: 'premium',
-      name: 'ðŸ’Ž Premium',
+      id: 'basic_monthly',
+      name: 'ðŸ’Ž Basico',
       price: 19.90,
       features: [
         'Tudo do Gratuito +',
-        'APIs ultra-precisas',
-        'Matching de casais',
-        'AnÃ¡lises avanÃ§adas',
-        'Suporte prioritÃ¡rio'
+        'Acesso a grupos',
+        'Previsoes basicas',
+        'Notificacoes essenciais'
       ],
       color: '#FFD700',
       current: false
     },
     {
-      id: 'ultimate',
-      name: 'ðŸŒŸ Ultimate',
-      price: 39.90,
+      id: 'pro_monthly',
+      name: 'ðŸŒŸ Pro',
+      price: 47.90,
       features: [
-        'Tudo do Premium +',
-        'RelatÃ³rios profissionais',
-        'TrÃ¢nsitos avanÃ§ados',
-        'AnÃ¡lise de progressÃµes',
-        'Acesso antecipado'
+        'Tudo do Basico +',
+        'Chatbot premium',
+        'Previsoes 30/90/365',
+        'Leituras premium',
+        'Hub premium completo'
       ],
       color: '#FF6B6B',
       current: false
@@ -204,6 +206,45 @@ export default function PremiumScreen() {
     }
   }
 
+  const handleExportPdf = async () => {
+    if (!hubResult || !user) return
+    try {
+      setExportingPdf(true)
+      const token = await user.getIdToken()
+      const actionMeta = getActionMeta(lastAction)
+      const summary = buildSummary(hubResult)
+      const highlights = buildKeyHighlights(hubResult)
+      const sections = [
+        { title: summary.title, content: summary.lines.join('\n') },
+        ...(highlights.length
+          ? [{ title: 'Destaques', content: highlights.map((h) => `${h.label}: ${h.value}`).join('\n') }]
+          : []),
+      ]
+      const payload = {
+        title: `Tabula Estelar - ${actionMeta.label}`,
+        summary: summary.lines.join('\n'),
+        sections,
+        footer: 'Tabula Estelar',
+      }
+      const blobOrBuffer = await AstrologerPremiumService.exportPdf(token, payload as any)
+      if (Platform.OS === 'web') {
+        const blob = blobOrBuffer instanceof Blob ? blobOrBuffer : new Blob([blobOrBuffer], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = 'tabula-premium.pdf'
+        anchor.click()
+        URL.revokeObjectURL(url)
+      } else {
+        Alert.alert('Exportar PDF', 'Exportacao disponivel no web por enquanto.')
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Nao foi possivel exportar o PDF.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   const runAction = async (action: string) => {
     if (!user) {
       Alert.alert('Login', 'Faça login para acessar recursos premium.')
@@ -247,17 +288,17 @@ export default function PremiumScreen() {
 
   const renderHub = () => (
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.hubContent}>
-      {!isPremium && (
+      {!hasHubAccess && (
         <View style={styles.lockedBox}>
           <Text style={styles.lockedTitle}>Premium bloqueado</Text>
-          <Text style={styles.lockedText}>Assine para desbloquear o Hub Premium.</Text>
+          <Text style={styles.lockedText}>Assine o plano Pro para desbloquear o Hub Premium.</Text>
           <TouchableOpacity style={styles.lockedButton} onPress={() => setSelectedTab('features')}>
             <Text style={styles.lockedButtonText}>Ver planos</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {isPremium && (
+      {hasHubAccess && (
         <>
           <View style={styles.hubCard}>
             <Text style={styles.hubTitle}>Ferramentas Premium</Text>
@@ -364,6 +405,11 @@ export default function PremiumScreen() {
                 <View style={styles.summaryActions}>
                   <TouchableOpacity style={styles.summaryButton} onPress={copySummary}>
                     <Text style={styles.summaryButtonText}>Copiar resumo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.summaryButton} onPress={handleExportPdf} disabled={exportingPdf}>
+                    <Text style={styles.summaryButtonText}>
+                      {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.summaryButton} onPress={() => setShowJson((prev) => !prev)}>
                     <Text style={styles.summaryButtonText}>{showJson ? 'Ocultar JSON' : 'Ver JSON'}</Text>

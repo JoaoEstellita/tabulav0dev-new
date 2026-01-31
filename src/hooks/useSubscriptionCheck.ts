@@ -9,6 +9,7 @@ const TRIAL_DAYS = 7
 interface SubscriptionResult {
   active: boolean
   status: string
+  planId?: string | null
 }
 
 export function useSubscriptionCheck() {
@@ -52,7 +53,7 @@ export function useSubscriptionCheck() {
       setTrialActive(false)
 
       const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
-      const result = { active: status.isActive, status: status.status }
+      const result = { active: status.isActive, status: status.status, planId: status.planId }
       setSubscription(result)
       setShowModal(!status.isActive && !adminFlag)
       setLoading(false)

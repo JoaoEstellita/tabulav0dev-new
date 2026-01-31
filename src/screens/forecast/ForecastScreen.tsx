@@ -90,6 +90,8 @@ const DOMAIN_COLORS: Record<string, string> = {
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
 const FORECAST_STRONG_ONLY_KEY = 'forecast_strong_only'
+const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
+const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -208,10 +210,12 @@ export default function ForecastScreen() {
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
 
+  const planId = subscription?.planId || null
   const isPremium = isAdmin || trialActive || subscription?.active === true
+  const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
   const granularity = periodDays >= 90 ? 'week' : 'day'
 
-  const fetchForecast = useCallback(async () => {
+  const fetchForecast = useCallback(async (force: boolean = false) => {
     if (!user?.uid) return
     if (skipNextFetchRef.current) {
       skipNextFetchRef.current = false
@@ -227,6 +231,28 @@ export default function ForecastScreen() {
       const utcToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
       const from = buildDateUTCString(utcToday)
       const to = buildDateUTCString(addDaysUTC(utcToday, periodDays - 1))
+      const cacheKey = `${FORECAST_CACHE_PREFIX}:${user.uid}:${from}:${to}:${granularity}`
+      if (!force) {
+        try {
+          const cachedRaw = await AsyncStorage.getItem(cacheKey)
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw)
+            const cachedAt = Number(cached?.cachedAt || 0)
+            const cachedPayload = cached?.payload as ForecastResponse | undefined
+            if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_CACHE_TTL_MS) {
+              setData(cachedPayload)
+              setLimitedBanner(!!cachedPayload.meta?.limited)
+              setMissingBirthData(false)
+              setError(null)
+              setLoading(false)
+              return
+            }
+          }
+        } catch (cacheError) {
+          console.warn('Forecast cache read failed', cacheError)
+        }
+      }
+
       const url = `${BACKEND_URL}/api/forecast?userId=${encodeURIComponent(user.uid)}&from=${from}&to=${to}&granularity=${granularity}`
       const resp = await fetch(url, {
         method: 'GET',
@@ -252,6 +278,7 @@ export default function ForecastScreen() {
       }
       const payload: ForecastResponse = await resp.json()
       setData(payload)
+      AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload })).catch(() => null)
       if (payload.meta?.limited) {
         setLimitedBanner(true)
         if (periodDays !== 7) {
@@ -275,12 +302,12 @@ export default function ForecastScreen() {
             rangePayload.days.forEach((day) => {
               nextMap[day.date] = day
             })
-            setDayStatusByDate(nextMap)
-            setLastStatusUpdatedAt(new Date().toISOString())
-          }
-        } catch (rangeError) {
-          console.warn('Day status range fetch failed', rangeError)
+          setDayStatusByDate(nextMap)
+          setLastStatusUpdatedAt(new Date().toISOString())
         }
+      } catch (rangeError) {
+        console.warn('Day status range fetch failed', rangeError)
+      }
       }
     } catch (err: any) {
       console.warn('Forecast fetch failed', err?.message || err)
@@ -610,7 +637,7 @@ export default function ForecastScreen() {
   }, [])
 
   const handleSelectPeriod = (days: number) => {
-    if (!isPremium && days !== 7) {
+    if (!hasExtendedForecast && days !== 7) {
       Alert.alert('Premium', 'Premium desbloqueia 30/90/365 dias')
       navigation.navigate('Premium' as never)
       return
@@ -649,7 +676,7 @@ export default function ForecastScreen() {
 
       <View style={styles.periodRow}>
         {PERIODS.map((days) => {
-          const locked = !isPremium && days !== 7
+          const locked = !hasExtendedForecast && days !== 7
           const selected = periodDays === days
           return (
             <TouchableOpacity
@@ -689,7 +716,7 @@ export default function ForecastScreen() {
               <Text style={styles.retryText}>Completar nascimento</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.retryButton} onPress={fetchForecast}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchForecast(true)}>
             <Text style={styles.retryText}>Tentar novamente</Text>
           </TouchableOpacity>
         </View>
@@ -708,7 +735,7 @@ export default function ForecastScreen() {
               dayComponent={renderCalendarDay}
               onDayPress={(day) => {
                 if (!isDateInRange(day.dateString)) {
-                  if (!isPremium) {
+                  if (!hasExtendedForecast) {
                     Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
                     navigation.navigate('Premium' as never)
                     return
@@ -762,7 +789,7 @@ export default function ForecastScreen() {
                 const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
                   setSelectedDate(todayKey)
-                } else if (!isPremium) {
+                } else if (!hasExtendedForecast) {
                   Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
                   navigation.navigate('Premium' as never)
                 }
@@ -827,12 +854,12 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   style={styles.dayNavButton}
                   onPress={() => {
-                    if (!selectedDateObj) return
-                    const prevDate = buildDateUTCString(addDaysUTC(selectedDateObj, -1))
-                    if (!isDateInRange(prevDate)) return
-                    setSelectedDate(prevDate)
-                  }}
-                >
+                if (!selectedDateObj) return
+                const prevDate = buildDateUTCString(addDaysUTC(selectedDateObj, -1))
+                if (!isDateInRange(prevDate)) return
+                setSelectedDate(prevDate)
+              }}
+            >
                   <Ionicons name="chevron-back" size={16} color="#FFD700" />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -840,14 +867,14 @@ export default function ForecastScreen() {
                   onPress={() => {
                     const now = new Date()
                     const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
-                    if (isDateInRange(todayKey)) {
-                      setSelectedDate(todayKey)
-                    } else if (!isPremium) {
-                      Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
-                      navigation.navigate('Premium' as never)
-                    }
-                  }}
-                >
+                if (isDateInRange(todayKey)) {
+                  setSelectedDate(todayKey)
+                } else if (!hasExtendedForecast) {
+                  Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                  navigation.navigate('Premium' as never)
+                }
+              }}
+            >
                   <Text style={styles.dayNavText}>Hoje</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1069,9 +1096,9 @@ export default function ForecastScreen() {
             </View>
           )}
 
-          {!isPremium && (
+          {!hasExtendedForecast && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
-              <Text style={styles.ctaText}>Desbloquear Premium</Text>
+              <Text style={styles.ctaText}>Desbloquear previsoes 30/90/365</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
