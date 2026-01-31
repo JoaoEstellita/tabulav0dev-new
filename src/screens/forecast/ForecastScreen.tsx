@@ -709,18 +709,18 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return eventsByDate[selectedDateKey] || []
   }, [selectedDateKey, eventsByDate])
-  const effectiveEventStrengthFilter = pendingEventStrengthFilter || eventStrengthFilter
+  const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
   const selectedEvents = useMemo(() => {
     const filtered = selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeDomain(domain) === selectedDomainKey))
       : selectedEventsRaw
     return filtered.filter((event) => {
-      if (eventStrengthFilter === 'strong' && event.intensity < 0.6) return false
-      if (eventStrengthFilter === 'light' && event.intensity >= 0.6) return false
+      if (effectiveEventStrengthFilter === 'strong' && event.intensity < 0.6) return false
+      if (effectiveEventStrengthFilter === 'light' && event.intensity >= 0.6) return false
       if (hideMixedImpact && event.impact === 'MIXED') return false
       return true
     })
-  }, [eventStrengthFilter, hideMixedImpact, selectedDomainKey, selectedEventsRaw])
+  }, [effectiveEventStrengthFilter, hideMixedImpact, selectedDomainKey, selectedEventsRaw])
   const dayEventsLimit = 6
   const visibleDayEvents = useMemo(() => {
     return showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
