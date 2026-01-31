@@ -77,7 +77,6 @@ const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_PERIOD_EVENTS_CACHE_PREFIX = 'forecast_period_events_v1'
-const FORECAST_PERIOD_EVENTS_CACHE_TTL_MS = 30 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -491,6 +490,11 @@ export default function ForecastScreen() {
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
   const granularity = periodDays >= 90 ? 'week' : 'day'
+  const periodEventsCacheTtlMs = useMemo(() => {
+    if (periodDays >= 365) return 3 * 60 * 60 * 1000
+    if (periodDays >= 90) return 90 * 60 * 1000
+    return 30 * 60 * 1000
+  }, [periodDays])
 
   const fetchForecast = useCallback(async (force: boolean = false) => {
     if (!user?.uid) return
@@ -1118,7 +1122,7 @@ export default function ForecastScreen() {
           const cached = JSON.parse(cachedRaw)
           const cachedAt = Number(cached?.cachedAt || 0)
           const cachedPayload = cached?.payload as { date: string; events: ForecastEvent[] }[] | undefined
-          if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_PERIOD_EVENTS_CACHE_TTL_MS) {
+          if (cachedPayload && cachedAt && Date.now() - cachedAt < periodEventsCacheTtlMs) {
             setPeriodEventsCachedList(cachedPayload)
             return
           }
@@ -1129,7 +1133,7 @@ export default function ForecastScreen() {
       setPeriodEventsCachedList(null)
     }
     loadCache()
-  }, [user?.uid, showPeriodEvents, rangeFromStr, rangeToStr, periodDays, badgeFilter])
+  }, [user?.uid, showPeriodEvents, rangeFromStr, rangeToStr, periodDays, badgeFilter, periodEventsCacheTtlMs])
 
   useEffect(() => {
     if (!showPeriodEvents) return
