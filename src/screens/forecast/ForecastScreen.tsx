@@ -510,6 +510,13 @@ export default function ForecastScreen() {
       isPremium,
     })
   }, [isPremium, subscription?.expiresAt, subscription?.nextBillingDate, subscription?.trialEndsAt, trialActive, trialEndsAt])
+  const expiryMessage = useMemo(() => {
+    if (!expiryInfo.show) return ''
+    const daysLeft = expiryInfo.daysLeft
+    if (typeof daysLeft !== 'number') return expiryInfo.message
+    if (daysLeft <= 0) return expiryInfo.message
+    return `${expiryInfo.message} (${daysLeft} dias)`
+  }, [expiryInfo])
   const periodEventsCacheTtlMs = useMemo(() => {
     if (periodDays >= 360) return 3 * 60 * 60 * 1000
     if (periodDays >= 90) return 90 * 60 * 1000
@@ -1212,7 +1219,7 @@ export default function ForecastScreen() {
       </View>
       {expiryInfo.show && (
         <ExpiryBanner
-          message={expiryInfo.message}
+          message={expiryMessage}
           variant={expiryInfo.variant}
           onPress={() => navigation.navigate('Premium' as never, { openTab: 'features' } as never)}
         />

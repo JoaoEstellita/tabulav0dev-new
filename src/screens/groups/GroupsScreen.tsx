@@ -136,6 +136,13 @@ export default function GroupsScreen() {
     subscriptionExpiresAt: subscription?.expiresAt || null,
     isPremium,
   })
+  const expiryMessage = (() => {
+    if (!expiryInfo.show) return ''
+    const daysLeft = expiryInfo.daysLeft
+    if (typeof daysLeft !== 'number') return expiryInfo.message
+    if (daysLeft <= 0) return expiryInfo.message
+    return `${expiryInfo.message} (${daysLeft} dias)`
+  })()
 
   useEffect(() => {
     if (user) {
@@ -929,7 +936,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
         {expiryInfo.show && (
           <ExpiryBanner
-            message={expiryInfo.message}
+            message={expiryMessage}
             variant={expiryInfo.variant}
             onPress={() => navigation.navigate("Premium" as never, { openTab: 'features' } as never)}
           />

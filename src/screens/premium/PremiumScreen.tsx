@@ -19,13 +19,13 @@ import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
 
-const HUB_ACTIONS: Record<string, { label: string; icon: string }> = {
-  birth: { label: 'Mapa natal', icon: 'star' },
-  transit: { label: 'Transitos', icon: 'pulse' },
-  synastry: { label: 'Sinastria', icon: 'heart' },
-  composite: { label: 'Mapa composto', icon: 'git-compare' },
-  solar: { label: 'Retorno solar', icon: 'sunny' },
-  lunar: { label: 'Retorno lunar', icon: 'moon' },
+const HUB_ACTIONS: Record<string, { label: string; icon: string; description: string; cost: number }> = {
+  birth: { label: 'Mapa natal', icon: 'star', description: 'Leitura completa do seu mapa natal.', cost: 1 },
+  transit: { label: 'Transitos', icon: 'pulse', description: 'Analise do dia/periodo escolhido.', cost: 1 },
+  synastry: { label: 'Sinastria', icon: 'heart', description: 'Compatibilidade entre duas pessoas.', cost: 2 },
+  composite: { label: 'Mapa composto', icon: 'git-compare', description: 'Mapa da relacao.', cost: 1 },
+  solar: { label: 'Retorno solar', icon: 'sunny', description: 'Analise do novo ciclo solar.', cost: 1 },
+  lunar: { label: 'Retorno lunar', icon: 'moon', description: 'Analise do ciclo lunar.', cost: 1 },
 }
 
 type HubHistoryItem = {
@@ -42,7 +42,7 @@ export default function PremiumScreen() {
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const hasHubAccess = isAdmin || (subscription?.active && (planId.startsWith('premium_') || planId === 'premium_monthly' || planId.startsWith('pro_') || planId === 'pro_monthly'))
-  const [selectedTab, setSelectedTab] = useState<'hub' | 'features' | 'analysis' | 'matching' | 'reports'>(hasHubAccess ? 'hub' : 'features')
+  const [selectedTab, setSelectedTab] = useState<'features' | 'hub' | 'credits' | 'history'>(hasHubAccess ? 'hub' : 'features')
   const [targetDate, setTargetDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [partnerBirthDate, setPartnerBirthDate] = useState('')
   const [partnerBirthTime, setPartnerBirthTime] = useState('')
@@ -58,6 +58,7 @@ export default function PremiumScreen() {
   const [lastAction, setLastAction] = useState<string | null>(null)
   const [showJson, setShowJson] = useState(false)
   const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
+  const [creditHistory, setCreditHistory] = useState<Array<{ id: string; type: string; qty: number; ts: string; detail?: string }>>([])
   const [exportingPdf, setExportingPdf] = useState(false)
   const [premiumPhone, setPremiumPhone] = useState('')
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
@@ -352,6 +353,11 @@ export default function PremiumScreen() {
       Alert.alert('Login', 'Faça login para acessar recursos premium.')
       return
     }
+    const actionMeta = HUB_ACTIONS[action]
+    if (creditsRemaining !== null && actionMeta && creditsRemaining < actionMeta.cost) {
+      Alert.alert('Sem creditos', 'Creditos insuficientes para esta leitura.')
+      return
+    }
     setHubLoading(true)
     setHubError(null)
     setLastAction(action)
@@ -383,6 +389,16 @@ export default function PremiumScreen() {
         AsyncStorage.setItem(HUB_HISTORY_KEY, JSON.stringify(next)).catch(() => null)
         return next
       })
+      if (actionMeta?.cost) {
+        const creditEntry = {
+          id: `${action}-credit-${Date.now()}`,
+          type: 'consumo',
+          qty: actionMeta.cost,
+          ts: new Date().toISOString(),
+          detail: actionMeta.label,
+        }
+        setCreditHistory((prev) => [creditEntry, ...prev].slice(0, 20))
+      }
     } catch (error) {
       const code = error?.code || 'error'
       if (code === 'credits_insufficient' || code === 'credits_unavailable') {
@@ -424,31 +440,21 @@ export default function PremiumScreen() {
               return <Text style={styles.creditsCycle}>{cycle.message}</Text>
             })()}
             <Text style={styles.hubSubtitle}>
-              Synastry custa 2 creditos. Demais leituras custam 1 credito.
+              Sinastria custa 2 creditos. Demais leituras custam 1 credito.
             </Text>
           </View>
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Ferramentas Premium</Text>
+            <Text style={styles.hubTitle}>Servicos Premium (API Astrologer)</Text>
             <Text style={styles.hubSubtitle}>Selecione uma leitura para gerar agora.</Text>
-            <View style={styles.hubButtonRow}>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('birth-chart')}>
-                <Text style={styles.hubButtonText}>Mapa Natal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('transit')}>
-                <Text style={styles.hubButtonText}>Trânsitos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('solar')}>
-                <Text style={styles.hubButtonText}>Retorno Solar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('lunar')}>
-                <Text style={styles.hubButtonText}>Retorno Lunar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('synastry')}>
-                <Text style={styles.hubButtonText}>Sinastria</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.hubButton} onPress={() => runAction('composite')}>
-                <Text style={styles.hubButtonText}>Composto</Text>
-              </TouchableOpacity>
+            <View style={styles.serviceGrid}>
+              {Object.entries(HUB_ACTIONS).map(([key, meta]) => (
+                <TouchableOpacity key={key} style={styles.serviceCard} onPress={() => runAction(key)}>
+                  <Ionicons name={meta.icon as any} size={20} color="#FFD700" />
+                  <Text style={styles.serviceTitle}>{meta.label}</Text>
+                  <Text style={styles.serviceDesc}>{meta.description}</Text>
+                  <Text style={styles.serviceCost}>Custo: {meta.cost} credito</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
 
@@ -579,7 +585,7 @@ export default function PremiumScreen() {
   const renderFeatures = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>Planos de Assinatura</Text>
+          <Text style={styles.sectionTitle}>Planos de Assinatura</Text>
         {subscriptionPlans.map(plan => (
           <TouchableOpacity
             key={plan.id}
@@ -632,7 +638,7 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>Premium</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Forecast</Text>
+            <Text style={styles.compareLabel}>Previsoes de Status</Text>
             <Text style={styles.compareValue}>7d</Text>
             <Text style={styles.compareValue}>7/30/90</Text>
             <Text style={styles.compareValue}>7/30/90/360</Text>
@@ -657,8 +663,8 @@ export default function PremiumScreen() {
           </View>
         </View>
       </View>
-        <View style={styles.plansContainer}>
-          <Text style={styles.sectionTitle}>Creditos Avulsos (Astrologer)</Text>
+      <View style={styles.plansContainer}>
+          <Text style={styles.sectionTitle}>Creditos Avulsos (Servicos Premium)</Text>
           {creditPacks.map((pack) => (
             <TouchableOpacity
               key={pack.id}
@@ -678,15 +684,63 @@ export default function PremiumScreen() {
     </ScrollView>
   )
 
-  const renderComingSoon = (icon: string, title: string, description: string) => (
+  const renderCredits = () => (
     <ScrollView style={styles.tabContent}>
-      <View style={styles.comingSoonContainer}>
-        <Text style={styles.comingSoonIcon}>{icon}</Text>
-        <Text style={styles.comingSoonTitle}>{title}</Text>
-        <Text style={styles.comingSoonDescription}>{description}</Text>
-        <TouchableOpacity style={styles.comingSoonButton}>
-          <Text style={styles.comingSoonButtonText}>Em Breve</Text>
-        </TouchableOpacity>
+      <View style={styles.hubCard}>
+        <Text style={styles.hubTitle}>Seus creditos</Text>
+        <Text style={styles.hubSubtitle}>Saldo e compras recentes.</Text>
+        {creditsLoading ? (
+          <ActivityIndicator color="#FFD700" />
+        ) : (
+          <Text style={styles.creditsValue}>
+            {creditsRemaining === null ? 'Ilimitado' : creditsRemaining}
+          </Text>
+        )}
+        {(() => {
+          const cycle = formatCycleEnd(creditsCycleEnd)
+          if (!cycle) return null
+          return <Text style={styles.creditsCycle}>{cycle.message}</Text>
+        })()}
+      </View>
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>Comprar creditos</Text>
+        {creditPacks.map((pack) => (
+          <TouchableOpacity
+            key={pack.id}
+            style={styles.creditCard}
+            onPress={() => handlePurchaseCredits(pack)}
+            disabled={purchaseLoading === pack.id}
+          >
+            <Text style={styles.creditTitle}>{pack.label}</Text>
+            {purchaseLoading === pack.id ? (
+              <ActivityIndicator color="#FFD700" />
+            ) : (
+              <Text style={styles.creditPrice}>R$ {pack.price.toFixed(2)}</Text>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
+  )
+
+  const renderHistory = () => (
+    <ScrollView style={styles.tabContent}>
+      <View style={styles.hubCard}>
+        <Text style={styles.hubTitle}>Historico de creditos</Text>
+        {creditHistory.length === 0 && (
+          <Text style={styles.emptyText}>Sem movimentacoes ainda.</Text>
+        )}
+        {creditHistory.map((item) => (
+          <View key={item.id} style={styles.historyItem}>
+            <Ionicons name="time" size={16} color="#FFD700" />
+            <View style={styles.historyText}>
+              <Text style={styles.historyLabel}>{item.detail || item.type}</Text>
+              <Text style={styles.historySummary}>
+                {item.type} • {item.qty} credito(s)
+              </Text>
+            </View>
+          </View>
+        ))}
       </View>
     </ScrollView>
   )
@@ -695,72 +749,51 @@ export default function PremiumScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Header Premium */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ðŸ’Ž Premium</Text>
-        <Text style={styles.headerSubtitle}>Recursos avanÃ§ados e anÃ¡lises profissionais</Text>
+        <Text style={styles.headerTitle}>Premium</Text>
+        <Text style={styles.headerSubtitle}>Planos e servicos premium</Text>
       </View>
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
-          onPress={() => setSelectedTab('hub')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
-            Hub
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           style={[styles.tab, selectedTab === 'features' && styles.activeTab]}
           onPress={() => setSelectedTab('features')}
         >
           <Text style={[styles.tabText, selectedTab === 'features' && styles.activeTabText]}>
-            Recursos
+            Planos
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'analysis' && styles.activeTab]}
-          onPress={() => setSelectedTab('analysis')}
+          style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
+          onPress={() => setSelectedTab('hub')}
         >
-          <Text style={[styles.tabText, selectedTab === 'analysis' && styles.activeTabText]}>
-            AnÃ¡lises
+          <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
+            Servicos Premium
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'matching' && styles.activeTab]}
-          onPress={() => setSelectedTab('matching')}
+          style={[styles.tab, selectedTab === 'credits' && styles.activeTab]}
+          onPress={() => setSelectedTab('credits')}
         >
-          <Text style={[styles.tabText, selectedTab === 'matching' && styles.activeTabText]}>
-            Matching
+          <Text style={[styles.tabText, selectedTab === 'credits' && styles.activeTabText]}>
+            Creditos
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, selectedTab === 'reports' && styles.activeTab]}
-          onPress={() => setSelectedTab('reports')}
+          style={[styles.tab, selectedTab === 'history' && styles.activeTab]}
+          onPress={() => setSelectedTab('history')}
         >
-          <Text style={[styles.tabText, selectedTab === 'reports' && styles.activeTabText]}>
-            RelatÃ³rios
+          <Text style={[styles.tabText, selectedTab === 'history' && styles.activeTabText]}>
+            Historico
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Content */}
-      {selectedTab === 'hub' && renderHub()}
       {selectedTab === 'features' && renderFeatures()}
-      {selectedTab === 'analysis' && renderComingSoon(
-        'ðŸ”¬', 
-        'AnÃ¡lises Ultra-Precisas', 
-        'APIs profissionais da Prokerala para cÃ¡lculos com precisÃ£o mÃ¡xima'
-      )}
-      {selectedTab === 'matching' && renderComingSoon(
-        'ðŸ’•', 
-        'Matching de Casais', 
-        'Compatibilidade amorosa avanÃ§ada com anÃ¡lise de sinastria completa'
-      )}
-      {selectedTab === 'reports' && renderComingSoon(
-        'ðŸ“Š', 
-        'RelatÃ³rios Profissionais', 
-        'PDFs completos com anÃ¡lises astrolÃ³gicas detalhadas e personalizadas'
-      )}
+      {selectedTab === 'hub' && renderHub()}
+      {selectedTab === 'credits' && renderCredits()}
+      {selectedTab === 'history' && renderHistory()}
     </LinearGradient>
   )
 }
@@ -848,6 +881,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  serviceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  serviceCard: {
+    flexBasis: '48%',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  serviceTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  serviceDesc: {
+    color: '#B0B0B0',
+    fontSize: 11,
+  },
+  serviceCost: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
   },
   hubButton: {
     backgroundColor: '#2C2C2E',
