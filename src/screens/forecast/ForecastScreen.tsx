@@ -6,12 +6,12 @@ import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
 import { Calendar } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import LifeAreaCard from '../../components/LifeAreaCard'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
   LIFE_AREA_ORDER,
+  LIFE_AREA_COLORS,
   normalizeLifeArea,
 } from '../../constants/lifeAreas'
 import { getForecastMaxDays, getPlanById } from '../../constants/plans'
@@ -137,6 +137,12 @@ function formatDomainLabel(domain: string) {
   return key.charAt(0).toUpperCase() + key.slice(1)
 }
 
+function getAreaColor(domain: string) {
+  const colors = LIFE_AREA_COLORS[domain]
+  if (Array.isArray(colors) && colors.length) return colors[0]
+  return '#2A2A2E'
+}
+
 function diffDaysUTC(from: Date, to: Date) {
   const ms = to.getTime() - from.getTime()
   return Math.round(ms / 86400000)
@@ -220,6 +226,45 @@ const MemoEventCard = React.memo(function MemoEventCard({
 })
 
 const MemoCalendar = React.memo(Calendar as any)
+const MemoAreaPill = React.memo(function MemoAreaPill({
+  label,
+  score,
+  active,
+  color,
+  onPress,
+}: {
+  label: string
+  score: number | null
+  active: boolean
+  color: string
+  onPress: () => void
+}) {
+  const value = typeof score === 'number' ? Math.round(score) : null
+  const statusText = value === null
+    ? '—'
+    : value < STATUS_THRESHOLDS.criticalBelow
+    ? 'Critico'
+    : value >= STATUS_THRESHOLDS.positiveAbove
+    ? 'Positivo'
+    : 'Moderado'
+  return (
+    <TouchableOpacity
+      style={[
+        styles.areaPill,
+        { backgroundColor: color },
+        active && styles.areaPillActive,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.areaPillLabel} numberOfLines={1}>{label}</Text>
+      <Text style={styles.areaPillValue}>
+        {value ?? '—'} {statusText}
+      </Text>
+    </TouchableOpacity>
+  )
+})
+
 const MemoDomainChip = React.memo(function MemoDomainChip({
   label,
   active,
@@ -299,25 +344,21 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
             onPress={() => onSelectDomain(null)}
           />
         </View>
-        <View style={styles.areaCardGrid}>
+        <View style={styles.areaPillGrid}>
           {lifeAreaCards.map((item) => {
             const isActive = selectedDomainKey === item.domain
+            const label = formatDomainLabel(item.domain)
+            const color = getAreaColor(item.domain)
             return (
               <View
                 key={item.domain}
-                style={[styles.areaCardWrapper, isActive && styles.areaCardSelected]}
+                style={[styles.areaPillWrapper, isActive && styles.areaPillSelected]}
               >
-                <LifeAreaCard
-                  compact
-                  area={{
-                    name: item.domain,
-                    status: item.score as any,
-                    trend: 'stable',
-                    description: '',
-                    criticalLevel: item.critical,
-                  } as any}
-                  transitCount={0}
-                  transitCount={item.transitCount}
+                <MemoAreaPill
+                  label={label}
+                  score={item.score}
+                  active={isActive}
+                  color={color}
                   onPress={() => onSelectDomain(item.domain)}
                 />
               </View>
@@ -894,7 +935,7 @@ export default function ForecastScreen() {
     const criticalCount = dateKey ? criticalCountsByDate[dateKey] : 0
     const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
     const badgeScore = dateKey ? data?.dailyBadges?.[dateKey]?.score : null
-    const isCriticalDay = typeof badgeScore === 'number' && badgeScore < 40
+    const isCriticalDay = typeof badgeScore === 'number' && badgeScore < STATUS_THRESHOLDS.criticalBelow
     const showCritical = badgeFilter !== 'strong' && typeof criticalCount === 'number' && criticalCount > 0
     const showStrong = badgeFilter !== 'critical' && typeof strongCount === 'number' && strongCount > 0
     return (
@@ -2154,20 +2195,42 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  areaCardGrid: {
+  areaPillGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 8,
   },
-  areaCardWrapper: {
+  areaPillWrapper: {
     flexBasis: '48%',
     maxWidth: '48%',
   },
-  areaCardSelected: {
+  areaPillSelected: {
     borderWidth: 2,
     borderColor: '#FFD700',
-    borderRadius: 14,
+    borderRadius: 12,
+  },
+  areaPill: {
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  areaPillActive: {
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  areaPillLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  areaPillValue: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   domainChip: {
     paddingVertical: 6,
