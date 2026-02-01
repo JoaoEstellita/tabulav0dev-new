@@ -58,6 +58,8 @@ export default function PremiumScreen() {
   const [premiumPhone, setPremiumPhone] = useState('')
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
   const [creditsLoading, setCreditsLoading] = useState(false)
+  const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
+  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
 
   useEffect(() => {
     AsyncStorage.getItem(HUB_HISTORY_KEY)
@@ -85,6 +87,8 @@ export default function PremiumScreen() {
           ? response.meta.creditsRemaining
           : null
         setCreditsRemaining(remaining)
+        const cycleEnd = response?.cycleEnd || response?.meta?.cycleEnd || null
+        if (cycleEnd) setCreditsCycleEnd(cycleEnd)
       })
       .catch(() => {
         if (!active) return
@@ -145,6 +149,59 @@ export default function PremiumScreen() {
     { id: 'credits_5', label: '5 creditos', price: 49.90 },
     { id: 'credits_10', label: '10 creditos', price: 89.90 },
   ]
+
+  const formatCycleEnd = (value: string | null) => {
+    if (!value) return null
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    const daysLeft = Math.max(0, Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    const formatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    const plural = daysLeft === 1 ? 'dia' : 'dias'
+    return { label: formatted, daysLeft, message: `Renova em ${daysLeft} ${plural} (${formatted}).` }
+  }
+
+  const handlePurchaseCredits = (pack: { id: string; label: string; price: number }) => {
+    if (!user) {
+      Alert.alert('Login', 'Faça login para comprar créditos.')
+      return
+    }
+    if (purchaseLoading) return
+    Alert.alert(
+      'Confirmar compra',
+      `Comprar ${pack.label} por R$ ${pack.price.toFixed(2)}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Comprar',
+          onPress: async () => {
+            try {
+              setPurchaseLoading(pack.id)
+              const token = await user.getIdToken(true)
+              const response = await AstrologerPremiumService.purchaseCredits(token, pack.id)
+              const remaining = typeof response?.creditsRemaining === 'number'
+                ? response.creditsRemaining
+                : typeof response?.meta?.creditsRemaining === 'number'
+                ? response.meta.creditsRemaining
+                : null
+              setCreditsRemaining(remaining)
+              const cycleEnd = response?.cycleEnd || response?.meta?.cycleEnd || null
+              if (cycleEnd) setCreditsCycleEnd(cycleEnd)
+              Alert.alert('Compra realizada', 'Créditos atualizados no seu saldo.')
+            } catch (error: any) {
+              const code = error?.code || 'erro'
+              if (code === 'purchase_disabled') {
+                Alert.alert('Indisponível', 'Compra de créditos ainda não está liberada.')
+              } else {
+                Alert.alert('Erro', 'Não foi possível finalizar a compra agora.')
+              }
+            } finally {
+              setPurchaseLoading(null)
+            }
+          },
+        },
+      ]
+    )
+  }
 
   const handleSubscribe = (plan: { id: string; requiresPhone?: boolean }) => {
     if (plan.requiresPhone && !premiumPhone.trim()) {
@@ -360,6 +417,11 @@ export default function PremiumScreen() {
                 {creditsRemaining === null ? 'Ilimitado' : creditsRemaining}
               </Text>
             )}
+            {(() => {
+              const cycle = formatCycleEnd(creditsCycleEnd)
+              if (!cycle) return null
+              return <Text style={styles.creditsCycle}>{cycle.message}</Text>
+            })()}
             <Text style={styles.hubSubtitle}>
               Synastry custa 2 creditos. Demais leituras custam 1 credito.
             </Text>
@@ -559,15 +621,24 @@ export default function PremiumScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>Creditos Avulsos (Astrologer)</Text>
-        {creditPacks.map((pack) => (
-          <TouchableOpacity key={pack.id} style={styles.creditCard} onPress={() => Alert.alert('Em breve', 'Compra de creditos em breve.')}>
-            <Text style={styles.creditTitle}>{pack.label}</Text>
-            <Text style={styles.creditPrice}>R$ {pack.price.toFixed(2)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <View style={styles.plansContainer}>
+          <Text style={styles.sectionTitle}>Creditos Avulsos (Astrologer)</Text>
+          {creditPacks.map((pack) => (
+            <TouchableOpacity
+              key={pack.id}
+              style={styles.creditCard}
+              onPress={() => handlePurchaseCredits(pack)}
+              disabled={purchaseLoading === pack.id}
+            >
+              <Text style={styles.creditTitle}>{pack.label}</Text>
+              {purchaseLoading === pack.id ? (
+                <ActivityIndicator color="#FFD700" />
+              ) : (
+                <Text style={styles.creditPrice}>R$ {pack.price.toFixed(2)}</Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
     </ScrollView>
   )
 
@@ -730,6 +801,11 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 22,
     fontWeight: '700',
+    marginBottom: 6,
+  },
+  creditsCycle: {
+    color: '#B8C1FF',
+    fontSize: 12,
     marginBottom: 6,
   },
   hubButtonRow: {

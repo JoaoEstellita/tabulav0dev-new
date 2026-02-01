@@ -5,9 +5,15 @@ export interface PremiumResponse<T = any> {
     cacheHit?: boolean
     ttlSeconds?: number | null
     creditsRemaining?: number | null
+    cycleEnd?: string | null
+    cycleStart?: string | null
     source?: string
     durationMs?: number
   }
+  creditsRemaining?: number | null
+  cycleEnd?: string | null
+  cycleStart?: string | null
+  unlimited?: boolean
   error?: string
   message?: string
 }
@@ -74,6 +80,10 @@ export class AstrologerPremiumService {
 
   static getCreditsStatus(token: string) {
     return this.request('/premium/credits/status', token, {})
+  }
+
+  static purchaseCredits(token: string, packId: string) {
+    return this.request('/premium/credits/purchase', token, { packId })
   }
 
   static registerWhatsApp(token: string, phone: string) {
