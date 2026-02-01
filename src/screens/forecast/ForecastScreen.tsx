@@ -79,7 +79,6 @@ const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
-const FORECAST_PERIOD_EVENTS_CACHE_PREFIX = 'forecast_period_events_v1'
 
 function labelFromScoreValue(score: number | null) {
   if (typeof score !== 'number') return '—'
@@ -522,21 +521,11 @@ export default function ForecastScreen() {
   const [pendingEventStrengthFilter, setPendingEventStrengthFilter] = useState<'all' | 'strong' | 'light' | null>(null)
   const [hideMixedImpact, setHideMixedImpact] = useState(false)
   const [showFilterHint, setShowFilterHint] = useState(false)
-  const [showPeriodEvents, setShowPeriodEvents] = useState(false)
-  const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>('all')
-  const [pendingBadgeFilter, setPendingBadgeFilter] = useState<'all' | 'critical' | 'strong' | null>(null)
-  const [periodEventsCachedList, setPeriodEventsCachedList] = useState<{ date: string; events: ForecastEvent[] }[] | null>(null)
-  const [periodEventsPage, setPeriodEventsPage] = useState(0)
-  const [periodEventsComputedList, setPeriodEventsComputedList] = useState<{ date: string; events: ForecastEvent[] }[] | null>(null)
-  const [periodEventsLoading, setPeriodEventsLoading] = useState(false)
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
-  const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
-  const pendingFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
   const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const periodEventsBuildRef = useRef<{ cancelled: boolean } | null>(null)
 
   const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
 
@@ -574,12 +563,6 @@ export default function ForecastScreen() {
     if (daysLeft <= 0) return expiryInfo.message
     return `${expiryInfo.message} (${daysLeft} dias)`
   }, [expiryInfo])
-  const periodEventsCacheTtlMs = useMemo(() => {
-    if (periodDays >= 360) return 3 * 60 * 60 * 1000
-    if (periodDays >= 90) return 90 * 60 * 1000
-    return 30 * 60 * 1000
-  }, [periodDays])
-
   const fetchForecast = useCallback(async (force: boolean = false) => {
     if (!user?.uid) return
     if (skipNextFetchRef.current) {
@@ -934,8 +917,8 @@ export default function ForecastScreen() {
     const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
     const badgeScore = dateKey ? data?.dailyBadges?.[dateKey]?.score : null
     const isCriticalDay = typeof badgeScore === 'number' && badgeScore < STATUS_THRESHOLDS.criticalBelow
-    const showCritical = badgeFilter !== 'strong' && typeof criticalCount === 'number' && criticalCount > 0
-    const showStrong = badgeFilter !== 'critical' && typeof strongCount === 'number' && strongCount > 0
+    const showCritical = typeof criticalCount === 'number' && criticalCount > 0
+    const showStrong = typeof strongCount === 'number' && strongCount > 0
     return (
       <TouchableOpacity
         style={[styles.dayCell, isCriticalDay && styles.dayCellCritical]}
@@ -969,13 +952,8 @@ export default function ForecastScreen() {
         )}
       </TouchableOpacity>
     )
-  }, [badgeFilter, criticalCountsByDate, data?.dailyBadges, handleCalendarPress, selectedDate, strongCountsByDate])
+  }, [criticalCountsByDate, data?.dailyBadges, handleCalendarPress, selectedDate, strongCountsByDate])
 
-  const criticalDaysList = useMemo(() => {
-    return Object.entries(criticalCountsByDate)
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-  }, [criticalCountsByDate])
 
   const formatEventAreas = useCallback((domains: string[]) => {
     if (!Array.isArray(domains)) return ''
@@ -1100,27 +1078,6 @@ export default function ForecastScreen() {
     })
   }, [buildEventDetailLines, eventPhaseMap, expandedEvents, selectedDateKey, visibleDayEvents])
 
-  const periodEventsList = useMemo(() => {
-    if (periodEventsCachedList) return periodEventsCachedList
-    return periodEventsComputedList || []
-  }, [periodEventsCachedList, periodEventsComputedList])
-
-  const periodEventsPerPage = useMemo(() => {
-    if (periodDays >= 360) return 10
-    if (periodDays >= 90) return 12
-    return 20
-  }, [periodDays])
-
-  const periodEventsPageCount = useMemo(() => {
-    if (!periodEventsList.length) return 0
-    return Math.ceil(periodEventsList.length / periodEventsPerPage)
-  }, [periodEventsList.length, periodEventsPerPage])
-
-  const periodEventsPageItems = useMemo(() => {
-    const start = periodEventsPage * periodEventsPerPage
-    return periodEventsList.slice(start, start + periodEventsPerPage)
-  }, [periodEventsList, periodEventsPage, periodEventsPerPage])
-
   useEffect(() => {
     if (!debouncedFetchDate) return
     if (!isDateInRange(debouncedFetchDate)) return
@@ -1158,115 +1115,6 @@ export default function ForecastScreen() {
     }
   }, [pendingEventStrengthFilter])
 
-  useEffect(() => {
-    if (!pendingBadgeFilter) return
-    if (pendingFilterTimerRef.current) clearTimeout(pendingFilterTimerRef.current)
-    pendingFilterTimerRef.current = setTimeout(() => {
-      setBadgeFilter(pendingBadgeFilter)
-      setPendingBadgeFilter(null)
-    }, 120)
-    return () => {
-      if (pendingFilterTimerRef.current) clearTimeout(pendingFilterTimerRef.current)
-    }
-  }, [pendingBadgeFilter])
-
-  useEffect(() => {
-    setPeriodEventsPage(0)
-  }, [badgeFilter, periodDays, showPeriodEvents])
-
-  useEffect(() => {
-    if (!user?.uid) return
-    if (!showPeriodEvents) return
-    if (!rangeFromStr || !rangeToStr) return
-    if (periodDays < 90) {
-      setPeriodEventsCachedList(null)
-      return
-    }
-    const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
-    const loadCache = async () => {
-      try {
-        const cachedRaw = await AsyncStorage.getItem(cacheKey)
-        if (cachedRaw) {
-          const cached = JSON.parse(cachedRaw)
-          const cachedAt = Number(cached?.cachedAt || 0)
-          const cachedPayload = cached?.payload as { date: string; events: ForecastEvent[] }[] | undefined
-          if (cachedPayload && cachedAt && Date.now() - cachedAt < periodEventsCacheTtlMs) {
-            setPeriodEventsCachedList(cachedPayload)
-            return
-          }
-        }
-      } catch (_) {
-        // ignore cache errors
-      }
-      setPeriodEventsCachedList(null)
-    }
-    loadCache()
-  }, [user?.uid, showPeriodEvents, rangeFromStr, rangeToStr, periodDays, badgeFilter, periodEventsCacheTtlMs])
-
-  useEffect(() => {
-    if (!showPeriodEvents) return
-    if (periodDays < 90) return
-    if (!user?.uid) return
-    if (!rangeFromStr || !rangeToStr) return
-    if (!periodEventsList.length) return
-    const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
-    AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload: periodEventsList })).catch(() => null)
-  }, [showPeriodEvents, periodDays, user?.uid, rangeFromStr, rangeToStr, badgeFilter, periodEventsList])
-
-  useEffect(() => {
-    if (!showPeriodEvents) {
-      setPeriodEventsComputedList(null)
-      setPeriodEventsLoading(false)
-      if (periodEventsBuildRef.current) periodEventsBuildRef.current.cancelled = true
-      return
-    }
-    if (!rangeFromStr || !rangeToStr) return
-    if (periodEventsCachedList) {
-      setPeriodEventsComputedList(periodEventsCachedList)
-      setPeriodEventsLoading(false)
-      return
-    }
-    if (periodEventsBuildRef.current) periodEventsBuildRef.current.cancelled = true
-    const guard = { cancelled: false }
-    periodEventsBuildRef.current = guard
-    setPeriodEventsLoading(true)
-    setPeriodEventsComputedList([])
-    const start = parseUTCDateString(rangeFromStr)
-    const end = parseUTCDateString(rangeToStr)
-    if (!start || !end) {
-      setPeriodEventsLoading(false)
-      return
-    }
-    const list: { date: string; events: ForecastEvent[] }[] = []
-    let cursor = start
-    const batchSize = 25
-    const step = () => {
-      if (guard.cancelled) return
-      let processed = 0
-      while (cursor <= end && processed < batchSize) {
-        const key = buildDateUTCString(cursor)
-        const items = eventsByDate[key] || []
-        const criticalCount = criticalCountsByDate[key] || 0
-        const strongCount = strongCountsByDate[key] || 0
-        const matchesFilter = badgeFilter === 'all'
-          || (badgeFilter === 'critical' && criticalCount > 0)
-          || (badgeFilter === 'strong' && strongCount > 0)
-        if (items.length && matchesFilter) list.push({ date: key, events: items })
-        cursor = addDaysUTC(cursor, 1)
-        processed += 1
-      }
-      setPeriodEventsComputedList(list.slice())
-      if (cursor <= end) {
-        setTimeout(step, 0)
-      } else {
-        setPeriodEventsLoading(false)
-      }
-    }
-    step()
-    return () => {
-      guard.cancelled = true
-    }
-  }, [badgeFilter, criticalCountsByDate, eventsByDate, periodEventsCachedList, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate])
 
   const toggleEventDetails = useCallback((eventId: string) => {
     setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
@@ -1285,27 +1133,6 @@ export default function ForecastScreen() {
     setPeriodDays(days)
   }
 
-  const weeklySummary = useMemo(() => {
-    if (!seriesSorted.length) return null
-    const withScore = seriesSorted.filter((point) => typeof point.score === 'number')
-    if (!withScore.length) return null
-    const best = withScore.reduce((acc, cur) => (cur.score! > acc.score! ? cur : acc), withScore[0])
-    const worst = withScore.reduce((acc, cur) => (cur.score! < acc.score! ? cur : acc), withScore[0])
-    const bestDate = parseUTCDateString(best.date)
-    const worstDate = parseUTCDateString(worst.date)
-    return {
-      best: { date: bestDate ? formatDateShortNoYear(bestDate) : best.date, score: best.score ?? null },
-      worst: { date: worstDate ? formatDateShortNoYear(worstDate) : worst.date, score: worst.score ?? null },
-    }
-  }, [seriesSorted])
-
-  const periodIndexText = useMemo(() => {
-    if (!selectedDateKey || !rangeFromStr || !rangeToStr) return null
-    const index = diffDaysUTC(parseUTCDateString(rangeFromStr)!, parseUTCDateString(selectedDateKey)!)
-    if (!Number.isFinite(index)) return null
-    const total = diffDaysUTC(parseUTCDateString(rangeFromStr)!, parseUTCDateString(rangeToStr)!) + 1
-    return `Dia ${index + 1} de ${total} no periodo`
-  }, [selectedDateKey, rangeFromStr, rangeToStr])
 
   return (
     <View style={styles.container}>
@@ -1490,79 +1317,6 @@ export default function ForecastScreen() {
             />
           </View>
 
-          <View style={styles.periodEventsSection}>
-            <View style={styles.periodEventsHeader}>
-              <Text style={styles.sectionTitle}>Eventos do periodo</Text>
-              <TouchableOpacity onPress={() => setShowPeriodEvents((prev) => !prev)}>
-                <Text style={styles.periodEventsToggle}>
-                  {showPeriodEvents ? 'Ocultar' : 'Mostrar'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {showPeriodEvents && periodEventsList.length === 0 && (
-              <Text style={styles.emptyText}>Sem eventos relevantes no periodo.</Text>
-            )}
-            {showPeriodEvents && periodEventsLoading && (
-              <View style={styles.periodSkeleton}>
-                <View style={styles.periodSkeletonLine} />
-                <View style={styles.periodSkeletonLine} />
-                <View style={styles.periodSkeletonLineShort} />
-              </View>
-            )}
-            {showPeriodEvents && (
-              <FlatList
-                data={periodEventsPageItems}
-                keyExtractor={(item) => item.date}
-                scrollEnabled={false}
-                initialNumToRender={3}
-                maxToRenderPerBatch={5}
-                windowSize={5}
-                removeClippedSubviews
-                renderItem={({ item }) => {
-                  const dateObj = parseUTCDateString(item.date)
-                  const header = dateObj ? formatDateShort(dateObj) : item.date
-                  return (
-                    <View style={styles.periodDayBlock}>
-                      <Text style={styles.periodDayTitle}>{header}</Text>
-                      {item.events.map((event) => (
-                        <View key={event.id} style={styles.eventCardSmall}>
-                          <Text style={styles.eventTitle}>{event.shortText}</Text>
-                          {(() => {
-                            const phase = buildEventPhase(item.date, event)
-                            return phase ? (
-                              <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
-                            ) : null
-                          })()}
-                          <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )
-                }}
-              />
-            )}
-            {showPeriodEvents && periodEventsPageCount > 1 && (
-              <View style={styles.periodPagination}>
-                <TouchableOpacity
-                  style={[styles.periodPageButton, periodEventsPage === 0 && styles.periodPageButtonDisabled]}
-                  onPress={() => setPeriodEventsPage((prev) => Math.max(0, prev - 1))}
-                  disabled={periodEventsPage === 0}
-                >
-                  <Text style={styles.periodPageText}>Anterior</Text>
-                </TouchableOpacity>
-                <Text style={styles.periodPageLabel}>
-                  {periodEventsPage + 1} de {periodEventsPageCount}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.periodPageButton, periodEventsPage >= periodEventsPageCount - 1 && styles.periodPageButtonDisabled]}
-                  onPress={() => setPeriodEventsPage((prev) => Math.min(periodEventsPageCount - 1, prev + 1))}
-                  disabled={periodEventsPage >= periodEventsPageCount - 1}
-                >
-                  <Text style={styles.periodPageText}>Proxima</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
           <Text style={styles.badgeHint}>
             Badges: vermelho = criticos, amarelo = fortes (>= 60%).
           </Text>
