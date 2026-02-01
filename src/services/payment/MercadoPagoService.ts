@@ -47,6 +47,22 @@ export interface SubscriptionStatus {
 
 export class MercadoPagoService {
   private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
+  private static readonly FRONTEND_URL = (process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br').replace(/\/$/, '')
+
+  private static buildBackUrls() {
+    if (typeof window !== 'undefined') {
+      return {
+        success: `${this.FRONTEND_URL}/payment/success`,
+        failure: `${this.FRONTEND_URL}/payment/failure`,
+        pending: `${this.FRONTEND_URL}/payment/pending`,
+      }
+    }
+    return {
+      success: 'tabulaestelar://payment/success',
+      failure: 'tabulaestelar://payment/failure',
+      pending: 'tabulaestelar://payment/pending',
+    }
+  }
 
   static readonly PLANS: SubscriptionPlan[] = [
     {
@@ -120,9 +136,8 @@ export class MercadoPagoService {
           }],
           external_reference: paymentData.externalReference,
           notification_url: `${this.BACKEND_URL}/mercado-pago/webhook`,
-          success_url: 'tabulaestelar://payment/success',
-          failure_url: 'tabulaestelar://payment/failure',
-          pending_url: 'tabulaestelar://payment/pending',
+          back_urls: this.buildBackUrls(),
+          auto_return: 'approved',
           payment_method: paymentData.paymentMethod || null
         })
       })

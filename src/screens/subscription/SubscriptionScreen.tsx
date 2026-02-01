@@ -26,38 +26,15 @@ interface SubscriptionPlan {
   discount?: number;
 }
 
-const subscriptionPlans: SubscriptionPlan[] = [
-  {
-    id: 'basic_monthly',
-    name: 'Plano Basico',
-    price: 19.90,
-    period: 'mes',
-    features: [
-      'Acesso a grupos',
-      'Previsoes basicas',
-      'Notificacoes essenciais'
-    ],
-    originalPrice: 29.90,
-    discount: 33,
-  },
-  {
-    id: 'pro_monthly',
-    name: 'Plano Pro',
-    price: 47.90,
-    period: 'mes',
-    features: [
-      'Tudo do Basico +',
-      'Chatbot premium',
-      'Previsoes 30/90/365',
-      'Leituras premium',
-      'Hub premium completo'
-    ],
-    isPopular: true,
-    isPremium: true,
-    originalPrice: 79.90,
-    discount: 40,
-  }
-];
+const subscriptionPlans: SubscriptionPlan[] = MercadoPagoService.PLANS.map((plan) => ({
+  id: plan.id,
+  name: plan.name,
+  price: plan.price,
+  period: plan.frequency === 'yearly' ? 'ano' : 'mes',
+  features: plan.features,
+  isPopular: plan.id === 'pro_monthly',
+  isPremium: plan.id === 'premium_monthly',
+}));
 
 export default function SubscriptionScreen() {
   const { user } = useAuth();
