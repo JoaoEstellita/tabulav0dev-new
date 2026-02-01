@@ -488,6 +488,8 @@ export default function ForecastScreen() {
   const [pendingBadgeFilter, setPendingBadgeFilter] = useState<'all' | 'critical' | 'strong' | null>(null)
   const [periodEventsCachedList, setPeriodEventsCachedList] = useState<{ date: string; events: ForecastEvent[] }[] | null>(null)
   const [periodEventsPage, setPeriodEventsPage] = useState(0)
+  const [periodEventsComputedList, setPeriodEventsComputedList] = useState<{ date: string; events: ForecastEvent[] }[] | null>(null)
+  const [periodEventsLoading, setPeriodEventsLoading] = useState(false)
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const [lastStatusUpdatedAt, setLastStatusUpdatedAt] = useState<string | null>(null)
   const skipNextFetchRef = useRef(false)
@@ -495,6 +497,7 @@ export default function ForecastScreen() {
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
   const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const periodEventsBuildRef = useRef<{ cancelled: boolean } | null>(null)
 
   const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
 
@@ -1060,25 +1063,8 @@ export default function ForecastScreen() {
 
   const periodEventsList = useMemo(() => {
     if (periodEventsCachedList) return periodEventsCachedList
-    if (!showPeriodEvents) return []
-    if (!rangeFromStr || !rangeToStr) return []
-    const list: { date: string; events: ForecastEvent[] }[] = []
-    let cursor = parseUTCDateString(rangeFromStr)
-    const end = parseUTCDateString(rangeToStr)
-    if (!cursor || !end) return []
-    while (cursor <= end) {
-      const key = buildDateUTCString(cursor)
-      const items = eventsByDate[key] || []
-      const criticalCount = criticalCountsByDate[key] || 0
-      const strongCount = strongCountsByDate[key] || 0
-      const matchesFilter = badgeFilter === 'all'
-        || (badgeFilter === 'critical' && criticalCount > 0)
-        || (badgeFilter === 'strong' && strongCount > 0)
-      if (items.length && matchesFilter) list.push({ date: key, events: items })
-      cursor = addDaysUTC(cursor, 1)
-    }
-    return list
-  }, [badgeFilter, criticalCountsByDate, eventsByDate, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate, periodEventsCachedList])
+    return periodEventsComputedList || []
+  }, [periodEventsCachedList, periodEventsComputedList])
 
   const periodEventsPerPage = useMemo(() => {
     if (periodDays >= 360) return 10
@@ -1187,6 +1173,61 @@ export default function ForecastScreen() {
     const cacheKey = `${FORECAST_PERIOD_EVENTS_CACHE_PREFIX}:${user.uid}:${rangeFromStr}:${rangeToStr}:${badgeFilter}`
     AsyncStorage.setItem(cacheKey, JSON.stringify({ cachedAt: Date.now(), payload: periodEventsList })).catch(() => null)
   }, [showPeriodEvents, periodDays, user?.uid, rangeFromStr, rangeToStr, badgeFilter, periodEventsList])
+
+  useEffect(() => {
+    if (!showPeriodEvents) {
+      setPeriodEventsComputedList(null)
+      setPeriodEventsLoading(false)
+      if (periodEventsBuildRef.current) periodEventsBuildRef.current.cancelled = true
+      return
+    }
+    if (!rangeFromStr || !rangeToStr) return
+    if (periodEventsCachedList) {
+      setPeriodEventsComputedList(periodEventsCachedList)
+      setPeriodEventsLoading(false)
+      return
+    }
+    if (periodEventsBuildRef.current) periodEventsBuildRef.current.cancelled = true
+    const guard = { cancelled: false }
+    periodEventsBuildRef.current = guard
+    setPeriodEventsLoading(true)
+    setPeriodEventsComputedList([])
+    const start = parseUTCDateString(rangeFromStr)
+    const end = parseUTCDateString(rangeToStr)
+    if (!start || !end) {
+      setPeriodEventsLoading(false)
+      return
+    }
+    const list: { date: string; events: ForecastEvent[] }[] = []
+    let cursor = start
+    const batchSize = 25
+    const step = () => {
+      if (guard.cancelled) return
+      let processed = 0
+      while (cursor <= end && processed < batchSize) {
+        const key = buildDateUTCString(cursor)
+        const items = eventsByDate[key] || []
+        const criticalCount = criticalCountsByDate[key] || 0
+        const strongCount = strongCountsByDate[key] || 0
+        const matchesFilter = badgeFilter === 'all'
+          || (badgeFilter === 'critical' && criticalCount > 0)
+          || (badgeFilter === 'strong' && strongCount > 0)
+        if (items.length && matchesFilter) list.push({ date: key, events: items })
+        cursor = addDaysUTC(cursor, 1)
+        processed += 1
+      }
+      setPeriodEventsComputedList(list.slice())
+      if (cursor <= end) {
+        setTimeout(step, 0)
+      } else {
+        setPeriodEventsLoading(false)
+      }
+    }
+    step()
+    return () => {
+      guard.cancelled = true
+    }
+  }, [badgeFilter, criticalCountsByDate, eventsByDate, periodEventsCachedList, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate])
 
   const toggleEventDetails = useCallback((eventId: string) => {
     setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
@@ -1508,6 +1549,13 @@ export default function ForecastScreen() {
             </View>
             {showPeriodEvents && periodEventsList.length === 0 && (
               <Text style={styles.emptyText}>Sem eventos relevantes no periodo.</Text>
+            )}
+            {showPeriodEvents && periodEventsLoading && (
+              <View style={styles.periodSkeleton}>
+                <View style={styles.periodSkeletonLine} />
+                <View style={styles.periodSkeletonLine} />
+                <View style={styles.periodSkeletonLineShort} />
+              </View>
             )}
             {showPeriodEvents && (
               <FlatList
@@ -1985,6 +2033,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 12,
     backgroundColor: '#1C1C1E',
+  },
+  periodSkeleton: {
+    marginTop: 8,
+    gap: 8,
+  },
+  periodSkeletonLine: {
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: '#2A2A2E',
+  },
+  periodSkeletonLineShort: {
+    height: 12,
+    width: '60%',
+    borderRadius: 8,
+    backgroundColor: '#2A2A2E',
   },
   periodDayTitle: {
     color: '#FFFFFF',
