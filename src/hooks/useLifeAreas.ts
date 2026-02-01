@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import { useAuth } from './useAuth'
 import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
 import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
@@ -303,7 +304,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
           const value = typeof area?.percentage === 'number'
             ? area.percentage
             : (typeof area?.status === 'number' ? area.status : null)
-          return typeof value === 'number' && value < 40
+          return typeof value === 'number' && value < STATUS_THRESHOLDS.criticalBelow
         })
         .map(([name, area]) => ({
           name,

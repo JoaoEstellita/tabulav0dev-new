@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import LifeAreaCard from '../../components/LifeAreaCard'
+import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import { doc, getDoc } from 'firebase/firestore'
@@ -46,11 +47,11 @@ try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod
 const normalizePhaseLabel = (raw?: string | null) => {
   if (!raw) return ""
   return raw.toLowerCase()
-    .replace(/Ã¡|Ã |Ã£|Ã¢/g, "a")
-    .replace(/Ã©|Ãª/g, "e")
-    .replace(/Ã­/g, "i")
-    .replace(/Ã³|Ã´|Ãµ/g, "o")
-    .replace(/Ãº/g, "u")
+    .replace(/á|à|ã|â/g, "a")
+    .replace(/é|ê/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ó|ô|õ/g, "o")
+    .replace(/ú/g, "u")
 }
 
 const extractPhaseKey = (event: any) => {
@@ -227,7 +228,7 @@ export default function HomeScreen() {
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do Usuário:', error)
+        console.error('Erro ao carregar perfil do Usu�rio:', error)
       }
     }
 
@@ -291,13 +292,13 @@ export default function HomeScreen() {
         let phaseLabel = useEventPhase
           ? getMoonPhaseLabelFromKey(phaseKey)
           : getMoonPhaseLabelFromAngle(angle)
-        if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
-        const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
+        if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Bals�mica'
+        const line1 = currentVoid ? `${phaseLabel} � Lua Vazia` : phaseLabel
         const line2Base = (phaseEnd || nextExact)
-          ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
-          : 'fase em atualização'
+          ? `at� ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
+          : 'fase em atualiza��o'
         const line2 = currentVoid && voidEnd
-          ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
+          ? `${line2Base} � Lua Vazia at� ${formatLocalTime(voidEnd, userTz)}`
           : line2Base
 
         const iconKey = (!useEventPhase && angle >= 315)
@@ -323,7 +324,7 @@ export default function HomeScreen() {
         userProfile?.displayName ||
         user?.displayName ||
         (user?.email ? user.email.split('@')[0] : '') ||
-        'Usuário'
+        'Usu�rio'
       return decodeUnicodeEscapes(raw)
     }
 
@@ -355,7 +356,7 @@ export default function HomeScreen() {
         ...area,
         status: typeof percentage === 'number' ? percentage : 0,
         percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
-        criticalLevel: typeof percentage === 'number' ? percentage < 40 : !!area?.criticalLevel,
+        criticalLevel: typeof percentage === 'number' ? percentage < STATUS_THRESHOLDS.criticalBelow : !!area?.criticalLevel,
       }
     }, [])
 
@@ -439,7 +440,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>Ol�, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
@@ -468,7 +469,7 @@ export default function HomeScreen() {
                         {moonPhaseLabel || 'Lua'}
                       </Text>
                       <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                        {moonLine2 || 'fase em atualização'}
+                        {moonLine2 || 'fase em atualiza��o'}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -953,4 +954,5 @@ const styles = StyleSheet.create({
 
 
 
-
+
+
