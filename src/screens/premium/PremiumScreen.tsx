@@ -6,13 +6,14 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform, Linking } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
+import MercadoPagoService from '../../services/payment/MercadoPagoService'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
 
@@ -176,24 +177,23 @@ export default function PremiumScreen() {
           onPress: async () => {
             try {
               setPurchaseLoading(pack.id)
-              const token = await user.getIdToken(true)
-              const response = await AstrologerPremiumService.purchaseCredits(token, pack.id)
-              const remaining = typeof response?.creditsRemaining === 'number'
-                ? response.creditsRemaining
-                : typeof response?.meta?.creditsRemaining === 'number'
-                ? response.meta.creditsRemaining
-                : null
-              setCreditsRemaining(remaining)
-              const cycleEnd = response?.cycleEnd || response?.meta?.cycleEnd || null
-              if (cycleEnd) setCreditsCycleEnd(cycleEnd)
-              Alert.alert('Compra realizada', 'Créditos atualizados no seu saldo.')
-            } catch (error: any) {
-              const code = error?.code || 'erro'
-              if (code === 'purchase_disabled') {
-                Alert.alert('Indisponível', 'Compra de créditos ainda não está liberada.')
-              } else {
-                Alert.alert('Erro', 'Não foi possível finalizar a compra agora.')
+              const preference = await MercadoPagoService.createPaymentPreference({
+                userId: user.uid,
+                planId: pack.id,
+                email: user.email || '',
+                name: user.displayName || user.email || 'Usuario',
+                amount: pack.price,
+                description: pack.label,
+                externalReference: MercadoPagoService.generateExternalReference(user.uid, pack.id),
+              })
+              const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
+              if (!checkoutUrl) {
+                Alert.alert('Erro', 'Nao foi possivel gerar o link de pagamento.')
+                return
               }
+              await Linking.openURL(checkoutUrl)
+            } catch (error: any) {
+              Alert.alert('Erro', 'Não foi possível iniciar a compra agora.')
             } finally {
               setPurchaseLoading(null)
             }
@@ -203,7 +203,7 @@ export default function PremiumScreen() {
     )
   }
 
-  const handleSubscribe = (plan: { id: string; requiresPhone?: boolean }) => {
+  const handleSubscribe = async (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number }) => {
     if (plan.requiresPhone && !premiumPhone.trim()) {
       Alert.alert('Numero necessario', 'Informe o numero do WhatsApp para assinar o Premium.')
       return
@@ -213,7 +213,34 @@ export default function PremiumScreen() {
         .then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim()))
         .catch(() => null)
     }
-    Alert.alert('Em breve', 'Sistema de assinaturas sera implementado em breve!')
+    if (!user) {
+      Alert.alert('Login', 'Faça login para assinar.')
+      return
+    }
+    try {
+      const planConfig = MercadoPagoService.getPlanById(plan.id)
+      if (!planConfig) {
+        Alert.alert('Plano invalido', 'Nao foi possivel localizar o plano selecionado.')
+        return
+      }
+      const preference = await MercadoPagoService.createPaymentPreference({
+        userId: user.uid,
+        planId: planConfig.id,
+        email: user.email || '',
+        name: user.displayName || user.email || 'Usuario',
+        amount: planConfig.price,
+        description: planConfig.name,
+        externalReference: MercadoPagoService.generateExternalReference(user.uid, planConfig.id),
+      })
+      const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
+      if (!checkoutUrl) {
+        Alert.alert('Erro', 'Nao foi possivel gerar o link de pagamento.')
+        return
+      }
+      await Linking.openURL(checkoutUrl)
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao iniciar pagamento. Tente novamente.')
+    }
   }
   const partnerPayload = useMemo(() => ({
     birthDate: partnerBirthDate,
