@@ -4,7 +4,7 @@ export interface PremiumResponse<T = any> {
   meta?: {
     cacheHit?: boolean
     ttlSeconds?: number | null
-    quotaRemaining?: number | null
+    creditsRemaining?: number | null
     source?: string
     durationMs?: number
   }
@@ -70,6 +70,14 @@ export class AstrologerPremiumService {
 
   static getLunarReturnData(token: string, targetDate?: string) {
     return this.request('/premium/astrologer/lunar-return-data', token, { targetDate })
+  }
+
+  static getCreditsStatus(token: string) {
+    return this.request('/premium/credits/status', token, {})
+  }
+
+  static registerWhatsApp(token: string, phone: string) {
+    return this.request('/premium/whatsapp/register', token, { phone })
   }
 
   static async exportPdf(token: string, payload: Record<string, any>) {

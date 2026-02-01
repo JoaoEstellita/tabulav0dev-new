@@ -65,6 +65,7 @@ export default function SettingsScreen() {
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
   const [birthLocation, setBirthLocation] = useState<{
     city?: string;
     state?: string;
@@ -104,6 +105,7 @@ export default function SettingsScreen() {
     name: string;
     birthDate: string;
     birthTime: string;
+    whatsappPhone: string;
     birthLocation: typeof birthLocation;
     locationQuery: string;
     photo: string | null;
@@ -500,6 +502,7 @@ export default function SettingsScreen() {
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
       setBirthDate(data.birthDate || "");
       setBirthTime(data.birthTime || "");
+      setWhatsappPhone(data.whatsappPhone || "");
       setBirthLocation(data.birthLocation || null);
       if (data.birthLocation?.city) {
         const display = data.birthLocation.state
@@ -656,6 +659,9 @@ export default function SettingsScreen() {
         displayName: profileName || user.email?.split("@")[0] || "Usuario",
         profilePhoto: updatedPhoto || null,
       };
+      if (whatsappPhone) {
+        payload.whatsappPhone = whatsappPhone;
+      }
       if (birthDate) {
         payload.birthDate = birthDate;
       }
@@ -1200,6 +1206,14 @@ export default function SettingsScreen() {
                   />
                   <TextInput
                     style={styles.input}
+                    placeholder="WhatsApp (com DDD)"
+                    placeholderTextColor="#888"
+                    value={whatsappPhone}
+                    onChangeText={setWhatsappPhone}
+                    keyboardType="phone-pad"
+                  />
+                  <TextInput
+                    style={styles.input}
                     placeholder="Local de nascimento"
                     placeholderTextColor="#888"
                     value={locationQuery}
@@ -1231,6 +1245,10 @@ export default function SettingsScreen() {
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Horario:</Text>
                     <Text style={styles.infoValue}>{birthTime || "Nao informado"}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>WhatsApp:</Text>
+                    <Text style={styles.infoValue}>{whatsappPhone || "Nao informado"}</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Local:</Text>

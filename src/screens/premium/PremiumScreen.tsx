@@ -56,6 +56,8 @@ export default function PremiumScreen() {
   const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
   const [exportingPdf, setExportingPdf] = useState(false)
   const [premiumPhone, setPremiumPhone] = useState('')
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
+  const [creditsLoading, setCreditsLoading] = useState(false)
 
   useEffect(() => {
     AsyncStorage.getItem(HUB_HISTORY_KEY)
@@ -68,6 +70,34 @@ export default function PremiumScreen() {
       })
       .catch(() => null)
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    setCreditsLoading(true)
+    user.getIdToken(true)
+      .then((token) => AstrologerPremiumService.getCreditsStatus(token))
+      .then((response) => {
+        if (!active) return
+        const remaining = typeof response?.creditsRemaining === 'number'
+          ? response.creditsRemaining
+          : typeof response?.meta?.creditsRemaining === 'number'
+          ? response.meta.creditsRemaining
+          : null
+        setCreditsRemaining(remaining)
+      })
+      .catch(() => {
+        if (!active) return
+        setCreditsRemaining(null)
+      })
+      .finally(() => {
+        if (!active) return
+        setCreditsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [user?.uid])
 
   const subscriptionPlans = [
     {
@@ -120,6 +150,11 @@ export default function PremiumScreen() {
     if (plan.requiresPhone && !premiumPhone.trim()) {
       Alert.alert('Numero necessario', 'Informe o numero do WhatsApp para assinar o Premium.')
       return
+    }
+    if (plan.requiresPhone && user) {
+      user.getIdToken(true)
+        .then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim()))
+        .catch(() => null)
     }
     Alert.alert('Em breve', 'Sistema de assinaturas sera implementado em breve!')
   }
@@ -275,6 +310,9 @@ export default function PremiumScreen() {
       setHubResult(payload)
       setHubMeta(response?.meta || null)
       setShowJson(false)
+      if (typeof response?.meta?.creditsRemaining === 'number') {
+        setCreditsRemaining(response.meta.creditsRemaining)
+      }
       const summary = buildSummary(payload)
       const entry: HubHistoryItem = {
         id: `${action}-${Date.now()}`,
@@ -289,7 +327,11 @@ export default function PremiumScreen() {
       })
     } catch (error) {
       const code = error?.code || 'error'
-      setHubError(`${code}: ${error?.message || 'Falha ao consultar premium'}`)
+      if (code === 'credits_insufficient' || code === 'credits_unavailable') {
+        setHubError('Sem creditos suficientes. Compre mais creditos para continuar.')
+      } else {
+        setHubError(`${code}: ${error?.message || 'Falha ao consultar premium'}`)
+      }
     } finally {
       setHubLoading(false)
     }
@@ -309,6 +351,19 @@ export default function PremiumScreen() {
 
       {hasHubAccess && (
         <>
+          <View style={styles.hubCard}>
+            <Text style={styles.hubTitle}>Creditos disponiveis</Text>
+            {creditsLoading ? (
+              <ActivityIndicator color="#FFD700" />
+            ) : (
+              <Text style={styles.creditsValue}>
+                {creditsRemaining === null ? 'Ilimitado' : creditsRemaining}
+              </Text>
+            )}
+            <Text style={styles.hubSubtitle}>
+              Synastry custa 2 creditos. Demais leituras custam 1 credito.
+            </Text>
+          </View>
           <View style={styles.hubCard}>
             <Text style={styles.hubTitle}>Ferramentas Premium</Text>
             <Text style={styles.hubSubtitle}>Selecione uma leitura para gerar agora.</Text>
@@ -427,7 +482,7 @@ export default function PremiumScreen() {
                 {showJson && <Text style={styles.resultText}>{formatResult(hubResult)}</Text>}
                 {hubMeta && (
                   <Text style={styles.metaText}>
-                    cacheHit: {String(hubMeta.cacheHit)} · quotaRemaining: {hubMeta.quotaRemaining ?? 'n/a'}
+                    cacheHit: {String(hubMeta.cacheHit)} · creditsRemaining: {hubMeta.creditsRemaining ?? 'n/a'}
                   </Text>
                 )}
               </>
@@ -670,6 +725,12 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     fontSize: 13,
     marginBottom: 12,
+  },
+  creditsValue: {
+    color: '#FFD700',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   hubButtonRow: {
     flexDirection: 'row',
