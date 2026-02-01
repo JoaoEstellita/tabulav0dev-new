@@ -299,7 +299,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards,
   selectedDomainKey,
   onSelectDomain,
-  lastStatusUpdatedAt,
+  selectedDateLabel,
 }: {
   isLoading: boolean
   dayStatus: DayStatusResponse | null
@@ -307,7 +307,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
   selectedDomainKey: string | null
   onSelectDomain: (domain: string | null) => void
-  lastStatusUpdatedAt: string | null
+  selectedDateLabel: string
 }) {
   const score = typeof dayStatus?.global?.score === 'number'
     ? dayStatus.global.score
@@ -317,7 +317,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
 
   return (
     <View style={styles.dayPanelCard}>
-      <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+      <Text style={styles.dayPanelTitle}>{selectedDateLabel}</Text>
       {isLoading ? (
         <View style={styles.daySkeleton}>
           <View style={styles.daySkeletonLine} />
@@ -325,25 +325,23 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
           <View style={styles.daySkeletonLine} />
         </View>
       ) : score !== null ? (
-        <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
-          {score} {labelFromScoreValue(score)}
-        </Text>
+        <View style={styles.dayScoreRow}>
+          <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+          <View style={styles.dayScoreValue}>
+            <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
+              {score}
+            </Text>
+            <Text style={[styles.dayScoreLabel, { color: scoreColor(score) }]}>
+              {labelFromScoreValue(score)}
+            </Text>
+          </View>
+        </View>
       ) : (
         <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
-      )}
-      {lastStatusUpdatedAt && (
-        <Text style={styles.updatedAtText}>Atualizado agora</Text>
       )}
 
       <View style={styles.domainSection}>
         <Text style={styles.dayPanelLabel}>Status por area</Text>
-        <View style={styles.domainRow}>
-          <MemoDomainChip
-            label="Todos"
-            active={!selectedDomainKey}
-            onPress={() => onSelectDomain(null)}
-          />
-        </View>
         <View style={styles.areaPillGrid}>
           {lifeAreaCards.map((item) => {
             const isActive = selectedDomainKey === item.domain
@@ -359,7 +357,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
                   score={item.score}
                   active={isActive}
                   color={color}
-                  onPress={() => onSelectDomain(item.domain)}
+                  onPress={() => onSelectDomain(isActive ? null : item.domain)}
                 />
               </View>
             )
@@ -1404,26 +1402,6 @@ export default function ForecastScreen() {
             />
           </View>
           <View style={styles.calendarLegend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
-              <Text style={styles.legendText}>Positivo</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-              <Text style={styles.legendText}>Desafiador</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FFD166' }]} />
-              <Text style={styles.legendText}>Misto</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendBadgeCritical} />
-              <Text style={styles.legendText}>Criticos</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendBadgeStrong} />
-              <Text style={styles.legendText}>Fortes</Text>
-            </View>
             <TouchableOpacity
               style={styles.todayButton}
               onPress={() => {
@@ -1440,61 +1418,9 @@ export default function ForecastScreen() {
               <Text style={styles.todayButtonText}>Hoje</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.calendarFilters}>
-                <TouchableOpacity
-                  style={[styles.calendarFilterButton, badgeFilter === 'all' && styles.calendarFilterButtonActive]}
-                  onPress={() => setPendingBadgeFilter('all')}
-                >
-                  <Text style={[styles.calendarFilterText, badgeFilter === 'all' && styles.calendarFilterTextActive]}>
-                    Todos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.calendarFilterButton, badgeFilter === 'critical' && styles.calendarFilterButtonActive]}
-                  onPress={() => setPendingBadgeFilter('critical')}
-                >
-                  <Text style={[styles.calendarFilterText, badgeFilter === 'critical' && styles.calendarFilterTextActive]}>
-                    Criticos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.calendarFilterButton, badgeFilter === 'strong' && styles.calendarFilterButtonActive]}
-                  onPress={() => setPendingBadgeFilter('strong')}
-                >
-                  <Text style={[styles.calendarFilterText, badgeFilter === 'strong' && styles.calendarFilterTextActive]}>
-                    Fortes
-                  </Text>
-                </TouchableOpacity>
-          </View>
-          <Text style={styles.badgeHint}>
-            Badges: vermelho = criticos, amarelo = fortes (>= 60%).
-          </Text>
-          {criticalDaysList.length > 0 && (
-            <View style={styles.criticalSummary}>
-              <Text style={styles.criticalTitle}>Criticos no periodo: {totalCriticalCount}</Text>
-              <View style={styles.criticalRow}>
-                {criticalDaysList.map((item) => {
-                  const dateObj = parseUTCDateString(item.date)
-                  const label = dateObj ? formatDateShortNoYear(dateObj) : item.date
-                  const badgeScore = data?.dailyBadges?.[item.date]?.score
-                  const chipColor = typeof badgeScore === 'number' ? scoreColor(badgeScore) : null
-                  const chipTextColor = chipColor ? '#0F0F23' : '#FFFFFF'
-                  return (
-                    <View key={item.date} style={[styles.criticalChip, chipColor ? { backgroundColor: chipColor } : null]}>
-                      <Text style={[styles.criticalChipText, { color: chipTextColor }]}>{label}</Text>
-                      <Text style={[styles.criticalChipCount, { color: chipTextColor }]}>{item.count}</Text>
-                    </View>
-                  )
-                })}
-              </View>
-            </View>
-          )}
 
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
-              <Text style={styles.dayPanelTitle}>
-                {selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
-              </Text>
               <View style={styles.dayNavRow}>
                 <TouchableOpacity
                   style={styles.dayNavButton}
@@ -1535,9 +1461,6 @@ export default function ForecastScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-            {periodIndexText && (
-              <Text style={styles.periodIndexText}>{periodIndexText}</Text>
-            )}
             <MemoDaySummary
               key={selectedDateKey || 'day-summary'}
               isLoading={dayStatusLoadingDate === selectedDateKey}
@@ -1546,7 +1469,7 @@ export default function ForecastScreen() {
               lifeAreaCards={lifeAreaCards}
               selectedDomainKey={selectedDomainKey}
               onSelectDomain={handleSelectDomain}
-              lastStatusUpdatedAt={lastStatusUpdatedAt}
+              selectedDateLabel={selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
             />
 
             <MemoDayEvents
@@ -1566,18 +1489,6 @@ export default function ForecastScreen() {
               onToggleHint={() => setShowFilterHint((prev) => !prev)}
             />
           </View>
-
-          {weeklySummary && periodDays <= 30 && (
-            <View style={styles.weeklySummary}>
-              <Text style={styles.weeklyTitle}>Resumo do periodo</Text>
-              <Text style={styles.weeklyItem}>
-                Melhor dia: {weeklySummary.best.date} ({weeklySummary.best.score})
-              </Text>
-              <Text style={styles.weeklyItem}>
-                Pior dia: {weeklySummary.worst.date} ({weeklySummary.worst.score})
-              </Text>
-            </View>
-          )}
 
           <View style={styles.periodEventsSection}>
             <View style={styles.periodEventsHeader}>
@@ -1652,6 +1563,9 @@ export default function ForecastScreen() {
               </View>
             )}
           </View>
+          <Text style={styles.badgeHint}>
+            Badges: vermelho = criticos, amarelo = fortes (>= 60%).
+          </Text>
 
           {maxDaysAllowed < 360 && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
@@ -2042,10 +1956,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
+  dayScoreRow: {
+    gap: 4,
+    marginBottom: 4,
+  },
+  dayScoreValue: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
   dayPanelScore: {
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 6,
+  },
+  dayScoreLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   domainSection: {
     marginBottom: 12,
@@ -2212,9 +2139,9 @@ const styles = StyleSheet.create({
   },
   areaPill: {
     borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    minHeight: 56,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    minHeight: 48,
     justifyContent: 'center',
   },
   areaPillActive: {
