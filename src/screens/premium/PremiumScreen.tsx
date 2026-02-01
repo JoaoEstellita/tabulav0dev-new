@@ -60,7 +60,9 @@ export default function PremiumScreen() {
   const [lastAction, setLastAction] = useState<string | null>(null)
   const [showJson, setShowJson] = useState(false)
   const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
-  const [creditHistory, setCreditHistory] = useState<Array<{ id: string; type: string; qty: number; ts: string; detail?: string }>>([])
+  const [creditHistory, setCreditHistory] = useState<Array<{ id: string; type: string; qty: number; ts: string; detail?: string; balanceAfter?: number | null; delta?: number | null }>>([])
+  const [creditsHistoryLoading, setCreditsHistoryLoading] = useState(false)
+  const [creditsHistoryError, setCreditsHistoryError] = useState<string | null>(null)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [premiumPhone, setPremiumPhone] = useState('')
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
@@ -132,6 +134,38 @@ export default function PremiumScreen() {
     return () => {
       active = false
     }
+  }, [user?.uid])
+
+  const fetchCreditsHistory = async () => {
+    if (!user) return
+    setCreditsHistoryLoading(true)
+    setCreditsHistoryError(null)
+    try {
+      const token = await user.getIdToken(true)
+      const response: any = await AstrologerPremiumService.getCreditsHistory(token, 30)
+      const items = response?.items || response?.data?.items || []
+      const mapped = Array.isArray(items)
+        ? items.map((item: any) => ({
+          id: item.id || `${item.type || 'credit'}-${item.createdAt || Date.now()}`,
+          type: item.type || 'movimentacao',
+          qty: Math.abs(Number(item.delta ?? 0)) || 0,
+          ts: item.createdAt || item.ts || new Date().toISOString(),
+          detail: item.source || item.meta?.packId || item.meta?.action || item.meta?.planId || undefined,
+          balanceAfter: typeof item.balanceAfter === 'number' ? item.balanceAfter : null,
+          delta: typeof item.delta === 'number' ? item.delta : null,
+        }))
+        : []
+      setCreditHistory(mapped)
+    } catch (error: any) {
+      setCreditsHistoryError(error?.message || 'Falha ao carregar historico')
+    } finally {
+      setCreditsHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return
+    fetchCreditsHistory()
   }, [user?.uid])
 
   const subscriptionPlans = PLAN_DEFINITIONS.map((plan) => ({
@@ -415,8 +449,10 @@ export default function PremiumScreen() {
           qty: actionMeta.cost,
           ts: new Date().toISOString(),
           detail: actionMeta.label,
+          delta: -Math.abs(actionMeta.cost),
         }
         setCreditHistory((prev) => [creditEntry, ...prev].slice(0, 20))
+        fetchCreditsHistory()
       }
     } catch (error) {
       const code = error?.code || 'error'
@@ -746,6 +782,12 @@ export default function PremiumScreen() {
     <ScrollView style={styles.tabContent}>
       <View style={styles.hubCard}>
         <Text style={styles.hubTitle}>Historico de creditos</Text>
+        {creditsHistoryLoading && (
+          <ActivityIndicator color="#FFD700" />
+        )}
+        {creditsHistoryError && !creditsHistoryLoading && (
+          <Text style={styles.errorText}>{creditsHistoryError}</Text>
+        )}
         {creditHistory.length === 0 && (
           <Text style={styles.emptyText}>Sem movimentacoes ainda.</Text>
         )}
@@ -755,7 +797,8 @@ export default function PremiumScreen() {
             <View style={styles.historyText}>
               <Text style={styles.historyLabel}>{item.detail || item.type}</Text>
               <Text style={styles.historySummary}>
-                {item.type} • {item.qty} credito(s)
+                {item.type} • {item.qty} credito(s){typeof item.delta === 'number' ? ` (${item.delta > 0 ? '+' : ''}${item.delta})` : ''}
+                {typeof item.balanceAfter === 'number' ? ` • saldo: ${item.balanceAfter}` : ''}
               </Text>
             </View>
           </View>

@@ -42,6 +42,24 @@ export class AstrologerPremiumService {
     return payload as PremiumResponse<T>
   }
 
+  private static async requestGet<T>(path: string, token: string) {
+    const response = await fetch(`${this.BACKEND_URL}${path}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const error = payload?.error || `HTTP_${response.status}`
+      const message = payload?.message || payload?.error || 'Erro ao consultar premium'
+      const err = new Error(message)
+      ;(err as any).code = error
+      throw err
+    }
+    return payload as PremiumResponse<T>
+  }
+
   static getBirthChartData(token: string) {
     return this.request('/premium/astrologer/birth-chart-data', token, {})
   }
@@ -84,6 +102,11 @@ export class AstrologerPremiumService {
 
   static purchaseCredits(token: string, packId: string) {
     return this.request('/premium/credits/purchase', token, { packId })
+  }
+
+  static getCreditsHistory(token: string, limit = 50) {
+    const qs = `?limit=${encodeURIComponent(String(limit))}`
+    return this.requestGet(`/premium/credits/history${qs}`, token)
   }
 
   static registerWhatsApp(token: string, phone: string) {
