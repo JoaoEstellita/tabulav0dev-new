@@ -16,6 +16,8 @@ import { useRoute } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService from '../../services/payment/MercadoPagoService'
 import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
+import ExpiryBanner from '../../components/ExpiryBanner'
+import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
 
@@ -65,6 +67,23 @@ export default function PremiumScreen() {
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const expiryInfo = useMemo(() => {
+    return getExpiryBannerInfo({
+      featureLabel: 'Premium',
+      trialActive,
+      trialEndsAt: subscription?.trialEndsAt || null,
+      subscriptionNextBillingDate: subscription?.nextBillingDate || null,
+      subscriptionExpiresAt: subscription?.expiresAt || null,
+      isPremium,
+    })
+  }, [isPremium, subscription?.expiresAt, subscription?.nextBillingDate, subscription?.trialEndsAt, trialActive])
+  const expiryMessage = useMemo(() => {
+    if (!expiryInfo.show) return ''
+    const daysLeft = expiryInfo.daysLeft
+    if (typeof daysLeft !== 'number') return expiryInfo.message
+    if (daysLeft <= 0) return expiryInfo.message
+    return `${expiryInfo.message} (${daysLeft} dias)`
+  }, [expiryInfo])
 
   useEffect(() => {
     AsyncStorage.getItem(HUB_HISTORY_KEY)
@@ -752,6 +771,13 @@ export default function PremiumScreen() {
         <Text style={styles.headerTitle}>Premium</Text>
         <Text style={styles.headerSubtitle}>Planos e servicos premium</Text>
       </View>
+      {expiryInfo.show && (
+        <ExpiryBanner
+          message={expiryMessage}
+          variant={expiryInfo.variant}
+          onPress={() => setSelectedTab('features')}
+        />
+      )}
 
       {/* Tabs */}
       <View style={styles.tabContainer}>

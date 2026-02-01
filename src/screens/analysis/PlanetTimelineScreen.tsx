@@ -4,17 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { translatePlanetPT } from '../../utils/astro/pt'
-
-const AREA_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Financas',
-  saude: 'Saude',
-  familia: 'Familia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicacao',
-  transformacao: 'Transformacao',
-}
+import { getLifeAreaLabel } from '../../constants/lifeAreas'
 
 const formatDegree = (longitude: number) => `${longitude.toFixed(1)}\u00B0`
 
@@ -124,7 +114,7 @@ export default function PlanetTimelineScreen() {
                     <Text style={styles.areaTitle}>Areas mais impactadas</Text>
                     {areaKeys.map((areaKey) => (
                       <Text key={`${planet.name}-${areaKey}`} style={styles.areaItem}>
-                        • {AREA_LABELS[areaKey] || areaKey}
+                        • {getLifeAreaLabel(areaKey)}
                       </Text>
                     ))}
                   </View>

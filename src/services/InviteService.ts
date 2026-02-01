@@ -10,6 +10,7 @@
 
 import * as Linking from 'expo-linking'
 import { Share, Alert, Platform } from 'react-native'
+import { getLifeAreaLabel } from '../constants/lifeAreas'
 
 export interface InviteData {
   groupId: string
@@ -23,17 +24,6 @@ export class InviteService {
   
   // Base URL do app (sera configurada para producao)
   private static readonly BASE_URL = 'https://tabulaestelar.com.br'
-
-  private static readonly LIFE_AREA_LABELS: Record<string, string> = {
-    amor: 'Amor',
-    carreira: 'Carreira',
-    financas: 'Financas',
-    saude: 'Saude',
-    familia: 'Familia',
-    espiritualidade: 'Espiritualidade',
-    comunicacao: 'Comunicacao',
-    transformacao: 'Transformacao',
-  }
 
   /**
    * Gera link de convite dinamico
@@ -111,7 +101,7 @@ Junte-se a nos na jornada astrologica.`
 
   private static formatLifeAreas(areas?: string[]): string {
     if (!areas || areas.length === 0) return 'Todas as areas'
-    return areas.map((area) => this.LIFE_AREA_LABELS[area] || area).join(', ')
+    return areas.map((area) => getLifeAreaLabel(area)).join(', ')
   }
 
   /**

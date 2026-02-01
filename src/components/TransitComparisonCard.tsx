@@ -92,17 +92,6 @@ const PLANET_ICONS: Record<string, string> = {
   Pluto: '\u2647'
 }
 
-const AREA_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Finan\u00E7as',
-  saude: 'Sa\u00FAde',
-  familia: 'Fam\u00EDlia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunica\u00E7\u00E3o',
-  transformacao: 'Transforma\u00E7\u00E3o'
-}
-
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 
 export default function TransitComparisonCard({

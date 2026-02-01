@@ -27,6 +27,7 @@ import InviteModal from './InviteModal'
 import GroupNotificationSettings from './GroupNotificationSettings'
 import InviteService from '../services/InviteService'
 import type { Group, GroupMember, GroupActivity } from '../services/firebase/GroupService'
+import { getLifeAreaLabel } from '../constants/lifeAreas'
 
 export interface GroupDetailModalProps {
   visible: boolean
@@ -88,20 +89,9 @@ function generateInviteLink(groupId: string, inviteCode: string): string {
   return `https://tabulaestelar.com.br/join/${inviteCode}`
 }
 
-const LIFE_AREA_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Financas',
-  saude: 'Saude',
-  familia: 'Familia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunicacao',
-  transformacao: 'Transformacao',
-}
-
 const formatLifeAreas = (areas?: string[]) => {
   if (!areas || areas.length === 0) return 'Todas as areas'
-  return areas.map((area) => LIFE_AREA_LABELS[area] || area).join(', ')
+  return areas.map((area) => getLifeAreaLabel(area)).join(', ')
 }
 
 export default function GroupDetailModal({

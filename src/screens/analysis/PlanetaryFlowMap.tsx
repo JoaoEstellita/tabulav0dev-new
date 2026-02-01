@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import Svg, { Path } from 'react-native-svg'
 import type { ImpactAreaNode, ImpactContributor } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
+import { getLifeAreaLabel } from '../../constants/lifeAreas'
 
 interface PlanetaryFlowMapProps {
   impactNodes: ImpactAreaNode[]
@@ -18,17 +19,6 @@ type FlowEntry = {
   intensity: 'leve' | 'moderada' | 'forte'
   scoreAbs: number
   reason?: string
-}
-
-const AREA_LABELS: Record<string, string> = {
-  amor: 'Amor',
-  carreira: 'Carreira',
-  financas: 'Finan\u00E7as',
-  saude: 'Sa\u00FAde',
-  familia: 'Fam\u00EDlia',
-  espiritualidade: 'Espiritualidade',
-  comunicacao: 'Comunica\u00E7\u00E3o',
-  transformacao: 'Transforma\u00E7\u00E3o',
 }
 
 const directionColor = (direction: FlowDirection) => {
@@ -176,7 +166,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               onPress={() => setSelectedArea(active ? null : area)}
             >
               <Text style={[styles.selectorText, active && styles.selectorTextActive]}>
-                {AREA_LABELS[area] || area}
+                {getLifeAreaLabel(area)}
               </Text>
             </TouchableOpacity>
           )
@@ -189,7 +179,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
             <View style={styles.flowHeaderRow}>
               <Text style={styles.flowPlanet}>{translatePlanetPT(flow.planet)}</Text>
               <Ionicons name="arrow-forward" size={14} color="#64748B" />
-              <Text style={styles.flowArea}>{AREA_LABELS[flow.areaKey] || flow.areaKey}</Text>
+              <Text style={styles.flowArea}>{getLifeAreaLabel(flow.areaKey)}</Text>
             </View>
             <View style={styles.flowLineWrap}>
               <Svg

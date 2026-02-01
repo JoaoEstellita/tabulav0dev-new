@@ -108,3 +108,8 @@ export function normalizeLifeArea(raw: string | null | undefined): string | null
   if (LIFE_AREA_ORDER.includes(key as LifeAreaKey)) return key
   return null
 }
+
+export function getLifeAreaLabel(raw: string | null | undefined): string {
+  const key = normalizeLifeArea(raw) || String(raw || '').trim().toLowerCase()
+  return LIFE_AREA_LABELS[key as keyof typeof LIFE_AREA_LABELS] || key || 'Área'
+}
