@@ -14,10 +14,11 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
-import { useRoute } from "@react-navigation/native"
+import { useNavigation, useRoute } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { useAuth } from "../../hooks/useAuth"
+import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
 import GroupService, { type Group, type GroupMember, type GroupAlert, type GroupActivity } from "../../services/firebase/GroupService"
 import CoupleService, { type CoupleRelationship } from "../../services/firebase/CoupleService"
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
@@ -26,7 +27,9 @@ import GroupDetailModal from "../../components/GroupDetailModal"
 import GroupNotificationSettings from "../../components/GroupNotificationSettings"
 import InviteService from "../../services/InviteService"
 import Avatar from "../../components/Avatar"
+import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
+import { getExpiryBannerInfo } from "../../utils/expiry"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -66,8 +69,10 @@ const formatLifeAreas = (areas?: string[]) => {
 
 export default function GroupsScreen() {
   const route = useRoute<any>()
+  const navigation = useNavigation()
   const { user } = useAuth()
   const { preferences } = useNotificationPreferences()
+  const { subscription, trialActive, trialEndsAt, isAdmin } = useSubscriptionCheck()
   
   // Estados para abas
   const [selectedTab, setSelectedTab] = useState<"groups" | "couple">("groups")
@@ -121,6 +126,16 @@ export default function GroupsScreen() {
   const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
+
+  const isPremium = isAdmin || trialActive || subscription?.active === true
+  const expiryInfo = getExpiryBannerInfo({
+    featureLabel: 'Grupos',
+    trialActive,
+    trialEndsAt: trialEndsAt || subscription?.trialEndsAt || null,
+    subscriptionNextBillingDate: subscription?.nextBillingDate || null,
+    subscriptionExpiresAt: subscription?.expiresAt || null,
+    isPremium,
+  })
 
   useEffect(() => {
     if (user) {
@@ -911,6 +926,14 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
           
         </View>
+
+        {expiryInfo.show && (
+          <ExpiryBanner
+            message={expiryInfo.message}
+            variant={expiryInfo.variant}
+            onPress={() => navigation.navigate("Premium" as never)}
+          />
+        )}
 
         {selectedGroup && (
           <>

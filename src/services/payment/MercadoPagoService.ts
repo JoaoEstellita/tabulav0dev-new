@@ -50,9 +50,9 @@ export class MercadoPagoService {
 
   static readonly PLANS: SubscriptionPlan[] = [
     {
-      id: 'basic_monthly',
-      name: 'Basico Mensal',
-      description: 'Grupos e previsoes essenciais',
+      id: 'essential_monthly',
+      name: 'Essential Mensal',
+      description: 'Grupos + previsoes basicas',
       price: 19.90,
       currency: 'BRL',
       frequency: 'monthly',
@@ -60,25 +60,40 @@ export class MercadoPagoService {
       trialDays: 7,
       features: [
         'Acesso a grupos',
-        'Previsoes basicas (7 dias)',
+        'Forecast: 7 dias',
         'Notificacoes essenciais'
       ]
     },
     {
       id: 'pro_monthly',
       name: 'Pro Mensal',
-      description: 'Chatbot e previsoes completas',
+      description: 'Forecast avancado + Hub limitado',
       price: 47.90,
       currency: 'BRL',
       frequency: 'monthly',
       duration: 1,
       trialDays: 7,
       features: [
-        'Tudo do Basico +',
-        'Chatbot premium',
-        'Previsoes 30/90/365',
-        'Leituras premium (Astrologer)',
-        'Hub premium'
+        'Tudo do Essential +',
+        'Forecast: 7/30/90 dias',
+        '1 credito Astrologer / mes',
+        'Hub premium (limitado)'
+      ]
+    },
+    {
+      id: 'premium_monthly',
+      name: 'Premium Mensal',
+      description: 'Forecast completo + Chatbot WhatsApp',
+      price: 79.90,
+      currency: 'BRL',
+      frequency: 'monthly',
+      duration: 1,
+      trialDays: 7,
+      features: [
+        'Tudo do Pro +',
+        'Forecast: 7/30/90/360 dias',
+        '10 creditos Astrologer / mes',
+        'Chatbot WhatsApp IA'
       ]
     }
   ]

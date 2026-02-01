@@ -10,6 +10,9 @@ interface SubscriptionResult {
   active: boolean
   status: string
   planId?: string | null
+  expiresAt?: Date | null
+  nextBillingDate?: Date | null
+  trialEndsAt?: Date | null
 }
 
 export function useSubscriptionCheck() {
@@ -18,6 +21,7 @@ export function useSubscriptionCheck() {
   const [showModal, setShowModal] = useState(false)
   const [subscription, setSubscription] = useState<SubscriptionResult | null>(null)
   const [trialActive, setTrialActive] = useState(true)
+  const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -43,6 +47,8 @@ export function useSubscriptionCheck() {
       }
 
       const diff = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24)
+      const trialEndDate = new Date(new Date(trialStart).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
+      setTrialEndsAt(trialEndDate)
       if (diff < TRIAL_DAYS) {
         setTrialActive(true)
         setShowModal(false)
@@ -53,7 +59,14 @@ export function useSubscriptionCheck() {
       setTrialActive(false)
 
       const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
-      const result = { active: status.isActive, status: status.status, planId: status.planId }
+      const result = {
+        active: status.isActive,
+        status: status.status,
+        planId: status.planId,
+        expiresAt: status.expiresAt,
+        nextBillingDate: status.nextBillingDate,
+        trialEndsAt: status.trialEndsAt,
+      }
       setSubscription(result)
       setShowModal(!status.isActive && !adminFlag)
       setLoading(false)
@@ -62,5 +75,5 @@ export function useSubscriptionCheck() {
     check()
   }, [user])
 
-  return { loading, showModal, setShowModal, subscription, trialActive, isAdmin }
+  return { loading, showModal, setShowModal, subscription, trialActive, trialEndsAt, isAdmin }
 }

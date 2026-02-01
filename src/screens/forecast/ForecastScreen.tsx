@@ -7,12 +7,14 @@ import { useNavigation } from '@react-navigation/native'
 import { Calendar } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import LifeAreaCard from '../../components/LifeAreaCard'
+import ExpiryBanner from '../../components/ExpiryBanner'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
   LIFE_AREA_ORDER,
   normalizeLifeArea,
 } from '../../constants/lifeAreas'
+import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -65,7 +67,7 @@ type ForecastResponse = {
   meta?: { cached?: boolean; limited?: boolean; premium?: boolean; rulesVersion?: string; durationMs?: number }
 }
 
-const PERIODS = [7, 30, 90, 365]
+const PERIODS = [7, 30, 90, 360]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
@@ -454,7 +456,7 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
 
 export default function ForecastScreen() {
   const { user } = useAuth()
-  const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
+  const { subscription, trialActive, trialEndsAt, isAdmin } = useSubscriptionCheck()
   const navigation = useNavigation()
   const [periodDays, setPeriodDays] = useState(7)
   const [loading, setLoading] = useState(false)
@@ -486,12 +488,30 @@ export default function ForecastScreen() {
 
   const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
 
-  const planId = subscription?.planId || null
-  const isPremium = isAdmin || trialActive || subscription?.active === true
-  const hasExtendedForecast = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_'))
-  const granularity = periodDays >= 90 ? 'week' : 'day'
+  const planId = (subscription?.planId || '').toLowerCase()
+  const isPremium = isAdmin || subscription?.active === true
+  const maxDaysAllowed = useMemo(() => {
+    if (isAdmin) return 360
+    if (!subscription?.active) return 7
+    if (planId.startsWith('premium_') || planId === 'premium_monthly') return 360
+    if (planId === 'pro_monthly' || planId.startsWith('pro_')) return 90
+    if (planId === 'basic_monthly' || planId.startsWith('basic_') || planId.startsWith('essential_')) return 30
+    return 7
+  }, [isAdmin, planId, subscription?.active])
+  const hasExtendedForecast = maxDaysAllowed > 7
+  const granularity = 'day'
+  const expiryInfo = useMemo(() => {
+    return getExpiryBannerInfo({
+      featureLabel: 'Previsoes',
+      trialActive,
+      trialEndsAt: trialEndsAt || subscription?.trialEndsAt || null,
+      subscriptionNextBillingDate: subscription?.nextBillingDate || null,
+      subscriptionExpiresAt: subscription?.expiresAt || null,
+      isPremium,
+    })
+  }, [isPremium, subscription?.expiresAt, subscription?.nextBillingDate, subscription?.trialEndsAt, trialActive, trialEndsAt])
   const periodEventsCacheTtlMs = useMemo(() => {
-    if (periodDays >= 365) return 3 * 60 * 60 * 1000
+    if (periodDays >= 360) return 3 * 60 * 60 * 1000
     if (periodDays >= 90) return 90 * 60 * 1000
     return 30 * 60 * 1000
   }, [periodDays])
@@ -807,8 +827,8 @@ export default function ForecastScreen() {
 
   const handleCalendarPress = useCallback((dateKey: string) => {
     if (!isDateInRange(dateKey)) {
-      if (!hasExtendedForecast) {
-        Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+      if (maxDaysAllowed <= 7) {
+        Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
         navigation.navigate('Premium' as never)
         return
       }
@@ -818,7 +838,7 @@ export default function ForecastScreen() {
       return
     }
     handleSelectDate(dateKey)
-  }, [data?.meta?.limited, handleSelectDate, hasExtendedForecast, isDateInRange, navigation])
+  }, [data?.meta?.limited, handleSelectDate, isDateInRange, maxDaysAllowed, navigation])
 
   const calendarMarkedDates = useMemo(() => {
     const marks: Record<string, any> = {}
@@ -1038,7 +1058,7 @@ export default function ForecastScreen() {
   }, [badgeFilter, criticalCountsByDate, eventsByDate, rangeFromStr, rangeToStr, showPeriodEvents, strongCountsByDate, periodEventsCachedList])
 
   const periodEventsPerPage = useMemo(() => {
-    if (periodDays >= 365) return 10
+    if (periodDays >= 360) return 10
     if (periodDays >= 90) return 12
     return 20
   }, [periodDays])
@@ -1154,8 +1174,8 @@ export default function ForecastScreen() {
   }, [])
 
   const handleSelectPeriod = (days: number) => {
-    if (!hasExtendedForecast && days !== 7) {
-      Alert.alert('Premium', 'Premium desbloqueia 30/90/365 dias')
+    if (days > maxDaysAllowed) {
+      Alert.alert('Premium', 'Seu plano atual nao libera este periodo')
       navigation.navigate('Premium' as never)
       return
     }
@@ -1190,10 +1210,17 @@ export default function ForecastScreen() {
         <Text style={styles.title}>Previsoes</Text>
         <Text style={styles.subtitle}>Status previsto dos proximos dias</Text>
       </View>
+      {expiryInfo.show && (
+        <ExpiryBanner
+          message={expiryInfo.message}
+          variant={expiryInfo.variant}
+          onPress={() => navigation.navigate('Premium' as never)}
+        />
+      )}
 
       <View style={styles.periodRow}>
         {PERIODS.map((days) => {
-          const locked = !hasExtendedForecast && days !== 7
+          const locked = days > maxDaysAllowed
           const selected = periodDays === days
           return (
             <TouchableOpacity
@@ -1212,8 +1239,8 @@ export default function ForecastScreen() {
         <View style={styles.banner}>
           <Text style={styles.bannerText}>
             {rangeFrom && rangeTo
-              ? `Mostrando ${formatDateShort(rangeFrom)} - ${formatDateShort(rangeTo)} (Premium desbloqueia 30/90/365)`
-              : 'Mostrando 7 dias (Premium desbloqueia 30/90/365)'}
+              ? `Mostrando ${formatDateShort(rangeFrom)} - ${formatDateShort(rangeTo)} (Premium desbloqueia 30/90/360)`
+              : 'Mostrando 7 dias (Premium desbloqueia 30/90/360)'}
           </Text>
         </View>
       )}
@@ -1294,8 +1321,8 @@ export default function ForecastScreen() {
                 const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
                   handleSelectDate(todayKey)
-                } else if (!hasExtendedForecast) {
-                  Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                } else if (maxDaysAllowed <= 7) {
+                  Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
                   navigation.navigate('Premium' as never)
                 }
               }}
@@ -1377,8 +1404,8 @@ export default function ForecastScreen() {
                     const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
                 if (isDateInRange(todayKey)) {
                   handleSelectDate(todayKey)
-                } else if (!hasExtendedForecast) {
-                  Alert.alert('Premium', 'Premium desbloqueia datas fora do periodo atual')
+                } else if (maxDaysAllowed <= 7) {
+                  Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
                   navigation.navigate('Premium' as never)
                 }
               }}
@@ -1507,9 +1534,9 @@ export default function ForecastScreen() {
             )}
           </View>
 
-          {!hasExtendedForecast && (
+          {maxDaysAllowed < 360 && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
-              <Text style={styles.ctaText}>Desbloquear previsoes 30/90/365</Text>
+              <Text style={styles.ctaText}>Desbloquear previsoes completas</Text>
             </TouchableOpacity>
           )}
         </ScrollView>

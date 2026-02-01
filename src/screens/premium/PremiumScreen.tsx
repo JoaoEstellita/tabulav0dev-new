@@ -35,9 +35,9 @@ type HubHistoryItem = {
 export default function PremiumScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
-  const planId = subscription?.planId || null
-  const isPremium = isAdmin || trialActive || subscription?.active === true
-  const hasHubAccess = isAdmin || trialActive || planId === 'pro_monthly' || (planId && String(planId).startsWith('premium_')) || (planId && String(planId).startsWith('pro_'))
+  const planId = (subscription?.planId || '').toLowerCase()
+  const isPremium = isAdmin || subscription?.active === true
+  const hasHubAccess = isAdmin || (subscription?.active && (planId.startsWith('premium_') || planId === 'premium_monthly' || planId.startsWith('pro_') || planId === 'pro_monthly'))
   const [selectedTab, setSelectedTab] = useState<'hub' | 'features' | 'analysis' | 'matching' | 'reports'>(hasHubAccess ? 'hub' : 'features')
   const [targetDate, setTargetDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [partnerBirthDate, setPartnerBirthDate] = useState('')
@@ -55,6 +55,7 @@ export default function PremiumScreen() {
   const [showJson, setShowJson] = useState(false)
   const [hubHistory, setHubHistory] = useState<HubHistoryItem[]>([])
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [premiumPhone, setPremiumPhone] = useState('')
 
   useEffect(() => {
     AsyncStorage.getItem(HUB_HISTORY_KEY)
@@ -70,49 +71,57 @@ export default function PremiumScreen() {
 
   const subscriptionPlans = [
     {
-      id: 'basic',
-      name: 'ðŸ†“ Gratuito',
-      price: 0,
-      features: [
-        'CÃ¡lculos ephemeris locais',
-        'Status das Ã¡reas da vida',
-        'NotificaÃ§Ãµes diÃ¡rias',
-        'AnÃ¡lise bÃ¡sica'
-      ],
-      color: '#44AA44',
-      current: true
-    },
-    {
-      id: 'basic_monthly',
-      name: 'ðŸ’Ž Basico',
+      id: 'essential_monthly',
+      name: 'Essential',
       price: 19.90,
       features: [
-        'Tudo do Gratuito +',
         'Acesso a grupos',
-        'Previsoes basicas',
-        'Notificacoes essenciais'
+        'Forecast: 7 dias',
+        'Alertas essenciais',
       ],
       color: '#FFD700',
-      current: false
     },
     {
       id: 'pro_monthly',
-      name: 'ðŸŒŸ Pro',
+      name: 'Pro',
       price: 47.90,
       features: [
-        'Tudo do Basico +',
-        'Chatbot premium',
-        'Previsoes 30/90/365',
-        'Leituras premium',
-        'Hub premium completo'
+        'Tudo do Essential +',
+        'Forecast: 7/30/90 dias',
+        '1 credito Astrologer / mês',
+        'Acesso ao Hub premium (limitado)',
+      ],
+      color: '#4ECDC4',
+    },
+    {
+      id: 'premium_monthly',
+      name: 'Premium',
+      price: 79.90,
+      features: [
+        'Tudo do Pro +',
+        'Forecast: 7/30/90/360 dias',
+        '10 creditos Astrologer / mês',
+        'Chatbot WhatsApp IA',
       ],
       color: '#FF6B6B',
-      current: false
-    }
+      requiresPhone: true,
+    },
+  ].map((plan) => ({
+    ...plan,
+    current: subscription?.active && planId === plan.id,
+  }))
+  const creditPacks = [
+    { id: 'credits_1', label: '1 credito', price: 14.90 },
+    { id: 'credits_5', label: '5 creditos', price: 49.90 },
+    { id: 'credits_10', label: '10 creditos', price: 89.90 },
   ]
 
-  const handleSubscribe = (planId: string) => {
-    Alert.alert('ðŸš€ Em Breve', 'Sistema de assinaturas serÃ¡ implementado em breve!')
+  const handleSubscribe = (plan: { id: string; requiresPhone?: boolean }) => {
+    if (plan.requiresPhone && !premiumPhone.trim()) {
+      Alert.alert('Numero necessario', 'Informe o numero do WhatsApp para assinar o Premium.')
+      return
+    }
+    Alert.alert('Em breve', 'Sistema de assinaturas sera implementado em breve!')
   }
   const partnerPayload = useMemo(() => ({
     birthDate: partnerBirthDate,
@@ -291,7 +300,7 @@ export default function PremiumScreen() {
       {!hasHubAccess && (
         <View style={styles.lockedBox}>
           <Text style={styles.lockedTitle}>Premium bloqueado</Text>
-          <Text style={styles.lockedText}>Assine o plano Pro para desbloquear o Hub Premium.</Text>
+          <Text style={styles.lockedText}>Assine o plano Pro ou Premium para desbloquear o Hub.</Text>
           <TouchableOpacity style={styles.lockedButton} onPress={() => setSelectedTab('features')}>
             <Text style={styles.lockedButtonText}>Ver planos</Text>
           </TouchableOpacity>
@@ -358,22 +367,22 @@ export default function PremiumScreen() {
                   const actionMeta = getActionMeta(lastAction)
                   return (
                     <View style={styles.hubCardsRow}>
-                      <View style={styles.hubCard}>
-                        <Ionicons name={actionMeta.icon as any} size={18} color="#FFD700" />
-                        <Text style={styles.hubCardLabel}>{actionMeta.label}</Text>
-                      </View>
-                      <View style={styles.hubCard}>
-                        <Ionicons name="speedometer" size={18} color="#8B5FBF" />
-                        <Text style={styles.hubCardLabel}>
-                          cache: {hubMeta?.cacheHit ? 'hit' : 'miss'}
-                        </Text>
-                      </View>
-                      <View style={styles.hubCard}>
-                        <Ionicons name="time" size={18} color="#4ECDC4" />
-                        <Text style={styles.hubCardLabel}>
-                          {hubMeta?.durationMs ? `${hubMeta.durationMs}ms` : 'tempo n/d'}
-                        </Text>
-                      </View>
+                    <View style={styles.hubPill}>
+                      <Ionicons name={actionMeta.icon as any} size={18} color="#FFD700" />
+                      <Text style={styles.hubCardLabel}>{actionMeta.label}</Text>
+                    </View>
+                    <View style={styles.hubPill}>
+                      <Ionicons name="speedometer" size={18} color="#8B5FBF" />
+                      <Text style={styles.hubCardLabel}>
+                        cache: {hubMeta?.cacheHit ? 'hit' : 'miss'}
+                      </Text>
+                    </View>
+                    <View style={styles.hubPill}>
+                      <Ionicons name="time" size={18} color="#4ECDC4" />
+                      <Text style={styles.hubCardLabel}>
+                        {hubMeta?.durationMs ? `${hubMeta.durationMs}ms` : 'tempo n/d'}
+                      </Text>
+                    </View>
                     </View>
                   )
                 })()}
@@ -452,7 +461,7 @@ export default function PremiumScreen() {
   const renderFeatures = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>ðŸ“‹ Planos de Assinatura</Text>
+        <Text style={styles.sectionTitle}>Planos de Assinatura</Text>
         {subscriptionPlans.map(plan => (
           <TouchableOpacity
             key={plan.id}
@@ -461,24 +470,46 @@ export default function PremiumScreen() {
               { borderColor: plan.color },
               plan.current && styles.currentPlan
             ]}
-            onPress={() => !plan.current && handleSubscribe(plan.id)}
+            onPress={() => !plan.current && handleSubscribe(plan)}
           >
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                {plan.price === 0 ? 'GrÃ¡tis' : `R$ ${(plan.price || 0).toFixed(2)}/mÃªs`}
+                {plan.price === 0 ? 'Gratis' : `R$ ${(plan.price || 0).toFixed(2)}/mes`}
               </Text>
             </View>
             <View style={styles.planFeatures}>
               {plan.features.map((feature, index) => (
-                <Text key={index} style={styles.planFeature}>âœ“ {feature}</Text>
+                <Text key={index} style={styles.planFeature}>✓ {feature}</Text>
               ))}
             </View>
+            {plan.requiresPhone && (
+              <View style={styles.planPhoneRow}>
+                <Text style={styles.planPhoneLabel}>WhatsApp (Premium)</Text>
+                <TextInput
+                  style={styles.planPhoneInput}
+                  placeholder="(DD) 9xxxx-xxxx"
+                  placeholderTextColor="#888"
+                  value={premiumPhone}
+                  onChangeText={setPremiumPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            )}
             {plan.current && (
               <View style={styles.currentBadge}>
                 <Text style={styles.currentBadgeText}>Plano Atual</Text>
               </View>
             )}
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>Creditos Avulsos (Astrologer)</Text>
+        {creditPacks.map((pack) => (
+          <TouchableOpacity key={pack.id} style={styles.creditCard} onPress={() => Alert.alert('Em breve', 'Compra de creditos em breve.')}>
+            <Text style={styles.creditTitle}>{pack.label}</Text>
+            <Text style={styles.creditPrice}>R$ {pack.price.toFixed(2)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -698,7 +729,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  hubCard: {
+  hubPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -850,10 +881,45 @@ const styles = StyleSheet.create({
   planFeatures: {
     marginBottom: 8,
   },
+  planPhoneRow: {
+    marginTop: 6,
+    gap: 6,
+  },
+  planPhoneLabel: {
+    color: '#AAAAAA',
+    fontSize: 12,
+  },
+  planPhoneInput: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#FFFFFF',
+    fontSize: 13,
+  },
   planFeature: {
     fontSize: 14,
     color: '#CCCCCC',
     marginBottom: 4,
+  },
+  creditCard: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  creditTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  creditPrice: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '700',
   },
   currentBadge: {
     backgroundColor: '#44AA44',
