@@ -12,8 +12,10 @@ import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
+import { useRoute } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService from '../../services/payment/MercadoPagoService'
+import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
 
@@ -36,6 +38,7 @@ type HubHistoryItem = {
 export default function PremiumScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
+  const route = useRoute<any>()
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const hasHubAccess = isAdmin || (subscription?.active && (planId.startsWith('premium_') || planId === 'premium_monthly' || planId.startsWith('pro_') || planId === 'pro_monthly'))
@@ -75,6 +78,13 @@ export default function PremiumScreen() {
   }, [])
 
   useEffect(() => {
+    const requestedTab = route?.params?.openTab
+    if (requestedTab && typeof requestedTab === 'string') {
+      setSelectedTab(requestedTab)
+    }
+  }, [route?.params?.openTab])
+
+  useEffect(() => {
     if (!user) return
     let active = true
     setCreditsLoading(true)
@@ -104,52 +114,16 @@ export default function PremiumScreen() {
     }
   }, [user?.uid])
 
-  const subscriptionPlans = [
-    {
-      id: 'essential_monthly',
-      name: 'Essential',
-      price: 19.90,
-      features: [
-        'Acesso a grupos',
-        'Forecast: 7 dias',
-        'Alertas essenciais',
-      ],
-      color: '#FFD700',
-    },
-    {
-      id: 'pro_monthly',
-      name: 'Pro',
-      price: 47.90,
-      features: [
-        'Tudo do Essential +',
-        'Forecast: 7/30/90 dias',
-        '1 credito Astrologer / mês',
-        'Acesso ao Hub premium (limitado)',
-      ],
-      color: '#4ECDC4',
-    },
-    {
-      id: 'premium_monthly',
-      name: 'Premium',
-      price: 79.90,
-      features: [
-        'Tudo do Pro +',
-        'Forecast: 7/30/90/360 dias',
-        '10 creditos Astrologer / mês',
-        'Chatbot WhatsApp IA',
-      ],
-      color: '#FF6B6B',
-      requiresPhone: true,
-    },
-  ].map((plan) => ({
-    ...plan,
+  const subscriptionPlans = PLAN_DEFINITIONS.map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+    price: plan.price,
+    features: plan.features,
+    color: plan.tier === 'premium' ? '#FF6B6B' : plan.tier === 'pro' ? '#4ECDC4' : '#FFD700',
+    requiresPhone: plan.requiresWhatsapp,
     current: subscription?.active && planId === plan.id,
   }))
-  const creditPacks = [
-    { id: 'credits_1', label: '1 credito', price: 14.90 },
-    { id: 'credits_5', label: '5 creditos', price: 49.90 },
-    { id: 'credits_10', label: '10 creditos', price: 89.90 },
-  ]
+  const creditPacks = CREDIT_PACKS
 
   const formatCycleEnd = (value: string | null) => {
     if (!value) return null
@@ -648,6 +622,41 @@ export default function PremiumScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>Comparar planos</Text>
+        <View style={styles.compareTable}>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>Recurso</Text>
+            <Text style={styles.compareValue}>Essential</Text>
+            <Text style={styles.compareValue}>Pro</Text>
+            <Text style={styles.compareValue}>Premium</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>Forecast</Text>
+            <Text style={styles.compareValue}>7d</Text>
+            <Text style={styles.compareValue}>7/30/90</Text>
+            <Text style={styles.compareValue}>7/30/90/360</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>Grupos</Text>
+            <Text style={styles.compareValue}>Sim</Text>
+            <Text style={styles.compareValue}>Sim</Text>
+            <Text style={styles.compareValue}>Sim</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>Creditos/mês</Text>
+            <Text style={styles.compareValue}>0</Text>
+            <Text style={styles.compareValue}>1</Text>
+            <Text style={styles.compareValue}>10</Text>
+          </View>
+          <View style={styles.compareRow}>
+            <Text style={styles.compareLabel}>Chatbot WhatsApp</Text>
+            <Text style={styles.compareValue}>—</Text>
+            <Text style={styles.compareValue}>—</Text>
+            <Text style={styles.compareValue}>Sim</Text>
+          </View>
+        </View>
+      </View>
         <View style={styles.plansContainer}>
           <Text style={styles.sectionTitle}>Creditos Avulsos (Astrologer)</Text>
           {creditPacks.map((pack) => (
@@ -1044,6 +1053,29 @@ const styles = StyleSheet.create({
   },
   planFeatures: {
     marginBottom: 8,
+  },
+  compareTable: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  compareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compareLabel: {
+    flex: 1.2,
+    color: '#B8B8C3',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  compareValue: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
   },
   planPhoneRow: {
     marginTop: 6,

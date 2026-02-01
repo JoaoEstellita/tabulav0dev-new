@@ -64,7 +64,7 @@ export const getExpiryBannerInfo = ({
       const plural = daysLeft === 1 ? 'dia' : 'dias'
       return {
         show: true,
-        message: `Faltam ${daysLeft} ${plural} para liberar continuar usando ${featureLabel}.`,
+        message: `Faltam ${daysLeft} ${plural} para expirar seu acesso gratuito a ${featureLabel}.`,
         variant: 'info',
         daysLeft,
       }

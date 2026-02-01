@@ -14,6 +14,7 @@ import {
   LIFE_AREA_ORDER,
   normalizeLifeArea,
 } from '../../constants/lifeAreas'
+import { getForecastMaxDays } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
@@ -491,12 +492,11 @@ export default function ForecastScreen() {
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const maxDaysAllowed = useMemo(() => {
-    if (isAdmin) return 360
-    if (!subscription?.active) return 7
-    if (planId.startsWith('premium_') || planId === 'premium_monthly') return 360
-    if (planId === 'pro_monthly' || planId.startsWith('pro_')) return 90
-    if (planId === 'basic_monthly' || planId.startsWith('basic_') || planId.startsWith('essential_')) return 30
-    return 7
+    return getForecastMaxDays({
+      planId,
+      isAdmin,
+      isActive: subscription?.active === true,
+    })
   }, [isAdmin, planId, subscription?.active])
   const hasExtendedForecast = maxDaysAllowed > 7
   const granularity = 'day'
@@ -1214,7 +1214,7 @@ export default function ForecastScreen() {
         <ExpiryBanner
           message={expiryInfo.message}
           variant={expiryInfo.variant}
-          onPress={() => navigation.navigate('Premium' as never)}
+          onPress={() => navigation.navigate('Premium' as never, { openTab: 'features' } as never)}
         />
       )}
 

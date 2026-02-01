@@ -931,7 +931,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
           <ExpiryBanner
             message={expiryInfo.message}
             variant={expiryInfo.variant}
-            onPress={() => navigation.navigate("Premium" as never)}
+            onPress={() => navigation.navigate("Premium" as never, { openTab: 'features' } as never)}
           />
         )}
 
