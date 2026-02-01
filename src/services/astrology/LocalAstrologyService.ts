@@ -18,6 +18,7 @@ import { useUserSettings } from '../../hooks/useUserSettings'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import AstrologyCacheService from './AstrologyCacheService'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
+import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
 export interface LocalTransitData {
   currentTransits: RealAstrologyData
@@ -226,8 +227,8 @@ export class LocalAstrologyService {
       mappedLifeAreas[areaName] = {
         name: areaName,
         status: areaData.percentage, // ✅ CONVERTER percentage para status
-        trend: areaData.percentage >= 70 ? 'positive' : 
-               areaData.percentage >= 40 ? 'stable' : 'negative',
+        trend: areaData.percentage >= STATUS_THRESHOLDS.positiveAbove ? 'positive' : 
+               areaData.percentage >= STATUS_THRESHOLDS.criticalBelow ? 'stable' : 'negative',
         description: areaData.influences?.join(' • ') || 'Área da vida',
         criticalLevel: areaData.percentage < 25,
         influences: areaData.influences || [],
@@ -247,9 +248,9 @@ export class LocalAstrologyService {
 
     // Analisar tendência geral
     const averageScore = areas.reduce((sum, [_, area]) => sum + area.percentage, 0) / areas.length
-    const generalTrend = averageScore >= 70 ? 'Período muito favorável' :
+    const generalTrend = averageScore >= STATUS_THRESHOLDS.positiveAbove ? 'Período muito favorável' :
                         averageScore >= 55 ? 'Período equilibrado' :
-                        averageScore >= 40 ? 'Período de desafios moderados' :
+                        averageScore >= STATUS_THRESHOLDS.criticalBelow ? 'Período de desafios moderados' :
                         'Período que requer cautela'
 
     // Aspectos-chave (T→T) do dia: filtrar pares triviais (planeta consigo mesmo) e pegar os mais fortes
