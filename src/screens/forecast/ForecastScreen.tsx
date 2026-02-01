@@ -14,7 +14,7 @@ import {
   LIFE_AREA_ORDER,
   normalizeLifeArea,
 } from '../../constants/lifeAreas'
-import { getForecastMaxDays } from '../../constants/plans'
+import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
@@ -168,6 +168,15 @@ function startOfWeekUTC(date: Date) {
   const day = date.getUTCDay()
   const diff = day === 0 ? -6 : 1 - day
   return addDaysUTC(date, diff)
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs)
+    return () => clearTimeout(timer)
+  }, [value, delayMs])
+  return debounced
 }
 
 const MemoEventCard = React.memo(function MemoEventCard({
@@ -491,6 +500,12 @@ export default function ForecastScreen() {
 
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
+  const currentPlan = useMemo(() => {
+    if (isAdmin) return { name: 'Admin' }
+    if (subscription?.active) return getPlanById(planId) || { name: 'Premium' }
+    if (trialActive) return { name: 'Trial' }
+    return { name: 'Free' }
+  }, [isAdmin, planId, subscription?.active, trialActive])
   const maxDaysAllowed = useMemo(() => {
     return getForecastMaxDays({
       planId,
@@ -826,11 +841,11 @@ export default function ForecastScreen() {
     setSelectedDomain(null)
     setSelectedDate(dateKey)
     if (!dayStatusByDate[dateKey]) {
-      fetchDayStatus(dateKey, true)
+      setDayStatusLoadingDate(dateKey)
     } else {
       setDayStatusLoadingDate(null)
     }
-  }, [dayStatusByDate, fetchDayStatus])
+  }, [dayStatusByDate])
 
   const handleCalendarPress = useCallback((dateKey: string) => {
     if (!isDateInRange(dateKey)) {
@@ -961,6 +976,7 @@ export default function ForecastScreen() {
   }, [formatEventAreas])
 
   const selectedDateKey = selectedDate
+  const debouncedFetchDate = useDebouncedValue(selectedDateKey, 150)
   const selectedDateObj = selectedDateKey ? parseUTCDateString(selectedDateKey) : null
   const selectedMonthKey = selectedDateKey ? selectedDateKey.slice(0, 7) : null
   const selectedSeriesKey = useMemo(() => {
@@ -1081,10 +1097,10 @@ export default function ForecastScreen() {
   }, [periodEventsList, periodEventsPage, periodEventsPerPage])
 
   useEffect(() => {
-    if (!selectedDateKey) return
-    if (!isDateInRange(selectedDateKey)) return
-    fetchDayStatus(selectedDateKey, true)
-  }, [selectedDateKey, isDateInRange, fetchDayStatus])
+    if (!debouncedFetchDate) return
+    if (!isDateInRange(debouncedFetchDate)) return
+    fetchDayStatus(debouncedFetchDate, true)
+  }, [debouncedFetchDate, isDateInRange, fetchDayStatus])
 
   useEffect(() => {
     if (!selectedDateKey) return
@@ -1214,7 +1230,12 @@ export default function ForecastScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Previsoes</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Previsoes</Text>
+          <View style={styles.planBadge}>
+            <Text style={styles.planBadgeText}>Plano atual: {currentPlan.name}</Text>
+          </View>
+        </View>
         <Text style={styles.subtitle}>Status previsto dos proximos dias</Text>
       </View>
       {expiryInfo.show && (
@@ -1436,6 +1457,7 @@ export default function ForecastScreen() {
               <Text style={styles.periodIndexText}>{periodIndexText}</Text>
             )}
             <MemoDaySummary
+              key={selectedDateKey || 'day-summary'}
               isLoading={dayStatusLoadingDate === selectedDateKey}
               dayStatus={dayStatus}
               selectedPoint={selectedPoint}
@@ -1446,6 +1468,7 @@ export default function ForecastScreen() {
             />
 
             <MemoDayEvents
+              key={selectedDateKey || 'day-events'}
               effectiveEventStrengthFilter={effectiveEventStrengthFilter}
               hideMixedImpact={hideMixedImpact}
               showFilterHint={showFilterHint}
@@ -1560,10 +1583,27 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   title: {
     fontSize: 26,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  planBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#2A2A2E',
+  },
+  planBadgeText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '700',
   },
   subtitle: {
     fontSize: 13,
