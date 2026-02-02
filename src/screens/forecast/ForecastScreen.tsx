@@ -72,7 +72,6 @@ const PERIODS = [7, 30, 90, 360]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
-const FORECAST_STRENGTH_FILTER_KEY = 'forecast_strength_filter'
 const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
 const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
@@ -325,7 +324,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
         </View>
       ) : score !== null ? (
         <View style={styles.dayScoreRow}>
-          <Text style={styles.dayPanelLabel}>Status global do dia</Text>
+          <Text style={styles.dayScorePrefix}>Status global do dia</Text>
           <View style={styles.dayScoreValue}>
             <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
               {score}
@@ -368,9 +367,6 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
 })
 
 const MemoDayEvents = React.memo(function MemoDayEvents({
-  effectiveEventStrengthFilter,
-  hideMixedImpact,
-  showFilterHint,
   selectedEvents,
   eventDisplayData,
   expandedEvents,
@@ -378,13 +374,7 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   showAllDayEvents,
   onToggleEvent,
   onToggleShowAll,
-  onSetStrengthFilter,
-  onToggleMixed,
-  onToggleHint,
 }: {
-  effectiveEventStrengthFilter: 'all' | 'strong' | 'light'
-  hideMixedImpact: boolean
-  showFilterHint: boolean
   selectedEvents: ForecastEvent[]
   eventDisplayData: Array<{ event: ForecastEvent; expanded: boolean; phase: { label: string; meta: string } | null; detailLines: string[] }>
   expandedEvents: Record<string, boolean>
@@ -392,82 +382,15 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   showAllDayEvents: boolean
   onToggleEvent: (eventId: string) => void
   onToggleShowAll: () => void
-  onSetStrengthFilter: (value: 'all' | 'strong' | 'light') => void
-  onToggleMixed: () => void
-  onToggleHint: () => void
 }) {
   return (
     <View>
       <View style={styles.eventHeaderRow}>
         <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
-        <View style={styles.filterActions}>
-          <TouchableOpacity
-            style={[
-              styles.filterToggle,
-              effectiveEventStrengthFilter === 'all' && styles.filterToggleActive,
-            ]}
-            onPress={() => onSetStrengthFilter('all')}
-          >
-            <Text style={[
-              styles.filterToggleText,
-              effectiveEventStrengthFilter === 'all' && styles.filterToggleTextActive,
-            ]}>
-              Todos
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterToggle,
-              effectiveEventStrengthFilter === 'strong' && styles.filterToggleActive,
-            ]}
-            onPress={() => onSetStrengthFilter('strong')}
-          >
-            <Text style={[
-              styles.filterToggleText,
-              effectiveEventStrengthFilter === 'strong' && styles.filterToggleTextActive,
-            ]}>
-              Fortes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterToggle,
-              effectiveEventStrengthFilter === 'light' && styles.filterToggleActive,
-            ]}
-            onPress={() => onSetStrengthFilter('light')}
-          >
-            <Text style={[
-              styles.filterToggleText,
-              effectiveEventStrengthFilter === 'light' && styles.filterToggleTextActive,
-            ]}>
-              Leves
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterToggle} onPress={onToggleMixed}>
-            <Text style={styles.filterToggleText}>
-              {hideMixedImpact ? 'Ocultar mistos' : 'Impacto misto'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.filterHintButton}
-            onPress={onToggleHint}
-          >
-            <Ionicons name="help-circle" size={14} color="#FFD700" />
-          </TouchableOpacity>
-        </View>
       </View>
-      {showFilterHint && (
-        <Text style={styles.filterHintText}>
-          Fortes = intensidade maior ou igual a 60%. Leves = abaixo de 60%. Impacto misto = influencia positiva e desafiadora no mesmo periodo.
-        </Text>
-      )}
       {selectedEvents.length === 0 && (
         <Text style={styles.emptyText}>
-          {effectiveEventStrengthFilter === 'strong'
-            ? 'Sem eventos fortes neste dia.'
-            : effectiveEventStrengthFilter === 'light'
-            ? 'Sem eventos leves neste dia.'
-            : 'Sem eventos. Dia mais calmo para organizar suas prioridades.'}
+          Sem eventos. Dia mais calmo para organizar suas prioridades.
         </Text>
       )}
       <FlatList
@@ -517,17 +440,10 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
-  const [eventStrengthFilter, setEventStrengthFilter] = useState<'all' | 'strong' | 'light'>('all')
-  const [pendingEventStrengthFilter, setPendingEventStrengthFilter] = useState<'all' | 'strong' | 'light' | null>(null)
-  const [hideMixedImpact, setHideMixedImpact] = useState(false)
-  const [showFilterHint, setShowFilterHint] = useState(false)
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
-  const pendingStrengthFilterTimerRef = useRef<NodeJS.Timeout | null>(null)
-
-  const effectiveEventStrengthFilter = pendingEventStrengthFilter ?? eventStrengthFilter
 
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
@@ -800,20 +716,6 @@ export default function ForecastScreen() {
     AsyncStorage.setItem(FORECAST_SELECTED_DATE_KEY, selectedDate).catch(() => null)
   }, [selectedDate])
 
-  useEffect(() => {
-    AsyncStorage.getItem(FORECAST_STRENGTH_FILTER_KEY)
-      .then((value) => {
-        if (value === 'strong' || value === 'light' || value === 'all') {
-          setEventStrengthFilter(value)
-        }
-      })
-      .catch(() => null)
-  }, [])
-
-  useEffect(() => {
-    AsyncStorage.setItem(FORECAST_STRENGTH_FILTER_KEY, eventStrengthFilter).catch(() => null)
-  }, [eventStrengthFilter])
-
   const fetchDayStatus = useCallback(async (dateKey: string, markLoading: boolean = false) => {
     if (!user?.uid) return
     if (dayStatusByDate[dateKey]) return
@@ -1016,16 +918,10 @@ export default function ForecastScreen() {
     return eventsByDate[selectedDateKey] || []
   }, [selectedDateKey, eventsByDate])
   const selectedEvents = useMemo(() => {
-    const filtered = selectedDomainKey
+    return selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeLifeArea(domain) === selectedDomainKey))
       : selectedEventsRaw
-    return filtered.filter((event) => {
-      if (effectiveEventStrengthFilter === 'strong' && event.intensity < 0.6) return false
-      if (effectiveEventStrengthFilter === 'light' && event.intensity >= 0.6) return false
-      if (hideMixedImpact && event.impact === 'MIXED') return false
-      return true
-    })
-  }, [effectiveEventStrengthFilter, hideMixedImpact, selectedDomainKey, selectedEventsRaw])
+  }, [selectedDomainKey, selectedEventsRaw])
   const lifeAreaCards = useMemo(() => {
     return LIFE_AREA_ORDER.map((domain) => {
       const statusArea = dayStatus?.lifeAreas?.[domain]
@@ -1104,16 +1000,9 @@ export default function ForecastScreen() {
   }, [selectedDateKey, fetchDayStatus, isDateInRange, periodDays])
 
   useEffect(() => {
-    if (!pendingEventStrengthFilter) return
-    if (pendingStrengthFilterTimerRef.current) clearTimeout(pendingStrengthFilterTimerRef.current)
-    pendingStrengthFilterTimerRef.current = setTimeout(() => {
-      setEventStrengthFilter(pendingEventStrengthFilter)
-      setPendingEventStrengthFilter(null)
-    }, 150)
-    return () => {
-      if (pendingStrengthFilterTimerRef.current) clearTimeout(pendingStrengthFilterTimerRef.current)
-    }
-  }, [pendingEventStrengthFilter])
+    setExpandedEvents({})
+    setShowAllDayEvents(false)
+  }, [selectedDateKey])
 
 
   const toggleEventDetails = useCallback((eventId: string) => {
@@ -1228,23 +1117,6 @@ export default function ForecastScreen() {
               }}
             />
           </View>
-          <View style={styles.calendarLegend}>
-            <TouchableOpacity
-              style={styles.todayButton}
-              onPress={() => {
-                const now = new Date()
-                const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
-                if (isDateInRange(todayKey)) {
-                  handleSelectDate(todayKey)
-                } else if (maxDaysAllowed <= 7) {
-                  Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
-                  navigation.navigate('Premium' as never)
-                }
-              }}
-            >
-              <Text style={styles.todayButtonText}>Hoje</Text>
-            </TouchableOpacity>
-          </View>
 
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
@@ -1263,21 +1135,6 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   style={styles.dayNavButton}
                   onPress={() => {
-                    const now = new Date()
-                    const todayKey = buildDateUTCString(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())))
-                if (isDateInRange(todayKey)) {
-                  handleSelectDate(todayKey)
-                } else if (maxDaysAllowed <= 7) {
-                  Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
-                  navigation.navigate('Premium' as never)
-                }
-              }}
-            >
-                  <Text style={styles.dayNavText}>Hoje</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.dayNavButton}
-                  onPress={() => {
                     if (!selectedDateObj) return
                     const nextDate = buildDateUTCString(addDaysUTC(selectedDateObj, 1))
                     if (!isDateInRange(nextDate)) return
@@ -1289,7 +1146,6 @@ export default function ForecastScreen() {
               </View>
             </View>
             <MemoDaySummary
-              key={selectedDateKey || 'day-summary'}
               isLoading={dayStatusLoadingDate === selectedDateKey}
               dayStatus={dayStatus}
               selectedPoint={selectedPoint}
@@ -1300,10 +1156,6 @@ export default function ForecastScreen() {
             />
 
             <MemoDayEvents
-              key={selectedDateKey || 'day-events'}
-              effectiveEventStrengthFilter={effectiveEventStrengthFilter}
-              hideMixedImpact={hideMixedImpact}
-              showFilterHint={showFilterHint}
               selectedEvents={selectedEvents}
               eventDisplayData={eventDisplayData}
               expandedEvents={expandedEvents}
@@ -1311,9 +1163,6 @@ export default function ForecastScreen() {
               showAllDayEvents={showAllDayEvents}
               onToggleEvent={toggleEventDetails}
               onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
-              onSetStrengthFilter={setPendingEventStrengthFilter}
-              onToggleMixed={() => setHideMixedImpact((prev) => !prev)}
-              onToggleHint={() => setShowFilterHint((prev) => !prev)}
             />
           </View>
 
@@ -1496,12 +1345,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
-  calendarLegend: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 8,
-  },
   criticalSummary: {
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
@@ -1642,18 +1485,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
   },
-  todayButton: {
-    marginLeft: 'auto',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: '#2A2A2E',
-  },
-  todayButtonText: {
-    color: '#FFD700',
-    fontSize: 11,
-    fontWeight: '600',
-  },
   weeklySummary: {
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
@@ -1695,12 +1526,6 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 6,
     backgroundColor: '#2A2A2E',
-  },
-  dayNavText: {
-    color: '#FFD700',
-    fontSize: 11,
-    fontWeight: '600',
-    paddingHorizontal: 4,
   },
   dayPanelCard: {
     marginBottom: 12,
@@ -1816,36 +1641,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  filterActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  filterToggle: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: '#2A2A2E',
-  },
-  filterToggleActive: {
-    backgroundColor: '#FFD700',
-  },
-  filterToggleText: {
-    color: '#FFD700',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  filterToggleTextActive: {
-    color: '#0F0F23',
-  },
-  filterHintButton: {
-    padding: 4,
-  },
-  filterHintText: {
-    color: '#B0B0B0',
-    fontSize: 11,
-    marginTop: 6,
-  },
   updatedAtText: {
     color: '#FFD700',
     fontSize: 11,
@@ -1893,9 +1688,9 @@ const styles = StyleSheet.create({
   },
   areaPill: {
     borderRadius: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 8,
-    minHeight: 48,
+    minHeight: 40,
     justifyContent: 'center',
   },
   areaPillActive: {
@@ -1904,13 +1699,13 @@ const styles = StyleSheet.create({
   },
   areaPillLabel: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
   },
   areaPillValue: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   domainChip: {
