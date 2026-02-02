@@ -147,6 +147,11 @@ function diffDaysUTC(from: Date, to: Date) {
   return Math.round(ms / 86400000)
 }
 
+function isDateKeyWithinRange(dateKey: string, startKey: string | null, endKey: string | null) {
+  if (!startKey || !endKey) return false
+  return dateKey >= startKey && dateKey <= endKey
+}
+
 function buildEventPhase(selectedDate: string, event: ForecastEvent) {
   const selectedDateObj = parseUTCDateString(selectedDate)
   const exactDateObj = parseUTCDateString(event.exactAt.slice(0, 10))
@@ -407,9 +412,10 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
         )}
         scrollEnabled={false}
         removeClippedSubviews
-        windowSize={5}
-        initialNumToRender={6}
-        maxToRenderPerBatch={6}
+        windowSize={7}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
       />
       {selectedEvents.length > dayEventsLimit && (
         <TouchableOpacity
@@ -941,8 +947,14 @@ export default function ForecastScreen() {
   const dayStatus = selectedDateKey ? dayStatusByDate[selectedDateKey] : null
   const selectedEventsRaw = useMemo(() => {
     if (!selectedDateKey) return []
-    return eventsByDate[selectedDateKey] || []
-  }, [selectedDateKey, eventsByDate])
+    const list = data?.events || []
+    return list.filter((event) => {
+      const startKey = event.startAt?.slice(0, 10) || null
+      const endKey = event.endAt?.slice(0, 10) || null
+      if (!startKey || !endKey) return event.exactAt?.slice(0, 10) === selectedDateKey
+      return isDateKeyWithinRange(selectedDateKey, startKey, endKey)
+    })
+  }, [data?.events, selectedDateKey])
   const selectedEvents = useMemo(() => {
     return selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeLifeArea(domain) === selectedDomainKey))

@@ -109,6 +109,8 @@ export function normalizeLifeArea(raw: string | null | undefined): string | null
   return null
 }
 
+export const normalizeDomain = normalizeLifeArea
+
 export function getLifeAreaLabel(raw: string | null | undefined): string {
   const key = normalizeLifeArea(raw) || String(raw || '').trim().toLowerCase()
   return LIFE_AREA_LABELS[key as keyof typeof LIFE_AREA_LABELS] || key || 'Área'
