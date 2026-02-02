@@ -219,7 +219,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Forecast" options={{ title: "Previsoes" }}>
+      <Tab.Screen name="Forecast" options={{ title: "Previsoes", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>

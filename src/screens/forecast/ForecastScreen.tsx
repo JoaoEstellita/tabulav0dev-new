@@ -647,7 +647,27 @@ export default function ForecastScreen() {
     return map
   }, [data?.events])
 
+  const countsFromStatusRange = useMemo(() => {
+    const critical: Record<string, number> = {}
+    const strong: Record<string, number> = {}
+    Object.entries(dayStatusByDate).forEach(([dateKey, day]) => {
+      const areas = day?.lifeAreas || {}
+      let criticalCount = 0
+      let strongCount = 0
+      Object.values(areas).forEach((area) => {
+        const score = typeof area?.percentage === 'number' ? area.percentage : null
+        if (score === null) return
+        if (score < STATUS_THRESHOLDS.criticalBelow) criticalCount += 1
+        if (score >= STATUS_THRESHOLDS.positiveAbove) strongCount += 1
+      })
+      if (criticalCount > 0) critical[dateKey] = criticalCount
+      if (strongCount > 0) strong[dateKey] = strongCount
+    })
+    return { critical, strong }
+  }, [dayStatusByDate])
+
   const criticalCountsByDate = useMemo(() => {
+    if (Object.keys(countsFromStatusRange.critical).length) return countsFromStatusRange.critical
     if (data?.dailyBadges) {
       const map: Record<string, number> = {}
       Object.entries(data.dailyBadges).forEach(([key, value]) => {
@@ -662,13 +682,14 @@ export default function ForecastScreen() {
       if (criticalCount > 0) counts[dateKey] = criticalCount
     })
     return counts
-  }, [data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
+  }, [countsFromStatusRange.critical, data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
 
   const totalCriticalCount = useMemo(() => {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
   const strongCountsByDate = useMemo(() => {
+    if (Object.keys(countsFromStatusRange.strong).length) return countsFromStatusRange.strong
     if (data?.dailyBadges) {
       const map: Record<string, number> = {}
       Object.entries(data.dailyBadges).forEach(([key, value]) => {
@@ -683,7 +704,7 @@ export default function ForecastScreen() {
       if (strongCount > 0) counts[dateKey] = strongCount
     })
     return counts
-  }, [data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
+  }, [countsFromStatusRange.strong, data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
 
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
@@ -816,13 +837,11 @@ export default function ForecastScreen() {
     const isToday = state === 'today'
     const criticalCount = dateKey ? criticalCountsByDate[dateKey] : 0
     const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
-    const badgeScore = dateKey ? data?.dailyBadges?.[dateKey]?.score : null
-    const isCriticalDay = typeof badgeScore === 'number' && badgeScore < STATUS_THRESHOLDS.criticalBelow
     const showCritical = typeof criticalCount === 'number' && criticalCount > 0
     const showStrong = typeof strongCount === 'number' && strongCount > 0
     return (
       <TouchableOpacity
-        style={[styles.dayCell, isCriticalDay && styles.dayCellCritical]}
+        style={styles.dayCell}
         disabled={!dateKey || isDisabled}
         onPress={() => dateKey && handleCalendarPress(dateKey)}
         activeOpacity={0.7}
