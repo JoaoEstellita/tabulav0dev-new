@@ -1027,7 +1027,7 @@ export default function ForecastScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Previsoes</Text>
+          <View />
           <View style={styles.planBadge}>
             <Text style={styles.planBadgeText}>Plano atual: {currentPlan.name}</Text>
           </View>
@@ -1092,7 +1092,6 @@ export default function ForecastScreen() {
 
       {!loading && !error && (
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.sectionTitle}>Calendario</Text>
           <View style={styles.calendarWrapper}>
             <MemoCalendar
               markingType="multi-dot"
@@ -1155,7 +1154,7 @@ export default function ForecastScreen() {
               lifeAreaCards={lifeAreaCards}
               selectedDomainKey={selectedDomainKey}
               onSelectDomain={handleSelectDomain}
-              selectedDateLabel={selectedDateObj ? `Dia ${formatDateShort(selectedDateObj)}` : 'Dia selecionado'}
+              selectedDateLabel={selectedDateObj ? `Status do Dia ${formatDateShort(selectedDateObj)}` : 'Status do dia'}
             />
 
             <MemoDayEvents
