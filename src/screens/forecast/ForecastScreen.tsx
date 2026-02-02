@@ -1117,6 +1117,9 @@ export default function ForecastScreen() {
               }}
             />
           </View>
+          <Text style={styles.calendarHint}>
+            Badges no calendario = contagem de eventos criticos (vermelho) e fortes (amarelo).
+          </Text>
 
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
@@ -1167,7 +1170,7 @@ export default function ForecastScreen() {
           </View>
 
           <Text style={styles.badgeHint}>
-            Badges: vermelho = criticos, amarelo = fortes (>= 60%).
+            Badges no calendario = eventos (nao o status global do dia).
           </Text>
 
           {maxDaysAllowed < 360 && (
@@ -1290,6 +1293,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 10,
     marginTop: 18,
+  },
+  calendarHint: {
+    color: '#B0B0B0',
+    fontSize: 11,
+    marginTop: 8,
+    marginBottom: 4,
   },
   miniGraph: {
     flexGrow: 0,
