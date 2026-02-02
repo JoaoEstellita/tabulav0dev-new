@@ -324,8 +324,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
         </View>
       ) : score !== null ? (
         <View style={styles.dayScoreRow}>
-          <Text style={styles.dayScorePrefix}>Status global do dia</Text>
           <View style={styles.dayScoreValue}>
+            <Text style={styles.dayScorePrefix}>Status Geral</Text>
             <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
               {score}
             </Text>
@@ -339,7 +339,6 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
       )}
 
       <View style={styles.domainSection}>
-        <Text style={styles.dayPanelLabel}>Status por area</Text>
         <View style={styles.areaPillGrid}>
           {lifeAreaCards.map((item) => {
             const isActive = selectedDomainKey === item.domain
@@ -1116,10 +1115,6 @@ export default function ForecastScreen() {
               }}
             />
           </View>
-          <Text style={styles.calendarHint}>
-            Badges no calendario = contagem de eventos criticos (vermelho) e fortes (amarelo).
-          </Text>
-
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
               <View style={styles.dayNavRow}>
@@ -1167,10 +1162,6 @@ export default function ForecastScreen() {
               onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
             />
           </View>
-
-          <Text style={styles.badgeHint}>
-            Badges no calendario = eventos (nao o status global do dia).
-          </Text>
 
           {maxDaysAllowed < 360 && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
@@ -1292,12 +1283,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 10,
     marginTop: 18,
-  },
-  calendarHint: {
-    color: '#B0B0B0',
-    fontSize: 11,
-    marginTop: 8,
-    marginBottom: 4,
   },
   miniGraph: {
     flexGrow: 0,
@@ -1434,11 +1419,6 @@ const styles = StyleSheet.create({
   },
   calendarFilterTextActive: {
     color: '#0F0F23',
-  },
-  badgeHint: {
-    color: '#B0B0B0',
-    fontSize: 11,
-    marginBottom: 12,
   },
   dayCell: {
     alignItems: 'center',
