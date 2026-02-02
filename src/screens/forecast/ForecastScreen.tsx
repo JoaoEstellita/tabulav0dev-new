@@ -324,15 +324,15 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
         </View>
       ) : score !== null ? (
         <View style={styles.dayScoreRow}>
-          <View style={styles.dayScoreValue}>
-            <Text style={styles.dayScorePrefix}>Status Geral</Text>
+          <Text style={styles.dayScoreLine}>
+            <Text style={styles.dayScorePrefix}>Status Geral </Text>
             <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
               {score}
             </Text>
             <Text style={[styles.dayScoreLabel, { color: scoreColor(score) }]}>
-              {labelFromScoreValue(score)}
+              {' '}{labelFromScoreValue(score)}
             </Text>
-          </View>
+          </Text>
         </View>
       ) : (
         <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
@@ -1527,6 +1527,12 @@ const styles = StyleSheet.create({
     gap: 4,
     marginBottom: 4,
   },
+  dayScoreLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    gap: 4,
+  },
   dayScoreValue: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -1539,6 +1545,11 @@ const styles = StyleSheet.create({
   },
   dayScoreLabel: {
     fontSize: 13,
+    fontWeight: '600',
+  },
+  dayScorePrefix: {
+    color: '#B0B0B0',
+    fontSize: 12,
     fontWeight: '600',
   },
   domainSection: {
