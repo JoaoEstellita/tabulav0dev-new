@@ -46,6 +46,7 @@ type DayStatusResponse = {
   date: string
   global: { score: number | null; level: string | null }
   lifeAreas: Record<string, { percentage: number | null; status: string | null }>
+  badges?: { criticalCount?: number; strongCount?: number }
   meta?: { cached?: boolean; rulesVersion?: string; durationMs?: number }
 }
 
@@ -651,6 +652,13 @@ export default function ForecastScreen() {
     const critical: Record<string, number> = {}
     const strong: Record<string, number> = {}
     Object.entries(dayStatusByDate).forEach(([dateKey, day]) => {
+      if (day?.badges) {
+        const criticalCount = Number(day.badges.criticalCount || 0)
+        const strongCount = Number(day.badges.strongCount || 0)
+        if (criticalCount > 0) critical[dateKey] = criticalCount
+        if (strongCount > 0) strong[dateKey] = strongCount
+        return
+      }
       const areas = day?.lifeAreas || {}
       let criticalCount = 0
       let strongCount = 0
