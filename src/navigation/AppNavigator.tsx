@@ -210,7 +210,7 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" options={{ title: "Perfil" }}>
+      <Tab.Screen name="Home" options={{ title: "Perfil", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -228,7 +228,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Groups" options={{ title: "Grupos" }}>
+      <Tab.Screen name="Groups" options={{ title: "Grupos", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -237,7 +237,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Notifications" options={{ title: "Notificacoes" }}>
+      <Tab.Screen name="Notifications" options={{ title: "Notificacoes", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -246,7 +246,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Premium" options={{ title: "Premium" }}>
+      <Tab.Screen name="Premium" options={{ title: "Premium", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -255,7 +255,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Settings" options={{ title: "Configuracoes" }}>
+      <Tab.Screen name="Settings" options={{ title: "Configuracoes", headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
