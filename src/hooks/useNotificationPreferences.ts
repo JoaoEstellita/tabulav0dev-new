@@ -21,6 +21,9 @@ export type NotificationPreferences = {
       user_status_positive?: boolean
       group_message: boolean
       astro_event_personal?: boolean
+      daily_summary?: boolean
+      daily_overview?: boolean
+      forecast_weekly?: boolean
     }
     limits?: {
       member_status_critical?: { dailyLimit: number; throttleMinutes: number }
@@ -40,6 +43,9 @@ export type NotificationPreferences = {
       group_message: boolean
       astro_event_personal?: boolean
       astro_event_collective?: boolean
+      daily_summary?: boolean
+      daily_overview?: boolean
+      forecast_weekly?: boolean
     }
   }
 }
@@ -62,6 +68,9 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       user_status_positive: true,
       group_message: true,
       astro_event_personal: false,
+      daily_summary: true,
+      daily_overview: false,
+      forecast_weekly: true,
     },
     limits: {
       member_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
@@ -81,6 +90,9 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: true,
       astro_event_personal: false,
       astro_event_collective: false,
+      daily_summary: true,
+      daily_overview: true,
+      forecast_weekly: true,
     },
   },
 }

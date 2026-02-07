@@ -321,6 +321,12 @@ export class RealAstrologyEngine {
     12: ['Jupiter', 'Neptune']
   }
 
+  private static canUseLocalFallback(): boolean {
+    const forceEnable = String(process.env.EXPO_PUBLIC_ALLOW_LOCAL_ASTRO_FALLBACK || '').toLowerCase()
+    if (forceEnable === '1' || forceEnable === 'true') return true
+    return process.env.NODE_ENV !== 'production'
+  }
+
   private static normalizeHouseMeta(houses: HouseMeta): NormalizedHouseMeta {
     const system = normalizeHouseSystem(
       houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus'
@@ -352,17 +358,19 @@ export class RealAstrologyEngine {
       try {
         const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
         const [hh, mm] = birthTime.split(':').map(n => parseInt(n, 10))
+        const natalLat = (typeof options?.natalLat === 'number') ? options.natalLat : latitude
+        const natalLon = (typeof options?.natalLon === 'number') ? options.natalLon : longitude
         // Usar meio-dia UTC para resolver TZ histÃƒÂ³rico e evitar bordas de alteraÃƒÂ§ÃƒÂ£o de DST
         const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
         const { getTimezoneData } = await import('../timezone/TimezoneService')
-        const tzData = await getTimezoneData(latitude, longitude, ts)
+        const tzData = await getTimezoneData(natalLat, natalLon, ts)
         resolvedTz = { offsetSec: tzData.offsetSec, timeZoneId: tzData.timeZoneId }
         if (resolvedTz && typeof resolvedTz.offsetSec === 'number') {
           const offsetHours = resolvedTz.offsetSec / 3600
           return new Date(Date.UTC(y, (m - 1), d, hh - offsetHours, mm, 0))
         }
         const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
-        const approx = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), longitude, latitude)
+        const approx = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), natalLon, natalLat)
         return new Date(Date.UTC(y, (m - 1), d, hh - approx, mm, 0))
       } catch {
         return new Date(`${birthDate}T${birthTime}:00`)
@@ -379,9 +387,10 @@ export class RealAstrologyEngine {
       try {
         // Enviar horÃƒÂ¡rio LOCAL de nascimento e TZ resolvido para unificar conversÃƒÂ£o no backend
         const natalLocalStr = `${birthDate}T${birthTime}:00`
+        const natalTimezone = (resolvedTz as any)?.timeZoneId || undefined
         const bundle = await this.fetchBackendBundle(date, birthDateTime, latitude, longitude, {
-          natalLocal: natalLocalStr,
-          natalTimezone: (resolvedTz as any)?.timeZoneId || undefined,
+          natalLocal: natalTimezone ? natalLocalStr : undefined,
+          natalTimezone,
           natalLat: (typeof options?.natalLat === 'number') ? options!.natalLat! : latitude,
           natalLon: (typeof options?.natalLon === 'number') ? options!.natalLon! : longitude,
         })
@@ -392,6 +401,9 @@ export class RealAstrologyEngine {
         natalPlanets = bundle.natal.planets
         console.log('Ã¢Å“â€¦ Backend astro bundle utilizado (posiÃƒÂ§ÃƒÂµes + casas + natal)')
       } catch (_e) {
+        if (!this.canUseLocalFallback()) {
+          throw new Error('Backend astrology bundle unavailable and local fallback disabled in production')
+        }
         // Fallback para engine local
         const planetsLocal = await this.calculateRealPlanetPositions(date, latitude, longitude)
   const housesLocal = await this.calculateRealHouses(date, birthDateTime, latitude, longitude, options?.houseSystem)
@@ -822,6 +834,7 @@ export class RealAstrologyEngine {
     const backend = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
     const ascOverrideDeg = Number((globalThis as any).__ascOverrideDeg)
     const natalAscOverrideDeg = Number((globalThis as any).__natalAscOverrideDeg)
+    const hasNatalLocal = !!(options?.natalLocal && options?.natalTimezone)
     const requestBody: any = {
       datetimeISO: currentDate.toISOString(),
       lat: latitude,
@@ -829,9 +842,9 @@ export class RealAstrologyEngine {
       includeHouses: true,
       // Respeitar sistema de casas escolhido pelo usuÃƒÂ¡rio (fallback 'placidus')
         system: normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus'),
-      natalISO: options?.natalLocal ? undefined : natalDate.toISOString(),
-      natalLocal: options?.natalLocal,
-      natalTimezone: options?.natalTimezone,
+      natalISO: hasNatalLocal ? undefined : natalDate.toISOString(),
+      natalLocal: hasNatalLocal ? options?.natalLocal : undefined,
+      natalTimezone: hasNatalLocal ? options?.natalTimezone : undefined,
       natalLat: options?.natalLat,
       natalLon: options?.natalLon,
       bodies: RealAstrologyEngine.PLANETS,
@@ -909,6 +922,9 @@ export class RealAstrologyEngine {
       natalHousesRaw = backendNatalHouses
       console.log('Ã¢Å“â€¦ Backend forneceu casas natais')
     } else {
+      if (!this.canUseLocalFallback()) {
+        throw new Error('Backend did not return natal houses and local fallback is disabled in production')
+      }
       // Backend nÃƒÂ£o forneceu casas natais - calcular localmente
       console.log('Ã¢Å¡Â Ã¯Â¸Â Backend nÃƒÂ£o forneceu casas natais - calculando localmente...')
       try {

@@ -149,6 +149,41 @@ export default function NotificationPreferencesScreen() {
                 (value) =>
                   savePreferences({ push: { types: { ...pushTypes, group_message: value } } })
               )}
+              {renderToggle(
+                "Positivo de grupo",
+                "Alertas quando um membro entra em fase positiva.",
+                pushTypes.member_status_positive !== false,
+                (value) =>
+                  savePreferences({ push: { types: { ...pushTypes, member_status_positive: value } } })
+              )}
+              {renderToggle(
+                "Positivo pessoal",
+                "Alertas quando voce entra em fase positiva.",
+                pushTypes.user_status_positive !== false,
+                (value) =>
+                  savePreferences({ push: { types: { ...pushTypes, user_status_positive: value } } })
+              )}
+              {renderToggle(
+                "Resumo diario",
+                "Resumo curto diario com status geral.",
+                pushTypes.daily_summary !== false,
+                (value) =>
+                  savePreferences({ push: { types: { ...pushTypes, daily_summary: value } } })
+              )}
+              {renderToggle(
+                "Forecast semanal",
+                "Alerta semanal quando novas previsoes forem geradas.",
+                pushTypes.forecast_weekly !== false,
+                (value) =>
+                  savePreferences({ push: { types: { ...pushTypes, forecast_weekly: value } } })
+              )}
+              {renderToggle(
+                "Eventos astrais pessoais",
+                "Alertas de inicio/pico/fim de eventos pessoais.",
+                pushTypes.astro_event_personal === true,
+                (value) =>
+                  savePreferences({ push: { types: { ...pushTypes, astro_event_personal: value } } })
+              )}
             </View>
 
             <View style={styles.section}>
@@ -173,6 +208,41 @@ export default function NotificationPreferencesScreen() {
                 inAppTypes.group_message !== false,
                 (value) =>
                   savePreferences({ inApp: { types: { ...inAppTypes, group_message: value } } })
+              )}
+              {renderToggle(
+                "Positivo de grupo",
+                "Registra fases positivas de membros no centro de notificacoes.",
+                inAppTypes.member_status_positive !== false,
+                (value) =>
+                  savePreferences({ inApp: { types: { ...inAppTypes, member_status_positive: value } } })
+              )}
+              {renderToggle(
+                "Positivo pessoal",
+                "Registra suas fases positivas no centro de notificacoes.",
+                inAppTypes.user_status_positive !== false,
+                (value) =>
+                  savePreferences({ inApp: { types: { ...inAppTypes, user_status_positive: value } } })
+              )}
+              {renderToggle(
+                "Resumo diario",
+                "Registra o resumo diario no centro de notificacoes.",
+                inAppTypes.daily_summary !== false,
+                (value) =>
+                  savePreferences({ inApp: { types: { ...inAppTypes, daily_summary: value } } })
+              )}
+              {renderToggle(
+                "Forecast semanal",
+                "Registra novas previsoes semanais no centro de notificacoes.",
+                inAppTypes.forecast_weekly !== false,
+                (value) =>
+                  savePreferences({ inApp: { types: { ...inAppTypes, forecast_weekly: value } } })
+              )}
+              {renderToggle(
+                "Eventos astrais pessoais",
+                "Registra eventos pessoais no centro de notificacoes.",
+                inAppTypes.astro_event_personal === true,
+                (value) =>
+                  savePreferences({ inApp: { types: { ...inAppTypes, astro_event_personal: value } } })
               )}
             </View>
 

@@ -782,6 +782,9 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
+    </LinearGradient>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -913,12 +916,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 16,
   },
   sectionHeader: {
