@@ -53,7 +53,7 @@ export type NotificationPreferences = {
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   pushEnabled: true,
   pushIncludeMemberName: true,
-  astroEventsPersonalEnabled: false,
+  astroEventsPersonalEnabled: true,
   astroEventsCollectiveEnabled: false,
   quietHours: {
     enabled: false,
@@ -67,7 +67,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       member_status_positive: true,
       user_status_positive: true,
       group_message: true,
-      astro_event_personal: false,
+      astro_event_personal: true,
       daily_summary: true,
       daily_overview: false,
       forecast_weekly: true,
@@ -88,7 +88,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       member_status_positive: true,
       user_status_positive: true,
       group_message: true,
-      astro_event_personal: false,
+      astro_event_personal: true,
       astro_event_collective: false,
       daily_summary: true,
       daily_overview: true,

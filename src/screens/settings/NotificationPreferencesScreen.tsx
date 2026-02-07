@@ -67,6 +67,18 @@ export default function NotificationPreferencesScreen() {
                 (value) => savePreferences({ pushEnabled: value })
               )}
               {renderToggle(
+                "Eventos astrais pessoais",
+                "Liga/desliga notificacoes de eventos astrais pessoais (inicio, pico e encerramento).",
+                prefs.astroEventsPersonalEnabled !== false,
+                (value) => savePreferences({ astroEventsPersonalEnabled: value })
+              )}
+              {renderToggle(
+                "Eventos astrais coletivos",
+                "Liga/desliga registro de eventos coletivos no app (sem push).",
+                prefs.astroEventsCollectiveEnabled === true,
+                (value) => savePreferences({ astroEventsCollectiveEnabled: value })
+              )}
+              {renderToggle(
                 "Mostrar nome do membro",
                 "Inclui o nome do membro em alertas criticos de grupo.",
                 prefs.pushIncludeMemberName === true,
