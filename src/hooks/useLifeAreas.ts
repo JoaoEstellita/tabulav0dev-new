@@ -11,6 +11,8 @@ import { db } from '../config/firebase'
 import { publishAstrologyData } from '../context/AstrologyDataProvider'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'
+const IS_PRODUCTION_BUILD = process.env.NODE_ENV === 'production'
 
 export interface UseLifeAreasReturn {
   transitData: LocalTransitData | null
@@ -216,6 +218,18 @@ export function useLifeAreas(): UseLifeAreasReturn {
           Array.isArray(personalTransits) &&
           Array.isArray(personalWindows)
         )
+      }
+
+      const canUseLocalEngineFallback = !IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK
+
+      if (shouldRunLocal && !canUseLocalEngineFallback) {
+        setIsUsingLocalEngine(false)
+        setLocalOverrideActive(false)
+        localOverrideActiveRef.current = false
+        if (!backendLifeAreasValue || !backendFresh) {
+          setError('Status do backend indisponível no momento. Tente novamente em instantes.')
+        }
+        return
       }
 
       if (shouldRunLocal) {

@@ -1,4 +1,4 @@
 export const STATUS_THRESHOLDS = {
-  criticalBelow: 40,
-  positiveAbove: 70,
+  criticalBelow: 35,
+  positiveAbove: 62,
 }
