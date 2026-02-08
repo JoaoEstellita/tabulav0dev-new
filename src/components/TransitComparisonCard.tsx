@@ -400,6 +400,9 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           <Text style={{ color: '#fff', opacity: 0.9 }}>
             Status pessoal: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
           </Text>
+          <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>
+            Confiança: {formatMetricPercent(statusPersonal.confidence)} • Volatilidade: {formatMetricPercent(statusPersonal.volatility)}
+          </Text>
         </View>
       )}
 
@@ -648,6 +651,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       </View>
     </LinearGradient>
   )
+}
+
+function formatMetricPercent(value: number | null | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '--'
+  return `${Math.round(value * 100)}%`
 }
 
 const styles = StyleSheet.create({

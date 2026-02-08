@@ -182,6 +182,8 @@ export interface RealAstrologyData {
     score: number
     level: 'excelente' | 'bom' | 'neutro' | 'desafiador' | 'critico'
     highlights: string[]
+    confidence?: number
+    volatility?: number
   }
   lifeAreas: {
     [area: string]: {

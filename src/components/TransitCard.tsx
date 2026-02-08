@@ -55,6 +55,11 @@ export default function TransitCard({ transit }: TransitCardProps) {
             Status pessoal: {statusPersonal.level} ({statusPersonal.score}%)
           </Text>
         )}
+        {statusPersonal && (
+          <Text style={{ color: '#fff', fontSize: 11, opacity: 0.78 }}>
+            Confiança: {formatMetricPercent(statusPersonal.confidence)} • Volatilidade: {formatMetricPercent(statusPersonal.volatility)}
+          </Text>
+        )}
       </View>
       <View style={styles.header}>
         <View style={styles.planetInfo}>
@@ -118,6 +123,11 @@ export default function TransitCard({ transit }: TransitCardProps) {
       )}
     </LinearGradient>
   )
+}
+
+function formatMetricPercent(value: number | null | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '--'
+  return `${Math.round(value * 100)}%`
 }
 
 function translateArea(area: string): string {

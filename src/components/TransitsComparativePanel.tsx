@@ -95,9 +95,14 @@ export default function TransitsComparativePanel() {
           </TouchableOpacity>
         </View>
         {statusPersonal && (
-          <Text style={styles.status}>
-            Status: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
-          </Text>
+          <View>
+            <Text style={styles.status}>
+              Status: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
+            </Text>
+            <Text style={styles.statusSub}>
+              Confiança: {formatMetricPercent(statusPersonal.confidence)} • Volatilidade: {formatMetricPercent(statusPersonal.volatility)}
+            </Text>
+          </View>
         )}
       </View>
 
@@ -125,6 +130,11 @@ export default function TransitsComparativePanel() {
   )
 }
 
+function formatMetricPercent(value: number | null | undefined): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '--'
+  return `${Math.round(value * 100)}%`
+}
+
 const styles = StyleSheet.create({
   container: {
     borderRadius: 12,
@@ -139,6 +149,7 @@ const styles = StyleSheet.create({
   },
   title: { color: '#E2E8F0', fontWeight: 'bold', fontSize: 16 },
   status: { color: '#FFFFFF', opacity: 0.85, fontSize: 12 },
+  statusSub: { color: '#FFFFFF', opacity: 0.7, fontSize: 11 },
   sectionTitle: { color: '#FFFFFF', fontWeight: '600', marginTop: 8, marginBottom: 6 },
   emptyText: { color: '#A0A0A0', fontSize: 12 },
   itemRow: { marginBottom: 8 },
