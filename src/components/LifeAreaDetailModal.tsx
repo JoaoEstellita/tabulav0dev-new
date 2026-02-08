@@ -162,6 +162,26 @@ const safeFixed = (value: unknown, digits = 1): string =>
 const safeArray = <T,>(value: T[] | null | undefined): T[] =>
   Array.isArray(value) ? value : []
 
+const normalizeMetric01 = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  if (value <= 1) return Math.max(0, Math.min(1, value))
+  return Math.max(0, Math.min(1, value / 100))
+}
+
+const getSignalLevel = (value01: number | null): string | null => {
+  if (value01 === null) return null
+  if (value01 >= 0.7) return 'Alto'
+  if (value01 >= 0.45) return 'Médio'
+  return 'Baixo'
+}
+
+const getVolatilityLevel = (value01: number | null): string | null => {
+  if (value01 === null) return null
+  if (value01 >= 0.65) return 'Alta'
+  if (value01 >= 0.35) return 'Média'
+  return 'Baixa'
+}
+
 const formatRelativeDay = (iso?: string | null): string | null => {
   if (!iso) return null
   const date = new Date(iso)
@@ -852,6 +872,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     : []
   const realSuggestions = backendSuggestions.length ? [] : getRealSuggestions()
   const realCalculations = getRealCalculations()
+  const confidence01 = normalizeMetric01((astrologyData as any)?.statusPersonal?.confidence)
+  const volatility01 = normalizeMetric01((astrologyData as any)?.statusPersonal?.volatility)
+  const signalLevel = getSignalLevel(confidence01)
+  const volatilityLevel = getVolatilityLevel(volatility01)
   const transitItems = backendActiveTransits.length ? backendActiveTransits : activeTransits
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
@@ -882,6 +906,33 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       />
     </TouchableOpacity>
   )
+
+  const renderMetricLevelsSection = () => {
+    if (!signalLevel && !volatilityLevel) return null
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>LEITURA DO PERÍODO</Text>
+        <View style={styles.metricCard}>
+          {signalLevel ? (
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Sinal do período</Text>
+              <Text style={styles.metricValue}>{signalLevel}</Text>
+            </View>
+          ) : null}
+          {volatilityLevel ? (
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Volatilidade</Text>
+              <Text style={styles.metricValue}>{volatilityLevel}</Text>
+            </View>
+          ) : null}
+          <Text style={styles.metricHint}>
+            Esses níveis ajudam a interpretar consistência e variação do momento, sem alterar a porcentagem final da área.
+          </Text>
+        </View>
+      </View>
+    )
+  }
 
   const renderTransitsSection = () => (
     <View style={styles.section}>
@@ -1270,6 +1321,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {renderSuggestionsSection()}
             {renderTransitsSection()}
+            {renderMetricLevelsSection()}
             {renderCalculationToggle()}
             {showTechnical && renderCalculationsSection()}
           </ScrollView>
@@ -1337,6 +1389,35 @@ const styles = StyleSheet.create({
   },
   summarySection: {
     marginBottom: DESIGN_SYSTEM.spacing.lg
+  },
+  metricCard: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    padding: DESIGN_SYSTEM.spacing.md,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  metricLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C2D12',
+  },
+  metricValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9A3412',
+  },
+  metricHint: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#92400E',
   },
   summaryBlock: {
     padding: DESIGN_SYSTEM.spacing.md
