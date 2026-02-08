@@ -129,6 +129,33 @@ function impactLabel(impact: ForecastEvent['impact']) {
   return 'Misto'
 }
 
+function buildDirectEventText(event: ForecastEvent) {
+  const base = event.shortText || 'Movimento ativo no período.'
+  if (event.impact === 'UP') return `${base} Tendência favorável: aproveite para avançar com consistência.`
+  if (event.impact === 'DOWN') return `${base} Tendência de ajuste: desacelere, revise e priorize o essencial.`
+  return `${base} Tendência mista: combine ação com revisão para manter equilíbrio.`
+}
+
+function buildActionHint(event: ForecastEvent) {
+  if (event.impact === 'UP') return 'Ação sugerida: avance em uma decisão prática.'
+  if (event.impact === 'DOWN') return 'Ação sugerida: reduzir excesso e ajustar rota.'
+  return 'Ação sugerida: testar em pequeno passo antes de ampliar.'
+}
+
+function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[]) {
+  const domains = (event.domains || []).map((d) => formatDomainLabel(d)).join(', ')
+  const intro = `Este trânsito conecta ${event.transitPlanet} com ${event.natalPoint} por ${event.aspect.toLowerCase()}.`
+  const impact =
+    event.impact === 'UP'
+      ? 'A leitura completa indica janela mais construtiva para progresso e organização.'
+      : event.impact === 'DOWN'
+      ? 'A leitura completa indica fricção maior, pedindo revisão e ritmo mais disciplinado.'
+      : 'A leitura completa indica oscilação entre avanço e revisão, com decisões graduais.'
+  const scope = domains ? `Áreas mais sensíveis: ${domains}.` : ''
+  const detail = detailLines.length ? `Dados técnicos: ${detailLines.join(' • ')}.` : ''
+  return [intro, impact, scope, detail].filter(Boolean).join(' ')
+}
+
 function formatDomainLabel(domain: string) {
   const key = normalizeLifeArea(domain) || String(domain || '').trim().toLowerCase()
   if (LIFE_AREA_LABELS[key]) return LIFE_AREA_LABELS[key]
@@ -192,37 +219,52 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 const MemoEventCard = React.memo(function MemoEventCard({
   event,
   phase,
-  detailLines,
+  directText,
+  fullText,
+  actionHint,
   expanded,
+  fullExpanded,
   onToggle,
+  onToggleFull,
 }: {
   event: ForecastEvent
-  phase: { label: string; meta: string } | null
-  detailLines: string[]
+  phase: { label: string; meta?: string } | null
+  directText: string
+  fullText: string
+  actionHint: string
   expanded: boolean
+  fullExpanded: boolean
   onToggle: () => void
+  onToggleFull: () => void
 }) {
   return (
     <View style={styles.eventCard}>
       <Text style={styles.eventTitle}>{event.shortText}</Text>
       {phase ? (
-        <Text style={styles.eventPhase}>{phase.label} - {phase.meta}</Text>
+        <Text style={styles.eventPhase}>{phase.label}{phase.meta ? ` - ${phase.meta}` : ''}</Text>
       ) : null}
       <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-      {detailLines.map((line) => (
-        <Text key={`${event.id}-${line}`} style={styles.eventMeta}>{line}</Text>
-      ))}
       <TouchableOpacity style={styles.eventToggle} onPress={onToggle}>
         <Text style={styles.eventToggleText}>
-          {expanded ? 'Ver menos' : 'Ver mais'}
+          {expanded ? 'Ocultar texto direto' : 'Ver texto direto'}
         </Text>
       </TouchableOpacity>
       {expanded && (
         <View style={styles.eventExtra}>
-          <Text style={styles.eventExtraTitle}>O que fazer</Text>
-          <Text style={styles.eventExtraText}>Sugestoes praticas em breve.</Text>
-          <Text style={styles.eventExtraTitle}>Pontos de atencao</Text>
-          <Text style={styles.eventExtraText}>Dicas de cuidado em breve.</Text>
+          <Text style={styles.eventExtraTitle}>Texto direto</Text>
+          <Text style={styles.eventExtraText}>{directText}</Text>
+          <TouchableOpacity style={styles.eventFullToggle} onPress={onToggleFull}>
+            <Text style={styles.eventFullToggleText}>
+              {fullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
+            </Text>
+          </TouchableOpacity>
+          {fullExpanded ? (
+            <View style={styles.eventFullBox}>
+              <Text style={styles.eventExtraTitle}>Interpretação completa</Text>
+              <Text style={styles.eventExtraText}>{fullText}</Text>
+              <Text style={styles.eventFullAction}>{actionHint}</Text>
+            </View>
+          ) : null}
         </View>
       )}
     </View>
@@ -378,14 +420,24 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   dayEventsLimit,
   showAllDayEvents,
   onToggleEvent,
+  onToggleFullEvent,
   onToggleShowAll,
 }: {
   selectedEvents: ForecastEvent[]
-  eventDisplayData: Array<{ event: ForecastEvent; expanded: boolean; phase: { label: string; meta: string } | null; detailLines: string[] }>
+  eventDisplayData: Array<{
+    event: ForecastEvent
+    expanded: boolean
+    fullExpanded: boolean
+    phase: { label: string; meta?: string } | null
+    directText: string
+    fullText: string
+    actionHint: string
+  }>
   expandedEvents: Record<string, boolean>
   dayEventsLimit: number
   showAllDayEvents: boolean
   onToggleEvent: (eventId: string) => void
+  onToggleFullEvent: (eventId: string) => void
   onToggleShowAll: () => void
 }) {
   return (
@@ -405,9 +457,13 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
           <MemoEventCard
             event={item.event}
             phase={item.phase}
-            detailLines={item.detailLines}
+            directText={item.directText}
+            fullText={item.fullText}
+            actionHint={item.actionHint}
             expanded={!!expandedEvents[item.event.id]}
+            fullExpanded={item.fullExpanded}
             onToggle={() => onToggleEvent(item.event.id)}
+            onToggleFull={() => onToggleFullEvent(item.event.id)}
           />
         )}
         scrollEnabled={false}
@@ -446,6 +502,7 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [expandedEventInterpretations, setExpandedEventInterpretations] = useState<Record<string, boolean>>({})
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -1003,14 +1060,18 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return visibleDayEvents.map((event) => {
       const expanded = !!expandedEvents[event.id]
+      const detailLines = buildEventDetailLines(event, selectedDateKey)
       return {
         event,
         expanded,
+        fullExpanded: !!expandedEventInterpretations[event.id],
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
-        detailLines: expanded ? buildEventDetailLines(event, selectedDateKey) : [],
+        directText: buildDirectEventText(event),
+        fullText: buildFullEventInterpretation(event, detailLines),
+        actionHint: buildActionHint(event),
       }
     })
-  }, [buildEventDetailLines, eventPhaseMap, expandedEvents, selectedDateKey, visibleDayEvents])
+  }, [buildEventDetailLines, eventPhaseMap, expandedEventInterpretations, expandedEvents, selectedDateKey, visibleDayEvents])
 
   useEffect(() => {
     if (!debouncedFetchDate) return
@@ -1039,12 +1100,23 @@ export default function ForecastScreen() {
 
   useEffect(() => {
     setExpandedEvents({})
+    setExpandedEventInterpretations({})
     setShowAllDayEvents(false)
   }, [selectedDateKey])
 
 
   const toggleEventDetails = useCallback((eventId: string) => {
-    setExpandedEvents((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
+    setExpandedEvents((prev) => {
+      const nextExpanded = !prev[eventId]
+      if (!nextExpanded) {
+        setExpandedEventInterpretations((prevFull) => ({ ...prevFull, [eventId]: false }))
+      }
+      return { ...prev, [eventId]: nextExpanded }
+    })
+  }, [])
+
+  const toggleFullEventDetails = useCallback((eventId: string) => {
+    setExpandedEventInterpretations((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
   }, [])
 
   const handleSelectDomain = useCallback((domain: string | null) => {
@@ -1198,6 +1270,7 @@ export default function ForecastScreen() {
               dayEventsLimit={dayEventsLimit}
               showAllDayEvents={showAllDayEvents}
               onToggleEvent={toggleEventDetails}
+              onToggleFullEvent={toggleFullEventDetails}
               onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
             />
           </View>
@@ -1367,6 +1440,61 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 12,
     marginTop: 4,
+  },
+  eventToggle: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  eventToggleText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventExtra: {
+    marginTop: 10,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A2E',
+    paddingTop: 10,
+  },
+  eventExtraTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventExtraText: {
+    color: '#D2D2D7',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  eventFullToggle: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#3A3A42',
+  },
+  eventFullToggleText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventFullBox: {
+    gap: 8,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#141418',
+    borderWidth: 1,
+    borderColor: '#2A2A2E',
+  },
+  eventFullAction: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
   },
   emptyText: {
     color: '#808080',

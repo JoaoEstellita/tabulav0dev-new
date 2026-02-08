@@ -41,9 +41,32 @@ function impactLabel(impact: ForecastEvent['impact']) {
   return 'Misto'
 }
 
+function buildDirectEventText(event: ForecastEvent) {
+  if (event.impact === 'UP') {
+    return `${event.shortText} Janela favoravel para avancar em passos simples e consistentes.`
+  }
+  if (event.impact === 'DOWN') {
+    return `${event.shortText} Momento de ajuste: revisar ritmo e reduzir excesso.`
+  }
+  return `${event.shortText} Momento misto: avance com cautela e faca revisoes curtas.`
+}
+
+function buildFullEventInterpretation(event: ForecastEvent) {
+  const intensity = Math.round((event.intensity || 0) * 100)
+  const impact =
+    event.impact === 'UP'
+      ? 'A tendencia geral e construtiva se houver priorizacao e rotina.'
+      : event.impact === 'DOWN'
+      ? 'A tendencia geral pede realismo: menos impulso e mais ajuste de rota.'
+      : 'A tendencia geral alterna avancos e freios, exigindo sequencia e metodo.'
+  return `Interpretacao completa: intensidade estimada em ${intensity}%. ${impact} Use este transito como contexto para decidir o proximo passo pratico, sem tentar resolver tudo de uma vez.`
+}
+
 export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {
   const { events, rangeFrom, rangeTo, badgeFilter: initialFilter = 'all', dailyBadges } = route.params || {}
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>(initialFilter)
+  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
+  const [expandedFullEvents, setExpandedFullEvents] = useState<Record<string, boolean>>({})
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, ForecastEvent[]> = {}
@@ -116,6 +139,38 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 <View key={event.id} style={styles.eventCard}>
                   <Text style={styles.eventTitle}>{event.shortText}</Text>
                   <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
+                  <TouchableOpacity
+                    style={styles.eventToggle}
+                    onPress={() => setExpandedEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))}
+                  >
+                    <Text style={styles.eventToggleText}>
+                      {expandedEvents[event.id] ? 'Ocultar texto direto' : 'Ver texto direto'}
+                    </Text>
+                  </TouchableOpacity>
+                  {expandedEvents[event.id] ? (
+                    <View style={styles.eventDetailBlock}>
+                      <Text style={styles.eventDetailTitle}>Texto direto</Text>
+                      <Text style={styles.eventDetailText}>{buildDirectEventText(event)}</Text>
+                      <TouchableOpacity
+                        style={styles.eventToggleSecondary}
+                        onPress={() =>
+                          setExpandedFullEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))
+                        }
+                      >
+                        <Text style={styles.eventToggleText}>
+                          {expandedFullEvents[event.id]
+                            ? 'Ocultar interpretacao completa'
+                            : 'Ver interpretacao completa'}
+                        </Text>
+                      </TouchableOpacity>
+                      {expandedFullEvents[event.id] ? (
+                        <View style={styles.eventFullBlock}>
+                          <Text style={styles.eventDetailTitle}>Interpretacao completa</Text>
+                          <Text style={styles.eventDetailText}>{buildFullEventInterpretation(event)}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -183,6 +238,52 @@ const styles = StyleSheet.create({
     color: '#B0B0B0',
     fontSize: 12,
     marginTop: 4,
+  },
+  eventToggle: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#2A2A2E',
+  },
+  eventToggleSecondary: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#3A3A42',
+  },
+  eventToggleText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventDetailBlock: {
+    marginTop: 8,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A2E',
+    paddingTop: 8,
+  },
+  eventFullBlock: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#2A2A2E',
+    borderRadius: 10,
+    backgroundColor: '#141418',
+    padding: 8,
+  },
+  eventDetailTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventDetailText: {
+    color: '#D2D2D7',
+    fontSize: 12,
+    lineHeight: 18,
   },
   emptyText: {
     color: '#808080',

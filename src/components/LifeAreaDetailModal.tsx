@@ -329,6 +329,36 @@ type BackendSuggestion = {
   title?: string
   text?: string
   basedOnId?: string
+  action?: string
+  templateKey?: string
+  influencePeriod?: string
+  confidence?: number
+  statusLink?: {
+    area?: string
+    expectedImpact?: string
+    scoreEffectHint?: string
+  }
+  card?: {
+    headline?: string
+    summary?: string
+    bestUse?: string
+    timingHint?: string
+  }
+  deep?: {
+    opening?: string
+    astrologicalWhy?: string
+    centralTension?: string
+    practicalGuidance?: string[]
+    reflectionPrompt?: string
+    integrationNote?: string
+  }
+  provenance?: Array<{
+    sourceTitle?: string
+    author?: string
+    year?: string | number
+    url?: string
+    evidenceNote?: string
+  }>
 }
 
 interface RealCalculationData {
@@ -415,6 +445,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   if (!areaData) return null
 
   const [showTechnical, setShowTechnical] = React.useState(false)
+  const [selectedTransitKey, setSelectedTransitKey] = React.useState<string | null>(null)
+  const [expandedInterpretationKey, setExpandedInterpretationKey] = React.useState<string | null>(null)
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
@@ -934,6 +966,88 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     )
   }
 
+  const getTransitKey = (transit: any, index: number) => (
+    transit?.id ||
+    [
+      transit?.transitPlanet || 'na',
+      transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.target?.house || 'na',
+      transit?.aspectName || transit?.type || 'na',
+      String(index),
+    ].join(':')
+  )
+
+  const getSuggestionForTransit = (transit: any) => {
+    if (backendSuggestions.length && transit?.id) {
+      return backendSuggestions.find((item: any) => item?.basedOnId === transit.id) || null
+    }
+    if (!backendSuggestions.length) {
+      const fallbackKey = `transit-${transit?.transitPlanet}-${transit?.natalPlanet}-${transit?.type}`
+      return realSuggestions.find((item: any) => item?.transitId === fallbackKey) || null
+    }
+    return null
+  }
+
+  const buildDirectText = (transit: any, suggestion: any) => {
+    const directFromDataset =
+      suggestion?.card?.summary ||
+      suggestion?.text ||
+      suggestion?.suggestion ||
+      suggestion?.deep?.opening
+    if (directFromDataset) return directFromDataset
+    const aspectType = String(transit?.aspectName || transit?.type || '')
+    const tone =
+      ['trigono', 'sextil', 'harmonic'].includes(aspectType)
+        ? 'momento de fluxo'
+        : ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
+        ? 'momento de ajuste'
+        : 'momento de integração'
+    const target =
+      transit?.natalPlanet ||
+      transit?.target?.natalPlanet ||
+      transit?.target?.angle ||
+      (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
+    return `${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)} indica ${tone} nesta área.`
+  }
+
+  const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
+    if (!suggestion) {
+      const aspectType = String(transit?.aspectName || transit?.type || '')
+      const target =
+        transit?.natalPlanet ||
+        transit?.target?.natalPlanet ||
+        transit?.target?.angle ||
+        (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
+      return [
+        `Leitura completa: ${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)}.`,
+        directText,
+        'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
+      ].join('\n\n')
+    }
+
+    const segments: string[] = []
+    if (suggestion?.deep?.opening) segments.push(suggestion.deep.opening)
+    if (suggestion?.deep?.astrologicalWhy) segments.push(suggestion.deep.astrologicalWhy)
+    if (suggestion?.deep?.centralTension) segments.push(`Tensão central: ${suggestion.deep.centralTension}`)
+
+    const guidance = Array.isArray(suggestion?.deep?.practicalGuidance)
+      ? suggestion.deep.practicalGuidance.filter(Boolean).slice(0, 4)
+      : []
+    if (guidance.length) {
+      segments.push(`Orientação prática:\n- ${guidance.join('\n- ')}`)
+    }
+
+    if (suggestion?.deep?.reflectionPrompt) segments.push(`Pergunta-chave: ${suggestion.deep.reflectionPrompt}`)
+    if (suggestion?.deep?.integrationNote) segments.push(suggestion.deep.integrationNote)
+    if (suggestion?.statusLink?.scoreEffectHint) segments.push(`Conexão com score: ${suggestion.statusLink.scoreEffectHint}`)
+    if (suggestion?.card?.bestUse) segments.push(`Melhor uso: ${suggestion.card.bestUse}`)
+    if (suggestion?.card?.timingHint) segments.push(`Timing: ${suggestion.card.timingHint}`)
+
+    if (!segments.length) {
+      segments.push(directText)
+    }
+    return segments.join('\n\n')
+  }
+
   const renderTransitsSection = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
@@ -948,65 +1062,97 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
           const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
           const isNeutral = aspectType === 'conjuncao' || aspectType === 'neutral'
-
-          let statusColor: string
-          let statusText: string
-
-          if (isHarmonious) {
-            statusColor = DESIGN_SYSTEM.colors.positive
-            statusText = 'Harmônico'
-          } else if (isChallenging) {
-            statusColor = DESIGN_SYSTEM.colors.negative
-            statusText = 'Desafiador'
-          } else if (isNeutral) {
-            statusColor = DESIGN_SYSTEM.colors.neutral
-            statusText = 'Neutro'
-          } else {
-            statusColor = DESIGN_SYSTEM.colors.secondary
-            statusText = 'Neutro'
-          }
-
-          const strengthValue = safeNumber(transit.strength ?? transit.impact)
-          const orbValue = safeNumber(transit.orb)
-          const contribution =
-            totalTransitStrength > 0 && Number.isFinite(transit.strength)
-              ? Math.round((strengthValue / totalTransitStrength) * 100)
-              : 0
-          const houseName =
-            TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
-          const summaryParts = [
-            strengthValue ? `Força ${strengthValue}` : null,
-            Number.isFinite(transit.orb) ? `Orb ${safeFixed(orbValue)}°` : null,
-            transit.natalHouseImpacted ? `Casa ${transit.natalHouseImpacted} (${houseName})` : null,
-            transit.durationClass ? `Duração ${getTransitDuration(transit)}` : null
-          ].filter(Boolean) as string[]
-          if (contribution > 0) {
-            summaryParts.push(`Contribuição ${contribution}%`)
-          }
+          const statusColor = isHarmonious
+            ? DESIGN_SYSTEM.colors.positive
+            : isChallenging
+            ? DESIGN_SYSTEM.colors.negative
+            : isNeutral
+            ? DESIGN_SYSTEM.colors.neutral
+            : DESIGN_SYSTEM.colors.secondary
+          const statusText = isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'
           const timingLabel = getTimingLabel(transit)
           const transitTarget =
             transit.natalPlanet ||
             transit.target?.natalPlanet ||
             transit.target?.angle ||
             (transit.target?.house ? `Casa ${transit.target.house}` : '')
+          const transitKey = getTransitKey(transit, index)
+          const isSelected = selectedTransitKey === transitKey
+          const isFullExpanded = expandedInterpretationKey === transitKey
+          const suggestion = getSuggestionForTransit(transit)
+          const directText = buildDirectText(transit, suggestion)
+          const fullText = buildFullInterpretationText(transit, suggestion, directText)
+          const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
+          const actionText =
+            suggestion?.action ||
+            (Array.isArray(suggestion?.deep?.practicalGuidance) ? suggestion.deep.practicalGuidance[0] : null)
+          const templateKey = suggestion?.templateKey || null
+          const confidenceText =
+            typeof suggestion?.confidence === 'number'
+              ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, suggestion.confidence)) * 100)}%`
+              : null
+          const sourceCount = Array.isArray(suggestion?.provenance) ? suggestion.provenance.length : 0
+          const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
+          const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
+          const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
 
           return (
-            <View key={`transit-${transit.transitPlanet}-${transit.natalPlanet}-${transit.type}`} style={styles.transitCard}>
-              <View style={styles.transitHeader}>
-                <Text style={styles.transitNumber}>#{index + 1}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                  <Text style={styles.statusText}>{statusText}</Text>
+            <View key={transitKey} style={styles.transitCard}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  setSelectedTransitKey((prev) => (prev === transitKey ? null : transitKey))
+                  setExpandedInterpretationKey(null)
+                }}
+              >
+                <View style={styles.transitHeader}>
+                  <Text style={styles.transitNumber}>#{index + 1}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                    <Text style={styles.statusText}>{statusText}</Text>
+                  </View>
                 </View>
-              </View>
 
-              <Text style={styles.transitName}>
-                {translate('planets', transit.transitPlanet)} em {getAspectLabel(aspectType)} com {translate('planets', transitTarget)}
-              </Text>
+                <Text style={styles.transitName}>
+                  {translate('planets', transit.transitPlanet)} em {getAspectLabel(aspectType)} com {translate('planets', transitTarget)}
+                </Text>
+                {timingLabel ? <Text style={styles.transitTiming}>{timingLabel}</Text> : null}
+              </TouchableOpacity>
 
-              {summaryParts.length ? (
-                <Text style={styles.transitSummary}>{summaryParts.join(' • ')}</Text>
+              {isSelected ? (
+                <View style={styles.directInsightBox}>
+                  <Text style={styles.directInsightTitle}>Texto direto</Text>
+                  <Text style={styles.directInsightText}>{directText}</Text>
+                  <TouchableOpacity
+                    style={styles.expandInterpretationButton}
+                    onPress={() =>
+                      setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
+                    }
+                  >
+                    <Text style={styles.expandInterpretationButtonText}>
+                      {isFullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ) : null}
-              {timingLabel ? <Text style={styles.transitTiming}>{timingLabel}</Text> : null}
+
+              {isSelected && isFullExpanded ? (
+                <View style={styles.fullInterpretationBox}>
+                  <Text style={styles.fullInterpretationTitle}>{titleText}</Text>
+                  <Text style={styles.fullInterpretationBody}>{fullText}</Text>
+                  {actionText ? <Text style={styles.fullInterpretationMeta}>Ação sugerida: {actionText}</Text> : null}
+                  <View style={styles.fullInterpretationMetaRow}>
+                    {orbText ? <Text style={styles.fullInterpretationMeta}>{orbText}</Text> : null}
+                    {impactText ? <Text style={styles.fullInterpretationMeta}>{impactText}</Text> : null}
+                  </View>
+                  <View style={styles.fullInterpretationMetaRow}>
+                    {confidenceText ? <Text style={styles.fullInterpretationMeta}>{confidenceText}</Text> : null}
+                    {sourceText ? <Text style={styles.fullInterpretationMeta}>{sourceText}</Text> : null}
+                  </View>
+                  {templateKey ? (
+                    <Text style={styles.fullInterpretationFootnote}>Template: {templateKey}</Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           )
         })
@@ -1319,11 +1465,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         <View style={styles.modalContent}>
           {renderHeader()}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {renderSuggestionsSection()}
             {renderTransitsSection()}
-            {renderMetricLevelsSection()}
-            {renderCalculationToggle()}
-            {showTechnical && renderCalculationsSection()}
           </ScrollView>
         </View>
       </View>
@@ -1389,6 +1531,73 @@ const styles = StyleSheet.create({
   },
   summarySection: {
     marginBottom: DESIGN_SYSTEM.spacing.lg
+  },
+  directInsightBox: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    padding: DESIGN_SYSTEM.spacing.md,
+  },
+  directInsightTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 6,
+  },
+  directInsightText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#78350F',
+  },
+  expandInterpretationButton: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F59E0B',
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    paddingVertical: 6,
+  },
+  expandInterpretationButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  fullInterpretationBox: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: DESIGN_SYSTEM.borderRadius.md,
+    padding: DESIGN_SYSTEM.spacing.md,
+  },
+  fullInterpretationTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  fullInterpretationBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#1E293B',
+  },
+  fullInterpretationMetaRow: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  fullInterpretationMeta: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#334155',
+  },
+  fullInterpretationFootnote: {
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    fontSize: 11,
+    color: '#64748B',
   },
   metricCard: {
     backgroundColor: '#FFF7ED',
