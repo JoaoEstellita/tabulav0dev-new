@@ -105,6 +105,7 @@ export default function ProfileScreen() {
   const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
   const [moonLine2, setMoonLine2] = useState<string | null>(null)
   const [moonIsVoid, setMoonIsVoid] = useState(false)
+  const [voidInfoVisible, setVoidInfoVisible] = useState(false)
   const [moonModalVisible, setMoonModalVisible] = useState(false)
   const [moonDetails, setMoonDetails] = useState<{
     phaseLabel: string
@@ -210,10 +211,7 @@ export default function ProfileScreen() {
         return Number.isNaN(parsed.getTime()) ? null : parsed
       }
 
-      let currentPhaseEvent: any = null
-      let bestExact: Date | null = null
       let nextExact: Date | null = null
-      let phaseEnd: Date | null = null
       let nextVoidStart: Date | null = null
       let nextVoidEnd: Date | null = null
       const upcomingPhases: Array<{ label: string; when: string }> = []
@@ -221,19 +219,8 @@ export default function ProfileScreen() {
       for (const event of events) {
         const type = String(event?.eventType || '').toUpperCase()
         if (type !== 'LUNAR_PHASE') continue
-        const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
-        const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
         const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
-        if (start && end && now >= start && now <= end) {
-          currentPhaseEvent = event
-          phaseEnd = end
-          continue
-        }
-        if (exact && exact <= now && (!bestExact || exact > bestExact)) {
-          bestExact = exact
-          currentPhaseEvent = event
-          phaseEnd = end || null
-        } else if (exact && exact > now && (!nextExact || exact < nextExact)) {
+        if (exact && exact > now && (!nextExact || exact < nextExact)) {
           nextExact = exact
         }
         if (exact && exact > now && upcomingPhases.length < 4) {
@@ -265,28 +252,17 @@ export default function ProfileScreen() {
 
       const angle = getMoonPhaseAngle(now)
       const angleKey = getMoonPhaseKeyFromAngle(angle)
-      const phaseKeyFromEvent = currentPhaseEvent ? extractPhaseKey(currentPhaseEvent) : null
-      const useEventPhase = Boolean(currentPhaseEvent && phaseKeyFromEvent)
-      const phaseKey = (phaseKeyFromEvent as any) || angleKey
-      let phaseLabel = useEventPhase
-        ? getMoonPhaseLabelFromKey(phaseKey)
-        : getMoonPhaseLabelFromAngle(angle)
-      if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
+      const phaseKey = angle >= 315 ? "waningCrescent" : angleKey
+      let phaseLabel = getMoonPhaseLabelFromAngle(angle)
+      if (angle >= 315) phaseLabel = "Lua Balsâmica"
 
       const line1 = isVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
-      const line2Base = (phaseEnd || nextExact)
-        ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
+      const line2Base = nextExact
+        ? `até ${formatLocalDateTime(nextExact, userTz)}`
         : 'fase em atualização'
-      const line2 = isVoid && currentVoid?.endAt
-        ? `${line2Base} · Lua Vazia até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
-        : line2Base
-
-      const iconKey = (!useEventPhase && angle >= 315)
-        ? 'waningCrescent'
-        : phaseKey
-      setMoonPhaseKey(iconKey)
+      setMoonPhaseKey(phaseKey)
       setMoonPhaseLabel(line1)
-      setMoonLine2(line2)
+      setMoonLine2(line2Base)
       setMoonIsVoid(isVoid)
       setMoonDetails({
         phaseLabel,
@@ -614,9 +590,16 @@ export default function ProfileScreen() {
                 <Text style={styles.moonLegendLine1} numberOfLines={1}>
                   {moonPhaseLabel || "Lua"}
                 </Text>
-                <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                  {moonLine2 || "fase em atualização"}
-                </Text>
+                <View style={styles.moonLegendLine2Row}>
+                  <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                    {moonLine2 || "fase em atualização"}
+                  </Text>
+                  {moonIsVoid && (
+                    <TouchableOpacity onPress={() => setVoidInfoVisible(true)}>
+                      <Text style={styles.moonVoidAlertText}> · Lua Vazia</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </TouchableOpacity>
           </View>
@@ -861,6 +844,39 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </Modal>
 
+      <Modal
+        visible={voidInfoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVoidInfoVisible(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.moonModalBackdrop}
+          onPress={() => setVoidInfoVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.moonModalCard} onPress={() => {}}>
+            <Text style={styles.moonModalTitle}>Lua Vazia</Text>
+            <Text style={styles.moonModalText}>
+              A Lua Vazia é um período entre o último aspecto da Lua em um signo e a entrada no próximo signo.
+            </Text>
+            <Text style={styles.moonModalText}>
+              Tendência: menor tração para decisões finais e temas novos. Melhor para revisão, finalização e descanso.
+            </Text>
+            <Text style={styles.moonModalSectionTitle}>Recomendações</Text>
+            <Text style={styles.moonModalText}>• Revisar pendências e organizar o que já está em andamento.</Text>
+            <Text style={styles.moonModalText}>• Evitar iniciar algo importante sem urgência real.</Text>
+            <Text style={styles.moonModalText}>• Priorizar autocuidado, observação e ajustes finos.</Text>
+            <TouchableOpacity
+              style={styles.moonModalCloseButton}
+              onPress={() => setVoidInfoVisible(false)}
+            >
+              <Text style={styles.moonModalCloseText}>Fechar</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
       
@@ -984,6 +1000,17 @@ const styles = StyleSheet.create({
   moonLegendLine2: {
     fontSize: 11,
     color: "#C9C3A2",
+    lineHeight: 14,
+  },
+  moonLegendLine2Row: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "nowrap",
+  },
+  moonVoidAlertText: {
+    fontSize: 11,
+    color: "#FF6B6B",
+    fontWeight: "700",
     lineHeight: 14,
   },
   statsContainer: {
