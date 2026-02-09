@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import { Calendar } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
+import TransitInsightCard from '../../components/TransitInsightCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
@@ -81,7 +82,7 @@ const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
-  if (typeof score !== 'number') return 'â€”'
+  if (typeof score !== 'number') return '--'
   if (score < STATUS_THRESHOLDS.criticalBelow) return 'Critico'
   if (score >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
   return 'Neutro'
@@ -229,48 +230,6 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced
 }
 
-const MemoEventCard = React.memo(function MemoEventCard({
-  event,
-  phase,
-  directText,
-  fullText,
-  actionHint,
-  fullExpanded,
-  onToggleFull,
-}: {
-  event: ForecastEvent
-  phase: { label: string; meta?: string } | null
-  directText: string
-  fullText: string
-  actionHint: string
-  fullExpanded: boolean
-  onToggleFull: () => void
-}) {
-  return (
-    <View style={styles.eventCard}>
-      <Text style={styles.eventTitle}>{event.shortText}</Text>
-      {phase ? (
-        <Text style={styles.eventPhase}>{phase.label}{phase.meta ? ` - ${phase.meta}` : ''}</Text>
-      ) : null}
-      <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-      <View style={styles.eventExtra}>
-        <Text style={styles.eventExtraText}>{directText}</Text>
-        <TouchableOpacity style={styles.eventFullToggle} onPress={onToggleFull}>
-          <Text style={styles.eventFullToggleText}>
-            {fullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
-          </Text>
-        </TouchableOpacity>
-        {fullExpanded ? (
-          <View style={styles.eventFullBox}>
-            <Text style={styles.eventExtraTitle}>Interpretação completa</Text>
-            <Text style={styles.eventExtraText}>{fullText}</Text>
-            <Text style={styles.eventFullAction}>{actionHint}</Text>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  )
-})
 const MemoCalendar = React.memo(Calendar as any)
 const MemoAreaPill = React.memo(function MemoAreaPill({
   label,
@@ -287,7 +246,7 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
 }) {
   const value = typeof score === 'number' ? Math.round(score) : null
   const statusText = value === null
-    ? 'â€”'
+    ? '--'
     : value < STATUS_THRESHOLDS.criticalBelow
     ? 'Critico'
     : value >= STATUS_THRESHOLDS.positiveAbove
@@ -305,7 +264,7 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
     >
       <Text style={styles.areaPillLabel} numberOfLines={1}>{label}</Text>
       <Text style={styles.areaPillValue}>
-        {value ?? 'â€”'} {statusText}
+        {value ?? '--'} {statusText}
       </Text>
     </TouchableOpacity>
   )
@@ -448,14 +407,18 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
       )}
       {visibleEvents.map((item) => (
         <View key={item.event.id}>
-          <MemoEventCard
-            event={item.event}
-            phase={item.phase}
+          <TransitInsightCard
+            statusLabel={impactLabel(item.event.impact)}
+            statusColor={item.event.impact === 'UP' ? '#22C55E' : item.event.impact === 'DOWN' ? '#EF4444' : '#D97706'}
+            title={item.event.shortText}
+            timingLabel={item.phase ? `${item.phase.label}${item.phase.meta ? ` - ${item.phase.meta}` : ''}` : null}
             directText={item.directText}
-            fullText={item.fullText}
-            actionHint={item.actionHint}
             fullExpanded={item.fullExpanded}
             onToggleFull={() => onToggleFullEvent(item.event.id)}
+            fullTitle="Interpretação completa"
+            fullText={item.fullText}
+            actionText={item.actionHint}
+            variant="dark"
           />
         </View>
       ))}

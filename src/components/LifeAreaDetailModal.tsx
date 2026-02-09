@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
+import TransitInsightCard from './TransitInsightCard'
 
 const { width, height } = Dimensions.get('window')
 
@@ -1098,44 +1099,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
 
           return (
-            <View key={transitKey} style={styles.transitCard}>
-              <View>
-                <View style={styles.transitHeader}>
-                  <Text style={styles.transitNumber}>#{index + 1}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                    <Text style={styles.statusText}>{statusText}</Text>
-                  </View>
-                </View>
-
-                <Text style={styles.transitName}>
-                  {translate('planets', transit.transitPlanet)} em {getAspectLabel(aspectType)} com {translate('planets', transitTarget)}
-                </Text>
-                {timingLabel ? <Text style={styles.transitTiming}>{timingLabel}</Text> : null}
-              </View>
-
-              <View style={styles.directInsightBox}>
-                <Text style={styles.directInsightText}>{directText}</Text>
-                <TouchableOpacity
-                  style={styles.expandInterpretationButton}
-                  onPress={() =>
-                    setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
-                  }
-                >
-                  <Text style={styles.expandInterpretationButtonText}>
-                    {isFullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {isFullExpanded ? (
-                <View style={styles.fullInterpretationBox}>
-                  <Text style={styles.fullInterpretationTitle}>{titleText}</Text>
-                  <Text style={styles.fullInterpretationBody}>{fullText}</Text>
-                  {actionText ? <Text style={styles.fullInterpretationMeta}>Ação sugerida: {actionText}</Text> : null}
-                  {metaLine ? <Text style={styles.fullInterpretationMeta}>{metaLine}</Text> : null}
-                </View>
-              ) : null}
-            </View>
+            <TransitInsightCard
+              key={transitKey}
+              indexLabel={`#${index + 1}`}
+              statusLabel={statusText}
+              statusColor={statusColor}
+              title={`${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`}
+              timingLabel={timingLabel}
+              directText={directText}
+              fullExpanded={isFullExpanded}
+              onToggleFull={() =>
+                setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
+              }
+              fullTitle={titleText}
+              fullText={fullText}
+              actionText={actionText}
+              metaText={metaLine}
+              variant="light"
+            />
           )
         })
       )}

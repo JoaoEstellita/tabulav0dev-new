@@ -48,12 +48,10 @@ try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod
 
 const normalizePhaseLabel = (raw?: string | null) => {
   if (!raw) return ""
-  return raw.toLowerCase()
-    .replace(/[áàãâ]/g, "a")
-    .replace(/[éê]/g, "e")
-    .replace(/[í]/g, "i")
-    .replace(/[óôõ]/g, "o")
-    .replace(/[ú]/g, "u")
+  return raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
 const extractPhaseKey = (event: any) => {
@@ -120,7 +118,6 @@ export default function HomeScreen() {
     const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
-    const [moonIsVoid, setMoonIsVoid] = useState(false)
     const [moonModalVisible, setMoonModalVisible] = useState(false)
     const [moonDetails, setMoonDetails] = useState<MoonDetails>({
       phaseLabel: 'Lua',
@@ -129,6 +126,7 @@ export default function HomeScreen() {
       nextVoidLabel: 'Sem previsão',
       upcomingPhases: [],
     })
+    const moonPress = usePressScale()
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
@@ -318,7 +316,6 @@ export default function HomeScreen() {
         setMoonPhaseKey(phaseKey)
         setMoonPhaseLabel(line1)
         setMoonLine2(line2)
-        setMoonIsVoid(currentVoid)
         setMoonDetails({
           phaseLabel,
           phaseUntilLabel: line2Base,
@@ -486,34 +483,26 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {(() => {
-              const press = usePressScale()
-              return (
-                <Animated.View style={press.style}>
-                  <TouchableOpacity
-                    style={styles.notificationButton}
-                    onPressIn={press.onPressIn}
-                    onPressOut={press.onPressOut}
-                    onPress={() => setMoonModalVisible(true)}
-                  >
-                    <View style={styles.moonIconWrap}>
-                      <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
-                    </View>
-                    {moonIsVoid && (
-                      null
-                    )}
-                    <View style={styles.moonLegend}>
-                      <Text style={styles.moonLegendLine1} numberOfLines={1}>
-                        {moonPhaseLabel || 'Lua'}
-                      </Text>
-                      <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                        {moonLine2 || 'fase em atualização'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              )
-            })()}
+            <Animated.View style={moonPress.style}>
+              <TouchableOpacity
+                style={styles.notificationButton}
+                onPressIn={moonPress.onPressIn}
+                onPressOut={moonPress.onPressOut}
+                onPress={() => setMoonModalVisible(true)}
+              >
+                <View style={styles.moonIconWrap}>
+                  <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+                </View>
+                <View style={styles.moonLegend}>
+                  <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                    {moonPhaseLabel || 'Lua'}
+                  </Text>
+                  <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                    {moonLine2 || 'fase em atualização'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
 
           {/* Status das Areas de Vida */}
@@ -651,9 +640,7 @@ export default function HomeScreen() {
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
           <Ionicons name="warning" size={48} color="#EF4444" />
-          <Text style={styles.loadingText}>
-            {uiText('Carregando seus tr\\u00E2nsitos...')}
-          </Text>
+          <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
           <Text style={styles.errorText}>
             {error instanceof Error ? error.message : 'Erro desconhecido'}
           </Text>
