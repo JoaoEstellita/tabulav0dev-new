@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  Image
+  Image,
+  Modal
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
@@ -47,11 +48,11 @@ try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod
 const normalizePhaseLabel = (raw?: string | null) => {
   if (!raw) return ""
   return raw.toLowerCase()
-    .replace(/á|à|ã|â/g, "a")
-    .replace(/é|ê/g, "e")
-    .replace(/í/g, "i")
-    .replace(/ó|ô|õ/g, "o")
-    .replace(/ú/g, "u")
+    .replace(/[áàãâ]/g, "a")
+    .replace(/[éê]/g, "e")
+    .replace(/[í]/g, "i")
+    .replace(/[óôõ]/g, "o")
+    .replace(/[ú]/g, "u")
 }
 
 const extractPhaseKey = (event: any) => {
@@ -90,6 +91,14 @@ const LIFE_AREA_ORDER = [
   'transformacao',
 ]
 
+type MoonDetails = {
+  phaseLabel: string
+  phaseUntilLabel: string
+  currentVoidLabel: string
+  nextVoidLabel: string
+  upcomingPhases: Array<{ label: string; when: string }>
+}
+
 export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
@@ -110,6 +119,14 @@ export default function HomeScreen() {
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
     const [moonIsVoid, setMoonIsVoid] = useState(false)
+    const [moonModalVisible, setMoonModalVisible] = useState(false)
+    const [moonDetails, setMoonDetails] = useState<MoonDetails>({
+      phaseLabel: 'Lua',
+      phaseUntilLabel: 'fase em atualização',
+      currentVoidLabel: 'Não',
+      nextVoidLabel: 'Sem previsão',
+      upcomingPhases: [],
+    })
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
@@ -228,7 +245,7 @@ export default function HomeScreen() {
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do Usu�rio:', error)
+        console.error('Erro ao carregar perfil do Usuário:', error)
       }
     }
 
@@ -255,18 +272,21 @@ export default function HomeScreen() {
         let currentVoid = false
         let phaseEnd: Date | null = null
         let voidEnd: Date | null = null
+        let nextVoidStart: Date | null = null
+        let nextVoidEnd: Date | null = null
+        const upcomingPhases: Array<{ label: string; when: string }> = []
 
         for (const event of events) {
           const type = String(event?.eventType || '').toUpperCase()
           if (type === 'LUNAR_PHASE') {
             const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
             const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
+            const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
             if (start && end && now >= start && now <= end) {
               currentPhase = event
               phaseEnd = end
-              break
+              continue
             }
-            const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
             if (exact && exact <= now && (!bestExact || exact > bestExact)) {
               bestExact = exact
               currentPhase = event
@@ -274,12 +294,22 @@ export default function HomeScreen() {
             } else if (exact && exact > now && (!nextExact || exact < nextExact)) {
               nextExact = exact
             }
+            if (exact && exact > now && upcomingPhases.length < 4) {
+              const phaseEventKey = extractPhaseKey(event)
+              upcomingPhases.push({
+                label: getMoonPhaseLabelFromKey(phaseEventKey as any),
+                when: formatLocalDateTime(exact, userTz),
+              })
+            }
           } else if (type.includes('LUNAR_VOID')) {
             const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
             const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
             if (start && end && now >= start && now <= end) {
               currentVoid = true
               voidEnd = end
+            } else if (start && start > now && (!nextVoidStart || start < nextVoidStart)) {
+              nextVoidStart = start
+              nextVoidEnd = end
             }
           }
         }
@@ -292,13 +322,13 @@ export default function HomeScreen() {
         let phaseLabel = useEventPhase
           ? getMoonPhaseLabelFromKey(phaseKey)
           : getMoonPhaseLabelFromAngle(angle)
-        if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Bals�mica'
-        const line1 = currentVoid ? `${phaseLabel} � Lua Vazia` : phaseLabel
+        if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
+        const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
         const line2Base = (phaseEnd || nextExact)
-          ? `at� ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
-          : 'fase em atualiza��o'
+          ? `até ${formatLocalDateTime(phaseEnd || nextExact!, userTz)}`
+          : 'fase em atualização'
         const line2 = currentVoid && voidEnd
-          ? `${line2Base} � Lua Vazia at� ${formatLocalTime(voidEnd, userTz)}`
+          ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
           : line2Base
 
         const iconKey = (!useEventPhase && angle >= 315)
@@ -308,6 +338,17 @@ export default function HomeScreen() {
         setMoonPhaseLabel(line1)
         setMoonLine2(line2)
         setMoonIsVoid(currentVoid)
+        setMoonDetails({
+          phaseLabel,
+          phaseUntilLabel: line2Base,
+          currentVoidLabel: currentVoid && voidEnd
+            ? `Sim, até ${formatLocalTime(voidEnd, userTz)}`
+            : 'Não',
+          nextVoidLabel: nextVoidStart
+            ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` até ${formatLocalTime(nextVoidEnd, userTz)}` : ''}`
+            : 'Sem previsão',
+          upcomingPhases,
+        })
       } catch (error) {
         console.error('Erro ao carregar fases da lua:', error)
       }
@@ -324,7 +365,7 @@ export default function HomeScreen() {
         userProfile?.displayName ||
         user?.displayName ||
         (user?.email ? user.email.split('@')[0] : '') ||
-        'Usu�rio'
+        'Usuário'
       return decodeUnicodeEscapes(raw)
     }
 
@@ -440,7 +481,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Ol�, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
@@ -456,7 +497,7 @@ export default function HomeScreen() {
                     style={styles.notificationButton}
                     onPressIn={press.onPressIn}
                     onPressOut={press.onPressOut}
-                    onPress={() => navigation.navigate('Notifications' as never)}
+                    onPress={() => setMoonModalVisible(true)}
                   >
                     <View style={styles.moonIconWrap}>
                       <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
@@ -469,7 +510,7 @@ export default function HomeScreen() {
                         {moonPhaseLabel || 'Lua'}
                       </Text>
                       <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                        {moonLine2 || 'fase em atualiza��o'}
+                        {moonLine2 || 'fase em atualização'}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -563,7 +604,53 @@ export default function HomeScreen() {
         {/* PWA Download Button */}
         <PWADownloadButton />
 
-        {/* modal legado removido */}
+        <Modal
+          visible={moonModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMoonModalVisible(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.moonModalBackdrop}
+            onPress={() => setMoonModalVisible(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.moonModalCard}
+              onPress={() => {}}
+            >
+              <Text style={styles.moonModalTitle}>Calendário Lunar</Text>
+              <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
+                <Text style={styles.moonModalSectionTitle}>Lua agora</Text>
+                <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
+                <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
+
+                <Text style={styles.moonModalSectionTitle}>Lua vazia</Text>
+                <Text style={styles.moonModalText}>Atual: {moonDetails.currentVoidLabel}</Text>
+                <Text style={styles.moonModalText}>Próxima: {moonDetails.nextVoidLabel}</Text>
+
+                <Text style={styles.moonModalSectionTitle}>Próximas fases</Text>
+                {moonDetails.upcomingPhases.length ? (
+                  moonDetails.upcomingPhases.map((item) => (
+                    <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
+                      <Text style={styles.moonModalItemLabel}>{item.label}</Text>
+                      <Text style={styles.moonModalItemWhen}>{item.when}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.moonModalText}>Sem eventos futuros no calendário.</Text>
+                )}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.moonModalCloseButton}
+                onPress={() => setMoonModalVisible(false)}
+              >
+                <Text style={styles.moonModalCloseText}>Fechar</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
       </LinearGradient>
     )
   } catch (error) {
@@ -925,8 +1012,77 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#000',
     fontWeight: '600',
+  },
+  moonModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  moonModalCard: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '80%',
+    backgroundColor: '#15152D',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+    padding: 16,
+  },
+  moonModalTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  moonModalScroll: {
+    marginBottom: 12,
+  },
+  moonModalSectionTitle: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  moonModalText: {
+    color: '#E6E6E6',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  moonModalItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+  },
+  moonModalItemLabel: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  moonModalItemWhen: {
+    color: '#B8B8B8',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  moonModalCloseButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  moonModalCloseText: {
+    color: '#1A1A1A',
+    fontSize: 13,
+    fontWeight: '700',
   }
 })
+
+
 
 
 

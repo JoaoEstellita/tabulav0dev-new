@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image, Modal } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
@@ -105,6 +105,20 @@ export default function ProfileScreen() {
   const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
   const [moonLine2, setMoonLine2] = useState<string | null>(null)
   const [moonIsVoid, setMoonIsVoid] = useState(false)
+  const [moonModalVisible, setMoonModalVisible] = useState(false)
+  const [moonDetails, setMoonDetails] = useState<{
+    phaseLabel: string
+    phaseUntilLabel: string
+    currentVoidLabel: string
+    nextVoidLabel: string
+    upcomingPhases: Array<{ label: string; when: string }>
+  }>({
+    phaseLabel: "Lua",
+    phaseUntilLabel: "fase em atualização",
+    currentVoidLabel: "Não",
+    nextVoidLabel: "Sem previsão",
+    upcomingPhases: [],
+  })
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
@@ -176,6 +190,13 @@ export default function ProfileScreen() {
       if (!calendarSnap.exists()) {
         setMoonPhaseKey(null)
         setMoonIsVoid(false)
+        setMoonDetails({
+          phaseLabel: "Lua",
+          phaseUntilLabel: "fase em atualização",
+          currentVoidLabel: "Não",
+          nextVoidLabel: "Sem previsão",
+          upcomingPhases: [],
+        })
         return
       }
       const data = calendarSnap.data() || {}
@@ -193,18 +214,21 @@ export default function ProfileScreen() {
       let bestExact: Date | null = null
       let nextExact: Date | null = null
       let phaseEnd: Date | null = null
+      let nextVoidStart: Date | null = null
+      let nextVoidEnd: Date | null = null
+      const upcomingPhases: Array<{ label: string; when: string }> = []
 
       for (const event of events) {
         const type = String(event?.eventType || '').toUpperCase()
         if (type !== 'LUNAR_PHASE') continue
         const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
         const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
+        const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
         if (start && end && now >= start && now <= end) {
           currentPhaseEvent = event
           phaseEnd = end
-          break
+          continue
         }
-        const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
         if (exact && exact <= now && (!bestExact || exact > bestExact)) {
           bestExact = exact
           currentPhaseEvent = event
@@ -212,6 +236,31 @@ export default function ProfileScreen() {
         } else if (exact && exact > now && (!nextExact || exact < nextExact)) {
           nextExact = exact
         }
+        if (exact && exact > now && upcomingPhases.length < 4) {
+          const phaseEventKey = extractPhaseKey(event)
+          upcomingPhases.push({
+            label: getMoonPhaseLabelFromKey(phaseEventKey as any),
+            when: formatLocalDateTime(exact, userTz),
+          })
+        }
+      }
+
+      const voidEvents = events
+        .filter((event) => String(event?.eventType || "").toUpperCase().includes("LUNAR_VOID"))
+        .map((event) => ({
+          startAt: toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start),
+          endAt: toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end),
+        }))
+        .filter((event) => event.startAt && event.endAt) as Array<{ startAt: Date; endAt: Date }>
+
+      const currentVoid = voidEvents.find((event) => now >= event.startAt && now <= event.endAt)
+      const isVoid = Boolean(currentVoid)
+      const nextVoid = voidEvents
+        .filter((event) => event.startAt > now)
+        .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())[0]
+      if (nextVoid) {
+        nextVoidStart = nextVoid.startAt
+        nextVoidEnd = nextVoid.endAt
       }
 
       const angle = getMoonPhaseAngle(now)
@@ -223,18 +272,6 @@ export default function ProfileScreen() {
         ? getMoonPhaseLabelFromKey(phaseKey)
         : getMoonPhaseLabelFromAngle(angle)
       if (!useEventPhase && angle >= 315) phaseLabel = 'Lua Balsâmica'
-
-      const voidEvents = events
-        .filter((event) => event?.eventType === "LUNAR_VOID" && event?.startAt && event?.endAt)
-        .map((event) => ({
-          ...event,
-          startAt: new Date(event.startAt),
-          endAt: new Date(event.endAt),
-        }))
-        .filter((event) => !Number.isNaN(event.startAt.getTime()) && !Number.isNaN(event.endAt.getTime()))
-
-      const currentVoid = voidEvents.find((event) => now >= event.startAt && now <= event.endAt)
-      const isVoid = Boolean(currentVoid)
 
       const line1 = isVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
       const line2Base = (phaseEnd || nextExact)
@@ -251,6 +288,17 @@ export default function ProfileScreen() {
       setMoonPhaseLabel(line1)
       setMoonLine2(line2)
       setMoonIsVoid(isVoid)
+      setMoonDetails({
+        phaseLabel,
+        phaseUntilLabel: line2Base,
+        currentVoidLabel: isVoid && currentVoid?.endAt
+          ? `Sim, até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
+          : "Não",
+        nextVoidLabel: nextVoidStart
+          ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` até ${formatLocalTime(nextVoidEnd, userTz)}` : ""}`
+          : "Sem previsão",
+        upcomingPhases,
+      })
     } catch (error) {
       console.warn("Falha ao carregar calendario lunar:", error)
     }
@@ -558,7 +606,7 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.profileHeaderTop}>
             <View style={styles.profileHeaderSpacer} />
-            <TouchableOpacity style={styles.moonWidget} onPress={() => navigation.navigate("Notifications" as never)}>
+            <TouchableOpacity style={styles.moonWidget} onPress={() => setMoonModalVisible(true)}>
               <View style={styles.moonIconWrap}>
                 <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
               </View>
@@ -764,6 +812,54 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={moonModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoonModalVisible(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.moonModalBackdrop}
+          onPress={() => setMoonModalVisible(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.moonModalCard}
+            onPress={() => {}}
+          >
+            <Text style={styles.moonModalTitle}>Calendário Lunar</Text>
+            <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.moonModalSectionTitle}>Lua agora</Text>
+              <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
+              <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
+
+              <Text style={styles.moonModalSectionTitle}>Lua vazia</Text>
+              <Text style={styles.moonModalText}>Atual: {moonDetails.currentVoidLabel}</Text>
+              <Text style={styles.moonModalText}>Próxima: {moonDetails.nextVoidLabel}</Text>
+
+              <Text style={styles.moonModalSectionTitle}>Próximas fases</Text>
+              {moonDetails.upcomingPhases.length ? (
+                moonDetails.upcomingPhases.map((item) => (
+                  <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
+                    <Text style={styles.moonModalItemLabel}>{item.label}</Text>
+                    <Text style={styles.moonModalItemWhen}>{item.when}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.moonModalText}>Sem eventos futuros no calendário.</Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.moonModalCloseButton}
+              onPress={() => setMoonModalVisible(false)}
+            >
+              <Text style={styles.moonModalCloseText}>Fechar</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
@@ -1194,5 +1290,72 @@ const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
     paddingVertical: 24,
+  },
+  moonModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  moonModalCard: {
+    width: "100%",
+    maxWidth: 420,
+    maxHeight: "80%",
+    backgroundColor: "#15152D",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.25)",
+    padding: 16,
+  },
+  moonModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  moonModalScroll: {
+    marginBottom: 12,
+  },
+  moonModalSectionTitle: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  moonModalText: {
+    color: "#E6E6E6",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  moonModalItem: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+  },
+  moonModalItemLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  moonModalItemWhen: {
+    color: "#B8B8B8",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  moonModalCloseButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  moonModalCloseText: {
+    color: "#1A1A1A",
+    fontSize: 13,
+    fontWeight: "700",
   },
 })
