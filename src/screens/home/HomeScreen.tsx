@@ -42,6 +42,7 @@ import {
   getMoonPhaseLabelFromAngle,
   getMoonPhaseLabelFromKey
 } from '../../utils/moonPhase'
+import { getAreaTransitCount } from '../../utils/transitsByArea'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -110,6 +111,7 @@ export default function HomeScreen() {
       error,
       refreshData,
       backendLifeAreas,
+      backendCurrentTransits,
       localOverrideActive
     } = useLifeAreas()
     const { settings } = useUserSettings()
@@ -525,11 +527,15 @@ export default function HomeScreen() {
                   }
 
                   const normalizedArea = normalizeDisplayArea(name, area)
-                  const byAreaCount = transitData?.currentTransits?.transits?.byArea?.[name]?.length || 0
+                  const byAreaCount = getAreaTransitCount(
+                    name,
+                    transitData?.currentTransits as any,
+                    backendCurrentTransits as any
+                  )
                   const activeTransitsCount = Array.isArray((normalizedArea as any)?.activeTransits)
                     ? (normalizedArea as any).activeTransits.length
                     : 0
-                  const transitCount = byAreaCount > 0 ? byAreaCount : activeTransitsCount
+                  const transitCount = Math.max(byAreaCount, activeTransitsCount)
 
                   return (
                     <View key={name} style={styles.lifeAreaItem}>
@@ -579,6 +585,7 @@ export default function HomeScreen() {
           onClose={() => setModalVisible(false)}
           areaData={selectedArea}
           astrologyData={transitData?.currentTransits}
+          astrologyDataFallback={backendCurrentTransits}
         />
 
         {/* PWA Download Button */}

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
+import { mergeAreaTransits } from '../utils/transitsByArea'
 
 const { width, height } = Dimensions.get('window')
 
@@ -278,6 +279,7 @@ interface LifeAreaDetailModalProps {
   onClose: () => void
   areaData: LifeArea | null
   astrologyData?: RealAstrologyData | null
+  astrologyDataFallback?: RealAstrologyData | null
 }
 
 //  INTERFACES PARA DADOS REAIS
@@ -441,7 +443,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   visible,
   onClose,
   areaData,
-  astrologyData
+  astrologyData,
+  astrologyDataFallback
 }) => {
   if (!areaData) return null
 
@@ -454,20 +457,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const headerGradient = [areaColors[0], areaColors[1]]
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
-  const getActiveTransits = (): RealTransitData[] => {
-    if (!astrologyData?.transits?.byArea) return []
-    
-    const areaTransits = astrologyData.transits.byArea[areaData.name] || []
-    return areaTransits.map(transit => ({
+  const mapTransitToReal = (transit: any): RealTransitData => ({
       transitPlanet: transit.transitPlanet,
       natalPlanet: transit.natalPlanet,
       type: transit.type,
-      orb: transit.orb,
-      isApplying: transit.isApplying,
-      strength: transit.strength,
-      natalHouseImpacted: transit.natalHouseImpacted,
+      orb: safeNumber(transit.orb),
+      isApplying: !!transit.isApplying,
+      strength: safeNumber(transit.strength, safeNumber(transit.impact)),
+      natalHouseImpacted: safeNumber(transit.natalHouseImpacted),
       durationClass: transit.durationClass
-    })).sort((a, b) => b.strength - a.strength) // Ordena por forca
+    })
+
+  const getActiveTransits = (): RealTransitData[] => {
+    const mergedAreaTransits = mergeAreaTransits(
+      areaData.name,
+      astrologyData as any,
+      astrologyDataFallback as any
+    )
+    return mergedAreaTransits.map(mapTransitToReal).sort((a, b) => b.strength - a.strength)
   }
 
   const getNatalAspects = (): NatalAspectData[] => {
@@ -908,11 +915,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const volatility01 = normalizeMetric01((astrologyData as any)?.statusPersonal?.volatility)
   const signalLevel = getSignalLevel(confidence01)
   const volatilityLevel = getVolatilityLevel(volatility01)
-  // Prioriza a lista mais completa para nao limitar o modal a 4 itens.
-  const transitItems =
-    activeTransits.length >= backendActiveTransits.length
-      ? activeTransits
-      : backendActiveTransits
+  // Prioriza sempre a lista astrológica completa da área e adiciona itens legados ausentes.
+  const transitItems = React.useMemo(() => {
+    const fromBackend = backendActiveTransits.map(mapTransitToReal)
+    const merged = [...activeTransits]
+    const seen = new Set(
+      activeTransits.map((t, i) => `${t.transitPlanet}:${t.natalPlanet}:${t.type}:${t.natalHouseImpacted}:${i}`)
+    )
+    fromBackend.forEach((t, i) => {
+      const key = `${t.transitPlanet}:${t.natalPlanet}:${t.type}:${t.natalHouseImpacted}:${i}`
+      if (seen.has(key)) return
+      seen.add(key)
+      merged.push(t)
+    })
+    return merged.sort((a, b) => b.strength - a.strength)
+  }, [activeTransits, backendActiveTransits])
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
   const renderHeader = () => (
