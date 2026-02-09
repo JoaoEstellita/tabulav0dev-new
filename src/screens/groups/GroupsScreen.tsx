@@ -1795,6 +1795,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
                         const status = classifyTransitStatus(transit)
                         const title = buildTransitTitle(transit)
+                        const houseLabel = getTransitHouseTarget(transit) || null
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
@@ -1812,6 +1813,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           id: String(transit?.id || `member-transit-${index}`),
                           rank: computeTransitPriority(transit, areaCritical),
                           title,
+                          houseLabel,
                           statusLabel,
                           statusColor,
                           timingLabel: timing || "Em andamento",
@@ -1848,6 +1850,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               statusLabel={item.statusLabel}
                               statusColor={item.statusColor}
                               title={item.title}
+                              houseLabel={item.houseLabel}
                               timingLabel={item.timingLabel}
                               directText={item.directText}
                               fullExpanded={false}

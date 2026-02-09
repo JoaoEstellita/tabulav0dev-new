@@ -6,6 +6,7 @@ type TransitInsightCardProps = {
   statusLabel: string
   statusColor: string
   title: string
+  houseLabel?: string | null
   timingLabel?: string | null
   directText: string
   fullExpanded: boolean
@@ -25,6 +26,7 @@ export default function TransitInsightCard({
   statusLabel,
   statusColor,
   title,
+  houseLabel,
   timingLabel,
   directText,
   fullExpanded,
@@ -56,6 +58,11 @@ export default function TransitInsightCard({
       </View>
 
       <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
+      {houseLabel ? (
+        <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
+          Casa impactada: {houseLabel}
+        </Text>
+      ) : null}
       {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
 
       <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
@@ -145,6 +152,17 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: 8,
     fontWeight: '600',
+  },
+  houseLine: {
+    fontSize: 12,
+    marginBottom: 6,
+    fontWeight: '700',
+  },
+  houseLineLight: {
+    color: '#475569',
+  },
+  houseLineDark: {
+    color: '#A7A7B0',
   },
   directText: {
     fontSize: 14,

@@ -1071,6 +1071,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return `${transitPlanet} em trânsito nesta área`
   }
 
+  const getTransitHouseLabel = (transit: any): string | null => {
+    const houseValue =
+      transit?.target?.house ||
+      transit?.natalHouseImpacted ||
+      transit?.house ||
+      transit?.natalHouse ||
+      null
+    const numericHouse = Number(houseValue)
+    if (!Number.isFinite(numericHouse)) return null
+    if (numericHouse < 1 || numericHouse > 12) return null
+    return String(Math.round(numericHouse))
+  }
+
   const getPhaseLabel = (transit: any) => {
     const phase = String(transit?.phase || '').toLowerCase()
     if (phase === 'peak') return 'Em pico'
@@ -1187,6 +1200,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const relativeTiming = getTimingLabel(transit)
           const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
           const transitTitle = buildTransitTitle(transit)
+          const houseLabel = getTransitHouseLabel(transit)
           const transitKey = getTransitKey(transit, absoluteIndex)
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
@@ -1212,6 +1226,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusLabel={statusText}
               statusColor={statusColor}
               title={transitTitle}
+              houseLabel={houseLabel}
               timingLabel={timingLabel}
               directText={directText}
               fullExpanded={false}
