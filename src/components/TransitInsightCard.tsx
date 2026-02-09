@@ -15,6 +15,7 @@ type TransitInsightCardProps = {
   actionText?: string | null
   metaText?: string | null
   variant?: 'light' | 'dark'
+  featured?: boolean
 }
 
 export default function TransitInsightCard({
@@ -31,10 +32,17 @@ export default function TransitInsightCard({
   actionText,
   metaText,
   variant = 'light',
+  featured = false,
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   return (
-    <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
+    <View
+      style={[
+        styles.card,
+        isDark ? styles.cardDark : styles.cardLight,
+        featured ? styles.cardFeatured : null,
+      ]}
+    >
       <View style={styles.header}>
         {indexLabel ? <Text style={styles.number}>{indexLabel}</Text> : <View />}
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -45,20 +53,30 @@ export default function TransitInsightCard({
       <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
       {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
 
-      <View style={[styles.directBox, isDark ? styles.directBoxDark : styles.directBoxLight]}>
-        <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>{directText}</Text>
+      <View
+        style={[
+          styles.directBox,
+          isDark ? styles.directBoxDark : styles.directBoxLight,
+          featured ? styles.directBoxFeatured : null,
+        ]}
+      >
+        <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
+          {directText}
+        </Text>
         <TouchableOpacity style={styles.toggleButton} onPress={onToggleFull}>
-          <Text style={styles.toggleText}>
-            {fullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
-          </Text>
+          <Text style={styles.toggleText}>{fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}</Text>
         </TouchableOpacity>
       </View>
 
       {fullExpanded ? (
         <View style={[styles.fullBox, isDark ? styles.fullBoxDark : styles.fullBoxLight]}>
-          <Text style={[styles.fullTitle, isDark ? styles.fullTitleDark : styles.fullTitleLight]}>{fullTitle}</Text>
-          <Text style={[styles.fullText, isDark ? styles.fullTextDark : styles.fullTextLight]}>{fullText}</Text>
-          {actionText ? <Text style={styles.meta}>Ação sugerida: {actionText}</Text> : null}
+          <Text style={[styles.fullTitle, isDark ? styles.fullTitleDark : styles.fullTitleLight]}>
+            {fullTitle}
+          </Text>
+          <Text style={[styles.fullText, isDark ? styles.fullTextDark : styles.fullTextLight]}>
+            {fullText}
+          </Text>
+          {actionText ? <Text style={styles.meta}>Acao sugerida: {actionText}</Text> : null}
           {metaText ? <Text style={styles.meta}>{metaText}</Text> : null}
         </View>
       ) : null}
@@ -71,6 +89,16 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.08)',
+  },
+  cardFeatured: {
+    borderColor: 'rgba(217,119,6,0.45)',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 2,
   },
   cardLight: {
     backgroundColor: '#FFFFFF',
@@ -114,6 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#F97316',
     marginBottom: 6,
+    fontWeight: '600',
   },
   directBox: {
     marginTop: 6,
@@ -122,19 +151,23 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   directBoxLight: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
   },
   directBoxDark: {
     backgroundColor: '#202025',
     borderColor: '#2A2A2E',
+  },
+  directBoxFeatured: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FCD34D',
   },
   directText: {
     fontSize: 14,
     lineHeight: 20,
   },
   directTextLight: {
-    color: '#78350F',
+    color: '#334155',
   },
   directTextDark: {
     color: '#D2D2D7',
@@ -142,15 +175,17 @@ const styles = StyleSheet.create({
   toggleButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     borderRadius: 10,
-    backgroundColor: '#3A3A42',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
   },
   toggleText: {
-    color: '#FFD700',
+    color: '#1E293B',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   fullBox: {
     marginTop: 10,
@@ -189,6 +224,7 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: 12,
-    color: '#FFD700',
+    color: '#475569',
   },
 })
+

@@ -1009,26 +1009,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildDirectText = (transit: any, suggestion: any) => {
-    const directFromDataset =
+    const directFromDatasetRaw =
       suggestion?.card?.summary ||
       suggestion?.text ||
       suggestion?.suggestion ||
       suggestion?.deep?.opening
-    if (directFromDataset) return directFromDataset
+    if (directFromDatasetRaw) {
+      const firstSentence = String(directFromDatasetRaw).split('. ')[0] || String(directFromDatasetRaw)
+      const sanitized = firstSentence
+        .replace(/\s+/g, ' ')
+        .replace(/^Leitura completa:\s*/i, '')
+        .trim()
+      if (sanitized.length >= 28) return sanitized
+    }
     const aspectType = String(transit?.aspectName || transit?.type || '')
+    const transitPlanet = translate('planets', transit?.transitPlanet)
     const tone =
       ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-        ? 'janela de avanço com consistência'
+        ? 'favorece progresso com mais fluidez e consistencia'
         : ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
-        ? 'janela de ajuste e recalibração'
-        : 'janela de integração gradual'
-    const target =
-      transit?.natalPlanet ||
-      transit?.target?.natalPlanet ||
-      transit?.target?.angle ||
-      (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
-    const areaHint = typeof areaData?.name === 'string' ? ` em ${String(areaData.name).toLowerCase()}` : ''
-    return `${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)} indica ${tone}${areaHint}.`
+        ? 'pede ajuste de rota com menos pressa e mais estrategia'
+        : 'traz uma fase de integracao e calibragem'
+    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : 'esta area'
+    return `${transitPlanet}: ${tone} em ${areaHint}.`
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
@@ -1070,16 +1073,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return segments.join('\n\n')
   }
 
-  const renderTransitsSection = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
-
-      {transitItems.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
-        </View>
-      ) : (
-        transitItems.map((transit: any, index: number) => {
+  const renderTransitList = (items: any[], startIndex = 0, featured = false) =>
+    items.map((transit: any, index: number) => {
+      const absoluteIndex = startIndex + index
           const aspectType = String(transit.aspectName || transit.type || '')
           const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
           const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
@@ -1098,7 +1094,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             transit.target?.natalPlanet ||
             transit.target?.angle ||
             (transit.target?.house ? `Casa ${transit.target.house}` : '')
-          const transitKey = getTransitKey(transit, index)
+          const transitKey = getTransitKey(transit, absoluteIndex)
           const isFullExpanded = expandedInterpretationKey === transitKey
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
@@ -1122,7 +1118,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           return (
             <TransitInsightCard
               key={transitKey}
-              indexLabel={`#${index + 1}`}
+              indexLabel={`#${absoluteIndex + 1}`}
               statusLabel={statusText}
               statusColor={statusColor}
               title={`${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`}
@@ -1137,12 +1133,45 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               actionText={actionText}
               metaText={metaLine}
               variant="light"
+              featured={featured}
             />
           )
-        })
-      )}
-    </View>
-  )
+    })
+
+  const renderTransitsSection = () => {
+    const topImpacts = transitItems.slice(0, 2)
+    const remainingTransits = transitItems.slice(2)
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
+
+        {transitItems.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.subsectionHeader}>
+              <Text style={styles.subsectionLabel}>Impactos prioritários</Text>
+              <Text style={styles.subsectionMeta}>mais fortes agora</Text>
+            </View>
+            {renderTransitList(topImpacts, 0, true)}
+
+            {remainingTransits.length ? (
+              <>
+                <View style={styles.subsectionHeader}>
+                  <Text style={styles.subsectionLabel}>Lista completa</Text>
+                  <Text style={styles.subsectionMeta}>{transitItems.length} trânsitos na área</Text>
+                </View>
+                {renderTransitList(remainingTransits, 2, false)}
+              </>
+            ) : null}
+          </>
+        )}
+      </View>
+    )
+  }
 
   const renderSuggestionsSection = () => (
     <View style={styles.section}>
@@ -1679,11 +1708,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.primary,
-    marginBottom: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
     textAlign: 'center',
-    backgroundColor: DESIGN_SYSTEM.colors.light,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
     padding: DESIGN_SYSTEM.spacing.sm,
-    borderRadius: DESIGN_SYSTEM.borderRadius.sm
+    borderRadius: DESIGN_SYSTEM.borderRadius.sm,
+  },
+  subsectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    paddingHorizontal: 2,
+  },
+  subsectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  subsectionMeta: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
   },
   emptyState: {
     padding: DESIGN_SYSTEM.spacing.lg,
