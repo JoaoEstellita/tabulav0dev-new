@@ -479,7 +479,7 @@ export default function HomeScreen() {
               <View style={styles.headerContent}>
                 <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
-                <Text style={styles.houseSystemLabel}>
+                <Text style={styles.houseSystemLabel} numberOfLines={2}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
                   {statusPersonalLabel ? ` • ${statusPersonalLabel}` : ''}
                 </Text>
@@ -725,6 +725,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   avatarContainer: {
     marginRight: 12,
@@ -748,6 +749,8 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
   },
   greeting: {
     fontSize: 24,
@@ -761,9 +764,11 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   houseSystemLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#A0A0A0',
     marginTop: 2,
+    lineHeight: 15,
+    flexShrink: 1,
   },
   notificationButton: {
     position: 'relative',
