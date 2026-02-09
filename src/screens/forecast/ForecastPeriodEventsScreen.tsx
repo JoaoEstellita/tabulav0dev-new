@@ -42,24 +42,21 @@ function impactLabel(impact: ForecastEvent['impact']) {
 }
 
 function buildDirectEventText(event: ForecastEvent) {
-  if (event.impact === 'UP') {
-    return `${event.shortText} Janela favoravel para avancar em passos simples e consistentes.`
-  }
-  if (event.impact === 'DOWN') {
-    return `${event.shortText} Momento de ajuste: revisar ritmo e reduzir excesso.`
-  }
-  return `${event.shortText} Momento misto: avance com cautela e faca revisoes curtas.`
+  const base = event.shortText || 'Movimento ativo no periodo.'
+  if (event.impact === 'UP') return `${base} Sinal favoravel para consolidar algo que ja foi iniciado.`
+  if (event.impact === 'DOWN') return `${base} Melhor reduzir friccao e ajustar expectativas antes de forcar.`
+  return `${base} Clima misto: use passos curtos e confirme direcao a cada etapa.`
 }
 
 function buildFullEventInterpretation(event: ForecastEvent) {
   const intensity = Math.round((event.intensity || 0) * 100)
   const impact =
     event.impact === 'UP'
-      ? 'A tendencia geral e construtiva se houver priorizacao e rotina.'
+      ? 'A tendencia geral e construtiva quando existe foco, sequencia e consistencia.'
       : event.impact === 'DOWN'
-      ? 'A tendencia geral pede realismo: menos impulso e mais ajuste de rota.'
-      : 'A tendencia geral alterna avancos e freios, exigindo sequencia e metodo.'
-  return `Interpretacao completa: intensidade estimada em ${intensity}%. ${impact} Use este transito como contexto para decidir o proximo passo pratico, sem tentar resolver tudo de uma vez.`
+      ? 'A tendencia geral pede realismo: menos impulso, mais calibracao de limite e prazo.'
+      : 'A tendencia geral alterna avanco e revisao, exigindo decisao por camadas.'
+  return `Intensidade estimada em ${intensity}%. ${impact} Use o transito como contexto para decidir o proximo passo pratico sem antecipar todas as respostas.`
 }
 
 export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {

@@ -996,16 +996,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const aspectType = String(transit?.aspectName || transit?.type || '')
     const tone =
       ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-        ? 'momento de fluxo'
+        ? 'janela de avanço com consistência'
         : ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
-        ? 'momento de ajuste'
-        : 'momento de integração'
+        ? 'janela de ajuste e recalibração'
+        : 'janela de integração gradual'
     const target =
       transit?.natalPlanet ||
       transit?.target?.natalPlanet ||
       transit?.target?.angle ||
       (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
-    return `${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)} indica ${tone} nesta área.`
+    const areaHint = typeof areaData?.name === 'string' ? ` em ${String(areaData.name).toLowerCase()}` : ''
+    return `${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)} indica ${tone}${areaHint}.`
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
@@ -1086,7 +1087,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const actionText =
             suggestion?.action ||
             (Array.isArray(suggestion?.deep?.practicalGuidance) ? suggestion.deep.practicalGuidance[0] : null)
-          const templateKey = suggestion?.templateKey || null
           const confidenceText =
             typeof suggestion?.confidence === 'number'
               ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, suggestion.confidence)) * 100)}%`
@@ -1095,6 +1095,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
           const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
           const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
+          const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
 
           return (
             <View key={transitKey} style={styles.transitCard}>
@@ -1131,17 +1132,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.fullInterpretationTitle}>{titleText}</Text>
                   <Text style={styles.fullInterpretationBody}>{fullText}</Text>
                   {actionText ? <Text style={styles.fullInterpretationMeta}>Ação sugerida: {actionText}</Text> : null}
-                  <View style={styles.fullInterpretationMetaRow}>
-                    {orbText ? <Text style={styles.fullInterpretationMeta}>{orbText}</Text> : null}
-                    {impactText ? <Text style={styles.fullInterpretationMeta}>{impactText}</Text> : null}
-                  </View>
-                  <View style={styles.fullInterpretationMetaRow}>
-                    {confidenceText ? <Text style={styles.fullInterpretationMeta}>{confidenceText}</Text> : null}
-                    {sourceText ? <Text style={styles.fullInterpretationMeta}>{sourceText}</Text> : null}
-                  </View>
-                  {templateKey ? (
-                    <Text style={styles.fullInterpretationFootnote}>Template: {templateKey}</Text>
-                  ) : null}
+                  {metaLine ? <Text style={styles.fullInterpretationMeta}>{metaLine}</Text> : null}
                 </View>
               ) : null}
             </View>
@@ -1574,21 +1565,10 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: '#1E293B',
   },
-  fullInterpretationMetaRow: {
-    marginTop: DESIGN_SYSTEM.spacing.sm,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
   fullInterpretationMeta: {
     marginTop: 6,
     fontSize: 12,
     color: '#334155',
-  },
-  fullInterpretationFootnote: {
-    marginTop: DESIGN_SYSTEM.spacing.sm,
-    fontSize: 11,
-    color: '#64748B',
   },
   metricCard: {
     backgroundColor: '#FFF7ED',
