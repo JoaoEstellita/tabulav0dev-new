@@ -449,7 +449,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   if (!areaData) return null
 
   const [showTechnical, setShowTechnical] = React.useState(false)
-  const [expandedInterpretationKey, setExpandedInterpretationKey] = React.useState<string | null>(null)
+  const [detailView, setDetailView] = React.useState<{
+    title: string
+    directText: string
+    fullText: string
+    actionText: string | null
+    metaText: string | null
+    statusText: string
+    statusColor: string
+    timingLabel: string | null
+  } | null>(null)
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
@@ -1095,12 +1104,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             transit.target?.angle ||
             (transit.target?.house ? `Casa ${transit.target.house}` : '')
           const transitKey = getTransitKey(transit, absoluteIndex)
-          const isFullExpanded = expandedInterpretationKey === transitKey
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
-          const fullText = isFullExpanded
-            ? buildFullInterpretationText(transit, suggestion, directText)
-            : ''
+          const fullText = buildFullInterpretationText(transit, suggestion, directText)
           const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
           const actionText =
             suggestion?.action ||
@@ -1124,10 +1130,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               title={`${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`}
               timingLabel={timingLabel}
               directText={directText}
-              fullExpanded={isFullExpanded}
-              onToggleFull={() =>
-                setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
+              fullExpanded={false}
+              onToggleFull={() => {}}
+              onOpenDetailModal={() =>
+                setDetailView({
+                  title: `${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`,
+                  directText,
+                  fullText,
+                  actionText: actionText || null,
+                  metaText: metaLine || null,
+                  statusText,
+                  statusColor,
+                  timingLabel: timingLabel || null,
+                })
               }
+              detailMode="modal"
               fullTitle={titleText}
               fullText={fullText}
               actionText={actionText}
@@ -1482,6 +1499,59 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </ScrollView>
         </View>
       </View>
+
+      <Modal
+        visible={!!detailView}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setDetailView(null)}
+      >
+        <View style={styles.readingBackdrop}>
+          <View style={styles.readingCard}>
+            <View style={styles.readingHeader}>
+              <View style={styles.readingTitleWrap}>
+                <View style={[styles.readingStatusBadge, { backgroundColor: detailView?.statusColor || '#64748B' }]}>
+                  <Text style={styles.readingStatusText}>{detailView?.statusText || 'Neutro'}</Text>
+                </View>
+                <Text style={styles.readingTitle}>{detailView?.title}</Text>
+                {detailView?.timingLabel ? (
+                  <Text style={styles.readingTiming}>{detailView.timingLabel}</Text>
+                ) : null}
+              </View>
+              <TouchableOpacity onPress={() => setDetailView(null)} style={styles.readingCloseButton}>
+                <Ionicons name="close" size={20} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.readingScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.readingSection}>
+                <Text style={styles.readingSectionLabel}>Frase-chave</Text>
+                <Text style={styles.readingLead}>{detailView?.directText}</Text>
+              </View>
+
+              <View style={styles.readingSection}>
+                <Text style={styles.readingSectionLabel}>Interpretação completa</Text>
+                <Text style={styles.readingBody}>{detailView?.fullText}</Text>
+              </View>
+
+              {detailView?.actionText ? (
+                <View style={styles.readingActionBox}>
+                  <Text style={styles.readingActionLabel}>Ação sugerida</Text>
+                  <Text style={styles.readingActionText}>{detailView.actionText}</Text>
+                </View>
+              ) : null}
+
+              {detailView?.metaText ? (
+                <Text style={styles.readingMeta}>{detailView.metaText}</Text>
+              ) : null}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.readingDoneButton} onPress={() => setDetailView(null)}>
+              <Text style={styles.readingDoneText}>Fechar leitura</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   )
 }
@@ -2272,6 +2342,136 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: DESIGN_SYSTEM.colors.positive
+  },
+  readingBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2,6,23,0.62)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 18,
+  },
+  readingCard: {
+    width: '100%',
+    maxWidth: 760,
+    maxHeight: '90%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  readingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFF7ED',
+  },
+  readingTitleWrap: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  readingStatusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 8,
+  },
+  readingStatusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  readingTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  readingTiming: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#B45309',
+    fontWeight: '600',
+  },
+  readingCloseButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  readingScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  readingSection: {
+    marginBottom: 16,
+  },
+  readingSectionLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    fontWeight: '700',
+    color: '#B45309',
+    marginBottom: 6,
+  },
+  readingLead: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  readingBody: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#1E293B',
+  },
+  readingActionBox: {
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  readingActionLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    fontWeight: '700',
+    color: '#047857',
+    marginBottom: 4,
+  },
+  readingActionText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#065F46',
+    fontWeight: '600',
+  },
+  readingMeta: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  readingDoneButton: {
+    margin: 16,
+    marginTop: 8,
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  readingDoneText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   }
 })
 

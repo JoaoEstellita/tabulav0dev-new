@@ -16,6 +16,8 @@ type TransitInsightCardProps = {
   metaText?: string | null
   variant?: 'light' | 'dark'
   featured?: boolean
+  detailMode?: 'inline' | 'modal'
+  onOpenDetailModal?: () => void
 }
 
 export default function TransitInsightCard({
@@ -33,8 +35,11 @@ export default function TransitInsightCard({
   metaText,
   variant = 'light',
   featured = false,
+  detailMode = 'inline',
+  onOpenDetailModal,
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
+  const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
   return (
     <View
       style={[
@@ -63,12 +68,17 @@ export default function TransitInsightCard({
         <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
           {directText}
         </Text>
-        <TouchableOpacity style={styles.toggleButton} onPress={onToggleFull}>
-          <Text style={styles.toggleText}>{fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}</Text>
+        <TouchableOpacity
+          style={styles.toggleButton}
+          onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
+        >
+          <Text style={styles.toggleText}>
+            {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {fullExpanded ? (
+      {!useModalDetail && fullExpanded ? (
         <View style={[styles.fullBox, isDark ? styles.fullBoxDark : styles.fullBoxLight]}>
           <Text style={[styles.fullTitle, isDark ? styles.fullTitleDark : styles.fullTitleLight]}>
             {fullTitle}
@@ -133,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   titleLight: {
-    color: '#B45309',
+    color: '#0F172A',
   },
   titleDark: {
     color: '#FFFFFF',
@@ -227,4 +237,3 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
 })
-
