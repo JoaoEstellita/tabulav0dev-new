@@ -81,7 +81,7 @@ const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {
-  if (typeof score !== 'number') return '—'
+  if (typeof score !== 'number') return 'â€”'
   if (score < STATUS_THRESHOLDS.criticalBelow) return 'Critico'
   if (score >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
   return 'Neutro'
@@ -244,33 +244,24 @@ const MemoEventCard = React.memo(function MemoEventCard({
         <Text style={styles.eventPhase}>{phase.label}{phase.meta ? ` - ${phase.meta}` : ''}</Text>
       ) : null}
       <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-      <TouchableOpacity style={styles.eventToggle} onPress={onToggle}>
-        <Text style={styles.eventToggleText}>
-          {expanded ? 'Ocultar texto direto' : 'Ver texto direto'}
-        </Text>
-      </TouchableOpacity>
-      {expanded && (
-        <View style={styles.eventExtra}>
-          <Text style={styles.eventExtraTitle}>Texto direto</Text>
-          <Text style={styles.eventExtraText}>{directText}</Text>
-          <TouchableOpacity style={styles.eventFullToggle} onPress={onToggleFull}>
-            <Text style={styles.eventFullToggleText}>
-              {fullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
-            </Text>
-          </TouchableOpacity>
-          {fullExpanded ? (
-            <View style={styles.eventFullBox}>
-              <Text style={styles.eventExtraTitle}>Interpretação completa</Text>
-              <Text style={styles.eventExtraText}>{fullText}</Text>
-              <Text style={styles.eventFullAction}>{actionHint}</Text>
-            </View>
-          ) : null}
-        </View>
-      )}
+      <View style={styles.eventExtra}>
+        <Text style={styles.eventExtraText}>{directText}</Text>
+        <TouchableOpacity style={styles.eventFullToggle} onPress={onToggleFull}>
+          <Text style={styles.eventFullToggleText}>
+            {fullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
+          </Text>
+        </TouchableOpacity>
+        {fullExpanded ? (
+          <View style={styles.eventFullBox}>
+            <Text style={styles.eventExtraTitle}>Interpretação completa</Text>
+            <Text style={styles.eventExtraText}>{fullText}</Text>
+            <Text style={styles.eventFullAction}>{actionHint}</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   )
 })
-
 const MemoCalendar = React.memo(Calendar as any)
 const MemoAreaPill = React.memo(function MemoAreaPill({
   label,
@@ -287,7 +278,7 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
 }) {
   const value = typeof score === 'number' ? Math.round(score) : null
   const statusText = value === null
-    ? '—'
+    ? 'â€”'
     : value < STATUS_THRESHOLDS.criticalBelow
     ? 'Critico'
     : value >= STATUS_THRESHOLDS.positiveAbove
@@ -305,7 +296,7 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
     >
       <Text style={styles.areaPillLabel} numberOfLines={1}>{label}</Text>
       <Text style={styles.areaPillValue}>
-        {value ?? '—'} {statusText}
+        {value ?? 'â€”'} {statusText}
       </Text>
     </TouchableOpacity>
   )
@@ -1053,15 +1044,17 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return visibleDayEvents.map((event) => {
       const expanded = !!expandedEvents[event.id]
-      const detailLines = buildEventDetailLines(event, selectedDateKey)
+      const fullExpanded = !!expandedEventInterpretations[event.id]
       return {
         event,
         expanded,
-        fullExpanded: !!expandedEventInterpretations[event.id],
+        fullExpanded,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
         directText: buildDirectEventText(event),
-        fullText: buildFullEventInterpretation(event, detailLines),
-        actionHint: buildActionHint(event),
+        fullText: fullExpanded
+          ? buildFullEventInterpretation(event, buildEventDetailLines(event, selectedDateKey))
+          : '',
+        actionHint: fullExpanded ? buildActionHint(event) : '',
       }
     })
   }, [buildEventDetailLines, eventPhaseMap, expandedEventInterpretations, expandedEvents, selectedDateKey, visibleDayEvents])

@@ -518,7 +518,11 @@ export default function HomeScreen() {
                   }
 
                   const transitCount =
-                    transitData?.currentTransits?.transits?.byArea?.[name]?.length || 0
+                    (Array.isArray((normalizedArea as any)?.activeTransits)
+                      ? (normalizedArea as any).activeTransits.length
+                      : 0) ||
+                    transitData?.currentTransits?.transits?.byArea?.[name]?.length ||
+                    0
                   const normalizedArea = normalizeDisplayArea(name, area)
 
                   return (

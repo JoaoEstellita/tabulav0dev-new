@@ -445,7 +445,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   if (!areaData) return null
 
   const [showTechnical, setShowTechnical] = React.useState(false)
-  const [selectedTransitKey, setSelectedTransitKey] = React.useState<string | null>(null)
   const [expandedInterpretationKey, setExpandedInterpretationKey] = React.useState<string | null>(null)
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
@@ -1077,11 +1076,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             transit.target?.angle ||
             (transit.target?.house ? `Casa ${transit.target.house}` : '')
           const transitKey = getTransitKey(transit, index)
-          const isSelected = selectedTransitKey === transitKey
           const isFullExpanded = expandedInterpretationKey === transitKey
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
-          const fullText = buildFullInterpretationText(transit, suggestion, directText)
+          const fullText = isFullExpanded
+            ? buildFullInterpretationText(transit, suggestion, directText)
+            : ''
           const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
           const actionText =
             suggestion?.action ||
@@ -1098,13 +1098,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
           return (
             <View key={transitKey} style={styles.transitCard}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => {
-                  setSelectedTransitKey((prev) => (prev === transitKey ? null : transitKey))
-                  setExpandedInterpretationKey(null)
-                }}
-              >
+              <View>
                 <View style={styles.transitHeader}>
                   <Text style={styles.transitNumber}>#{index + 1}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -1116,26 +1110,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   {translate('planets', transit.transitPlanet)} em {getAspectLabel(aspectType)} com {translate('planets', transitTarget)}
                 </Text>
                 {timingLabel ? <Text style={styles.transitTiming}>{timingLabel}</Text> : null}
-              </TouchableOpacity>
+              </View>
 
-              {isSelected ? (
-                <View style={styles.directInsightBox}>
-                  <Text style={styles.directInsightTitle}>Texto direto</Text>
-                  <Text style={styles.directInsightText}>{directText}</Text>
-                  <TouchableOpacity
-                    style={styles.expandInterpretationButton}
-                    onPress={() =>
-                      setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
-                    }
-                  >
-                    <Text style={styles.expandInterpretationButtonText}>
-                      {isFullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ) : null}
+              <View style={styles.directInsightBox}>
+                <Text style={styles.directInsightText}>{directText}</Text>
+                <TouchableOpacity
+                  style={styles.expandInterpretationButton}
+                  onPress={() =>
+                    setExpandedInterpretationKey((prev) => (prev === transitKey ? null : transitKey))
+                  }
+                >
+                  <Text style={styles.expandInterpretationButtonText}>
+                    {isFullExpanded ? 'Ocultar interpretação completa' : 'Ver interpretação completa'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-              {isSelected && isFullExpanded ? (
+              {isFullExpanded ? (
                 <View style={styles.fullInterpretationBox}>
                   <Text style={styles.fullInterpretationTitle}>{titleText}</Text>
                   <Text style={styles.fullInterpretationBody}>{fullText}</Text>

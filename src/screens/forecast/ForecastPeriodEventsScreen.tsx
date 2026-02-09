@@ -65,7 +65,6 @@ function buildFullEventInterpretation(event: ForecastEvent) {
 export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {
   const { events, rangeFrom, rangeTo, badgeFilter: initialFilter = 'all', dailyBadges } = route.params || {}
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>(initialFilter)
-  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [expandedFullEvents, setExpandedFullEvents] = useState<Record<string, boolean>>({})
 
   const eventsByDate = useMemo(() => {
@@ -142,38 +141,27 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 <View key={event.id} style={styles.eventCard}>
                   <Text style={styles.eventTitle}>{event.shortText}</Text>
                   <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-                  <TouchableOpacity
-                    style={styles.eventToggle}
-                    onPress={() => setExpandedEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))}
-                  >
-                    <Text style={styles.eventToggleText}>
-                      {expandedEvents[event.id] ? 'Ocultar texto direto' : 'Ver texto direto'}
-                    </Text>
-                  </TouchableOpacity>
-                  {expandedEvents[event.id] ? (
-                    <View style={styles.eventDetailBlock}>
-                      <Text style={styles.eventDetailTitle}>Texto direto</Text>
-                      <Text style={styles.eventDetailText}>{buildDirectEventText(event)}</Text>
-                      <TouchableOpacity
-                        style={styles.eventToggleSecondary}
-                        onPress={() =>
-                          setExpandedFullEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))
-                        }
-                      >
-                        <Text style={styles.eventToggleText}>
-                          {expandedFullEvents[event.id]
-                            ? 'Ocultar interpretacao completa'
-                            : 'Ver interpretacao completa'}
-                        </Text>
-                      </TouchableOpacity>
-                      {expandedFullEvents[event.id] ? (
-                        <View style={styles.eventFullBlock}>
-                          <Text style={styles.eventDetailTitle}>Interpretacao completa</Text>
-                          <Text style={styles.eventDetailText}>{buildFullEventInterpretation(event)}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  ) : null}
+                  <View style={styles.eventDetailBlock}>
+                    <Text style={styles.eventDetailText}>{buildDirectEventText(event)}</Text>
+                    <TouchableOpacity
+                      style={styles.eventToggleSecondary}
+                      onPress={() =>
+                        setExpandedFullEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))
+                      }
+                    >
+                      <Text style={styles.eventToggleText}>
+                        {expandedFullEvents[event.id]
+                          ? 'Ocultar interpretação completa'
+                          : 'Ver interpretação completa'}
+                      </Text>
+                    </TouchableOpacity>
+                    {expandedFullEvents[event.id] ? (
+                      <View style={styles.eventFullBlock}>
+                        <Text style={styles.eventDetailTitle}>Interpretação completa</Text>
+                        <Text style={styles.eventDetailText}>{buildFullEventInterpretation(event)}</Text>
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
               ))}
             </View>
