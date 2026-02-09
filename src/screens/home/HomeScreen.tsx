@@ -525,12 +525,11 @@ export default function HomeScreen() {
                   }
 
                   const normalizedArea = normalizeDisplayArea(name, area)
-                  const transitCount =
-                    (Array.isArray((normalizedArea as any)?.activeTransits)
-                      ? (normalizedArea as any).activeTransits.length
-                      : 0) ||
-                    transitData?.currentTransits?.transits?.byArea?.[name]?.length ||
-                    0
+                  const byAreaCount = transitData?.currentTransits?.transits?.byArea?.[name]?.length || 0
+                  const activeTransitsCount = Array.isArray((normalizedArea as any)?.activeTransits)
+                    ? (normalizedArea as any).activeTransits.length
+                    : 0
+                  const transitCount = byAreaCount > 0 ? byAreaCount : activeTransitsCount
 
                   return (
                     <View key={name} style={styles.lifeAreaItem}>

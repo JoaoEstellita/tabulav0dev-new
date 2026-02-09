@@ -908,7 +908,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const volatility01 = normalizeMetric01((astrologyData as any)?.statusPersonal?.volatility)
   const signalLevel = getSignalLevel(confidence01)
   const volatilityLevel = getVolatilityLevel(volatility01)
-  const transitItems = backendActiveTransits.length ? backendActiveTransits : activeTransits
+  // Prioriza a lista mais completa para nao limitar o modal a 4 itens.
+  const transitItems =
+    activeTransits.length >= backendActiveTransits.length
+      ? activeTransits
+      : backendActiveTransits
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
   const renderHeader = () => (
