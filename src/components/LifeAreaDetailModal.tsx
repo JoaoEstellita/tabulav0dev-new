@@ -1284,9 +1284,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           )
     })
 
+  const getTransitPriorityScore = (transit: any) => {
+    const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+    let score = 12
+    if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)) score += 18
+    if (['trigono', 'sextil', 'harmonic'].includes(aspectType)) score += 10
+    const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+    score += impactAbs * 10
+    const orbAbs = Math.abs(safeNumber(transit?.orb, 3))
+    score += Math.max(0, 3 - Math.min(3, orbAbs)) * 4
+    const phase = String(transit?.phase || '').toLowerCase()
+    if (phase === 'peak') score += 10
+    else if (phase === 'start') score += 6
+    else if (phase === 'end') score += 3
+    return score
+  }
+
   const renderTransitsSection = () => {
-    const topImpacts = transitItems.slice(0, 2)
-    const remainingTransits = transitItems.slice(2)
+    const orderedTransits = [...transitItems].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
 
     return (
       <View style={styles.section}>
@@ -1299,20 +1314,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         ) : (
           <>
             <View style={styles.subsectionHeader}>
-              <Text style={styles.subsectionLabel}>Impactos prioritários</Text>
-              <Text style={styles.subsectionMeta}>mais fortes agora</Text>
+              <Text style={styles.subsectionLabel}>Lista de trânsitos</Text>
+              <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos na área</Text>
             </View>
-            {renderTransitList(topImpacts, 0, true)}
-
-            {remainingTransits.length ? (
-              <>
-                <View style={styles.subsectionHeader}>
-                  <Text style={styles.subsectionLabel}>Lista completa</Text>
-                  <Text style={styles.subsectionMeta}>{transitItems.length} trânsitos na área</Text>
-                </View>
-                {renderTransitList(remainingTransits, 2, false)}
-              </>
-            ) : null}
+            {renderTransitList(orderedTransits, 0, false)}
           </>
         )}
       </View>
@@ -1402,6 +1407,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       <Text style={styles.sectionTitle}>CÁLCULOS TÉCNICOS E BASE ASTROLÓGICA</Text>
       
       <View style={styles.calculationCard}>
+        <Text style={styles.breakdownTitle}>Fatores do status desta área:</Text>
+        <Text style={styles.validationText}>
+          Score atual: {safeNumber(areaData.status)}% • Trânsitos considerados: {transitItems.length}
+        </Text>
+        <Text style={styles.validationText}>
+          Força total dos trânsitos: {safeFixed(totalTransitStrength, 2)}
+        </Text>
+        {planetBreakdown.length ? (
+          <Text style={styles.validationText}>
+            Planetas com maior peso: {planetBreakdown
+              .slice()
+              .sort((a, b) => safeNumber(b.totalScore) - safeNumber(a.totalScore))
+              .slice(0, 5)
+              .map((p) => `${p.planet} (${p.totalScore})`)
+              .join(' • ')}
+          </Text>
+        ) : null}
+
         <Text style={styles.formulaTitle}>Fórmula de Cálculo:</Text>
         <Text style={styles.formulaText}>{realCalculations.formula}</Text>
         
