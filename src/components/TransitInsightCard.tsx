@@ -58,25 +58,17 @@ export default function TransitInsightCard({
       <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
       {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
 
-      <View
-        style={[
-          styles.directBox,
-          isDark ? styles.directBoxDark : styles.directBoxLight,
-          featured ? styles.directBoxFeatured : null,
-        ]}
+      <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
+        {directText}
+      </Text>
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
       >
-        <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
-          {directText}
+        <Text style={styles.toggleText}>
+          {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
         </Text>
-        <TouchableOpacity
-          style={styles.toggleButton}
-          onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
-        >
-          <Text style={styles.toggleText}>
-            {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       {!useModalDetail && fullExpanded ? (
         <View style={[styles.fullBox, isDark ? styles.fullBoxDark : styles.fullBoxLight]}>
@@ -150,31 +142,14 @@ const styles = StyleSheet.create({
   },
   timing: {
     fontSize: 12,
-    color: '#F97316',
-    marginBottom: 6,
+    color: '#64748B',
+    marginBottom: 8,
     fontWeight: '600',
-  },
-  directBox: {
-    marginTop: 6,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-  },
-  directBoxLight: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-  },
-  directBoxDark: {
-    backgroundColor: '#202025',
-    borderColor: '#2A2A2E',
-  },
-  directBoxFeatured: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FCD34D',
   },
   directText: {
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: 8,
   },
   directTextLight: {
     color: '#334155',
@@ -183,7 +158,6 @@ const styles = StyleSheet.create({
     color: '#D2D2D7',
   },
   toggleButton: {
-    marginTop: 8,
     alignSelf: 'flex-start',
     paddingHorizontal: 11,
     paddingVertical: 5,

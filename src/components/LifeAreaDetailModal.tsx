@@ -292,6 +292,8 @@ interface RealTransitData {
   strength: number
   natalHouseImpacted: number
   durationClass?: 'curto' | 'medio' | 'longo'
+  phase?: string
+  window?: { start?: string; exact?: string; end?: string; days?: number }
   seriesId?: string
   contactPhase?: 'direct' | 'retro'
   isMaster?: boolean
@@ -474,7 +476,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       isApplying: !!transit.isApplying,
       strength: safeNumber(transit.strength, safeNumber(transit.impact)),
       natalHouseImpacted: safeNumber(transit.natalHouseImpacted),
-      durationClass: transit.durationClass
+      durationClass: transit.durationClass,
+      phase: transit.phase,
+      window: transit.window,
     })
 
   const getActiveTransits = (): RealTransitData[] => {
@@ -1017,6 +1021,52 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return null
   }
 
+  const buildTransitTitle = (transit: any) => {
+    const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
+    const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
+    const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
+    const rawTarget =
+      transit?.natalPlanet ||
+      transit?.target?.natalPlanet ||
+      transit?.target?.angle ||
+      (transit?.target?.house ? `Casa ${transit.target.house}` : '')
+    const target = rawTarget ? translate('planets', String(rawTarget)) : ''
+
+    if (aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
+    if (aspect) return `${transitPlanet} em ${aspect}`
+    if (target) return `${transitPlanet} com ${target}`
+    return `${transitPlanet} em trânsito nesta área`
+  }
+
+  const getPhaseLabel = (transit: any) => {
+    const phase = String(transit?.phase || '').toLowerCase()
+    if (phase === 'peak') return 'Em pico'
+    if (phase === 'start') return 'Em aproximação'
+    if (phase === 'end') return 'Afastando'
+    if (transit?.isApplying === true) return 'Em aproximação'
+    if (transit?.isApplying === false) return 'Afastando'
+    return 'Em andamento'
+  }
+
+  const getDurationLabel = (transit: any) => {
+    const windowDays = safeNumber(transit?.window?.days, 0)
+    if (windowDays > 0) return `${windowDays} dias`
+    const startAt = transit?.startAt || transit?.window?.start
+    const endAt = transit?.endAt || transit?.window?.end
+    if (startAt && endAt) {
+      const start = new Date(startAt).getTime()
+      const end = new Date(endAt).getTime()
+      if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+        const days = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)))
+        return `${days} dias`
+      }
+    }
+    if (transit?.durationClass === 'curto') return 'curto prazo'
+    if (transit?.durationClass === 'medio') return 'médio prazo'
+    if (transit?.durationClass === 'longo') return 'longo prazo'
+    return null
+  }
+
   const buildDirectText = (transit: any, suggestion: any) => {
     const directFromDatasetRaw =
       suggestion?.card?.summary ||
@@ -1097,12 +1147,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             ? DESIGN_SYSTEM.colors.neutral
             : DESIGN_SYSTEM.colors.secondary
           const statusText = isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'
-          const timingLabel = getTimingLabel(transit)
-          const transitTarget =
-            transit.natalPlanet ||
-            transit.target?.natalPlanet ||
-            transit.target?.angle ||
-            (transit.target?.house ? `Casa ${transit.target.house}` : '')
+          const phaseLabel = getPhaseLabel(transit)
+          const durationLabel = getDurationLabel(transit)
+          const relativeTiming = getTimingLabel(transit)
+          const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
+          const transitTitle = buildTransitTitle(transit)
           const transitKey = getTransitKey(transit, absoluteIndex)
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
@@ -1127,14 +1176,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               indexLabel={`#${absoluteIndex + 1}`}
               statusLabel={statusText}
               statusColor={statusColor}
-              title={`${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`}
+              title={transitTitle}
               timingLabel={timingLabel}
               directText={directText}
               fullExpanded={false}
               onToggleFull={() => {}}
               onOpenDetailModal={() =>
                 setDetailView({
-                  title: `${translate('planets', transit.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', transitTarget)}`,
+                  title: transitTitle,
                   directText,
                   fullText,
                   actionText: actionText || null,
