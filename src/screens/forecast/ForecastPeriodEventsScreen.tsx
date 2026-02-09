@@ -129,6 +129,9 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
       <FlatList
         data={periodList}
         keyExtractor={(item) => item.date}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const dateObj = parseUTCDateString(item.date)
           const header = dateObj ? formatDateShort(dateObj) : item.date
@@ -290,5 +293,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,
+  },
+  listContent: {
+    paddingBottom: 24,
   },
 })

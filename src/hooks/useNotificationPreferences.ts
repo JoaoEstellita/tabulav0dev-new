@@ -17,34 +17,51 @@ export type NotificationPreferences = {
     types: {
       member_status_critical: boolean
       user_status_critical: boolean
-      member_status_positive?: boolean
-      user_status_positive?: boolean
-      group_message: boolean
-      astro_event_personal?: boolean
-      daily_summary?: boolean
-      daily_overview?: boolean
-      forecast_weekly?: boolean
-    }
-    limits?: {
-      member_status_critical?: { dailyLimit: number; throttleMinutes: number }
-      user_status_critical?: { dailyLimit: number; throttleMinutes: number }
-      member_status_positive?: { dailyLimit: number; throttleMinutes: number }
-      user_status_positive?: { dailyLimit: number; throttleMinutes: number }
-      group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
-      astro_event_personal?: { dailyLimit: number; throttleMinutes: number }
-    }
-  }
-  inApp: {
-    types: {
-      member_status_critical: boolean
-      user_status_critical: boolean
+      user_status_critical_recovered?: boolean
+      user_status_highlight?: boolean
       member_status_positive?: boolean
       user_status_positive?: boolean
       group_message: boolean
       astro_event_personal?: boolean
       astro_event_collective?: boolean
+      critical_active_summary?: boolean
       daily_summary?: boolean
-      daily_overview?: boolean
+      weekly_summary?: boolean
+      forecast_weekly?: boolean
+    }
+    limits?: {
+      member_status_critical?: { dailyLimit: number; throttleMinutes: number }
+      user_status_critical?: { dailyLimit: number; throttleMinutes: number }
+      user_status_critical_recovered?: { dailyLimit: number; throttleMinutes: number }
+      member_status_positive?: { dailyLimit: number; throttleMinutes: number }
+      user_status_positive?: { dailyLimit: number; throttleMinutes: number }
+      user_status_highlight?: { dailyLimit: number; throttleMinutes: number }
+      group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
+      astro_event_personal?: { dailyLimit: number; throttleMinutes: number }
+      astro_event_collective?: { dailyLimit: number; throttleMinutes: number }
+      critical_active_summary?: { dailyLimit: number; throttleMinutes: number }
+      daily_summary?: { dailyLimit: number; throttleMinutes: number }
+      weekly_summary?: { dailyLimit: number; throttleMinutes: number }
+      forecast_weekly?: { dailyLimit: number; throttleMinutes: number }
+    }
+  }
+  inApp: {
+    types: {
+      daily_ready?: boolean
+      user_status?: boolean
+      member_status_critical: boolean
+      user_status_critical: boolean
+      user_status_critical_recovered?: boolean
+      user_status_highlight?: boolean
+      member_status_positive?: boolean
+      user_status_positive?: boolean
+      group_status?: boolean
+      group_message: boolean
+      astro_event_personal?: boolean
+      astro_event_collective?: boolean
+      critical_active_summary?: boolean
+      daily_summary?: boolean
+      weekly_summary?: boolean
       forecast_weekly?: boolean
     }
   }
@@ -64,34 +81,51 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     types: {
       member_status_critical: true,
       user_status_critical: true,
-      member_status_positive: true,
-      user_status_positive: true,
+      user_status_critical_recovered: true,
+      user_status_highlight: false,
+      member_status_positive: false,
+      user_status_positive: false,
       group_message: true,
-      astro_event_personal: true,
-      daily_summary: true,
-      daily_overview: false,
-      forecast_weekly: true,
+      astro_event_personal: false,
+      astro_event_collective: false,
+      critical_active_summary: false,
+      daily_summary: false,
+      weekly_summary: false,
+      forecast_weekly: false,
     },
     limits: {
       member_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
       user_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
-      member_status_positive: { dailyLimit: 2, throttleMinutes: 60 },
-      user_status_positive: { dailyLimit: 2, throttleMinutes: 60 },
+      user_status_critical_recovered: { dailyLimit: 2, throttleMinutes: 120 },
+      user_status_highlight: { dailyLimit: 1, throttleMinutes: 240 },
+      member_status_positive: { dailyLimit: 2, throttleMinutes: 120 },
+      user_status_positive: { dailyLimit: 2, throttleMinutes: 120 },
       group_message: { dailyLimit: 20, throttleMinutes: 1, burstWindowMinutes: 1 },
-      astro_event_personal: { dailyLimit: 5, throttleMinutes: 120 },
+      astro_event_personal: { dailyLimit: 3, throttleMinutes: 180 },
+      astro_event_collective: { dailyLimit: 2, throttleMinutes: 240 },
+      critical_active_summary: { dailyLimit: 1, throttleMinutes: 720 },
+      daily_summary: { dailyLimit: 1, throttleMinutes: 720 },
+      weekly_summary: { dailyLimit: 1, throttleMinutes: 1440 },
+      forecast_weekly: { dailyLimit: 1, throttleMinutes: 1440 },
     },
   },
   inApp: {
     types: {
+      daily_ready: false,
+      user_status: false,
       member_status_critical: true,
       user_status_critical: true,
+      user_status_critical_recovered: true,
+      user_status_highlight: true,
       member_status_positive: true,
       user_status_positive: true,
+      group_status: false,
       group_message: true,
       astro_event_personal: true,
       astro_event_collective: false,
+      critical_active_summary: true,
       daily_summary: true,
-      daily_overview: true,
+      weekly_summary: true,
       forecast_weekly: true,
     },
   },

@@ -41,9 +41,64 @@ export default function NotificationPreferencesScreen() {
     </View>
   )
 
+  const pushTypeItems: Array<{ key: string; label: string; description: string }> = [
+    { key: "member_status_critical", label: "Critico de grupo", description: "Alertas criticos de membros nos grupos." },
+    { key: "user_status_critical", label: "Critico pessoal", description: "Alertas quando voce entra em estado critico." },
+    { key: "user_status_critical_recovered", label: "Recuperacao do critico", description: "Alerta quando voce sai do estado critico." },
+    { key: "member_status_positive", label: "Positivo de grupo", description: "Alertas quando membro entra em fase positiva." },
+    { key: "user_status_positive", label: "Positivo pessoal", description: "Alertas quando voce entra em fase positiva." },
+    { key: "user_status_highlight", label: "Destaque de status", description: "Alertas de destaque quando houver mudanca relevante." },
+    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Inicio, pico e encerramento dos seus transitos (inclui ingresso em casa)." },
+    { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Alertas de eventos coletivos quando habilitados no backend." },
+    { key: "critical_active_summary", label: "Resumo critico ativo", description: "Resumo consolidado de areas criticas ativas." },
+    { key: "daily_summary", label: "Resumo diario", description: "Resumo curto diario com status geral." },
+    { key: "weekly_summary", label: "Resumo semanal", description: "Resumo semanal consolidado das variacoes." },
+    { key: "forecast_weekly", label: "Forecast semanal", description: "Alerta semanal quando novas previsoes forem geradas." },
+    { key: "group_message", label: "Mensagens do grupo", description: "Alertas quando houver nova mensagem no grupo." },
+  ]
+
+  const inAppTypeItems: Array<{ key: string; label: string; description: string }> = [
+    { key: "daily_ready", label: "Diario pronto", description: "Registra quando o diario/resumo diario estiver pronto." },
+    { key: "user_status", label: "Seu status agora", description: "Atualizacoes simples de status (pode gerar ruido se ligado)." },
+    { key: "user_status_critical", label: "Critico pessoal", description: "Registra alertas pessoais criticos no centro de notificacoes." },
+    { key: "user_status_critical_recovered", label: "Recuperacao do critico", description: "Registra quando voce sai do estado critico." },
+    { key: "user_status_positive", label: "Positivo pessoal", description: "Registra suas fases positivas no centro de notificacoes." },
+    { key: "user_status_highlight", label: "Destaque de status", description: "Registra destaques de status com maior relevancia." },
+    { key: "group_status", label: "Status coletivo", description: "Registra atualizacoes gerais do grupo." },
+    { key: "member_status_critical", label: "Critico de grupo", description: "Registra alertas criticos de membros no grupo." },
+    { key: "member_status_positive", label: "Positivo de grupo", description: "Registra fases positivas de membros no grupo." },
+    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Registra inicio/pico/fim dos seus transitos (inclui ingresso em casa)." },
+    { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Registra eventos astrais coletivos no app." },
+    { key: "critical_active_summary", label: "Resumo critico ativo", description: "Registra resumo consolidado de areas criticas." },
+    { key: "daily_summary", label: "Resumo diario", description: "Registra resumo diario no centro de notificacoes." },
+    { key: "weekly_summary", label: "Resumo semanal", description: "Registra resumo semanal no centro de notificacoes." },
+    { key: "forecast_weekly", label: "Forecast semanal", description: "Registra novas previsoes semanais no app." },
+    { key: "group_message", label: "Mensagens do grupo", description: "Registra mensagens de grupos no app." },
+  ]
+
+  const renderTypeToggle = (
+    mode: "push" | "inApp",
+    key: string,
+    label: string,
+    description: string
+  ) => {
+    const map = (mode === "push" ? pushTypes : inAppTypes) as Record<string, boolean | undefined>
+    const value = map[key] !== false
+    return renderToggle(label, description, value, (next) => {
+      const nextTypes = { ...map, [key]: next }
+      savePreferences(mode === "push" ? { push: { types: nextTypes } } : { inApp: { types: nextTypes } })
+    })
+  }
+
   return (
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Opcoes de Notificacoes</Text>
           <Text style={styles.subtitle}>
@@ -140,122 +195,20 @@ export default function NotificationPreferencesScreen() {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Tipos de push</Text>
-              {renderToggle(
-                "Critico de grupo",
-                "Alertas criticos de membros nos grupos.",
-                pushTypes.member_status_critical !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, member_status_critical: value } } })
-              )}
-              {renderToggle(
-                "Critico pessoal",
-                "Alertas quando voce entra em estado critico.",
-                pushTypes.user_status_critical !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, user_status_critical: value } } })
-              )}
-              {renderToggle(
-                "Mensagens do grupo",
-                "Alertas quando houver nova mensagem no grupo.",
-                pushTypes.group_message === true,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, group_message: value } } })
-              )}
-              {renderToggle(
-                "Positivo de grupo",
-                "Alertas quando um membro entra em fase positiva.",
-                pushTypes.member_status_positive !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, member_status_positive: value } } })
-              )}
-              {renderToggle(
-                "Positivo pessoal",
-                "Alertas quando voce entra em fase positiva.",
-                pushTypes.user_status_positive !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, user_status_positive: value } } })
-              )}
-              {renderToggle(
-                "Resumo diario",
-                "Resumo curto diario com status geral.",
-                pushTypes.daily_summary !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, daily_summary: value } } })
-              )}
-              {renderToggle(
-                "Forecast semanal",
-                "Alerta semanal quando novas previsoes forem geradas.",
-                pushTypes.forecast_weekly !== false,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, forecast_weekly: value } } })
-              )}
-              {renderToggle(
-                "Eventos astrais pessoais",
-                "Alertas de inicio/pico/fim de eventos pessoais.",
-                pushTypes.astro_event_personal === true,
-                (value) =>
-                  savePreferences({ push: { types: { ...pushTypes, astro_event_personal: value } } })
-              )}
+              {pushTypeItems.map((item) => (
+                <View key={`push_${item.key}`}>
+                  {renderTypeToggle("push", item.key, item.label, item.description)}
+                </View>
+              ))}
             </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Notificacoes internas (app)</Text>
-              {renderToggle(
-                "Critico de grupo",
-                "Registra alertas criticos no centro de notificacoes.",
-                inAppTypes.member_status_critical !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, member_status_critical: value } } })
-              )}
-              {renderToggle(
-                "Critico pessoal",
-                "Registra alertas pessoais no centro de notificacoes.",
-                inAppTypes.user_status_critical !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, user_status_critical: value } } })
-              )}
-              {renderToggle(
-                "Mensagens do grupo",
-                "Registra mensagens do grupo no centro de notificacoes.",
-                inAppTypes.group_message !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, group_message: value } } })
-              )}
-              {renderToggle(
-                "Positivo de grupo",
-                "Registra fases positivas de membros no centro de notificacoes.",
-                inAppTypes.member_status_positive !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, member_status_positive: value } } })
-              )}
-              {renderToggle(
-                "Positivo pessoal",
-                "Registra suas fases positivas no centro de notificacoes.",
-                inAppTypes.user_status_positive !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, user_status_positive: value } } })
-              )}
-              {renderToggle(
-                "Resumo diario",
-                "Registra o resumo diario no centro de notificacoes.",
-                inAppTypes.daily_summary !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, daily_summary: value } } })
-              )}
-              {renderToggle(
-                "Forecast semanal",
-                "Registra novas previsoes semanais no centro de notificacoes.",
-                inAppTypes.forecast_weekly !== false,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, forecast_weekly: value } } })
-              )}
-              {renderToggle(
-                "Eventos astrais pessoais",
-                "Registra eventos pessoais no centro de notificacoes.",
-                inAppTypes.astro_event_personal === true,
-                (value) =>
-                  savePreferences({ inApp: { types: { ...inAppTypes, astro_event_personal: value } } })
-              )}
+              {inAppTypeItems.map((item) => (
+                <View key={`inapp_${item.key}`}>
+                  {renderTypeToggle("inApp", item.key, item.label, item.description)}
+                </View>
+              ))}
             </View>
 
             <View style={styles.sectionNote}>
@@ -284,7 +237,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F0F23",
   },
   scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
   header: {
     paddingTop: 24,

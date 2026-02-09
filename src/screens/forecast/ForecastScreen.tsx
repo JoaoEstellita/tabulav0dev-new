@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, FlatList, InteractionManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, InteractionManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
@@ -440,6 +440,7 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   onToggleFullEvent: (eventId: string) => void
   onToggleShowAll: () => void
 }) {
+  const visibleEvents = showAllDayEvents ? eventDisplayData : eventDisplayData.slice(0, dayEventsLimit)
   return (
     <View>
       <View style={styles.eventHeaderRow}>
@@ -450,10 +451,8 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
           Sem eventos. Dia mais calmo para organizar suas prioridades.
         </Text>
       )}
-      <FlatList
-        data={eventDisplayData}
-        keyExtractor={(item) => item.event.id}
-        renderItem={({ item }) => (
+      {visibleEvents.map((item) => (
+        <View key={item.event.id}>
           <MemoEventCard
             event={item.event}
             phase={item.phase}
@@ -465,14 +464,8 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
             onToggle={() => onToggleEvent(item.event.id)}
             onToggleFull={() => onToggleFullEvent(item.event.id)}
           />
-        )}
-        scrollEnabled={false}
-        removeClippedSubviews
-        windowSize={7}
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        updateCellsBatchingPeriod={50}
-      />
+        </View>
+      ))}
       {selectedEvents.length > dayEventsLimit && (
         <TouchableOpacity
           style={styles.showMoreButton}
