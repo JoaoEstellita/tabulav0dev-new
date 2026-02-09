@@ -1050,6 +1050,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
+    const areaKey = String(areaData?.name || '').toLowerCase()
+    const relevantAreaHouses = getRelevantHousesForArea(areaKey)
+    const areaHouseHint = relevantAreaHouses.length
+      ? relevantAreaHouses.join('/')
+      : ''
     const houseTarget =
       transit?.target?.house ||
       transit?.natalHouseImpacted ||
@@ -1066,12 +1071,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     if (aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
     if (aspect && houseTarget) return `${transitPlanet} em ${aspect} na Casa ${houseTarget}`
     if (houseTarget) return `${transitPlanet} em trânsito na Casa ${houseTarget}`
+    if (aspect && areaHouseHint) return `${transitPlanet} em ${aspect} com foco nas Casas ${areaHouseHint}`
+    if (areaHouseHint) return `${transitPlanet} em trânsito com foco nas Casas ${areaHouseHint}`
     if (aspect) return `${transitPlanet} em ${aspect}`
     if (target) return `${transitPlanet} com ${target}`
-    return `${transitPlanet} em trânsito nesta área`
+    if (areaKey) return `${transitPlanet} em trânsito em ${areaKey}`
+    return `${transitPlanet} em trânsito`
   }
 
   const getTransitHouseLabel = (transit: any): string | null => {
+    const areaKey = String(areaData?.name || '').toLowerCase()
+    const relevantAreaHouses = getRelevantHousesForArea(areaKey)
     const houseValue =
       transit?.target?.house ||
       transit?.natalHouseImpacted ||
@@ -1079,14 +1089,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.natalHouse ||
       null
     const numericHouse = Number(houseValue)
-    if (!Number.isFinite(numericHouse)) return null
-    if (numericHouse < 1 || numericHouse > 12) return null
+    if (!Number.isFinite(numericHouse) || numericHouse < 1 || numericHouse > 12) {
+      return relevantAreaHouses.length ? relevantAreaHouses.join('/') : null
+    }
     return String(Math.round(numericHouse))
   }
 
   const getTransitHousePrefix = (transit: any): string => {
+    const areaKey = String(areaData?.name || '').toLowerCase()
+    const relevantAreaHouses = getRelevantHousesForArea(areaKey)
     const natalHouse = Number(transit?.natalHouseImpacted ?? transit?.natalHouse)
     if (Number.isFinite(natalHouse) && natalHouse >= 1 && natalHouse <= 12) return 'Casa natal ativada'
+    if (relevantAreaHouses.length) return 'Casas da área'
     return 'Casa de trânsito'
   }
 
