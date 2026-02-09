@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'tabula-estelar-v3';
+const CACHE_NAME = 'tabula-estelar-v4';
 const urlsToCache = [
   '/',
   '/app',
@@ -24,9 +24,24 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const accept = request.headers.get('accept') || '';
   const isHtmlRequest = request.mode === 'navigate' || accept.includes('text/html');
+  const isWebBundleRequest = request.url.includes('/_expo/static/js/web/');
 
   if (isHtmlRequest) {
     // Network-first for HTML to avoid stale bundle references after deploys.
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  if (isWebBundleRequest) {
+    // Network-first for JS bundles to avoid stale deploys caused by SW cache.
     event.respondWith(
       fetch(request)
         .then((response) => {
