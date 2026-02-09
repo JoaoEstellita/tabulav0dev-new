@@ -208,11 +208,36 @@ const getTimingLabel = (transit: BackendTransit): string | null => {
   return transit.phaseLabel ? transit.phaseLabel : null
 }
 
+const normalizeAspectKey = (value: string): string => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  if (!normalized) return ''
+  if (normalized.includes('trigono') || normalized.includes('trine')) return 'trigono'
+  if (normalized.includes('sesquiquadr')) return 'sesquiquadratura'
+  if (normalized.includes('semiquadr')) return 'semiquadratura'
+  if (normalized.includes('semissext') || normalized.includes('semisext')) return 'semissextil'
+  if (normalized.includes('sext')) return 'sextil'
+  if (normalized.includes('quadr')) return 'quadratura'
+  if (normalized.includes('opos')) return 'oposicao'
+  if (normalized.includes('quinc')) return 'quincuncio'
+  if (normalized.includes('conj')) return 'conjuncao'
+  if (normalized.includes('harmon')) return 'harmonic'
+  if (normalized.includes('tense') || normalized.includes('desafi')) return 'tense'
+  if (normalized.includes('neutral') || normalized.includes('neutro')) return 'neutral'
+  return normalized
+}
+
 const getAspectLabel = (type: string): string => {
-  if (type === 'harmonic') return 'harmônico'
-  if (type === 'tense') return 'desafiador'
-  if (type === 'neutral') return 'neutro'
-  return translate('aspects', type)
+  const normalized = normalizeAspectKey(type)
+  if (normalized === 'harmonic') return 'harmônico'
+  if (normalized === 'tense') return 'desafiador'
+  if (normalized === 'neutral') return 'neutro'
+  if (!normalized) return ''
+  const translated = translate('aspects', normalized)
+  return translated === normalized ? '' : translated
 }
 
 const getTransitDuration = (transit: RealTransitData): string => {
@@ -1025,14 +1050,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
+    const houseTarget =
+      transit?.target?.house ||
+      transit?.natalHouseImpacted ||
+      transit?.house ||
+      transit?.natalHouse ||
+      null
     const rawTarget =
       transit?.natalPlanet ||
       transit?.target?.natalPlanet ||
       transit?.target?.angle ||
-      (transit?.target?.house ? `Casa ${transit.target.house}` : '')
+      (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? translate('planets', String(rawTarget)) : ''
 
     if (aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
+    if (aspect && houseTarget) return `${transitPlanet} em ${aspect} na Casa ${houseTarget}`
+    if (houseTarget) return `${transitPlanet} em trânsito na Casa ${houseTarget}`
     if (aspect) return `${transitPlanet} em ${aspect}`
     if (target) return `${transitPlanet} com ${target}`
     return `${transitPlanet} em trânsito nesta área`
@@ -1096,13 +1129,15 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
     if (!suggestion) {
       const aspectType = String(transit?.aspectName || transit?.type || '')
+      const normalizedAspectType = normalizeAspectKey(aspectType)
       const target =
         transit?.natalPlanet ||
         transit?.target?.natalPlanet ||
         transit?.target?.angle ||
         (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
+      const aspectLabel = getAspectLabel(normalizedAspectType) || 'aspecto'
       return [
-        `Leitura completa: ${translate('planets', transit?.transitPlanet)} em ${getAspectLabel(aspectType)} com ${translate('planets', target)}.`,
+        `Leitura completa: ${translate('planets', transit?.transitPlanet)} em ${aspectLabel} com ${translate('planets', target)}.`,
         directText,
         'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
       ].join('\n\n')
@@ -1545,6 +1580,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           {renderHeader()}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {renderTransitsSection()}
+            {renderMetricLevelsSection()}
+            {renderCalculationToggle()}
+            {showTechnical ? renderCalculationsSection() : null}
           </ScrollView>
         </View>
       </View>

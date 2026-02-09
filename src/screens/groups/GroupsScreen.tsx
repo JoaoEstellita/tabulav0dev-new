@@ -125,6 +125,7 @@ export default function GroupsScreen() {
     key: string
   } | null>(null)
   const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
+  const [showMemberAreaCalc, setShowMemberAreaCalc] = useState(false)
   const [selectedMemberTransitDetail, setSelectedMemberTransitDetail] = useState<{
     title: string
     statusLabel: string
@@ -237,6 +238,7 @@ export default function GroupsScreen() {
     if (!member) return
 
     setSelectedMemberArea({ member, key: focusArea })
+    setShowMemberAreaCalc(false)
     setShowMemberAreaModal(true)
     focusHandledRef.current = true
   }, [route?.params, selectedGroup?.id, groupMembers])
@@ -766,7 +768,29 @@ const ASPECT_LABELS: Record<string, string> = {
 }
 
 const formatPlanetLabel = (name: string) => PLANET_LABELS[name] || name
-const formatAspectLabel = (type: string) => ASPECT_LABELS[type] || type
+
+const normalizeLabelKey = (value: string) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+
+const formatAspectLabel = (type: string) => {
+  const normalized = normalizeLabelKey(type)
+  const exact = ASPECT_LABELS[normalized]
+  if (exact) return exact
+  if (normalized.includes("trigono") || normalized.includes("trine")) return "trigono"
+  if (normalized.includes("sesquiquadr")) return "sesquiquadratura"
+  if (normalized.includes("semiquadr")) return "semiquadratura"
+  if (normalized.includes("semissext") || normalized.includes("semisext")) return "semissextil"
+  if (normalized.includes("sext")) return "sextil"
+  if (normalized.includes("quadr")) return "quadratura"
+  if (normalized.includes("opos")) return "oposicao"
+  if (normalized.includes("quinc")) return "quincuncio"
+  if (normalized.includes("conj")) return "conjuncao"
+  return ""
+}
 
 const formatTransitTimingLabel = (transit: any) => {
   const label = transit?.phaseLabel
@@ -795,12 +819,26 @@ const formatTransitDuration = (transit: { window?: { start?: string; end?: strin
   return ""
 }
 
+const getTransitHouseTarget = (transit: any) => {
+  const houseValue =
+    transit?.target?.house ??
+    transit?.house ??
+    transit?.transitHouse ??
+    transit?.natalHouseImpacted ??
+    transit?.natalHouse ??
+    null
+  const houseNumber = Number(houseValue)
+  if (!Number.isFinite(houseNumber)) return ""
+  if (houseNumber < 1 || houseNumber > 12) return ""
+  return `Casa ${Math.round(houseNumber)}`
+}
+
 const buildTransitTitle = (transit: any) => {
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "")
   const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
   const targetAngle = transit?.target?.angle
-  const targetHouse = typeof transit?.target?.house === "number" ? `Casa ${transit.target.house}` : ""
+  const targetHouse = getTransitHouseTarget(transit)
   const target = targetPlanet
     ? formatPlanetLabel(targetPlanet)
     : targetAngle
@@ -812,43 +850,69 @@ const buildTransitTitle = (transit: any) => {
   return transitPlanet ? `${transitPlanet} em transito` : "Transito ativo"
 }
 
+const normalizeAspectType = (value: string) => {
+  const normalized = normalizeLabelKey(value)
+  if (!normalized) return ""
+  if (normalized.includes("trigono") || normalized.includes("trine")) return "trigono"
+  if (normalized.includes("sesquiquadr")) return "sesquiquadratura"
+  if (normalized.includes("semiquadr")) return "semiquadratura"
+  if (normalized.includes("semissext") || normalized.includes("semisext")) return "semissextil"
+  if (normalized.includes("sext")) return "sextil"
+  if (normalized.includes("quadr")) return "quadratura"
+  if (normalized.includes("opos")) return "oposicao"
+  if (normalized.includes("quinc")) return "quincuncio"
+  if (normalized.includes("conj")) return "conjuncao"
+  if (normalized.includes("harmon")) return "harmonico"
+  if (normalized.includes("tense") || normalized.includes("desafi")) return "desafiador"
+  if (normalized.includes("neutral") || normalized.includes("neutro")) return "neutro"
+  return normalized
+}
+
 const classifyTransitStatus = (transit: any) => {
-  const aspectType = String(transit?.aspectName || transit?.type || transit?.aspectType || "").toLowerCase()
-  const isHarmonic = ["trigono", "sextil", "harmonic"].includes(aspectType)
+  const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  const isHarmonic = ["trigono", "sextil", "harmonico"].includes(aspectType)
   const isTense = [
     "quadratura",
     "oposicao",
     "quincuncio",
+    "semissextil",
     "semiquadratura",
     "sesquiquadratura",
-    "tense",
+    "desafiador",
   ].includes(aspectType)
-  if (isHarmonic) return { label: "Harmonico", color: "#22C55E" }
-  if (isTense) return { label: "Desafiador", color: "#EF4444" }
-  return { label: "Neutro", color: "#64748B" }
+  if (isHarmonic) return { kind: "harmonic", label: "Harmonico", color: "#22C55E" }
+  if (isTense) return { kind: "tense", label: "Desafiador", color: "#EF4444" }
+  return { kind: "neutral", label: "Neutro", color: "#64748B" }
 }
 
-const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string) => {
+const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string, areaCritical = false) => {
   if (fallbackText && fallbackText.trim().length > 25) return fallbackText.trim()
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "Transito")
+  const houseTarget = getTransitHouseTarget(transit)
+  const houseHint = houseTarget ? ` em ${houseTarget.toLowerCase()}` : ""
   const status = classifyTransitStatus(transit).label
   const timing = formatTransitTimingLabel(transit)
   if (status === "Harmonico") {
-    if (timing === "Em pico") return `${transitPlanet}: fase forte para consolidar resultados em ${areaLabel.toLowerCase()}.`
-    if (timing === "Afastando") return `${transitPlanet}: colha resultados e organize continuidade em ${areaLabel.toLowerCase()}.`
-    return `${transitPlanet}: janela favoravel para progresso com consistencia em ${areaLabel.toLowerCase()}.`
+    if (areaCritical) return `${transitPlanet}${houseHint}: alivio pontual em ${areaLabel.toLowerCase()}, sem reverter o quadro sozinho.`
+    if (timing === "Em pico") return `${transitPlanet}${houseHint}: fase forte para consolidar resultados em ${areaLabel.toLowerCase()}.`
+    if (timing === "Afastando") return `${transitPlanet}${houseHint}: consolide ganhos e mantenha consistencia em ${areaLabel.toLowerCase()}.`
+    return `${transitPlanet}${houseHint}: janela favoravel para progresso constante em ${areaLabel.toLowerCase()}.`
   }
   if (status === "Desafiador") {
-    if (timing === "Em pico") return `${transitPlanet}: fase sensivel; reduza friccao e ajuste prioridades em ${areaLabel.toLowerCase()}.`
-    if (timing === "Afastando") return `${transitPlanet}: finalize correcoes e estabilize o ritmo em ${areaLabel.toLowerCase()}.`
-    return `${transitPlanet}: pede recalibragem de rota com menos pressa em ${areaLabel.toLowerCase()}.`
+    if (timing === "Em pico") return `${transitPlanet}${houseHint}: fase sensivel; reduza friccao e ajuste prioridades em ${areaLabel.toLowerCase()}.`
+    if (timing === "Afastando") return `${transitPlanet}${houseHint}: finalize correcoes e estabilize o ritmo em ${areaLabel.toLowerCase()}.`
+    return `${transitPlanet}${houseHint}: pede ajuste de rota com menos pressa em ${areaLabel.toLowerCase()}.`
   }
-  return `${transitPlanet}: momento de observacao ativa e escolhas objetivas em ${areaLabel.toLowerCase()}.`
+  return `${transitPlanet}${houseHint}: momento de observacao ativa e escolhas objetivas em ${areaLabel.toLowerCase()}.`
 }
 
-const computeTransitPriority = (transit: any) => {
-  const status = classifyTransitStatus(transit).label
-  let score = status === "Desafiador" ? 30 : status === "Harmonico" ? 20 : 12
+const computeTransitPriority = (transit: any, areaCritical = false) => {
+  const status = classifyTransitStatus(transit)
+  let score = status.kind === "tense" ? 30 : status.kind === "harmonic" ? 20 : 12
+  if (areaCritical) {
+    if (status.kind === "tense") score += 24
+    if (status.kind === "harmonic") score -= 6
+  }
 
   const impact = Number(transit?.impact)
   if (Number.isFinite(impact)) score += Math.abs(impact) * 10
@@ -1161,6 +1225,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               activeOpacity={0.8}
                               onPress={() => {
                                 setSelectedMemberArea({ member, key: entry.key })
+                                setShowMemberAreaCalc(false)
                                 setShowMemberAreaModal(true)
                               }}
                             >
@@ -1603,6 +1668,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
           setShowMemberAreaModal(false)
           setSelectedMemberArea(null)
           setSelectedMemberTransitDetail(null)
+          setShowMemberAreaCalc(false)
         }}
       >
         <View style={styles.memberAreaBackdrop}>
@@ -1725,12 +1791,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   >
                     {(() => {
                       const areaLabel = LIFE_AREA_LABELS[key] || key
+                      const areaCritical = bucket === "critical"
                       const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
                         const status = classifyTransitStatus(transit)
                         const title = buildTransitTitle(transit)
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
-                        const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text)
+                        const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
+                        const statusLabel = areaCritical && status.kind === "harmonic" ? "Alivio" : status.label
+                        const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
                         const fullLines = [
                           directText,
                           suggestion?.text || "",
@@ -1741,10 +1810,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
                         return {
                           id: String(transit?.id || `member-transit-${index}`),
-                          rank: computeTransitPriority(transit),
+                          rank: computeTransitPriority(transit, areaCritical),
                           title,
-                          statusLabel: status.label,
-                          statusColor: status.color,
+                          statusLabel,
+                          statusColor,
                           timingLabel: timing || "Em andamento",
                           directText,
                           fullText: fullLines.join("\n\n"),
@@ -1761,19 +1830,18 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         )
                       }
 
-                      const prioritized = [...baseTransits]
+                      const orderedTransits = [...baseTransits]
                         .sort((a, b) => b.rank - a.rank)
-                        .slice(0, 2)
-                      const remainingIds = new Set(prioritized.map((item) => item.id))
-                      const remaining = baseTransits.filter((item) => !remainingIds.has(item.id))
 
                       return (
                         <>
                           <View style={styles.memberAreaSectionRow}>
-                            <Text style={styles.memberAreaSectionTitle}>Impactos prioritarios</Text>
-                            <Text style={styles.memberAreaSectionMeta}>mais fortes agora</Text>
+                            <Text style={styles.memberAreaSectionTitle}>Transitos ativos</Text>
+                            <Text style={styles.memberAreaSectionMeta}>
+                              {orderedTransits.length} transitos na area
+                            </Text>
                           </View>
-                          {prioritized.map((item, index) => (
+                          {orderedTransits.map((item, index) => (
                             <TransitInsightCard
                               key={item.id}
                               indexLabel={`#${index + 1}`}
@@ -1802,48 +1870,49 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               actionText={item.actionText}
                               metaText={item.metaText}
                               variant="dark"
-                              featured
+                              featured={index < 2}
                             />
                           ))}
 
-                          {remaining.length ? (
-                            <>
-                              <View style={styles.memberAreaSectionRow}>
-                                <Text style={styles.memberAreaSectionTitle}>Lista completa</Text>
-                                <Text style={styles.memberAreaSectionMeta}>{baseTransits.length} transitos na area</Text>
-                              </View>
-                              {remaining.map((item, index) => (
-                                <TransitInsightCard
-                                  key={item.id}
-                                  indexLabel={`#${index + 3}`}
-                                  statusLabel={item.statusLabel}
-                                  statusColor={item.statusColor}
-                                  title={item.title}
-                                  timingLabel={item.timingLabel}
-                                  directText={item.directText}
-                                  fullExpanded={false}
-                                  onToggleFull={() => {}}
-                                  detailMode="modal"
-                                  onOpenDetailModal={() =>
-                                    setSelectedMemberTransitDetail({
-                                      title: item.title,
-                                      statusLabel: item.statusLabel,
-                                      statusColor: item.statusColor,
-                                      timingLabel: item.timingLabel,
-                                      directText: item.directText,
-                                      fullText: item.fullText,
-                                      actionText: item.actionText,
-                                      metaText: item.metaText,
-                                    })
-                                  }
-                                  fullTitle="Interpretacao completa"
-                                  fullText={item.fullText}
-                                  actionText={item.actionText}
-                                  metaText={item.metaText}
-                                  variant="dark"
-                                />
-                              ))}
-                            </>
+                          <TouchableOpacity
+                            style={styles.memberCalcToggle}
+                            onPress={() => setShowMemberAreaCalc((prev) => !prev)}
+                          >
+                            <Text style={styles.memberCalcToggleText}>
+                              {showMemberAreaCalc ? "Ocultar calculo do status" : "Visualizar calculo do status"}
+                            </Text>
+                            <Ionicons
+                              name={showMemberAreaCalc ? "chevron-up" : "chevron-down"}
+                              size={16}
+                              color="#FFD700"
+                            />
+                          </TouchableOpacity>
+
+                          {showMemberAreaCalc ? (
+                            <View style={styles.memberCalcBox}>
+                              <Text style={styles.memberCalcTitle}>Fatores do cálculo desta área</Text>
+                              <Text style={styles.memberCalcText}>
+                                Score atual: {percentage !== null ? `${percentage}%` : "--"} • Classificação: {getStatusLabel(bucket === "attention" ? "neutral" : bucket)}
+                              </Text>
+                              <Text style={styles.memberCalcText}>
+                                Trânsitos considerados: {orderedTransits.length}
+                              </Text>
+                              {mainPlanets.length ? (
+                                <Text style={styles.memberCalcText}>
+                                  Planetas de base: {mainPlanets.slice(0, 8).join(", ")}
+                                </Text>
+                              ) : null}
+                              {resolvedActiveTransits.length ? (
+                                <Text style={styles.memberCalcText}>
+                                  Eventos ativos: {resolvedActiveTransits.slice(0, 8).join(" • ")}
+                                </Text>
+                              ) : null}
+                              {resolvedAspects.length ? (
+                                <Text style={styles.memberCalcText}>
+                                  Aspectos relevantes: {resolvedAspects.slice(0, 6).join(" • ")}
+                                </Text>
+                              ) : null}
+                            </View>
                           ) : null}
                         </>
                       )
@@ -1859,6 +1928,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 setShowMemberAreaModal(false)
                 setSelectedMemberArea(null)
                 setSelectedMemberTransitDetail(null)
+                setShowMemberAreaCalc(false)
               }}
             >
               <Text style={styles.memberAreaCloseText}>Fechar</Text>
@@ -2182,6 +2252,43 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 11,
     fontWeight: "600",
+  },
+  memberCalcToggle: {
+    marginTop: 8,
+    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#334155",
+    backgroundColor: "#111827",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  memberCalcToggleText: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  memberCalcBox: {
+    marginTop: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#2A2A2E",
+    backgroundColor: "#141418",
+    padding: 10,
+    gap: 6,
+  },
+  memberCalcTitle: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  memberCalcText: {
+    color: "#CBD5E1",
+    fontSize: 12,
+    lineHeight: 18,
   },
   memberAreaItem: {
     marginBottom: 8,
