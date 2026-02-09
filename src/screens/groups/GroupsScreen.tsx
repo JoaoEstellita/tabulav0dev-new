@@ -25,6 +25,7 @@ import GroupNotificationService from "../../services/notifications/GroupNotifica
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import GroupDetailModal from "../../components/GroupDetailModal"
 import GroupNotificationSettings from "../../components/GroupNotificationSettings"
+import TransitInsightCard from "../../components/TransitInsightCard"
 import InviteService from "../../services/InviteService"
 import Avatar from "../../components/Avatar"
 import ExpiryBanner from "../../components/ExpiryBanner"
@@ -124,6 +125,16 @@ export default function GroupsScreen() {
     key: string
   } | null>(null)
   const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
+  const [selectedMemberTransitDetail, setSelectedMemberTransitDetail] = useState<{
+    title: string
+    statusLabel: string
+    statusColor: string
+    timingLabel: string
+    directText: string
+    fullText: string
+    actionText?: string
+    metaText?: string
+  } | null>(null)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
 
@@ -782,6 +793,75 @@ const formatTransitDuration = (transit: { window?: { start?: string; end?: strin
   if (transit.durationClass === "medio") return "duracao: medio"
   if (transit.durationClass === "longo") return "duracao: longo"
   return ""
+}
+
+const buildTransitTitle = (transit: any) => {
+  const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "")
+  const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
+  const targetAngle = transit?.target?.angle
+  const targetHouse = typeof transit?.target?.house === "number" ? `Casa ${transit.target.house}` : ""
+  const target = targetPlanet
+    ? formatPlanetLabel(targetPlanet)
+    : targetAngle
+    ? String(targetAngle)
+    : targetHouse
+  if (transitPlanet && aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
+  if (transitPlanet && target) return `${transitPlanet} com ${target}`
+  if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
+  return transitPlanet ? `${transitPlanet} em transito` : "Transito ativo"
+}
+
+const classifyTransitStatus = (transit: any) => {
+  const aspectType = String(transit?.aspectName || transit?.type || transit?.aspectType || "").toLowerCase()
+  const isHarmonic = ["trigono", "sextil", "harmonic"].includes(aspectType)
+  const isTense = [
+    "quadratura",
+    "oposicao",
+    "quincuncio",
+    "semiquadratura",
+    "sesquiquadratura",
+    "tense",
+  ].includes(aspectType)
+  if (isHarmonic) return { label: "Harmonico", color: "#22C55E" }
+  if (isTense) return { label: "Desafiador", color: "#EF4444" }
+  return { label: "Neutro", color: "#64748B" }
+}
+
+const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string) => {
+  if (fallbackText && fallbackText.trim().length > 25) return fallbackText.trim()
+  const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "Transito")
+  const status = classifyTransitStatus(transit).label
+  const timing = formatTransitTimingLabel(transit)
+  if (status === "Harmonico") {
+    if (timing === "Em pico") return `${transitPlanet}: fase forte para consolidar resultados em ${areaLabel.toLowerCase()}.`
+    if (timing === "Afastando") return `${transitPlanet}: colha resultados e organize continuidade em ${areaLabel.toLowerCase()}.`
+    return `${transitPlanet}: janela favoravel para progresso com consistencia em ${areaLabel.toLowerCase()}.`
+  }
+  if (status === "Desafiador") {
+    if (timing === "Em pico") return `${transitPlanet}: fase sensivel; reduza friccao e ajuste prioridades em ${areaLabel.toLowerCase()}.`
+    if (timing === "Afastando") return `${transitPlanet}: finalize correcoes e estabilize o ritmo em ${areaLabel.toLowerCase()}.`
+    return `${transitPlanet}: pede recalibragem de rota com menos pressa em ${areaLabel.toLowerCase()}.`
+  }
+  return `${transitPlanet}: momento de observacao ativa e escolhas objetivas em ${areaLabel.toLowerCase()}.`
+}
+
+const computeTransitPriority = (transit: any) => {
+  const status = classifyTransitStatus(transit).label
+  let score = status === "Desafiador" ? 30 : status === "Harmonico" ? 20 : 12
+
+  const impact = Number(transit?.impact)
+  if (Number.isFinite(impact)) score += Math.abs(impact) * 10
+
+  const orb = Number(transit?.orb)
+  if (Number.isFinite(orb)) score += Math.max(0, 3 - Math.abs(orb)) * 5
+
+  const timing = formatTransitTimingLabel(transit)
+  if (timing === "Em pico") score += 14
+  else if (timing === "Em aproximação") score += 8
+  else if (timing === "Afastando") score += 4
+
+  return score
 }
 
 const getBucketPriority = (bucket: string) => {
@@ -1522,6 +1602,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         onRequestClose={() => {
           setShowMemberAreaModal(false)
           setSelectedMemberArea(null)
+          setSelectedMemberTransitDetail(null)
         }}
       >
         <View style={styles.memberAreaBackdrop}>
@@ -1642,62 +1723,131 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     style={styles.memberAreaContent}
                     showsVerticalScrollIndicator={false}
                   >
-                    <Text style={styles.memberAreaSectionTitle}>Sugestoes por transito</Text>
-                    {fallbackSuggestionItems.length ? (
-                      fallbackSuggestionItems.map((item, index) => (
-                        <View key={item.id || `suggestion-${index}`} style={styles.memberAreaItem}>
-                          <Text style={styles.memberAreaSuggestionTitle}>
-                            {String(item.title || "Sugestao")}
-                          </Text>
-                          <Text style={styles.memberAreaText}>{String(item.text || "")}</Text>
-                        </View>
-                      ))
-                    ) : (
-                      <Text style={styles.memberAreaEmpty}>
-                        Sem sugestoes disponiveis para esta area.
-                      </Text>
-                    )}
+                    {(() => {
+                      const areaLabel = LIFE_AREA_LABELS[key] || key
+                      const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
+                        const status = classifyTransitStatus(transit)
+                        const title = buildTransitTitle(transit)
+                        const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
+                        const suggestion = fallbackSuggestionItems[index]
+                        const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text)
+                        const fullLines = [
+                          directText,
+                          suggestion?.text || "",
+                          suggestion?.title ? `Foco: ${String(suggestion.title)}` : "",
+                          mainPlanets.length ? `Planetas de base: ${mainPlanets.slice(0, 5).join(", ")}` : "",
+                        ].filter(Boolean)
+                        const orbText = Number.isFinite(transit?.orb) ? `Orb ${Number(transit.orb).toFixed(1)}°` : ""
+                        const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
+                        return {
+                          id: String(transit?.id || `member-transit-${index}`),
+                          rank: computeTransitPriority(transit),
+                          title,
+                          statusLabel: status.label,
+                          statusColor: status.color,
+                          timingLabel: timing || "Em andamento",
+                          directText,
+                          fullText: fullLines.join("\n\n"),
+                          actionText: suggestion?.title ? String(suggestion.title) : "Ajuste o proximo passo com foco e constancia.",
+                          metaText: [orbText, impactText].filter(Boolean).join(" • "),
+                        }
+                      })
 
-                    <Text style={styles.memberAreaSectionTitle}>Transitos ativos</Text>
-                    {resolvedActiveTransits.length ? (
-                      resolvedActiveTransits.map((item, index) => (
-                        <Text key={`active-${index}`} style={styles.memberAreaText}>
-                          - {String(item)}
-                        </Text>
-                      ))
-                    ) : (
-                      <Text style={styles.memberAreaEmpty}>
-                        Nenhum transito ativo para esta area.
-                      </Text>
-                    )}
-
-                    {resolvedActiveTransits.length === 0 && (
-                      <>
-                        <Text style={styles.memberAreaSectionTitle}>Aspectos</Text>
-                        {resolvedAspects.length ? (
-                          resolvedAspects.map((item, index) => (
-                            <Text key={`aspect-${index}`} style={styles.memberAreaText}>
-                              - {String(item)}
-                            </Text>
-                          ))
-                        ) : (
+                      if (!baseTransits.length) {
+                        return (
                           <Text style={styles.memberAreaEmpty}>
-                            Sem aspectos compartilhados para esta area.
+                            Nenhum transito ativo para esta area.
                           </Text>
-                        )}
-                      </>
-                    )}
+                        )
+                      }
 
-                    <Text style={styles.memberAreaSectionTitle}>Justificativas</Text>
-                    {mainPlanets.length ? (
-                      <Text style={styles.memberAreaText}>
-                        Planetas: {mainPlanets.slice(0, 5).join(", ")}
-                      </Text>
-                    ) : (
-                      <Text style={styles.memberAreaEmpty}>
-                        Sem justificativas compartilhadas para esta area.
-                      </Text>
-                    )}
+                      const prioritized = [...baseTransits]
+                        .sort((a, b) => b.rank - a.rank)
+                        .slice(0, 2)
+                      const remainingIds = new Set(prioritized.map((item) => item.id))
+                      const remaining = baseTransits.filter((item) => !remainingIds.has(item.id))
+
+                      return (
+                        <>
+                          <View style={styles.memberAreaSectionRow}>
+                            <Text style={styles.memberAreaSectionTitle}>Impactos prioritarios</Text>
+                            <Text style={styles.memberAreaSectionMeta}>mais fortes agora</Text>
+                          </View>
+                          {prioritized.map((item, index) => (
+                            <TransitInsightCard
+                              key={item.id}
+                              indexLabel={`#${index + 1}`}
+                              statusLabel={item.statusLabel}
+                              statusColor={item.statusColor}
+                              title={item.title}
+                              timingLabel={item.timingLabel}
+                              directText={item.directText}
+                              fullExpanded={false}
+                              onToggleFull={() => {}}
+                              detailMode="modal"
+                              onOpenDetailModal={() =>
+                                setSelectedMemberTransitDetail({
+                                  title: item.title,
+                                  statusLabel: item.statusLabel,
+                                  statusColor: item.statusColor,
+                                  timingLabel: item.timingLabel,
+                                  directText: item.directText,
+                                  fullText: item.fullText,
+                                  actionText: item.actionText,
+                                  metaText: item.metaText,
+                                })
+                              }
+                              fullTitle="Interpretacao completa"
+                              fullText={item.fullText}
+                              actionText={item.actionText}
+                              metaText={item.metaText}
+                              variant="dark"
+                              featured
+                            />
+                          ))}
+
+                          {remaining.length ? (
+                            <>
+                              <View style={styles.memberAreaSectionRow}>
+                                <Text style={styles.memberAreaSectionTitle}>Lista completa</Text>
+                                <Text style={styles.memberAreaSectionMeta}>{baseTransits.length} transitos na area</Text>
+                              </View>
+                              {remaining.map((item, index) => (
+                                <TransitInsightCard
+                                  key={item.id}
+                                  indexLabel={`#${index + 3}`}
+                                  statusLabel={item.statusLabel}
+                                  statusColor={item.statusColor}
+                                  title={item.title}
+                                  timingLabel={item.timingLabel}
+                                  directText={item.directText}
+                                  fullExpanded={false}
+                                  onToggleFull={() => {}}
+                                  detailMode="modal"
+                                  onOpenDetailModal={() =>
+                                    setSelectedMemberTransitDetail({
+                                      title: item.title,
+                                      statusLabel: item.statusLabel,
+                                      statusColor: item.statusColor,
+                                      timingLabel: item.timingLabel,
+                                      directText: item.directText,
+                                      fullText: item.fullText,
+                                      actionText: item.actionText,
+                                      metaText: item.metaText,
+                                    })
+                                  }
+                                  fullTitle="Interpretacao completa"
+                                  fullText={item.fullText}
+                                  actionText={item.actionText}
+                                  metaText={item.metaText}
+                                  variant="dark"
+                                />
+                              ))}
+                            </>
+                          ) : null}
+                        </>
+                      )
+                    })()}
                   </ScrollView>
                 </>
               )
@@ -1708,10 +1858,56 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               onPress={() => {
                 setShowMemberAreaModal(false)
                 setSelectedMemberArea(null)
+                setSelectedMemberTransitDetail(null)
               }}
             >
               <Text style={styles.memberAreaCloseText}>Fechar</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!selectedMemberTransitDetail}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedMemberTransitDetail(null)}
+      >
+        <View style={styles.memberReadingBackdrop}>
+          <View style={styles.memberReadingCard}>
+            {selectedMemberTransitDetail ? (
+              <>
+                <View style={styles.memberReadingHeader}>
+                  <View style={[styles.memberReadingStatusBadge, { backgroundColor: selectedMemberTransitDetail.statusColor }]}>
+                    <Text style={styles.memberReadingStatusText}>{selectedMemberTransitDetail.statusLabel}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.memberReadingCloseIcon}
+                    onPress={() => setSelectedMemberTransitDetail(null)}
+                  >
+                    <Ionicons name="close" size={16} color="#0F172A" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.memberReadingTitle}>{selectedMemberTransitDetail.title}</Text>
+                <Text style={styles.memberReadingTiming}>{selectedMemberTransitDetail.timingLabel}</Text>
+                <Text style={styles.memberReadingSectionTitle}>Frase-chave</Text>
+                <Text style={styles.memberReadingDirect}>{selectedMemberTransitDetail.directText}</Text>
+                <Text style={styles.memberReadingSectionTitle}>Interpretacao completa</Text>
+                <Text style={styles.memberReadingFull}>{selectedMemberTransitDetail.fullText}</Text>
+                {selectedMemberTransitDetail.actionText ? (
+                  <Text style={styles.memberReadingAction}>Acao sugerida: {selectedMemberTransitDetail.actionText}</Text>
+                ) : null}
+                {selectedMemberTransitDetail.metaText ? (
+                  <Text style={styles.memberReadingMeta}>{selectedMemberTransitDetail.metaText}</Text>
+                ) : null}
+                <TouchableOpacity
+                  style={styles.memberReadingCloseButton}
+                  onPress={() => setSelectedMemberTransitDetail(null)}
+                >
+                  <Text style={styles.memberReadingCloseButtonText}>Fechar leitura</Text>
+                </TouchableOpacity>
+              </>
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -1975,6 +2171,18 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 6,
   },
+  memberAreaSectionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  memberAreaSectionMeta: {
+    color: "#94A3B8",
+    fontSize: 11,
+    fontWeight: "600",
+  },
   memberAreaItem: {
     marginBottom: 8,
   },
@@ -2005,6 +2213,94 @@ const styles = StyleSheet.create({
     color: "#FFD700",
     fontSize: 13,
     fontWeight: "600",
+  },
+  memberReadingBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(2,6,23,0.78)",
+    justifyContent: "center",
+    padding: 16,
+  },
+  memberReadingCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    padding: 14,
+    gap: 10,
+  },
+  memberReadingHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  memberReadingStatusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  memberReadingStatusText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  memberReadingCloseIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E2E8F0",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  memberReadingTitle: {
+    color: "#0F172A",
+    fontSize: 21,
+    fontWeight: "800",
+  },
+  memberReadingTiming: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  memberReadingSectionTitle: {
+    color: "#B45309",
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    marginTop: 2,
+  },
+  memberReadingDirect: {
+    color: "#0F172A",
+    fontSize: 18,
+    lineHeight: 25,
+    fontWeight: "600",
+  },
+  memberReadingFull: {
+    color: "#1E293B",
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  memberReadingAction: {
+    color: "#B45309",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  memberReadingMeta: {
+    color: "#64748B",
+    fontSize: 12,
+  },
+  memberReadingCloseButton: {
+    marginTop: 4,
+    backgroundColor: "#0F172A",
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  memberReadingCloseButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 14,
   },
   memberCard: {
     backgroundColor: "#1C1C1E",

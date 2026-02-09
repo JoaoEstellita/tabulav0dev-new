@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, InteractionManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, InteractionManager, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
@@ -130,20 +130,59 @@ function impactLabel(impact: ForecastEvent['impact']) {
   return 'Misto'
 }
 
+function normalizeAspectLabel(rawAspect: string) {
+  const value = String(rawAspect || '').trim().toLowerCase()
+  const map: Record<string, string> = {
+    conjunction: 'conjuncao',
+    opposition: 'oposicao',
+    square: 'quadratura',
+    trine: 'trigono',
+    sextile: 'sextil',
+    quincunx: 'quincuncio',
+    semisextile: 'semissextil',
+    semisquare: 'semiquadratura',
+    sesquiquadrate: 'sesquiquadratura',
+  }
+  return map[value] || value
+}
+
+function buildEventTitle(event: ForecastEvent) {
+  const transitPlanet = String(event.transitPlanet || '').trim()
+  const natalPoint = String(event.natalPoint || '').trim()
+  const aspect = normalizeAspectLabel(event.aspect || '')
+  if (transitPlanet && aspect && natalPoint) return `${transitPlanet} em ${aspect} com ${natalPoint}`
+  if (transitPlanet && natalPoint) return `${transitPlanet} com ${natalPoint}`
+  if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
+  if (event.shortText) return event.shortText
+  return 'Transito ativo'
+}
+
 function buildDirectEventText(event: ForecastEvent) {
   const base = event.shortText || 'Movimento ativo no periodo.'
   const aspect = String(event.aspect || '').toLowerCase()
   const isHarmonic = /trigono|sextil/.test(aspect)
   const isChallenging = /quadratura|oposicao|quincuncio|semi/.test(aspect)
   const domain = (event.domains || []).map((item) => formatDomainLabel(item)).slice(0, 2).join(' e ')
+  const hasNearPeak = (() => {
+    const exact = parseUTCDateString((event.exactAt || '').slice(0, 10))
+    const start = parseUTCDateString((event.startAt || '').slice(0, 10))
+    if (!exact || !start) return false
+    return Math.abs(diffDaysUTC(start, exact)) <= 2
+  })()
 
   if (event.impact === 'UP' || isHarmonic) {
-    return `${base} Janela favoravel para avancar com consistencia${domain ? ` em ${domain}` : ''}.`
+    if (hasNearPeak) {
+      return `${base} Janela de maior tracao${domain ? ` em ${domain}` : ''}: execute a prioridade principal.`
+    }
+    return `${base} Tendencia construtiva${domain ? ` em ${domain}` : ''}: avance com constancia e finalize pendencias.`
   }
   if (event.impact === 'DOWN' || isChallenging) {
-    return `${base} Pede ajuste de ritmo${domain ? ` em ${domain}` : ''}: revise antes de ampliar.`
+    if (hasNearPeak) {
+      return `${base} Momento sensivel${domain ? ` em ${domain}` : ''}: reduza atrito, renegocie e evite excesso de pressa.`
+    }
+    return `${base} Pede calibragem${domain ? ` em ${domain}` : ''}: simplifique e ajuste a rota antes de ampliar.`
   }
-  return `${base} Clima misto${domain ? ` em ${domain}` : ''}: mantenha passo curto e decisao objetiva.`
+  return `${base} Clima oscilante${domain ? ` em ${domain}` : ''}: mantenha passo curto e valide cada decisao.`
 }
 
 function buildActionHint(event: ForecastEvent) {
@@ -377,21 +416,24 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   eventDisplayData,
   dayEventsLimit,
   showAllDayEvents,
-  onToggleFullEvent,
+  onOpenEventDetail,
   onToggleShowAll,
 }: {
   selectedEvents: ForecastEvent[]
   eventDisplayData: Array<{
     event: ForecastEvent
-    fullExpanded: boolean
     phase: { label: string; meta?: string } | null
+    title: string
+    statusLabel: string
+    statusColor: string
     directText: string
     fullText: string
     actionHint: string
+    metaText: string
   }>
   dayEventsLimit: number
   showAllDayEvents: boolean
-  onToggleFullEvent: (eventId: string) => void
+  onOpenEventDetail: (eventId: string) => void
   onToggleShowAll: () => void
 }) {
   const visibleEvents = showAllDayEvents ? eventDisplayData : eventDisplayData.slice(0, dayEventsLimit)
@@ -408,16 +450,19 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
       {visibleEvents.map((item) => (
         <View key={item.event.id}>
           <TransitInsightCard
-            statusLabel={impactLabel(item.event.impact)}
-            statusColor={item.event.impact === 'UP' ? '#22C55E' : item.event.impact === 'DOWN' ? '#EF4444' : '#D97706'}
-            title={item.event.shortText}
+            statusLabel={item.statusLabel}
+            statusColor={item.statusColor}
+            title={item.title}
             timingLabel={item.phase ? `${item.phase.label}${item.phase.meta ? ` - ${item.phase.meta}` : ''}` : null}
             directText={item.directText}
-            fullExpanded={item.fullExpanded}
-            onToggleFull={() => onToggleFullEvent(item.event.id)}
-            fullTitle="Interpretação completa"
+            fullExpanded={false}
+            onToggleFull={() => {}}
+            detailMode="modal"
+            onOpenDetailModal={() => onOpenEventDetail(item.event.id)}
+            fullTitle="Interpretacao completa"
             fullText={item.fullText}
             actionText={item.actionHint}
+            metaText={item.metaText}
             variant="dark"
           />
         </View>
@@ -435,7 +480,6 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     </View>
   )
 })
-
 export default function ForecastScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, trialEndsAt, isAdmin } = useSubscriptionCheck()
@@ -450,7 +494,7 @@ export default function ForecastScreen() {
   const [missingBirthData, setMissingBirthData] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
-  const [expandedEventInterpretations, setExpandedEventInterpretations] = useState<Record<string, boolean>>({})
+  const [selectedEventDetailId, setSelectedEventDetailId] = useState<string | null>(null)
   const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -961,10 +1005,13 @@ export default function ForecastScreen() {
     })
   }, [data?.events, selectedDateKey])
   const selectedEvents = useMemo(() => {
-    return selectedDomainKey
+    const filtered = selectedDomainKey
       ? selectedEventsRaw.filter((event) => (event.domains || []).some((domain) => normalizeLifeArea(domain) === selectedDomainKey))
       : selectedEventsRaw
-  }, [selectedDomainKey, selectedEventsRaw])
+    return filtered
+      .slice()
+      .sort((a, b) => eventPriorityScore(b, selectedDateKey) - eventPriorityScore(a, selectedDateKey))
+  }, [selectedDomainKey, selectedDateKey, selectedEventsRaw])
   const lifeAreaCards = useMemo(() => {
     return LIFE_AREA_ORDER.map((domain) => {
       const statusArea = dayStatus?.lifeAreas?.[domain]
@@ -1007,19 +1054,27 @@ export default function ForecastScreen() {
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
     return visibleDayEvents.map((event) => {
-      const fullExpanded = !!expandedEventInterpretations[event.id]
+      const detailLines = buildEventDetailLines(event, selectedDateKey)
+      const fullText = buildFullEventInterpretation(event, detailLines)
+      const actionHint = buildActionHint(event)
+      const orbLine = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
+      const intensityLine = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
+      const metaText = [orbLine, intensityLine].filter(Boolean).join(' • ')
+      const statusLabel = impactLabel(event.impact)
+      const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
       return {
         event,
-        fullExpanded,
+        title: buildEventTitle(event),
+        statusLabel,
+        statusColor,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
         directText: buildDirectEventText(event),
-        fullText: fullExpanded
-          ? buildFullEventInterpretation(event, buildEventDetailLines(event, selectedDateKey))
-          : '',
-        actionHint: fullExpanded ? buildActionHint(event) : '',
+        fullText,
+        actionHint,
+        metaText,
       }
     })
-  }, [buildEventDetailLines, eventPhaseMap, expandedEventInterpretations, selectedDateKey, visibleDayEvents])
+  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, visibleDayEvents])
 
   useEffect(() => {
     if (!debouncedFetchDate) return
@@ -1047,12 +1102,12 @@ export default function ForecastScreen() {
   }, [selectedDateKey, fetchDayStatus, isDateInRange, periodDays])
 
   useEffect(() => {
-    setExpandedEventInterpretations({})
+    setSelectedEventDetailId(null)
     setShowAllDayEvents(false)
   }, [selectedDateKey])
 
-  const toggleFullEventDetails = useCallback((eventId: string) => {
-    setExpandedEventInterpretations((prev) => ({ ...prev, [eventId]: !prev[eventId] }))
+  const openEventDetail = useCallback((eventId: string) => {
+    setSelectedEventDetailId(eventId)
   }, [])
 
   const handleSelectDomain = useCallback((domain: string | null) => {
@@ -1204,7 +1259,7 @@ export default function ForecastScreen() {
               eventDisplayData={eventDisplayData}
               dayEventsLimit={dayEventsLimit}
               showAllDayEvents={showAllDayEvents}
-              onToggleFullEvent={toggleFullEventDetails}
+              onOpenEventDetail={openEventDetail}
               onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
             />
           </View>
@@ -1216,8 +1271,75 @@ export default function ForecastScreen() {
           )}
         </ScrollView>
       )}
+      <Modal
+        visible={!!selectedEventDetailId}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setSelectedEventDetailId(null)}
+      >
+        <View style={styles.readingBackdrop}>
+          <View style={styles.readingCard}>
+            {(() => {
+              const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
+              if (!detail) return null
+              return (
+                <>
+                  <View style={styles.readingHeader}>
+                    <View style={[styles.readingStatusBadge, { backgroundColor: detail.statusColor }]}>
+                      <Text style={styles.readingStatusText}>{detail.statusLabel}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.readingCloseIcon} onPress={() => setSelectedEventDetailId(null)}>
+                      <Ionicons name="close" size={16} color="#0F172A" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.readingTitle}>{detail.title}</Text>
+                  {detail.phase ? (
+                    <Text style={styles.readingTiming}>
+                      {detail.phase.label}{detail.phase.meta ? ` - ${detail.phase.meta}` : ''}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.readingSectionTitle}>Frase-chave</Text>
+                  <Text style={styles.readingDirect}>{detail.directText}</Text>
+                  <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
+                  <Text style={styles.readingFull}>{detail.fullText}</Text>
+                  {detail.actionHint ? <Text style={styles.readingAction}>Acao sugerida: {detail.actionHint}</Text> : null}
+                  {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
+                  <TouchableOpacity style={styles.readingCloseButton} onPress={() => setSelectedEventDetailId(null)}>
+                    <Text style={styles.readingCloseButtonText}>Fechar leitura</Text>
+                  </TouchableOpacity>
+                </>
+              )
+            })()}
+          </View>
+        </View>
+      </Modal>
     </View>
   )
+}
+
+function eventPriorityScore(event: ForecastEvent, selectedDate: string | null) {
+  const intensity = Math.max(0, Number(event.intensity || 0))
+  let score = intensity * 100
+
+  if (event.impact === 'DOWN') score += 24
+  else if (event.impact === 'UP') score += 14
+  else score += 8
+
+  const exactDateObj = parseUTCDateString((event.exactAt || '').slice(0, 10))
+  const selectedDateObj = selectedDate ? parseUTCDateString(selectedDate) : null
+  if (exactDateObj && selectedDateObj) {
+    const delta = Math.abs(diffDaysUTC(selectedDateObj, exactDateObj))
+    if (delta === 0) score += 18
+    else if (delta <= 2) score += 10
+    else if (delta <= 5) score += 4
+  }
+
+  if (typeof event.orbMax === 'number' && Number.isFinite(event.orbMax)) {
+    const tightness = Math.max(0, 3 - event.orbMax) * 4
+    score += tightness
+  }
+
+  return score
 }
 
 const styles = StyleSheet.create({
@@ -1826,6 +1948,94 @@ const styles = StyleSheet.create({
   domainChipTextActive: {
     color: '#FFFFFF',
   },
+  readingBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2,6,23,0.78)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  readingCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 14,
+    gap: 10,
+  },
+  readingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  readingStatusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  readingStatusText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  readingCloseIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  readingTitle: {
+    color: '#0F172A',
+    fontSize: 21,
+    fontWeight: '800',
+  },
+  readingTiming: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  readingSectionTitle: {
+    color: '#B45309',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  readingDirect: {
+    color: '#0F172A',
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
+  },
+  readingFull: {
+    color: '#1E293B',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  readingAction: {
+    color: '#B45309',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  readingMeta: {
+    color: '#64748B',
+    fontSize: 12,
+  },
+  readingCloseButton: {
+    marginTop: 4,
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  readingCloseButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
   cta: {
     marginTop: 20,
     paddingVertical: 12,
@@ -1838,5 +2048,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 })
+
+
 
 

@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react'
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+﻿import React, { useMemo, useState } from 'react'
+import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import TransitInsightCard from '../../components/TransitInsightCard'
 
 type ForecastEvent = {
   id: string
@@ -7,6 +9,12 @@ type ForecastEvent = {
   intensity: number
   impact: 'UP' | 'DOWN' | 'MIXED'
   shortText: string
+  transitPlanet?: string
+  natalPoint?: string
+  aspect?: string
+  startAt?: string
+  endAt?: string
+  orbMax?: number
 }
 
 type RouteParams = {
@@ -15,6 +23,17 @@ type RouteParams = {
   rangeTo: string
   badgeFilter?: 'all' | 'critical' | 'strong'
   dailyBadges?: Record<string, { criticalCount: number; strongCount: number }>
+}
+
+type EventDetail = {
+  id: string
+  title: string
+  statusLabel: string
+  statusColor: string
+  timingLabel: string
+  directText: string
+  fullText: string
+  metaText: string
 }
 
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -41,28 +60,80 @@ function impactLabel(impact: ForecastEvent['impact']) {
   return 'Misto'
 }
 
+function normalizeAspectLabel(rawAspect: string) {
+  const value = String(rawAspect || '').trim().toLowerCase()
+  const map: Record<string, string> = {
+    conjunction: 'conjuncao',
+    opposition: 'oposicao',
+    square: 'quadratura',
+    trine: 'trigono',
+    sextile: 'sextil',
+    quincunx: 'quincuncio',
+    semisextile: 'semissextil',
+    semisquare: 'semiquadratura',
+    sesquiquadrate: 'sesquiquadratura',
+  }
+  return map[value] || value
+}
+
+function buildEventTitle(event: ForecastEvent) {
+  const transitPlanet = String(event.transitPlanet || '').trim()
+  const natalPoint = String(event.natalPoint || '').trim()
+  const aspect = normalizeAspectLabel(event.aspect || '')
+  if (transitPlanet && aspect && natalPoint) return `${transitPlanet} em ${aspect} com ${natalPoint}`
+  if (transitPlanet && natalPoint) return `${transitPlanet} com ${natalPoint}`
+  if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
+  return event.shortText || 'Transito ativo'
+}
+
 function buildDirectEventText(event: ForecastEvent) {
-  const base = event.shortText || 'Movimento ativo no periodo.'
-  if (event.impact === 'UP') return `${base} Sinal favoravel para consolidar algo que ja foi iniciado.`
-  if (event.impact === 'DOWN') return `${base} Melhor reduzir friccao e ajustar expectativas antes de forcar.`
-  return `${base} Clima misto: use passos curtos e confirme direcao a cada etapa.`
+  const title = buildEventTitle(event)
+  const intensity = Math.round((event.intensity || 0) * 100)
+  if (event.impact === 'UP') {
+    return intensity >= 65
+      ? `${title}: fase favoravel para executar a prioridade principal com mais confianca.`
+      : `${title}: tendencia construtiva para progresso consistente e organizado.`
+  }
+  if (event.impact === 'DOWN') {
+    return intensity >= 65
+      ? `${title}: fase sensivel, pedindo ajuste de ritmo e menos impulsividade.`
+      : `${title}: revise expectativas e simplifique o proximo passo antes de ampliar.`
+  }
+  return `${title}: clima oscilante, avance em etapas curtas e valide cada decisao.`
 }
 
 function buildFullEventInterpretation(event: ForecastEvent) {
   const intensity = Math.round((event.intensity || 0) * 100)
-  const impact =
+  const impactText =
     event.impact === 'UP'
       ? 'A tendencia geral e construtiva quando existe foco, sequencia e consistencia.'
       : event.impact === 'DOWN'
       ? 'A tendencia geral pede realismo: menos impulso, mais calibracao de limite e prazo.'
       : 'A tendencia geral alterna avanco e revisao, exigindo decisao por camadas.'
-  return `Intensidade estimada em ${intensity}%. ${impact} Use o transito como contexto para decidir o proximo passo pratico sem antecipar todas as respostas.`
+  return `${impactText} Use o transito como contexto para decidir o proximo passo pratico sem antecipar todas as respostas.`
+}
+
+function buildTimingLabel(event: ForecastEvent) {
+  const exactDate = parseUTCDateString((event.exactAt || '').slice(0, 10))
+  if (!exactDate) return 'Sem janela definida'
+  return `Pico em ${formatDateShort(exactDate)}`
+}
+
+function eventPriorityScore(event: ForecastEvent) {
+  let score = Math.max(0, Number(event.intensity || 0)) * 100
+  if (event.impact === 'DOWN') score += 22
+  else if (event.impact === 'UP') score += 12
+  else score += 8
+  if (typeof event.orbMax === 'number' && Number.isFinite(event.orbMax)) {
+    score += Math.max(0, 3 - event.orbMax) * 4
+  }
+  return score
 }
 
 export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {
   const { events, rangeFrom, rangeTo, badgeFilter: initialFilter = 'all', dailyBadges } = route.params || {}
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>(initialFilter)
-  const [expandedFullEvents, setExpandedFullEvents] = useState<Record<string, boolean>>({})
+  const [detail, setDetail] = useState<EventDetail | null>(null)
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, ForecastEvent[]> = {}
@@ -73,7 +144,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
       map[dateKey].push(event)
     })
     Object.keys(map).forEach((key) => {
-      map[key] = map[key].slice().sort((a, b) => b.intensity - a.intensity)
+      map[key] = map[key].slice().sort((a, b) => eventPriorityScore(b) - eventPriorityScore(a))
     })
     return map
   }, [events])
@@ -122,6 +193,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
           <Text style={[styles.filterText, badgeFilter === 'strong' && styles.filterTextActive]}>Fortes</Text>
         </TouchableOpacity>
       </View>
+
       <FlatList
         data={periodList}
         keyExtractor={(item) => item.date}
@@ -134,38 +206,80 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
           return (
             <View style={styles.dayBlock}>
               <Text style={styles.dayTitle}>{header}</Text>
-              {item.events.map((event) => (
-                <View key={event.id} style={styles.eventCard}>
-                  <Text style={styles.eventTitle}>{event.shortText}</Text>
-                  <Text style={styles.eventMeta}>Impacto {impactLabel(event.impact)}</Text>
-                  <View style={styles.eventDetailBlock}>
-                    <Text style={styles.eventDetailText}>{buildDirectEventText(event)}</Text>
-                    <TouchableOpacity
-                      style={styles.eventToggleSecondary}
-                      onPress={() =>
-                        setExpandedFullEvents((prev) => ({ ...prev, [event.id]: !prev[event.id] }))
-                      }
-                    >
-                      <Text style={styles.eventToggleText}>
-                        {expandedFullEvents[event.id]
-                          ? 'Ocultar interpretação completa'
-                          : 'Ver interpretação completa'}
-                      </Text>
-                    </TouchableOpacity>
-                    {expandedFullEvents[event.id] ? (
-                      <View style={styles.eventFullBlock}>
-                        <Text style={styles.eventDetailTitle}>Interpretação completa</Text>
-                        <Text style={styles.eventDetailText}>{buildFullEventInterpretation(event)}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </View>
-              ))}
+              {item.events.map((event, index) => {
+                const statusLabel = impactLabel(event.impact)
+                const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
+                const title = buildEventTitle(event)
+                const directText = buildDirectEventText(event)
+                const fullText = buildFullEventInterpretation(event)
+                const intensity = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
+                const orb = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
+                const metaText = [intensity, orb].filter(Boolean).join(' • ')
+                return (
+                  <TransitInsightCard
+                    key={event.id}
+                    indexLabel={`#${index + 1}`}
+                    statusLabel={statusLabel}
+                    statusColor={statusColor}
+                    title={title}
+                    timingLabel={buildTimingLabel(event)}
+                    directText={directText}
+                    fullExpanded={false}
+                    onToggleFull={() => {}}
+                    detailMode="modal"
+                    onOpenDetailModal={() =>
+                      setDetail({
+                        id: event.id,
+                        title,
+                        statusLabel,
+                        statusColor,
+                        timingLabel: buildTimingLabel(event),
+                        directText,
+                        fullText,
+                        metaText,
+                      })
+                    }
+                    fullTitle="Interpretacao completa"
+                    fullText={fullText}
+                    metaText={metaText}
+                    variant="dark"
+                  />
+                )
+              })}
             </View>
           )
         }}
         ListEmptyComponent={<Text style={styles.emptyText}>Sem eventos no periodo.</Text>}
       />
+
+      <Modal visible={!!detail} animationType="fade" transparent onRequestClose={() => setDetail(null)}>
+        <View style={styles.readingBackdrop}>
+          <View style={styles.readingCard}>
+            {detail ? (
+              <>
+                <View style={styles.readingHeader}>
+                  <View style={[styles.readingStatusBadge, { backgroundColor: detail.statusColor }]}>
+                    <Text style={styles.readingStatusText}>{detail.statusLabel}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.readingCloseIcon} onPress={() => setDetail(null)}>
+                    <Ionicons name="close" size={16} color="#0F172A" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.readingTitle}>{detail.title}</Text>
+                <Text style={styles.readingTiming}>{detail.timingLabel}</Text>
+                <Text style={styles.readingSectionTitle}>Frase-chave</Text>
+                <Text style={styles.readingDirect}>{detail.directText}</Text>
+                <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
+                <Text style={styles.readingFull}>{detail.fullText}</Text>
+                {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
+                <TouchableOpacity style={styles.readingCloseButton} onPress={() => setDetail(null)}>
+                  <Text style={styles.readingCloseButtonText}>Fechar leitura</Text>
+                </TouchableOpacity>
+              </>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -215,64 +329,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 6,
   },
-  eventCard: {
-    paddingVertical: 6,
-  },
-  eventTitle: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  eventMeta: {
-    color: '#B0B0B0',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  eventToggle: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#2A2A2E',
-  },
-  eventToggleSecondary: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#3A3A42',
-  },
-  eventToggleText: {
-    color: '#FFD700',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  eventDetailBlock: {
-    marginTop: 8,
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#2A2A2E',
-    paddingTop: 8,
-  },
-  eventFullBlock: {
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#2A2A2E',
-    borderRadius: 10,
-    backgroundColor: '#141418',
-    padding: 8,
-  },
-  eventDetailTitle: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  eventDetailText: {
-    color: '#D2D2D7',
-    fontSize: 12,
-    lineHeight: 18,
-  },
   emptyText: {
     color: '#808080',
     fontSize: 12,
@@ -282,4 +338,88 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 24,
   },
+  readingBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2,6,23,0.78)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  readingCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 14,
+    gap: 10,
+  },
+  readingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  readingStatusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  readingStatusText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  readingCloseIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  readingTitle: {
+    color: '#0F172A',
+    fontSize: 21,
+    fontWeight: '800',
+  },
+  readingTiming: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  readingSectionTitle: {
+    color: '#B45309',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  readingDirect: {
+    color: '#0F172A',
+    fontSize: 18,
+    lineHeight: 25,
+    fontWeight: '600',
+  },
+  readingFull: {
+    color: '#1E293B',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  readingMeta: {
+    color: '#64748B',
+    fontSize: 12,
+  },
+  readingCloseButton: {
+    marginTop: 4,
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  readingCloseButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
 })
+
