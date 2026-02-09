@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import useTransits from '../../hooks/useTransits'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { useUserSettings } from '../../hooks/useUserSettings'
@@ -114,6 +115,7 @@ export default function HomeScreen() {
       localOverrideActive
     } = useLifeAreas()
     const { settings } = useUserSettings()
+    const { statusPersonal } = useTransits(null)
     const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
     const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
@@ -380,6 +382,25 @@ export default function HomeScreen() {
       }
     }, [])
 
+    const statusPersonalLabel = React.useMemo(() => {
+      const rawLevel = String(statusPersonal?.level || '').toLowerCase()
+      const map: Record<string, string> = {
+        excellent: 'Excelente',
+        excelente: 'Excelente',
+        good: 'Bom',
+        bom: 'Bom',
+        neutral: 'Neutro',
+        neutro: 'Neutro',
+        challenging: 'Desafiador',
+        desafiador: 'Desafiador',
+        critical: 'Crítico',
+        critico: 'Crítico',
+      }
+      const score = typeof statusPersonal?.score === 'number' ? Math.round(statusPersonal.score) : null
+      if (score === null) return null
+      return `Status pessoal: ${map[rawLevel] || 'Neutro'} (${score}%)`
+    }, [statusPersonal?.level, statusPersonal?.score])
+
     if (loading && !transitData) {
       return (
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -460,6 +481,7 @@ export default function HomeScreen() {
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel}>
                   Sistema: {formatHouseSystemLabel(houseSystem)}
+                  {statusPersonalLabel ? ` • ${statusPersonalLabel}` : ''}
                 </Text>
               </View>
             </View>
@@ -553,6 +575,7 @@ export default function HomeScreen() {
                   lifeAreas={lifeAreasForDisplay || transitData.lifeAreas}
                   lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
+                  showOverviewHeader={false}
                 />
               </View>
             </AnimatedMount>

@@ -28,6 +28,7 @@ interface TransitComparisonCardProps {
     type: string
     window?: { start?: string; exact?: string; end?: string; days?: number }
   }>
+  showOverviewHeader?: boolean
 }
 const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   fire: 'flame',
@@ -104,7 +105,8 @@ export default function TransitComparisonCard({
   housesCusps,
   lifeAreas,
   lifeAreasDebug,
-  personalWindows
+  personalWindows,
+  showOverviewHeader = true
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
   const { settings, updateSettings } = useUserSettings()
@@ -400,21 +402,24 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       colors={['#1E1E2E', '#2A2A3E']}
       style={styles.container}
     >
-      <View style={styles.cardHeader}>
-        <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-        <Text style={styles.cardTitle}>Visão geral do período</Text>
-      </View>
-      {/* Status pessoal agregado */}
-      {statusPersonal && (
-        <View style={{ marginBottom: 8 }}>
-          <Text style={{ color: '#fff', opacity: 0.9 }}>
-            Status pessoal: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
-          </Text>
-          {statusMetaLine ? (
-            <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>{statusMetaLine}</Text>
+      {showOverviewHeader ? (
+        <>
+          <View style={styles.cardHeader}>
+            <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
+            <Text style={styles.cardTitle}>Visão geral do período</Text>
+          </View>
+          {statusPersonal ? (
+            <View style={{ marginBottom: 8 }}>
+              <Text style={{ color: '#fff', opacity: 0.9 }}>
+                Status pessoal: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
+              </Text>
+              {statusMetaLine ? (
+                <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>{statusMetaLine}</Text>
+              ) : null}
+            </View>
           ) : null}
-        </View>
-      )}
+        </>
+      ) : null}
 
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
@@ -592,9 +597,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       {/* Resumo da carta (após planetas) */}
       <View style={styles.summarySection}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="analytics" size={20} color="#FFD700" />
-          <Text style={styles.sectionTitle}>Resumo da Carta</Text>
-          {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="analytics" size={20} color="#FFD700" />
+            <Text style={styles.sectionTitle}>Resumo da Carta</Text>
+            {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text> : null}
+          </View>
         </View>
 
         <View style={styles.analysisRow}>
