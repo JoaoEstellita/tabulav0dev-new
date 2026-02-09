@@ -385,6 +385,16 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     }>
 }, [lifeAreasDebug, lifeAreas])
 
+  const confidenceValue = typeof statusPersonal?.confidence === 'number' && Number.isFinite(statusPersonal.confidence)
+    ? formatMetricPercent(statusPersonal.confidence)
+    : null
+  const volatilityValue = typeof statusPersonal?.volatility === 'number' && Number.isFinite(statusPersonal.volatility)
+    ? formatMetricPercent(statusPersonal.volatility)
+    : null
+  const statusMetaLine = [confidenceValue ? `Confiança: ${confidenceValue}` : null, volatilityValue ? `Volatilidade: ${volatilityValue}` : null]
+    .filter(Boolean)
+    .join(' • ')
+
   return (
     <LinearGradient
       colors={['#1E1E2E', '#2A2A3E']}
@@ -392,7 +402,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     >
       <View style={styles.cardHeader}>
         <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-        <Text style={styles.cardTitle}>Trânsitos comparativos</Text>
+        <Text style={styles.cardTitle}>Visão geral do período</Text>
       </View>
       {/* Status pessoal agregado */}
       {statusPersonal && (
@@ -400,80 +410,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           <Text style={{ color: '#fff', opacity: 0.9 }}>
             Status pessoal: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
           </Text>
-          <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>
-            Confiança: {formatMetricPercent(statusPersonal.confidence)} • Volatilidade: {formatMetricPercent(statusPersonal.volatility)}
-          </Text>
+          {statusMetaLine ? (
+            <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>{statusMetaLine}</Text>
+          ) : null}
         </View>
       )}
-
-      {/* An\u00E1lise Elemental */}
-      <View style={styles.summarySection}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="analytics" size={20} color="#FFD700" />
-          <Text style={styles.sectionTitle}>Resumo da Carta</Text>
-          {showApprox && (
-            <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text>
-          )}
-        </View>
-
-        {/* An\u00E1lise Elemental */}
-        <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Elementos:</Text>
-          <View style={styles.elementalGrid}>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Natal:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
-                  <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Atual:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
-                  <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* An\u00E1lise de Modalidades */}
-        <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Modalidades:</Text>
-          <View style={styles.elementalGrid}>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Natal:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
-                  <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Atual:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
-                  <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
 
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
@@ -646,8 +587,71 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             )}
           </View>
         ))}
+      </View>
 
-        
+      {/* Resumo da carta (após planetas) */}
+      <View style={styles.summarySection}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="analytics" size={20} color="#FFD700" />
+          <Text style={styles.sectionTitle}>Resumo da Carta</Text>
+          {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text> : null}
+        </View>
+
+        <View style={styles.analysisRow}>
+          <Text style={styles.analysisLabel}>Elementos:</Text>
+          <View style={styles.elementalGrid}>
+            <View style={styles.elementalComparison}>
+              <Text style={styles.comparisonLabel}>Natal:</Text>
+              <View style={styles.elementalRow}>
+                {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
+                  <View key={element} style={styles.elementalItem}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            <View style={styles.elementalComparison}>
+              <Text style={styles.comparisonLabel}>Atual:</Text>
+              <View style={styles.elementalRow}>
+                {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
+                  <View key={element} style={styles.elementalItem}>
+                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.analysisRow}>
+          <Text style={styles.analysisLabel}>Modalidades:</Text>
+          <View style={styles.elementalGrid}>
+            <View style={styles.elementalComparison}>
+              <Text style={styles.comparisonLabel}>Natal:</Text>
+              <View style={styles.elementalRow}>
+                {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
+                  <View key={modality} style={styles.elementalItem}>
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            <View style={styles.elementalComparison}>
+              <Text style={styles.comparisonLabel}>Atual:</Text>
+              <View style={styles.elementalRow}>
+                {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
+                  <View key={modality} style={styles.elementalItem}>
+                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
+                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
       </View>
     </LinearGradient>
   )

@@ -380,10 +380,6 @@ export default function HomeScreen() {
       }
     }, [])
 
-    const aspectLegendText = uiText(
-      'Legenda: \u260C Conjun\u00E7\u00E3o \u00B7 \u25A1 Quadratura \u00B7 \u25B3 Tr\u00EDgono \u00B7 \u2736 Sextil \u00B7 \u260D Oposi\u00E7\u00E3o \u00B7 \u26BB Quinc\u00FAncio'
-    )
-
     if (loading && !transitData) {
       return (
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -517,13 +513,13 @@ export default function HomeScreen() {
                     return null
                   }
 
+                  const normalizedArea = normalizeDisplayArea(name, area)
                   const transitCount =
                     (Array.isArray((normalizedArea as any)?.activeTransits)
                       ? (normalizedArea as any).activeTransits.length
                       : 0) ||
                     transitData?.currentTransits?.transits?.byArea?.[name]?.length ||
                     0
-                  const normalizedArea = normalizeDisplayArea(name, area)
 
                   return (
                     <View key={name} style={styles.lifeAreaItem}>
@@ -561,16 +557,6 @@ export default function HomeScreen() {
               </View>
             </AnimatedMount>
           )}
-
-          {/* Legenda sutil dos s\u00EDmbolos dos aspectos */}
-          <View style={styles.aspectLegendContainer}>
-            <Text style={styles.aspectLegendTitle} numberOfLines={1} ellipsizeMode="tail">
-              {uiText('Legenda dos aspectos')}
-            </Text>
-            <Text style={styles.aspectLegendText} numberOfLines={2} ellipsizeMode="tail">
-              {aspectLegendText}
-            </Text>
-          </View>
 
           {/* Espa\u00E7amento final */}
           <View style={styles.bottomSpacing} />
@@ -894,24 +880,6 @@ const styles = StyleSheet.create({
   },
   lifeAreaItem: {
     width: '50%',
-  },
-  aspectLegendContainer: {
-    marginTop: 8,
-    marginHorizontal: 16,
-    alignSelf: 'center',
-    alignItems: 'center',
-  },
-  aspectLegendTitle: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  aspectLegendText: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 14,
   },
   warningCard: {
     flexDirection: 'row',
