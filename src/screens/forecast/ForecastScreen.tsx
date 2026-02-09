@@ -427,9 +427,10 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     statusLabel: string
     statusColor: string
     directText: string
-    fullText: string
     actionHint: string
     metaText: string
+    impactValue01: number
+    impactLabel: string
   }>
   dayEventsLimit: number
   showAllDayEvents: boolean
@@ -455,12 +456,14 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
             title={item.title}
             timingLabel={item.phase ? `${item.phase.label}${item.phase.meta ? ` - ${item.phase.meta}` : ''}` : null}
             directText={item.directText}
+            impactValue01={item.impactValue01}
+            impactLabel={item.impactLabel}
             fullExpanded={false}
             onToggleFull={() => {}}
             detailMode="modal"
             onOpenDetailModal={() => onOpenEventDetail(item.event.id)}
             fullTitle="Interpretacao completa"
-            fullText={item.fullText}
+            fullText=""
             actionText={item.actionHint}
             metaText={item.metaText}
             variant="dark"
@@ -1055,13 +1058,13 @@ export default function ForecastScreen() {
     if (!selectedDateKey) return []
     return visibleDayEvents.map((event) => {
       const detailLines = buildEventDetailLines(event, selectedDateKey)
-      const fullText = buildFullEventInterpretation(event, detailLines)
       const actionHint = buildActionHint(event)
       const orbLine = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
       const intensityLine = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
       const metaText = [orbLine, intensityLine].filter(Boolean).join(' • ')
       const statusLabel = impactLabel(event.impact)
       const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
+      const impactValue01 = Math.max(0.08, Math.min(1, Number(event.intensity || 0)))
       return {
         event,
         title: buildEventTitle(event),
@@ -1069,9 +1072,10 @@ export default function ForecastScreen() {
         statusColor,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
         directText: buildDirectEventText(event),
-        fullText,
         actionHint,
         metaText,
+        impactValue01,
+        impactLabel: `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
       }
     })
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, visibleDayEvents])
@@ -1282,6 +1286,10 @@ export default function ForecastScreen() {
             {(() => {
               const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
               if (!detail) return null
+              const fullText = buildFullEventInterpretation(
+                detail.event,
+                buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10))
+              )
               return (
                 <>
                   <View style={styles.readingHeader}>
@@ -1301,7 +1309,7 @@ export default function ForecastScreen() {
                   <Text style={styles.readingSectionTitle}>Frase-chave</Text>
                   <Text style={styles.readingDirect}>{detail.directText}</Text>
                   <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
-                  <Text style={styles.readingFull}>{detail.fullText}</Text>
+                  <Text style={styles.readingFull}>{fullText}</Text>
                   {detail.actionHint ? <Text style={styles.readingAction}>Acao sugerida: {detail.actionHint}</Text> : null}
                   {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
                   <TouchableOpacity style={styles.readingCloseButton} onPress={() => setSelectedEventDetailId(null)}>

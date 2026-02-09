@@ -1084,6 +1084,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return String(Math.round(numericHouse))
   }
 
+  const getTransitHousePrefix = (transit: any): string => {
+    const natalHouse = Number(transit?.natalHouseImpacted ?? transit?.natalHouse)
+    if (Number.isFinite(natalHouse) && natalHouse >= 1 && natalHouse <= 12) return 'Casa natal ativada'
+    return 'Casa de trânsito'
+  }
+
   const getPhaseLabel = (transit: any) => {
     const phase = String(transit?.phase || '').toLowerCase()
     if (phase === 'peak') return 'Em pico'
@@ -1125,18 +1131,34 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         .replace(/\s+/g, ' ')
         .replace(/^Leitura completa:\s*/i, '')
         .trim()
-      if (sanitized.length >= 28) return sanitized
+      const normalized = sanitized.toLowerCase()
+      const isGeneric =
+        normalized.includes('fase de integracao e calibragem') ||
+        normalized.includes('momento de observacao') ||
+        normalized.includes('traz uma fase')
+      if (sanitized.length >= 28 && !isGeneric) return sanitized
     }
-    const aspectType = String(transit?.aspectName || transit?.type || '')
+    const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
     const transitPlanet = translate('planets', transit?.transitPlanet)
+    const phase = String(transit?.phase || '').toLowerCase()
+    const houseLabel = getTransitHouseLabel(transit)
+    const houseHint = houseLabel ? ` em casa ${houseLabel}` : ''
     const tone =
       ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-        ? 'favorece progresso com mais fluidez e consistencia'
+        ? phase === 'peak'
+          ? 'ativa janela forte de progresso'
+          : phase === 'end'
+          ? 'pede consolidacao de ganhos'
+          : 'favorece progresso com fluidez e consistencia'
         : ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
-        ? 'pede ajuste de rota com menos pressa e mais estrategia'
-        : 'traz uma fase de integracao e calibragem'
+        ? phase === 'peak'
+          ? 'entra em fase sensivel e exige ajuste fino'
+          : phase === 'end'
+          ? 'pede fechamento de ajustes com disciplina'
+          : 'pede ajuste de rota com menos pressa e mais estrategia'
+        : 'traz fase de observacao e calibragem'
     const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : 'esta area'
-    return `${transitPlanet}: ${tone} em ${areaHint}.`
+    return `${transitPlanet}${houseHint}: ${tone} em ${areaHint}.`
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
@@ -1201,10 +1223,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
           const transitTitle = buildTransitTitle(transit)
           const houseLabel = getTransitHouseLabel(transit)
+          const houseLabelPrefix = getTransitHousePrefix(transit)
           const transitKey = getTransitKey(transit, absoluteIndex)
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
-          const fullText = buildFullInterpretationText(transit, suggestion, directText)
           const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
           const actionText =
             suggestion?.action ||
@@ -1218,6 +1240,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
           const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
           const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
+          const impactValue01 = (() => {
+            const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+            if (impactAbs > 0) return Math.max(0.08, Math.min(1, impactAbs / 1.5))
+            const orb = Math.abs(safeNumber(transit?.orb, 2.5))
+            return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
+          })()
 
           return (
             <TransitInsightCard
@@ -1227,7 +1255,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusColor={statusColor}
               title={transitTitle}
               houseLabel={houseLabel}
+              houseLabelPrefix={houseLabelPrefix}
               timingLabel={timingLabel}
+              impactValue01={impactValue01}
               directText={directText}
               fullExpanded={false}
               onToggleFull={() => {}}
@@ -1235,7 +1265,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 setDetailView({
                   title: transitTitle,
                   directText,
-                  fullText,
+                  fullText: buildFullInterpretationText(transit, suggestion, directText),
                   actionText: actionText || null,
                   metaText: metaLine || null,
                   statusText,
@@ -1245,7 +1275,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               }
               detailMode="modal"
               fullTitle={titleText}
-              fullText={fullText}
+              fullText=""
               actionText={actionText}
               metaText={metaLine}
               variant="light"

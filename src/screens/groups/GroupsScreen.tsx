@@ -833,6 +833,14 @@ const getTransitHouseTarget = (transit: any) => {
   return `Casa ${Math.round(houseNumber)}`
 }
 
+const getTransitNatalHouse = (transit: any) => {
+  const houseValue = transit?.natalHouseImpacted ?? transit?.natalHouse ?? null
+  const houseNumber = Number(houseValue)
+  if (!Number.isFinite(houseNumber)) return ""
+  if (houseNumber < 1 || houseNumber > 12) return ""
+  return `Casa ${Math.round(houseNumber)}`
+}
+
 const buildTransitTitle = (transit: any) => {
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "")
   const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
@@ -886,7 +894,12 @@ const classifyTransitStatus = (transit: any) => {
 }
 
 const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string, areaCritical = false) => {
-  if (fallbackText && fallbackText.trim().length > 25) return fallbackText.trim()
+  const normalizedFallback = String(fallbackText || "").toLowerCase()
+  const isGenericFallback =
+    normalizedFallback.includes("fase de integracao e calibragem") ||
+    normalizedFallback.includes("momento de observacao") ||
+    normalizedFallback.includes("traz uma fase")
+  if (fallbackText && fallbackText.trim().length > 25 && !isGenericFallback) return fallbackText.trim()
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "Transito")
   const houseTarget = getTransitHouseTarget(transit)
   const houseHint = houseTarget ? ` em ${houseTarget.toLowerCase()}` : ""
@@ -926,6 +939,11 @@ const computeTransitPriority = (transit: any, areaCritical = false) => {
   else if (timing === "Afastando") score += 4
 
   return score
+}
+
+const computeTransitImpactValue = (transit: any, areaCritical = false) => {
+  const rank = computeTransitPriority(transit, areaCritical)
+  return Math.max(0.08, Math.min(1, rank / 100))
 }
 
 const getBucketPriority = (bucket: string) => {
@@ -1795,7 +1813,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
                         const status = classifyTransitStatus(transit)
                         const title = buildTransitTitle(transit)
-                        const houseLabel = getTransitHouseTarget(transit) || null
+                        const natalHouseLabel = getTransitNatalHouse(transit)
+                        const transitHouseLabel = getTransitHouseTarget(transit)
+                        const houseLabel = natalHouseLabel || transitHouseLabel || null
+                        const houseLabelPrefix = natalHouseLabel ? "Casa natal ativada" : "Casa de trânsito"
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
@@ -1814,13 +1835,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           rank: computeTransitPriority(transit, areaCritical),
                           title,
                           houseLabel,
+                          houseLabelPrefix,
                           statusLabel,
                           statusColor,
                           timingLabel: timing || "Em andamento",
                           directText,
-                          fullText: fullLines.join("\n\n"),
+                          fullLines,
                           actionText: suggestion?.title ? String(suggestion.title) : "Ajuste o proximo passo com foco e constancia.",
                           metaText: [orbText, impactText].filter(Boolean).join(" • "),
+                          impactValue01: computeTransitImpactValue(transit, areaCritical),
                         }
                       })
 
@@ -1851,25 +1874,33 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               statusColor={item.statusColor}
                               title={item.title}
                               houseLabel={item.houseLabel}
+                              houseLabelPrefix={item.houseLabelPrefix}
                               timingLabel={item.timingLabel}
                               directText={item.directText}
+                              impactValue01={item.impactValue01}
                               fullExpanded={false}
                               onToggleFull={() => {}}
                               detailMode="modal"
-                              onOpenDetailModal={() =>
+                              onOpenDetailModal={() => {
+                                const fullText = item.fullLines.join("\n\n")
+                                const intensityLabel = item.impactValue01 >= 0.75
+                                  ? "Impacto forte"
+                                  : item.impactValue01 >= 0.45
+                                  ? "Impacto moderado"
+                                  : "Impacto leve"
                                 setSelectedMemberTransitDetail({
                                   title: item.title,
                                   statusLabel: item.statusLabel,
                                   statusColor: item.statusColor,
                                   timingLabel: item.timingLabel,
                                   directText: item.directText,
-                                  fullText: item.fullText,
+                                  fullText,
                                   actionText: item.actionText,
-                                  metaText: item.metaText,
+                                  metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
                                 })
-                              }
+                              }}
                               fullTitle="Interpretacao completa"
-                              fullText={item.fullText}
+                              fullText=""
                               actionText={item.actionText}
                               metaText={item.metaText}
                               variant="dark"

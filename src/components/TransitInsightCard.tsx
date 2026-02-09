@@ -7,14 +7,18 @@ type TransitInsightCardProps = {
   statusColor: string
   title: string
   houseLabel?: string | null
+  houseLabelPrefix?: string
   timingLabel?: string | null
   directText: string
   fullExpanded: boolean
   onToggleFull: () => void
-  fullTitle: string
-  fullText: string
+  fullTitle?: string
+  fullText?: string
   actionText?: string | null
   metaText?: string | null
+  impactValue01?: number | null
+  impactLabel?: string | null
+  impactColor?: string
   variant?: 'light' | 'dark'
   featured?: boolean
   detailMode?: 'inline' | 'modal'
@@ -27,14 +31,18 @@ export default function TransitInsightCard({
   statusColor,
   title,
   houseLabel,
+  houseLabelPrefix = 'Casa impactada',
   timingLabel,
   directText,
   fullExpanded,
   onToggleFull,
-  fullTitle,
-  fullText,
+  fullTitle = 'Leitura completa',
+  fullText = '',
   actionText,
   metaText,
+  impactValue01,
+  impactLabel,
+  impactColor = '#F59E0B',
   variant = 'light',
   featured = false,
   detailMode = 'inline',
@@ -42,6 +50,9 @@ export default function TransitInsightCard({
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
+  const normalizedImpact = Number.isFinite(impactValue01 as number)
+    ? Math.max(0, Math.min(1, Number(impactValue01)))
+    : null
   return (
     <View
       style={[
@@ -60,10 +71,20 @@ export default function TransitInsightCard({
       <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
       {houseLabel ? (
         <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
-          Casa impactada: {houseLabel}
+          {houseLabelPrefix}: {houseLabel}
         </Text>
       ) : null}
       {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
+      {normalizedImpact !== null ? (
+        <View style={styles.impactRow}>
+          <View style={[styles.impactTrack, isDark ? styles.impactTrackDark : styles.impactTrackLight]}>
+            <View style={[styles.impactFill, { width: `${Math.round(normalizedImpact * 100)}%`, backgroundColor: impactColor }]} />
+          </View>
+          <Text style={[styles.impactLabel, isDark ? styles.impactLabelDark : styles.impactLabelLight]}>
+            {impactLabel || `Impacto relativo ${Math.round(normalizedImpact * 100)}%`}
+          </Text>
+        </View>
+      ) : null}
 
       <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
         {directText}
@@ -150,8 +171,38 @@ const styles = StyleSheet.create({
   timing: {
     fontSize: 12,
     color: '#64748B',
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '600',
+  },
+  impactRow: {
+    marginBottom: 8,
+  },
+  impactTrack: {
+    width: '100%',
+    height: 6,
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  impactTrackLight: {
+    backgroundColor: '#E2E8F0',
+  },
+  impactTrackDark: {
+    backgroundColor: '#374151',
+  },
+  impactFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  impactLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  impactLabelLight: {
+    color: '#64748B',
+  },
+  impactLabelDark: {
+    color: '#9CA3AF',
   },
   houseLine: {
     fontSize: 12,

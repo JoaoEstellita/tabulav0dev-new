@@ -27,12 +27,12 @@ type RouteParams = {
 
 type EventDetail = {
   id: string
+  event: ForecastEvent
   title: string
   statusLabel: string
   statusColor: string
   timingLabel: string
   directText: string
-  fullText: string
   metaText: string
 }
 
@@ -211,10 +211,10 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
                 const title = buildEventTitle(event)
                 const directText = buildDirectEventText(event)
-                const fullText = buildFullEventInterpretation(event)
                 const intensity = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
                 const orb = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
                 const metaText = [intensity, orb].filter(Boolean).join(' • ')
+                const impactValue01 = Math.max(0.08, Math.min(1, Number(event.intensity || 0)))
                 return (
                   <TransitInsightCard
                     key={event.id}
@@ -224,23 +224,25 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                     title={title}
                     timingLabel={buildTimingLabel(event)}
                     directText={directText}
+                    impactValue01={impactValue01}
+                    impactLabel={`Impacto relativo ${Math.round(impactValue01 * 100)}%`}
                     fullExpanded={false}
                     onToggleFull={() => {}}
                     detailMode="modal"
                     onOpenDetailModal={() =>
                       setDetail({
                         id: event.id,
+                        event,
                         title,
                         statusLabel,
                         statusColor,
                         timingLabel: buildTimingLabel(event),
                         directText,
-                        fullText,
                         metaText,
                       })
                     }
                     fullTitle="Interpretacao completa"
-                    fullText={fullText}
+                    fullText=""
                     metaText={metaText}
                     variant="dark"
                   />
@@ -270,7 +272,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 <Text style={styles.readingSectionTitle}>Frase-chave</Text>
                 <Text style={styles.readingDirect}>{detail.directText}</Text>
                 <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
-                <Text style={styles.readingFull}>{detail.fullText}</Text>
+                <Text style={styles.readingFull}>{buildFullEventInterpretation(detail.event)}</Text>
                 {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
                 <TouchableOpacity style={styles.readingCloseButton} onPress={() => setDetail(null)}>
                   <Text style={styles.readingCloseButtonText}>Fechar leitura</Text>
