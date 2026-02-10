@@ -15,7 +15,8 @@
     "init-firestore": "node scripts/initFirestore.js",
     "deploy:web": "npm run build:web && vercel --prod",
     "deploy:pwa": "npm run build:pwa && vercel --prod",
-    "test": "vitest run"
+    "test": "vitest run",
+    "guard:forecast": "node scripts/check-forecast-guard.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
