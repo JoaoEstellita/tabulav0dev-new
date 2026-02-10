@@ -107,6 +107,85 @@ const PLANET_KEYWORDS: Record<string, string> = {
   Pluto: 'profundidade e transformação'
 }
 
+const PLANET_MEANING_CONTENT: Record<string, {
+  title: string
+  essence: string
+  inAspect: string
+  inHouse: string
+  keywords: string[]
+}> = {
+  Sun: {
+    title: 'Sol',
+    essence: 'Centro da identidade, vitalidade e direção de vida.',
+    inAspect: 'Nos aspectos, o Sol mostra como sua vontade encontra apoio ou tensão para se expressar com clareza.',
+    inHouse: 'Na casa, o Sol ilumina onde você precisa assumir protagonismo, consistência e presença.',
+    keywords: ['identidade', 'propósito', 'vitalidade']
+  },
+  Moon: {
+    title: 'Lua',
+    essence: 'Emoções, memória afetiva, segurança e ritmo interno.',
+    inAspect: 'Nos aspectos, a Lua revela como você reage, acolhe e regula seus estados emocionais.',
+    inHouse: 'Na casa, a Lua destaca onde você busca pertencimento, cuidado e estabilidade emocional.',
+    keywords: ['emoções', 'vínculo', 'segurança']
+  },
+  Mercury: {
+    title: 'Mercúrio',
+    essence: 'Mente, comunicação, aprendizagem e decisões.',
+    inAspect: 'Nos aspectos, Mercúrio indica como ideias se alinham, entram em ruído ou ganham precisão.',
+    inHouse: 'Na casa, Mercúrio mostra onde organizar informação, conversar melhor e ajustar estratégia.',
+    keywords: ['mente', 'comunicação', 'estratégia']
+  },
+  Venus: {
+    title: 'Vênus',
+    essence: 'Valores, vínculos, prazer, estética e trocas afetivas.',
+    inAspect: 'Nos aspectos, Vênus mostra qualidade das conexões: harmonia, ajuste de valor ou tensão relacional.',
+    inHouse: 'Na casa, Vênus indica onde cultivar reciprocidade, beleza e escolhas coerentes com seus valores.',
+    keywords: ['valores', 'afeto', 'reciprocidade']
+  },
+  Mars: {
+    title: 'Marte',
+    essence: 'Ação, iniciativa, coragem, impulso e limites.',
+    inAspect: 'Nos aspectos, Marte mostra onde há aceleração, atrito criativo ou necessidade de direção objetiva.',
+    inHouse: 'Na casa, Marte marca onde agir com foco, canalizar energia e evitar reação impulsiva.',
+    keywords: ['ação', 'iniciativa', 'limites']
+  },
+  Jupiter: {
+    title: 'Júpiter',
+    essence: 'Expansão, confiança, visão de futuro e sentido.',
+    inAspect: 'Nos aspectos, Júpiter amplia oportunidades, crenças e o alcance das decisões.',
+    inHouse: 'Na casa, Júpiter mostra onde crescer com consistência, evitando excesso e dispersão.',
+    keywords: ['expansão', 'visão', 'crescimento']
+  },
+  Saturn: {
+    title: 'Saturno',
+    essence: 'Estrutura, disciplina, responsabilidade e maturação.',
+    inAspect: 'Nos aspectos, Saturno pede ajuste realista: prazo, método, limite e comprometimento.',
+    inHouse: 'Na casa, Saturno mostra onde consolidar base sólida antes de acelerar.',
+    keywords: ['estrutura', 'disciplina', 'maturidade']
+  },
+  Uranus: {
+    title: 'Urano',
+    essence: 'Inovação, liberdade, ruptura de padrão e atualização.',
+    inAspect: 'Nos aspectos, Urano sinaliza mudanças súbitas e necessidade de flexibilidade inteligente.',
+    inHouse: 'Na casa, Urano ativa reinvenção e novas formas de agir fora do automático.',
+    keywords: ['mudança', 'liberdade', 'inovação']
+  },
+  Neptune: {
+    title: 'Netuno',
+    essence: 'Sensibilidade, imaginação, empatia e inspiração.',
+    inAspect: 'Nos aspectos, Netuno amplia intuição e simbolismo, pedindo clareza para evitar confusão.',
+    inHouse: 'Na casa, Netuno mostra onde refinar escuta interna, propósito e compaixão com limite.',
+    keywords: ['intuição', 'sensibilidade', 'imaginação']
+  },
+  Pluto: {
+    title: 'Plutão',
+    essence: 'Transformação profunda, poder pessoal e renascimento.',
+    inAspect: 'Nos aspectos, Plutão expõe padrões intensos para cura, reposicionamento e fortalecimento.',
+    inHouse: 'Na casa, Plutão indica onde ocorre depuração, desapego e reconstrução estrutural.',
+    keywords: ['transformação', 'profundidade', 'renascimento']
+  },
+}
+
 const HOUSE_FOCUS: Record<number, string> = {
   1: 'identidade e presença',
   2: 'recursos e estabilidade',
@@ -605,6 +684,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   const [detailModalSubtitle, setDetailModalSubtitle] = React.useState('')
   const [detailModalShort, setDetailModalShort] = React.useState('')
   const [detailModalLong, setDetailModalLong] = React.useState('')
+  const [planetMeaningModalOpen, setPlanetMeaningModalOpen] = React.useState(false)
+  const [planetMeaningPlanet, setPlanetMeaningPlanet] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     try {
@@ -646,6 +727,53 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     setDetailModalLong(params.long)
     setDetailModalOpen(true)
   }, [])
+
+  const comparisonByPlanet = React.useMemo(() => {
+    const map: Record<string, PlanetComparison> = {}
+    for (const comparison of planetComparisons || []) {
+      map[comparison.name] = comparison
+    }
+    return map
+  }, [planetComparisons])
+
+  const openPlanetMeaningModal = React.useCallback((planetName: string) => {
+    setPlanetMeaningPlanet(planetName)
+    setPlanetMeaningModalOpen(true)
+  }, [])
+
+  const planetMeaningData = React.useMemo(() => {
+    if (!planetMeaningPlanet) return null
+    const comparison = comparisonByPlanet[planetMeaningPlanet]
+    if (!comparison) return null
+    const content = PLANET_MEANING_CONTENT[planetMeaningPlanet] || {
+      title: translatePlanetName(planetMeaningPlanet),
+      essence: 'Força arquetípica em movimento.',
+      inAspect: 'Nos aspectos, revela como a energia se combina com outras forças do mapa.',
+      inHouse: 'Na casa, mostra o campo da vida mais ativado no momento.',
+      keywords: ['força', 'contexto', 'leitura']
+    }
+    const personalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps) || comparison.current.house
+    const collectiveHouse = comparison.current.house
+    const natalHouse = comparison.natal.house
+    const personalFocus = HOUSE_FOCUS[personalHouse || 0] || 'área de ajuste'
+    const collectiveFocus = HOUSE_FOCUS[collectiveHouse || 0] || 'campo coletivo'
+    const natalFocus = HOUSE_FOCUS[natalHouse || 0] || 'base natal'
+    const signLabel = getSignFromDegree(comparison.current.longitude)
+    return {
+      planetName: translatePlanetName(planetMeaningPlanet),
+      title: content.title,
+      imageUri: resolvePlanetImageUri(planetMeaningPlanet),
+      fallbackIcon: PLANET_ICONS[planetMeaningPlanet] || '?',
+      essence: content.essence,
+      inAspect: content.inAspect,
+      inHouse: content.inHouse,
+      keywords: content.keywords,
+      practical: `Com ${translatePlanetName(planetMeaningPlanet)} em ${signLabel}, o foco atual é ${collectiveFocus}.`,
+      personalLine: `Trânsito pessoal (c/ natal) ativa Casa ${personalHouse || '-'}: ${personalFocus}.`,
+      collectiveLine: `Trânsito coletivo ativa Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`,
+      natalLine: `No natal, ${translatePlanetName(planetMeaningPlanet)} está na Casa ${natalHouse || '-'}: ${natalFocus}.`,
+    }
+  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, resolvePlanetImageUri, translatePlanetName])
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,
@@ -954,7 +1082,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             <View style={styles.planetContent}>
             {/* Cabe\u00E7alho do Planeta */}
             <View style={styles.planetHeader}>
-              <View style={styles.planetHeaderRow}>
+              <TouchableOpacity style={styles.planetHeaderRow} activeOpacity={0.88} onPress={() => openPlanetMeaningModal(comparison.name)}>
                 {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
                   <Image
                     source={{ uri: resolvePlanetImageUri(comparison.name) }}
@@ -965,7 +1093,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   <Text style={styles.planetGlyphFallback}>{(PLANET_ICONS[comparison.name] || '?')}</Text>
                 )}
                 <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {/* Comparacao em 3 colunas: Natal | Transito c/ Natal | Posicao Atual */}
@@ -1268,6 +1396,68 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             </ScrollView>
             <TouchableOpacity style={styles.detailModalButton} onPress={() => setDetailModalOpen(false)}>
               <Text style={styles.detailModalButtonText}>Fechar leitura</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={planetMeaningModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPlanetMeaningModalOpen(false)}
+      >
+        <View style={styles.planetMeaningBackdrop}>
+          <View style={[styles.planetMeaningCard, isNarrow ? styles.detailModalCardNarrow : styles.detailModalCardWide]}>
+            <LinearGradient
+              colors={['#101936', '#1C2A56']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.planetMeaningHero}
+            >
+              <View style={styles.planetMeaningHeroLeft}>
+                {planetMeaningData?.imageUri && !failedPlanetImages[planetMeaningPlanet || ''] ? (
+                  <Image source={{ uri: planetMeaningData.imageUri }} style={styles.planetMeaningHeroImage} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.planetMeaningHeroFallback}>{planetMeaningData?.fallbackIcon || '?'}</Text>
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.planetMeaningTitle}>{planetMeaningData?.planetName || ''}</Text>
+                <Text style={styles.planetMeaningSubtitle}>Força astrológica em leitura aplicada</Text>
+              </View>
+              <TouchableOpacity onPress={() => setPlanetMeaningModalOpen(false)} style={styles.detailCloseIcon}>
+                <Ionicons name="close" size={20} color="#0A1633" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <ScrollView style={styles.planetMeaningScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.planetMeaningTagsRow}>
+                {(planetMeaningData?.keywords || []).slice(0, 3).map((keyword) => (
+                  <View key={keyword} style={styles.planetMeaningTag}>
+                    <Text style={styles.planetMeaningTagText}>{keyword}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.planetMeaningSectionLabel}>Essência</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.essence || ''}</Text>
+
+              <Text style={styles.planetMeaningSectionLabel}>Nos aspectos</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.inAspect || ''}</Text>
+
+              <Text style={styles.planetMeaningSectionLabel}>Na casa</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.inHouse || ''}</Text>
+
+              <Text style={styles.planetMeaningSectionLabel}>Leitura do seu momento</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.practical || ''}</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.natalLine || ''}</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.personalLine || ''}</Text>
+              <Text style={styles.planetMeaningBody}>{planetMeaningData?.collectiveLine || ''}</Text>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.detailModalButton} onPress={() => setPlanetMeaningModalOpen(false)}>
+              <Text style={styles.detailModalButtonText}>Fechar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1768,6 +1958,98 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '800',
+  },
+  planetMeaningBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 14,
+  },
+  planetMeaningCard: {
+    backgroundColor: '#0F1836',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    maxHeight: '90%',
+    width: '100%',
+    overflow: 'hidden',
+  },
+  planetMeaningHero: {
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.14)',
+  },
+  planetMeaningHeroLeft: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planetMeaningHeroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  planetMeaningHeroFallback: {
+    color: '#FFF',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+  planetMeaningTitle: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  planetMeaningSubtitle: {
+    color: '#C9D6FF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  planetMeaningScroll: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: '#151F42',
+  },
+  planetMeaningTagsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+    flexWrap: 'wrap',
+  },
+  planetMeaningTag: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.35)',
+  },
+  planetMeaningTagText: {
+    color: '#FFE58D',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  planetMeaningSectionLabel: {
+    color: '#FFD166',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  planetMeaningBody: {
+    color: '#E8EEFF',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 8,
   },
   // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {
