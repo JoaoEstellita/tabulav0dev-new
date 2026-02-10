@@ -61,6 +61,17 @@ const LIFE_AREA_COLORS: Record<string, string[]> = {
   transformacao: ["#F472B6", "#EC4899"],
 }
 
+const AREA_HOUSES: Record<string, number[]> = {
+  amor: [5, 7],
+  carreira: [10, 6],
+  financas: [2, 8],
+  saude: [1, 6],
+  familia: [4, 10],
+  espiritualidade: [9, 12],
+  comunicacao: [3, 9],
+  transformacao: [8, 12],
+}
+
 const formatLifeAreas = (areas?: string[]) => {
   if (!areas || areas.length === 0) return "Todas as áreas"
   return areas
@@ -841,21 +852,36 @@ const getTransitNatalHouse = (transit: any) => {
   return `Casa ${Math.round(houseNumber)}`
 }
 
-const buildTransitTitle = (transit: any) => {
+const buildTransitTitle = (transit: any, areaKey?: string) => {
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "")
   const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
   const targetAngle = transit?.target?.angle
   const targetHouse = getTransitHouseTarget(transit)
+  const housesFromArea = areaKey && AREA_HOUSES[areaKey]?.length
+    ? AREA_HOUSES[areaKey].join("/")
+    : ""
   const target = targetPlanet
     ? formatPlanetLabel(targetPlanet)
     : targetAngle
     ? String(targetAngle)
     : targetHouse
   if (transitPlanet && aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
+  if (transitPlanet && aspect && housesFromArea) return `${transitPlanet} em ${aspect} nas Casas ${housesFromArea}`
+  if (transitPlanet && housesFromArea) return `${transitPlanet} em trânsito nas Casas ${housesFromArea}`
   if (transitPlanet && target) return `${transitPlanet} com ${target}`
   if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
   return transitPlanet ? `${transitPlanet} em transito` : "Transito ativo"
+}
+
+const getTransitTechnicalTypeLabel = (transit: any) => {
+  const targetNatalPlanet = transit?.target?.natalPlanet || transit?.natalPlanet
+  if (targetNatalPlanet) return "Aspecto com planeta natal"
+  const targetAngle = transit?.target?.angle
+  if (targetAngle) return `Aspecto com angulo (${String(targetAngle).toUpperCase()})`
+  const house = getTransitHouseTarget(transit)
+  if (house) return `Planeta em casa (${house.replace("Casa ", "")})`
+  return "Transito contextual da area"
 }
 
 const normalizeAspectType = (value: string) => {
@@ -1812,11 +1838,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const areaCritical = bucket === "critical"
                       const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
                         const status = classifyTransitStatus(transit)
-                        const title = buildTransitTitle(transit)
+                        const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
                         const transitHouseLabel = getTransitHouseTarget(transit)
                         const houseLabel = natalHouseLabel || transitHouseLabel || null
                         const houseLabelPrefix = natalHouseLabel ? "Casa natal ativada" : "Casa de trânsito"
+                        const technicalTypeLabel = getTransitTechnicalTypeLabel(transit)
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
@@ -1836,6 +1863,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           title,
                           houseLabel,
                           houseLabelPrefix,
+                          technicalTypeLabel,
                           statusLabel,
                           statusColor,
                           timingLabel: timing || "Em andamento",
@@ -1875,6 +1903,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               title={item.title}
                               houseLabel={item.houseLabel}
                               houseLabelPrefix={item.houseLabelPrefix}
+                              technicalTypeLabel={item.technicalTypeLabel}
                               timingLabel={item.timingLabel}
                               directText={item.directText}
                               impactValue01={item.impactValue01}

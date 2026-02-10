@@ -1104,6 +1104,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return 'Casa de trânsito'
   }
 
+  const getTransitTechnicalTypeLabel = (transit: any): string => {
+    const targetNatalPlanet = transit?.target?.natalPlanet || transit?.natalPlanet
+    if (targetNatalPlanet) return 'Aspecto com planeta natal'
+    const targetAngle = transit?.target?.angle
+    if (targetAngle) return `Aspecto com ângulo (${String(targetAngle).toUpperCase()})`
+    const houseValue =
+      transit?.target?.house ??
+      transit?.natalHouseImpacted ??
+      transit?.house ??
+      transit?.natalHouse
+    const houseNumber = Number(houseValue)
+    if (Number.isFinite(houseNumber) && houseNumber >= 1 && houseNumber <= 12) {
+      return `Planeta em casa (${Math.round(houseNumber)})`
+    }
+    return 'Trânsito contextual da área'
+  }
+
   const getPhaseLabel = (transit: any) => {
     const phase = String(transit?.phase || '').toLowerCase()
     if (phase === 'peak') return 'Em pico'
@@ -1238,6 +1255,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const transitTitle = buildTransitTitle(transit)
           const houseLabel = getTransitHouseLabel(transit)
           const houseLabelPrefix = getTransitHousePrefix(transit)
+          const technicalTypeLabel = getTransitTechnicalTypeLabel(transit)
           const transitKey = getTransitKey(transit, absoluteIndex)
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
@@ -1270,6 +1288,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               title={transitTitle}
               houseLabel={houseLabel}
               houseLabelPrefix={houseLabelPrefix}
+              technicalTypeLabel={technicalTypeLabel}
               timingLabel={timingLabel}
               impactValue01={impactValue01}
               directText={directText}

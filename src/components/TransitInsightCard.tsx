@@ -9,6 +9,7 @@ type TransitInsightCardProps = {
   houseLabel?: string | null
   houseLabelPrefix?: string
   timingLabel?: string | null
+  technicalTypeLabel?: string | null
   directText: string
   fullExpanded: boolean
   onToggleFull: () => void
@@ -33,6 +34,7 @@ export default function TransitInsightCard({
   houseLabel,
   houseLabelPrefix = 'Casa impactada',
   timingLabel,
+  technicalTypeLabel,
   directText,
   fullExpanded,
   onToggleFull,
@@ -72,6 +74,11 @@ export default function TransitInsightCard({
       {houseLabel ? (
         <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
           {houseLabelPrefix}: {houseLabel}
+        </Text>
+      ) : null}
+      {technicalTypeLabel ? (
+        <Text style={[styles.technicalLine, isDark ? styles.technicalLineDark : styles.technicalLineLight]}>
+          Tipo: {technicalTypeLabel}
         </Text>
       ) : null}
       {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
@@ -214,6 +221,17 @@ const styles = StyleSheet.create({
   },
   houseLineDark: {
     color: '#A7A7B0',
+  },
+  technicalLine: {
+    fontSize: 11,
+    marginBottom: 6,
+    fontWeight: '600',
+  },
+  technicalLineLight: {
+    color: '#64748B',
+  },
+  technicalLineDark: {
+    color: '#9CA3AF',
   },
   directText: {
     fontSize: 14,
