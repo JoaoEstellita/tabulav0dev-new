@@ -163,6 +163,12 @@ const safeNumber = (value: unknown, fallback = 0): number =>
 const safeFixed = (value: unknown, digits = 1): string =>
   safeNumber(value).toFixed(digits)
 
+const toIdentityToken = (value: unknown): string =>
+  String(value ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_')
+
 const safeArray = <T,>(value: T[] | null | undefined): T[] =>
   Array.isArray(value) ? value : []
 
@@ -956,20 +962,41 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const signalLevel = getSignalLevel(confidence01)
   const volatilityLevel = getVolatilityLevel(volatility01)
   // Prioriza sempre a lista astrológica completa da área e adiciona itens legados ausentes.
+  const buildTransitIdentityKey = React.useCallback((transit: any) => {
+    const targetHouse =
+      transit?.target?.house ??
+      transit?.natalHouseImpacted ??
+      transit?.natalHouse ??
+      ''
+    const targetLabel =
+      transit?.natalPlanet ||
+      transit?.target?.natalPlanet ||
+      transit?.target?.angle ||
+      (targetHouse !== '' ? `HOUSE_${targetHouse}` : 'NA')
+
+    return [
+      toIdentityToken(transit?.transitPlanet || 'NA'),
+      toIdentityToken(targetLabel),
+      toIdentityToken(transit?.type || transit?.aspectName || 'NA'),
+      safeFixed(transit?.orb ?? 0, 3),
+      transit?.isApplying === true ? 'A' : transit?.isApplying === false ? 'S' : 'U',
+      toIdentityToken(transit?.phase || ''),
+      toIdentityToken(transit?.window?.start || transit?.startAt || ''),
+    ].join('|')
+  }, [])
+
   const transitItems = React.useMemo(() => {
     const fromBackend = backendActiveTransits.map(mapTransitToReal)
     const merged = [...activeTransits]
-    const seen = new Set(
-      activeTransits.map((t, i) => `${t.transitPlanet}:${t.natalPlanet}:${t.type}:${t.natalHouseImpacted}:${i}`)
-    )
-    fromBackend.forEach((t, i) => {
-      const key = `${t.transitPlanet}:${t.natalPlanet}:${t.type}:${t.natalHouseImpacted}:${i}`
+    const seen = new Set(activeTransits.map((t) => buildTransitIdentityKey(t)))
+    fromBackend.forEach((t) => {
+      const key = buildTransitIdentityKey(t)
       if (seen.has(key)) return
       seen.add(key)
       merged.push(t)
     })
     return merged.sort((a, b) => b.strength - a.strength)
-  }, [activeTransits, backendActiveTransits])
+  }, [activeTransits, backendActiveTransits, buildTransitIdentityKey])
   const totalTransitStrength = activeTransits.reduce((sum, t) => sum + safeNumber(t.strength), 0)
 
   const renderHeader = () => (
@@ -1382,18 +1409,33 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
     const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
     const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
+    const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
     const explicitHouseTarget =
-      String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
-        .toUpperCase()
-        .startsWith('HOUSE_')
+      rawTarget.startsWith('HOUSE_') ||
+      rawTarget.startsWith('CASA') ||
+      rawTarget.includes('HOUSE') ||
+      rawTarget.includes('CASA')
     const rawType = String(transit?.aspectName || transit?.type || '').toLowerCase()
-    const hasPlanetOrAngleTarget = !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
-    if (hasPlanetOrAngleTarget && !explicitHouseTarget) return 'planet'
-    if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return 'house'
+    const isHouseContext =
+      hasHouseTarget ||
+      explicitHouseTarget ||
+      rawType.includes('ingress') ||
+      rawType.includes('casa') ||
+      rawType.includes('house') ||
+      rawType.includes('planeta em casa')
+    if (isHouseContext) return 'house'
 
-    const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
-    const hasRecognizedAspect = !!aspectType
-    if (hasRecognizedAspect && hasPlanetOrAngleTarget) return 'planet'
+    const targetAngle = String(transit?.target?.angle || '').toUpperCase()
+    if (['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)) return 'planet'
+
+    const planetTargets = new Set([
+      'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
+      'ASC', 'MC', 'DSC', 'IC'
+    ])
+    const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
+    if (planetTargets.has(normalizedTarget)) return 'planet'
+
+    if (rawTarget && !explicitHouseTarget) return 'planet'
     return 'house'
   }
 

@@ -334,8 +334,13 @@ const translateElement = (element: string): string => {
   return translations[key] || cleaned
 }
 
-const normalizeElementKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
-const normalizeModalityKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
+function normalizeElementKey(value: string): string {
+  return normalizeKey(sanitizeChangeText(value))
+}
+
+function normalizeModalityKey(value: string): string {
+  return normalizeKey(sanitizeChangeText(value))
+}
 const getElementIconName = (value: string): keyof typeof Ionicons.glyphMap =>
   ELEMENT_ICONS[normalizeElementKey(value)] || FALLBACK_ICON
 const getModalityIconName = (value: string): keyof typeof Ionicons.glyphMap =>

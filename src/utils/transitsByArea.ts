@@ -40,14 +40,16 @@ const getTransitHouse = (transit: PersonalTransitLike): number => {
   return Number.isFinite(house) ? house : 0
 }
 
-const getTransitKey = (transit: PersonalTransitLike, index: number): string => {
+const getTransitKey = (transit: PersonalTransitLike): string => {
   const id = typeof transit?.id === 'string' ? transit.id : ''
   if (id) return id
   const planet = transit?.transitPlanet || 'na'
   const target = transit?.natalPlanet || 'na'
   const type = transit?.type || 'na'
   const house = String(getTransitHouse(transit) || '0')
-  return `${planet}:${target}:${type}:${house}:${index}`
+  const orb = Number.isFinite(Number(transit?.orb)) ? Number(transit?.orb).toFixed(3) : 'na'
+  const applying = transit?.isApplying === true ? 'app' : transit?.isApplying === false ? 'sep' : 'na'
+  return `${planet}:${target}:${type}:${house}:${orb}:${applying}`
 }
 
 const isTransitRelevantToArea = (areaKey: string, transit: PersonalTransitLike): boolean => {
@@ -87,8 +89,8 @@ export const mergeAreaTransits = (
   const seen = new Set<string>()
   sources.forEach((source) => {
     const items = getAreaTransitsFromAstro(areaKey, source)
-    items.forEach((item, index) => {
-      const key = getTransitKey(item, index)
+    items.forEach((item) => {
+      const key = getTransitKey(item)
       if (seen.has(key)) return
       seen.add(key)
       merged.push(item)
