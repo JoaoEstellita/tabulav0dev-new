@@ -212,7 +212,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
           return (
             <View style={styles.dayBlock}>
               <Text style={styles.dayTitle}>{header}</Text>
-              {item.events.map((event, index) => {
+              {item.events.map((event) => {
                 const statusLabel = impactLabel(event.impact)
                 const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
                 const title = buildEventTitle(event)
@@ -224,7 +224,6 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 return (
                   <TransitInsightCard
                     key={event.id}
-                    indexLabel={`#${index + 1}`}
                     statusLabel={statusLabel}
                     statusColor={statusColor}
                     title={title}

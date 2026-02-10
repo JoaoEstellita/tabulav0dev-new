@@ -1292,7 +1292,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           return (
             <TransitInsightCard
               key={transitKey}
-              indexLabel={`#${absoluteIndex + 1}`}
               statusLabel={statusText}
               statusColor={statusColor}
               title={transitTitle}
@@ -1344,6 +1343,15 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
+    const targetHouse = Number(transit?.target?.house ?? transit?.house ?? transit?.transitHouse)
+    const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
+    const explicitHouseTarget =
+      String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
+        .toUpperCase()
+        .startsWith('HOUSE_')
+    const rawType = String(transit?.aspectName || transit?.type || '').toLowerCase()
+    if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return 'house'
+
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
     const hasRecognizedAspect = !!aspectType
     const hasPlanetOrAngleTarget = !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)

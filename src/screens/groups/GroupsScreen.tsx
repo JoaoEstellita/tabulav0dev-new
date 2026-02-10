@@ -884,6 +884,17 @@ const getTransitTechnicalTypeLabel = (transit: any) => {
 }
 
 const getTransitColumnKind = (transit: any): "planet" | "house" => {
+  const targetHouse = Number(transit?.target?.house ?? transit?.house ?? transit?.transitHouse)
+  const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
+  const explicitHouseTarget =
+    String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
+      .toUpperCase()
+      .startsWith('HOUSE_')
+  const rawType = String(transit?.aspectName || transit?.type || transit?.aspectType || '').toLowerCase()
+  if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) {
+    return "house"
+  }
+
   const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const hasRecognizedAspect = [
     "trigono",
@@ -1920,7 +1931,6 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const renderTransitCard = (item: any, index: number) => (
                         <TransitInsightCard
                           key={item.id}
-                          indexLabel={`#${index + 1}`}
                           statusLabel={item.statusLabel}
                           statusColor={item.statusColor}
                           title={item.title}
