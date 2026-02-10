@@ -1,5 +1,5 @@
 ﻿import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView, useWindowDimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
@@ -119,6 +119,39 @@ const HOUSE_FOCUS: Record<number, string> = {
   10: 'carreira e reputação',
   11: 'rede e projetos',
   12: 'fechamentos e interiorização'
+}
+
+const ELEMENT_KEYS = ['fire', 'earth', 'air', 'water'] as const
+const MODALITY_KEYS = ['cardinal', 'fixed', 'mutable'] as const
+const SIGN_WEIGHT = 0.6
+const HOUSE_WEIGHT = 0.4
+
+const toCanonicalElementKey = (value: string): 'fire' | 'earth' | 'air' | 'water' | null => {
+  const normalized = normalizeElementKey(value)
+  const map: Record<string, 'fire' | 'earth' | 'air' | 'water'> = {
+    fire: 'fire',
+    fogo: 'fire',
+    earth: 'earth',
+    terra: 'earth',
+    air: 'air',
+    ar: 'air',
+    water: 'water',
+    agua: 'water'
+  }
+  return map[normalized] || null
+}
+
+const toCanonicalModalityKey = (value: string): 'cardinal' | 'fixed' | 'mutable' | null => {
+  const normalized = normalizeModalityKey(value)
+  const map: Record<string, 'cardinal' | 'fixed' | 'mutable'> = {
+    cardinal: 'cardinal',
+    cardeal: 'cardinal',
+    fixed: 'fixed',
+    fixo: 'fixed',
+    mutable: 'mutable',
+    mutavel: 'mutable'
+  }
+  return map[normalized] || null
 }
 
 export default function TransitComparisonCard({
@@ -366,6 +399,19 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     }
   }
 
+  const formatWindowInline = React.useCallback(
+    (windowInfo: { days: number | null; startLabel: string | null; endLabel: string | null; phaseLabel: string | null } | null) => {
+      if (!windowInfo) return 'Em curso'
+      const parts: string[] = []
+      if (windowInfo.phaseLabel) parts.push(windowInfo.phaseLabel)
+      if (windowInfo.days) parts.push(`${windowInfo.days}d`)
+      if (windowInfo.startLabel) parts.push(`Início ${windowInfo.startLabel}`)
+      if (windowInfo.endLabel) parts.push(`Fim ${windowInfo.endLabel}`)
+      return parts.length ? parts.join(' • ') : 'Em curso'
+    },
+    []
+  )
+
 
   // \u00F0\u0178\u008F\u00B7\u00EF\u00B8\u008F Dist\u00C3\u00A2ncia at\u00C3\u00A9 a c\u00C3\u00BAspide mais pr\u00C3\u00B3xima (casas ATUAIS)
   const nearestCuspInfo = React.useCallback((longitude: number): { house: number, distance: number } | null => {
@@ -578,27 +624,65 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       const natalNatural = getNaturalHouseInfo(comparison.natal.house)
       const currentNatural = getNaturalHouseInfo(comparison.current.house)
 
-      const natalElementKey = normalizeElementKey(natalNatural?.element || '')
-      const natalModalityKey = normalizeModalityKey(natalNatural?.modality || '')
-      const currentElementKey = normalizeElementKey(currentNatural?.element || '')
-      const currentModalityKey = normalizeModalityKey(currentNatural?.modality || '')
+      const natalElementKey = toCanonicalElementKey(natalNatural?.element || '')
+      const natalModalityKey = toCanonicalModalityKey(natalNatural?.modality || '')
+      const currentElementKey = toCanonicalElementKey(currentNatural?.element || '')
+      const currentModalityKey = toCanonicalModalityKey(currentNatural?.modality || '')
 
-      if (natalElementKey in result.natal.elements) {
+      if (natalElementKey && natalElementKey in result.natal.elements) {
         ;(result.natal.elements as any)[natalElementKey] += 1
       }
-      if (natalModalityKey in result.natal.modalities) {
+      if (natalModalityKey && natalModalityKey in result.natal.modalities) {
         ;(result.natal.modalities as any)[natalModalityKey] += 1
       }
-      if (currentElementKey in result.current.elements) {
+      if (currentElementKey && currentElementKey in result.current.elements) {
         ;(result.current.elements as any)[currentElementKey] += 1
       }
-      if (currentModalityKey in result.current.modalities) {
+      if (currentModalityKey && currentModalityKey in result.current.modalities) {
         ;(result.current.modalities as any)[currentModalityKey] += 1
       }
     }
 
     return result
   }, [planetComparisons, getNaturalHouseInfo])
+
+  const getSignCounts = React.useCallback(
+    (
+      source: Record<string, number>,
+      kind: 'element' | 'modality'
+    ): Record<string, number> => {
+      const base =
+        kind === 'element'
+          ? { fire: 0, earth: 0, air: 0, water: 0 }
+          : { cardinal: 0, fixed: 0, mutable: 0 }
+      for (const [key, rawValue] of Object.entries(source || {})) {
+        const canonical =
+          kind === 'element'
+            ? toCanonicalElementKey(key)
+            : toCanonicalModalityKey(key)
+        if (!canonical) continue
+        ;(base as any)[canonical] += Number(rawValue) || 0
+      }
+      return base
+    },
+    []
+  )
+
+  const buildWeightedRows = React.useCallback(
+    (
+      signCounts: Record<string, number>,
+      houseCounts: Record<string, number>,
+      keys: readonly string[]
+    ) => {
+      return keys.map((key) => {
+        const signs = Number((signCounts as any)[key] || 0)
+        const houses = Number((houseCounts as any)[key] || 0)
+        const weighted = signs * SIGN_WEIGHT + houses * HOUSE_WEIGHT
+        return { key, signs, houses, weighted }
+      })
+    },
+    []
+  )
 
   const buildColumnInterpretation = React.useCallback((params: {
     planet: string
@@ -657,6 +741,97 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         `organiza foco em ${houseFocus}. ${tone} ${windowLabel}.${phaseLabel} ` +
         `Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.`
     }
+  }, [])
+
+  const elementSignCounts = React.useMemo(
+    () => ({
+      natal: getSignCounts(chartSummary.elemental.natal as Record<string, number>, 'element'),
+      current: getSignCounts(chartSummary.elemental.current as Record<string, number>, 'element')
+    }),
+    [chartSummary.elemental.current, chartSummary.elemental.natal, getSignCounts]
+  )
+
+  const modalitySignCounts = React.useMemo(
+    () => ({
+      natal: getSignCounts(chartSummary.modality.natal as Record<string, number>, 'modality'),
+      current: getSignCounts(chartSummary.modality.current as Record<string, number>, 'modality')
+    }),
+    [chartSummary.modality.current, chartSummary.modality.natal, getSignCounts]
+  )
+
+  const weightedElementRows = React.useMemo(
+    () => ({
+      natal: buildWeightedRows(elementSignCounts.natal, houseBasedCounts.natal.elements, ELEMENT_KEYS),
+      current: buildWeightedRows(elementSignCounts.current, houseBasedCounts.current.elements, ELEMENT_KEYS)
+    }),
+    [buildWeightedRows, elementSignCounts.current, elementSignCounts.natal, houseBasedCounts.current.elements, houseBasedCounts.natal.elements]
+  )
+
+  const weightedModalityRows = React.useMemo(
+    () => ({
+      natal: buildWeightedRows(modalitySignCounts.natal, houseBasedCounts.natal.modalities, MODALITY_KEYS),
+      current: buildWeightedRows(modalitySignCounts.current, houseBasedCounts.current.modalities, MODALITY_KEYS)
+    }),
+    [buildWeightedRows, modalitySignCounts.current, modalitySignCounts.natal, houseBasedCounts.current.modalities, houseBasedCounts.natal.modalities]
+  )
+
+  const renderBalanceColumns = React.useCallback((params: {
+    periodLabel: string
+    signRows: Array<{ key: string; signs: number; houses: number; weighted: number }>
+    kind: 'element' | 'modality'
+  }) => {
+    const predominant = params.signRows.reduce((acc, item) => {
+      if (!acc || item.weighted > acc.weighted) return item
+      return acc
+    }, null as null | { key: string; signs: number; houses: number; weighted: number })
+
+    const labelFn = params.kind === 'element' ? translateElement : translateModality
+    const iconFn =
+      params.kind === 'element'
+        ? (k: string) => getElementIconName(k)
+        : (k: string) => getModalityIconName(k)
+
+    return (
+      <View style={styles.balanceCard}>
+        <Text style={styles.comparisonLabel}>{params.periodLabel}</Text>
+        <View style={styles.balanceColumns}>
+          <View style={styles.balanceColumn}>
+            <Text style={styles.balanceColumnTitle}>Signos</Text>
+            {params.signRows.map((row) => (
+              <View key={`${params.periodLabel}-sign-${row.key}`} style={styles.balanceRowItem}>
+                <Ionicons name={iconFn(row.key)} size={12} color="#FFD700" />
+                <Text style={styles.balanceRowText}>{labelFn(row.key)} {row.signs}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.balanceColumn}>
+            <Text style={styles.balanceColumnTitle}>Casas</Text>
+            {params.signRows.map((row) => (
+              <View key={`${params.periodLabel}-house-${row.key}`} style={styles.balanceRowItem}>
+                <Ionicons name={iconFn(row.key)} size={12} color="#FFD700" />
+                <Text style={styles.balanceRowText}>{labelFn(row.key)} {row.houses}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.balanceColumn}>
+            <Text style={styles.balanceColumnTitle}>Balanço</Text>
+            {params.signRows.map((row) => (
+              <View key={`${params.periodLabel}-balance-${row.key}`} style={styles.balanceRowItem}>
+                <Ionicons name={iconFn(row.key)} size={12} color={predominant?.key === row.key ? '#34D399' : '#FFD700'} />
+                <Text style={[styles.balanceRowText, predominant?.key === row.key ? styles.balanceRowTextPredominant : null]}>
+                  {labelFn(row.key)} {row.weighted.toFixed(1)}
+                </Text>
+              </View>
+            ))}
+            {predominant ? (
+              <Text style={styles.balancePredominantText}>
+                Predominante: {labelFn(predominant.key)}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    )
   }, [])
 
   return (
@@ -846,9 +1021,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
-                      <TouchableOpacity
-                        activeOpacity={0.86}
-                        style={styles.aspectBodyInteractive}
+                      <Pressable
+                        style={({ hovered, pressed }) => [
+                          styles.aspectBodyInteractive,
+                          hovered && styles.aspectBodyInteractiveHovered,
+                          pressed && styles.aspectBodyInteractivePressed
+                        ]}
                         onPress={() =>
                           openDetailModal({
                             title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
@@ -864,13 +1042,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
+                          <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
                           <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   )
                 })}
@@ -894,9 +1069,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
-                      <TouchableOpacity
-                        activeOpacity={0.86}
-                        style={styles.aspectBodyInteractive}
+                      <Pressable
+                        style={({ hovered, pressed }) => [
+                          styles.aspectBodyInteractive,
+                          hovered && styles.aspectBodyInteractiveHovered,
+                          pressed && styles.aspectBodyInteractivePressed
+                        ]}
                         onPress={() =>
                           openDetailModal({
                             title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
@@ -912,13 +1090,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
+                          <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
                           <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   )
                 })}
@@ -942,9 +1117,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
-                      <TouchableOpacity
-                        activeOpacity={0.86}
-                        style={styles.aspectBodyInteractive}
+                      <Pressable
+                        style={({ hovered, pressed }) => [
+                          styles.aspectBodyInteractive,
+                          hovered && styles.aspectBodyInteractiveHovered,
+                          pressed && styles.aspectBodyInteractivePressed
+                        ]}
                         onPress={() =>
                           openDetailModal({
                             title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
@@ -958,13 +1136,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
+                          <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
                           <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   )
                 })}
@@ -1015,70 +1190,34 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
 
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Elementos (Signos + Casas):</Text>
-          <View style={styles.elementalGrid}>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Natal:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
-                  <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>
-                      {translateElement(element)} {Number(count) + (houseBasedCounts.natal.elements as any)[normalizeElementKey(element)]}
-                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.natal.elements as any)[normalizeElementKey(element)] || 0})</Text>
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Atual:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
-                  <View key={element} style={styles.elementalItem}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>
-                      {translateElement(element)} {Number(count) + (houseBasedCounts.current.elements as any)[normalizeElementKey(element)]}
-                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.current.elements as any)[normalizeElementKey(element)] || 0})</Text>
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          <Text style={styles.analysisLabel}>Elementos (Signos | Casas | Balanço):</Text>
+          <View style={styles.balanceGrid}>
+            {renderBalanceColumns({
+              periodLabel: 'Natal',
+              signRows: weightedElementRows.natal,
+              kind: 'element'
+            })}
+            {renderBalanceColumns({
+              periodLabel: 'Atual',
+              signRows: weightedElementRows.current,
+              kind: 'element'
+            })}
           </View>
         </View>
 
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Modalidades (Signos + Casas):</Text>
-          <View style={styles.elementalGrid}>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Natal:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
-                  <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>
-                      {translateModality(modality)} {Number(count) + (houseBasedCounts.natal.modalities as any)[normalizeModalityKey(modality)]}
-                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.natal.modalities as any)[normalizeModalityKey(modality)] || 0})</Text>
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <View style={styles.elementalComparison}>
-              <Text style={styles.comparisonLabel}>Atual:</Text>
-              <View style={styles.elementalRow}>
-                {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
-                  <View key={modality} style={styles.elementalItem}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>
-                      {translateModality(modality)} {Number(count) + (houseBasedCounts.current.modalities as any)[normalizeModalityKey(modality)]}
-                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.current.modalities as any)[normalizeModalityKey(modality)] || 0})</Text>
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          <Text style={styles.analysisLabel}>Modalidades (Signos | Casas | Balanço):</Text>
+          <View style={styles.balanceGrid}>
+            {renderBalanceColumns({
+              periodLabel: 'Natal',
+              signRows: weightedModalityRows.natal,
+              kind: 'modality'
+            })}
+            {renderBalanceColumns({
+              periodLabel: 'Atual',
+              signRows: weightedModalityRows.current,
+              kind: 'modality'
+            })}
           </View>
         </View>
       </View>
@@ -1133,6 +1272,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
+  },
+  balanceGrid: {
+    gap: 8,
+  },
+  balanceCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 10,
+  },
+  balanceColumns: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  balanceColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  balanceColumnTitle: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  balanceRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  balanceRowText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    marginLeft: 4,
+  },
+  balanceRowTextPredominant: {
+    color: '#34D399',
+    fontWeight: '700',
+  },
+  balancePredominantText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 4,
   },
   elementalGrid: {
     flexDirection: 'row',
@@ -1321,6 +1505,20 @@ const styles = StyleSheet.create({
   },
   aspectBodyInteractive: {
     flex: 1,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.01)',
+  },
+  aspectBodyInteractiveHovered: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(252, 211, 77, 0.35)',
+  },
+  aspectBodyInteractivePressed: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(252, 211, 77, 0.55)',
   },
   aspectLine: {
     flexDirection: 'row',
