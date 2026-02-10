@@ -13,6 +13,7 @@ import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
 import { mergeAreaTransits } from '../utils/transitsByArea'
+import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 
 const { width, height } = Dimensions.get('window')
 
@@ -1052,9 +1053,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
     const areaKey = String(areaData?.name || '').toLowerCase()
     const relevantAreaHouses = getRelevantHousesForArea(areaKey)
-    const areaHouseHint = relevantAreaHouses.length
-      ? relevantAreaHouses.join('/')
-      : ''
     const houseTarget =
       transit?.target?.house ||
       transit?.natalHouseImpacted ||
@@ -1067,16 +1065,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.target?.angle ||
       (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? translate('planets', String(rawTarget)) : ''
-
-    if (aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
-    if (aspect && houseTarget) return `${transitPlanet} em ${aspect} na Casa ${houseTarget}`
-    if (houseTarget) return `${transitPlanet} em trânsito na Casa ${houseTarget}`
-    if (aspect && areaHouseHint) return `${transitPlanet} em ${aspect} com foco nas Casas ${areaHouseHint}`
-    if (areaHouseHint) return `${transitPlanet} em trânsito com foco nas Casas ${areaHouseHint}`
-    if (aspect) return `${transitPlanet} em ${aspect}`
-    if (target) return `${transitPlanet} com ${target}`
-    if (areaKey) return `${transitPlanet} em trânsito em ${areaKey}`
-    return `${transitPlanet} em trânsito`
+    return buildSharedTransitTitle({
+      transitPlanet,
+      aspectLabel: aspect,
+      targetLabel: target,
+      houseNumber: houseTarget,
+      areaHouses: relevantAreaHouses,
+    })
   }
 
   const getTransitHouseLabel = (transit: any): string | null => {

@@ -31,6 +31,7 @@ import Avatar from "../../components/Avatar"
 import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
+import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -866,12 +867,16 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
     : targetAngle
     ? String(targetAngle)
     : targetHouse
-  if (transitPlanet && aspect && target) return `${transitPlanet} em ${aspect} com ${target}`
-  if (transitPlanet && aspect && housesFromArea) return `${transitPlanet} em ${aspect} nas Casas ${housesFromArea}`
-  if (transitPlanet && housesFromArea) return `${transitPlanet} em trânsito nas Casas ${housesFromArea}`
-  if (transitPlanet && target) return `${transitPlanet} com ${target}`
-  if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
-  return transitPlanet ? `${transitPlanet} em transito` : "Transito ativo"
+  const areaHouses = housesFromArea
+    ? housesFromArea.split("/").map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : []
+  return buildSharedTransitTitle({
+    transitPlanet,
+    aspectLabel: aspect,
+    targetLabel: target,
+    houseNumber: targetHouse.replace("Casa ", ""),
+    areaHouses,
+  })
 }
 
 const getTransitTechnicalTypeLabel = (transit: any) => {

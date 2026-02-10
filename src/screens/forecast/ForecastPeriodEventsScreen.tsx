@@ -2,6 +2,7 @@
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import TransitInsightCard from '../../components/TransitInsightCard'
+import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 
 type ForecastEvent = {
   id: string
@@ -80,10 +81,15 @@ function buildEventTitle(event: ForecastEvent) {
   const transitPlanet = String(event.transitPlanet || '').trim()
   const natalPoint = String(event.natalPoint || '').trim()
   const aspect = normalizeAspectLabel(event.aspect || '')
-  if (transitPlanet && aspect && natalPoint) return `${transitPlanet} em ${aspect} com ${natalPoint}`
-  if (transitPlanet && natalPoint) return `${transitPlanet} com ${natalPoint}`
-  if (transitPlanet && aspect) return `${transitPlanet} em ${aspect}`
-  return event.shortText || 'Transito ativo'
+  const houseNumber =
+    extractHouseNumber((natalPoint.match(/(?:casa|house)\s*(\d{1,2})/i) || [])[1] || null) ||
+    null
+  return buildSharedTransitTitle({
+    transitPlanet,
+    aspectLabel: aspect,
+    targetLabel: natalPoint,
+    houseNumber,
+  })
 }
 
 function buildDirectEventText(event: ForecastEvent) {
