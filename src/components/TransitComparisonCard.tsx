@@ -373,7 +373,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
   const resolveWindowInfo = (
     window: { start?: string; exact?: string; end?: string; days?: number } | undefined
-  ): { days: number | null; startLabel: string | null; endLabel: string | null; phaseLabel: string | null } | null => {
+  ): {
+    days: number | null
+    startLabel: string | null
+    endLabel: string | null
+    phaseLabel: string | null
+    daysToPeak: number | null
+  } | null => {
     if (!window) return null
     const startDate = window.start ? new Date(window.start) : null
     const exactDate = window.exact ? new Date(window.exact) : null
@@ -381,32 +387,51 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     if (!startDate && !exactDate && !endDate && !window.days) return null
     const now = new Date()
     const toDayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const daysDiff = (from: Date, to: Date) => Math.max(0, Math.round((toDayStart(to).getTime() - toDayStart(from).getTime()) / 86400000))
     let phaseLabel: string | null = null
+    let daysToPeak: number | null = null
     if (exactDate && !Number.isNaN(exactDate.getTime())) {
       const nowDay = toDayStart(now).getTime()
       const exactDay = toDayStart(exactDate).getTime()
       if (nowDay === exactDay) phaseLabel = 'Pico'
       else if (nowDay < exactDay) phaseLabel = 'Em aprox'
       else phaseLabel = 'Afastando'
+      daysToPeak = daysDiff(now, exactDate)
     } else if (startDate && !Number.isNaN(startDate.getTime())) {
       phaseLabel = now.getTime() < startDate.getTime() ? 'Em aprox' : 'Afastando'
+      daysToPeak = now.getTime() < startDate.getTime() ? daysDiff(now, startDate) : null
     }
     return {
       days: typeof window.days === 'number' ? window.days : null,
       startLabel: formatDate(startDate),
       endLabel: formatDate(endDate),
-      phaseLabel
+      phaseLabel,
+      daysToPeak
     }
   }
 
   const formatWindowInline = React.useCallback(
-    (windowInfo: { days: number | null; startLabel: string | null; endLabel: string | null; phaseLabel: string | null } | null) => {
+    (windowInfo: {
+      days: number | null
+      startLabel: string | null
+      endLabel: string | null
+      phaseLabel: string | null
+      daysToPeak: number | null
+    } | null) => {
       if (!windowInfo) return 'Em curso'
       const parts: string[] = []
-      if (windowInfo.phaseLabel) parts.push(windowInfo.phaseLabel)
-      if (windowInfo.days) parts.push(`${windowInfo.days}d`)
+      if (windowInfo.phaseLabel === 'Em aprox') {
+        const lead = typeof windowInfo.daysToPeak === 'number' ? windowInfo.daysToPeak : windowInfo.days
+        parts.push(`Em aprox${typeof lead === 'number' ? ` (${lead}d)` : ''}`)
+      } else if (windowInfo.phaseLabel) {
+        parts.push(windowInfo.phaseLabel)
+      }
       if (windowInfo.startLabel) parts.push(`Início ${windowInfo.startLabel}`)
       if (windowInfo.endLabel) parts.push(`Fim ${windowInfo.endLabel}`)
+      if (windowInfo.phaseLabel === 'Pico') {
+        const lead = typeof windowInfo.daysToPeak === 'number' ? windowInfo.daysToPeak : 0
+        parts.push(`faltam ${lead} dias`)
+      }
       return parts.length ? parts.join(' • ') : 'Em curso'
     },
     []
@@ -932,7 +957,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Trânsito c/ Natal',
+                          contextLabel: 'Leitura Trânsito Pessoal',
                           signLabel,
                           signElement: translateElement(comparison.current.element),
                           signModality: translateModality(comparison.current.modality),
@@ -941,14 +966,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: transitOnNatalNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Trânsito c/ Natal`,
+                          title: `${translatePlanetName(comparison.name)} • Trânsito Pessoal`,
                           subtitle: `${signLabel} • Casa ${transitOnNatalHouse || '-'}`,
                           short: interp.short,
                           long: interp.long,
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Trânsito c/ Natal</Text>
+                      <Text style={styles.columnTitle}>Trânsito Pessoal</Text>
                       <Text style={styles.metricLine}>
                         {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
                       </Text>
@@ -983,6 +1008,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       }}
                     >
                       <Text style={styles.columnTitle}>Trânsito Coletivo</Text>
+                      <Text style={styles.metricLine}>
+                        {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
+                      </Text>
+                      {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.current.house}
                       </Text>
