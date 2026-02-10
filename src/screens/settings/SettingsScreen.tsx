@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -61,7 +61,7 @@ export default function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
-  const [houseSystem, setHouseSystem] = useState<HouseSystem>('placidus');
+  const [houseSystem, setHouseSystem] = useState<HouseSystem>('whole-sign');
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
@@ -483,10 +483,10 @@ export default function SettingsScreen() {
   }
 
   const houseSystemDescriptions: Record<HouseSystem, string> = {
-    placidus: 'Placidus (tempo/quadrantes): calcula as c√∫spides pelas divis√µes de tempo do ‚Äúarco diurno‚Äù (o quanto um ponto leva para ir do horizonte ao Meio do C√©u, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do hor√°rio.',
-    'whole-sign': 'Casas Inteiras: a Casa 1 √© o signo inteiro que cont√©m o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30¬∞), com uma divis√£o bem ‚Äúlimpa‚Äù e constante.',
-    'psychological-shift': 'Psicol√≥gico (Casas Naturais / Casa 1 = √Åries): fixa a sequ√™ncia Casa 1 = √Åries, Casa 2 = Touro‚Ä¶ (todas de 30¬∞), como um modelo simb√≥lico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
-    equal: 'Casas iguais de 30¬∞; simples e direta.',
+    placidus: 'Placidus (tempo/quadrantes): calcula as c˙spides pelas divisıes de tempo do ìarco diurnoî (o quanto um ponto leva para ir do horizonte ao Meio do CÈu, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do hor·rio.',
+    'whole-sign': 'Casas Inteiras: a Casa 1 È o signo inteiro que contÈm o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30∞), com uma divis„o bem ìlimpaî e constante.',
+    'psychological-shift': 'PsicolÛgico (Casas Naturais / Casa 1 = ¡ries): fixa a sequÍncia Casa 1 = ¡ries, Casa 2 = TouroÖ (todas de 30∞), como um modelo simbÛlico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
+    equal: 'Casas iguais de 30∞; simples e direta.',
     porphyry: 'Divide entre Ascendente e MC; boa para iniciantes.',
     regiomontanus: 'Baseada na esfera celeste; tradicional.',
     koch: 'Foco na latitude e tempo; detalhada.',
@@ -1759,4 +1759,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
 

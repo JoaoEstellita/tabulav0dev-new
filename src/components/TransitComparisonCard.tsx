@@ -7,9 +7,7 @@ import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
-import UserService from '../services/firebase/UserService'
-import { useAuth } from '../hooks/useAuth'
-import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
+import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
 import type { HouseSystem } from '../astro/houseSystem'
 
 interface TransitComparisonCardProps {
@@ -109,10 +107,9 @@ export default function TransitComparisonCard({
   showOverviewHeader = true
 }: TransitComparisonCardProps) {
   const { personal, statusPersonal } = useTransits(null)
-  const { settings, updateSettings } = useUserSettings()
-  const { user } = useAuth()
+  const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
-    normalizeHouseSystem(settings?.houseSystem || 'placidus')
+    normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
   )
 
     // Sincronizar quando as configuracoes carregarem/alterarem
@@ -121,18 +118,6 @@ export default function TransitComparisonCard({
       setHouseSystem(normalizeHouseSystem(settings.houseSystem))
     }
   }, [settings?.houseSystem])
-  const applyHouseSystem = React.useCallback(async (sys: HouseSystem) => {
-    try {
-      const normalized = normalizeHouseSystem(sys)
-      setHouseSystem(normalized)
-      await updateSettings({ houseSystem: sys })
-      ;(globalThis as any).__userHouseSystem = normalized
-      if (user?.uid) { try { await UserService.setHouseSystem(user.uid, normalized) } catch {} }
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('house-system-changed'))
-      }
-    } catch {}
-  }, [])
   const showApprox = false // placeholder: card nao recebe props de housesApproximate aqui
   const personalByTransitPlanet = React.useMemo(() => {
     const map: Record<string, typeof personal> = {}
@@ -428,21 +413,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             <Ionicons name="planet" size={20} color="#FFD700" />
             <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
           </View>
-          <View style={styles.toggleGroup}>
-            <TouchableOpacity
-              onPress={() => {
-                const idx = HOUSE_SYSTEMS.indexOf(houseSystem)
-                const next = HOUSE_SYSTEMS[(idx + 1) % HOUSE_SYSTEMS.length]
-                applyHouseSystem(next)
-              }}
-              style={[styles.toggleBtn, styles.toggleBtnActive]}
-              accessibilityRole="button"
-              accessibilityLabel="Alternar sistema de casas"
-            >
-              <Text style={[styles.toggleText, styles.toggleTextActive]}>
-                {formatHouseSystemLabel(houseSystem)}
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.systemBadge}>
+            <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem)}</Text>
           </View>
         </View>
 
@@ -833,26 +805,16 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     marginBottom: 2,
   },
-  toggleGroup: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  toggleBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+  systemBadge: {
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)'
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  toggleBtnActive: {
-    backgroundColor: 'rgba(255,215,0,0.2)'
-  },
-  toggleText: {
+  systemBadgeText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '500'
-  },
-  toggleTextActive: {
-    fontWeight: '700'
+    fontWeight: '700',
   },
   nearCuspChip: {
     marginLeft: 8,

@@ -14,7 +14,7 @@ export interface NatalAscResult {
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
 
 export class NatalAscService {
-	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'placidus'): Promise<NatalAscResult> {
+	static async computeNatalAsc(birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'whole-sign'): Promise<NatalAscResult> {
 		// Resolve timezone histórico no dia do nascimento (00:00 UTC)
 		const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
 		// Meio-dia UTC para evitar bordas de DST
@@ -59,7 +59,7 @@ export class NatalAscService {
 		}
 	}
 
-	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'placidus') {
+	static async computeAndPersist(userId: string, birthDate: string, birthTime: string, latitude: number, longitude: number, system: HouseSystem = 'whole-sign') {
 		try {
 			const result = await this.computeNatalAsc(birthDate, birthTime, latitude, longitude, system)
 			await UserService.saveNatalAsc(userId, {

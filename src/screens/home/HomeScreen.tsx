@@ -116,7 +116,8 @@ export default function HomeScreen() {
     } = useLifeAreas()
     const { settings } = useUserSettings()
     const { statusPersonal } = useTransits(null)
-    const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'placidus'))
+    const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
+    const previousHouseSystemRef = useRef<HouseSystem | null>(null)
     const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
@@ -132,12 +133,14 @@ export default function HomeScreen() {
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
-      if (settings?.houseSystem) {
-        const normalized = normalizeHouseSystem(settings.houseSystem)
-        setHouseSystem(normalized)
-        ;(globalThis as any).__userHouseSystem = normalized
+      const normalized = normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
+      setHouseSystem(normalized)
+      ;(globalThis as any).__userHouseSystem = normalized
+      if (previousHouseSystemRef.current && previousHouseSystemRef.current !== normalized) {
+        refreshData(true)
       }
-    }, [settings?.houseSystem])
+      previousHouseSystemRef.current = normalized
+    }, [settings?.houseSystem, refreshData])
 
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)

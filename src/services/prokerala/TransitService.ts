@@ -233,7 +233,7 @@ class TransitService {
       ayanamsa: 1,
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus',
+      house_system: 'whole-sign',
       orb: 'default',
       birth_time_rectification: 'flat-chart',
       la: 'en'
@@ -301,7 +301,7 @@ class TransitService {
       ayanamsa: 1,
       transit_datetime: datetime,
       current_coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
-      house_system: 'placidus',
+      house_system: 'whole-sign',
       orb: 'default',
       birth_time_rectification: 'flat-chart',
       aspect_filter: 'major',

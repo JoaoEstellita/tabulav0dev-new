@@ -97,7 +97,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       const activeHouseSystem =
         (globalThis as any).__userHouseSystem || userProfile?.preferences?.houseSystem || userProfile?.houseSystem
-      const normalizedHouseSystem = String(activeHouseSystem || 'placidus')
+      const normalizedHouseSystem = String(activeHouseSystem || 'whole-sign')
       const houseSystemChanged =
         lastHouseSystemRef.current && lastHouseSystemRef.current !== normalizedHouseSystem
       lastHouseSystemRef.current = normalizedHouseSystem

@@ -19,7 +19,7 @@ export default function BirthDataFormContainer() {
 
     try {
       await UserService.saveBirthData(user.uid, birthData)
-      // Calcula e persiste automaticamente ASC/MC/cúspides (Placidus por padrão)
+      // Calcula e persiste automaticamente ASC/MC/cúspides (Casas Inteiras por padrão)
       try {
         await NatalAscService.computeAndPersist(
           user.uid,
@@ -27,7 +27,7 @@ export default function BirthDataFormContainer() {
           birthData.birthTime,
           birthData.birthLocation.latitude,
           birthData.birthLocation.longitude,
-          'placidus'
+          'whole-sign'
         )
       } catch (e) {
         console.warn('⚠️ Não foi possível calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)

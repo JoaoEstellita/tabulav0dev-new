@@ -331,7 +331,7 @@ export class RealAstrologyEngine {
 
   private static normalizeHouseMeta(houses: HouseMeta): NormalizedHouseMeta {
     const system = normalizeHouseSystem(
-      houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus'
+      houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'whole-sign'
     )
     return {
       ...houses,
@@ -428,7 +428,7 @@ export class RealAstrologyEngine {
       const planetsWithHouses = this.assignHouses(realPlanets, this.normalizeHouseMeta(houses))
       if (process.env.NODE_ENV !== 'production') {
         try {
-          const debugSystem = normalizeHouseSystem(houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'placidus')
+          const debugSystem = normalizeHouseSystem(houses.systemEffective || houses.system || (globalThis as any).__userHouseSystem || 'whole-sign')
           console.debug('DEBUG Casas: ASC/MC', { asc: houses.ascendant, mc: houses.midheaven, system: debugSystem })
           console.debug('Ã°Å¸ÂÂ  DEBUG Cusps', houses.cusps.map((c,i)=>({ casa:i+1, cusp:c.toFixed(4) })))
           console.debug('Ã°Å¸ÂÂ  DEBUG PlanetasÃ¢â€ â€™Casa', planetsWithHouses.map(p=>({ p:p.name, lon:p.longitude.toFixed(4), casa:p.house })))
@@ -644,7 +644,7 @@ export class RealAstrologyEngine {
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,
         housesApproximate: (houses as any).approximate === true,
-        houseSystem: normalizeHouseSystem((houses as any).system || (houses as any).systemEffective || (globalThis as any).__userHouseSystem || 'placidus'),
+        houseSystem: normalizeHouseSystem((houses as any).system || (houses as any).systemEffective || (globalThis as any).__userHouseSystem || 'whole-sign'),
         collective,
         collectiveWeekly: (weekKey && RealAstrologyEngine._weeklyTTCache.get(weekKey)) ? {
           key: weekKey!,
@@ -843,7 +843,7 @@ export class RealAstrologyEngine {
       lon: longitude,
       includeHouses: true,
       // Respeitar sistema de casas escolhido pelo usuÃƒÂ¡rio (fallback 'placidus')
-        system: normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus'),
+        system: normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign'),
       natalISO: hasNatalLocal ? undefined : natalDate.toISOString(),
       natalLocal: hasNatalLocal ? options?.natalLocal : undefined,
       natalTimezone: hasNatalLocal ? options?.natalTimezone : undefined,
@@ -932,7 +932,7 @@ export class RealAstrologyEngine {
       try {
         const natalLat = options?.natalLat || latitude
         const natalLon = options?.natalLon || longitude
-        const system = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
+        const system = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
         
         const res = await computeHousesUTC(natalDate, natalLat, natalLon, system)
         natalHousesRaw = { 
@@ -962,7 +962,7 @@ export class RealAstrologyEngine {
     // CRITICO: validar ordem das cuspides (somente em debug)
     const debugEnabled = typeof window !== 'undefined' && window.location.search.includes('debug=1')
     const validateCuspsOrder = (cusps: number[], label: string, systemRaw?: HouseSystem | string) => {
-      const system = normalizeHouseSystem(systemRaw || (globalThis as any).__userHouseSystem || 'placidus')
+      const system = normalizeHouseSystem(systemRaw || (globalThis as any).__userHouseSystem || 'whole-sign')
       if (system !== 'placidus') {
         return true
       }
@@ -1012,7 +1012,7 @@ export class RealAstrologyEngine {
       houses: NormalizedHouseMeta,
       label: string
     ): NormalizedHouseMeta => {
-      const system = (houses as any).systemEffective || (houses as any).system || 'placidus'
+      const system = (houses as any).systemEffective || (houses as any).system || 'whole-sign'
       if (system !== 'placidus') {
         return houses
       }
@@ -1092,7 +1092,7 @@ export class RealAstrologyEngine {
     ): Promise<NormalizedHouseMeta> {
     // Delegar para mÃƒÂ³dulo unificado de casas do app (garante monotonicidade e fallback)
     try {
-        const system = normalizeHouseSystem(houseSystem || (globalThis as any).__userHouseSystem || 'placidus')
+        const system = normalizeHouseSystem(houseSystem || (globalThis as any).__userHouseSystem || 'whole-sign')
         const res = await computeHousesUTC(currentDate, latitude, longitude, system)
         return {
           cusps: res.cusps,
@@ -1282,7 +1282,7 @@ export class RealAstrologyEngine {
     houses: NormalizedHouseMeta
   ): RealPlanetPosition[] {
     const asc = Number.isFinite(houses.ascendant) ? houses.ascendant : houses.cusps[0]
-    const system = normalizeHouseSystem(houses.system || houses.systemEffective || (globalThis as any).__userHouseSystem || 'placidus')
+    const system = normalizeHouseSystem(houses.system || houses.systemEffective || (globalThis as any).__userHouseSystem || 'whole-sign')
     return planets.map(p => ({
       ...p,
       house: getPlanetHouse({

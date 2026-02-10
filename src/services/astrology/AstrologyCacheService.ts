@@ -46,7 +46,7 @@ class AstrologyCacheService {
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'
   
   private getCurrentHouseSystem(): string {
-    return normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
+    return normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
   }
   
   /**
@@ -440,6 +440,7 @@ class AstrologyCacheService {
 }
 
 export default new AstrologyCacheService()
+
 
 
 

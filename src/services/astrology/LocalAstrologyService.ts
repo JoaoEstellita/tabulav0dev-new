@@ -106,7 +106,7 @@ export class LocalAstrologyService {
       // 2. Calcular dados REAIS usando engine local
       console.log('🔬 Calculando dados astrológicos REAIS localmente...')
       // Ler sistema de casas persistido (fallback placidus)
-      const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
+      const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
 
       // Determinar localização atual para casas do momento
       let currentLat = birthData.birthLocation.latitude
@@ -453,7 +453,7 @@ export class LocalAstrologyService {
       const cache = await AstrologyCacheService.getCache(userId)
       
       if (cache && cache.calculatedData) {
-        const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'placidus')
+        const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
         if (cache.houseSystem && cache.houseSystem !== currentSystem) {
           return null
         }
@@ -640,3 +640,4 @@ export class LocalAstrologyService {
 }
 
 export default LocalAstrologyService
+

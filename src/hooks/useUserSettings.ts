@@ -35,7 +35,7 @@ export function useUserSettings() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        const normalized = normalizeHouseSystem(parsed.houseSystem || 'placidus')
+        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
         const merged = { ...parsed, houseSystem: normalized }
         setSettings(merged)
         try { (globalThis as any).__userHouseSystem = normalized } catch {}
@@ -48,7 +48,7 @@ export function useUserSettings() {
           language: 'pt-BR',
           timezone: 'America/Sao_Paulo',
           currency: 'BRL',
-          houseSystem: 'placidus'
+          houseSystem: 'whole-sign'
         }
         setSettings(defaultSettings)
         try { (globalThis as any).__userHouseSystem = defaultSettings.houseSystem } catch {}
@@ -76,7 +76,7 @@ export function useUserSettings() {
         language: 'pt-BR',
         timezone: 'America/Sao_Paulo',
         currency: 'BRL',
-        houseSystem: 'placidus'
+        houseSystem: 'whole-sign'
       }
       setSettings(defaultSettings)
     } finally {
@@ -123,7 +123,7 @@ export function useUserSettings() {
       language: 'pt-BR',
       timezone: 'America/Sao_Paulo',
       currency: 'BRL',
-      houseSystem: 'placidus'
+      houseSystem: 'whole-sign'
     }
     return await saveSettings(defaultSettings)
   }

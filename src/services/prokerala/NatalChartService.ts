@@ -87,7 +87,7 @@ class NatalChartService {
             datetime: `${birthData.birthDate}T${birthData.birthTime}:00`,
             coordinates: `${birthData.birthLocation.latitude},${birthData.birthLocation.longitude}`,
             ayanamsa: 1,
-            house_system: 'placidus',
+            house_system: 'whole-sign',
             orb: 'default',
             birth_time_rectification: 'flat-chart',
             aspect_filter: 'major',
