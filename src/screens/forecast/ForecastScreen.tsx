@@ -610,7 +610,6 @@ export default function ForecastScreen() {
             const cachedPayload = cachedRange?.payload as Record<string, DayStatusResponse> | undefined
             if (cachedPayload && cachedAt && Date.now() - cachedAt < FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS) {
               setDayStatusByDate(cachedPayload)
-              setLastStatusUpdatedAt(new Date().toISOString())
               return
             }
           }
@@ -633,7 +632,6 @@ export default function ForecastScreen() {
               nextMap[day.date] = day
             })
           setDayStatusByDate(nextMap)
-          setLastStatusUpdatedAt(new Date().toISOString())
           AsyncStorage.setItem(rangeCacheKey, JSON.stringify({ cachedAt: Date.now(), payload: nextMap })).catch(() => null)
         }
       } catch (rangeError) {
@@ -1094,7 +1092,6 @@ export default function ForecastScreen() {
 
   useEffect(() => {
     setSelectedEventDetailId(null)
-    setShowAllDayEvents(false)
   }, [selectedDateKey])
 
   const openEventDetail = useCallback((eventId: string) => {
