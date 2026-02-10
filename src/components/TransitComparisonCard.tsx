@@ -18,6 +18,7 @@ interface TransitComparisonCardProps {
   natalAscendant?: number
   natalMidheaven?: number
   housesCusps?: number[]
+  natalHousesCusps?: number[]
   lifeAreas?: Record<string, any>
   lifeAreasDebug?: Record<string, any>
   personalWindows?: Array<{
@@ -101,6 +102,7 @@ export default function TransitComparisonCard({
   natalAscendant,
   natalMidheaven,
   housesCusps,
+  natalHousesCusps,
   lifeAreas,
   lifeAreasDebug,
   personalWindows,
@@ -224,6 +226,21 @@ const getSignFromDegree = (degree: number): string => {
   return signs[signIndex]
 }
 
+const SIGN_INFO: Record<string, { element: string; modality: string }> = {
+  'Áries': { element: 'Fogo', modality: 'Cardeal' },
+  'Touro': { element: 'Terra', modality: 'Fixo' },
+  'Gêmeos': { element: 'Ar', modality: 'Mutável' },
+  'Câncer': { element: 'Água', modality: 'Cardeal' },
+  'Leão': { element: 'Fogo', modality: 'Fixo' },
+  'Virgem': { element: 'Terra', modality: 'Mutável' },
+  'Libra': { element: 'Ar', modality: 'Cardeal' },
+  'Escorpião': { element: 'Água', modality: 'Fixo' },
+  'Sagitário': { element: 'Fogo', modality: 'Mutável' },
+  'Capricórnio': { element: 'Terra', modality: 'Cardeal' },
+  'Aquário': { element: 'Ar', modality: 'Fixo' },
+  'Peixes': { element: 'Água', modality: 'Mutável' },
+}
+
 const translateAspectLabel = (type: string): string => {
   const key = normalizeKey(type)
   const map: Record<string, string> = {
@@ -306,6 +323,33 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       return null
     }
   }, [housesCusps])
+
+  const getHouseFromCusps = React.useCallback((longitude: number, cusps?: number[] | null): number | null => {
+    try {
+      if (!cusps || cusps.length !== 12) return null
+      const norm = (d: number) => ((d % 360) + 360) % 360
+      const lon = norm(longitude)
+      for (let i = 0; i < 12; i++) {
+        const start = norm(cusps[i])
+        const end = norm(cusps[(i + 1) % 12])
+        const inHouse = start < end ? lon >= start && lon < end : lon >= start || lon < end
+        if (inHouse) return i + 1
+      }
+      return 1
+    } catch {
+      return null
+    }
+  }, [])
+
+  const getHouseSignInfo = React.useCallback((house: number | null, cusps?: number[] | null) => {
+    if (!house || !cusps || cusps.length !== 12) return null
+    const cuspDegree = Number(cusps[house - 1])
+    if (!Number.isFinite(cuspDegree)) return null
+    const sign = getSignFromDegree(cuspDegree)
+    const info = SIGN_INFO[sign]
+    if (!info) return null
+    return { sign, ...info }
+  }, [])
 
   const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
   if (!lifeAreasDebug || typeof lifeAreasDebug !== 'object') return []
@@ -445,6 +489,25 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <Text style={styles.attributeChipText}>{translateModality(comparison.natal.modality)}</Text>
                   </View>
                 </View>
+                {(() => {
+                  const info = getHouseSignInfo(comparison.natal.house, natalHousesCusps)
+                  if (!info) return null
+                  return (
+                    <View style={styles.attributesRow}>
+                      <View style={styles.attributeChip}>
+                        <Text style={styles.attributeChipText}>Casa em {info.sign}</Text>
+                      </View>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.element}</Text>
+                      </View>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.modality}</Text>
+                      </View>
+                    </View>
+                  )
+                })()}
               </View>
 
               <View style={styles.comparisonColumn}>
@@ -473,8 +536,52 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <Text style={styles.attributeChipText}>{translateModality(comparison.current.modality)}</Text>
                   </View>
                 </View>
+                {(() => {
+                  const info = getHouseSignInfo(comparison.current.house, housesCusps)
+                  if (!info) return null
+                  return (
+                    <View style={styles.attributesRow}>
+                      <View style={styles.attributeChip}>
+                        <Text style={styles.attributeChipText}>Casa em {info.sign}</Text>
+                      </View>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.element}</Text>
+                      </View>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.modality}</Text>
+                      </View>
+                    </View>
+                  )
+                })()}
               </View>
             </View>
+
+            {(() => {
+              const transitOnNatalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
+              if (!transitOnNatalHouse) return null
+              const info = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
+              return (
+                <View style={styles.transitOnNatalCard}>
+                  <Text style={styles.columnTitle}>Trânsito na casa natal</Text>
+                  <Text style={styles.positionText}>Casa {transitOnNatalHouse}</Text>
+                  {info ? <Text style={styles.houseText}>Cúspide em {info.sign}</Text> : null}
+                  {info ? (
+                    <View style={styles.attributesRow}>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.element}</Text>
+                      </View>
+                      <View style={styles.attributeChip}>
+                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
+                        <Text style={styles.attributeChipText}>{info.modality}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              )
+            })()}
 
                         {/* Transitos pessoais para este planeta em transito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
@@ -734,6 +841,15 @@ const styles = StyleSheet.create({
   comparisonGrid: {
     flexDirection: 'row',
     marginBottom: 16,
+  },
+  transitOnNatalCard: {
+    marginTop: -6,
+    marginBottom: 12,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   comparisonColumn: {
     flex: 1,

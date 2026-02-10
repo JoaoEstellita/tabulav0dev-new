@@ -571,6 +571,7 @@ export default function HomeScreen() {
                   natalAscendant={transitData.currentTransits.natalAscendant}
                   natalMidheaven={transitData.currentTransits.natalMidheaven}
                   housesCusps={transitData.currentTransits.houses}
+                  natalHousesCusps={transitData.currentTransits.natalHouses}
                   lifeAreas={lifeAreasForDisplay || transitData.lifeAreas}
                   lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
