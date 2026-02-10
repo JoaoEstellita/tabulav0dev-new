@@ -471,117 +471,54 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </Text>
             </View>
 
-            {/* Compara\u00E7\u00E3o Natal vs Trânsito */}
+            {/* Comparacao em 3 colunas: Natal | Transito c/ Natal | Posicao Atual */}
             <View style={styles.comparisonGrid}>
-              <View style={styles.comparisonColumn}>
-                <Text style={styles.columnTitle}>Natal</Text>
-                <Text style={styles.positionText}>
-                  {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
-                </Text>
-                <Text style={styles.houseText}>Casa {comparison.natal.house}</Text>
-                <View style={styles.attributesRow}>
-                  <View style={styles.attributeChip}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.natal.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                    <Text style={styles.attributeChipText}>{translateElement(comparison.natal.element)}</Text>
-                  </View>
-                  <View style={styles.attributeChip}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(comparison.natal.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                    <Text style={styles.attributeChipText}>{translateModality(comparison.natal.modality)}</Text>
-                  </View>
-                </View>
-                {(() => {
-                  const info = getHouseSignInfo(comparison.natal.house, natalHousesCusps)
-                  if (!info) return null
-                  return (
-                    <View style={styles.attributesRow}>
-                      <View style={styles.attributeChip}>
-                        <Text style={styles.attributeChipText}>Casa em {info.sign}</Text>
-                      </View>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.element}</Text>
-                      </View>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.modality}</Text>
-                      </View>
+              {(() => {
+                const natalHouseInfo = getHouseSignInfo(comparison.natal.house, natalHousesCusps)
+                const currentHouseInfo = getHouseSignInfo(comparison.current.house, housesCusps)
+                const transitOnNatalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
+                const transitOnNatalInfo = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
+                const currentSignLine = `${formatDegreeInSign(comparison.current.longitude)} ${getSignFromDegree(comparison.current.longitude)} ${translateElement(comparison.current.element)} ${translateModality(comparison.current.modality)}${comparison.current.isRetrograde ? ' (Rx)' : ''}`
+                return (
+                  <>
+                    <View style={styles.comparisonColumn}>
+                      <Text style={styles.columnTitle}>Natal</Text>
+                      <Text style={styles.metricLine}>
+                        {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)} {translateElement(comparison.natal.element)} {translateModality(comparison.natal.modality)}
+                      </Text>
+                      <Text style={styles.metricLineStrong}>
+                        Casa {comparison.natal.house} {natalHouseInfo?.element || '-'} {natalHouseInfo?.modality || '-'}
+                      </Text>
                     </View>
-                  )
-                })()}
-              </View>
 
-              <View style={styles.comparisonColumn}>
-              <Text style={styles.columnTitle}>Trânsito</Text>
-                <Text style={styles.positionText}>
-                  {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}
-                  {comparison.current.isRetrograde && ' (Rx)'}
-                </Text>
-                <Text style={styles.houseText}>Casa {comparison.current.house}</Text>
-                {(() => {
-                  const info = nearestCuspInfo(comparison.current.longitude)
-                  if (info && info.distance <= 0.5) {
-                    return (
-                      <Text style={styles.nearCuspChip}>{`pr\u00F3x. cúspide ${info.house} (${info.distance.toFixed(2)} graus)`}</Text>
-                    )
-                  }
-                  return null
-                })()}
-                <View style={styles.attributesRow}>
-                  <View style={styles.attributeChip}>
-                    <Ionicons name={ELEMENT_ICONS[normalizeElementKey(comparison.current.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                    <Text style={styles.attributeChipText}>{translateElement(comparison.current.element)}</Text>
-                  </View>
-                  <View style={styles.attributeChip}>
-                    <Ionicons name={MODALITY_ICONS[normalizeModalityKey(comparison.current.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                    <Text style={styles.attributeChipText}>{translateModality(comparison.current.modality)}</Text>
-                  </View>
-                </View>
-                {(() => {
-                  const info = getHouseSignInfo(comparison.current.house, housesCusps)
-                  if (!info) return null
-                  return (
-                    <View style={styles.attributesRow}>
-                      <View style={styles.attributeChip}>
-                        <Text style={styles.attributeChipText}>Casa em {info.sign}</Text>
-                      </View>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.element}</Text>
-                      </View>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.modality}</Text>
-                      </View>
+                    <View style={styles.comparisonColumn}>
+                      <Text style={styles.columnTitle}>Trânsito c/ Natal</Text>
+                      <Text style={styles.metricLine}>{currentSignLine}</Text>
+                      <Text style={styles.metricLineStrong}>
+                        Casa {transitOnNatalHouse || '-'} {transitOnNatalInfo?.element || '-'} {transitOnNatalInfo?.modality || '-'}
+                      </Text>
                     </View>
-                  )
-                })()}
-              </View>
+
+                    <View style={styles.comparisonColumn}>
+                      <Text style={styles.columnTitle}>Posição Atual</Text>
+                      <Text style={styles.metricLine}>{currentSignLine}</Text>
+                      <Text style={styles.metricLineStrong}>
+                        Casa {comparison.current.house} {currentHouseInfo?.element || '-'} {currentHouseInfo?.modality || '-'}
+                      </Text>
+                      {(() => {
+                        const info = nearestCuspInfo(comparison.current.longitude)
+                        if (info && info.distance <= 0.5) {
+                          return (
+                            <Text style={styles.nearCuspChip}>{`próx. cúspide ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
+                          )
+                        }
+                        return null
+                      })()}
+                    </View>
+                  </>
+                )
+              })()}
             </View>
-
-            {(() => {
-              const transitOnNatalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
-              if (!transitOnNatalHouse) return null
-              const info = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
-              return (
-                <View style={styles.transitOnNatalCard}>
-                  <Text style={styles.columnTitle}>Trânsito na casa natal</Text>
-                  <Text style={styles.positionText}>Casa {transitOnNatalHouse}</Text>
-                  {info ? <Text style={styles.houseText}>Cúspide em {info.sign}</Text> : null}
-                  {info ? (
-                    <View style={styles.attributesRow}>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={ELEMENT_ICONS[normalizeElementKey(info.element)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.element}</Text>
-                      </View>
-                      <View style={styles.attributeChip}>
-                        <Ionicons name={MODALITY_ICONS[normalizeModalityKey(info.modality)] || FALLBACK_ICON} size={12} color="#FFD700" />
-                        <Text style={styles.attributeChipText}>{info.modality}</Text>
-                      </View>
-                    </View>
-                  ) : null}
-                </View>
-              )
-            })()}
 
                         {/* Transitos pessoais para este planeta em transito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
@@ -840,26 +777,38 @@ const styles = StyleSheet.create({
   },
   comparisonGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  transitOnNatalCard: {
-    marginTop: -6,
-    marginBottom: 12,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
   comparisonColumn: {
-    flex: 1,
-    paddingHorizontal: 8,
+    width: '32%',
+    minWidth: 210,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 8,
   },
   columnTitle: {
     color: '#A0A0A0',
     fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 6,
+  },
+  metricLine: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  metricLineStrong: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
   },
   positionText: {
     color: '#FFFFFF',
