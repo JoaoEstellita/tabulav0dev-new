@@ -1070,10 +1070,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitCurrentHouseLabel = (transit: any): string | null => {
+    const planetCurrentHouse =
+      safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null
     const houseValue =
+      planetCurrentHouse ??
       transit?.transitHouse ??
       transit?.currentHouse ??
-      (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
+      null
     const numericHouse = Number(houseValue)
     if (!Number.isFinite(numericHouse) || numericHouse < 1 || numericHouse > 12) return null
     return String(Math.round(numericHouse))
