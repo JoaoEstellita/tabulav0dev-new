@@ -609,12 +609,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         Casa {comparison.natal.house}
                       </Text>
                       {renderAttributeChips(natalNaturalInfo?.element || null, natalNaturalInfo?.modality || null)}
-                      <Text style={styles.metricHint}>
-                        Casa por cúspide (cálculo): {natalHouseInfo?.sign || '-'} • {natalHouseInfo?.element || '-'} {natalHouseInfo?.modality || '-'}
-                      </Text>
-                      <Text style={styles.metricHint}>
-                        Casa natural (arquétipo): {natalNaturalInfo?.sign || '-'} • {natalNaturalInfo?.element || '-'} {natalNaturalInfo?.modality || '-'}
-                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -649,12 +643,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         Casa {transitOnNatalHouse || '-'}
                       </Text>
                       {renderAttributeChips(transitOnNatalNaturalInfo?.element || null, transitOnNatalNaturalInfo?.modality || null)}
-                      <Text style={styles.metricHint}>
-                        Casa por cúspide (cálculo): {transitOnNatalInfo?.sign || '-'} • {transitOnNatalInfo?.element || '-'} {transitOnNatalInfo?.modality || '-'}
-                      </Text>
-                      <Text style={styles.metricHint}>
-                        Casa natural (arquétipo): {transitOnNatalNaturalInfo?.sign || '-'} • {transitOnNatalNaturalInfo?.element || '-'} {transitOnNatalNaturalInfo?.modality || '-'}
-                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -687,12 +675,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         Casa {comparison.current.house}
                       </Text>
                       {renderAttributeChips(currentNaturalInfo?.element || null, currentNaturalInfo?.modality || null)}
-                      <Text style={styles.metricHint}>
-                        Casa por cúspide (cálculo): {currentHouseInfo?.sign || '-'} • {currentHouseInfo?.element || '-'} {currentHouseInfo?.modality || '-'}
-                      </Text>
-                      <Text style={styles.metricHint}>
-                        Casa natural (arquétipo): {currentNaturalInfo?.sign || '-'} • {currentNaturalInfo?.element || '-'} {currentNaturalInfo?.modality || '-'}
-                      </Text>
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
@@ -1042,14 +1024,14 @@ const styles = StyleSheet.create({
   },
   comparisonGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
   comparisonColumn: {
-    width: '32%',
-    minWidth: 210,
-    paddingHorizontal: 6,
+    width: '31.5%',
+    minWidth: 0,
+    paddingHorizontal: 5,
     paddingVertical: 6,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 10,
@@ -1059,21 +1041,21 @@ const styles = StyleSheet.create({
   },
   columnTitle: {
     color: '#A0A0A0',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     marginBottom: 6,
   },
   metricLine: {
     color: '#E2E8F0',
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 6,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   metricLineStrong: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   metricHint: {
     color: '#94A3B8',
