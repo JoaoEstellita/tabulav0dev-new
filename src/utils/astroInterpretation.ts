@@ -109,6 +109,29 @@ function getTargetLabel(transit: AnyTransit): string {
   return PLANET_PT[raw] || raw
 }
 
+function buildSeed(transit: AnyTransit): number {
+  const raw = [
+    transit?.id,
+    transit?.transitPlanet,
+    transit?.aspectName || transit?.type || transit?.aspect,
+    transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint,
+    transit?.house || transit?.target?.house || transit?.transitHouse,
+    transit?.phase,
+  ]
+    .filter(Boolean)
+    .join('|')
+  let hash = 0
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
+
+function pickVariant(seed: number, options: string[], offset = 0): string {
+  if (!options.length) return ''
+  return options[(seed + offset) % options.length]
+}
+
 function getAreaLabel(areaLabel?: string | null): string {
   const value = String(areaLabel || '').trim()
   if (!value) return 'area de vida'
@@ -166,6 +189,7 @@ export function buildAstroTransitNarrative(
   transit: AnyTransit,
   areaLabel?: string | null
 ): { directText: string; fullText: string } {
+  const seed = buildSeed(transit)
   const transitPlanetRaw = String(transit?.transitPlanet || 'Transito')
   const transitPlanet = PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const planetMeaning = PLANET_SYMBOLISM[transitPlanetRaw] || 'movimento de foco e resposta'
@@ -178,25 +202,36 @@ export function buildAstroTransitNarrative(
   const houseMeaning = house ? HOUSE_SYMBOLISM[house] : ''
   const actionHint = buildActionHint(aspectKey, house, areaLabel)
   const scoreLink = buildScoreLink(aspectKey, areaLabel)
+  const phaseVerb = pickVariant(seed, ['sinaliza', 'reforca', 'reorganiza'], 1)
+  const phaseBridge = pickVariant(seed, ['neste ciclo', 'nesta janela', 'neste momento'], 2)
+  const flowVerb = pickVariant(seed, ['orienta', 'pede', 'favorece'], 3)
 
   let directText = ''
   if (house && aspectKey === 'ingress') {
-    directText = `${transitPlanet} ingressa na Casa ${house}, ativando ${houseMeaning}. ${phaseLabel}, isso reorganiza prioridades em ${area}.`
+    directText = `${transitPlanet} ingressa na Casa ${house}, ativando ${houseMeaning}. ${phaseLabel}, isso ${phaseVerb} prioridades em ${area}.`
   } else if (house && (!aspectKey || aspectKey === 'neutral')) {
-    directText = `${transitPlanet} na Casa ${house} ativa ${houseMeaning}. ${phaseLabel}, isso muda o ritmo de decisao em ${area}.`
+    directText = `${transitPlanet} na Casa ${house} ativa ${houseMeaning}. ${phaseLabel}, isso ${flowVerb} ajuste de ritmo em ${area}.`
   } else {
-    directText = `${transitPlanet} em ${aspectKey || 'transito'} com ${targetLabel} indica ${aspectMeaning}. ${phaseLabel}, o foco recai em ${area}.`
+    directText = `${transitPlanet} em ${aspectKey || 'transito'} com ${targetLabel} indica ${aspectMeaning}. ${phaseLabel}, ${phaseBridge} o foco recai em ${area}.`
   }
   const safeDirectText = sanitizeNarrativeText(directText) || `${transitPlanet} ativa um ciclo de ajustes praticos em ${area}.`
 
   const fullParts = [
-    `Leitura tecnica: ${transitPlanet} simboliza ${planetMeaning}.`,
+    pickVariant(seed, [
+      `Leitura tecnica: ${transitPlanet} simboliza ${planetMeaning}.`,
+      `Base tecnica: ${transitPlanet} atua sobre ${planetMeaning}.`,
+      `Fundamento tecnico: ${transitPlanet} mobiliza ${planetMeaning}.`,
+    ], 4),
     house
       ? `Posicao atual: Casa ${house} (${houseMeaning}).`
       : `Alvo ativado: ${targetLabel}.`,
     `Aspecto em foco: ${aspectMeaning}.`,
     `Fase temporal: ${phaseLabel}.`,
-    `Aplicacao pratica: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
+    pickVariant(seed, [
+      `Aplicacao pratica: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
+      `Direcionamento pratico: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
+      `Uso recomendado: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
+    ], 5),
     scoreLink,
   ]
 

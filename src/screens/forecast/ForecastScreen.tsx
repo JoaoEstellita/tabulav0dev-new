@@ -76,11 +76,11 @@ const PERIODS = [7, 30, 90, 360]
 const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
-const FORECAST_CACHE_PREFIX = 'forecast_cache_v1'
+const FORECAST_CACHE_PREFIX = 'forecast_cache_v2'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
-const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v1'
+const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v2'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
-const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v1'
+const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v2'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 
 function labelFromScoreValue(score: number | null) {

@@ -40,7 +40,7 @@ class AstrologyCacheService {
   private readonly CACHE_DURATION_HOURS = 12
   private readonly MIN_REFRESH_HOURS = 6
   private readonly MAX_DAILY_REQUESTS = 2
-  private readonly DATA_VERSION = '1.3'
+  private readonly DATA_VERSION = '1.4'
   
   // Cache local (AsyncStorage) para acesso r+ípido
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'
@@ -440,6 +440,7 @@ class AstrologyCacheService {
 }
 
 export default new AstrologyCacheService()
+
 
 
 
