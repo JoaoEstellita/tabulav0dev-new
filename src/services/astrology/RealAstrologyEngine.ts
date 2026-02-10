@@ -544,7 +544,7 @@ export class RealAstrologyEngine {
       console.log('Ã¢Å“â€¦ PosiÃƒÂ§ÃƒÂµes natais e casas natais prontas')
 
       // Ã°Å¸Å’Å¸ 6. COMPARAÃƒâ€¡ÃƒÆ’O NATAL vs ATUAL
-      const planetComparisons = this.createPlanetComparisons(natalPlanets, currentOnNatalHouses, natalHouses, date)
+      const planetComparisons = this.createPlanetComparisons(natalPlanets, planetsWithHouses, houses, date)
       console.log('Ã¢Å“â€¦ ComparaÃƒÂ§ÃƒÂµes planetÃƒÂ¡rias criadas')
 
       // Ã°Å¸Å’Å¸ 7. ASPECTOS COM CASAS

@@ -853,29 +853,22 @@ const getTransitNatalHouse = (transit: any) => {
   return `Casa ${Math.round(houseNumber)}`
 }
 
-const buildTransitTitle = (transit: any, areaKey?: string) => {
+const buildTransitTitle = (transit: any, _areaKey?: string) => {
   const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "")
   const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
   const targetAngle = transit?.target?.angle
   const targetHouse = getTransitHouseTarget(transit)
-  const housesFromArea = areaKey && AREA_HOUSES[areaKey]?.length
-    ? AREA_HOUSES[areaKey].join("/")
-    : ""
   const target = targetPlanet
     ? formatPlanetLabel(targetPlanet)
     : targetAngle
     ? String(targetAngle)
     : targetHouse
-  const areaHouses = housesFromArea
-    ? housesFromArea.split("/").map((value) => Number(value)).filter((value) => Number.isFinite(value))
-    : []
   return buildSharedTransitTitle({
     transitPlanet,
     aspectLabel: aspect,
     targetLabel: target,
     houseNumber: targetHouse.replace("Casa ", ""),
-    areaHouses,
   })
 }
 
@@ -887,6 +880,13 @@ const getTransitTechnicalTypeLabel = (transit: any) => {
   const house = getTransitHouseTarget(transit)
   if (house) return `Planeta em casa (${house.replace("Casa ", "")})`
   return "Transito contextual da area"
+}
+
+const getTransitColumnKind = (transit: any): "planet" | "house" => {
+  if (transit?.target?.natalPlanet || transit?.natalPlanet || transit?.target?.angle) {
+    return "planet"
+  }
+  return "house"
 }
 
 const normalizeAspectType = (value: string) => {
@@ -1846,9 +1846,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
                         const transitHouseLabel = getTransitHouseTarget(transit)
-                        const houseLabel = natalHouseLabel || transitHouseLabel || null
-                        const houseLabelPrefix = natalHouseLabel ? "Casa natal ativada" : "Casa de trânsito"
-                        const technicalTypeLabel = getTransitTechnicalTypeLabel(transit)
+                        const houseLabel = transitHouseLabel || natalHouseLabel || null
+                        const houseLabelPrefix = transitHouseLabel ? "Casa de trânsito atual" : "Casa natal ativada"
+                        const areaHousesText = AREA_HOUSES[key]?.length ? AREA_HOUSES[key].join("/") : ""
+                        const technicalParts = [getTransitTechnicalTypeLabel(transit)]
+                        if (transitHouseLabel && natalHouseLabel && transitHouseLabel !== natalHouseLabel) {
+                          technicalParts.push(`Casa natal ativada: ${natalHouseLabel.replace("Casa ", "")}`)
+                        }
+                        if (areaHousesText) technicalParts.push(`Casas da área: ${areaHousesText}`)
+                        const technicalTypeLabel = technicalParts.join(" • ")
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
@@ -1864,6 +1870,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
                         return {
                           id: String(transit?.id || `member-transit-${index}`),
+                          columnKind: getTransitColumnKind(transit),
                           rank: computeTransitPriority(transit, areaCritical),
                           title,
                           houseLabel,
@@ -1890,6 +1897,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
                       const orderedTransits = [...baseTransits]
                         .sort((a, b) => b.rank - a.rank)
+                      const planetTransits = orderedTransits.filter((item) => item.columnKind === "planet")
+                      const houseTransits = orderedTransits.filter((item) => item.columnKind === "house")
 
                       return (
                         <>
@@ -1899,48 +1908,105 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               {orderedTransits.length} transitos na area
                             </Text>
                           </View>
-                          {orderedTransits.map((item, index) => (
-                            <TransitInsightCard
-                              key={item.id}
-                              indexLabel={`#${index + 1}`}
-                              statusLabel={item.statusLabel}
-                              statusColor={item.statusColor}
-                              title={item.title}
-                              houseLabel={item.houseLabel}
-                              houseLabelPrefix={item.houseLabelPrefix}
-                              technicalTypeLabel={item.technicalTypeLabel}
-                              timingLabel={item.timingLabel}
-                              directText={item.directText}
-                              impactValue01={item.impactValue01}
-                              fullExpanded={false}
-                              onToggleFull={() => {}}
-                              detailMode="modal"
-                              onOpenDetailModal={() => {
-                                const fullText = item.fullLines.join("\n\n")
-                                const intensityLabel = item.impactValue01 >= 0.75
-                                  ? "Impacto forte"
-                                  : item.impactValue01 >= 0.45
-                                  ? "Impacto moderado"
-                                  : "Impacto leve"
-                                setSelectedMemberTransitDetail({
-                                  title: item.title,
-                                  statusLabel: item.statusLabel,
-                                  statusColor: item.statusColor,
-                                  timingLabel: item.timingLabel,
-                                  directText: item.directText,
-                                  fullText,
-                                  actionText: item.actionText,
-                                  metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
-                                })
-                              }}
-                              fullTitle="Interpretacao completa"
-                              fullText=""
-                              actionText={item.actionText}
-                              metaText={item.metaText}
-                              variant="dark"
-                              featured={index < 2}
-                            />
-                          ))}
+                          <View style={styles.memberTransitColumns}>
+                            <View style={styles.memberTransitColumn}>
+                              <View style={styles.memberTransitColumnHeader}>
+                                <Text style={styles.memberTransitColumnTitle}>Planeta x Planeta/Ponto</Text>
+                                <Text style={styles.memberTransitColumnMeta}>{planetTransits.length}</Text>
+                              </View>
+                              {planetTransits.map((item, index) => (
+                                <TransitInsightCard
+                                  key={item.id}
+                                  indexLabel={`#${index + 1}`}
+                                  statusLabel={item.statusLabel}
+                                  statusColor={item.statusColor}
+                                  title={item.title}
+                                  houseLabel={item.houseLabel}
+                                  houseLabelPrefix={item.houseLabelPrefix}
+                                  technicalTypeLabel={item.technicalTypeLabel}
+                                  timingLabel={item.timingLabel}
+                                  directText={item.directText}
+                                  impactValue01={item.impactValue01}
+                                  fullExpanded={false}
+                                  onToggleFull={() => {}}
+                                  detailMode="modal"
+                                  onOpenDetailModal={() => {
+                                    const fullText = item.fullLines.join("\n\n")
+                                    const intensityLabel = item.impactValue01 >= 0.75
+                                      ? "Impacto forte"
+                                      : item.impactValue01 >= 0.45
+                                      ? "Impacto moderado"
+                                      : "Impacto leve"
+                                    setSelectedMemberTransitDetail({
+                                      title: item.title,
+                                      statusLabel: item.statusLabel,
+                                      statusColor: item.statusColor,
+                                      timingLabel: item.timingLabel,
+                                      directText: item.directText,
+                                      fullText,
+                                      actionText: item.actionText,
+                                      metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
+                                    })
+                                  }}
+                                  fullTitle="Interpretacao completa"
+                                  fullText=""
+                                  actionText={item.actionText}
+                                  metaText={item.metaText}
+                                  variant="dark"
+                                  featured={index < 2}
+                                />
+                              ))}
+                            </View>
+
+                            <View style={styles.memberTransitColumn}>
+                              <View style={styles.memberTransitColumnHeader}>
+                                <Text style={styles.memberTransitColumnTitle}>Planeta x Casa/Contexto</Text>
+                                <Text style={styles.memberTransitColumnMeta}>{houseTransits.length}</Text>
+                              </View>
+                              {houseTransits.map((item, index) => (
+                                <TransitInsightCard
+                                  key={item.id}
+                                  indexLabel={`#${index + 1}`}
+                                  statusLabel={item.statusLabel}
+                                  statusColor={item.statusColor}
+                                  title={item.title}
+                                  houseLabel={item.houseLabel}
+                                  houseLabelPrefix={item.houseLabelPrefix}
+                                  technicalTypeLabel={item.technicalTypeLabel}
+                                  timingLabel={item.timingLabel}
+                                  directText={item.directText}
+                                  impactValue01={item.impactValue01}
+                                  fullExpanded={false}
+                                  onToggleFull={() => {}}
+                                  detailMode="modal"
+                                  onOpenDetailModal={() => {
+                                    const fullText = item.fullLines.join("\n\n")
+                                    const intensityLabel = item.impactValue01 >= 0.75
+                                      ? "Impacto forte"
+                                      : item.impactValue01 >= 0.45
+                                      ? "Impacto moderado"
+                                      : "Impacto leve"
+                                    setSelectedMemberTransitDetail({
+                                      title: item.title,
+                                      statusLabel: item.statusLabel,
+                                      statusColor: item.statusColor,
+                                      timingLabel: item.timingLabel,
+                                      directText: item.directText,
+                                      fullText,
+                                      actionText: item.actionText,
+                                      metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
+                                    })
+                                  }}
+                                  fullTitle="Interpretacao completa"
+                                  fullText=""
+                                  actionText={item.actionText}
+                                  metaText={item.metaText}
+                                  variant="dark"
+                                  featured={index < 2}
+                                />
+                              ))}
+                            </View>
+                          </View>
 
                           <TouchableOpacity
                             style={styles.memberCalcToggle}
@@ -2320,6 +2386,36 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 11,
     fontWeight: "600",
+  },
+  memberTransitColumns: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  memberTransitColumn: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 360,
+    minWidth: 260,
+  },
+  memberTransitColumnHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  memberTransitColumnTitle: {
+    color: "#E2E8F0",
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  memberTransitColumnMeta: {
+    color: "#94A3B8",
+    fontSize: 11,
+    fontWeight: "700",
   },
   memberCalcToggle: {
     marginTop: 8,

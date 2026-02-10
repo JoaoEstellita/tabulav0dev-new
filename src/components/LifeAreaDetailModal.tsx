@@ -1051,14 +1051,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
-    const areaKey = String(areaData?.name || '').toLowerCase()
-    const relevantAreaHouses = getRelevantHousesForArea(areaKey)
     const houseTarget =
-      transit?.target?.house ||
-      transit?.natalHouseImpacted ||
       transit?.house ||
-      transit?.natalHouse ||
-      null
+      transit?.transitHouse ||
+      (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
     const rawTarget =
       transit?.natalPlanet ||
       transit?.target?.natalPlanet ||
@@ -1070,40 +1066,49 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       aspectLabel: aspect,
       targetLabel: target,
       houseNumber: houseTarget,
-      areaHouses: relevantAreaHouses,
     })
   }
 
-  const getTransitHouseLabel = (transit: any): string | null => {
-    const areaKey = String(areaData?.name || '').toLowerCase()
-    const relevantAreaHouses = getRelevantHousesForArea(areaKey)
+  const getTransitCurrentHouseLabel = (transit: any): string | null => {
     const houseValue =
-      transit?.target?.house ||
-      transit?.natalHouseImpacted ||
-      transit?.house ||
-      transit?.natalHouse ||
-      null
+      transit?.house ??
+      transit?.transitHouse ??
+      (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
     const numericHouse = Number(houseValue)
-    if (!Number.isFinite(numericHouse) || numericHouse < 1 || numericHouse > 12) {
-      return relevantAreaHouses.length ? relevantAreaHouses.join('/') : null
-    }
+    if (!Number.isFinite(numericHouse) || numericHouse < 1 || numericHouse > 12) return null
     return String(Math.round(numericHouse))
   }
 
-  const getTransitHousePrefix = (transit: any): string => {
+  const getTransitNatalHouseLabel = (transit: any): string | null => {
+    const natalHouse = Number(transit?.natalHouseImpacted ?? transit?.natalHouse ?? transit?.target?.house ?? null)
+    if (!Number.isFinite(natalHouse) || natalHouse < 1 || natalHouse > 12) return null
+    return String(Math.round(natalHouse))
+  }
+
+  const getAreaHousesLabel = (): string | null => {
     const areaKey = String(areaData?.name || '').toLowerCase()
     const relevantAreaHouses = getRelevantHousesForArea(areaKey)
-    const natalHouse = Number(transit?.natalHouseImpacted ?? transit?.natalHouse)
-    if (Number.isFinite(natalHouse) && natalHouse >= 1 && natalHouse <= 12) return 'Casa natal ativada'
-    if (relevantAreaHouses.length) return 'Casas da área'
+    return relevantAreaHouses.length ? relevantAreaHouses.join('/') : null
+  }
+
+  const getTransitHouseLabel = (transit: any): string | null => {
+    return getTransitCurrentHouseLabel(transit) || getTransitNatalHouseLabel(transit)
+  }
+
+  const getTransitHousePrefix = (transit: any): string => {
+    const currentHouse = getTransitCurrentHouseLabel(transit)
+    if (currentHouse) return 'Casa de trânsito atual'
+    const natalHouse = getTransitNatalHouseLabel(transit)
+    if (natalHouse) return 'Casa natal ativada'
     return 'Casa de trânsito'
   }
 
   const getTransitTechnicalTypeLabel = (transit: any): string => {
     const targetNatalPlanet = transit?.target?.natalPlanet || transit?.natalPlanet
-    if (targetNatalPlanet) return 'Aspecto com planeta natal'
+    let base = 'Trânsito contextual da área'
+    if (targetNatalPlanet) base = 'Aspecto com planeta natal'
     const targetAngle = transit?.target?.angle
-    if (targetAngle) return `Aspecto com ângulo (${String(targetAngle).toUpperCase()})`
+    if (targetAngle) base = `Aspecto com ângulo (${String(targetAngle).toUpperCase()})`
     const houseValue =
       transit?.target?.house ??
       transit?.natalHouseImpacted ??
@@ -1111,9 +1116,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.natalHouse
     const houseNumber = Number(houseValue)
     if (Number.isFinite(houseNumber) && houseNumber >= 1 && houseNumber <= 12) {
-      return `Planeta em casa (${Math.round(houseNumber)})`
+      base = `Planeta em casa (${Math.round(houseNumber)})`
     }
-    return 'Trânsito contextual da área'
+    const details: string[] = []
+    const natalHouse = getTransitNatalHouseLabel(transit)
+    const currentHouse = getTransitCurrentHouseLabel(transit)
+    const areaHouses = getAreaHousesLabel()
+    if (currentHouse && natalHouse && currentHouse !== natalHouse) {
+      details.push(`Casa natal ativada: ${natalHouse}`)
+    }
+    if (areaHouses) details.push(`Casas da área: ${areaHouses}`)
+    return [base, ...details].join(' • ')
   }
 
   const getPhaseLabel = (transit: any) => {
@@ -1328,8 +1341,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return score
   }
 
+  const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
+    const hasPlanetOrAngleTarget =
+      !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
+    if (hasPlanetOrAngleTarget) return 'planet'
+    return 'house'
+  }
+
   const renderTransitsSection = () => {
     const orderedTransits = [...transitItems].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
+    const planetTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'planet')
+    const houseTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'house')
+    const isWideLayout = width >= 980
 
     return (
       <View style={styles.section}>
@@ -1345,7 +1368,35 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               <Text style={styles.subsectionLabel}>Lista de trânsitos</Text>
               <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos na área</Text>
             </View>
-            {renderTransitList(orderedTransits, 0, false)}
+            <View style={[styles.transitColumnsWrap, isWideLayout ? styles.transitColumnsWide : styles.transitColumnsStack]}>
+              <View style={styles.transitColumn}>
+                <View style={styles.transitColumnHeader}>
+                  <Text style={styles.transitColumnTitle}>Planeta x Planeta/Ponto</Text>
+                  <Text style={styles.transitColumnMeta}>{planetTransits.length}</Text>
+                </View>
+                {planetTransits.length ? (
+                  renderTransitList(planetTransits, 0, false)
+                ) : (
+                  <View style={styles.columnEmptyState}>
+                    <Text style={styles.columnEmptyText}>Sem trânsitos deste tipo agora.</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.transitColumn}>
+                <View style={styles.transitColumnHeader}>
+                  <Text style={styles.transitColumnTitle}>Planeta x Casa/Contexto</Text>
+                  <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
+                </View>
+                {houseTransits.length ? (
+                  renderTransitList(houseTransits, 0, false)
+                ) : (
+                  <View style={styles.columnEmptyState}>
+                    <Text style={styles.columnEmptyText}>Sem trânsitos deste tipo agora.</Text>
+                  </View>
+                )}
+              </View>
+            </View>
           </>
         )}
       </View>
@@ -1988,6 +2039,50 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     fontWeight: '600',
+  },
+  transitColumnsWrap: {
+    gap: 12,
+  },
+  transitColumnsWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  transitColumnsStack: {
+    flexDirection: 'column',
+  },
+  transitColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  transitColumnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  transitColumnTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  transitColumnMeta: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '700',
+  },
+  columnEmptyState: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 10,
+  },
+  columnEmptyText: {
+    fontSize: 12,
+    color: '#64748B',
   },
   emptyState: {
     padding: DESIGN_SYSTEM.spacing.lg,
