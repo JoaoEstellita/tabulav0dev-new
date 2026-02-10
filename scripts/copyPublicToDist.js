@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const SW_VERSION = '2026-02-10-1'
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -56,10 +57,16 @@ function ensurePwaHooks(htmlPath) {
       `  <link rel="manifest" href="/manifest.json">\n  <meta name="theme-color" content="#FFD700">\n</head>`
     )
   }
-  if (!html.includes("serviceWorker.register('/sw.js')")) {
+  const swRegistrationPattern = /navigator\.serviceWorker\.register\('\/sw\.js(?:\?v=[^']*)?'\)/
+  if (!swRegistrationPattern.test(html)) {
     html = html.replace(
       /<\/body>/i,
-      `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js').catch(() => {});\n      });\n      navigator.serviceWorker.addEventListener('controllerchange', () => {\n        if (sessionStorage.getItem('sw-reloaded')) return;\n        sessionStorage.setItem('sw-reloaded', '1');\n        window.location.reload();\n      });\n    }\n  </script>\n</body>`
+      `  <script>\n    if ('serviceWorker' in navigator) {\n      window.addEventListener('load', () => {\n        navigator.serviceWorker.register('/sw.js?v=${SW_VERSION}').catch(() => {});\n      });\n      navigator.serviceWorker.addEventListener('controllerchange', () => {\n        if (sessionStorage.getItem('sw-reloaded')) return;\n        sessionStorage.setItem('sw-reloaded', '1');\n        window.location.reload();\n      });\n    }\n  </script>\n</body>`
+    )
+  } else {
+    html = html.replace(
+      /navigator\.serviceWorker\.register\('\/sw\.js(?:\?v=[^']*)?'\)/g,
+      `navigator.serviceWorker.register('/sw.js?v=${SW_VERSION}')`
     )
   }
   html = html.replace(/\\n\s*/g, '')

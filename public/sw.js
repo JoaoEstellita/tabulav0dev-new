@@ -1,4 +1,5 @@
-const CACHE_NAME = 'tabula-estelar-v5';
+const SW_VERSION = '2026-02-10-1';
+const CACHE_NAME = `tabula-estelar-${SW_VERSION}`;
 const urlsToCache = [
   '/',
   '/app',
