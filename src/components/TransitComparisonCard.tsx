@@ -1,5 +1,5 @@
 ﻿import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, useWindowDimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
@@ -108,6 +108,8 @@ export default function TransitComparisonCard({
   personalWindows,
   showOverviewHeader = true
 }: TransitComparisonCardProps) {
+  const { width } = useWindowDimensions()
+  const isNarrow = width < 900
   const { personal, statusPersonal } = useTransits(null)
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
@@ -181,6 +183,10 @@ const translateElement = (element: string): string => {
 
 const normalizeElementKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
 const normalizeModalityKey = (value: string): string => normalizeKey(sanitizeChangeText(value))
+const getElementIconName = (value: string): keyof typeof Ionicons.glyphMap =>
+  ELEMENT_ICONS[normalizeElementKey(value)] || FALLBACK_ICON
+const getModalityIconName = (value: string): keyof typeof Ionicons.glyphMap =>
+  MODALITY_ICONS[normalizeModalityKey(value)] || FALLBACK_ICON
 
 const translateModality = (modality: string): string => {
   const translations: Record<string, string> = {
@@ -426,6 +432,72 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     .filter(Boolean)
     .join(' • ')
 
+  const [detailModalOpen, setDetailModalOpen] = React.useState(false)
+  const [detailModalTitle, setDetailModalTitle] = React.useState('')
+  const [detailModalSubtitle, setDetailModalSubtitle] = React.useState('')
+  const [detailModalShort, setDetailModalShort] = React.useState('')
+  const [detailModalLong, setDetailModalLong] = React.useState('')
+
+  const openDetailModal = React.useCallback((params: {
+    title: string
+    subtitle?: string
+    short: string
+    long: string
+  }) => {
+    setDetailModalTitle(params.title)
+    setDetailModalSubtitle(params.subtitle || '')
+    setDetailModalShort(params.short)
+    setDetailModalLong(params.long)
+    setDetailModalOpen(true)
+  }, [])
+
+  const renderAttributeChips = React.useCallback((
+    element?: string | null,
+    modality?: string | null,
+    contextTitle?: string
+  ) => {
+    if (!element && !modality) return null
+    return (
+      <View style={styles.attributesRow}>
+        {element ? (
+          <TouchableOpacity
+            style={styles.attributeChip}
+            onPress={() =>
+              openDetailModal({
+                title: `${contextTitle || 'Leitura'} • Elemento ${translateElement(element)}`,
+                subtitle: 'Leitura simbólica',
+                short: `${translateElement(element)} indica a qualidade principal de expressão neste ponto do mapa.`,
+                long: `Neste contexto, o elemento ${translateElement(element)} descreve o estilo energético predominante. ` +
+                  `A leitura prática é observar como essa qualidade aparece em decisão, ritmo e resposta emocional. ` +
+                  `Use isso para ajustar ação e timing com mais precisão.`,
+              })
+            }
+          >
+            <Ionicons name={getElementIconName(element)} size={12} color="#FFD700" />
+            <Text style={styles.attributeChipText}>{translateElement(element)}</Text>
+          </TouchableOpacity>
+        ) : null}
+        {modality ? (
+          <TouchableOpacity
+            style={styles.attributeChip}
+            onPress={() =>
+              openDetailModal({
+                title: `${contextTitle || 'Leitura'} • Modalidade ${translateModality(modality)}`,
+                subtitle: 'Leitura simbólica',
+                short: `${translateModality(modality)} mostra como essa energia tende a agir no tempo.`,
+                long: `A modalidade ${translateModality(modality)} aponta o modo operacional do trânsito: iniciar, sustentar ou adaptar. ` +
+                  `Aplicando isso na prática, você melhora consistência e reduz decisões fora de fase.`,
+              })
+            }
+          >
+            <Ionicons name={getModalityIconName(modality)} size={12} color="#FFD700" />
+            <Text style={styles.attributeChipText}>{translateModality(modality)}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    )
+  }, [openDetailModal])
+
   return (
     <LinearGradient
       colors={['#1E1E2E', '#2A2A3E']}
@@ -455,7 +527,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Planetas em trânsito</Text>
+            <Text style={styles.sectionTitle}>Tábula Estelar</Text>
           </View>
           <View style={styles.systemBadge}>
             <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem)}</Text>
@@ -484,27 +556,35 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <View style={styles.comparisonColumn}>
                       <Text style={styles.columnTitle}>Natal</Text>
                       <Text style={styles.metricLine}>
-                        {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)} {translateElement(comparison.natal.element)} {translateModality(comparison.natal.modality)}
+                        {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
                       </Text>
+                      {renderAttributeChips(comparison.natal.element, comparison.natal.modality, `${translatePlanetName(comparison.name)} • Natal`)}
                       <Text style={styles.metricLineStrong}>
-                        Casa {comparison.natal.house} {natalHouseInfo?.element || '-'} {natalHouseInfo?.modality || '-'}
+                        Casa {comparison.natal.house}
                       </Text>
+                      {renderAttributeChips(natalHouseInfo?.element || null, natalHouseInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa Natal`)}
                     </View>
 
                     <View style={styles.comparisonColumn}>
                       <Text style={styles.columnTitle}>Trânsito c/ Natal</Text>
-                      <Text style={styles.metricLine}>{currentSignLine}</Text>
-                      <Text style={styles.metricLineStrong}>
-                        Casa {transitOnNatalHouse || '-'} {transitOnNatalInfo?.element || '-'} {transitOnNatalInfo?.modality || '-'}
+                      <Text style={styles.metricLine}>
+                        {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
                       </Text>
+                      {renderAttributeChips(comparison.current.element, comparison.current.modality, `${translatePlanetName(comparison.name)} • Trânsito c/ Natal`)}
+                      <Text style={styles.metricLineStrong}>
+                        Casa {transitOnNatalHouse || '-'}
+                      </Text>
+                      {renderAttributeChips(transitOnNatalInfo?.element || null, transitOnNatalInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa do Trânsito c/ Natal`)}
                     </View>
 
                     <View style={styles.comparisonColumn}>
                       <Text style={styles.columnTitle}>Posição Atual</Text>
                       <Text style={styles.metricLine}>{currentSignLine}</Text>
+                      {renderAttributeChips(comparison.current.element, comparison.current.modality, `${translatePlanetName(comparison.name)} • Posição Atual`)}
                       <Text style={styles.metricLineStrong}>
-                        Casa {comparison.current.house} {currentHouseInfo?.element || '-'} {currentHouseInfo?.modality || '-'}
+                        Casa {comparison.current.house}
                       </Text>
+                      {renderAttributeChips(currentHouseInfo?.element || null, currentHouseInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa Atual`)}
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
@@ -544,6 +624,22 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
                           )}
                         </View>
+                        <TouchableOpacity
+                          style={styles.readButton}
+                          onPress={() =>
+                            openDetailModal({
+                              title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
+                              subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
+                              short: `Aspecto ${translateAspectLabel(t.type)} entre ${translatePlanetName(t.transitPlanet)} e ${translatePlanetName(t.natalPlanet)} ativo neste ciclo.`,
+                              long:
+                                `Este trânsito conecta ${translatePlanetName(t.transitPlanet)} com ${translatePlanetName(t.natalPlanet)} por ${translateAspectLabel(t.type)}. ` +
+                                `A leitura completa pede observar timing, intensidade e repetição de padrão. ` +
+                                `Use a influência como contexto para decisões práticas nesta janela${windowInfo?.days ? ` de ${windowInfo.days} dias` : ''}.`,
+                            })
+                          }
+                        >
+                          <Text style={styles.readButtonText}>Abrir leitura</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   )
@@ -573,6 +669,21 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
                           )}
                         </View>
+                        <TouchableOpacity
+                          style={styles.readButton}
+                          onPress={() =>
+                            openDetailModal({
+                              title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
+                              subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
+                              short: `Aspecto coletivo ${translateAspectLabel(aspect.type)} em vigor no céu atual.`,
+                              long:
+                                `O aspecto ${translateAspectLabel(aspect.type)} entre ${translatePlanetName(aspect.planet1)} e ${translatePlanetName(aspect.planet2)} atua como pano de fundo coletivo. ` +
+                                `A interpretação prática é calibrar expectativa e escolha conforme a fase do aspecto${windowInfo?.days ? ` (janela estimada de ${windowInfo.days} dias)` : ''}.`,
+                            })
+                          }
+                        >
+                          <Text style={styles.readButtonText}>Abrir leitura</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   )
@@ -600,6 +711,22 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
                           )}
                         </View>
+                        <TouchableOpacity
+                          style={styles.readButton}
+                          onPress={() =>
+                            openDetailModal({
+                              title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
+                              subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
+                              short: `Ativação de casa ${houseAspect.house} por ${translateAspectLabel(houseAspect.aspect)}.`,
+                              long:
+                                `Quando ${translatePlanetName(comparison.name)} ativa a Casa ${houseAspect.house}, o foco recai em ${houseAspect.meaning}. ` +
+                                `A leitura precisa combina planeta, aspecto e casa para traduzir prioridade real. ` +
+                                `Use esta janela para alinhar intenção e ação concreta${windowInfo?.days ? ` em até ${windowInfo.days} dias` : ''}.`,
+                            })
+                          }
+                        >
+                          <Text style={styles.readButtonText}>Abrir leitura</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   )
@@ -609,6 +736,36 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           </View>
         ))}
       </View>
+
+      <Modal
+        visible={detailModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetailModalOpen(false)}
+      >
+        <View style={styles.detailModalBackdrop}>
+          <View style={[styles.detailModalCard, isNarrow ? styles.detailModalCardNarrow : styles.detailModalCardWide]}>
+            <View style={styles.detailModalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.detailModalTitle}>{detailModalTitle}</Text>
+                {detailModalSubtitle ? <Text style={styles.detailModalSubtitle}>{detailModalSubtitle}</Text> : null}
+              </View>
+              <TouchableOpacity onPress={() => setDetailModalOpen(false)} style={styles.detailCloseIcon}>
+                <Ionicons name="close" size={20} color="#0A1633" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.detailModalScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.detailSectionLabel}>Frase-chave</Text>
+              <Text style={styles.detailBody}>{detailModalShort}</Text>
+              <Text style={styles.detailSectionLabel}>Interpretação completa</Text>
+              <Text style={styles.detailBody}>{detailModalLong}</Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.detailModalButton} onPress={() => setDetailModalOpen(false)}>
+              <Text style={styles.detailModalButtonText}>Fechar leitura</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Resumo da carta (após planetas) */}
       <View style={styles.summarySection}>
@@ -918,6 +1075,103 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginLeft: 8,
     textAlign: 'right',
+  },
+  readButton: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(10, 22, 51, 0.5)',
+  },
+  readButtonText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 14,
+  },
+  detailModalCard: {
+    backgroundColor: '#ECE9E1',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D9C07A',
+    maxHeight: '88%',
+    width: '100%',
+  },
+  detailModalCardNarrow: {
+    maxWidth: 620,
+  },
+  detailModalCardWide: {
+    maxWidth: 840,
+  },
+  detailModalHeader: {
+    backgroundColor: '#ECE9E1',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  detailCloseIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#EFF3FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailModalTitle: {
+    color: '#0A1633',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  detailModalSubtitle: {
+    color: '#A85A12',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  detailModalScroll: {
+    backgroundColor: '#F6F7F9',
+    borderTopWidth: 1,
+    borderTopColor: '#D9C07A',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  detailSectionLabel: {
+    color: '#A85A12',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 8,
+    marginTop: 6,
+  },
+  detailBody: {
+    color: '#1F334F',
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 10,
+  },
+  detailModalButton: {
+    margin: 16,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#081A45',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailModalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '800',
   },
   // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {

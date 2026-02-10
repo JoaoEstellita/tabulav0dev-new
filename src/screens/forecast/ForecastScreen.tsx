@@ -8,6 +8,7 @@ import { Calendar } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
+import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
@@ -1248,52 +1249,28 @@ export default function ForecastScreen() {
           )}
         </ScrollView>
       )}
-      <Modal
-        visible={!!selectedEventDetailId}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setSelectedEventDetailId(null)}
-      >
-        <View style={styles.readingBackdrop}>
-          <View style={styles.readingCard}>
-            {(() => {
-              const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
-              if (!detail) return null
-              const fullText = buildFullEventInterpretation(
-                detail.event,
-                buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10))
-              )
-              return (
-                <>
-                  <View style={styles.readingHeader}>
-                    <View style={[styles.readingStatusBadge, { backgroundColor: detail.statusColor }]}>
-                      <Text style={styles.readingStatusText}>{detail.statusLabel}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.readingCloseIcon} onPress={() => setSelectedEventDetailId(null)}>
-                      <Ionicons name="close" size={16} color="#0F172A" />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.readingTitle}>{detail.title}</Text>
-                  {detail.phase ? (
-                    <Text style={styles.readingTiming}>
-                      {detail.phase.label}{detail.phase.meta ? ` - ${detail.phase.meta}` : ''}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.readingSectionTitle}>Frase-chave</Text>
-                  <Text style={styles.readingDirect}>{detail.directText}</Text>
-                  <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
-                  <Text style={styles.readingFull}>{fullText}</Text>
-                  {detail.actionHint ? <Text style={styles.readingAction}>Acao sugerida: {detail.actionHint}</Text> : null}
-                  {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
-                  <TouchableOpacity style={styles.readingCloseButton} onPress={() => setSelectedEventDetailId(null)}>
-                    <Text style={styles.readingCloseButtonText}>Fechar leitura</Text>
-                  </TouchableOpacity>
-                </>
-              )
-            })()}
-          </View>
-        </View>
-      </Modal>
+      {(() => {
+        const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
+        if (!detail) return null
+        const fullText = buildFullEventInterpretation(
+          detail.event,
+          buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10))
+        )
+        return (
+          <ReadingDetailModal
+            visible={!!selectedEventDetailId}
+            onClose={() => setSelectedEventDetailId(null)}
+            statusLabel={detail.statusLabel}
+            statusColor={detail.statusColor}
+            title={detail.title}
+            timingLabel={detail.phase ? `${detail.phase.label}${detail.phase.meta ? ` - ${detail.phase.meta}` : ''}` : null}
+            directText={detail.directText}
+            fullText={fullText}
+            actionText={detail.actionHint}
+            metaText={detail.metaText}
+          />
+        )
+      })()}
     </View>
   )
 }

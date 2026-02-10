@@ -24,6 +24,7 @@ import CoupleService, { type CoupleRelationship } from "../../services/firebase/
 import GroupNotificationService from "../../services/notifications/GroupNotificationService"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import GroupDetailModal from "../../components/GroupDetailModal"
+import ReadingDetailModal from "../../components/ReadingDetailModal"
 import GroupNotificationSettings from "../../components/GroupNotificationSettings"
 import TransitInsightCard from "../../components/TransitInsightCard"
 import InviteService from "../../services/InviteService"
@@ -2085,50 +2086,18 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         </View>
       </Modal>
 
-      <Modal
+      <ReadingDetailModal
         visible={!!selectedMemberTransitDetail}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedMemberTransitDetail(null)}
-      >
-        <View style={styles.memberReadingBackdrop}>
-          <View style={styles.memberReadingCard}>
-            {selectedMemberTransitDetail ? (
-              <>
-                <View style={styles.memberReadingHeader}>
-                  <View style={[styles.memberReadingStatusBadge, { backgroundColor: selectedMemberTransitDetail.statusColor }]}>
-                    <Text style={styles.memberReadingStatusText}>{selectedMemberTransitDetail.statusLabel}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.memberReadingCloseIcon}
-                    onPress={() => setSelectedMemberTransitDetail(null)}
-                  >
-                    <Ionicons name="close" size={16} color="#0F172A" />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.memberReadingTitle}>{selectedMemberTransitDetail.title}</Text>
-                <Text style={styles.memberReadingTiming}>{selectedMemberTransitDetail.timingLabel}</Text>
-                <Text style={styles.memberReadingSectionTitle}>Frase-chave</Text>
-                <Text style={styles.memberReadingDirect}>{selectedMemberTransitDetail.directText}</Text>
-                <Text style={styles.memberReadingSectionTitle}>Interpretacao completa</Text>
-                <Text style={styles.memberReadingFull}>{selectedMemberTransitDetail.fullText}</Text>
-                {selectedMemberTransitDetail.actionText ? (
-                  <Text style={styles.memberReadingAction}>Acao sugerida: {selectedMemberTransitDetail.actionText}</Text>
-                ) : null}
-                {selectedMemberTransitDetail.metaText ? (
-                  <Text style={styles.memberReadingMeta}>{selectedMemberTransitDetail.metaText}</Text>
-                ) : null}
-                <TouchableOpacity
-                  style={styles.memberReadingCloseButton}
-                  onPress={() => setSelectedMemberTransitDetail(null)}
-                >
-                  <Text style={styles.memberReadingCloseButtonText}>Fechar leitura</Text>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setSelectedMemberTransitDetail(null)}
+        statusLabel={selectedMemberTransitDetail?.statusLabel}
+        statusColor={selectedMemberTransitDetail?.statusColor}
+        title={selectedMemberTransitDetail?.title || ''}
+        timingLabel={selectedMemberTransitDetail?.timingLabel || null}
+        directText={selectedMemberTransitDetail?.directText || ''}
+        fullText={selectedMemberTransitDetail?.fullText || ''}
+        actionText={selectedMemberTransitDetail?.actionText || null}
+        metaText={selectedMemberTransitDetail?.metaText || null}
+      />
 
       <GroupDetailModal
         visible={showGroupDetail}
