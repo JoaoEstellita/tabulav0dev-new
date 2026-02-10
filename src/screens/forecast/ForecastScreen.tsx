@@ -291,6 +291,13 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
     : value >= STATUS_THRESHOLDS.positiveAbove
     ? 'Positivo'
     : 'Moderado'
+  const valueColor = value === null
+    ? '#FFFFFF'
+    : value < STATUS_THRESHOLDS.criticalBelow
+    ? '#DC2626'
+    : value >= STATUS_THRESHOLDS.positiveAbove
+    ? '#16A34A'
+    : '#FFFFFF'
   return (
     <TouchableOpacity
       style={[
@@ -302,7 +309,7 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
       activeOpacity={0.8}
     >
       <Text style={styles.areaPillLabel} numberOfLines={1}>{label}</Text>
-      <Text style={styles.areaPillValue}>
+      <Text style={[styles.areaPillValue, { color: valueColor }]}>
         {value ?? '--'} {statusText}
       </Text>
     </TouchableOpacity>
@@ -343,7 +350,6 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards,
   selectedDomainKey,
   onSelectDomain,
-  selectedDateLabel,
 }: {
   isLoading: boolean
   dayStatus: DayStatusResponse | null
@@ -351,7 +357,6 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
   selectedDomainKey: string | null
   onSelectDomain: (domain: string | null) => void
-  selectedDateLabel: string
 }) {
   const score = typeof dayStatus?.global?.score === 'number'
     ? dayStatus.global.score
@@ -361,7 +366,6 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
 
   return (
     <View style={styles.dayPanelCard}>
-      <Text style={styles.dayPanelTitle}>{selectedDateLabel}</Text>
       {isLoading ? (
         <View style={styles.daySkeleton}>
           <View style={styles.daySkeletonLine} />
@@ -414,10 +418,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
 const MemoDayEvents = React.memo(function MemoDayEvents({
   selectedEvents,
   eventDisplayData,
-  dayEventsLimit,
-  showAllDayEvents,
   onOpenEventDetail,
-  onToggleShowAll,
 }: {
   selectedEvents: ForecastEvent[]
   eventDisplayData: Array<{
@@ -432,12 +433,9 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     impactValue01: number
     impactLabel: string
   }>
-  dayEventsLimit: number
-  showAllDayEvents: boolean
   onOpenEventDetail: (eventId: string) => void
-  onToggleShowAll: () => void
 }) {
-  const visibleEvents = showAllDayEvents ? eventDisplayData : eventDisplayData.slice(0, dayEventsLimit)
+  const visibleEvents = eventDisplayData
   return (
     <View>
       <View style={styles.eventHeaderRow}>
@@ -470,16 +468,6 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
           />
         </View>
       ))}
-      {selectedEvents.length > dayEventsLimit && (
-        <TouchableOpacity
-          style={styles.showMoreButton}
-          onPress={onToggleShowAll}
-        >
-          <Text style={styles.showMoreText}>
-            {showAllDayEvents ? 'Ver menos' : `Ver mais (${selectedEvents.length - dayEventsLimit})`}
-          </Text>
-        </TouchableOpacity>
-      )}
     </View>
   )
 })
@@ -498,7 +486,6 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [selectedEventDetailId, setSelectedEventDetailId] = useState<string | null>(null)
-  const [showAllDayEvents, setShowAllDayEvents] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
@@ -1038,11 +1025,6 @@ export default function ForecastScreen() {
       }
     })
   }, [dayStatus, domainSeriesByDate, selectedEventsRaw, selectedPoint, selectedSeriesKey])
-  const dayEventsLimit = 6
-  const visibleDayEvents = useMemo(() => {
-    return showAllDayEvents ? selectedEvents : selectedEvents.slice(0, dayEventsLimit)
-  }, [showAllDayEvents, selectedEvents])
-
   const eventPhaseMap = useMemo(() => {
     if (!selectedDateKey) return {}
     const phases = data?.eventPhasesByDate?.[selectedDateKey] || []
@@ -1056,7 +1038,7 @@ export default function ForecastScreen() {
 
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
-    return visibleDayEvents.map((event) => {
+    return selectedEvents.map((event) => {
       const detailLines = buildEventDetailLines(event, selectedDateKey)
       const actionHint = buildActionHint(event)
       const orbLine = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
@@ -1078,7 +1060,7 @@ export default function ForecastScreen() {
         impactLabel: `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
       }
     })
-  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, visibleDayEvents])
+  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents])
 
   useEffect(() => {
     if (!debouncedFetchDate) return
@@ -1223,7 +1205,7 @@ export default function ForecastScreen() {
           </View>
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
-              <View style={styles.dayNavRow}>
+              <View style={styles.dayNavColLeft}>
                 <TouchableOpacity
                   style={styles.dayNavButton}
                   onPress={() => {
@@ -1235,6 +1217,13 @@ export default function ForecastScreen() {
             >
                   <Ionicons name="chevron-back" size={16} color="#FFD700" />
                 </TouchableOpacity>
+              </View>
+              <View style={styles.dayNavColCenter}>
+                <Text style={styles.dayPanelTitle}>
+                  {selectedDateObj ? `Status do Dia ${formatDateShort(selectedDateObj)}` : 'Status do dia'}
+                </Text>
+              </View>
+              <View style={styles.dayNavColRight}>
                 <TouchableOpacity
                   style={styles.dayNavButton}
                   onPress={() => {
@@ -1255,16 +1244,12 @@ export default function ForecastScreen() {
               lifeAreaCards={lifeAreaCards}
               selectedDomainKey={selectedDomainKey}
               onSelectDomain={handleSelectDomain}
-              selectedDateLabel={selectedDateObj ? `Status do Dia ${formatDateShort(selectedDateObj)}` : 'Status do dia'}
             />
 
             <MemoDayEvents
               selectedEvents={selectedEvents}
               eventDisplayData={eventDisplayData}
-              dayEventsLimit={dayEventsLimit}
-              showAllDayEvents={showAllDayEvents}
               onOpenEventDetail={openEventDetail}
-              onToggleShowAll={() => setShowAllDayEvents((prev) => !prev)}
             />
           </View>
 
@@ -1723,7 +1708,6 @@ const styles = StyleSheet.create({
   dayTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 8,
   },
   dayPanel: {
@@ -1736,10 +1720,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     marginBottom: 0,
+    textAlign: 'center',
   },
-  dayNavRow: {
-    flexDirection: 'row',
-    gap: 6,
+  dayNavColLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  dayNavColCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dayNavColRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   dayNavButton: {
     padding: 4,
@@ -1857,19 +1850,6 @@ const styles = StyleSheet.create({
   periodPageLabel: {
     color: '#B0B0B0',
     fontSize: 12,
-  },
-  showMoreButton: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#2A2A2E',
-  },
-  showMoreText: {
-    color: '#FFD700',
-    fontSize: 12,
-    fontWeight: '700',
   },
   updatedAtText: {
     color: '#FFD700',

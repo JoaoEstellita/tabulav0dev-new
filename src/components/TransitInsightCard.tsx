@@ -97,10 +97,10 @@ export default function TransitInsightCard({
         {directText}
       </Text>
       <TouchableOpacity
-        style={styles.toggleButton}
+        style={[styles.toggleButton, isDark ? styles.toggleButtonDark : styles.toggleButtonLight]}
         onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
       >
-        <Text style={styles.toggleText}>
+        <Text style={[styles.toggleText, isDark ? styles.toggleTextDark : styles.toggleTextLight]}>
           {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
         </Text>
       </TouchableOpacity>
@@ -251,12 +251,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'transparent',
     borderWidth: 1,
+  },
+  toggleButtonLight: {
     borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+  },
+  toggleButtonDark: {
+    borderColor: '#475569',
+    backgroundColor: '#111827',
   },
   toggleText: {
-    color: '#1E293B',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  toggleTextLight: {
+    color: '#1E293B',
+  },
+  toggleTextDark: {
+    color: '#F8FAFC',
   },
   fullBox: {
     marginTop: 10,
