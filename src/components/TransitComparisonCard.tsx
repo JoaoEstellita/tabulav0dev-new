@@ -93,6 +93,33 @@ const PLANET_ICONS: Record<string, string> = {
 }
 
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
+const PLANET_KEYWORDS: Record<string, string> = {
+  Sun: 'direção e identidade',
+  Moon: 'emoções e segurança',
+  Mercury: 'mente e comunicação',
+  Venus: 'vínculos e valores',
+  Mars: 'ação e iniciativa',
+  Jupiter: 'expansão e visão',
+  Saturn: 'estrutura e responsabilidade',
+  Uranus: 'mudança e liberdade',
+  Neptune: 'sensibilidade e imaginação',
+  Pluto: 'profundidade e transformação'
+}
+
+const HOUSE_FOCUS: Record<number, string> = {
+  1: 'identidade e presença',
+  2: 'recursos e estabilidade',
+  3: 'comunicação e aprendizado',
+  4: 'base emocional e família',
+  5: 'criatividade e expressão',
+  6: 'rotina e organização',
+  7: 'parcerias e acordos',
+  8: 'trocas profundas e desapego',
+  9: 'sentido e expansão',
+  10: 'carreira e reputação',
+  11: 'rede e projetos',
+  12: 'fechamentos e interiorização'
+}
 
 export default function TransitComparisonCard({
   planetComparisons, 
@@ -595,6 +622,43 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return { short, long }
   }, [])
 
+  const buildAspectReading = React.useCallback((params: {
+    planet: string
+    aspectType: string
+    targetLabel: string
+    house?: number | null
+    days?: number | null
+    phase?: string | null
+    scope: 'pessoal' | 'coletivo' | 'casa'
+  }) => {
+    const keyword = PLANET_KEYWORDS[params.planet] || 'dinâmica central'
+    const houseFocus = params.house ? HOUSE_FOCUS[params.house] || `temas da Casa ${params.house}` : 'contexto atual'
+    const aspectKey = normalizeAspectKey(params.aspectType)
+    const constructive = aspectKey === 'trigono' || aspectKey === 'sextil'
+    const intense = aspectKey === 'quadratura' || aspectKey === 'oposicao' || aspectKey === 'quincuncio'
+    const tone = constructive
+      ? 'janela favorável para avanço com consistência'
+      : intense
+      ? 'tensão produtiva pedindo ajuste de rota'
+      : 'movimento de recalibração gradual'
+    const windowLabel = params.days ? `em uma janela de cerca de ${params.days} dias` : 'neste ciclo'
+    const phaseLabel = params.phase ? ` Fase atual: ${params.phase}.` : ''
+    const scopeLabel =
+      params.scope === 'pessoal'
+        ? 'No plano pessoal,'
+        : params.scope === 'coletivo'
+        ? 'No plano coletivo,'
+        : 'No eixo de casas,'
+
+    return {
+      short: `${scopeLabel} ${params.planet} ativa ${keyword} em ${houseFocus}: ${tone}.`,
+      long:
+        `${params.planet} em ${translateAspectLabel(params.aspectType)} com ${params.targetLabel} ` +
+        `organiza foco em ${houseFocus}. ${tone} ${windowLabel}.${phaseLabel} ` +
+        `Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.`
+    }
+  }, [])
+
   return (
     <LinearGradient
       colors={['#1E1E2E', '#2A2A3E']}
@@ -770,38 +834,43 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {personalByTransitPlanet[comparison.name].map((t, idx) => {
                   const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
                   const windowInfo = resolveWindowInfo((t as any).window || personalWindowMap.get(key))
+                  const reading = buildAspectReading({
+                    planet: t.transitPlanet,
+                    aspectType: t.type,
+                    targetLabel: translatePlanetName(t.natalPlanet),
+                    house: comparison.current.house,
+                    days: windowInfo?.days || null,
+                    phase: windowInfo?.phaseLabel || null,
+                    scope: 'pessoal'
+                  })
                   return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
-                      <View style={styles.aspectBody}>
+                      <TouchableOpacity
+                        activeOpacity={0.86}
+                        style={styles.aspectBodyInteractive}
+                        onPress={() =>
+                          openDetailModal({
+                            title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
+                            subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
+                            short: reading.short,
+                            long: reading.long,
+                          })
+                        }
+                      >
                         <View style={styles.aspectLine}>
                           <Text style={styles.aspectText}>
                             {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <TouchableOpacity
-                            style={styles.readButtonInline}
-                            onPress={() =>
-                              openDetailModal({
-                                title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
-                                subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
-                                short: `Aspecto ${translateAspectLabel(t.type)} entre ${translatePlanetName(t.transitPlanet)} e ${translatePlanetName(t.natalPlanet)} ativo neste ciclo.`,
-                                long:
-                                  `Este trânsito conecta ${translatePlanetName(t.transitPlanet)} com ${translatePlanetName(t.natalPlanet)} por ${translateAspectLabel(t.type)}. ` +
-                                  `A leitura completa pede observar timing, intensidade e repetição de padrão. ` +
-                                  `Use a influência como contexto para decisões práticas nesta janela${windowInfo?.days ? ` de ${windowInfo.days} dias` : ''}.`,
-                              })
-                            }
-                          >
-                            <Text style={styles.readButtonText}>Abrir leitura</Text>
-                          </TouchableOpacity>
                           <Text style={styles.aspectMetaInline}>
                             {windowInfo?.phaseLabel || 'Em curso'}
                             {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
                           </Text>
+                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   )
                 })}
@@ -813,37 +882,43 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
                 {comparison.planetaryAspects.map((aspect, aspectIndex) => {
                   const windowInfo = resolveWindowInfo((aspect as any).window)
+                  const reading = buildAspectReading({
+                    planet: aspect.planet1,
+                    aspectType: aspect.type,
+                    targetLabel: translatePlanetName(aspect.planet2),
+                    house: comparison.current.house,
+                    days: windowInfo?.days || null,
+                    phase: windowInfo?.phaseLabel || null,
+                    scope: 'coletivo'
+                  })
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
-                      <View style={styles.aspectBody}>
+                      <TouchableOpacity
+                        activeOpacity={0.86}
+                        style={styles.aspectBodyInteractive}
+                        onPress={() =>
+                          openDetailModal({
+                            title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
+                            subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
+                            short: reading.short,
+                            long: reading.long,
+                          })
+                        }
+                      >
                         <View style={styles.aspectLine}>
                           <Text style={styles.aspectText}>
                             {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <TouchableOpacity
-                            style={styles.readButtonInline}
-                            onPress={() =>
-                              openDetailModal({
-                                title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
-                                subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
-                                short: `Aspecto coletivo ${translateAspectLabel(aspect.type)} em vigor no céu atual.`,
-                                long:
-                                  `O aspecto ${translateAspectLabel(aspect.type)} entre ${translatePlanetName(aspect.planet1)} e ${translatePlanetName(aspect.planet2)} atua como pano de fundo coletivo. ` +
-                                  `A interpretação prática é calibrar expectativa e escolha conforme a fase do aspecto${windowInfo?.days ? ` (janela estimada de ${windowInfo.days} dias)` : ''}.`,
-                              })
-                            }
-                          >
-                            <Text style={styles.readButtonText}>Abrir leitura</Text>
-                          </TouchableOpacity>
                           <Text style={styles.aspectMetaInline}>
                             {windowInfo?.phaseLabel || 'Em curso'}
                             {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
                           </Text>
+                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   )
                 })}
@@ -855,36 +930,41 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
                   const windowInfo = resolveWindowInfo((houseAspect as any).window)
+                  const reading = buildAspectReading({
+                    planet: comparison.name,
+                    aspectType: houseAspect.aspect,
+                    targetLabel: `Casa ${houseAspect.house} (${houseAspect.meaning})`,
+                    house: houseAspect.house,
+                    days: windowInfo?.days || null,
+                    phase: windowInfo?.phaseLabel || null,
+                    scope: 'casa'
+                  })
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
-                      <View style={styles.aspectBody}>
+                      <TouchableOpacity
+                        activeOpacity={0.86}
+                        style={styles.aspectBodyInteractive}
+                        onPress={() =>
+                          openDetailModal({
+                            title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
+                            subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
+                            short: reading.short,
+                            long: reading.long,
+                          })
+                        }
+                      >
                         <View style={styles.aspectLine}>
                           <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <TouchableOpacity
-                            style={styles.readButtonInline}
-                            onPress={() =>
-                              openDetailModal({
-                                title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
-                                subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
-                                short: `Ativação de casa ${houseAspect.house} por ${translateAspectLabel(houseAspect.aspect)}.`,
-                                long:
-                                  `Quando ${translatePlanetName(comparison.name)} ativa a Casa ${houseAspect.house}, o foco recai em ${houseAspect.meaning}. ` +
-                                  `A leitura precisa combina planeta, aspecto e casa para traduzir prioridade real. ` +
-                                  `Use esta janela para alinhar intenção e ação concreta${windowInfo?.days ? ` em até ${windowInfo.days} dias` : ''}.`,
-                              })
-                            }
-                          >
-                            <Text style={styles.readButtonText}>Abrir leitura</Text>
-                          </TouchableOpacity>
                           <Text style={styles.aspectMetaInline}>
                             {windowInfo?.phaseLabel || 'Em curso'}
                             {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
                           </Text>
+                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   )
                 })}
@@ -1239,6 +1319,9 @@ const styles = StyleSheet.create({
   aspectBody: {
     flex: 1,
   },
+  aspectBodyInteractive: {
+    flex: 1,
+  },
   aspectLine: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1259,15 +1342,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
-  },
-  readButtonInline: {
-    alignSelf: 'flex-end',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    backgroundColor: 'rgba(10, 22, 51, 0.5)',
   },
   readButtonText: {
     color: '#E2E8F0',
