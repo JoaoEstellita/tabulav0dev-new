@@ -1,5 +1,5 @@
 ﻿import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView, useWindowDimensions, Image } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView, useWindowDimensions, Image, Platform } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
@@ -92,6 +92,8 @@ const PLANET_ICONS: Record<string, string> = {
   Neptune: '\u2646',
   Pluto: '\u2647'
 }
+
+const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 const PLANET_KEYWORDS: Record<string, string> = {
@@ -1058,11 +1060,17 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
         {planetComparisons.map((comparison) => (
           <View key={comparison.name} style={styles.planetCard}>
-            {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
+            {(() => {
+              const needsLightBgFix = PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
+              return resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
               <View pointerEvents="none" style={styles.planetArtworkWrap}>
                 <Image
                   source={{ uri: resolvePlanetImageUri(comparison.name) }}
-                  style={styles.planetArtwork}
+                  style={[
+                    styles.planetArtwork,
+                    needsLightBgFix && styles.planetArtworkWhiteBgFix,
+                    Platform.OS === 'web' && needsLightBgFix ? ({ mixBlendMode: 'multiply' } as any) : null,
+                  ]}
                   resizeMode="cover"
                   onError={() =>
                     setFailedPlanetImages((prev) => ({
@@ -1078,7 +1086,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   style={styles.planetArtworkFade}
                 />
               </View>
-            ) : null}
+            ) : null
+            })()}
             <View style={styles.planetContent}>
             {/* Cabe\u00E7alho do Planeta */}
             <View style={styles.planetHeader}>
@@ -1086,7 +1095,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
                   <Image
                     source={{ uri: resolvePlanetImageUri(comparison.name) }}
-                    style={styles.planetHeaderImage}
+                    style={[
+                      styles.planetHeaderImage,
+                      PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name) && styles.planetHeaderImageWhiteBgFix,
+                      Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
+                        ? ({ mixBlendMode: 'multiply' } as any)
+                        : null,
+                    ]}
                     resizeMode="cover"
                   />
                 ) : (
@@ -1660,6 +1675,9 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 125,
   },
+  planetArtworkWhiteBgFix: {
+    backgroundColor: 'rgba(8,12,30,0.92)',
+  },
   planetArtworkFade: {
     position: 'absolute',
     top: 0,
@@ -1685,8 +1703,11 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderColor: 'rgba(255,215,0,0.45)',
     backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  planetHeaderImageWhiteBgFix: {
+    backgroundColor: 'rgba(8,12,30,0.92)',
   },
   planetGlyphFallback: {
     color: '#F8FAFC',
