@@ -1088,6 +1088,32 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return String(Math.round(natalHouse))
   }
 
+  const getHouseFromCusps = (longitude: number, cusps?: number[] | null): string | null => {
+    try {
+      if (!Array.isArray(cusps) || cusps.length !== 12) return null
+      const norm = (d: number) => ((d % 360) + 360) % 360
+      const lon = norm(longitude)
+      for (let i = 0; i < 12; i++) {
+        const start = norm(Number(cusps[i]))
+        const end = norm(Number(cusps[(i + 1) % 12]))
+        const inHouse = start < end ? lon >= start && lon < end : lon >= start || lon < end
+        if (inHouse) return String(i + 1)
+      }
+      return '1'
+    } catch {
+      return null
+    }
+  }
+
+  const getTransitOnNatalHouseLabel = (transit: any): string | null => {
+    const planetLongitude = Number(
+      safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.longitude
+    )
+    if (!Number.isFinite(planetLongitude)) return null
+    const natalCusps = (astrologyData as any)?.natalHouses
+    return getHouseFromCusps(planetLongitude, natalCusps)
+  }
+
   const getAreaHousesLabel = (): string | null => {
     const areaKey = String(areaData?.name || '').toLowerCase()
     const relevantAreaHouses = getRelevantHousesForArea(areaKey)
@@ -1123,9 +1149,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const details: string[] = []
     const natalHouse = getTransitNatalHouseLabel(transit)
     const currentHouse = getTransitCurrentHouseLabel(transit)
+    const transitOnNatalHouse = getTransitOnNatalHouseLabel(transit)
     const areaHouses = getAreaHousesLabel()
     if (currentHouse && natalHouse && currentHouse !== natalHouse) {
       details.push(`Casa natal ativada: ${natalHouse}`)
+    }
+    if (transitOnNatalHouse) {
+      details.push(`Trânsito na casa natal: ${transitOnNatalHouse}`)
     }
     if (areaHouses) details.push(`Casas da área: ${areaHouses}`)
     return [base, ...details].join(' • ')
