@@ -200,6 +200,12 @@ export default function TransitComparisonCard({
 
   const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
 
+  const formatSignLine = React.useCallback((longitude: number, isRetrograde?: boolean): string => {
+    const signName = getSignFromDegree(longitude)
+    const signSymbol = getSignSymbol(signName)
+    return `${formatDegreeInSign(longitude)} ${signSymbol ? `${signSymbol} ` : ''}${signName}${isRetrograde ? ' (Rx)' : ''}`
+  }, [])
+
 const translatePlanetTokens = (text: string): string =>
   decodeUnicodeEscapes(String(text || ''))
     .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
@@ -290,6 +296,25 @@ const getSignFromDegree = (degree: number): string => {
   ]
   const signIndex = Math.floor(degree / 30) % 12
   return signs[signIndex]
+}
+
+const SIGN_SYMBOLS: Record<string, string> = {
+  aries: '♈',
+  touro: '♉',
+  gemeos: '♊',
+  cancer: '♋',
+  leao: '♌',
+  virgem: '♍',
+  libra: '♎',
+  escorpiao: '♏',
+  sagitario: '♐',
+  capricornio: '♑',
+  aquario: '♒',
+  peixes: '♓',
+}
+
+const getSignSymbol = (signName: string): string => {
+  return SIGN_SYMBOLS[normalizeKey(signName)] || ''
 }
 
 const SIGN_INFO: Record<string, { element: string; modality: string }> = {
@@ -940,8 +965,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       }}
                     >
                       <Text style={styles.columnTitle}>Natal</Text>
-                      <Text style={styles.metricLine}>
-                        {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
+                      <Text style={styles.metricLineStrong}>
+                        {formatSignLine(comparison.natal.longitude)}
                       </Text>
                       {renderAttributeChips(comparison.natal.element, comparison.natal.modality)}
                       <Text style={styles.metricLineStrong}>
@@ -974,8 +999,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       }}
                     >
                       <Text style={styles.columnTitle}>Trânsito Pessoal</Text>
-                      <Text style={styles.metricLine}>
-                        {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
+                      <Text style={styles.metricLineStrong}>
+                        {formatSignLine(comparison.current.longitude, comparison.current.isRetrograde)}
                       </Text>
                       {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
@@ -1008,8 +1033,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       }}
                     >
                       <Text style={styles.columnTitle}>Trânsito Coletivo</Text>
-                      <Text style={styles.metricLine}>
-                        {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
+                      <Text style={styles.metricLineStrong}>
+                        {formatSignLine(comparison.current.longitude, comparison.current.isRetrograde)}
                       </Text>
                       {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
