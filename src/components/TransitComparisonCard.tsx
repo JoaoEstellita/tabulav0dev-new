@@ -247,6 +247,21 @@ const SIGN_INFO: Record<string, { element: string; modality: string }> = {
   'Peixes': { element: 'Água', modality: 'Mutável' },
 }
 
+const NATURAL_HOUSE_SIGNS = [
+  'Áries',
+  'Touro',
+  'Gêmeos',
+  'Câncer',
+  'Leão',
+  'Virgem',
+  'Libra',
+  'Escorpião',
+  'Sagitário',
+  'Capricórnio',
+  'Aquário',
+  'Peixes',
+] as const
+
 const translateAspectLabel = (type: string): string => {
   const key = normalizeKey(type)
   const map: Record<string, string> = {
@@ -357,6 +372,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return { sign, ...info }
   }, [])
 
+  const getNaturalHouseInfo = React.useCallback((house: number | null) => {
+    if (!house || house < 1 || house > 12) return null
+    const sign = NATURAL_HOUSE_SIGNS[house - 1]
+    const info = SIGN_INFO[sign]
+    if (!info) return null
+    return { sign, ...info }
+  }, [])
+
   const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
   if (!lifeAreasDebug || typeof lifeAreasDebug !== 'object') return []
   return Object.entries(lifeAreasDebug)
@@ -453,50 +476,48 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,
-    modality?: string | null,
-    contextTitle?: string
+    modality?: string | null
   ) => {
     if (!element && !modality) return null
     return (
       <View style={styles.attributesRow}>
         {element ? (
-          <TouchableOpacity
-            style={styles.attributeChip}
-            onPress={() =>
-              openDetailModal({
-                title: `${contextTitle || 'Leitura'} • Elemento ${translateElement(element)}`,
-                subtitle: 'Leitura simbólica',
-                short: `${translateElement(element)} indica a qualidade principal de expressão neste ponto do mapa.`,
-                long: `Neste contexto, o elemento ${translateElement(element)} descreve o estilo energético predominante. ` +
-                  `A leitura prática é observar como essa qualidade aparece em decisão, ritmo e resposta emocional. ` +
-                  `Use isso para ajustar ação e timing com mais precisão.`,
-              })
-            }
-          >
+          <View style={styles.attributeChip}>
             <Ionicons name={getElementIconName(element)} size={12} color="#FFD700" />
             <Text style={styles.attributeChipText}>{translateElement(element)}</Text>
-          </TouchableOpacity>
+          </View>
         ) : null}
         {modality ? (
-          <TouchableOpacity
-            style={styles.attributeChip}
-            onPress={() =>
-              openDetailModal({
-                title: `${contextTitle || 'Leitura'} • Modalidade ${translateModality(modality)}`,
-                subtitle: 'Leitura simbólica',
-                short: `${translateModality(modality)} mostra como essa energia tende a agir no tempo.`,
-                long: `A modalidade ${translateModality(modality)} aponta o modo operacional do trânsito: iniciar, sustentar ou adaptar. ` +
-                  `Aplicando isso na prática, você melhora consistência e reduz decisões fora de fase.`,
-              })
-            }
-          >
+          <View style={styles.attributeChip}>
             <Ionicons name={getModalityIconName(modality)} size={12} color="#FFD700" />
             <Text style={styles.attributeChipText}>{translateModality(modality)}</Text>
-          </TouchableOpacity>
+          </View>
         ) : null}
       </View>
     )
-  }, [openDetailModal])
+  }, [])
+
+  const buildColumnInterpretation = React.useCallback((params: {
+    planet: string
+    contextLabel: string
+    signLabel: string
+    signElement: string
+    signModality: string
+    house: number | null
+    houseByCusp?: { sign: string; element: string; modality: string } | null
+    houseNatural?: { sign: string; element: string; modality: string } | null
+  }) => {
+    const houseLabel = params.house ? `Casa ${params.house}` : 'Casa indefinida'
+    const short = `${params.planet} em ${params.signLabel} (${params.signElement}/${params.signModality}) atuando em ${houseLabel}.`
+    const long =
+      `${params.contextLabel} integra três camadas: planeta, signo e casa.\n\n` +
+      `Planeta + signo: ${params.planet} em ${params.signLabel} indica expressão por ${params.signElement} e modo ${params.signModality}.\n\n` +
+      `Casa ativada: ${houseLabel}.` +
+      `${params.houseByCusp ? ` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).` : ''}` +
+      `${params.houseNatural ? ` Casa natural (arquétipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).` : ''}\n\n` +
+      `Síntese prática: leia este ponto como junção de estilo (signo) + tema (casa) + função (planeta), priorizando decisões que combinem ritmo e contexto real do momento.`
+    return { short, long }
+  }, [])
 
   return (
     <LinearGradient
@@ -550,41 +571,128 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 const currentHouseInfo = getHouseSignInfo(comparison.current.house, housesCusps)
                 const transitOnNatalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
                 const transitOnNatalInfo = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
+                const natalNaturalInfo = getNaturalHouseInfo(comparison.natal.house)
+                const transitOnNatalNaturalInfo = getNaturalHouseInfo(transitOnNatalHouse)
+                const currentNaturalInfo = getNaturalHouseInfo(comparison.current.house)
                 const currentSignLine = `${formatDegreeInSign(comparison.current.longitude)} ${getSignFromDegree(comparison.current.longitude)} ${translateElement(comparison.current.element)} ${translateModality(comparison.current.modality)}${comparison.current.isRetrograde ? ' (Rx)' : ''}`
                 return (
                   <>
-                    <View style={styles.comparisonColumn}>
+                    <TouchableOpacity
+                      activeOpacity={0.86}
+                      style={styles.comparisonColumn}
+                      onPress={() => {
+                        const signLabel = getSignFromDegree(comparison.natal.longitude)
+                        const interp = buildColumnInterpretation({
+                          planet: translatePlanetName(comparison.name),
+                          contextLabel: 'Leitura Natal',
+                          signLabel,
+                          signElement: translateElement(comparison.natal.element),
+                          signModality: translateModality(comparison.natal.modality),
+                          house: comparison.natal.house,
+                          houseByCusp: natalHouseInfo,
+                          houseNatural: natalNaturalInfo,
+                        })
+                        openDetailModal({
+                          title: `${translatePlanetName(comparison.name)} • Natal`,
+                          subtitle: `${signLabel} • Casa ${comparison.natal.house}`,
+                          short: interp.short,
+                          long: interp.long,
+                        })
+                      }}
+                    >
                       <Text style={styles.columnTitle}>Natal</Text>
                       <Text style={styles.metricLine}>
                         {formatDegreeInSign(comparison.natal.longitude)} {getSignFromDegree(comparison.natal.longitude)}
                       </Text>
-                      {renderAttributeChips(comparison.natal.element, comparison.natal.modality, `${translatePlanetName(comparison.name)} • Natal`)}
+                      {renderAttributeChips(comparison.natal.element, comparison.natal.modality)}
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.natal.house}
                       </Text>
-                      {renderAttributeChips(natalHouseInfo?.element || null, natalHouseInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa Natal`)}
-                    </View>
+                      {renderAttributeChips(natalHouseInfo?.element || null, natalHouseInfo?.modality || null)}
+                      <Text style={styles.metricHint}>
+                        Casa por cúspide (cálculo): {natalHouseInfo?.sign || '-'} • {natalHouseInfo?.element || '-'} {natalHouseInfo?.modality || '-'}
+                      </Text>
+                      <Text style={styles.metricHint}>
+                        Casa natural (arquétipo): {natalNaturalInfo?.sign || '-'} • {natalNaturalInfo?.element || '-'} {natalNaturalInfo?.modality || '-'}
+                      </Text>
+                    </TouchableOpacity>
 
-                    <View style={styles.comparisonColumn}>
+                    <TouchableOpacity
+                      activeOpacity={0.86}
+                      style={styles.comparisonColumn}
+                      onPress={() => {
+                        const signLabel = getSignFromDegree(comparison.current.longitude)
+                        const interp = buildColumnInterpretation({
+                          planet: translatePlanetName(comparison.name),
+                          contextLabel: 'Leitura Trânsito c/ Natal',
+                          signLabel,
+                          signElement: translateElement(comparison.current.element),
+                          signModality: translateModality(comparison.current.modality),
+                          house: transitOnNatalHouse,
+                          houseByCusp: transitOnNatalInfo,
+                          houseNatural: transitOnNatalNaturalInfo,
+                        })
+                        openDetailModal({
+                          title: `${translatePlanetName(comparison.name)} • Trânsito c/ Natal`,
+                          subtitle: `${signLabel} • Casa ${transitOnNatalHouse || '-'}`,
+                          short: interp.short,
+                          long: interp.long,
+                        })
+                      }}
+                    >
                       <Text style={styles.columnTitle}>Trânsito c/ Natal</Text>
                       <Text style={styles.metricLine}>
                         {formatDegreeInSign(comparison.current.longitude)} {getSignFromDegree(comparison.current.longitude)}{comparison.current.isRetrograde ? ' (Rx)' : ''}
                       </Text>
-                      {renderAttributeChips(comparison.current.element, comparison.current.modality, `${translatePlanetName(comparison.name)} • Trânsito c/ Natal`)}
+                      {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
                         Casa {transitOnNatalHouse || '-'}
                       </Text>
-                      {renderAttributeChips(transitOnNatalInfo?.element || null, transitOnNatalInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa do Trânsito c/ Natal`)}
-                    </View>
+                      {renderAttributeChips(transitOnNatalInfo?.element || null, transitOnNatalInfo?.modality || null)}
+                      <Text style={styles.metricHint}>
+                        Casa por cúspide (cálculo): {transitOnNatalInfo?.sign || '-'} • {transitOnNatalInfo?.element || '-'} {transitOnNatalInfo?.modality || '-'}
+                      </Text>
+                      <Text style={styles.metricHint}>
+                        Casa natural (arquétipo): {transitOnNatalNaturalInfo?.sign || '-'} • {transitOnNatalNaturalInfo?.element || '-'} {transitOnNatalNaturalInfo?.modality || '-'}
+                      </Text>
+                    </TouchableOpacity>
 
-                    <View style={styles.comparisonColumn}>
+                    <TouchableOpacity
+                      activeOpacity={0.86}
+                      style={styles.comparisonColumn}
+                      onPress={() => {
+                        const signLabel = getSignFromDegree(comparison.current.longitude)
+                        const interp = buildColumnInterpretation({
+                          planet: translatePlanetName(comparison.name),
+                          contextLabel: 'Leitura Posição Atual',
+                          signLabel,
+                          signElement: translateElement(comparison.current.element),
+                          signModality: translateModality(comparison.current.modality),
+                          house: comparison.current.house,
+                          houseByCusp: currentHouseInfo,
+                          houseNatural: currentNaturalInfo,
+                        })
+                        openDetailModal({
+                          title: `${translatePlanetName(comparison.name)} • Posição Atual`,
+                          subtitle: `${signLabel} • Casa ${comparison.current.house}`,
+                          short: interp.short,
+                          long: interp.long,
+                        })
+                      }}
+                    >
                       <Text style={styles.columnTitle}>Posição Atual</Text>
                       <Text style={styles.metricLine}>{currentSignLine}</Text>
-                      {renderAttributeChips(comparison.current.element, comparison.current.modality, `${translatePlanetName(comparison.name)} • Posição Atual`)}
+                      {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.current.house}
                       </Text>
-                      {renderAttributeChips(currentHouseInfo?.element || null, currentHouseInfo?.modality || null, `${translatePlanetName(comparison.name)} • Casa Atual`)}
+                      {renderAttributeChips(currentHouseInfo?.element || null, currentHouseInfo?.modality || null)}
+                      <Text style={styles.metricHint}>
+                        Casa por cúspide (cálculo): {currentHouseInfo?.sign || '-'} • {currentHouseInfo?.element || '-'} {currentHouseInfo?.modality || '-'}
+                      </Text>
+                      <Text style={styles.metricHint}>
+                        Casa natural (arquétipo): {currentNaturalInfo?.sign || '-'} • {currentNaturalInfo?.element || '-'} {currentNaturalInfo?.modality || '-'}
+                      </Text>
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
@@ -594,7 +702,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         }
                         return null
                       })()}
-                    </View>
+                    </TouchableOpacity>
                   </>
                 )
               })()}
@@ -966,6 +1074,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 20,
+  },
+  metricHint: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 4,
   },
   positionText: {
     color: '#FFFFFF',
