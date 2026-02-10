@@ -1052,11 +1052,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
-    const houseTarget =
-      transit?.target?.house ||
-      transit?.house ||
-      transit?.transitHouse ||
-      (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
+    const houseTarget = getTransitNatalHouseLabel(transit)
+    const currentHouse = getTransitCurrentHouseLabel(transit)
     const rawTarget =
       transit?.natalPlanet ||
       transit?.target?.natalPlanet ||
@@ -1067,15 +1064,15 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transitPlanet,
       aspectLabel: aspect,
       targetLabel: target,
-      houseNumber: houseTarget,
+      houseNumber: currentHouse,
       areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
     })
   }
 
   const getTransitCurrentHouseLabel = (transit: any): string | null => {
     const houseValue =
-      transit?.house ??
       transit?.transitHouse ??
+      transit?.currentHouse ??
       (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
     const numericHouse = Number(houseValue)
     if (!Number.isFinite(numericHouse) || numericHouse < 1 || numericHouse > 12) return null
@@ -1115,7 +1112,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseValue =
       transit?.target?.house ??
       transit?.natalHouseImpacted ??
-      transit?.house ??
       transit?.natalHouse
     const houseNumber = Number(houseValue)
     if (Number.isFinite(houseNumber) && houseNumber >= 1 && houseNumber <= 12) {
@@ -1351,18 +1347,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
-    const targetHouse = Number(transit?.target?.house ?? transit?.house ?? transit?.transitHouse)
+    const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
     const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
     const explicitHouseTarget =
       String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
         .toUpperCase()
         .startsWith('HOUSE_')
     const rawType = String(transit?.aspectName || transit?.type || '').toLowerCase()
+    const hasPlanetOrAngleTarget = !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
+    if (hasPlanetOrAngleTarget && !explicitHouseTarget) return 'planet'
     if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return 'house'
 
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
     const hasRecognizedAspect = !!aspectType
-    const hasPlanetOrAngleTarget = !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
     if (hasRecognizedAspect && hasPlanetOrAngleTarget) return 'planet'
     return 'house'
   }

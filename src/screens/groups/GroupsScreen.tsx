@@ -832,11 +832,20 @@ const formatTransitDuration = (transit: { window?: { start?: string; end?: strin
   return ""
 }
 
+const getTransitCurrentHouse = (transit: any) => {
+  const houseValue =
+    transit?.transitHouse ??
+    transit?.currentHouse ??
+    null
+  const houseNumber = Number(houseValue)
+  if (!Number.isFinite(houseNumber)) return ""
+  if (houseNumber < 1 || houseNumber > 12) return ""
+  return `Casa ${Math.round(houseNumber)}`
+}
+
 const getTransitHouseTarget = (transit: any) => {
   const houseValue =
     transit?.target?.house ??
-    transit?.house ??
-    transit?.transitHouse ??
     transit?.natalHouseImpacted ??
     transit?.natalHouse ??
     null
@@ -860,6 +869,7 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
   const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
   const targetAngle = transit?.target?.angle
   const targetHouse = getTransitHouseTarget(transit)
+  const currentHouse = getTransitCurrentHouse(transit)
   const target = targetPlanet
     ? formatPlanetLabel(targetPlanet)
     : targetAngle
@@ -869,7 +879,7 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
     transitPlanet,
     aspectLabel: aspect,
     targetLabel: target,
-    houseNumber: targetHouse.replace("Casa ", ""),
+    houseNumber: currentHouse.replace("Casa ", ""),
     areaHouses: areaKey && AREA_HOUSES[areaKey] ? AREA_HOUSES[areaKey] : null,
   })
 }
@@ -885,16 +895,16 @@ const getTransitTechnicalTypeLabel = (transit: any) => {
 }
 
 const getTransitColumnKind = (transit: any): "planet" | "house" => {
-  const targetHouse = Number(transit?.target?.house ?? transit?.house ?? transit?.transitHouse)
+  const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
   const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
   const explicitHouseTarget =
     String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
       .toUpperCase()
       .startsWith('HOUSE_')
   const rawType = String(transit?.aspectName || transit?.type || transit?.aspectType || '').toLowerCase()
-  if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) {
-    return "house"
-  }
+  const hasPlanetOrAngleTarget = !!(transit?.target?.natalPlanet || transit?.natalPlanet || transit?.target?.angle)
+  if (hasPlanetOrAngleTarget && !explicitHouseTarget) return "planet"
+  if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return "house"
 
   const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const hasRecognizedAspect = [
@@ -911,7 +921,6 @@ const getTransitColumnKind = (transit: any): "planet" | "house" => {
     "desafiador",
     "neutro",
   ].includes(aspectType)
-  const hasPlanetOrAngleTarget = !!(transit?.target?.natalPlanet || transit?.natalPlanet || transit?.target?.angle)
   if (hasRecognizedAspect && hasPlanetOrAngleTarget) {
     return "planet"
   }
@@ -1877,7 +1886,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const status = classifyTransitStatus(transit)
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
-                        const transitHouseLabel = getTransitHouseTarget(transit)
+                        const transitHouseLabel = getTransitCurrentHouse(transit)
                         const houseLabel = transitHouseLabel || natalHouseLabel || null
                         const houseLabelPrefix = transitHouseLabel ? "Casa de trânsito atual" : "Casa natal ativada"
                         const areaHousesText = AREA_HOUSES[key]?.length ? AREA_HOUSES[key].join("/") : ""
