@@ -14,6 +14,7 @@ import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngin
 import TransitInsightCard from './TransitInsightCard'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
+import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
 
 const { width, height } = Dimensions.get('window')
 
@@ -1161,6 +1162,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildDirectText = (transit: any, suggestion: any) => {
+    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
+    if (astroNarrative?.directText) return astroNarrative.directText
+
     const directFromDatasetRaw =
       suggestion?.card?.summary ||
       suggestion?.text ||
@@ -1203,23 +1207,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
+    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
+
     if (!suggestion) {
-      const aspectType = String(transit?.aspectName || transit?.type || '')
-      const normalizedAspectType = normalizeAspectKey(aspectType)
-      const target =
-        transit?.natalPlanet ||
-        transit?.target?.natalPlanet ||
-        transit?.target?.angle ||
-        (transit?.target?.house ? `Casa ${transit.target.house}` : 'seu mapa')
-      const aspectLabel = getAspectLabel(normalizedAspectType) || 'aspecto'
       return [
-        `Leitura completa: ${translate('planets', transit?.transitPlanet)} em ${aspectLabel} com ${translate('planets', target)}.`,
-        directText,
+        astroNarrative.fullText,
         'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
       ].join('\n\n')
     }
 
-    const segments: string[] = []
+    const segments: string[] = [astroNarrative.fullText]
     if (suggestion?.deep?.opening) segments.push(suggestion.deep.opening)
     if (suggestion?.deep?.astrologicalWhy) segments.push(suggestion.deep.astrologicalWhy)
     if (suggestion?.deep?.centralTension) segments.push(`Tensão central: ${suggestion.deep.centralTension}`)

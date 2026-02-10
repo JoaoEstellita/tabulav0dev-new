@@ -32,6 +32,7 @@ import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
+import { buildAstroTransitNarrative } from "../../utils/astroInterpretation"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -953,6 +954,9 @@ const classifyTransitStatus = (transit: any) => {
 }
 
 const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string, areaCritical = false) => {
+  const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
+  if (astroNarrative?.directText) return astroNarrative.directText
+
   const normalizedFallback = String(fallbackText || "").toLowerCase()
   const isGenericFallback =
     normalizedFallback.includes("fase de integracao e calibragem") ||
@@ -1888,8 +1892,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
                         const statusLabel = areaCritical && status.kind === "harmonic" ? "Alivio" : status.label
                         const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
+                        const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
                         const fullLines = [
-                          directText,
+                          astroNarrative.fullText,
                           suggestion?.text || "",
                           suggestion?.title ? `Foco: ${String(suggestion.title)}` : "",
                           mainPlanets.length ? `Planetas de base: ${mainPlanets.slice(0, 5).join(", ")}` : "",

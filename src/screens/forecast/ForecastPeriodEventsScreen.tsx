@@ -3,6 +3,7 @@ import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react
 import { Ionicons } from '@expo/vector-icons'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
+import { buildAstroTransitNarrative } from '../../utils/astroInterpretation'
 
 type ForecastEvent = {
   id: string
@@ -93,30 +94,27 @@ function buildEventTitle(event: ForecastEvent) {
 }
 
 function buildDirectEventText(event: ForecastEvent) {
-  const title = buildEventTitle(event)
-  const intensity = Math.round((event.intensity || 0) * 100)
-  if (event.impact === 'UP') {
-    return intensity >= 65
-      ? `${title}: fase favoravel para executar a prioridade principal com mais confianca.`
-      : `${title}: tendencia construtiva para progresso consistente e organizado.`
-  }
-  if (event.impact === 'DOWN') {
-    return intensity >= 65
-      ? `${title}: fase sensivel, pedindo ajuste de ritmo e menos impulsividade.`
-      : `${title}: revise expectativas e simplifique o proximo passo antes de ampliar.`
-  }
-  return `${title}: clima oscilante, avance em etapas curtas e valide cada decisao.`
+  const narrative = buildAstroTransitNarrative(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    'previsoes'
+  )
+  return narrative.directText
 }
 
 function buildFullEventInterpretation(event: ForecastEvent) {
-  const intensity = Math.round((event.intensity || 0) * 100)
-  const impactText =
-    event.impact === 'UP'
-      ? 'A tendencia geral e construtiva quando existe foco, sequencia e consistencia.'
-      : event.impact === 'DOWN'
-      ? 'A tendencia geral pede realismo: menos impulso, mais calibracao de limite e prazo.'
-      : 'A tendencia geral alterna avanco e revisao, exigindo decisao por camadas.'
-  return `${impactText} Use o transito como contexto para decidir o proximo passo pratico sem antecipar todas as respostas.`
+  const narrative = buildAstroTransitNarrative(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    'previsoes'
+  )
+  return narrative.fullText
 }
 
 function buildTimingLabel(event: ForecastEvent) {
