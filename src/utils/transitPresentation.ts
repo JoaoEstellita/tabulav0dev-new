@@ -33,6 +33,19 @@ export function sanitizeTransitToken(value: unknown): string {
   return token
 }
 
+function normalizeComparableToken(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function isHouseLikeTarget(target: string): boolean {
+  const normalized = normalizeComparableToken(target)
+  if (!normalized) return false
+  return normalized.startsWith('casa ') || normalized.startsWith('house ') || normalized.startsWith('house_')
+}
+
 export function extractHouseNumber(value: unknown): number | null {
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) return null
@@ -57,8 +70,13 @@ export function buildTransitTitle(params: {
         .filter((value): value is number => value !== null)
     : []
   const areaHousesLabel = areaHouses.length ? areaHouses.join('/') : ''
+  const targetIsHouse = isHouseLikeTarget(targetLabel)
 
-  if (aspectLabel && targetLabel) return `${transitPlanet} em ${aspectLabel} com ${targetLabel}`
+  if (aspectLabel && targetLabel && !targetIsHouse) return `${transitPlanet} em ${aspectLabel} com ${targetLabel}`
+  if (aspectLabel && targetIsHouse) {
+    if (houseNumber) return `${transitPlanet} ativa a Casa ${houseNumber} em ${aspectLabel}`
+    return `${transitPlanet} ativa ${targetLabel} em ${aspectLabel}`
+  }
   if (aspectLabel && houseNumber) return `${transitPlanet} em ${aspectLabel} na Casa ${houseNumber}`
   if (aspectLabel && areaHousesLabel) return `${transitPlanet} em ${aspectLabel} nas Casas ${areaHousesLabel}`
   if (houseNumber) return `${transitPlanet} em transito na Casa ${houseNumber}`

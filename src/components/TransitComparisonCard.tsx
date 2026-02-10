@@ -784,6 +784,20 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const collectiveFocus = HOUSE_FOCUS[collectiveHouse || 0] || 'campo coletivo'
     const natalFocus = HOUSE_FOCUS[natalHouse || 0] || 'base natal'
     const signLabel = getSignFromDegree(comparison.current.longitude)
+    const personalAspectsCount = personalByTransitPlanet[planetMeaningPlanet]?.length || 0
+    const collectiveAspectsCount = comparison.planetaryAspects.length
+    const houseAspectsCount = comparison.houseAspects.length
+    const totalActiveContacts = personalAspectsCount + collectiveAspectsCount + houseAspectsCount
+    const forceLine =
+      totalActiveContacts >= 6
+        ? 'Força alta no período: múltiplos contatos simultâneos.'
+        : totalActiveContacts >= 3
+        ? 'Força moderada: energia consistente com pontos de ajuste.'
+        : 'Força focal: atuação seletiva e pontual.'
+    const practicalUse =
+      totalActiveContacts >= 5
+        ? 'Uso prático: priorize 1 objetivo central e corte dispersões.'
+        : 'Uso prático: mantenha cadência estável com revisão semanal.'
     return {
       planetName: translatePlanetName(planetMeaningPlanet),
       title: content.title,
@@ -794,11 +808,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       inHouse: content.inHouse,
       keywords: content.keywords,
       practical: `Com ${translatePlanetName(planetMeaningPlanet)} em ${signLabel}, o foco atual é ${collectiveFocus}.`,
+      forceLine,
+      practicalUse,
       personalLine: `Trânsito pessoal (c/ natal) ativa Casa ${personalHouse || '-'}: ${personalFocus}.`,
       collectiveLine: `Trânsito coletivo ativa Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`,
       natalLine: `No natal, ${translatePlanetName(planetMeaningPlanet)} está na Casa ${natalHouse || '-'}: ${natalFocus}.`,
     }
-  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, resolvePlanetImageUri, translatePlanetName])
+  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName])
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,
@@ -1478,20 +1494,30 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 ))}
               </View>
 
-              <Text style={styles.planetMeaningSectionLabel}>Essência</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.essence || ''}</Text>
+              <View style={styles.planetMeaningSectionCard}>
+                <Text style={styles.planetMeaningSectionLabel}>Força do planeta</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.essence || ''}</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.forceLine || ''}</Text>
+              </View>
 
-              <Text style={styles.planetMeaningSectionLabel}>Nos aspectos</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.inAspect || ''}</Text>
+              <View style={styles.planetMeaningSectionCard}>
+                <Text style={styles.planetMeaningSectionLabel}>Efeito em aspecto</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.inAspect || ''}</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.personalLine || ''}</Text>
+              </View>
 
-              <Text style={styles.planetMeaningSectionLabel}>Na casa</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.inHouse || ''}</Text>
+              <View style={styles.planetMeaningSectionCard}>
+                <Text style={styles.planetMeaningSectionLabel}>Efeito em casa</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.inHouse || ''}</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.natalLine || ''}</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.collectiveLine || ''}</Text>
+              </View>
 
-              <Text style={styles.planetMeaningSectionLabel}>Leitura do seu momento</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.practical || ''}</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.natalLine || ''}</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.personalLine || ''}</Text>
-              <Text style={styles.planetMeaningBody}>{planetMeaningData?.collectiveLine || ''}</Text>
+              <View style={styles.planetMeaningSectionCard}>
+                <Text style={styles.planetMeaningSectionLabel}>Uso prático</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.practical || ''}</Text>
+                <Text style={styles.planetMeaningBody}>{planetMeaningData?.practicalUse || ''}</Text>
+              </View>
             </ScrollView>
 
             <TouchableOpacity style={styles.detailModalButton} onPress={() => setPlanetMeaningModalOpen(false)}>
@@ -1512,6 +1538,15 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
 
         <View style={styles.analysisRow}>
+          <View style={styles.weightMethodCard}>
+            <Text style={styles.weightMethodTitle}>Método de peso do balanço</Text>
+            <Text style={styles.weightMethodText}>
+              Balanço = (Signos x {Math.round(SIGN_WEIGHT * 100)}%) + (Casas x {Math.round(HOUSE_WEIGHT * 100)}%)
+            </Text>
+            <Text style={styles.weightMethodText}>
+              Signos mostram o estilo de expressão; casas mostram a área ativada no mapa.
+            </Text>
+          </View>
           <Text style={styles.analysisLabel}>Elementos (Signos | Casas | Balanço):</Text>
           <View style={styles.balanceGrid}>
             {renderBalanceColumns({
@@ -1594,6 +1629,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
+  },
+  weightMethodCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.25)',
+    padding: 10,
+    marginBottom: 8,
+  },
+  weightMethodTitle: {
+    color: '#FFE58D',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  weightMethodText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 2,
   },
   balanceGrid: {
     gap: 8,
@@ -2094,6 +2151,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 8,
+  },
+  planetMeaningSectionCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   // \u00F0\u0178\u017D\u00AF ESTILOS PARA ASCENDENTE E MEIO DO C\u00C3\u2030U
   anglesSection: {

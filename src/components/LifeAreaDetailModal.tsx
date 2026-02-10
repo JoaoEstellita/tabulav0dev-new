@@ -216,6 +216,24 @@ const getTimingLabel = (transit: BackendTransit): string | null => {
   return transit.phaseLabel ? transit.phaseLabel : null
 }
 
+const normalizeNarrativeText = (value: unknown): string =>
+  String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const isGenericNarrativeText = (value: unknown): boolean => {
+  const normalized = normalizeNarrativeText(value)
+  if (!normalized) return true
+  return (
+    normalized.includes('fase de integracao e calibragem') ||
+    normalized.includes('momento de observacao') ||
+    normalized.includes('traz uma fase')
+  )
+}
+
 const normalizeAspectKey = (value: string): string => {
   const normalized = String(value || '')
     .trim()
@@ -1076,6 +1094,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildTransitTitle = (transit: any) => {
+    const columnKind = getTransitColumnKind(transit)
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
@@ -1087,6 +1106,27 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.target?.angle ||
       (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? translate('planets', String(rawTarget)) : ''
+    if (columnKind === 'house') {
+      const aspectKey = normalizeAspectKey(rawAspect)
+      if (houseTarget) {
+        if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
+          return `${transitPlanet} tensiona o eixo da Casa ${houseTarget}`
+        }
+        if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
+          return `${transitPlanet} favorece o eixo da Casa ${houseTarget}`
+        }
+        if (aspect) {
+          return `${transitPlanet} ativa a Casa ${houseTarget} em ${aspect}`
+        }
+      }
+      return buildSharedTransitTitle({
+        transitPlanet,
+        aspectLabel: aspect,
+        targetLabel: '',
+        houseNumber: currentHouse || houseTarget,
+        areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
+      })
+    }
     return buildSharedTransitTitle({
       transitPlanet,
       aspectLabel: aspect,
@@ -1190,7 +1230,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const buildDirectText = (transit: any, suggestion: any) => {
     const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
-    if (astroNarrative?.directText) return astroNarrative.directText
+    if (astroNarrative?.directText && !isGenericNarrativeText(astroNarrative.directText)) {
+      return String(astroNarrative.directText).replace(/\s+/g, ' ').trim()
+    }
 
     const directFromDatasetRaw =
       suggestion?.card?.summary ||
@@ -1203,12 +1245,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         .replace(/\s+/g, ' ')
         .replace(/^Leitura completa:\s*/i, '')
         .trim()
-      const normalized = sanitized.toLowerCase()
-      const isGeneric =
-        normalized.includes('fase de integracao e calibragem') ||
-        normalized.includes('momento de observacao') ||
-        normalized.includes('traz uma fase')
-      if (sanitized.length >= 28 && !isGeneric) return sanitized
+      if (sanitized.length >= 28 && !isGenericNarrativeText(sanitized)) return sanitized
     }
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
     const transitPlanet = translate('planets', transit?.transitPlanet)
@@ -1235,26 +1272,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
     const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
+    const normalizedDirect = normalizeNarrativeText(directText)
 
     if (!suggestion) {
-      return [
+      const fallbackSegments = [
         astroNarrative.fullText,
         'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
-      ].join('\n\n')
+      ].filter((segment) => {
+        const normalized = normalizeNarrativeText(segment)
+        return normalized && normalized !== normalizedDirect && !isGenericNarrativeText(segment)
+      })
+      return fallbackSegments.length ? fallbackSegments.join('\n\n') : directText
     }
 
-    const segments: string[] = [astroNarrative.fullText]
+    const segments: string[] = []
     const addSegment = (value: unknown, prefix = '') => {
       const raw = String(value || '').trim()
       if (!raw) return
-      const normalized = raw
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-      if (normalized.includes('fase de integracao e calibragem') || normalized.includes('momento de observacao')) return
+      const normalized = normalizeNarrativeText(raw)
+      if (!normalized || normalized === normalizedDirect || isGenericNarrativeText(raw)) return
       const text = `${prefix}${raw}`
-      if (!segments.includes(text)) segments.push(text)
+      const normalizedText = normalizeNarrativeText(text)
+      const alreadyExists = segments.some((segment) => normalizeNarrativeText(segment) === normalizedText)
+      if (!alreadyExists) segments.push(text)
     }
+    addSegment(astroNarrative.fullText)
     addSegment(suggestion?.deep?.opening)
     addSegment(suggestion?.deep?.astrologicalWhy)
     addSegment(suggestion?.deep?.centralTension, 'Tensão central: ')
@@ -1272,10 +1314,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     addSegment(suggestion?.card?.bestUse, 'Melhor uso: ')
     addSegment(suggestion?.card?.timingHint, 'Timing: ')
 
-    if (!segments.length) {
-      segments.push(directText)
-    }
-    return segments.join('\n\n')
+    return segments.length ? segments.join('\n\n') : directText
   }
 
   const renderTransitList = (items: any[], startIndex = 0, featured = false) =>
@@ -1376,9 +1415,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
+    const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
+    const targetAngle = String(transit?.target?.angle || '').toUpperCase()
+    const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
+    const planetTargets = new Set([
+      'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
+      'ASC', 'MC', 'DSC', 'IC'
+    ])
+    const isPlanetTarget = planetTargets.has(normalizedTarget) || ['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)
+    if (isPlanetTarget) return 'planet'
+
     const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
     const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
-    const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
     const explicitHouseTarget =
       rawTarget.startsWith('HOUSE_') ||
       rawTarget.startsWith('CASA') ||
@@ -1393,17 +1441,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       rawType.includes('house') ||
       rawType.includes('planeta em casa')
     if (isHouseContext) return 'house'
-
-    const targetAngle = String(transit?.target?.angle || '').toUpperCase()
-    if (['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)) return 'planet'
-
-    const planetTargets = new Set([
-      'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
-      'ASC', 'MC', 'DSC', 'IC'
-    ])
-    const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
-    if (planetTargets.has(normalizedTarget)) return 'planet'
-
     if (rawTarget && !explicitHouseTarget) return 'planet'
     return 'house'
   }
@@ -1423,11 +1460,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           <>
-            <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos na área</Text>
+            <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos ativos nesta área</Text>
             {planetTransits.length ? (
               <View style={styles.transitBlock}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Planeta</Text>
+                  <Text style={styles.transitColumnDescription}>Aspectos com planetas e pontos natais</Text>
                   <Text style={styles.transitColumnMeta}>{planetTransits.length}</Text>
                 </View>
                 {renderTransitList(planetTransits, 0, false)}
@@ -1438,6 +1476,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               <View style={styles.transitBlock}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Casa</Text>
+                  <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
                   <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
                 </View>
                 {renderTransitList(houseTransits, 0, false)}
@@ -1485,31 +1524,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
           let transitTitle = 'Trânsito'
           let transitMeta = ''
+          let suggestionContextLabel = 'Planeta x Planeta'
           if (transit) {
-            const areaKey = String(areaData?.name || '').toLowerCase()
-            const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
-            const transitTarget =
-              transit.natalPlanet ||
-              transit.target?.natalPlanet ||
-              transit.target?.angle ||
-              (transit.target?.house ? `Casa ${transit.target.house}` : '')
-            transitTitle = buildSharedTransitTitle({
-              transitPlanet: translate('planets', transit.transitPlanet),
-              aspectLabel: translate('aspects', sourceType),
-              targetLabel: translate('planets', transitTarget),
-              houseNumber:
-                transit?.target?.house ??
-                transit?.house ??
-                transit?.transitHouse ??
-                null,
-              areaHouses: getRelevantHousesForArea(areaKey),
-            })
-            transitMeta = transit.natalHouseImpacted
-              ? `Casa ${transit.natalHouseImpacted} (${houseName})`
-              : ''
+            const columnKind = getTransitColumnKind(transit)
+            suggestionContextLabel = columnKind === 'house' ? 'Planeta x Casa' : 'Planeta x Planeta'
+            transitTitle = buildTransitTitle(transit)
+            const houseLabel = getTransitHouseLabel(transit)
+            const orbLabel = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : ''
+            if (columnKind === 'house') {
+              const houseName = houseLabel
+                ? TRANSLATIONS.houses[Number(houseLabel) as keyof typeof TRANSLATIONS.houses] || `Casa ${houseLabel}`
+                : ''
+              transitMeta = [houseLabel ? `Casa natal ativada ${houseLabel}` : '', houseName, orbLabel]
+                .filter(Boolean)
+                .join(' • ')
+            } else {
+              transitMeta = [transit?.natalPlanet ? `Alvo natal: ${translate('planets', transit.natalPlanet)}` : '', orbLabel]
+                .filter(Boolean)
+                .join(' • ')
+            }
           } else if (aspect) {
             transitTitle = `${translate('planets', aspect.planet1)} em ${translate('aspects', aspect.type)} com ${translate('planets', aspect.planet2)}`
             transitMeta = `Força ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
+            suggestionContextLabel = 'Planeta x Planeta'
           }
           const timingLabel = transit ? getTimingLabel(transit) : null
 
@@ -1517,8 +1554,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             <View key={suggestion.id || suggestion.transitId} style={styles.suggestionCard}>
               <View style={styles.suggestionHeader}>
                 <Text style={styles.suggestionNumber}>#{index + 1}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                  <Text style={styles.statusText}>{statusText}</Text>
+                <View style={styles.suggestionBadges}>
+                  <View style={styles.suggestionContextBadge}>
+                    <Text style={styles.suggestionContextText}>{suggestionContextLabel}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                    <Text style={styles.statusText}>{statusText}</Text>
+                  </View>
                 </View>
               </View>
 
@@ -2098,26 +2140,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   transitBlock: {
-    marginTop: 8,
+    marginTop: 10,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
   },
   transitColumnHeader: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingHorizontal: 2,
+    justifyContent: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 6,
+    gap: 3,
   },
   transitColumnTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: 0.6,
+    textAlign: 'center',
+  },
+  transitColumnDescription: {
+    fontSize: 11,
+    color: '#475569',
+    textAlign: 'center',
   },
   transitColumnMeta: {
     fontSize: 11,
-    color: '#64748B',
-    fontWeight: '700',
+    color: '#1E293B',
+    fontWeight: '800',
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FED7AA',
+    borderWidth: 1,
+    borderRadius: 999,
+    overflow: 'hidden',
+    paddingHorizontal: 9,
+    paddingVertical: 2,
   },
   emptyState: {
     padding: DESIGN_SYSTEM.spacing.lg,
@@ -2219,6 +2280,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: DESIGN_SYSTEM.spacing.sm
+  },
+  suggestionBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  suggestionContextBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+  suggestionContextText: {
+    fontSize: 10,
+    color: '#334155',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   suggestionNumber: {
     fontSize: 14,
