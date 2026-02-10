@@ -18,6 +18,7 @@ import {
 import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
+import { buildAstroTransitNarrative } from '../../utils/astroInterpretation'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -163,31 +164,16 @@ function buildEventTitle(event: ForecastEvent) {
 }
 
 function buildDirectEventText(event: ForecastEvent) {
-  const base = event.shortText || 'Movimento ativo no periodo.'
-  const aspect = String(event.aspect || '').toLowerCase()
-  const isHarmonic = /trigono|sextil/.test(aspect)
-  const isChallenging = /quadratura|oposicao|quincuncio|semi/.test(aspect)
-  const domain = (event.domains || []).map((item) => formatDomainLabel(item)).slice(0, 2).join(' e ')
-  const hasNearPeak = (() => {
-    const exact = parseUTCDateString((event.exactAt || '').slice(0, 10))
-    const start = parseUTCDateString((event.startAt || '').slice(0, 10))
-    if (!exact || !start) return false
-    return Math.abs(diffDaysUTC(start, exact)) <= 2
-  })()
-
-  if (event.impact === 'UP' || isHarmonic) {
-    if (hasNearPeak) {
-      return `${base} Janela de maior tracao${domain ? ` em ${domain}` : ''}: execute a prioridade principal.`
-    }
-    return `${base} Tendencia construtiva${domain ? ` em ${domain}` : ''}: avance com constancia e finalize pendencias.`
-  }
-  if (event.impact === 'DOWN' || isChallenging) {
-    if (hasNearPeak) {
-      return `${base} Momento sensivel${domain ? ` em ${domain}` : ''}: reduza atrito, renegocie e evite excesso de pressa.`
-    }
-    return `${base} Pede calibragem${domain ? ` em ${domain}` : ''}: simplifique e ajuste a rota antes de ampliar.`
-  }
-  return `${base} Clima oscilante${domain ? ` em ${domain}` : ''}: mantenha passo curto e valide cada decisao.`
+  const domain = (event.domains || []).map((item) => formatDomainLabel(item)).slice(0, 1).join(', ')
+  const narrative = buildAstroTransitNarrative(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    domain || 'previsoes'
+  )
+  return narrative.directText
 }
 
 function buildActionHint(event: ForecastEvent) {
@@ -202,16 +188,16 @@ function buildActionHint(event: ForecastEvent) {
 
 function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[]) {
   const domains = (event.domains || []).map((d) => formatDomainLabel(d)).join(', ')
-  const intro = `${event.transitPlanet} em ${event.aspect.toLowerCase()} com ${event.natalPoint} ativa um ciclo pratico de decisao.`
-  const impact =
-    event.impact === 'UP'
-      ? 'A leitura completa indica janela mais construtiva para progresso e organizacao.'
-      : event.impact === 'DOWN'
-      ? 'A leitura completa indica friccao maior, pedindo revisao e ritmo mais disciplinado.'
-      : 'A leitura completa indica oscilacao entre avanco e revisao, com decisoes graduais.'
-  const scope = domains ? `Areas mais sensiveis: ${domains}.` : ''
+  const narrative = buildAstroTransitNarrative(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    domains || 'previsoes'
+  )
   const detail = detailLines.length ? `Dados tecnicos: ${detailLines.join(' - ')}.` : ''
-  return [intro, impact, scope, detail].filter(Boolean).join(' ')
+  return [narrative.fullText, detail].filter(Boolean).join('\n\n')
 }
 
 function formatDomainLabel(domain: string) {

@@ -1217,22 +1217,33 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
 
     const segments: string[] = [astroNarrative.fullText]
-    if (suggestion?.deep?.opening) segments.push(suggestion.deep.opening)
-    if (suggestion?.deep?.astrologicalWhy) segments.push(suggestion.deep.astrologicalWhy)
-    if (suggestion?.deep?.centralTension) segments.push(`Tensão central: ${suggestion.deep.centralTension}`)
+    const addSegment = (value: unknown, prefix = '') => {
+      const raw = String(value || '').trim()
+      if (!raw) return
+      const normalized = raw
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+      if (normalized.includes('fase de integracao e calibragem') || normalized.includes('momento de observacao')) return
+      const text = `${prefix}${raw}`
+      if (!segments.includes(text)) segments.push(text)
+    }
+    addSegment(suggestion?.deep?.opening)
+    addSegment(suggestion?.deep?.astrologicalWhy)
+    addSegment(suggestion?.deep?.centralTension, 'Tensão central: ')
 
     const guidance = Array.isArray(suggestion?.deep?.practicalGuidance)
       ? suggestion.deep.practicalGuidance.filter(Boolean).slice(0, 4)
       : []
     if (guidance.length) {
-      segments.push(`Orientação prática:\n- ${guidance.join('\n- ')}`)
+      addSegment(`Orientação prática:\n- ${guidance.join('\n- ')}`)
     }
 
-    if (suggestion?.deep?.reflectionPrompt) segments.push(`Pergunta-chave: ${suggestion.deep.reflectionPrompt}`)
-    if (suggestion?.deep?.integrationNote) segments.push(suggestion.deep.integrationNote)
-    if (suggestion?.statusLink?.scoreEffectHint) segments.push(`Conexão com score: ${suggestion.statusLink.scoreEffectHint}`)
-    if (suggestion?.card?.bestUse) segments.push(`Melhor uso: ${suggestion.card.bestUse}`)
-    if (suggestion?.card?.timingHint) segments.push(`Timing: ${suggestion.card.timingHint}`)
+    addSegment(suggestion?.deep?.reflectionPrompt, 'Pergunta-chave: ')
+    addSegment(suggestion?.deep?.integrationNote)
+    addSegment(suggestion?.statusLink?.scoreEffectHint, 'Conexão com score: ')
+    addSegment(suggestion?.card?.bestUse, 'Melhor uso: ')
+    addSegment(suggestion?.card?.timingHint, 'Timing: ')
 
     if (!segments.length) {
       segments.push(directText)

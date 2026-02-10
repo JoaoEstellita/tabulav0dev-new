@@ -1893,12 +1893,22 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const statusLabel = areaCritical && status.kind === "harmonic" ? "Alivio" : status.label
                         const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
                         const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
+                        const suggestionText = String(suggestion?.text || '').trim()
+                        const normalizedSuggestion = suggestionText
+                          .toLowerCase()
+                          .normalize("NFD")
+                          .replace(/[\u0300-\u036f]/g, "")
+                        const shouldUseSuggestionText = suggestionText.length > 20
+                          && !normalizedSuggestion.includes("fase de integracao e calibragem")
+                          && !normalizedSuggestion.includes("momento de observacao")
                         const fullLines = [
                           astroNarrative.fullText,
-                          suggestion?.text || "",
+                          shouldUseSuggestionText ? suggestionText : "",
                           suggestion?.title ? `Foco: ${String(suggestion.title)}` : "",
                           mainPlanets.length ? `Planetas de base: ${mainPlanets.slice(0, 5).join(", ")}` : "",
-                        ].filter(Boolean)
+                        ]
+                          .filter(Boolean)
+                          .filter((line: string, idx: number, arr: string[]) => arr.indexOf(line) === idx)
                         const orbText = Number.isFinite(transit?.orb) ? `Orb ${Number(transit.orb).toFixed(1)}°` : ""
                         const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
                         return {

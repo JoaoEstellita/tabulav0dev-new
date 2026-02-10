@@ -47,7 +47,7 @@ const ASPECT_MEANING: Record<string, string> = {
   quadratura: 'tensao de ajuste pratico e decisao',
   trigono: 'fluxo mais natural de recursos e talentos',
   sextil: 'abertura de oportunidade que depende de iniciativa',
-  quincuncio: 'desalinhamento fino que pede recalibragem',
+  quincuncio: 'desalinhamento fino que pede ajuste consciente',
   semissextil: 'ajuste sutil por observacao e refinamento',
   semiquadratura: 'irritacao leve que sinaliza ponto de ajuste',
   sesquiquadratura: 'atrito intermitente que pede reposicionamento',
@@ -109,6 +109,49 @@ function getTargetLabel(transit: AnyTransit): string {
   return PLANET_PT[raw] || raw
 }
 
+function getAreaLabel(areaLabel?: string | null): string {
+  const value = String(areaLabel || '').trim()
+  if (!value) return 'area de vida'
+  return value.toLowerCase()
+}
+
+function buildActionHint(aspectKey: string, house: number | null, areaLabel?: string | null): string {
+  const area = getAreaLabel(areaLabel)
+  if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
+    return `Acao pratica: reduza atrito, defina uma prioridade objetiva em ${area} e ajuste o ritmo por 48h.`
+  }
+  if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
+    return `Acao pratica: aproveite a fluidez para concluir uma entrega concreta em ${area}.`
+  }
+  if (aspectKey === 'ingress' && house) {
+    return `Acao pratica: reorganize a agenda conforme os temas da Casa ${house} e acompanhe o efeito no dia a dia.`
+  }
+  return `Acao pratica: observe sinais, registre decisoes e execute um proximo passo simples em ${area}.`
+}
+
+function buildScoreLink(aspectKey: string, areaLabel?: string | null): string {
+  const area = getAreaLabel(areaLabel)
+  if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
+    return `Conexao com o status: este padrao tende a pressionar ${area} se voce agir no impulso; o score melhora com ajuste de estrategia.`
+  }
+  if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
+    return `Conexao com o status: este padrao tende a favorecer ${area}; o score sobe quando voce transforma potencial em acao concreta.`
+  }
+  return `Conexao com o status: o efeito em ${area} depende mais da consistencia das escolhas do que da intensidade do transito.`
+}
+
+function sanitizeNarrativeText(value: string): string {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return ''
+  const banned = ['nesta area', 'nesta area.', 'fase de calibragem']
+  const normalized = text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  if (banned.some((pattern) => normalized.includes(pattern))) return ''
+  return text
+}
+
 function getPhaseLabel(transit: AnyTransit): string {
   const phase = String(transit?.phase || '').toLowerCase()
   if (phase === 'peak') return 'em pico'
@@ -131,8 +174,10 @@ export function buildAstroTransitNarrative(
   const house = getHouseNumber(transit)
   const targetLabel = getTargetLabel(transit)
   const phaseLabel = getPhaseLabel(transit)
-  const area = String(areaLabel || 'a area atual').toLowerCase()
+  const area = getAreaLabel(areaLabel)
   const houseMeaning = house ? HOUSE_SYMBOLISM[house] : ''
+  const actionHint = buildActionHint(aspectKey, house, areaLabel)
+  const scoreLink = buildScoreLink(aspectKey, areaLabel)
 
   let directText = ''
   if (house && aspectKey === 'ingress') {
@@ -142,20 +187,21 @@ export function buildAstroTransitNarrative(
   } else {
     directText = `${transitPlanet} em ${aspectKey || 'transito'} com ${targetLabel} indica ${aspectMeaning}. ${phaseLabel}, o foco recai em ${area}.`
   }
+  const safeDirectText = sanitizeNarrativeText(directText) || `${transitPlanet} ativa um ciclo de ajustes praticos em ${area}.`
 
   const fullParts = [
-    `Base astrologica: ${transitPlanet} simboliza ${planetMeaning}.`,
+    `Leitura tecnica: ${transitPlanet} simboliza ${planetMeaning}.`,
     house
       ? `Posicao atual: Casa ${house} (${houseMeaning}).`
       : `Alvo ativado: ${targetLabel}.`,
-    `Leitura do aspecto/transito: ${aspectMeaning}.`,
+    `Aspecto em foco: ${aspectMeaning}.`,
     `Fase temporal: ${phaseLabel}.`,
-    `Conexao com ${area}: esta dinamica altera como voce percebe, decide e executa nessa area.`,
+    `Aplicacao pratica: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
+    scoreLink,
   ]
 
   return {
-    directText,
+    directText: safeDirectText,
     fullText: fullParts.join('\n\n'),
   }
 }
-
