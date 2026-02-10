@@ -127,7 +127,7 @@ const SIGN_WEIGHT = 0.6
 const HOUSE_WEIGHT = 0.4
 
 const toCanonicalElementKey = (value: string): 'fire' | 'earth' | 'air' | 'water' | null => {
-  const normalized = normalizeElementKey(value)
+  const normalized = normalizeKey(String(value || ''))
   const map: Record<string, 'fire' | 'earth' | 'air' | 'water'> = {
     fire: 'fire',
     fogo: 'fire',
@@ -142,7 +142,7 @@ const toCanonicalElementKey = (value: string): 'fire' | 'earth' | 'air' | 'water
 }
 
 const toCanonicalModalityKey = (value: string): 'cardinal' | 'fixed' | 'mutable' | null => {
-  const normalized = normalizeModalityKey(value)
+  const normalized = normalizeKey(String(value || ''))
   const map: Record<string, 'cardinal' | 'fixed' | 'mutable'> = {
     cardinal: 'cardinal',
     cardeal: 'cardinal',
