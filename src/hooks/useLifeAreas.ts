@@ -19,6 +19,7 @@ export interface UseLifeAreasReturn {
   cacheStatus: CacheStatus | null
   backendLifeAreas: Record<string, any> | null
   backendCurrentTransits: any | null
+  backendStatusPersonal: { score?: number; level?: string } | null
   loading: boolean
   error: string | null
   refreshData: (forceRefresh?: boolean) => Promise<void>
@@ -33,6 +34,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null)
   const [backendLifeAreas, setBackendLifeAreas] = useState<Record<string, any> | null>(null)
   const [backendCurrentTransits, setBackendCurrentTransits] = useState<any | null>(null)
+  const [backendStatusPersonal, setBackendStatusPersonal] = useState<{ score?: number; level?: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
@@ -52,6 +54,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setCacheStatus(null)
       setBackendLifeAreas(null)
       setBackendCurrentTransits(null)
+      setBackendStatusPersonal(null)
       setLoading(false)
       setError(null)
       setIsUsingLocalEngine(false)
@@ -104,6 +107,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       let backendLifeAreasValue: Record<string, any> | null = null
       let backendCurrentTransitsValue: any | null = null
+      let backendStatusPersonalValue: { score?: number; level?: string } | null = null
       let backendComputedAtMs: number | null = null
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
@@ -113,6 +117,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
           const statusData = statusSnap.data()
           backendLifeAreasValue = statusData?.lifeAreas || null
           backendCurrentTransitsValue = statusData?.currentTransits || null
+          backendStatusPersonalValue = statusData?.statusPersonal || null
           backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
           backendComputedAtMs = statusData?.computedAt?.toDate
             ? statusData.computedAt.toDate().getTime()
@@ -122,9 +127,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
             : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
           setBackendLifeAreas(backendLifeAreasValue)
           setBackendCurrentTransits(backendCurrentTransitsValue)
+          setBackendStatusPersonal(backendStatusPersonalValue)
         } else {
           setBackendLifeAreas(null)
           setBackendCurrentTransits(null)
+          setBackendStatusPersonal(null)
         }
       } catch (statusError) {
         console.error('Erro ao carregar userStatus:', statusError)
@@ -154,6 +161,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
             const statusData = statusSnap.data()
             backendLifeAreasValue = statusData?.lifeAreas || null
             backendCurrentTransitsValue = statusData?.currentTransits || null
+            backendStatusPersonalValue = statusData?.statusPersonal || null
             backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
             backendComputedAtMs = statusData?.computedAt?.toDate
               ? statusData.computedAt.toDate().getTime()
@@ -163,6 +171,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
               : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
             setBackendLifeAreas(backendLifeAreasValue)
             setBackendCurrentTransits(backendCurrentTransitsValue)
+            setBackendStatusPersonal(backendStatusPersonalValue)
           }
         } catch (refreshError) {
           console.warn('Falha ao atualizar status via backend:', refreshError)
@@ -391,6 +400,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     cacheStatus,
     backendLifeAreas,
     backendCurrentTransits,
+    backendStatusPersonal,
     loading,
     error,
     refreshData,

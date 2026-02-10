@@ -112,6 +112,7 @@ export default function HomeScreen() {
       refreshData,
       backendLifeAreas,
       backendCurrentTransits,
+      backendStatusPersonal,
       localOverrideActive
     } = useLifeAreas()
     const { settings } = useUserSettings()
@@ -385,7 +386,8 @@ export default function HomeScreen() {
     }, [])
 
     const statusPersonalLabel = React.useMemo(() => {
-      const rawLevel = String(statusPersonal?.level || '').toLowerCase()
+      const source = backendStatusPersonal || statusPersonal
+      const rawLevel = String(source?.level || '').toLowerCase()
       const map: Record<string, string> = {
         excellent: 'Excelente',
         excelente: 'Excelente',
@@ -398,10 +400,10 @@ export default function HomeScreen() {
         critical: 'Crítico',
         critico: 'Crítico',
       }
-      const score = typeof statusPersonal?.score === 'number' ? Math.round(statusPersonal.score) : null
+      const score = typeof source?.score === 'number' ? Math.round(source.score) : null
       if (score === null) return null
       return `Status pessoal: ${map[rawLevel] || 'Neutro'} (${score}%)`
-    }, [statusPersonal?.level, statusPersonal?.score])
+    }, [backendStatusPersonal?.level, backendStatusPersonal?.score, statusPersonal?.level, statusPersonal?.score])
 
     if (loading && !transitData) {
       return (
