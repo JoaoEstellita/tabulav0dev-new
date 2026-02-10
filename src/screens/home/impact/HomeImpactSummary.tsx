@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { decodeUnicodeEscapes, translatePlanetPT } from '../../../utils/astro/pt'
 import { normalizeKey } from '../../../utils/astro/normalizeKey'
+import { buildTransitTitle as buildSharedTransitTitle } from '../../../utils/transitPresentation'
 import type { ImpactAreaNode } from './buildImpactNodes'
 
 interface HomeImpactSummaryProps {
@@ -84,7 +85,11 @@ export default function HomeImpactSummary({
         <View style={styles.rows}>
           <Text style={styles.sectionLabel}>Trânsitos recentes</Text>
           {recentItems.map((item, index) => {
-            const label = `${translatePlanetPT(item.transitPlanet)} ${translateAspectLabel(item.type)} ${translatePlanetPT(item.natalPlanet)}`
+            const label = buildSharedTransitTitle({
+              transitPlanet: translatePlanetPT(item.transitPlanet),
+              aspectLabel: translateAspectLabel(item.type),
+              targetLabel: translatePlanetPT(item.natalPlanet),
+            })
             const orbLabel = formatOrb(item.orb)
             return (
               <View key={`${item.transitPlanet}-${item.natalPlanet}-${index}`} style={styles.transitItem}>

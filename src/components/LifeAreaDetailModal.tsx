@@ -1429,13 +1429,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           let transitTitle = 'Trânsito'
           let transitMeta = ''
           if (transit) {
+            const areaKey = String(areaData?.name || '').toLowerCase()
             const houseName = TRANSLATIONS.houses[transit.natalHouseImpacted as keyof typeof TRANSLATIONS.houses] || 'Casa'
             const transitTarget =
               transit.natalPlanet ||
               transit.target?.natalPlanet ||
               transit.target?.angle ||
               (transit.target?.house ? `Casa ${transit.target.house}` : '')
-            transitTitle = `${translate('planets', transit.transitPlanet)} em ${translate('aspects', sourceType)} com ${translate('planets', transitTarget)}`
+            transitTitle = buildSharedTransitTitle({
+              transitPlanet: translate('planets', transit.transitPlanet),
+              aspectLabel: translate('aspects', sourceType),
+              targetLabel: translate('planets', transitTarget),
+              houseNumber:
+                transit?.target?.house ??
+                transit?.house ??
+                transit?.transitHouse ??
+                null,
+              areaHouses: getRelevantHousesForArea(areaKey),
+            })
             transitMeta = transit.natalHouseImpacted
               ? `Casa ${transit.natalHouseImpacted} (${houseName})`
               : ''
