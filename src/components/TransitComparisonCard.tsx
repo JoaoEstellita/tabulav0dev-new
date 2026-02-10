@@ -404,6 +404,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     endLabel: string | null
     phaseLabel: string | null
     daysToPeak: number | null
+    daysToEnd: number | null
   } | null => {
     if (!window) return null
     const startDate = window.start ? new Date(window.start) : null
@@ -431,7 +432,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       startLabel: formatDate(startDate),
       endLabel: formatDate(endDate),
       phaseLabel,
-      daysToPeak
+      daysToPeak,
+      daysToEnd: endDate && !Number.isNaN(endDate.getTime()) ? daysDiff(now, endDate) : null,
     }
   }
 
@@ -442,6 +444,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       endLabel: string | null
       phaseLabel: string | null
       daysToPeak: number | null
+      daysToEnd: number | null
     } | null) => {
       if (!windowInfo) return 'Em curso'
       const parts: string[] = []
@@ -452,10 +455,9 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         parts.push(windowInfo.phaseLabel)
       }
       if (windowInfo.startLabel) parts.push(`Início ${windowInfo.startLabel}`)
-      if (windowInfo.endLabel) parts.push(`Fim ${windowInfo.endLabel}`)
-      if (windowInfo.phaseLabel === 'Pico') {
-        const lead = typeof windowInfo.daysToPeak === 'number' ? windowInfo.daysToPeak : 0
-        parts.push(`faltam ${lead} dias`)
+      if (windowInfo.endLabel) {
+        if (windowInfo.daysToEnd === 0) parts.push('termina hoje')
+        else parts.push(`vai até dia ${windowInfo.endLabel}`)
       }
       return parts.length ? parts.join(' • ') : 'Em curso'
     },
