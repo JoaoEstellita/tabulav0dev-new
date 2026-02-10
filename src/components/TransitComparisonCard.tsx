@@ -236,6 +236,31 @@ const toCanonicalModalityKey = (value: string): 'cardinal' | 'fixed' | 'mutable'
   return map[normalized] || null
 }
 
+const normalizeElementKey = (value: string): string =>
+  normalizeKey(
+    decodeUnicodeEscapes(String(value || ''))
+      .replace(/\u{1F525}/gu, 'Fogo')
+      .replace(/\u{1F30D}/gu, 'Terra')
+      .replace(/\u{1F4A8}/gu, 'Ar')
+      .replace(/\u{1F4A7}/gu, '\u00C1gua')
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+      .replace(/[\u0000-\u001F\u007F]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+  )
+
+const normalizeModalityKey = (value: string): string =>
+  normalizeKey(
+    decodeUnicodeEscapes(String(value || ''))
+      .replace(/\u{26A1}/gu, 'Cardeal')
+      .replace(/\u{1F512}/gu, 'Fixo')
+      .replace(/\u{1F504}/gu, 'Mut\u00E1vel')
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+      .replace(/[\u0000-\u001F\u007F]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+  )
+
 export default function TransitComparisonCard({
   planetComparisons, 
   chartSummary,
@@ -334,13 +359,6 @@ const translateElement = (element: string): string => {
   return translations[key] || cleaned
 }
 
-function normalizeElementKey(value: string): string {
-  return normalizeKey(sanitizeChangeText(value))
-}
-
-function normalizeModalityKey(value: string): string {
-  return normalizeKey(sanitizeChangeText(value))
-}
 const getElementIconName = (value: string): keyof typeof Ionicons.glyphMap =>
   ELEMENT_ICONS[normalizeElementKey(value)] || FALLBACK_ICON
 const getModalityIconName = (value: string): keyof typeof Ionicons.glyphMap =>
