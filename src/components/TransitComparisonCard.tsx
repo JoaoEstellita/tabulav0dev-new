@@ -312,16 +312,30 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   }
 
   const resolveWindowInfo = (
-    window: { start?: string; end?: string; days?: number } | undefined
-  ): { days: number | null; startLabel: string | null; endLabel: string | null } | null => {
+    window: { start?: string; exact?: string; end?: string; days?: number } | undefined
+  ): { days: number | null; startLabel: string | null; endLabel: string | null; phaseLabel: string | null } | null => {
     if (!window) return null
     const startDate = window.start ? new Date(window.start) : null
+    const exactDate = window.exact ? new Date(window.exact) : null
     const endDate = window.end ? new Date(window.end) : null
-    if (!startDate && !endDate && !window.days) return null
+    if (!startDate && !exactDate && !endDate && !window.days) return null
+    const now = new Date()
+    const toDayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    let phaseLabel: string | null = null
+    if (exactDate && !Number.isNaN(exactDate.getTime())) {
+      const nowDay = toDayStart(now).getTime()
+      const exactDay = toDayStart(exactDate).getTime()
+      if (nowDay === exactDay) phaseLabel = 'Pico'
+      else if (nowDay < exactDay) phaseLabel = 'Em aprox'
+      else phaseLabel = 'Afastando'
+    } else if (startDate && !Number.isNaN(startDate.getTime())) {
+      phaseLabel = now.getTime() < startDate.getTime() ? 'Em aprox' : 'Afastando'
+    }
     return {
       days: typeof window.days === 'number' ? window.days : null,
       startLabel: formatDate(startDate),
-      endLabel: formatDate(endDate)
+      endLabel: formatDate(endDate),
+      phaseLabel
     }
   }
 
@@ -461,6 +475,34 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   const [detailModalShort, setDetailModalShort] = React.useState('')
   const [detailModalLong, setDetailModalLong] = React.useState('')
 
+  React.useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
+      if (!window.location.search.includes('debug=1')) return
+      if (!planetComparisons?.length) return
+
+      const rows = planetComparisons.map((comparison) => {
+        const houseTransitOnNatal = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
+        const houseOnCurrentCusps = getHouseFromCusps(comparison.current.longitude, housesCusps)
+        return {
+          planeta: translatePlanetName(comparison.name),
+          longitudeAtual: Number(comparison.current.longitude?.toFixed?.(3) || comparison.current.longitude),
+          casaComparativoNatal: houseTransitOnNatal ?? '-',
+          casaColetivoViaComparacao: comparison.current.house ?? '-',
+          casaColetivoRecalculada: houseOnCurrentCusps ?? '-',
+          alinhadoColetivo:
+            (comparison.current.house ?? null) === (houseOnCurrentCusps ?? null) ? 'sim' : 'nao',
+        }
+      })
+
+      console.group('ASTRO DEBUG - Validacao casas (Transito c/Natal x Coletivo)')
+      console.table(rows)
+      console.groupEnd()
+    } catch (error) {
+      console.warn('ASTRO DEBUG - Falha ao validar casas por planeta', error)
+    }
+  }, [planetComparisons, housesCusps, natalHousesCusps, getHouseFromCusps])
+
   const openDetailModal = React.useCallback((params: {
     title: string
     subtitle?: string
@@ -573,8 +615,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 const transitOnNatalInfo = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
                 const natalNaturalInfo = getNaturalHouseInfo(comparison.natal.house)
                 const transitOnNatalNaturalInfo = getNaturalHouseInfo(transitOnNatalHouse)
-                const currentNaturalInfo = getNaturalHouseInfo(comparison.current.house)
-                const currentSignLine = `${formatDegreeInSign(comparison.current.longitude)} ${getSignFromDegree(comparison.current.longitude)} ${translateElement(comparison.current.element)} ${translateModality(comparison.current.modality)}${comparison.current.isRetrograde ? ' (Rx)' : ''}`
                 return (
                   <>
                     <TouchableOpacity
@@ -652,7 +692,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Posição Atual',
+                          contextLabel: 'Leitura Coletivo',
                           signLabel,
                           signElement: translateElement(comparison.current.element),
                           signModality: translateModality(comparison.current.modality),
@@ -661,20 +701,17 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: currentNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Posição Atual`,
-                          subtitle: `${signLabel} • Casa ${comparison.current.house}`,
+                          title: `${translatePlanetName(comparison.name)} • Coletivo`,
+                          subtitle: `Casa ${comparison.current.house}`,
                           short: interp.short,
                           long: interp.long,
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Posição Atual</Text>
-                      <Text style={styles.metricLine}>{currentSignLine}</Text>
-                      {renderAttributeChips(comparison.current.element, comparison.current.modality)}
+                      <Text style={styles.columnTitle}>Coletivo</Text>
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.current.house}
                       </Text>
-                      {renderAttributeChips(currentNaturalInfo?.element || null, currentNaturalInfo?.modality || null)}
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
@@ -705,31 +742,29 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           <Text style={styles.aspectText}>
                             {translatePlanetName(t.transitPlanet)} {translateAspectLabel(t.type)} {translatePlanetName(t.natalPlanet)}
                           </Text>
-                          {windowInfo ? (
-                            <Text style={styles.aspectMetaInline}>
-                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
-                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
-                            </Text>
-                          ) : (
-                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
-                          )}
                         </View>
-                        <TouchableOpacity
-                          style={styles.readButton}
-                          onPress={() =>
-                            openDetailModal({
-                              title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
-                              subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
-                              short: `Aspecto ${translateAspectLabel(t.type)} entre ${translatePlanetName(t.transitPlanet)} e ${translatePlanetName(t.natalPlanet)} ativo neste ciclo.`,
-                              long:
-                                `Este trânsito conecta ${translatePlanetName(t.transitPlanet)} com ${translatePlanetName(t.natalPlanet)} por ${translateAspectLabel(t.type)}. ` +
-                                `A leitura completa pede observar timing, intensidade e repetição de padrão. ` +
-                                `Use a influência como contexto para decisões práticas nesta janela${windowInfo?.days ? ` de ${windowInfo.days} dias` : ''}.`,
-                            })
-                          }
-                        >
-                          <Text style={styles.readButtonText}>Abrir leitura</Text>
-                        </TouchableOpacity>
+                        <View style={styles.aspectActionsRow}>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.readButtonInline}
+                            onPress={() =>
+                              openDetailModal({
+                                title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
+                                subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
+                                short: `Aspecto ${translateAspectLabel(t.type)} entre ${translatePlanetName(t.transitPlanet)} e ${translatePlanetName(t.natalPlanet)} ativo neste ciclo.`,
+                                long:
+                                  `Este trânsito conecta ${translatePlanetName(t.transitPlanet)} com ${translatePlanetName(t.natalPlanet)} por ${translateAspectLabel(t.type)}. ` +
+                                  `A leitura completa pede observar timing, intensidade e repetição de padrão. ` +
+                                  `Use a influência como contexto para decisões práticas nesta janela${windowInfo?.days ? ` de ${windowInfo.days} dias` : ''}.`,
+                              })
+                            }
+                          >
+                            <Text style={styles.readButtonText}>Ler</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   )
@@ -750,30 +785,28 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           <Text style={styles.aspectText}>
                             {translatePlanetName(aspect.planet1)} {translateAspectLabel(aspect.type)} {translatePlanetName(aspect.planet2)}
                           </Text>
-                          {windowInfo ? (
-                            <Text style={styles.aspectMetaInline}>
-                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
-                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
-                            </Text>
-                          ) : (
-                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
-                          )}
                         </View>
-                        <TouchableOpacity
-                          style={styles.readButton}
-                          onPress={() =>
-                            openDetailModal({
-                              title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
-                              subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
-                              short: `Aspecto coletivo ${translateAspectLabel(aspect.type)} em vigor no céu atual.`,
-                              long:
-                                `O aspecto ${translateAspectLabel(aspect.type)} entre ${translatePlanetName(aspect.planet1)} e ${translatePlanetName(aspect.planet2)} atua como pano de fundo coletivo. ` +
-                                `A interpretação prática é calibrar expectativa e escolha conforme a fase do aspecto${windowInfo?.days ? ` (janela estimada de ${windowInfo.days} dias)` : ''}.`,
-                            })
-                          }
-                        >
-                          <Text style={styles.readButtonText}>Abrir leitura</Text>
-                        </TouchableOpacity>
+                        <View style={styles.aspectActionsRow}>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.readButtonInline}
+                            onPress={() =>
+                              openDetailModal({
+                                title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
+                                subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
+                                short: `Aspecto coletivo ${translateAspectLabel(aspect.type)} em vigor no céu atual.`,
+                                long:
+                                  `O aspecto ${translateAspectLabel(aspect.type)} entre ${translatePlanetName(aspect.planet1)} e ${translatePlanetName(aspect.planet2)} atua como pano de fundo coletivo. ` +
+                                  `A interpretação prática é calibrar expectativa e escolha conforme a fase do aspecto${windowInfo?.days ? ` (janela estimada de ${windowInfo.days} dias)` : ''}.`,
+                              })
+                            }
+                          >
+                            <Text style={styles.readButtonText}>Ler</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   )
@@ -792,31 +825,29 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       <View style={styles.aspectBody}>
                         <View style={styles.aspectLine}>
                           <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
-                          {windowInfo ? (
-                            <Text style={styles.aspectMetaInline}>
-                              {windowInfo.days ? `Duracao: ${windowInfo.days} dias | ` : ''}
-                              Inicio: {windowInfo.startLabel || '-'} | Fim: {windowInfo.endLabel || '-'}
-                            </Text>
-                          ) : (
-                            <Text style={styles.aspectMetaInline}>Datas reais indisponiveis.</Text>
-                          )}
                         </View>
-                        <TouchableOpacity
-                          style={styles.readButton}
-                          onPress={() =>
-                            openDetailModal({
-                              title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
-                              subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
-                              short: `Ativação de casa ${houseAspect.house} por ${translateAspectLabel(houseAspect.aspect)}.`,
-                              long:
-                                `Quando ${translatePlanetName(comparison.name)} ativa a Casa ${houseAspect.house}, o foco recai em ${houseAspect.meaning}. ` +
-                                `A leitura precisa combina planeta, aspecto e casa para traduzir prioridade real. ` +
-                                `Use esta janela para alinhar intenção e ação concreta${windowInfo?.days ? ` em até ${windowInfo.days} dias` : ''}.`,
-                            })
-                          }
-                        >
-                          <Text style={styles.readButtonText}>Abrir leitura</Text>
-                        </TouchableOpacity>
+                        <View style={styles.aspectActionsRow}>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.readButtonInline}
+                            onPress={() =>
+                              openDetailModal({
+                                title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
+                                subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
+                                short: `Ativação de casa ${houseAspect.house} por ${translateAspectLabel(houseAspect.aspect)}.`,
+                                long:
+                                  `Quando ${translatePlanetName(comparison.name)} ativa a Casa ${houseAspect.house}, o foco recai em ${houseAspect.meaning}. ` +
+                                  `A leitura precisa combina planeta, aspecto e casa para traduzir prioridade real. ` +
+                                  `Use esta janela para alinhar intenção e ação concreta${windowInfo?.days ? ` em até ${windowInfo.days} dias` : ''}.`,
+                              })
+                            }
+                          >
+                            <Text style={styles.readButtonText}>Ler</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   )
@@ -1158,7 +1189,7 @@ const styles = StyleSheet.create({
   },
   aspectLine: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   aspectText: {
     color: '#FFFFFF',
@@ -1168,17 +1199,22 @@ const styles = StyleSheet.create({
   aspectMetaInline: {
     color: '#94A3B8',
     fontSize: 11,
-    marginLeft: 8,
-    textAlign: 'right',
+    marginRight: 8,
   },
-  readButton: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
+  aspectActionsRow: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  readButtonInline: {
+    alignSelf: 'flex-end',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.35)',
     borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     backgroundColor: 'rgba(10, 22, 51, 0.5)',
   },
   readButtonText: {
