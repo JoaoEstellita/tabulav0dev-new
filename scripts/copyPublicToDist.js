@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const SW_VERSION = '2026-02-10-1'
+const SW_VERSION = '2026-02-10-2'
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
