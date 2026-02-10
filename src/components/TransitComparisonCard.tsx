@@ -608,7 +608,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.natal.house}
                       </Text>
-                      {renderAttributeChips(natalHouseInfo?.element || null, natalHouseInfo?.modality || null)}
+                      {renderAttributeChips(natalNaturalInfo?.element || null, natalNaturalInfo?.modality || null)}
                       <Text style={styles.metricHint}>
                         Casa por cúspide (cálculo): {natalHouseInfo?.sign || '-'} • {natalHouseInfo?.element || '-'} {natalHouseInfo?.modality || '-'}
                       </Text>
@@ -648,7 +648,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       <Text style={styles.metricLineStrong}>
                         Casa {transitOnNatalHouse || '-'}
                       </Text>
-                      {renderAttributeChips(transitOnNatalInfo?.element || null, transitOnNatalInfo?.modality || null)}
+                      {renderAttributeChips(transitOnNatalNaturalInfo?.element || null, transitOnNatalNaturalInfo?.modality || null)}
                       <Text style={styles.metricHint}>
                         Casa por cúspide (cálculo): {transitOnNatalInfo?.sign || '-'} • {transitOnNatalInfo?.element || '-'} {transitOnNatalInfo?.modality || '-'}
                       </Text>
@@ -686,7 +686,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.current.house}
                       </Text>
-                      {renderAttributeChips(currentHouseInfo?.element || null, currentHouseInfo?.modality || null)}
+                      {renderAttributeChips(currentNaturalInfo?.element || null, currentNaturalInfo?.modality || null)}
                       <Text style={styles.metricHint}>
                         Casa por cúspide (cálculo): {currentHouseInfo?.sign || '-'} • {currentHouseInfo?.element || '-'} {currentHouseInfo?.modality || '-'}
                       </Text>
