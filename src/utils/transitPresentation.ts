@@ -56,11 +56,13 @@ export function buildTransitTitle(params: {
         .map((value) => extractHouseNumber(value))
         .filter((value): value is number => value !== null)
     : []
-  void areaHouses
+  const areaHousesLabel = areaHouses.length ? areaHouses.join('/') : ''
 
   if (aspectLabel && targetLabel) return `${transitPlanet} em ${aspectLabel} com ${targetLabel}`
   if (aspectLabel && houseNumber) return `${transitPlanet} em ${aspectLabel} na Casa ${houseNumber}`
+  if (aspectLabel && areaHousesLabel) return `${transitPlanet} em ${aspectLabel} nas Casas ${areaHousesLabel}`
   if (houseNumber) return `${transitPlanet} em transito na Casa ${houseNumber}`
+  if (areaHousesLabel) return `${transitPlanet} em transito nas Casas ${areaHousesLabel}`
   if (targetLabel) return `${transitPlanet} com ${targetLabel}`
   if (aspectLabel) return `${transitPlanet} em ${aspectLabel}`
   return `${transitPlanet} em transito ativo`

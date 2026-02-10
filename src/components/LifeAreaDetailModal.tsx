@@ -1052,6 +1052,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
     const houseTarget =
+      transit?.target?.house ||
       transit?.house ||
       transit?.transitHouse ||
       (safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null)
@@ -1066,6 +1067,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       aspectLabel: aspect,
       targetLabel: target,
       houseNumber: houseTarget,
+      areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
     })
   }
 
@@ -1342,9 +1344,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
-    const hasPlanetOrAngleTarget =
-      !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
-    if (hasPlanetOrAngleTarget) return 'planet'
+    const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+    const hasRecognizedAspect = !!aspectType
+    const hasPlanetOrAngleTarget = !!(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle)
+    if (hasRecognizedAspect && hasPlanetOrAngleTarget) return 'planet'
     return 'house'
   }
 
@@ -1352,7 +1355,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const orderedTransits = [...transitItems].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
     const planetTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'planet')
     const houseTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'house')
-    const isWideLayout = width >= 980
 
     return (
       <View style={styles.section}>
@@ -1364,39 +1366,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           <>
-            <View style={styles.subsectionHeader}>
-              <Text style={styles.subsectionLabel}>Lista de trânsitos</Text>
-              <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos na área</Text>
-            </View>
-            <View style={[styles.transitColumnsWrap, isWideLayout ? styles.transitColumnsWide : styles.transitColumnsStack]}>
-              <View style={styles.transitColumn}>
+            <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos na área</Text>
+            {planetTransits.length ? (
+              <View style={styles.transitBlock}>
                 <View style={styles.transitColumnHeader}>
-                  <Text style={styles.transitColumnTitle}>Planeta x Planeta/Ponto</Text>
+                  <Text style={styles.transitColumnTitle}>Planeta x Planeta</Text>
                   <Text style={styles.transitColumnMeta}>{planetTransits.length}</Text>
                 </View>
-                {planetTransits.length ? (
-                  renderTransitList(planetTransits, 0, false)
-                ) : (
-                  <View style={styles.columnEmptyState}>
-                    <Text style={styles.columnEmptyText}>Sem trânsitos deste tipo agora.</Text>
-                  </View>
-                )}
+                {renderTransitList(planetTransits, 0, false)}
               </View>
+            ) : null}
 
-              <View style={styles.transitColumn}>
+            {houseTransits.length ? (
+              <View style={styles.transitBlock}>
                 <View style={styles.transitColumnHeader}>
-                  <Text style={styles.transitColumnTitle}>Planeta x Casa/Contexto</Text>
+                  <Text style={styles.transitColumnTitle}>Planeta x Casa</Text>
                   <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
                 </View>
-                {houseTransits.length ? (
-                  renderTransitList(houseTransits, 0, false)
-                ) : (
-                  <View style={styles.columnEmptyState}>
-                    <Text style={styles.columnEmptyText}>Sem trânsitos deste tipo agora.</Text>
-                  </View>
-                )}
+                {renderTransitList(houseTransits, 0, false)}
               </View>
-            </View>
+            ) : null}
           </>
         )}
       </View>
@@ -2040,19 +2029,8 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '600',
   },
-  transitColumnsWrap: {
-    gap: 12,
-  },
-  transitColumnsWide: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  transitColumnsStack: {
-    flexDirection: 'column',
-  },
-  transitColumn: {
-    flex: 1,
-    minWidth: 0,
+  transitBlock: {
+    marginTop: 8,
   },
   transitColumnHeader: {
     flexDirection: 'row',
@@ -2072,17 +2050,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#64748B',
     fontWeight: '700',
-  },
-  columnEmptyState: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    padding: 10,
-  },
-  columnEmptyText: {
-    fontSize: 12,
-    color: '#64748B',
   },
   emptyState: {
     padding: DESIGN_SYSTEM.spacing.lg,
