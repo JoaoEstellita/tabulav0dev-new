@@ -1,10 +1,11 @@
 ﻿import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView, useWindowDimensions, Image } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
 import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
+import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
@@ -175,6 +176,7 @@ export default function TransitComparisonCard({
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
     normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
   )
+  const [failedPlanetImages, setFailedPlanetImages] = React.useState<Record<string, boolean>>({})
 
     // Sincronizar quando as configuracoes carregarem/alterarem
   React.useEffect(() => {
@@ -199,6 +201,10 @@ export default function TransitComparisonCard({
   }
 
   const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
+  const resolvePlanetImageUri = React.useCallback((planetName: string): string | undefined => {
+    if (!(planetName in PLANET_ICONS)) return undefined
+    return getPlanetImageUri(planetName as PlanetKey)
+  }, [])
 
   const formatSignLine = React.useCallback((longitude: number, isRetrograde?: boolean): string => {
     const signName = getSignFromDegree(longitude)
@@ -924,11 +930,42 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
         {planetComparisons.map((comparison) => (
           <View key={comparison.name} style={styles.planetCard}>
+            {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
+              <View pointerEvents="none" style={styles.planetArtworkWrap}>
+                <Image
+                  source={{ uri: resolvePlanetImageUri(comparison.name) }}
+                  style={styles.planetArtwork}
+                  resizeMode="cover"
+                  onError={() =>
+                    setFailedPlanetImages((prev) => ({
+                      ...prev,
+                      [comparison.name]: true,
+                    }))
+                  }
+                />
+                <LinearGradient
+                  colors={['rgba(42,42,62,0.18)', 'rgba(42,42,62,0.78)', 'rgba(42,42,62,0.96)']}
+                  start={{ x: 0, y: 0.2 }}
+                  end={{ x: 0.9, y: 0.5 }}
+                  style={styles.planetArtworkFade}
+                />
+              </View>
+            ) : null}
+            <View style={styles.planetContent}>
             {/* Cabe\u00E7alho do Planeta */}
             <View style={styles.planetHeader}>
-              <Text style={styles.planetName}>
-                {(PLANET_ICONS[comparison.name] || '?')} {translatePlanetName(comparison.name)}
-              </Text>
+              <View style={styles.planetHeaderRow}>
+                {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
+                  <Image
+                    source={{ uri: resolvePlanetImageUri(comparison.name) }}
+                    style={styles.planetHeaderImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.planetGlyphFallback}>{(PLANET_ICONS[comparison.name] || '?')}</Text>
+                )}
+                <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
+              </View>
             </View>
 
             {/* Comparacao em 3 colunas: Natal | Transito c/ Natal | Posicao Atual */}
@@ -1201,6 +1238,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 })}
               </View>
             )}
+            </View>
           </View>
         ))}
       </View>
@@ -1416,9 +1454,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#FFD700',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  planetArtworkWrap: {
+    position: 'absolute',
+    left: -52,
+    top: -36,
+    width: 250,
+    height: 250,
+    opacity: 0.5,
+  },
+  planetArtwork: {
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+  },
+  planetArtworkFade: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+  },
+  planetContent: {
+    position: 'relative',
+    zIndex: 2,
   },
   planetHeader: {
     marginBottom: 12,
+  },
+  planetHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  planetHeaderImage: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  planetGlyphFallback: {
+    color: '#F8FAFC',
+    fontSize: 22,
+    width: 28,
+    marginRight: 10,
+    textAlign: 'center',
   },
   planetName: {
     color: '#F8FAFC',
