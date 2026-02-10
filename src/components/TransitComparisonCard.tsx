@@ -539,6 +539,40 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     )
   }, [])
 
+  const houseBasedCounts = React.useMemo(() => {
+    const emptyElements = { fire: 0, earth: 0, air: 0, water: 0 }
+    const emptyModalities = { cardinal: 0, fixed: 0, mutable: 0 }
+    const result = {
+      natal: { elements: { ...emptyElements }, modalities: { ...emptyModalities } },
+      current: { elements: { ...emptyElements }, modalities: { ...emptyModalities } },
+    }
+
+    for (const comparison of planetComparisons || []) {
+      const natalNatural = getNaturalHouseInfo(comparison.natal.house)
+      const currentNatural = getNaturalHouseInfo(comparison.current.house)
+
+      const natalElementKey = normalizeElementKey(natalNatural?.element || '')
+      const natalModalityKey = normalizeModalityKey(natalNatural?.modality || '')
+      const currentElementKey = normalizeElementKey(currentNatural?.element || '')
+      const currentModalityKey = normalizeModalityKey(currentNatural?.modality || '')
+
+      if (natalElementKey in result.natal.elements) {
+        ;(result.natal.elements as any)[natalElementKey] += 1
+      }
+      if (natalModalityKey in result.natal.modalities) {
+        ;(result.natal.modalities as any)[natalModalityKey] += 1
+      }
+      if (currentElementKey in result.current.elements) {
+        ;(result.current.elements as any)[currentElementKey] += 1
+      }
+      if (currentModalityKey in result.current.modalities) {
+        ;(result.current.modalities as any)[currentModalityKey] += 1
+      }
+    }
+
+    return result
+  }, [planetComparisons, getNaturalHouseInfo])
+
   const buildColumnInterpretation = React.useCallback((params: {
     planet: string
     contextLabel: string
@@ -615,6 +649,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 const transitOnNatalInfo = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
                 const natalNaturalInfo = getNaturalHouseInfo(comparison.natal.house)
                 const transitOnNatalNaturalInfo = getNaturalHouseInfo(transitOnNatalHouse)
+                const currentNaturalInfo = getNaturalHouseInfo(comparison.current.house)
                 return (
                   <>
                     <TouchableOpacity
@@ -692,7 +727,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Coletivo',
+                          contextLabel: 'Leitura Trânsito Coletivo',
                           signLabel,
                           signElement: translateElement(comparison.current.element),
                           signModality: translateModality(comparison.current.modality),
@@ -701,17 +736,18 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: currentNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Coletivo`,
+                          title: `${translatePlanetName(comparison.name)} • Trânsito Coletivo`,
                           subtitle: `Casa ${comparison.current.house}`,
                           short: interp.short,
                           long: interp.long,
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Coletivo</Text>
+                      <Text style={styles.columnTitle}>Trânsito Coletivo</Text>
                       <Text style={styles.metricLineStrong}>
                         Casa {comparison.current.house}
                       </Text>
+                      {renderAttributeChips(currentNaturalInfo?.element || null, currentNaturalInfo?.modality || null)}
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
@@ -744,10 +780,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
                           <TouchableOpacity
                             style={styles.readButtonInline}
                             onPress={() =>
@@ -762,8 +794,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                               })
                             }
                           >
-                            <Text style={styles.readButtonText}>Ler</Text>
+                            <Text style={styles.readButtonText}>Abrir leitura</Text>
                           </TouchableOpacity>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -787,10 +823,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           </Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
                           <TouchableOpacity
                             style={styles.readButtonInline}
                             onPress={() =>
@@ -804,8 +836,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                               })
                             }
                           >
-                            <Text style={styles.readButtonText}>Ler</Text>
+                            <Text style={styles.readButtonText}>Abrir leitura</Text>
                           </TouchableOpacity>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -827,10 +863,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
-                          <Text style={styles.aspectMetaInline}>
-                            {windowInfo?.phaseLabel || 'Em curso'}
-                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
-                          </Text>
                           <TouchableOpacity
                             style={styles.readButtonInline}
                             onPress={() =>
@@ -845,8 +877,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                               })
                             }
                           >
-                            <Text style={styles.readButtonText}>Ler</Text>
+                            <Text style={styles.readButtonText}>Abrir leitura</Text>
                           </TouchableOpacity>
+                          <Text style={styles.aspectMetaInline}>
+                            {windowInfo?.phaseLabel || 'Em curso'}
+                            {windowInfo?.days ? ` • ${windowInfo.days}d` : ''}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -899,7 +935,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
 
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Elementos:</Text>
+          <Text style={styles.analysisLabel}>Elementos (Signos + Casas):</Text>
           <View style={styles.elementalGrid}>
             <View style={styles.elementalComparison}>
               <Text style={styles.comparisonLabel}>Natal:</Text>
@@ -907,7 +943,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {Object.entries(chartSummary.elemental.natal).map(([element, count]) => (
                   <View key={element} style={styles.elementalItem}>
                     <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                    <Text style={styles.elementalItemText}>
+                      {translateElement(element)} {Number(count) + (houseBasedCounts.natal.elements as any)[normalizeElementKey(element)]}
+                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.natal.elements as any)[normalizeElementKey(element)] || 0})</Text>
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -918,7 +957,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {Object.entries(chartSummary.elemental.current).map(([element, count]) => (
                   <View key={element} style={styles.elementalItem}>
                     <Ionicons name={ELEMENT_ICONS[normalizeElementKey(element)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateElement(element)} {count}</Text>
+                    <Text style={styles.elementalItemText}>
+                      {translateElement(element)} {Number(count) + (houseBasedCounts.current.elements as any)[normalizeElementKey(element)]}
+                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.current.elements as any)[normalizeElementKey(element)] || 0})</Text>
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -927,7 +969,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
 
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Modalidades:</Text>
+          <Text style={styles.analysisLabel}>Modalidades (Signos + Casas):</Text>
           <View style={styles.elementalGrid}>
             <View style={styles.elementalComparison}>
               <Text style={styles.comparisonLabel}>Natal:</Text>
@@ -935,7 +977,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {Object.entries(chartSummary.modality.natal).map(([modality, count]) => (
                   <View key={modality} style={styles.elementalItem}>
                     <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                    <Text style={styles.elementalItemText}>
+                      {translateModality(modality)} {Number(count) + (houseBasedCounts.natal.modalities as any)[normalizeModalityKey(modality)]}
+                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.natal.modalities as any)[normalizeModalityKey(modality)] || 0})</Text>
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -946,7 +991,10 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {Object.entries(chartSummary.modality.current).map(([modality, count]) => (
                   <View key={modality} style={styles.elementalItem}>
                     <Ionicons name={MODALITY_ICONS[normalizeModalityKey(modality)] || FALLBACK_ICON} size={14} color="#FFD700" />
-                    <Text style={styles.elementalItemText}>{translateModality(modality)} {count}</Text>
+                    <Text style={styles.elementalItemText}>
+                      {translateModality(modality)} {Number(count) + (houseBasedCounts.current.modalities as any)[normalizeModalityKey(modality)]}
+                      <Text style={styles.elementalItemMeta}> (Signos: {count} • Casas: {(houseBasedCounts.current.modalities as any)[normalizeModalityKey(modality)] || 0})</Text>
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -1033,6 +1081,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     marginLeft: 4,
+  },
+  elementalItemMeta: {
+    color: '#94A3B8',
+    fontSize: 10,
   },
   planetsSection: {
     flex: 1,
