@@ -113,14 +113,23 @@ const TRANSLATIONS = {
   // Aspectos
     aspects: {
     conjunction: "conjunção",
+    conjuncao: "conjunção",
     opposition: "oposição",
+    oposicao: "oposição",
     square: "quadratura",
+    quadratura: "quadratura",
     trine: "trígono",
+    trigono: "trígono",
     sextile: "sextil",
+    sextil: "sextil",
     quincunx: "quincúncio",
+    quincuncio: "quincúncio",
     semisextile: "semissextil",
+    semissextil: "semissextil",
     semisquare: "semiquadratura",
+    semiquadratura: "semiquadratura",
     sesquiquadrate: "sesquiquadratura",
+    sesquiquadratura: "sesquiquadratura",
   },
   // Prioridades
   priorities: {
@@ -1185,7 +1194,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transitPlanet,
       aspectLabel: aspect,
       targetLabel: target,
-      houseNumber: currentHouse,
+      houseNumber: null,
       areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
     })
   }
@@ -1374,6 +1383,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const renderTransitList = (items: any[], startIndex = 0, featured = false) =>
     items.map((transit: any, index: number) => {
       const absoluteIndex = startIndex + index
+          const columnKind = getTransitColumnKind(transit)
           const aspectType = String(transit.aspectName || transit.type || '')
           const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
           const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
@@ -1391,8 +1401,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const relativeTiming = getTimingLabel(transit)
           const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
           const transitTitle = buildTransitTitle(transit)
-          const houseLabel = getTransitHouseLabel(transit)
-          const houseLabelPrefix = getTransitHousePrefix(transit)
+          const houseLabel = columnKind === 'house' ? getTransitHouseLabel(transit) : null
+          const houseLabelPrefix = columnKind === 'house' ? getTransitHousePrefix(transit) : 'Casa de trânsito'
           const transitKey = getTransitKey(transit, absoluteIndex)
           const suggestion = getSuggestionForTransit(transit)
           const directText = buildDirectText(transit, suggestion)
