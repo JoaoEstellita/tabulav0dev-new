@@ -43,6 +43,7 @@ export type NotificationPreferences = {
       group_message: boolean
       astro_event_personal?: boolean
       astro_event_collective?: boolean
+      weekly_digest?: boolean
       critical_active_summary?: boolean
       daily_summary?: boolean
       weekly_summary?: boolean
@@ -58,6 +59,7 @@ export type NotificationPreferences = {
       group_message?: { dailyLimit: number; throttleMinutes: number; burstWindowMinutes?: number }
       astro_event_personal?: { dailyLimit: number; throttleMinutes: number }
       astro_event_collective?: { dailyLimit: number; throttleMinutes: number }
+      weekly_digest?: { dailyLimit: number; throttleMinutes: number }
       critical_active_summary?: { dailyLimit: number; throttleMinutes: number }
       daily_summary?: { dailyLimit: number; throttleMinutes: number }
       weekly_summary?: { dailyLimit: number; throttleMinutes: number }
@@ -78,6 +80,7 @@ export type NotificationPreferences = {
       group_message: boolean
       astro_event_personal?: boolean
       astro_event_collective?: boolean
+      weekly_digest?: boolean
       critical_active_summary?: boolean
       daily_summary?: boolean
       weekly_summary?: boolean
@@ -126,6 +129,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: false,
       astro_event_personal: false,
       astro_event_collective: false,
+      weekly_digest: false,
       critical_active_summary: false,
       daily_summary: false,
       weekly_summary: false,
@@ -141,6 +145,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: { dailyLimit: 20, throttleMinutes: 1, burstWindowMinutes: 1 },
       astro_event_personal: { dailyLimit: 3, throttleMinutes: 180 },
       astro_event_collective: { dailyLimit: 2, throttleMinutes: 240 },
+      weekly_digest: { dailyLimit: 1, throttleMinutes: 1440 },
       critical_active_summary: { dailyLimit: 1, throttleMinutes: 720 },
       daily_summary: { dailyLimit: 1, throttleMinutes: 720 },
       weekly_summary: { dailyLimit: 1, throttleMinutes: 1440 },
@@ -161,6 +166,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       group_message: false,
       astro_event_personal: false,
       astro_event_collective: false,
+      weekly_digest: false,
       critical_active_summary: false,
       daily_summary: false,
       weekly_summary: false,
@@ -189,6 +195,29 @@ export const loadUserNotificationPreferences = async (
 ): Promise<{ prefs: NotificationPreferences }> => {
   const existing = userData?.notifications || null
   const merged = mergeDeep(DEFAULT_PREFERENCES, existing || {}) as NotificationPreferences
+  if (merged.push?.types?.weekly_digest === undefined) {
+    const legacyWeeklyEnabled = !(
+      merged.push?.types?.critical_active_summary === false &&
+      merged.push?.types?.weekly_summary === false &&
+      merged.push?.types?.forecast_weekly === false
+    )
+    merged.push.types.weekly_digest = legacyWeeklyEnabled
+  }
+  if (merged.inApp?.types?.weekly_digest === undefined) {
+    const legacyWeeklyEnabled = !(
+      merged.inApp?.types?.critical_active_summary === false &&
+      merged.inApp?.types?.weekly_summary === false &&
+      merged.inApp?.types?.forecast_weekly === false
+    )
+    merged.inApp.types.weekly_digest = legacyWeeklyEnabled
+  }
+  if (!merged.push?.limits?.weekly_digest) {
+    const legacyLimits =
+      merged.push?.limits?.weekly_summary ||
+      merged.push?.limits?.forecast_weekly ||
+      merged.push?.limits?.critical_active_summary
+    if (legacyLimits) merged.push.limits.weekly_digest = legacyLimits
+  }
   return { prefs: merged }
 }
 

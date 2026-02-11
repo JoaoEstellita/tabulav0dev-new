@@ -26,9 +26,6 @@ export default function NotificationPreferencesScreen() {
     if (preset === "essential") {
       await savePreferences({
         pushEnabled: true,
-        push: {
-          frequencyProfile: "focus",
-        },
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: false,
         groupFilters: {
@@ -40,6 +37,7 @@ export default function NotificationPreferencesScreen() {
           weekly: false,
         },
         push: {
+          frequencyProfile: "focus",
           types: {
             ...basePushTypes,
             user_status_critical: true,
@@ -49,8 +47,7 @@ export default function NotificationPreferencesScreen() {
             astro_event_personal: true,
             astro_event_collective: false,
             group_message: true,
-            weekly_summary: false,
-            forecast_weekly: false,
+            weekly_digest: false,
           },
         },
         inApp: {
@@ -71,9 +68,6 @@ export default function NotificationPreferencesScreen() {
     if (preset === "balanced") {
       await savePreferences({
         pushEnabled: true,
-        push: {
-          frequencyProfile: "balanced",
-        },
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: true,
         groupFilters: {
@@ -85,6 +79,7 @@ export default function NotificationPreferencesScreen() {
           weekly: true,
         },
         push: {
+          frequencyProfile: "balanced",
           types: {
             ...basePushTypes,
             user_status_critical: true,
@@ -94,8 +89,7 @@ export default function NotificationPreferencesScreen() {
             astro_event_personal: true,
             astro_event_collective: true,
             group_message: true,
-            weekly_summary: true,
-            forecast_weekly: true,
+            weekly_digest: true,
           },
         },
         inApp: {
@@ -108,8 +102,7 @@ export default function NotificationPreferencesScreen() {
             astro_event_personal: true,
             astro_event_collective: true,
             group_message: true,
-            weekly_summary: true,
-            forecast_weekly: true,
+            weekly_digest: true,
           },
         },
       })
@@ -191,15 +184,12 @@ export default function NotificationPreferencesScreen() {
     { key: "user_status_highlight", label: "Destaque de status", description: "Alertas de destaque quando houver mudan\u00E7a relevante." },
     { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "In\u00EDcio, pico e encerramento dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
     { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Alertas de eventos coletivos quando habilitados no backend." },
-    { key: "critical_active_summary", label: "Resumo cr\u00EDtico ativo", description: "Resumo consolidado de \u00E1reas cr\u00EDticas ativas." },
     { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Resumo curto di\u00E1rio com status geral." },
-    { key: "weekly_summary", label: "Resumo semanal", description: "Resumo semanal consolidado das varia\u00E7\u00F5es." },
-    { key: "forecast_weekly", label: "Forecast semanal", description: "Alerta semanal quando novas previs\u00F5es forem geradas." },
+    { key: "weekly_digest", label: "Resumo semanal", description: "Digest semanal unificado (status e previs\u00F5es)." },
     { key: "group_message", label: "Mensagens do grupo", description: "Alertas quando houver nova mensagem no grupo." },
   ]
 
   const inAppTypeItems: Array<{ key: string; label: string; description: string }> = [
-    { key: "daily_ready", label: "Di\u00E1rio pronto", description: "Registra quando o di\u00E1rio/resumo di\u00E1rio estiver pronto." },
     { key: "user_status", label: "Seu status agora", description: "Atualiza\u00E7\u00F5es simples de status (pode gerar ru\u00EDdo se ligado)." },
     { key: "user_status_critical", label: "Cr\u00EDtico pessoal", description: "Registra alertas pessoais cr\u00EDticos no centro de notifica\u00E7\u00F5es." },
     { key: "user_status_critical_recovered", label: "Recupera\u00E7\u00E3o do cr\u00EDtico", description: "Registra quando voc\u00EA sai do estado cr\u00EDtico." },
@@ -210,10 +200,8 @@ export default function NotificationPreferencesScreen() {
     { key: "member_status_positive", label: "Positivo de grupo", description: "Registra fases positivas de membros no grupo." },
     { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Registra in\u00EDcio/pico/fim dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
     { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Registra eventos astrais coletivos no app." },
-    { key: "critical_active_summary", label: "Resumo cr\u00EDtico ativo", description: "Registra resumo consolidado de \u00E1reas cr\u00EDticas." },
     { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Registra resumo di\u00E1rio no centro de notifica\u00E7\u00F5es." },
-    { key: "weekly_summary", label: "Resumo semanal", description: "Registra resumo semanal no centro de notifica\u00E7\u00F5es." },
-    { key: "forecast_weekly", label: "Forecast semanal", description: "Registra novas previs\u00F5es semanais no app." },
+    { key: "weekly_digest", label: "Resumo semanal", description: "Registra digest semanal unificado no app." },
     { key: "group_message", label: "Mensagens do grupo", description: "Registra mensagens de grupos no app." },
   ]
 
