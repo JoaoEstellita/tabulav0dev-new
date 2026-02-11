@@ -103,11 +103,11 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   },
   groupFilters: {
     critical: true,
-    positive: true,
-    messages: true,
+    positive: false,
+    messages: false,
   },
   forecastFilters: {
-    weekly: true,
+    weekly: false,
   },
   quietHours: {
     enabled: false,
@@ -123,7 +123,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       user_status_highlight: false,
       member_status_positive: false,
       user_status_positive: false,
-      group_message: true,
+      group_message: false,
       astro_event_personal: false,
       astro_event_collective: false,
       critical_active_summary: false,
@@ -158,7 +158,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       member_status_positive: false,
       user_status_positive: false,
       group_status: false,
-      group_message: true,
+      group_message: false,
       astro_event_personal: false,
       astro_event_collective: false,
       critical_active_summary: false,

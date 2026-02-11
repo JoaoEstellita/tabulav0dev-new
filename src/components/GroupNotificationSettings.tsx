@@ -287,10 +287,10 @@ export default function GroupNotificationSettings({
       }
 
       setHasChanges(false)
-      Alert.alert('Sucesso', 'Configuracoes salvas com sucesso!')
+      Alert.alert('Sucesso', 'Configurações salvas com sucesso!')
     } catch (error) {
-      console.error('Erro ao salvar configuracoes do grupo:', error)
-      Alert.alert('Erro', 'Nao foi possivel salvar as configuracoes')
+      console.error('Erro ao salvar configurações do grupo:', error)
+      Alert.alert('Erro', 'Não foi possível salvar as configurações')
     }
   }
 
@@ -298,8 +298,8 @@ export default function GroupNotificationSettings({
     if (!group) return
 
     Alert.alert(
-      'Restaurar padroes',
-      'Deseja restaurar as configuracoes padrao do grupo?',
+      'Restaurar padrões',
+      'Deseja restaurar as configurações padrão do grupo?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -331,8 +331,8 @@ export default function GroupNotificationSettings({
   const handleClose = () => {
     if (hasChanges) {
       Alert.alert(
-        'Alteracoes nao salvas',
-        'Voce tem alteracoes nao salvas. Deseja sair mesmo assim?',
+        'Alterações não salvas',
+        'Você tem alterações não salvas. Deseja sair mesmo assim?',
         [
           { text: 'Cancelar', style: 'cancel' },
           { text: 'Sair', style: 'destructive', onPress: onClose },
@@ -354,7 +354,7 @@ export default function GroupNotificationSettings({
           </TouchableOpacity>
 
           <View style={styles.headerInfo}>
-            <Text style={styles.title}>Configuracoes</Text>
+            <Text style={styles.title}>Configurações</Text>
             <Text style={styles.groupName}>{group.name}</Text>
           </View>
 
@@ -373,9 +373,9 @@ export default function GroupNotificationSettings({
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Receber notificacoes</Text>
+                <Text style={styles.settingLabel}>Receber notificações</Text>
                 <Text style={styles.settingDescription}>
-                  Ativar ou desativar todas as notificacoes deste grupo
+                  Ativar ou desativar todas as notificações deste grupo
                 </Text>
               </View>
               <Switch
@@ -403,9 +403,9 @@ export default function GroupNotificationSettings({
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Compartilhar duracao dos transitos</Text>
+                <Text style={styles.settingLabel}>Compartilhar duração dos trânsitos</Text>
                 <Text style={styles.settingDescription}>
-                  Permitir que membros vejam a duracao exata dos aspectos
+                  Permitir que membros vejam a duração exata dos aspectos
                 </Text>
               </View>
               <Switch
@@ -443,7 +443,7 @@ export default function GroupNotificationSettings({
                         settings.priority === priority && styles.priorityButtonTextActive,
                       ]}
                     >
-                      {priority === 'all' ? 'Todas' : priority === 'critical_only' ? 'Criticas' : 'Nenhuma'}
+                      {priority === 'all' ? 'Todas' : priority === 'critical_only' ? 'Críticas' : 'Nenhuma'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -454,7 +454,7 @@ export default function GroupNotificationSettings({
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Cooldown do grupo (push)</Text>
                 <Text style={styles.settingDescription}>
-                  Evita varios pushes seguidos deste grupo. Notificacoes internas continuam aparecendo no app.
+                  Evita vários pushes seguidos deste grupo. Notificações internas continuam aparecendo no app.
                 </Text>
               </View>
               <View style={styles.priorityButtons}>
@@ -526,9 +526,9 @@ export default function GroupNotificationSettings({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Areas de vida</Text>
+            <Text style={styles.sectionTitle}>Áreas de vida</Text>
             <Text style={styles.sectionDescription}>
-              Escolha o que voce compartilha e o que deseja receber neste grupo
+              Escolha o que você compartilha e o que deseja receber neste grupo
             </Text>
 
             <Text style={styles.subsectionTitle}>Compartilhar com o grupo</Text>
@@ -567,7 +567,7 @@ export default function GroupNotificationSettings({
               ))}
             </View>
 
-            <Text style={styles.subsectionTitle}>Receber notificacoes</Text>
+            <Text style={styles.subsectionTitle}>Receber notificações</Text>
             <View style={styles.lifeAreasGrid}>
               {Object.entries(lifeAreaLabels).map(([key, config]) => (
                 <TouchableOpacity
@@ -632,12 +632,12 @@ export default function GroupNotificationSettings({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Nao perturbe</Text>
+            <Text style={styles.sectionTitle}>Não perturbe</Text>
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Modo nao perturbe</Text>
-                <Text style={styles.settingDescription}>Silenciar notificacoes durante certas horas</Text>
+                <Text style={styles.settingLabel}>Modo não perturbe</Text>
+                <Text style={styles.settingDescription}>Silenciar notificações durante certas horas</Text>
               </View>
               <Switch
                 value={settings.schedule.doNotDisturb}

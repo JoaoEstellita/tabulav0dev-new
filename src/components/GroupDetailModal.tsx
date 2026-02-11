@@ -6,7 +6,7 @@
  * - Lista de membros com avatars e status
  * - Historico de atividades
  * - Sistema de convites
- * - Configuracoes de notificacao
+ * - Configurações de notificação
  */
 
 import React, { useState } from 'react'
@@ -158,7 +158,7 @@ export default function GroupDetailModal({
     try {
       if (group.inviteCode) {
         await Share.share({
-          message: `Junte-se ao meu grupo "${group.name}" no Tabula Estelar.\n\nLink: ${inviteLink}\nCodigo: ${group.inviteCode}\n\nAreas compartilhadas: ${sharedAreasText}\nAreas notificadas: ${notifiedAreasText}\n\nBaixe o app Tabula Estelar para entrar no grupo.`,
+          message: `Junte-se ao meu grupo "${group.name}" no Tabula Estelar.\n\nLink: ${inviteLink}\nCódigo: ${group.inviteCode}\n\nÁreas compartilhadas: ${sharedAreasText}\nÁreas notificadas: ${notifiedAreasText}\n\nBaixe o app Tabula Estelar para entrar no grupo.`,
           title: `Convite - ${group.name}`
         })
       }
@@ -169,7 +169,7 @@ export default function GroupDetailModal({
   
   const handleCopyCode = () => {
     if (group.inviteCode) {
-      copyToClipboard(group.inviteCode, 'Codigo copiado para a area de transferencia!')
+      copyToClipboard(group.inviteCode, 'Código copiado para a área de transferência!')
     }
   }
   
@@ -302,7 +302,7 @@ export default function GroupDetailModal({
                           }
                         ]} />
                         <Text style={styles.statusText}>
-                          {member.astrologicalStatus.mood || 'Status nao disponivel'}
+                          {member.astrologicalStatus.mood || 'Status não disponível'}
                         </Text>
                       </View>
                     )}
@@ -380,10 +380,10 @@ export default function GroupDetailModal({
                   <View style={styles.inviteOption}>
                     <View style={styles.inviteHeader}>
                       <Ionicons name="keypad" size={20} color="#FFD700" />
-                      <Text style={styles.inviteTitle}>Codigo de Convite</Text>
+                      <Text style={styles.inviteTitle}>Código de Convite</Text>
                     </View>
                     <Text style={styles.inviteDescription}>
-                      Digite este codigo no app
+                      Digite este código no app
                     </Text>
                     <View style={styles.codeContainer}>
                       <Text style={styles.codeText}>{group.inviteCode}</Text>
@@ -399,24 +399,24 @@ export default function GroupDetailModal({
                   </TouchableOpacity>
 
                   <View style={styles.inviteInfoBox}>
-                    <Text style={styles.inviteInfoTitle}>Areas compartilhadas no grupo</Text>
+                    <Text style={styles.inviteInfoTitle}>Áreas compartilhadas no grupo</Text>
                     <Text style={styles.inviteInfoText}>{sharedAreasText}</Text>
                   </View>
                   <View style={styles.inviteInfoBox}>
-                    <Text style={styles.inviteInfoTitle}>Areas notificadas no grupo</Text>
+                    <Text style={styles.inviteInfoTitle}>Áreas notificadas no grupo</Text>
                     <Text style={styles.inviteInfoText}>{notifiedAreasText}</Text>
                   </View>
 
                   <TouchableOpacity style={styles.settingsButton} onPress={() => setShowGroupSettings(true)}>
                     <Ionicons name="options" size={18} color="#FFFFFF" />
-                    <Text style={styles.settingsButtonText}>Preferencias de compartilhamento</Text>
+                    <Text style={styles.settingsButtonText}>Preferências de compartilhamento</Text>
                   </TouchableOpacity>
                 </>
               )}
 
               {isGroupOwner && onUpdateInviteSettings && (
                 <View style={styles.inviteAdminBox}>
-                  <Text style={styles.inviteAdminTitle}>Configuracoes de convite</Text>
+                  <Text style={styles.inviteAdminTitle}>Configurações de convite</Text>
                   <View style={styles.inviteAdminRow}>
                     <TouchableOpacity
                       style={[styles.inviteAdminButton, inviteEnabled ? styles.inviteAdminButtonActive : null]}
@@ -430,7 +430,7 @@ export default function GroupDetailModal({
                       style={styles.inviteAdminButton}
                       onPress={() => onUpdateInviteSettings({ rotate: true })}
                     >
-                      <Text style={styles.inviteAdminButtonText}>Regenerar codigo</Text>
+                      <Text style={styles.inviteAdminButtonText}>Regenerar código</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={styles.inviteAdminRow}>
@@ -438,7 +438,7 @@ export default function GroupDetailModal({
                       style={styles.inviteAdminButton}
                       onPress={() => onUpdateInviteSettings({ inviteExpiresAt: null })}
                     >
-                      <Text style={styles.inviteAdminButtonText}>Sem expiracao</Text>
+                      <Text style={styles.inviteAdminButtonText}>Sem expiração</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.inviteAdminButton}
@@ -509,7 +509,7 @@ export default function GroupDetailModal({
             style={styles.leaveButton} 
             onPress={() => {
               const message = isGroupOwner
-                ? 'Voce e o admin. Ao sair, a administracao passa para outro membro.'
+                ? 'Você é o admin. Ao sair, a administração passa para outro membro.'
                 : 'Tem certeza que deseja sair deste grupo?'
               confirmAction('Sair do Grupo', message, 'Sair', onLeaveGroup)
             }}
