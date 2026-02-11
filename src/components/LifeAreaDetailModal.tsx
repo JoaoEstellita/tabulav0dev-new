@@ -524,6 +524,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   astrologyDataFallback
 }) => {
   if (!areaData) return null
+  const isWide = width >= 980
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [detailView, setDetailView] = React.useState<{
@@ -1170,24 +1171,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? translate('planets', String(rawTarget)) : ''
     if (columnKind === 'house') {
-      const aspectKey = normalizeAspectKey(rawAspect)
-      if (houseTarget) {
-        if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
-          return `${transitPlanet} tensiona o eixo da Casa ${houseTarget}`
-        }
-        if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
-          return `${transitPlanet} favorece o eixo da Casa ${houseTarget}`
-        }
-        if (aspect) {
-          return `${transitPlanet} ativa a Casa ${houseTarget} em ${aspect}`
-        }
+      const personalHouse = houseTarget || getTransitOnNatalHouseLabel(transit)
+      if (personalHouse) {
+        return `${transitPlanet} em trânsito pessoal na Casa ${personalHouse}`
       }
       return buildSharedTransitTitle({
         transitPlanet,
         aspectLabel: aspect,
         targetLabel: '',
-        houseNumber: currentHouse || houseTarget,
-        areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
+        houseNumber: currentHouse || null,
+        areaHouses: null,
       })
     }
     return buildSharedTransitTitle({
@@ -1195,7 +1188,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       aspectLabel: aspect,
       targetLabel: target,
       houseNumber: null,
-      areaHouses: getRelevantHousesForArea(String(areaData?.name || '').toLowerCase()),
+      areaHouses: null,
     })
   }
 
@@ -1525,8 +1518,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         ) : (
           <>
             <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos ativos nesta área</Text>
-            {planetTransits.length ? (
-              <View style={styles.transitBlock}>
+            <View style={[styles.transitsColumnsGrid, isWide ? styles.transitsColumnsGridWide : null]}>
+              <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Planeta</Text>
                   <Text style={styles.transitColumnDescription}>Aspectos com planetas e pontos natais</Text>
@@ -1534,10 +1527,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 </View>
                 {renderTransitList(planetTransits, 0, false)}
               </View>
-            ) : null}
 
-            {houseTransits.length ? (
-              <View style={styles.transitBlock}>
+              <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Casa</Text>
                   <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
@@ -1545,7 +1536,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 </View>
                 {renderTransitList(houseTransits, 0, false)}
               </View>
-            ) : null}
+            </View>
           </>
         )}
       </View>
@@ -2203,13 +2194,25 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '600',
   },
+  transitsColumnsGrid: {
+    marginTop: 8,
+    gap: 10,
+  },
+  transitsColumnsGridWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   transitBlock: {
-    marginTop: 10,
+    marginTop: 0,
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderWidth: 1,
     borderRadius: 12,
     padding: 10,
+  },
+  transitBlockWide: {
+    flex: 1,
+    minWidth: 0,
   },
   transitColumnHeader: {
     flexDirection: 'column',
