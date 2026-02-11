@@ -1,7 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react'
-import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import TransitInsightCard from '../../components/TransitInsightCard'
+import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildAstroTransitNarrative } from '../../utils/astroInterpretation'
 
@@ -121,6 +121,21 @@ function buildTimingLabel(event: ForecastEvent) {
   const exactDate = parseUTCDateString((event.exactAt || '').slice(0, 10))
   if (!exactDate) return 'Sem janela definida'
   return `Pico em ${formatDateShort(exactDate)}`
+}
+
+function buildEventKeywords(event: ForecastEvent) {
+  const out: string[] = []
+  const add = (value?: string | null) => {
+    const token = String(value || '').trim()
+    if (!token) return
+    if (!out.some((item) => item.toLowerCase() === token.toLowerCase())) out.push(token)
+  }
+  add(String(event.transitPlanet || ''))
+  add(normalizeAspectLabel(event.aspect || ''))
+  add(String(event.natalPoint || ''))
+  add(impactLabel(event.impact))
+  add(buildTimingLabel(event))
+  return out.slice(0, 5)
 }
 
 function eventPriorityScore(event: ForecastEvent) {
@@ -257,34 +272,18 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
         ListEmptyComponent={<Text style={styles.emptyText}>Sem eventos no periodo.</Text>}
       />
 
-      <Modal visible={!!detail} animationType="fade" transparent onRequestClose={() => setDetail(null)}>
-        <View style={styles.readingBackdrop}>
-          <View style={styles.readingCard}>
-            {detail ? (
-              <>
-                <View style={styles.readingHeader}>
-                  <View style={[styles.readingStatusBadge, { backgroundColor: detail.statusColor }]}>
-                    <Text style={styles.readingStatusText}>{detail.statusLabel}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.readingCloseIcon} onPress={() => setDetail(null)}>
-                    <Ionicons name="close" size={16} color="#0F172A" />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.readingTitle}>{detail.title}</Text>
-                <Text style={styles.readingTiming}>{detail.timingLabel}</Text>
-                <Text style={styles.readingSectionTitle}>Frase-chave</Text>
-                <Text style={styles.readingDirect}>{detail.directText}</Text>
-                <Text style={styles.readingSectionTitle}>Interpretacao completa</Text>
-                <Text style={styles.readingFull}>{buildFullEventInterpretation(detail.event)}</Text>
-                {detail.metaText ? <Text style={styles.readingMeta}>{detail.metaText}</Text> : null}
-                <TouchableOpacity style={styles.readingCloseButton} onPress={() => setDetail(null)}>
-                  <Text style={styles.readingCloseButtonText}>Fechar leitura</Text>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+      <ReadingDetailModal
+        visible={!!detail}
+        onClose={() => setDetail(null)}
+        title={detail?.title || ''}
+        timingLabel={detail?.timingLabel || ''}
+        directText={detail?.directText || ''}
+        fullText={detail ? buildFullEventInterpretation(detail.event) : ''}
+        keywords={detail ? buildEventKeywords(detail.event) : []}
+        metaText={detail?.metaText || ''}
+        statusLabel={detail?.statusLabel || ''}
+        statusColor={detail?.statusColor || '#D97706'}
+      />
     </View>
   )
 }
@@ -342,89 +341,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 24,
-  },
-  readingBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(2,6,23,0.78)',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  readingCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 14,
-    gap: 10,
-  },
-  readingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  readingStatusBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  readingStatusText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  readingCloseIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
-  readingTitle: {
-    color: '#0F172A',
-    fontSize: 21,
-    fontWeight: '800',
-  },
-  readingTiming: {
-    color: '#475569',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  readingSectionTitle: {
-    color: '#B45309',
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  readingDirect: {
-    color: '#0F172A',
-    fontSize: 18,
-    lineHeight: 25,
-    fontWeight: '600',
-  },
-  readingFull: {
-    color: '#1E293B',
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  readingMeta: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  readingCloseButton: {
-    marginTop: 4,
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  readingCloseButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
   },
 })
 

@@ -10,6 +10,7 @@ import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
 import type { HouseSystem } from '../astro/houseSystem'
+import ReadingDetailModal from './ReadingDetailModal'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -709,6 +710,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   const [detailModalSubtitle, setDetailModalSubtitle] = React.useState('')
   const [detailModalShort, setDetailModalShort] = React.useState('')
   const [detailModalLong, setDetailModalLong] = React.useState('')
+  const [detailModalKeywords, setDetailModalKeywords] = React.useState<string[]>([])
   const [planetMeaningModalOpen, setPlanetMeaningModalOpen] = React.useState(false)
   const [planetMeaningPlanet, setPlanetMeaningPlanet] = React.useState<string | null>(null)
 
@@ -745,11 +747,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     subtitle?: string
     short: string
     long: string
+    keywords?: string[]
   }) => {
     setDetailModalTitle(params.title)
     setDetailModalSubtitle(params.subtitle || '')
     setDetailModalShort(params.short)
     setDetailModalLong(params.long)
+    setDetailModalKeywords(Array.isArray(params.keywords) ? params.keywords : [])
     setDetailModalOpen(true)
   }, [])
 
@@ -1185,6 +1189,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           subtitle: `${signLabel} • Casa ${comparison.natal.house}`,
                           short: interp.short,
                           long: interp.long,
+                          keywords: [
+                            'natal',
+                            signLabel,
+                            `Casa ${comparison.natal.house}`,
+                            translateElement(comparison.natal.element),
+                            translateModality(comparison.natal.modality),
+                          ],
                         })
                       }}
                     >
@@ -1219,6 +1230,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           subtitle: `${signLabel} • Casa ${transitOnNatalHouse || '-'}`,
                           short: interp.short,
                           long: interp.long,
+                          keywords: [
+                            'trânsito pessoal',
+                            signLabel,
+                            `Casa ${transitOnNatalHouse || '-'}`,
+                            translateElement(comparison.current.element),
+                            translateModality(comparison.current.modality),
+                          ],
                         })
                       }}
                     >
@@ -1253,6 +1271,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           subtitle: `Casa ${comparison.current.house}`,
                           short: interp.short,
                           long: interp.long,
+                          keywords: [
+                            'trânsito coletivo',
+                            signLabel,
+                            `Casa ${comparison.current.house}`,
+                            translateElement(comparison.current.element),
+                            translateModality(comparison.current.modality),
+                          ],
                         })
                       }}
                     >
@@ -1311,6 +1336,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
+                            keywords: [
+                              'trânsito pessoal',
+                              translatePlanetName(t.transitPlanet),
+                              translateAspectLabel(t.type),
+                              translatePlanetName(t.natalPlanet),
+                              `Casa ${comparison.current.house}`,
+                            ],
                           })
                         }
                       >
@@ -1359,6 +1391,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
+                            keywords: [
+                              'aspecto coletivo',
+                              translatePlanetName(aspect.planet1),
+                              translateAspectLabel(aspect.type),
+                              translatePlanetName(aspect.planet2),
+                              `Casa ${comparison.current.house}`,
+                            ],
                           })
                         }
                       >
@@ -1407,6 +1446,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
+                            keywords: [
+                              'aspecto com casa',
+                              translatePlanetName(comparison.name),
+                              translateAspectLabel(houseAspect.aspect),
+                              `Casa ${houseAspect.house}`,
+                              houseAspect.meaning,
+                            ],
                           })
                         }
                       >
@@ -1428,35 +1474,15 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         ))}
       </View>
 
-      <Modal
+      <ReadingDetailModal
         visible={detailModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDetailModalOpen(false)}
-      >
-        <View style={styles.detailModalBackdrop}>
-          <View style={[styles.detailModalCard, isNarrow ? styles.detailModalCardNarrow : styles.detailModalCardWide]}>
-            <View style={styles.detailModalHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.detailModalTitle}>{detailModalTitle}</Text>
-                {detailModalSubtitle ? <Text style={styles.detailModalSubtitle}>{detailModalSubtitle}</Text> : null}
-              </View>
-              <TouchableOpacity onPress={() => setDetailModalOpen(false)} style={styles.detailCloseIcon}>
-                <Ionicons name="close" size={20} color="#0A1633" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.detailModalScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.detailSectionLabel}>Frase-chave</Text>
-              <Text style={styles.detailBody}>{detailModalShort}</Text>
-              <Text style={styles.detailSectionLabel}>Interpretação completa</Text>
-              <Text style={styles.detailBody}>{detailModalLong}</Text>
-            </ScrollView>
-            <TouchableOpacity style={styles.detailModalButton} onPress={() => setDetailModalOpen(false)}>
-              <Text style={styles.detailModalButtonText}>Fechar leitura</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setDetailModalOpen(false)}
+        title={detailModalTitle}
+        subtitle={detailModalSubtitle || null}
+        directText={detailModalShort}
+        fullText={detailModalLong}
+        keywords={detailModalKeywords}
+      />
 
       <Modal
         visible={planetMeaningModalOpen}

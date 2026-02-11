@@ -187,6 +187,26 @@ function buildActionHint(event: ForecastEvent) {
   return 'Acao sugerida: testar em pequeno passo antes de ampliar.'
 }
 
+function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null) {
+  const out: string[] = []
+  const add = (value?: string | null) => {
+    const token = String(value || '').trim()
+    if (!token) return
+    if (!out.some((item) => item.toLowerCase() === token.toLowerCase())) out.push(token)
+  }
+  const transitPlanet = String(event.transitPlanet || '').trim()
+  const natalPoint = String(event.natalPoint || '').trim()
+  const aspectLabel = normalizeAspectLabel(event.aspect || '')
+  add(transitPlanet)
+  add(aspectLabel)
+  add(natalPoint)
+  add(impactLabel(event.impact))
+  add(phaseLabel || null)
+  const domains = (event.domains || []).map((d) => formatDomainLabel(d))
+  domains.slice(0, 2).forEach((domain) => add(domain))
+  return out.slice(0, 5)
+}
+
 function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[]) {
   const domains = (event.domains || []).map((d) => formatDomainLabel(d)).join(', ')
   const narrative = buildAstroTransitNarrative(
@@ -1268,6 +1288,7 @@ export default function ForecastScreen() {
             fullText={fullText}
             actionText={detail.actionHint}
             metaText={detail.metaText}
+            keywords={buildEventKeywords(detail.event, detail.phase?.label || null)}
           />
         )
       })()}
