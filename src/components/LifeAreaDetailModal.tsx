@@ -1210,6 +1210,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           meta: [getPhaseLabel(transit), getDurationLabel(transit)].filter(Boolean).join(' • '),
           value: `${Math.round(Math.abs(safeNumber(transit?.impact, 0)) * 100)}%`,
           tone,
+          icon: 'pulse-outline',
         }
       })
     const topAspectSignals = planetBreakdown
@@ -1230,6 +1231,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           title: `${translate('planets', aspect.planet)} ${getAspectLabel(aspect.type)} ${translate('planets', aspect.with)}`,
           meta: `Orb ${safeFixed(aspect.orb)}°`,
           value: `${safeFixed(aspect.score, 1)}`,
+          icon: 'git-compare-outline',
           tone:
             normalized === 'trigono' || normalized === 'sextil' || normalized === 'harmonic'
               ? 'harmonic'
@@ -1252,6 +1254,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         meta: planet.houseReason,
         value: `+${safeNumber(planet.houseScore, 0)}`,
         tone: 'harmonic' as const,
+        icon: 'home-outline',
       }))
     const topConditionSignals = planetBreakdown
       .flatMap((planet) =>
@@ -1269,6 +1272,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         meta: condition.description,
         value: `${condition.score >= 0 ? '+' : ''}${safeNumber(condition.score, 0)}`,
         tone: condition.score > 0 ? ('harmonic' as const) : condition.score < 0 ? ('challenging' as const) : ('neutral' as const),
+        icon: 'options-outline',
       }))
 
     const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
@@ -1341,6 +1345,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           meta?: string
           value?: string
           tone?: 'harmonic' | 'challenging' | 'neutral'
+          icon?: string
         }>
       }
     > = {
@@ -1366,6 +1371,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           meta: planet.dignityReason,
           value: `+${safeNumber(planet.dignityScore, 0)}`,
           tone: 'harmonic',
+          icon: 'sparkles-outline',
         })),
       },
       houses: {
@@ -1384,13 +1390,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         title: 'Sinal do período',
         summary: 'Leitura de consistência global do cenário da área no momento atual.',
         metric: signalLevel || '-',
-        rows: [],
+        rows: signalLevel
+          ? [
+              {
+                title: `Sinal ${signalLevel}`,
+                meta: 'Expressa clareza geral do cenário desta área no período atual.',
+                icon: 'trending-up-outline',
+              },
+            ]
+          : [],
       },
       volatility: {
         title: 'Volatilidade do período',
         summary: 'Ritmo de mudança do cenário da área, indicando necessidade de ajuste tático.',
         metric: volatilityLevel || '-',
-        rows: [],
+        rows: volatilityLevel
+          ? [
+              {
+                title: `Volatilidade ${volatilityLevel}`,
+                meta: 'Mostra o nível de oscilação e necessidade de calibrar timing e expectativa.',
+                icon: 'speedometer-outline',
+              },
+            ]
+          : [],
       },
     }
     const activeChip = chips.find((chip) => chip.key === activeScoreComponent)
@@ -1437,6 +1459,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                       row.tone === 'challenging' ? styles.scoreDetailRowChallenging : null,
                     ]}
                   >
+                    {row.icon ? (
+                      <View style={styles.scoreDetailRowIconWrap}>
+                        <Ionicons name={row.icon as any} size={14} color="#475569" />
+                      </View>
+                    ) : null}
                     <View style={styles.scoreDetailRowText}>
                       <Text style={styles.scoreDetailRowTitle}>{row.title}</Text>
                       {row.meta ? <Text style={styles.scoreDetailRowMeta}>{row.meta}</Text> : null}
@@ -2810,6 +2837,16 @@ const styles = StyleSheet.create({
   scoreDetailRowChallenging: {
     borderColor: '#FECACA',
     backgroundColor: '#FEF2F2',
+  },
+  scoreDetailRowIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scoreDetailRowText: {
     flex: 1,
