@@ -28,6 +28,14 @@ export default function NotificationPreferencesScreen() {
         pushEnabled: true,
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: false,
+        groupFilters: {
+          critical: true,
+          positive: false,
+          messages: true,
+        },
+        forecastFilters: {
+          weekly: false,
+        },
         push: {
           types: {
             ...basePushTypes,
@@ -62,6 +70,14 @@ export default function NotificationPreferencesScreen() {
         pushEnabled: true,
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: true,
+        groupFilters: {
+          critical: true,
+          positive: true,
+          messages: true,
+        },
+        forecastFilters: {
+          weekly: true,
+        },
         push: {
           types: {
             ...basePushTypes,
@@ -113,6 +129,14 @@ export default function NotificationPreferencesScreen() {
     aspects: true,
     transits: true,
     combos: true,
+  }
+  const groupFilters = prefs.groupFilters || defaults.groupFilters || {
+    critical: true,
+    positive: true,
+    messages: true,
+  }
+  const forecastFilters = prefs.forecastFilters || defaults.forecastFilters || {
+    weekly: true,
   }
 
   const quietHoursLabel = useMemo(() => {
@@ -320,6 +344,60 @@ export default function NotificationPreferencesScreen() {
                   )}
                 </View>
               )}
+              <View style={styles.nestedSection}>
+                <Text style={styles.nestedTitle}>Filtros de grupos</Text>
+                {renderToggle(
+                  "Alertas críticos de grupo",
+                  "Permite alertas quando membros entram em estado crítico.",
+                  groupFilters.critical !== false,
+                  (value) =>
+                    savePreferences({
+                      groupFilters: {
+                        ...groupFilters,
+                        critical: value,
+                      },
+                    })
+                )}
+                {renderToggle(
+                  "Alertas positivos de grupo",
+                  "Permite alertas de boa energia de membros no grupo.",
+                  groupFilters.positive !== false,
+                  (value) =>
+                    savePreferences({
+                      groupFilters: {
+                        ...groupFilters,
+                        positive: value,
+                      },
+                    })
+                )}
+                {renderToggle(
+                  "Mensagens de grupo",
+                  "Permite notificações de novas mensagens dos grupos.",
+                  groupFilters.messages !== false,
+                  (value) =>
+                    savePreferences({
+                      groupFilters: {
+                        ...groupFilters,
+                        messages: value,
+                      },
+                    })
+                )}
+              </View>
+              <View style={styles.nestedSection}>
+                <Text style={styles.nestedTitle}>Filtros de previsões</Text>
+                {renderToggle(
+                  "Forecast semanal",
+                  "Permite a notificação quando a previsão semanal for gerada.",
+                  forecastFilters.weekly !== false,
+                  (value) =>
+                    savePreferences({
+                      forecastFilters: {
+                        ...forecastFilters,
+                        weekly: value,
+                      },
+                    })
+                )}
+              </View>
               {renderToggle(
                 "Mostrar nome do membro",
                 "Inclui o nome do membro em alertas críticos de grupo.",

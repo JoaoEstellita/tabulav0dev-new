@@ -18,6 +18,14 @@ export type NotificationPreferences = {
     transits: boolean
     combos: boolean
   }
+  groupFilters?: {
+    critical: boolean
+    positive: boolean
+    messages: boolean
+  }
+  forecastFilters?: {
+    weekly: boolean
+  }
   quietHours?: {
     enabled: boolean
     start: string
@@ -91,6 +99,14 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     aspects: true,
     transits: true,
     combos: true,
+  },
+  groupFilters: {
+    critical: true,
+    positive: true,
+    messages: true,
+  },
+  forecastFilters: {
+    weekly: true,
   },
   quietHours: {
     enabled: false,
@@ -244,10 +260,7 @@ export const loadUserNotificationPreferences = async (
   const migrationDone = migrationVersion >= 2
   const existing = userData?.notifications || null
   const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
-  const legacyPreferences = migrationDone ? null : (userData?.preferences?.notifications || null)
-  const legacyPreferencesMapped = isLegacyPreferenceShape(legacyPreferences)
-    ? mapLegacyPreferences(legacyPreferences)
-    : legacyPreferences
+  const legacyPreferencesMapped: any = null
   let legacyData: any = null
   let migrated = false
 
@@ -268,7 +281,7 @@ export const loadUserNotificationPreferences = async (
     )
   ) as NotificationPreferences
 
-  if (!migrationDone && (!existing || existingLegacy || legacyData || legacyPreferences)) {
+  if (!migrationDone && (!existing || existingLegacy || legacyData)) {
     migrated = true
   }
 
