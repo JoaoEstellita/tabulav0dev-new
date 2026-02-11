@@ -36,6 +36,7 @@ import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
+import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import {
   formatLocalDateTime,
   formatLocalTime,
@@ -92,6 +93,42 @@ const LIFE_AREA_ORDER = [
   'comunicacao',
   'transformacao',
 ]
+
+const PLANET_ORDER: PlanetKey[] = [
+  'Sun',
+  'Moon',
+  'Mercury',
+  'Venus',
+  'Mars',
+  'Jupiter',
+  'Saturn',
+  'Uranus',
+  'Neptune',
+  'Pluto',
+]
+
+const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
+const HARMONIOUS_ASPECT_KEYS = new Set(['trigono', 'sextil'])
+const CHALLENGING_ASPECT_KEYS = new Set(['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'])
+const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
+  Sun: '☉',
+  Moon: '☽',
+  Mercury: '☿',
+  Venus: '♀',
+  Mars: '♂',
+  Jupiter: '♃',
+  Saturn: '♄',
+  Uranus: '♅',
+  Neptune: '♆',
+  Pluto: '♇',
+}
+
+const normalizeKey = (value: string): string =>
+  String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
 
 type MoonDetails = {
   phaseLabel: string
@@ -151,7 +188,54 @@ export default function HomeScreen() {
     const scrollRef = useRef<ScrollView>(null)
     const { width } = useWindowDimensions()
     const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
+    const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
     const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
+
+    const getAspectTone = React.useCallback((aspectType: string): 'harmonic' | 'challenging' | 'neutral' => {
+      const key = normalizeKey(aspectType)
+      if (HARMONIOUS_ASPECT_KEYS.has(key)) return 'harmonic'
+      if (CHALLENGING_ASPECT_KEYS.has(key)) return 'challenging'
+      return 'neutral'
+    }, [])
+
+    const planetQuickNav = React.useMemo(() => {
+      const personalTransits = (transitData as any)?.currentTransits?.transits?.personal || []
+      const byPlanet = new Map<string, Array<{ type?: string }>>()
+      for (const item of personalTransits) {
+        const planet = String(item?.transitPlanet || '')
+        if (!planet) continue
+        if (!byPlanet.has(planet)) byPlanet.set(planet, [])
+        byPlanet.get(planet)!.push(item)
+      }
+      return PLANET_ORDER.map((planet) => {
+        const list = byPlanet.get(planet) || []
+        let challenging = 0
+        let neutral = 0
+        let harmonic = 0
+        for (const item of list) {
+          const tone = getAspectTone(String(item?.type || ''))
+          if (tone === 'challenging') challenging += 1
+          else if (tone === 'harmonic') harmonic += 1
+          else neutral += 1
+        }
+        return {
+          planet,
+          imageUri: getPlanetImageUri(planet),
+          challenging,
+          neutral,
+          harmonic,
+        }
+      })
+    }, [transitData, getAspectTone])
+
+    const scrollToPlanetInTabula = React.useCallback((planet: PlanetKey) => {
+      try {
+        if (Platform.OS !== 'web' || typeof document === 'undefined') return
+        const element = document.getElementById(`tabula-planet-${planet}`)
+        if (!element) return
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch {}
+    }, [])
 
     // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -566,6 +650,66 @@ export default function HomeScreen() {
           {transitData?.currentTransits?.planetComparisons &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
+              <View style={styles.planetStripSection}>
+                <View style={styles.planetStripRow}>
+                  {planetQuickNav.map((planetItem) => (
+                    <TouchableOpacity
+                      key={`quick-planet-${planetItem.planet}`}
+                      style={styles.planetStripItem}
+                      activeOpacity={0.86}
+                      onPress={() => scrollToPlanetInTabula(planetItem.planet)}
+                    >
+                      {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
+                        <Image
+                          source={{ uri: planetItem.imageUri }}
+                          style={[
+                            styles.planetStripImage,
+                            PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planet) && styles.planetStripImageWhiteBgFix,
+                            Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planet)
+                              ? ({ mixBlendMode: 'multiply' } as any)
+                              : null,
+                          ]}
+                          resizeMode="cover"
+                          onError={() =>
+                            setFailedPlanetImages((prev) => ({
+                              ...prev,
+                              [planetItem.planet]: true,
+                            }))
+                          }
+                        />
+                      ) : (
+                        <View style={styles.planetStripFallback}>
+                          <Text style={styles.planetStripFallbackText}>{PLANET_FALLBACK_GLYPHS[planetItem.planet]}</Text>
+                        </View>
+                      )}
+                      <View style={styles.planetStripBadgesRow}>
+                        {planetItem.challenging > 0 ? (
+                          <View style={[styles.planetStripBadge, styles.planetStripBadgeChallenging]}>
+                            <Text style={styles.planetStripBadgeText}>{planetItem.challenging}</Text>
+                          </View>
+                        ) : null}
+                        {planetItem.neutral > 0 ? (
+                          <View style={[styles.planetStripBadge, styles.planetStripBadgeNeutral]}>
+                            <Text style={styles.planetStripBadgeText}>{planetItem.neutral}</Text>
+                          </View>
+                        ) : null}
+                        {planetItem.harmonic > 0 ? (
+                          <View style={[styles.planetStripBadge, styles.planetStripBadgeHarmonic]}>
+                            <Text style={styles.planetStripBadgeText}>{planetItem.harmonic}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </AnimatedMount>
+          )}
+
+
+          {transitData?.currentTransits?.planetComparisons &&
+          transitData?.currentTransits?.chartSummary && (
+            <AnimatedMount>
               <View style={styles.section}>
                 <TransitComparisonCard
                   planetComparisons={transitData.currentTransits.planetComparisons}
@@ -911,6 +1055,78 @@ const styles = StyleSheet.create({
   },
   lifeAreaItem: {
     width: '50%',
+  },
+  planetStripSection: {
+    marginTop: -6,
+    marginBottom: 16,
+    paddingHorizontal: 10,
+  },
+  planetStripRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  planetStripItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    minWidth: 0,
+  },
+  planetStripImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.45)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  planetStripImageWhiteBgFix: {
+    backgroundColor: 'rgba(8,12,30,0.92)',
+  },
+  planetStripFallback: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  planetStripFallbackText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  planetStripBadgesRow: {
+    marginTop: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 18,
+  },
+  planetStripBadge: {
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  planetStripBadgeChallenging: {
+    backgroundColor: '#EF4444',
+  },
+  planetStripBadgeNeutral: {
+    backgroundColor: '#D97706',
+  },
+  planetStripBadgeHarmonic: {
+    backgroundColor: '#22C55E',
+  },
+  planetStripBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 11,
   },
   warningCard: {
     flexDirection: 'row',
