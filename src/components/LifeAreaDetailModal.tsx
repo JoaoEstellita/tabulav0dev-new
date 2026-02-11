@@ -10,6 +10,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
@@ -20,6 +21,7 @@ import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { height } = Dimensions.get('window')
+const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v1'
 
 const PLANET_IMAGE_ORDER: PlanetKey[] = [
   'Sun',
@@ -573,6 +575,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
+  const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
   const { width: viewportWidth } = useWindowDimensions()
   const isCompactViewport = viewportWidth <= 430
   const [filtersExpanded, setFiltersExpanded] = React.useState(false)
@@ -593,12 +596,52 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const headerGradient = [areaColors[0], areaColors[1]]
 
   React.useEffect(() => {
+    let cancelled = false
+    const loadFilterPreferences = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(MODAL_FILTER_PREFS_KEY)
+        if (!raw || cancelled) return
+        const parsed = JSON.parse(raw || '{}') as {
+          facetFilters?: Array<'planet' | 'house'>
+          toneFilter?: 'all' | 'challenging' | 'harmonic'
+          sortMode?: 'impact' | 'recent'
+        }
+        const nextFacetFilters = Array.isArray(parsed.facetFilters)
+          ? parsed.facetFilters.filter((value) => value === 'planet' || value === 'house')
+          : []
+        if (nextFacetFilters.length) setSelectedFacetFilters(Array.from(new Set(nextFacetFilters)))
+        if (parsed.toneFilter === 'all' || parsed.toneFilter === 'challenging' || parsed.toneFilter === 'harmonic') {
+          setSelectedToneFilter(parsed.toneFilter)
+        }
+        if (parsed.sortMode === 'impact' || parsed.sortMode === 'recent') {
+          setSelectedSortMode(parsed.sortMode)
+        }
+      } catch {
+        // ignore preference parse/read failures and keep safe defaults
+      } finally {
+        if (!cancelled) setFilterPrefsLoaded(true)
+      }
+    }
+    loadFilterPreferences()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!filterPrefsLoaded) return
+    const payload = JSON.stringify({
+      facetFilters: selectedFacetFilters,
+      toneFilter: selectedToneFilter,
+      sortMode: selectedSortMode,
+    })
+    AsyncStorage.setItem(MODAL_FILTER_PREFS_KEY, payload).catch(() => null)
+  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode])
+
+  React.useEffect(() => {
     setActiveScoreComponent(null)
     setSelectedPlanetFilters([])
     setSelectedHouseFilters([])
-    setSelectedFacetFilters(['planet', 'house'])
-    setSelectedToneFilter('all')
-    setSelectedSortMode('impact')
     setFiltersExpanded(!isCompactViewport)
   }, [visible, areaData?.name, isCompactViewport])
 
