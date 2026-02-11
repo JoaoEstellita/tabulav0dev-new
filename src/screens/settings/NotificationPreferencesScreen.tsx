@@ -20,6 +20,11 @@ export default function NotificationPreferencesScreen() {
   const pushTypes = prefs.push?.types || defaults.push.types
   const inAppTypes = prefs.inApp?.types || defaults.inApp.types
   const quietHours = prefs.quietHours || defaults.quietHours
+  const astroPersonalFilters = prefs.astroEventsPersonalFilters || defaults.astroEventsPersonalFilters || {
+    aspects: true,
+    transits: true,
+    combos: true,
+  }
 
   const quietHoursLabel = useMemo(() => {
     if (!quietHours?.enabled) return "Desativado"
@@ -127,9 +132,50 @@ export default function NotificationPreferencesScreen() {
                 prefs.astroEventsPersonalEnabled !== false,
                 (value) => savePreferences({ astroEventsPersonalEnabled: value })
               )}
+              {prefs.astroEventsPersonalEnabled !== false && (
+                <View style={styles.nestedSection}>
+                  <Text style={styles.nestedTitle}>Filtros dos eventos pessoais</Text>
+                  {renderToggle(
+                    "Novos aspectos",
+                    "Notifica aspectos planeta x planeta e planeta x casa.",
+                    astroPersonalFilters.aspects !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsPersonalFilters: {
+                          ...astroPersonalFilters,
+                          aspects: value,
+                        },
+                      })
+                  )}
+                  {renderToggle(
+                    "Novos transitos",
+                    "Notifica ingressos de planeta em casa (mudanca de casa).",
+                    astroPersonalFilters.transits !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsPersonalFilters: {
+                          ...astroPersonalFilters,
+                          transits: value,
+                        },
+                      })
+                  )}
+                  {renderToggle(
+                    "Eventos combinados",
+                    "Notifica convergencias de multiplos fatores (combo).",
+                    astroPersonalFilters.combos !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsPersonalFilters: {
+                          ...astroPersonalFilters,
+                          combos: value,
+                        },
+                      })
+                  )}
+                </View>
+              )}
               {renderToggle(
                 "Eventos astrais coletivos",
-                "Liga/desliga registro de eventos coletivos no app (sem push).",
+                "Liga/desliga notificacoes coletivas no app e push (se habilitados nos tipos).",
                 prefs.astroEventsCollectiveEnabled === true,
                 (value) => savePreferences({ astroEventsCollectiveEnabled: value })
               )}
@@ -315,6 +361,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: "#FFFFFF",
     fontSize: 13,
+  },
+  nestedSection: {
+    marginTop: 6,
+    marginBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 215, 0, 0.12)",
+    paddingTop: 8,
+  },
+  nestedTitle: {
+    color: "#FCD34D",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+    marginBottom: 2,
   },
   sectionNote: {
     flexDirection: "row",

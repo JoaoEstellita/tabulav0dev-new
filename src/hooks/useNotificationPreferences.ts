@@ -8,6 +8,11 @@ export type NotificationPreferences = {
   pushIncludeMemberName: boolean
   astroEventsPersonalEnabled?: boolean
   astroEventsCollectiveEnabled?: boolean
+  astroEventsPersonalFilters?: {
+    aspects: boolean
+    transits: boolean
+    combos: boolean
+  }
   quietHours?: {
     enabled: boolean
     start: string
@@ -72,6 +77,11 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   pushIncludeMemberName: true,
   astroEventsPersonalEnabled: false,
   astroEventsCollectiveEnabled: false,
+  astroEventsPersonalFilters: {
+    aspects: true,
+    transits: true,
+    combos: true,
+  },
   quietHours: {
     enabled: false,
     start: '22:00',
@@ -350,6 +360,9 @@ export function useNotificationPreferences() {
     try {
       await updateDoc(doc(db, 'users', user.uid), {
         notifications: merged,
+        preferences: {
+          notifications: merged,
+        },
         lastPreferencesUpdate: serverTimestamp(),
       })
       return true
