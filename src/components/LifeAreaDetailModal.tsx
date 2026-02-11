@@ -272,7 +272,7 @@ const getAspectLabel = (type: string): string => {
   if (normalized === 'neutral') return 'neutro'
   if (!normalized) return ''
   const translated = translate('aspects', normalized)
-  return translated === normalized ? '' : translated
+  return translated || normalized
 }
 
 const getTransitDuration = (transit: RealTransitData): string => {
@@ -1529,7 +1529,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       return Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
     }
     const planetTransits = orderedTransits.filter(hasPlanetFacet)
-    const houseTransits = orderedTransits.filter(hasHouseFacet)
+    const seenHouseFacet = new Set<string>()
+    const houseTransits = orderedTransits
+      .filter(hasHouseFacet)
+      .filter((transit) => {
+        const personalHouse = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit) || 'NA'
+        const phase = String(transit?.phase || '').toLowerCase() || 'NA'
+        const startAt = String(transit?.startAt || transit?.window?.start || '')
+        const endAt = String(transit?.endAt || transit?.window?.end || '')
+        const facetKey = [
+          String(transit?.seriesId || ''),
+          toIdentityToken(transit?.transitPlanet || 'NA'),
+          toIdentityToken(personalHouse),
+          toIdentityToken(phase),
+          toIdentityToken(startAt),
+          toIdentityToken(endAt),
+        ].join('|')
+        if (seenHouseFacet.has(facetKey)) return false
+        seenHouseFacet.add(facetKey)
+        return true
+      })
 
     return (
       <View style={styles.section}>
@@ -1541,7 +1560,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           <>
-            <Text style={styles.subsectionMeta}>{orderedTransits.length} trânsitos ativos nesta área</Text>
             <View style={[styles.transitsColumnsGrid, isWide ? styles.transitsColumnsGridWide : null]}>
               <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
                 <View style={styles.transitColumnHeader}>
