@@ -1603,13 +1603,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       if (aIndex !== bIndex) return aIndex - bIndex
       return a.localeCompare(b, 'pt-BR')
     })
-    const houseFilterOptions = Array.from(
-      new Set(
-        houseTransits
-          .map((transit) => getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit))
-          .filter((value): value is string => !!value)
-      )
-    ).sort((a, b) => Number(a) - Number(b))
+    const areaKey = String(areaData?.name || '').toLowerCase()
+    const relevantAreaHouses = getRelevantHousesForArea(areaKey).map((house) => String(house))
+    const houseFromTransits = houseTransits
+      .map((transit) => getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit))
+      .filter((value): value is string => !!value)
+    const houseFilterOptions = Array.from(new Set([...relevantAreaHouses, ...houseFromTransits])).sort(
+      (a, b) => Number(a) - Number(b)
+    )
     const filteredPlanetTransits = selectedPlanetFilters.length
       ? planetTransits.filter((transit) => selectedPlanetFilters.includes(String(transit?.transitPlanet || '').trim()))
       : planetTransits
