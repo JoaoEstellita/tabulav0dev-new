@@ -33,9 +33,7 @@ import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
-import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
-import { translatePlanetPT } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -110,8 +108,6 @@ const PLANET_ORDER: PlanetKey[] = [
 ]
 
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
-const HARMONIOUS_ASPECT_KEYS = new Set(['trigono', 'sextil'])
-const CHALLENGING_ASPECT_KEYS = new Set(['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'])
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
   Sun: '☉',
   Moon: '☽',
@@ -125,46 +121,12 @@ const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
   Pluto: '♇',
 }
 
-const normalizeKey = (value: string): string =>
-  String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-
 type MoonDetails = {
   phaseLabel: string
   phaseUntilLabel: string
   currentVoidLabel: string
   nextVoidLabel: string
   upcomingPhases: Array<{ label: string; when: string }>
-}
-
-type PlanetQuickInfo = {
-  planet: PlanetKey
-  imageUri?: string
-  challenging: number
-  neutral: number
-  harmonic: number
-  statusScore: number | null
-  statusLevel: string | null
-  breakdown: {
-    essential: number
-    houseStrength: number
-    accidentalDignity: number
-    aspectStrength: number
-    specialConditions: number
-    total: number
-  } | null
-}
-
-const PLANET_STATUS_COLOR_MAP: Record<string, string> = {
-  'Muito Forte': '#16A34A',
-  Forte: '#22C55E',
-  Moderado: '#0EA5E9',
-  Neutro: '#64748B',
-  Fraco: '#D97706',
-  'Muito Fraco': '#EF4444',
 }
 
 export default function HomeScreen() {
@@ -191,8 +153,6 @@ export default function HomeScreen() {
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
     const [moonModalVisible, setMoonModalVisible] = useState(false)
-    const [planetInfoModal, setPlanetInfoModal] = useState<PlanetQuickInfo | null>(null)
-    const [pendingPlanetScroll, setPendingPlanetScroll] = useState<PlanetKey | null>(null)
     const [moonDetails, setMoonDetails] = useState<MoonDetails>({
       phaseLabel: 'Lua',
       phaseUntilLabel: 'fase em atualização',
@@ -222,57 +182,14 @@ export default function HomeScreen() {
     const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
     const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
-    const getAspectTone = React.useCallback((aspectType: string): 'harmonic' | 'challenging' | 'neutral' => {
-      const key = normalizeKey(aspectType)
-      if (HARMONIOUS_ASPECT_KEYS.has(key)) return 'harmonic'
-      if (CHALLENGING_ASPECT_KEYS.has(key)) return 'challenging'
-      return 'neutral'
-    }, [])
-
     const planetQuickNav = React.useMemo(() => {
-      const personalTransits = (transitData as any)?.currentTransits?.transits?.personal || []
-      const planetsNow = (transitData as any)?.currentTransits?.planets || []
-      const byPlanet = new Map<string, Array<{ type?: string }>>()
-      for (const item of personalTransits) {
-        const planet = String(item?.transitPlanet || '')
-        if (!planet) continue
-        if (!byPlanet.has(planet)) byPlanet.set(planet, [])
-        byPlanet.get(planet)!.push(item)
-      }
       return PLANET_ORDER.map((planet) => {
-        const list = byPlanet.get(planet) || []
-        const planetNow = planetsNow.find((item: any) => String(item?.name || '') === planet)
-        const status = planetNow?.planetaryStatus || null
-        let challenging = 0
-        let neutral = 0
-        let harmonic = 0
-        for (const item of list) {
-          const tone = getAspectTone(String(item?.type || ''))
-          if (tone === 'challenging') challenging += 1
-          else if (tone === 'harmonic') harmonic += 1
-          else neutral += 1
-        }
         return {
           planet,
           imageUri: getPlanetImageUri(planet),
-          challenging,
-          neutral,
-          harmonic,
-          statusScore: typeof status?.score === 'number' ? status.score : null,
-          statusLevel: status?.level || null,
-          breakdown: status?.breakdown
-            ? {
-                essential: Number(status.breakdown.essential || 0),
-                houseStrength: Number(status.breakdown.houseStrength || 0),
-                accidentalDignity: Number(status.breakdown.accidentalDignity || 0),
-                aspectStrength: Number(status.breakdown.aspectStrength || 0),
-                specialConditions: Number(status.breakdown.specialConditions || 0),
-                total: Number(status.breakdown.total || status.score || 0),
-              }
-            : null,
         }
       })
-    }, [transitData, getAspectTone])
+    }, [])
 
     const scrollToPlanetInTabula = React.useCallback((planet: PlanetKey) => {
       try {
@@ -280,49 +197,11 @@ export default function HomeScreen() {
         const element = document.getElementById(`tabula-planet-${planet}`)
         if (!element) return
         element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setTimeout(() => {
+          try { element.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch {}
+        }, 180)
       } catch {}
     }, [])
-
-    useEffect(() => {
-      if (planetInfoModal || !pendingPlanetScroll) return
-      const target = pendingPlanetScroll
-      const timer = setTimeout(() => {
-        scrollToPlanetInTabula(target)
-        setTimeout(() => scrollToPlanetInTabula(target), 220)
-        setPendingPlanetScroll(null)
-      }, 120)
-      return () => clearTimeout(timer)
-    }, [planetInfoModal, pendingPlanetScroll, scrollToPlanetInTabula])
-
-    const planetInfoReading = React.useMemo(() => {
-      if (!planetInfoModal) return null
-      const label = translatePlanetPT(planetInfoModal.planet)
-      const statusLevel = planetInfoModal.statusLevel || 'Sem status'
-      const scoreText = typeof planetInfoModal.statusScore === 'number' ? `${planetInfoModal.statusScore.toFixed(1)} pts` : 'sem score'
-      const directText = `${label} está em ${statusLevel}, com ${scoreText} no contexto atual do status.`
-      const fullText = planetInfoModal.breakdown
-        ? `Dignidade essencial: ${planetInfoModal.breakdown.essential.toFixed(1)}\n` +
-          `Força de casa: ${planetInfoModal.breakdown.houseStrength.toFixed(1)}\n` +
-          `Condições acidentais: ${planetInfoModal.breakdown.accidentalDignity.toFixed(1)}\n` +
-          `Aspectos: ${planetInfoModal.breakdown.aspectStrength.toFixed(1)}\n` +
-          `Condições especiais: ${planetInfoModal.breakdown.specialConditions.toFixed(1)}\n` +
-          `Total: ${planetInfoModal.breakdown.total.toFixed(1)}`
-        : 'Sem detalhamento de pesos disponível para este planeta no momento.'
-      const chips: string[] = []
-      if (planetInfoModal.challenging > 0) chips.push(`Desafiador ${planetInfoModal.challenging}`)
-      if (planetInfoModal.neutral > 0) chips.push(`Neutro ${planetInfoModal.neutral}`)
-      if (planetInfoModal.harmonic > 0) chips.push(`Harmônico ${planetInfoModal.harmonic}`)
-      if (!chips.length) chips.push('Sem trânsitos ativos')
-      return {
-        title: label,
-        statusLabel: statusLevel,
-        statusColor: PLANET_STATUS_COLOR_MAP[statusLevel] || '#64748B',
-        timingLabel: typeof planetInfoModal.statusScore === 'number' ? `${planetInfoModal.statusScore.toFixed(1)} pts` : null,
-        directText,
-        fullText,
-        keywords: chips,
-      }
-    }, [planetInfoModal])
 
     // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
     const handleAreaPress = (areaName: string, areaData: any) => {
@@ -744,7 +623,7 @@ export default function HomeScreen() {
                       key={`quick-planet-${planetItem.planet}`}
                       style={styles.planetStripItem}
                       activeOpacity={0.86}
-                      onPress={() => setPlanetInfoModal(planetItem)}
+                      onPress={() => scrollToPlanetInTabula(planetItem.planet)}
                     >
                       {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
                         <Image
@@ -814,26 +693,6 @@ export default function HomeScreen() {
 
         {/* PWA Download Button */}
         <PWADownloadButton />
-
-        <ReadingDetailModal
-          visible={!!planetInfoModal}
-          onClose={() => setPlanetInfoModal(null)}
-          title={planetInfoReading?.title || 'Planeta'}
-          subtitle="Força planetária no status do dia"
-          statusLabel={planetInfoReading?.statusLabel || 'Sem status'}
-          statusColor={planetInfoReading?.statusColor || '#64748B'}
-          timingLabel={planetInfoReading?.timingLabel || null}
-          directText={planetInfoReading?.directText || 'Sem dados do planeta no momento.'}
-          fullText={planetInfoReading?.fullText || 'Sem detalhamento de pesos disponível para este planeta.'}
-          keywords={planetInfoReading?.keywords || []}
-          secondaryActionLabel="Ir para o planeta na Tábula"
-          onSecondaryAction={() => {
-            const selected = planetInfoModal?.planet || null
-            if (!selected) return
-            setPendingPlanetScroll(selected)
-            setPlanetInfoModal(null)
-          }}
-        />
 
         <Modal
           visible={moonModalVisible}
