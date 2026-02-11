@@ -555,6 +555,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   if (!areaData) return null
 
   const [showTechnical, setShowTechnical] = React.useState(false)
+  const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
@@ -576,6 +577,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const headerGradient = [areaColors[0], areaColors[1]]
 
   React.useEffect(() => {
+    setActiveScoreComponent(null)
     setSelectedPlanetFilters([])
     setSelectedHouseFilters([])
     setSelectedFacetFilters(['planet', 'house'])
@@ -1182,39 +1184,89 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseCount = planetBreakdown.filter((planet) => safeNumber(planet.houseScore) > 0).length
     const transitsCount = transitItems.length
 
-    const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning' }> = [
-      { key: 'transits', label: 'Trânsitos', value: String(transitsCount), tone: transitsCount > 0 ? 'positive' : 'neutral' },
-      { key: 'aspects', label: 'Aspectos', value: String(aspectsCount), tone: aspectsCount > 0 ? 'positive' : 'neutral' },
-      { key: 'dignity', label: 'Dignidade', value: String(dignityCount), tone: dignityCount > 0 ? 'positive' : 'neutral' },
-      { key: 'houses', label: 'Força de casa', value: String(houseCount), tone: houseCount > 0 ? 'positive' : 'neutral' },
-      { key: 'conditions', label: 'Condições', value: String(conditionsCount), tone: conditionsCount > 0 ? 'warning' : 'neutral' },
+    const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
+      {
+        key: 'transits',
+        label: 'Trânsitos',
+        value: String(transitsCount),
+        tone: transitsCount > 0 ? 'positive' : 'neutral',
+        info: `${transitsCount} trânsitos entram nesta área. Eles são o gatilho dinâmico principal da leitura atual.`,
+      },
+      {
+        key: 'aspects',
+        label: 'Aspectos',
+        value: String(aspectsCount),
+        tone: aspectsCount > 0 ? 'positive' : 'neutral',
+        info: `${aspectsCount} aspectos ativos no cálculo. Eles podem ser harmônicos ou desafiadores e modulam o impacto dos trânsitos.`,
+      },
+      {
+        key: 'dignity',
+        label: 'Dignidade',
+        value: String(dignityCount),
+        tone: dignityCount > 0 ? 'positive' : 'neutral',
+        info: `${dignityCount} planetas com dignidade relevante nesta área. Dignidade mede coerência da expressão do planeta no signo.`,
+      },
+      {
+        key: 'houses',
+        label: 'Força de casa',
+        value: String(houseCount),
+        tone: houseCount > 0 ? 'positive' : 'neutral',
+        info: `${houseCount} fatores de força de casa ativos. Casas angulares e casas-chave da área tendem a aumentar peso no status.`,
+      },
+      {
+        key: 'conditions',
+        label: 'Condições',
+        value: String(conditionsCount),
+        tone: conditionsCount > 0 ? 'warning' : 'neutral',
+        info: `${conditionsCount} condições acidentais influenciam o score (fase, contexto, natureza do contato e outros ajustes do engine).`,
+      },
     ]
 
     if (signalLevel) {
-      chips.push({ key: 'signal', label: 'Sinal', value: signalLevel, tone: signalLevel === 'Alto' ? 'positive' : 'neutral' })
+      chips.push({
+        key: 'signal',
+        label: 'Sinal',
+        value: signalLevel,
+        tone: signalLevel === 'Alto' ? 'positive' : 'neutral',
+        info: `Sinal ${signalLevel}: indica clareza e consistência do cenário geral da área.`,
+      })
     }
     if (volatilityLevel) {
-      chips.push({ key: 'volatility', label: 'Volatilidade', value: volatilityLevel, tone: volatilityLevel === 'Alta' ? 'warning' : 'neutral' })
+      chips.push({
+        key: 'volatility',
+        label: 'Volatilidade',
+        value: volatilityLevel,
+        tone: volatilityLevel === 'Alta' ? 'warning' : 'neutral',
+        info: `Volatilidade ${volatilityLevel}: indica variação do período e necessidade de ajuste de ritmo.`,
+      })
     }
+    const activeInfo = chips.find((chip) => chip.key === activeScoreComponent)?.info
 
     return (
       <View style={styles.section}>
         <Text style={styles.subsectionTitle}>COMPONENTES ATIVOS DO SCORE</Text>
         <View style={styles.scoreComponentsRow}>
           {chips.map((chip) => (
-            <View
+            <TouchableOpacity
               key={chip.key}
+              onPress={() => setActiveScoreComponent((prev) => (prev === chip.key ? null : chip.key))}
               style={[
                 styles.scoreComponentChip,
                 chip.tone === 'positive' ? styles.scoreComponentChipPositive : null,
                 chip.tone === 'warning' ? styles.scoreComponentChipWarning : null,
+                activeScoreComponent === chip.key ? styles.scoreComponentChipActive : null,
               ]}
             >
               <Text style={styles.scoreComponentLabel}>{chip.label}</Text>
               <Text style={styles.scoreComponentValue}>{chip.value}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
+        {activeInfo ? (
+          <View style={styles.scoreComponentInfoBox}>
+            <Text style={styles.scoreComponentInfoText}>{activeInfo}</Text>
+          </View>
+        ) : null}
       </View>
     )
   }
@@ -1714,61 +1766,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
     return (
       <View style={styles.section}>
-        <View style={styles.sectionControlsRow}>
-          <View style={styles.facetToggleRow}>
-            <TouchableOpacity
-              onPress={() =>
-                setSelectedFacetFilters((prev) =>
-                  prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
-                )
-              }
-              style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
-            >
-              <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
-                Planeta x Planeta
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                setSelectedFacetFilters((prev) =>
-                  prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
-                )
-              }
-              style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
-            >
-              <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
-                Planeta x Casa
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.toneToggleRow}>
-            <TouchableOpacity
-              onPress={() => setSelectedToneFilter('all')}
-              style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
-            >
-              <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
-                Todos
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setSelectedToneFilter('challenging')}
-              style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
-            >
-              <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
-                Desafiador
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setSelectedToneFilter('harmonic')}
-              style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
-            >
-              <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
-                Harmônico
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {transitItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
@@ -1830,9 +1827,65 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
             <View style={styles.transitBlock}>
               <View style={styles.transitColumnHeader}>
-                <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
-                <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
-                <Text style={styles.transitColumnMeta}>{visibleTransitCards.length}</Text>
+                <View style={styles.transitHeaderControlRow}>
+                  <View style={styles.facetToggleRow}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setSelectedFacetFilters((prev) =>
+                          prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
+                        )
+                      }
+                      style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
+                        Planeta x Planeta
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setSelectedFacetFilters((prev) =>
+                          prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
+                        )
+                      }
+                      style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
+                        Planeta x Casa
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.toneToggleRow}>
+                    <TouchableOpacity
+                      onPress={() => setSelectedToneFilter('all')}
+                      style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
+                        Todos
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedToneFilter('challenging')}
+                      style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
+                        Desafiador
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedToneFilter('harmonic')}
+                      style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
+                        Harmônico
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={styles.transitHeaderTitleWrap}>
+                  <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
+                  <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
+                  <Text style={styles.transitColumnMeta}>{visibleTransitCards.length}</Text>
+                </View>
               </View>
               {selectedFacetFilters.length === 0 ? (
                 <Text style={styles.emptyColumnText}>Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).</Text>
@@ -2504,6 +2557,10 @@ const styles = StyleSheet.create({
     borderColor: '#FED7AA',
     backgroundColor: '#FFF7ED',
   },
+  scoreComponentChipActive: {
+    borderColor: '#B45309',
+    backgroundColor: '#FFFBEB',
+  },
   scoreComponentLabel: {
     fontSize: 10,
     color: '#64748B',
@@ -2516,6 +2573,21 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontWeight: '800',
     marginTop: 2,
+  },
+  scoreComponentInfoBox: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  scoreComponentInfoText: {
+    fontSize: 12,
+    color: '#7C2D12',
+    lineHeight: 17,
+    textAlign: 'center',
   },
   sectionControlsRow: {
     flexDirection: 'row',
@@ -2667,6 +2739,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 10,
     paddingHorizontal: 6,
+    gap: 3,
+  },
+  transitHeaderControlRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 2,
+    flexWrap: 'wrap',
+  },
+  transitHeaderTitleWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
     gap: 3,
   },
   transitColumnTitle: {
