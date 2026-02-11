@@ -1153,7 +1153,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   )}
                   <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
                 </View>
-                <Text style={styles.planetReadHintEmoji}>📖</Text>
+                <Ionicons name="book-outline" size={16} color="#CBD5E1" style={styles.planetReadHintIcon} />
               </TouchableOpacity>
             </View>
 
@@ -1838,11 +1838,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  planetReadHintEmoji: {
-    fontSize: 16,
-    lineHeight: 20,
+  planetReadHintIcon: {
     marginLeft: 10,
-    opacity: 0.95,
+    opacity: 0.96,
   },
   comparisonGrid: {
     flexDirection: 'row',
