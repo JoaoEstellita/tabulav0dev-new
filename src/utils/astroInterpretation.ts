@@ -57,6 +57,22 @@ const ASPECT_MEANING: Record<string, string> = {
   ingress: 'mudanca de foco por troca de casa/ambiente',
 }
 
+const ASPECT_ARCHETYPE: Record<string, string> = {
+  conjuncao: 'foco',
+  oposicao: 'equilibrio',
+  quadratura: 'ajuste',
+  trigono: 'fluidez',
+  sextil: 'oportunidade',
+  quincuncio: 'recalibracao',
+  semissextil: 'refino',
+  semiquadratura: 'friccao',
+  sesquiquadratura: 'reposicionamento',
+  harmonic: 'suporte',
+  tense: 'tensao',
+  neutral: 'observacao',
+  ingress: 'mudanca de fase',
+}
+
 function normalizeAspect(value: unknown): string {
   const raw = String(value || '')
     .trim()
@@ -107,6 +123,43 @@ function getTargetLabel(transit: AnyTransit): string {
   if (!target) return 'seu mapa natal'
   const raw = String(target)
   return PLANET_PT[raw] || raw
+}
+
+function getPlanetArchetypeWord(planetRaw: string): string {
+  const content = PLANET_SYMBOLISM[planetRaw] || ''
+  return content.split(',')[0]?.trim() || 'movimento'
+}
+
+export function buildArchetypeKeywordsForTransit(
+  transit: AnyTransit,
+  areaLabel?: string | null
+): string[] {
+  const out: string[] = []
+  const add = (value?: string | null) => {
+    const token = String(value || '').trim()
+    if (!token) return
+    const normalized = token
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+    if (!out.some((item) => item
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') === normalized)) out.push(token)
+  }
+
+  const transitPlanetRaw = String(transit?.transitPlanet || '').trim()
+  const aspectKey = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
+  const house = getHouseNumber(transit)
+  const targetRaw = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').trim()
+
+  add(getPlanetArchetypeWord(transitPlanetRaw))
+  add(ASPECT_ARCHETYPE[aspectKey] || aspectKey)
+  if (targetRaw && PLANET_SYMBOLISM[targetRaw]) add(getPlanetArchetypeWord(targetRaw))
+  if (house && HOUSE_SYMBOLISM[house]) add(HOUSE_SYMBOLISM[house].split(',')[0]?.trim() || `Casa ${house}`)
+  add(areaLabel || null)
+
+  return out.slice(0, 5)
 }
 
 function buildSeed(transit: AnyTransit): number {

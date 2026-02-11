@@ -53,6 +53,68 @@ export function extractHouseNumber(value: unknown): number | null {
   return Math.round(parsed)
 }
 
+const ASPECT_SYMBOLS: Record<string, string> = {
+  conjuncao: '\u260C',
+  oposicao: '\u260D',
+  quadratura: '\u25A1',
+  trigono: '\u25B3',
+  sextil: '\u2736',
+  quincuncio: '\u26BB',
+  semissextil: '\u26BA',
+  semiquadratura: '\u2220',
+  sesquiquadratura: '\u26BC',
+}
+
+const ASPECT_LABELS: Record<string, string> = {
+  conjuncao: 'Conjuncao',
+  oposicao: 'Oposicao',
+  quadratura: 'Quadratura',
+  trigono: 'Trigono',
+  sextil: 'Sextil',
+  quincuncio: 'Quincuncio',
+  semissextil: 'Semissextil',
+  semiquadratura: 'Semiquadratura',
+  sesquiquadratura: 'Sesquiquadratura',
+}
+
+function normalizeAspectToken(value: string): string {
+  const normalized = value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+  if (normalized.includes('trigono') || normalized.includes('trine')) return 'trigono'
+  if (normalized.includes('sesquiquadr')) return 'sesquiquadratura'
+  if (normalized.includes('semiquadr')) return 'semiquadratura'
+  if (normalized.includes('semissext') || normalized.includes('semisext')) return 'semissextil'
+  if (normalized.includes('sext')) return 'sextil'
+  if (normalized.includes('quadr')) return 'quadratura'
+  if (normalized.includes('opos')) return 'oposicao'
+  if (normalized.includes('quinc')) return 'quincuncio'
+  if (normalized.includes('conj')) return 'conjuncao'
+  return normalized
+}
+
+export function toRomanHouse(value: unknown): string | null {
+  const n = extractHouseNumber(value)
+  if (!n) return null
+  const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
+  return roman[n - 1] || null
+}
+
+function formatHouseLabel(value: unknown): string {
+  const roman = toRomanHouse(value)
+  if (roman) return `Casa ${roman}`
+  const fallback = extractHouseNumber(value)
+  return fallback ? `Casa ${fallback}` : ''
+}
+
+function parseHouseNumberFromText(value: string): number | null {
+  const match = value.match(/(?:casa|house)\s*(\d{1,2})/i)
+  if (!match) return null
+  return extractHouseNumber(match[1])
+}
+
 export function buildTransitTitle(params: {
   transitPlanet?: unknown
   aspectLabel?: unknown
@@ -62,6 +124,9 @@ export function buildTransitTitle(params: {
 }): string {
   const transitPlanet = sanitizeTransitToken(params.transitPlanet) || 'Transito'
   const aspectLabel = sanitizeTransitToken(params.aspectLabel)
+  const aspectKey = normalizeAspectToken(aspectLabel)
+  const aspectText = aspectKey ? (ASPECT_LABELS[aspectKey] || aspectLabel) : ''
+  const aspectSymbol = aspectKey ? (ASPECT_SYMBOLS[aspectKey] || '') : ''
   const targetLabel = sanitizeTransitToken(params.targetLabel)
   const houseNumber = extractHouseNumber(params.houseNumber)
   const areaHouses = Array.isArray(params.areaHouses)
@@ -71,17 +136,24 @@ export function buildTransitTitle(params: {
     : []
   const areaHousesLabel = areaHouses.length ? areaHouses.join('/') : ''
   const targetIsHouse = isHouseLikeTarget(targetLabel)
+  const targetHouseNumber = targetLabel ? parseHouseNumberFromText(targetLabel) : null
 
-  if (aspectLabel && targetLabel && !targetIsHouse) return `${transitPlanet} em ${aspectLabel} com ${targetLabel}`
-  if (aspectLabel && targetIsHouse) {
-    if (houseNumber) return `${transitPlanet} ativa a Casa ${houseNumber} em ${aspectLabel}`
-    return `${transitPlanet} ativa ${targetLabel} em ${aspectLabel}`
+  if (aspectText && targetLabel && !targetIsHouse) {
+    return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${targetLabel}`.trim()
   }
-  if (aspectLabel && houseNumber) return `${transitPlanet} em ${aspectLabel} na Casa ${houseNumber}`
-  if (aspectLabel && areaHousesLabel) return `${transitPlanet} em ${aspectLabel} nas Casas ${areaHousesLabel}`
-  if (houseNumber) return `${transitPlanet} em transito na Casa ${houseNumber}`
+  if (aspectLabel && targetIsHouse) {
+    const houseLabel = targetHouseNumber
+      ? formatHouseLabel(targetHouseNumber)
+      : houseNumber
+      ? formatHouseLabel(houseNumber)
+      : targetLabel
+    return `${transitPlanet} ${aspectText || aspectLabel}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${houseLabel}`.trim()
+  }
+  if (aspectText && houseNumber) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${formatHouseLabel(houseNumber)}`
+  if (aspectText && areaHousesLabel) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} Casas ${areaHousesLabel}`
+  if (houseNumber) return `${transitPlanet} em transito na ${formatHouseLabel(houseNumber)}`
   if (areaHousesLabel) return `${transitPlanet} em transito nas Casas ${areaHousesLabel}`
   if (targetLabel) return `${transitPlanet} com ${targetLabel}`
-  if (aspectLabel) return `${transitPlanet} em ${aspectLabel}`
+  if (aspectText) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''}`.trim()
   return `${transitPlanet} em transito ativo`
 }

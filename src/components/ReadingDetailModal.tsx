@@ -79,6 +79,29 @@ const resolvePlanetFromText = (value: string): PlanetKey | null => {
   return null
 }
 
+const extractPlanetsFromText = (value: string): PlanetKey[] => {
+  const normalized = normalizeToken(value)
+  const hits: Array<{ key: PlanetKey; index: number }> = []
+  for (const key of PLANET_KEYS) {
+    const labels = [normalizeToken(PLANET_LABELS_PT[key]), normalizeToken(key)]
+    let best = -1
+    for (const label of labels) {
+      const idx = normalized.indexOf(label)
+      if (idx >= 0 && (best < 0 || idx < best)) best = idx
+    }
+    if (best >= 0) hits.push({ key, index: best })
+  }
+  return hits.sort((a, b) => a.index - b.index).map((item) => item.key)
+}
+
+const extractAspectSymbol = (value: string): string | null => {
+  const symbols = ['△', '□', '☍', '✶', '☌', '⚻', '⚺', '⚼', '∠']
+  for (const symbol of symbols) {
+    if (String(value || '').includes(symbol)) return symbol
+  }
+  return null
+}
+
 const buildDefaultKeywords = (
   title: string,
   subtitle: string | null | undefined,
@@ -129,8 +152,12 @@ export default function ReadingDetailModal({
 }: ReadingDetailModalProps) {
   const { width } = useWindowDimensions()
   const isNarrow = width <= 430
-  const planetKey = React.useMemo(() => resolvePlanetFromText(`${title} ${directText}`), [title, directText])
+  const planetKeys = React.useMemo(() => extractPlanetsFromText(`${title} ${directText}`), [title, directText])
+  const planetKey = planetKeys[0] || resolvePlanetFromText(`${title} ${directText}`)
+  const secondaryPlanetKey = planetKeys.length > 1 ? planetKeys[1] : null
   const imageUri = planetKey ? getPlanetImageUri(planetKey) : null
+  const secondaryImageUri = secondaryPlanetKey ? getPlanetImageUri(secondaryPlanetKey) : null
+  const aspectSymbol = React.useMemo(() => extractAspectSymbol(title), [title])
   const keywordChips = React.useMemo(
     () => (Array.isArray(keywords) && keywords.length ? keywords : buildDefaultKeywords(title, subtitle, statusLabel, timingLabel)),
     [keywords, title, subtitle, statusLabel, timingLabel]
@@ -154,6 +181,18 @@ export default function ReadingDetailModal({
                 </View>
               )}
             </View>
+            {secondaryPlanetKey ? (
+              <View style={styles.secondaryPlanetWrap}>
+                {aspectSymbol ? <Text style={styles.aspectSymbol}>{aspectSymbol}</Text> : null}
+                {secondaryImageUri ? (
+                  <Image source={{ uri: secondaryImageUri }} style={styles.secondaryPlanetImage} resizeMode="cover" />
+                ) : (
+                  <View style={styles.secondaryPlanetFallback}>
+                    <Ionicons name={PLANET_FALLBACK_ICON[secondaryPlanetKey] as any} size={13} color="#F8FAFC" />
+                  </View>
+                )}
+              </View>
+            ) : null}
             <View style={styles.heroBody}>
               <Text style={[styles.title, isNarrow ? styles.titleNarrow : null]}>{title}</Text>
               {subtitle ? (
@@ -278,6 +317,33 @@ const styles = StyleSheet.create({
   heroBody: {
     flex: 1,
     minWidth: 0,
+  },
+  secondaryPlanetWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  aspectSymbol: {
+    color: '#FDE047',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  secondaryPlanetImage: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  secondaryPlanetFallback: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(2,6,23,0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
   },
   title: {
     color: '#F8FAFC',

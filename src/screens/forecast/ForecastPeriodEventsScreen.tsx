@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative } from '../../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../../utils/astroInterpretation'
 
 type ForecastEvent = {
   id: string
@@ -124,7 +124,14 @@ function buildTimingLabel(event: ForecastEvent) {
 }
 
 function buildEventKeywords(event: ForecastEvent) {
-  const out: string[] = []
+  const out: string[] = buildArchetypeKeywordsForTransit(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    'previsoes'
+  )
   const add = (value?: string | null) => {
     const token = String(value || '').trim()
     if (!token) return
@@ -259,6 +266,8 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                         metaText,
                       })
                     }
+                    modalOpenByCard
+                    showModalActionIcon
                     fullTitle="Interpretacao completa"
                     fullText=""
                     metaText={metaText}

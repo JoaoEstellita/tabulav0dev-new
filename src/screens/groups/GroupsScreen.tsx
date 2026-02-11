@@ -33,7 +33,7 @@ import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
-import { buildAstroTransitNarrative } from "../../utils/astroInterpretation"
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from "../../utils/astroInterpretation"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -149,6 +149,7 @@ export default function GroupsScreen() {
     fullText: string
     actionText?: string
     metaText?: string
+    keywords?: string[]
   } | null>(null)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
@@ -883,6 +884,20 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
     houseNumber: currentHouse.replace("Casa ", ""),
     areaHouses: areaKey && AREA_HOUSES[areaKey] ? AREA_HOUSES[areaKey] : null,
   })
+}
+
+const buildTransitKeywords = (transit: any, areaKey?: string) => {
+  const areaLabel = areaKey ? (LIFE_AREA_LABELS[areaKey] || areaKey) : ""
+  const out = buildArchetypeKeywordsForTransit(
+    {
+      transitPlanet: transit?.transitPlanet,
+      aspectName: transit?.aspectName || transit?.type || transit?.aspectType,
+      natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
+      house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
+    },
+    areaLabel || "grupos"
+  )
+  return out.slice(0, 5)
 }
 
 const getTransitTechnicalTypeLabel = (transit: any) => {
@@ -1937,6 +1952,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           actionText: suggestion?.title ? String(suggestion.title) : "Ajuste o proximo passo com foco e constancia.",
                           metaText: [orbText, impactText].filter(Boolean).join(" • "),
                           impactValue01: computeTransitImpactValue(transit, areaCritical),
+                          keywords: buildTransitKeywords(transit, key),
                         }
                       })
 
@@ -1984,8 +2000,11 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               fullText,
                               actionText: item.actionText,
                               metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
+                              keywords: item.keywords,
                             })
                           }}
+                          modalOpenByCard
+                          showModalActionIcon
                           fullTitle="Interpretacao completa"
                           fullText=""
                           actionText={item.actionText}
@@ -2097,6 +2116,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         fullText={selectedMemberTransitDetail?.fullText || ''}
         actionText={selectedMemberTransitDetail?.actionText || null}
         metaText={selectedMemberTransitDetail?.metaText || null}
+        keywords={selectedMemberTransitDetail?.keywords || []}
       />
 
       <GroupDetailModal

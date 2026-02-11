@@ -1,5 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import ReadingOpenIcon from './ReadingOpenIcon'
 
 type TransitInsightCardProps = {
   indexLabel?: string
@@ -24,6 +25,8 @@ type TransitInsightCardProps = {
   featured?: boolean
   detailMode?: 'inline' | 'modal'
   onOpenDetailModal?: () => void
+  modalOpenByCard?: boolean
+  showModalActionIcon?: boolean
 }
 
 export default function TransitInsightCard({
@@ -49,24 +52,38 @@ export default function TransitInsightCard({
   featured = false,
   detailMode = 'inline',
   onOpenDetailModal,
+  modalOpenByCard = false,
+  showModalActionIcon = false,
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
+  const openModalByCard = useModalDetail && modalOpenByCard
+  const showHeaderBookIcon = useModalDetail && showModalActionIcon
   const normalizedImpact = Number.isFinite(impactValue01 as number)
     ? Math.max(0, Math.min(1, Number(impactValue01)))
     : null
-  return (
-    <View
-      style={[
-        styles.card,
-        isDark ? styles.cardDark : styles.cardLight,
-        featured ? styles.cardFeatured : null,
-      ]}
-    >
+  const cardStyles = [
+    styles.card,
+    isDark ? styles.cardDark : styles.cardLight,
+    featured ? styles.cardFeatured : null,
+  ]
+
+  const cardContent = (
+    <>
       <View style={styles.header}>
         {indexLabel ? <Text style={styles.number}>{indexLabel}</Text> : <View />}
-        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <Text style={styles.statusText}>{statusLabel}</Text>
+        <View style={styles.headerRight}>
+          {showHeaderBookIcon ? (
+            <View style={styles.readingIconWrap}>
+              <ReadingOpenIcon
+                size={16}
+                color={isDark ? '#D2D2D7' : '#334155'}
+              />
+            </View>
+          ) : null}
+          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+            <Text style={styles.statusText}>{statusLabel}</Text>
+          </View>
         </View>
       </View>
 
@@ -96,14 +113,23 @@ export default function TransitInsightCard({
       <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
         {directText}
       </Text>
-      <TouchableOpacity
-        style={[styles.toggleButton, isDark ? styles.toggleButtonDark : styles.toggleButtonLight]}
-        onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
-      >
-        <Text style={[styles.toggleText, isDark ? styles.toggleTextDark : styles.toggleTextLight]}>
-          {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
-        </Text>
-      </TouchableOpacity>
+      {!openModalByCard ? (
+        <TouchableOpacity
+          style={[styles.toggleButton, isDark ? styles.toggleButtonDark : styles.toggleButtonLight]}
+          onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
+        >
+          {useModalDetail && showModalActionIcon ? (
+            <ReadingOpenIcon
+              size={16}
+              color={isDark ? '#F8FAFC' : '#1E293B'}
+            />
+          ) : (
+            <Text style={[styles.toggleText, isDark ? styles.toggleTextDark : styles.toggleTextLight]}>
+              {useModalDetail ? 'Abrir leitura' : fullExpanded ? 'Ocultar leitura' : 'Ver leitura'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      ) : null}
 
       {!useModalDetail && fullExpanded ? (
         <View style={[styles.fullBox, isDark ? styles.fullBoxDark : styles.fullBoxLight]}>
@@ -117,6 +143,24 @@ export default function TransitInsightCard({
           {metaText ? <Text style={styles.meta}>{metaText}</Text> : null}
         </View>
       ) : null}
+    </>
+  )
+
+  if (openModalByCard) {
+    return (
+      <TouchableOpacity
+        style={cardStyles}
+        onPress={onOpenDetailModal}
+        activeOpacity={0.92}
+      >
+        {cardContent}
+      </TouchableOpacity>
+    )
+  }
+
+  return (
+    <View style={cardStyles}>
+      {cardContent}
     </View>
   )
 }
@@ -148,6 +192,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  readingIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#94A3B8',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   number: {
     fontSize: 14,

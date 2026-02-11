@@ -19,7 +19,7 @@ import {
 import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative } from '../../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../../utils/astroInterpretation'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -188,7 +188,14 @@ function buildActionHint(event: ForecastEvent) {
 }
 
 function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null) {
-  const out: string[] = []
+  const out: string[] = buildArchetypeKeywordsForTransit(
+    {
+      transitPlanet: event.transitPlanet,
+      aspectName: event.aspect,
+      natalPlanet: event.natalPoint,
+    },
+    (event.domains || []).map((d) => formatDomainLabel(d)).slice(0, 1).join(', ')
+  )
   const add = (value?: string | null) => {
     const token = String(value || '').trim()
     if (!token) return
@@ -472,6 +479,8 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
             onToggleFull={() => {}}
             detailMode="modal"
             onOpenDetailModal={() => onOpenEventDetail(item.event.id)}
+            modalOpenByCard
+            showModalActionIcon
             fullTitle="Interpretacao completa"
             fullText=""
             actionText={item.actionHint}
