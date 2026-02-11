@@ -17,6 +17,9 @@ type ReadingDetailModalProps = {
   actionText?: string | null
   metaText?: string | null
   keywords?: string[]
+  closeLabel?: string
+  secondaryActionLabel?: string | null
+  onSecondaryAction?: (() => void) | null
 }
 
 const PLANET_KEYS: PlanetKey[] = [
@@ -120,6 +123,9 @@ export default function ReadingDetailModal({
   actionText,
   metaText,
   keywords,
+  closeLabel = 'Fechar',
+  secondaryActionLabel,
+  onSecondaryAction,
 }: ReadingDetailModalProps) {
   const { width } = useWindowDimensions()
   const isNarrow = width <= 430
@@ -203,8 +209,17 @@ export default function ReadingDetailModal({
             ) : null}
           </ScrollView>
 
+          {secondaryActionLabel && onSecondaryAction ? (
+            <TouchableOpacity style={styles.secondaryButton} onPress={onSecondaryAction}>
+              <Text style={[styles.secondaryButtonText, isNarrow ? styles.secondaryButtonTextNarrow : null]}>
+                {secondaryActionLabel}
+              </Text>
+              <Ionicons name="arrow-down" size={16} color="#E2E8F0" />
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>Fechar</Text>
+            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>{closeLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -395,5 +410,27 @@ const styles = StyleSheet.create({
   },
   doneButtonTextNarrow: {
     fontSize: 18,
+  },
+  secondaryButton: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: 'rgba(148,163,184,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  secondaryButtonText: {
+    color: '#E2E8F0',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  secondaryButtonTextNarrow: {
+    fontSize: 13,
   },
 })
