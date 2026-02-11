@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  StyleSheet
+  StyleSheet,
+  useWindowDimensions,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
@@ -572,6 +573,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
+  const { width: viewportWidth } = useWindowDimensions()
+  const isCompactViewport = viewportWidth <= 430
+  const [filtersExpanded, setFiltersExpanded] = React.useState(false)
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -595,7 +599,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     setSelectedFacetFilters(['planet', 'house'])
     setSelectedToneFilter('all')
     setSelectedSortMode('impact')
-  }, [visible, areaData?.name])
+    setFiltersExpanded(!isCompactViewport)
+  }, [visible, areaData?.name, isCompactViewport])
+
+  React.useEffect(() => {
+    if (!visible) return
+    setFiltersExpanded((prev) => (isCompactViewport ? prev : true))
+  }, [isCompactViewport, visible])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
   const mapTransitToReal = (transit: any): RealTransitData => {
@@ -2052,6 +2062,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       .filter(({ transit }) => toneMatchesFilter(transit))
     const sortedTransits = sortTransitEntries(combinedTransits)
     const visibleTransitCards = renderTransitList(sortedTransits, 0, false)
+    const activeFiltersCount =
+      selectedPlanetFilters.length +
+      selectedHouseFilters.length +
+      (selectedToneFilter !== 'all' ? 1 : 0) +
+      (selectedSortMode !== 'impact' ? 1 : 0) +
+      (selectedFacetFilters.length === 2 ? 0 : 1)
 
     return (
       <View style={styles.section}>
@@ -2061,131 +2077,145 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           <>
-            <View style={styles.filtersSection}>
-              <View style={styles.filterBlock}>
-                <Text style={styles.filterTitle}>Filtro • Planeta x Planeta</Text>
-                <View style={styles.filterRow}>
-                  {planetFilterOptions.map((planet) => {
-                    const selected = selectedPlanetFilters.includes(planet)
-                    const planetKey = toPlanetImageKey(planet)
-                    const imageUri = planetKey ? getPlanetImageUri(planetKey) : undefined
-                    return (
-                      <TouchableOpacity
-                        key={`planet-filter-${planet}`}
-                        style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
-                        onPress={() =>
-                          setSelectedPlanetFilters((prev) =>
-                            prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
-                          )
-                        }
-                      >
-                        {imageUri ? <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} /> : null}
-                        <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                          {translate('planets', planet)}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              </View>
-
-              <View style={styles.filterBlock}>
-                <Text style={styles.filterTitle}>Filtro • Planeta x Casa</Text>
-                <View style={styles.filterRow}>
-                  {houseFilterOptions.map((house) => {
-                    const selected = selectedHouseFilters.includes(house)
-                    return (
-                      <TouchableOpacity
-                        key={`house-filter-${house}`}
-                        style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
-                        onPress={() =>
-                          setSelectedHouseFilters((prev) =>
-                            prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
-                          )
-                        }
-                      >
-                        <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                          Casa {house}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              </View>
-            </View>
-
             <View style={styles.transitBlock}>
               <View style={styles.transitColumnHeader}>
-                <View style={styles.transitHeaderControlRow}>
-                  <View style={styles.facetToggleRow}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setSelectedFacetFilters((prev) =>
-                          prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
-                        )
-                      }
-                      style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
-                        Planeta x Planeta
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setSelectedFacetFilters((prev) =>
-                          prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
-                        )
-                      }
-                      style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
-                        Planeta x Casa
-                      </Text>
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.filtersToggleBar} onPress={() => setFiltersExpanded((prev) => !prev)}>
+                  <Text style={styles.filtersToggleTitle}>Filtros e Ordenação</Text>
+                  <View style={styles.filtersToggleMetaWrap}>
+                    <Text style={styles.filtersToggleMeta}>{activeFiltersCount} ativos</Text>
+                    <Ionicons
+                      name={filtersExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={14}
+                      color="#9A3412"
+                    />
                   </View>
-                  <View style={styles.toneToggleRow}>
-                    <TouchableOpacity
-                      onPress={() => setSelectedToneFilter('all')}
-                      style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
-                        Todos
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setSelectedToneFilter('challenging')}
-                      style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
-                        Desafiador
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setSelectedToneFilter('harmonic')}
-                      style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
-                        Harmônico
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setSelectedSortMode('impact')}
-                      style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
-                        Mais impacto
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setSelectedSortMode('recent')}
-                      style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
-                    >
-                      <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
-                        Mais recente
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                </TouchableOpacity>
+                {filtersExpanded ? (
+                  <>
+                    <View style={styles.transitHeaderControlRow}>
+                      <View style={styles.facetToggleRow}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setSelectedFacetFilters((prev) =>
+                              prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
+                            )
+                          }
+                          style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
+                            Planeta x Planeta
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setSelectedFacetFilters((prev) =>
+                              prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
+                            )
+                          }
+                          style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
+                            Planeta x Casa
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.toneToggleRow}>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('all')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
+                            Todos
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('challenging')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
+                            Desafiador
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('harmonic')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
+                            Harmônico
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedSortMode('impact')}
+                          style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
+                            Mais impacto
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedSortMode('recent')}
+                          style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
+                            Mais recente
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.filtersSection}>
+                      <View style={styles.filterBlock}>
+                        <Text style={styles.filterTitle}>Filtro • Planeta x Planeta</Text>
+                        <View style={styles.filterRow}>
+                          {planetFilterOptions.map((planet) => {
+                            const selected = selectedPlanetFilters.includes(planet)
+                            const planetKey = toPlanetImageKey(planet)
+                            const imageUri = planetKey ? getPlanetImageUri(planetKey) : undefined
+                            return (
+                              <TouchableOpacity
+                                key={`planet-filter-${planet}`}
+                                style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
+                                onPress={() =>
+                                  setSelectedPlanetFilters((prev) =>
+                                    prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
+                                  )
+                                }
+                              >
+                                {imageUri ? <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} /> : null}
+                                <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
+                                  {translate('planets', planet)}
+                                </Text>
+                              </TouchableOpacity>
+                            )
+                          })}
+                        </View>
+                      </View>
+
+                      <View style={styles.filterBlock}>
+                        <Text style={styles.filterTitle}>Filtro • Planeta x Casa</Text>
+                        <View style={styles.filterRow}>
+                          {houseFilterOptions.map((house) => {
+                            const selected = selectedHouseFilters.includes(house)
+                            return (
+                              <TouchableOpacity
+                                key={`house-filter-${house}`}
+                                style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
+                                onPress={() =>
+                                  setSelectedHouseFilters((prev) =>
+                                    prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
+                                  )
+                                }
+                              >
+                                <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
+                                  Casa {house}
+                                </Text>
+                              </TouchableOpacity>
+                            )
+                          })}
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                ) : null}
                 <View style={styles.transitHeaderTitleWrap}>
                   <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
                   <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
@@ -3053,9 +3083,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   filtersSection: {
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 6,
     gap: 8,
+  },
+  filtersToggleBar: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginBottom: 6,
+  },
+  filtersToggleTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1E293B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  filtersToggleMetaWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  filtersToggleMeta: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9A3412',
   },
   filterBlock: {
     backgroundColor: '#FFFFFF',
