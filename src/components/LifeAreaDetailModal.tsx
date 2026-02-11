@@ -549,6 +549,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
+  const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -568,6 +569,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   React.useEffect(() => {
     setSelectedPlanetFilters([])
     setSelectedHouseFilters([])
+    setSelectedToneFilter('all')
   }, [visible, areaData?.name])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
@@ -1593,6 +1595,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseDriverTransits = orderedTransits.filter((transit) => !hasPlanetFacet(transit) && hasHouseFacet(transit))
     const planetTransits = dedupeByKey(planetDriverTransits, toPlanetFacetKey)
     const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
+    const toneMatchesFilter = (transit: any): boolean => {
+      if (selectedToneFilter === 'all') return true
+      const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+      if (selectedToneFilter === 'harmonic') {
+        return ['trigono', 'sextil', 'harmonic'].includes(aspectType)
+      }
+      return ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
+    }
     const planetFilterOptions = Array.from(
       new Set(planetTransits.map((transit) => String(transit?.transitPlanet || '').trim()).filter(Boolean))
     ).sort((a, b) => {
@@ -1611,19 +1621,49 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseFilterOptions = Array.from(new Set([...relevantAreaHouses, ...houseFromTransits])).sort(
       (a, b) => Number(a) - Number(b)
     )
-    const filteredPlanetTransits = selectedPlanetFilters.length
+    const filteredPlanetTransits = (selectedPlanetFilters.length
       ? planetTransits.filter((transit) => selectedPlanetFilters.includes(String(transit?.transitPlanet || '').trim()))
       : planetTransits
-    const filteredHouseTransits = selectedHouseFilters.length
+    ).filter(toneMatchesFilter)
+    const filteredHouseTransits = (selectedHouseFilters.length
       ? houseTransits.filter((transit) => {
           const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
           return !!house && selectedHouseFilters.includes(house)
         })
       : houseTransits
+    ).filter(toneMatchesFilter)
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>TRÂNSITOS ATIVOS</Text>
+        <View style={styles.sectionTitleRow}>
+          <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>TRÂNSITOS ATIVOS</Text>
+          <View style={styles.toneToggleRow}>
+            <TouchableOpacity
+              onPress={() => setSelectedToneFilter('all')}
+              style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
+            >
+              <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
+                Todos
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedToneFilter('challenging')}
+              style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
+            >
+              <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
+                Desafiador
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedToneFilter('harmonic')}
+              style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
+            >
+              <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
+                Harmônico
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {transitItems.length === 0 ? (
           <View style={styles.emptyState}>
@@ -1694,7 +1734,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 {filteredPlanetTransits.length ? (
                   renderTransitList(filteredPlanetTransits, 0, false, 'planet')
                 ) : (
-                  <Text style={styles.emptyColumnText}>Nenhum trânsito para o filtro selecionado.</Text>
+                  <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
                 )}
               </View>
 
@@ -2347,6 +2387,41 @@ const styles = StyleSheet.create({
     borderColor: '#FED7AA',
     padding: DESIGN_SYSTEM.spacing.sm,
     borderRadius: DESIGN_SYSTEM.borderRadius.sm,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+  },
+  sectionTitleInline: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  toneToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  toneToggleChip: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  toneToggleChipActive: {
+    borderColor: '#B45309',
+    backgroundColor: '#FFF7ED',
+  },
+  toneToggleText: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '700',
+  },
+  toneToggleTextActive: {
+    color: '#9A3412',
   },
   subsectionHeader: {
     flexDirection: 'row',
