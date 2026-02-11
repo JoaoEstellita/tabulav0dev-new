@@ -1131,22 +1131,25 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             {/* Cabe\u00E7alho do Planeta */}
             <View style={styles.planetHeader}>
               <TouchableOpacity style={styles.planetHeaderRow} activeOpacity={0.88} onPress={() => openPlanetMeaningModal(comparison.name)}>
-                {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
-                  <Image
-                    source={{ uri: resolvePlanetImageUri(comparison.name) }}
-                    style={[
-                      styles.planetHeaderImage,
-                      PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name) && styles.planetHeaderImageWhiteBgFix,
-                      Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
-                        ? ({ mixBlendMode: 'multiply' } as any)
-                        : null,
-                    ]}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.planetGlyphFallback}>{(PLANET_ICONS[comparison.name] || '?')}</Text>
-                )}
-                <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
+                <View style={styles.planetHeaderMain}>
+                  {resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
+                    <Image
+                      source={{ uri: resolvePlanetImageUri(comparison.name) }}
+                      style={[
+                        styles.planetHeaderImage,
+                        PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name) && styles.planetHeaderImageWhiteBgFix,
+                        Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
+                          ? ({ mixBlendMode: 'multiply' } as any)
+                          : null,
+                      ]}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.planetGlyphFallback}>{(PLANET_ICONS[comparison.name] || '?')}</Text>
+                  )}
+                  <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
+                </View>
+                <Text style={styles.planetReadHintEmoji}>📖</Text>
               </TouchableOpacity>
             </View>
 
@@ -1776,6 +1779,14 @@ const styles = StyleSheet.create({
   planetHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  planetHeaderMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+    flexShrink: 1,
   },
   planetHeaderImage: {
     width: 34,
@@ -1800,6 +1811,12 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  planetReadHintEmoji: {
+    fontSize: 16,
+    lineHeight: 20,
+    marginLeft: 10,
+    opacity: 0.95,
   },
   comparisonGrid: {
     flexDirection: 'row',

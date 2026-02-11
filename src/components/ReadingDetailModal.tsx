@@ -1,5 +1,5 @@
 import React from 'react'
-import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
@@ -121,6 +121,8 @@ export default function ReadingDetailModal({
   metaText,
   keywords,
 }: ReadingDetailModalProps) {
+  const { width } = useWindowDimensions()
+  const isNarrow = width <= 430
   const planetKey = React.useMemo(() => resolvePlanetFromText(`${title} ${directText}`), [title, directText])
   const imageUri = planetKey ? getPlanetImageUri(planetKey) : null
   const keywordChips = React.useMemo(
@@ -147,13 +149,17 @@ export default function ReadingDetailModal({
               )}
             </View>
             <View style={styles.heroBody}>
-              <Text style={styles.title}>{title}</Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <Text style={styles.subtitle}>Leitura aplicada ao contexto atual</Text>}
+              <Text style={[styles.title, isNarrow ? styles.titleNarrow : null]}>{title}</Text>
+              {subtitle ? (
+                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{subtitle}</Text>
+              ) : (
+                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>Leitura aplicada ao contexto atual</Text>
+              )}
               <View style={styles.heroMetaRow}>
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
                   <Text style={styles.statusText}>{statusLabel}</Text>
                 </View>
-                {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
+                {timingLabel ? <Text style={[styles.timing, isNarrow ? styles.timingNarrow : null]}>{timingLabel}</Text> : null}
               </View>
             </View>
             <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
@@ -173,32 +179,32 @@ export default function ReadingDetailModal({
             ) : null}
 
             <View style={styles.sectionCard}>
-              <Text style={styles.sectionLabel}>Leitura-chave</Text>
-              <Text style={styles.body}>{directText}</Text>
+              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Leitura-chave</Text>
+              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{directText}</Text>
             </View>
 
             <View style={styles.sectionCard}>
-              <Text style={styles.sectionLabel}>Interpretação aplicada</Text>
-              <Text style={styles.body}>{fullText}</Text>
+              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Interpretação aplicada</Text>
+              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{fullText}</Text>
             </View>
 
             {actionText ? (
               <View style={styles.sectionCard}>
-                <Text style={styles.sectionLabel}>Uso prático</Text>
-                <Text style={styles.body}>{actionText}</Text>
+                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Uso prático</Text>
+                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{actionText}</Text>
               </View>
             ) : null}
 
             {metaText ? (
               <View style={styles.sectionCard}>
-                <Text style={styles.sectionLabel}>Contexto técnico</Text>
-                <Text style={styles.meta}>{metaText}</Text>
+                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Contexto técnico</Text>
+                <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{metaText}</Text>
               </View>
             ) : null}
           </ScrollView>
 
           <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-            <Text style={styles.doneButtonText}>Fechar</Text>
+            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>Fechar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -263,11 +269,17 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: '800',
   },
+  titleNarrow: {
+    fontSize: 24,
+  },
   subtitle: {
     color: '#D6E4FF',
     fontSize: 14,
     fontWeight: '600',
     marginTop: 2,
+  },
+  subtitleNarrow: {
+    fontSize: 12,
   },
   heroMetaRow: {
     marginTop: 8,
@@ -290,6 +302,9 @@ const styles = StyleSheet.create({
     color: '#C7D2FE',
     fontSize: 12,
     fontWeight: '700',
+  },
+  timingNarrow: {
+    fontSize: 11,
   },
   closeIcon: {
     width: 36,
@@ -341,16 +356,27 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 6,
   },
+  sectionLabelNarrow: {
+    fontSize: 14,
+  },
   body: {
     color: '#F8FAFC',
     fontSize: 19,
     lineHeight: 27,
     marginBottom: 2,
   },
+  bodyNarrow: {
+    fontSize: 16,
+    lineHeight: 23,
+  },
   meta: {
     color: '#CBD5E1',
     fontSize: 17,
     lineHeight: 25,
+  },
+  metaNarrow: {
+    fontSize: 14,
+    lineHeight: 21,
   },
   doneButton: {
     marginHorizontal: 12,
@@ -366,5 +392,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '800',
+  },
+  doneButtonTextNarrow: {
+    fontSize: 18,
   },
 })
