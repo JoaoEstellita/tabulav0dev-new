@@ -96,6 +96,8 @@ const PLANET_ICONS: Record<string, string> = {
 }
 
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
+const HARMONIOUS_ASPECT_KEYS = new Set(['trigono', 'sextil'])
+const CHALLENGING_ASPECT_KEYS = new Set(['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'])
 
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
 const PLANET_KEYWORDS: Record<string, string> = {
@@ -493,6 +495,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return ASPECT_ICONS[normalizeAspectKey(aspect)] || '\u2022'
   }
 
+  const getAspectTone = React.useCallback((aspectType: string): 'harmonic' | 'challenging' | 'neutral' => {
+    const key = normalizeAspectKey(aspectType)
+    if (HARMONIOUS_ASPECT_KEYS.has(key)) return 'harmonic'
+    if (CHALLENGING_ASPECT_KEYS.has(key)) return 'challenging'
+    return 'neutral'
+  }, [])
+
   const personalWindowMap = React.useMemo(() => {
     const map = new Map<string, { start?: string; exact?: string; end?: string; days?: number }>()
     if (!personalWindows?.length) return map
@@ -765,6 +774,40 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     }
     return map
   }, [planetComparisons])
+
+  const planetNavigatorData = React.useMemo(() => {
+    return (planetComparisons || []).map((comparison) => {
+      const personalTransits = personalByTransitPlanet[comparison.name] || []
+      let challenging = 0
+      let neutral = 0
+      let harmonic = 0
+      for (const item of personalTransits) {
+        const tone = getAspectTone((item as any).type || '')
+        if (tone === 'challenging') challenging += 1
+        else if (tone === 'harmonic') harmonic += 1
+        else neutral += 1
+      }
+      return {
+        key: comparison.name,
+        planetName: comparison.name,
+        label: translatePlanetName(comparison.name),
+        imageUri: resolvePlanetImageUri(comparison.name),
+        challenging,
+        neutral,
+        harmonic,
+      }
+    })
+  }, [planetComparisons, personalByTransitPlanet, getAspectTone, translatePlanetName, resolvePlanetImageUri])
+
+  const scrollToPlanetCard = React.useCallback((planetName: string) => {
+    try {
+      if (Platform.OS !== 'web' || typeof document === 'undefined') return
+      const id = `tabula-planet-${String(planetName)}`
+      const element = document.getElementById(id)
+      if (!element) return
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch {}
+  }, [])
 
   const openPlanetMeaningModal = React.useCallback((planetName: string) => {
     setPlanetMeaningPlanet(planetName)
@@ -1102,8 +1145,60 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           </View>
         </View>
 
+        <View style={styles.planetQuickNavWrap}>
+          <Text style={styles.planetQuickNavTitle}>Navegação por planeta</Text>
+          <View style={styles.planetQuickNavRow}>
+            {planetNavigatorData.map((planetItem) => (
+              <TouchableOpacity
+                key={`quick-nav-${planetItem.key}`}
+                style={styles.planetQuickNavItem}
+                activeOpacity={0.88}
+                onPress={() => scrollToPlanetCard(planetItem.planetName)}
+              >
+                <View style={styles.planetQuickNavTop}>
+                  {planetItem.imageUri && !failedPlanetImages[planetItem.planetName] ? (
+                    <Image
+                      source={{ uri: planetItem.imageUri }}
+                      style={[
+                        styles.planetQuickNavImage,
+                        PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planetName) && styles.planetQuickNavImageWhiteBgFix,
+                        Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planetName)
+                          ? ({ mixBlendMode: 'multiply' } as any)
+                          : null,
+                      ]}
+                      resizeMode="cover"
+                      onError={() =>
+                        setFailedPlanetImages((prev) => ({
+                          ...prev,
+                          [planetItem.planetName]: true,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <View style={styles.planetQuickNavFallback}>
+                      <Text style={styles.planetQuickNavFallbackText}>{PLANET_ICONS[planetItem.planetName] || '?'}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.planetQuickNavLabel} numberOfLines={1}>{planetItem.label}</Text>
+                </View>
+                <View style={styles.planetQuickNavCounters}>
+                  <View style={[styles.planetQuickNavCounter, styles.planetQuickNavCounterChallenging]}>
+                    <Text style={styles.planetQuickNavCounterText}>{planetItem.challenging}</Text>
+                  </View>
+                  <View style={[styles.planetQuickNavCounter, styles.planetQuickNavCounterNeutral]}>
+                    <Text style={styles.planetQuickNavCounterText}>{planetItem.neutral}</Text>
+                  </View>
+                  <View style={[styles.planetQuickNavCounter, styles.planetQuickNavCounterHarmonic]}>
+                    <Text style={styles.planetQuickNavCounterText}>{planetItem.harmonic}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {planetComparisons.map((comparison) => (
-          <View key={comparison.name} style={styles.planetCard}>
+          <View key={comparison.name} nativeID={`tabula-planet-${comparison.name}`} style={styles.planetCard}>
             {(() => {
               const needsLightBgFix = PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
               return resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (
@@ -1761,6 +1856,104 @@ const styles = StyleSheet.create({
   },
   planetsSection: {
     flex: 1,
+  },
+  planetQuickNavWrap: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: 10,
+    marginBottom: 12,
+  },
+  planetQuickNavTitle: {
+    color: '#CBD5E1',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  planetQuickNavRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  planetQuickNavItem: {
+    backgroundColor: 'rgba(15,23,42,0.56)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.35)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    minWidth: 96,
+    maxWidth: 126,
+  },
+  planetQuickNavTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  planetQuickNavImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  planetQuickNavImageWhiteBgFix: {
+    backgroundColor: 'rgba(8,12,30,0.92)',
+  },
+  planetQuickNavFallback: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.45)',
+  },
+  planetQuickNavFallbackText: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    lineHeight: 14,
+  },
+  planetQuickNavLabel: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  planetQuickNavCounters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  planetQuickNavCounter: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  planetQuickNavCounterChallenging: {
+    backgroundColor: '#EF4444',
+  },
+  planetQuickNavCounterNeutral: {
+    backgroundColor: '#D97706',
+  },
+  planetQuickNavCounterHarmonic: {
+    backgroundColor: '#22C55E',
+  },
+  planetQuickNavCounterText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 12,
   },
   planetCard: {
     backgroundColor: 'rgba(42, 42, 62, 0.6)',

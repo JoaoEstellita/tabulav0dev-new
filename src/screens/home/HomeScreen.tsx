@@ -8,7 +8,9 @@ import {
   RefreshControl,
   Alert,
   Image,
-  Modal
+  Modal,
+  Platform,
+  useWindowDimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
@@ -147,6 +149,8 @@ export default function HomeScreen() {
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
     const scrollRef = useRef<ScrollView>(null)
+    const { width } = useWindowDimensions()
+    const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
     const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
     // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
@@ -455,7 +459,7 @@ export default function HomeScreen() {
         <ScrollView
           ref={scrollRef}
           style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={showDesktopScrollbar}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
