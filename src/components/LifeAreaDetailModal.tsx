@@ -578,7 +578,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
   const { width: viewportWidth } = useWindowDimensions()
   const isCompactViewport = viewportWidth <= 430
-  const [filtersExpanded, setFiltersExpanded] = React.useState(false)
+  const [filtersExpanded, setFiltersExpanded] = React.useState(!isCompactViewport)
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -605,6 +605,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           facetFilters?: Array<'planet' | 'house'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
+          filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
           ? parsed.facetFilters.filter((value) => value === 'planet' || value === 'house')
@@ -615,6 +616,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         }
         if (parsed.sortMode === 'impact' || parsed.sortMode === 'recent') {
           setSelectedSortMode(parsed.sortMode)
+        }
+        if (typeof parsed.filtersExpanded === 'boolean') {
+          setFiltersExpanded(parsed.filtersExpanded)
         }
       } catch {
         // ignore preference parse/read failures and keep safe defaults
@@ -634,21 +638,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       facetFilters: selectedFacetFilters,
       toneFilter: selectedToneFilter,
       sortMode: selectedSortMode,
+      filtersExpanded,
     })
     AsyncStorage.setItem(MODAL_FILTER_PREFS_KEY, payload).catch(() => null)
-  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode])
+  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, filtersExpanded])
 
   React.useEffect(() => {
     setActiveScoreComponent(null)
     setSelectedPlanetFilters([])
     setSelectedHouseFilters([])
-    setFiltersExpanded(!isCompactViewport)
-  }, [visible, areaData?.name, isCompactViewport])
-
-  React.useEffect(() => {
-    if (!visible) return
-    setFiltersExpanded((prev) => (isCompactViewport ? prev : true))
-  }, [isCompactViewport, visible])
+  }, [visible, areaData?.name])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
   const mapTransitToReal = (transit: any): RealTransitData => {
