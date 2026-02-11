@@ -1438,7 +1438,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
     return (
       <View style={styles.section}>
-        <Text style={styles.subsectionTitle}>COMPONENTES ATIVOS DO SCORE</Text>
         <View style={styles.scoreComponentsRow}>
           {chips.map((chip) => (
             <TouchableOpacity
