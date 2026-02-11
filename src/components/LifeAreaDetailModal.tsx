@@ -571,6 +571,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
+  const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -593,6 +594,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     setSelectedHouseFilters([])
     setSelectedFacetFilters(['planet', 'house'])
     setSelectedToneFilter('all')
+    setSelectedSortMode('impact')
   }, [visible, areaData?.name])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
@@ -1963,6 +1965,25 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       })
       return Array.from(map.values()).sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
     }
+    const getTransitRecentTimestamp = (transit: any): number => {
+      const startAt = transit?.startAt || transit?.window?.start || null
+      const peakAt = transit?.peakAt || transit?.window?.exact || null
+      const fallbackAt = transit?.endAt || transit?.window?.end || null
+      const candidates = [startAt, peakAt, fallbackAt]
+        .map((value) => new Date(String(value || '')).getTime())
+        .filter((value) => Number.isFinite(value))
+      if (!candidates.length) return 0
+      return Math.max(...candidates)
+    }
+    const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'planet' | 'house' }>) => {
+      return [...items].sort((a, b) => {
+        if (selectedSortMode === 'recent') {
+          const recentDelta = getTransitRecentTimestamp(b.transit) - getTransitRecentTimestamp(a.transit)
+          if (recentDelta !== 0) return recentDelta
+        }
+        return getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit)
+      })
+    }
 
     const planetDriverTransits = orderedTransits.filter((transit) => hasPlanetFacet(transit))
     const houseDriverTransits = orderedTransits.filter((transit) => hasHouseFacet(transit))
@@ -2013,8 +2034,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : []),
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
-      .sort((a, b) => getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit))
-    const visibleTransitCards = renderTransitList(combinedTransits, 0, false)
+    const sortedTransits = sortTransitEntries(combinedTransits)
+    const visibleTransitCards = renderTransitList(sortedTransits, 0, false)
 
     return (
       <View style={styles.section}>
@@ -2129,6 +2150,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     >
                       <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
                         Harmônico
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedSortMode('impact')}
+                      style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
+                        Mais impacto
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedSortMode('recent')}
+                      style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
+                    >
+                      <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
+                        Mais recente
                       </Text>
                     </TouchableOpacity>
                   </View>
