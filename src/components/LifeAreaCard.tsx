@@ -26,7 +26,6 @@ export default function LifeAreaCard({
   area,
   onPress,
   calculationFactors,
-  transitCount = 0,
   compact = false,
 }: LifeAreaCardProps) {
   const getStatusColor = (status: number) => {
@@ -58,14 +57,9 @@ export default function LifeAreaCard({
             <Ionicons name={areaIcon as any} size={20} color="#FFFFFF" />
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.areaName} numberOfLines={1}>
+            <Text style={[styles.areaName, compact && styles.areaNameCompact]} numberOfLines={1}>
               {translateAreaName(area.name)}
             </Text>
-            {!compact && (
-              <Text style={styles.transitMeta} numberOfLines={1}>
-                Transitos: {transitCount}
-              </Text>
-            )}
           </View>
         </View>
 
@@ -140,14 +134,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   areaName: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 22,
+    lineHeight: 24,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
-  transitMeta: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 2,
+  areaNameCompact: {
+    fontSize: 18,
+    lineHeight: 20,
   },
   statusRow: {
     flexDirection: 'row',

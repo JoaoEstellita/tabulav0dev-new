@@ -335,15 +335,30 @@ interface LifeAreaDetailModalProps {
 
 //  INTERFACES PARA DADOS REAIS
 interface RealTransitData {
+  id?: string
   transitPlanet: string
-  natalPlanet: string
-  type: string
+  natalPlanet?: string
+  target?: {
+    natalPlanet?: string
+    angle?: string
+    house?: number
+  }
+  type?: string
+  aspectName?: string
+  aspectType?: string
   orb: number
   isApplying: boolean
   strength: number
-  natalHouseImpacted: number
+  impact?: number
+  natalHouseImpacted?: number
+  transitHouse?: number
+  currentHouse?: number
   durationClass?: 'curto' | 'medio' | 'longo'
   phase?: string
+  phaseLabel?: string
+  startAt?: string | null
+  peakAt?: string | null
+  endAt?: string | null
   window?: { start?: string; exact?: string; end?: string; days?: number }
   seriesId?: string
   contactPhase?: 'direct' | 'retro'
@@ -519,18 +534,57 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const headerGradient = [areaColors[0], areaColors[1]]
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
-  const mapTransitToReal = (transit: any): RealTransitData => ({
-      transitPlanet: transit.transitPlanet,
-      natalPlanet: transit.natalPlanet,
-      type: transit.type,
-      orb: safeNumber(transit.orb),
-      isApplying: !!transit.isApplying,
-      strength: safeNumber(transit.strength, safeNumber(transit.impact)),
-      natalHouseImpacted: safeNumber(transit.natalHouseImpacted),
-      durationClass: transit.durationClass,
-      phase: transit.phase,
-      window: transit.window,
-    })
+  const mapTransitToReal = (transit: any): RealTransitData => {
+    const rawTargetHouse = transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse ?? null
+    const numericTargetHouse =
+      Number.isFinite(Number(rawTargetHouse)) && Number(rawTargetHouse) >= 1 && Number(rawTargetHouse) <= 12
+        ? Number(rawTargetHouse)
+        : undefined
+    const target = {
+      natalPlanet: transit?.target?.natalPlanet || transit?.natalPlanet || undefined,
+      angle: transit?.target?.angle || undefined,
+      house: numericTargetHouse,
+    }
+
+    return {
+      id: transit?.id || undefined,
+      transitPlanet: transit?.transitPlanet || 'Trânsito',
+      natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || undefined,
+      target,
+      type: transit?.type || transit?.aspectName || transit?.aspectType || undefined,
+      aspectName: transit?.aspectName || transit?.type || undefined,
+      aspectType: transit?.aspectType || transit?.type || undefined,
+      orb: safeNumber(transit?.orb),
+      isApplying:
+        transit?.isApplying === true || transit?.applying === true
+          ? true
+          : transit?.isApplying === false || transit?.applying === false
+          ? false
+          : false,
+      strength: safeNumber(transit?.strength, safeNumber(transit?.impact)),
+      impact: safeNumber(transit?.impact),
+      natalHouseImpacted: numericTargetHouse,
+      transitHouse:
+        Number.isFinite(Number(transit?.transitHouse)) && Number(transit?.transitHouse) >= 1 && Number(transit?.transitHouse) <= 12
+          ? Number(transit.transitHouse)
+          : undefined,
+      currentHouse:
+        Number.isFinite(Number(transit?.currentHouse)) && Number(transit?.currentHouse) >= 1 && Number(transit?.currentHouse) <= 12
+          ? Number(transit.currentHouse)
+          : undefined,
+      durationClass: transit?.durationClass,
+      phase: transit?.phase,
+      phaseLabel: transit?.phaseLabel,
+      startAt: transit?.startAt ?? transit?.window?.start ?? null,
+      peakAt: transit?.peakAt ?? transit?.window?.exact ?? null,
+      endAt: transit?.endAt ?? transit?.window?.end ?? null,
+      window: transit?.window,
+      seriesId: transit?.seriesId,
+      contactPhase: transit?.contactPhase,
+      isMaster: transit?.isMaster,
+      contactIndex: transit?.contactIndex,
+    }
+  }
 
   const getActiveTransits = (): RealTransitData[] => {
     const mergedAreaTransits = mergeAreaTransits(
