@@ -295,6 +295,15 @@ const getAspectLabel = (type: string): string => {
   return translated || normalized
 }
 
+const getTransitToneCategory = (transit: any): 'harmonic' | 'challenging' | 'neutral' => {
+  const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+  if (['trigono', 'sextil', 'harmonic'].includes(aspectType)) return 'harmonic'
+  if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)) {
+    return 'challenging'
+  }
+  return 'neutral'
+}
+
 const getTransitDuration = (transit: RealTransitData): string => {
   // Velocidades medias dos planetas (graus por dia)
   const planetSpeeds: Record<string, number> = {
@@ -1456,10 +1465,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     items.map((transit: any, index: number) => {
       const absoluteIndex = startIndex + index
           const columnKind = forcedKind || transit?.__facetKind || getTransitColumnKind(transit)
-          const aspectType = String(transit.aspectName || transit.type || '')
-          const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-          const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
-          const isNeutral = aspectType === 'conjuncao' || aspectType === 'neutral'
+          const toneCategory = getTransitToneCategory(transit)
+          const isHarmonious = toneCategory === 'harmonic'
+          const isChallenging = toneCategory === 'challenging'
+          const isNeutral = toneCategory === 'neutral'
           const statusColor = isHarmonious
             ? DESIGN_SYSTEM.colors.positive
             : isChallenging
@@ -1642,11 +1651,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
     const toneMatchesFilter = (transit: any): boolean => {
       if (selectedToneFilter === 'all') return true
-      const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
-      if (selectedToneFilter === 'harmonic') {
-        return ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-      }
-      return ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
+      const tone = getTransitToneCategory(transit)
+      if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
+      return tone === 'challenging'
     }
     const planetFilterOptions = Array.from(
       new Set(planetTransits.map((transit) => String(transit?.transitPlanet || '').trim()).filter(Boolean))
@@ -1808,7 +1815,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
                 <Text style={styles.transitColumnMeta}>{combinedTransits.length}</Text>
               </View>
-              {combinedTransits.length ? (
+              {selectedFacetFilters.length === 0 ? (
+                <Text style={styles.emptyColumnText}>Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).</Text>
+              ) : combinedTransits.length ? (
                 renderTransitList(combinedTransits, 0, false)
               ) : (
                 <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
