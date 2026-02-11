@@ -18,7 +18,7 @@ import TransitInsightCard from './TransitInsightCard'
 import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
-import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { height } = Dimensions.get('window')
@@ -589,6 +589,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     statusText: string
     statusColor: string
     timingLabel: string | null
+    keywords: string[]
   } | null>(null)
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
@@ -1903,9 +1904,20 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusText,
               statusColor,
               timingLabel: timingLabel || null,
+              keywords: buildArchetypeKeywordsForTransit(
+                {
+                  transitPlanet: transit?.transitPlanet,
+                  aspectName: transit?.aspectName || transit?.type || transit?.aspectType,
+                  natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
+                  house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
+                },
+                areaData?.name || ''
+              ),
             })
           }
           detailMode="modal"
+          modalOpenByCard
+          showModalActionIcon
           fullTitle={titleText}
           fullText=""
           actionText={actionText}
@@ -2635,6 +2647,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         fullText={detailView?.fullText || ''}
         actionText={detailView?.actionText || null}
         metaText={detailView?.metaText || null}
+        keywords={detailView?.keywords || []}
       />
     </Modal>
   )
