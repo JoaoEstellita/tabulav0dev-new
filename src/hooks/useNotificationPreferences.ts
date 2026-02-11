@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { doc, getDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useAuth } from './useAuth'
 
@@ -183,111 +183,13 @@ const mergeDeep = (base: any, override: any) => {
   return result
 }
 
-const isLegacyPreferenceShape = (legacy: any) => {
-  if (!legacy) return false
-  return (
-    legacy.criticalAlerts !== undefined ||
-    legacy.groupUpdates !== undefined ||
-    legacy.groupNotifications !== undefined ||
-    legacy.dailyHoroscope !== undefined ||
-    legacy.dailyNotifications !== undefined ||
-    legacy.quietHours !== undefined ||
-    legacy.quietHoursStart !== undefined ||
-    legacy.quietHoursEnd !== undefined ||
-    legacy.pushEnabled !== undefined ||
-    legacy.pushIncludeMemberName !== undefined
-  )
-}
-
-const mapLegacyPreferences = (legacy: any) => {
-  if (!legacy) return {}
-  const mapped: any = {}
-  if (typeof legacy.criticalAlerts === 'boolean') {
-    mapped.push = { types: { user_status_critical: legacy.criticalAlerts } }
-    mapped.inApp = { types: { user_status_critical: legacy.criticalAlerts } }
-  }
-  const groupFlag =
-    typeof legacy.groupUpdates === 'boolean'
-      ? legacy.groupUpdates
-      : typeof legacy.groupNotifications === 'boolean'
-        ? legacy.groupNotifications
-        : null
-  if (typeof groupFlag === 'boolean') {
-    mapped.push = {
-      ...(mapped.push || {}),
-      types: {
-        ...(mapped.push?.types || {}),
-        member_status_critical: groupFlag,
-      },
-    }
-    mapped.inApp = {
-      ...(mapped.inApp || {}),
-      types: {
-        ...(mapped.inApp?.types || {}),
-        member_status_critical: groupFlag,
-      },
-    }
-  }
-  if (typeof legacy.dailyHoroscope === 'boolean' || typeof legacy.dailyNotifications === 'boolean') {
-    const dailyEnabled = legacy.dailyHoroscope ?? legacy.dailyNotifications
-    mapped.inApp = {
-      ...(mapped.inApp || {}),
-      types: {
-        ...(mapped.inApp?.types || {}),
-        daily_ready: dailyEnabled,
-      },
-    }
-  }
-  if (legacy.quietHours || legacy.quietHoursStart || legacy.quietHoursEnd) {
-    mapped.quietHours = {
-      enabled: legacy.quietHours === true,
-      start: legacy.quietHoursStart || DEFAULT_PREFERENCES.quietHours?.start || '22:00',
-      end: legacy.quietHoursEnd || DEFAULT_PREFERENCES.quietHours?.end || '08:00',
-    }
-  }
-  if (typeof legacy.pushEnabled === 'boolean') {
-    mapped.pushEnabled = legacy.pushEnabled
-  }
-  if (typeof legacy.pushIncludeMemberName === 'boolean') {
-    mapped.pushIncludeMemberName = legacy.pushIncludeMemberName
-  }
-  return mapped
-}
-
 export const loadUserNotificationPreferences = async (
-  userId: string,
+  _userId: string,
   userData?: any
-): Promise<{ prefs: NotificationPreferences; migrated: boolean }> => {
-  const migrationVersion = Number(userData?.notificationsMigrationVersion || 0)
-  const migrationDone = migrationVersion >= 2
+): Promise<{ prefs: NotificationPreferences }> => {
   const existing = userData?.notifications || null
-  const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
-  const legacyPreferencesMapped: any = null
-  let legacyData: any = null
-  let migrated = false
-
-  if (!migrationDone && (!existing || existingLegacy)) {
-    try {
-      const legacySnap = await getDoc(doc(db, 'users', userId, 'preferences', 'notifications'))
-      legacyData = legacySnap.exists() ? legacySnap.data() : null
-    } catch {
-      legacyData = null
-    }
-  }
-
-  const merged = mergeDeep(
-    DEFAULT_PREFERENCES,
-    mergeDeep(
-      legacyPreferencesMapped || {},
-      mergeDeep(existing || {}, mapLegacyPreferences(existingLegacy || legacyData))
-    )
-  ) as NotificationPreferences
-
-  if (!migrationDone && (!existing || existingLegacy || legacyData)) {
-    migrated = true
-  }
-
-  return { prefs: merged, migrated }
+  const merged = mergeDeep(DEFAULT_PREFERENCES, existing || {}) as NotificationPreferences
+  return { prefs: merged }
 }
 
 type SharedState = {
@@ -315,20 +217,9 @@ const startSharedListener = (userId: string) => {
 
   sharedUnsub = onSnapshot(doc(db, 'users', userId), async (snap) => {
     const data = snap.exists() ? snap.data() : {}
-    const { prefs, migrated } = await loadUserNotificationPreferences(userId, data)
+    const { prefs } = await loadUserNotificationPreferences(userId, data)
     sharedState = { preferences: prefs, loading: false }
     notifyShared()
-    if (migrated) {
-      try {
-        await updateDoc(doc(db, 'users', userId), {
-          notifications: prefs,
-          lastPreferencesUpdate: serverTimestamp(),
-          notificationsMigrationVersion: 2,
-        })
-      } catch {
-        // Best effort
-      }
-    }
   })
 }
 
@@ -385,7 +276,6 @@ export function useNotificationPreferences() {
     try {
       await updateDoc(doc(db, 'users', user.uid), {
         notifications: merged,
-        notificationsMigrationVersion: 2,
         lastPreferencesUpdate: serverTimestamp(),
       })
       return true

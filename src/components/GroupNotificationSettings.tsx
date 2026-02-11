@@ -607,7 +607,7 @@ export default function GroupNotificationSettings({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Mensagens para alertas criticos</Text>
             <Text style={styles.sectionDescription}>
-              Personalize a mensagem enviada ao grupo quando uma area ficar critica.
+              Personalize a mensagem enviada ao grupo quando uma área ficar crítica.
             </Text>
             {Object.entries(lifeAreaLabels).map(([key, config]) => (
               <View key={`message-${key}`} style={styles.messageBlock}>
