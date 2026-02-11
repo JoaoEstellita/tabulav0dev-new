@@ -44,10 +44,7 @@ export type NotificationPreferences = {
       astro_event_personal?: boolean
       astro_event_collective?: boolean
       weekly_digest?: boolean
-      critical_active_summary?: boolean
       daily_summary?: boolean
-      weekly_summary?: boolean
-      forecast_weekly?: boolean
     }
     limits?: {
       member_status_critical?: { dailyLimit: number; throttleMinutes: number }
@@ -60,15 +57,11 @@ export type NotificationPreferences = {
       astro_event_personal?: { dailyLimit: number; throttleMinutes: number }
       astro_event_collective?: { dailyLimit: number; throttleMinutes: number }
       weekly_digest?: { dailyLimit: number; throttleMinutes: number }
-      critical_active_summary?: { dailyLimit: number; throttleMinutes: number }
       daily_summary?: { dailyLimit: number; throttleMinutes: number }
-      weekly_summary?: { dailyLimit: number; throttleMinutes: number }
-      forecast_weekly?: { dailyLimit: number; throttleMinutes: number }
     }
   }
   inApp: {
     types: {
-      daily_ready?: boolean
       user_status?: boolean
       member_status_critical: boolean
       user_status_critical: boolean
@@ -81,10 +74,7 @@ export type NotificationPreferences = {
       astro_event_personal?: boolean
       astro_event_collective?: boolean
       weekly_digest?: boolean
-      critical_active_summary?: boolean
       daily_summary?: boolean
-      weekly_summary?: boolean
-      forecast_weekly?: boolean
     }
   }
 }
@@ -130,10 +120,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       astro_event_personal: false,
       astro_event_collective: false,
       weekly_digest: false,
-      critical_active_summary: false,
       daily_summary: false,
-      weekly_summary: false,
-      forecast_weekly: false,
     },
     limits: {
       member_status_critical: { dailyLimit: 0, throttleMinutes: 60 },
@@ -146,15 +133,11 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       astro_event_personal: { dailyLimit: 3, throttleMinutes: 180 },
       astro_event_collective: { dailyLimit: 2, throttleMinutes: 240 },
       weekly_digest: { dailyLimit: 1, throttleMinutes: 1440 },
-      critical_active_summary: { dailyLimit: 1, throttleMinutes: 720 },
       daily_summary: { dailyLimit: 1, throttleMinutes: 720 },
-      weekly_summary: { dailyLimit: 1, throttleMinutes: 1440 },
-      forecast_weekly: { dailyLimit: 1, throttleMinutes: 1440 },
     },
   },
   inApp: {
     types: {
-      daily_ready: false,
       user_status: false,
       member_status_critical: true,
       user_status_critical: true,
@@ -167,12 +150,54 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
       astro_event_personal: false,
       astro_event_collective: false,
       weekly_digest: false,
-      critical_active_summary: false,
       daily_summary: false,
-      weekly_summary: false,
-      forecast_weekly: false,
     },
   },
+}
+
+const LEGACY_WEEKLY_KEYS = ['critical_active_summary', 'weekly_summary', 'forecast_weekly'] as const
+
+const sanitizePreferences = (prefs: NotificationPreferences): NotificationPreferences => {
+  const clean = mergeDeep(DEFAULT_PREFERENCES, prefs || {}) as NotificationPreferences
+  const pushTypes = { ...(clean.push?.types || {}) } as Record<string, any>
+  const inAppTypes = { ...(clean.inApp?.types || {}) } as Record<string, any>
+  const pushLimits = { ...(clean.push?.limits || {}) } as Record<string, any>
+
+  const weeklyEnabledByLegacyPush = !LEGACY_WEEKLY_KEYS.every((key) => pushTypes[key] === false)
+  const weeklyEnabledByLegacyInApp = !LEGACY_WEEKLY_KEYS.every((key) => inAppTypes[key] === false)
+
+  if (pushTypes.weekly_digest === undefined) pushTypes.weekly_digest = weeklyEnabledByLegacyPush
+  if (inAppTypes.weekly_digest === undefined) inAppTypes.weekly_digest = weeklyEnabledByLegacyInApp
+
+  if (inAppTypes.daily_summary === undefined && typeof inAppTypes.daily_ready === 'boolean') {
+    inAppTypes.daily_summary = inAppTypes.daily_ready
+  }
+
+  if (!pushLimits.weekly_digest) {
+    const legacyLimit =
+      pushLimits.weekly_summary ||
+      pushLimits.forecast_weekly ||
+      pushLimits.critical_active_summary
+    if (legacyLimit) pushLimits.weekly_digest = legacyLimit
+  }
+
+  delete inAppTypes.daily_ready
+  LEGACY_WEEKLY_KEYS.forEach((key) => {
+    delete pushTypes[key]
+    delete inAppTypes[key]
+    delete pushLimits[key]
+  })
+
+  clean.push = {
+    ...(clean.push || {}),
+    types: pushTypes as NotificationPreferences['push']['types'],
+    limits: pushLimits as NotificationPreferences['push']['limits'],
+  }
+  clean.inApp = {
+    ...(clean.inApp || {}),
+    types: inAppTypes as NotificationPreferences['inApp']['types'],
+  }
+  return clean
 }
 
 const mergeDeep = (base: any, override: any) => {
@@ -194,30 +219,7 @@ export const loadUserNotificationPreferences = async (
   userData?: any
 ): Promise<{ prefs: NotificationPreferences }> => {
   const existing = userData?.notifications || null
-  const merged = mergeDeep(DEFAULT_PREFERENCES, existing || {}) as NotificationPreferences
-  if (merged.push?.types?.weekly_digest === undefined) {
-    const legacyWeeklyEnabled = !(
-      merged.push?.types?.critical_active_summary === false &&
-      merged.push?.types?.weekly_summary === false &&
-      merged.push?.types?.forecast_weekly === false
-    )
-    merged.push.types.weekly_digest = legacyWeeklyEnabled
-  }
-  if (merged.inApp?.types?.weekly_digest === undefined) {
-    const legacyWeeklyEnabled = !(
-      merged.inApp?.types?.critical_active_summary === false &&
-      merged.inApp?.types?.weekly_summary === false &&
-      merged.inApp?.types?.forecast_weekly === false
-    )
-    merged.inApp.types.weekly_digest = legacyWeeklyEnabled
-  }
-  if (!merged.push?.limits?.weekly_digest) {
-    const legacyLimits =
-      merged.push?.limits?.weekly_summary ||
-      merged.push?.limits?.forecast_weekly ||
-      merged.push?.limits?.critical_active_summary
-    if (legacyLimits) merged.push.limits.weekly_digest = legacyLimits
-  }
+  const merged = sanitizePreferences(mergeDeep(DEFAULT_PREFERENCES, existing || {}) as NotificationPreferences)
   return { prefs: merged }
 }
 
@@ -300,7 +302,7 @@ export function useNotificationPreferences() {
 
   const updatePreferences = async (updates: Partial<NotificationPreferences>) => {
     if (!user?.uid || !preferences) return false
-    const merged = mergeDeep(preferences, updates) as NotificationPreferences
+    const merged = sanitizePreferences(mergeDeep(preferences, updates) as NotificationPreferences)
     setPreferences(merged)
     try {
       await updateDoc(doc(db, 'users', user.uid), {
