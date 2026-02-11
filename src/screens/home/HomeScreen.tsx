@@ -570,13 +570,6 @@ export default function HomeScreen() {
           {lifeAreasForDisplay && (
             <AnimatedMount>
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="grid" size={20} color="#FFD700" />
-                <Text style={styles.sectionTitle}>
-                  {uiText('Status das \\u00C1reas de Vida')}
-                </Text>
-              </View>
-
               <View style={styles.lifeAreasGrid}>
                 {orderedLifeAreas.map(([name, area], index) => {
                   // ??? Prote\u00E7\u00E3o extra para cada \u00E1rea

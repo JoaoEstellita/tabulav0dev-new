@@ -13,6 +13,11 @@ export type NotificationPreferences = {
     transits: boolean
     combos: boolean
   }
+  astroEventsCollectiveFilters?: {
+    aspects: boolean
+    transits: boolean
+    combos: boolean
+  }
   quietHours?: {
     enabled: boolean
     start: string
@@ -78,6 +83,11 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   astroEventsPersonalEnabled: false,
   astroEventsCollectiveEnabled: false,
   astroEventsPersonalFilters: {
+    aspects: true,
+    transits: true,
+    combos: true,
+  },
+  astroEventsCollectiveFilters: {
     aspects: true,
     transits: true,
     combos: true,
@@ -231,10 +241,10 @@ export const loadUserNotificationPreferences = async (
   userData?: any
 ): Promise<{ prefs: NotificationPreferences; migrated: boolean }> => {
   const migrationVersion = Number(userData?.notificationsMigrationVersion || 0)
-  const migrationDone = migrationVersion >= 1
+  const migrationDone = migrationVersion >= 2
   const existing = userData?.notifications || null
   const existingLegacy = isLegacyPreferenceShape(existing) ? existing : null
-  const legacyPreferences = userData?.preferences?.notifications || null
+  const legacyPreferences = migrationDone ? null : (userData?.preferences?.notifications || null)
   const legacyPreferencesMapped = isLegacyPreferenceShape(legacyPreferences)
     ? mapLegacyPreferences(legacyPreferences)
     : legacyPreferences
@@ -298,7 +308,7 @@ const startSharedListener = (userId: string) => {
         await updateDoc(doc(db, 'users', userId), {
           notifications: prefs,
           lastPreferencesUpdate: serverTimestamp(),
-          notificationsMigrationVersion: 1,
+          notificationsMigrationVersion: 2,
         })
       } catch {
         // Best effort
@@ -360,9 +370,7 @@ export function useNotificationPreferences() {
     try {
       await updateDoc(doc(db, 'users', user.uid), {
         notifications: merged,
-        preferences: {
-          notifications: merged,
-        },
+        notificationsMigrationVersion: 2,
         lastPreferencesUpdate: serverTimestamp(),
       })
       return true

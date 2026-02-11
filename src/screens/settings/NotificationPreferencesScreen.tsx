@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput } from "react-native"
+import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput, Platform } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
@@ -10,6 +10,7 @@ export default function NotificationPreferencesScreen() {
   const [saving, setSaving] = useState(false)
   const { preferences, loading, updatePreferences, defaults } = useNotificationPreferences()
   const prefs = preferences || defaults
+  const isWeb = Platform.OS === "web"
 
   const savePreferences = async (updates: any) => {
     setSaving(true)
@@ -21,6 +22,11 @@ export default function NotificationPreferencesScreen() {
   const inAppTypes = prefs.inApp?.types || defaults.inApp.types
   const quietHours = prefs.quietHours || defaults.quietHours
   const astroPersonalFilters = prefs.astroEventsPersonalFilters || defaults.astroEventsPersonalFilters || {
+    aspects: true,
+    transits: true,
+    combos: true,
+  }
+  const astroCollectiveFilters = prefs.astroEventsCollectiveFilters || defaults.astroEventsCollectiveFilters || {
     aspects: true,
     transits: true,
     combos: true,
@@ -96,13 +102,13 @@ export default function NotificationPreferencesScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
+    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={[styles.container, isWeb && styles.containerWeb]}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        style={[styles.scrollView, isWeb && styles.scrollViewWeb]}
+        contentContainerStyle={[styles.scrollContent, isWeb && styles.scrollContentWeb]}
+        showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
+        scrollEnabled
       >
         <View style={styles.header}>
           <Text style={styles.title}>Opcoes de Notificacoes</Text>
@@ -178,6 +184,47 @@ export default function NotificationPreferencesScreen() {
                 "Liga/desliga notificacoes coletivas no app e push (se habilitados nos tipos).",
                 prefs.astroEventsCollectiveEnabled === true,
                 (value) => savePreferences({ astroEventsCollectiveEnabled: value })
+              )}
+              {prefs.astroEventsCollectiveEnabled === true && (
+                <View style={styles.nestedSection}>
+                  <Text style={styles.nestedTitle}>Filtros dos eventos coletivos</Text>
+                  {renderToggle(
+                    "Novos aspectos coletivos",
+                    "Notifica aspectos coletivos entre planetas lentos/impacto global.",
+                    astroCollectiveFilters.aspects !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsCollectiveFilters: {
+                          ...astroCollectiveFilters,
+                          aspects: value,
+                        },
+                      })
+                  )}
+                  {renderToggle(
+                    "Novos trânsitos coletivos",
+                    "Notifica ingressos coletivos e ativações gerais.",
+                    astroCollectiveFilters.transits !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsCollectiveFilters: {
+                          ...astroCollectiveFilters,
+                          transits: value,
+                        },
+                      })
+                  )}
+                  {renderToggle(
+                    "Eventos combinados coletivos",
+                    "Notifica convergências coletivas relevantes.",
+                    astroCollectiveFilters.combos !== false,
+                    (value) =>
+                      savePreferences({
+                        astroEventsCollectiveFilters: {
+                          ...astroCollectiveFilters,
+                          combos: value,
+                        },
+                      })
+                  )}
+                </View>
               )}
               {renderToggle(
                 "Mostrar nome do membro",
@@ -282,13 +329,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F0F23",
   },
+  containerWeb: {
+    height: "100vh",
+    maxHeight: "100vh",
+  },
   scrollView: {
     flex: 1,
+  },
+  scrollViewWeb: {
+    overflow: "scroll",
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 32,
     flexGrow: 1,
+  },
+  scrollContentWeb: {
+    paddingBottom: 120,
+    minHeight: "100%",
   },
   header: {
     paddingTop: 24,
