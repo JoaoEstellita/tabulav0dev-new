@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image, Modal } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, Image, Modal, Platform, useWindowDimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
@@ -90,6 +90,8 @@ interface UserProfile {
 
 export default function ProfileScreen() {
   const navigation = useNavigation()
+  const { width } = useWindowDimensions()
+  const isDesktopWeb = Platform.OS === 'web' && width >= 1024
   const { user, logout } = useAuth()
   const { unreadCount } = useNotificationStore()
   const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
@@ -577,7 +579,10 @@ export default function ProfileScreen() {
 
   return (
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={[styles.scrollView, isDesktopWeb ? styles.scrollViewDesktopWeb : null]}
+        showsVerticalScrollIndicator={isDesktopWeb}
+      >
         {/* Header do Perfil */}
         <View style={styles.profileHeader}>
           <View style={styles.profileHeaderTop}>
@@ -905,6 +910,16 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollViewDesktopWeb: {
+    paddingRight: 8,
+    ...(Platform.OS === 'web'
+      ? ({
+          overflowY: 'scroll',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#64748B rgba(15,23,42,0.35)',
+        } as any)
+      : null),
   },
   loadingContainer: {
     flex: 1,
