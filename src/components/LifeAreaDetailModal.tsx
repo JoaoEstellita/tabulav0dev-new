@@ -1528,27 +1528,44 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
       return Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
     }
-    const planetTransits = orderedTransits.filter(hasPlanetFacet)
-    const seenHouseFacet = new Set<string>()
-    const houseTransits = orderedTransits
-      .filter(hasHouseFacet)
-      .filter((transit) => {
-        const personalHouse = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit) || 'NA'
-        const phase = String(transit?.phase || '').toLowerCase() || 'NA'
-        const startAt = String(transit?.startAt || transit?.window?.start || '')
-        const endAt = String(transit?.endAt || transit?.window?.end || '')
-        const facetKey = [
-          String(transit?.seriesId || ''),
-          toIdentityToken(transit?.transitPlanet || 'NA'),
-          toIdentityToken(personalHouse),
-          toIdentityToken(phase),
-          toIdentityToken(startAt),
-          toIdentityToken(endAt),
-        ].join('|')
-        if (seenHouseFacet.has(facetKey)) return false
-        seenHouseFacet.add(facetKey)
-        return true
+    const toPlanetFacetKey = (transit: any) => {
+      const normalizedAspect = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+      const target = String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || 'NA')
+      return [
+        toIdentityToken(transit?.seriesId || ''),
+        toIdentityToken(transit?.contactIndex || ''),
+        toIdentityToken(transit?.transitPlanet || 'NA'),
+        toIdentityToken(target),
+        toIdentityToken(normalizedAspect || 'NA'),
+        toIdentityToken(transit?.phase || ''),
+      ].join('|')
+    }
+    const toHouseFacetKey = (transit: any) => {
+      const personalHouse = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit) || 'NA'
+      return [
+        toIdentityToken(transit?.seriesId || ''),
+        toIdentityToken(transit?.contactIndex || ''),
+        toIdentityToken(transit?.transitPlanet || 'NA'),
+        toIdentityToken(personalHouse),
+        toIdentityToken(transit?.phase || ''),
+      ].join('|')
+    }
+    const dedupeByKey = (items: any[], keyBuilder: (transit: any) => string) => {
+      const map = new Map<string, any>()
+      items.forEach((item) => {
+        const key = keyBuilder(item)
+        const existing = map.get(key)
+        if (!existing || getTransitPriorityScore(item) > getTransitPriorityScore(existing)) {
+          map.set(key, item)
+        }
       })
+      return Array.from(map.values()).sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
+    }
+
+    const planetDriverTransits = orderedTransits.filter((transit) => hasPlanetFacet(transit))
+    const houseDriverTransits = orderedTransits.filter((transit) => !hasPlanetFacet(transit) && hasHouseFacet(transit))
+    const planetTransits = dedupeByKey(planetDriverTransits, toPlanetFacetKey)
+    const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
 
     return (
       <View style={styles.section}>
@@ -1576,7 +1593,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
                   <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
                 </View>
-                {renderTransitList(houseTransits, 0, false, 'house')}
+                {houseTransits.length ? (
+                  renderTransitList(houseTransits, 0, false, 'house')
+                ) : (
+                  <Text style={styles.emptyColumnText}>Sem trânsitos de casa com impacto direto no status desta área.</Text>
+                )}
               </View>
             </View>
           </>
@@ -2255,6 +2276,13 @@ const styles = StyleSheet.create({
   transitBlockWide: {
     flex: 1,
     minWidth: 0,
+  },
+  emptyColumnText: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
   },
   transitColumnHeader: {
     flexDirection: 'column',
