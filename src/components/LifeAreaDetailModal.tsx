@@ -18,7 +18,7 @@ import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPr
 import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
-const { width, height } = Dimensions.get('window')
+const { height } = Dimensions.get('window')
 
 const PLANET_IMAGE_ORDER: PlanetKey[] = [
   'Sun',
@@ -544,11 +544,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   astrologyDataFallback
 }) => {
   if (!areaData) return null
-  const isWide = width >= 980
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
+  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [detailView, setDetailView] = React.useState<{
     title: string
@@ -569,6 +569,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   React.useEffect(() => {
     setSelectedPlanetFilters([])
     setSelectedHouseFilters([])
+    setSelectedFacetFilters(['planet', 'house'])
     setSelectedToneFilter('all')
   }, [visible, areaData?.name])
 
@@ -1454,7 +1455,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   ) =>
     items.map((transit: any, index: number) => {
       const absoluteIndex = startIndex + index
-          const columnKind = forcedKind || getTransitColumnKind(transit)
+          const columnKind = forcedKind || transit?.__facetKind || getTransitColumnKind(transit)
           const aspectType = String(transit.aspectName || transit.type || '')
           const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
           const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
@@ -1636,7 +1637,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
 
     const planetDriverTransits = orderedTransits.filter((transit) => hasPlanetFacet(transit))
-    const houseDriverTransits = orderedTransits.filter((transit) => !hasPlanetFacet(transit) && hasHouseFacet(transit))
+    const houseDriverTransits = orderedTransits.filter((transit) => hasHouseFacet(transit))
     const planetTransits = dedupeByKey(planetDriverTransits, toPlanetFacetKey)
     const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
     const toneMatchesFilter = (transit: any): boolean => {
@@ -1676,11 +1677,44 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         })
       : houseTransits
     ).filter(toneMatchesFilter)
+    const combinedTransits = [
+      ...(selectedFacetFilters.includes('planet')
+        ? filteredPlanetTransits.map((transit) => ({ ...transit, __facetKind: 'planet' as const }))
+        : []),
+      ...(selectedFacetFilters.includes('house')
+        ? filteredHouseTransits.map((transit) => ({ ...transit, __facetKind: 'house' as const }))
+        : []),
+    ].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
 
     return (
       <View style={styles.section}>
-        <View style={styles.sectionTitleRow}>
-          <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>TRÂNSITOS ATIVOS</Text>
+        <View style={styles.sectionControlsRow}>
+          <View style={styles.facetToggleRow}>
+            <TouchableOpacity
+              onPress={() =>
+                setSelectedFacetFilters((prev) =>
+                  prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
+                )
+              }
+              style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
+            >
+              <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
+                Planeta x Planeta
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                setSelectedFacetFilters((prev) =>
+                  prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
+                )
+              }
+              style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
+            >
+              <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
+                Planeta x Casa
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.toneToggleRow}>
             <TouchableOpacity
               onPress={() => setSelectedToneFilter('all')}
@@ -1768,32 +1802,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
             </View>
 
-            <View style={[styles.transitsColumnsGrid, isWide ? styles.transitsColumnsGridWide : null]}>
-              <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
-                <View style={styles.transitColumnHeader}>
-                  <Text style={styles.transitColumnTitle}>Planeta x Planeta</Text>
-                  <Text style={styles.transitColumnDescription}>Aspectos com planetas e pontos natais</Text>
-                  <Text style={styles.transitColumnMeta}>{filteredPlanetTransits.length}</Text>
-                </View>
-                {filteredPlanetTransits.length ? (
-                  renderTransitList(filteredPlanetTransits, 0, false, 'planet')
-                ) : (
-                  <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
-                )}
+            <View style={styles.transitBlock}>
+              <View style={styles.transitColumnHeader}>
+                <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
+                <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
+                <Text style={styles.transitColumnMeta}>{combinedTransits.length}</Text>
               </View>
-
-              <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
-                <View style={styles.transitColumnHeader}>
-                  <Text style={styles.transitColumnTitle}>Planeta x Casa</Text>
-                  <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
-                  <Text style={styles.transitColumnMeta}>{filteredHouseTransits.length}</Text>
-                </View>
-                {filteredHouseTransits.length ? (
-                  renderTransitList(filteredHouseTransits, 0, false, 'house')
-                ) : (
-                  <Text style={styles.emptyColumnText}>Sem trânsitos de casa com impacto direto no status desta área.</Text>
-                )}
-              </View>
+              {combinedTransits.length ? (
+                renderTransitList(combinedTransits, 0, false)
+              ) : (
+                <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
+              )}
             </View>
           </>
         )}
@@ -2470,20 +2489,26 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 2,
   },
-  sectionTitleRow: {
+  sectionControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
     marginBottom: DESIGN_SYSTEM.spacing.sm,
   },
-  sectionTitleInline: {
+  facetToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     flex: 1,
-    marginBottom: 0,
+    flexWrap: 'wrap',
   },
   toneToggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
   },
   toneToggleChip: {
     borderWidth: 1,
