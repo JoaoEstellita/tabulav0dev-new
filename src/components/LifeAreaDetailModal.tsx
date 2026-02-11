@@ -5,6 +5,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Image,
   Dimensions,
   StyleSheet
 } from 'react-native'
@@ -15,8 +16,27 @@ import TransitInsightCard from './TransitInsightCard'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
+import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { width, height } = Dimensions.get('window')
+
+const PLANET_IMAGE_ORDER: PlanetKey[] = [
+  'Sun',
+  'Moon',
+  'Mercury',
+  'Venus',
+  'Mars',
+  'Jupiter',
+  'Saturn',
+  'Uranus',
+  'Neptune',
+  'Pluto',
+]
+
+const toPlanetImageKey = (value: unknown): PlanetKey | null => {
+  const token = String(value || '').trim()
+  return PLANET_IMAGE_ORDER.includes(token as PlanetKey) ? (token as PlanetKey) : null
+}
 
 // Sistema de cores e icones por area de vida (mantendo identidade original)
 const AREA_ICONS: Record<string, string> = {
@@ -527,6 +547,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const isWide = width >= 980
 
   const [showTechnical, setShowTechnical] = React.useState(false)
+  const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
+  const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [detailView, setDetailView] = React.useState<{
     title: string
     directText: string
@@ -542,6 +564,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
   const areaIcon = AREA_ICONS[areaData.name] || 'help-circle'
   const headerGradient = [areaColors[0], areaColors[1]]
+
+  React.useEffect(() => {
+    setSelectedPlanetFilters([])
+    setSelectedHouseFilters([])
+  }, [visible, areaData?.name])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
   const mapTransitToReal = (transit: any): RealTransitData => {
@@ -1566,6 +1593,32 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseDriverTransits = orderedTransits.filter((transit) => !hasPlanetFacet(transit) && hasHouseFacet(transit))
     const planetTransits = dedupeByKey(planetDriverTransits, toPlanetFacetKey)
     const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
+    const planetFilterOptions = Array.from(
+      new Set(planetTransits.map((transit) => String(transit?.transitPlanet || '').trim()).filter(Boolean))
+    ).sort((a, b) => {
+      const aKey = toPlanetImageKey(a)
+      const bKey = toPlanetImageKey(b)
+      const aIndex = aKey ? PLANET_IMAGE_ORDER.indexOf(aKey) : Number.MAX_SAFE_INTEGER
+      const bIndex = bKey ? PLANET_IMAGE_ORDER.indexOf(bKey) : Number.MAX_SAFE_INTEGER
+      if (aIndex !== bIndex) return aIndex - bIndex
+      return a.localeCompare(b, 'pt-BR')
+    })
+    const houseFilterOptions = Array.from(
+      new Set(
+        houseTransits
+          .map((transit) => getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit))
+          .filter((value): value is string => !!value)
+      )
+    ).sort((a, b) => Number(a) - Number(b))
+    const filteredPlanetTransits = selectedPlanetFilters.length
+      ? planetTransits.filter((transit) => selectedPlanetFilters.includes(String(transit?.transitPlanet || '').trim()))
+      : planetTransits
+    const filteredHouseTransits = selectedHouseFilters.length
+      ? houseTransits.filter((transit) => {
+          const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
+          return !!house && selectedHouseFilters.includes(house)
+        })
+      : houseTransits
 
     return (
       <View style={styles.section}>
@@ -1577,24 +1630,81 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </View>
         ) : (
           <>
+            <View style={styles.filtersSection}>
+              <View style={styles.filterBlock}>
+                <Text style={styles.filterTitle}>Filtro • Planeta x Planeta</Text>
+                <View style={styles.filterRow}>
+                  {planetFilterOptions.map((planet) => {
+                    const selected = selectedPlanetFilters.includes(planet)
+                    const planetKey = toPlanetImageKey(planet)
+                    const imageUri = planetKey ? getPlanetImageUri(planetKey) : undefined
+                    return (
+                      <TouchableOpacity
+                        key={`planet-filter-${planet}`}
+                        style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
+                        onPress={() =>
+                          setSelectedPlanetFilters((prev) =>
+                            prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
+                          )
+                        }
+                      >
+                        {imageUri ? <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} /> : null}
+                        <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
+                          {translate('planets', planet)}
+                        </Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.filterBlock}>
+                <Text style={styles.filterTitle}>Filtro • Planeta x Casa</Text>
+                <View style={styles.filterRow}>
+                  {houseFilterOptions.map((house) => {
+                    const selected = selectedHouseFilters.includes(house)
+                    return (
+                      <TouchableOpacity
+                        key={`house-filter-${house}`}
+                        style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
+                        onPress={() =>
+                          setSelectedHouseFilters((prev) =>
+                            prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
+                          )
+                        }
+                      >
+                        <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
+                          Casa {house}
+                        </Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              </View>
+            </View>
+
             <View style={[styles.transitsColumnsGrid, isWide ? styles.transitsColumnsGridWide : null]}>
               <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Planeta</Text>
                   <Text style={styles.transitColumnDescription}>Aspectos com planetas e pontos natais</Text>
-                  <Text style={styles.transitColumnMeta}>{planetTransits.length}</Text>
+                  <Text style={styles.transitColumnMeta}>{filteredPlanetTransits.length}</Text>
                 </View>
-                {renderTransitList(planetTransits, 0, false, 'planet')}
+                {filteredPlanetTransits.length ? (
+                  renderTransitList(filteredPlanetTransits, 0, false, 'planet')
+                ) : (
+                  <Text style={styles.emptyColumnText}>Nenhum trânsito para o filtro selecionado.</Text>
+                )}
               </View>
 
               <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
                 <View style={styles.transitColumnHeader}>
                   <Text style={styles.transitColumnTitle}>Planeta x Casa</Text>
                   <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
-                  <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
+                  <Text style={styles.transitColumnMeta}>{filteredHouseTransits.length}</Text>
                 </View>
-                {houseTransits.length ? (
-                  renderTransitList(houseTransits, 0, false, 'house')
+                {filteredHouseTransits.length ? (
+                  renderTransitList(filteredHouseTransits, 0, false, 'house')
                 ) : (
                   <Text style={styles.emptyColumnText}>Sem trânsitos de casa com impacto direto no status desta área.</Text>
                 )}
@@ -2256,6 +2366,62 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     fontWeight: '600',
+  },
+  filtersSection: {
+    marginTop: 6,
+    marginBottom: 8,
+    gap: 8,
+  },
+  filterBlock: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 8,
+  },
+  filterTitle: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: '#475569',
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  filterChipSelected: {
+    borderColor: '#B45309',
+    backgroundColor: '#FFF7ED',
+  },
+  filterChipText: {
+    fontSize: 11,
+    color: '#334155',
+    fontWeight: '700',
+  },
+  filterChipTextSelected: {
+    color: '#9A3412',
+  },
+  filterChipPlanetImage: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
   },
   transitsColumnsGrid: {
     marginTop: 8,
