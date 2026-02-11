@@ -221,6 +221,18 @@ const getVolatilityLevel = (value01: number | null): string | null => {
   return 'Baixa'
 }
 
+const formatCalendarDate = (iso?: string | null): string | null => {
+  if (!iso) return null
+  const date = new Date(iso)
+  if (!Number.isFinite(date.getTime())) return null
+  const nowYear = new Date().getFullYear()
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  if (date.getFullYear() === nowYear) return `${day}/${month}`
+  const year2 = String(date.getFullYear()).slice(-2)
+  return `${day}/${month}/${year2}`
+}
+
 const formatRelativeDay = (iso?: string | null): string | null => {
   if (!iso) return null
   const date = new Date(iso)
@@ -235,13 +247,12 @@ const formatRelativeDay = (iso?: string | null): string | null => {
 }
 
 const getTimingLabel = (transit: BackendTransit): string | null => {
+  const endAt = transit?.endAt || transit?.window?.end || null
+  const endDate = formatCalendarDate(endAt)
+  if (endDate) return `até ${endDate}`
   if (!transit?.phase) return null
-  const startLabel = formatRelativeDay(transit.startAt)
   const peakLabel = formatRelativeDay(transit.peakAt)
-  const endLabel = formatRelativeDay(transit.endAt)
   if (transit.phase === 'peak') return peakLabel ? `Pico ${peakLabel}` : 'Pico'
-  if (transit.phase === 'start') return startLabel ? `Inicio ${startLabel}` : 'Inicio'
-  if (transit.phase === 'end') return endLabel ? `Termina ${endLabel}` : 'Fim'
   return transit.phaseLabel ? transit.phaseLabel : null
 }
 
@@ -1596,13 +1607,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getPhaseLabel = (transit: any) => {
+    const getDaysUntil = (iso?: string | null): number | null => {
+      if (!iso) return null
+      const target = new Date(iso).getTime()
+      if (!Number.isFinite(target)) return null
+      const now = Date.now()
+      return Math.max(0, Math.round((target - now) / (1000 * 60 * 60 * 24)))
+    }
     const phase = String(transit?.phase || '').toLowerCase()
     if (phase === 'peak') return 'Em pico'
-    if (phase === 'start') return 'Em aproximação'
+    if (phase === 'start') {
+      const daysToPeak = getDaysUntil(transit?.peakAt || transit?.window?.exact || null)
+      return Number.isFinite(daysToPeak) ? `Em aproximação (${daysToPeak}d)` : 'Em aproximação'
+    }
     if (phase === 'end') return 'Afastando'
-    if (transit?.isApplying === true) return 'Em aproximação'
+    if (transit?.isApplying === true) {
+      const daysToPeak = getDaysUntil(transit?.peakAt || transit?.window?.exact || null)
+      return Number.isFinite(daysToPeak) ? `Em aproximação (${daysToPeak}d)` : 'Em aproximação'
+    }
     if (transit?.isApplying === false) return 'Afastando'
-    return 'Em andamento'
+    return 'Ativo'
   }
 
   const getDurationLabel = (transit: any) => {
@@ -1625,45 +1649,85 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildDirectText = (transit: any, suggestion: any) => {
-    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
-    if (astroNarrative?.directText && !isGenericNarrativeText(astroNarrative.directText)) {
-      return String(astroNarrative.directText).replace(/\s+/g, ' ').trim()
+    const planetCoreKeywords: Record<string, string> = {
+      sun: 'identidade, visibilidade e direção',
+      moon: 'emoções, necessidades e vínculo',
+      mercury: 'comunicação, ideias e decisões',
+      venus: 'afeto, prazer e valores',
+      mars: 'ação, desejo e iniciativa',
+      jupiter: 'expansão, oportunidades e confiança',
+      saturn: 'estrutura, limites e responsabilidade',
+      uranus: 'mudança, ruptura e autonomia',
+      neptune: 'sensibilidade, imaginação e propósito',
+      pluto: 'poder, transformação e controle',
+    }
+    const aspectIntentKeywords: Record<string, string> = {
+      trigono: 'fluxo natural e apoio',
+      sextil: 'abertura de oportunidade com iniciativa',
+      conjuncao: 'intensificação direta do tema',
+      quadratura: 'tensão de ajuste e fricção prática',
+      oposicao: 'polarização e necessidade de equilíbrio',
+      quincuncio: 'recalibragem e adaptação fina',
+      semiquadratura: 'atrito sutil e ajuste progressivo',
+      sesquiquadratura: 'pressão intermitente e reposicionamento',
+      semissextil: 'ajuste discreto e refinamento',
+      harmonic: 'integração favorável',
+      tense: 'pressão desafiadora',
+      neutral: 'observação e calibração',
+    }
+    const houseKeywords: Record<string, string> = {
+      '1': 'autoimagem, presença e iniciativa pessoal',
+      '2': 'recursos, segurança material e autoestima',
+      '3': 'comunicação, estudos e trocas cotidianas',
+      '4': 'base emocional, família e pertencimento',
+      '5': 'expressão criativa, prazer e romance',
+      '6': 'rotina, trabalho diário e saúde',
+      '7': 'parcerias, contratos e reciprocidade',
+      '8': 'intimidade, partilhas e transformações profundas',
+      '9': 'visão, expansão e sentido de vida',
+      '10': 'carreira, reputação e direção pública',
+      '11': 'redes, projetos coletivos e futuro',
+      '12': 'fechamentos, bastidores e interioridade',
+    }
+    const angleKeywords: Record<string, string> = {
+      ASC: 'identidade e forma de agir',
+      MC: 'carreira e posicionamento público',
+      DSC: 'parcerias e dinâmica relacional',
+      IC: 'raízes, casa e base emocional',
     }
 
-    const directFromDatasetRaw =
-      suggestion?.card?.summary ||
-      suggestion?.text ||
-      suggestion?.suggestion ||
-      suggestion?.deep?.opening
-    if (directFromDatasetRaw) {
-      const firstSentence = String(directFromDatasetRaw).split('. ')[0] || String(directFromDatasetRaw)
-      const sanitized = firstSentence
-        .replace(/\s+/g, ' ')
-        .replace(/^Leitura completa:\s*/i, '')
-        .trim()
-      if (sanitized.length >= 28 && !isGenericNarrativeText(sanitized)) return sanitized
-    }
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
-    const transitPlanet = translate('planets', transit?.transitPlanet)
-    const phase = String(transit?.phase || '').toLowerCase()
-    const houseLabel = getTransitHouseLabel(transit)
-    const houseHint = houseLabel ? ` em casa ${houseLabel}` : ''
-    const tone =
-      ['trigono', 'sextil', 'harmonic'].includes(aspectType)
-        ? phase === 'peak'
-          ? 'ativa janela forte de progresso'
-          : phase === 'end'
-          ? 'pede consolidacao de ganhos'
-          : 'favorece progresso com fluidez e consistencia'
-        : ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
-        ? phase === 'peak'
-          ? 'entra em fase sensivel e exige ajuste fino'
-          : phase === 'end'
-          ? 'pede fechamento de ajustes com disciplina'
-          : 'pede ajuste de rota com menos pressa e mais estrategia'
-        : 'traz fase de observacao e calibragem'
-    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : 'esta area'
-    return `${transitPlanet}${houseHint}: ${tone} em ${areaHint}.`
+    const transitPlanetRaw = String(transit?.transitPlanet || '').trim()
+    const transitPlanetLabel = translate('planets', transitPlanetRaw || 'Trânsito')
+    const transitPlanetKey = normalizeNarrativeText(transitPlanetRaw)
+    const transitKeywords = planetCoreKeywords[transitPlanetKey] || 'ação, ajuste e resposta prática'
+
+    const targetRaw = String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || '').trim()
+    const targetNormalized = String(targetRaw).toUpperCase().replace(/^NATAL_/, '').replace(/^NATAL:/, '')
+    const targetLabel = targetRaw ? translate('planets', targetRaw) : null
+    const targetKey = normalizeNarrativeText(targetNormalized)
+    const targetKeywords =
+      planetCoreKeywords[targetKey] ||
+      angleKeywords[targetNormalized] ||
+      (targetNormalized.startsWith('HOUSE_') ? houseKeywords[String(targetNormalized.replace('HOUSE_', ''))] : '') ||
+      ''
+
+    const houseLabel = getTransitNatalHouseLabel(transit) || getTransitOnNatalHouseLabel(transit) || null
+    const houseText = houseLabel ? houseKeywords[String(houseLabel)] : ''
+    const aspectLabel = getAspectLabel(aspectType)
+    const aspectIntent = aspectIntentKeywords[aspectType] || 'movimento de ajuste'
+
+    const firstSentence = targetLabel
+      ? `${transitPlanetLabel} em ${aspectLabel} com ${targetLabel} ativa ${aspectIntent}, trabalhando ${transitKeywords}.`
+      : `${transitPlanetLabel} ativa ${aspectIntent}, trazendo foco em ${transitKeywords}.`
+    const secondParts = [targetKeywords ? `No alvo, mexe com ${targetKeywords}` : null, houseText ? `na Casa ${houseLabel} destaca ${houseText}` : null]
+      .filter(Boolean)
+      .join(' e ')
+    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : 'esta área'
+    const secondSentence = secondParts
+      ? `${secondParts}, com impacto direto em ${areaHint}.`
+      : `A leitura nesta fase pede escolhas objetivas em ${areaHint}.`
+    return `${firstSentence} ${secondSentence}`.replace(/\s+/g, ' ').trim()
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
