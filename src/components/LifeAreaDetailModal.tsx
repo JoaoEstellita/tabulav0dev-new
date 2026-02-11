@@ -1461,10 +1461,27 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     startIndex = 0,
     featured = false,
     forcedKind?: 'planet' | 'house'
-  ) =>
-    items.map((transit: any, index: number) => {
+  ) => {
+    const passesToneFilter = (transit: any): boolean => {
+      if (selectedToneFilter === 'all') return true
+      const tone = getTransitToneCategory(transit)
+      if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
+      return tone === 'challenging'
+    }
+    return items.map((transit: any, index: number) => {
       const absoluteIndex = startIndex + index
           const columnKind = forcedKind || transit?.__facetKind || getTransitColumnKind(transit)
+          if (columnKind === 'planet' && !selectedFacetFilters.includes('planet')) return null
+          if (columnKind === 'house' && !selectedFacetFilters.includes('house')) return null
+          if (!passesToneFilter(transit)) return null
+          if (columnKind === 'planet' && selectedPlanetFilters.length) {
+            const planet = String(transit?.transitPlanet || '').trim()
+            if (!selectedPlanetFilters.includes(planet)) return null
+          }
+          if (columnKind === 'house' && selectedHouseFilters.length) {
+            const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
+            if (!house || !selectedHouseFilters.includes(house)) return null
+          }
           const toneCategory = getTransitToneCategory(transit)
           const isHarmonious = toneCategory === 'harmonic'
           const isChallenging = toneCategory === 'challenging'
@@ -1541,7 +1558,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               featured={featured}
             />
           )
-    })
+    }).filter(Boolean)
+  }
 
   const getTransitPriorityScore = (transit: any) => {
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
@@ -1692,6 +1710,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         ? filteredHouseTransits.map((transit) => ({ ...transit, __facetKind: 'house' as const }))
         : []),
     ].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
+    const visibleTransitCards = renderTransitList(combinedTransits, 0, false)
 
     return (
       <View style={styles.section}>
@@ -1813,12 +1832,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               <View style={styles.transitColumnHeader}>
                 <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
                 <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
-                <Text style={styles.transitColumnMeta}>{combinedTransits.length}</Text>
+                <Text style={styles.transitColumnMeta}>{visibleTransitCards.length}</Text>
               </View>
               {selectedFacetFilters.length === 0 ? (
                 <Text style={styles.emptyColumnText}>Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).</Text>
-              ) : combinedTransits.length ? (
-                renderTransitList(combinedTransits, 0, false)
+              ) : visibleTransitCards.length ? (
+                visibleTransitCards
               ) : (
                 <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
               )}
