@@ -1,6 +1,8 @@
 import React from 'react'
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 type ReadingDetailModalProps = {
   visible: boolean
@@ -14,6 +16,95 @@ type ReadingDetailModalProps = {
   fullText: string
   actionText?: string | null
   metaText?: string | null
+  keywords?: string[]
+}
+
+const PLANET_KEYS: PlanetKey[] = [
+  'Sun',
+  'Moon',
+  'Mercury',
+  'Venus',
+  'Mars',
+  'Jupiter',
+  'Saturn',
+  'Uranus',
+  'Neptune',
+  'Pluto',
+]
+
+const PLANET_LABELS_PT: Record<PlanetKey, string> = {
+  Sun: 'Sol',
+  Moon: 'Lua',
+  Mercury: 'Mercúrio',
+  Venus: 'Vênus',
+  Mars: 'Marte',
+  Jupiter: 'Júpiter',
+  Saturn: 'Saturno',
+  Uranus: 'Urano',
+  Neptune: 'Netuno',
+  Pluto: 'Plutão',
+}
+
+const PLANET_FALLBACK_ICON: Record<PlanetKey, string> = {
+  Sun: 'sunny',
+  Moon: 'moon',
+  Mercury: 'swap-horizontal',
+  Venus: 'heart',
+  Mars: 'flame',
+  Jupiter: 'planet',
+  Saturn: 'timer',
+  Uranus: 'flash',
+  Neptune: 'water',
+  Pluto: 'radio-button-on',
+}
+
+const normalizeToken = (value: unknown): string =>
+  String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+const resolvePlanetFromText = (value: string): PlanetKey | null => {
+  const normalized = normalizeToken(value)
+  for (const key of PLANET_KEYS) {
+    const label = normalizeToken(PLANET_LABELS_PT[key])
+    if (normalized.includes(label) || normalized.includes(normalizeToken(key))) {
+      return key
+    }
+  }
+  return null
+}
+
+const buildDefaultKeywords = (
+  title: string,
+  subtitle: string | null | undefined,
+  statusLabel: string,
+  timingLabel: string | null | undefined
+): string[] => {
+  const out: string[] = []
+  const normalizedTitle = normalizeToken(title)
+  const add = (token?: string | null) => {
+    const value = String(token || '').trim()
+    if (!value) return
+    if (!out.some((item) => normalizeToken(item) === normalizeToken(value))) out.push(value)
+  }
+
+  if (normalizedTitle.includes('quadratura') || normalizedTitle.includes('oposicao') || normalizedTitle.includes('quincuncio')) {
+    add('ajuste')
+    add('tensão')
+  }
+  if (normalizedTitle.includes('trigono') || normalizedTitle.includes('sextil')) {
+    add('fluidez')
+    add('integração')
+  }
+  if (normalizedTitle.includes('casa')) add('casa ativada')
+  if (normalizedTitle.includes('transito')) add('trânsito')
+  if (subtitle) add(subtitle)
+  if (timingLabel) add(timingLabel.split('•')[0])
+  if (statusLabel) add(statusLabel)
+
+  return out.slice(0, 4)
 }
 
 export default function ReadingDetailModal({
@@ -28,36 +119,86 @@ export default function ReadingDetailModal({
   fullText,
   actionText,
   metaText,
+  keywords,
 }: ReadingDetailModalProps) {
+  const planetKey = React.useMemo(() => resolvePlanetFromText(`${title} ${directText}`), [title, directText])
+  const imageUri = planetKey ? getPlanetImageUri(planetKey) : null
+  const keywordChips = React.useMemo(
+    () => (Array.isArray(keywords) && keywords.length ? keywords : buildDefaultKeywords(title, subtitle, statusLabel, timingLabel)),
+    [keywords, title, subtitle, statusLabel, timingLabel]
+  )
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{statusLabel}</Text>
-              </View>
+          <LinearGradient colors={['#101936', '#1C2A56']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+            <View style={styles.heroLeft}>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.heroImage} resizeMode="cover" />
+              ) : planetKey ? (
+                <View style={styles.heroFallback}>
+                  <Ionicons name={PLANET_FALLBACK_ICON[planetKey] as any} size={18} color="#F8FAFC" />
+                </View>
+              ) : (
+                <View style={styles.heroFallback}>
+                  <Ionicons name="sparkles" size={18} color="#F8FAFC" />
+                </View>
+              )}
+            </View>
+            <View style={styles.heroBody}>
               <Text style={styles.title}>{title}</Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-              {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
+              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <Text style={styles.subtitle}>Leitura aplicada ao contexto atual</Text>}
+              <View style={styles.heroMetaRow}>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={styles.statusText}>{statusLabel}</Text>
+                </View>
+                {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
+              </View>
             </View>
             <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
               <Ionicons name="close" size={18} color="#0F172A" />
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-            <Text style={styles.sectionTitle}>Frase-chave</Text>
-            <Text style={styles.direct}>{directText}</Text>
-            <Text style={styles.sectionTitle}>Interpretação completa</Text>
-            <Text style={styles.full}>{fullText}</Text>
-            {actionText ? <Text style={styles.action}>Ação sugerida: {actionText}</Text> : null}
-            {metaText ? <Text style={styles.meta}>{metaText}</Text> : null}
+            {keywordChips.length ? (
+              <View style={styles.tagsRow}>
+                {keywordChips.slice(0, 4).map((keyword) => (
+                  <View key={keyword} style={styles.tag}>
+                    <Text style={styles.tagText}>{keyword}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionLabel}>Leitura-chave</Text>
+              <Text style={styles.body}>{directText}</Text>
+            </View>
+
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionLabel}>Interpretação aplicada</Text>
+              <Text style={styles.body}>{fullText}</Text>
+            </View>
+
+            {actionText ? (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>Uso prático</Text>
+                <Text style={styles.body}>{actionText}</Text>
+              </View>
+            ) : null}
+
+            {metaText ? (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>Contexto técnico</Text>
+                <Text style={styles.meta}>{metaText}</Text>
+              </View>
+            ) : null}
           </ScrollView>
 
           <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-            <Text style={styles.doneButtonText}>Fechar leitura</Text>
+            <Text style={styles.doneButtonText}>Fechar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -68,113 +209,162 @@ export default function ReadingDetailModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(4, 10, 24, 0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 14,
   },
   card: {
     width: '100%',
-    maxWidth: 860,
-    maxHeight: '88%',
-    borderRadius: 16,
+    maxWidth: 920,
+    maxHeight: '90%',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#D9C07A',
-    backgroundColor: '#ECE9E1',
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+    backgroundColor: '#0E1A45',
+    overflow: 'hidden',
   },
-  header: {
-    padding: 16,
+  hero: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 10,
   },
+  heroLeft: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  heroImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  heroFallback: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(2,6,23,0.35)',
+  },
+  heroBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    color: '#F8FAFC',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+  subtitle: {
+    color: '#D6E4FF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  heroMetaRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   statusBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 10,
+    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    marginBottom: 8,
   },
   statusText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '800',
+  },
+  timing: {
+    color: '#C7D2FE',
+    fontSize: 12,
     fontWeight: '700',
   },
   closeIcon: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EFF3FA',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  subtitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#A85A12',
-    marginTop: 4,
-  },
-  timing: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 4,
+    backgroundColor: '#F1F5F9',
   },
   scroll: {
+    backgroundColor: '#132457',
     borderTopWidth: 1,
-    borderTopColor: '#D9C07A',
-    backgroundColor: '#F6F7F9',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderTopColor: 'rgba(148, 163, 184, 0.25)',
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#A85A12',
-    marginBottom: 8,
-    marginTop: 6,
-  },
-  direct: {
-    fontSize: 17,
-    lineHeight: 25,
-    color: '#0F172A',
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginBottom: 10,
   },
-  full: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#1F334F',
-    marginBottom: 10,
+  tag: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#EAB308',
+    backgroundColor: 'rgba(234,179,8,0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  action: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: '#B45309',
+  tagText: {
+    color: '#FDE047',
+    fontSize: 12,
     fontWeight: '700',
+  },
+  sectionCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    backgroundColor: 'rgba(30, 58, 138, 0.22)',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  sectionLabel: {
+    color: '#FBBF24',
+    fontSize: 15,
+    fontWeight: '800',
     marginBottom: 6,
   },
+  body: {
+    color: '#F8FAFC',
+    fontSize: 19,
+    lineHeight: 27,
+    marginBottom: 2,
+  },
   meta: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#64748B',
-    marginBottom: 4,
+    color: '#CBD5E1',
+    fontSize: 17,
+    lineHeight: 25,
   },
   doneButton: {
-    margin: 16,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: '#081A45',
+    marginHorizontal: 12,
+    marginTop: 2,
+    marginBottom: 12,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: '#082F8A',
     alignItems: 'center',
     justifyContent: 'center',
   },
   doneButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: '800',
   },
 })
-

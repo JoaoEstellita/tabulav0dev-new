@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
+import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildAstroTransitNarrative } from '../utils/astroInterpretation'
@@ -2623,58 +2624,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         </View>
       </View>
 
-      <Modal
+      <ReadingDetailModal
         visible={!!detailView}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setDetailView(null)}
-      >
-        <View style={styles.readingBackdrop}>
-          <View style={styles.readingCard}>
-            <View style={styles.readingHeader}>
-              <View style={styles.readingTitleWrap}>
-                <View style={[styles.readingStatusBadge, { backgroundColor: detailView?.statusColor || '#64748B' }]}>
-                  <Text style={styles.readingStatusText}>{detailView?.statusText || 'Neutro'}</Text>
-                </View>
-                <Text style={styles.readingTitle}>{detailView?.title}</Text>
-                {detailView?.timingLabel ? (
-                  <Text style={styles.readingTiming}>{detailView.timingLabel}</Text>
-                ) : null}
-              </View>
-              <TouchableOpacity onPress={() => setDetailView(null)} style={styles.readingCloseButton}>
-                <Ionicons name="close" size={20} color="#0F172A" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.readingScroll} showsVerticalScrollIndicator={false}>
-              <View style={styles.readingSection}>
-                <Text style={styles.readingSectionLabel}>Frase-chave</Text>
-                <Text style={styles.readingLead}>{detailView?.directText}</Text>
-              </View>
-
-              <View style={styles.readingSection}>
-                <Text style={styles.readingSectionLabel}>Interpretação completa</Text>
-                <Text style={styles.readingBody}>{detailView?.fullText}</Text>
-              </View>
-
-              {detailView?.actionText ? (
-                <View style={styles.readingActionBox}>
-                  <Text style={styles.readingActionLabel}>Ação sugerida</Text>
-                  <Text style={styles.readingActionText}>{detailView.actionText}</Text>
-                </View>
-              ) : null}
-
-              {detailView?.metaText ? (
-                <Text style={styles.readingMeta}>{detailView.metaText}</Text>
-              ) : null}
-            </ScrollView>
-
-            <TouchableOpacity style={styles.readingDoneButton} onPress={() => setDetailView(null)}>
-              <Text style={styles.readingDoneText}>Fechar leitura</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setDetailView(null)}
+        statusLabel={detailView?.statusText || 'Neutro'}
+        statusColor={detailView?.statusColor || '#64748B'}
+        title={detailView?.title || 'Leitura'}
+        timingLabel={detailView?.timingLabel || null}
+        directText={detailView?.directText || ''}
+        fullText={detailView?.fullText || ''}
+        actionText={detailView?.actionText || null}
+        metaText={detailView?.metaText || null}
+      />
     </Modal>
   )
 }
