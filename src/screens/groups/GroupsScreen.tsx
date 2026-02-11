@@ -33,7 +33,7 @@ import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from "../../utils/astroInterpretation"
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from "../../utils/astroInterpretation"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -1926,14 +1926,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const shouldUseSuggestionText = suggestionText.length > 20
                           && !normalizedSuggestion.includes("fase de integracao e calibragem")
                           && !normalizedSuggestion.includes("momento de observacao")
-                        const fullLines = [
+                        const fullLines = mergeNarrativeSegments([
                           astroNarrative.fullText,
                           shouldUseSuggestionText ? suggestionText : "",
                           suggestion?.title ? `Foco: ${String(suggestion.title)}` : "",
                           mainPlanets.length ? `Planetas de base: ${mainPlanets.slice(0, 5).join(", ")}` : "",
-                        ]
-                          .filter(Boolean)
-                          .filter((line: string, idx: number, arr: string[]) => arr.indexOf(line) === idx)
+                        ], { exclude: [directText] })
                         const orbText = Number.isFinite(transit?.orb) ? `Orb ${Number(transit.orb).toFixed(1)}°` : ""
                         const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
                         return {

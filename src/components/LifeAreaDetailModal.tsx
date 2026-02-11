@@ -18,7 +18,7 @@ import TransitInsightCard from './TransitInsightCard'
 import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { height } = Dimensions.get('window')
@@ -1797,7 +1797,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         const normalized = normalizeNarrativeText(segment)
         return normalized && normalized !== normalizedDirect && !isGenericNarrativeText(segment)
       })
-      return fallbackSegments.length ? fallbackSegments.join('\n\n') : directText
+      return fallbackSegments.length
+        ? mergeNarrativeSegments(fallbackSegments, { exclude: [directText] }).join('\n\n')
+        : directText
     }
 
     const segments: string[] = []
@@ -1829,7 +1831,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     addSegment(suggestion?.card?.bestUse, 'Melhor uso: ')
     addSegment(suggestion?.card?.timingHint, 'Timing: ')
 
-    return segments.length ? segments.join('\n\n') : directText
+    const merged = mergeNarrativeSegments(segments, { exclude: [directText] })
+    return merged.length ? merged.join('\n\n') : directText
   }
 
   const renderTransitList = (

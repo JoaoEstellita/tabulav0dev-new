@@ -19,7 +19,7 @@ import {
 import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -225,7 +225,7 @@ function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[
     domains || 'previsoes'
   )
   const detail = detailLines.length ? `Dados tecnicos: ${detailLines.join(' - ')}.` : ''
-  return [narrative.fullText, detail].filter(Boolean).join('\n\n')
+  return mergeNarrativeSegments([narrative.fullText, detail], { exclude: [narrative.directText] }).join('\n\n')
 }
 
 function formatDomainLabel(domain: string) {

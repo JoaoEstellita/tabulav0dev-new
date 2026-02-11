@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit } from '../../utils/astroInterpretation'
+import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
 
 type ForecastEvent = {
   id: string
@@ -114,7 +114,7 @@ function buildFullEventInterpretation(event: ForecastEvent) {
     },
     'previsoes'
   )
-  return narrative.fullText
+  return mergeNarrativeSegments([narrative.fullText], { exclude: [narrative.directText] }).join('\n\n')
 }
 
 function buildTimingLabel(event: ForecastEvent) {

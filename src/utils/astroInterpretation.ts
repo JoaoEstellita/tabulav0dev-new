@@ -228,6 +228,43 @@ function sanitizeNarrativeText(value: string): string {
   return text
 }
 
+function normalizeNarrativeKey(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function mergeNarrativeSegments(
+  segments: Array<string | null | undefined>,
+  options?: { exclude?: Array<string | null | undefined> }
+): string[] {
+  const out: string[] = []
+  const excluded = (options?.exclude || [])
+    .map((item) => normalizeNarrativeKey(item))
+    .filter(Boolean)
+
+  const add = (value: string | null | undefined) => {
+    const text = String(value || '').trim()
+    if (!text) return
+    const normalized = normalizeNarrativeKey(text)
+    if (!normalized) return
+    if (excluded.some((item) => item === normalized || item.includes(normalized) || normalized.includes(item))) return
+    const duplicated = out.some((existing) => {
+      const key = normalizeNarrativeKey(existing)
+      return key === normalized || key.includes(normalized) || normalized.includes(key)
+    })
+    if (!duplicated) out.push(text)
+  }
+
+  segments.forEach((segment) => add(segment))
+  return out
+}
+
 function getPhaseLabel(transit: AnyTransit): string {
   const phase = String(transit?.phase || '').toLowerCase()
   if (phase === 'peak') return 'em pico'
@@ -269,7 +306,7 @@ export function buildAstroTransitNarrative(
   }
   const safeDirectText = sanitizeNarrativeText(directText) || `${transitPlanet} ativa um ciclo de ajustes praticos em ${area}.`
 
-  const fullParts = [
+  const fullParts = mergeNarrativeSegments([
     pickVariant(seed, [
       `Leitura tecnica: ${transitPlanet} simboliza ${planetMeaning}.`,
       `Base tecnica: ${transitPlanet} atua sobre ${planetMeaning}.`,
@@ -286,7 +323,7 @@ export function buildAstroTransitNarrative(
       `Uso recomendado: ${actionHint.replace(/^Acao pratica:\s*/i, '')}`,
     ], 5),
     scoreLink,
-  ]
+  ], { exclude: [safeDirectText] })
 
   return {
     directText: safeDirectText,
