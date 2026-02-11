@@ -1736,17 +1736,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseFilterOptions = Array.from(new Set([...relevantAreaHouses, ...houseFromTransits])).sort(
       (a, b) => Number(a) - Number(b)
     )
-    const filteredPlanetTransits = (selectedPlanetFilters.length
-      ? planetTransits.filter((transit) => selectedPlanetFilters.includes(String(transit?.transitPlanet || '').trim()))
-      : planetTransits
-    )
-    const filteredHouseTransits = (selectedHouseFilters.length
-      ? houseTransits.filter((transit) => {
-          const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
-          return !!house && selectedHouseFilters.includes(house)
-        })
-      : houseTransits
-    )
+    const matchesSelectedPlanet = (transit: any) => {
+      if (!selectedPlanetFilters.length) return true
+      const transitPlanet = String(transit?.transitPlanet || '').trim()
+      return !!transitPlanet && selectedPlanetFilters.includes(transitPlanet)
+    }
+    const filteredPlanetTransits = planetTransits.filter((transit) => matchesSelectedPlanet(transit))
+    const filteredHouseTransits = houseTransits.filter((transit) => {
+      if (!matchesSelectedPlanet(transit)) return false
+      if (!selectedHouseFilters.length) return true
+      const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
+      return !!house && selectedHouseFilters.includes(house)
+    })
     const combinedTransits: Array<{ transit: any; facetKind: 'planet' | 'house' }> = [
       ...(selectedFacetFilters.includes('planet')
         ? filteredPlanetTransits.map((transit) => ({ transit, facetKind: 'planet' as const }))
