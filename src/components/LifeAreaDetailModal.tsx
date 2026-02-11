@@ -1165,6 +1165,50 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     )
   }
 
+  const renderScoreComponentsSection = () => {
+    const aspectsCount = planetBreakdown.reduce((sum, planet) => sum + safeArray(planet.natalAspects).length, 0)
+    const conditionsCount = planetBreakdown.reduce((sum, planet) => sum + safeArray(planet.accidentalConditions).length, 0)
+    const dignityCount = planetBreakdown.filter((planet) => safeNumber(planet.dignityScore) > 0).length
+    const houseCount = planetBreakdown.filter((planet) => safeNumber(planet.houseScore) > 0).length
+    const transitsCount = transitItems.length
+
+    const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning' }> = [
+      { key: 'transits', label: 'Trânsitos', value: String(transitsCount), tone: transitsCount > 0 ? 'positive' : 'neutral' },
+      { key: 'aspects', label: 'Aspectos', value: String(aspectsCount), tone: aspectsCount > 0 ? 'positive' : 'neutral' },
+      { key: 'dignity', label: 'Dignidade', value: String(dignityCount), tone: dignityCount > 0 ? 'positive' : 'neutral' },
+      { key: 'houses', label: 'Força de casa', value: String(houseCount), tone: houseCount > 0 ? 'positive' : 'neutral' },
+      { key: 'conditions', label: 'Condições', value: String(conditionsCount), tone: conditionsCount > 0 ? 'warning' : 'neutral' },
+    ]
+
+    if (signalLevel) {
+      chips.push({ key: 'signal', label: 'Sinal', value: signalLevel, tone: signalLevel === 'Alto' ? 'positive' : 'neutral' })
+    }
+    if (volatilityLevel) {
+      chips.push({ key: 'volatility', label: 'Volatilidade', value: volatilityLevel, tone: volatilityLevel === 'Alta' ? 'warning' : 'neutral' })
+    }
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.subsectionTitle}>COMPONENTES ATIVOS DO SCORE</Text>
+        <View style={styles.scoreComponentsRow}>
+          {chips.map((chip) => (
+            <View
+              key={chip.key}
+              style={[
+                styles.scoreComponentChip,
+                chip.tone === 'positive' ? styles.scoreComponentChipPositive : null,
+                chip.tone === 'warning' ? styles.scoreComponentChipWarning : null,
+              ]}
+            >
+              <Text style={styles.scoreComponentLabel}>{chip.label}</Text>
+              <Text style={styles.scoreComponentValue}>{chip.value}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    )
+  }
+
   const getTransitKey = (transit: any, index: number) => (
     transit?.id ||
     [
@@ -2094,6 +2138,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         <View style={styles.modalContent}>
           {renderHeader()}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {renderScoreComponentsSection()}
             {renderTransitsSection()}
             {renderMetricLevelsSection()}
             {renderCalculationToggle()}
@@ -2387,6 +2432,43 @@ const styles = StyleSheet.create({
     borderColor: '#FED7AA',
     padding: DESIGN_SYSTEM.spacing.sm,
     borderRadius: DESIGN_SYSTEM.borderRadius.sm,
+  },
+  scoreComponentsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  scoreComponentChip: {
+    minWidth: 84,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  scoreComponentChipPositive: {
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+  },
+  scoreComponentChipWarning: {
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+  },
+  scoreComponentLabel: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  scoreComponentValue: {
+    fontSize: 13,
+    color: '#0F172A',
+    fontWeight: '800',
+    marginTop: 2,
   },
   sectionTitleRow: {
     flexDirection: 'row',
