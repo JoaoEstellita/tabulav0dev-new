@@ -34,6 +34,7 @@ import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseS
 import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
+import { translatePlanetPT } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -138,6 +139,24 @@ type MoonDetails = {
   upcomingPhases: Array<{ label: string; when: string }>
 }
 
+type PlanetQuickInfo = {
+  planet: PlanetKey
+  imageUri?: string
+  challenging: number
+  neutral: number
+  harmonic: number
+  statusScore: number | null
+  statusLevel: string | null
+  breakdown: {
+    essential: number
+    houseStrength: number
+    accidentalDignity: number
+    aspectStrength: number
+    specialConditions: number
+    total: number
+  } | null
+}
+
 export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
@@ -162,6 +181,7 @@ export default function HomeScreen() {
     const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
     const [moonModalVisible, setMoonModalVisible] = useState(false)
+    const [planetInfoModal, setPlanetInfoModal] = useState<PlanetQuickInfo | null>(null)
     const [moonDetails, setMoonDetails] = useState<MoonDetails>({
       phaseLabel: 'Lua',
       phaseUntilLabel: 'fase em atualização',
@@ -200,6 +220,7 @@ export default function HomeScreen() {
 
     const planetQuickNav = React.useMemo(() => {
       const personalTransits = (transitData as any)?.currentTransits?.transits?.personal || []
+      const planetsNow = (transitData as any)?.currentTransits?.planets || []
       const byPlanet = new Map<string, Array<{ type?: string }>>()
       for (const item of personalTransits) {
         const planet = String(item?.transitPlanet || '')
@@ -209,6 +230,8 @@ export default function HomeScreen() {
       }
       return PLANET_ORDER.map((planet) => {
         const list = byPlanet.get(planet) || []
+        const planetNow = planetsNow.find((item: any) => String(item?.name || '') === planet)
+        const status = planetNow?.planetaryStatus || null
         let challenging = 0
         let neutral = 0
         let harmonic = 0
@@ -224,6 +247,18 @@ export default function HomeScreen() {
           challenging,
           neutral,
           harmonic,
+          statusScore: typeof status?.score === 'number' ? status.score : null,
+          statusLevel: status?.level || null,
+          breakdown: status?.breakdown
+            ? {
+                essential: Number(status.breakdown.essential || 0),
+                houseStrength: Number(status.breakdown.houseStrength || 0),
+                accidentalDignity: Number(status.breakdown.accidentalDignity || 0),
+                aspectStrength: Number(status.breakdown.aspectStrength || 0),
+                specialConditions: Number(status.breakdown.specialConditions || 0),
+                total: Number(status.breakdown.total || status.score || 0),
+              }
+            : null,
         }
       })
     }, [transitData, getAspectTone])
@@ -657,7 +692,7 @@ export default function HomeScreen() {
                       key={`quick-planet-${planetItem.planet}`}
                       style={styles.planetStripItem}
                       activeOpacity={0.86}
-                      onPress={() => scrollToPlanetInTabula(planetItem.planet)}
+                      onPress={() => setPlanetInfoModal(planetItem)}
                     >
                       {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
                         <Image
@@ -682,23 +717,6 @@ export default function HomeScreen() {
                           <Text style={styles.planetStripFallbackText}>{PLANET_FALLBACK_GLYPHS[planetItem.planet]}</Text>
                         </View>
                       )}
-                      <View style={styles.planetStripBadgesRow}>
-                        {planetItem.challenging > 0 ? (
-                          <View style={[styles.planetStripBadge, styles.planetStripBadgeChallenging]}>
-                            <Text style={styles.planetStripBadgeText}>{planetItem.challenging}</Text>
-                          </View>
-                        ) : null}
-                        {planetItem.neutral > 0 ? (
-                          <View style={[styles.planetStripBadge, styles.planetStripBadgeNeutral]}>
-                            <Text style={styles.planetStripBadgeText}>{planetItem.neutral}</Text>
-                          </View>
-                        ) : null}
-                        {planetItem.harmonic > 0 ? (
-                          <View style={[styles.planetStripBadge, styles.planetStripBadgeHarmonic]}>
-                            <Text style={styles.planetStripBadgeText}>{planetItem.harmonic}</Text>
-                          </View>
-                        ) : null}
-                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -744,6 +762,77 @@ export default function HomeScreen() {
 
         {/* PWA Download Button */}
         <PWADownloadButton />
+
+        <Modal
+          visible={!!planetInfoModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPlanetInfoModal(null)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.planetInfoBackdrop} onPress={() => setPlanetInfoModal(null)}>
+            <TouchableOpacity activeOpacity={1} style={styles.planetInfoCard} onPress={() => {}}>
+              <View style={styles.planetInfoHeader}>
+                <Text style={styles.planetInfoTitle}>
+                  {planetInfoModal ? translatePlanetPT(planetInfoModal.planet) : 'Planeta'}
+                </Text>
+                <TouchableOpacity style={styles.planetInfoClose} onPress={() => setPlanetInfoModal(null)}>
+                  <Ionicons name="close" size={18} color="#0F172A" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.planetInfoStatus}>
+                {planetInfoModal?.statusLevel ? `Status: ${planetInfoModal.statusLevel}` : 'Status: sem dados no momento'}
+                {typeof planetInfoModal?.statusScore === 'number'
+                  ? ` • ${planetInfoModal.statusScore.toFixed(1)} pts`
+                  : ''}
+              </Text>
+
+              <View style={styles.planetInfoToneRow}>
+                {planetInfoModal && planetInfoModal.challenging > 0 ? (
+                  <View style={[styles.planetInfoToneBadge, styles.planetStripBadgeChallenging]}>
+                    <Text style={styles.planetInfoToneText}>Desafiador {planetInfoModal.challenging}</Text>
+                  </View>
+                ) : null}
+                {planetInfoModal && planetInfoModal.neutral > 0 ? (
+                  <View style={[styles.planetInfoToneBadge, styles.planetStripBadgeNeutral]}>
+                    <Text style={styles.planetInfoToneText}>Neutro {planetInfoModal.neutral}</Text>
+                  </View>
+                ) : null}
+                {planetInfoModal && planetInfoModal.harmonic > 0 ? (
+                  <View style={[styles.planetInfoToneBadge, styles.planetStripBadgeHarmonic]}>
+                    <Text style={styles.planetInfoToneText}>Harmônico {planetInfoModal.harmonic}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {planetInfoModal?.breakdown ? (
+                <View style={styles.planetInfoBreakdown}>
+                  <Text style={styles.planetInfoBreakdownTitle}>Peso por componente</Text>
+                  <Text style={styles.planetInfoBreakdownLine}>Dignidade essencial: {planetInfoModal.breakdown.essential.toFixed(1)}</Text>
+                  <Text style={styles.planetInfoBreakdownLine}>Força de casa: {planetInfoModal.breakdown.houseStrength.toFixed(1)}</Text>
+                  <Text style={styles.planetInfoBreakdownLine}>Condições acidentais: {planetInfoModal.breakdown.accidentalDignity.toFixed(1)}</Text>
+                  <Text style={styles.planetInfoBreakdownLine}>Aspectos: {planetInfoModal.breakdown.aspectStrength.toFixed(1)}</Text>
+                  <Text style={styles.planetInfoBreakdownLine}>Condições especiais: {planetInfoModal.breakdown.specialConditions.toFixed(1)}</Text>
+                  <Text style={styles.planetInfoBreakdownTotal}>Total: {planetInfoModal.breakdown.total.toFixed(1)}</Text>
+                </View>
+              ) : (
+                <Text style={styles.planetInfoNoData}>Sem detalhamento de peso disponível para este planeta agora.</Text>
+              )}
+
+              <TouchableOpacity
+                style={styles.planetInfoGoButton}
+                onPress={() => {
+                  const selected = planetInfoModal?.planet || null
+                  setPlanetInfoModal(null)
+                  if (selected) scrollToPlanetInTabula(selected)
+                }}
+              >
+                <Text style={styles.planetInfoGoText}>Ir para o planeta na Tábula</Text>
+                <Ionicons name="arrow-down" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
 
         <Modal
           visible={moonModalVisible}
@@ -1070,6 +1159,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
+    paddingVertical: 2,
     minWidth: 0,
   },
   planetStripImage: {
@@ -1098,21 +1188,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 18,
   },
-  planetStripBadgesRow: {
-    marginTop: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 18,
-  },
-  planetStripBadge: {
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
   planetStripBadgeChallenging: {
     backgroundColor: '#EF4444',
   },
@@ -1127,6 +1202,110 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     lineHeight: 11,
+  },
+  planetInfoBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(4,10,24,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+  planetInfoCard: {
+    width: '100%',
+    maxWidth: 440,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 14,
+    gap: 10,
+  },
+  planetInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  planetInfoTitle: {
+    color: '#0F172A',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  planetInfoClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E2E8F0',
+  },
+  planetInfoStatus: {
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  planetInfoToneRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+  },
+  planetInfoToneBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  planetInfoToneText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  planetInfoBreakdown: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 10,
+    gap: 2,
+  },
+  planetInfoBreakdownTitle: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  planetInfoBreakdownLine: {
+    color: '#334155',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  planetInfoBreakdownTotal: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  planetInfoNoData: {
+    color: '#475569',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  planetInfoGoButton: {
+    marginTop: 4,
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  planetInfoGoText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   warningCard: {
     flexDirection: 'row',
