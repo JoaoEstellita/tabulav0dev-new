@@ -1157,8 +1157,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return null
   }
 
-  const buildTransitTitle = (transit: any) => {
-    const columnKind = getTransitColumnKind(transit)
+  const buildTransitTitle = (transit: any, forcedKind?: 'planet' | 'house') => {
+    const columnKind = forcedKind || getTransitColumnKind(transit)
     const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
@@ -1373,10 +1373,15 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return segments.length ? segments.join('\n\n') : directText
   }
 
-  const renderTransitList = (items: any[], startIndex = 0, featured = false) =>
+  const renderTransitList = (
+    items: any[],
+    startIndex = 0,
+    featured = false,
+    forcedKind?: 'planet' | 'house'
+  ) =>
     items.map((transit: any, index: number) => {
       const absoluteIndex = startIndex + index
-          const columnKind = getTransitColumnKind(transit)
+          const columnKind = forcedKind || getTransitColumnKind(transit)
           const aspectType = String(transit.aspectName || transit.type || '')
           const isHarmonious = ['trigono', 'sextil', 'harmonic'].includes(aspectType)
           const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectType)
@@ -1393,7 +1398,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const durationLabel = getDurationLabel(transit)
           const relativeTiming = getTimingLabel(transit)
           const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
-          const transitTitle = buildTransitTitle(transit)
+          const transitTitle = buildTransitTitle(transit, forcedKind)
           const houseLabel = columnKind === 'house' ? getTransitHouseLabel(transit) : null
           const houseLabelPrefix = columnKind === 'house' ? getTransitHousePrefix(transit) : 'Casa de trânsito'
           const transitKey = getTransitKey(transit, absoluteIndex)
@@ -1504,8 +1509,27 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderTransitsSection = () => {
     const orderedTransits = [...transitItems].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
-    const planetTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'planet')
-    const houseTransits = orderedTransits.filter((transit) => getTransitColumnKind(transit) === 'house')
+    const planetTargets = new Set([
+      'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
+      'ASC', 'MC', 'DSC', 'IC'
+    ])
+    const hasPlanetFacet = (transit: any): boolean => {
+      const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
+      const targetAngle = String(transit?.target?.angle || '').toUpperCase()
+      const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
+      if (['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)) return true
+      if (planetTargets.has(normalizedTarget)) return true
+      if (rawTarget && !rawTarget.startsWith('HOUSE_') && !rawTarget.startsWith('CASA')) return true
+      return false
+    }
+    const hasHouseFacet = (transit: any): boolean => {
+      const personalHouse = getTransitOnNatalHouseLabel(transit)
+      if (personalHouse) return true
+      const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
+      return Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
+    }
+    const planetTransits = orderedTransits.filter(hasPlanetFacet)
+    const houseTransits = orderedTransits.filter(hasHouseFacet)
 
     return (
       <View style={styles.section}>
@@ -1525,7 +1549,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.transitColumnDescription}>Aspectos com planetas e pontos natais</Text>
                   <Text style={styles.transitColumnMeta}>{planetTransits.length}</Text>
                 </View>
-                {renderTransitList(planetTransits, 0, false)}
+                {renderTransitList(planetTransits, 0, false, 'planet')}
               </View>
 
               <View style={[styles.transitBlock, isWide ? styles.transitBlockWide : null]}>
@@ -1534,7 +1558,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   <Text style={styles.transitColumnDescription}>Ativação da casa natal e eixo temático</Text>
                   <Text style={styles.transitColumnMeta}>{houseTransits.length}</Text>
                 </View>
-                {renderTransitList(houseTransits, 0, false)}
+                {renderTransitList(houseTransits, 0, false, 'house')}
               </View>
             </View>
           </>
