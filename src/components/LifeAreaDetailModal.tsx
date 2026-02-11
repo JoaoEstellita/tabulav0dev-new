@@ -1186,7 +1186,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const topDignityPlanets = planetBreakdown
       .filter((planet) => safeNumber(planet.dignityScore) > 0)
       .sort((a, b) => safeNumber(b.dignityScore) - safeNumber(a.dignityScore))
-      .slice(0, 3)
     const topDignitySummary = topDignityPlanets
       .map((planet) => `${translate('planets', planet.planet)} (+${safeNumber(planet.dignityScore)})`)
       .join(', ')
@@ -1195,7 +1194,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       .join(' | ')
     const topTransitSignals = [...transitItems]
       .sort((a, b) => Math.abs(safeNumber(b.impact, 0)) - Math.abs(safeNumber(a.impact, 0)))
-      .slice(0, 5)
       .map((transit) => {
         const tone = getTransitToneCategory(transit)
         const targetRaw =
@@ -1224,7 +1222,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         }))
       )
       .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-      .slice(0, 5)
       .map((aspect) => {
         const normalized = normalizeAspectKey(aspect.type)
         return {
@@ -1248,7 +1245,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const topHouseSignals = [...planetBreakdown]
       .filter((planet) => safeNumber(planet.houseScore, 0) > 0)
       .sort((a, b) => safeNumber(b.houseScore, 0) - safeNumber(a.houseScore, 0))
-      .slice(0, 5)
       .map((planet) => ({
         title: translate('planets', planet.planet),
         meta: planet.houseReason,
@@ -1266,7 +1262,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         }))
       )
       .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-      .slice(0, 5)
       .map((condition) => ({
         title: `${translate('planets', condition.planet)} • ${condition.condition}`,
         meta: condition.description,
