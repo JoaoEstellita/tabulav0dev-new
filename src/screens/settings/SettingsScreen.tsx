@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -115,20 +115,20 @@ export default function SettingsScreen() {
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
-      title: 'Notificacoes',
+      title: 'Notificações',
       items: [
         {
           id: 'register_webpush',
-          title: 'Registrar Notificacao Mobile',
-          subtitle: 'Ativar notificacoes no celular (PWA)',
+          title: 'Registrar Notificação Mobile',
+          subtitle: 'Ativar notificações no celular (PWA)',
           icon: 'notifications-outline',
           type: 'button',
           onPress: () => handleWebPushPress(),
         },
         {
           id: 'notification_options',
-          title: 'Opcoes de Notificacoes',
-          subtitle: 'Gerenciar tipos e preferencias globais',
+          title: 'Opções de Notificações',
+          subtitle: 'Gerenciar tipos e preferências globais',
           icon: 'options-outline',
           type: 'button',
           onPress: () => navigation.navigate('NotificationPreferences' as never),
@@ -148,8 +148,8 @@ export default function SettingsScreen() {
         },
         {
           id: 'billing_info',
-          title: 'Informacoes de Pagamento',
-          subtitle: 'Ver histrico e faturas',
+          title: 'Informações de Pagamento',
+          subtitle: 'Ver histórico e faturas',
           icon: 'card',
           type: 'button',
           onPress: () => openBillingInfo(),
@@ -161,7 +161,7 @@ export default function SettingsScreen() {
       items: [
         {
           id: 'app_version',
-          title: 'Versao do App',
+          title: 'Versão do App',
           subtitle: '1.0.0',
           icon: 'information-circle',
           type: 'link',
@@ -184,7 +184,7 @@ export default function SettingsScreen() {
         },
         {
           id: 'privacy_policy',
-          title: 'Politica de Privacidade',
+          title: 'Política de Privacidade',
           subtitle: 'Como protegemos seus dados',
           icon: 'shield-checkmark',
           type: 'button',
@@ -201,7 +201,7 @@ export default function SettingsScreen() {
         {
           id: 'feedback',
           title: 'Enviar Feedback',
-          subtitle: 'Sugestoes via WhatsApp',
+          subtitle: 'Sugestões via WhatsApp',
           icon: 'chatbubble-ellipses',
           type: 'button',
           onPress: () => openFeedback(),
@@ -254,7 +254,7 @@ export default function SettingsScreen() {
       // Carregar configuracoes salvas
       // TODO: Implementar carregamento de configuracoes do backend
     } catch (error) {
-      console.error('Erro ao carregar configuracoes:', error);
+      console.error('Erro ao carregar configurações:', error);
     }
   };
 
@@ -264,7 +264,7 @@ export default function SettingsScreen() {
       const { status } = await Notifications.getPermissionsAsync();
       setNotificationPermission(status);
     } catch (error) {
-      console.warn('Nao foi possivel verificar permissao de notificacoes', error);
+      console.warn('Não foi possível verificar permissão de notificações', error);
       setNotificationPermission('unknown');
     }
   };
@@ -335,7 +335,7 @@ export default function SettingsScreen() {
           hasFcmToken = expoToken.some((entry) => !!entry?.token);
         }
       } catch (error) {
-        console.warn('Nao foi possivel carregar tokens expo', error);
+        console.warn('Não foi possível carregar tokens expo', error);
       }
       try {
         if (!hasFcmToken) {
@@ -345,7 +345,7 @@ export default function SettingsScreen() {
           hasFcmToken = fcmSnap.size > 0;
         }
       } catch (error) {
-        console.warn('Nao foi possivel carregar tokens mobile', error);
+        console.warn('Não foi possível carregar tokens mobile', error);
       }
       try {
         const webPushSnap = await getDocs(
@@ -353,7 +353,7 @@ export default function SettingsScreen() {
         );
         hasWebPush = hasWebPush || webPushSnap.size > 0;
       } catch (error) {
-        console.warn('Nao foi possivel carregar subscriptions web push', error);
+        console.warn('Não foi possível carregar subscriptions web push', error);
       }
       setPushStatus({
         hasWebPush,
@@ -391,8 +391,8 @@ export default function SettingsScreen() {
 
       if (status === 'denied') {
         Alert.alert(
-          'Ativar notificacoes',
-          'As notificacoes estao bloqueadas. Abra os ajustes do sistema para permitir.',
+          'Ativar notificações',
+          'As notificações estão bloqueadas. Abra os ajustes do sistema para permitir.',
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
@@ -405,7 +405,7 @@ export default function SettingsScreen() {
       setNotificationPermission(request.status);
       if (request.status !== 'granted') {
         Alert.alert(
-          'Permissao nao concedida',
+          'Permissão não concedida',
           'Se quiser ativar depois, use os ajustes do sistema.',
           [
             { text: 'OK', style: 'default' },
@@ -417,8 +417,8 @@ export default function SettingsScreen() {
         loadPushStatus();
       }
     } catch (error) {
-      console.error('Erro ao solicitar permissao de notificacoes', error);
-      Alert.alert('Erro', 'Nao foi possivel solicitar permissao de notificacoes.');
+      console.error('Erro ao solicitar permissão de notificações', error);
+      Alert.alert('Erro', 'Não foi possível solicitar permissão de notificações.');
     }
   };
 
@@ -444,18 +444,18 @@ export default function SettingsScreen() {
     if (!isNotificationsActive()) {
       bounceWebPushButton();
     }
-    if (!user?.uid) return Alert.alert('Erro', 'Faca login para registrar');
+    if (!user?.uid) return Alert.alert('Erro', 'Faça login para registrar');
     try {
       if (Platform.OS === 'web') {
         const webNotification = (globalThis as any).Notification;
         if (!webNotification) {
-          window.alert('Notificacoes nao suportadas neste navegador.');
+          window.alert('Notificações não suportadas neste navegador.');
           return;
         }
         if (webNotification.permission !== 'granted') {
           const permission = await webNotification.requestPermission();
           if (permission !== 'granted') {
-            window.alert('Permissao de notificacao nao concedida.');
+            window.alert('Permissão de notificação não concedida.');
             loadPushStatus();
             return;
           }
@@ -467,13 +467,13 @@ export default function SettingsScreen() {
         if (result?.error) {
           Alert.alert('Erro', result.error);
         } else {
-          Alert.alert('Sucesso', 'Notificacoes do celular ativadas!');
+          Alert.alert('Sucesso', 'Notificações do celular ativadas!');
         }
       }
       loadPushStatus();
       refreshNotificationPermission();
     } catch (e: any) {
-      const message = e?.message || 'Falha ao registrar notificacao';
+      const message = e?.message || 'Falha ao registrar notificação';
       if (Platform.OS === 'web') {
         window.alert(message);
       } else {
@@ -483,10 +483,10 @@ export default function SettingsScreen() {
   }
 
   const houseSystemDescriptions: Record<HouseSystem, string> = {
-    placidus: 'Placidus (tempo/quadrantes): calcula as c�spides pelas divis�es de tempo do �arco diurno� (o quanto um ponto leva para ir do horizonte ao Meio do C�u, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do hor�rio.',
-    'whole-sign': 'Casas Inteiras: a Casa 1 � o signo inteiro que cont�m o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30�), com uma divis�o bem �limpa� e constante.',
-    'psychological-shift': 'Psicol�gico (Casas Naturais / Casa 1 = �ries): fixa a sequ�ncia Casa 1 = �ries, Casa 2 = Touro� (todas de 30�), como um modelo simb�lico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
-    equal: 'Casas iguais de 30�; simples e direta.',
+    placidus: 'Placidus (tempo/quadrantes): calcula as cúspides pelas divisões de tempo do “arco diurno” (o quanto um ponto leva para ir do horizonte ao Meio do Céu, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do horário.',
+    'whole-sign': 'Casas Inteiras: a Casa 1 é o signo inteiro que contém o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30°), com uma divisão bem “limpa” e constante.',
+    'psychological-shift': 'Psicológico (Casas Naturais / Casa 1 = Áries): fixa a sequência Casa 1 = Áries, Casa 2 = Touro… (todas de 30°), como um modelo simbólico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
+    equal: 'Casas iguais de 30°; simples e direta.',
     porphyry: 'Divide entre Ascendente e MC; boa para iniciantes.',
     regiomontanus: 'Baseada na esfera celeste; tradicional.',
     koch: 'Foco na latitude e tempo; detalhada.',
@@ -538,7 +538,7 @@ export default function SettingsScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-        Alert.alert("Permissao Necessaria", "Precisamos de acesso a galeria para selecionar sua foto.");
+        Alert.alert("Permissão necessária", "Precisamos de acesso à galeria para selecionar sua foto.");
       return false;
     }
     return true;
@@ -551,7 +551,7 @@ export default function SettingsScreen() {
       if (source === "camera") {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== "granted") {
-      Alert.alert("Permissao Necessaria", "Precisamos de acesso a camera.");
+      Alert.alert("Permissão necessária", "Precisamos de acesso à câmera.");
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -584,7 +584,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error("Erro ao selecionar foto:", error);
-      Alert.alert("Erro", "Nao foi possivel selecionar a foto. Tente novamente.");
+      Alert.alert("Erro", "Não foi possível selecionar a foto. Tente novamente.");
     }
   };
 
@@ -642,7 +642,7 @@ export default function SettingsScreen() {
         return;
       }
       if (birthTime && !isValidBirthTime(birthTime)) {
-        Alert.alert("Horario invalido", "Use o formato HH:MM.");
+        Alert.alert("Horário inválido", "Use o formato HH:MM.");
         return;
       }
       if (isEditingProfile && locationQuery && !selectedLocation && !birthLocation) {
@@ -656,7 +656,7 @@ export default function SettingsScreen() {
       }
 
       const payload: Record<string, any> = {
-        displayName: profileName || user.email?.split("@")[0] || "Usuario",
+        displayName: profileName || user.email?.split("@")[0] || "Usuário",
         profilePhoto: updatedPhoto || null,
       };
       if (whatsappPhone) {
@@ -692,7 +692,7 @@ export default function SettingsScreen() {
       Alert.alert("Sucesso", "Perfil atualizado!");
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
-      Alert.alert("Erro", "Nao foi possivel salvar seu perfil agora.");
+      Alert.alert("Erro", "Não foi possível salvar seu perfil agora.");
     } finally {
       setSavingProfile(false);
     }
@@ -714,7 +714,7 @@ export default function SettingsScreen() {
   };
 
   const formatBirthLocation = (location: typeof birthLocation) => {
-    if (!location?.city) return "Nao informado";
+    if (!location?.city) return "Não informado";
     if (location.state) return `${location.city}, ${location.state}`;
     if (location.country) return `${location.city}, ${location.country}`;
     return location.city;
@@ -797,7 +797,7 @@ export default function SettingsScreen() {
       setIsLoading(true);
       
       if (!user?.uid) {
-        Alert.alert('Erro', 'Usuario nao identificado.');
+        Alert.alert('Erro', 'Usuário não identificado.');
         return;
       }
 
@@ -820,8 +820,8 @@ export default function SettingsScreen() {
       } else if (MercadoPagoService.isInTrial(status)) {
         const daysRemaining = MercadoPagoService.getTrialDaysRemaining(status);
         Alert.alert(
-          'Periodo de Teste',
-          `Voce esta no periodo de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
+          'Período de teste',
+          `Você está no período de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
@@ -830,7 +830,7 @@ export default function SettingsScreen() {
       } else {
         Alert.alert(
           'Assinatura Premium',
-          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e analises avancadas!',
+          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e análises avançadas!',
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
@@ -839,7 +839,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Erro ao verificar assinatura:', error);
-      Alert.alert('Erro', 'Nao foi possivel verificar o status da assinatura.');
+      Alert.alert('Erro', 'Não foi possível verificar o status da assinatura.');
     } finally {
       setIsLoading(false);
     }
@@ -863,17 +863,17 @@ export default function SettingsScreen() {
   const deleteAccount = () => {
     Alert.alert(
       'Excluir Conta',
-      'Tem certeza que deseja excluir sua conta? Esta acao nao pode ser desfeita e todos os seus dados serao perdidos permanentemente.',
+      'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Excluir', style: 'destructive', onPress: async () => {
           try {
             setIsLoading(true);
             await deleteUserAccount();
-            Alert.alert('Conta Excluida', 'Sua conta foi excluida com sucesso.');
+            Alert.alert('Conta excluída', 'Sua conta foi excluída com sucesso.');
           } catch (error) {
             console.error('Erro ao excluir conta:', error);
-            Alert.alert('Erro', 'Nao foi possivel excluir a conta. Tente novamente.');
+            Alert.alert('Erro', 'Não foi possível excluir a conta. Tente novamente.');
           } finally {
             setIsLoading(false);
           }
@@ -884,7 +884,7 @@ export default function SettingsScreen() {
 
   const handleSignOut = () => {
     console.log('oi handleSignOut chamado')
-    console.log('Usuario atual:', user?.uid)
+    console.log('Usuário atual:', user?.uid)
     console.log('Funcao logout disponivel:', !!logout)
     
     if (Platform.OS === 'web') {
@@ -918,7 +918,7 @@ export default function SettingsScreen() {
             Alert.alert('Sucesso', 'Logout realizado com sucesso!');
           } catch (error) {
             console.error('Erro no logout:', error);
-            Alert.alert('Erro', 'Nao foi possivel fazer logout. Tente novamente.');
+            Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
           } finally {
             setIsLoading(false);
           }
@@ -971,10 +971,10 @@ export default function SettingsScreen() {
     const isPushRegistered = Platform.OS === 'web' ? pushStatus.hasWebPush : pushStatus.hasFcmToken;
     const notificationStatusLabel = isPushRegistered ? 'Registrado' : 'Clique para registrar';
     const displayTitle = isWebPush
-      ? (isPushRegistered ? 'Notificacao Mobile' : 'Registrar Notificacao Mobile')
+      ? (isPushRegistered ? 'Notificação Mobile' : 'Registrar Notificação Mobile')
       : item.title;
     const displaySubtitle = isWebPush
-      ? (isPushRegistered ? 'Registrado' : 'Ativar notificacoes no celular (PWA)')
+      ? (isPushRegistered ? 'Registrado' : 'Ativar notificações no celular (PWA)')
       : item.subtitle;
 
     const content = (
@@ -1083,7 +1083,7 @@ export default function SettingsScreen() {
         {content}
         <View style={styles.pushStatusCard}>
           <View style={styles.pushStatusHeader}>
-            <Text style={styles.pushStatusTitle}>Status de notificacoes</Text>
+            <Text style={styles.pushStatusTitle}>Status de notificações</Text>
             <TouchableOpacity style={styles.pushStatusRefresh} onPress={loadPushStatus}>
               <Ionicons name="refresh" size={14} color="#FFD700" />
               <Text style={styles.pushStatusRefreshText}>Atualizar</Text>
@@ -1095,16 +1095,16 @@ export default function SettingsScreen() {
             disabled={isPushRegistered}
           >
             <View style={[styles.pushStatusDot, isPushRegistered ? styles.pushStatusOk : styles.pushStatusWarn]} />
-            <Text style={styles.pushStatusLabel}>Notificacao do celular:</Text>
+            <Text style={styles.pushStatusLabel}>Notificação do celular:</Text>
             <Text style={[styles.pushStatusValue, !isPushRegistered && styles.pushStatusCta]}>
               {notificationStatusLabel}
             </Text>
           </TouchableOpacity>
           {Platform.OS === 'web' && (
             <View style={styles.pushDiagnostics}>
-              <Text style={styles.pushDiagnosticsTitle}>Diagnostico Web Push</Text>
+              <Text style={styles.pushDiagnosticsTitle}>Diagnóstico Web Push</Text>
               <View style={styles.pushDiagnosticsRow}>
-                <Text style={styles.pushDiagnosticsLabel}>Permissao:</Text>
+                <Text style={styles.pushDiagnosticsLabel}>Permissão:</Text>
                 <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.permission}</Text>
               </View>
               <View style={styles.pushDiagnosticsRow}>
@@ -1114,7 +1114,7 @@ export default function SettingsScreen() {
               <View style={styles.pushDiagnosticsRow}>
                 <Text style={styles.pushDiagnosticsLabel}>Push Manager:</Text>
                 <Text style={styles.pushDiagnosticsValue}>
-                  {webPushDiagnostics.pushManagerSupported ? 'suportado' : 'nao suportado'}
+                  {webPushDiagnostics.pushManagerSupported ? 'suportado' : 'não suportado'}
                 </Text>
               </View>
               <View style={styles.pushDiagnosticsRow}>
@@ -1145,8 +1145,8 @@ export default function SettingsScreen() {
     );
   };
 
-  const notificationSection = settingsSections.find((section) => section.title === 'Notificacoes');
-  const otherSections = settingsSections.filter((section) => section.title !== 'Notificacoes');
+  const notificationSection = settingsSections.find((section) => section.title === 'Notificações');
+  const otherSections = settingsSections.filter((section) => section.title !== 'Notificações');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1160,9 +1160,9 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Configuracoes</Text>
+            <Text style={styles.title}>Configurações</Text>
             <Text style={styles.subtitle}>
-              Personalize sua experiencia no Tabula Estelar
+              Personalize sua experiência no Tabula Estelar
             </Text>
           </View>
 
@@ -1199,7 +1199,7 @@ export default function SettingsScreen() {
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Horario de nascimento (HH:MM)"
+                    placeholder="Horário de nascimento (HH:MM)"
                     placeholderTextColor="#888"
                     value={birthTime}
                     onChangeText={setBirthTime}
@@ -1237,18 +1237,18 @@ export default function SettingsScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.userName}>{profileName || "Usuario"}</Text>
+                  <Text style={styles.userName}>{profileName || "Usuário"}</Text>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Data:</Text>
-                    <Text style={styles.infoValue}>{birthDate || "Nao informado"}</Text>
+                    <Text style={styles.infoValue}>{birthDate || "Não informado"}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Horario:</Text>
-                    <Text style={styles.infoValue}>{birthTime || "Nao informado"}</Text>
+                    <Text style={styles.infoLabel}>Horário:</Text>
+                    <Text style={styles.infoValue}>{birthTime || "Não informado"}</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>WhatsApp:</Text>
-                    <Text style={styles.infoValue}>{whatsappPhone || "Nao informado"}</Text>
+                    <Text style={styles.infoValue}>{whatsappPhone || "Não informado"}</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Local:</Text>
@@ -1305,7 +1305,7 @@ export default function SettingsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sistema de Casas</Text>
             <Text style={styles.sectionNote}>
-              Afeta mapas e analises; sistemas diferentes mudam as casas e os significados.
+              Afeta mapas e análises; sistemas diferentes mudam as casas e os significados.
             </Text>
             <View style={styles.sectionContent}>
               {HOUSE_SYSTEMS.map((system) => {
@@ -1323,7 +1323,7 @@ export default function SettingsScreen() {
                       <View style={styles.itemText}>
                         <Text style={styles.itemTitle}>{formatHouseSystemLabel(system)}</Text>
                         <Text style={styles.itemSubtitle}>
-                          {houseSystemDescriptions[system] || 'Aplicar ao mapa natal e transitos'}
+                          {houseSystemDescriptions[system] || 'Aplicar ao mapa natal e trânsitos'}
                         </Text>
                       </View>
                     </View>
@@ -1353,7 +1353,7 @@ export default function SettingsScreen() {
               Tabula Estelar v1.0.0
             </Text>
             <Text style={styles.appInfoSubtext}>
-              Desenvolvido com cuidado para sua jornada astrologica
+              Desenvolvido com cuidado para sua jornada astrológica
             </Text>
           </View>
         </ScrollView>
@@ -1759,5 +1759,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+
 
 

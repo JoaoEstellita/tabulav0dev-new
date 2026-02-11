@@ -73,6 +73,14 @@ const templateDocToMap = (data: any): Record<string, NotificationTemplate> => {
   return data as Record<string, NotificationTemplate>
 }
 
+const isVisibleForUserFeed = (item?: NotificationItem | null, includeDebug = false) => {
+  if (!item) return false
+  if (includeDebug) return true
+  const source = String(item.source || "").toLowerCase()
+  if (source === "debug" || source === "test") return false
+  return true
+}
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -83,6 +91,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [hasMore, setHasMore] = useState(true)
   const [lastDoc, setLastDoc] = useState<any>(null)
   const PAGE_SIZE = 200
+  const includeDebugNotifications = useMemo(() => {
+    try {
+      if (typeof window === "undefined") return false
+      const params = new URLSearchParams(window.location.search || "")
+      return params.get("debug") === "1"
+    } catch {
+      return false
+    }
+  }, [])
 
   useEffect(() => {
     if (!user?.uid) {
@@ -110,10 +127,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           id: docSnap.id,
           ...(docSnap.data() as any),
         })) as NotificationItem[]
+        const visibleItems = items.filter((item) =>
+          isVisibleForUserFeed(item, includeDebugNotifications)
+        )
         setNotifications((prev) => {
           const map = new Map<string, NotificationItem>()
-          prev.forEach((item) => map.set(item.id, item))
-          items.forEach((item) => map.set(item.id, item))
+          prev
+            .filter((item) => isVisibleForUserFeed(item, includeDebugNotifications))
+            .forEach((item) => map.set(item.id, item))
+          visibleItems.forEach((item) => map.set(item.id, item))
           const merged = Array.from(map.values())
           merged.sort((a, b) => {
             const aTime = a.createdAt?.toMillis?.() || 0
@@ -160,7 +182,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       unsubscribeNotifications()
       canceled = true
     }
-  }, [user?.uid])
+  }, [user?.uid, includeDebugNotifications])
 
   const templates = useMemo(() => {
     return {
@@ -170,10 +192,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [docTemplates, collectionTemplates])
 
   const unreadCount = useMemo(() => {
-    return notifications.filter(
-      (item) => (!item.source || item.source === "user") && !item.isRead
-    ).length
-  }, [notifications])
+    return notifications.filter((item) => isVisibleForUserFeed(item, includeDebugNotifications) && !item.isRead).length
+  }, [notifications, includeDebugNotifications])
 
   const markAsRead = async (notificationId: string) => {
     if (!notificationId) return
@@ -209,7 +229,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       snap.docs.forEach((docSnap) => {
         const data = docSnap.data() as any
         if (data?.isRead) return
-        if (data?.source && data.source !== "user") return
+        if (!includeDebugNotifications) {
+          const source = String(data?.source || "").toLowerCase()
+          if (source === "debug" || source === "test") return
+        }
         batch.update(doc(db, "notifications", docSnap.id), {
           isRead: true,
           readAt: serverTimestamp(),
@@ -238,11 +261,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         id: docSnap.id,
         ...(docSnap.data() as any),
       })) as NotificationItem[]
-      if (items.length) {
+      const visibleItems = items.filter((item) =>
+        isVisibleForUserFeed(item, includeDebugNotifications)
+      )
+      if (visibleItems.length) {
         setNotifications((prev) => {
           const map = new Map<string, NotificationItem>()
-          prev.forEach((item) => map.set(item.id, item))
-          items.forEach((item) => map.set(item.id, item))
+          prev
+            .filter((item) => isVisibleForUserFeed(item, includeDebugNotifications))
+            .forEach((item) => map.set(item.id, item))
+          visibleItems.forEach((item) => map.set(item.id, item))
           const merged = Array.from(map.values())
           merged.sort((a, b) => {
             const aTime = a.createdAt?.toMillis?.() || 0

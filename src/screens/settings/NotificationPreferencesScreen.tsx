@@ -1,13 +1,15 @@
-"use client"
+﻿"use client"
 
 import React, { useMemo, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput, Platform } from "react-native"
+import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput, Platform, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 
 export default function NotificationPreferencesScreen() {
   const [saving, setSaving] = useState(false)
+  const [showPushTypes, setShowPushTypes] = useState(false)
+  const [showInAppTypes, setShowInAppTypes] = useState(false)
   const { preferences, loading, updatePreferences, defaults } = useNotificationPreferences()
   const prefs = preferences || defaults
   const isWeb = Platform.OS === "web"
@@ -16,6 +18,87 @@ export default function NotificationPreferencesScreen() {
     setSaving(true)
     await updatePreferences(updates)
     setSaving(false)
+  }
+
+  const applyPreset = async (preset: "essential" | "balanced" | "silent") => {
+    const basePushTypes = { ...(prefs.push?.types || defaults.push.types) }
+    const baseInAppTypes = { ...(prefs.inApp?.types || defaults.inApp.types) }
+    if (preset === "essential") {
+      await savePreferences({
+        pushEnabled: true,
+        astroEventsPersonalEnabled: true,
+        astroEventsCollectiveEnabled: false,
+        push: {
+          types: {
+            ...basePushTypes,
+            user_status_critical: true,
+            member_status_critical: true,
+            user_status_positive: true,
+            user_status_highlight: false,
+            astro_event_personal: true,
+            astro_event_collective: false,
+            group_message: true,
+            weekly_summary: false,
+            forecast_weekly: false,
+          },
+        },
+        inApp: {
+          types: {
+            ...baseInAppTypes,
+            user_status_critical: true,
+            member_status_critical: true,
+            user_status_positive: true,
+            user_status_highlight: true,
+            astro_event_personal: true,
+            astro_event_collective: false,
+            group_message: true,
+          },
+        },
+      })
+      return
+    }
+    if (preset === "balanced") {
+      await savePreferences({
+        pushEnabled: true,
+        astroEventsPersonalEnabled: true,
+        astroEventsCollectiveEnabled: true,
+        push: {
+          types: {
+            ...basePushTypes,
+            user_status_critical: true,
+            member_status_critical: true,
+            user_status_positive: true,
+            user_status_highlight: true,
+            astro_event_personal: true,
+            astro_event_collective: true,
+            group_message: true,
+            weekly_summary: true,
+            forecast_weekly: true,
+          },
+        },
+        inApp: {
+          types: {
+            ...baseInAppTypes,
+            user_status_critical: true,
+            member_status_critical: true,
+            user_status_positive: true,
+            user_status_highlight: true,
+            astro_event_personal: true,
+            astro_event_collective: true,
+            group_message: true,
+            weekly_summary: true,
+            forecast_weekly: true,
+          },
+        },
+      })
+      return
+    }
+    await savePreferences({
+      pushEnabled: false,
+      push: {
+        types: Object.keys(basePushTypes).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
+      },
+    })
   }
 
   const pushTypes = prefs.push?.types || defaults.push.types
@@ -53,37 +136,37 @@ export default function NotificationPreferencesScreen() {
   )
 
   const pushTypeItems: Array<{ key: string; label: string; description: string }> = [
-    { key: "member_status_critical", label: "Critico de grupo", description: "Alertas criticos de membros nos grupos." },
-    { key: "user_status_critical", label: "Critico pessoal", description: "Alertas quando voce entra em estado critico." },
-    { key: "user_status_critical_recovered", label: "Recuperacao do critico", description: "Alerta quando voce sai do estado critico." },
+    { key: "member_status_critical", label: "Cr\u00EDtico de grupo", description: "Alertas cr\u00EDticos de membros nos grupos." },
+    { key: "user_status_critical", label: "Cr\u00EDtico pessoal", description: "Alertas quando voc\u00EA entra em estado cr\u00EDtico." },
+    { key: "user_status_critical_recovered", label: "Recupera\u00E7\u00E3o do cr\u00EDtico", description: "Alerta quando voc\u00EA sai do estado cr\u00EDtico." },
     { key: "member_status_positive", label: "Positivo de grupo", description: "Alertas quando membro entra em fase positiva." },
-    { key: "user_status_positive", label: "Positivo pessoal", description: "Alertas quando voce entra em fase positiva." },
-    { key: "user_status_highlight", label: "Destaque de status", description: "Alertas de destaque quando houver mudanca relevante." },
-    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Inicio, pico e encerramento dos seus transitos (inclui ingresso em casa)." },
+    { key: "user_status_positive", label: "Positivo pessoal", description: "Alertas quando voc\u00EA entra em fase positiva." },
+    { key: "user_status_highlight", label: "Destaque de status", description: "Alertas de destaque quando houver mudan\u00E7a relevante." },
+    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "In\u00EDcio, pico e encerramento dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
     { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Alertas de eventos coletivos quando habilitados no backend." },
-    { key: "critical_active_summary", label: "Resumo critico ativo", description: "Resumo consolidado de areas criticas ativas." },
-    { key: "daily_summary", label: "Resumo diario", description: "Resumo curto diario com status geral." },
-    { key: "weekly_summary", label: "Resumo semanal", description: "Resumo semanal consolidado das variacoes." },
-    { key: "forecast_weekly", label: "Forecast semanal", description: "Alerta semanal quando novas previsoes forem geradas." },
+    { key: "critical_active_summary", label: "Resumo cr\u00EDtico ativo", description: "Resumo consolidado de \u00E1reas cr\u00EDticas ativas." },
+    { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Resumo curto di\u00E1rio com status geral." },
+    { key: "weekly_summary", label: "Resumo semanal", description: "Resumo semanal consolidado das varia\u00E7\u00F5es." },
+    { key: "forecast_weekly", label: "Forecast semanal", description: "Alerta semanal quando novas previs\u00F5es forem geradas." },
     { key: "group_message", label: "Mensagens do grupo", description: "Alertas quando houver nova mensagem no grupo." },
   ]
 
   const inAppTypeItems: Array<{ key: string; label: string; description: string }> = [
-    { key: "daily_ready", label: "Diario pronto", description: "Registra quando o diario/resumo diario estiver pronto." },
-    { key: "user_status", label: "Seu status agora", description: "Atualizacoes simples de status (pode gerar ruido se ligado)." },
-    { key: "user_status_critical", label: "Critico pessoal", description: "Registra alertas pessoais criticos no centro de notificacoes." },
-    { key: "user_status_critical_recovered", label: "Recuperacao do critico", description: "Registra quando voce sai do estado critico." },
-    { key: "user_status_positive", label: "Positivo pessoal", description: "Registra suas fases positivas no centro de notificacoes." },
-    { key: "user_status_highlight", label: "Destaque de status", description: "Registra destaques de status com maior relevancia." },
-    { key: "group_status", label: "Status coletivo", description: "Registra atualizacoes gerais do grupo." },
-    { key: "member_status_critical", label: "Critico de grupo", description: "Registra alertas criticos de membros no grupo." },
+    { key: "daily_ready", label: "Di\u00E1rio pronto", description: "Registra quando o di\u00E1rio/resumo di\u00E1rio estiver pronto." },
+    { key: "user_status", label: "Seu status agora", description: "Atualiza\u00E7\u00F5es simples de status (pode gerar ru\u00EDdo se ligado)." },
+    { key: "user_status_critical", label: "Cr\u00EDtico pessoal", description: "Registra alertas pessoais cr\u00EDticos no centro de notifica\u00E7\u00F5es." },
+    { key: "user_status_critical_recovered", label: "Recupera\u00E7\u00E3o do cr\u00EDtico", description: "Registra quando voc\u00EA sai do estado cr\u00EDtico." },
+    { key: "user_status_positive", label: "Positivo pessoal", description: "Registra suas fases positivas no centro de notifica\u00E7\u00F5es." },
+    { key: "user_status_highlight", label: "Destaque de status", description: "Registra destaques de status com maior relev\u00E2ncia." },
+    { key: "group_status", label: "Status coletivo", description: "Registra atualiza\u00E7\u00F5es gerais do grupo." },
+    { key: "member_status_critical", label: "Cr\u00EDtico de grupo", description: "Registra alertas cr\u00EDticos de membros no grupo." },
     { key: "member_status_positive", label: "Positivo de grupo", description: "Registra fases positivas de membros no grupo." },
-    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Registra inicio/pico/fim dos seus transitos (inclui ingresso em casa)." },
+    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Registra in\u00EDcio/pico/fim dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
     { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Registra eventos astrais coletivos no app." },
-    { key: "critical_active_summary", label: "Resumo critico ativo", description: "Registra resumo consolidado de areas criticas." },
-    { key: "daily_summary", label: "Resumo diario", description: "Registra resumo diario no centro de notificacoes." },
-    { key: "weekly_summary", label: "Resumo semanal", description: "Registra resumo semanal no centro de notificacoes." },
-    { key: "forecast_weekly", label: "Forecast semanal", description: "Registra novas previsoes semanais no app." },
+    { key: "critical_active_summary", label: "Resumo cr\u00EDtico ativo", description: "Registra resumo consolidado de \u00E1reas cr\u00EDticas." },
+    { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Registra resumo di\u00E1rio no centro de notifica\u00E7\u00F5es." },
+    { key: "weekly_summary", label: "Resumo semanal", description: "Registra resumo semanal no centro de notifica\u00E7\u00F5es." },
+    { key: "forecast_weekly", label: "Forecast semanal", description: "Registra novas previs\u00F5es semanais no app." },
     { key: "group_message", label: "Mensagens do grupo", description: "Registra mensagens de grupos no app." },
   ]
 
@@ -111,7 +194,7 @@ export default function NotificationPreferencesScreen() {
         scrollEnabled
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Opcoes de Notificacoes</Text>
+          <Text style={styles.title}>Op\u00E7\u00F5es de Notifica\u00E7\u00F5es</Text>
           <Text style={styles.subtitle}>
             Push aparece na tela bloqueada. O centro interno continua registrando eventos.
           </Text>
@@ -120,12 +203,23 @@ export default function NotificationPreferencesScreen() {
         {loading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando preferencias...</Text>
+            <Text style={styles.loadingText}>Carregando preferências...</Text>
           </View>
         ) : (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notificacao do celular (push)</Text>
+              <Text style={styles.sectionTitle}>Notifica\u00E7\u00E3o do celular (push)</Text>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("essential")}>
+                  <Text style={styles.presetBtnText}>Essencial</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("balanced")}>
+                  <Text style={styles.presetBtnText}>Equilibrado</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("silent")}>
+                  <Text style={styles.presetBtnText}>Silencioso</Text>
+                </TouchableOpacity>
+              </View>
               {renderToggle(
                 "Push ativado",
                 "Permite receber alertas na tela bloqueada.",
@@ -134,7 +228,7 @@ export default function NotificationPreferencesScreen() {
               )}
               {renderToggle(
                 "Eventos astrais pessoais",
-                "Liga/desliga notificacoes de eventos astrais pessoais (inicio, pico e encerramento).",
+                "Liga/desliga notificações de eventos astrais pessoais (início, pico e encerramento).",
                 prefs.astroEventsPersonalEnabled !== false,
                 (value) => savePreferences({ astroEventsPersonalEnabled: value })
               )}
@@ -154,8 +248,8 @@ export default function NotificationPreferencesScreen() {
                       })
                   )}
                   {renderToggle(
-                    "Novos transitos",
-                    "Notifica ingressos de planeta em casa (mudanca de casa).",
+                    "Novos trânsitos",
+                    "Notifica ingressos de planeta em casa (mudança de casa).",
                     astroPersonalFilters.transits !== false,
                     (value) =>
                       savePreferences({
@@ -167,7 +261,7 @@ export default function NotificationPreferencesScreen() {
                   )}
                   {renderToggle(
                     "Eventos combinados",
-                    "Notifica convergencias de multiplos fatores (combo).",
+                    "Notifica convergências de múltiplos fatores (combo).",
                     astroPersonalFilters.combos !== false,
                     (value) =>
                       savePreferences({
@@ -181,7 +275,7 @@ export default function NotificationPreferencesScreen() {
               )}
               {renderToggle(
                 "Eventos astrais coletivos",
-                "Liga/desliga notificacoes coletivas no app e push (se habilitados nos tipos).",
+                "Liga/desliga notificações coletivas no app e push (se habilitados nos tipos).",
                 prefs.astroEventsCollectiveEnabled === true,
                 (value) => savePreferences({ astroEventsCollectiveEnabled: value })
               )}
@@ -228,13 +322,13 @@ export default function NotificationPreferencesScreen() {
               )}
               {renderToggle(
                 "Mostrar nome do membro",
-                "Inclui o nome do membro em alertas criticos de grupo.",
+                "Inclui o nome do membro em alertas críticos de grupo.",
                 prefs.pushIncludeMemberName === true,
                 (value) => savePreferences({ pushIncludeMemberName: value })
               )}
               {renderToggle(
-                "Horario silencioso",
-                `Silencia push nesse periodo. ${quietHoursLabel}`,
+                "Horário silencioso",
+                `Silencia push nesse período. ${quietHoursLabel}`,
                 quietHours?.enabled === true,
                 (value) =>
                   savePreferences({
@@ -247,7 +341,7 @@ export default function NotificationPreferencesScreen() {
               {quietHours?.enabled === true && (
                 <View style={styles.quietHoursRow}>
                   <View style={styles.quietHoursField}>
-                    <Text style={styles.quietHoursLabel}>Inicio</Text>
+                    <Text style={styles.quietHoursLabel}>Início</Text>
                     <TextInput
                       style={styles.quietHoursInput}
                       value={quietHours.start}
@@ -287,8 +381,22 @@ export default function NotificationPreferencesScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tipos de push</Text>
-              {pushTypeItems.map((item) => (
+              <TouchableOpacity
+                style={styles.sectionToggle}
+                onPress={() => setShowPushTypes((prev) => !prev)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sectionTitle}>Tipos de push</Text>
+                <View style={styles.sectionToggleRight}>
+                  <Text style={styles.sectionToggleCount}>{pushTypeItems.length}</Text>
+                  <Ionicons
+                    name={showPushTypes ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color="#FFD700"
+                  />
+                </View>
+              </TouchableOpacity>
+              {showPushTypes && pushTypeItems.map((item) => (
                 <View key={`push_${item.key}`}>
                   {renderTypeToggle("push", item.key, item.label, item.description)}
                 </View>
@@ -296,8 +404,22 @@ export default function NotificationPreferencesScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notificacoes internas (app)</Text>
-              {inAppTypeItems.map((item) => (
+              <TouchableOpacity
+                style={styles.sectionToggle}
+                onPress={() => setShowInAppTypes((prev) => !prev)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sectionTitle}>Notificações internas (app)</Text>
+                <View style={styles.sectionToggleRight}>
+                  <Text style={styles.sectionToggleCount}>{inAppTypeItems.length}</Text>
+                  <Ionicons
+                    name={showInAppTypes ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color="#FFD700"
+                  />
+                </View>
+              </TouchableOpacity>
+              {showInAppTypes && inAppTypeItems.map((item) => (
                 <View key={`inapp_${item.key}`}>
                   {renderTypeToggle("inApp", item.key, item.label, item.description)}
                 </View>
@@ -307,7 +429,7 @@ export default function NotificationPreferencesScreen() {
             <View style={styles.sectionNote}>
               <Ionicons name="information-circle" size={18} color="#FFD700" />
               <Text style={styles.noteText}>
-                Notificacoes internas aparecem na tela de Notificacoes, mesmo se o push estiver desligado.
+                Notificações internas aparecem na tela de Notificações, mesmo se o push estiver desligado.
               </Text>
             </View>
           </>
@@ -376,6 +498,45 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
     marginBottom: 12,
+  },
+  sectionToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  sectionToggleRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  sectionToggleCount: {
+    color: "#FDE68A",
+    fontSize: 12,
+    fontWeight: "700",
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.35)",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  presetRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+  },
+  presetBtn: {
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.35)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255, 215, 0, 0.08)",
+  },
+  presetBtnText: {
+    color: "#FDE68A",
+    fontSize: 12,
+    fontWeight: "700",
   },
   toggleRow: {
     flexDirection: "row",
@@ -472,3 +633,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
+
+
