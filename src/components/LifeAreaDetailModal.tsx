@@ -1193,6 +1193,83 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const topDignityReasons = topDignityPlanets
       .map((planet) => `${translate('planets', planet.planet)}: ${planet.dignityReason}`)
       .join(' | ')
+    const topTransitSignals = [...transitItems]
+      .sort((a, b) => Math.abs(safeNumber(b.impact, 0)) - Math.abs(safeNumber(a.impact, 0)))
+      .slice(0, 5)
+      .map((transit) => {
+        const tone = getTransitToneCategory(transit)
+        const targetRaw =
+          transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || getTransitNatalHouseLabel(transit)
+        const targetLabel = targetRaw ? translate('planets', String(targetRaw)) : null
+        const aspectLabel = getAspectLabel(String(transit?.aspectName || transit?.type || ''))
+        const title = targetLabel
+          ? `${translate('planets', transit?.transitPlanet)} ${aspectLabel} ${targetLabel}`
+          : buildTransitTitle(transit, getTransitColumnKind(transit))
+        return {
+          title,
+          meta: [getPhaseLabel(transit), getDurationLabel(transit)].filter(Boolean).join(' • '),
+          value: `${Math.round(Math.abs(safeNumber(transit?.impact, 0)) * 100)}%`,
+          tone,
+        }
+      })
+    const topAspectSignals = planetBreakdown
+      .flatMap((planet) =>
+        safeArray(planet.natalAspects).map((aspect) => ({
+          planet: planet.planet,
+          with: aspect.with,
+          type: aspect.type,
+          orb: safeNumber(aspect.orb, 0),
+          score: safeNumber(aspect.score, 0),
+        }))
+      )
+      .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+      .slice(0, 5)
+      .map((aspect) => {
+        const normalized = normalizeAspectKey(aspect.type)
+        return {
+          title: `${translate('planets', aspect.planet)} ${getAspectLabel(aspect.type)} ${translate('planets', aspect.with)}`,
+          meta: `Orb ${safeFixed(aspect.orb)}°`,
+          value: `${safeFixed(aspect.score, 1)}`,
+          tone:
+            normalized === 'trigono' || normalized === 'sextil' || normalized === 'harmonic'
+              ? 'harmonic'
+              : normalized === 'quadratura' ||
+                normalized === 'oposicao' ||
+                normalized === 'quincuncio' ||
+                normalized === 'semiquadratura' ||
+                normalized === 'sesquiquadratura' ||
+                normalized === 'tense'
+              ? 'challenging'
+              : 'neutral',
+        }
+      })
+    const topHouseSignals = [...planetBreakdown]
+      .filter((planet) => safeNumber(planet.houseScore, 0) > 0)
+      .sort((a, b) => safeNumber(b.houseScore, 0) - safeNumber(a.houseScore, 0))
+      .slice(0, 5)
+      .map((planet) => ({
+        title: translate('planets', planet.planet),
+        meta: planet.houseReason,
+        value: `+${safeNumber(planet.houseScore, 0)}`,
+        tone: 'harmonic' as const,
+      }))
+    const topConditionSignals = planetBreakdown
+      .flatMap((planet) =>
+        safeArray(planet.accidentalConditions).map((condition) => ({
+          planet: planet.planet,
+          condition: condition.condition,
+          score: safeNumber(condition.score, 0),
+          description: condition.description,
+        }))
+      )
+      .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+      .slice(0, 5)
+      .map((condition) => ({
+        title: `${translate('planets', condition.planet)} • ${condition.condition}`,
+        meta: condition.description,
+        value: `${condition.score >= 0 ? '+' : ''}${safeNumber(condition.score, 0)}`,
+        tone: condition.score > 0 ? ('harmonic' as const) : condition.score < 0 ? ('challenging' as const) : ('neutral' as const),
+      }))
 
     const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
       {
@@ -1253,7 +1330,71 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         info: `Volatilidade ${volatilityLevel}: indica variação do período e necessidade de ajuste de ritmo.`,
       })
     }
-    const activeInfo = chips.find((chip) => chip.key === activeScoreComponent)?.info
+    const scoreDrilldown: Record<
+      string,
+      {
+        title: string
+        summary: string
+        metric: string
+        rows: Array<{
+          title: string
+          meta?: string
+          value?: string
+          tone?: 'harmonic' | 'challenging' | 'neutral'
+        }>
+      }
+    > = {
+      transits: {
+        title: 'Trânsitos ativos no score',
+        summary: 'Gatilhos dinâmicos que mais estão pesando agora para esta área.',
+        metric: `${transitsCount} ativos`,
+        rows: topTransitSignals,
+      },
+      aspects: {
+        title: 'Aspectos que modulam o impacto',
+        summary: 'Aspectos entre planetas e pontos natais que amplificam ou suavizam os trânsitos.',
+        metric: `${aspectsCount} no cálculo`,
+        rows: topAspectSignals,
+      },
+      dignity: {
+        title: 'Dignidade essencial por planeta',
+        summary:
+          'Mede afinidade do planeta com o signo atual (domicílio/exaltação fortalecem; detrimento/queda enfraquecem).',
+        metric: `${dignityCount} relevantes`,
+        rows: topDignityPlanets.map((planet) => ({
+          title: translate('planets', planet.planet),
+          meta: planet.dignityReason,
+          value: `+${safeNumber(planet.dignityScore, 0)}`,
+          tone: 'harmonic',
+        })),
+      },
+      houses: {
+        title: 'Força de casa por planeta',
+        summary: 'Mostra quais planetas recebem mais peso por posição em casas com impacto nesta área.',
+        metric: `${houseCount} com peso`,
+        rows: topHouseSignals,
+      },
+      conditions: {
+        title: 'Condições acidentais ativas',
+        summary: 'Ajustes contextuais do engine (fase, natureza do contato e outros moduladores).',
+        metric: `${conditionsCount} condições`,
+        rows: topConditionSignals,
+      },
+      signal: {
+        title: 'Sinal do período',
+        summary: 'Leitura de consistência global do cenário da área no momento atual.',
+        metric: signalLevel || '-',
+        rows: [],
+      },
+      volatility: {
+        title: 'Volatilidade do período',
+        summary: 'Ritmo de mudança do cenário da área, indicando necessidade de ajuste tático.',
+        metric: volatilityLevel || '-',
+        rows: [],
+      },
+    }
+    const activeChip = chips.find((chip) => chip.key === activeScoreComponent)
+    const activeDetail = activeScoreComponent ? scoreDrilldown[activeScoreComponent] : null
 
     return (
       <View style={styles.section}>
@@ -1275,9 +1416,38 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             </TouchableOpacity>
           ))}
         </View>
-        {activeInfo ? (
+        {activeChip && activeDetail ? (
           <View style={styles.scoreComponentInfoBox}>
-            <Text style={styles.scoreComponentInfoText}>{activeInfo}</Text>
+            <View style={styles.scoreDetailHeader}>
+              <Text style={styles.scoreDetailTitle}>{activeDetail.title}</Text>
+              <View style={styles.scoreDetailMetricChip}>
+                <Text style={styles.scoreDetailMetricText}>{activeDetail.metric}</Text>
+              </View>
+            </View>
+            <Text style={styles.scoreComponentInfoText}>{activeChip.info}</Text>
+            <Text style={styles.scoreDetailSummary}>{activeDetail.summary}</Text>
+            {activeDetail.rows.length ? (
+              <View style={styles.scoreDetailRows}>
+                {activeDetail.rows.map((row, index) => (
+                  <View
+                    key={`${activeScoreComponent || 'detail'}-${index}-${row.title}`}
+                    style={[
+                      styles.scoreDetailRow,
+                      row.tone === 'harmonic' ? styles.scoreDetailRowHarmonic : null,
+                      row.tone === 'challenging' ? styles.scoreDetailRowChallenging : null,
+                    ]}
+                  >
+                    <View style={styles.scoreDetailRowText}>
+                      <Text style={styles.scoreDetailRowTitle}>{row.title}</Text>
+                      {row.meta ? <Text style={styles.scoreDetailRowMeta}>{row.meta}</Text> : null}
+                    </View>
+                    {row.value ? <Text style={styles.scoreDetailRowValue}>{row.value}</Text> : null}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.scoreDetailEmpty}>Sem itens específicos para listar neste componente agora.</Text>
+            )}
           </View>
         ) : null}
       </View>
@@ -2583,7 +2753,87 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7C2D12',
     lineHeight: 17,
-    textAlign: 'center',
+    textAlign: 'left',
+  },
+  scoreDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  scoreDetailTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#9A3412',
+    flex: 1,
+  },
+  scoreDetailMetricChip: {
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  scoreDetailMetricText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#9A3412',
+  },
+  scoreDetailSummary: {
+    fontSize: 12,
+    color: '#7C2D12',
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  scoreDetailRows: {
+    marginTop: 8,
+    gap: 6,
+  },
+  scoreDetailRow: {
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: 8,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  scoreDetailRowHarmonic: {
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+  },
+  scoreDetailRowChallenging: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  scoreDetailRowText: {
+    flex: 1,
+  },
+  scoreDetailRowTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  scoreDetailRowMeta: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  scoreDetailRowValue: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  scoreDetailEmpty: {
+    marginTop: 8,
+    fontSize: 11,
+    color: '#64748B',
+    fontStyle: 'italic',
   },
   sectionControlsRow: {
     flexDirection: 'row',
