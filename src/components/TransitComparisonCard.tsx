@@ -11,6 +11,7 @@ import { useUserSettings } from '../hooks/useUserSettings'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
 import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
+import ReadingOpenIcon from './ReadingOpenIcon'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -1153,7 +1154,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   )}
                   <Text style={styles.planetName}>{translatePlanetName(comparison.name)}</Text>
                 </View>
-                <Ionicons name="book-outline" size={16} color="#CBD5E1" style={styles.planetReadHintIcon} />
+                <ReadingOpenIcon style={styles.planetReadHintIcon} />
               </TouchableOpacity>
             </View>
 
@@ -1353,7 +1354,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         </View>
                         <View style={styles.aspectActionsRow}>
                           <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
-                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
+                          <ReadingOpenIcon />
                         </View>
                       </Pressable>
                     </View>
@@ -1408,7 +1409,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         </View>
                         <View style={styles.aspectActionsRow}>
                           <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
-                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
+                          <ReadingOpenIcon />
                         </View>
                       </Pressable>
                     </View>
@@ -1461,7 +1462,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         </View>
                         <View style={styles.aspectActionsRow}>
                           <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
-                          <Ionicons name="book-outline" size={16} color="#CBD5E1" />
+                          <ReadingOpenIcon />
                         </View>
                       </Pressable>
                     </View>
