@@ -264,10 +264,10 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Notificacoes</Text>
+          <Text style={styles.title}>Notificações</Text>
           <Text style={styles.subtitle}>
             {unreadCount > 0
-              ? `${unreadCount} nao lida${unreadCount === 1 ? "" : "s"}`
+              ? `${unreadCount} não lida${unreadCount === 1 ? "" : "s"}`
               : "Tudo em dia"}
           </Text>
         </View>
@@ -284,7 +284,7 @@ export default function NotificationsScreen() {
       <View style={styles.filters}>
         {[
           { key: "all", label: "Todos" },
-          { key: "critical", label: "Criticos" },
+          { key: "critical", label: "Críticos" },
           { key: "personal", label: "Pessoais" },
           { key: "group", label: "Grupos" },
         ].map((option) => (
@@ -307,9 +307,9 @@ export default function NotificationsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {loading ? (
-          <Text style={styles.emptyText}>Carregando notificacoes...</Text>
+          <Text style={styles.emptyText}>Carregando notificações...</Text>
         ) : filteredNotifications.length === 0 ? (
-          <Text style={styles.emptyText}>Sem notificacoes no momento</Text>
+          <Text style={styles.emptyText}>Sem notificações no momento</Text>
         ) : (
           grouped.map(([label, items]) => (
             <View key={label} style={styles.groupSection}>
@@ -395,7 +395,7 @@ export default function NotificationsScreen() {
 
                 {resolveCriticalAreasText(activeItem) ? (
                   <View style={styles.modalSection}>
-                    <Text style={styles.modalSectionTitle}>Areas criticas</Text>
+                    <Text style={styles.modalSectionTitle}>Áreas críticas</Text>
                     <Text style={styles.modalSectionText}>
                       {resolveCriticalAreasText(activeItem)}
                     </Text>

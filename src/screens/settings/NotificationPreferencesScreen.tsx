@@ -26,6 +26,9 @@ export default function NotificationPreferencesScreen() {
     if (preset === "essential") {
       await savePreferences({
         pushEnabled: true,
+        push: {
+          frequencyProfile: "focus",
+        },
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: false,
         groupFilters: {
@@ -68,6 +71,9 @@ export default function NotificationPreferencesScreen() {
     if (preset === "balanced") {
       await savePreferences({
         pushEnabled: true,
+        push: {
+          frequencyProfile: "balanced",
+        },
         astroEventsPersonalEnabled: true,
         astroEventsCollectiveEnabled: true,
         groupFilters: {
@@ -112,6 +118,7 @@ export default function NotificationPreferencesScreen() {
     await savePreferences({
       pushEnabled: false,
       push: {
+        frequencyProfile: "quiet",
         types: Object.keys(basePushTypes).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
       },
     })
@@ -143,6 +150,22 @@ export default function NotificationPreferencesScreen() {
     if (!quietHours?.enabled) return "Desativado"
     return `${quietHours.start} - ${quietHours.end}`
   }, [quietHours])
+  const frequencyProfile = prefs.push?.frequencyProfile || "balanced"
+  const enabledPushTypeCount = useMemo(
+    () => Object.values(pushTypes).filter((value) => value !== false).length,
+    [pushTypes]
+  )
+  const enabledInAppTypeCount = useMemo(
+    () => Object.values(inAppTypes).filter((value) => value !== false).length,
+    [inAppTypes]
+  )
+  const estimatedVolumeLabel = useMemo(() => {
+    if (prefs.pushEnabled === false) return "Baixo"
+    const base = enabledPushTypeCount + Math.round(enabledInAppTypeCount * 0.35)
+    if (frequencyProfile === "quiet") return base > 6 ? "Médio" : "Baixo"
+    if (frequencyProfile === "focus") return base > 6 ? "Alto" : "Médio"
+    return base > 10 ? "Alto" : base > 5 ? "Médio" : "Baixo"
+  }, [enabledInAppTypeCount, enabledPushTypeCount, frequencyProfile, prefs.pushEnabled])
 
   const renderToggle = (label: string, description: string, value: boolean, onToggle: (next: boolean) => void) => (
     <View style={styles.toggleRow}>
@@ -250,6 +273,32 @@ export default function NotificationPreferencesScreen() {
                 prefs.pushEnabled !== false,
                 (value) => savePreferences({ pushEnabled: value })
               )}
+              <View style={styles.nestedSection}>
+                <Text style={styles.nestedTitle}>Frequência de envio</Text>
+                <View style={styles.presetRow}>
+                  <TouchableOpacity
+                    style={[styles.presetBtn, frequencyProfile === "focus" && styles.presetBtnActive]}
+                    onPress={() => savePreferences({ push: { frequencyProfile: "focus" } })}
+                  >
+                    <Text style={styles.presetBtnText}>Foco</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.presetBtn, frequencyProfile === "balanced" && styles.presetBtnActive]}
+                    onPress={() => savePreferences({ push: { frequencyProfile: "balanced" } })}
+                  >
+                    <Text style={styles.presetBtnText}>Equilibrado</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.presetBtn, frequencyProfile === "quiet" && styles.presetBtnActive]}
+                    onPress={() => savePreferences({ push: { frequencyProfile: "quiet" } })}
+                  >
+                    <Text style={styles.presetBtnText}>Silencioso</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.previewText}>
+                  Prévia: push ativos {enabledPushTypeCount}, internos ativos {enabledInAppTypeCount}, volume estimado {estimatedVolumeLabel}.
+                </Text>
+              </View>
               {renderToggle(
                 "Eventos astrais pessoais",
                 "Liga/desliga notificações de eventos astrais pessoais (início, pico e encerramento).",
@@ -611,6 +660,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "rgba(255, 215, 0, 0.08)",
   },
+  presetBtnActive: {
+    borderColor: "#FFD700",
+    backgroundColor: "rgba(255, 215, 0, 0.2)",
+  },
   presetBtnText: {
     color: "#FDE68A",
     fontSize: 12,
@@ -672,6 +725,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.2,
     marginBottom: 2,
+  },
+  previewText: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginTop: 2,
   },
   sectionNote: {
     flexDirection: "row",

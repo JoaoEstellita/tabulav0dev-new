@@ -32,6 +32,7 @@ export type NotificationPreferences = {
     end: string
   }
   push: {
+    frequencyProfile?: 'focus' | 'balanced' | 'quiet'
     types: {
       member_status_critical: boolean
       user_status_critical: boolean
@@ -114,6 +115,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     end: '08:00',
   },
   push: {
+    frequencyProfile: 'balanced',
     types: {
       member_status_critical: true,
       user_status_critical: true,
