@@ -1965,20 +1965,36 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       })
       return Array.from(map.values()).sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
     }
-    const getTransitRecentTimestamp = (transit: any): number => {
-      const startAt = transit?.startAt || transit?.window?.start || null
-      const peakAt = transit?.peakAt || transit?.window?.exact || null
-      const fallbackAt = transit?.endAt || transit?.window?.end || null
-      const candidates = [startAt, peakAt, fallbackAt]
-        .map((value) => new Date(String(value || '')).getTime())
-        .filter((value) => Number.isFinite(value))
-      if (!candidates.length) return 0
-      return Math.max(...candidates)
+    const getTransitImpactMagnitude = (transit: any): number => Math.abs(safeNumber(transit?.impact, 0))
+    const getTransitRecencyDistance = (transit: any): number => {
+      const toMs = (value: unknown) => {
+        const ms = new Date(String(value || '')).getTime()
+        return Number.isFinite(ms) ? ms : null
+      }
+      const now = Date.now()
+      const phase = String(transit?.phase || '').toLowerCase()
+      const startAt = toMs(transit?.startAt || transit?.window?.start || null)
+      const peakAt = toMs(transit?.peakAt || transit?.window?.exact || null)
+      const endAt = toMs(transit?.endAt || transit?.window?.end || null)
+      const byPhase = phase === 'start' ? peakAt : phase === 'peak' ? peakAt : phase === 'end' ? endAt : null
+      if (byPhase !== null) return Math.abs(byPhase - now)
+      const candidates = [startAt, peakAt, endAt].filter((value): value is number => value !== null)
+      if (!candidates.length) return Number.MAX_SAFE_INTEGER
+      return Math.min(...candidates.map((value) => Math.abs(value - now)))
     }
     const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'planet' | 'house' }>) => {
       return [...items].sort((a, b) => {
         if (selectedSortMode === 'recent') {
-          const recentDelta = getTransitRecentTimestamp(b.transit) - getTransitRecentTimestamp(a.transit)
+          const recentDelta = getTransitRecencyDistance(a.transit) - getTransitRecencyDistance(b.transit)
+          if (recentDelta !== 0) return recentDelta
+          const impactDelta = getTransitImpactMagnitude(b.transit) - getTransitImpactMagnitude(a.transit)
+          if (impactDelta !== 0) return impactDelta
+          return getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit)
+        }
+        if (selectedSortMode === 'impact') {
+          const impactDelta = getTransitImpactMagnitude(b.transit) - getTransitImpactMagnitude(a.transit)
+          if (impactDelta !== 0) return impactDelta
+          const recentDelta = getTransitRecencyDistance(a.transit) - getTransitRecencyDistance(b.transit)
           if (recentDelta !== 0) return recentDelta
         }
         return getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit)
