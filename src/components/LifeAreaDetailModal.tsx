@@ -1183,6 +1183,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const dignityCount = planetBreakdown.filter((planet) => safeNumber(planet.dignityScore) > 0).length
     const houseCount = planetBreakdown.filter((planet) => safeNumber(planet.houseScore) > 0).length
     const transitsCount = transitItems.length
+    const topDignityPlanets = planetBreakdown
+      .filter((planet) => safeNumber(planet.dignityScore) > 0)
+      .sort((a, b) => safeNumber(b.dignityScore) - safeNumber(a.dignityScore))
+      .slice(0, 3)
+    const topDignitySummary = topDignityPlanets
+      .map((planet) => `${translate('planets', planet.planet)} (+${safeNumber(planet.dignityScore)})`)
+      .join(', ')
+    const topDignityReasons = topDignityPlanets
+      .map((planet) => `${translate('planets', planet.planet)}: ${planet.dignityReason}`)
+      .join(' | ')
 
     const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
       {
@@ -1204,7 +1214,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         label: 'Dignidade',
         value: String(dignityCount),
         tone: dignityCount > 0 ? 'positive' : 'neutral',
-        info: `${dignityCount} planetas com dignidade relevante nesta área. Dignidade mede coerência da expressão do planeta no signo.`,
+        info:
+          dignityCount > 0
+            ? `${dignityCount} planetas com dignidade relevante nesta área. Dignidade mede a afinidade do planeta com o signo (domicílio/exaltação fortalecem; detrimento/queda enfraquecem). Destaques: ${topDignitySummary}. Base técnica: ${topDignityReasons}.`
+            : 'Nenhum planeta com dignidade essencial relevante nesta área agora. Dignidade é a afinidade do planeta com o signo (domicílio/exaltação fortalecem; detrimento/queda enfraquecem).',
       },
       {
         key: 'houses',
@@ -1509,109 +1522,89 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const renderTransitList = (
-    items: any[],
+    items: Array<{ transit: any; facetKind: 'planet' | 'house' }>,
     startIndex = 0,
-    featured = false,
-    forcedKind?: 'planet' | 'house'
-  ) => {
-    const passesToneFilter = (transit: any): boolean => {
-      if (selectedToneFilter === 'all') return true
-      const tone = getTransitToneCategory(transit)
-      if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
-      return tone === 'challenging'
-    }
-    return items.map((transit: any, index: number) => {
+    featured = false
+  ) =>
+    items.map(({ transit, facetKind }, index: number) => {
       const absoluteIndex = startIndex + index
-          const columnKind = forcedKind || transit?.__facetKind || getTransitColumnKind(transit)
-          if (columnKind === 'planet' && !selectedFacetFilters.includes('planet')) return null
-          if (columnKind === 'house' && !selectedFacetFilters.includes('house')) return null
-          if (!passesToneFilter(transit)) return null
-          if (columnKind === 'planet' && selectedPlanetFilters.length) {
-            const planet = String(transit?.transitPlanet || '').trim()
-            if (!selectedPlanetFilters.includes(planet)) return null
-          }
-          if (columnKind === 'house' && selectedHouseFilters.length) {
-            const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
-            if (!house || !selectedHouseFilters.includes(house)) return null
-          }
-          const toneCategory = getTransitToneCategory(transit)
-          const isHarmonious = toneCategory === 'harmonic'
-          const isChallenging = toneCategory === 'challenging'
-          const isNeutral = toneCategory === 'neutral'
-          const statusColor = isHarmonious
-            ? DESIGN_SYSTEM.colors.positive
-            : isChallenging
-            ? DESIGN_SYSTEM.colors.negative
-            : isNeutral
-            ? DESIGN_SYSTEM.colors.neutral
-            : DESIGN_SYSTEM.colors.secondary
-          const statusText = isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'
-          const phaseLabel = getPhaseLabel(transit)
-          const durationLabel = getDurationLabel(transit)
-          const relativeTiming = getTimingLabel(transit)
-          const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
-          const transitTitle = buildTransitTitle(transit, forcedKind)
-          const houseLabel = columnKind === 'house' ? getTransitHouseLabel(transit) : null
-          const houseLabelPrefix = columnKind === 'house' ? getTransitHousePrefix(transit) : 'Casa de trânsito'
-          const transitKey = getTransitKey(transit, absoluteIndex)
-          const suggestion = getSuggestionForTransit(transit)
-          const directText = buildDirectText(transit, suggestion)
-          const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
-          const actionText =
-            suggestion?.action ||
-            (Array.isArray(suggestion?.deep?.practicalGuidance) ? suggestion.deep.practicalGuidance[0] : null)
-          const confidenceText =
-            typeof suggestion?.confidence === 'number'
-              ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, suggestion.confidence)) * 100)}%`
-              : null
-          const sourceCount = Array.isArray(suggestion?.provenance) ? suggestion.provenance.length : 0
-          const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
-          const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
-          const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
-          const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
-          const impactValue01 = (() => {
-            const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
-            if (impactAbs > 0) return Math.max(0.08, Math.min(1, impactAbs / 1.5))
-            const orb = Math.abs(safeNumber(transit?.orb, 2.5))
-            return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
-          })()
+      const toneCategory = getTransitToneCategory(transit)
+      const isHarmonious = toneCategory === 'harmonic'
+      const isChallenging = toneCategory === 'challenging'
+      const isNeutral = toneCategory === 'neutral'
+      const statusColor = isHarmonious
+        ? DESIGN_SYSTEM.colors.positive
+        : isChallenging
+        ? DESIGN_SYSTEM.colors.negative
+        : isNeutral
+        ? DESIGN_SYSTEM.colors.neutral
+        : DESIGN_SYSTEM.colors.secondary
+      const statusText = isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'
+      const phaseLabel = getPhaseLabel(transit)
+      const durationLabel = getDurationLabel(transit)
+      const relativeTiming = getTimingLabel(transit)
+      const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
+      const transitTitle = buildTransitTitle(transit, facetKind)
+      const houseLabel = facetKind === 'house' ? getTransitHouseLabel(transit) : null
+      const houseLabelPrefix = facetKind === 'house' ? getTransitHousePrefix(transit) : 'Casa de trânsito'
+      const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
+      const suggestion = getSuggestionForTransit(transit)
+      const directText = buildDirectText(transit, suggestion)
+      const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
+      const actionText =
+        suggestion?.action ||
+        (Array.isArray(suggestion?.deep?.practicalGuidance) ? suggestion.deep.practicalGuidance[0] : null)
+      const confidenceText =
+        typeof suggestion?.confidence === 'number'
+          ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, suggestion.confidence)) * 100)}%`
+          : null
+      const sourceCount = Array.isArray(suggestion?.provenance) ? suggestion.provenance.length : 0
+      const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
+      const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
+      const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
+      const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
+      const impactValue01 = (() => {
+        const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+        if (impactAbs > 0) return Math.max(0.08, Math.min(1, impactAbs / 1.5))
+        const orb = Math.abs(safeNumber(transit?.orb, 2.5))
+        return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
+      })()
 
-          return (
-            <TransitInsightCard
-              key={transitKey}
-              statusLabel={statusText}
-              statusColor={statusColor}
-              title={transitTitle}
-              houseLabel={houseLabel}
-              houseLabelPrefix={houseLabelPrefix}
-              timingLabel={timingLabel}
-              impactValue01={impactValue01}
-              directText={directText}
-              fullExpanded={false}
-              onToggleFull={() => {}}
-              onOpenDetailModal={() =>
-                setDetailView({
-                  title: transitTitle,
-                  directText,
-                  fullText: buildFullInterpretationText(transit, suggestion, directText),
-                  actionText: actionText || null,
-                  metaText: metaLine || null,
-                  statusText,
-                  statusColor,
-                  timingLabel: timingLabel || null,
-                })
-              }
-              detailMode="modal"
-              fullTitle={titleText}
-              fullText=""
-              actionText={actionText}
-              metaText={metaLine}
-              variant="light"
-              featured={featured}
-            />
-          )
-    }).filter(Boolean)
-  }
+      return (
+        <TransitInsightCard
+          key={transitKey}
+          statusLabel={statusText}
+          statusColor={statusColor}
+          title={transitTitle}
+          houseLabel={houseLabel}
+          houseLabelPrefix={houseLabelPrefix}
+          timingLabel={timingLabel}
+          impactValue01={impactValue01}
+          directText={directText}
+          fullExpanded={false}
+          onToggleFull={() => {}}
+          onOpenDetailModal={() =>
+            setDetailView({
+              title: transitTitle,
+              directText,
+              fullText: buildFullInterpretationText(transit, suggestion, directText),
+              actionText: actionText || null,
+              metaText: metaLine || null,
+              statusText,
+              statusColor,
+              timingLabel: timingLabel || null,
+            })
+          }
+          detailMode="modal"
+          fullTitle={titleText}
+          fullText=""
+          actionText={actionText}
+          metaText={metaLine}
+          variant="light"
+          featured={featured}
+        />
+      )
+    })
 
   const getTransitPriorityScore = (transit: any) => {
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
@@ -1746,22 +1739,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const filteredPlanetTransits = (selectedPlanetFilters.length
       ? planetTransits.filter((transit) => selectedPlanetFilters.includes(String(transit?.transitPlanet || '').trim()))
       : planetTransits
-    ).filter(toneMatchesFilter)
+    )
     const filteredHouseTransits = (selectedHouseFilters.length
       ? houseTransits.filter((transit) => {
           const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
           return !!house && selectedHouseFilters.includes(house)
         })
       : houseTransits
-    ).filter(toneMatchesFilter)
-    const combinedTransits = [
+    )
+    const combinedTransits: Array<{ transit: any; facetKind: 'planet' | 'house' }> = [
       ...(selectedFacetFilters.includes('planet')
-        ? filteredPlanetTransits.map((transit) => ({ ...transit, __facetKind: 'planet' as const }))
+        ? filteredPlanetTransits.map((transit) => ({ transit, facetKind: 'planet' as const }))
         : []),
       ...(selectedFacetFilters.includes('house')
-        ? filteredHouseTransits.map((transit) => ({ ...transit, __facetKind: 'house' as const }))
+        ? filteredHouseTransits.map((transit) => ({ transit, facetKind: 'house' as const }))
         : []),
-    ].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
+    ]
+      .filter(({ transit }) => toneMatchesFilter(transit))
+      .sort((a, b) => getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit))
     const visibleTransitCards = renderTransitList(combinedTransits, 0, false)
 
     return (
