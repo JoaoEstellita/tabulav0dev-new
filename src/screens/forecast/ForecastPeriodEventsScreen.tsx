@@ -4,6 +4,7 @@ import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 type ForecastEvent = {
   id: string
@@ -93,26 +94,28 @@ function buildEventTitle(event: ForecastEvent) {
   })
 }
 
-function buildDirectEventText(event: ForecastEvent) {
+function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
   const narrative = buildAstroTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    'previsoes'
+    'previsoes',
+    language
   )
   return narrative.directText
 }
 
-function buildFullEventInterpretation(event: ForecastEvent) {
+function buildFullEventInterpretation(event: ForecastEvent, language = 'pt-BR') {
   const narrative = buildAstroTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    'previsoes'
+    'previsoes',
+    language
   )
   return mergeNarrativeSegments([narrative.fullText], { exclude: [narrative.directText] }).join('\n\n')
 }
@@ -123,14 +126,15 @@ function buildTimingLabel(event: ForecastEvent) {
   return `Pico em ${formatDateShort(exactDate)}`
 }
 
-function buildEventKeywords(event: ForecastEvent) {
+function buildEventKeywords(event: ForecastEvent, language = 'pt-BR') {
   const out: string[] = buildArchetypeKeywordsForTransit(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    'previsoes'
+    'previsoes',
+    language
   )
   const add = (value?: string | null) => {
     const token = String(value || '').trim()
@@ -157,6 +161,7 @@ function eventPriorityScore(event: ForecastEvent) {
 }
 
 export default function ForecastPeriodEventsScreen({ route }: { route: { params: RouteParams } }) {
+  const { language } = useAppLanguage()
   const { events, rangeFrom, rangeTo, badgeFilter: initialFilter = 'all', dailyBadges } = route.params || {}
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'critical' | 'strong'>(initialFilter)
   const [detail, setDetail] = useState<EventDetail | null>(null)
@@ -236,7 +241,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
                 const statusLabel = impactLabel(event.impact)
                 const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
                 const title = buildEventTitle(event)
-                const directText = buildDirectEventText(event)
+                const directText = buildDirectEventText(event, language)
                 const intensity = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
                 const orb = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
                 const metaText = [intensity, orb].filter(Boolean).join(' • ')
@@ -287,8 +292,8 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
         title={detail?.title || ''}
         timingLabel={detail?.timingLabel || ''}
         directText={detail?.directText || ''}
-        fullText={detail ? buildFullEventInterpretation(detail.event) : ''}
-        keywords={detail ? buildEventKeywords(detail.event) : []}
+        fullText={detail ? buildFullEventInterpretation(detail.event, language) : ''}
+        keywords={detail ? buildEventKeywords(detail.event, language) : []}
         metaText={detail?.metaText || ''}
         statusLabel={detail?.statusLabel || ''}
         statusColor={detail?.statusColor || '#D97706'}

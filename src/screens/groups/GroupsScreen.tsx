@@ -77,7 +77,7 @@ const AREA_HOUSES: Record<string, number[]> = {
 }
 
 export default function GroupsScreen() {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const route = useRoute<any>()
   const navigation = useNavigation()
   const { user } = useAuth()
@@ -906,7 +906,8 @@ const buildTransitKeywords = (transit: any, areaKey?: string) => {
       natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
       house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
     },
-    areaLabel || "grupos"
+    areaLabel || "grupos",
+    language
   )
   return out.slice(0, 5)
 }
@@ -1003,7 +1004,7 @@ const buildTransitDirectText = (
   tr?: LocalizeFn
 ) => {
   const tx = tr || ((_k: string, fallback: string) => fallback)
-  const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
+  const astroNarrative = buildAstroTransitNarrative(transit, areaLabel, language)
   if (astroNarrative?.directText) return astroNarrative.directText
 
   const normalizedFallback = String(fallbackText || "").toLowerCase()
@@ -1952,7 +1953,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical, tr)
                         const statusLabel = areaCritical && status.kind === "harmonic" ? tr('groups.status.relief', 'Alivio') : status.label
                         const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
-                        const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
+                        const astroNarrative = buildAstroTransitNarrative(transit, areaLabel, language)
                         const suggestionText = String(suggestion?.text || '').trim()
                         const normalizedSuggestion = suggestionText
                           .toLowerCase()

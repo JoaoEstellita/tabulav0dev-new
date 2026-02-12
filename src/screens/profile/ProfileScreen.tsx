@@ -27,6 +27,8 @@ import {
 } from '../../utils/moonPhase'
 // Removido reprocesso manual de casas natais deste fluxo
 
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+
 interface UserProfile {
   displayName: string
   profilePhoto?: string
@@ -138,6 +140,19 @@ export default function ProfileScreen() {
     } catch (error) {
       console.warn('Falha ao enviar foto:', error)
       return null
+    }
+  }
+
+  const forceBackendStatusRefresh = async (uid: string, reason: string) => {
+    if (!BACKEND_URL) return
+    try {
+      await fetch(`${BACKEND_URL}/api/status-refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid, force: true, reason }),
+      })
+    } catch (error) {
+      console.warn('Falha ao forcar refresh de status no backend:', error)
     }
   }
 
@@ -385,6 +400,7 @@ export default function ProfileScreen() {
         },
         { merge: true }
       )
+      await forceBackendStatusRefresh(user!.uid, 'profile_screen_save')
       setEditing(false)
       Alert.alert("Sucesso", "Perfil atualizado com sucesso!")
     } catch (error) {

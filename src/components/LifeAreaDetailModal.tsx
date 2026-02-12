@@ -20,6 +20,7 @@ import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
+import { useAppLanguage } from '../hooks/useAppLanguage'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v1'
@@ -568,6 +569,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   astrologyDataFallback
 }) => {
   if (!areaData) return null
+  const { language } = useAppLanguage()
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
@@ -1786,7 +1788,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
-    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '')
+    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '', language)
     const normalizedDirect = normalizeNarrativeText(directText)
 
     if (!suggestion) {
@@ -1914,7 +1916,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
                   house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
                 },
-                areaData?.name || ''
+                areaData?.name || '',
+                language
               ),
             })
           }

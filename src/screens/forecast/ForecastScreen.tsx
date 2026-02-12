@@ -168,7 +168,7 @@ function buildEventTitle(event: ForecastEvent) {
   })
 }
 
-function buildDirectEventText(event: ForecastEvent) {
+function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
   const domain = (event.domains || []).map((item) => formatDomainLabel(item)).slice(0, 1).join(', ')
   const narrative = buildAstroTransitNarrative(
     {
@@ -176,7 +176,8 @@ function buildDirectEventText(event: ForecastEvent) {
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    domain || 'previsoes'
+    domain || 'previsoes',
+    language
   )
   return narrative.directText
 }
@@ -191,14 +192,15 @@ function buildActionHint(event: ForecastEvent) {
   return 'Acao sugerida: testar em pequeno passo antes de ampliar.'
 }
 
-function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null) {
+function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, language = 'pt-BR') {
   const out: string[] = buildArchetypeKeywordsForTransit(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    (event.domains || []).map((d) => formatDomainLabel(d)).slice(0, 1).join(', ')
+    (event.domains || []).map((d) => formatDomainLabel(d)).slice(0, 1).join(', '),
+    language
   )
   const add = (value?: string | null) => {
     const token = String(value || '').trim()
@@ -218,7 +220,7 @@ function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null) {
   return out.slice(0, 5)
 }
 
-function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[]) {
+function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[], language = 'pt-BR') {
   const domains = (event.domains || []).map((d) => formatDomainLabel(d)).join(', ')
   const narrative = buildAstroTransitNarrative(
     {
@@ -226,7 +228,8 @@ function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    domains || 'previsoes'
+    domains || 'previsoes',
+    language
   )
   const detail = detailLines.length ? `Dados tecnicos: ${detailLines.join(' - ')}.` : ''
   return mergeNarrativeSegments([narrative.fullText, detail], { exclude: [narrative.directText] }).join('\n\n')
@@ -1158,7 +1161,7 @@ export default function ForecastScreen() {
         statusLabel,
         statusColor,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
-        directText: buildDirectEventText(event),
+        directText: buildDirectEventText(event, language),
         actionHint,
         metaText,
         impactValue01,
@@ -1169,7 +1172,7 @@ export default function ForecastScreen() {
         ),
       }
     })
-  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr])
+  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
 
   useEffect(() => {
     if (!debouncedFetchDate) return
@@ -1407,7 +1410,8 @@ export default function ForecastScreen() {
         if (!detail) return null
         const fullText = buildFullEventInterpretation(
           detail.event,
-          buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10))
+          buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10)),
+          language
         )
         return (
           <ReadingDetailModal
@@ -1421,7 +1425,7 @@ export default function ForecastScreen() {
             fullText={fullText}
             actionText={detail.actionHint}
             metaText={detail.metaText}
-            keywords={buildEventKeywords(detail.event, detail.phase?.label || null)}
+            keywords={buildEventKeywords(detail.event, detail.phase?.label || null, language)}
           />
         )
       })()}

@@ -39,6 +39,7 @@ import { db } from '../../config/firebase';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
 
 const { width } = Dimensions.get('window');
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
 
 interface SettingsSection {
   title: string;
@@ -495,6 +496,20 @@ export default function SettingsScreen() {
     campanus: 'Divide o ceu em 12; visual e intuitiva.',
     topocentric: 'Variante moderna; busca precisao.',
   };
+
+  const forceBackendStatusRefresh = async (uid: string, reason: string) => {
+    if (!BACKEND_URL) return;
+    try {
+      await fetch(`${BACKEND_URL}/api/status-refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid, force: true, reason }),
+      });
+    } catch (error) {
+      console.warn('Falha ao forcar refresh de status no backend:', error);
+    }
+  };
+
   const loadProfile = async () => {
     if (!user?.uid) return;
     try {
@@ -687,6 +702,7 @@ export default function SettingsScreen() {
         },
         { merge: true }
       );
+      await forceBackendStatusRefresh(user.uid, 'settings_profile_save');
       setIsEditingProfile(false);
       setProfileSnapshot(null);
       setShowLocationSuggestions(false);
@@ -791,6 +807,7 @@ export default function SettingsScreen() {
     await updateSettings({ houseSystem: normalized });
     if (user?.uid) {
       try { await UserService.setHouseSystem(user.uid, normalized); } catch {}
+      await forceBackendStatusRefresh(user.uid, 'settings_house_system_change');
     }
   };
 

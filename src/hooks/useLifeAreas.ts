@@ -12,6 +12,7 @@ import { publishAstrologyData } from '../context/AstrologyDataProvider'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
 const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'
+const BACKEND_ONLY_STATUS = process.env.EXPO_PUBLIC_BACKEND_ONLY_STATUS !== '0'
 const IS_PRODUCTION_BUILD = process.env.NODE_ENV === 'production'
 
 export interface UseLifeAreasReturn {
@@ -204,12 +205,13 @@ export function useLifeAreas(): UseLifeAreasReturn {
         lastBackendComputedAtRef.current = backendComputedAtMs
       }
 
+      const debugLocalOverride = typeof window !== 'undefined' && window.location.search.includes('debug=1')
       const shouldRunLocal =
         forceRefresh ||
         houseSystemChanged ||
         !backendLifeAreasValue ||
         !backendFresh ||
-        (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+        debugLocalOverride
 
       const isTransitDataComplete = (data: LocalTransitData | null) => {
         const transitsByArea = data?.currentTransits?.transits?.byArea
@@ -229,9 +231,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
         )
       }
 
-      const canUseLocalEngineFallback = !IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK
+      const canUseLocalEngineFallback =
+        !BACKEND_ONLY_STATUS &&
+        (!IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK)
 
-      if (shouldRunLocal && !canUseLocalEngineFallback) {
+      if (shouldRunLocal && !canUseLocalEngineFallback && !debugLocalOverride) {
         setIsUsingLocalEngine(false)
         setLocalOverrideActive(false)
         localOverrideActiveRef.current = false
@@ -241,12 +245,12 @@ export function useLifeAreas(): UseLifeAreasReturn {
         return
       }
 
-      if (shouldRunLocal) {
+      if (shouldRunLocal && (canUseLocalEngineFallback || debugLocalOverride)) {
         console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
         const result = await LocalAstrologyService.getCurrentTransits(
           birthData,
           user.uid,
-          forceRefresh || houseSystemChanged || (typeof window !== 'undefined' && window.location.search.includes('debug=1'))
+          forceRefresh || houseSystemChanged || debugLocalOverride
         )
         setTransitData(result.data)
         setCacheStatus(result.cacheStatus)
