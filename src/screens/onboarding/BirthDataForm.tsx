@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -11,13 +11,14 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
-import LocationService, { type LocationSuggestion } from '../../services/LocationService'
+import LocationService, { type LocationSuggestion, type CountryOption } from '../../services/LocationService'
 import { useAuth } from '../../hooks/useAuth'
 import { hardSignOut } from '../../services/auth/logout'
 import ResponsiveContainer from '../../components/ResponsiveContainer'
@@ -45,23 +46,8 @@ export interface BirthData {
     longitude: number
   }
   language?: AppLanguage
-  birthCountryCode?: SupportedCountryCode
+  birthCountryCode?: string
 }
-
-type SupportedCountryCode = 'BR' | 'US' | 'ES' | 'IT'
-
-type CountryOption = {
-  code: SupportedCountryCode
-  flag: string
-  nameKey: string
-}
-
-const COUNTRIES: CountryOption[] = [
-  { code: 'BR', flag: 'BR', nameKey: 'onboarding.country.br' },
-  { code: 'US', flag: 'US', nameKey: 'onboarding.country.us' },
-  { code: 'ES', flag: 'ES', nameKey: 'onboarding.country.es' },
-  { code: 'IT', flag: 'IT', nameKey: 'onboarding.country.it' },
-]
 
 const TOTAL_STEPS = 6
 
@@ -80,7 +66,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     latitude: 0,
     longitude: 0,
     language,
-    birthCountryCode: 'BR' as SupportedCountryCode,
+    birthCountryCode: 'BR',
   })
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
@@ -97,11 +83,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [searchingLocation, setSearchingLocation] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null)
+  const [countryQuery, setCountryQuery] = useState('')
+  const [countryOptions, setCountryOptions] = useState<CountryOption[]>([])
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const [searchingCountry, setSearchingCountry] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
   const [notificationsGranted, setNotificationsGranted] = useState(false)
-  const selectedCountry = useMemo(
-    () => COUNTRIES.find((country) => country.code === formData.birthCountryCode) || COUNTRIES[0],
-    [formData.birthCountryCode]
-  )
 
   const formatDateDisplay = (isoDate: string) => {
     if (!isoDate) return ''
@@ -203,17 +190,42 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(false)
   }
 
-  // Carregar sugestões iniciais quando o componente monta
+  const loadCountryOptions = async (query = '') => {
+    setSearchingCountry(true)
+    try {
+      const options = await LocationService.getCountries(query, formData.language)
+      setCountryOptions(options)
+      if (!selectedCountry) {
+        const initial = options.find((item) => item.code === formData.birthCountryCode) || options[0]
+        if (initial) {
+          setSelectedCountry(initial)
+          setCountryQuery(`${initial.flag} ${initial.name}`)
+          setFormData((prev) => ({
+            ...prev,
+            birthCountryCode: initial.code,
+            country: initial.name,
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar países:', error)
+    } finally {
+      setSearchingCountry(false)
+    }
+  }
+
+  // Carregar dados iniciais quando o componente monta
   useEffect(() => {
-    const loadInitialSuggestions = async () => {
+    const loadInitialData = async () => {
       try {
-        const initialSuggestions = await LocationService.searchLocations('', formData.birthCountryCode)
+        await loadCountryOptions('')
+        const initialSuggestions = await LocationService.searchLocations('', formData.birthCountryCode, formData.language)
         setLocationSuggestions(initialSuggestions)
       } catch (error) {
-        console.error('Erro ao carregar sugestões iniciais:', error)
+        console.error('Erro ao carregar dados iniciais:', error)
       }
     }
-    loadInitialSuggestions()
+    loadInitialData()
 
     // Carregar foto salva no localStorage
     if (typeof window !== 'undefined') {
@@ -233,10 +245,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }, [language])
 
   useEffect(() => {
-    const country = COUNTRIES.find((item) => item.code === formData.birthCountryCode)
-    if (!country) return
-    setFormData((prev) => ({ ...prev, country: t(country.nameKey) }))
-  }, [formData.birthCountryCode, t])
+    loadCountryOptions(countryQuery)
+  }, [countryQuery, formData.language])
+
+  useEffect(() => {
+    if (!selectedCountry?.code) return
+    const syncSelectedCountryName = async () => {
+      try {
+        const options = await LocationService.getCountries('', formData.language)
+        const translated = options.find((item) => item.code === selectedCountry.code)
+        if (!translated) return
+        setSelectedCountry(translated)
+        setCountryQuery(`${translated.flag} ${translated.name}`)
+        setFormData((prev) => ({ ...prev, country: translated.name }))
+      } catch (error) {
+        console.error('Erro ao sincronizar nome do pais com idioma:', error)
+      }
+    }
+    syncSelectedCountryName()
+  }, [formData.language, selectedCountry?.code])
 
   useEffect(() => {
     if (formData.birthDate) {
@@ -260,7 +287,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       const timeoutId = setTimeout(async () => {
         setSearchingLocation(true)
         try {
-          const suggestions = await LocationService.searchLocations(locationQuery, formData.birthCountryCode)
+          const suggestions = await LocationService.searchLocations(locationQuery, formData.birthCountryCode, formData.language)
           setLocationSuggestions(suggestions)
           setShowLocationSuggestions(true)
           console.log('Sugestões encontradas:', suggestions.length)
@@ -276,7 +303,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       // Se campo vazio, carrega sugestões padrão
       const loadDefaultSuggestions = async () => {
         try {
-          const defaultSuggestions = await LocationService.searchLocations('', formData.birthCountryCode)
+          const defaultSuggestions = await LocationService.searchLocations('', formData.birthCountryCode, formData.language)
           setLocationSuggestions(defaultSuggestions)
         } catch (error) {
           console.error('Erro ao carregar sugestões padrão:', error)
@@ -287,7 +314,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setLocationSuggestions([])
       setShowLocationSuggestions(false)
     }
-  }, [locationQuery, formData.birthCountryCode])
+  }, [locationQuery, formData.birthCountryCode, formData.language])
 
   const handleLocationSelect = (location: LocationSuggestion) => {
     setSelectedLocation(location)
@@ -311,25 +338,33 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setFormData(prev => ({
         ...prev,
         city: '',
-        country: t(selectedCountry.nameKey),
+        country: selectedCountry?.name || prev.country,
         latitude: 0,
         longitude: 0,
       }))
     }
   }
 
-  const handleCountryChange = (countryCode: SupportedCountryCode) => {
-    const country = COUNTRIES.find(item => item.code === countryCode)
+  const handleCountryChange = async (country: CountryOption) => {
     setFormData(prev => ({
       ...prev,
-      birthCountryCode: countryCode,
-      country: country ? t(country.nameKey) : prev.country,
+      birthCountryCode: country.code,
+      country: country.name,
       city: '',
       latitude: 0,
       longitude: 0,
     }))
+    setSelectedCountry(country)
+    setCountryQuery(`${country.flag} ${country.name}`)
+    setShowCountrySuggestions(false)
     setSelectedLocation(null)
     setLocationQuery('')
+    try {
+      const suggestions = await LocationService.searchLocations('', country.code, formData.language)
+      setLocationSuggestions(suggestions)
+    } catch (error) {
+      console.error('Erro ao carregar sugestões do país selecionado:', error)
+    }
   }
 
   const requestNotificationPermission = async () => {
@@ -593,7 +628,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setFormData(prev => ({
         ...prev,
         city: locationQuery.trim(),
-        country: t(selectedCountry.nameKey),
+        country: selectedCountry?.name || prev.country,
         latitude: -15.7942, // Coordenadas do centro do Brasil
         longitude: -47.8825,
       }))
@@ -687,23 +722,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderIntroStep = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="sparkles-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-      <Text style={styles.stepTitle}>{t('onboarding.step.intro.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.intro.description')}</Text>
-      <View style={styles.introCard}>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item1')}</Text>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item2')}</Text>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item3')}</Text>
-      </View>
-    </View>
-  )
-
-  const renderStep1 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-      
-      <Text style={styles.stepTitle}>{t('onboarding.step.profile.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.profile.description')}</Text>
-
       <View style={styles.filterRow}>
         <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
@@ -724,25 +742,71 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           })}
         </ScrollView>
       </View>
+      <Text style={styles.stepTitle}>{t('onboarding.step.intro.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.intro.description')}</Text>
+      <View style={styles.introCard}>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item1')}</Text>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item2')}</Text>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item3')}</Text>
+      </View>
+    </View>
+  )
+
+  const renderStep1 = () => (
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
+      
+      <Text style={styles.stepTitle}>{t('onboarding.step.profile.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.profile.description')}</Text>
 
       <View style={styles.filterRow}>
         <Text style={styles.filterTitle}>{t('onboarding.field.country')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
-          {COUNTRIES.map((country) => {
-            const active = formData.birthCountryCode === country.code
-            return (
-              <TouchableOpacity
-                key={country.code}
-                style={[styles.filterPill, active && styles.filterPillActive]}
-                onPress={() => handleCountryChange(country.code)}
-              >
-                <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>
-                  {t(country.nameKey)}
-                </Text>
-              </TouchableOpacity>
-            )
-          })}
-        </ScrollView>
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowCountrySuggestions(true)}>
+            <Ionicons name="globe-outline" size={20} color="#FFD700" />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.locationInput}
+            placeholder={t('onboarding.field.country')}
+            placeholderTextColor="#8E8E93"
+            value={countryQuery}
+            onChangeText={(text) => {
+              setCountryQuery(text)
+              setShowCountrySuggestions(true)
+            }}
+            onFocus={() => setShowCountrySuggestions(true)}
+            onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
+          />
+          {searchingCountry ? (
+            <ActivityIndicator size="small" color="#FFD700" style={styles.searchIndicator} />
+          ) : (
+            <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowCountrySuggestions(true)}>
+              <Ionicons name="chevron-down" size={18} color="#FFD700" />
+            </TouchableOpacity>
+          )}
+        </View>
+        {showCountrySuggestions && countryOptions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <Text style={styles.suggestionsTitle}>{t('onboarding.field.country')}</Text>
+            <FlatList
+              data={countryOptions.slice(0, 20)}
+              keyExtractor={(item) => item.code}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    handleCountryChange(item)
+                  }}
+                >
+                  <Text style={styles.countrySuggestionFlag}>{item.flag}</Text>
+                  <Text style={styles.suggestionText}>{item.name}</Text>
+                  <Text style={styles.countryCodeText}>{item.code}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
       </View>
 
       {/* Foto de Perfil */}
@@ -905,7 +969,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onFocus={() => {
             setShowLocationSuggestions(true)
             if (locationSuggestions.length === 0) {
-              LocationService.searchLocations('', formData.birthCountryCode).then(suggestions => {
+              LocationService.searchLocations('', formData.birthCountryCode, formData.language).then(suggestions => {
                 setLocationSuggestions(suggestions)
               }).catch(error => {
                 console.error('Erro ao carregar sugestoes padrao:', error)
@@ -1010,13 +1074,17 @@ const renderProgressBar = () => (
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ResponsiveContainer>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+        <ResponsiveContainer style={styles.responsiveContent}>
           {renderProgressBar()}
           
           <View style={styles.content}>
@@ -1071,7 +1139,8 @@ const renderProgressBar = () => (
             <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
           </TouchableOpacity>
         </ResponsiveContainer>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </LinearGradient>
   )
 }
@@ -1080,11 +1149,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  responsiveContent: {
+    flex: 0,
+    width: '100%',
+  },
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: 60,
-    paddingBottom: 80,
+    paddingBottom: 120,
   },
   progressContainer: {
     marginBottom: 40,
@@ -1114,6 +1187,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
+    width: '100%',
   },
   stepContainerLandscape: {
     flexDirection: 'row',
@@ -1155,6 +1229,7 @@ const styles = StyleSheet.create({
   filterRow: {
     width: '100%',
     marginBottom: 12,
+    zIndex: 5,
   },
   filterTitle: {
     color: '#FFD700',
@@ -1343,6 +1418,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
+  countrySuggestionFlag: {
+    fontSize: FONT_SIZES.lg,
+    marginRight: 8,
+  },
+  countryCodeText: {
+    color: '#A0A0A0',
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
   suggestionPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1427,7 +1512,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 24,
   },
   backButton: {
     flexDirection: 'row',

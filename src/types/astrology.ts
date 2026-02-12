@@ -12,5 +12,5 @@ export interface BirthData {
     longitude: number
   }
   language?: AppLanguage
-  birthCountryCode?: 'BR' | 'US' | 'ES' | 'IT'
+  birthCountryCode?: string
 }

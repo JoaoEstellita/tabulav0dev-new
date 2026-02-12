@@ -7,14 +7,19 @@ export interface LocationSuggestion {
   displayName: string
 }
 
-type SupportedCountryCode = 'BR' | 'US' | 'ES' | 'IT'
-
-const COUNTRY_NAMES: Record<SupportedCountryCode, string> = {
-  BR: 'Brasil',
-  US: 'United States',
-  ES: 'Espana',
-  IT: 'Italia',
+export interface CountryOption {
+  code: string
+  name: string
+  flag: string
 }
+
+const COMMON_COUNTRY_CODES = [
+  'BR', 'US', 'ES', 'IT', 'AR', 'MX', 'CL', 'CO', 'PE', 'UY',
+  'PT', 'FR', 'DE', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK',
+  'GB', 'IE', 'PL', 'CZ', 'RO', 'HU', 'GR', 'TR', 'RU', 'UA',
+  'CA', 'AU', 'NZ', 'JP', 'KR', 'CN', 'IN', 'ID', 'TH', 'VN',
+  'PH', 'MY', 'SG', 'AE', 'SA', 'ZA', 'EG', 'NG', 'MA', 'IL',
+] as const
 
 const BRAZILIAN_CITIES: LocationSuggestion[] = [
   { city: 'Sao Paulo', country: 'Brasil', state: 'SP', latitude: -23.5505, longitude: -46.6333, displayName: 'Sao Paulo, SP' },
@@ -29,7 +34,7 @@ const BRAZILIAN_CITIES: LocationSuggestion[] = [
   { city: 'Goiania', country: 'Brasil', state: 'GO', latitude: -16.6864, longitude: -49.2643, displayName: 'Goiania, GO' },
 ]
 
-const DEFAULT_BY_COUNTRY: Record<SupportedCountryCode, LocationSuggestion[]> = {
+const DEFAULT_BY_COUNTRY: Record<string, LocationSuggestion[]> = {
   BR: BRAZILIAN_CITIES.slice(0, 10),
   US: [{ city: 'New York', country: 'United States', state: 'NY', latitude: 40.7128, longitude: -74.006, displayName: 'New York, NY' }],
   ES: [{ city: 'Madrid', country: 'Espana', state: 'MD', latitude: 40.4168, longitude: -3.7038, displayName: 'Madrid, MD' }],
@@ -37,22 +42,93 @@ const DEFAULT_BY_COUNTRY: Record<SupportedCountryCode, LocationSuggestion[]> = {
 }
 
 class LocationService {
-  async searchLocations(query: string, countryCode: SupportedCountryCode = 'BR'): Promise<LocationSuggestion[]> {
+  private countriesCache: CountryOption[] | null = null
+
+  private codeToFlag(code: string): string {
+    return String(code || '')
+      .toUpperCase()
+      .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+  }
+
+  private getCountryDisplayName(code: string, language = 'pt-BR'): string {
+    const upper = String(code || '').toUpperCase()
+    try {
+      if (typeof Intl !== 'undefined' && typeof (Intl as any).DisplayNames === 'function') {
+        const displayNames = new (Intl as any).DisplayNames([language], { type: 'region' })
+        const translated = displayNames.of(upper)
+        if (translated) return translated
+      }
+    } catch {}
+
+    if (upper === 'BR') return 'Brasil'
+    if (upper === 'US') return 'United States'
+    if (upper === 'ES') return 'Espana'
+    if (upper === 'IT') return 'Italia'
+    return upper
+  }
+
+  async getCountries(query = '', language = 'pt-BR'): Promise<CountryOption[]> {
+    if (!this.countriesCache) {
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=cca2')
+        if (response.ok) {
+          const data = (await response.json()) as Array<{ cca2?: string }>
+          const options = (data || [])
+            .map((item) => String(item?.cca2 || '').toUpperCase())
+            .filter((code) => code.length === 2)
+            .map((code) => ({
+              code,
+              name: this.getCountryDisplayName(code, language),
+              flag: this.codeToFlag(code),
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, language))
+          this.countriesCache = options
+        }
+      } catch {}
+    }
+
+    if (!this.countriesCache || this.countriesCache.length === 0) {
+      this.countriesCache = COMMON_COUNTRY_CODES.map((code) => ({
+        code,
+        name: this.getCountryDisplayName(code, language),
+        flag: this.codeToFlag(code),
+      }))
+    }
+
+    const normalizedQuery = this.normalizeText(query || '')
+    const base = this.countriesCache.map((option) => ({
+      ...option,
+      name: this.getCountryDisplayName(option.code, language),
+    }))
+
+    if (!normalizedQuery) return base.slice(0, 80)
+
+    return base
+      .filter((option) => {
+        const name = this.normalizeText(option.name)
+        return name.includes(normalizedQuery) || option.code.toLowerCase().includes(normalizedQuery)
+      })
+      .slice(0, 80)
+  }
+
+  async searchLocations(query: string, countryCode = 'BR', language = 'pt-BR'): Promise<LocationSuggestion[]> {
+    const normalizedCountryCode = String(countryCode || 'BR').toUpperCase()
+
     if (!query || query.length < 2) {
-      return DEFAULT_BY_COUNTRY[countryCode] || DEFAULT_BY_COUNTRY.BR
+      return DEFAULT_BY_COUNTRY[normalizedCountryCode] || DEFAULT_BY_COUNTRY.BR
     }
 
     try {
-      if (countryCode === 'BR') {
+      if (normalizedCountryCode === 'BR') {
         const local = this.searchLocalBrazil(query)
         if (local.length > 0) return local
       }
-      const online = await this.searchOnlineLocations(query, countryCode)
+      const online = await this.searchOnlineLocations(query, normalizedCountryCode, language)
       if (online.length > 0) return online
-      return DEFAULT_BY_COUNTRY[countryCode] || DEFAULT_BY_COUNTRY.BR
+      return DEFAULT_BY_COUNTRY[normalizedCountryCode] || DEFAULT_BY_COUNTRY.BR
     } catch (error) {
       console.error('Location search failed', error)
-      return DEFAULT_BY_COUNTRY[countryCode] || DEFAULT_BY_COUNTRY.BR
+      return DEFAULT_BY_COUNTRY[normalizedCountryCode] || DEFAULT_BY_COUNTRY.BR
     }
   }
 
@@ -66,9 +142,10 @@ class LocationService {
     }).slice(0, 8)
   }
 
-  private async searchOnlineLocations(query: string, countryCode: SupportedCountryCode): Promise<LocationSuggestion[]> {
+  private async searchOnlineLocations(query: string, countryCode: string, language = 'pt-BR'): Promise<LocationSuggestion[]> {
+    const countryFilter = countryCode && countryCode.length === 2 ? `&countrycodes=${countryCode.toLowerCase()}` : ''
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&countrycodes=${countryCode.toLowerCase()}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8${countryFilter}`
     )
     if (!response.ok) return []
     const data = await response.json()
@@ -79,7 +156,7 @@ class LocationService {
         if (!city) return null
         return {
           city,
-          country: COUNTRY_NAMES[countryCode],
+          country: this.getCountryDisplayName(countryCode, language),
           state: this.extractStateName(displayName),
           latitude: parseFloat(item.lat),
           longitude: parseFloat(item.lon),
