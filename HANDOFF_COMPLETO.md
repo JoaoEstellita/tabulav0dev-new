@@ -166,5 +166,8 @@ Recommended action:
 - Before finishing a task, confirm whether new/changed strings need keys in frontend/src/i18n/appI18n.ts.
 - Avoid hardcoded strings in screens/components. Prefer translation keys with fallback only as temporary safety.
 
+## Release Reference
+- Use `RELEASE_CHECKLIST_FINAL.md` before production deploy.
+
 
 
