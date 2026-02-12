@@ -625,8 +625,24 @@ export default function GroupsScreen() {
     }
   }
 
+  const normalizeStatusKey = (status?: string) => {
+    const value = String(status || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+
+    if (!value) return "neutral"
+    if (["critical", "critico", "critica", "crítico", "crítica"].includes(value)) return "critical"
+    if (["challenging", "desafiador", "desafiante", "desafio", "moderado", "alerta"].includes(value)) return "challenging"
+    if (["neutral", "neutro", "estavel", "estável", "stable"].includes(value)) return "neutral"
+    if (["positive", "positivo", "boa", "bom", "good"].includes(value)) return "positive"
+    if (["excellent", "otimo", "ótimo", "excelente", "great"].includes(value)) return "excellent"
+    return value
+  }
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (normalizeStatusKey(status)) {
       case "critical":
         return "#FF4444"
       case "challenging":
@@ -643,7 +659,7 @@ export default function GroupsScreen() {
   }
 
   const getStatusRank = (status?: string) => {
-    switch (status) {
+    switch (normalizeStatusKey(status)) {
       case "critical":
         return 0
       case "challenging":
@@ -660,7 +676,7 @@ export default function GroupsScreen() {
   }
 
   const getStatusLabel = (status?: string) => {
-    switch (status) {
+    switch (normalizeStatusKey(status)) {
       case "critical":
         return tr('groups.status.critical', 'Critico')
       case "challenging":
@@ -677,8 +693,9 @@ export default function GroupsScreen() {
   }
 
   const getStatusBucket = (status?: string) => {
-    if (status === "critical" || status === "challenging") return "critical"
-    if (status === "positive" || status === "excellent") return "positive"
+    const normalized = normalizeStatusKey(status)
+    if (normalized === "critical" || normalized === "challenging") return "critical"
+    if (normalized === "positive" || normalized === "excellent") return "positive"
     return "neutral"
   }
 
@@ -696,7 +713,7 @@ export default function GroupsScreen() {
   }
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (normalizeStatusKey(status)) {
       case "critical":
         return "warning"
       case "challenging":

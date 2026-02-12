@@ -27,7 +27,6 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
-import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
 import { registerDeviceToken } from '../../services/notifications/registerDeviceToken';
@@ -42,6 +41,7 @@ const { width } = Dimensions.get('window');
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
 
 interface SettingsSection {
+  id: string;
   title: string;
   items: SettingsItem[];
 }
@@ -61,9 +61,12 @@ export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
   const { settings: userSettings, updateSettings } = useUserSettings();
   const { language, languages, setLanguage, t } = useAppLanguage();
+  const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars as any);
+    return value === key ? fallback : value;
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
-  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
   const [houseSystem, setHouseSystem] = useState<HouseSystem>('whole-sign');
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -118,20 +121,21 @@ export default function SettingsScreen() {
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
     {
-      title: 'Notificações',
+      id: 'notifications',
+      title: t('settings.section.notifications'),
       items: [
         {
           id: 'register_webpush',
-          title: 'Registrar Notificação Mobile',
-          subtitle: 'Ativar notificações no celular (PWA)',
+          title: t('settings.item.registerWebpush.title'),
+          subtitle: t('settings.item.registerWebpush.subtitle'),
           icon: 'notifications-outline',
           type: 'button',
           onPress: () => handleWebPushPress(),
         },
         {
           id: 'notification_options',
-          title: 'Opções de Notificações',
-          subtitle: 'Gerenciar tipos e preferências globais',
+          title: t('settings.item.notificationOptions.title'),
+          subtitle: t('settings.item.notificationOptions.subtitle'),
           icon: 'options-outline',
           type: 'button',
           onPress: () => navigation.navigate('NotificationPreferences' as never),
@@ -139,20 +143,21 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: 'Assinatura',
+      id: 'subscription',
+      title: t('settings.section.subscription'),
       items: [
         {
           id: 'subscription_status',
-          title: 'Status da Assinatura',
-          subtitle: 'Gerenciar plano premium',
+          title: t('settings.item.subscriptionStatus.title'),
+          subtitle: t('settings.item.subscriptionStatus.subtitle'),
           icon: 'diamond',
           type: 'button',
           onPress: () => checkSubscriptionStatus(),
         },
         {
           id: 'billing_info',
-          title: 'Informações de Pagamento',
-          subtitle: 'Ver histórico e faturas',
+          title: t('settings.item.billingInfo.title'),
+          subtitle: t('settings.item.billingInfo.subtitle'),
           icon: 'card',
           type: 'button',
           onPress: () => openBillingInfo(),
@@ -160,51 +165,52 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: 'Aplicativo',
+      id: 'app',
+      title: t('settings.section.app'),
       items: [
         {
           id: 'app_version',
-          title: 'Versão do App',
+          title: t('settings.item.appVersion.title'),
           subtitle: '1.0.0',
           icon: 'information-circle',
           type: 'link',
         },
         {
           id: 'faq',
-          title: 'Perguntas Frequentes',
-          subtitle: 'Como o app funciona',
+          title: t('settings.item.faq.title'),
+          subtitle: t('settings.item.faq.subtitle'),
           icon: 'help-circle',
           type: 'button',
           onPress: () => setShowFAQ(true),
         },
         {
           id: 'terms_of_service',
-          title: 'Termos de Uso',
-          subtitle: 'Leia nossos termos',
+          title: t('settings.item.terms.title'),
+          subtitle: t('settings.item.terms.subtitle'),
           icon: 'document-text',
           type: 'button',
           onPress: () => openTerms(),
         },
         {
           id: 'privacy_policy',
-          title: 'Política de Privacidade',
-          subtitle: 'Como protegemos seus dados',
+          title: t('settings.item.privacy.title'),
+          subtitle: t('settings.item.privacy.subtitle'),
           icon: 'shield-checkmark',
           type: 'button',
           onPress: () => openPrivacyPolicy(),
         },
         {
           id: 'support',
-          title: 'Suporte',
-          subtitle: 'WhatsApp e email de suporte',
+          title: t('settings.item.support.title'),
+          subtitle: t('settings.item.support.subtitle'),
           icon: 'help-circle',
           type: 'button',
           onPress: () => openSupport(),
         },
         {
           id: 'feedback',
-          title: 'Enviar Feedback',
-          subtitle: 'Sugestões via WhatsApp',
+          title: t('settings.item.feedback.title'),
+          subtitle: t('settings.item.feedback.subtitle'),
           icon: 'chatbubble-ellipses',
           type: 'button',
           onPress: () => openFeedback(),
@@ -212,12 +218,13 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: 'Conta',
+      id: 'account',
+      title: t('settings.section.account'),
       items: [
         {
           id: 'sign_out',
-          title: 'Sair da Conta',
-          subtitle: 'Fazer logout',
+          title: t('settings.item.signOut.title'),
+          subtitle: t('settings.item.signOut.subtitle'),
           icon: 'log-out',
           type: 'danger',
           onPress: () => handleSignOut(),
@@ -394,11 +401,11 @@ export default function SettingsScreen() {
 
       if (status === 'denied') {
         Alert.alert(
-          'Ativar notificações',
-          'As notificações estão bloqueadas. Abra os ajustes do sistema para permitir.',
+          tr('settings.alert.notificationsBlocked.title', 'Ativar notificações'),
+          tr('settings.alert.notificationsBlocked.body', 'As notificações estão bloqueadas. Abra os ajustes do sistema para permitir.'),
           [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
+            { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+            { text: tr('settings.alert.openSettings', 'Abrir ajustes'), onPress: () => Linking.openSettings() },
           ]
         );
         return;
@@ -408,11 +415,11 @@ export default function SettingsScreen() {
       setNotificationPermission(request.status);
       if (request.status !== 'granted') {
         Alert.alert(
-          'Permissão não concedida',
-          'Se quiser ativar depois, use os ajustes do sistema.',
+          tr('settings.alert.permissionDenied.title', 'Permissão não concedida'),
+          tr('settings.alert.permissionDenied.body', 'Se quiser ativar depois, use os ajustes do sistema.'),
           [
-            { text: 'OK', style: 'default' },
-            { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
+            { text: tr('common.ok', 'OK'), style: 'default' },
+            { text: tr('settings.alert.openSettings', 'Abrir ajustes'), onPress: () => Linking.openSettings() },
           ]
         );
       } else if (user?.uid) {
@@ -421,7 +428,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Erro ao solicitar permissão de notificações', error);
-      Alert.alert('Erro', 'Não foi possível solicitar permissão de notificações.');
+      Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.notificationPermissionFailed', 'Não foi possível solicitar permissão de notificações.'));
     }
   };
 
@@ -447,54 +454,54 @@ export default function SettingsScreen() {
     if (!isNotificationsActive()) {
       bounceWebPushButton();
     }
-    if (!user?.uid) return Alert.alert('Erro', 'Faça login para registrar');
+    if (!user?.uid) return Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.loginToRegister', 'Faça login para registrar'));
     try {
       if (Platform.OS === 'web') {
         const webNotification = (globalThis as any).Notification;
         if (!webNotification) {
-          window.alert('Notificações não suportadas neste navegador.');
+          window.alert(tr('settings.alert.webPushUnsupported', 'Notificações não suportadas neste navegador.'));
           return;
         }
         if (webNotification.permission !== 'granted') {
           const permission = await webNotification.requestPermission();
           if (permission !== 'granted') {
-            window.alert('Permissão de notificação não concedida.');
+            window.alert(tr('settings.alert.webPushPermissionDenied', 'Permissão de notificação não concedida.'));
             loadPushStatus();
             return;
           }
         }
         await subscribeWebPush(user.uid);
-        window.alert('Web Push registrado!');
+        window.alert(tr('settings.alert.webPushRegistered', 'Web Push registrado!'));
       } else {
         const result = await registerDeviceToken(user.uid);
         if (result?.error) {
-          Alert.alert('Erro', result.error);
+          Alert.alert(tr('common.error', 'Erro'), result.error);
         } else {
-          Alert.alert('Sucesso', 'Notificações do celular ativadas!');
+          Alert.alert(tr('common.success', 'Sucesso'), tr('settings.alert.mobileNotificationsEnabled', 'Notificações do celular ativadas!'));
         }
       }
       loadPushStatus();
       refreshNotificationPermission();
     } catch (e: any) {
-      const message = e?.message || 'Falha ao registrar notificação';
+      const message = e?.message || tr('settings.alert.webPushRegisterFailed', 'Falha ao registrar notificação');
       if (Platform.OS === 'web') {
         window.alert(message);
       } else {
-        Alert.alert('Erro', message);
+        Alert.alert(tr('common.error', 'Erro'), message);
       }
     }
   }
 
   const houseSystemDescriptions: Record<string, string> = {
-    placidus: 'Placidus (tempo/quadrantes): calcula as cúspides pelas divisões de tempo do “arco diurno” (o quanto um ponto leva para ir do horizonte ao Meio do Céu, etc.). Por isso, as casas podem ter tamanhos diferentes (desiguais) dependendo da latitude e do horário.',
-    'whole-sign': 'Casas Inteiras: a Casa 1 é o signo inteiro que contém o Ascendente; o signo seguinte vira a Casa 2, e assim por diante. Resultado: cada casa = 1 signo inteiro (30°), com uma divisão bem “limpa” e constante.',
-    'psychological-shift': 'Psicológico (Casas Naturais / Casa 1 = Áries): fixa a sequência Casa 1 = Áries, Casa 2 = Touro… (todas de 30°), como um modelo simbólico/interpretativo, sem depender do Ascendente para definir a Casa 1.',
-    equal: 'Casas iguais de 30°; simples e direta.',
-    porphyry: 'Divide entre Ascendente e MC; boa para iniciantes.',
-    regiomontanus: 'Baseada na esfera celeste; tradicional.',
-    koch: 'Foco na latitude e tempo; detalhada.',
-    campanus: 'Divide o ceu em 12; visual e intuitiva.',
-    topocentric: 'Variante moderna; busca precisao.',
+    placidus: t('settings.houses.desc.placidus'),
+    'whole-sign': t('settings.houses.desc.wholeSign'),
+    'psychological-shift': t('settings.houses.desc.psychologicalShift'),
+    equal: t('settings.houses.desc.equal'),
+    porphyry: t('settings.houses.desc.porphyry'),
+    regiomontanus: t('settings.houses.desc.regiomontanus'),
+    koch: t('settings.houses.desc.koch'),
+    campanus: t('settings.houses.desc.campanus'),
+    topocentric: t('settings.houses.desc.topocentric'),
   };
 
   const forceBackendStatusRefresh = async (uid: string, reason: string) => {
@@ -555,7 +562,7 @@ export default function SettingsScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-        Alert.alert("Permissão necessária", "Precisamos de acesso à galeria para selecionar sua foto.");
+        Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.galleryPermission', 'Precisamos de acesso à galeria para selecionar sua foto.'));
       return false;
     }
     return true;
@@ -568,7 +575,7 @@ export default function SettingsScreen() {
       if (source === "camera") {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== "granted") {
-      Alert.alert("Permissão necessária", "Precisamos de acesso à câmera.");
+      Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.cameraPermission', 'Precisamos de acesso à câmera.'));
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -601,7 +608,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error("Erro ao selecionar foto:", error);
-      Alert.alert("Erro", "Não foi possível selecionar a foto. Tente novamente.");
+      Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.selectPhotoFailed', 'Não foi possível selecionar a foto. Tente novamente.'));
     }
   };
 
@@ -643,10 +650,10 @@ export default function SettingsScreen() {
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
 
-    Alert.alert("Escolher Foto", "Como voce gostaria de adicionar sua foto?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Galeria", onPress: () => pickImage("gallery") },
-      { text: "Camera", onPress: () => pickImage("camera") },
+    Alert.alert(tr('settings.alert.choosePhoto.title', 'Escolher foto'), tr('settings.alert.choosePhoto.body', 'Como você gostaria de adicionar sua foto?'), [
+      { text: tr('common.cancel', 'Cancelar'), style: "cancel" },
+      { text: tr('settings.alert.choosePhoto.gallery', 'Galeria'), onPress: () => pickImage("gallery") },
+      { text: tr('settings.alert.choosePhoto.camera', 'Câmera'), onPress: () => pickImage("camera") },
     ]);
   };
 
@@ -655,15 +662,15 @@ export default function SettingsScreen() {
     try {
       setSavingProfile(true);
       if (birthDate && !isValidBirthDate(birthDate)) {
-        Alert.alert("Data invalida", "Use o formato AAAA-MM-DD.");
+        Alert.alert(tr('settings.alert.invalidBirthDate.title', 'Data inválida'), tr('settings.alert.invalidBirthDate.body', 'Use o formato AAAA-MM-DD.'));
         return;
       }
       if (birthTime && !isValidBirthTime(birthTime)) {
-        Alert.alert("Horário inválido", "Use o formato HH:MM.");
+        Alert.alert(tr('settings.alert.invalidBirthTime.title', 'Horário inválido'), tr('settings.alert.invalidBirthTime.body', 'Use o formato HH:MM.'));
         return;
       }
       if (isEditingProfile && locationQuery && !selectedLocation && !birthLocation) {
-        Alert.alert("Local de nascimento", "Selecione uma cidade da lista.");
+        Alert.alert(tr('settings.alert.birthLocation.title', 'Local de nascimento'), tr('settings.alert.birthLocation.body', 'Selecione uma cidade da lista.'));
         return;
       }
       let updatedPhoto = profilePhoto;
@@ -673,7 +680,7 @@ export default function SettingsScreen() {
       }
 
       const payload: Record<string, any> = {
-        displayName: profileName || user.email?.split("@")[0] || "Usuário",
+        displayName: profileName || user.email?.split("@")[0] || t('settings.profile.defaultUser'),
         profilePhoto: updatedPhoto || null,
       };
       if (whatsappPhone) {
@@ -707,10 +714,10 @@ export default function SettingsScreen() {
       setProfileSnapshot(null);
       setShowLocationSuggestions(false);
       setProfilePhotoDirty(false);
-      Alert.alert("Sucesso", "Perfil atualizado!");
+      Alert.alert(tr('common.success', 'Sucesso'), tr('settings.alert.profileUpdated', 'Perfil atualizado!'));
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
-      Alert.alert("Erro", "Não foi possível salvar seu perfil agora.");
+      Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.profileSaveFailed', 'Não foi possível salvar seu perfil agora.'));
     } finally {
       setSavingProfile(false);
     }
@@ -817,7 +824,7 @@ export default function SettingsScreen() {
       setIsLoading(true);
       
       if (!user?.uid) {
-        Alert.alert('Erro', 'Usuário não identificado.');
+        Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.userNotIdentified', 'Usuário não identificado.'));
         return;
       }
 
@@ -830,70 +837,69 @@ export default function SettingsScreen() {
           new Date(status.expiresAt).toLocaleDateString('pt-BR') : 'N/A';
         
         Alert.alert(
-          'Assinatura Ativa',
-          `Plano: ${planName}\nExpira em: ${expiresAt}\n\nDeseja gerenciar sua assinatura?`,
+          tr('settings.alert.subscriptionActive.title', 'Assinatura Ativa'),
+          tr('settings.alert.subscriptionActive.body', 'Plano: {plan}\nExpira em: {expiresAt}\n\nDeseja gerenciar sua assinatura?', { plan: planName, expiresAt }),
           [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Gerenciar', onPress: () => openSubscriptionManagement() }
+            { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+            { text: tr('settings.alert.subscriptionActive.manage', 'Gerenciar'), onPress: () => openSubscriptionManagement() }
           ]
         );
       } else if (MercadoPagoService.isInTrial(status)) {
         const daysRemaining = MercadoPagoService.getTrialDaysRemaining(status);
         Alert.alert(
-          'Período de teste',
-          `Você está no período de teste gratuito!\nDias restantes: ${daysRemaining}\n\nDeseja assinar um plano?`,
+          tr('settings.alert.trial.title', 'Período de teste'),
+          tr('settings.alert.trial.body', 'Você está no período de teste gratuito!\nDias restantes: {days}\n\nDeseja assinar um plano?', { days: daysRemaining }),
           [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
+            { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+            { text: tr('settings.alert.seePlans', 'Ver Planos'), onPress: () => openSubscriptionPlans() }
           ]
         );
       } else {
         Alert.alert(
-          'Assinatura Premium',
-          'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e análises avançadas!',
+          tr('settings.alert.premium.title', 'Assinatura Premium'),
+          tr('settings.alert.premium.body', 'Desbloqueie recursos exclusivos como IA conversacional, matching de casais e análises avançadas!'),
           [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Ver Planos', onPress: () => openSubscriptionPlans() }
+            { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+            { text: tr('settings.alert.seePlans', 'Ver Planos'), onPress: () => openSubscriptionPlans() }
           ]
         );
       }
     } catch (error) {
       console.error('Erro ao verificar assinatura:', error);
-      Alert.alert('Erro', 'Não foi possível verificar o status da assinatura.');
+      Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.subscriptionStatusFailed', 'Não foi possível verificar o status da assinatura.'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const openSubscriptionPlans = () => {
-    setShowSubscriptionPlans(true);
+    (navigation as any).navigate('Premium', { openTab: 'features' });
   };
 
   const openSubscriptionManagement = () => {
-    // TODO: Navegar para tela de gerenciamento de assinatura
-    Alert.alert('Gerenciar Assinatura', 'Funcionalidade em desenvolvimento.');
+    (navigation as any).navigate('Premium', { openTab: 'features' });
   };
 
   const openBillingInfo = () => {
-    Linking.openURL('https://www.mercadopago.com.br');
+    (navigation as any).navigate('Premium', { openTab: 'features' });
   };
 
   // Funcoes removidas pois agora usam os hooks
 
   const deleteAccount = () => {
     Alert.alert(
-      'Excluir Conta',
-      'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.',
+      tr('settings.alert.deleteAccount.title', 'Excluir Conta'),
+      tr('settings.alert.deleteAccount.body', 'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.'),
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: async () => {
+        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+        { text: tr('settings.alert.deleteAccount.confirm', 'Excluir'), style: 'destructive', onPress: async () => {
           try {
             setIsLoading(true);
             await deleteUserAccount();
-            Alert.alert('Conta excluída', 'Sua conta foi excluída com sucesso.');
+            Alert.alert(tr('settings.alert.deleteAccount.deletedTitle', 'Conta excluída'), tr('settings.alert.deleteAccount.deletedBody', 'Sua conta foi excluída com sucesso.'));
           } catch (error) {
             console.error('Erro ao excluir conta:', error);
-            Alert.alert('Erro', 'Não foi possível excluir a conta. Tente novamente.');
+            Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.deleteAccount.failed', 'Não foi possível excluir a conta. Tente novamente.'));
           } finally {
             setIsLoading(false);
           }
@@ -903,19 +909,14 @@ export default function SettingsScreen() {
   };
 
   const handleSignOut = () => {
-    console.log('oi handleSignOut chamado')
-    console.log('Usuário atual:', user?.uid)
-    console.log('Funcao logout disponivel:', !!logout)
-    
     if (Platform.OS === 'web') {
       try {
         // window.confirm retorna true/false no Web
         // eslint-disable-next-line no-restricted-globals
-        const ok = typeof window !== 'undefined' ? window.confirm('Tem certeza que deseja sair?') : true
+        const ok = typeof window !== 'undefined' ? window.confirm(tr('settings.alert.signOut.confirmBody', 'Tem certeza que deseja sair?')) : true
         if (!ok) return
         setIsLoading(true)
         logout()
-          .then(() => console.log('Logout (web) realizado com sucesso'))
           .catch((error) => console.error('Erro no logout (web):', error))
           .finally(() => setIsLoading(false))
       } catch (error) {
@@ -925,20 +926,18 @@ export default function SettingsScreen() {
     }
 
     Alert.alert(
-      'Sair da Conta',
-      'Tem certeza que deseja sair?',
+      tr('settings.alert.signOut.title', 'Sair da Conta'),
+      tr('settings.alert.signOut.confirmBody', 'Tem certeza que deseja sair?'),
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', style: 'destructive', onPress: async () => {
+        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+        { text: tr('settings.alert.signOut.confirm', 'Sair'), style: 'destructive', onPress: async () => {
           try {
-            console.log('Iniciando processo de logout...')
             setIsLoading(true);
             await logout();
-            console.log('Logout realizado com sucesso');
-            Alert.alert('Sucesso', 'Logout realizado com sucesso!');
+            Alert.alert(tr('common.success', 'Sucesso'), tr('settings.alert.signOut.success', 'Logout realizado com sucesso!'));
           } catch (error) {
             console.error('Erro no logout:', error);
-            Alert.alert('Erro', 'Não foi possível fazer logout. Tente novamente.');
+            Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.signOut.failed', 'Não foi possível fazer logout. Tente novamente.'));
           } finally {
             setIsLoading(false);
           }
@@ -956,10 +955,10 @@ export default function SettingsScreen() {
   };
 
   const openSupport = () => {
-    Alert.alert('Suporte', 'Escolha como falar com a equipe:', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'WhatsApp', onPress: () => Linking.openURL('https://w.app/tabulaestelar') },
-      { text: 'Email', onPress: () => Linking.openURL('mailto:contato@tabulaestelar.com.br') },
+    Alert.alert(tr('settings.alert.support.title', 'Suporte'), tr('settings.alert.support.body', 'Escolha como falar com a equipe:'), [
+      { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+      { text: tr('settings.alert.support.whatsapp', 'WhatsApp'), onPress: () => Linking.openURL('https://w.app/tabulaestelar') },
+      { text: tr('settings.alert.support.email', 'Email'), onPress: () => Linking.openURL('mailto:contato@tabulaestelar.com.br') },
     ]);
   };
 
@@ -989,12 +988,12 @@ export default function SettingsScreen() {
     const isLink = item.type === 'link';
     const isWebPush = item.id === 'register_webpush';
     const isPushRegistered = Platform.OS === 'web' ? pushStatus.hasWebPush : pushStatus.hasFcmToken;
-    const notificationStatusLabel = isPushRegistered ? 'Registrado' : 'Clique para registrar';
+    const notificationStatusLabel = isPushRegistered ? t('settings.push.statusRegistered') : t('settings.push.statusClickToRegister');
     const displayTitle = isWebPush
-      ? (isPushRegistered ? 'Notificação Mobile' : 'Registrar Notificação Mobile')
+      ? (isPushRegistered ? t('settings.push.mobileTitle') : t('settings.push.registerMobileTitle'))
       : item.title;
     const displaySubtitle = isWebPush
-      ? (isPushRegistered ? 'Registrado' : 'Ativar notificações no celular (PWA)')
+      ? (isPushRegistered ? t('settings.push.statusRegistered') : t('settings.item.registerWebpush.subtitle'))
       : item.subtitle;
 
     const content = (
@@ -1103,10 +1102,10 @@ export default function SettingsScreen() {
         {content}
         <View style={styles.pushStatusCard}>
           <View style={styles.pushStatusHeader}>
-            <Text style={styles.pushStatusTitle}>Status de notificações</Text>
+            <Text style={styles.pushStatusTitle}>{t('settings.push.statusTitle')}</Text>
             <TouchableOpacity style={styles.pushStatusRefresh} onPress={loadPushStatus}>
               <Ionicons name="refresh" size={14} color="#FFD700" />
-              <Text style={styles.pushStatusRefreshText}>Atualizar</Text>
+              <Text style={styles.pushStatusRefreshText}>{t('settings.push.refresh')}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -1115,58 +1114,58 @@ export default function SettingsScreen() {
             disabled={isPushRegistered}
           >
             <View style={[styles.pushStatusDot, isPushRegistered ? styles.pushStatusOk : styles.pushStatusWarn]} />
-            <Text style={styles.pushStatusLabel}>Notificação do celular:</Text>
+            <Text style={styles.pushStatusLabel}>{t('settings.push.mobileLabel')}</Text>
             <Text style={[styles.pushStatusValue, !isPushRegistered && styles.pushStatusCta]}>
               {notificationStatusLabel}
             </Text>
           </TouchableOpacity>
           {Platform.OS === 'web' && (
             <View style={styles.pushDiagnostics}>
-              <Text style={styles.pushDiagnosticsTitle}>Diagnóstico Web Push</Text>
+              <Text style={styles.pushDiagnosticsTitle}>{t('settings.push.diagnosticsTitle')}</Text>
               <View style={styles.pushDiagnosticsRow}>
-                <Text style={styles.pushDiagnosticsLabel}>Permissão:</Text>
+                <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.permissionLabel')}</Text>
                 <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.permission}</Text>
               </View>
               <View style={styles.pushDiagnosticsRow}>
-                <Text style={styles.pushDiagnosticsLabel}>Service Worker:</Text>
+                <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.serviceWorkerLabel')}</Text>
                 <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.serviceWorkerState}</Text>
               </View>
               <View style={styles.pushDiagnosticsRow}>
-                <Text style={styles.pushDiagnosticsLabel}>Push Manager:</Text>
+                <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.pushManagerLabel')}</Text>
                 <Text style={styles.pushDiagnosticsValue}>
-                  {webPushDiagnostics.pushManagerSupported ? 'suportado' : 'não suportado'}
+                  {webPushDiagnostics.pushManagerSupported ? t('settings.push.supported') : t('settings.push.unsupported')}
                 </Text>
               </View>
               <View style={styles.pushDiagnosticsRow}>
-                <Text style={styles.pushDiagnosticsLabel}>Subscription:</Text>
+                <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.subscriptionLabel')}</Text>
                 <Text style={styles.pushDiagnosticsValue}>
-                  {webPushDiagnostics.subscriptionActive ? 'ativa' : 'inativa'}
+                  {webPushDiagnostics.subscriptionActive ? t('settings.push.active') : t('settings.push.inactive')}
                 </Text>
               </View>
               {webPushDiagnostics.subscriptionEndpoint ? (
                 <View style={styles.pushDiagnosticsRow}>
-                  <Text style={styles.pushDiagnosticsLabel}>Endpoint:</Text>
+                  <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.endpointLabel')}</Text>
                   <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.subscriptionEndpoint}</Text>
                 </View>
               ) : null}
               {webPushDiagnostics.subscriptionExpiration ? (
                 <View style={styles.pushDiagnosticsRow}>
-                  <Text style={styles.pushDiagnosticsLabel}>Expira:</Text>
+                  <Text style={styles.pushDiagnosticsLabel}>{t('settings.push.expiresLabel')}</Text>
                   <Text style={styles.pushDiagnosticsValue}>{webPushDiagnostics.subscriptionExpiration}</Text>
                 </View>
               ) : null}
             </View>
           )}
           {pushStatusLoading && (
-            <Text style={styles.pushStatusLoading}>Atualizando...</Text>
+            <Text style={styles.pushStatusLoading}>{t('settings.push.updating')}</Text>
           )}
         </View>
       </Animated.View>
     );
   };
 
-  const notificationSection = settingsSections.find((section) => section.title === 'Notificações');
-  const otherSections = settingsSections.filter((section) => section.title !== 'Notificações');
+  const notificationSection = settingsSections.find((section) => section.id === 'notifications');
+  const otherSections = settingsSections.filter((section) => section.id !== 'notifications');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1180,9 +1179,9 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Configurações</Text>
+            <Text style={styles.title}>{t('nav.settings')}</Text>
             <Text style={styles.subtitle}>
-              Personalize sua experiência no Tabula Estelar
+              {t('settings.header.subtitle')}
             </Text>
           </View>
 
@@ -1205,28 +1204,28 @@ export default function SettingsScreen() {
                 <>
                   <TextInput
                     style={styles.nameInput}
-                    placeholder="Seu nome"
+                    placeholder={t('settings.profile.namePlaceholder')}
                     placeholderTextColor="#888"
                     value={profileName}
                     onChangeText={setProfileName}
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Data de nascimento (AAAA-MM-DD)"
+                    placeholder={t('settings.profile.birthDatePlaceholder')}
                     placeholderTextColor="#888"
                     value={birthDate}
                     onChangeText={setBirthDate}
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Horário de nascimento (HH:MM)"
+                    placeholder={t('settings.profile.birthTimePlaceholder')}
                     placeholderTextColor="#888"
                     value={birthTime}
                     onChangeText={setBirthTime}
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="WhatsApp (com DDD)"
+                    placeholder={t('settings.profile.whatsappPlaceholder')}
                     placeholderTextColor="#888"
                     value={whatsappPhone}
                     onChangeText={setWhatsappPhone}
@@ -1234,13 +1233,13 @@ export default function SettingsScreen() {
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Local de nascimento"
+                    placeholder={t('settings.profile.birthLocationPlaceholder')}
                     placeholderTextColor="#888"
                     value={locationQuery}
                     onChangeText={handleLocationQueryChange}
                     onFocus={() => setShowLocationSuggestions(true)}
                   />
-                  <Text style={styles.helperText}>Use o formato AAAA-MM-DD e HH:MM.</Text>
+                  <Text style={styles.helperText}>{t('settings.profile.formatHint')}</Text>
                   {showLocationSuggestions && locationSuggestions.length > 0 && (
                     <View style={styles.suggestionsContainer}>
                       {locationSuggestions.map((item, idx) => (
@@ -1257,28 +1256,28 @@ export default function SettingsScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.userName}>{profileName || "Usuário"}</Text>
+                  <Text style={styles.userName}>{profileName || t('settings.profile.defaultUser')}</Text>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Data:</Text>
-                    <Text style={styles.infoValue}>{birthDate || "Não informado"}</Text>
+                    <Text style={styles.infoLabel}>{t('settings.profile.labelDate')}</Text>
+                    <Text style={styles.infoValue}>{birthDate || t('settings.profile.notInformed')}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Horário:</Text>
-                    <Text style={styles.infoValue}>{birthTime || "Não informado"}</Text>
+                    <Text style={styles.infoLabel}>{t('settings.profile.labelTime')}</Text>
+                    <Text style={styles.infoValue}>{birthTime || t('settings.profile.notInformed')}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>WhatsApp:</Text>
-                    <Text style={styles.infoValue}>{whatsappPhone || "Não informado"}</Text>
+                    <Text style={styles.infoLabel}>{t('settings.profile.labelWhatsapp')}</Text>
+                    <Text style={styles.infoValue}>{whatsappPhone || t('settings.profile.notInformed')}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Local:</Text>
+                    <Text style={styles.infoLabel}>{t('settings.profile.labelLocation')}</Text>
                     <Text style={styles.infoValue}>{formatBirthLocation(birthLocation)}</Text>
                   </View>
                 </>
               )}
 
               <Text style={styles.userEmail}>
-                {user?.email || "usuario@email.com"}
+                {user?.email || t('settings.profile.defaultEmail')}
               </Text>
               <View style={styles.profileActions}>
                 <TouchableOpacity
@@ -1292,7 +1291,7 @@ export default function SettingsScreen() {
                     color="#0a0e27"
                   />
                   <Text style={styles.editProfileText}>
-                    {isEditingProfile ? "Cancelar" : "Editar"}
+                    {isEditingProfile ? t('common.cancel') : t('settings.profile.edit')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1305,7 +1304,7 @@ export default function SettingsScreen() {
                 >
                   <Ionicons name="checkmark" size={14} color="#0a0e27" />
                   <Text style={styles.saveProfileText}>
-                    {savingProfile ? "Salvando..." : "Salvar"}
+                    {savingProfile ? t('common.saving') : t('settings.profile.save')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1324,7 +1323,7 @@ export default function SettingsScreen() {
                     style={[styles.languagePill, active && styles.languagePillActive]}
                     onPress={async () => {
                       await setLanguage(item.code)
-                      Alert.alert('OK', t('settings.language.changed', { language: item.nativeLabel }))
+                      Alert.alert(tr('common.ok', 'OK'), t('settings.language.changed', { language: item.nativeLabel }))
                     }}
                   >
                     <Text style={[styles.languagePillText, active && styles.languagePillTextActive]}>
@@ -1347,9 +1346,9 @@ export default function SettingsScreen() {
 
           {/* Sistema de Casas */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sistema de Casas</Text>
+            <Text style={styles.sectionTitle}>{t('settings.houses.title')}</Text>
             <Text style={styles.sectionNote}>
-              Afeta mapas e análises; sistemas diferentes mudam as casas e os significados.
+              {t('settings.houses.subtitle')}
             </Text>
             <View style={styles.sectionContent}>
               {HOUSE_SYSTEMS.map((system) => {
@@ -1367,7 +1366,7 @@ export default function SettingsScreen() {
                       <View style={styles.itemText}>
                         <Text style={styles.itemTitle}>{formatHouseSystemLabel(system)}</Text>
                         <Text style={styles.itemSubtitle}>
-                          {houseSystemDescriptions[system] || 'Aplicar ao mapa natal e trânsitos'}
+                          {houseSystemDescriptions[system] || t('settings.houses.applyFallback')}
                         </Text>
                       </View>
                     </View>
@@ -1394,10 +1393,10 @@ export default function SettingsScreen() {
           {/* App Info */}
           <View style={styles.appInfo}>
             <Text style={styles.appInfoText}>
-              Tabula Estelar v1.0.0
+              {tr('settings.appInfo.version', 'Tabula Estelar v1.0.0')}
             </Text>
             <Text style={styles.appInfoSubtext}>
-              Desenvolvido com cuidado para sua jornada astrológica
+              {tr('settings.appInfo.tagline', 'Desenvolvido com cuidado para sua jornada astrológica')}
             </Text>
           </View>
         </ScrollView>
@@ -1405,10 +1404,6 @@ export default function SettingsScreen() {
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
-      <SubscriptionPlansModal
-        visible={showSubscriptionPlans}
-        onClose={() => setShowSubscriptionPlans(false)}
-      />
     </SafeAreaView>
   );
 }

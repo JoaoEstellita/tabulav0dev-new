@@ -23,13 +23,13 @@ import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
 
-const HUB_ACTIONS: Record<string, { label: string; icon: string; description: string; cost: number }> = {
-  birth: { label: 'Mapa natal', icon: 'star', description: 'Leitura completa do seu mapa natal.', cost: 1 },
-  transit: { label: 'Transitos', icon: 'pulse', description: 'Analise do dia/periodo escolhido.', cost: 1 },
-  synastry: { label: 'Sinastria', icon: 'heart', description: 'Compatibilidade entre duas pessoas.', cost: 2 },
-  composite: { label: 'Mapa composto', icon: 'git-compare', description: 'Mapa da relacao.', cost: 1 },
-  solar: { label: 'Retorno solar', icon: 'sunny', description: 'Analise do novo ciclo solar.', cost: 1 },
-  lunar: { label: 'Retorno lunar', icon: 'moon', description: 'Analise do ciclo lunar.', cost: 1 },
+const HUB_ACTIONS: Record<string, { labelKey: string; descriptionKey: string; icon: string; cost: number }> = {
+  birth: { labelKey: 'premium.actions.birth.label', icon: 'star', descriptionKey: 'premium.actions.birth.desc', cost: 1 },
+  transit: { labelKey: 'premium.actions.transit.label', icon: 'pulse', descriptionKey: 'premium.actions.transit.desc', cost: 1 },
+  synastry: { labelKey: 'premium.actions.synastry.label', icon: 'heart', descriptionKey: 'premium.actions.synastry.desc', cost: 2 },
+  composite: { labelKey: 'premium.actions.composite.label', icon: 'git-compare', descriptionKey: 'premium.actions.composite.desc', cost: 1 },
+  solar: { labelKey: 'premium.actions.solar.label', icon: 'sunny', descriptionKey: 'premium.actions.solar.desc', cost: 1 },
+  lunar: { labelKey: 'premium.actions.lunar.label', icon: 'moon', descriptionKey: 'premium.actions.lunar.desc', cost: 1 },
 }
 
 type HubHistoryItem = {
@@ -40,7 +40,11 @@ type HubHistoryItem = {
 }
 
 export default function PremiumScreen() {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
+  const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars)
+    return value === key ? fallback : value
+  }
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()
@@ -75,7 +79,7 @@ export default function PremiumScreen() {
   const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>('mercadopago')
   const expiryInfo = useMemo(() => {
     return getExpiryBannerInfo({
-      featureLabel: 'Premium',
+      featureLabel: tr('premium.header.title', 'Premium'),
       trialActive,
       trialEndsAt: subscription?.trialEndsAt || null,
       subscriptionNextBillingDate: subscription?.nextBillingDate || null,
@@ -88,7 +92,7 @@ export default function PremiumScreen() {
     const daysLeft = expiryInfo.daysLeft
     if (typeof daysLeft !== 'number') return expiryInfo.message
     if (daysLeft <= 0) return expiryInfo.message
-    return `${expiryInfo.message} (${daysLeft} dias)`
+    return `${expiryInfo.message} (${daysLeft} ${tr('premium.common.days', 'dias')})`
   }, [expiryInfo])
 
   useEffect(() => {
@@ -156,7 +160,7 @@ export default function PremiumScreen() {
       const mapped = Array.isArray(items)
         ? items.map((item: any) => ({
           id: item.id || `${item.type || 'credit'}-${item.createdAt || Date.now()}`,
-          type: item.type || 'movimentacao',
+          type: item.type || tr('premium.credits.type.movement', 'movimentacao'),
           qty: Math.abs(Number(item.delta ?? 0)) || 0,
           ts: item.createdAt || item.ts || new Date().toISOString(),
           detail: item.source || item.meta?.packId || item.meta?.action || item.meta?.planId || undefined,
@@ -166,7 +170,7 @@ export default function PremiumScreen() {
         : []
       setCreditHistory(mapped)
     } catch (error: any) {
-      setCreditsHistoryError(error?.message || 'Falha ao carregar historico')
+      setCreditsHistoryError(error?.message || tr('premium.creditsHistory.loadFailed', 'Falha ao carregar historico'))
     } finally {
       setCreditsHistoryLoading(false)
     }
@@ -193,24 +197,23 @@ export default function PremiumScreen() {
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) return null
     const daysLeft = Math.max(0, Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-    const formatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-    const plural = daysLeft === 1 ? 'dia' : 'dias'
-    return { label: formatted, daysLeft, message: `Renova em ${daysLeft} ${plural} (${formatted}).` }
+    const formatted = date.toLocaleDateString(language, { day: '2-digit', month: 'short' })
+    return { label: formatted, daysLeft, message: tr('premium.billing.renewsAt', 'Renova em {days} dias ({date}).', { days: daysLeft, date: formatted }) }
   }
 
   const handlePurchaseCredits = (pack: { id: string; label: string; price: number }) => {
     if (!user) {
-      Alert.alert('Login', 'Faça login para comprar créditos.')
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.buyCredits', 'Faça login para comprar créditos.'))
       return
     }
     if (purchaseLoading) return
     Alert.alert(
-      'Confirmar compra',
-      `Comprar ${pack.label} por R$ ${pack.price.toFixed(2)}?`,
+      tr('premium.alert.confirmPurchase.title', 'Confirmar compra'),
+      tr('premium.alert.confirmPurchase.body', 'Comprar {label} por R$ {price}?', { label: pack.label, price: pack.price.toFixed(2) }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
         {
-          text: 'Comprar',
+          text: tr('premium.alert.confirmPurchase.cta', 'Comprar'),
           onPress: async () => {
             try {
               setPurchaseLoading(pack.id)
@@ -218,19 +221,19 @@ export default function PremiumScreen() {
                 userId: user.uid,
                 planId: pack.id,
                 email: user.email || '',
-                name: user.displayName || user.email || 'Usuario',
+                name: user.displayName || user.email || tr('common.user', 'Usuario'),
                 amount: pack.price,
                 description: pack.label,
                 externalReference: MercadoPagoService.generateExternalReference(user.uid, pack.id),
               })
               const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
               if (!checkoutUrl) {
-                Alert.alert('Erro', 'Nao foi possivel gerar o link de pagamento.')
+                Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
                 return
               }
               await Linking.openURL(checkoutUrl)
             } catch (error: any) {
-              Alert.alert('Erro', 'Não foi possível iniciar a compra agora.')
+              Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.purchaseStartFailed', 'Não foi possível iniciar a compra agora.'))
             } finally {
               setPurchaseLoading(null)
             }
@@ -242,7 +245,7 @@ export default function PremiumScreen() {
 
   const handleSubscribe = async (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number }) => {
     if (plan.requiresPhone && !premiumPhone.trim()) {
-      Alert.alert('Numero necessario', 'Informe o numero do WhatsApp para assinar o Premium.')
+      Alert.alert(tr('premium.alert.phoneRequired.title', 'Número necessário'), tr('premium.alert.phoneRequired.body', 'Informe o número do WhatsApp para assinar o Premium.'))
       return
     }
     if (plan.requiresPhone && user) {
@@ -251,13 +254,13 @@ export default function PremiumScreen() {
         .catch(() => null)
     }
     if (!user) {
-      Alert.alert('Login', 'Faça login para assinar.')
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.subscribe', 'Faça login para assinar.'))
       return
     }
     try {
       const planConfig = MercadoPagoService.getPlanById(plan.id)
       if (!planConfig) {
-        Alert.alert('Plano invalido', 'Nao foi possivel localizar o plano selecionado.')
+        Alert.alert(tr('premium.alert.invalidPlan.title', 'Plano inválido'), tr('premium.alert.invalidPlan.body', 'Não foi possível localizar o plano selecionado.'))
         return
       }
       if (subscriptionProvider === 'stripe') {
@@ -265,13 +268,13 @@ export default function PremiumScreen() {
           userId: user.uid,
           planId: planConfig.id,
           email: user.email || '',
-          name: user.displayName || user.email || 'Usuario',
+          name: user.displayName || user.email || tr('common.user', 'Usuario'),
           amount: planConfig.price,
           currency: 'usd',
         })
         const stripeUrl = stripeSession?.url
         if (!stripeUrl) {
-          Alert.alert('Erro', 'Nao foi possivel gerar o link Stripe.')
+          Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.stripeLinkFailed', 'Não foi possível gerar o link Stripe.'))
           return
         }
         await Linking.openURL(stripeUrl)
@@ -281,19 +284,19 @@ export default function PremiumScreen() {
         userId: user.uid,
         planId: planConfig.id,
         email: user.email || '',
-        name: user.displayName || user.email || 'Usuario',
+        name: user.displayName || user.email || tr('common.user', 'Usuario'),
         amount: planConfig.price,
         description: planConfig.name,
         externalReference: MercadoPagoService.generateExternalReference(user.uid, planConfig.id),
       })
       const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
       if (!checkoutUrl) {
-        Alert.alert('Erro', 'Nao foi possivel gerar o link de pagamento.')
+        Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
         return
       }
       await Linking.openURL(checkoutUrl)
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao iniciar pagamento. Tente novamente.')
+      Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.'))
     }
   }
   const partnerPayload = useMemo(() => ({
@@ -331,45 +334,47 @@ export default function PremiumScreen() {
   }
 
   const buildSummary = (data: any) => {
-    if (!data) return { title: 'Resumo', lines: ['Sem dados disponíveis.'] }
+    if (!data) return { title: tr('premium.summary.title', 'Resumo'), lines: [tr('premium.summary.noData', 'Sem dados disponíveis.')] }
     if (typeof data === 'string') {
       const lines = extractSummaryLines(data)
-      return { title: 'Resumo', lines: lines.length ? lines : ['Leitura sem resumo disponível.'] }
+      return { title: tr('premium.summary.title', 'Resumo'), lines: lines.length ? lines : [tr('premium.summary.noReadingSummary', 'Leitura sem resumo disponível.')] }
     }
     if (typeof data === 'object') {
       const rawText = data.summary || data.context || data.text || data.interpretation || data.description || null
       const lines = extractSummaryLines(rawText)
-      if (lines.length) return { title: 'Resumo', lines }
+      if (lines.length) return { title: tr('premium.summary.title', 'Resumo'), lines }
       const keys = Object.keys(data || {}).slice(0, 6)
-      if (keys.length) return { title: 'Campos principais', lines: keys.map((key) => key) }
-      return { title: 'Resumo', lines: ['Leitura sem resumo disponível.'] }
+      if (keys.length) return { title: tr('premium.summary.mainFields', 'Campos principais'), lines: keys.map((key) => key) }
+      return { title: tr('premium.summary.title', 'Resumo'), lines: [tr('premium.summary.noReadingSummary', 'Leitura sem resumo disponível.')] }
     }
-    return { title: 'Resumo', lines: ['Leitura sem resumo disponível.'] }
+    return { title: tr('premium.summary.title', 'Resumo'), lines: [tr('premium.summary.noReadingSummary', 'Leitura sem resumo disponível.')] }
   }
 
   const buildKeyHighlights = (data: any) => {
     if (!data || typeof data !== 'object') return []
     const candidates: Array<{ key: string; label: string }> = [
-      { key: 'highlights', label: 'Destaques' },
-      { key: 'recommendations', label: 'Recomendacoes' },
-      { key: 'key_points', label: 'Pontos chave' },
-      { key: 'themes', label: 'Temas' },
-      { key: 'warnings', label: 'Atencoes' },
-      { key: 'strengths', label: 'Forcas' },
-      { key: 'challenges', label: 'Desafios' },
+      { key: 'highlights', label: tr('premium.highlights.highlights', 'Destaques') },
+      { key: 'recommendations', label: tr('premium.highlights.recommendations', 'Recomendacoes') },
+      { key: 'key_points', label: tr('premium.highlights.keyPoints', 'Pontos chave') },
+      { key: 'themes', label: tr('premium.highlights.themes', 'Temas') },
+      { key: 'warnings', label: tr('premium.highlights.warnings', 'Atencoes') },
+      { key: 'strengths', label: tr('premium.highlights.strengths', 'Forcas') },
+      { key: 'challenges', label: tr('premium.highlights.challenges', 'Desafios') },
     ]
     return candidates
       .filter((item) => data[item.key])
       .slice(0, 4)
       .map((item) => ({
         label: item.label,
-        value: Array.isArray(data[item.key]) ? `${data[item.key].length} itens` : 'ok',
+        value: Array.isArray(data[item.key]) ? tr('premium.highlights.itemsCount', '{count} itens', { count: data[item.key].length }) : tr('premium.highlights.ok', 'ok'),
       }))
   }
 
   const getActionMeta = (action: string | null) => {
-    if (!action) return { label: 'Leitura premium', icon: 'sparkles' }
-    return HUB_ACTIONS[action] || { label: 'Leitura premium', icon: 'sparkles' }
+    if (!action) return { label: tr('premium.actions.defaultLabel', 'Leitura premium'), icon: 'sparkles' }
+    const actionMeta = HUB_ACTIONS[action]
+    if (!actionMeta) return { label: tr('premium.actions.defaultLabel', 'Leitura premium'), icon: 'sparkles' }
+    return { label: tr(actionMeta.labelKey, action), icon: actionMeta.icon }
   }
 
   const copySummary = async () => {
@@ -379,12 +384,12 @@ export default function PremiumScreen() {
     try {
       if (Platform.OS === 'web' && navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(text)
-        Alert.alert('Copiado', 'Resumo copiado para a área de transferência.')
+        Alert.alert(tr('premium.alert.copy.title', 'Copiado'), tr('premium.alert.copy.success', 'Resumo copiado para a área de transferência.'))
       } else {
-        Alert.alert('Copiar', 'Copie manualmente o resumo na tela.')
+        Alert.alert(tr('premium.alert.copy.title2', 'Copiar'), tr('premium.alert.copy.manual', 'Copie manualmente o resumo na tela.'))
       }
     } catch {
-      Alert.alert('Copiar', 'Não foi possível copiar automaticamente.')
+      Alert.alert(tr('premium.alert.copy.title2', 'Copiar'), tr('premium.alert.copy.failed', 'Não foi possível copiar automaticamente.'))
     }
   }
 
@@ -399,14 +404,14 @@ export default function PremiumScreen() {
       const sections = [
         { title: summary.title, content: summary.lines.join('\n') },
         ...(highlights.length
-          ? [{ title: 'Destaques', content: highlights.map((h) => `${h.label}: ${h.value}`).join('\n') }]
+          ? [{ title: tr('premium.highlights.sectionTitle', 'Destaques'), content: highlights.map((h) => `${h.label}: ${h.value}`).join('\n') }]
           : []),
       ]
       const payload = {
-        title: `Tabula Estelar - ${actionMeta.label}`,
+        title: `${tr('premium.pdf.titlePrefix', 'Tabula Estelar')} - ${actionMeta.label}`,
         summary: summary.lines.join('\n'),
         sections,
-        footer: 'Tabula Estelar',
+        footer: tr('premium.pdf.footer', 'Tabula Estelar'),
       }
       const blobOrBuffer = await AstrologerPremiumService.exportPdf(token, payload as any)
       if (Platform.OS === 'web') {
@@ -418,10 +423,10 @@ export default function PremiumScreen() {
         anchor.click()
         URL.revokeObjectURL(url)
       } else {
-        Alert.alert('Exportar PDF', 'Exportacao disponivel no web por enquanto.')
+        Alert.alert(tr('premium.alert.exportPdf.title', 'Exportar PDF'), tr('premium.alert.exportPdf.webOnly', 'Exportação disponível no web por enquanto.'))
       }
     } catch (error) {
-      Alert.alert('Erro', 'Nao foi possivel exportar o PDF.')
+      Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.exportPdf.failed', 'Não foi possível exportar o PDF.'))
     } finally {
       setExportingPdf(false)
     }
@@ -429,12 +434,12 @@ export default function PremiumScreen() {
 
   const runAction = async (action: string) => {
     if (!user) {
-      Alert.alert('Login', 'Faça login para acessar recursos premium.')
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.accessPremium', 'Faça login para acessar recursos premium.'))
       return
     }
     const actionMeta = HUB_ACTIONS[action]
     if (creditsRemaining !== null && actionMeta && creditsRemaining < actionMeta.cost) {
-      Alert.alert('Sem creditos', 'Creditos insuficientes para esta leitura.')
+      Alert.alert(tr('premium.alert.noCredits.title', 'Sem créditos'), tr('premium.alert.noCredits.body', 'Créditos insuficientes para esta leitura.'))
       return
     }
     setHubLoading(true)
@@ -471,10 +476,10 @@ export default function PremiumScreen() {
       if (actionMeta?.cost) {
         const creditEntry = {
           id: `${action}-credit-${Date.now()}`,
-          type: 'consumo',
+          type: tr('premium.credits.consumeType', 'consumo'),
           qty: actionMeta.cost,
           ts: new Date().toISOString(),
-          detail: actionMeta.label,
+          detail: tr(actionMeta.labelKey, action),
           delta: -Math.abs(actionMeta.cost),
         }
         setCreditHistory((prev) => [creditEntry, ...prev].slice(0, 20))
@@ -483,9 +488,9 @@ export default function PremiumScreen() {
     } catch (error: any) {
       const code = error?.code || 'error'
       if (code === 'credits_insufficient' || code === 'credits_unavailable') {
-        setHubError('Sem creditos suficientes. Compre mais creditos para continuar.')
+        setHubError(tr('premium.error.noCredits', 'Sem creditos suficientes. Compre mais creditos para continuar.'))
       } else {
-        setHubError(`${code}: ${error?.message || 'Falha ao consultar premium'}`)
+        setHubError(`${code}: ${error?.message || tr('premium.error.queryFailed', 'Falha ao consultar premium')}`)
       }
     } finally {
       setHubLoading(false)
@@ -496,10 +501,10 @@ export default function PremiumScreen() {
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.hubContent}>
       {!hasHubAccess && (
         <View style={styles.lockedBox}>
-          <Text style={styles.lockedTitle}>Premium bloqueado</Text>
-          <Text style={styles.lockedText}>Assine o plano Pro ou Premium para desbloquear o Hub.</Text>
+          <Text style={styles.lockedTitle}>{tr('premium.locked.title', 'Premium bloqueado')}</Text>
+          <Text style={styles.lockedText}>{tr('premium.locked.body', 'Assine o plano Pro ou Premium para desbloquear o Hub.')}</Text>
           <TouchableOpacity style={styles.lockedButton} onPress={() => setSelectedTab('features')}>
-            <Text style={styles.lockedButtonText}>Ver planos</Text>
+            <Text style={styles.lockedButtonText}>{tr('premium.locked.cta', 'Ver planos')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -507,12 +512,12 @@ export default function PremiumScreen() {
       {hasHubAccess && (
         <>
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Creditos disponiveis</Text>
+            <Text style={styles.hubTitle}>{tr('premium.credits.available', 'Créditos disponíveis')}</Text>
             {creditsLoading ? (
               <ActivityIndicator color="#FFD700" />
             ) : (
               <Text style={styles.creditsValue}>
-                {creditsRemaining === null ? 'Ilimitado' : creditsRemaining}
+                {creditsRemaining === null ? tr('premium.credits.unlimited', 'Ilimitado') : creditsRemaining}
               </Text>
             )}
             {(() => {
@@ -521,53 +526,53 @@ export default function PremiumScreen() {
               return <Text style={styles.creditsCycle}>{cycle.message}</Text>
             })()}
             <Text style={styles.hubSubtitle}>
-              Sinastria custa 2 creditos. Demais leituras custam 1 credito.
+              {tr('premium.credits.costHint', 'Sinastria custa 2 créditos. Demais leituras custam 1 crédito.')}
             </Text>
           </View>
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Servicos Premium (API Astrologer)</Text>
-            <Text style={styles.hubSubtitle}>Selecione uma leitura para gerar agora.</Text>
+            <Text style={styles.hubTitle}>{tr('premium.services.title', 'Serviços Premium (API Astrologer)')}</Text>
+            <Text style={styles.hubSubtitle}>{tr('premium.services.subtitle', 'Selecione uma leitura para gerar agora.')}</Text>
             <View style={styles.serviceGrid}>
               {Object.entries(HUB_ACTIONS).map(([key, meta]) => (
                 <TouchableOpacity key={key} style={styles.serviceCard} onPress={() => runAction(key)}>
                   <Ionicons name={meta.icon as any} size={20} color="#FFD700" />
-                  <Text style={styles.serviceTitle}>{meta.label}</Text>
-                  <Text style={styles.serviceDesc}>{meta.description}</Text>
-                  <Text style={styles.serviceCost}>Custo: {meta.cost} credito</Text>
+                  <Text style={styles.serviceTitle}>{tr(meta.labelKey, key)}</Text>
+                  <Text style={styles.serviceDesc}>{tr(meta.descriptionKey, '')}</Text>
+                  <Text style={styles.serviceCost}>{tr('premium.services.cost', 'Custo: {cost} crédito', { cost: meta.cost })}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Data alvo</Text>
+            <Text style={styles.hubTitle}>{tr('premium.targetDate.title', 'Data-alvo')}</Text>
             <TextInput
               style={styles.input}
               value={targetDate}
               onChangeText={setTargetDate}
-              placeholder="YYYY-MM-DD"
+              placeholder={tr('premium.input.dateIsoPlaceholder', 'YYYY-MM-DD')}
               placeholderTextColor="#888"
             />
           </View>
 
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Dados do parceiro (sinastria/composite)</Text>
-            <TextInput style={styles.input} value={partnerBirthDate} onChangeText={setPartnerBirthDate} placeholder="Data (YYYY-MM-DD)" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerBirthTime} onChangeText={setPartnerBirthTime} placeholder="Hora (HH:MM)" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerLat} onChangeText={setPartnerLat} placeholder="Latitude" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerLon} onChangeText={setPartnerLon} placeholder="Longitude" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerTz} onChangeText={setPartnerTz} placeholder="Timezone" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerCity} onChangeText={setPartnerCity} placeholder="Cidade" placeholderTextColor="#888" />
-            <TextInput style={styles.input} value={partnerCountry} onChangeText={setPartnerCountry} placeholder="País" placeholderTextColor="#888" />
+            <Text style={styles.hubTitle}>{tr('premium.partnerData.title', 'Dados do parceiro (sinastria/composite)')}</Text>
+            <TextInput style={styles.input} value={partnerBirthDate} onChangeText={setPartnerBirthDate} placeholder={tr('premium.input.partnerDatePlaceholder', 'Data (YYYY-MM-DD)')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerBirthTime} onChangeText={setPartnerBirthTime} placeholder={tr('premium.input.partnerTimePlaceholder', 'Hora (HH:MM)')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerLat} onChangeText={setPartnerLat} placeholder={tr('premium.input.partnerLatitudePlaceholder', 'Latitude')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerLon} onChangeText={setPartnerLon} placeholder={tr('premium.input.partnerLongitudePlaceholder', 'Longitude')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerTz} onChangeText={setPartnerTz} placeholder={tr('premium.input.partnerTimezonePlaceholder', 'Timezone')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerCity} onChangeText={setPartnerCity} placeholder={tr('premium.input.partnerCityPlaceholder', 'Cidade')} placeholderTextColor="#888" />
+            <TextInput style={styles.input} value={partnerCountry} onChangeText={setPartnerCountry} placeholder={tr('premium.input.partnerCountryPlaceholder', 'País')} placeholderTextColor="#888" />
           </View>
 
           <View style={styles.hubCard}>
-            <Text style={styles.hubTitle}>Resultado</Text>
+            <Text style={styles.hubTitle}>{tr('premium.result.title', 'Resultado')}</Text>
             {hubLoading && <ActivityIndicator color="#FFD700" />}
             {hubError && <Text style={styles.errorText}>{hubError}</Text>}
             {!hubLoading && !hubError && hubResult && (
               <>
-                <Text style={styles.resultLabel}>Última ação: {lastAction}</Text>
+                <Text style={styles.resultLabel}>{tr('premium.result.lastAction', 'Última ação: {action}', { action: lastAction || '--' })}</Text>
                 {(() => {
                   const actionMeta = getActionMeta(lastAction)
                   return (
@@ -579,13 +584,13 @@ export default function PremiumScreen() {
                     <View style={styles.hubPill}>
                       <Ionicons name="speedometer" size={18} color="#8B5FBF" />
                       <Text style={styles.hubCardLabel}>
-                        cache: {hubMeta?.cacheHit ? 'hit' : 'miss'}
+                        {tr('premium.meta.cache', 'cache')}: {hubMeta?.cacheHit ? tr('premium.meta.hit', 'hit') : tr('premium.meta.miss', 'miss')}
                       </Text>
                     </View>
                     <View style={styles.hubPill}>
                       <Ionicons name="time" size={18} color="#4ECDC4" />
                       <Text style={styles.hubCardLabel}>
-                        {hubMeta?.durationMs ? `${hubMeta.durationMs}ms` : 'tempo n/d'}
+                        {hubMeta?.durationMs ? `${hubMeta.durationMs}ms` : tr('premium.meta.timeNa', 'tempo n/d')}
                       </Text>
                     </View>
                     </View>
@@ -618,28 +623,28 @@ export default function PremiumScreen() {
                 })()}
                 <View style={styles.summaryActions}>
                   <TouchableOpacity style={styles.summaryButton} onPress={copySummary}>
-                    <Text style={styles.summaryButtonText}>Copiar resumo</Text>
+                    <Text style={styles.summaryButtonText}>{tr('premium.result.copySummary', 'Copiar resumo')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.summaryButton} onPress={handleExportPdf} disabled={exportingPdf}>
                     <Text style={styles.summaryButtonText}>
-                      {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
+                      {exportingPdf ? tr('premium.result.generatingPdf', 'Gerando PDF...') : tr('premium.result.exportPdf', 'Exportar PDF')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.summaryButton} onPress={() => setShowJson((prev) => !prev)}>
-                    <Text style={styles.summaryButtonText}>{showJson ? 'Ocultar JSON' : 'Ver JSON'}</Text>
+                    <Text style={styles.summaryButtonText}>{showJson ? tr('premium.result.hideJson', 'Ocultar JSON') : tr('premium.result.viewJson', 'Ver JSON')}</Text>
                   </TouchableOpacity>
                 </View>
                 {showJson && <Text style={styles.resultText}>{formatResult(hubResult)}</Text>}
                 {hubMeta && (
                   <Text style={styles.metaText}>
-                    cacheHit: {String(hubMeta.cacheHit)} · creditsRemaining: {hubMeta.creditsRemaining ?? 'n/a'}
+                    {tr('premium.meta.cacheHit', 'cacheHit')}: {String(hubMeta.cacheHit)} · {tr('premium.meta.creditsRemaining', 'creditsRemaining')}: {hubMeta.creditsRemaining ?? tr('premium.meta.na', 'n/a')}
                   </Text>
                 )}
               </>
             )}
             {!hubLoading && hubHistory.length > 0 && (
               <View style={styles.historySection}>
-                <Text style={styles.sectionTitle}>Historico recente</Text>
+                <Text style={styles.sectionTitle}>{tr('premium.history.recent', 'Histórico recente')}</Text>
                 {hubHistory.map((item) => {
                   const actionMeta = getActionMeta(item.action)
                   return (
@@ -655,7 +660,7 @@ export default function PremiumScreen() {
               </View>
             )}
             {!hubLoading && !hubError && !hubResult && (
-              <Text style={styles.emptyText}>Nenhuma leitura executada ainda.</Text>
+              <Text style={styles.emptyText}>{tr('premium.result.empty', 'Nenhuma leitura executada ainda.')}</Text>
             )}
           </View>
         </>
@@ -666,7 +671,7 @@ export default function PremiumScreen() {
   const renderFeatures = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.plansContainer}>
-          <Text style={styles.sectionTitle}>Planos de Assinatura</Text>
+          <Text style={styles.sectionTitle}>{tr('premium.subscriptionPlans.title', 'Planos de assinatura')}</Text>
         <View style={styles.providerChoiceRow}>
           <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
           <TouchableOpacity
@@ -699,7 +704,7 @@ export default function PremiumScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                {plan.price === 0 ? 'Gratis' : `R$ ${(plan.price || 0).toFixed(2)}/mes`}
+                {plan.price === 0 ? tr('premium.plans.free', 'Gratis') : `R$ ${(plan.price || 0).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`}
               </Text>
             </View>
             <View style={styles.planFeatures}>
@@ -709,10 +714,10 @@ export default function PremiumScreen() {
             </View>
             {plan.requiresPhone && (
               <View style={styles.planPhoneRow}>
-                <Text style={styles.planPhoneLabel}>WhatsApp (Premium)</Text>
+                <Text style={styles.planPhoneLabel}>{tr('premium.plans.whatsappLabel', 'WhatsApp (Premium)')}</Text>
                 <TextInput
                   style={styles.planPhoneInput}
-                  placeholder="(DD) 9xxxx-xxxx"
+                  placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
                   placeholderTextColor="#888"
                   value={premiumPhone}
                   onChangeText={setPremiumPhone}
@@ -722,49 +727,49 @@ export default function PremiumScreen() {
             )}
             {plan.current && (
               <View style={styles.currentBadge}>
-                <Text style={styles.currentBadgeText}>Plano Atual</Text>
+                <Text style={styles.currentBadgeText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
               </View>
             )}
           </TouchableOpacity>
         ))}
       </View>
       <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>Comparar planos</Text>
+        <Text style={styles.sectionTitle}>{tr('premium.comparePlans.title', 'Comparar planos')}</Text>
         <View style={styles.compareTable}>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Recurso</Text>
-            <Text style={styles.compareValue}>Essential</Text>
-            <Text style={styles.compareValue}>Pro</Text>
-            <Text style={styles.compareValue}>Premium</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.feature', 'Recurso')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.plan.essential', 'Essential')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.plan.pro', 'Pro')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.plan.premium', 'Premium')}</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Previsoes de Status</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.statusForecast', 'Previsoes de Status')}</Text>
             <Text style={styles.compareValue}>7d</Text>
             <Text style={styles.compareValue}>7/30/90</Text>
             <Text style={styles.compareValue}>7/30/90/360</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Grupos</Text>
-            <Text style={styles.compareValue}>Sim</Text>
-            <Text style={styles.compareValue}>Sim</Text>
-            <Text style={styles.compareValue}>Sim</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.groups', 'Grupos')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Creditos/mês</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.creditsPerMonth', 'Creditos/mês')}</Text>
             <Text style={styles.compareValue}>0</Text>
             <Text style={styles.compareValue}>1</Text>
             <Text style={styles.compareValue}>10</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Chatbot WhatsApp</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappBot', 'Chatbot WhatsApp')}</Text>
             <Text style={styles.compareValue}>—</Text>
             <Text style={styles.compareValue}>—</Text>
-            <Text style={styles.compareValue}>Sim</Text>
+            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
         </View>
       </View>
       <View style={styles.plansContainer}>
-          <Text style={styles.sectionTitle}>Creditos Avulsos (Servicos Premium)</Text>
+          <Text style={styles.sectionTitle}>{tr('premium.oneTimeCredits.title', 'Créditos avulsos (Serviços Premium)')}</Text>
           {creditPacks.map((pack) => (
             <TouchableOpacity
               key={pack.id}
@@ -787,13 +792,13 @@ export default function PremiumScreen() {
   const renderCredits = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.hubCard}>
-        <Text style={styles.hubTitle}>Seus creditos</Text>
-        <Text style={styles.hubSubtitle}>Saldo e compras recentes.</Text>
+        <Text style={styles.hubTitle}>{tr('premium.yourCredits.title', 'Seus créditos')}</Text>
+        <Text style={styles.hubSubtitle}>{tr('premium.yourCredits.subtitle', 'Saldo e compras recentes.')}</Text>
         {creditsLoading ? (
           <ActivityIndicator color="#FFD700" />
         ) : (
           <Text style={styles.creditsValue}>
-            {creditsRemaining === null ? 'Ilimitado' : creditsRemaining}
+            {creditsRemaining === null ? tr('premium.credits.unlimited', 'Ilimitado') : creditsRemaining}
           </Text>
         )}
         {(() => {
@@ -803,7 +808,7 @@ export default function PremiumScreen() {
         })()}
       </View>
       <View style={styles.plansContainer}>
-        <Text style={styles.sectionTitle}>Comprar creditos</Text>
+        <Text style={styles.sectionTitle}>{tr('premium.buyCredits.title', 'Comprar créditos')}</Text>
         {creditPacks.map((pack) => (
           <TouchableOpacity
             key={pack.id}
@@ -826,7 +831,7 @@ export default function PremiumScreen() {
   const renderHistory = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.hubCard}>
-        <Text style={styles.hubTitle}>Historico de creditos</Text>
+        <Text style={styles.hubTitle}>{tr('premium.creditsHistory.title', 'Histórico de créditos')}</Text>
         {creditsHistoryLoading && (
           <ActivityIndicator color="#FFD700" />
         )}
@@ -834,7 +839,7 @@ export default function PremiumScreen() {
           <Text style={styles.errorText}>{creditsHistoryError}</Text>
         )}
         {creditHistory.length === 0 && (
-          <Text style={styles.emptyText}>Sem movimentacoes ainda.</Text>
+          <Text style={styles.emptyText}>{tr('premium.creditsHistory.empty', 'Sem movimentações ainda.')}</Text>
         )}
         {creditHistory.map((item) => (
           <View key={item.id} style={styles.historyItem}>
@@ -842,8 +847,12 @@ export default function PremiumScreen() {
             <View style={styles.historyText}>
               <Text style={styles.historyLabel}>{item.detail || item.type}</Text>
               <Text style={styles.historySummary}>
-                {item.type} • {item.qty} credito(s){typeof item.delta === 'number' ? ` (${item.delta > 0 ? '+' : ''}${item.delta})` : ''}
-                {typeof item.balanceAfter === 'number' ? ` • saldo: ${item.balanceAfter}` : ''}
+                {tr('premium.creditsHistory.line', '{type} • {qty} credito(s){delta}{balance}', {
+                  type: item.type,
+                  qty: item.qty,
+                  delta: typeof item.delta === 'number' ? ` (${item.delta > 0 ? '+' : ''}${item.delta})` : '',
+                  balance: typeof item.balanceAfter === 'number' ? ` • ${tr('premium.creditsHistory.balance', 'saldo')}: ${item.balanceAfter}` : '',
+                })}
               </Text>
             </View>
           </View>
@@ -856,8 +865,8 @@ export default function PremiumScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Header Premium */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Premium</Text>
-        <Text style={styles.headerSubtitle}>Planos e servicos premium</Text>
+        <Text style={styles.headerTitle}>{tr('premium.header.title', 'Premium')}</Text>
+        <Text style={styles.headerSubtitle}>{tr('premium.header.subtitle', 'Planos e serviços premium')}</Text>
       </View>
       {expiryInfo.show && (
         <ExpiryBanner
@@ -874,7 +883,7 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('features')}
         >
           <Text style={[styles.tabText, selectedTab === 'features' && styles.activeTabText]}>
-            Planos
+            {tr('premium.tab.plans', 'Planos')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -882,7 +891,7 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('hub')}
         >
           <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
-            Servicos Premium
+            {tr('premium.tab.services', 'Serviços Premium')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -890,7 +899,7 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('credits')}
         >
           <Text style={[styles.tabText, selectedTab === 'credits' && styles.activeTabText]}>
-            Creditos
+            {tr('premium.tab.credits', 'Créditos')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -898,7 +907,7 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('history')}
         >
           <Text style={[styles.tabText, selectedTab === 'history' && styles.activeTabText]}>
-            Historico
+            {tr('premium.tab.history', 'Histórico')}
           </Text>
         </TouchableOpacity>
       </View>

@@ -62,7 +62,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     birthDate: '',
     birthTime: '',
     city: '',
-    country: 'Brasil',
+    country: '',
     latitude: 0,
     longitude: 0,
     language,

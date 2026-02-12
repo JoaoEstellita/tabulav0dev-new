@@ -1,19 +1,18 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
-import SubscriptionModal from "../auth/SubscriptionModal"
-import SubscriptionPlansModal from "../../components/SubscriptionPlansModal"
 import GroupsScreen from "./GroupsScreen"
 
 export default function GroupsAccessGuard() {
   const { t } = useAppLanguage()
-  const { loading, showModal, setShowModal, subscription, trialActive, isAdmin } = useSubscriptionCheck()
-  const [showPlans, setShowPlans] = useState(false)
+  const navigation = useNavigation<any>()
+  const { loading, subscription, trialActive, isAdmin } = useSubscriptionCheck()
 
   const hasAccess = !!(isAdmin || trialActive || subscription?.active)
 
@@ -37,24 +36,13 @@ export default function GroupsAccessGuard() {
         <Text style={styles.subtitle}>
           {t('groupsAccess.subtitle')}
         </Text>
-        <TouchableOpacity style={styles.ctaButton} onPress={() => setShowPlans(true)}>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          onPress={() => navigation.navigate('Premium', { openTab: 'features' })}
+        >
           <Text style={styles.ctaText}>{t('groupsAccess.cta')}</Text>
         </TouchableOpacity>
       </View>
-
-      <SubscriptionModal
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-        onSubscribe={() => {
-          setShowModal(false)
-          setShowPlans(true)
-        }}
-      />
-
-      <SubscriptionPlansModal
-        visible={showPlans}
-        onClose={() => setShowPlans(false)}
-      />
     </LinearGradient>
   )
 }

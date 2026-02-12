@@ -15,7 +15,6 @@ import { db } from "../../config/firebase"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
-import SubscriptionScreen from "../subscription/SubscriptionScreen"
 import { useUserSettings } from '../../hooks/useUserSettings'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
 import {
@@ -92,8 +91,12 @@ interface UserProfile {
 }
 
 export default function ProfileScreen() {
-  useAppLanguage()
-  const navigation = useNavigation()
+  const { t } = useAppLanguage()
+  const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars as any)
+    return value === key ? fallback : value
+  }
+  const navigation = useNavigation<any>()
   const { width } = useWindowDimensions()
   const isDesktopWeb = Platform.OS === 'web' && width >= 1024
   const { user, logout } = useAuth()
@@ -105,7 +108,6 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showFAQ, setShowFAQ] = useState(false)
-  const [showSubscription, setShowSubscription] = useState(false)
   const [savingPhoto, setSavingPhoto] = useState(false)
   const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
   const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
@@ -120,10 +122,10 @@ export default function ProfileScreen() {
     nextVoidLabel: string
     upcomingPhases: Array<{ label: string; when: string }>
   }>({
-    phaseLabel: "Lua",
-    phaseUntilLabel: "fase em atualização",
-    currentVoidLabel: "Não",
-    nextVoidLabel: "Sem previsão",
+    phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
+    phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualização'),
+    currentVoidLabel: tr('profile.moon.no', 'Não'),
+    nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsão'),
     upcomingPhases: [],
   })
 
@@ -211,10 +213,10 @@ export default function ProfileScreen() {
         setMoonPhaseKey(null)
         setMoonIsVoid(false)
         setMoonDetails({
-          phaseLabel: "Lua",
-          phaseUntilLabel: "fase em atualização",
-          currentVoidLabel: "Não",
-          nextVoidLabel: "Sem previsão",
+          phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
+          phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualização'),
+          currentVoidLabel: tr('profile.moon.no', 'Não'),
+          nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsão'),
           upcomingPhases: [],
         })
         return
@@ -273,12 +275,12 @@ export default function ProfileScreen() {
       const angleKey = getMoonPhaseKeyFromAngle(angle)
       const phaseKey = angle >= 315 ? "waningCrescent" : angleKey
       let phaseLabel = getMoonPhaseLabelFromAngle(angle)
-      if (angle >= 315) phaseLabel = "Lua Balsâmica"
+      if (angle >= 315) phaseLabel = tr('profile.moon.balsamic', 'Lua Balsâmica')
 
-      const line1 = isVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
+      const line1 = isVoid ? `${phaseLabel} · ${tr('profile.moon.void', 'Lua Vazia')}` : phaseLabel
       const line2Base = nextExact
-        ? `até ${formatLocalDateTime(nextExact, userTz)}`
-        : 'fase em atualização'
+        ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz) })
+        : tr('profile.moon.updatingPhase', 'fase em atualização')
       setMoonPhaseKey(phaseKey)
       setMoonPhaseLabel(line1)
       setMoonLine2(line2Base)
@@ -287,11 +289,11 @@ export default function ProfileScreen() {
         phaseLabel,
         phaseUntilLabel: line2Base,
         currentVoidLabel: isVoid && currentVoid?.endAt
-          ? `Sim, até ${formatLocalTime(new Date(currentVoid.endAt), userTz)}`
-          : "Não",
+          ? tr('profile.moon.currentVoidYesUntil', 'Sim, até {time}', { time: formatLocalTime(new Date(currentVoid.endAt), userTz) })
+          : tr('profile.moon.no', 'Não'),
         nextVoidLabel: nextVoidStart
-          ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` até ${formatLocalTime(nextVoidEnd, userTz)}` : ""}`
-          : "Sem previsão",
+          ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` ${tr('profile.moon.until', 'até {date}', { date: formatLocalTime(nextVoidEnd, userTz) })}` : ""}`
+          : tr('profile.moon.noForecast', 'Sem previsão'),
         upcomingPhases,
       })
     } catch (error) {
@@ -309,7 +311,7 @@ export default function ProfileScreen() {
       } else {
         // Criar perfil padrão
         const defaultProfile: UserProfile = {
-          displayName: user!.email?.split("@")[0] || "Usuário",
+          displayName: user!.email?.split("@")[0] || tr('common.user', 'Usuario'),
           birthDate: "",
           birthTime: "",
           birthLocation: {
@@ -365,13 +367,23 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error)
-      Alert.alert("Erro", "Não foi possível carregar o perfil")
+      Alert.alert(tr('profile.alert.errorTitle', 'Erro'), tr('profile.alert.loadFailed', 'Não foi possível carregar o perfil'))
     } finally {
       setLoading(false)
     }
   }
 
   const notificationBadgeCount = unreadCount
+
+  const subscriptionStatusLabel = (() => {
+    if (isInTrial) return tr('profile.subscription.trial', 'Teste ({days} dias)', { days: trialDaysRemaining })
+    if (!subscription) return tr('profile.subscription.none', 'Sem assinatura')
+    if (subscription.status === 'active' || subscription.isActive) return tr('profile.subscription.active', 'Ativa')
+    if (subscription.status === 'trial') return tr('profile.subscription.trial', 'Teste ({days} dias)', { days: trialDaysRemaining })
+    if (subscription.status === 'cancelled') return tr('profile.subscription.cancelled', 'Cancelada')
+    if (subscription.status === 'pending') return tr('profile.subscription.pending', 'Pendente')
+    return tr('profile.subscription.none', 'Sem assinatura')
+  })()
 
   const saveProfile = async () => {
     if (!profile) return
@@ -404,10 +416,10 @@ export default function ProfileScreen() {
       )
       await forceBackendStatusRefresh(user!.uid, 'profile_screen_save')
       setEditing(false)
-      Alert.alert("Sucesso", "Perfil atualizado com sucesso!")
+      Alert.alert(tr('profile.alert.successTitle', 'Sucesso'), tr('profile.alert.saveSuccess', 'Perfil atualizado com sucesso!'))
     } catch (error) {
       console.error("Erro ao salvar perfil:", error)
-      Alert.alert("Erro", "Não foi possível salvar o perfil")
+      Alert.alert(tr('profile.alert.errorTitle', 'Erro'), tr('profile.alert.saveFailed', 'Não foi possível salvar o perfil'))
     } finally {
       setSavingPhoto(false)
     }
@@ -416,7 +428,7 @@ export default function ProfileScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      Alert.alert(tr('profile.permission.title', 'Permissão Necessária'), tr('profile.permission.gallery', 'Precisamos de acesso à galeria para selecionar sua foto.'))
       return false
     }
     return true
@@ -462,12 +474,12 @@ export default function ProfileScreen() {
     if (!hasPermission) return
 
     Alert.alert(
-      'Escolher Foto',
-      'Como você gostaria de adicionar sua foto?',
+      tr('profile.photo.chooseTitle', 'Escolher Foto'),
+      tr('profile.photo.chooseBody', 'Como você gostaria de adicionar sua foto?'),
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'Câmera', onPress: () => pickImage('camera') },
+        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+        { text: tr('profile.photo.gallery', 'Galeria'), onPress: () => pickImage('gallery') },
+        { text: tr('profile.photo.camera', 'Câmera'), onPress: () => pickImage('camera') },
       ]
     )
   }
@@ -481,7 +493,7 @@ export default function ProfileScreen() {
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          Alert.alert(tr('profile.permission.title', 'Permissão Necessária'), tr('profile.permission.camera', 'Precisamos de acesso à câmera.'))
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -513,7 +525,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
+      Alert.alert(tr('profile.alert.errorTitle', 'Erro'), tr('profile.alert.selectPhotoFailed', 'Não foi possível selecionar a foto. Tente novamente.'))
     }
   }
 
@@ -521,7 +533,7 @@ export default function ProfileScreen() {
     // Web: usar confirm() para garantir fluxo sem modais nativos bloqueando estado
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line no-restricted-globals
-      const ok = window.confirm('Tem certeza que deseja sair da sua conta?')
+      const ok = window.confirm(tr('profile.logout.confirm', 'Tem certeza que deseja sair da sua conta?'))
       if (!ok) return
       try {
         await FCMService.clearAllNotifications()
@@ -532,10 +544,10 @@ export default function ProfileScreen() {
       return
     }
 
-    Alert.alert("Sair", "Tem certeza que deseja sair da sua conta?", [
-      { text: "Cancelar", style: "cancel" },
+    Alert.alert(tr('profile.logout.title', 'Sair'), tr('profile.logout.confirm', 'Tem certeza que deseja sair da sua conta?'), [
+      { text: tr('common.cancel', 'Cancelar'), style: "cancel" },
       {
-        text: "Sair",
+        text: tr('profile.logout.title', 'Sair'),
         style: "destructive",
         onPress: async () => {
           try {
@@ -579,7 +591,7 @@ export default function ProfileScreen() {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Carregando perfil...</Text>
+          <Text style={styles.loadingText}>{tr('profile.loading', 'Carregando perfil...')}</Text>
         </View>
       </LinearGradient>
     )
@@ -589,7 +601,7 @@ export default function ProfileScreen() {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Erro ao carregar perfil</Text>
+          <Text style={styles.errorText}>{tr('profile.error.load', 'Erro ao carregar perfil')}</Text>
         </View>
       </LinearGradient>
     )
@@ -611,15 +623,15 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.moonLegend}>
                 <Text style={styles.moonLegendLine1} numberOfLines={1}>
-                  {moonPhaseLabel || "Lua"}
+                  {moonPhaseLabel || tr('profile.moon.defaultLabel', 'Lua')}
                 </Text>
                 <View style={styles.moonLegendLine2Row}>
                   <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                    {moonLine2 || "fase em atualização"}
+                    {moonLine2 || tr('profile.moon.updatingPhase', 'fase em atualização')}
                   </Text>
                   {moonIsVoid && (
                     <TouchableOpacity onPress={() => setVoidInfoVisible(true)}>
-                      <Text style={styles.moonVoidAlertText}> · Lua Vazia</Text>
+                      <Text style={styles.moonVoidAlertText}> · {tr('profile.moon.void', 'Lua Vazia')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -645,39 +657,33 @@ export default function ProfileScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.groupsJoined || 0}</Text>
-            <Text style={styles.statLabel}>Grupos</Text>
+            <Text style={styles.statLabel}>{tr('profile.stats.groups', 'Grupos')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.alertsSent || 0}</Text>
-            <Text style={styles.statLabel}>Alertas Enviados</Text>
+            <Text style={styles.statLabel}>{tr('profile.stats.alertsSent', 'Alertas Enviados')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.alertsReceived || 0}</Text>
-            <Text style={styles.statLabel}>Alertas Recebidos</Text>
+            <Text style={styles.statLabel}>{tr('profile.stats.alertsReceived', 'Alertas Recebidos')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{profile.stats?.daysActive || 1}</Text>
-            <Text style={styles.statLabel}>Dias Ativo</Text>
+            <Text style={styles.statLabel}>{tr('profile.stats.daysActive', 'Dias Ativo')}</Text>
           </View>
         </View>
 
         {/* Subscription Button */}
         <TouchableOpacity 
           style={styles.subscriptionButton} 
-          onPress={() => setShowSubscription(true)}
+          onPress={() => navigation.navigate('Premium', { openTab: 'features' })}
           activeOpacity={0.8}
         >
           <View style={styles.subscriptionButtonContent}>
             <Ionicons name="card-outline" size={24} color="#8B5FBF" />
             <View style={styles.subscriptionButtonTextContainer}>
-              <Text style={styles.subscriptionButtonText}>Assinatura</Text>
-              {subscription && (
-                <Text style={styles.subscriptionStatus}>
-                  {subscription.status === 'active' ? 'Ativa' : 
-                   subscription.status === 'trial' ? `Teste (${trialDaysRemaining} dias)` :
-                   subscription.status === 'cancelled' ? 'Cancelada' : 'Expirada'}
-                </Text>
-              )}
+              <Text style={styles.subscriptionButtonText}>{tr('profile.subscription.title', 'Assinatura')}</Text>
+              <Text style={styles.subscriptionStatus}>{subscriptionStatusLabel}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#8B5FBF" />
           </View>
@@ -691,7 +697,7 @@ export default function ProfileScreen() {
         >
           <View style={styles.faqButtonContent}>
             <Ionicons name="help-circle-outline" size={24} color="#8B5FBF" />
-            <Text style={styles.faqButtonText}>Como este aplicativo funciona?</Text>
+            <Text style={styles.faqButtonText}>{tr('profile.faq.cta', 'Como este aplicativo funciona?')}</Text>
             <Ionicons name="chevron-forward" size={20} color="#8B5FBF" />
           </View>
         </TouchableOpacity>
@@ -699,7 +705,7 @@ export default function ProfileScreen() {
         {/* Informações Pessoais */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+            <Text style={styles.sectionTitle}>{tr('profile.section.personalInfo', 'Informações Pessoais')}</Text>
             <TouchableOpacity onPress={() => setEditing(!editing)}>
               <Ionicons name={editing ? "checkmark" : "pencil"} size={20} color="#FFD700" />
             </TouchableOpacity>
@@ -709,21 +715,21 @@ export default function ProfileScreen() {
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Nome de exibição"
+                placeholder={tr('profile.input.displayName', 'Nome de exibição')}
                 placeholderTextColor="#888"
                 value={profile.displayName}
                 onChangeText={(text) => setProfile({ ...profile, displayName: text })}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Data de nascimento (DD/MM/AAAA)"
+                placeholder={tr('profile.input.birthDate', 'Data de nascimento (DD/MM/AAAA)')}
                 placeholderTextColor="#888"
                 value={profile.birthDate}
                 onChangeText={(text) => setProfile({ ...profile, birthDate: text })}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Horário de nascimento (HH:MM)"
+                placeholder={tr('profile.input.birthTime', 'Horário de nascimento (HH:MM)')}
                 placeholderTextColor="#888"
                 value={profile.birthTime}
                 onChangeText={(text) => setProfile({ ...profile, birthTime: text })}
@@ -732,30 +738,30 @@ export default function ProfileScreen() {
                 <Text style={styles.locationButtonText}>
                   {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
-                    : "Definir local de nascimento"}
+                    : tr('profile.input.setBirthLocation', 'Definir local de nascimento')}
                 </Text>
                 <Ionicons name="location" size={20} color="#FFD700" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
-                <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+                <Text style={styles.saveButtonText}>{tr('profile.saveChanges', 'Salvar Alterações')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.infoContainer}>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Data de Nascimento:</Text>
-                <Text style={styles.infoValue}>{profile.birthDate || "Não informado"}</Text>
+                <Text style={styles.infoLabel}>{tr('profile.info.birthDate', 'Data de Nascimento:')}</Text>
+                <Text style={styles.infoValue}>{profile.birthDate || tr('profile.info.notInformed', 'Não informado')}</Text>
               </View>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Horário:</Text>
-                <Text style={styles.infoValue}>{profile.birthTime || "Não informado"}</Text>
+                <Text style={styles.infoLabel}>{tr('profile.info.birthTime', 'Horário:')}</Text>
+                <Text style={styles.infoValue}>{profile.birthTime || tr('profile.info.notInformed', 'Não informado')}</Text>
               </View>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Local:</Text>
+                <Text style={styles.infoLabel}>{tr('profile.info.location', 'Local:')}</Text>
                 <Text style={styles.infoValue}>
                   {profile.birthLocation?.city
                     ? `${profile.birthLocation.city}, ${profile.birthLocation.country}`
-                    : "Não informado"}
+                    : tr('profile.info.notInformed', 'Não informado')}
                 </Text>
               </View>
             </View>
@@ -764,13 +770,13 @@ export default function ProfileScreen() {
 
         {/* Preferências de Privacidade */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Privacidade</Text>
+          <Text style={styles.sectionTitle}>{tr('profile.section.privacy', 'Privacidade')}</Text>
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Mostrar Status nos Grupos</Text>
+              <Text style={styles.preferenceTitle}>{tr('profile.privacy.showStatus.title', 'Mostrar Status nos Grupos')}</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros do grupo vejam seu status astrológico
+                {tr('profile.privacy.showStatus.desc', 'Permitir que membros do grupo vejam seu status astrológico')}
               </Text>
             </View>
             <Switch
@@ -783,9 +789,9 @@ export default function ProfileScreen() {
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Compartilhar duração dos trânsitos</Text>
+              <Text style={styles.preferenceTitle}>{tr('profile.privacy.shareTransit.title', 'Compartilhar duração dos trânsitos')}</Text>
               <Text style={styles.preferenceDescription}>
-                Permitir que membros vejam a duração exata dos aspectos no grupo
+                {tr('profile.privacy.shareTransit.desc', 'Permitir que membros vejam a duração exata dos aspectos no grupo')}
               </Text>
             </View>
             <Switch
@@ -798,8 +804,8 @@ export default function ProfileScreen() {
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>Permitir Convites</Text>
-              <Text style={styles.preferenceDescription}>Receber convites para novos grupos</Text>
+              <Text style={styles.preferenceTitle}>{tr('profile.privacy.allowInvites.title', 'Permitir Convites')}</Text>
+              <Text style={styles.preferenceDescription}>{tr('profile.privacy.allowInvites.desc', 'Receber convites para novos grupos')}</Text>
             </View>
             <Switch
               value={profile.preferences?.privacy?.allowGroupInvites || false}
@@ -814,7 +820,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out" size={20} color="#FF4444" />
-            <Text style={styles.logoutButtonText}>Sair da Conta</Text>
+            <Text style={styles.logoutButtonText}>{tr('profile.logout.button', 'Sair da Conta')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -835,17 +841,17 @@ export default function ProfileScreen() {
             style={styles.moonModalCard}
             onPress={() => {}}
           >
-            <Text style={styles.moonModalTitle}>Calendário Lunar</Text>
+            <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Calendário Lunar')}</Text>
             <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.moonModalSectionTitle}>Lua agora</Text>
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Lua agora')}</Text>
               <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
               <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
 
-              <Text style={styles.moonModalSectionTitle}>Lua vazia</Text>
-              <Text style={styles.moonModalText}>Atual: {moonDetails.currentVoidLabel}</Text>
-              <Text style={styles.moonModalText}>Próxima: {moonDetails.nextVoidLabel}</Text>
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Lua vazia')}</Text>
+              <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Atual')}: {moonDetails.currentVoidLabel}</Text>
+              <Text style={styles.moonModalText}>{tr('profile.moon.modal.next', 'Próxima')}: {moonDetails.nextVoidLabel}</Text>
 
-              <Text style={styles.moonModalSectionTitle}>Próximas fases</Text>
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.upcoming', 'Próximas fases')}</Text>
               {moonDetails.upcomingPhases.length ? (
                 moonDetails.upcomingPhases.map((item) => (
                   <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
@@ -854,14 +860,14 @@ export default function ProfileScreen() {
                   </View>
                 ))
               ) : (
-                <Text style={styles.moonModalText}>Sem eventos futuros no calendário.</Text>
+                <Text style={styles.moonModalText}>{tr('profile.moon.modal.noUpcoming', 'Sem eventos futuros no calendário.')}</Text>
               )}
             </ScrollView>
             <TouchableOpacity
               style={styles.moonModalCloseButton}
               onPress={() => setMoonModalVisible(false)}
             >
-              <Text style={styles.moonModalCloseText}>Fechar</Text>
+              <Text style={styles.moonModalCloseText}>{tr('common.close', 'Fechar')}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -879,22 +885,22 @@ export default function ProfileScreen() {
           onPress={() => setVoidInfoVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} style={styles.moonModalCard} onPress={() => {}}>
-            <Text style={styles.moonModalTitle}>Lua Vazia</Text>
+            <Text style={styles.moonModalTitle}>{tr('profile.moon.void', 'Lua Vazia')}</Text>
             <Text style={styles.moonModalText}>
-              A Lua Vazia é um período entre o último aspecto da Lua em um signo e a entrada no próximo signo.
+              {tr('profile.moon.voidInfo.body1', 'A Lua Vazia é um período entre o último aspecto da Lua em um signo e a entrada no próximo signo.')}
             </Text>
             <Text style={styles.moonModalText}>
-              Tendência: menor tração para decisões finais e temas novos. Melhor para revisão, finalização e descanso.
+              {tr('profile.moon.voidInfo.body2', 'Tendência: menor tração para decisões finais e temas novos. Melhor para revisão, finalização e descanso.')}
             </Text>
-            <Text style={styles.moonModalSectionTitle}>Recomendações</Text>
-            <Text style={styles.moonModalText}>• Revisar pendências e organizar o que já está em andamento.</Text>
-            <Text style={styles.moonModalText}>• Evitar iniciar algo importante sem urgência real.</Text>
-            <Text style={styles.moonModalText}>• Priorizar autocuidado, observação e ajustes finos.</Text>
+            <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.voidInfo.recommendations', 'Recomendações')}</Text>
+            <Text style={styles.moonModalText}>• {tr('profile.moon.voidInfo.tip1', 'Revisar pendências e organizar o que já está em andamento.')}</Text>
+            <Text style={styles.moonModalText}>• {tr('profile.moon.voidInfo.tip2', 'Evitar iniciar algo importante sem urgência real.')}</Text>
+            <Text style={styles.moonModalText}>• {tr('profile.moon.voidInfo.tip3', 'Priorizar autocuidado, observação e ajustes finos.')}</Text>
             <TouchableOpacity
               style={styles.moonModalCloseButton}
               onPress={() => setVoidInfoVisible(false)}
             >
-              <Text style={styles.moonModalCloseText}>Fechar</Text>
+              <Text style={styles.moonModalCloseText}>{tr('common.close', 'Fechar')}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -903,20 +909,6 @@ export default function ProfileScreen() {
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
       
-      {/* Subscription Modal */}
-      {showSubscription && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Assinatura</Text>
-              <TouchableOpacity onPress={() => setShowSubscription(false)}>
-                <Ionicons name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-            <SubscriptionScreen />
-          </View>
-        </View>
-      )}
     </LinearGradient>
   )
 }
@@ -1251,36 +1243,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8B5FBF",
     marginTop: 2,
-  },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    backgroundColor: "#0F0F23",
-    borderRadius: 16,
-    width: "90%",
-    height: "80%",
-    overflow: "hidden",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2C2C2E",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
   },
   notificationModal: {
     backgroundColor: "#0F0F23",
