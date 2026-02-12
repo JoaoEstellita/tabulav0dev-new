@@ -817,6 +817,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             />
           </View>
         )}
+        {showCountrySuggestions && !searchingCountry && countryQuery.length >= 2 && countryOptions.length === 0 && (
+          <View style={styles.emptyStateCard}>
+            <Ionicons name="search-outline" size={20} color="#FFD700" />
+            <Text style={styles.emptyStateText}>{t('onboarding.country.empty')}</Text>
+          </View>
+        )}
         {selectedCountry && (
           <Text style={styles.helperInlineText}>
             {t('onboarding.country.selected', { country: selectedCountry.name })}
@@ -873,7 +879,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </TouchableOpacity>
         <TextInput
           style={styles.dateInput}
-          placeholder="DD/MM/AAAA"
+          placeholder={t('onboarding.date.placeholder')}
           placeholderTextColor="#8E8E93"
           value={birthDateDisplay}
           onChangeText={handleBirthDateInput}
@@ -898,7 +904,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           {Platform.OS === 'ios' && (
             <View style={styles.pickerButtons}>
               <TouchableOpacity onPress={() => setShowDatePicker(false)} style={styles.pickerButton}>
-                <Text style={styles.pickerButtonText}>Cancelar</Text>
+                <Text style={styles.pickerButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={confirmDate} style={[styles.pickerButton, styles.confirmButton]}>
                 <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>{t('common.confirm')}</Text>
@@ -928,7 +934,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </TouchableOpacity>
         <TextInput
           style={styles.dateInput}
-          placeholder="HH:MM"
+          placeholder={t('onboarding.time.placeholder')}
           placeholderTextColor="#8E8E93"
           value={birthTimeDisplay}
           onChangeText={handleBirthTimeInput}
@@ -952,7 +958,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           {Platform.OS === 'ios' && (
             <View style={styles.pickerButtons}>
               <TouchableOpacity onPress={() => setShowTimePicker(false)} style={styles.pickerButton}>
-                <Text style={styles.pickerButtonText}>Cancelar</Text>
+                <Text style={styles.pickerButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={confirmTime} style={[styles.pickerButton, styles.confirmButton]}>
                 <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>{t('common.confirm')}</Text>
