@@ -7,8 +7,9 @@ import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import {
   LIFE_AREA_COLORS,
   LIFE_AREA_ICONS,
-  LIFE_AREA_LABELS,
 } from '../constants/lifeAreas'
+import { useAppLanguage } from '../hooks/useAppLanguage'
+import { normalizeKey } from '../utils/astro/normalizeKey'
 
 interface LifeAreaCardProps {
   area: LifeArea
@@ -18,16 +19,29 @@ interface LifeAreaCardProps {
   compact?: boolean
 }
 
-const translateAreaName = (name: string) => {
-  return LIFE_AREA_LABELS[name as keyof typeof LIFE_AREA_LABELS] || name
-}
-
 export default function LifeAreaCard({
   area,
   onPress,
   calculationFactors,
   compact = false,
 }: LifeAreaCardProps) {
+  const { language, t } = useAppLanguage()
+  const tr = (key: string, fallback: string) => {
+    const value = t(key)
+    return value === key ? fallback : value
+  }
+  const tl = (pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }
+
+  const translateAreaName = (name: string) => {
+    const key = normalizeKey(String(name || ''))
+    return tr(`lifeArea.${key}`, name)
+  }
+
   const getStatusColor = (status: number) => {
     if (status >= STATUS_THRESHOLDS.positiveAbove) return '#10B981'
     if (status >= STATUS_THRESHOLDS.criticalBelow) return '#F59E0B'
@@ -35,9 +49,9 @@ export default function LifeAreaCard({
   }
 
   const getStatusText = (status: number) => {
-    if (status >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
-    if (status >= STATUS_THRESHOLDS.criticalBelow) return 'Moderado'
-    return 'Crítico'
+    if (status >= STATUS_THRESHOLDS.positiveAbove) return tr('groups.status.positive', 'Positive')
+    if (status >= STATUS_THRESHOLDS.criticalBelow) return tl('Moderado', 'Moderate', 'Moderado', 'Moderato')
+    return tr('groups.status.critical', 'Critical')
   }
 
   const areaColors = LIFE_AREA_COLORS[area.name] || ['#4B5563', '#6B7280']
@@ -86,7 +100,7 @@ export default function LifeAreaCard({
 
         {!compact && (
           <View style={styles.ctaRow}>
-            <Text style={styles.ctaText}>Ver justificativas</Text>
+            <Text style={styles.ctaText}>{tl('Ver justificativas', 'View reasons', 'Ver justificaciones', 'Vedi motivazioni')}</Text>
             <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
           </View>
         )}

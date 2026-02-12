@@ -8,6 +8,7 @@ import { normalizeKey } from '../utils/astro/normalizeKey'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
+import { useAppLanguage } from '../hooks/useAppLanguage'
 import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
 import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
@@ -280,6 +281,17 @@ export default function TransitComparisonCard({
   const { width } = useWindowDimensions()
   const isNarrow = width < 900
   const { personal, statusPersonal } = useTransits(null)
+  const { language, t } = useAppLanguage()
+  const tr = React.useCallback((key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars as any)
+    return value === key ? fallback : value
+  }, [t])
+  const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }, [language])
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
     normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
@@ -558,22 +570,32 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       daysToPeak: number | null
       daysToEnd: number | null
     } | null) => {
-      if (!windowInfo) return 'Em curso'
+      if (!windowInfo) return tl('Em curso', 'In progress', 'En curso', 'In corso')
       const parts: string[] = []
       if (windowInfo.phaseLabel === 'Em aprox') {
         const lead = typeof windowInfo.daysToPeak === 'number' ? windowInfo.daysToPeak : windowInfo.days
-        parts.push(`Em aprox${typeof lead === 'number' ? ` (${lead}d)` : ''}`)
+        parts.push(
+          typeof lead === 'number'
+            ? tl(`Em aprox (${lead}d)`, `Approaching (${lead}d)`, `En aprox (${lead}d)`, `In avvicinamento (${lead}d)`)
+            : tl('Em aprox', 'Approaching', 'En aprox', 'In avvicinamento')
+        )
       } else if (windowInfo.phaseLabel) {
-        parts.push(windowInfo.phaseLabel)
+        const mapped =
+          windowInfo.phaseLabel === 'Pico'
+            ? tl('Pico', 'Peak', 'Pico', 'Picco')
+            : windowInfo.phaseLabel === 'Afastando'
+            ? tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
+            : windowInfo.phaseLabel
+        parts.push(mapped)
       }
-      if (windowInfo.startLabel) parts.push(`Início ${windowInfo.startLabel}`)
+      if (windowInfo.startLabel) parts.push(`${tl('Início', 'Start', 'Inicio', 'Inizio')} ${windowInfo.startLabel}`)
       if (windowInfo.endLabel) {
-        if (windowInfo.daysToEnd === 0) parts.push('termina hoje')
-        else parts.push(`vai até dia ${windowInfo.endLabel}`)
+        if (windowInfo.daysToEnd === 0) parts.push(tl('termina hoje', 'ends today', 'termina hoy', 'termina oggi'))
+        else parts.push(`${tl('vai até dia', 'until', 'va hasta', 'fino al')} ${windowInfo.endLabel}`)
       }
-      return parts.length ? parts.join(' • ') : 'Em curso'
+      return parts.length ? parts.join(' • ') : tl('Em curso', 'In progress', 'En curso', 'In corso')
     },
-    []
+    [tl]
   )
 
 
@@ -777,17 +799,36 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     if (!comparison) return null
     const content = PLANET_MEANING_CONTENT[planetMeaningPlanet] || {
       title: translatePlanetName(planetMeaningPlanet),
-      essence: 'Força arquetípica em movimento.',
-      inAspect: 'Nos aspectos, revela como a energia se combina com outras forças do mapa.',
-      inHouse: 'Na casa, mostra o campo da vida mais ativado no momento.',
-      keywords: ['força', 'contexto', 'leitura']
+      essence: tl(
+        'Força arquetípica em movimento.',
+        'Archetypal force in motion.',
+        'Fuerza arquetípica en movimiento.',
+        'Forza archetipica in movimento.'
+      ),
+      inAspect: tl(
+        'Nos aspectos, revela como a energia se combina com outras forças do mapa.',
+        'In aspects, it shows how this energy combines with other chart forces.',
+        'En los aspectos, muestra cómo esta energía se combina con otras fuerzas de la carta.',
+        'Negli aspetti, mostra come questa energia si combina con altre forze del tema.'
+      ),
+      inHouse: tl(
+        'Na casa, mostra o campo da vida mais ativado no momento.',
+        'In the house, it shows which life area is currently most activated.',
+        'En la casa, muestra qué área de vida está más activada ahora.',
+        'Nella casa, mostra quale area di vita è più attivata in questo momento.'
+      ),
+      keywords: [
+        tl('força', 'strength', 'fuerza', 'forza'),
+        tl('contexto', 'context', 'contexto', 'contesto'),
+        tl('leitura', 'reading', 'lectura', 'lettura')
+      ]
     }
     const personalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps) || comparison.current.house
     const collectiveHouse = comparison.current.house
     const natalHouse = comparison.natal.house
-    const personalFocus = HOUSE_FOCUS[personalHouse || 0] || 'área de ajuste'
-    const collectiveFocus = HOUSE_FOCUS[collectiveHouse || 0] || 'campo coletivo'
-    const natalFocus = HOUSE_FOCUS[natalHouse || 0] || 'base natal'
+    const personalFocus = HOUSE_FOCUS[personalHouse || 0] || tl('área de ajuste', 'adjustment area', 'área de ajuste', 'area di regolazione')
+    const collectiveFocus = HOUSE_FOCUS[collectiveHouse || 0] || tl('campo coletivo', 'collective field', 'campo colectivo', 'campo collettivo')
+    const natalFocus = HOUSE_FOCUS[natalHouse || 0] || tl('base natal', 'natal baseline', 'base natal', 'base natale')
     const signLabel = getSignFromDegree(comparison.current.longitude)
     const personalAspectsCount = personalByTransitPlanet[planetMeaningPlanet]?.length || 0
     const collectiveAspectsCount = comparison.planetaryAspects.length
@@ -795,14 +836,39 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const totalActiveContacts = personalAspectsCount + collectiveAspectsCount + houseAspectsCount
     const forceLine =
       totalActiveContacts >= 6
-        ? 'Força alta no período: múltiplos contatos simultâneos.'
+        ? tl(
+          'Força alta no período: múltiplos contatos simultâneos.',
+          'High force in this period: multiple simultaneous contacts.',
+          'Fuerza alta en este período: múltiples contactos simultáneos.',
+          'Forza alta in questo periodo: contatti multipli simultanei.'
+        )
         : totalActiveContacts >= 3
-        ? 'Força moderada: energia consistente com pontos de ajuste.'
-        : 'Força focal: atuação seletiva e pontual.'
+        ? tl(
+          'Força moderada: energia consistente com pontos de ajuste.',
+          'Moderate force: consistent energy with adjustment points.',
+          'Fuerza moderada: energía consistente con puntos de ajuste.',
+          'Forza moderata: energia coerente con punti di regolazione.'
+        )
+        : tl(
+          'Força focal: atuação seletiva e pontual.',
+          'Focused force: selective and specific action.',
+          'Fuerza focal: actuación selectiva y puntual.',
+          'Forza focalizzata: azione selettiva e puntuale.'
+        )
     const practicalUse =
       totalActiveContacts >= 5
-        ? 'Uso prático: priorize 1 objetivo central e corte dispersões.'
-        : 'Uso prático: mantenha cadência estável com revisão semanal.'
+        ? tl(
+          'Uso prático: priorize 1 objetivo central e corte dispersões.',
+          'Practical use: prioritize 1 core objective and cut distractions.',
+          'Uso práctico: prioriza 1 objetivo central y reduce la dispersión.',
+          'Uso pratico: dai priorita a 1 obiettivo centrale e riduci le dispersioni.'
+        )
+        : tl(
+          'Uso prático: mantenha cadência estável com revisão semanal.',
+          'Practical use: keep a steady cadence with weekly review.',
+          'Uso práctico: mantén una cadencia estable con revisión semanal.',
+          'Uso pratico: mantieni una cadenza stabile con revisione settimanale.'
+        )
     return {
       planetName: translatePlanetName(planetMeaningPlanet),
       title: content.title,
@@ -812,14 +878,34 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       inAspect: content.inAspect,
       inHouse: content.inHouse,
       keywords: content.keywords,
-      practical: `Com ${translatePlanetName(planetMeaningPlanet)} em ${signLabel}, o foco atual é ${collectiveFocus}.`,
+      practical: tl(
+        `Com ${translatePlanetName(planetMeaningPlanet)} em ${signLabel}, o foco atual é ${collectiveFocus}.`,
+        `With ${translatePlanetName(planetMeaningPlanet)} in ${signLabel}, the current focus is ${collectiveFocus}.`,
+        `Con ${translatePlanetName(planetMeaningPlanet)} en ${signLabel}, el foco actual es ${collectiveFocus}.`,
+        `Con ${translatePlanetName(planetMeaningPlanet)} in ${signLabel}, il focus attuale è ${collectiveFocus}.`
+      ),
       forceLine,
       practicalUse,
-      personalLine: `Trânsito pessoal (c/ natal) ativa Casa ${personalHouse || '-'}: ${personalFocus}.`,
-      collectiveLine: `Trânsito coletivo ativa Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`,
-      natalLine: `No natal, ${translatePlanetName(planetMeaningPlanet)} está na Casa ${natalHouse || '-'}: ${natalFocus}.`,
+      personalLine: tl(
+        `Trânsito pessoal (c/ natal) ativa Casa ${personalHouse || '-'}: ${personalFocus}.`,
+        `Personal transit (with natal) activates House ${personalHouse || '-'}: ${personalFocus}.`,
+        `Tránsito personal (con natal) activa Casa ${personalHouse || '-'}: ${personalFocus}.`,
+        `Transito personale (con natale) attiva Casa ${personalHouse || '-'}: ${personalFocus}.`
+      ),
+      collectiveLine: tl(
+        `Trânsito coletivo ativa Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`,
+        `Collective transit activates House ${collectiveHouse || '-'}: ${collectiveFocus}.`,
+        `Tránsito colectivo activa Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`,
+        `Transito collettivo attiva Casa ${collectiveHouse || '-'}: ${collectiveFocus}.`
+      ),
+      natalLine: tl(
+        `No natal, ${translatePlanetName(planetMeaningPlanet)} está na Casa ${natalHouse || '-'}: ${natalFocus}.`,
+        `In natal, ${translatePlanetName(planetMeaningPlanet)} is in House ${natalHouse || '-'}: ${natalFocus}.`,
+        `En la carta natal, ${translatePlanetName(planetMeaningPlanet)} está en Casa ${natalHouse || '-'}: ${natalFocus}.`,
+        `Nel tema natale, ${translatePlanetName(planetMeaningPlanet)} è in Casa ${natalHouse || '-'}: ${natalFocus}.`
+      ),
     }
-  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName])
+  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName, tl])
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,
@@ -926,17 +1012,37 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     houseByCusp?: { sign: string; element: string; modality: string } | null
     houseNatural?: { sign: string; element: string; modality: string } | null
   }) => {
-    const houseLabel = params.house ? `Casa ${params.house}` : 'Casa indefinida'
-    const short = `${params.planet} em ${params.signLabel} (${params.signElement}/${params.signModality}) atuando em ${houseLabel}.`
+    const houseLabel = params.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('Casa indefinida', 'Undefined house', 'Casa indefinida', 'Casa indefinita')
+    const short = tl(
+      `${params.planet} em ${params.signLabel} (${params.signElement}/${params.signModality}) atuando em ${houseLabel}.`,
+      `${params.planet} in ${params.signLabel} (${params.signElement}/${params.signModality}) acting in ${houseLabel}.`,
+      `${params.planet} en ${params.signLabel} (${params.signElement}/${params.signModality}) actuando en ${houseLabel}.`,
+      `${params.planet} in ${params.signLabel} (${params.signElement}/${params.signModality}) attivo in ${houseLabel}.`
+    )
     const long =
-      `${params.contextLabel} integra três camadas: planeta, signo e casa.\n\n` +
-      `Planeta + signo: ${params.planet} em ${params.signLabel} indica expressão por ${params.signElement} e modo ${params.signModality}.\n\n` +
-      `Casa ativada: ${houseLabel}.` +
-      `${params.houseByCusp ? ` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).` : ''}` +
-      `${params.houseNatural ? ` Casa natural (arquétipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).` : ''}\n\n` +
-      `Síntese prática: leia este ponto como junção de estilo (signo) + tema (casa) + função (planeta), priorizando decisões que combinem ritmo e contexto real do momento.`
+      tl(
+        `${params.contextLabel} integra três camadas: planeta, signo e casa.\n\n`,
+        `${params.contextLabel} integrates three layers: planet, sign and house.\n\n`,
+        `${params.contextLabel} integra tres capas: planeta, signo y casa.\n\n`,
+        `${params.contextLabel} integra tre livelli: pianeta, segno e casa.\n\n`
+      ) +
+      tl(
+        `Planeta + signo: ${params.planet} em ${params.signLabel} indica expressão por ${params.signElement} e modo ${params.signModality}.\n\n`,
+        `Planet + sign: ${params.planet} in ${params.signLabel} indicates expression through ${params.signElement} and ${params.signModality} mode.\n\n`,
+        `Planeta + signo: ${params.planet} en ${params.signLabel} indica expresión por ${params.signElement} y modo ${params.signModality}.\n\n`,
+        `Pianeta + segno: ${params.planet} in ${params.signLabel} indica espressione tramite ${params.signElement} e modalità ${params.signModality}.\n\n`
+      ) +
+      tl(`Casa ativada: ${houseLabel}.`, `Activated house: ${houseLabel}.`, `Casa activada: ${houseLabel}.`, `Casa attivata: ${houseLabel}.`) +
+      `${params.houseByCusp ? tl(` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` House by cusp (calculation): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` Casa per cuspide (calcolo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`) : ''}` +
+      `${params.houseNatural ? tl(` Casa natural (arquétipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Natural house (archetype): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Casa natural (arquetipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Casa naturale (archetipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`) : '\n\n'}` +
+      tl(
+        'Síntese prática: leia este ponto como junção de estilo (signo) + tema (casa) + função (planeta), priorizando decisões que combinem ritmo e contexto real do momento.',
+        'Practical synthesis: read this point as a merge of style (sign) + theme (house) + function (planet), prioritizing decisions that match rhythm and real context.',
+        'Síntesis práctica: lee este punto como unión de estilo (signo) + tema (casa) + función (planeta), priorizando decisiones con ritmo y contexto real.',
+        'Sintesi pratica: leggi questo punto come unione di stile (segno) + tema (casa) + funzione (pianeta), privilegiando decisioni coerenti con ritmo e contesto reale.'
+      )
     return { short, long }
-  }, [])
+  }, [tl])
 
   const buildAspectReading = React.useCallback((params: {
     planet: string
@@ -947,33 +1053,38 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     phase?: string | null
     scope: 'pessoal' | 'coletivo' | 'casa'
   }) => {
-    const keyword = PLANET_KEYWORDS[params.planet] || 'dinâmica central'
-    const houseFocus = params.house ? HOUSE_FOCUS[params.house] || `temas da Casa ${params.house}` : 'contexto atual'
+    const keyword = PLANET_KEYWORDS[params.planet] || tl('dinâmica central', 'core dynamic', 'dinámica central', 'dinamica centrale')
+    const houseFocus = params.house ? HOUSE_FOCUS[params.house] || `${tl('temas da', 'themes of', 'temas de la', 'temi della')} ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('contexto atual', 'current context', 'contexto actual', 'contesto attuale')
     const aspectKey = normalizeAspectKey(params.aspectType)
     const constructive = aspectKey === 'trigono' || aspectKey === 'sextil'
     const intense = aspectKey === 'quadratura' || aspectKey === 'oposicao' || aspectKey === 'quincuncio'
     const tone = constructive
-      ? 'janela favorável para avanço com consistência'
+      ? tl('janela favorável para avanço com consistência', 'favorable window for consistent progress', 'ventana favorable para avanzar con consistencia', 'finestra favorevole per avanzare con costanza')
       : intense
-      ? 'tensão produtiva pedindo ajuste de rota'
-      : 'movimento de recalibração gradual'
-    const windowLabel = params.days ? `em uma janela de cerca de ${params.days} dias` : 'neste ciclo'
-    const phaseLabel = params.phase ? ` Fase atual: ${params.phase}.` : ''
+      ? tl('tensão produtiva pedindo ajuste de rota', 'productive tension requiring route adjustment', 'tensión productiva que pide ajuste de rumbo', 'tensione produttiva che richiede un aggiustamento di rotta')
+      : tl('movimento de recalibração gradual', 'gradual recalibration movement', 'movimiento de recalibración gradual', 'movimento di ricalibrazione graduale')
+    const windowLabel = params.days ? tl(`em uma janela de cerca de ${params.days} dias`, `within a window of about ${params.days} days`, `en una ventana de unos ${params.days} días`, `in una finestra di circa ${params.days} giorni`) : tl('neste ciclo', 'in this cycle', 'en este ciclo', 'in questo ciclo')
+    const phaseLabel = params.phase ? tl(` Fase atual: ${params.phase}.`, ` Current phase: ${params.phase}.`, ` Fase actual: ${params.phase}.`, ` Fase attuale: ${params.phase}.`) : ''
     const scopeLabel =
       params.scope === 'pessoal'
-        ? 'No plano pessoal,'
+        ? tl('No plano pessoal,', 'On a personal level,', 'En el plano personal,', 'Nel piano personale,')
         : params.scope === 'coletivo'
-        ? 'No plano coletivo,'
-        : 'No eixo de casas,'
+        ? tl('No plano coletivo,', 'On a collective level,', 'En el plano colectivo,', 'Nel piano collettivo,')
+        : tl('No eixo de casas,', 'In the house axis,', 'En el eje de casas,', 'Nell asse delle case,')
 
     return {
       short: `${scopeLabel} ${params.planet} ativa ${keyword} em ${houseFocus}: ${tone}.`,
       long:
         `${params.planet} em ${translateAspectLabel(params.aspectType)} com ${params.targetLabel} ` +
         `organiza foco em ${houseFocus}. ${tone} ${windowLabel}.${phaseLabel} ` +
-        `Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.`
+        tl(
+          'Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.',
+          'Practical reading: convert this trend into a small, clear and executable decision to avoid dispersion.',
+          'Lectura práctica: convierte esta tendencia en una decisión pequeña, clara y ejecutable para evitar dispersión.',
+          'Lettura pratica: trasforma questa tendenza in una decisione piccola, chiara ed eseguibile per evitare dispersione.'
+        )
     }
-  }, [])
+  }, [tl])
 
   const elementSignCounts = React.useMemo(
     () => ({
@@ -1080,7 +1191,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           {statusPersonal ? (
             <View style={{ marginBottom: 8 }}>
               <Text style={{ color: '#fff', opacity: 0.9 }}>
-                Status pessoal: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
+                {tl('Status pessoal', 'Personal status', 'Estado personal', 'Stato personale')}: {formatStatusLabel(statusPersonal.level)} ({statusPersonal.score}%)
               </Text>
               {statusMetaLine ? (
                 <Text style={{ color: '#fff', opacity: 0.72, fontSize: 12 }}>{statusMetaLine}</Text>
@@ -1177,7 +1288,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.natal.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Natal',
+                          contextLabel: tl('Leitura Natal', 'Natal Reading', 'Lectura Natal', 'Lettura Natale'),
                           signLabel,
                           signElement: translateElement(comparison.natal.element),
                           signModality: translateModality(comparison.natal.modality),
@@ -1186,27 +1297,27 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: natalNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Natal`,
-                          subtitle: `${signLabel} • Casa ${comparison.natal.house}`,
+                          title: `${translatePlanetName(comparison.name)} • ${tl('Natal', 'Natal', 'Natal', 'Natale')}`,
+                          subtitle: `${signLabel} • ${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.natal.house}`,
                           short: interp.short,
                           long: interp.long,
                           keywords: [
-                            'natal',
+                            tl('natal', 'natal', 'natal', 'natale'),
                             signLabel,
-                            `Casa ${comparison.natal.house}`,
+                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.natal.house}`,
                             translateElement(comparison.natal.element),
                             translateModality(comparison.natal.modality),
                           ],
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Natal</Text>
+                      <Text style={styles.columnTitle}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
                       <Text style={styles.metricLineStrong}>
                         {formatSignLine(comparison.natal.longitude)}
                       </Text>
                       {renderAttributeChips(comparison.natal.element, comparison.natal.modality)}
                       <Text style={styles.metricLineStrong}>
-                        Casa {comparison.natal.house}
+                        {tl('Casa', 'House', 'Casa', 'Casa')} {comparison.natal.house}
                       </Text>
                       {renderAttributeChips(natalNaturalInfo?.element || null, natalNaturalInfo?.modality || null)}
                     </TouchableOpacity>
@@ -1218,7 +1329,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Trânsito Pessoal',
+                          contextLabel: tl('Leitura Trânsito Pessoal', 'Personal Transit Reading', 'Lectura Tránsito Personal', 'Lettura Transito Personale'),
                           signLabel,
                           signElement: translateElement(comparison.current.element),
                           signModality: translateModality(comparison.current.modality),
@@ -1227,27 +1338,27 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: transitOnNatalNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Trânsito Pessoal`,
-                          subtitle: `${signLabel} • Casa ${transitOnNatalHouse || '-'}`,
+                          title: `${translatePlanetName(comparison.name)} • ${tl('Trânsito Pessoal', 'Personal Transit', 'Tránsito Personal', 'Transito Personale')}`,
+                          subtitle: `${signLabel} • ${tl('Casa', 'House', 'Casa', 'Casa')} ${transitOnNatalHouse || '-'}`,
                           short: interp.short,
                           long: interp.long,
                           keywords: [
-                            'trânsito pessoal',
+                            tl('trânsito pessoal', 'personal transit', 'tránsito personal', 'transito personale'),
                             signLabel,
-                            `Casa ${transitOnNatalHouse || '-'}`,
+                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${transitOnNatalHouse || '-'}`,
                             translateElement(comparison.current.element),
                             translateModality(comparison.current.modality),
                           ],
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Trânsito Pessoal</Text>
+                      <Text style={styles.columnTitle}>{tl('Trânsito Pessoal', 'Personal Transit', 'Tránsito Personal', 'Transito Personale')}</Text>
                       <Text style={styles.metricLineStrong}>
                         {formatSignLine(comparison.current.longitude, comparison.current.isRetrograde)}
                       </Text>
                       {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
-                        Casa {transitOnNatalHouse || '-'}
+                        {tl('Casa', 'House', 'Casa', 'Casa')} {transitOnNatalHouse || '-'}
                       </Text>
                       {renderAttributeChips(transitOnNatalNaturalInfo?.element || null, transitOnNatalNaturalInfo?.modality || null)}
                     </TouchableOpacity>
@@ -1259,7 +1370,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
                         const interp = buildColumnInterpretation({
                           planet: translatePlanetName(comparison.name),
-                          contextLabel: 'Leitura Trânsito Coletivo',
+                          contextLabel: tl('Leitura Trânsito Coletivo', 'Collective Transit Reading', 'Lectura Tránsito Colectivo', 'Lettura Transito Collettivo'),
                           signLabel,
                           signElement: translateElement(comparison.current.element),
                           signModality: translateModality(comparison.current.modality),
@@ -1268,34 +1379,34 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           houseNatural: currentNaturalInfo,
                         })
                         openDetailModal({
-                          title: `${translatePlanetName(comparison.name)} • Trânsito Coletivo`,
-                          subtitle: `Casa ${comparison.current.house}`,
+                          title: `${translatePlanetName(comparison.name)} • ${tl('Trânsito Coletivo', 'Collective Transit', 'Tránsito Colectivo', 'Transito Collettivo')}`,
+                          subtitle: `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
                           short: interp.short,
                           long: interp.long,
                           keywords: [
-                            'trânsito coletivo',
+                            tl('trânsito coletivo', 'collective transit', 'tránsito colectivo', 'transito collettivo'),
                             signLabel,
-                            `Casa ${comparison.current.house}`,
+                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
                             translateElement(comparison.current.element),
                             translateModality(comparison.current.modality),
                           ],
                         })
                       }}
                     >
-                      <Text style={styles.columnTitle}>Trânsito Coletivo</Text>
+                      <Text style={styles.columnTitle}>{tl('Trânsito Coletivo', 'Collective Transit', 'Tránsito Colectivo', 'Transito Collettivo')}</Text>
                       <Text style={styles.metricLineStrong}>
                         {formatSignLine(comparison.current.longitude, comparison.current.isRetrograde)}
                       </Text>
                       {renderAttributeChips(comparison.current.element, comparison.current.modality)}
                       <Text style={styles.metricLineStrong}>
-                        Casa {comparison.current.house}
+                        {tl('Casa', 'House', 'Casa', 'Casa')} {comparison.current.house}
                       </Text>
                       {renderAttributeChips(currentNaturalInfo?.element || null, currentNaturalInfo?.modality || null)}
                       {(() => {
                         const info = nearestCuspInfo(comparison.current.longitude)
                         if (info && info.distance <= 0.5) {
                           return (
-                            <Text style={styles.nearCuspChip}>{`próx. cúspide ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
+                            <Text style={styles.nearCuspChip}>{`${tl('próx. cúspide', 'next cusp', 'próx. cúspide', 'pross. cuspide')} ${info.house} (${info.distance.toFixed(2)}°)`}</Text>
                           )
                         }
                         return null
@@ -1309,7 +1420,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         {/* Transitos pessoais para este planeta em transito */}
             {(personalByTransitPlanet[comparison.name]?.length ?? 0) > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Transitos pessoais:</Text>
+                <Text style={styles.aspectsTitle}>{tr('transits.personal.title', 'Personal transits')}:</Text>
                 {personalByTransitPlanet[comparison.name].map((t, idx) => {
                   const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
                   const windowInfo = resolveWindowInfo((t as any).window || personalWindowMap.get(key))
@@ -1334,15 +1445,15 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         onPress={() =>
                           openDetailModal({
                             title: `${translatePlanetName(t.transitPlanet)} ${translateAspectLabel(t.type)} ${translatePlanetName(t.natalPlanet)}`,
-                            subtitle: `Trânsito pessoal • ${translatePlanetName(comparison.name)}`,
+                            subtitle: `${tl('Trânsito pessoal', 'Personal transit', 'Tránsito personal', 'Transito personale')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
                             keywords: [
-                              'trânsito pessoal',
+                              tl('trânsito pessoal', 'personal transit', 'tránsito personal', 'transito personale'),
                               translatePlanetName(t.transitPlanet),
                               translateAspectLabel(t.type),
                               translatePlanetName(t.natalPlanet),
-                              `Casa ${comparison.current.house}`,
+                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
                             ],
                           })
                         }
@@ -1365,7 +1476,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             {/* Aspectos coletivos do momento para este planeta */}
             {comparison.planetaryAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Aspectos coletivos:</Text>
+                <Text style={styles.aspectsTitle}>{tr('transits.collective.title', 'Collective aspects')}:</Text>
                 {comparison.planetaryAspects.map((aspect, aspectIndex) => {
                   const windowInfo = resolveWindowInfo((aspect as any).window)
                   const reading = buildAspectReading({
@@ -1389,15 +1500,15 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         onPress={() =>
                           openDetailModal({
                             title: `${translatePlanetName(aspect.planet1)} ${translateAspectLabel(aspect.type)} ${translatePlanetName(aspect.planet2)}`,
-                            subtitle: `Aspecto coletivo • ${translatePlanetName(comparison.name)}`,
+                            subtitle: `${tl('Aspecto coletivo', 'Collective aspect', 'Aspecto colectivo', 'Aspetto collettivo')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
                             keywords: [
-                              'aspecto coletivo',
+                              tl('aspecto coletivo', 'collective aspect', 'aspecto colectivo', 'aspetto collettivo'),
                               translatePlanetName(aspect.planet1),
                               translateAspectLabel(aspect.type),
                               translatePlanetName(aspect.planet2),
-                              `Casa ${comparison.current.house}`,
+                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
                             ],
                           })
                         }
@@ -1420,13 +1531,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             {/* Aspectos com casas */}
             {comparison.houseAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Aspectos com casas:</Text>
+                <Text style={styles.aspectsTitle}>{tl('Aspectos com casas', 'House aspects', 'Aspectos con casas', 'Aspetti con case')}:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
                   const windowInfo = resolveWindowInfo((houseAspect as any).window)
                   const reading = buildAspectReading({
                     planet: comparison.name,
                     aspectType: houseAspect.aspect,
-                    targetLabel: `Casa ${houseAspect.house} (${houseAspect.meaning})`,
+                    targetLabel: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} (${houseAspect.meaning})`,
                     house: houseAspect.house,
                     days: windowInfo?.days || null,
                     phase: windowInfo?.phaseLabel || null,
@@ -1443,22 +1554,22 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         ]}
                         onPress={() =>
                           openDetailModal({
-                            title: `Casa ${houseAspect.house} • ${houseAspect.meaning}`,
-                            subtitle: `Aspecto com casa • ${translatePlanetName(comparison.name)}`,
+                            title: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} • ${houseAspect.meaning}`,
+                            subtitle: `${tl('Aspecto com casa', 'House aspect', 'Aspecto con casa', 'Aspetto con casa')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
                             keywords: [
-                              'aspecto com casa',
+                              tl('aspecto com casa', 'house aspect', 'aspecto con casa', 'aspetto con casa'),
                               translatePlanetName(comparison.name),
                               translateAspectLabel(houseAspect.aspect),
-                              `Casa ${houseAspect.house}`,
+                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house}`,
                               houseAspect.meaning,
                             ],
                           })
                         }
                       >
                         <View style={styles.aspectLine}>
-                          <Text style={styles.aspectText}>Casa {houseAspect.house} - {houseAspect.meaning}</Text>
+                          <Text style={styles.aspectText}>{tl('Casa', 'House', 'Casa', 'Casa')} {houseAspect.house} - {houseAspect.meaning}</Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
                           <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>
@@ -1508,7 +1619,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.planetMeaningTitle}>{planetMeaningData?.planetName || ''}</Text>
-                <Text style={styles.planetMeaningSubtitle}>Força astrológica em leitura aplicada</Text>
+                <Text style={styles.planetMeaningSubtitle}>
+                  {tl(
+                    'Força astrológica em leitura aplicada',
+                    'Astrological strength in applied reading',
+                    'Fuerza astrológica en lectura aplicada',
+                    'Forza astrologica in lettura applicata'
+                  )}
+                </Text>
               </View>
               <TouchableOpacity onPress={() => setPlanetMeaningModalOpen(false)} style={styles.detailCloseIcon}>
                 <Ionicons name="close" size={20} color="#0A1633" />
@@ -1525,33 +1643,33 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               </View>
 
               <View style={styles.planetMeaningSectionCard}>
-                <Text style={styles.planetMeaningSectionLabel}>Força do planeta</Text>
+                <Text style={styles.planetMeaningSectionLabel}>{tl('Força do planeta', 'Planet strength', 'Fuerza del planeta', 'Forza del pianeta')}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.essence || ''}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.forceLine || ''}</Text>
               </View>
 
               <View style={styles.planetMeaningSectionCard}>
-                <Text style={styles.planetMeaningSectionLabel}>Efeito em aspecto</Text>
+                <Text style={styles.planetMeaningSectionLabel}>{tl('Efeito em aspecto', 'Aspect effect', 'Efecto en aspecto', 'Effetto in aspetto')}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.inAspect || ''}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.personalLine || ''}</Text>
               </View>
 
               <View style={styles.planetMeaningSectionCard}>
-                <Text style={styles.planetMeaningSectionLabel}>Efeito em casa</Text>
+                <Text style={styles.planetMeaningSectionLabel}>{tl('Efeito em casa', 'House effect', 'Efecto en casa', 'Effetto in casa')}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.inHouse || ''}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.natalLine || ''}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.collectiveLine || ''}</Text>
               </View>
 
               <View style={styles.planetMeaningSectionCard}>
-                <Text style={styles.planetMeaningSectionLabel}>Uso prático</Text>
+                <Text style={styles.planetMeaningSectionLabel}>{tl('Uso prático', 'Practical use', 'Uso práctico', 'Uso pratico')}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.practical || ''}</Text>
                 <Text style={styles.planetMeaningBody}>{planetMeaningData?.practicalUse || ''}</Text>
               </View>
             </ScrollView>
 
             <TouchableOpacity style={styles.detailModalButton} onPress={() => setPlanetMeaningModalOpen(false)}>
-              <Text style={styles.detailModalButtonText}>Fechar</Text>
+              <Text style={styles.detailModalButtonText}>{tr('common.close', 'Close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1562,14 +1680,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="analytics" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Resumo da Carta</Text>
+            <Text style={styles.sectionTitle}>{tl('Resumo da Carta', 'Chart Summary', 'Resumen de la Carta', 'Riepilogo del Tema')}</Text>
             {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text> : null}
           </View>
         </View>
 
         <View style={styles.analysisRow}>
           <View style={styles.weightMethodCard}>
-            <Text style={styles.weightMethodTitle}>Método de peso do balanço</Text>
+            <Text style={styles.weightMethodTitle}>{tl('Método de peso do balanço', 'Balance weighting method', 'Metodo de peso del balance', 'Metodo di peso del bilancio')}</Text>
             <Text style={styles.weightMethodText}>
               Balanço = (Signos x {Math.round(SIGN_WEIGHT * 100)}%) + (Casas x {Math.round(HOUSE_WEIGHT * 100)}%)
             </Text>
@@ -1577,7 +1695,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
               Signos mostram o estilo de expressão; casas mostram a área ativada no mapa.
             </Text>
           </View>
-          <Text style={styles.analysisLabel}>Elementos (Signos | Casas | Balanço):</Text>
+          <Text style={styles.analysisLabel}>{tl('Elementos (Signos | Casas | Balanço):', 'Elements (Signs | Houses | Balance):', 'Elementos (Signos | Casas | Balance):', 'Elementi (Segni | Case | Bilancio):')}</Text>
           <View style={styles.balanceGrid}>
             {renderBalanceColumns({
               periodLabel: 'Natal',
@@ -1593,7 +1711,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
 
         <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>Modalidades (Signos | Casas | Balanço):</Text>
+          <Text style={styles.analysisLabel}>{tl('Modalidades (Signos | Casas | Balanço):', 'Modalities (Signs | Houses | Balance):', 'Modalidades (Signos | Casas | Balance):', 'Modalita (Segni | Case | Bilancio):')}</Text>
           <View style={styles.balanceGrid}>
             {renderBalanceColumns({
               periodLabel: 'Natal',

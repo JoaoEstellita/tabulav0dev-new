@@ -119,7 +119,7 @@ export default function SettingsScreen() {
 
   const navigation = useNavigation();
 
-  const [settingsSections, setSettingsSections] = useState<SettingsSection[]>([
+  const buildSettingsSections = React.useCallback((): SettingsSection[] => ([
     {
       id: 'notifications',
       title: t('settings.section.notifications'),
@@ -231,13 +231,19 @@ export default function SettingsScreen() {
         },
       ],
     },
-  ]);
+  ]), [navigation, t]);
+
+  const [settingsSections, setSettingsSections] = useState<SettingsSection[]>(() => buildSettingsSections());
 
   useEffect(() => {
     loadSettings();
     loadProfile();
     refreshNotificationPermission();
   }, []);
+
+  useEffect(() => {
+    setSettingsSections(buildSettingsSections());
+  }, [buildSettingsSections, language]);
 
   useEffect(() => {
     if (!user?.uid) return;

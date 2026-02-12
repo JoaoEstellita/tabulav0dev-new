@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import UserService from '../services/firebase/UserService'
 import AstrologyCacheService from '../services/astrology/AstrologyCacheService'
@@ -21,73 +21,61 @@ export interface UserSettings {
 
 const STORAGE_KEY = '@tabula_estelar:user_settings'
 
+let sharedSettings: UserSettings | null = null
+const sharedListeners = new Set<(next: UserSettings) => void>()
+
+const publishSharedSettings = (next: UserSettings) => {
+  sharedSettings = next
+  sharedListeners.forEach((listener) => listener(next))
+}
+
+const getDefaultSettings = (): UserSettings => ({
+  dataSync: true,
+  analytics: true,
+  locationSharing: true,
+  theme: 'dark',
+  language: 'pt-BR',
+  timezone: 'America/Sao_Paulo',
+  currency: 'BRL',
+  houseSystem: 'whole-sign',
+})
+
 export function useUserSettings() {
   const { user } = useAuth() as any
-  const [settings, setSettings] = useState<UserSettings | null>(null)
+  const [settings, setSettings] = useState<UserSettings | null>(sharedSettings)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadSettings()
+    const listener = (next: UserSettings) => setSettings(next)
+    sharedListeners.add(listener)
+    return () => {
+      sharedListeners.delete(listener)
+    }
   }, [])
 
-  const loadSettings = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
-        const merged = { ...parsed, houseSystem: normalized }
-        setSettings(merged)
-        try { (globalThis as any).__userHouseSystem = normalized } catch {}
-      } else {
-        const defaultSettings: UserSettings = {
-          dataSync: true,
-          analytics: true,
-          locationSharing: true,
-          theme: 'dark',
-          language: 'pt-BR',
-          timezone: 'America/Sao_Paulo',
-          currency: 'BRL',
-          houseSystem: 'whole-sign'
-        }
-        setSettings(defaultSettings)
-        try { (globalThis as any).__userHouseSystem = defaultSettings.houseSystem } catch {}
-        await saveSettings(defaultSettings)
-      }
+  useEffect(() => {
+    loadSettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || !event.newValue) return
       try {
-        if (user?.uid) {
-          const hs = await UserService.getHouseSystem(user.uid)
-          if (hs) {
-            const normalized = normalizeHouseSystem(hs)
-            const merged = { ...(settings || JSON.parse(stored || '{}')), houseSystem: normalized }
-            try { (globalThis as any).__userHouseSystem = normalized } catch {}
-            await saveSettings(merged)
-          }
-        }
+        const parsed = JSON.parse(event.newValue)
+        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
+        publishSharedSettings({ ...parsed, houseSystem: normalized })
       } catch {}
-    } catch (error) {
-      console.error('Erro ao carregar configuracoes:', error)
-      const defaultSettings: UserSettings = {
-        dataSync: true,
-        analytics: true,
-        locationSharing: true,
-        theme: 'dark',
-        language: 'pt-BR',
-        timezone: 'America/Sao_Paulo',
-        currency: 'BRL',
-        houseSystem: 'whole-sign'
-      }
-      setSettings(defaultSettings)
-    } finally {
-      setLoading(false)
     }
-  }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   const saveSettings = async (newSettings: UserSettings) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings))
-      setSettings(newSettings)
+      publishSharedSettings(newSettings)
       return true
     } catch (error) {
       console.error('Erro ao salvar configuracoes:', error)
@@ -95,19 +83,71 @@ export function useUserSettings() {
     }
   }
 
-  const updateSettings = async (updates: Partial<UserSettings>) => {
-    if (!settings) return false
+  const loadSettings = async () => {
+    try {
+      if (sharedSettings) {
+        setSettings(sharedSettings)
+        setLoading(false)
+        return
+      }
 
-    const newSettings = { ...settings, ...updates }
+      const stored = await AsyncStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
+        publishSharedSettings({ ...parsed, houseSystem: normalized })
+        try {
+          ;(globalThis as any).__userHouseSystem = normalized
+        } catch {}
+      } else {
+        const defaults = getDefaultSettings()
+        publishSharedSettings(defaults)
+        try {
+          ;(globalThis as any).__userHouseSystem = defaults.houseSystem
+        } catch {}
+        await saveSettings(defaults)
+      }
+
+      try {
+        if (user?.uid) {
+          const hs = await UserService.getHouseSystem(user.uid)
+          if (hs) {
+            const normalized = normalizeHouseSystem(hs)
+            const merged = { ...(sharedSettings || getDefaultSettings()), houseSystem: normalized }
+            try {
+              ;(globalThis as any).__userHouseSystem = normalized
+            } catch {}
+            await saveSettings(merged)
+          }
+        }
+      } catch {}
+    } catch (error) {
+      console.error('Erro ao carregar configuracoes:', error)
+      const defaults = getDefaultSettings()
+      publishSharedSettings(defaults)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateSettings = async (updates: Partial<UserSettings>) => {
+    const current = settings || sharedSettings
+    if (!current) return false
+
+    const newSettings = { ...current, ...updates }
     if (updates.houseSystem) {
       const normalized = normalizeHouseSystem(updates.houseSystem)
       newSettings.houseSystem = normalized
-      try { (globalThis as any).__userHouseSystem = normalized } catch {}
+      try {
+        ;(globalThis as any).__userHouseSystem = normalized
+      } catch {}
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }
       if (user?.uid) {
-        try { await AstrologyCacheService.clearCache(user.uid) } catch {}
+        try {
+          await AstrologyCacheService.clearCache(user.uid)
+        } catch {}
       }
     }
 
@@ -115,23 +155,14 @@ export function useUserSettings() {
   }
 
   const resetSettings = async () => {
-    const defaultSettings: UserSettings = {
-      dataSync: true,
-      analytics: true,
-      locationSharing: true,
-      theme: 'dark',
-      language: 'pt-BR',
-      timezone: 'America/Sao_Paulo',
-      currency: 'BRL',
-      houseSystem: 'whole-sign'
-    }
-    return await saveSettings(defaultSettings)
+    return await saveSettings(getDefaultSettings())
   }
 
   const toggleTheme = async () => {
-    if (!settings) return false
+    const current = settings || sharedSettings
+    if (!current) return false
 
-    const newTheme = settings.theme === 'dark' ? 'light' : 'dark'
+    const newTheme = current.theme === 'dark' ? 'light' : 'dark'
     return await updateSettings({ theme: newTheme })
   }
 
@@ -155,6 +186,7 @@ export function useUserSettings() {
     toggleTheme,
     updateLanguage,
     updateTimezone,
-    updateCurrency
+    updateCurrency,
   }
 }
+

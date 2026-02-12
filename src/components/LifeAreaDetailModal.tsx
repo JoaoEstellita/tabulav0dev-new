@@ -571,6 +571,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 }) => {
   if (!areaData) return null
   const { language } = useAppLanguage()
+  const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }, [language])
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
@@ -1350,21 +1356,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
       {
         key: 'transits',
-        label: 'Trânsitos',
+        label: tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti'),
         value: String(transitsCount),
         tone: transitsCount > 0 ? 'positive' : 'neutral',
-        info: `${transitsCount} trânsitos entram nesta área. Eles são o gatilho dinâmico principal da leitura atual.`,
+        info: tl(
+          `${transitsCount} trânsitos entram nesta área. Eles são o gatilho dinâmico principal da leitura atual.`,
+          `${transitsCount} transits enter this area. They are the main dynamic trigger of the current reading.`,
+          `${transitsCount} tránsitos entran en esta área. Son el principal disparador dinámico de la lectura actual.`,
+          `${transitsCount} transiti entrano in quest area. Sono il principale trigger dinamico della lettura attuale.`
+        ),
       },
       {
         key: 'aspects',
-        label: 'Aspectos',
+        label: tl('Aspectos', 'Aspects', 'Aspectos', 'Aspetti'),
         value: String(aspectsCount),
         tone: aspectsCount > 0 ? 'positive' : 'neutral',
-        info: `${aspectsCount} aspectos ativos no cálculo. Eles podem ser harmônicos ou desafiadores e modulam o impacto dos trânsitos.`,
+        info: tl(
+          `${aspectsCount} aspectos ativos no cálculo. Eles podem ser harmônicos ou desafiadores e modulam o impacto dos trânsitos.`,
+          `${aspectsCount} active aspects in calculation. They can be harmonic or challenging and modulate transit impact.`,
+          `${aspectsCount} aspectos activos en el cálculo. Pueden ser armónicos o desafiantes y modulan el impacto de los tránsitos.`,
+          `${aspectsCount} aspetti attivi nel calcolo. Possono essere armonici o impegnativi e modulano l impatto dei transiti.`
+        ),
       },
       {
         key: 'dignity',
-        label: 'Dignidade',
+        label: tl('Dignidade', 'Dignity', 'Dignidad', 'Dignità'),
         value: String(dignityCount),
         tone: dignityCount > 0 ? 'positive' : 'neutral',
         info:
@@ -1374,36 +1390,56 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       },
       {
         key: 'houses',
-        label: 'Força de casa',
+        label: tl('Força de casa', 'House strength', 'Fuerza de casa', 'Forza della casa'),
         value: String(houseCount),
         tone: houseCount > 0 ? 'positive' : 'neutral',
-        info: `${houseCount} fatores de força de casa ativos. Casas angulares e casas-chave da área tendem a aumentar peso no status.`,
+        info: tl(
+          `${houseCount} fatores de força de casa ativos. Casas angulares e casas-chave da área tendem a aumentar peso no status.`,
+          `${houseCount} active house-strength factors. Angular houses and area key-houses tend to increase status weight.`,
+          `${houseCount} factores de fuerza de casa activos. Las casas angulares y casas clave del área tienden a aumentar el peso del estado.`,
+          `${houseCount} fattori di forza della casa attivi. Le case angolari e le case chiave dell area tendono ad aumentare il peso dello stato.`
+        ),
       },
       {
         key: 'conditions',
-        label: 'Condições',
+        label: tl('Condições', 'Conditions', 'Condiciones', 'Condizioni'),
         value: String(conditionsCount),
         tone: conditionsCount > 0 ? 'warning' : 'neutral',
-        info: `${conditionsCount} condições acidentais influenciam o score (fase, contexto, natureza do contato e outros ajustes do engine).`,
+        info: tl(
+          `${conditionsCount} condições acidentais influenciam o score (fase, contexto, natureza do contato e outros ajustes do engine).`,
+          `${conditionsCount} accidental conditions influence score (phase, context, contact nature and other engine adjustments).`,
+          `${conditionsCount} condiciones accidentales influyen en la puntuación (fase, contexto, naturaleza del contacto y otros ajustes del motor).`,
+          `${conditionsCount} condizioni accidentali influenzano il punteggio (fase, contesto, natura del contatto e altri aggiustamenti dell engine).`
+        ),
       },
     ]
 
     if (signalLevel) {
       chips.push({
         key: 'signal',
-        label: 'Sinal',
+        label: tl('Sinal', 'Signal', 'Señal', 'Segnale'),
         value: signalLevel,
         tone: signalLevel === 'Alto' ? 'positive' : 'neutral',
-        info: `Sinal ${signalLevel}: indica clareza e consistência do cenário geral da área.`,
+        info: tl(
+          `Sinal ${signalLevel}: indica clareza e consistência do cenário geral da área.`,
+          `Signal ${signalLevel}: indicates clarity and consistency of the area's overall scenario.`,
+          `Señal ${signalLevel}: indica claridad y consistencia del escenario general del área.`,
+          `Segnale ${signalLevel}: indica chiarezza e coerenza dello scenario generale dell area.`
+        ),
       })
     }
     if (volatilityLevel) {
       chips.push({
         key: 'volatility',
-        label: 'Volatilidade',
+        label: tl('Volatilidade', 'Volatility', 'Volatilidad', 'Volatilità'),
         value: volatilityLevel,
         tone: volatilityLevel === 'Alta' ? 'warning' : 'neutral',
-        info: `Volatilidade ${volatilityLevel}: indica variação do período e necessidade de ajuste de ritmo.`,
+        info: tl(
+          `Volatilidade ${volatilityLevel}: indica variação do período e necessidade de ajuste de ritmo.`,
+          `Volatility ${volatilityLevel}: indicates period variation and need for pace adjustment.`,
+          `Volatilidad ${volatilityLevel}: indica variación del período y necesidad de ajustar el ritmo.`,
+          `Volatilità ${volatilityLevel}: indica variazione del periodo e necessità di regolare il ritmo.`
+        ),
       })
     }
     const scoreDrilldown: Record<
@@ -1422,22 +1458,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       }
     > = {
       transits: {
-        title: 'Trânsitos ativos no score',
-        summary: 'Gatilhos dinâmicos que mais estão pesando agora para esta área.',
-        metric: `${transitsCount} ativos`,
+        title: tl('Trânsitos ativos no score', 'Active transits in score', 'Tránsitos activos en la puntuación', 'Transiti attivi nel punteggio'),
+        summary: tl('Gatilhos dinâmicos que mais estão pesando agora para esta área.', 'Dynamic triggers weighing most for this area now.', 'Disparadores dinámicos que más pesan ahora en esta área.', 'Trigger dinamici che stanno pesando di più ora per quest area.'),
+        metric: `${transitsCount} ${tl('ativos', 'active', 'activos', 'attivi')}`,
         rows: topTransitSignals,
       },
       aspects: {
-        title: 'Aspectos que modulam o impacto',
-        summary: 'Aspectos entre planetas e pontos natais que amplificam ou suavizam os trânsitos.',
-        metric: `${aspectsCount} no cálculo`,
+        title: tl('Aspectos que modulam o impacto', 'Aspects that modulate impact', 'Aspectos que modulan el impacto', 'Aspetti che modulano l impatto'),
+        summary: tl('Aspectos entre planetas e pontos natais que amplificam ou suavizam os trânsitos.', 'Aspects between planets and natal points that amplify or soften transits.', 'Aspectos entre planetas y puntos natales que amplifican o suavizan los tránsitos.', 'Aspetti tra pianeti e punti natali che amplificano o attenuano i transiti.'),
+        metric: `${aspectsCount} ${tl('no cálculo', 'in calculation', 'en cálculo', 'nel calcolo')}`,
         rows: topAspectSignals,
       },
       dignity: {
-        title: 'Dignidade essencial por planeta',
+        title: tl('Dignidade essencial por planeta', 'Essential dignity by planet', 'Dignidad esencial por planeta', 'Dignità essenziale per pianeta'),
         summary:
-          'Mede afinidade do planeta com o signo atual (domicílio/exaltação fortalecem; detrimento/queda enfraquecem).',
-        metric: `${dignityCount} relevantes`,
+          tl('Mede afinidade do planeta com o signo atual (domicílio/exaltação fortalecem; detrimento/queda enfraquecem).', 'Measures planet affinity with current sign (domicile/exaltation strengthen; detriment/fall weaken).', 'Mide la afinidad del planeta con el signo actual (domicilio/exaltación fortalecen; detrimento/caída debilitan).', 'Misura l affinità del pianeta con il segno attuale (domicilio/esaltazione rafforzano; detrimento/caduta indeboliscono).'),
+        metric: `${dignityCount} ${tl('relevantes', 'relevant', 'relevantes', 'rilevanti')}`,
         rows: topDignityPlanets.map((planet) => ({
           title: translate('planets', planet.planet),
           meta: planet.dignityReason,
@@ -1447,20 +1483,20 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         })),
       },
       houses: {
-        title: 'Força de casa por planeta',
-        summary: 'Mostra quais planetas recebem mais peso por posição em casas com impacto nesta área.',
-        metric: `${houseCount} com peso`,
+        title: tl('Força de casa por planeta', 'House strength by planet', 'Fuerza de casa por planeta', 'Forza della casa per pianeta'),
+        summary: tl('Mostra quais planetas recebem mais peso por posição em casas com impacto nesta área.', 'Shows which planets gain more weight by house position for this area.', 'Muestra qué planetas reciben más peso por posición en casas con impacto en esta área.', 'Mostra quali pianeti ricevono più peso per posizione nelle case con impatto in quest area.'),
+        metric: `${houseCount} ${tl('com peso', 'weighted', 'con peso', 'con peso')}`,
         rows: topHouseSignals,
       },
       conditions: {
-        title: 'Condições acidentais ativas',
-        summary: 'Ajustes contextuais do engine (fase, natureza do contato e outros moduladores).',
-        metric: `${conditionsCount} condições`,
+        title: tl('Condições acidentais ativas', 'Active accidental conditions', 'Condiciones accidentales activas', 'Condizioni accidentali attive'),
+        summary: tl('Ajustes contextuais do engine (fase, natureza do contato e outros moduladores).', 'Engine contextual adjustments (phase, contact nature and other modulators).', 'Ajustes contextuales del motor (fase, naturaleza del contacto y otros moduladores).', 'Regolazioni contestuali dell engine (fase, natura del contatto e altri modulatori).'),
+        metric: `${conditionsCount} ${tl('condições', 'conditions', 'condiciones', 'condizioni')}`,
         rows: topConditionSignals,
       },
       signal: {
-        title: 'Sinal do período',
-        summary: 'Leitura de consistência global do cenário da área no momento atual.',
+        title: tl('Sinal do período', 'Period signal', 'Señal del período', 'Segnale del periodo'),
+        summary: tl('Leitura de consistência global do cenário da área no momento atual.', 'Reading of overall consistency of this area scenario right now.', 'Lectura de consistencia global del escenario del área en este momento.', 'Lettura della coerenza complessiva dello scenario dell area nel momento attuale.'),
         metric: signalLevel || '-',
         rows: signalLevel
           ? [
@@ -1473,8 +1509,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           : [],
       },
       volatility: {
-        title: 'Volatilidade do período',
-        summary: 'Ritmo de mudança do cenário da área, indicando necessidade de ajuste tático.',
+        title: tl('Volatilidade do período', 'Period volatility', 'Volatilidad del período', 'Volatilità del periodo'),
+        summary: tl('Ritmo de mudança do cenário da área, indicando necessidade de ajuste tático.', 'Pace of scenario change in this area, indicating tactical adjustment needs.', 'Ritmo de cambio del escenario del área, indicando necesidad de ajuste táctico.', 'Ritmo di cambiamento dello scenario dell area, indicando necessità di aggiustamento tattico.'),
         metric: volatilityLevel || '-',
         rows: volatilityLevel
           ? [
@@ -1664,10 +1700,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const getTransitHousePrefix = (transit: any): string => {
     const currentHouse = getTransitCurrentHouseLabel(transit)
-    if (currentHouse) return 'Casa de trânsito atual'
+    if (currentHouse) return tl('Casa de trânsito atual', 'Current transit house', 'Casa de tránsito actual', 'Casa di transito attuale')
     const natalHouse = getTransitNatalHouseLabel(transit)
-    if (natalHouse) return 'Casa natal ativada'
-    return 'Casa de trânsito'
+    if (natalHouse) return tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')
+    return tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
   }
 
   const getPhaseLabel = (transit: any) => {
@@ -1679,18 +1715,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       return Math.max(0, Math.round((target - now) / (1000 * 60 * 60 * 24)))
     }
     const phase = String(transit?.phase || '').toLowerCase()
-    if (phase === 'peak') return 'Em pico'
+    if (phase === 'peak') return tl('Em pico', 'At peak', 'En pico', 'Al picco')
     if (phase === 'start') {
       const daysToPeak = getDaysUntil(transit?.peakAt || transit?.window?.exact || null)
-      return Number.isFinite(daysToPeak) ? `Em aproximação (${daysToPeak}d)` : 'Em aproximação'
+      return Number.isFinite(daysToPeak)
+        ? tl(`Em aproximação (${daysToPeak}d)`, `Approaching (${daysToPeak}d)`, `En aproximación (${daysToPeak}d)`, `In avvicinamento (${daysToPeak}d)`)
+        : tl('Em aproximação', 'Approaching', 'En aproximación', 'In avvicinamento')
     }
-    if (phase === 'end') return 'Afastando'
+    if (phase === 'end') return tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
     if (transit?.isApplying === true) {
       const daysToPeak = getDaysUntil(transit?.peakAt || transit?.window?.exact || null)
-      return Number.isFinite(daysToPeak) ? `Em aproximação (${daysToPeak}d)` : 'Em aproximação'
+      return Number.isFinite(daysToPeak)
+        ? tl(`Em aproximação (${daysToPeak}d)`, `Approaching (${daysToPeak}d)`, `En aproximación (${daysToPeak}d)`, `In avvicinamento (${daysToPeak}d)`)
+        : tl('Em aproximação', 'Approaching', 'En aproximación', 'In avvicinamento')
     }
-    if (transit?.isApplying === false) return 'Afastando'
-    return 'Ativo'
+    if (transit?.isApplying === false) return tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
+    return tl('Ativo', 'Active', 'Activo', 'Attivo')
   }
 
   const getDurationLabel = (transit: any) => {
@@ -1862,14 +1902,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : isNeutral
         ? DESIGN_SYSTEM.colors.neutral
         : DESIGN_SYSTEM.colors.secondary
-      const statusText = isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'
+      const statusText = isHarmonious
+        ? tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico')
+        : isChallenging
+        ? tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo')
+        : tl('Neutro', 'Neutral', 'Neutro', 'Neutro')
       const phaseLabel = getPhaseLabel(transit)
       const durationLabel = getDurationLabel(transit)
       const relativeTiming = getTimingLabel(transit)
       const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
       const transitTitle = buildTransitTitle(transit, facetKind)
       const houseLabel = facetKind === 'house' ? getTransitHouseLabel(transit) : null
-      const houseLabelPrefix = facetKind === 'house' ? getTransitHousePrefix(transit) : 'Casa de trânsito'
+      const houseLabelPrefix = facetKind === 'house' ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
       const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
       const suggestion = getSuggestionForTransit(transit)
       const directText = buildDirectText(transit, suggestion)
@@ -1881,18 +1925,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           Array.isArray((suggestion as any)?.provenance))
           ? (suggestion as BackendSuggestion)
           : null
-      const titleText = backendSuggestion?.title || backendSuggestion?.card?.headline || 'Leitura completa'
+      const titleText = backendSuggestion?.title || backendSuggestion?.card?.headline || tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')
       const actionText =
         suggestion?.action ||
         (Array.isArray(backendSuggestion?.deep?.practicalGuidance) ? backendSuggestion.deep.practicalGuidance[0] : null)
       const confidenceText =
         typeof backendSuggestion?.confidence === 'number'
-          ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, backendSuggestion.confidence)) * 100)}%`
+          ? `${tl('Confiabilidade editorial', 'Editorial confidence', 'Confiabilidad editorial', 'Affidabilità editoriale')} ${Math.round(Math.max(0, Math.min(1, backendSuggestion.confidence)) * 100)}%`
           : null
       const sourceCount = Array.isArray(backendSuggestion?.provenance) ? backendSuggestion.provenance.length : 0
-      const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
+      const sourceText = sourceCount > 0 ? `${tl('Fontes mapeadas', 'Mapped sources', 'Fuentes mapeadas', 'Fonti mappate')}: ${sourceCount}` : null
       const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
-      const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null
+      const impactText = Number.isFinite(transit?.impact) ? `${tl('Impacto', 'Impact', 'Impacto', 'Impatto')} ${safeFixed(transit.impact, 2)}` : null
       const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
       const impactValue01 = (() => {
         const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
@@ -2148,16 +2192,25 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       <View style={styles.section}>
         {transitItems.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Nenhum trânsito ativo para esta área no momento</Text>
+            <Text style={styles.emptyText}>
+              {tl(
+                'Nenhum trânsito ativo para esta área no momento',
+                'No active transits for this area right now',
+                'No hay tránsitos activos para esta área en este momento',
+                'Nessun transito attivo per quest area in questo momento'
+              )}
+            </Text>
           </View>
         ) : (
           <>
             <View style={styles.transitBlock}>
               <View style={styles.transitColumnHeader}>
                 <TouchableOpacity style={styles.filtersToggleBar} onPress={() => setFiltersExpanded((prev) => !prev)}>
-                  <Text style={styles.filtersToggleTitle}>Filtros e Ordenação</Text>
+                  <Text style={styles.filtersToggleTitle}>{tl('Filtros e Ordenação', 'Filters and Sorting', 'Filtros y ordenación', 'Filtri e ordinamento')}</Text>
                   <View style={styles.filtersToggleMetaWrap}>
-                    <Text style={styles.filtersToggleMeta}>{activeFiltersCount} ativos</Text>
+                    <Text style={styles.filtersToggleMeta}>
+                      {activeFiltersCount} {tl('ativos', 'active', 'activos', 'attivi')}
+                    </Text>
                     <Ionicons
                       name={filtersExpanded ? 'chevron-up' : 'chevron-down'}
                       size={14}
@@ -2178,7 +2231,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
-                            Planeta x Planeta
+                            {tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -2190,7 +2243,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
-                            Planeta x Casa
+                            {tl('Planeta x Casa', 'Planet x House', 'Planeta x Casa', 'Pianeta x Casa')}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -2200,7 +2253,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
-                            Todos
+                            {tl('Todos', 'All', 'Todos', 'Tutti')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -2208,7 +2261,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
-                            Desafiador
+                            {tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -2216,7 +2269,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
-                            Harmônico
+                            {tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -2224,7 +2277,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
-                            Mais impacto
+                            {tl('Mais impacto', 'Most impact', 'Mayor impacto', 'Maggiore impatto')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -2232,14 +2285,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
                         >
                           <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
-                            Mais recente
+                            {tl('Mais recente', 'Most recent', 'Más reciente', 'Più recente')}
                           </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                     <View style={styles.filtersSection}>
                       <View style={styles.filterBlock}>
-                        <Text style={styles.filterTitle}>Filtro • Planeta x Planeta</Text>
+                        <Text style={styles.filterTitle}>
+                          {tl('Filtro • Planeta x Planeta', 'Filter • Planet x Planet', 'Filtro • Planeta x Planeta', 'Filtro • Pianeta x Pianeta')}
+                        </Text>
                         <View style={styles.filterRow}>
                           {planetFilterOptions.map((planet) => {
                             const selected = selectedPlanetFilters.includes(planet)
@@ -2266,7 +2321,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                       </View>
 
                       <View style={styles.filterBlock}>
-                        <Text style={styles.filterTitle}>Filtro • Planeta x Casa</Text>
+                        <Text style={styles.filterTitle}>
+                          {tl('Filtro • Planeta x Casa', 'Filter • Planet x House', 'Filtro • Planeta x Casa', 'Filtro • Pianeta x Casa')}
+                        </Text>
                         <View style={styles.filterRow}>
                           {houseFilterOptions.map((house) => {
                             const selected = selectedHouseFilters.includes(house)
@@ -2281,7 +2338,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                                 }
                               >
                                 <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                                  Casa {house}
+                                  {tl('Casa', 'House', 'Casa', 'Casa')} {house}
                                 </Text>
                               </TouchableOpacity>
                             )
@@ -2292,17 +2349,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                   </>
                 ) : null}
                 <View style={styles.transitHeaderTitleWrap}>
-                  <Text style={styles.transitColumnTitle}>Lista de trânsitos</Text>
-                  <Text style={styles.transitColumnDescription}>Leitura combinada pelos filtros ativos</Text>
+                  <Text style={styles.transitColumnTitle}>{tl('Lista de trânsitos', 'Transit list', 'Lista de tránsitos', 'Lista dei transiti')}</Text>
+                  <Text style={styles.transitColumnDescription}>{tl('Leitura combinada pelos filtros ativos', 'Combined reading from active filters', 'Lectura combinada por filtros activos', 'Lettura combinata dai filtri attivi')}</Text>
                   <Text style={styles.transitColumnMeta}>{visibleTransitCards.length}</Text>
                 </View>
               </View>
               {selectedFacetFilters.length === 0 ? (
-                <Text style={styles.emptyColumnText}>Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).</Text>
+                <Text style={styles.emptyColumnText}>
+                  {tl(
+                    'Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).',
+                    'Enable at least one transit type (Planet x Planet or Planet x House).',
+                    'Activa al menos un tipo de tránsito (Planeta x Planeta o Planeta x Casa).',
+                    'Attiva almeno un tipo di transito (Pianeta x Pianeta o Pianeta x Casa).'
+                  )}
+                </Text>
               ) : visibleTransitCards.length ? (
                 visibleTransitCards
               ) : (
-                <Text style={styles.emptyColumnText}>Nenhum trânsito para os filtros selecionados.</Text>
+                <Text style={styles.emptyColumnText}>{tl('Nenhum trânsito para os filtros selecionados.', 'No transits for selected filters.', 'No hay tránsitos para los filtros seleccionados.', 'Nessun transito per i filtri selezionati.')}</Text>
               )}
             </View>
           </>
@@ -2313,11 +2377,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderSuggestionsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>SUGESTÕES POR TRÂNSITO</Text>
+      <Text style={styles.sectionTitle}>{tl('SUGESTÕES POR TRÂNSITO', 'SUGGESTIONS BY TRANSIT', 'SUGERENCIAS POR TRÁNSITO', 'SUGGERIMENTI PER TRANSITO')}</Text>
 
       {(backendSuggestions.length === 0 && realSuggestions.length === 0) ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Nenhuma sugestão disponível no momento</Text>
+          <Text style={styles.emptyText}>{tl('Nenhuma sugestão disponível no momento', 'No suggestions available right now', 'No hay sugerencias disponibles en este momento', 'Nessun suggerimento disponibile al momento')}</Text>
         </View>
       ) : (
         (backendSuggestions.length ? backendSuggestions : realSuggestions).map((suggestion: any, index: number) => {
@@ -2334,42 +2398,44 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           const isNeutral = sourceType === 'conjuncao' || sourceType === 'neutral'
 
           let statusColor = DESIGN_SYSTEM.colors.secondary
-          let statusText = 'Neutro'
+          let statusText = tl('Neutro', 'Neutral', 'Neutro', 'Neutro')
           if (isHarmonious) {
             statusColor = DESIGN_SYSTEM.colors.positive
-            statusText = 'Harmônico'
+            statusText = tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico')
           } else if (isChallenging) {
             statusColor = DESIGN_SYSTEM.colors.negative
-            statusText = 'Desafiador'
+            statusText = tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo')
           } else if (isNeutral) {
             statusColor = DESIGN_SYSTEM.colors.neutral
           }
 
-          let transitTitle = 'Trânsito'
+          let transitTitle = tl('Trânsito', 'Transit', 'Tránsito', 'Transito')
           let transitMeta = ''
-          let suggestionContextLabel = 'Planeta x Planeta'
+          let suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
           if (transit) {
             const columnKind = getTransitColumnKind(transit)
-            suggestionContextLabel = columnKind === 'house' ? 'Planeta x Casa' : 'Planeta x Planeta'
+            suggestionContextLabel = columnKind === 'house'
+              ? tl('Planeta x Casa', 'Planet x House', 'Planeta x Casa', 'Pianeta x Casa')
+              : tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
             transitTitle = buildTransitTitle(transit)
             const houseLabel = getTransitHouseLabel(transit)
             const orbLabel = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : ''
             if (columnKind === 'house') {
               const houseName = houseLabel
-                ? TRANSLATIONS.houses[Number(houseLabel) as keyof typeof TRANSLATIONS.houses] || `Casa ${houseLabel}`
+                ? TRANSLATIONS.houses[Number(houseLabel) as keyof typeof TRANSLATIONS.houses] || `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseLabel}`
                 : ''
-              transitMeta = [houseLabel ? `Casa natal ativada ${houseLabel}` : '', houseName, orbLabel]
+              transitMeta = [houseLabel ? `${tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')} ${houseLabel}` : '', houseName, orbLabel]
                 .filter(Boolean)
                 .join(' • ')
             } else {
-              transitMeta = [transit?.natalPlanet ? `Alvo natal: ${translate('planets', transit.natalPlanet)}` : '', orbLabel]
+              transitMeta = [transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${translate('planets', transit.natalPlanet)}` : '', orbLabel]
                 .filter(Boolean)
                 .join(' • ')
             }
           } else if (aspect) {
             transitTitle = `${translate('planets', aspect.planet1)} em ${translate('aspects', aspect.type)} com ${translate('planets', aspect.planet2)}`
-            transitMeta = `Força ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
-            suggestionContextLabel = 'Planeta x Planeta'
+            transitMeta = `${tl('Força', 'Strength', 'Fuerza', 'Forza')} ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
+            suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
           }
           const timingLabel = transit ? getTimingLabel(transit) : null
 
@@ -2393,7 +2459,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               <Text style={styles.suggestionText}>{suggestion.text || suggestion.suggestion}</Text>
               {suggestion.action ? (
                 <Text style={styles.suggestionMeta}>
-                  Ação: {suggestion.action} • Período: {suggestion.influencePeriod}
+                  {tl('Ação', 'Action', 'Acción', 'Azione')}: {suggestion.action} • {tl('Período', 'Period', 'Período', 'Periodo')}: {suggestion.influencePeriod}
                 </Text>
               ) : null}
             </View>
@@ -2405,19 +2471,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderCalculationsSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>CÁLCULOS TÉCNICOS E BASE ASTROLÓGICA</Text>
+      <Text style={styles.sectionTitle}>{tl('CÁLCULOS TÉCNICOS E BASE ASTROLÓGICA', 'TECHNICAL CALCULATIONS AND ASTROLOGICAL BASIS', 'CÁLCULOS TÉCNICOS Y BASE ASTROLÓGICA', 'CALCOLI TECNICI E BASE ASTROLOGICA')}</Text>
       
       <View style={styles.calculationCard}>
-        <Text style={styles.breakdownTitle}>Fatores do status desta área:</Text>
+        <Text style={styles.breakdownTitle}>{tl('Fatores do status desta área:', 'Status factors for this area:', 'Factores del estado de esta área:', 'Fattori dello stato di quest area:')}</Text>
         <Text style={styles.validationText}>
-          Score atual: {safeNumber(areaData.status)}% • Trânsitos considerados: {transitItems.length}
+          {tl('Score atual', 'Current score', 'Puntuación actual', 'Punteggio attuale')}: {safeNumber(areaData.status)}% • {tl('Trânsitos considerados', 'Considered transits', 'Tránsitos considerados', 'Transiti considerati')}: {transitItems.length}
         </Text>
         <Text style={styles.validationText}>
-          Força total dos trânsitos: {safeFixed(totalTransitStrength, 2)}
+          {tl('Força total dos trânsitos', 'Total transit strength', 'Fuerza total de tránsitos', 'Forza totale dei transiti')}: {safeFixed(totalTransitStrength, 2)}
         </Text>
         {planetBreakdown.length ? (
           <Text style={styles.validationText}>
-            Planetas com maior peso: {planetBreakdown
+            {tl('Planetas com maior peso', 'Highest-weight planets', 'Planetas con mayor peso', 'Pianeti con peso maggiore')}: {planetBreakdown
               .slice()
               .sort((a, b) => safeNumber(b.totalScore) - safeNumber(a.totalScore))
               .slice(0, 5)
@@ -2426,10 +2492,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           </Text>
         ) : null}
 
-        <Text style={styles.formulaTitle}>Fórmula de Cálculo:</Text>
+        <Text style={styles.formulaTitle}>{tl('Fórmula de Cálculo:', 'Calculation formula:', 'Fórmula de cálculo:', 'Formula di calcolo:')}</Text>
         <Text style={styles.formulaText}>{realCalculations.formula}</Text>
         
-        <Text style={styles.breakdownTitle}>Detalhamento matemático:</Text>
+        <Text style={styles.breakdownTitle}>{tl('Detalhamento matemático:', 'Mathematical breakdown:', 'Detalle matemático:', 'Dettaglio matematico:')}</Text>
         
         {/* Breakdown em árvore por Planeta */}
         {planetBreakdown.map((planet, index) => (
@@ -2443,7 +2509,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Dignidade Essencial */}
             <View style={styles.breakdownRow}>
               <View style={styles.breakdownLabel}>
-                <Text style={styles.breakdownLabelText}>Dignidade essencial:</Text>
+                <Text style={styles.breakdownLabelText}>{tl('Dignidade essencial:', 'Essential dignity:', 'Dignidad esencial:', 'Dignità essenziale:')}</Text>
               </View>
               <View style={styles.breakdownValue}>
                 <Text style={styles.breakdownValueText}>+{planet.dignityScore}</Text>
@@ -2456,7 +2522,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Força da Casa */}
             <View style={styles.breakdownRow}>
               <View style={styles.breakdownLabel}>
-                <Text style={styles.breakdownLabelText}>Força da casa:</Text>
+                <Text style={styles.breakdownLabelText}>{tl('Força da casa:', 'House strength:', 'Fuerza de la casa:', 'Forza della casa:')}</Text>
               </View>
               <View style={styles.breakdownValue}>
                 <Text style={styles.breakdownValueText}>+{planet.houseScore}</Text>
@@ -2469,7 +2535,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Aspectos Natais */}
             {planet.natalAspects.length > 0 && (
               <View style={styles.aspectsSection}>
-                <Text style={styles.aspectsTitle}>Aspectos de trânsito:</Text>
+                <Text style={styles.aspectsTitle}>{tl('Aspectos de trânsito:', 'Transit aspects:', 'Aspectos de tránsito:', 'Aspetti di transito:')}</Text>
                 {planet.natalAspects.map((aspect, aspectIndex) => {
                   //  CORRECAO: Mostrar natureza real do aspecto
                   const isHarmonious = ['trigono', 'sextil'].includes(aspect.type)
@@ -2489,7 +2555,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     <View key={aspectIndex} style={styles.aspectRow}>
                       <View style={styles.aspectLabel}>
                                                  <Text style={styles.aspectLabelText}>
-                           {aspectIcon} {translate('aspects', aspect.type)} com {translate('planets', aspect.with)}:
+                           {aspectIcon} {translate('aspects', aspect.type)} {tl('com', 'with', 'con', 'con')} {translate('planets', aspect.with)}:
                          </Text>
                       </View>
                       <View style={styles.aspectValue}>
@@ -2499,7 +2565,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                       </View>
                       <View style={styles.aspectDescription}>
                         <Text style={styles.aspectDescriptionText}>
-                          Orb: {safeFixed(aspect.orb)} graus - {isHarmonious ? 'Harmônico' : isChallenging ? 'Desafiador' : 'Neutro'}
+                          Orb: {safeFixed(aspect.orb)} {tl('graus', 'degrees', 'grados', 'gradi')} - {isHarmonious ? tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico') : isChallenging ? tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo') : tl('Neutro', 'Neutral', 'Neutro', 'Neutro')}
                         </Text>
                       </View>
                     </View>
@@ -2511,7 +2577,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             {/* Condições Acidentais */}
             {planet.accidentalConditions.length > 0 && (
               <View style={styles.conditionsSection}>
-                <Text style={styles.conditionsTitle}>Condições acidentais:</Text>
+                <Text style={styles.conditionsTitle}>{tl('Condições acidentais:', 'Accidental conditions:', 'Condiciones accidentales:', 'Condizioni accidentali:')}</Text>
                 {planet.accidentalConditions.map((condition, conditionIndex) => (
                   <View key={conditionIndex} style={styles.conditionRow}>
                     <View style={styles.conditionLabel}>
@@ -2534,26 +2600,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             
                          {/* Total do Planeta */}
              <View style={styles.planetTotalRow}>
-               <Text style={styles.planetTotalLabel}>Total {planet.planet}:</Text>
-               <Text style={styles.planetTotalValue}>{planet.totalScore} pontos</Text>
+               <Text style={styles.planetTotalLabel}>{tl('Total', 'Total', 'Total', 'Totale')} {planet.planet}:</Text>
+               <Text style={styles.planetTotalValue}>{planet.totalScore} {tl('pontos', 'points', 'puntos', 'punti')}</Text>
              </View>
 
              {/*  NOVO: BREAKDOWN DETALHADO COM MULTIPLICADORES */}
              {planet.detailedBreakdown && (
                <View style={styles.detailedBreakdownSection}>
-                 <Text style={styles.detailedBreakdownTitle}>Cálculo detalhado:</Text>
+                 <Text style={styles.detailedBreakdownTitle}>{tl('Cálculo detalhado:', 'Detailed calculation:', 'Cálculo detallado:', 'Calcolo dettagliato:')}</Text>
                  
                  {/* Score Base */}
                  <View style={styles.breakdownRow}>
                    <View style={styles.breakdownLabel}>
-                     <Text style={styles.breakdownLabelText}>Score base:</Text>
+                     <Text style={styles.breakdownLabelText}>{tl('Score base:', 'Base score:', 'Puntuación base:', 'Punteggio base:')}</Text>
                    </View>
                    <View style={styles.breakdownValue}>
                      <Text style={styles.breakdownValueText}>+{planet.detailedBreakdown.baseScore}</Text>
                    </View>
                    <View style={styles.breakdownReason}>
                      <Text style={styles.breakdownReasonText}>
-                       Dignidade ({planet.dignityScore}) + Casa ({planet.houseScore})
+                       {tl('Dignidade', 'Dignity', 'Dignidad', 'Dignità')} ({planet.dignityScore}) + {tl('Casa', 'House', 'Casa', 'Casa')} ({planet.houseScore})
                      </Text>
                    </View>
                  </View>
@@ -2583,7 +2649,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
                  {/* Passos do Cálculo */}
                  <View style={styles.calculationStepsSection}>
-                   <Text style={styles.calculationStepsTitle}>Passos do cálculo:</Text>
+                   <Text style={styles.calculationStepsTitle}>{tl('Passos do cálculo:', 'Calculation steps:', 'Pasos del cálculo:', 'Passi del calcolo:')}</Text>
                    {planet.detailedBreakdown.calculationSteps.map((step, stepIndex) => (
                      <Text key={stepIndex} style={styles.calculationStepText}>
                        {stepIndex + 1}. {step}
@@ -2593,9 +2659,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
                  {/* Score Final */}
                  <View style={styles.finalScoreRow}>
-                   <Text style={styles.finalScoreLabel}> Score Final:</Text>
+                   <Text style={styles.finalScoreLabel}> {tl('Score Final', 'Final Score', 'Puntuación final', 'Punteggio finale')}:</Text>
                    <Text style={styles.finalScoreValue}>
-                     {planet.detailedBreakdown.finalScore} pontos
+                     {planet.detailedBreakdown.finalScore} {tl('pontos', 'points', 'puntos', 'punti')}
                    </Text>
                  </View>
                </View>
@@ -2604,35 +2670,35 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         ))}
         
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total Geral:</Text>
+          <Text style={styles.totalLabel}>{tl('Total Geral', 'Overall Total', 'Total general', 'Totale generale')}:</Text>
           <Text style={styles.totalValue}>{realCalculations.total}</Text>
         </View>
         
-        <Text style={styles.validationTitle}>Validação:</Text>
+        <Text style={styles.validationTitle}>{tl('Validação:', 'Validation:', 'Validación:', 'Validazione:')}</Text>
         <Text style={styles.validationText}>{realCalculations.validation}</Text>
         
-        <Text style={styles.basisTitle}>Base Astrológica:</Text>
+        <Text style={styles.basisTitle}>{tl('Base Astrológica:', 'Astrological basis:', 'Base astrológica:', 'Base astrologica:')}</Text>
         <Text style={styles.basisText}>{realCalculations.astrologicalBasis}</Text>
         
         {/*  NOTA EXPLICATIVA SOBRE SCORES */}
         <View style={styles.explanationCard}>
-          <Text style={styles.explanationTitle}>Como interpretar os scores:</Text>
+          <Text style={styles.explanationTitle}>{tl('Como interpretar os scores:', 'How to interpret scores:', 'Cómo interpretar las puntuaciones:', 'Come interpretare i punteggi:')}</Text>
           <Text style={styles.explanationText}>
-            - <Text style={{ color: DESIGN_SYSTEM.colors.positive }}>Scores positivos</Text> indicam influências favoráveis
+            - <Text style={{ color: DESIGN_SYSTEM.colors.positive }}>{tl('Scores positivos', 'Positive scores', 'Puntuaciones positivas', 'Punteggi positivi')}</Text> {tl('indicam influências favoráveis', 'indicate favorable influences', 'indican influencias favorables', 'indicano influenze favorevoli')}
           </Text>
           <Text style={styles.explanationText}>
-            - <Text style={{ color: DESIGN_SYSTEM.colors.negative }}>Scores negativos</Text> indicam desafios a serem superados
+            - <Text style={{ color: DESIGN_SYSTEM.colors.negative }}>{tl('Scores negativos', 'Negative scores', 'Puntuaciones negativas', 'Punteggi negativi')}</Text> {tl('indicam desafios a serem superados', 'indicate challenges to overcome', 'indican desafíos por superar', 'indicano sfide da superare')}
           </Text>
           <Text style={styles.explanationText}>
-            - <Text style={{ color: DESIGN_SYSTEM.colors.neutral }}>Scores neutros</Text> indicam influências equilibradas
+            - <Text style={{ color: DESIGN_SYSTEM.colors.neutral }}>{tl('Scores neutros', 'Neutral scores', 'Puntuaciones neutras', 'Punteggi neutri')}</Text> {tl('indicam influências equilibradas', 'indicate balanced influences', 'indican influencias equilibradas', 'indicano influenze bilanciate')}
           </Text>
           <Text style={styles.explanationText}>
-            - A <Text style={{ fontWeight: 'bold' }}>natureza do aspecto</Text> (Harmônico/Desafiador/Neutro) é baseada no tipo astrológico, não no score numérico
+            - {tl('A', 'The', 'La', 'La')} <Text style={{ fontWeight: 'bold' }}>{tl('natureza do aspecto', 'aspect nature', 'naturaleza del aspecto', 'natura dell aspetto')}</Text> ({tl('Harmônico/Desafiador/Neutro', 'Harmonic/Challenging/Neutral', 'Armónico/Desafiante/Neutro', 'Armonico/Impegnativo/Neutro')}) {tl('é baseada no tipo astrológico, não no score numérico', 'is based on astrological type, not numeric score', 'se basa en el tipo astrológico, no en la puntuación numérica', 'si basa sul tipo astrologico, non sul punteggio numerico')}
           </Text>
         </View>
       </View>
       <Text style={styles.intensityText}>
-        A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.
+        {tl('A intensidade indica o quanto este tema tende a ocupar espaco na experiencia atual. Nao define resultados.', 'Intensity indicates how much this theme tends to occupy space in the current experience. It does not define outcomes.', 'La intensidad indica cuánto este tema tiende a ocupar espacio en la experiencia actual. No define resultados.', 'L intensita indica quanto questo tema tende a occupare spazio nell esperienza attuale. Non definisce i risultati.')}
       </Text>
     </View>
   )
@@ -2660,9 +2726,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       <ReadingDetailModal
         visible={!!detailView}
         onClose={() => setDetailView(null)}
-        statusLabel={detailView?.statusText || 'Neutro'}
+        statusLabel={detailView?.statusText || tl('Neutro', 'Neutral', 'Neutro', 'Neutro')}
         statusColor={detailView?.statusColor || '#64748B'}
-        title={detailView?.title || 'Leitura'}
+        title={detailView?.title || tl('Leitura', 'Reading', 'Lectura', 'Lettura')}
         timingLabel={detailView?.timingLabel || null}
         directText={detailView?.directText || ''}
         fullText={detailView?.fullText || ''}

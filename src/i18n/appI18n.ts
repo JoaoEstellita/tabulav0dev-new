@@ -3057,6 +3057,41 @@ const postPatch: Record<AppLanguage, Dict> = {
   Object.assign(dictionaries[lang], postPatch[lang])
 })
 
+const postPatchReadingModal: Record<AppLanguage, Dict> = {
+  'pt-BR': {
+    'reading.modal.subtitle': 'Leitura aplicada ao contexto atual',
+    'reading.modal.keyReading': 'Leitura-chave',
+    'reading.modal.appliedInterpretation': 'Interpretação aplicada',
+    'reading.modal.practicalUse': 'Uso prático',
+    'reading.modal.technicalContext': 'Contexto técnico',
+  },
+  'en-US': {
+    'reading.modal.subtitle': 'Applied reading for the current context',
+    'reading.modal.keyReading': 'Key reading',
+    'reading.modal.appliedInterpretation': 'Applied interpretation',
+    'reading.modal.practicalUse': 'Practical use',
+    'reading.modal.technicalContext': 'Technical context',
+  },
+  'es-ES': {
+    'reading.modal.subtitle': 'Lectura aplicada al contexto actual',
+    'reading.modal.keyReading': 'Lectura clave',
+    'reading.modal.appliedInterpretation': 'Interpretación aplicada',
+    'reading.modal.practicalUse': 'Uso práctico',
+    'reading.modal.technicalContext': 'Contexto técnico',
+  },
+  'it-IT': {
+    'reading.modal.subtitle': 'Lettura applicata al contesto attuale',
+    'reading.modal.keyReading': 'Lettura chiave',
+    'reading.modal.appliedInterpretation': 'Interpretazione applicata',
+    'reading.modal.practicalUse': 'Uso pratico',
+    'reading.modal.technicalContext': 'Contesto tecnico',
+  },
+}
+
+;(Object.keys(postPatchReadingModal) as AppLanguage[]).forEach((lang) => {
+  Object.assign(dictionaries[lang], postPatchReadingModal[lang])
+})
+
 export const normalizeLanguage = (value?: string | null): AppLanguage => {
   const raw = String(value || 'pt-BR').trim()
   if (raw === 'pt' || raw.toLowerCase() === 'pt-br') return 'pt-BR'

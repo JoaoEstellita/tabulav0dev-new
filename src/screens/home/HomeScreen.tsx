@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+﻿import React, { useEffect, useState, useRef } from 'react'
 import {
   View,
   Text,
@@ -110,16 +110,16 @@ const PLANET_ORDER: PlanetKey[] = [
 
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
-  Sun: '☉',
-  Moon: '☽',
-  Mercury: '☿',
-  Venus: '♀',
-  Mars: '♂',
-  Jupiter: '♃',
-  Saturn: '♄',
-  Uranus: '♅',
-  Neptune: '♆',
-  Pluto: '♇',
+  Sun: 'â˜‰',
+  Moon: 'â˜½',
+  Mercury: 'â˜¿',
+  Venus: 'â™€',
+  Mars: 'â™‚',
+  Jupiter: 'â™ƒ',
+  Saturn: 'â™„',
+  Uranus: 'â™…',
+  Neptune: 'â™†',
+  Pluto: 'â™‡',
 }
 
 type MoonDetails = {
@@ -133,7 +133,17 @@ type MoonDetails = {
 export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
-    useAppLanguage()
+    const { language, t } = useAppLanguage()
+    const tr = React.useCallback((key: string, fallback: string, vars?: Record<string, string | number>) => {
+      const value = t(key, vars as any)
+      return value === key ? fallback : value
+    }, [t])
+    const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
+      if (language === 'en-US') return en
+      if (language === 'es-ES') return es
+      if (language === 'it-IT') return it
+      return pt
+    }, [language])
     const { user } = useAuth()
     const navigation = useNavigation()
     const { unreadCount } = useNotificationStore()
@@ -156,10 +166,10 @@ export default function HomeScreen() {
     const [moonLine2, setMoonLine2] = useState<string | null>(null)
     const [moonModalVisible, setMoonModalVisible] = useState(false)
     const [moonDetails, setMoonDetails] = useState<MoonDetails>({
-      phaseLabel: 'Lua',
-      phaseUntilLabel: 'fase em atualização',
-      currentVoidLabel: 'Não',
-      nextVoidLabel: 'Sem previsão',
+      phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
+      phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
+      currentVoidLabel: tr('profile.moon.no', 'Nao'),
+      nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsao'),
       upcomingPhases: [],
     })
     const moonPress = usePressScale()
@@ -236,13 +246,38 @@ export default function HomeScreen() {
         return sum + count
       }, 0)
       return [
-        `Dignidade no signo: media ${avgSign} (forca essencial do planeta).`,
-        `Casa astrologica: media ${avgHouse} (relevancia da casa).`,
-        `Condicoes acidentais: ${tags.length ? tags.join(', ') : 'nenhuma destacada'}.`,
-        `Aspectos considerados: ${aspectsCount} (harmonicos e desafiadores).`,
-        'Peso planetario: luminares/sociais/transpessoais ajustam a influencia.'
+        tl(
+          `Dignidade no signo: media ${avgSign} (forca essencial do planeta).`,
+          `Sign dignity: average ${avgSign} (planet essential strength).`,
+          `Dignidad en el signo: media ${avgSign} (fuerza esencial del planeta).`,
+          `Dignità nel segno: media ${avgSign} (forza essenziale del pianeta).`
+        ),
+        tl(
+          `Casa astrologica: media ${avgHouse} (relevancia da casa).`,
+          `Astrological house: average ${avgHouse} (house relevance).`,
+          `Casa astrológica: media ${avgHouse} (relevancia de la casa).`,
+          `Casa astrologica: media ${avgHouse} (rilevanza della casa).`
+        ),
+        tl(
+          `Condicoes acidentais: ${tags.length ? tags.join(', ') : 'nenhuma destacada'}.`,
+          `Accidental conditions: ${tags.length ? tags.join(', ') : 'none highlighted'}.`,
+          `Condiciones accidentales: ${tags.length ? tags.join(', ') : 'ninguna destacada'}.`,
+          `Condizioni accidentali: ${tags.length ? tags.join(', ') : 'nessuna evidenziata'}.`
+        ),
+        tl(
+          `Aspectos considerados: ${aspectsCount} (harmonicos e desafiadores).`,
+          `Considered aspects: ${aspectsCount} (harmonic and challenging).`,
+          `Aspectos considerados: ${aspectsCount} (armónicos y desafiantes).`,
+          `Aspetti considerati: ${aspectsCount} (armonici e impegnativi).`
+        ),
+        tl(
+          'Peso planetario: luminares/sociais/transpessoais ajustam a influencia.',
+          'Planetary weighting: luminaries/social/transpersonal adjust influence.',
+          'Peso planetario: luminares/sociales/transpersonales ajustan la influencia.',
+          'Peso planetario: luminari/sociali/transpersonali regolano l influenza.'
+        )
       ]
-    }, [transitData?.currentTransits?.debug?.lifeAreas])
+    }, [transitData?.currentTransits?.debug?.lifeAreas, tl])
 
     const [userProfile, setUserProfile] = useState<{
       displayName: string
@@ -261,7 +296,10 @@ export default function HomeScreen() {
     useEffect(() => {
       const handler = () => {
         try {
-          Alert.alert('Sucesso', 'Casas recalculadas com sucesso!')
+          Alert.alert(
+            tl('Sucesso', 'Success', 'Éxito', 'Successo'),
+            tl('Casas recalculadas com sucesso!', 'Houses recalculated successfully!', '¡Casas recalculadas con éxito!', 'Case ricalcolate con successo!')
+          )
           refreshData(true)
         } catch {}
       }
@@ -307,7 +345,7 @@ export default function HomeScreen() {
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil do Usuário:', error)
+        console.error('Erro ao carregar perfil do UsuÃ¡rio:', error)
       }
     }
 
@@ -366,13 +404,13 @@ export default function HomeScreen() {
         const angleKey = getMoonPhaseKeyFromAngle(angle)
         const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
         let phaseLabel = getMoonPhaseLabelFromAngle(angle)
-        if (angle >= 315) phaseLabel = 'Lua Balsâmica'
-        const line1 = currentVoid ? `${phaseLabel} · Lua Vazia` : phaseLabel
+        if (angle >= 315) phaseLabel = tl('Lua Balsâmica', 'Balsamic Moon', 'Luna balsámica', 'Luna balsamica')
+        const line1 = currentVoid ? `${phaseLabel} · ${tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota')}` : phaseLabel
         const line2Base = nextExact
-          ? `até ${formatLocalDateTime(nextExact, userTz)}`
-          : 'fase em atualização'
+          ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz) })
+          : tr('profile.moon.updatingPhase', 'phase updating')
         const line2 = currentVoid && voidEnd
-          ? `${line2Base} · Lua Vazia até ${formatLocalTime(voidEnd, userTz)}`
+          ? `${line2Base} · ${tl('Lua Vazia até', 'Void Moon until', 'Luna vacía hasta', 'Luna vuota fino a')} ${formatLocalTime(voidEnd, userTz)}`
           : line2Base
 
         setMoonPhaseKey(phaseKey)
@@ -382,11 +420,11 @@ export default function HomeScreen() {
           phaseLabel,
           phaseUntilLabel: line2Base,
           currentVoidLabel: currentVoid && voidEnd
-            ? `Sim, até ${formatLocalTime(voidEnd, userTz)}`
-            : 'Não',
+            ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz)}`
+            : tl('Não', 'No', 'No', 'No'),
           nextVoidLabel: nextVoidStart
-            ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` até ${formatLocalTime(nextVoidEnd, userTz)}` : ''}`
-            : 'Sem previsão',
+            ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz)}` : ''}`
+            : tr('profile.moon.noForecast', 'No forecast'),
           upcomingPhases,
         })
       } catch (error) {
@@ -405,12 +443,13 @@ export default function HomeScreen() {
         userProfile?.displayName ||
         user?.displayName ||
         (user?.email ? user.email.split('@')[0] : '') ||
-        'Usuário'
+        tl('Usuário', 'User', 'Usuario', 'Utente')
       return decodeUnicodeEscapes(raw)
     }
 
     const formatDate = () => {
-      return new Date().toLocaleDateString('pt-BR', {
+      const locale = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
+      return new Date().toLocaleDateString(locale, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -445,20 +484,20 @@ export default function HomeScreen() {
       const source = backendStatusPersonal || statusPersonal
       const rawLevel = String(source?.level || '').toLowerCase()
       const map: Record<string, string> = {
-        excellent: 'Excelente',
-        excelente: 'Excelente',
-        good: 'Bom',
-        bom: 'Bom',
-        neutral: 'Neutro',
-        neutro: 'Neutro',
-        challenging: 'Desafiador',
-        desafiador: 'Desafiador',
-        critical: 'Crítico',
-        critico: 'Crítico',
+        excellent: tl('Excelente', 'Excellent', 'Excelente', 'Eccellente'),
+        excelente: tl('Excelente', 'Excellent', 'Excelente', 'Eccellente'),
+        good: tl('Bom', 'Good', 'Bueno', 'Buono'),
+        bom: tl('Bom', 'Good', 'Bueno', 'Buono'),
+        neutral: tl('Neutro', 'Neutral', 'Neutro', 'Neutro'),
+        neutro: tl('Neutro', 'Neutral', 'Neutro', 'Neutro'),
+        challenging: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo'),
+        desafiador: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo'),
+        critical: tl('Crítico', 'Critical', 'Crítico', 'Critico'),
+        critico: tl('Crítico', 'Critical', 'Crítico', 'Critico'),
       }
       const score = typeof source?.score === 'number' ? Math.round(source.score) : null
       if (score === null) return null
-      return `Status pessoal: ${map[rawLevel] || 'Neutro'} (${score}%)`
+      return `${tl('Status pessoal', 'Personal status', 'Estado personal', 'Stato personale')}: ${map[rawLevel] || tl('Neutro', 'Neutral', 'Neutro', 'Neutro')} (${score}%)`
     }, [backendStatusPersonal?.level, backendStatusPersonal?.score, statusPersonal?.level, statusPersonal?.score])
 
     if (loading && !transitData) {
@@ -467,7 +506,7 @@ export default function HomeScreen() {
           <View style={styles.loadingContainer}>
             <StarLoader size={36} color="#FFD700" />
             <Text style={styles.loadingText}>
-              {uiText('Carregando seus tr\\u00E2nsitos...')}
+              {tl('Carregando seus trânsitos...','Loading your transits...','Cargando tus tránsitos...','Caricamento dei tuoi transiti...')}
             </Text>
           </View>
         </LinearGradient>
@@ -479,10 +518,10 @@ export default function HomeScreen() {
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
-            <Text style={styles.errorTitle}>{uiText('Ops! Algo deu errado')}</Text>
+            <Text style={styles.errorTitle}>{tl('Erro', 'Error', 'Error', 'Errore')}</Text>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={() => refreshData()}>
-              <Text style={styles.retryButtonText}>{uiText('Tentar Novamente')}</Text>
+              <Text style={styles.retryButtonText}>{tl('Tentar novamente', 'Try again', 'Intentar de nuevo', 'Riprova')}</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -505,7 +544,7 @@ export default function HomeScreen() {
         )}
         {localOverrideActive && (
           <View style={styles.statusToast}>
-            <Text style={styles.statusToastText}>Recarregando Status</Text>
+            <Text style={styles.statusToastText}>{tl('Recarregando status', 'Refreshing status', 'Recargando estado', 'Aggiornamento stato')}</Text>
           </View>
         )}
         <ScrollView
@@ -537,10 +576,10 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.headerContent}>
-                <Text style={styles.greeting}>Olá, {getUserDisplayName()}!</Text>
+                <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel} numberOfLines={2}>
-                  Sistema: {formatHouseSystemLabel(houseSystem)}
+                  {tl('Sistema', 'System', 'Sistema', 'Sistema')}: {formatHouseSystemLabel(houseSystem)}
                   {statusPersonalLabel ? ` • ${statusPersonalLabel}` : ''}
                 </Text>
               </View>
@@ -558,10 +597,10 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.moonLegend}>
                   <Text style={styles.moonLegendLine1} numberOfLines={1}>
-                    {moonPhaseLabel || 'Lua'}
+                    {moonPhaseLabel || tr('profile.moon.defaultLabel', 'Lua')}
                   </Text>
                   <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                    {moonLine2 || 'fase em atualização'}
+                    {moonLine2 || tr('profile.moon.updatingPhase', 'phase updating')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -705,17 +744,17 @@ export default function HomeScreen() {
               style={styles.moonModalCard}
               onPress={() => {}}
             >
-              <Text style={styles.moonModalTitle}>Calendário Lunar</Text>
+              <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
               <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
-                <Text style={styles.moonModalSectionTitle}>Lua agora</Text>
+                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Moon now')}</Text>
                 <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
                 <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
 
-                <Text style={styles.moonModalSectionTitle}>Lua vazia</Text>
-                <Text style={styles.moonModalText}>Atual: {moonDetails.currentVoidLabel}</Text>
-                <Text style={styles.moonModalText}>Próxima: {moonDetails.nextVoidLabel}</Text>
+                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Void Moon')}</Text>
+                <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Current')}: {moonDetails.currentVoidLabel}</Text>
+                <Text style={styles.moonModalText}>{tr('profile.moon.modal.next', 'Next')}: {moonDetails.nextVoidLabel}</Text>
 
-                <Text style={styles.moonModalSectionTitle}>Próximas fases</Text>
+                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.upcoming', 'Upcoming phases')}</Text>
                 {moonDetails.upcomingPhases.length ? (
                   moonDetails.upcomingPhases.map((item) => (
                     <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
@@ -724,14 +763,14 @@ export default function HomeScreen() {
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.moonModalText}>Sem eventos futuros no calendário.</Text>
+                  <Text style={styles.moonModalText}>{tr('profile.moon.modal.noUpcoming', 'No upcoming events in calendar.')}</Text>
                 )}
               </ScrollView>
               <TouchableOpacity
                 style={styles.moonModalCloseButton}
                 onPress={() => setMoonModalVisible(false)}
               >
-                <Text style={styles.moonModalCloseText}>Fechar</Text>
+                <Text style={styles.moonModalCloseText}>{tr('common.close', 'Close')}</Text>
               </TouchableOpacity>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -744,7 +783,7 @@ export default function HomeScreen() {
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
         <View style={styles.loadingContainer}>
           <Ionicons name="warning" size={48} color="#EF4444" />
-          <Text style={styles.loadingText}>Carregando seus trânsitos...</Text>
+          <Text style={styles.loadingText}>{tl('Carregando seus trÃ¢nsitos...', 'Loading your transits...', 'Cargando tus trÃ¡nsitos...', 'Caricamento dei tuoi transiti...')}</Text>
           <Text style={styles.errorText}>
             {error instanceof Error ? error.message : 'Erro desconhecido'}
           </Text>
@@ -1194,6 +1233,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   }
 })
+
 
 
 

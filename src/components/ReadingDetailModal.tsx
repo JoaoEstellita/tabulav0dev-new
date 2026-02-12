@@ -3,6 +3,7 @@ import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, use
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
+import { useAppLanguage } from '../hooks/useAppLanguage'
 
 type ReadingDetailModalProps = {
   visible: boolean
@@ -150,6 +151,11 @@ export default function ReadingDetailModal({
   secondaryActionLabel,
   onSecondaryAction,
 }: ReadingDetailModalProps) {
+  const { t } = useAppLanguage()
+  const tr = (key: string, fallback: string) => {
+    const value = t(key)
+    return value === key ? fallback : value
+  }
   const { width } = useWindowDimensions()
   const isNarrow = width <= 430
   const planetKeys = React.useMemo(() => extractPlanetsFromText(`${title} ${directText}`), [title, directText])
@@ -198,7 +204,7 @@ export default function ReadingDetailModal({
               {subtitle ? (
                 <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{subtitle}</Text>
               ) : (
-                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>Leitura aplicada ao contexto atual</Text>
+                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{tr('reading.modal.subtitle', 'Applied reading for the current context')}</Text>
               )}
               <View style={styles.heroMetaRow}>
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -224,25 +230,25 @@ export default function ReadingDetailModal({
             ) : null}
 
             <View style={styles.sectionCard}>
-              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Leitura-chave</Text>
+              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.keyReading', 'Key reading')}</Text>
               <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{directText}</Text>
             </View>
 
             <View style={styles.sectionCard}>
-              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Interpretação aplicada</Text>
+              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.appliedInterpretation', 'Applied interpretation')}</Text>
               <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{fullText}</Text>
             </View>
 
             {actionText ? (
               <View style={styles.sectionCard}>
-                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Uso prático</Text>
+                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.practicalUse', 'Practical use')}</Text>
                 <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{actionText}</Text>
               </View>
             ) : null}
 
             {metaText ? (
               <View style={styles.sectionCard}>
-                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>Contexto técnico</Text>
+                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.technicalContext', 'Technical context')}</Text>
                 <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{metaText}</Text>
               </View>
             ) : null}

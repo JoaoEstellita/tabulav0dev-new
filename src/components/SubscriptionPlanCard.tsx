@@ -1,147 +1,116 @@
-/**
- * 💎 SUBSCRIPTION PLAN CARD 💎
- * 
- * Componente para exibir planos de assinatura
- * - Design atrativo e informativo
- * - Destaque para plano popular
- * - Cálculo de economia
- * - Botões de ação
- */
-
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useAppLanguage } from '../hooks/useAppLanguage'
 
 interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  period: string;
-  features: string[];
-  isPopular?: boolean;
-  isPremium?: boolean;
-  originalPrice?: number;
-  discount?: number;
+  id: string
+  name: string
+  price: number
+  period: string
+  features: string[]
+  isPopular?: boolean
+  isPremium?: boolean
+  originalPrice?: number
+  discount?: number
 }
 
 interface SubscriptionPlanCardProps {
-  plan: SubscriptionPlan;
-  onSubscribe: (planId: string) => void;
-  isLoading?: boolean;
+  plan: SubscriptionPlan
+  onSubscribe: (planId: string) => void
+  isLoading?: boolean
 }
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get('window')
 
 export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   plan,
   onSubscribe,
   isLoading = false,
 }) => {
-  const handleSubscribe = async () => {
-    try {
-      if (isLoading) return;
-      onSubscribe(plan.id);
-    } catch (error) {
-      console.error('Erro ao criar preferencia:', error);
-    }
-  };
+  const { language, t } = useAppLanguage()
+  const tr = (key: string, fallback: string) => {
+    const value = t(key)
+    return value === key ? fallback : value
+  }
+  const tl = (pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }
+
+  const handleSubscribe = () => {
+    if (isLoading) return
+    onSubscribe(plan.id)
+  }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat(language || 'pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(price);
-  };
+    }).format(price)
+  }
 
   return (
     <View style={[styles.container, plan.isPopular && styles.popularContainer]}>
       {plan.isPopular && (
         <View style={styles.popularBadge}>
-          <Text style={styles.popularText}>🌟 MAIS POPULAR</Text>
+          <Text style={styles.popularText}>⭐ {tl('MAIS POPULAR', 'MOST POPULAR', 'MAS POPULAR', 'PIU POPOLARE')}</Text>
         </View>
       )}
-      
+
       <LinearGradient
-        colors={plan.isPremium 
-          ? ['#FFD700', '#FFED4E', '#FFD700'] 
-          : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']
-        }
+        colors={plan.isPremium ? ['#FFD700', '#FFED4E', '#FFD700'] : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
         style={[styles.gradient, plan.isPremium && styles.premiumGradient]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.header}>
-          <Text style={[styles.planName, plan.isPremium && styles.premiumText]}>
-            {plan.name}
-          </Text>
-          
+          <Text style={[styles.planName, plan.isPremium && styles.premiumText]}>{plan.name}</Text>
+
           <View style={styles.priceContainer}>
-            {plan.originalPrice && plan.discount && (
-              <Text style={styles.originalPrice}>
-                {formatPrice(plan.originalPrice)}
-              </Text>
-            )}
-            <Text style={[styles.price, plan.isPremium && styles.premiumPrice]}>
-              {formatPrice(plan.price)}
-            </Text>
-            <Text style={[styles.period, plan.isPremium && styles.premiumText]}>
-              /{plan.period}
-            </Text>
+            {plan.originalPrice && plan.discount ? <Text style={styles.originalPrice}>{formatPrice(plan.originalPrice)}</Text> : null}
+            <Text style={[styles.price, plan.isPremium && styles.premiumPrice]}>{formatPrice(plan.price)}</Text>
+            <Text style={[styles.period, plan.isPremium && styles.premiumText]}>/{plan.period}</Text>
           </View>
-          
-          {plan.discount && (
+
+          {plan.discount ? (
             <View style={styles.discountBadge}>
               <Text style={styles.discountText}>-{plan.discount}%</Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         <View style={styles.featuresContainer}>
           {plan.features.map((feature, index) => (
             <View key={index} style={styles.featureItem}>
               <Text style={styles.checkIcon}>✓</Text>
-              <Text style={[styles.featureText, plan.isPremium && styles.premiumFeatureText]}>
-                {feature}
-              </Text>
+              <Text style={[styles.featureText, plan.isPremium && styles.premiumFeatureText]}>{feature}</Text>
             </View>
           ))}
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.subscribeButton,
-            plan.isPremium && styles.premiumButton,
-            isLoading && styles.disabledButton
-          ]}
+          style={[styles.subscribeButton, plan.isPremium && styles.premiumButton, isLoading && styles.disabledButton]}
           onPress={handleSubscribe}
           disabled={isLoading}
         >
           <LinearGradient
-            colors={plan.isPremium 
-              ? ['#0a0e27', '#1a1f3a'] 
-              : ['#FFD700', '#FFED4E']
-            }
+            colors={plan.isPremium ? ['#0a0e27', '#1a1f3a'] : ['#FFD700', '#FFED4E']}
             style={styles.buttonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Text style={[
-              styles.buttonText,
-              plan.isPremium && styles.premiumButtonText
-            ]}>
-              {isLoading ? 'Processando...' : 'Assinar Agora'}
+            <Text style={[styles.buttonText, plan.isPremium && styles.premiumButtonText]}>
+              {isLoading ? tr('common.loading', 'Carregando...') : tl('Assinar agora', 'Subscribe now', 'Suscribirse ahora', 'Abbonati ora')}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
       </LinearGradient>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -267,16 +236,16 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonGradient: {
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#0a0e27',
   },
   premiumButtonText: {
     color: '#FFD700',
   },
-});
+})
+
