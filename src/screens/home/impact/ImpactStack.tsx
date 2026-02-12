@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ImpactStackRow from './ImpactStackRow'
 import type { ImpactAreaNode } from './buildImpactNodes'
+import { useAppLanguage } from '../../../hooks/useAppLanguage'
 
 interface ImpactStackProps {
   impactNodes: ImpactAreaNode[]
@@ -24,6 +25,7 @@ export default function ImpactStack({
   subtitle = 'Entenda as principais forcas (apoio e pressao) que moldam seus status agora.',
   showHeader = true,
 }: ImpactStackProps) {
+  useAppLanguage()
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   const hasBreakdown = useMemo(

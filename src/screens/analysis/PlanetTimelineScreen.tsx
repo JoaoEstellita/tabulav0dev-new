@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { getLifeAreaLabel } from '../../constants/lifeAreas'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const formatDegree = (longitude: number) => `${longitude.toFixed(1)}\u00B0`
 
@@ -18,6 +19,7 @@ const getSignFromDegree = (degree: number): string => {
 }
 
 export default function PlanetTimelineScreen() {
+  useAppLanguage()
   const { transitData, backendCurrentTransits } = useLifeAreas()
   const planets = backendCurrentTransits?.planets || transitData?.currentTransits?.planets || []
   const byArea = transitData?.currentTransits?.transits?.byArea || {}

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { translatePlanetPT } from '../../../utils/astro/pt'
 import type { ImpactAreaNode } from './buildImpactNodes'
 import ImpactContributorItem from './ImpactContributorItem'
+import { useAppLanguage } from '../../../hooks/useAppLanguage'
 
 interface ImpactStackRowProps {
   areaKey: string
@@ -59,6 +60,7 @@ export default function ImpactStackRow({
   expanded,
   onToggle,
 }: ImpactStackRowProps) {
+  useAppLanguage()
   const percentageRaw =
     typeof areaData?.percentage === 'number'
       ? areaData.percentage

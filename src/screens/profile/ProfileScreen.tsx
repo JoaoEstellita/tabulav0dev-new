@@ -8,6 +8,7 @@ import { useNavigation } from "@react-navigation/native"
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { useNotificationStore } from "../../context/NotificationStore"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit } from "firebase/firestore"
 import { db } from "../../config/firebase"
@@ -91,6 +92,7 @@ interface UserProfile {
 }
 
 export default function ProfileScreen() {
+  useAppLanguage()
   const navigation = useNavigation()
   const { width } = useWindowDimensions()
   const isDesktopWeb = Platform.OS === 'web' && width >= 1024

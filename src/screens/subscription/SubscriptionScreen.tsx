@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SubscriptionPlanCard } from '../../components/SubscriptionPlanCard';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import { useAuth } from '../../hooks/useAuth';
+import { useAppLanguage } from '../../hooks/useAppLanguage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,6 +38,7 @@ const subscriptionPlans: SubscriptionPlan[] = MercadoPagoService.PLANS.map((plan
 }));
 
 export default function SubscriptionScreen() {
+  useAppLanguage();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);

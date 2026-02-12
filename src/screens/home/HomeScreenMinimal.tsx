@@ -1,8 +1,10 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function HomeScreenMinimal() {
+  useAppLanguage()
   console.log('🟢 HomeScreenMinimal renderizando...')
   
   return (

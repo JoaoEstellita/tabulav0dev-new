@@ -2,8 +2,10 @@ import React from 'react'
 import { View, Text, ScrollView } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { formatTransitCompact, aspectNature } from '../../utils/astro/pt'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function CollectiveTransitsScreen() {
+  useAppLanguage()
   const { transitData } = useLifeAreas()
   const rawAll = (transitData?.dailyOverview?.collectiveKeyAspectsRich || [])
     .filter((a:any)=> a.planet1 !== a.planet2)

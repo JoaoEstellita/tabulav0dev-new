@@ -17,10 +17,12 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { PieChart } from 'react-native-chart-kit'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const { width } = Dimensions.get('window')
 
 export default function FreeAstrologyScreen() {
+  useAppLanguage()
   const { transitData, cacheStatus, loading, error, refreshData, isUsingLocalEngine } = useLifeAreas()
   const [refreshing, setRefreshing] = useState(false)
 

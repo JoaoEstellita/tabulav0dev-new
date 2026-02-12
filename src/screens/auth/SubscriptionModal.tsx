@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useAppLanguage } from '../../hooks/useAppLanguage';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -8,6 +9,7 @@ interface SubscriptionModalProps {
 }
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
+  useAppLanguage();
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>

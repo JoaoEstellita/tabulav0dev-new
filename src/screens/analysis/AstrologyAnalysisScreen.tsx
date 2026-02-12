@@ -4,11 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import PlanetaryFlowMap from './PlanetaryFlowMap'
 import PredictiveTimeline from './PredictiveTimeline'
 import { buildImpactNodes } from '../home/impact/buildImpactNodes'
 
 export default function AstrologyAnalysisScreen() {
+  const { t } = useAppLanguage()
   const navigation = useNavigation<any>()
   const { transitData } = useLifeAreas()
   const impactNodes = useMemo(
@@ -20,19 +22,19 @@ export default function AstrologyAnalysisScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Analise Astrologica do Momento</Text>
+          <Text style={styles.title}>{t('analysis.screenTitle', 'Analise Astrologica do Momento')}</Text>
           <Text style={styles.subtitle}>
-            Leitura tecnica dos transitos, aspectos e casas ativadas.
+            {t('analysis.screenSubtitle', 'Leitura tecnica dos transitos, aspectos e casas ativadas.')}
           </Text>
           <Text style={styles.helper}>
-            Tudo aqui indica tendencias em movimento, nunca determinacoes.
+            {t('analysis.screenHelper', 'Tudo aqui indica tendencias em movimento, nunca determinacoes.')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fluxos planetarios</Text>
+          <Text style={styles.sectionTitle}>{t('analysis.flowTitle', 'Fluxos planetarios')}</Text>
           <Text style={styles.sectionBody}>
-            Relacao qualitativa entre planetas e areas impactadas (apoio ou pressao).
+            {t('analysis.flowSubtitle', 'Relacao qualitativa entre planetas e areas impactadas (apoio ou pressao).')}
           </Text>
           <PlanetaryFlowMap impactNodes={impactNodes} />
           <TouchableOpacity

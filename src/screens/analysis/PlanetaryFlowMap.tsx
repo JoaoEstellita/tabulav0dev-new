@@ -5,6 +5,7 @@ import Svg, { Path } from 'react-native-svg'
 import type { ImpactAreaNode, ImpactContributor } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { getLifeAreaLabel } from '../../constants/lifeAreas'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface PlanetaryFlowMapProps {
   impactNodes: ImpactAreaNode[]
@@ -105,6 +106,7 @@ const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
 }
 
 export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps) {
+  useAppLanguage()
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
 

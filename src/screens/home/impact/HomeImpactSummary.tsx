@@ -4,6 +4,7 @@ import { decodeUnicodeEscapes, translatePlanetPT } from '../../../utils/astro/pt
 import { normalizeKey } from '../../../utils/astro/normalizeKey'
 import { buildTransitTitle as buildSharedTransitTitle } from '../../../utils/transitPresentation'
 import type { ImpactAreaNode } from './buildImpactNodes'
+import { useAppLanguage } from '../../../hooks/useAppLanguage'
 
 interface HomeImpactSummaryProps {
   impactNodes: ImpactAreaNode[]
@@ -49,6 +50,7 @@ export default function HomeImpactSummary({
   lunarPhaseLabel,
   recentTransits,
 }: HomeImpactSummaryProps) {
+  useAppLanguage()
   const recentItems = useMemo(() => {
     if (!recentTransits?.length) return []
     return [...recentTransits]

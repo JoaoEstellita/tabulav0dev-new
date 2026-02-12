@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useRoute } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService from '../../services/payment/MercadoPagoService'
@@ -38,6 +39,7 @@ type HubHistoryItem = {
 }
 
 export default function PremiumScreen() {
+  useAppLanguage()
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()

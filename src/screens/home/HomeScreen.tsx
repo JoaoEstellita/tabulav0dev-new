@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import useTransits from '../../hooks/useTransits'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
@@ -132,6 +133,7 @@ type MoonDetails = {
 export default function HomeScreen() {
   try {
     useAutoScheduleNotifications()
+    useAppLanguage()
     const { user } = useAuth()
     const navigation = useNavigation()
     const { unreadCount } = useNotificationStore()

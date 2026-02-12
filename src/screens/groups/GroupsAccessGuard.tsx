@@ -5,11 +5,13 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 import SubscriptionModal from "../auth/SubscriptionModal"
 import SubscriptionPlansModal from "../../components/SubscriptionPlansModal"
 import GroupsScreen from "./GroupsScreen"
 
 export default function GroupsAccessGuard() {
+  useAppLanguage()
   const { loading, showModal, setShowModal, subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const [showPlans, setShowPlans] = useState(false)
 

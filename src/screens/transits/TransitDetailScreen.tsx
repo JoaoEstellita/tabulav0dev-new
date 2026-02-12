@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface RouteParams {
   title: string
@@ -10,6 +11,7 @@ interface RouteParams {
 }
 
 export default function TransitDetailScreen({ route }: any) {
+  useAppLanguage()
   const params: RouteParams = route?.params || {}
   const fmt = (iso?: string) => {
     try { if (!iso) return undefined; const d = new Date(iso); return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }) } catch { return undefined }

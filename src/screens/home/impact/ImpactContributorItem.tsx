@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons'
 import { translatePlanetPT } from '../../../utils/astro/pt'
 import type { ImpactContributor } from './buildImpactNodes'
+import { useAppLanguage } from '../../../hooks/useAppLanguage'
 
 interface ImpactContributorItemProps {
   contributor: ImpactContributor
@@ -19,6 +20,7 @@ export default function ImpactContributorItem({
   contributor,
   showScore = false,
 }: ImpactContributorItemProps) {
+  useAppLanguage()
   const [showDetails, setShowDetails] = useState(false)
   const direction = DIRECTION_STYLES[contributor.direction]
 

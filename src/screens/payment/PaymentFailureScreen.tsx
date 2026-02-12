@@ -2,8 +2,10 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentFailureScreen() {
+  useAppLanguage()
   const navigation = useNavigation()
 
   return (

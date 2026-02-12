@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import type { ImpactAreaNode } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import type { RealAstrologyData } from '../../services/astrology/RealAstrologyEngine'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface PredictiveTimelineProps {
   impactNodes: ImpactAreaNode[]
@@ -45,6 +46,7 @@ export default function PredictiveTimeline({
   impactNodes,
   currentTransits,
 }: PredictiveTimelineProps) {
+  useAppLanguage()
   const planetData = useMemo(() => {
     const map: Record<string, { speed?: number; isRetrograde?: boolean }> = {}
     currentTransits?.planets?.forEach((planet) => {

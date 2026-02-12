@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import ImpactStack from '../home/impact/ImpactStack'
 import type { ImpactAreaNode } from '../home/impact/buildImpactNodes'
 
@@ -14,11 +15,12 @@ export default function AnalysisImpactStack({
   lifeAreas,
   isLoading,
 }: AnalysisImpactStackProps) {
+  const { t } = useAppLanguage()
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Visao geral</Text>
+      <Text style={styles.title}>{t('analysis.overviewTitle', 'Visao geral')}</Text>
       <Text style={styles.subtitle}>
-        Leitura completa das forcas por area (apoio e pressao).
+        {t('analysis.overviewSubtitle', 'Leitura completa das forcas por area (apoio e pressao).')}
       </Text>
       <ImpactStack
         impactNodes={impactNodes}

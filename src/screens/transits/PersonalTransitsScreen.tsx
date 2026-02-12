@@ -2,8 +2,10 @@ import React from 'react'
 import { View, Text, ScrollView } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { formatTransitCompact, getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PersonalTransitsScreen() {
+  useAppLanguage()
   const { transitData } = useLifeAreas()
   const personalRaw = (transitData?.dailyOverview?.personalTodayRich || [])
   // deduplicar por chave planeta-aspecto-planeta

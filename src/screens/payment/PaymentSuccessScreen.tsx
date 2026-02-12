@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentSuccessScreen() {
+  useAppLanguage()
   const navigation = useNavigation()
   const { user } = useAuth()
   const [statusMessage, setStatusMessage] = useState('Validando sua assinatura...')
