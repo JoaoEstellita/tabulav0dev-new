@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
@@ -74,7 +75,6 @@ type ForecastResponse = {
 }
 
 const PERIODS = [7, 30, 90, 360]
-const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
 const FORECAST_CACHE_PREFIX = 'forecast_cache_v2'
@@ -114,17 +114,21 @@ function parseUTCDateString(value: string) {
   return new Date(Date.UTC(year, month - 1, day))
 }
 
-function formatDateShort(date: Date) {
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = MONTHS_PT[date.getUTCMonth()]
-  const year = date.getUTCFullYear()
-  return `${day} ${month} ${year}`
+function formatDateShort(date: Date, language = 'pt-BR') {
+  return date.toLocaleDateString(language, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
 }
 
-function formatDateShortNoYear(date: Date) {
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = MONTHS_PT[date.getUTCMonth()]
-  return `${day} ${month}`
+function formatDateShortNoYear(date: Date, language = 'pt-BR') {
+  return date.toLocaleDateString(language, {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  })
 }
 
 function impactLabel(impact: ForecastEvent['impact']) {
@@ -369,6 +373,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards,
   selectedDomainKey,
   onSelectDomain,
+  globalStatusLabel,
+  noDataLabel,
 }: {
   isLoading: boolean
   dayStatus: DayStatusResponse | null
@@ -376,6 +382,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
   selectedDomainKey: string | null
   onSelectDomain: (domain: string | null) => void
+  globalStatusLabel: string
+  noDataLabel: string
 }) {
   const score = typeof dayStatus?.global?.score === 'number'
     ? dayStatus.global.score
@@ -394,7 +402,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
       ) : score !== null ? (
         <View style={styles.dayScoreRow}>
           <Text style={styles.dayScoreLine}>
-            <Text style={styles.dayScorePrefix}>Status Geral </Text>
+            <Text style={styles.dayScorePrefix}>{globalStatusLabel} </Text>
             <Text style={[styles.dayPanelScore, { color: scoreColor(score) }]}>
               {score}
             </Text>
@@ -404,7 +412,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
           </Text>
         </View>
       ) : (
-        <Text style={styles.emptyText}>Sem dados para o dia selecionado.</Text>
+        <Text style={styles.emptyText}>{noDataLabel}</Text>
       )}
 
       <View style={styles.domainSection}>
@@ -438,6 +446,8 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   selectedEvents,
   eventDisplayData,
   onOpenEventDetail,
+  dayEventsLabel,
+  noEventsLabel,
 }: {
   selectedEvents: ForecastEvent[]
   eventDisplayData: Array<{
@@ -453,17 +463,17 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     impactLabel: string
   }>
   onOpenEventDetail: (eventId: string) => void
+  dayEventsLabel: string
+  noEventsLabel: string
 }) {
   const visibleEvents = eventDisplayData
   return (
     <View>
       <View style={styles.eventHeaderRow}>
-        <Text style={styles.dayPanelLabel}>Eventos do dia</Text>
+        <Text style={styles.dayPanelLabel}>{dayEventsLabel}</Text>
       </View>
       {selectedEvents.length === 0 && (
-        <Text style={styles.emptyText}>
-          Sem eventos. Dia mais calmo para organizar suas prioridades.
-        </Text>
+        <Text style={styles.emptyText}>{noEventsLabel}</Text>
       )}
       {visibleEvents.map((item) => (
         <View key={item.event.id}>
@@ -493,9 +503,28 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   )
 })
 export default function ForecastScreen() {
+  const { t, language } = useAppLanguage()
   const { user } = useAuth()
   const { subscription, trialActive, trialEndsAt, isAdmin } = useSubscriptionCheck()
   const navigation = useNavigation()
+  const tr = useCallback(
+    (key: string, fallback: string, vars?: Record<string, string | number>) => {
+      const value = t(key, vars)
+      return value === key ? fallback : value
+    },
+    [t]
+  )
+  const formatEventTimingLabel = useCallback(
+    (label: string, delta: number) => {
+      if (delta === 0) return tr('forecast.timing.today', `${label}: hoje`, { label })
+      if (delta > 0) return tr('forecast.timing.future', `${label}: em ${delta}d`, { label, days: delta })
+      return tr('forecast.timing.past', `${label}: ha ${Math.abs(delta)}d`, {
+        label,
+        days: Math.abs(delta),
+      })
+    },
+    [tr]
+  )
   const [periodDays, setPeriodDays] = useState(7)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -600,11 +629,11 @@ export default function ForecastScreen() {
         }
         if (payload?.error === 'missing_birth_data') {
           setMissingBirthData(true)
-          setError('Dados de nascimento incompletos')
+          setError(tr('forecast.error.missingBirth', 'Dados de nascimento incompletos'))
           return
         }
         const text = payload?.error ? String(payload.error) : await resp.text()
-        throw new Error(text || `Erro ${resp.status}`)
+        throw new Error(text || tr('forecast.error.http', 'Erro {status}', { status: resp.status }))
       }
       const payload: ForecastResponse = await resp.json()
       setData(payload)
@@ -656,7 +685,7 @@ export default function ForecastScreen() {
       }
     } catch (err: any) {
       console.warn('Forecast fetch failed', err?.message || err)
-      setError('Nao foi possivel carregar previsoes')
+      setError(tr('forecast.error.loadFailed', 'Nao foi possivel carregar previsoes'))
     } finally {
       setLoading(false)
     }
@@ -869,12 +898,18 @@ export default function ForecastScreen() {
   const handleCalendarPress = useCallback((dateKey: string) => {
     if (!isDateInRange(dateKey)) {
       if (maxDaysAllowed <= 7) {
-        Alert.alert('Premium', 'Seu plano atual nao libera datas fora do periodo.')
+        Alert.alert(
+          tr('forecast.alert.premiumTitle', 'Premium'),
+          tr('forecast.alert.premiumRange', 'Seu plano atual nao libera datas fora do periodo.')
+        )
         navigation.navigate('Premium' as never)
         return
       }
       if (data?.meta?.limited) {
-        Alert.alert('Limite', 'O backend limitou o periodo. Tente outro intervalo.')
+        Alert.alert(
+          tr('forecast.alert.limitTitle', 'Limite'),
+          tr('forecast.alert.limitBody', 'O backend limitou o periodo. Tente outro intervalo.')
+        )
       }
       return
     }
@@ -964,28 +999,56 @@ export default function ForecastScreen() {
     const endDateObj = parseUTCDateString(event.endAt.slice(0, 10))
     const lines: string[] = []
     if (startDateObj && endDateObj) {
-      lines.push(`Janela ${formatDateShortNoYear(startDateObj)} - ${formatDateShortNoYear(endDateObj)}`)
+      lines.push(
+        tr(
+          'forecast.detail.window',
+          `Janela ${formatDateShortNoYear(startDateObj, language)} - ${formatDateShortNoYear(endDateObj, language)}`,
+          {
+            start: formatDateShortNoYear(startDateObj, language),
+            end: formatDateShortNoYear(endDateObj, language),
+          }
+        )
+      )
     }
     if (startDateObj) {
-      lines.push(formatEventTiming('Comeca', diffDaysUTC(selectedDateObj, startDateObj)))
+      lines.push(
+        formatEventTimingLabel(
+          tr('forecast.phase.starts', 'Comeca'),
+          diffDaysUTC(selectedDateObj, startDateObj)
+        )
+      )
     }
     if (exactDateObj) {
-      lines.push(formatEventTiming('Pico', diffDaysUTC(selectedDateObj, exactDateObj)))
+      lines.push(
+        formatEventTimingLabel(
+          tr('forecast.phase.peak', 'Pico'),
+          diffDaysUTC(selectedDateObj, exactDateObj)
+        )
+      )
     }
     if (endDateObj) {
-      lines.push(formatEventTiming('Termina', diffDaysUTC(selectedDateObj, endDateObj)))
+      lines.push(
+        formatEventTimingLabel(
+          tr('forecast.phase.ends', 'Termina'),
+          diffDaysUTC(selectedDateObj, endDateObj)
+        )
+      )
     }
     const intensity = Math.round(event.intensity * 100)
-    lines.push(`Intensidade ${intensity}%`)
+    lines.push(tr('forecast.detail.intensity', `Intensidade ${intensity}%`, { value: intensity }))
     if (typeof event.orbMax === 'number') {
-      lines.push(`Orb ${event.orbMax.toFixed(1)} deg`)
+      lines.push(
+        tr('forecast.detail.orb', `Orb ${event.orbMax.toFixed(1)} deg`, {
+          value: event.orbMax.toFixed(1),
+        })
+      )
     }
     const areas = formatEventAreas(event.domains || [])
     if (areas) {
-      lines.push(`Afeta: ${areas}`)
+      lines.push(tr('forecast.detail.affects', `Afeta: ${areas}`, { areas }))
     }
     return lines
-  }, [formatEventAreas])
+  }, [formatEventAreas, formatEventTimingLabel, language, tr])
 
   const selectedDateKey = selectedDate
   const debouncedFetchDate = useDebouncedValue(selectedDateKey, 150)
@@ -1057,13 +1120,36 @@ export default function ForecastScreen() {
 
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
+    const localizedImpactLabel = (impact: ForecastEvent['impact']) => {
+      if (impact === 'UP') return tr('forecast.impact.up', 'Positivo')
+      if (impact === 'DOWN') return tr('forecast.impact.down', 'Desafiador')
+      return tr('forecast.impact.mixed', 'Misto')
+    }
+    const localizedActionHint = (event: ForecastEvent) => {
+      const aspect = String(event.aspect || '').toLowerCase()
+      if (/conjuncao/.test(aspect)) return tr('forecast.action.conjunction', 'Acao sugerida: concentre energia em uma prioridade unica.')
+      if (/trigono|sextil/.test(aspect)) return tr('forecast.action.harmonic', 'Acao sugerida: aproveite para concluir uma entrega importante.')
+      if (/quadratura|oposicao|quincuncio|semi/.test(aspect)) return tr('forecast.action.tense', 'Acao sugerida: reduza friccao e renegocie o que estiver pesado.')
+      if (event.impact === 'UP') return tr('forecast.action.up', 'Acao sugerida: avance em uma decisao pratica.')
+      if (event.impact === 'DOWN') return tr('forecast.action.down', 'Acao sugerida: reduzir excesso e ajustar rota.')
+      return tr('forecast.action.default', 'Acao sugerida: testar em pequeno passo antes de ampliar.')
+    }
     return selectedEvents.map((event) => {
       const detailLines = buildEventDetailLines(event, selectedDateKey)
-      const actionHint = buildActionHint(event)
-      const orbLine = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''
-      const intensityLine = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
+      const actionHint = localizedActionHint(event)
+      const orbLine =
+        typeof event.orbMax === 'number'
+          ? tr('forecast.detail.orb', `Orb ${event.orbMax.toFixed(1)} deg`, {
+              value: event.orbMax.toFixed(1),
+            })
+          : ''
+      const intensityLine = tr(
+        'forecast.detail.intensity',
+        `Intensidade ${Math.round((event.intensity || 0) * 100)}%`,
+        { value: Math.round((event.intensity || 0) * 100) }
+      )
       const metaText = [orbLine, intensityLine].filter(Boolean).join(' • ')
-      const statusLabel = impactLabel(event.impact)
+      const statusLabel = localizedImpactLabel(event.impact)
       const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
       const impactValue01 = Math.max(0.08, Math.min(1, Number(event.intensity || 0)))
       return {
@@ -1076,10 +1162,14 @@ export default function ForecastScreen() {
         actionHint,
         metaText,
         impactValue01,
-        impactLabel: `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
+        impactLabel: tr(
+          'forecast.detail.relativeImpact',
+          `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
+          { value: Math.round(impactValue01 * 100) }
+        ),
       }
     })
-  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents])
+  }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr])
 
   useEffect(() => {
     if (!debouncedFetchDate) return
@@ -1120,7 +1210,10 @@ export default function ForecastScreen() {
 
   const handleSelectPeriod = (days: number) => {
     if (days > maxDaysAllowed) {
-      Alert.alert('Premium', 'Seu plano atual nao libera este periodo')
+      Alert.alert(
+        tr('forecast.alert.premiumTitle', 'Premium'),
+        tr('forecast.alert.premiumPeriod', 'Seu plano atual nao libera este periodo')
+      )
       navigation.navigate('Premium' as never)
       return
     }
@@ -1134,10 +1227,14 @@ export default function ForecastScreen() {
         <View style={styles.headerRow}>
           <View />
           <View style={styles.planBadge}>
-            <Text style={styles.planBadgeText}>Plano atual: {currentPlan.name}</Text>
+            <Text style={styles.planBadgeText}>
+              {tr('forecast.currentPlan', 'Plano atual: {plan}', { plan: currentPlan.name })}
+            </Text>
           </View>
         </View>
-        <Text style={styles.subtitle}>Status previsto dos proximos dias</Text>
+        <Text style={styles.subtitle}>
+          {tr('forecast.subtitle', 'Status previsto dos proximos dias')}
+        </Text>
       </View>
       {expiryInfo.show && (
         <ExpiryBanner
@@ -1168,8 +1265,18 @@ export default function ForecastScreen() {
         <View style={styles.banner}>
           <Text style={styles.bannerText}>
             {rangeFrom && rangeTo
-              ? `Mostrando ${formatDateShort(rangeFrom)} - ${formatDateShort(rangeTo)} (Premium desbloqueia 30/90/360)`
-              : 'Mostrando 7 dias (Premium desbloqueia 30/90/360)'}
+              ? tr(
+                  'forecast.banner.range',
+                  `Mostrando ${formatDateShort(rangeFrom, language)} - ${formatDateShort(rangeTo, language)} (Premium desbloqueia 30/90/360)`,
+                  {
+                    from: formatDateShort(rangeFrom, language),
+                    to: formatDateShort(rangeTo, language),
+                  }
+                )
+              : tr(
+                  'forecast.banner.default',
+                  'Mostrando 7 dias (Premium desbloqueia 30/90/360)'
+                )}
           </Text>
         </View>
       )}
@@ -1177,7 +1284,9 @@ export default function ForecastScreen() {
       {loading && (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="#FFD700" />
-          <Text style={styles.loadingText}>Carregando previsoes...</Text>
+          <Text style={styles.loadingText}>
+            {tr('forecast.loading', 'Carregando previsoes...')}
+          </Text>
         </View>
       )}
 
@@ -1186,11 +1295,13 @@ export default function ForecastScreen() {
           <Text style={styles.errorText}>{error}</Text>
           {missingBirthData && (
             <TouchableOpacity style={styles.retryButton} onPress={() => navigation.navigate('Settings' as never)}>
-              <Text style={styles.retryText}>Completar nascimento</Text>
+              <Text style={styles.retryText}>
+                {tr('forecast.completeBirth', 'Completar nascimento')}
+              </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.retryButton} onPress={() => fetchForecast(true)}>
-            <Text style={styles.retryText}>Tentar novamente</Text>
+            <Text style={styles.retryText}>{tr('forecast.retry', 'Tentar novamente')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1238,7 +1349,11 @@ export default function ForecastScreen() {
               </View>
               <View style={styles.dayNavColCenter}>
                 <Text style={styles.dayPanelTitle}>
-                  {selectedDateObj ? `Status do Dia ${formatDateShort(selectedDateObj)}` : 'Status do dia'}
+                  {selectedDateObj
+                    ? tr('forecast.statusDayWithDate', `Status do Dia ${formatDateShort(selectedDateObj, language)}`, {
+                        date: formatDateShort(selectedDateObj, language),
+                      })
+                    : tr('forecast.statusDay', 'Status do dia')}
                 </Text>
               </View>
               <View style={styles.dayNavColRight}>
@@ -1262,18 +1377,27 @@ export default function ForecastScreen() {
               lifeAreaCards={lifeAreaCards}
               selectedDomainKey={selectedDomainKey}
               onSelectDomain={handleSelectDomain}
+              globalStatusLabel={tr('forecast.globalStatus', 'Status Geral')}
+              noDataLabel={tr('forecast.noDataForDay', 'Sem dados para o dia selecionado.')}
             />
 
             <MemoDayEvents
               selectedEvents={selectedEvents}
               eventDisplayData={eventDisplayData}
               onOpenEventDetail={openEventDetail}
+              dayEventsLabel={tr('forecast.dayEvents', 'Eventos do dia')}
+              noEventsLabel={tr(
+                'forecast.noEventsForDay',
+                'Sem eventos. Dia mais calmo para organizar suas prioridades.'
+              )}
             />
           </View>
 
           {maxDaysAllowed < 360 && (
             <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium' as never)}>
-              <Text style={styles.ctaText}>Desbloquear previsoes completas</Text>
+              <Text style={styles.ctaText}>
+                {tr('forecast.unlockFull', 'Desbloquear previsoes completas')}
+              </Text>
             </TouchableOpacity>
           )}
         </ScrollView>

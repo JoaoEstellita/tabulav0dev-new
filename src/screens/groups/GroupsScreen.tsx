@@ -34,6 +34,7 @@ import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from "../../utils/astroInterpretation"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 
 const LIFE_AREA_OPTIONS = [
   { key: "amor", label: "Amor" },
@@ -75,19 +76,26 @@ const AREA_HOUSES: Record<string, number[]> = {
   transformacao: [8, 12],
 }
 
-const formatLifeAreas = (areas?: string[]) => {
-  if (!areas || areas.length === 0) return "Todas as áreas"
-  return areas
-    .map((area) => LIFE_AREA_OPTIONS.find((option) => option.key === area)?.label || area)
-    .join(", ")
-}
-
 export default function GroupsScreen() {
+  const { t } = useAppLanguage()
   const route = useRoute<any>()
   const navigation = useNavigation()
   const { user } = useAuth()
   const { preferences } = useNotificationPreferences()
   const { subscription, trialActive, trialEndsAt, isAdmin } = useSubscriptionCheck()
+  const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars)
+    return value === key ? fallback : value
+  }
+  const lifeAreaLabel = (key?: string | null) => {
+    const normalized = String(key || '').trim().toLowerCase()
+    if (!normalized) return tr('groups.label.areaUnavailable', 'Area indisponivel')
+    return tr(`lifeArea.${normalized}`, LIFE_AREA_LABELS[normalized] || normalized)
+  }
+  const formatLifeAreasLocalized = (areas?: string[]) => {
+    if (!areas || areas.length === 0) return tr('groups.label.allAreas', 'Todas as areas')
+    return areas.map((area) => lifeAreaLabel(area)).join(', ')
+  }
   
   // Estados para abas
   const [selectedTab, setSelectedTab] = useState<"groups" | "couple">("groups")
@@ -156,7 +164,7 @@ export default function GroupsScreen() {
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
-    featureLabel: 'Grupos',
+    featureLabel: tr('groups.title', 'Grupos'),
     trialActive,
     trialEndsAt: trialEndsAt || subscription?.trialEndsAt || null,
     subscriptionNextBillingDate: subscription?.nextBillingDate || null,
@@ -274,12 +282,12 @@ export default function GroupsScreen() {
       .then((group) => {
         if (!isActive) return
         setInvitePreview(group)
-        setInvitePreviewError(group ? "" : "Código não encontrado")
+        setInvitePreviewError(group ? "" : tr('groups.invite.notFound', 'Codigo nao encontrado'))
       })
       .catch(() => {
         if (!isActive) return
         setInvitePreview(null)
-        setInvitePreviewError("Não foi possível validar o código")
+        setInvitePreviewError(tr('groups.invite.validateFailed', 'Nao foi possivel validar o codigo'))
       })
       .finally(() => {
         if (!isActive) return
@@ -435,7 +443,7 @@ export default function GroupsScreen() {
   
   const handleCreateCouple = async () => {
     if (!user || !partnerEmail.trim()) {
-      Alert.alert('Erro', 'Por favor, insira o email do seu parceiro')
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.partnerEmailRequired', 'Por favor, insira o email do seu parceiro'))
       return
     }
     
@@ -445,15 +453,18 @@ export default function GroupsScreen() {
       // TODO: Buscar partner por email
       // Por enquanto, vou simular com um ID ficticio
       Alert.alert(
-        'Funcionalidade em desenvolvimento',
-        "Em breve você poderá convidar seu parceiro pelo email. Por enquanto, peça para ele/ela criar uma conta no app."
+        tr('groups.alert.inDevelopmentTitle', 'Funcionalidade em desenvolvimento'),
+        tr(
+          'groups.alert.partnerInviteSoon',
+          'Em breve voce podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
+        )
       )
       
       setShowCreateCoupleModal(false)
       setPartnerEmail('')
     } catch (error) {
       console.error('Erro ao criar relacionamento:', error)
-      Alert.alert("Erro", "Não foi possível criar o relacionamento")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.coupleCreateFailed', 'Nao foi possivel criar o relacionamento'))
     } finally {
       setCoupleLoading(false)
     }
@@ -470,10 +481,10 @@ export default function GroupsScreen() {
       const updatedRelationship = await CoupleService.getUserCoupleRelationship(user!.uid)
       setCoupleRelationship(updatedRelationship)
       
-      Alert.alert('Sucesso', 'Compatibilidade atualizada!')
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.compatUpdated', 'Compatibilidade atualizada!'))
     } catch (error) {
       console.error('Erro ao atualizar compatibilidade:', error)
-      Alert.alert("Erro", "Não foi possível atualizar a compatibilidade")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.compatUpdateFailed', 'Nao foi possivel atualizar a compatibilidade'))
     } finally {
       setCoupleLoading(false)
     }
@@ -481,7 +492,7 @@ export default function GroupsScreen() {
 
   const createGroup = async () => {
     if (!newGroupName.trim()) {
-      Alert.alert("Erro", "Nome do grupo é obrigatório")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.groupNameRequired', 'Nome do grupo e obrigatorio'))
       return
     }
 
@@ -496,20 +507,20 @@ export default function GroupsScreen() {
       setNewGroupSharedLifeAreas(LIFE_AREA_KEYS)
       setNewGroupNotifiedLifeAreas(LIFE_AREA_KEYS)
       await loadUserGroups()
-      Alert.alert("Sucesso", "Grupo criado com sucesso!")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.groupCreated', 'Grupo criado com sucesso!'))
     } catch (error: any) {
-      Alert.alert("Erro", error.message)
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error.message)
     }
   }
 
   const joinGroup = async () => {
     if (!inviteCode.trim()) {
-      Alert.alert("Erro", "Código de convite é obrigatório")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.inviteCodeRequired', 'Codigo de convite e obrigatorio'))
       return
     }
 
     if (invitePreview && (invitePreview.inviteEnabled === false || invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now())) {
-      Alert.alert("Convite indisponível", "Este convite está desativado ou expirado.")
+      Alert.alert(tr('groups.alert.inviteUnavailableTitle', 'Convite indisponivel'), tr('groups.alert.inviteUnavailableBody', 'Este convite esta desativado ou expirado.'))
       return
     }
 
@@ -526,9 +537,9 @@ export default function GroupsScreen() {
         await GroupNotificationService.sendMemberJoined(invitePreview.id, user!.uid)
       }
       
-      Alert.alert("Sucesso", "Você entrou no grupo!")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.joinedGroup', 'Voce entrou no grupo!'))
     } catch (error: any) {
-      Alert.alert("Erro", error.message)
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error.message)
     }
   }
   
@@ -536,7 +547,7 @@ export default function GroupsScreen() {
   
   const sendGroupMessage = async () => {
     if (!selectedGroup || !groupMessage.trim()) {
-      Alert.alert("Erro", "Mensagem é obrigatória")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.messageRequired', 'Mensagem e obrigatoria'))
       return
     }
 
@@ -551,11 +562,11 @@ export default function GroupsScreen() {
       
       setShowMessageModal(false)
       setGroupMessage("")
-      Alert.alert("Sucesso", "Mensagem enviada para o grupo!")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.messageSent', 'Mensagem enviada para o grupo!'))
       
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error)
-      Alert.alert("Erro", "Não foi possível enviar a mensagem")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.messageSendFailed', 'Nao foi possivel enviar a mensagem'))
     } finally {
       setSendingNotification(false)
     }
@@ -577,10 +588,10 @@ export default function GroupsScreen() {
       setSelectedGroupForDetail((prev) =>
         prev ? { ...prev, inviteCode: result.inviteCode, inviteEnabled: result.inviteEnabled, inviteExpiresAt: result.inviteExpiresAt } : prev
       )
-      Alert.alert("Sucesso", "Convite atualizado")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.inviteUpdated', 'Convite atualizado'))
     } catch (error: any) {
       console.error("Erro ao atualizar convite:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível atualizar convite")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.alert.inviteUpdateFailed', 'Nao foi possivel atualizar convite'))
     } finally {
       setUpdatingInvite(false)
     }
@@ -592,10 +603,10 @@ export default function GroupsScreen() {
       await GroupService.removeMember(selectedGroup.id, memberId, user.uid)
       await loadGroupData()
       await loadUserGroups()
-      Alert.alert("Sucesso", "Membro removido do grupo")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.memberRemoved', 'Membro removido do grupo'))
     } catch (error: any) {
       console.error("Erro ao remover membro:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível remover o membro")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.alert.memberRemoveFailed', 'Nao foi possivel remover o membro'))
     }
   }
 
@@ -607,10 +618,10 @@ export default function GroupsScreen() {
       setSelectedGroupForDetail(null)
       await loadUserGroups()
       setSelectedGroup(null)
-      Alert.alert("Sucesso", "Você saiu do grupo")
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.leftGroup', 'Voce saiu do grupo'))
     } catch (error: any) {
       console.error("Erro ao sair do grupo:", error)
-      Alert.alert("Erro", error?.message || "Não foi possível sair do grupo")
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.alert.leaveGroupFailed', 'Nao foi possivel sair do grupo'))
     }
   }
 
@@ -651,17 +662,17 @@ export default function GroupsScreen() {
   const getStatusLabel = (status?: string) => {
     switch (status) {
       case "critical":
-        return "Crítico"
+        return tr('groups.status.critical', 'Critico')
       case "challenging":
-        return "Desafiador"
+        return tr('groups.status.challenging', 'Desafiador')
       case "neutral":
-        return "Neutro"
+        return tr('groups.status.neutral', 'Neutro')
       case "positive":
-        return "Positivo"
+        return tr('groups.status.positive', 'Positivo')
       case "excellent":
-        return "Ótimo"
+        return tr('groups.status.excellent', 'Otimo')
       default:
-        return "Neutro"
+        return tr('groups.status.neutral', 'Neutro')
     }
   }
 
@@ -672,16 +683,16 @@ export default function GroupsScreen() {
   }
 
   const formatRelativeTime = (value?: Date | null) => {
-    if (!value) return "Agora"
+    if (!value) return tr('groups.time.now', 'Agora')
     const date = value instanceof Date ? value : new Date(value)
     const diffMs = Date.now() - date.getTime()
     const diffMinutes = Math.floor(diffMs / (1000 * 60))
-    if (diffMinutes < 1) return "Agora"
-    if (diffMinutes < 60) return `${diffMinutes} min`
+    if (diffMinutes < 1) return tr('groups.time.now', 'Agora')
+    if (diffMinutes < 60) return tr('groups.time.min', '{count} min', { count: diffMinutes })
     const diffHours = Math.floor(diffMinutes / 60)
-    if (diffHours < 24) return `${diffHours} h`
+    if (diffHours < 24) return tr('groups.time.hour', '{count} h', { count: diffHours })
     const diffDays = Math.floor(diffHours / 24)
-    return `${diffDays} d`
+    return tr('groups.time.day', '{count} d', { count: diffDays })
   }
 
   const getStatusIcon = (status: string) => {
@@ -900,14 +911,19 @@ const buildTransitKeywords = (transit: any, areaKey?: string) => {
   return out.slice(0, 5)
 }
 
-const getTransitTechnicalTypeLabel = (transit: any) => {
+type LocalizeFn = (key: string, fallback: string, vars?: Record<string, string | number>) => string
+
+const getTransitTechnicalTypeLabel = (transit: any, tr?: LocalizeFn) => {
+  const tx = tr || ((_k: string, fallback: string) => fallback)
   const targetNatalPlanet = transit?.target?.natalPlanet || transit?.natalPlanet
-  if (targetNatalPlanet) return "Aspecto com planeta natal"
+  if (targetNatalPlanet) return tx('groups.member.tech.natalPlanet', 'Aspecto com planeta natal')
   const targetAngle = transit?.target?.angle
-  if (targetAngle) return `Aspecto com angulo (${String(targetAngle).toUpperCase()})`
+  if (targetAngle) {
+    return tx('groups.member.tech.angle', 'Aspecto com angulo ({angle})', { angle: String(targetAngle).toUpperCase() })
+  }
   const house = getTransitHouseTarget(transit)
-  if (house) return `Planeta em casa (${house.replace("Casa ", "")})`
-  return "Transito contextual da area"
+  if (house) return tx('groups.member.tech.house', 'Planeta em casa ({house})', { house: house.replace("Casa ", "") })
+  return tx('groups.member.tech.context', 'Transito contextual da area')
 }
 
 const getTransitColumnKind = (transit: any): "planet" | "house" => {
@@ -961,7 +977,8 @@ const normalizeAspectType = (value: string) => {
   return normalized
 }
 
-const classifyTransitStatus = (transit: any) => {
+const classifyTransitStatus = (transit: any, tr?: LocalizeFn) => {
+  const tx = tr || ((_k: string, fallback: string) => fallback)
   const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const isHarmonic = ["trigono", "sextil", "harmonico"].includes(aspectType)
   const isTense = [
@@ -973,12 +990,19 @@ const classifyTransitStatus = (transit: any) => {
     "sesquiquadratura",
     "desafiador",
   ].includes(aspectType)
-  if (isHarmonic) return { kind: "harmonic", label: "Harmonico", color: "#22C55E" }
-  if (isTense) return { kind: "tense", label: "Desafiador", color: "#EF4444" }
-  return { kind: "neutral", label: "Neutro", color: "#64748B" }
+  if (isHarmonic) return { kind: "harmonic", label: tx('groups.status.harmonic', 'Harmonico'), color: "#22C55E" }
+  if (isTense) return { kind: "tense", label: tx('groups.status.challenging', 'Desafiador'), color: "#EF4444" }
+  return { kind: "neutral", label: tx('groups.status.neutral', 'Neutro'), color: "#64748B" }
 }
 
-const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: string, areaCritical = false) => {
+const buildTransitDirectText = (
+  transit: any,
+  areaLabel: string,
+  fallbackText?: string,
+  areaCritical = false,
+  tr?: LocalizeFn
+) => {
+  const tx = tr || ((_k: string, fallback: string) => fallback)
   const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
   if (astroNarrative?.directText) return astroNarrative.directText
 
@@ -988,23 +1012,23 @@ const buildTransitDirectText = (transit: any, areaLabel: string, fallbackText?: 
     normalizedFallback.includes("momento de observacao") ||
     normalizedFallback.includes("traz uma fase")
   if (fallbackText && fallbackText.trim().length > 25 && !isGenericFallback) return fallbackText.trim()
-  const transitPlanet = formatPlanetLabel(transit?.transitPlanet || "Transito")
+  const transitPlanet = formatPlanetLabel(transit?.transitPlanet || tx('groups.member.transit', 'Transito'))
   const houseTarget = getTransitHouseTarget(transit)
   const houseHint = houseTarget ? ` em ${houseTarget.toLowerCase()}` : ""
-  const status = classifyTransitStatus(transit).label
+  const status = classifyTransitStatus(transit, tx).label
   const timing = formatTransitTimingLabel(transit)
-  if (status === "Harmonico") {
-    if (areaCritical) return `${transitPlanet}${houseHint}: alivio pontual em ${areaLabel.toLowerCase()}, sem reverter o quadro sozinho.`
-    if (timing === "Em pico") return `${transitPlanet}${houseHint}: fase forte para consolidar resultados em ${areaLabel.toLowerCase()}.`
-    if (timing === "Afastando") return `${transitPlanet}${houseHint}: consolide ganhos e mantenha consistencia em ${areaLabel.toLowerCase()}.`
-    return `${transitPlanet}${houseHint}: janela favoravel para progresso constante em ${areaLabel.toLowerCase()}.`
+  if (status === tx('groups.status.harmonic', 'Harmonico')) {
+    if (areaCritical) return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.harmonicCritical', 'alivio pontual em {area}, sem reverter o quadro sozinho.', { area: areaLabel.toLowerCase() })}`
+    if (timing === "Em pico") return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.harmonicPeak', 'fase forte para consolidar resultados em {area}.', { area: areaLabel.toLowerCase() })}`
+    if (timing === "Afastando") return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.harmonicAway', 'consolide ganhos e mantenha consistencia em {area}.', { area: areaLabel.toLowerCase() })}`
+    return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.harmonicDefault', 'janela favoravel para progresso constante em {area}.', { area: areaLabel.toLowerCase() })}`
   }
-  if (status === "Desafiador") {
-    if (timing === "Em pico") return `${transitPlanet}${houseHint}: fase sensivel; reduza friccao e ajuste prioridades em ${areaLabel.toLowerCase()}.`
-    if (timing === "Afastando") return `${transitPlanet}${houseHint}: finalize correcoes e estabilize o ritmo em ${areaLabel.toLowerCase()}.`
-    return `${transitPlanet}${houseHint}: pede ajuste de rota com menos pressa em ${areaLabel.toLowerCase()}.`
+  if (status === tx('groups.status.challenging', 'Desafiador')) {
+    if (timing === "Em pico") return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.challengingPeak', 'fase sensivel; reduza friccao e ajuste prioridades em {area}.', { area: areaLabel.toLowerCase() })}`
+    if (timing === "Afastando") return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.challengingAway', 'finalize correcoes e estabilize o ritmo em {area}.', { area: areaLabel.toLowerCase() })}`
+    return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.challengingDefault', 'pede ajuste de rota com menos pressa em {area}.', { area: areaLabel.toLowerCase() })}`
   }
-  return `${transitPlanet}${houseHint}: momento de observacao ativa e escolhas objetivas em ${areaLabel.toLowerCase()}.`
+  return `${transitPlanet}${houseHint}: ${tx('groups.member.direct.neutralDefault', 'momento de observacao ativa e escolhas objetivas em {area}.', { area: areaLabel.toLowerCase() })}`
 }
 
 const computeTransitPriority = (transit: any, areaCritical = false) => {
@@ -1153,7 +1177,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Carregando grupos...</Text>
+          <Text style={styles.loadingText}>{tr('groups.loading', 'Carregando grupos...')}</Text>
         </View>
       </LinearGradient>
     )
@@ -1198,7 +1222,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               <View style={styles.groupHeaderTitleRow}>
                 <View style={styles.groupHeaderTitles}>
                   <Text style={styles.groupHeaderTitle}>{selectedGroup.name}</Text>
-                  <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || "Grupo astrológico"}</Text>
+                  <Text style={styles.groupHeaderSubtitle}>{selectedGroup.description || tr('groups.label.astroGroup', 'Grupo astrologico')}</Text>
                 </View>
                 <View style={styles.groupHeaderActionsColumn}>
                   <View style={styles.groupHeaderActionsRow}>
@@ -1220,42 +1244,44 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   </View>
                   <TouchableOpacity style={styles.groupHeaderPreferencesButton} onPress={openGroupSettings}>
                     <Ionicons name="options" size={12} color="#FFD700" />
-                    <Text style={styles.groupHeaderPreferencesText}>Preferências</Text>
+                    <Text style={styles.groupHeaderPreferencesText}>{tr('groups.label.preferences', 'Preferencias')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
               <View style={styles.groupHeaderMetaRow}>
                 <Text style={styles.groupMetaTextInline}>
-                  {selectedGroup.members?.length || groupMembers.length} membros
+                  {tr('groups.label.membersCount', '{count} membros', { count: selectedGroup.members?.length || groupMembers.length })}
                 </Text>
                 <Text style={styles.groupMetaDot}>-</Text>
                 <Text style={styles.groupMetaTextInline}>
-                  {(selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length} áreas
+                  {tr('groups.label.areasCount', '{count} areas', {
+                    count: (selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length,
+                  })}
                 </Text>
               </View>
             </View>
 
             <View style={styles.groupSummaryCard}>
               <View style={styles.groupSummaryHeader}>
-                <Text style={styles.sectionTitle}>Status geral</Text>
+                <Text style={styles.sectionTitle}>{tr('groups.section.generalStatus', 'Status geral')}</Text>
                 <View style={styles.groupSummaryCounters}>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
                     <Text style={styles.groupSummaryValueCompact}>{statusCounts.critical}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>Críticos</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalPlural', 'Criticos')}</Text>
                   </View>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
                     <Text style={styles.groupSummaryValueCompact}>{statusCounts.positive}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>Positivos</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positivePlural', 'Positivos')}</Text>
                   </View>
                 </View>
               </View>
               {highlightMembers.length > 0 && (
                 <>
                   <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
-                    <Text style={styles.sectionTitle}>Precisa de atenção</Text>
+                    <Text style={styles.sectionTitle}>{tr('groups.section.needsAttention', 'Precisa de atencao')}</Text>
                     {visibleMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
                       <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
-                        <Text style={styles.attentionLink}>Ver todos</Text>
+                        <Text style={styles.attentionLink}>{tr('groups.action.viewAll', 'Ver todos')}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -1275,12 +1301,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         <View style={styles.attentionInfo}>
                           <Text style={styles.attentionName}>{member.displayName}</Text>
                           <Text style={styles.attentionMeta}>
-                            {criticalText || (worst ? worst.label : "Área indisponível")}{" "}
+                            {criticalText || (worst ? worst.label : tr('groups.label.areaUnavailable', 'Area indisponivel'))}{" "}
                             {!criticalText && percentage !== null ? `- ${percentage}%` : ""}
                           </Text>
                         </View>
                         <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
-                          {member.lastStatusUpdate ? `${formatRelativeTime(member.lastStatusUpdate)}` : "Agora"}
+                          {member.lastStatusUpdate ? `${formatRelativeTime(member.lastStatusUpdate)}` : tr('groups.label.now', 'Agora')}
                         </Text>
                       </View>
                     )
@@ -1291,7 +1317,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <View style={styles.membersSection}>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Membros</Text>
+                <Text style={styles.sectionTitle}>{tr('groups.section.members', 'Membros')}</Text>
                 <TouchableOpacity style={styles.sectionIconButton} onPress={openMemberSort}>
                   <Ionicons name="swap-vertical" size={16} color="#FFD700" />
                 </TouchableOpacity>
@@ -1309,10 +1335,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         </Text>
                         <Text style={styles.memberRowUpdate} numberOfLines={1}>
                           {!hasStatus
-                            ? "Status privado"
+                            ? tr('groups.label.privateStatus', 'Status privado')
                             : member.lastStatusUpdate
-                            ? `Atualizado há ${formatRelativeTime(new Date(member.lastStatusUpdate))}`
-                            : "Sem atualização recente"}
+                            ? tr('groups.label.updatedAgo', 'Atualizado ha {time}', { time: formatRelativeTime(new Date(member.lastStatusUpdate)) })
+                            : tr('groups.label.noRecentUpdate', 'Sem atualizacao recente')}
                         </Text>
                       </View>
                     </View>
@@ -1359,7 +1385,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         })}
                       </View>
                     ) : (
-                      <Text style={styles.memberDetailEmpty}>Status privado para este grupo.</Text>
+                      <Text style={styles.memberDetailEmpty}>{tr('groups.label.privateStatusGroup', 'Status privado para este grupo.')}</Text>
                     )}
                   </View>
                 )
@@ -1368,16 +1394,16 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <View style={styles.alertsSection}>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Feed do grupo</Text>
+                <Text style={styles.sectionTitle}>{tr('groups.section.groupFeed', 'Feed do grupo')}</Text>
                 <TouchableOpacity style={styles.sectionIconButton} onPress={() => setShowMessageModal(true)}>
                   <Ionicons name="add" size={16} color="#FFD700" />
                 </TouchableOpacity>
               </View>
               <View style={styles.feedTabs}>
                 {[
-                  { key: "all", label: "Todos" },
-                  { key: "messages", label: "Mensagens" },
-                  { key: "alerts", label: "Alertas" },
+                  { key: "all", label: tr('groups.feed.all', 'Todos') },
+                  { key: "messages", label: tr('groups.feed.messages', 'Mensagens') },
+                  { key: "alerts", label: tr('groups.feed.alerts', 'Alertas') },
                 ].map((tab) => (
                   <TouchableOpacity
                     key={tab.key}
@@ -1407,7 +1433,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       <View style={styles.feedMeta}>
                         <View style={[styles.feedTag, styles.feedTagType]}>
                           <Text style={[styles.feedTagText, styles.feedTagTypeText]}>
-                            {(alert.type || "event") === "custom_message" ? "Mensagem" : "Alerta"}
+                            {(alert.type || "event") === "custom_message" ? tr('groups.feed.messageTag', 'Mensagem') : tr('groups.feed.alertTag', 'Alerta')}
                           </Text>
                         </View>
                         <View style={[styles.feedTag, { borderColor: getStatusColor(alert.status) }]}>
@@ -1417,7 +1443,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         </View>
                         {alert.area && (
                           <View style={styles.feedTag}>
-                            <Text style={styles.feedTagText}>{LIFE_AREA_LABELS[alert.area] || alert.area}</Text>
+                            <Text style={styles.feedTagText}>{lifeAreaLabel(alert.area)}</Text>
                           </View>
                         )}
                         <Text style={styles.feedTime}>{formatRelativeTime(alert.createdAt)}</Text>
@@ -1435,12 +1461,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         {groups.length === 0 && (
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={64} color="#666" />
-            <Text style={styles.emptyStateTitle}>Nenhum grupo encontrado</Text>
+            <Text style={styles.emptyStateTitle}>{tr('groups.empty.title', 'Nenhum grupo encontrado')}</Text>
             <Text style={styles.emptyStateText}>
-              Crie seu primeiro grupo ou entre em um existente usando um código de convite
+              {tr('groups.empty.body', 'Crie seu primeiro grupo ou entre em um existente usando um codigo de convite')}
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
-              <Text style={styles.createFirstGroupButtonText}>Criar primeiro grupo</Text>
+              <Text style={styles.createFirstGroupButtonText}>{tr('groups.empty.createFirst', 'Criar primeiro grupo')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1449,7 +1475,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       <Modal visible={showGroupOrderModal} transparent animationType="fade" onRequestClose={() => setShowGroupOrderModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.orderModalContent}>
-            <Text style={styles.modalTitle}>Ordenar grupos</Text>
+            <Text style={styles.modalTitle}>{tr('groups.modal.orderGroups', 'Ordenar grupos')}</Text>
             <ScrollView style={styles.orderModalList}>
               {(groupOrderDraft.length ? groupOrderDraft : groups.map((group) => group.id)).map((groupId, index, arr) => {
                 const group = groups.find((item) => item.id === groupId)
@@ -1479,10 +1505,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             </ScrollView>
             <View style={styles.orderModalFooter}>
               <TouchableOpacity style={styles.modalButtonCancel} onPress={() => setShowGroupOrderModal(false)}>
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={applyGroupOrder}>
-                <Text style={styles.modalButtonConfirmText}>Salvar</Text>
+                <Text style={styles.modalButtonConfirmText}>{tr('groups.action.save', 'Salvar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1496,14 +1522,14 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Grupos</Text>
-            <Text style={styles.modalSubtitle}>O que deseja fazer?</Text>
+            <Text style={styles.modalTitle}>{tr('groups.modal.groupsTitle', 'Grupos')}</Text>
+            <Text style={styles.modalSubtitle}>{tr('groups.modal.whatToDo', 'O que deseja fazer?')}</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalButtonCancel}
                 onPress={() => setShowGroupActionsModal(false)}
               >
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalButtonConfirm}
@@ -1512,7 +1538,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   setShowCreateModal(true)
                 }}
               >
-                <Text style={styles.modalButtonConfirmText}>Criar grupo</Text>
+                <Text style={styles.modalButtonConfirmText}>{tr('groups.action.createGroup', 'Criar grupo')}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -1522,7 +1548,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 setShowJoinModal(true)
               }}
             >
-              <Text style={styles.modalButtonConfirmText}>Entrar em grupo</Text>
+              <Text style={styles.modalButtonConfirmText}>{tr('groups.action.joinGroup', 'Entrar em grupo')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1536,12 +1562,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Ordenar membros</Text>
-            <Text style={styles.modalSubtitle}>Escolha a ordem de exibicao</Text>
+            <Text style={styles.modalTitle}>{tr('groups.modal.orderMembers', 'Ordenar membros')}</Text>
+            <Text style={styles.modalSubtitle}>{tr('groups.modal.chooseOrder', 'Escolha a ordem de exibicao')}</Text>
             {[
-              { key: "status" as const, label: "Status" },
-              { key: "name" as const, label: "Nome (A-Z)" },
-              { key: "recent" as const, label: "Atualizado recente" },
+              { key: "status" as const, label: tr('groups.sort.status', 'Status') },
+              { key: "name" as const, label: tr('groups.sort.name', 'Nome (A-Z)') },
+              { key: "recent" as const, label: tr('groups.sort.recent', 'Atualizado recente') },
             ].map((option) => (
               <TouchableOpacity
                 key={option.key}
@@ -1568,19 +1594,20 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               style={[styles.modalButtonCancel, styles.modalButtonFullWidth]}
               onPress={() => setShowMemberSortModal(false)}
             >
-              <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+              <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>`n      {/* Modal Criar Grupo */}
+      </Modal>
+      {/* Modal Criar Grupo */}
       <Modal visible={showCreateModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Criar Novo Grupo</Text>
+            <Text style={styles.modalTitle}>{tr('groups.modal.createTitle', 'Criar Novo Grupo')}</Text>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Nome do grupo"
+              placeholder={tr('groups.modal.groupNamePlaceholder', 'Nome do grupo')}
               placeholderTextColor="#888"
               value={newGroupName}
               onChangeText={setNewGroupName}
@@ -1588,7 +1615,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Descrição (opcional)"
+              placeholder={tr('groups.modal.groupDescPlaceholder', 'Descricao (opcional)')}
               placeholderTextColor="#888"
               value={newGroupDescription}
               onChangeText={setNewGroupDescription}
@@ -1608,7 +1635,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     }
                   >
                     <Text style={[styles.lifeAreaOptionText, active && styles.lifeAreaOptionTextActive]}>
-                      {area.label}
+                      {lifeAreaLabel(area.key)}
                     </Text>
                   </TouchableOpacity>
                 )
@@ -1628,7 +1655,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     }
                   >
                     <Text style={[styles.lifeAreaOptionText, active && styles.lifeAreaOptionTextActive]}>
-                      {area.label}
+                      {lifeAreaLabel(area.key)}
                     </Text>
                   </TouchableOpacity>
                 )
@@ -1646,10 +1673,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   setNewGroupNotifiedLifeAreas(LIFE_AREA_KEYS)
                 }}
               >
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={createGroup}>
-                <Text style={styles.modalButtonConfirmText}>Criar</Text>
+                <Text style={styles.modalButtonConfirmText}>{tr('common.create', 'Criar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1660,34 +1687,34 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       <Modal visible={showJoinModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Entrar no Grupo</Text>
+            <Text style={styles.modalTitle}>{tr('groups.modal.joinTitle', 'Entrar no Grupo')}</Text>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Código de convite"
+              placeholder={tr('groups.modal.inviteCode', 'Codigo de convite')}
               placeholderTextColor="#888"
               value={inviteCode}
               onChangeText={setInviteCode}
               autoCapitalize="characters"
             />
             {invitePreviewLoading && (
-              <Text style={styles.invitePreviewText}>Carregando grupo...</Text>
+              <Text style={styles.invitePreviewText}>{tr('groups.loadingGroup', 'Carregando grupo...')}</Text>
             )}
 
             {invitePreview && (
               <View style={styles.invitePreviewBox}>
                 <Text style={styles.invitePreviewTitle}>{invitePreview.name}</Text>
                 <Text style={styles.invitePreviewText}>
-                  Áreas compartilhadas: {formatLifeAreas(invitePreview.sharedLifeAreas)}
+                  {tr('groups.modal.sharedAreasPrefix', 'Areas compartilhadas')}: {formatLifeAreasLocalized(invitePreview.sharedLifeAreas)}
                 </Text>
                 <Text style={styles.invitePreviewText}>
-                  Áreas notificadas: {formatLifeAreas(invitePreview.notifiedLifeAreas)}
+                  {tr('groups.modal.notifiedAreasPrefix', 'Areas notificadas')}: {formatLifeAreasLocalized(invitePreview.notifiedLifeAreas)}
                 </Text>
                 {invitePreview.inviteEnabled === false && (
-                  <Text style={styles.invitePreviewError}>Convite desativado pelo admin</Text>
+                  <Text style={styles.invitePreviewError}>{tr('groups.invite.disabledByAdmin', 'Convite desativado pelo admin')}</Text>
                 )}
                 {invitePreview.inviteExpiresAt && invitePreview.inviteExpiresAt.getTime() < Date.now() && (
-                  <Text style={styles.invitePreviewError}>Convite expirado</Text>
+                  <Text style={styles.invitePreviewError}>{tr('groups.invite.expired', 'Convite expirado')}</Text>
                 )}
               </View>
             )}
@@ -1706,10 +1733,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   setInvitePreviewError("")
                 }}
               >
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={joinGroup}>
-                <Text style={styles.modalButtonConfirmText}>Entrar</Text>
+                <Text style={styles.modalButtonConfirmText}>{tr('groups.action.join', 'Entrar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1720,15 +1747,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       <Modal visible={showMessageModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Enviar Mensagem para o Grupo</Text>
+              <Text style={styles.modalTitle}>{tr('groups.modal.messageTitle', 'Enviar Mensagem para o Grupo')}</Text>
             
             <Text style={styles.modalSubtitle}>
-              Todos os membros do grupo receberao uma notificacao
+              {tr('groups.modal.messageSubtitle', 'Todos os membros do grupo receberao uma notificacao')}
             </Text>
 
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Digite sua mensagem..."
+              placeholder={tr('groups.modal.typeMessage', 'Digite sua mensagem...')}
               placeholderTextColor="#888"
               value={groupMessage}
               onChangeText={setGroupMessage}
@@ -1738,7 +1765,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             />
             
             <Text style={styles.characterCount}>
-              {groupMessage.length}/200 caracteres
+              {tr('groups.modal.charCount', '{count}/200 caracteres', { count: groupMessage.length })}
             </Text>
 
             <View style={styles.modalButtons}>
@@ -1749,7 +1776,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   setGroupMessage("")
                 }}
               >
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.modalButtonConfirm, sendingNotification && styles.modalButtonDisabled]} 
@@ -1757,7 +1784,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 disabled={sendingNotification || !groupMessage.trim()}
               >
                 <Text style={styles.modalButtonConfirmText}>
-                  {sendingNotification ? "Enviando..." : "Enviar"}
+                  {sendingNotification ? tr('common.sending', 'Enviando...') : tr('common.send', 'Enviar')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1852,17 +1879,17 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           "semiquadratura",
                           "sesquiquadratura",
                         ].includes(aspectType)
-                        const areaLabel = LIFE_AREA_LABELS[key] || key
+                        const areaLabel = lifeAreaLabel(key)
                         const title = isHarmonious
-                          ? "Aproveitar oportunidades"
+                          ? tr('groups.suggestion.useOpportunities', 'Aproveitar oportunidades')
                           : isChallenging
-                          ? "Rever e ajustar"
-                          : "Organizar e observar"
+                          ? tr('groups.suggestion.reviewAdjust', 'Rever e ajustar')
+                          : tr('groups.suggestion.organizeObserve', 'Organizar e observar')
                         const text = isHarmonious
-                          ? `Boa fase para fortalecer iniciativas em ${areaLabel}.`
+                          ? tr('groups.suggestion.goodPhase', 'Boa fase para fortalecer iniciativas em {area}.', { area: areaLabel })
                           : isChallenging
-                          ? `Periodo de ajustes e revisoes em ${areaLabel}.`
-                          : `Momento de observar sinais e organizar passos em ${areaLabel}.`
+                          ? tr('groups.suggestion.adjustments', 'Periodo de ajustes e revisoes em {area}.', { area: areaLabel })
+                          : tr('groups.suggestion.observeSignals', 'Momento de observar sinais e organizar passos em {area}.', { area: areaLabel })
                         return {
                           id: `fallback-${key}-${index}`,
                           title,
@@ -1874,7 +1901,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               return (
                 <>
                   <LinearGradient colors={cardColors} style={styles.memberAreaHeader}>
-                    <Text style={styles.memberAreaTitle}>{LIFE_AREA_LABELS[key] || key}</Text>
+                    <Text style={styles.memberAreaTitle}>{lifeAreaLabel(key)}</Text>
                     <Text style={styles.memberAreaPercent}>
                       {percentage !== null ? `${percentage}%` : "--"}
                     </Text>
@@ -1896,26 +1923,34 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     showsVerticalScrollIndicator={false}
                   >
                     {(() => {
-                      const areaLabel = LIFE_AREA_LABELS[key] || key
+                      const areaLabel = lifeAreaLabel(key)
                       const areaCritical = bucket === "critical"
                       const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
-                        const status = classifyTransitStatus(transit)
+                        const status = classifyTransitStatus(transit, tr)
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
                         const transitHouseLabel = getTransitCurrentHouse(transit)
                         const houseLabel = transitHouseLabel || natalHouseLabel || null
-                        const houseLabelPrefix = transitHouseLabel ? "Casa de trânsito atual" : "Casa natal ativada"
+                        const houseLabelPrefix = transitHouseLabel
+                          ? tr('groups.member.currentTransitHouse', 'Casa de transito atual')
+                          : tr('groups.member.natalActivatedHouse', 'Casa natal ativada')
                         const areaHousesText = AREA_HOUSES[key]?.length ? AREA_HOUSES[key].join("/") : ""
-                        const technicalParts = [getTransitTechnicalTypeLabel(transit)]
+                        const technicalParts = [getTransitTechnicalTypeLabel(transit, tr)]
                         if (transitHouseLabel && natalHouseLabel && transitHouseLabel !== natalHouseLabel) {
-                          technicalParts.push(`Casa natal ativada: ${natalHouseLabel.replace("Casa ", "")}`)
+                          technicalParts.push(
+                            tr('groups.member.natalActivatedHouseValue', 'Casa natal ativada: {house}', {
+                              house: natalHouseLabel.replace("Casa ", ""),
+                            })
+                          )
                         }
-                        if (areaHousesText) technicalParts.push(`Casas da área: ${areaHousesText}`)
+                        if (areaHousesText) {
+                          technicalParts.push(tr('groups.member.areaHouses', 'Casas da area: {houses}', { houses: areaHousesText }))
+                        }
                         const technicalTypeLabel = technicalParts.join(" • ")
                         const timing = [formatTransitTimingLabel(transit), formatTransitDuration(transit)].filter(Boolean).join(" • ")
                         const suggestion = fallbackSuggestionItems[index]
-                        const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical)
-                        const statusLabel = areaCritical && status.kind === "harmonic" ? "Alivio" : status.label
+                        const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical, tr)
+                        const statusLabel = areaCritical && status.kind === "harmonic" ? tr('groups.status.relief', 'Alivio') : status.label
                         const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
                         const astroNarrative = buildAstroTransitNarrative(transit, areaLabel)
                         const suggestionText = String(suggestion?.text || '').trim()
@@ -1929,11 +1964,19 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const fullLines = mergeNarrativeSegments([
                           astroNarrative.fullText,
                           shouldUseSuggestionText ? suggestionText : "",
-                          suggestion?.title ? `Foco: ${String(suggestion.title)}` : "",
-                          mainPlanets.length ? `Planetas de base: ${mainPlanets.slice(0, 5).join(", ")}` : "",
+                          suggestion?.title
+                            ? tr('groups.member.focusTitle', 'Foco: {title}', { title: String(suggestion.title) })
+                            : "",
+                          mainPlanets.length
+                            ? tr('groups.member.basePlanets', 'Planetas de base: {planets}', { planets: mainPlanets.slice(0, 5).join(", ") })
+                            : "",
                         ], { exclude: [directText] })
-                        const orbText = Number.isFinite(transit?.orb) ? `Orb ${Number(transit.orb).toFixed(1)}°` : ""
-                        const impactText = Number.isFinite(transit?.impact) ? `Impacto ${Number(transit.impact).toFixed(2)}` : ""
+                        const orbText = Number.isFinite(transit?.orb)
+                          ? tr('groups.member.orb', 'Orb {value}deg', { value: Number(transit.orb).toFixed(1) })
+                          : ""
+                        const impactText = Number.isFinite(transit?.impact)
+                          ? tr('groups.member.impact', 'Impacto {value}', { value: Number(transit.impact).toFixed(2) })
+                          : ""
                         return {
                           id: String(transit?.id || `member-transit-${index}`),
                           columnKind: getTransitColumnKind(transit),
@@ -1944,10 +1987,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           technicalTypeLabel,
                           statusLabel,
                           statusColor,
-                          timingLabel: timing || "Em andamento",
+                          timingLabel: timing || tr('groups.member.inProgress', 'Em andamento'),
                           directText,
                           fullLines,
-                          actionText: suggestion?.title ? String(suggestion.title) : "Ajuste o proximo passo com foco e constancia.",
+                          actionText: suggestion?.title
+                            ? String(suggestion.title)
+                            : tr('groups.member.adjustNextStep', 'Ajuste o proximo passo com foco e constancia.'),
                           metaText: [orbText, impactText].filter(Boolean).join(" • "),
                           impactValue01: computeTransitImpactValue(transit, areaCritical),
                           keywords: buildTransitKeywords(transit, key),
@@ -1957,7 +2002,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       if (!baseTransits.length) {
                         return (
                           <Text style={styles.memberAreaEmpty}>
-                            Nenhum transito ativo para esta area.
+                            {tr('groups.member.noTransitForArea', 'Nenhum transito ativo para esta area.')}
                           </Text>
                         )
                       }
@@ -1985,10 +2030,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           onOpenDetailModal={() => {
                             const fullText = item.fullLines.join("\n\n")
                             const intensityLabel = item.impactValue01 >= 0.75
-                              ? "Impacto forte"
+                              ? tr('groups.member.impactStrong', 'Impacto forte')
                               : item.impactValue01 >= 0.45
-                              ? "Impacto moderado"
-                              : "Impacto leve"
+                              ? tr('groups.member.impactModerate', 'Impacto moderado')
+                              : tr('groups.member.impactLight', 'Impacto leve')
                             setSelectedMemberTransitDetail({
                               title: item.title,
                               statusLabel: item.statusLabel,
@@ -2015,15 +2060,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       return (
                         <>
                           <View style={styles.memberAreaSectionRow}>
-                            <Text style={styles.memberAreaSectionTitle}>Transitos ativos</Text>
+                            <Text style={styles.memberAreaSectionTitle}>{tr('groups.member.activeTransits', 'Transitos ativos')}</Text>
                             <Text style={styles.memberAreaSectionMeta}>
-                              {orderedTransits.length} transitos na area
+                              {tr('groups.member.transitsInArea', '{count} transitos na area', { count: orderedTransits.length })}
                             </Text>
                           </View>
                           {planetTransits.length ? (
                             <View style={styles.memberTransitSection}>
                               <View style={styles.memberTransitColumnHeader}>
-                                <Text style={styles.memberTransitColumnTitle}>Planeta x Planeta</Text>
+                                <Text style={styles.memberTransitColumnTitle}>{tr('groups.member.planetPlanet', 'Planeta x Planeta')}</Text>
                                 <Text style={styles.memberTransitColumnMeta}>{planetTransits.length}</Text>
                               </View>
                               {planetTransits.map((item, index) => renderTransitCard(item, index))}
@@ -2033,7 +2078,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           {houseTransits.length ? (
                             <View style={styles.memberTransitSection}>
                               <View style={styles.memberTransitColumnHeader}>
-                                <Text style={styles.memberTransitColumnTitle}>Planeta x Casa</Text>
+                                <Text style={styles.memberTransitColumnTitle}>{tr('groups.member.planetHouse', 'Planeta x Casa')}</Text>
                                 <Text style={styles.memberTransitColumnMeta}>{houseTransits.length}</Text>
                               </View>
                               {houseTransits.map((item, index) => renderTransitCard(item, index))}
@@ -2045,7 +2090,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                             onPress={() => setShowMemberAreaCalc((prev) => !prev)}
                           >
                             <Text style={styles.memberCalcToggleText}>
-                              {showMemberAreaCalc ? "Ocultar calculo do status" : "Visualizar calculo do status"}
+                              {showMemberAreaCalc
+                                ? tr('groups.member.hideCalc', 'Ocultar calculo do status')
+                                : tr('groups.member.showCalc', 'Visualizar calculo do status')}
                             </Text>
                             <Ionicons
                               name={showMemberAreaCalc ? "chevron-up" : "chevron-down"}
@@ -2056,26 +2103,37 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
                           {showMemberAreaCalc ? (
                             <View style={styles.memberCalcBox}>
-                              <Text style={styles.memberCalcTitle}>Fatores do cálculo desta área</Text>
+                              <Text style={styles.memberCalcTitle}>{tr('groups.member.calcFactors', 'Fatores do calculo desta area')}</Text>
                               <Text style={styles.memberCalcText}>
-                                Score atual: {percentage !== null ? `${percentage}%` : "--"} • Classificação: {getStatusLabel(bucket === "attention" ? "neutral" : bucket)}
+                                {tr('groups.member.currentScoreLine', 'Score atual: {score}% • Classificacao: {classification}', {
+                                  score: percentage !== null ? percentage : '--',
+                                  classification: getStatusLabel(bucket === "attention" ? "neutral" : bucket),
+                                })}
                               </Text>
                               <Text style={styles.memberCalcText}>
-                                Trânsitos considerados: {orderedTransits.length}
+                                {tr('groups.member.consideredTransits', 'Transitos considerados: {count}', {
+                                  count: orderedTransits.length,
+                                })}
                               </Text>
                               {mainPlanets.length ? (
                                 <Text style={styles.memberCalcText}>
-                                  Planetas de base: {mainPlanets.slice(0, 8).join(", ")}
+                                  {tr('groups.member.basePlanets', 'Planetas de base: {planets}', {
+                                    planets: mainPlanets.slice(0, 8).join(", "),
+                                  })}
                                 </Text>
                               ) : null}
                               {resolvedActiveTransits.length ? (
                                 <Text style={styles.memberCalcText}>
-                                  Eventos ativos: {resolvedActiveTransits.slice(0, 8).join(" • ")}
+                                  {tr('groups.member.activeEvents', 'Eventos ativos: {events}', {
+                                    events: resolvedActiveTransits.slice(0, 8).join(" • "),
+                                  })}
                                 </Text>
                               ) : null}
                               {resolvedAspects.length ? (
                                 <Text style={styles.memberCalcText}>
-                                  Aspectos relevantes: {resolvedAspects.slice(0, 6).join(" • ")}
+                                  {tr('groups.member.relevantAspects', 'Aspectos relevantes: {aspects}', {
+                                    aspects: resolvedAspects.slice(0, 6).join(" • "),
+                                  })}
                                 </Text>
                               ) : null}
                             </View>
@@ -2097,7 +2155,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 setShowMemberAreaCalc(false)
               }}
             >
-              <Text style={styles.memberAreaCloseText}>Fechar</Text>
+              <Text style={styles.memberAreaCloseText}>{tr('common.close', 'Fechar')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2129,14 +2187,14 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         }}
         onInvite={() => {
           // Acao de convite sera implementada na proxima etapa
-          Alert.alert('Em breve', 'Sistema de convites em desenvolvimento!')
+          Alert.alert(tr('groups.alert.comingSoonTitle', 'Em breve'), tr('groups.alert.comingSoonInvites', 'Sistema de convites em desenvolvimento!'))
         }}
         onLeaveGroup={handleLeaveGroup}
         onRemoveMember={(member) => handleRemoveMember(member.userId)}
         onUpdateInviteSettings={handleUpdateInviteSettings}
         onMemberProfile={(member) => {
           // Acao de ver perfil do membro
-          Alert.alert('Perfil', `Ver perfil de ${member.displayName}`)
+          Alert.alert(tr('groups.alert.profileTitle', 'Perfil'), tr('groups.alert.viewProfile', `Ver perfil de ${member.displayName}`, { name: member.displayName }))
         }}
       />
 
@@ -3562,6 +3620,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
+
+
 
 
 

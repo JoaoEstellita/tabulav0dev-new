@@ -10,6 +10,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 
 const getLocalDateKey = (date: Date) => {
   const year = date.getFullYear()
@@ -18,8 +19,12 @@ const getLocalDateKey = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
-const formatDateLabel = (value?: any) => {
-  if (!value?.toDate) return "Sem data"
+const formatDateLabel = (
+  value: any,
+  language: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+) => {
+  if (!value?.toDate) return t("notif.noDate")
   const date = value.toDate()
   const today = new Date()
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
@@ -30,15 +35,15 @@ const formatDateLabel = (value?: any) => {
   const todayKey = getLocalDateKey(todayStart)
   const yesterdayKey = getLocalDateKey(yesterdayStart)
 
-  if (dateKey === todayKey) return "Hoje"
-  if (dateKey === yesterdayKey) return "Ontem"
-  return date.toLocaleDateString("pt-BR")
+  if (dateKey === todayKey) return t("notif.today")
+  if (dateKey === yesterdayKey) return t("notif.yesterday")
+  return date.toLocaleDateString(language)
 }
 
-const formatTimeLabel = (value?: any) => {
+const formatTimeLabel = (value: any, language: string) => {
   if (!value?.toDate) return ""
   const date = value.toDate()
-  return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  return date.toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" })
 }
 
 const renderTemplate = (template?: NotificationTemplate, vars?: Record<string, any>) => {
@@ -81,7 +86,7 @@ const formatAreaLabel = (value?: any) => {
   return raw.charAt(0).toUpperCase() + raw.slice(1)
 }
 
-const buildLifeAreaTags = (item: NotificationItem) => {
+const buildLifeAreaTags = (item: NotificationItem, t: (key: string) => string) => {
   const vars = item.templateVars || {}
   const meta = item.meta || {}
   const singleLabel =
@@ -113,7 +118,7 @@ const buildLifeAreaTags = (item: NotificationItem) => {
   if (listLabel) return [String(listLabel)]
 
   if (item.area) return [String(item.area)]
-  return ["Geral"]
+  return [t("notif.general")]
 }
 
 const resolvePercentageTag = (item: NotificationItem) => {
@@ -128,17 +133,18 @@ const resolvePercentageTag = (item: NotificationItem) => {
           ? vars.primaryStatus
           : typeof vars.primaryLifeAreaStatus === "number"
             ? vars.primaryLifeAreaStatus
-      : typeof vars.status === "number"
-        ? vars.status
-        : typeof meta.status === "number"
-          ? meta.status
-          : null
+            : typeof vars.status === "number"
+              ? vars.status
+              : typeof meta.status === "number"
+                ? meta.status
+                : null
   return typeof value === "number" ? Math.round(value) : null
 }
 
 const resolveNotificationText = (
   item: NotificationItem,
-  templates: Record<string, NotificationTemplate>
+  templates: Record<string, NotificationTemplate>,
+  t: (key: string) => string
 ) => {
   if (item.templateKey === "member_status_critical") {
     const summaryText = item.templateVars?.summaryText
@@ -149,10 +155,10 @@ const resolveNotificationText = (
     if (Array.isArray(items) && items.length > 0) {
       const summary = items
         .map((entry: any) => {
-          const name = entry.memberName || "Membro"
+          const name = entry.memberName || t("notif.member")
           if (entry.customMessage) return `${name}: ${entry.customMessage}`
           const areas = entry.criticalAreasText ? ` (${entry.criticalAreasText})` : ""
-          return `${name}${areas} em crítico`
+          return `${name}${areas} ${t("notif.inCritical")}`
         })
         .join("; ")
       if (summary) return { title: item.title || "", body: summary }
@@ -184,7 +190,7 @@ const resolveCriticalAreasText = (item: NotificationItem) => {
   )
 }
 
-const resolveLifeAreaEntries = (item: NotificationItem) => {
+const resolveLifeAreaEntries = (item: NotificationItem, t: (key: string) => string) => {
   const vars = item.templateVars || {}
   const meta = item.meta || {}
   const entries = Array.isArray(vars.lifeAreas)
@@ -203,7 +209,7 @@ const resolveLifeAreaEntries = (item: NotificationItem) => {
             ? entry.value
             : null
     return {
-      label: label || "Geral",
+      label: label || t("notif.general"),
       percentage: typeof rawPercent === "number" ? Math.round(rawPercent) : null,
     }
   })
@@ -225,6 +231,7 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
 }
 
 export default function NotificationsScreen() {
+  const { t, language } = useAppLanguage()
   const [filter, setFilter] = useState("all")
   const [activeItem, setActiveItem] = useState<NotificationItem | null>(null)
   const {
@@ -246,12 +253,12 @@ export default function NotificationsScreen() {
   const grouped = useMemo(() => {
     const groups = new Map<string, NotificationItem[]>()
     filteredNotifications.forEach((item) => {
-      const label = formatDateLabel(item.createdAt)
+      const label = formatDateLabel(item.createdAt, language, t)
       if (!groups.has(label)) groups.set(label, [])
       groups.get(label)?.push(item)
     })
     return Array.from(groups.entries())
-  }, [filteredNotifications])
+  }, [filteredNotifications, language, t])
 
   const handleOpenNotification = async (item: NotificationItem) => {
     if (!item.isRead) {
@@ -264,11 +271,11 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Notificações</Text>
+          <Text style={styles.title}>{t("notif.title")}</Text>
           <Text style={styles.subtitle}>
             {unreadCount > 0
-              ? `${unreadCount} não lida${unreadCount === 1 ? "" : "s"}`
-              : "Tudo em dia"}
+              ? t("notif.unreadCount", { count: unreadCount })
+              : t("notif.allCaughtUp")}
           </Text>
         </View>
         <TouchableOpacity
@@ -277,16 +284,16 @@ export default function NotificationsScreen() {
           disabled={unreadCount === 0}
         >
           <Ionicons name="checkmark-done" size={16} color="#0F0F23" />
-          <Text style={styles.markAllButtonText}>Marcar tudo</Text>
+          <Text style={styles.markAllButtonText}>{t("notif.markAll")}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.filters}>
         {[
-          { key: "all", label: "Todos" },
-          { key: "critical", label: "Críticos" },
-          { key: "personal", label: "Pessoais" },
-          { key: "group", label: "Grupos" },
+          { key: "all", label: t("notif.filter.all") },
+          { key: "critical", label: t("notif.filter.critical") },
+          { key: "personal", label: t("notif.filter.personal") },
+          { key: "group", label: t("notif.filter.group") },
         ].map((option) => (
           <TouchableOpacity
             key={option.key}
@@ -307,9 +314,9 @@ export default function NotificationsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {loading ? (
-          <Text style={styles.emptyText}>Carregando notificações...</Text>
+          <Text style={styles.emptyText}>{t("notif.loading")}</Text>
         ) : filteredNotifications.length === 0 ? (
-          <Text style={styles.emptyText}>Sem notificações no momento</Text>
+          <Text style={styles.emptyText}>{t("notif.empty")}</Text>
         ) : (
           grouped.map(([label, items]) => (
             <View key={label} style={styles.groupSection}>
@@ -317,8 +324,8 @@ export default function NotificationsScreen() {
               {items.map((item) => {
                 const severity = getNotificationSeverity(item)
                 const icon = getSeverityIcon(severity)
-                const text = resolveNotificationText(item, templates)
-                const areaTags = buildLifeAreaTags(item)
+                const text = resolveNotificationText(item, templates, t)
+                const areaTags = buildLifeAreaTags(item, t)
                 const percentValue = resolvePercentageTag(item)
                 return (
                   <TouchableOpacity
@@ -333,7 +340,7 @@ export default function NotificationsScreen() {
                       <Text style={styles.cardTitle}>{text.title}</Text>
                       <Text style={styles.cardBody}>{text.body}</Text>
                       {item.createdAt?.toDate ? (
-                        <Text style={styles.cardTime}>{formatTimeLabel(item.createdAt)}</Text>
+                        <Text style={styles.cardTime}>{formatTimeLabel(item.createdAt, language)}</Text>
                       ) : null}
                       <View style={styles.tags}>
                         {item.groupName ? (
@@ -341,9 +348,9 @@ export default function NotificationsScreen() {
                             <Text style={styles.tagText}>{item.groupName}</Text>
                           </View>
                         ) : null}
-                        {areaTags.map((label, index) => (
+                        {areaTags.map((areaLabel, index) => (
                           <View key={`${item.id}_area_${index}`} style={styles.tag}>
-                            <Text style={styles.tagText}>{label}</Text>
+                            <Text style={styles.tagText}>{areaLabel}</Text>
                           </View>
                         ))}
                         {typeof percentValue === "number" ? (
@@ -367,7 +374,7 @@ export default function NotificationsScreen() {
             disabled={loadingMore}
           >
             <Text style={styles.loadMoreText}>
-              {loadingMore ? "Carregando..." : "Carregar mais"}
+              {loadingMore ? t("notif.loadingMore") : t("notif.loadMore")}
             </Text>
           </TouchableOpacity>
         )}
@@ -384,27 +391,27 @@ export default function NotificationsScreen() {
             {activeItem ? (
               <>
                 <Text style={styles.modalTitle}>
-                  {resolveNotificationText(activeItem, templates).title}
+                  {resolveNotificationText(activeItem, templates, t).title}
                 </Text>
                 <Text style={styles.modalBody}>
-                  {resolveNotificationText(activeItem, templates).body}
+                  {resolveNotificationText(activeItem, templates, t).body}
                 </Text>
                 {activeItem.createdAt?.toDate ? (
-                  <Text style={styles.modalTime}>{formatTimeLabel(activeItem.createdAt)}</Text>
+                  <Text style={styles.modalTime}>{formatTimeLabel(activeItem.createdAt, language)}</Text>
                 ) : null}
 
                 {resolveCriticalAreasText(activeItem) ? (
                   <View style={styles.modalSection}>
-                    <Text style={styles.modalSectionTitle}>Áreas críticas</Text>
+                    <Text style={styles.modalSectionTitle}>{t("notif.criticalAreas")}</Text>
                     <Text style={styles.modalSectionText}>
                       {resolveCriticalAreasText(activeItem)}
                     </Text>
                   </View>
                 ) : null}
 
-                {resolveLifeAreaEntries(activeItem).length > 0 ? (
+                {resolveLifeAreaEntries(activeItem, t).length > 0 ? (
                   <View style={styles.modalTags}>
-                    {resolveLifeAreaEntries(activeItem).map((entry, index) => (
+                    {resolveLifeAreaEntries(activeItem, t).map((entry, index) => (
                       <View key={`modal_area_${index}`} style={styles.tag}>
                         <Text style={styles.tagText}>
                           {entry.label}
