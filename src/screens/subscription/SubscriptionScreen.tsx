@@ -45,6 +45,18 @@ export default function SubscriptionScreen() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [provider, setProvider] = useState<'mercadopago' | 'stripe'>('mercadopago');
 
+  const getCurrentSubscriptionProvider = async (): Promise<'mercadopago' | 'stripe'> => {
+    if (!user?.uid) return provider;
+    try {
+      const status = await MercadoPagoService.getSubscriptionStatus(user.uid);
+      if (status?.provider === 'stripe') return 'stripe';
+      if (status?.provider === 'mercadopago') return 'mercadopago';
+    } catch (error) {
+      console.warn('Falha ao consultar provider atual da assinatura:', error);
+    }
+    return provider;
+  };
+
   const handleSubscribe = async (planId: string) => {
     try {
       setIsLoading(true);
@@ -116,11 +128,12 @@ export default function SubscriptionScreen() {
 
   const manageSubscription = async () => {
     try {
+      const currentProvider = await getCurrentSubscriptionProvider();
       if (!user?.uid) {
         Alert.alert(t('common.error'), t('subscription.error.userNotFound'));
         return;
       }
-      if (provider === 'stripe') {
+      if (currentProvider === 'stripe') {
         const portal = await StripeService.createPortalSession(user.uid);
         if (portal.url) {
           await Linking.openURL(portal.url);
@@ -139,7 +152,8 @@ export default function SubscriptionScreen() {
   };
 
   const cancelSubscription = async () => {
-    if (provider === 'stripe' && user?.uid) {
+    const currentProvider = await getCurrentSubscriptionProvider();
+    if (currentProvider === 'stripe' && user?.uid) {
       try {
         const portal = await StripeService.createPortalSession(user.uid);
         if (portal.url) {
@@ -160,27 +174,28 @@ export default function SubscriptionScreen() {
     );
   };
 
-  const viewSubscriptionDetails = () => {
-    if (provider === 'stripe' && user?.uid) {
-      StripeService.createPortalSession(user.uid)
-        .then((portal) => {
-          if (portal.url) return Linking.openURL(portal.url);
-          throw new Error('Portal sem URL');
-        })
-        .catch((error) => {
-          console.error('Erro ao abrir portal Stripe (detalhes):', error);
-          Alert.alert(t('common.error'), t('subscription.error.manageDetails'));
-        });
-      return;
+  const viewSubscriptionDetails = async () => {
+    try {
+      const currentProvider = await getCurrentSubscriptionProvider();
+      if (currentProvider === 'stripe' && user?.uid) {
+        const portal = await StripeService.createPortalSession(user.uid);
+        if (portal.url) {
+          await Linking.openURL(portal.url);
+          return;
+        }
+      }
+      Alert.alert(
+        t('subscription.details.title'),
+        t('subscription.details.body'),
+        [
+          { text: t('common.close') },
+          { text: t('subscription.openMercadoPago'), onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
+        ]
+      );
+    } catch (error) {
+      console.error('Erro ao abrir detalhes da assinatura:', error);
+      Alert.alert(t('common.error'), t('subscription.error.manageDetails'));
     }
-    Alert.alert(
-      t('subscription.details.title'),
-      t('subscription.details.body'),
-      [
-        { text: t('common.close') },
-        { text: t('subscription.openMercadoPago'), onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
-      ]
-    );
   };
 
   return (

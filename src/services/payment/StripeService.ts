@@ -24,6 +24,22 @@ export interface StripePortalResponse {
   error?: { code?: string; message?: string; details?: unknown }
 }
 
+export interface StripeSyncResponse {
+  ok: boolean
+  sessionId?: string
+  paymentStatus?: string
+  subscriptionStatus?: string
+  mappedStatus?: string
+  persisted?: {
+    ok?: boolean
+    userId?: string
+    planId?: string
+    status?: string
+    isActive?: boolean
+  } | null
+  error?: { code?: string; message?: string; details?: unknown }
+}
+
 export class StripeService {
   private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
   private static readonly FRONTEND_URL = (process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br').replace(/\/$/, '')
@@ -58,6 +74,19 @@ export class StripeService {
     const data = await response.json()
     if (!response.ok || !data?.ok) {
       throw new Error(data?.error?.message || 'Falha ao abrir portal Stripe')
+    }
+    return data
+  }
+
+  static async syncCheckoutSession(sessionId: string, userId: string): Promise<StripeSyncResponse> {
+    const response = await fetch(`${this.BACKEND_URL}/stripe/sync-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, userId }),
+    })
+    const data = await response.json()
+    if (!response.ok || !data?.ok) {
+      throw new Error(data?.error?.message || 'Falha ao sincronizar checkout Stripe')
     }
     return data
   }

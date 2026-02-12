@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService'
+import StripeService from '../../services/payment/StripeService'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentSuccessScreen() {
@@ -22,6 +23,19 @@ export default function PaymentSuccessScreen() {
         return
       }
       try {
+        if (Platform.OS === 'web') {
+          const params = new URLSearchParams(window.location.search || '')
+          const provider = params.get('provider')
+          const sessionId = params.get('session_id')
+          if (provider === 'stripe' && sessionId) {
+            try {
+              await StripeService.syncCheckoutSession(sessionId, user.uid)
+            } catch (syncError) {
+              console.warn('Stripe sync checkout failed:', syncError)
+            }
+          }
+        }
+
         const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
         if (!active) return
         if (status?.isActive) {
