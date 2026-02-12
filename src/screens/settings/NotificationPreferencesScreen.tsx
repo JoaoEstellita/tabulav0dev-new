@@ -177,34 +177,34 @@ export default function NotificationPreferencesScreen() {
     </View>
   )
 
-  const pushTypeItems: Array<{ key: string; label: string; description: string }> = [
-    { key: "member_status_critical", label: "Cr\u00EDtico de grupo", description: "Alertas cr\u00EDticos de membros nos grupos." },
-    { key: "user_status_critical", label: "Cr\u00EDtico pessoal", description: "Alertas quando voc\u00EA entra em estado cr\u00EDtico." },
-    { key: "user_status_critical_recovered", label: "Recupera\u00E7\u00E3o do cr\u00EDtico", description: "Alerta quando voc\u00EA sai do estado cr\u00EDtico." },
-    { key: "member_status_positive", label: "Positivo de grupo", description: "Alertas quando membro entra em fase positiva." },
-    { key: "user_status_positive", label: "Positivo pessoal", description: "Alertas quando voc\u00EA entra em fase positiva." },
-    { key: "user_status_highlight", label: "Destaque de status", description: "Alertas de destaque quando houver mudan\u00E7a relevante." },
-    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "In\u00EDcio, pico e encerramento dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
-    { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Alertas de eventos coletivos quando habilitados no backend." },
-    { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Resumo curto di\u00E1rio com status geral." },
-    { key: "weekly_digest", label: "Resumo semanal", description: "Digest semanal unificado (status e previs\u00F5es)." },
-    { key: "group_message", label: "Mensagens do grupo", description: "Alertas quando houver nova mensagem no grupo." },
+  const pushTypeItems: Array<{ key: string; labelKey: string; descriptionKey: string }> = [
+    { key: "member_status_critical", labelKey: "nprefs.type.member_status_critical.label", descriptionKey: "nprefs.type.member_status_critical.desc" },
+    { key: "user_status_critical", labelKey: "nprefs.type.user_status_critical.label", descriptionKey: "nprefs.type.user_status_critical.desc" },
+    { key: "user_status_critical_recovered", labelKey: "nprefs.type.user_status_critical_recovered.label", descriptionKey: "nprefs.type.user_status_critical_recovered.desc" },
+    { key: "member_status_positive", labelKey: "nprefs.type.member_status_positive.label", descriptionKey: "nprefs.type.member_status_positive.desc" },
+    { key: "user_status_positive", labelKey: "nprefs.type.user_status_positive.label", descriptionKey: "nprefs.type.user_status_positive.desc" },
+    { key: "user_status_highlight", labelKey: "nprefs.type.user_status_highlight.label", descriptionKey: "nprefs.type.user_status_highlight.desc" },
+    { key: "astro_event_personal", labelKey: "nprefs.type.astro_event_personal.label", descriptionKey: "nprefs.type.astro_event_personal.desc" },
+    { key: "astro_event_collective", labelKey: "nprefs.type.astro_event_collective.label", descriptionKey: "nprefs.type.astro_event_collective.desc" },
+    { key: "daily_summary", labelKey: "nprefs.type.daily_summary.label", descriptionKey: "nprefs.type.daily_summary.desc" },
+    { key: "weekly_digest", labelKey: "nprefs.type.weekly_digest.label", descriptionKey: "nprefs.type.weekly_digest.desc" },
+    { key: "group_message", labelKey: "nprefs.type.group_message.label", descriptionKey: "nprefs.type.group_message.desc" },
   ]
 
-  const inAppTypeItems: Array<{ key: string; label: string; description: string }> = [
-    { key: "user_status", label: "Seu status agora", description: "Atualiza\u00E7\u00F5es simples de status (pode gerar ru\u00EDdo se ligado)." },
-    { key: "user_status_critical", label: "Cr\u00EDtico pessoal", description: "Registra alertas pessoais cr\u00EDticos no centro de notifica\u00E7\u00F5es." },
-    { key: "user_status_critical_recovered", label: "Recupera\u00E7\u00E3o do cr\u00EDtico", description: "Registra quando voc\u00EA sai do estado cr\u00EDtico." },
-    { key: "user_status_positive", label: "Positivo pessoal", description: "Registra suas fases positivas no centro de notifica\u00E7\u00F5es." },
-    { key: "user_status_highlight", label: "Destaque de status", description: "Registra destaques de status com maior relev\u00E2ncia." },
-    { key: "group_status", label: "Status coletivo", description: "Registra atualiza\u00E7\u00F5es gerais do grupo." },
-    { key: "member_status_critical", label: "Cr\u00EDtico de grupo", description: "Registra alertas cr\u00EDticos de membros no grupo." },
-    { key: "member_status_positive", label: "Positivo de grupo", description: "Registra fases positivas de membros no grupo." },
-    { key: "astro_event_personal", label: "Eventos astrais pessoais", description: "Registra in\u00EDcio/pico/fim dos seus tr\u00E2nsitos (inclui ingresso em casa)." },
-    { key: "astro_event_collective", label: "Eventos astrais coletivos", description: "Registra eventos astrais coletivos no app." },
-    { key: "daily_summary", label: "Resumo di\u00E1rio", description: "Registra resumo di\u00E1rio no centro de notifica\u00E7\u00F5es." },
-    { key: "weekly_digest", label: "Resumo semanal", description: "Registra digest semanal unificado no app." },
-    { key: "group_message", label: "Mensagens do grupo", description: "Registra mensagens de grupos no app." },
+  const inAppTypeItems: Array<{ key: string; labelKey: string; descriptionKey: string }> = [
+    { key: "user_status", labelKey: "nprefs.inapp.user_status.label", descriptionKey: "nprefs.inapp.user_status.desc" },
+    { key: "user_status_critical", labelKey: "nprefs.inapp.user_status_critical.label", descriptionKey: "nprefs.inapp.user_status_critical.desc" },
+    { key: "user_status_critical_recovered", labelKey: "nprefs.inapp.user_status_critical_recovered.label", descriptionKey: "nprefs.inapp.user_status_critical_recovered.desc" },
+    { key: "user_status_positive", labelKey: "nprefs.inapp.user_status_positive.label", descriptionKey: "nprefs.inapp.user_status_positive.desc" },
+    { key: "user_status_highlight", labelKey: "nprefs.inapp.user_status_highlight.label", descriptionKey: "nprefs.inapp.user_status_highlight.desc" },
+    { key: "group_status", labelKey: "nprefs.inapp.group_status.label", descriptionKey: "nprefs.inapp.group_status.desc" },
+    { key: "member_status_critical", labelKey: "nprefs.inapp.member_status_critical.label", descriptionKey: "nprefs.inapp.member_status_critical.desc" },
+    { key: "member_status_positive", labelKey: "nprefs.inapp.member_status_positive.label", descriptionKey: "nprefs.inapp.member_status_positive.desc" },
+    { key: "astro_event_personal", labelKey: "nprefs.inapp.astro_event_personal.label", descriptionKey: "nprefs.inapp.astro_event_personal.desc" },
+    { key: "astro_event_collective", labelKey: "nprefs.inapp.astro_event_collective.label", descriptionKey: "nprefs.inapp.astro_event_collective.desc" },
+    { key: "daily_summary", labelKey: "nprefs.inapp.daily_summary.label", descriptionKey: "nprefs.inapp.daily_summary.desc" },
+    { key: "weekly_digest", labelKey: "nprefs.inapp.weekly_digest.label", descriptionKey: "nprefs.inapp.weekly_digest.desc" },
+    { key: "group_message", labelKey: "nprefs.inapp.group_message.label", descriptionKey: "nprefs.inapp.group_message.desc" },
   ]
 
   const renderTypeToggle = (
@@ -294,17 +294,17 @@ export default function NotificationPreferencesScreen() {
                 </Text>
               </View>
               {renderToggle(
-                "Eventos astrais pessoais",
-                "Liga/desliga notificações de eventos astrais pessoais (início, pico e encerramento).",
+                t("nprefs.personalEvents.title"),
+                t("nprefs.personalEvents.desc"),
                 prefs.astroEventsPersonalEnabled !== false,
                 (value) => savePreferences({ astroEventsPersonalEnabled: value })
               )}
               {prefs.astroEventsPersonalEnabled !== false && (
                 <View style={styles.nestedSection}>
-                  <Text style={styles.nestedTitle}>Filtros dos eventos pessoais</Text>
+                  <Text style={styles.nestedTitle}>{t("nprefs.personalFilters.title")}</Text>
                   {renderToggle(
-                    "Novos aspectos",
-                    "Notifica aspectos planeta x planeta e planeta x casa.",
+                    t("nprefs.personalFilters.aspects.title"),
+                    t("nprefs.personalFilters.aspects.desc"),
                     astroPersonalFilters.aspects !== false,
                     (value) =>
                       savePreferences({
@@ -315,8 +315,8 @@ export default function NotificationPreferencesScreen() {
                       })
                   )}
                   {renderToggle(
-                    "Novos trânsitos",
-                    "Notifica ingressos de planeta em casa (mudança de casa).",
+                    t("nprefs.personalFilters.transits.title"),
+                    t("nprefs.personalFilters.transits.desc"),
                     astroPersonalFilters.transits !== false,
                     (value) =>
                       savePreferences({
@@ -327,8 +327,8 @@ export default function NotificationPreferencesScreen() {
                       })
                   )}
                   {renderToggle(
-                    "Eventos combinados",
-                    "Notifica convergências de múltiplos fatores (combo).",
+                    t("nprefs.personalFilters.combos.title"),
+                    t("nprefs.personalFilters.combos.desc"),
                     astroPersonalFilters.combos !== false,
                     (value) =>
                       savePreferences({
@@ -341,17 +341,17 @@ export default function NotificationPreferencesScreen() {
                 </View>
               )}
               {renderToggle(
-                "Eventos astrais coletivos",
-                "Liga/desliga notificações coletivas no app e push (se habilitados nos tipos).",
+                t("nprefs.collectiveEvents.title"),
+                t("nprefs.collectiveEvents.desc"),
                 prefs.astroEventsCollectiveEnabled === true,
                 (value) => savePreferences({ astroEventsCollectiveEnabled: value })
               )}
               {prefs.astroEventsCollectiveEnabled === true && (
                 <View style={styles.nestedSection}>
-                  <Text style={styles.nestedTitle}>Filtros dos eventos coletivos</Text>
+                  <Text style={styles.nestedTitle}>{t("nprefs.collectiveFilters.title")}</Text>
                   {renderToggle(
-                    "Novos aspectos coletivos",
-                    "Notifica aspectos coletivos entre planetas lentos/impacto global.",
+                    t("nprefs.collectiveFilters.aspects.title"),
+                    t("nprefs.collectiveFilters.aspects.desc"),
                     astroCollectiveFilters.aspects !== false,
                     (value) =>
                       savePreferences({
@@ -362,8 +362,8 @@ export default function NotificationPreferencesScreen() {
                       })
                   )}
                   {renderToggle(
-                    "Novos trânsitos coletivos",
-                    "Notifica ingressos coletivos e ativações gerais.",
+                    t("nprefs.collectiveFilters.transits.title"),
+                    t("nprefs.collectiveFilters.transits.desc"),
                     astroCollectiveFilters.transits !== false,
                     (value) =>
                       savePreferences({
@@ -374,8 +374,8 @@ export default function NotificationPreferencesScreen() {
                       })
                   )}
                   {renderToggle(
-                    "Eventos combinados coletivos",
-                    "Notifica convergências coletivas relevantes.",
+                    t("nprefs.collectiveFilters.combos.title"),
+                    t("nprefs.collectiveFilters.combos.desc"),
                     astroCollectiveFilters.combos !== false,
                     (value) =>
                       savePreferences({
@@ -390,8 +390,8 @@ export default function NotificationPreferencesScreen() {
               <View style={styles.nestedSection}>
                 <Text style={styles.nestedTitle}>{t("nprefs.groups.filters")}</Text>
                 {renderToggle(
-                  "Alertas críticos de grupo",
-                  "Permite alertas quando membros entram em estado crítico.",
+                  t("nprefs.groupFilters.critical.title"),
+                  t("nprefs.groupFilters.critical.desc"),
                   groupFilters.critical !== false,
                   (value) =>
                     savePreferences({
@@ -402,8 +402,8 @@ export default function NotificationPreferencesScreen() {
                     })
                 )}
                 {renderToggle(
-                  "Alertas positivos de grupo",
-                  "Permite alertas de boa energia de membros no grupo.",
+                  t("nprefs.groupFilters.positive.title"),
+                  t("nprefs.groupFilters.positive.desc"),
                   groupFilters.positive !== false,
                   (value) =>
                     savePreferences({
@@ -414,8 +414,8 @@ export default function NotificationPreferencesScreen() {
                     })
                 )}
                 {renderToggle(
-                  "Mensagens de grupo",
-                  "Permite notificações de novas mensagens dos grupos.",
+                  t("nprefs.groupFilters.messages.title"),
+                  t("nprefs.groupFilters.messages.desc"),
                   groupFilters.messages !== false,
                   (value) =>
                     savePreferences({
@@ -429,8 +429,8 @@ export default function NotificationPreferencesScreen() {
               <View style={styles.nestedSection}>
                 <Text style={styles.nestedTitle}>{t("nprefs.forecast.filters")}</Text>
                 {renderToggle(
-                  "Forecast semanal",
-                  "Permite a notificação quando a previsão semanal for gerada.",
+                  t("nprefs.forecastFilters.weekly.title"),
+                  t("nprefs.forecastFilters.weekly.desc"),
                   forecastFilters.weekly !== false,
                   (value) =>
                     savePreferences({
@@ -519,7 +519,7 @@ export default function NotificationPreferencesScreen() {
               </TouchableOpacity>
               {showPushTypes && pushTypeItems.map((item) => (
                 <View key={`push_${item.key}`}>
-                  {renderTypeToggle("push", item.key, item.label, item.description)}
+                  {renderTypeToggle("push", item.key, t(item.labelKey), t(item.descriptionKey))}
                 </View>
               ))}
             </View>
@@ -542,7 +542,7 @@ export default function NotificationPreferencesScreen() {
               </TouchableOpacity>
               {showInAppTypes && inAppTypeItems.map((item) => (
                 <View key={`inapp_${item.key}`}>
-                  {renderTypeToggle("inApp", item.key, item.label, item.description)}
+                  {renderTypeToggle("inApp", item.key, t(item.labelKey), t(item.descriptionKey))}
                 </View>
               ))}
             </View>
