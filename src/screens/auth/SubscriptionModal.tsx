@@ -1,33 +1,31 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAppLanguage } from '../../hooks/useAppLanguage';
+import React from 'react'
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface SubscriptionModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSubscribe?: () => void;
+  visible: boolean
+  onClose: () => void
+  onSubscribe?: () => void
 }
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
-  useAppLanguage();
+  const { t } = useAppLanguage()
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <Text style={styles.title}>Assinatura Necessária</Text>
-          <Text style={styles.text}>
-            Seu período de teste grátis terminou. Para continuar usando todos os recursos do app, faça sua assinatura.
-          </Text>
+          <Text style={styles.title}>{t('subscription.modal.title')}</Text>
+          <Text style={styles.text}>{t('subscription.modal.body')}</Text>
           <TouchableOpacity style={styles.button} onPress={onSubscribe || onClose}>
-            <Text style={styles.buttonText}>Assinar agora</Text>
+            <Text style={styles.buttonText}>{t('subscription.modal.subscribe')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Fechar</Text>
+            <Text style={styles.closeButtonText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -41,36 +39,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 24,
+    width: '85%',
     alignItems: 'center',
-    width: 320,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 12,
+    color: '#222',
+    textAlign: 'center',
   },
   text: {
     fontSize: 16,
+    color: '#333',
     marginBottom: 24,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#009ee3',
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 32,
-    borderRadius: 8,
     marginBottom: 12,
   },
   buttonText: {
-    color: '#fff',
+    color: '#222',
     fontWeight: 'bold',
     fontSize: 16,
   },
   closeButton: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   closeButtonText: {
-    color: '#009ee3',
-    fontSize: 14,
+    color: '#666',
+    fontSize: 15,
   },
-});
+})

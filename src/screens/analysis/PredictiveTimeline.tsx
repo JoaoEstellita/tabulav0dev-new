@@ -26,27 +26,11 @@ const toTimeframe = (speed?: number, isRetrograde?: boolean): Timeframe => {
   return 'em_desenvolvimento'
 }
 
-const timeframeLabel = (timeframe: Timeframe) => {
-  if (timeframe === 'curto') return 'Passageiro'
-  if (timeframe === 'estrutural') return 'Estrutural'
-  return 'Em desenvolvimento'
-}
-
-const timeframeHint = (timeframe: Timeframe) => {
-  if (timeframe === 'curto') {
-    return 'Tende a mudar em breve.'
-  }
-  if (timeframe === 'estrutural') {
-    return 'Influencia mais lenta e consistente.'
-  }
-  return 'Fase de ajuste em curso.'
-}
-
 export default function PredictiveTimeline({
   impactNodes,
   currentTransits,
 }: PredictiveTimelineProps) {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const planetData = useMemo(() => {
     const map: Record<string, { speed?: number; isRetrograde?: boolean }> = {}
     currentTransits?.planets?.forEach((planet) => {
@@ -70,20 +54,32 @@ export default function PredictiveTimeline({
       .map(([planet]) => {
         const meta = planetData[planet]
         const timeframe = toTimeframe(meta?.speed, meta?.isRetrograde)
+        const labelKey =
+          timeframe === 'curto'
+            ? 'analysis.timeline.timeframe.short'
+            : timeframe === 'estrutural'
+            ? 'analysis.timeline.timeframe.structural'
+            : 'analysis.timeline.timeframe.developing'
+        const hintKey =
+          timeframe === 'curto'
+            ? 'analysis.timeline.hint.short'
+            : timeframe === 'estrutural'
+            ? 'analysis.timeline.hint.structural'
+            : 'analysis.timeline.hint.developing'
         return {
           planet,
           timeframe,
-          label: timeframeLabel(timeframe),
-          hint: timeframeHint(timeframe),
+          label: t(labelKey),
+          hint: t(hintKey),
         }
       })
-  }, [impactNodes, planetData])
+  }, [impactNodes, planetData, t])
 
   if (!entries.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyText}>
-          Sem dados suficientes para uma leitura temporal agora.
+          {t('analysis.timeline.empty')}
         </Text>
       </View>
     )
@@ -91,9 +87,9 @@ export default function PredictiveTimeline({
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Linha do tempo</Text>
+      <Text style={styles.sectionTitle}>{t('analysis.timeline.title')}</Text>
       <Text style={styles.sectionSubtitle}>
-        Fases qualitativas guiadas pelo ritmo dos planetas.
+        {t('analysis.timeline.subtitle')}
       </Text>
       <ScrollView
         horizontal
@@ -106,7 +102,7 @@ export default function PredictiveTimeline({
             <Text style={styles.timelineLabel}>{entry.label}</Text>
             <Text style={styles.timelineHint}>{entry.hint}</Text>
             <Text style={styles.timelineFootnote}>
-              Indica tendencia, nao determinacao.
+              {t('analysis.timeline.footnote')}
             </Text>
           </View>
         ))}

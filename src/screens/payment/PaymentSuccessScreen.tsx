@@ -7,17 +7,17 @@ import { MercadoPagoService } from '../../services/payment/MercadoPagoService'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentSuccessScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const navigation = useNavigation()
   const { user } = useAuth()
-  const [statusMessage, setStatusMessage] = useState('Validando sua assinatura...')
+  const [statusMessage, setStatusMessage] = useState(t('payment.success.validating'))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
     async function refreshStatus() {
       if (!user?.uid) {
-        setStatusMessage('Faça login para validar sua assinatura.')
+        setStatusMessage(t('payment.success.loginNeeded'))
         setLoading(false)
         return
       }
@@ -25,15 +25,15 @@ export default function PaymentSuccessScreen() {
         const status = await MercadoPagoService.getSubscriptionStatus(user.uid)
         if (!active) return
         if (status?.isActive) {
-          setStatusMessage('Assinatura ativa! Recursos liberados.')
+          setStatusMessage(t('payment.success.active'))
         } else if (status?.status === 'pending') {
-          setStatusMessage('Pagamento pendente. Aguarde confirmação do Mercado Pago.')
+          setStatusMessage(t('payment.success.pending'))
         } else {
-          setStatusMessage('Não foi possível confirmar a assinatura ainda.')
+          setStatusMessage(t('payment.success.unconfirmed'))
         }
       } catch {
         if (!active) return
-        setStatusMessage('Falha ao validar assinatura. Tente novamente.')
+        setStatusMessage(t('payment.success.validateFailed'))
       } finally {
         if (!active) return
         setLoading(false)
@@ -43,19 +43,19 @@ export default function PaymentSuccessScreen() {
     return () => {
       active = false
     }
-  }, [user?.uid])
+  }, [user?.uid, t])
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Pagamento aprovado</Text>
+        <Text style={styles.title}>{t('payment.success.title')}</Text>
         {loading ? <ActivityIndicator color="#FFD700" /> : <Text style={styles.message}>{statusMessage}</Text>}
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Premium' as never)}>
-          <Text style={styles.primaryButtonText}>Ir para Premium</Text>
+          <Text style={styles.primaryButtonText}>{t('payment.success.cta')}</Text>
         </TouchableOpacity>
         {Platform.OS === 'web' && (
           <TouchableOpacity style={styles.secondaryButton} onPress={() => window.location.reload()}>
-            <Text style={styles.secondaryButtonText}>Atualizar página</Text>
+            <Text style={styles.secondaryButtonText}>{t('payment.success.refresh')}</Text>
           </TouchableOpacity>
         )}
       </View>

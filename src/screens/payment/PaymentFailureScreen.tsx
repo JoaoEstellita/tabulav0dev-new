@@ -5,18 +5,16 @@ import { useNavigation } from '@react-navigation/native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentFailureScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const navigation = useNavigation()
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Pagamento não aprovado</Text>
-        <Text style={styles.message}>
-          Não foi possível concluir o pagamento. Você pode tentar novamente ou escolher outro meio.
-        </Text>
+        <Text style={styles.title}>{t('payment.failure.title')}</Text>
+        <Text style={styles.message}>{t('payment.failure.body')}</Text>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Premium' as never)}>
-          <Text style={styles.primaryButtonText}>Tentar novamente</Text>
+          <Text style={styles.primaryButtonText}>{t('payment.failure.cta')}</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>

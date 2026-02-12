@@ -7,19 +7,19 @@ import { translatePlanetPT } from '../../utils/astro/pt'
 import { getLifeAreaLabel } from '../../constants/lifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
-const formatDegree = (longitude: number) => `${longitude.toFixed(1)}\u00B0`
+const formatDegree = (longitude: number) => `${longitude.toFixed(1)}°`
 
 const getSignFromDegree = (degree: number): string => {
   const signs = [
     'Aries', 'Touro', 'Gemeos', 'Cancer', 'Leao', 'Virgem',
-    'Libra', 'Escorpiao', 'Sagitario', 'Capricornio', 'Aquario', 'Peixes'
+    'Libra', 'Escorpiao', 'Sagitario', 'Capricornio', 'Aquario', 'Peixes',
   ]
   const signIndex = Math.floor(degree / 30) % 12
   return signs[signIndex]
 }
 
 export default function PlanetTimelineScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const { transitData, backendCurrentTransits } = useLifeAreas()
   const planets = backendCurrentTransits?.planets || transitData?.currentTransits?.planets || []
   const byArea = transitData?.currentTransits?.transits?.byArea || {}
@@ -28,7 +28,7 @@ export default function PlanetTimelineScreen() {
   const areasByPlanet = useMemo(() => {
     const map: Record<string, string[]> = {}
     Object.entries(byArea).forEach(([areaKey, items]) => {
-      items.forEach((item: any) => {
+      ;(items as any[]).forEach((item: any) => {
         if (!map[item.transitPlanet]) map[item.transitPlanet] = []
         if (!map[item.transitPlanet].includes(areaKey)) {
           map[item.transitPlanet].push(areaKey)
@@ -56,32 +56,26 @@ export default function PlanetTimelineScreen() {
   }, [personalTransits])
 
   const durationLabel = (key: string) => {
-    if (key === 'longo') return 'estrutural'
-    if (key === 'curto') return 'passageiro'
-    return 'em desenvolvimento'
+    if (key === 'longo') return t('analysis.timeline.timeframe.structural')
+    if (key === 'curto') return t('analysis.timeline.timeframe.short')
+    return t('analysis.timeline.timeframe.developing')
   }
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Linha do Tempo Planetaria</Text>
-          <Text style={styles.subtitle}>
-            Leitura temporal qualitativa dos fluxos por planeta, sem previsoes fechadas.
-          </Text>
-          <Text style={styles.helper}>
-            Use esta visao para acompanhar tendencias: passageiras, em desenvolvimento ou estruturais.
-          </Text>
+          <Text style={styles.title}>{t('analysis.planetTimeline.title')}</Text>
+          <Text style={styles.subtitle}>{t('analysis.planetTimeline.subtitle')}</Text>
+          <Text style={styles.helper}>{t('analysis.planetTimeline.helper')}</Text>
         </View>
 
         {!planets.length ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              Sem dados planetarios suficientes agora. Atualize seus dados astrologicos.
-            </Text>
+            <Text style={styles.emptyText}>{t('analysis.planetTimeline.empty')}</Text>
           </View>
         ) : (
-          planets.map((planet) => {
+          planets.map((planet: any) => {
             const areaKeys = areasByPlanet[planet.name] || []
             return (
               <View key={planet.name} style={styles.planetCard}>
@@ -90,33 +84,31 @@ export default function PlanetTimelineScreen() {
                   <Text style={styles.planetName}>{translatePlanetPT(planet.name)}</Text>
                 </View>
                 <Text style={styles.planetMeta}>
-                  {formatDegree(planet.longitude)} {getSignFromDegree(planet.longitude)} Â· Casa {planet.house}
-                  {planet.isRetrograde ? ' Â· Retrogrado' : ''}
+                  {formatDegree(planet.longitude)} {getSignFromDegree(planet.longitude)} · {t('analysis.house')} {planet.house}
+                  {planet.isRetrograde ? ` · ${t('analysis.retrograde')}` : ''}
                 </Text>
-            <Text style={styles.planetFlowTitle}>Tendencia temporal</Text>
-            <Text style={styles.planetFlowText}>
-              Indicacao qualitativa baseada na duracao dos aspectos pessoais.
-            </Text>
-            <View style={styles.timelineRow}>
-              <View style={styles.timelineChip}>
-                <Text style={styles.timelineChipText}>Agora</Text>
-              </View>
-              <View style={styles.timelineChip}>
-                <Text style={styles.timelineChipText}>Curto prazo</Text>
-              </View>
-              <View style={styles.timelineChip}>
-                <Text style={styles.timelineChipText}>Medio prazo</Text>
-              </View>
-            </View>
-            <Text style={styles.timelineLabel}>
-              Classificacao: {durationLabel(durationByPlanet.pick(planet.name))}
-            </Text>
-            {areaKeys.length > 0 && (
-              <View style={styles.areaList}>
-                    <Text style={styles.areaTitle}>Areas mais impactadas</Text>
+                <Text style={styles.planetFlowTitle}>{t('analysis.planetTimeline.trendTitle')}</Text>
+                <Text style={styles.planetFlowText}>{t('analysis.planetTimeline.trendSubtitle')}</Text>
+                <View style={styles.timelineRow}>
+                  <View style={styles.timelineChip}>
+                    <Text style={styles.timelineChipText}>{t('analysis.planetTimeline.chip.now')}</Text>
+                  </View>
+                  <View style={styles.timelineChip}>
+                    <Text style={styles.timelineChipText}>{t('analysis.planetTimeline.chip.short')}</Text>
+                  </View>
+                  <View style={styles.timelineChip}>
+                    <Text style={styles.timelineChipText}>{t('analysis.planetTimeline.chip.mid')}</Text>
+                  </View>
+                </View>
+                <Text style={styles.timelineLabel}>
+                  {t('analysis.planetTimeline.classification')}: {durationLabel(durationByPlanet.pick(planet.name))}
+                </Text>
+                {areaKeys.length > 0 && (
+                  <View style={styles.areaList}>
+                    <Text style={styles.areaTitle}>{t('analysis.planetTimeline.areas')}</Text>
                     {areaKeys.map((areaKey) => (
                       <Text key={`${planet.name}-${areaKey}`} style={styles.areaItem}>
-                        â€¢ {getLifeAreaLabel(areaKey)}
+                        • {getLifeAreaLabel(areaKey)}
                       </Text>
                     ))}
                   </View>

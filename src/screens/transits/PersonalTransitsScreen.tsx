@@ -5,52 +5,56 @@ import { formatTransitCompact, getTransitState, formatPeakETA, aspectNature, win
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PersonalTransitsScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const { transitData } = useLifeAreas()
-  const personalRaw = (transitData?.dailyOverview?.personalTodayRich || [])
-  // deduplicar por chave planeta-aspecto-planeta
+  const personalRaw = transitData?.dailyOverview?.personalTodayRich || []
+
   const seen = new Set<string>()
-  const personal = personalRaw.filter((t:any) => {
-    const key = `${t.natalPlanet}|${t.type}|${t.transitPlanet}`
+  const personal = personalRaw.filter((item: any) => {
+    const key = `${item.natalPlanet}|${item.type}|${item.transitPlanet}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
   })
-  const collective = (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a:any)=>a.planet1!==a.planet2)
-  const list = personal
-    .slice()
-    .sort((a:any,b:any)=>{
-      const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
-      const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
-      return ax - bx
-    })
+
+  const collective = (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a: any) => a.planet1 !== a.planet2)
+  const list = personal.slice().sort((a: any, b: any) => {
+    const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
+    const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
+    return ax - bx
+  })
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor:'#0F0F23', minHeight:'100%' }}>
-      <Text style={{ color:'#FFFFFF', fontSize:18, fontWeight:'600', marginBottom:8 }}>‚≠ê Tr√¢nsitos Pessoais</Text>
-      {list.map((it:any, i:number) => {
-        const title = formatTransitCompact(it.natalPlanet, it.type, it.transitPlanet)
-        const state = getTransitState(it.window)
-        const eta = formatPeakETA(it.window)
-        const nature = aspectNature(it.type)
-        const hasSynergy = collective.some((c:any)=>
-          (c.planet1===it.natalPlanet || c.planet2===it.natalPlanet || c.planet1===it.transitPlanet || c.planet2===it.transitPlanet)
-          && windowsIntersect(it.window as any, c.window as any)
+    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: '#0F0F23', minHeight: '100%' }}>
+      <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
+        {t('transits.personal.title')}
+      </Text>
+      {list.map((item: any, i: number) => {
+        const title = formatTransitCompact(item.natalPlanet, item.type, item.transitPlanet)
+        const state = getTransitState(item.window)
+        const eta = formatPeakETA(item.window)
+        const nature = aspectNature(item.type)
+        const hasSynergy = collective.some(
+          (c: any) =>
+            (c.planet1 === item.natalPlanet ||
+              c.planet2 === item.natalPlanet ||
+              c.planet1 === item.transitPlanet ||
+              c.planet2 === item.transitPlanet) &&
+            windowsIntersect(item.window as any, c.window as any)
         )
+
         return (
           <View key={i} style={{ marginBottom: 10 }}>
-            <Text style={{ color: nature==='harmonico' ? '#9AE6B4' : nature==='desafiador' ? '#FCA5A5' : '#FDE68A', fontSize:16 }}>‚Ä¢ {title} {hasSynergy ? '¬∑ Sinergia' : ''}</Text>
+            <Text style={{ color: nature === 'harmonico' ? '#9AE6B4' : nature === 'desafiador' ? '#FCA5A5' : '#FDE68A', fontSize: 16 }}>
+              ï {title} {hasSynergy ? `∑ ${t('transits.personal.synergy')}` : ''}
+            </Text>
             {!!(state || eta) && (
-              <Text style={{ color:'#A0AEC0', fontSize:12 }}>{[state, eta].filter(Boolean).join(' ‚Ä¢ ')}</Text>
+              <Text style={{ color: '#A0AEC0', fontSize: 12 }}>{[state, eta].filter(Boolean).join(' ï ')}</Text>
             )}
-            {!!it.house && (
-              <Text style={{ color:'#CBD5E1', fontSize:11 }}>Casa {it.house}</Text>
-            )}
+            {!!item.house && <Text style={{ color: '#CBD5E1', fontSize: 11 }}>{t('analysis.house')} {item.house}</Text>}
           </View>
         )
       })}
     </ScrollView>
   )
 }
-
-

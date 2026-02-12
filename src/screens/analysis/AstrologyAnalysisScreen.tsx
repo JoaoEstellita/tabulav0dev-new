@@ -22,34 +22,34 @@ export default function AstrologyAnalysisScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>{t('analysis.screenTitle', 'Analise Astrologica do Momento')}</Text>
+          <Text style={styles.title}>{t('analysis.screenTitle')}</Text>
           <Text style={styles.subtitle}>
-            {t('analysis.screenSubtitle', 'Leitura tecnica dos transitos, aspectos e casas ativadas.')}
+            {t('analysis.screenSubtitle')}
           </Text>
           <Text style={styles.helper}>
-            {t('analysis.screenHelper', 'Tudo aqui indica tendencias em movimento, nunca determinacoes.')}
+            {t('analysis.screenHelper')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('analysis.flowTitle', 'Fluxos planetarios')}</Text>
+          <Text style={styles.sectionTitle}>{t('analysis.flowTitle')}</Text>
           <Text style={styles.sectionBody}>
-            {t('analysis.flowSubtitle', 'Relacao qualitativa entre planetas e areas impactadas (apoio ou pressao).')}
+            {t('analysis.flowSubtitle')}
           </Text>
           <PlanetaryFlowMap impactNodes={impactNodes} />
           <TouchableOpacity
             style={styles.timelineButton}
             onPress={() => navigation.navigate('PlanetTimeline')}
           >
-            <Text style={styles.timelineButtonText}>Abrir linha do tempo planetaria</Text>
+            <Text style={styles.timelineButtonText}>{t('analysis.openTimeline')}</Text>
             <Ionicons name="arrow-forward" size={16} color="#0F0F23" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tempo e evolucao</Text>
+          <Text style={styles.sectionTitle}>{t('analysis.timeTitle')}</Text>
           <Text style={styles.sectionBody}>
-            Classificacao qualitativa do momento: passageiro, em desenvolvimento ou estrutural.
+            {t('analysis.timeSubtitle')}
           </Text>
           <PredictiveTimeline
             impactNodes={impactNodes}
@@ -59,7 +59,7 @@ export default function AstrologyAnalysisScreen() {
             style={styles.backButton}
             onPress={() => navigation.navigate('Tabs', { screen: 'Home' })}
           >
-            <Text style={styles.backButtonText}>Voltar ao Perfil</Text>
+            <Text style={styles.backButtonText}>{t('analysis.backToProfile')}</Text>
           </TouchableOpacity>
         </View>
 

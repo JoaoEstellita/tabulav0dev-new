@@ -28,12 +28,6 @@ const directionColor = (direction: FlowDirection) => {
   return '#FBBF24'
 }
 
-const directionLabel = (direction: FlowDirection) => {
-  if (direction === 'apoio') return 'Apoio'
-  if (direction === 'pressao') return 'Press\u00E3o'
-  return 'Misto'
-}
-
 const toIntensity = (ratio: number) => {
   if (ratio >= 0.66) return 'forte'
   if (ratio >= 0.33) return 'moderada'
@@ -106,7 +100,12 @@ const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
 }
 
 export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps) {
-  useAppLanguage()
+  const { t } = useAppLanguage()
+  const directionLabel = (direction: FlowDirection) => {
+    if (direction === 'apoio') return t('analysis.flowMap.direction.support')
+    if (direction === 'pressao') return t('analysis.flowMap.direction.pressure')
+    return t('analysis.flowMap.direction.mixed')
+  }
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
 
@@ -129,16 +128,16 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
   if (!flows.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyText}>Sem dados suficientes para mapear os fluxos.</Text>
+        <Text style={styles.emptyText}>{t('analysis.flowMap.empty')}</Text>
       </View>
     )
   }
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Fluxos planet\u00E1rios</Text>
+      <Text style={styles.sectionTitle}>{t('analysis.flowMap.title')}</Text>
       <Text style={styles.sectionSubtitle}>
-        Mapa qualitativo de como os planetas direcionam apoio e press\u00E3o.
+        {t('analysis.flowMap.subtitle')}
       </Text>
 
       <View style={styles.selectorRow}>
@@ -198,13 +197,19 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                   fill="none"
                 />
               </Svg>
-              <View style={styles.flowMetaRow}>
+            <View style={styles.flowMetaRow}>
                 <Text style={styles.flowMeta}>{directionLabel(flow.direction)}</Text>
-                <Text style={styles.flowMeta}>{flow.intensity}</Text>
+                <Text style={styles.flowMeta}>
+                  {flow.intensity === 'forte'
+                    ? t('analysis.flowMap.intensity.strong')
+                    : flow.intensity === 'moderada'
+                    ? t('analysis.flowMap.intensity.medium')
+                    : t('analysis.flowMap.intensity.light')}
+                </Text>
               </View>
             </View>
             <Text style={styles.flowReason}>
-              {flow.reason ? flow.reason : 'Influ\u00EAncia em movimento.'}
+              {flow.reason ? flow.reason : t('analysis.flowMap.reasonDefault')}
             </Text>
           </View>
         ))}

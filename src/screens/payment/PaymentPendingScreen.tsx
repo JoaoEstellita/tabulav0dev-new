@@ -5,18 +5,16 @@ import { useNavigation } from '@react-navigation/native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function PaymentPendingScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const navigation = useNavigation()
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Pagamento pendente</Text>
-        <Text style={styles.message}>
-          Seu pagamento ainda está em análise. Assim que for aprovado, sua assinatura será liberada automaticamente.
-        </Text>
+        <Text style={styles.title}>{t('payment.pending.title')}</Text>
+        <Text style={styles.message}>{t('payment.pending.body')}</Text>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Premium' as never)}>
-          <Text style={styles.primaryButtonText}>Voltar ao Premium</Text>
+          <Text style={styles.primaryButtonText}>{t('payment.pending.cta')}</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>

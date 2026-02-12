@@ -11,7 +11,7 @@ import SubscriptionPlansModal from "../../components/SubscriptionPlansModal"
 import GroupsScreen from "./GroupsScreen"
 
 export default function GroupsAccessGuard() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const { loading, showModal, setShowModal, subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const [showPlans, setShowPlans] = useState(false)
 
@@ -20,7 +20,7 @@ export default function GroupsAccessGuard() {
   if (loading) {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
-        <Text style={styles.loadingText}>Carregando...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </LinearGradient>
     )
   }
@@ -33,12 +33,12 @@ export default function GroupsAccessGuard() {
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
       <View style={styles.content}>
         <Ionicons name="lock-closed" size={48} color="#FFD700" />
-        <Text style={styles.title}>Grupos Premium</Text>
+        <Text style={styles.title}>{t('groupsAccess.title')}</Text>
         <Text style={styles.subtitle}>
-          Seu acesso aos grupos esta bloqueado. Assine para liberar o recurso.
+          {t('groupsAccess.subtitle')}
         </Text>
         <TouchableOpacity style={styles.ctaButton} onPress={() => setShowPlans(true)}>
-          <Text style={styles.ctaText}>Ver planos</Text>
+          <Text style={styles.ctaText}>{t('groupsAccess.cta')}</Text>
         </TouchableOpacity>
       </View>
 

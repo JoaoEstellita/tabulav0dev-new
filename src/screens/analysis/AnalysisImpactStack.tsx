@@ -18,9 +18,9 @@ export default function AnalysisImpactStack({
   const { t } = useAppLanguage()
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('analysis.overviewTitle', 'Visao geral')}</Text>
+      <Text style={styles.title}>{t('analysis.overviewTitle')}</Text>
       <Text style={styles.subtitle}>
-        {t('analysis.overviewSubtitle', 'Leitura completa das forcas por area (apoio e pressao).')}
+        {t('analysis.overviewSubtitle')}
       </Text>
       <ImpactStack
         impactNodes={impactNodes}

@@ -38,7 +38,7 @@ const subscriptionPlans: SubscriptionPlan[] = MercadoPagoService.PLANS.map((plan
 }));
 
 export default function SubscriptionScreen() {
-  useAppLanguage();
+  const { t } = useAppLanguage();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -50,12 +50,12 @@ export default function SubscriptionScreen() {
 
       const plan = subscriptionPlans.find(p => p.id === planId);
       if (!plan) {
-        Alert.alert('Erro', 'Plano nao encontrado.');
+        Alert.alert(t('common.error'), t('subscription.error.planNotFound'));
         return;
       }
 
       if (!user?.uid) {
-        Alert.alert('Erro', 'Usuario nao identificado.');
+        Alert.alert(t('common.error'), t('subscription.error.userNotFound'));
         return;
       }
 
@@ -76,14 +76,14 @@ export default function SubscriptionScreen() {
         if (supported) {
           await Linking.openURL(result.init_point);
         } else {
-          Alert.alert('Erro', 'Nao foi possivel abrir o link de pagamento.');
+          Alert.alert(t('common.error'), t('subscription.error.openPaymentLink'));
         }
       } else {
-        Alert.alert('Erro', 'Nao foi possivel processar o pagamento. Tente novamente.');
+        Alert.alert(t('common.error'), t('subscription.error.processPayment'));
       }
     } catch (error) {
       console.error('Erro ao assinar:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar a assinatura.');
+      Alert.alert(t('common.error'), t('subscription.error.generic'));
     } finally {
       setIsLoading(false);
       setSelectedPlan(null);
@@ -93,34 +93,34 @@ export default function SubscriptionScreen() {
   const manageSubscription = async () => {
     try {
       Alert.alert(
-        'Gerenciar Assinatura',
-        'Funcionalidade em desenvolvimento. Em breve voce podera gerenciar sua assinatura aqui.',
-        [{ text: 'OK' }]
+        t('subscription.manage.title'),
+        t('subscription.manage.body'),
+        [{ text: t('common.close') }]
       );
     } catch (error) {
       console.error('Erro ao gerenciar assinatura:', error);
-      Alert.alert('Erro', 'Nao foi possivel acessar os detalhes da assinatura.');
+      Alert.alert(t('common.error'), t('subscription.error.manageDetails'));
     }
   };
 
   const cancelSubscription = async () => {
     Alert.alert(
-      'Cancelar Assinatura',
-      'Funcionalidade em desenvolvimento. Para cancelar sua assinatura, acesse sua conta no Mercado Pago.',
+      t('subscription.cancel.title'),
+      t('subscription.cancel.body'),
       [
-        { text: 'OK' },
-        { text: 'Abrir Mercado Pago', onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
+        { text: t('common.close') },
+        { text: t('subscription.openMercadoPago'), onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
       ]
     );
   };
 
   const viewSubscriptionDetails = () => {
     Alert.alert(
-      'Detalhes da Assinatura',
-      'Para ver detalhes completos da sua assinatura, acesse sua conta no Mercado Pago.',
+      t('subscription.details.title'),
+      t('subscription.details.body'),
       [
-        { text: 'OK' },
-        { text: 'Abrir Mercado Pago', onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
+        { text: t('common.close') },
+        { text: t('subscription.openMercadoPago'), onPress: () => Linking.openURL('https://www.mercadopago.com.br') }
       ]
     );
   };
@@ -137,14 +137,14 @@ export default function SubscriptionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Planos Premium</Text>
+            <Text style={styles.title}>{t('subscription.title')}</Text>
             <Text style={styles.subtitle}>
-              Desbloqueie todo o potencial astrologico do Tabula Estelar
+              {t('subscription.subtitle')}
             </Text>
           </View>
 
           <View style={styles.plansContainer}>
-            <Text style={styles.plansTitle}>Escolha seu plano:</Text>
+            <Text style={styles.plansTitle}>{t('subscription.choosePlan')}</Text>
             {subscriptionPlans.map((plan) => (
               <SubscriptionPlanCard
                 key={plan.id}
@@ -156,12 +156,12 @@ export default function SubscriptionScreen() {
           </View>
 
           <View style={styles.infoContainer}>
-            <Text style={styles.infoTitle}>Informacoes importantes:</Text>
+            <Text style={styles.infoTitle}>{t('subscription.infoTitle')}</Text>
             <View style={styles.infoList}>
-              <Text style={styles.infoText}>Pagamento seguro via Mercado Pago</Text>
-              <Text style={styles.infoText}>Cancelamento a qualquer momento</Text>
-              <Text style={styles.infoText}>Acesso imediato apos confirmacao</Text>
-              <Text style={styles.infoText}>Suporte para assinantes</Text>
+              <Text style={styles.infoText}>{t('subscription.info.secure')}</Text>
+              <Text style={styles.infoText}>{t('subscription.info.cancelAnytime')}</Text>
+              <Text style={styles.infoText}>{t('subscription.info.instantAccess')}</Text>
+              <Text style={styles.infoText}>{t('subscription.info.support')}</Text>
             </View>
           </View>
         </ScrollView>
