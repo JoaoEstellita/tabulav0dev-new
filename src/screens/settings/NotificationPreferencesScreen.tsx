@@ -5,8 +5,10 @@ import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInpu
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 
 export default function NotificationPreferencesScreen() {
+  const { t } = useAppLanguage()
   const [saving, setSaving] = useState(false)
   const [showPushTypes, setShowPushTypes] = useState(false)
   const [showInAppTypes, setShowInAppTypes] = useState(false)
@@ -140,9 +142,9 @@ export default function NotificationPreferencesScreen() {
   }
 
   const quietHoursLabel = useMemo(() => {
-    if (!quietHours?.enabled) return "Desativado"
+    if (!quietHours?.enabled) return t("nprefs.quietHours.disabled")
     return `${quietHours.start} - ${quietHours.end}`
-  }, [quietHours])
+  }, [quietHours, t])
   const frequencyProfile = prefs.push?.frequencyProfile || "balanced"
   const enabledPushTypeCount = useMemo(
     () => Object.values(pushTypes).filter((value) => value !== false).length,
@@ -153,12 +155,12 @@ export default function NotificationPreferencesScreen() {
     [inAppTypes]
   )
   const estimatedVolumeLabel = useMemo(() => {
-    if (prefs.pushEnabled === false) return "Baixo"
+    if (prefs.pushEnabled === false) return t("nprefs.volume.low")
     const base = enabledPushTypeCount + Math.round(enabledInAppTypeCount * 0.35)
-    if (frequencyProfile === "quiet") return base > 6 ? "Médio" : "Baixo"
-    if (frequencyProfile === "focus") return base > 6 ? "Alto" : "Médio"
-    return base > 10 ? "Alto" : base > 5 ? "Médio" : "Baixo"
-  }, [enabledInAppTypeCount, enabledPushTypeCount, frequencyProfile, prefs.pushEnabled])
+    if (frequencyProfile === "quiet") return base > 6 ? t("nprefs.volume.medium") : t("nprefs.volume.low")
+    if (frequencyProfile === "focus") return base > 6 ? t("nprefs.volume.high") : t("nprefs.volume.medium")
+    return base > 10 ? t("nprefs.volume.high") : base > 5 ? t("nprefs.volume.medium") : t("nprefs.volume.low")
+  }, [enabledInAppTypeCount, enabledPushTypeCount, frequencyProfile, prefs.pushEnabled, t])
 
   const renderToggle = (label: string, description: string, value: boolean, onToggle: (next: boolean) => void) => (
     <View style={styles.toggleRow}>
@@ -229,62 +231,66 @@ export default function NotificationPreferencesScreen() {
         scrollEnabled
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Op\u00E7\u00F5es de Notifica\u00E7\u00F5es</Text>
+          <Text style={styles.title}>{t("nprefs.title")}</Text>
           <Text style={styles.subtitle}>
-            Push aparece na tela bloqueada. O centro interno continua registrando eventos.
+            {t("nprefs.subtitle")}
           </Text>
         </View>
 
         {loading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color="#FFD700" />
-            <Text style={styles.loadingText}>Carregando preferências...</Text>
+            <Text style={styles.loadingText}>{t("nprefs.loading")}</Text>
           </View>
         ) : (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notifica\u00E7\u00E3o do celular (push)</Text>
+              <Text style={styles.sectionTitle}>{t("nprefs.push.section")}</Text>
               <View style={styles.presetRow}>
                 <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("essential")}>
-                  <Text style={styles.presetBtnText}>Essencial</Text>
+                  <Text style={styles.presetBtnText}>{t("nprefs.preset.essential")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("balanced")}>
-                  <Text style={styles.presetBtnText}>Equilibrado</Text>
+                  <Text style={styles.presetBtnText}>{t("nprefs.preset.balanced")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.presetBtn} onPress={() => applyPreset("silent")}>
-                  <Text style={styles.presetBtnText}>Silencioso</Text>
+                  <Text style={styles.presetBtnText}>{t("nprefs.preset.silent")}</Text>
                 </TouchableOpacity>
               </View>
               {renderToggle(
-                "Push ativado",
-                "Permite receber alertas na tela bloqueada.",
+                t("nprefs.push.enabled.title"),
+                t("nprefs.push.enabled.desc"),
                 prefs.pushEnabled !== false,
                 (value) => savePreferences({ pushEnabled: value })
               )}
               <View style={styles.nestedSection}>
-                <Text style={styles.nestedTitle}>Frequência de envio</Text>
+                <Text style={styles.nestedTitle}>{t("nprefs.push.frequency")}</Text>
                 <View style={styles.presetRow}>
                   <TouchableOpacity
                     style={[styles.presetBtn, frequencyProfile === "focus" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "focus" } })}
                   >
-                    <Text style={styles.presetBtnText}>Foco</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.freq.focus")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.presetBtn, frequencyProfile === "balanced" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "balanced" } })}
                   >
-                    <Text style={styles.presetBtnText}>Equilibrado</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.freq.balanced")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.presetBtn, frequencyProfile === "quiet" && styles.presetBtnActive]}
                     onPress={() => savePreferences({ push: { frequencyProfile: "quiet" } })}
                   >
-                    <Text style={styles.presetBtnText}>Silencioso</Text>
+                    <Text style={styles.presetBtnText}>{t("nprefs.freq.quiet")}</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.previewText}>
-                  Prévia: push ativos {enabledPushTypeCount}, internos ativos {enabledInAppTypeCount}, volume estimado {estimatedVolumeLabel}.
+                  {t("nprefs.preview", {
+                    push: enabledPushTypeCount,
+                    inapp: enabledInAppTypeCount,
+                    volume: estimatedVolumeLabel,
+                  })}
                 </Text>
               </View>
               {renderToggle(
@@ -382,7 +388,7 @@ export default function NotificationPreferencesScreen() {
                 </View>
               )}
               <View style={styles.nestedSection}>
-                <Text style={styles.nestedTitle}>Filtros de grupos</Text>
+                <Text style={styles.nestedTitle}>{t("nprefs.groups.filters")}</Text>
                 {renderToggle(
                   "Alertas críticos de grupo",
                   "Permite alertas quando membros entram em estado crítico.",
@@ -421,7 +427,7 @@ export default function NotificationPreferencesScreen() {
                 )}
               </View>
               <View style={styles.nestedSection}>
-                <Text style={styles.nestedTitle}>Filtros de previsões</Text>
+                <Text style={styles.nestedTitle}>{t("nprefs.forecast.filters")}</Text>
                 {renderToggle(
                   "Forecast semanal",
                   "Permite a notificação quando a previsão semanal for gerada.",
@@ -436,14 +442,14 @@ export default function NotificationPreferencesScreen() {
                 )}
               </View>
               {renderToggle(
-                "Mostrar nome do membro",
-                "Inclui o nome do membro em alertas críticos de grupo.",
+                t("nprefs.memberName.title"),
+                t("nprefs.memberName.desc"),
                 prefs.pushIncludeMemberName === true,
                 (value) => savePreferences({ pushIncludeMemberName: value })
               )}
               {renderToggle(
-                "Horário silencioso",
-                `Silencia push nesse período. ${quietHoursLabel}`,
+                t("nprefs.quietHours.title"),
+                t("nprefs.quietHours.desc", { range: quietHoursLabel }),
                 quietHours?.enabled === true,
                 (value) =>
                   savePreferences({
@@ -456,7 +462,7 @@ export default function NotificationPreferencesScreen() {
               {quietHours?.enabled === true && (
                 <View style={styles.quietHoursRow}>
                   <View style={styles.quietHoursField}>
-                    <Text style={styles.quietHoursLabel}>Início</Text>
+                    <Text style={styles.quietHoursLabel}>{t("nprefs.quietHours.start")}</Text>
                     <TextInput
                       style={styles.quietHoursInput}
                       value={quietHours.start}
@@ -474,7 +480,7 @@ export default function NotificationPreferencesScreen() {
                     />
                   </View>
                   <View style={styles.quietHoursField}>
-                    <Text style={styles.quietHoursLabel}>Fim</Text>
+                    <Text style={styles.quietHoursLabel}>{t("nprefs.quietHours.end")}</Text>
                     <TextInput
                       style={styles.quietHoursInput}
                       value={quietHours.end}
@@ -501,7 +507,7 @@ export default function NotificationPreferencesScreen() {
                 onPress={() => setShowPushTypes((prev) => !prev)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.sectionTitle}>Tipos de push</Text>
+                <Text style={styles.sectionTitle}>{t("nprefs.push.types")}</Text>
                 <View style={styles.sectionToggleRight}>
                   <Text style={styles.sectionToggleCount}>{pushTypeItems.length}</Text>
                   <Ionicons
@@ -524,7 +530,7 @@ export default function NotificationPreferencesScreen() {
                 onPress={() => setShowInAppTypes((prev) => !prev)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.sectionTitle}>Notificações internas (app)</Text>
+                <Text style={styles.sectionTitle}>{t("nprefs.inapp.section")}</Text>
                 <View style={styles.sectionToggleRight}>
                   <Text style={styles.sectionToggleCount}>{inAppTypeItems.length}</Text>
                   <Ionicons
@@ -544,7 +550,7 @@ export default function NotificationPreferencesScreen() {
             <View style={styles.sectionNote}>
               <Ionicons name="information-circle" size={18} color="#FFD700" />
               <Text style={styles.noteText}>
-                Notificações internas aparecem na tela de Notificações, mesmo se o push estiver desligado.
+                {t("nprefs.note")}
               </Text>
             </View>
           </>
@@ -554,7 +560,7 @@ export default function NotificationPreferencesScreen() {
       {saving && (
         <View style={styles.savingOverlay}>
           <ActivityIndicator size="small" color="#FFD700" />
-          <Text style={styles.savingText}>Salvando...</Text>
+          <Text style={styles.savingText}>{t("common.saving")}</Text>
         </View>
       )}
     </LinearGradient>

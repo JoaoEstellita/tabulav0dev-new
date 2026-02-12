@@ -27,6 +27,7 @@ import PaymentFailureScreen from "../screens/payment/PaymentFailureScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
+import { useAppLanguage } from "../hooks/useAppLanguage"
 import { registerDeviceToken } from "../services/notifications/registerDeviceToken"
 import { useNotificationStore } from "../context/NotificationStore"
 
@@ -155,6 +156,7 @@ function OnboardingStack() {
 }
 
 function MainTabs() {
+  const { t } = useAppLanguage()
   const { unreadCount } = useNotificationStore()
 
   const renderStarIcon = (focused: boolean, color: string, size: number) => (
@@ -210,7 +212,7 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" options={{ title: "Perfil", headerShown: false }}>
+      <Tab.Screen name="Home" options={{ title: t("nav.profile"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -219,7 +221,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Forecast" options={{ title: "Previsões", headerShown: false }}>
+      <Tab.Screen name="Forecast" options={{ title: t("nav.forecast"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -228,7 +230,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Groups" options={{ title: "Grupos", headerShown: false }}>
+      <Tab.Screen name="Groups" options={{ title: t("nav.groups"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -237,7 +239,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Notifications" options={{ title: "Notificações", headerShown: false }}>
+      <Tab.Screen name="Notifications" options={{ title: t("nav.notifications"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -246,7 +248,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Premium" options={{ title: "Premium", headerShown: false }}>
+      <Tab.Screen name="Premium" options={{ title: t("nav.premium"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -255,7 +257,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Settings" options={{ title: "Configurações", headerShown: false }}>
+      <Tab.Screen name="Settings" options={{ title: t("nav.settings"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
@@ -269,6 +271,7 @@ function MainTabs() {
 }
 
 function RootNavigator() {
+  const { t } = useAppLanguage()
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
@@ -280,7 +283,7 @@ function RootNavigator() {
       <RootStack.Screen
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}
-        options={{ headerShown: true, title: "Opções de Notificações", headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
+        options={{ headerShown: true, title: t("nav.notificationPrefs"), headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
       />
       <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} options={{ headerShown: true, title: 'Detalhe do Trânsito', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PersonalTransits" component={require('../screens/transits/PersonalTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Pessoais', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
@@ -365,3 +368,4 @@ export default function AppNavigator() {
   console.log('🏠 Showing MainTabs (complete data)')
   return <NavigationContainer theme={NAV_THEME}><RootNavigator /></NavigationContainer>
 }
+
