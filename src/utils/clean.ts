@@ -1,4 +1,5 @@
-export function cleanUndefined<T extends Record<string, any>>(obj: T): T {
+export function cleanUndefined<T extends Record<string, any>>(obj: T | null): T {
+  if (!obj) return {} as T
   const isPlainObject = (v: any) => v && typeof v === 'object' && !Array.isArray(v)
   const out: any = Array.isArray(obj) ? [] : {}
   Object.entries(obj as any).forEach(([k, v]) => {

@@ -214,9 +214,11 @@ export class MercadoPagoService {
   }
 
   static isInTrial(subscriptionStatus: SubscriptionStatus): boolean {
-    return subscriptionStatus.status === 'trial' &&
-      subscriptionStatus.trialEndsAt &&
+    return (
+      subscriptionStatus.status === 'trial' &&
+      !!subscriptionStatus.trialEndsAt &&
       subscriptionStatus.trialEndsAt > new Date()
+    )
   }
 
   static getTrialDaysRemaining(subscriptionStatus: SubscriptionStatus): number {
@@ -242,9 +244,11 @@ export class MercadoPagoService {
   }
 
   static hasPremiumAccess(subscriptionStatus: SubscriptionStatus): boolean {
-    return subscriptionStatus.isActive ||
+    return !!subscriptionStatus.isActive ||
       subscriptionStatus.status === 'trial' ||
-      (subscriptionStatus.status === 'pending' && subscriptionStatus.trialEndsAt && subscriptionStatus.trialEndsAt > new Date())
+      (subscriptionStatus.status === 'pending' &&
+        !!subscriptionStatus.trialEndsAt &&
+        subscriptionStatus.trialEndsAt > new Date())
   }
 }
 

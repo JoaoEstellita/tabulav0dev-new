@@ -26,9 +26,9 @@ const DESCRIPTIONS: Record<AspectName, string> = {
 
 function normalizeType(t: string): AspectName | any {
   const map: Record<string, AspectName> = {
-    'conjuncao': 'conjunção', 'conjuncao': 'conjunção', 'conjunção': 'conjunção',
-    'oposicao': 'oposição', 'oposição': 'oposição',
-    'trigono': 'trígono', 'trígono': 'trígono',
+    'conjuncao': 'conjunção',
+    'oposicao': 'oposição',
+    'trigono': 'trígono',
     'quadratura': 'quadratura',
     'sextil': 'sextil',
     'quincuncio': 'quincúncio', 'quincúncio': 'quincúncio',
@@ -68,7 +68,6 @@ const PAIR_NOTES: Record<string, string> = {
   'Sun|Moon|sextil': 'Oportunidade de integrar identidade e emoções de forma construtiva.',
   // Sol – Saturno
   'Sun|Saturn|conjunção': 'Foco, responsabilidade e realidade; testes de maturidade.',
-  'Sun|Saturn|quadratura': 'Pressão de deveres; autocrítica e necessidade de estrutura.',
   'Sun|Saturn|oposição': 'Autoridade externa desafia a vontade; limites e paciência.',
   'Sun|Saturn|trígono': 'Construção paciente e sólida; reconhecimento por mérito.',
   'Sun|Saturn|sextil': 'Organização e constância facilitadas; bom para compromissos.',

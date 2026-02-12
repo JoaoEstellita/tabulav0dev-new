@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import { useAuth } from './useAuth'
-import TransitService, { type TransitData, type LifeArea } from '../services/prokerala/TransitService'
+import TransitService from '../services/prokerala/TransitService'
 import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '../services/astrology/LocalAstrologyService'
 import UserService from '../services/firebase/UserService'
 import GroupNotificationService from '../services/notifications/GroupNotificationService'
@@ -79,6 +79,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
   const loadTransitData = async (forceRefresh: boolean = false) => {
     if (!user) return
+    let backendLifeAreasValue: Record<string, any> | null = null
+    let backendCurrentTransitsValue: any | null = null
+    let backendStatusPersonalValue: { score?: number; level?: string } | null = null
 
     try {
       setLoading(true)
@@ -106,9 +109,6 @@ export function useLifeAreas(): UseLifeAreasReturn {
         lastHouseSystemRef.current && lastHouseSystemRef.current !== normalizedHouseSystem
       lastHouseSystemRef.current = normalizedHouseSystem
 
-      let backendLifeAreasValue: Record<string, any> | null = null
-      let backendCurrentTransitsValue: any | null = null
-      let backendStatusPersonalValue: { score?: number; level?: string } | null = null
       let backendComputedAtMs: number | null = null
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
@@ -289,7 +289,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         const cachedComplete = isTransitDataComplete(cachedData)
         if (cachedData && cachedComplete) {
           setTransitData(cachedData)
-          setCacheStatus(cached.cacheStatus)
+          setCacheStatus(cached?.cacheStatus || null)
           if (cachedData.currentTransits) {
             publishAstrologyData(cachedData.currentTransits)
           }
@@ -372,7 +372,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
             }
 
             const customMessage = memberSettings?.customAlertMessages?.[area.name]
-            const message = customMessage || alertMessages?.[area.name] || getDefaultMessage(area.name)
+            const message =
+              customMessage ||
+              (alertMessages as Record<string, string> | undefined)?.[area.name] ||
+              getDefaultMessage(area.name)
 
             await GroupNotificationService.sendGroupNotification({
               groupId,
@@ -453,7 +456,7 @@ async function getUserGroups(userId: string): Promise<string[]> {
 }
 
 function getDefaultMessage(area: string): string {
-  const defaultMessages: { [key: string]: string } = {
+  const defaultMessages: Record<string, string> = {
     amor: "Meus transitos amorosos estao em fase critica. Preciso de apoio!",
     carreira: "Minha carreira passa por um momento desafiador. Pedindo energias positivas!",
     saude: "Minha saude precisa de atencao especial agora. Enviando amor e luz!",
@@ -464,7 +467,7 @@ function getDefaultMessage(area: string): string {
     financas: "Minhas financas pedem cautela agora. Agradeco o suporte!",
   }
 
-  return defaultMessages[area] || `Estou passando por um momento critico em ${area}. Pedindo energias positivas!`
+  return defaultMessages[area as keyof typeof defaultMessages] || `Estou passando por um momento critico em ${area}. Pedindo energias positivas!`
 }
 
 

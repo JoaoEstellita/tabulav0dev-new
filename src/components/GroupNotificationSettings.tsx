@@ -131,7 +131,7 @@ const lifeAreaLabels: Record<keyof LifeAreaState, { label: string; icon: string;
 
 const LIFE_AREAS = LIFE_AREA_ORDER
 
-const buildLifeAreasState = (enabled?: string[]): LifeAreaState => ({
+const buildLifeAreasState = (enabled?: readonly string[] | string[]): LifeAreaState => ({
   amor: enabled ? enabled.includes('amor') : true,
   carreira: enabled ? enabled.includes('carreira') : true,
   financas: enabled ? enabled.includes('financas') : true,
@@ -142,7 +142,7 @@ const buildLifeAreasState = (enabled?: string[]): LifeAreaState => ({
   transformacao: enabled ? enabled.includes('transformacao') : true,
 })
 
-const buildMessageState = (messages?: Record<string, string>): GroupNotificationSettings['customAlertMessages'] => ({
+const buildMessageState = (messages?: Record<string, string> | null): GroupNotificationSettings['customAlertMessages'] => ({
   amor: messages?.amor || '',
   carreira: messages?.carreira || '',
   financas: messages?.financas || '',
@@ -193,8 +193,8 @@ export default function GroupNotificationSettings({
       setSettings({
         ...defaultSettings,
         enabled: memberSettings?.enabled ?? true,
-        types: memberSettings?.types || defaultSettings.types,
-        schedule: memberSettings?.schedule || defaultSettings.schedule,
+        types: { ...defaultSettings.types, ...(memberSettings?.types || {}) },
+        schedule: { ...defaultSettings.schedule, ...(memberSettings?.schedule || {}) },
         priority: memberSettings?.priority || defaultSettings.priority,
         shareStatus: memberSettings?.shareStatus ?? defaultSettings.shareStatus,
         cooldownMinutes: memberSettings?.cooldownMinutes ?? defaultSettings.cooldownMinutes,

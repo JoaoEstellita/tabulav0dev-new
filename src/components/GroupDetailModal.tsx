@@ -79,7 +79,7 @@ function formatRelativeTime(date: unknown): string {
   const diffDays = Math.floor(diffHours / 24)
   if (diffDays < 7) return `${diffDays}d atras`
   
-  return date.toLocaleDateString('pt-BR')
+  return normalizedDate.toLocaleDateString('pt-BR')
 }
 
 /**

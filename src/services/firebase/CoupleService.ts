@@ -193,8 +193,8 @@ class CoupleService {
       const user2Data = user2Doc.data() as UserProfile
       
       // Calcular signos baseados nas datas de nascimento
-      const sign1 = this.calculateZodiacSign(user1Data.birthDate)
-      const sign2 = this.calculateZodiacSign(user2Data.birthDate)
+      const sign1 = this.calculateZodiacSign(user1Data.birthDate || '')
+      const sign2 = this.calculateZodiacSign(user2Data.birthDate || '')
       
       // Buscar compatibilidade inicial
       const initialCompatibility = await this.getDailyLoveCompatibility(sign1, sign2)
@@ -354,15 +354,19 @@ Dica: ${compatibility.advice}`
     try {
       // Enviar para ambos os parceiros
       await Promise.all([
-        NotificationService.sendPushNotification(
+        NotificationService.sendNotificationToUser(
           couple.partner1.userId,
-          "Alerta de Relacionamento",
-          alertMessage
+          {
+            title: "Alerta de Relacionamento",
+            body: alertMessage,
+          }
         ),
-        NotificationService.sendPushNotification(
+        NotificationService.sendNotificationToUser(
           couple.partner2.userId,
-          "Alerta de Relacionamento", 
-          alertMessage
+          {
+            title: "Alerta de Relacionamento",
+            body: alertMessage,
+          }
         )
       ])
       

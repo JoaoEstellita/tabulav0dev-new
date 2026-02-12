@@ -7,6 +7,8 @@ import { cleanUndefined } from '../../utils/clean'
 
 export interface UserProfile {
   displayName: string
+  fullName?: string
+  name?: string
   email: string
   profilePhoto?: string
   birthDate?: string
@@ -22,6 +24,7 @@ export interface UserProfile {
   createdAt: Date
   lastBirthDataEdit?: Date
   preferences?: {
+    houseSystem?: import('../../astro/houseSystem').HouseSystem
     notifications?: {
       criticalAlerts: boolean
       groupUpdates: boolean
@@ -51,6 +54,7 @@ export interface UserProfile {
   natalMcDeg?: number
   natalCusps?: number[]
   natalSystem?: import('../../astro/houseSystem').HouseSystem
+  houseSystem?: import('../../astro/houseSystem').HouseSystem
   natalApproximate?: boolean
   natalTimeZoneId?: string
 }

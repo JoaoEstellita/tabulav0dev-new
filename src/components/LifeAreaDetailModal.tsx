@@ -340,7 +340,7 @@ const getTransitDuration = (transit: RealTransitData): string => {
 
   // Calcular tempo para sair do orbe (aproximacao)
   // Considerando que o planeta precisa "sair" do orbe maximo
-  const maxOrb = getMaxOrbForAspect(transit.type)
+  const maxOrb = getMaxOrbForAspect(transit.type || '')
   const timeToExit = (maxOrb - orb) / speed
 
   if (timeToExit <= 1) {
@@ -447,6 +447,7 @@ type BackendTransit = {
   endAt?: string | null
   phase?: string
   phaseLabel?: string
+  window?: { start?: string; exact?: string; end?: string; days?: number }
 }
 
 type BackendSuggestion = {
@@ -1029,9 +1030,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     // Sugestões baseadas em trânsitos ativos
     transits.forEach((transit) => {
       //  CORRECAO: Classificacao mais abrangente
-      const isHarmonious = ['trigono', 'sextil'].includes(transit.type)
-      const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transit.type)
-      const isNeutral = transit.type === 'conjuncao'
+      const transitType = String(transit.type || '')
+      const isHarmonious = ['trigono', 'sextil'].includes(transitType)
+      const isChallenging = ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(transitType)
+      const isNeutral = transitType === 'conjuncao'
 
       let suggestion = ''
       let action = ''
@@ -1280,7 +1282,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           icon: 'pulse-outline',
         }
       })
-    const topAspectSignals = planetBreakdown
+    const topAspectSignals: Array<{
+      title: string
+      meta: string
+      value: string
+      icon: string
+      tone: 'harmonic' | 'challenging' | 'neutral'
+    }> = planetBreakdown
       .flatMap((planet) =>
         safeArray(planet.natalAspects).map((aspect) => ({
           planet: planet.planet,
@@ -1601,8 +1609,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitCurrentHouseLabel = (transit: any): string | null => {
-    const planetCurrentHouse =
-      safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.house ?? null
+    const planets = safeArray<any>((astrologyData as any)?.planets)
+    const planetCurrentHouse = planets.find((planet) => planet?.name === transit?.transitPlanet)?.house ?? null
     const houseValue =
       planetCurrentHouse ??
       transit?.transitHouse ??
@@ -1637,9 +1645,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitOnNatalHouseLabel = (transit: any): string | null => {
-    const planetLongitude = Number(
-      safeArray((astrologyData as any)?.planets).find((planet: any) => planet?.name === transit?.transitPlanet)?.longitude
-    )
+    const planets = safeArray<any>((astrologyData as any)?.planets)
+    const planetLongitude = Number(planets.find((planet) => planet?.name === transit?.transitPlanet)?.longitude)
     if (!Number.isFinite(planetLongitude)) return null
     const natalCusps = (astrologyData as any)?.natalHouses
     return getHouseFromCusps(planetLongitude, natalCusps)
@@ -1866,15 +1873,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
       const suggestion = getSuggestionForTransit(transit)
       const directText = buildDirectText(transit, suggestion)
-      const titleText = suggestion?.title || suggestion?.card?.headline || 'Leitura completa'
+      const backendSuggestion =
+        suggestion &&
+        (typeof (suggestion as any)?.title === 'string' ||
+          typeof (suggestion as any)?.card === 'object' ||
+          typeof (suggestion as any)?.deep === 'object' ||
+          Array.isArray((suggestion as any)?.provenance))
+          ? (suggestion as BackendSuggestion)
+          : null
+      const titleText = backendSuggestion?.title || backendSuggestion?.card?.headline || 'Leitura completa'
       const actionText =
         suggestion?.action ||
-        (Array.isArray(suggestion?.deep?.practicalGuidance) ? suggestion.deep.practicalGuidance[0] : null)
+        (Array.isArray(backendSuggestion?.deep?.practicalGuidance) ? backendSuggestion.deep.practicalGuidance[0] : null)
       const confidenceText =
-        typeof suggestion?.confidence === 'number'
-          ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, suggestion.confidence)) * 100)}%`
+        typeof backendSuggestion?.confidence === 'number'
+          ? `Confiabilidade editorial ${Math.round(Math.max(0, Math.min(1, backendSuggestion.confidence)) * 100)}%`
           : null
-      const sourceCount = Array.isArray(suggestion?.provenance) ? suggestion.provenance.length : 0
+      const sourceCount = Array.isArray(backendSuggestion?.provenance) ? backendSuggestion.provenance.length : 0
       const sourceText = sourceCount > 0 ? `Fontes mapeadas: ${sourceCount}` : null
       const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
       const impactText = Number.isFinite(transit?.impact) ? `Impacto ${safeFixed(transit.impact, 2)}` : null

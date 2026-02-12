@@ -54,3 +54,5 @@ export interface PlanetaryStatus {
   aspectAnalysis: AspectAnalysis
   breakdownExplanation: string[]
 }
+
+export type { DetectedAspect } from './aspects.types'

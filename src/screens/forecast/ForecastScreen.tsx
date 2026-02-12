@@ -295,7 +295,7 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced
 }
 
-const MemoCalendar = React.memo(Calendar as any)
+const MemoCalendar: any = React.memo(Calendar as any)
 const MemoAreaPill = React.memo(function MemoAreaPill({
   label,
   score,
@@ -1240,11 +1240,11 @@ export default function ForecastScreen() {
         </Text>
       </View>
       {expiryInfo.show && (
-        <ExpiryBanner
-          message={expiryMessage}
-          variant={expiryInfo.variant}
-          onPress={() => navigation.navigate('Premium' as never, { openTab: 'features' } as never)}
-        />
+          <ExpiryBanner
+            message={expiryMessage}
+            variant={expiryInfo.variant}
+            onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}
+          />
       )}
 
       <View style={styles.periodRow}>
@@ -1319,7 +1319,7 @@ export default function ForecastScreen() {
               maxDate={rangeToStr || undefined}
               markedDates={calendarMarkedDates}
               dayComponent={renderCalendarDay}
-              onDayPress={(day) => {
+              onDayPress={(day: any) => {
                 if (day?.dateString) handleCalendarPress(day.dateString)
               }}
               theme={{

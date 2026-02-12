@@ -64,7 +64,7 @@ const buildFromDebug = (
   debugAreas: NonNullable<RealAstrologyData['debug']>['lifeAreas']
 ): ImpactAreaNode[] => {
   return Object.entries(debugAreas).map(([areaKey, areaData]) => {
-    const contributors = (areaData?.planetDetails || [])
+    const contributors: ImpactContributor[] = (areaData?.planetDetails || [])
       .slice()
       .sort((a, b) => Math.abs(b.total) - Math.abs(a.total))
       .map((detail, index) => {
@@ -120,7 +120,7 @@ const buildFromLifeAreas = (
     const influences = Array.isArray(areaData?.influences)
       ? areaData.influences
       : []
-    const contributors = (areaData?.mainPlanets || []).map((planet, index) => ({
+    const contributors: ImpactContributor[] = (areaData?.mainPlanets || []).map((planet, index) => ({
       id: `${areaKey}:${planet}:${index}`,
       planet,
       score: 0,

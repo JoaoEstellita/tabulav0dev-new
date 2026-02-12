@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import LocalAstrologyService from '../astrology/LocalAstrologyService'
 import { PushNotificationService } from './PushNotificationService'
-import type { BirthData } from '../../types/astrology'
+import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import UserService from '../firebase/UserService'
 
 type ScheduleOpts = {
@@ -110,11 +110,12 @@ export class AstroNotificationOrchestrator {
 
         for (const c of candidates) {
           if (todayCount >= 2) break // cap diário simples
-          const key = `${c.t.seriesId}|${c.t.contactIndex}`
+          const contactIndex = (c.t as any).contactIndex
+          const key = `${c.t.seriesId}|${contactIndex ?? 0}`
           if (sent.has(key)) continue
           const title = 'Alerta Pessoal – ápice próximo'
-          const body = `⭐ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, ${translatePlanet(c.t.transitPlanet)} ${c.t.type} ${translatePlanet(c.t.natalPlanet)} • orbe ${c.t.orb.toFixed(1)}° • ${c.t.contactIndex}º contato • pico ~${c.daysToPeak}d`
-          await PushNotificationService.sendImmediateNotification(title, body, { type: 'personal_alert', navTarget: 'home-personal', seriesId: c.t.seriesId, contactIndex: c.t.contactIndex })
+          const body = `⭐ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, ${translatePlanet(c.t.transitPlanet)} ${c.t.type} ${translatePlanet(c.t.natalPlanet)} • orbe ${c.t.orb.toFixed(1)}° • ${contactIndex ?? 1}º contato • pico ~${c.daysToPeak}d`
+          await PushNotificationService.sendImmediateNotification(title, body, { type: 'personal_alert', navTarget: 'home-personal', seriesId: c.t.seriesId, contactIndex })
           sent.add(key)
           todayCount++
         }
@@ -128,7 +129,7 @@ export class AstroNotificationOrchestrator {
           const t = nextDay[0]
           const title = 'Lembrete Pessoal – amanhã é o pico'
           const body = `⭐ ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, ${translatePlanet(t.t.transitPlanet)} ${t.t.type} ${translatePlanet(t.t.natalPlanet)} atinge pico amanhã.`
-          await PushNotificationService.scheduleCustomNotification(title, body, nd, { type: 'personal_alert', navTarget: 'home-personal', seriesId: t.t.seriesId, contactIndex: t.t.contactIndex })
+          await PushNotificationService.scheduleCustomNotification(title, body, nd, { type: 'personal_alert', navTarget: 'home-personal', seriesId: t.t.seriesId, contactIndex: (t.t as any).contactIndex })
         }
 
         await AsyncStorage.setItem(DEDUPE_KEY, JSON.stringify(Array.from(sent)))
@@ -142,7 +143,7 @@ export class AstroNotificationOrchestrator {
   private static async getUserShortName(userId: string): Promise<string> {
     try {
       const profile = await UserService.getUserProfile(userId)
-      const n = profile?.displayName || profile?.fullName || ''
+      const n = profile?.displayName || ''
       if (!n) return 'você'
       return n.split(' ')[0]
     } catch { return 'você' }

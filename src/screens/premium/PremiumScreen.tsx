@@ -103,7 +103,12 @@ export default function PremiumScreen() {
 
   useEffect(() => {
     const requestedTab = route?.params?.openTab
-    if (requestedTab && typeof requestedTab === 'string') {
+    if (
+      requestedTab === 'features' ||
+      requestedTab === 'hub' ||
+      requestedTab === 'credits' ||
+      requestedTab === 'history'
+    ) {
       setSelectedTab(requestedTab)
     }
   }, [route?.params?.openTab])
@@ -456,7 +461,7 @@ export default function PremiumScreen() {
         setCreditHistory((prev) => [creditEntry, ...prev].slice(0, 20))
         fetchCreditsHistory()
       }
-    } catch (error) {
+    } catch (error: any) {
       const code = error?.code || 'error'
       if (code === 'credits_insufficient' || code === 'credits_unavailable') {
         setHubError('Sem creditos suficientes. Compre mais creditos para continuar.')
@@ -978,6 +983,16 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 11,
     fontWeight: '600',
+  },
+  input: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#3A3A3C',
+    borderWidth: 1,
+    borderRadius: 8,
+    color: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
   },
   hubButton: {
     backgroundColor: '#2C2C2E',

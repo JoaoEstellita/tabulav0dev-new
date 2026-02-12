@@ -101,9 +101,10 @@ export class DailyAstrologyAutomation {
 
       return stats
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro crítico nos cálculos diários:', error)
-      stats.errors.push(`Erro crítico: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      stats.errors.push(`Erro crítico: ${errorMessage}`)
       stats.executionTimeMs = Date.now() - startTime
       return stats
     }
@@ -140,8 +141,9 @@ export class DailyAstrologyAutomation {
         alertMessage
       }
 
-    } catch (error) {
-      throw new Error(`Falha no usuário ${user.id}: ${error.message}`)
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`Falha no usuário ${user.id}: ${errorMessage}`)
     }
   }
 
@@ -230,10 +232,11 @@ export class DailyAstrologyAutomation {
       const groupsRef = collection(db, 'groups')
       const snapshot = await getDocs(groupsRef)
       
-      return snapshot.docs.map(doc => ({
+      const groups = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).filter(group => group.isActive !== false)
+      }))
+      return groups.filter((group: any) => group.isActive !== false)
 
     } catch (error) {
       console.error('❌ Erro ao buscar grupos:', error)

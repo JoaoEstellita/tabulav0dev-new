@@ -883,7 +883,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       source: Record<string, number>,
       kind: 'element' | 'modality'
     ): Record<string, number> => {
-      const base =
+      const base: Record<string, number> =
         kind === 'element'
           ? { fire: 0, earth: 0, air: 0, water: 0 }
           : { cardinal: 0, fixed: 0, mutable: 0 }
@@ -977,16 +977,16 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
   const elementSignCounts = React.useMemo(
     () => ({
-      natal: getSignCounts(chartSummary.elemental.natal as Record<string, number>, 'element'),
-      current: getSignCounts(chartSummary.elemental.current as Record<string, number>, 'element')
+      natal: getSignCounts(chartSummary.elemental.natal as unknown as Record<string, number>, 'element'),
+      current: getSignCounts(chartSummary.elemental.current as unknown as Record<string, number>, 'element')
     }),
     [chartSummary.elemental.current, chartSummary.elemental.natal, getSignCounts]
   )
 
   const modalitySignCounts = React.useMemo(
     () => ({
-      natal: getSignCounts(chartSummary.modality.natal as Record<string, number>, 'modality'),
-      current: getSignCounts(chartSummary.modality.current as Record<string, number>, 'modality')
+      natal: getSignCounts(chartSummary.modality.natal as unknown as Record<string, number>, 'modality'),
+      current: getSignCounts(chartSummary.modality.current as unknown as Record<string, number>, 'modality')
     }),
     [chartSummary.modality.current, chartSummary.modality.natal, getSignCounts]
   )
@@ -1326,7 +1326,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
                       <Pressable
-                        style={({ hovered, pressed }) => [
+                        style={({ hovered, pressed }: any) => [
                           styles.aspectBodyInteractive,
                           hovered && styles.aspectBodyInteractiveHovered,
                           pressed && styles.aspectBodyInteractivePressed
@@ -1381,7 +1381,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
                       <Pressable
-                        style={({ hovered, pressed }) => [
+                        style={({ hovered, pressed }: any) => [
                           styles.aspectBodyInteractive,
                           hovered && styles.aspectBodyInteractiveHovered,
                           pressed && styles.aspectBodyInteractivePressed
@@ -1436,7 +1436,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
                       <Pressable
-                        style={({ hovered, pressed }) => [
+                        style={({ hovered, pressed }: any) => [
                           styles.aspectBodyInteractive,
                           hovered && styles.aspectBodyInteractiveHovered,
                           pressed && styles.aspectBodyInteractivePressed

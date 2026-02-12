@@ -51,7 +51,7 @@ export default function InviteModal({
   const [activeTab, setActiveTab] = useState<'link' | 'qr' | 'code' | 'email'>('link')
   const [emailText, setEmailText] = useState('')
   const [customMessage, setCustomMessage] = useState('')
-  const [resolvedInviteCode, setResolvedInviteCode] = useState<string | null>(group.inviteCode || null)
+  const [resolvedInviteCode, setResolvedInviteCode] = useState<string | null>(group?.inviteCode || null)
 
   useEffect(() => {
     if (!group) return
@@ -302,7 +302,7 @@ export default function InviteModal({
 
               <View style={styles.codeDisplay}>
                 <Text style={styles.codeText}>
-                  {InviteService.formatCodeForDisplay(inviteCode)}
+                  {inviteCode ? InviteService.formatCodeForDisplay(inviteCode) : '---- ----'}
                 </Text>
                 <TouchableOpacity onPress={handleCopyCode} style={styles.copyCodeButton}>
                   <Ionicons name="copy" size={24} color="#FFD700" />

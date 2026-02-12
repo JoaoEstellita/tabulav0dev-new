@@ -162,10 +162,10 @@ export class PushNotificationService {
         console.warn('[push] Web: scheduleDailyNotification ignorado');
         return
       }
-      const trigger = {
+      const trigger: Notifications.DailyTriggerInput = {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
-        repeats: true,
       };
 
       await this.scheduleNotification(title, body, trigger, data);
@@ -189,11 +189,11 @@ export class PushNotificationService {
         console.warn('[push] Web: scheduleWeeklyNotification ignorado');
         return
       }
-      const trigger = {
+      const trigger: Notifications.WeeklyTriggerInput = {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
         weekday,
         hour,
         minute,
-        repeats: true,
       };
 
       await this.scheduleNotification(title, body, trigger, data);
@@ -215,9 +215,9 @@ export class PushNotificationService {
         console.warn('[push] Web: scheduleCustomNotification ignorado');
         return
       }
-      const trigger = {
+      const trigger: Notifications.DateTriggerInput = {
         date,
-        type: 'date' as const,
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
       };
 
       await this.scheduleNotification(title, body, trigger, data);

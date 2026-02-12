@@ -87,6 +87,7 @@ const formatAreaLabel = (value?: any) => {
 }
 
 const buildLifeAreaTags = (item: NotificationItem, t: (key: string) => string) => {
+  const rawItem = item as any
   const vars = item.templateVars || {}
   const meta = item.meta || {}
   const singleLabel =
@@ -97,8 +98,8 @@ const buildLifeAreaTags = (item: NotificationItem, t: (key: string) => string) =
   if (singleLabel) return [String(singleLabel)]
 
   const directLabel =
-    item.lifeAreaLabel ||
-    item.lifeAreaKey ||
+    rawItem.lifeAreaLabel ||
+    rawItem.lifeAreaKey ||
     item.area ||
     meta.lifeAreaKey ||
     vars.lifeAreaKey

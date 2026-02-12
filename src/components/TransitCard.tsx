@@ -2,14 +2,26 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import type { Transit } from '../services/prokerala/TransitService'
 import useTransits from '../hooks/useTransits'
+
+type TransitInfluence = 'positive' | 'negative' | 'neutral'
+
+interface Transit {
+  influence: TransitInfluence
+  planet: { name: string; isRetrograde?: boolean }
+  fromSign: string
+  toSign: string
+  transitDate: string
+  intensity: number
+  description: string
+  areas: string[]
+}
 
 interface TransitCardProps {
   transit: Transit
 }
 
-const INFLUENCE_COLORS = {
+const INFLUENCE_COLORS: Record<TransitInfluence, [string, string]> = {
   positive: ['#10B981', '#34D399'],
   negative: ['#EF4444', '#F87171'],
   neutral: ['#6B7280', '#9CA3AF'],
@@ -111,7 +123,7 @@ export default function TransitCard({ transit }: TransitCardProps) {
         <View style={styles.areasContainer}>
           <Text style={styles.areasLabel}>Áreas Afetadas:</Text>
           <View style={styles.areasRow}>
-            {transit.areas.map((area, index) => (
+            {transit.areas.map((area: string, index: number) => (
               <View key={index} style={styles.areaTag}>
                 <Text style={styles.areaTagText}>
                   {translateArea(area)}

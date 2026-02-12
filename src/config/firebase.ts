@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
+import { getMessaging } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM",
@@ -32,12 +33,20 @@ try {
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
   experimentalForceLongPolling: true,
-  useFetchStreams: false,
 })
 
 // Initialize Storage
 const storage = getStorage(app)
 
+let messaging: ReturnType<typeof getMessaging> | undefined
+if (typeof window !== 'undefined') {
+  try {
+    messaging = getMessaging(app)
+  } catch {
+    messaging = undefined
+  }
+}
+
 console.log('✅ Firebase inicializado com sucesso')
 
-export { auth, db, storage }
+export { auth, db, storage, messaging }

@@ -96,14 +96,14 @@ export interface GroupMemberSettings {
     favorableEvents?: boolean
     memberUpdates?: boolean
     groupMessages?: boolean
-  }
+  } | null
   schedule?: {
     doNotDisturb?: boolean
     startTime?: string
     endTime?: string
-  }
-  priority?: 'all' | 'critical_only' | 'none'
-  customAlertMessages?: Record<string, string>
+  } | null
+  priority?: 'all' | 'critical_only' | 'none' | null
+  customAlertMessages?: Record<string, string> | null
   updatedAt: Date
 }
 
@@ -862,12 +862,12 @@ class GroupService {
     if (Object.keys(updates).length) await updateDoc(groupRef, updates)
 
     const refreshed = await getDoc(groupRef)
-    const refreshedData = refreshed.data() as Group
+    const refreshedData = refreshed.data() as any
     return {
       ...refreshedData,
       id: groupId,
-      createdAt: refreshedData.createdAt?.toDate ? refreshedData.createdAt.toDate() : new Date(),
-      inviteExpiresAt: refreshedData.inviteExpiresAt?.toDate ? refreshedData.inviteExpiresAt.toDate() : null,
+      createdAt: refreshedData?.createdAt?.toDate ? refreshedData.createdAt.toDate() : (refreshedData?.createdAt || new Date()),
+      inviteExpiresAt: refreshedData?.inviteExpiresAt?.toDate ? refreshedData.inviteExpiresAt.toDate() : (refreshedData?.inviteExpiresAt || null),
     } as Group
   }
 

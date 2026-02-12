@@ -211,11 +211,20 @@ class AstrologyCacheService {
       const cacheDoc = await getDoc(doc(db, 'users', userId, 'astrologyCache', 'data'))
       
       if (cacheDoc.exists()) {
-        const data = cacheDoc.data()
+        const data: any = cacheDoc.data()
         const cache: AstrologyCache = {
-          ...data,
-          lastUpdate: data.lastUpdate.toDate(),
-          expiresAt: data.expiresAt.toDate()
+          lastUpdate: data?.lastUpdate?.toDate ? data.lastUpdate.toDate() : new Date(data?.lastUpdate || Date.now()),
+          expiresAt: data?.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data?.expiresAt || Date.now()),
+          dailyRequestCount: Number(data?.dailyRequestCount || 0),
+          lastRequestDate: String(data?.lastRequestDate || this.getTodayString()),
+          planetPositions: Array.isArray(data?.planetPositions) ? data.planetPositions : [],
+          transitAspects: Array.isArray(data?.transitAspects) ? data.transitAspects : [],
+          calculatedData: data?.calculatedData || { lifeAreas: [], currentTransits: [], dailyOverview: null },
+          dataVersion: String(data?.dataVersion || this.DATA_VERSION),
+          cacheSource: (data?.cacheSource || 'prokerala') as AstrologyCache['cacheSource'],
+          userId: String(data?.userId || userId),
+          houseSystem: data?.houseSystem ? String(data.houseSystem) : this.getCurrentHouseSystem(),
+          birthDataHash: String(data?.birthDataHash || ''),
         }
         
         // Salva no cache local para pr+¦xima vez
@@ -284,8 +293,8 @@ class AstrologyCacheService {
       }
       
       // Debug: verificar campos undefined RECURSIVAMENTE
-      const findUndefinedFields = (obj, path = '') => {
-        const undefinedPaths = []
+      const findUndefinedFields = (obj: any, path = ''): string[] => {
+        const undefinedPaths: string[] = []
         for (const [key, value] of Object.entries(obj)) {
           const currentPath = path ? `${path}.${key}` : key
           if (value === undefined) {
@@ -440,6 +449,7 @@ class AstrologyCacheService {
 }
 
 export default new AstrologyCacheService()
+
 
 
 

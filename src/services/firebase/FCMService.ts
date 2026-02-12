@@ -8,6 +8,8 @@ import * as Device from "expo-device"
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -245,8 +247,8 @@ class FCMService {
       let success = false
 
       // Enviar para todos os dispositivos do usuário
-      for (const [platform, tokenData] of Object.entries(fcmTokens)) {
-        const result = await this.sendFCMMessage(tokenData.token, notification)
+      for (const [platform, tokenData] of Object.entries(fcmTokens as Record<string, any>)) {
+        const result = await this.sendFCMMessage((tokenData as any)?.token, notification)
         if (result) success = true
       }
 
@@ -391,6 +393,7 @@ class FCMService {
           sound: notification.sound || "default",
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: triggerDate,
         },
       })

@@ -40,19 +40,20 @@ export function useAutoScheduleNotifications() {
         ;(globalThis as any).__currentBirthData = birthData
 
         const p: any = preferences || {}
+        const pushTypes = p?.push?.types || {}
         await AstroNotificationOrchestrator.scheduleAll(user.uid, birthData as any, {
-          dailyTime: p.dailyTime || '08:00',
-          enableDaily: p.dailyNotifications !== false,
-          enableWeekly: p.weeklyNotifications !== false,
-          enableMonthly: p.monthlyNotifications !== false,
-          enablePersonalAlerts: p.personalAlerts !== false,
+          dailyTime: p?.quietHours?.end || '08:00',
+          enableDaily: pushTypes.daily_summary !== false,
+          enableWeekly: pushTypes.weekly_digest !== false,
+          enableMonthly: false,
+          enablePersonalAlerts: pushTypes.user_status_critical !== false,
         })
         await AsyncStorage.setItem(LAST_SCHEDULE_KEY, today)
       } catch (e) {
         console.log('useAutoScheduleNotifications error', e)
       }
     })()
-  }, [user?.uid, preferences?.dailyTime, preferences?.dailyNotifications, preferences?.weeklyNotifications, preferences?.monthlyNotifications, preferences?.personalAlerts])
+  }, [user?.uid, preferences])
 }
 
 export default useAutoScheduleNotifications

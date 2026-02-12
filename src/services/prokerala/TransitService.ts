@@ -424,9 +424,10 @@ class TransitService {
         dailyOverview: this.calculateDailyOverview(lifeAreas),
         warnings: this.generateAdvancedWarnings(lifeAreas, [loveCalculation, careerCalculation, healthCalculation, familyCalculation, spiritualityCalculation])
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao processar dados reais:', error)
-      throw new Error(`Falha no processamento de dados astrológicos: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`Falha no processamento de dados astrológicos: ${errorMessage}`)
     }
   }
 

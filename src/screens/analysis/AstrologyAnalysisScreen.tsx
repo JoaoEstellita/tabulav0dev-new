@@ -14,7 +14,7 @@ export default function AstrologyAnalysisScreen() {
   const navigation = useNavigation<any>()
   const { transitData } = useLifeAreas()
   const impactNodes = useMemo(
-    () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas),
+    () => buildImpactNodes(transitData?.currentTransits, transitData?.lifeAreas as any),
     [transitData?.currentTransits, transitData?.lifeAreas]
   )
 

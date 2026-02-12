@@ -716,8 +716,9 @@ export default function GroupsScreen() {
     if (member.lifeAreas && !Array.isArray(member.lifeAreas) && typeof member.lifeAreas === "object") {
       return member.lifeAreas
     }
-    if (member.astrologicalStatus?.lifeAreas && typeof member.astrologicalStatus.lifeAreas === "object") {
-      return member.astrologicalStatus.lifeAreas as Record<string, any>
+    const statusAny = member.astrologicalStatus as any
+    if (statusAny?.lifeAreas && typeof statusAny.lifeAreas === "object") {
+      return statusAny.lifeAreas as Record<string, any>
     }
     return {}
   }
@@ -1213,7 +1214,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
           <ExpiryBanner
             message={expiryMessage}
             variant={expiryInfo.variant}
-            onPress={() => navigation.navigate("Premium" as never, { openTab: 'features' } as never)}
+            onPress={() => (navigation as any).navigate("Premium", { openTab: 'features' })}
           />
         )}
 
@@ -1362,7 +1363,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                 setShowMemberAreaModal(true)
                               }}
                             >
-                              <LinearGradient colors={cardColors} style={styles.memberStatusMiniInner}>
+                              <LinearGradient colors={cardColors as [string, string]} style={styles.memberStatusMiniInner}>
                                 <Text style={styles.memberStatusMiniLabel} numberOfLines={1}>
                                   {entry.label}
                                 </Text>
@@ -1827,12 +1828,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               const areaTransits = Array.isArray(member.areaTransits?.[key])
                 ? member.areaTransits?.[key]
                 : []
-              const transitAspects = areaTransits.map((transit) => {
+              const transitAspects = areaTransits.map((transit: any) => {
                 const label = `${formatPlanetLabel(transit.transitPlanet)} ${formatAspectLabel(transit.type)} ${formatPlanetLabel(transit.natalPlanet)}`
                 const duration = formatTransitDuration(transit)
                 return duration ? `${label} (${duration})` : label
               })
-              const activeTransitLabels = activeTransitItems.map((transit) => {
+              const activeTransitLabels = activeTransitItems.map((transit: any) => {
                 const aspectLabel = formatAspectLabel(transit.aspectName || transit.type || "")
                 const targetPlanet = transit.target?.natalPlanet
                 const targetAngle = transit.target?.angle
@@ -1869,7 +1870,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   ? suggestionItems
                   : (activeTransitItems.length ? activeTransitItems : areaTransits)
                       .slice(0, 2)
-                      .map((transit, index) => {
+                      .map((transit: any, index: number) => {
                         const aspectType = String(transit.aspectType || transit.type || "")
                         const isHarmonious = ["harmonic", "trigono", "sextil"].includes(aspectType)
                         const isChallenging = [
@@ -1901,7 +1902,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
               return (
                 <>
-                  <LinearGradient colors={cardColors} style={styles.memberAreaHeader}>
+                  <LinearGradient colors={cardColors as [string, string]} style={styles.memberAreaHeader}>
                     <Text style={styles.memberAreaTitle}>{lifeAreaLabel(key)}</Text>
                     <Text style={styles.memberAreaPercent}>
                       {percentage !== null ? `${percentage}%` : "--"}
@@ -1926,7 +1927,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     {(() => {
                       const areaLabel = lifeAreaLabel(key)
                       const areaCritical = bucket === "critical"
-                      const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit, index) => {
+                      const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit: any, index: number) => {
                         const status = classifyTransitStatus(transit, tr)
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
@@ -2446,6 +2447,14 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 11,
     fontWeight: "600",
+  },
+  memberTransitSection: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(148, 163, 184, 0.25)",
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
   },
   memberTransitColumnHeader: {
     flexDirection: "row",

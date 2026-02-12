@@ -99,7 +99,9 @@ export const subscribePwaInstall = (cb: (state: PwaInstallState) => void) => {
   init()
   listeners.add(cb)
   cb({ ...state })
-  return () => listeners.delete(cb)
+  return () => {
+    listeners.delete(cb)
+  }
 }
 
 export const getPwaState = () => ({ ...state })

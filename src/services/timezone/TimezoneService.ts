@@ -13,4 +13,10 @@ export async function getTimezoneData(lat: number, lon: number, timestampSec: nu
   }
 }
 
+export class TimezoneService {
+  static async resolveOffsetSeconds(lat: number, lon: number, timestampSec: number): Promise<TimezoneData> {
+    return getTimezoneData(lat, lon, timestampSec)
+  }
+}
+
 

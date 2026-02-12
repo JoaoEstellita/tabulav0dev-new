@@ -34,7 +34,7 @@ interface BirthDataFormProps {
 }
 
 export interface BirthData {
-  fullName: string
+  fullName?: string
   profilePhoto?: string
   birthDate: string
   birthTime: string

@@ -27,7 +27,8 @@ export function useTransits(_birthData: BirthData | null): UseTransitsResult {
   const byArea = state?.transits?.byArea ?? {}
   const statusPersonal = state?.statusPersonal
 
-  const filterPersonal = (filters: PersonalTransitFilters) => filterPersonalTransits(personal as any, filters)
+  const filterPersonal = (filters: PersonalTransitFilters) =>
+    filterPersonalTransits(personal as any, filters) as NonNullable<RealAstrologyData['transits']>['personal']
 
   return {
     data: state ?? null,

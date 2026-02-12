@@ -11,7 +11,9 @@ export interface PersonalTransitItem {
   eventType?: string
   seriesId?: string
   contactIndex?: number
-  durationClass?: string
+  durationClass?: 'curto' | 'medio' | 'longo'
+  contactPhase?: 'direct' | 'retrograde' | 'retro'
+  isMaster?: boolean
   window?: { start?: string; exact?: string; end?: string; days?: number }
   windowDays?: number
 }

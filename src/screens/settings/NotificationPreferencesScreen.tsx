@@ -573,8 +573,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F0F23",
   },
   containerWeb: {
-    height: "100vh",
-    maxHeight: "100vh",
+    flex: 1,
   },
   scrollView: {
     flex: 1,

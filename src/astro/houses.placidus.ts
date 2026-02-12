@@ -86,7 +86,8 @@ export function computePlacidusCusps(
     return { cusps, asc: ascDeg, mc: mcDeg, approximate: true }
   }
 
-  const lstHours = SiderealTime(dateUTC, lonDeg)
+  // astronomy-engine returns Greenwich sidereal time; convert to local with longitude.
+  const lstHours = SiderealTime(dateUTC) + lonDeg / 15
   const RAMC = norm360(lstHours*15)
   const epsRad = obliquityRad()
   const latRad = toRad(latDeg)

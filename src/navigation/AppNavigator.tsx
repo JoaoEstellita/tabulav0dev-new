@@ -174,7 +174,6 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
-      lazy={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap
@@ -277,9 +276,10 @@ function RootNavigator() {
       <RootStack.Screen name="Tabs" component={MainTabs} />
       <RootStack.Screen
         name="ForecastPeriodEvents"
-        component={ForecastPeriodEventsScreen}
         options={{ headerShown: true, title: "Eventos do período", headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
-      />
+      >
+        {(props) => <ForecastPeriodEventsScreen {...(props as any)} />}
+      </RootStack.Screen>
       <RootStack.Screen
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}
