@@ -16,7 +16,8 @@
     "deploy:web": "npm run build:web && vercel --prod",
     "deploy:pwa": "npm run build:pwa && vercel --prod",
     "test": "vitest run",
-    "guard:forecast": "node scripts/check-forecast-guard.js"
+    "guard:forecast": "node scripts/check-forecast-guard.js",
+    "guard:i18n": "node scripts/check-i18n-hardcoded.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",

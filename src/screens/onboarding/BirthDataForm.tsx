@@ -53,14 +53,14 @@ type SupportedCountryCode = 'BR' | 'US' | 'ES' | 'IT'
 type CountryOption = {
   code: SupportedCountryCode
   flag: string
-  name: string
+  nameKey: string
 }
 
 const COUNTRIES: CountryOption[] = [
-  { code: 'BR', flag: 'BR', name: 'Brasil' },
-  { code: 'US', flag: 'US', name: 'United States' },
-  { code: 'ES', flag: 'ES', name: 'Espana' },
-  { code: 'IT', flag: 'IT', name: 'Italia' },
+  { code: 'BR', flag: 'BR', nameKey: 'onboarding.country.br' },
+  { code: 'US', flag: 'US', nameKey: 'onboarding.country.us' },
+  { code: 'ES', flag: 'ES', nameKey: 'onboarding.country.es' },
+  { code: 'IT', flag: 'IT', nameKey: 'onboarding.country.it' },
 ]
 
 const TOTAL_STEPS = 6
@@ -233,6 +233,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }, [language])
 
   useEffect(() => {
+    const country = COUNTRIES.find((item) => item.code === formData.birthCountryCode)
+    if (!country) return
+    setFormData((prev) => ({ ...prev, country: t(country.nameKey) }))
+  }, [formData.birthCountryCode, t])
+
+  useEffect(() => {
     if (formData.birthDate) {
       setBirthDateDisplay(formatDateDisplay(formData.birthDate))
     } else if (birthDateDisplay) {
@@ -305,7 +311,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setFormData(prev => ({
         ...prev,
         city: '',
-        country: selectedCountry.name,
+        country: t(selectedCountry.nameKey),
         latitude: 0,
         longitude: 0,
       }))
@@ -317,7 +323,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setFormData(prev => ({
       ...prev,
       birthCountryCode: countryCode,
-      country: country?.name || prev.country,
+      country: country ? t(country.nameKey) : prev.country,
       city: '',
       latitude: 0,
       longitude: 0,
@@ -429,7 +435,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
+      Alert.alert(t('onboarding.alert.permissionTitle'), t('onboarding.alert.galleryPermission'))
       return false
     }
     return true
@@ -480,15 +486,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const hasPermission = await requestPermissions()
     if (!hasPermission) return
 
-    Alert.alert(
-      'Escolher Foto',
-      'Como você gostaria de adicionar sua foto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'Câmera', onPress: () => pickImage('camera') },
-      ]
-    )
+    Alert.alert(t('onboarding.photo.chooseTitle'), t('onboarding.photo.chooseBody'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('onboarding.photo.gallery'), onPress: () => pickImage('gallery') },
+        { text: t('onboarding.photo.camera'), onPress: () => pickImage('camera') },
+      ])
   }
 
   const pickImage = async (source: 'gallery' | 'camera') => {
@@ -498,7 +500,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
+          Alert.alert(t('onboarding.alert.permissionTitle'), t('onboarding.alert.cameraPermission'))
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -536,32 +538,28 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
+      Alert.alert(t('common.error'), t('onboarding.photo.selectFailed'))
     }
   }
 
   const removePhoto = () => {
-    Alert.alert(
-      'Remover Foto',
-      'Tem certeza que deseja remover a foto selecionada?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Remover', 
+    Alert.alert(t('onboarding.photo.removeTitle'), t('onboarding.photo.removeBody'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('onboarding.photo.removeCta'),
           style: 'destructive',
-          onPress: () => setFormData(prev => ({ ...prev, profilePhoto: '' }))
+          onPress: () => setFormData(prev => ({ ...prev, profilePhoto: '' })),
         },
-      ]
-    )
+      ])
   }
 
   const validateStep2 = () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Atencao', 'Por favor, informe seu nome completo.')
+      Alert.alert(t('common.attention'), t('onboarding.validation.nameRequired'))
       return false
     }
     if (formData.fullName.trim().length < 3) {
-      Alert.alert('Atencao', 'O nome deve ter pelo menos 3 caracteres.')
+      Alert.alert(t('common.attention'), t('onboarding.validation.nameMin'))
       return false
     }
     return true
@@ -569,7 +567,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep3 = () => {
     if (!formData.birthDate) {
-      Alert.alert('Atencao', 'Por favor, selecione sua data de nascimento.')
+      Alert.alert(t('common.attention'), t('onboarding.validation.birthDateRequired'))
       return false
     }
     return true
@@ -577,7 +575,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep4 = () => {
     if (!formData.birthTime) {
-      Alert.alert('Atencao', 'Por favor, informe sua hora de nascimento.')
+      Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeRequired'))
       return false
     }
     return true
@@ -586,7 +584,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const validateStep5 = () => {
     // Aceita tanto localização selecionada quanto texto livre
     if (!selectedLocation && !locationQuery.trim()) {
-      Alert.alert('Atencao', 'Por favor, informe a cidade e o estado de nascimento.')
+      Alert.alert(t('common.attention'), t('onboarding.validation.locationRequired'))
       return false
     }
 
@@ -595,7 +593,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setFormData(prev => ({
         ...prev,
         city: locationQuery.trim(),
-        country: selectedCountry.name,
+        country: t(selectedCountry.nameKey),
         latitude: -15.7942, // Coordenadas do centro do Brasil
         longitude: -47.8825,
       }))
@@ -739,7 +737,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                 onPress={() => handleCountryChange(country.code)}
               >
                 <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>
-                  {country.name}
+                  {t(country.nameKey)}
                 </Text>
               </TouchableOpacity>
             )
@@ -824,13 +822,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                 <Text style={styles.pickerButtonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={confirmDate} style={[styles.pickerButton, styles.confirmButton]}>
-                <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>Confirmar</Text>
+                <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>{t('common.confirm')}</Text>
               </TouchableOpacity>
             </View>
           )}
           {Platform.OS !== 'ios' && (
             <TouchableOpacity onPress={confirmDate} style={[styles.pickerButton, styles.confirmButton, { marginTop: 16 }]}>
-              <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>Confirmar</Text>
+              <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -878,7 +876,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                 <Text style={styles.pickerButtonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={confirmTime} style={[styles.pickerButton, styles.confirmButton]}>
-                <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>Confirmar</Text>
+                <Text style={[styles.pickerButtonText, styles.confirmButtonText]}>{t('common.confirm')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -1070,7 +1068,7 @@ const renderProgressBar = () => (
             onPress={async () => { await hardSignOut(); logout(); }}
           >
             <Ionicons name="log-out-outline" size={16} color="#FFD700" />
-            <Text style={styles.backToLoginText}>Voltar ao Login</Text>
+            <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
           </TouchableOpacity>
         </ResponsiveContainer>
       </ScrollView>
@@ -1510,6 +1508,9 @@ const styles = StyleSheet.create({
     minWidth: '100%',
   },
 })
+
+
+
 
 
 

@@ -4,14 +4,16 @@ import BirthDataForm, { type BirthData } from './BirthDataForm'
 import UserService from '../../services/firebase/UserService'
 import { useAuth } from '../../hooks/useAuth'
 import NatalAscService from '../../services/astrology/NatalAscService'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 export default function BirthDataFormContainer() {
   const [loading, setLoading] = useState(false)
   const { user, checkBirthDataComplete } = useAuth()
+  const { t } = useAppLanguage()
 
   const handleComplete = async (birthData: BirthData) => {
     if (!user) {
-      Alert.alert('Erro', 'Usuário não encontrado. Faça login novamente.')
+      Alert.alert(t('common.error'), t('onboarding.error.userNotFound'))
       return
     }
 
@@ -19,7 +21,7 @@ export default function BirthDataFormContainer() {
 
     try {
       await UserService.saveBirthData(user.uid, birthData)
-      // Calcula e persiste automaticamente ASC/MC/cúspides (Casas Inteiras por padrão)
+      // Calcula e persiste automaticamente ASC/MC/cuspides (Casas Inteiras por padrao)
       try {
         await NatalAscService.computeAndPersist(
           user.uid,
@@ -30,27 +32,20 @@ export default function BirthDataFormContainer() {
           'whole-sign'
         )
       } catch (e) {
-        console.warn('⚠️ Não foi possível calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)
+        console.warn('Nao foi possivel calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)
       }
-      
-      // Atualizar estado de dados completos
+
       await checkBirthDataComplete()
-      
-      // Não mostrar alert, apenas redirecionar automaticamente
       console.log('Dados salvos com sucesso! Redirecionando...')
     } catch (error) {
       console.error('Erro ao salvar dados:', error)
-      Alert.alert(
-        'Erro', 
-        'Não foi possível salvar seus dados. Tente novamente.',
-        [{ text: 'OK', style: 'default' }]
-      )
+      Alert.alert(t('common.error'), t('onboarding.error.saveFailed'), [
+        { text: t('common.close'), style: 'default' },
+      ])
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <BirthDataForm onComplete={handleComplete} loading={loading} />
-  )
+  return <BirthDataForm onComplete={handleComplete} loading={loading} />
 }

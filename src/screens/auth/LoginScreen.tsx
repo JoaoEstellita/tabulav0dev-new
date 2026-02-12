@@ -18,22 +18,20 @@ import {
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
-import ResponsiveContainer from "../../components/ResponsiveContainer"
-import { FONT_SIZES, SPACING, isDesktop, isTablet, isMobile } from "../../styles/responsive"
+import { useAppLanguage } from "../../hooks/useAppLanguage"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 
-// Componente Logo com imagem real
-const Logo = () => (
+const Logo = ({ tagline }: { tagline: string }) => (
   <View style={styles.logoContainer}>
     <View style={styles.logoImageContainer}>
-      <Image 
-        source={require('../../../assets/icon.png')} 
+      <Image
+        source={require('../../../assets/icon.png')}
         style={styles.logoImage}
         resizeMode="contain"
       />
     </View>
-    <Text style={styles.tagline}>Seu guia astrológico pessoal</Text>
+    <Text style={styles.tagline}>{tagline}</Text>
   </View>
 )
 
@@ -45,6 +43,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const { signIn, signUp, signInWithGoogle } = useAuth()
+  const { t } = useAppLanguage()
+
   const isEmbeddedBrowser =
     Platform.OS === 'web' &&
     typeof navigator !== 'undefined' &&
@@ -66,22 +66,21 @@ export default function LoginScreen() {
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos")
+      Alert.alert(t("common.error"), t("login.error.fillFields"))
       return
     }
 
-    // Validação de confirmação de senha no cadastro
     if (!isLogin) {
       if (!confirmPassword) {
-        Alert.alert("Erro", "Confirme sua senha")
+        Alert.alert(t("common.error"), t("login.error.confirmPassword"))
         return
       }
       if (password !== confirmPassword) {
-        Alert.alert("Erro", "As senhas não coincidem")
+        Alert.alert(t("common.error"), t("login.error.passwordMismatch"))
         return
       }
       if (password.length < 6) {
-        Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres")
+        Alert.alert(t("common.error"), t("login.error.passwordMin"))
         return
       }
     }
@@ -96,18 +95,18 @@ export default function LoginScreen() {
     } catch (error: any) {
       const code = error?.code || ''
       if (code === 'auth/email-already-in-use') {
-        Alert.alert("Email ja cadastrado", "Esse email ja esta em uso. Tente entrar ou recuperar a senha.")
+        Alert.alert(t("login.error.emailInUse.title"), t("login.error.emailInUse.body"))
         return
       }
       if (code === 'auth/invalid-email') {
-        Alert.alert("Email invalido", "Verifique o formato do email e tente novamente.")
+        Alert.alert(t("login.error.invalidEmail.title"), t("login.error.invalidEmail.body"))
         return
       }
       if (code === 'auth/weak-password') {
-        Alert.alert("Senha fraca", "Use uma senha com pelo menos 6 caracteres.")
+        Alert.alert(t("login.error.weakPassword.title"), t("login.error.weakPassword.body"))
         return
       }
-      Alert.alert("Erro", error.message || "Nao foi possivel concluir. Tente novamente.")
+      Alert.alert(t("common.error"), error.message || t("login.error.generic"))
     } finally {
       setLoading(false)
     }
@@ -120,16 +119,16 @@ export default function LoginScreen() {
     } catch (error: any) {
       if (error?.code === 'auth/popup-blocked') {
         Alert.alert(
-          "Pop-up bloqueado",
-          "O login com Google foi bloqueado pelo navegador embutido. Abra no navegador normal para continuar.",
+          t("login.error.popupBlocked.title"),
+          t("login.error.popupBlocked.body"),
           [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Abrir no navegador", onPress: openExternalLogin },
+            { text: t("common.cancel"), style: "cancel" },
+            { text: t("login.openInBrowser"), onPress: openExternalLogin },
           ]
         )
         return
       }
-      Alert.alert("Erro", error.message)
+      Alert.alert(t("common.error"), error.message)
     } finally {
       setGoogleLoading(false)
     }
@@ -137,27 +136,27 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <Logo />
-            
+            <Logo tagline={t("login.tagline")} />
+
             <View style={styles.formContainer}>
               <Text style={styles.formTitle}>
-                {isLogin ? "Entrar" : "Criar Conta"}
+                {isLogin ? t("login.signIn") : t("login.createAccount")}
               </Text>
-              
+
               <View style={styles.inputContainer}>
                 <Ionicons name="mail" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder={t("login.email")}
                   placeholderTextColor="#666"
                   value={email}
                   onChangeText={setEmail}
@@ -170,7 +169,7 @@ export default function LoginScreen() {
                 <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Senha"
+                  placeholder={t("login.password")}
                   placeholderTextColor="#666"
                   value={password}
                   onChangeText={setPassword}
@@ -183,7 +182,7 @@ export default function LoginScreen() {
                   <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Confirmar senha"
+                    placeholder={t("login.confirmPassword")}
                     placeholderTextColor="#666"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
@@ -198,10 +197,10 @@ export default function LoginScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <Text style={styles.authButtonText}>Carregando...</Text>
+                  <Text style={styles.authButtonText}>{t("common.loading")}</Text>
                 ) : (
                   <Text style={styles.authButtonText}>
-                    {isLogin ? "Entrar" : "Cadastrar"}
+                    {isLogin ? t("login.signIn") : t("login.register")}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -213,9 +212,10 @@ export default function LoginScreen() {
               >
                 <Ionicons name="logo-google" size={20} color="#000" />
                 <Text style={styles.googleButtonText}>
-                  {googleLoading ? "Carregando..." : "Continuar com Google"}
+                  {googleLoading ? t("common.loading") : t("login.continueWithGoogle")}
                 </Text>
               </TouchableOpacity>
+
               {isEmbeddedBrowser && (
                 <TouchableOpacity
                   style={[styles.googleButton, styles.externalGoogleButton]}
@@ -223,7 +223,7 @@ export default function LoginScreen() {
                 >
                   <Ionicons name="open-outline" size={20} color="#000" />
                   <Text style={styles.googleButtonText}>
-                    Continuar com Google (abrir no navegador)
+                    {t("login.continueWithGoogleInBrowser")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -233,7 +233,7 @@ export default function LoginScreen() {
                 onPress={() => setIsLogin(!isLogin)}
               >
                 <Text style={styles.switchText}>
-                  {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entre"}
+                  {isLogin ? t("login.noAccount") : t("login.haveAccount")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -367,5 +367,3 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 })
-
-
