@@ -15,7 +15,7 @@
     "init-firestore": "node scripts/initFirestore.js",
     "deploy:web": "npm run build:web && vercel --prod",
     "deploy:pwa": "npm run build:pwa && vercel --prod",
-    "test": "vitest run",
+    "test": "npm exec vitest run --pool=forks --poolOptions.forks.singleFork",
     "guard:forecast": "node scripts/check-forecast-guard.js",
     "guard:i18n": "node scripts/check-i18n-hardcoded.js"
   },
