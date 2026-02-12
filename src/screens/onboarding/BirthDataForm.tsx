@@ -722,6 +722,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderIntroStep = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="sparkles-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
+      <Text style={styles.introKicker}>{t('onboarding.step.intro.kicker')}</Text>
       <View style={styles.filterRow}>
         <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
@@ -745,9 +746,18 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       <Text style={styles.stepTitle}>{t('onboarding.step.intro.title')}</Text>
       <Text style={styles.stepDescription}>{t('onboarding.step.intro.description')}</Text>
       <View style={styles.introCard}>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item1')}</Text>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item2')}</Text>
-        <Text style={styles.introLine}>- {t('onboarding.step.intro.item3')}</Text>
+        <View style={styles.introFeatureRow}>
+          <Ionicons name="heart-outline" size={18} color="#FFD700" />
+          <Text style={styles.introLine}>{t('onboarding.step.intro.item1')}</Text>
+        </View>
+        <View style={styles.introFeatureRow}>
+          <Ionicons name="layers-outline" size={18} color="#FFD700" />
+          <Text style={styles.introLine}>{t('onboarding.step.intro.item2')}</Text>
+        </View>
+        <View style={styles.introFeatureRow}>
+          <Ionicons name="notifications-outline" size={18} color="#FFD700" />
+          <Text style={styles.introLine}>{t('onboarding.step.intro.item3')}</Text>
+        </View>
       </View>
     </View>
   )
@@ -806,6 +816,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               )}
             />
           </View>
+        )}
+        {selectedCountry && (
+          <Text style={styles.helperInlineText}>
+            {t('onboarding.country.selected', { country: selectedCountry.name })}
+          </Text>
         )}
       </View>
 
@@ -1011,6 +1026,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               </TouchableOpacity>
             )}
           />
+        </View>
+      )}
+      {showLocationSuggestions && !searchingLocation && locationQuery.length >= 2 && locationSuggestions.length === 0 && (
+        <View style={styles.emptyStateCard}>
+          <Ionicons name="search-outline" size={20} color="#FFD700" />
+          <Text style={styles.emptyStateText}>{t('onboarding.location.empty')}</Text>
         </View>
       )}
 
@@ -1221,10 +1242,30 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  introKicker: {
+    color: '#94A3B8',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  introFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   introLine: {
     color: '#E5E7EB',
     fontSize: FONT_SIZES.md,
-    marginBottom: 8,
+    flex: 1,
+  },
+  helperInlineText: {
+    color: '#94A3B8',
+    fontSize: FONT_SIZES.xs,
+    marginTop: 6,
+    marginLeft: 2,
   },
   filterRow: {
     width: '100%',
@@ -1478,6 +1519,24 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontSize: FONT_SIZES.md,
     fontWeight: 'bold',
+  },
+  emptyStateCard: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4B5563',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#1F2937',
+    marginBottom: 12,
+    gap: 8,
+  },
+  emptyStateText: {
+    color: '#D1D5DB',
+    fontSize: FONT_SIZES.sm,
+    flex: 1,
   },
   pickerContainer: {
     backgroundColor: '#2C2C2E',
