@@ -41,6 +41,7 @@ export interface PaymentData {
 export interface SubscriptionStatus {
   isActive: boolean
   planId: string | null
+  provider?: 'mercadopago' | 'stripe' | null
   expiresAt: Date | null
   nextBillingDate: Date | null
   status: 'active' | 'expired' | 'cancelled' | 'pending' | 'trial'
@@ -136,6 +137,7 @@ export class MercadoPagoService {
       return {
         isActive: !!status.isActive,
         planId: status.planId || null,
+        provider: status.provider || null,
         expiresAt: status.expiresAt ? new Date(status.expiresAt) : null,
         nextBillingDate: status.nextBillingDate ? new Date(status.nextBillingDate) : null,
         status: status.status || 'expired',
@@ -146,6 +148,7 @@ export class MercadoPagoService {
       return {
         isActive: false,
         planId: null,
+        provider: null,
         expiresAt: null,
         nextBillingDate: null,
         status: 'expired',

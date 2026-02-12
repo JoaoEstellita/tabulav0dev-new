@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SubscriptionPlanCard } from '../../components/SubscriptionPlanCard';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
+import { StripeService } from '../../services/payment/StripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppLanguage } from '../../hooks/useAppLanguage';
 
@@ -42,6 +43,7 @@ export default function SubscriptionScreen() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [provider, setProvider] = useState<'mercadopago' | 'stripe'>('mercadopago');
 
   const handleSubscribe = async (planId: string) => {
     try {
@@ -69,6 +71,28 @@ export default function SubscriptionScreen() {
         externalReference: MercadoPagoService.generateExternalReference(user.uid, planId),
       };
 
+      if (provider === 'stripe') {
+        const result = await StripeService.createCheckoutSession({
+          userId: user.uid,
+          planId,
+          email: user.email || '',
+          name: user.displayName || 'Usuario',
+          amount: plan.price,
+          currency: 'usd',
+        });
+        if (result.url) {
+          const supported = await Linking.canOpenURL(result.url);
+          if (supported) {
+            await Linking.openURL(result.url);
+          } else {
+            Alert.alert(t('common.error'), t('subscription.error.openPaymentLink'));
+          }
+        } else {
+          Alert.alert(t('common.error'), t('subscription.error.processPayment'));
+        }
+        return;
+      }
+
       const result = await MercadoPagoService.createPaymentPreference(paymentData);
 
       if (result.init_point) {
@@ -92,6 +116,17 @@ export default function SubscriptionScreen() {
 
   const manageSubscription = async () => {
     try {
+      if (!user?.uid) {
+        Alert.alert(t('common.error'), t('subscription.error.userNotFound'));
+        return;
+      }
+      if (provider === 'stripe') {
+        const portal = await StripeService.createPortalSession(user.uid);
+        if (portal.url) {
+          await Linking.openURL(portal.url);
+          return;
+        }
+      }
       Alert.alert(
         t('subscription.manage.title'),
         t('subscription.manage.body'),
@@ -104,6 +139,17 @@ export default function SubscriptionScreen() {
   };
 
   const cancelSubscription = async () => {
+    if (provider === 'stripe' && user?.uid) {
+      try {
+        const portal = await StripeService.createPortalSession(user.uid);
+        if (portal.url) {
+          await Linking.openURL(portal.url);
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao abrir portal Stripe (cancelamento):', error);
+      }
+    }
     Alert.alert(
       t('subscription.cancel.title'),
       t('subscription.cancel.body'),
@@ -115,6 +161,18 @@ export default function SubscriptionScreen() {
   };
 
   const viewSubscriptionDetails = () => {
+    if (provider === 'stripe' && user?.uid) {
+      StripeService.createPortalSession(user.uid)
+        .then((portal) => {
+          if (portal.url) return Linking.openURL(portal.url);
+          throw new Error('Portal sem URL');
+        })
+        .catch((error) => {
+          console.error('Erro ao abrir portal Stripe (detalhes):', error);
+          Alert.alert(t('common.error'), t('subscription.error.manageDetails'));
+        });
+      return;
+    }
     Alert.alert(
       t('subscription.details.title'),
       t('subscription.details.body'),
@@ -141,6 +199,23 @@ export default function SubscriptionScreen() {
             <Text style={styles.subtitle}>
               {t('subscription.subtitle')}
             </Text>
+            <View style={styles.providerRow}>
+              <Text style={styles.providerLabel}>{t('subscription.provider.label')}</Text>
+              <View style={styles.providerButtons}>
+                <Text
+                  onPress={() => setProvider('mercadopago')}
+                  style={[styles.providerButton, provider === 'mercadopago' && styles.providerButtonActive]}
+                >
+                  {t('subscription.provider.mercado')}
+                </Text>
+                <Text
+                  onPress={() => setProvider('stripe')}
+                  style={[styles.providerButton, provider === 'stripe' && styles.providerButtonActive]}
+                >
+                  {t('subscription.provider.stripe')}
+                </Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.plansContainer}>
@@ -199,6 +274,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#E0E0E0',
     textAlign: 'center',
+  },
+  providerRow: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  providerLabel: {
+    color: '#E0E0E0',
+    fontSize: 13,
+    marginBottom: 6,
+  },
+  providerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  providerButton: {
+    color: '#D1D5DB',
+    borderWidth: 1,
+    borderColor: '#6B7280',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 12,
+    overflow: 'hidden',
+  },
+  providerButtonActive: {
+    color: '#FFD700',
+    borderColor: '#FFD700',
   },
   plansContainer: {
     paddingHorizontal: 20,

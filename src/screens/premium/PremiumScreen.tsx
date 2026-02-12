@@ -16,6 +16,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useRoute } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService from '../../services/payment/MercadoPagoService'
+import StripeService from '../../services/payment/StripeService'
 import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import { getExpiryBannerInfo } from '../../utils/expiry'
@@ -39,7 +40,7 @@ type HubHistoryItem = {
 }
 
 export default function PremiumScreen() {
-  useAppLanguage()
+  const { t } = useAppLanguage()
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()
@@ -71,6 +72,7 @@ export default function PremiumScreen() {
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>('mercadopago')
   const expiryInfo = useMemo(() => {
     return getExpiryBannerInfo({
       featureLabel: 'Premium',
@@ -256,6 +258,23 @@ export default function PremiumScreen() {
       const planConfig = MercadoPagoService.getPlanById(plan.id)
       if (!planConfig) {
         Alert.alert('Plano invalido', 'Nao foi possivel localizar o plano selecionado.')
+        return
+      }
+      if (subscriptionProvider === 'stripe') {
+        const stripeSession = await StripeService.createCheckoutSession({
+          userId: user.uid,
+          planId: planConfig.id,
+          email: user.email || '',
+          name: user.displayName || user.email || 'Usuario',
+          amount: planConfig.price,
+          currency: 'usd',
+        })
+        const stripeUrl = stripeSession?.url
+        if (!stripeUrl) {
+          Alert.alert('Erro', 'Nao foi possivel gerar o link Stripe.')
+          return
+        }
+        await Linking.openURL(stripeUrl)
         return
       }
       const preference = await MercadoPagoService.createPaymentPreference({
@@ -648,6 +667,25 @@ export default function PremiumScreen() {
     <ScrollView style={styles.tabContent}>
       <View style={styles.plansContainer}>
           <Text style={styles.sectionTitle}>Planos de Assinatura</Text>
+        <View style={styles.providerChoiceRow}>
+          <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
+          <TouchableOpacity
+            style={[styles.providerChoiceButton, subscriptionProvider === 'mercadopago' && styles.providerChoiceButtonActive]}
+            onPress={() => setSubscriptionProvider('mercadopago')}
+          >
+            <Text style={[styles.providerChoiceText, subscriptionProvider === 'mercadopago' && styles.providerChoiceTextActive]}>
+              {t('subscription.provider.mercado')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.providerChoiceButton, subscriptionProvider === 'stripe' && styles.providerChoiceButtonActive]}
+            onPress={() => setSubscriptionProvider('stripe')}
+          >
+            <Text style={[styles.providerChoiceText, subscriptionProvider === 'stripe' && styles.providerChoiceTextActive]}>
+              {t('subscription.provider.stripe')}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {subscriptionPlans.map(plan => (
           <TouchableOpacity
             key={plan.id}
@@ -1198,6 +1236,37 @@ const styles = StyleSheet.create({
   },
   planFeatures: {
     marginBottom: 8,
+  },
+  providerChoiceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  providerChoiceLabel: {
+    color: '#B8B8C3',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  providerChoiceButton: {
+    borderWidth: 1,
+    borderColor: '#4B5563',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#1C1C1E',
+  },
+  providerChoiceButtonActive: {
+    borderColor: '#FFD700',
+  },
+  providerChoiceText: {
+    color: '#B8B8C3',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  providerChoiceTextActive: {
+    color: '#FFD700',
   },
   compareTable: {
     backgroundColor: '#1C1C1E',
