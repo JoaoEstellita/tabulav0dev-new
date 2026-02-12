@@ -111,6 +111,9 @@ class UserService {
         birthDate: birthData.birthDate,
         birthTime: birthData.birthTime,
         birthLocation: birthData.birthLocation,
+        language: birthData.language || 'pt-BR',
+        birthCountryCode: birthData.birthCountryCode || 'BR',
+        'preferences.language': birthData.language || 'pt-BR',
         birthDataComplete: true,
         lastBirthDataEdit: serverTimestamp(),
       })

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   View,
   Text,
@@ -23,6 +23,10 @@ import { hardSignOut } from '../../services/auth/logout'
 import ResponsiveContainer from '../../components/ResponsiveContainer'
 import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
 import { useOrientation } from '../../hooks/useOrientation'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { subscribeWebPush } from '../../webpush/subscribe'
+import { registerDeviceToken } from '../../services/notifications/registerDeviceToken'
+import type { AppLanguage } from '../../i18n/appI18n'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -40,10 +44,30 @@ export interface BirthData {
     latitude: number
     longitude: number
   }
+  language?: AppLanguage
+  birthCountryCode?: SupportedCountryCode
 }
 
+type SupportedCountryCode = 'BR' | 'US' | 'ES' | 'IT'
+
+type CountryOption = {
+  code: SupportedCountryCode
+  flag: string
+  name: string
+}
+
+const COUNTRIES: CountryOption[] = [
+  { code: 'BR', flag: 'BR', name: 'Brasil' },
+  { code: 'US', flag: 'US', name: 'United States' },
+  { code: 'ES', flag: 'ES', name: 'Espana' },
+  { code: 'IT', flag: 'IT', name: 'Italia' },
+]
+
+const TOTAL_STEPS = 6
+
 export default function BirthDataForm({ onComplete, loading = false }: BirthDataFormProps) {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
+  const { language, languages, setLanguage, t } = useAppLanguage()
   const { isLandscape } = useOrientation()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -52,9 +76,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     birthDate: '',
     birthTime: '',
     city: '',
-    country: '',
+    country: 'Brasil',
     latitude: 0,
     longitude: 0,
+    language,
+    birthCountryCode: 'BR' as SupportedCountryCode,
   })
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
@@ -65,12 +91,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [tempDate, setTempDate] = useState(new Date())
   const [tempTime, setTempTime] = useState(new Date())
 
-  // Estados para busca de localizaÃ§Ã£o
+  // Estados para busca de localização
   const [locationQuery, setLocationQuery] = useState('')
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([])
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [searchingLocation, setSearchingLocation] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null)
+  const [notificationsGranted, setNotificationsGranted] = useState(false)
+  const selectedCountry = useMemo(
+    () => COUNTRIES.find((country) => country.code === formData.birthCountryCode) || COUNTRIES[0],
+    [formData.birthCountryCode]
+  )
 
   const formatDateDisplay = (isoDate: string) => {
     if (!isoDate) return ''
@@ -172,14 +203,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(false)
   }
 
-  // Carregar sugestÃµes iniciais quando o componente monta
+  // Carregar sugestões iniciais quando o componente monta
   useEffect(() => {
     const loadInitialSuggestions = async () => {
       try {
-        const initialSuggestions = await LocationService.searchLocations('')
+        const initialSuggestions = await LocationService.searchLocations('', formData.birthCountryCode)
         setLocationSuggestions(initialSuggestions)
       } catch (error) {
-        console.error('Erro ao carregar sugestÃµes iniciais:', error)
+        console.error('Erro ao carregar sugestões iniciais:', error)
       }
     }
     loadInitialSuggestions()
@@ -192,10 +223,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           ...prev,
           profilePhoto: savedPhoto,
         }))
-        console.log('âœ… Foto carregada do localStorage')
+        console.log('✅ Foto carregada do localStorage')
       }
     }
   }, [])
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, language }))
+  }, [language])
 
   useEffect(() => {
     if (formData.birthDate) {
@@ -213,18 +248,18 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }, [formData.birthTime])
 
-  // Busca de localizaÃ§Ã£o com debounce
+  // Busca de localização com debounce
   useEffect(() => {
     if (locationQuery.length >= 2) {
       const timeoutId = setTimeout(async () => {
         setSearchingLocation(true)
         try {
-          const suggestions = await LocationService.searchLocations(locationQuery)
+          const suggestions = await LocationService.searchLocations(locationQuery, formData.birthCountryCode)
           setLocationSuggestions(suggestions)
           setShowLocationSuggestions(true)
-          console.log('SugestÃµes encontradas:', suggestions.length)
+          console.log('Sugestões encontradas:', suggestions.length)
         } catch (error) {
-          console.error('Erro ao buscar localizaÃ§Ãµes:', error)
+          console.error('Erro ao buscar localizações:', error)
         } finally {
           setSearchingLocation(false)
         }
@@ -232,13 +267,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       return () => clearTimeout(timeoutId)
     } else if (locationQuery.length === 0) {
-      // Se campo vazio, carrega sugestÃµes padrÃ£o
+      // Se campo vazio, carrega sugestões padrão
       const loadDefaultSuggestions = async () => {
         try {
-          const defaultSuggestions = await LocationService.searchLocations('')
+          const defaultSuggestions = await LocationService.searchLocations('', formData.birthCountryCode)
           setLocationSuggestions(defaultSuggestions)
         } catch (error) {
-          console.error('Erro ao carregar sugestÃµes padrÃ£o:', error)
+          console.error('Erro ao carregar sugestões padrão:', error)
         }
       }
       loadDefaultSuggestions()
@@ -246,7 +281,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       setLocationSuggestions([])
       setShowLocationSuggestions(false)
     }
-  }, [locationQuery])
+  }, [locationQuery, formData.birthCountryCode])
 
   const handleLocationSelect = (location: LocationSuggestion) => {
     setSelectedLocation(location)
@@ -265,16 +300,89 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setLocationQuery(text)
     setSelectedLocation(null)
     
-    // Se o usuÃ¡rio limpar o campo, limpa tambÃ©m os dados
+    // Se o usuário limpar o campo, limpa também os dados
     if (!text) {
       setFormData(prev => ({
         ...prev,
         city: '',
-        country: '',
+        country: selectedCountry.name,
         latitude: 0,
         longitude: 0,
       }))
     }
+  }
+
+  const handleCountryChange = (countryCode: SupportedCountryCode) => {
+    const country = COUNTRIES.find(item => item.code === countryCode)
+    setFormData(prev => ({
+      ...prev,
+      birthCountryCode: countryCode,
+      country: country?.name || prev.country,
+      city: '',
+      latitude: 0,
+      longitude: 0,
+    }))
+    setSelectedLocation(null)
+    setLocationQuery('')
+  }
+
+  const requestNotificationPermission = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        const webNotification = (globalThis as any).Notification
+        if (!webNotification) return false
+        let permission = webNotification.permission
+        if (permission !== 'granted') permission = await webNotification.requestPermission()
+        if (permission !== 'granted') return false
+        if (user?.uid) await subscribeWebPush(user.uid)
+        setNotificationsGranted(true)
+        return true
+      }
+
+      if (!user?.uid) return false
+      const result = await registerDeviceToken(user.uid)
+      const ok = !result?.error
+      setNotificationsGranted(ok)
+      return ok
+    } catch (error) {
+      console.warn('Falha ao ativar notificacoes no onboarding', error)
+      return false
+    }
+  }
+
+  const handleNotificationSkip = async () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const wantsEnable = window.confirm(t('onboarding.notifications.why.body'))
+      if (wantsEnable) {
+        const enabled = await requestNotificationPermission()
+        if (enabled) {
+          handleComplete()
+          return
+        }
+        return
+      }
+      handleComplete()
+      return
+    }
+
+    Alert.alert(t('onboarding.notifications.why.title'), t('onboarding.notifications.why.body'), [
+      {
+        text: t('onboarding.notifications.why.cta'),
+        onPress: async () => {
+          const enabled = await requestNotificationPermission()
+          if (enabled) {
+            handleComplete()
+            return
+          }
+          handleComplete()
+        },
+      },
+      {
+        text: t('onboarding.notifications.why.skip'),
+        style: 'cancel',
+        onPress: handleComplete,
+      },
+    ])
   }
 
   const handleBirthDateInput = (text: string) => {
@@ -317,11 +425,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(true)
   }
 
-  // FunÃ§Ãµes para manipulaÃ§Ã£o de foto
+  // Funções para manipulação de foto
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  galeria para selecionar sua foto.')
+      Alert.alert('Permissão Necessária', 'Precisamos de acesso à galeria para selecionar sua foto.')
       return false
     }
     return true
@@ -358,7 +466,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               profilePhoto: dataUrl,
             }))
             localStorage.setItem('tempProfilePhoto', dataUrl)
-            console.log('âœ… Foto selecionada na web (comprimida)')
+            console.log('✅ Foto selecionada na web (comprimida)')
           } catch {
             // Se algo falhar no localStorage, apenas ignore
           }
@@ -374,11 +482,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
     Alert.alert(
       'Escolher Foto',
-      'Como vocÃª gostaria de adicionar sua foto?',
+      'Como você gostaria de adicionar sua foto?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Galeria', onPress: () => pickImage('gallery') },
-        { text: 'CÃ¢mera', onPress: () => pickImage('camera') },
+        { text: 'Câmera', onPress: () => pickImage('camera') },
       ]
     )
   }
@@ -390,7 +498,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync()
         if (status !== 'granted') {
-          Alert.alert('PermissÃ£o NecessÃ¡ria', 'Precisamos de acesso Ã  cÃ¢mera.')
+          Alert.alert('Permissão Necessária', 'Precisamos de acesso à câmera.')
           return
         }
         result = await ImagePicker.launchCameraAsync({
@@ -410,7 +518,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0]
-        console.log('ðŸ“¸ Foto selecionada:', asset.uri)
+        console.log('📸 Foto selecionada:', asset.uri)
         
         // Redimensionar a imagem para otimizar
         const manipulatedImage = await ImageManipulator.manipulateAsync(
@@ -424,11 +532,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           profilePhoto: manipulatedImage.uri,
         }))
 
-        console.log('âœ… Foto processada e salva')
+        console.log('✅ Foto processada e salva')
       }
     } catch (error) {
       console.error('Erro ao selecionar foto:', error)
-      Alert.alert('Erro', 'NÃ£o foi possÃ­vel selecionar a foto. Tente novamente.')
+      Alert.alert('Erro', 'Não foi possível selecionar a foto. Tente novamente.')
     }
   }
 
@@ -447,7 +555,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     )
   }
 
-  const validateStep1 = () => {
+  const validateStep2 = () => {
     if (!formData.fullName.trim()) {
       Alert.alert('Atencao', 'Por favor, informe seu nome completo.')
       return false
@@ -459,7 +567,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const validateStep2 = () => {
+  const validateStep3 = () => {
     if (!formData.birthDate) {
       Alert.alert('Atencao', 'Por favor, selecione sua data de nascimento.')
       return false
@@ -467,7 +575,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const validateStep3 = () => {
+  const validateStep4 = () => {
     if (!formData.birthTime) {
       Alert.alert('Atencao', 'Por favor, informe sua hora de nascimento.')
       return false
@@ -475,19 +583,19 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const validateStep4 = () => {
-    // Aceita tanto localizaÃ§Ã£o selecionada quanto texto livre
+  const validateStep5 = () => {
+    // Aceita tanto localização selecionada quanto texto livre
     if (!selectedLocation && !locationQuery.trim()) {
       Alert.alert('Atencao', 'Por favor, informe a cidade e o estado de nascimento.')
       return false
     }
 
-    // Se tem texto mas nÃ£o selecionou nenhuma cidade, usa os dados do texto
+    // Se tem texto mas não selecionou nenhuma cidade, usa os dados do texto
     if (!selectedLocation && locationQuery.trim()) {
       setFormData(prev => ({
         ...prev,
         city: locationQuery.trim(),
-        country: 'Brasil', // PadrÃ£o para texto livre
+        country: selectedCountry.name,
         latitude: -15.7942, // Coordenadas do centro do Brasil
         longitude: -47.8825,
       }))
@@ -501,7 +609,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     
     switch (currentStep) {
       case 1:
-        isValid = validateStep1()
+        isValid = true
         break
       case 2:
         isValid = validateStep2()
@@ -512,11 +620,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       case 4:
         isValid = validateStep4()
         break
+      case 5:
+        isValid = validateStep5()
+        break
+      case 6:
+        isValid = true
+        break
     }
 
-    if (isValid && currentStep < 4) {
+    if (isValid && currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1)
-    } else if (isValid && currentStep === 4) {
+    } else if (isValid && currentStep === TOTAL_STEPS) {
       handleComplete()
     }
   }
@@ -540,20 +654,98 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         country: formData.country,
         latitude: formData.latitude,
         longitude: formData.longitude,
-      }
+      },
+      language: formData.language,
+      birthCountryCode: formData.birthCountryCode,
     }
 
     onComplete(birthData)
   }
 
+  const handleEnableNotifications = async () => {
+    const enabled = await requestNotificationPermission()
+    if (enabled) {
+      handleComplete()
+      return
+    }
+
+    Alert.alert(
+      t('onboarding.notifications.why.title'),
+      t('onboarding.notifications.enableFailed'),
+      [
+        {
+          text: t('onboarding.notifications.why.skip'),
+          style: 'cancel',
+          onPress: handleComplete,
+        },
+        {
+          text: t('onboarding.notifications.retry'),
+          onPress: handleEnableNotifications,
+        },
+      ]
+    )
+  }
+
+  const renderIntroStep = () => (
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons name="sparkles-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
+      <Text style={styles.stepTitle}>{t('onboarding.step.intro.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.intro.description')}</Text>
+      <View style={styles.introCard}>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item1')}</Text>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item2')}</Text>
+        <Text style={styles.introLine}>- {t('onboarding.step.intro.item3')}</Text>
+      </View>
+    </View>
+  )
+
   const renderStep1 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
-      <Text style={styles.stepTitle}>Vamos nos conhecer!</Text>
-      <Text style={styles.stepDescription}>
-        Como vocÃª gostaria de ser chamado? E que tal adicionar uma foto?
-      </Text>
+      <Text style={styles.stepTitle}>{t('onboarding.step.profile.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.profile.description')}</Text>
+
+      <View style={styles.filterRow}>
+        <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
+          {languages.map((option) => {
+            const active = formData.language === option.code
+            return (
+              <TouchableOpacity
+                key={option.code}
+                style={[styles.filterPill, active && styles.filterPillActive]}
+                onPress={async () => {
+                  setFormData(prev => ({ ...prev, language: option.code }))
+                  await setLanguage(option.code)
+                }}
+              >
+                <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>{option.nativeLabel}</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.filterRow}>
+        <Text style={styles.filterTitle}>{t('onboarding.field.country')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
+          {COUNTRIES.map((country) => {
+            const active = formData.birthCountryCode === country.code
+            return (
+              <TouchableOpacity
+                key={country.code}
+                style={[styles.filterPill, active && styles.filterPillActive]}
+                onPress={() => handleCountryChange(country.code)}
+              >
+                <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>
+                  {country.name}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
+      </View>
 
       {/* Foto de Perfil */}
       <View style={styles.photoContainer}>
@@ -567,8 +759,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         ) : (
           <TouchableOpacity style={styles.photoPlaceholder} onPress={selectPhoto}>
             <Ionicons name="camera-outline" size={isDesktop() ? 50 : 40} color="#666" />
-            <Text style={styles.photoPlaceholderText}>Adicionar Foto</Text>
-            <Text style={styles.photoOptionalText}>(Opcional)</Text>
+            <Text style={styles.photoPlaceholderText}>{t('onboarding.field.photo.add')}</Text>
+            <Text style={styles.photoOptionalText}>{t('onboarding.field.photo.optional')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -578,7 +770,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <Ionicons name="person" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
           style={styles.nameInput}
-          placeholder="Seu nome completo"
+          placeholder={t('onboarding.field.name')}
           placeholderTextColor="#666"
           value={formData.fullName}
           onChangeText={(text) => setFormData(prev => ({ ...prev, fullName: text }))}
@@ -587,9 +779,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         />
       </View>
 
-      <Text style={styles.helpText}>
-        ðŸ‘‹ Este nome aparecerÃ¡ em seu perfil e para outros usuÃ¡rios
-      </Text>
+      <Text style={styles.helpText}>{t('onboarding.profile.help')}</Text>
     </View>
   )
 
@@ -597,10 +787,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="calendar-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
-      <Text style={styles.stepTitle}>Quando voce nasceu?</Text>
-      <Text style={styles.stepDescription}>
-        Sua data de nascimento e essencial para calcular seu mapa astral
-      </Text>
+      <Text style={styles.stepTitle}>{t('onboarding.step.date.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.date.description')}</Text>
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.inputIconButton} onPress={openDatePicker}>
@@ -654,10 +842,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="time-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       
-      <Text style={styles.stepTitle}>Que horas voce nasceu?</Text>
-      <Text style={styles.stepDescription}>
-        A hora exata e crucial para determinar seu ascendente e casas astrologicas
-      </Text>
+      <Text style={styles.stepTitle}>{t('onboarding.step.time.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.time.description')}</Text>
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.inputIconButton} onPress={openTimePicker}>
@@ -699,18 +885,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </View>
       )}
 
-      <Text style={styles.helpText}>
-        Se nao souber a hora exata, consulte sua certidao de nascimento
-      </Text>
+      <Text style={styles.helpText}>{t('onboarding.time.help')}</Text>
     </View>
   )
 
   const renderStep4 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Text style={styles.stepTitle}>Local de nascimento</Text>
-      <Text style={styles.stepDescription}>
-        Informe a cidade e o estado (UF) onde voce nasceu para calculos mais precisos
-      </Text>
+      <Text style={styles.stepTitle}>{t('onboarding.step.location.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.location.description')}</Text>
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowLocationSuggestions(true)}>
@@ -718,14 +900,14 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </TouchableOpacity>
         <TextInput
           style={styles.locationInput}
-          placeholder="Cidade e estado (ex: Rio de Janeiro, RJ)"
+          placeholder={t('onboarding.location.placeholder')}
           placeholderTextColor="#8E8E93"
           value={locationQuery}
           onChangeText={handleLocationQueryChange}
           onFocus={() => {
             setShowLocationSuggestions(true)
             if (locationSuggestions.length === 0) {
-              LocationService.searchLocations('').then(suggestions => {
+              LocationService.searchLocations('', formData.birthCountryCode).then(suggestions => {
                 setLocationSuggestions(suggestions)
               }).catch(error => {
                 console.error('Erro ao carregar sugestoes padrao:', error)
@@ -751,7 +933,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       {showLocationSuggestions && locationSuggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
-          <Text style={styles.suggestionsTitle}>Cidades e estados disponiveis</Text>
+          <Text style={styles.suggestionsTitle}>{t('onboarding.location.suggestions')}</Text>
           <FlatList
             data={locationSuggestions.slice(0, 8)}
             keyExtractor={(item, index) => `${item.city}-${index}`}
@@ -773,9 +955,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       {!selectedLocation && !showLocationSuggestions && (
         <TouchableOpacity style={styles.suggestionPrompt} onPress={() => setShowLocationSuggestions(true)}>
           <Ionicons name="information-circle" size={20} color="#FFD700" />
-          <Text style={styles.suggestionPromptText}>
-            Toque para ver sugestoes de cidades e estados
-          </Text>
+          <Text style={styles.suggestionPromptText}>{t('onboarding.location.prompt')}</Text>
         </TouchableOpacity>
       )}
 
@@ -783,7 +963,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <View style={styles.selectedLocationContainer}>
           <Ionicons name="checkmark-circle" size={24} color="#10B981" />
           <View style={styles.selectedLocationTextContainer}>
-            <Text style={styles.selectedLocationLabel}>Local selecionado:</Text>
+            <Text style={styles.selectedLocationLabel}>{t('onboarding.location.selected')}</Text>
             <Text style={styles.selectedLocationText}>
               {selectedLocation.displayName}
             </Text>
@@ -793,18 +973,40 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       <Text style={styles.helpText}>
         {selectedLocation
-          ? "Pronto. Voce pode finalizar."
-          : "Digite pelo menos 2 letras para filtrar as opcoes."
+          ? t('onboarding.location.ready')
+          : t('onboarding.location.help')
         }
       </Text>
     </View>
   )
+  const renderStep5 = () => (
+    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
+      <Ionicons
+        name={notificationsGranted ? 'notifications' : 'notifications-outline'}
+        size={isDesktop() ? 80 : 64}
+        color={notificationsGranted ? '#10B981' : '#FFD700'}
+        style={styles.stepIcon}
+      />
+      <Text style={styles.stepTitle}>{t('onboarding.step.notification.title')}</Text>
+      <Text style={styles.stepDescription}>{t('onboarding.step.notification.description')}</Text>
+      <TouchableOpacity
+        style={[styles.nextButton, { marginLeft: 0 }]}
+        onPress={handleEnableNotifications}
+      >
+        <Text style={styles.nextButtonText}>{t('onboarding.notifications.enable')}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.secondaryActionButton} onPress={handleNotificationSkip}>
+        <Text style={styles.secondaryActionText}>{t('onboarding.notifications.notnow')}</Text>
+      </TouchableOpacity>
+    </View>
+  )
+
 const renderProgressBar = () => (
     <View style={styles.progressContainer}>
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${(currentStep / 4) * 100}%` }]} />
+        <View style={[styles.progressFill, { width: `${(currentStep / TOTAL_STEPS) * 100}%` }]} />
       </View>
-      <Text style={styles.progressText}>{currentStep} de 4</Text>
+      <Text style={styles.progressText}>{t('onboarding.progress', { current: currentStep, total: TOTAL_STEPS })}</Text>
     </View>
   )
 
@@ -820,12 +1022,15 @@ const renderProgressBar = () => (
           {renderProgressBar()}
           
           <View style={styles.content}>
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
-            {currentStep === 4 && renderStep4()}
+            {currentStep === 1 && renderIntroStep()}
+            {currentStep === 2 && renderStep1()}
+            {currentStep === 3 && renderStep2()}
+            {currentStep === 4 && renderStep3()}
+            {currentStep === 5 && renderStep4()}
+            {currentStep === 6 && renderStep5()}
           </View>
 
+          {currentStep < TOTAL_STEPS && (
           <View style={styles.buttonContainer}>
             {currentStep > 1 && (
               <TouchableOpacity 
@@ -833,32 +1038,33 @@ const renderProgressBar = () => (
                 onPress={() => setCurrentStep(currentStep - 1)}
               >
                 <Ionicons name="arrow-back" size={20} color="#FFD700" />
-                <Text style={styles.backButtonText}>Voltar</Text>
+                <Text style={styles.backButtonText}>{t('common.back')}</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity 
               style={[
                 styles.nextButton, 
-                (loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
+                (loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
               ]} 
               onPress={handleNext}
-              disabled={loading || (currentStep === 4 && !selectedLocation && !locationQuery.trim())}
+              disabled={loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())}
             >
               {loading ? (
-                <Text style={styles.nextButtonText}>Salvando...</Text>
+                <Text style={styles.nextButtonText}>{t('common.saving')}</Text>
               ) : (
                 <>
                   <Text style={styles.nextButtonText}>
-                    {currentStep === 4 ? 'Finalizar' : 'PrÃ³ximo'}
+                    {t('common.next')}
                   </Text>
                   <Ionicons name="arrow-forward" size={20} color="#000" />
                 </>
               )}
             </TouchableOpacity>
           </View>
+          )}
 
-          {/* BotÃ£o para voltar ao login */}
+          {/* Botão para voltar ao login */}
           <TouchableOpacity 
             style={styles.backToLoginButton} 
             onPress={async () => { await hardSignOut(); logout(); }}
@@ -933,6 +1139,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 40,
+  },
+  introCard: {
+    width: '100%',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3F3F46',
+    padding: 16,
+    marginBottom: 16,
+  },
+  introLine: {
+    color: '#E5E7EB',
+    fontSize: FONT_SIZES.md,
+    marginBottom: 8,
+  },
+  filterRow: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  filterTitle: {
+    color: '#FFD700',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  pillsContainer: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  filterPill: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#4B5563',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  filterPillActive: {
+    borderColor: '#FFD700',
+    backgroundColor: '#3A3220',
+  },
+  filterPillText: {
+    color: '#D1D5DB',
+    fontSize: FONT_SIZES.sm,
+  },
+  filterPillTextActive: {
+    color: '#FFD700',
+    fontWeight: '700',
   },
   dateButton: {
     flexDirection: 'row',
@@ -1063,7 +1317,7 @@ const styles = StyleSheet.create({
   suggestionsAbove: {
     marginTop: 0,
     marginBottom: 8,
-    // Sombra para destacar que estÃ¡ "flutuando" acima
+    // Sombra para destacar que está "flutuando" acima
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1212,6 +1466,20 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 8,
   },
+  secondaryActionButton: {
+    marginTop: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#4B5563',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#1E293B',
+  },
+  secondaryActionText: {
+    color: '#D1D5DB',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+  },
   backToLoginButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1242,6 +1510,8 @@ const styles = StyleSheet.create({
     minWidth: '100%',
   },
 })
+
+
 
 
 

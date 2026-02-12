@@ -24,6 +24,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserSettings } from '../../hooks/useUserSettings';
+import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 import SubscriptionPlansModal from '../../components/SubscriptionPlansModal';
@@ -58,6 +59,7 @@ interface SettingsItem {
 export default function SettingsScreen() {
   const { user, logout, deleteAccount: deleteUserAccount } = useAuth();
   const { settings: userSettings, updateSettings } = useUserSettings();
+  const { language, languages, setLanguage, t } = useAppLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
@@ -1292,6 +1294,30 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.language.title')}</Text>
+            <Text style={styles.sectionNote}>{t('settings.language.subtitle')}</Text>
+            <View style={styles.languagePills}>
+              {languages.map((item) => {
+                const active = item.code === language
+                return (
+                  <TouchableOpacity
+                    key={item.code}
+                    style={[styles.languagePill, active && styles.languagePillActive]}
+                    onPress={async () => {
+                      await setLanguage(item.code)
+                      Alert.alert('OK', t('settings.language.changed', { language: item.nativeLabel }))
+                    }}
+                  >
+                    <Text style={[styles.languagePillText, active && styles.languagePillTextActive]}>
+                      {item.nativeLabel}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </View>
+
           {notificationSection && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{notificationSection.title}</Text>
@@ -1546,6 +1572,32 @@ const styles = StyleSheet.create({
     color: '#b0b0b0',
     marginBottom: 10,
     paddingLeft: 5,
+  },
+  languagePills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  languagePill: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  languagePillActive: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.16)',
+  },
+  languagePillText: {
+    color: '#E5E7EB',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  languagePillTextActive: {
+    color: '#FFD700',
   },
   sectionContent: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
