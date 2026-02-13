@@ -83,6 +83,8 @@ export default function PremiumScreen() {
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
   const stripeReturnHandledRef = useRef(false)
+  const checkoutNoticeHandledRef = useRef(false)
+  const [checkoutNotice, setCheckoutNotice] = useState<{ type: 'success' | 'cancel' | 'pending' | 'failure'; message: string } | null>(null)
   const isPortuguese = language === 'pt-BR'
   const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>(isPortuguese ? 'mercadopago' : 'stripe')
   const usesStripePricing = !isPortuguese || subscriptionProvider === 'stripe'
@@ -133,6 +135,27 @@ export default function PremiumScreen() {
       setSubscriptionProvider('stripe')
     }
   }, [isPortuguese, subscriptionProvider])
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return
+    if (checkoutNoticeHandledRef.current) return
+    checkoutNoticeHandledRef.current = true
+
+    const params = new URLSearchParams(window.location.search || '')
+    const checkoutState = (params.get('checkout') || '').toLowerCase()
+    if (!checkoutState) return
+
+    const map: Record<string, { type: 'success' | 'cancel' | 'pending' | 'failure'; message: string }> = {
+      success: { type: 'success', message: tr('premium.checkout.success', 'Pagamento confirmado. Seu plano foi atualizado.') },
+      cancel: { type: 'cancel', message: tr('premium.checkout.cancel', 'Checkout cancelado. Você pode tentar novamente quando quiser.') },
+      failure: { type: 'failure', message: tr('premium.checkout.failure', 'Pagamento não aprovado. Revise os dados e tente novamente.') },
+      pending: { type: 'pending', message: tr('premium.checkout.pending', 'Pagamento pendente. Aguarde a confirmação do provedor.') },
+    }
+    if (map[checkoutState]) {
+      setCheckoutNotice(map[checkoutState])
+      setSelectedTab('features')
+    }
+  }, [])
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined' || !user?.uid) return
@@ -959,6 +982,22 @@ export default function PremiumScreen() {
           onPress={() => setSelectedTab('features')}
         />
       )}
+      {checkoutNotice && (
+        <View
+          style={[
+            styles.checkoutNotice,
+            checkoutNotice.type === 'success' && styles.checkoutNoticeSuccess,
+            checkoutNotice.type === 'cancel' && styles.checkoutNoticeCancel,
+            checkoutNotice.type === 'pending' && styles.checkoutNoticePending,
+            checkoutNotice.type === 'failure' && styles.checkoutNoticeFailure,
+          ]}
+        >
+          <Text style={styles.checkoutNoticeText}>{checkoutNotice.message}</Text>
+          <TouchableOpacity onPress={() => setCheckoutNotice(null)} style={styles.checkoutNoticeClose}>
+            <Ionicons name="close" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
@@ -1052,6 +1091,44 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 8,
+  },
+  checkoutNotice: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+  },
+  checkoutNoticeSuccess: {
+    backgroundColor: 'rgba(34,197,94,0.18)',
+    borderColor: 'rgba(34,197,94,0.6)',
+  },
+  checkoutNoticeCancel: {
+    backgroundColor: 'rgba(245,158,11,0.18)',
+    borderColor: 'rgba(245,158,11,0.6)',
+  },
+  checkoutNoticePending: {
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    borderColor: 'rgba(59,130,246,0.6)',
+  },
+  checkoutNoticeFailure: {
+    backgroundColor: 'rgba(239,68,68,0.18)',
+    borderColor: 'rgba(239,68,68,0.6)',
+  },
+  checkoutNoticeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    flex: 1,
+    paddingRight: 8,
+  },
+  checkoutNoticeClose: {
+    padding: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.14)',
   },
   activeTab: {
     backgroundColor: '#FFD700',
