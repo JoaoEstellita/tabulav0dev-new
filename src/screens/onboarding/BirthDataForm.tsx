@@ -56,6 +56,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const { logout, user } = useAuth()
   const { language, languages, setLanguage, t } = useAppLanguage()
   const { isLandscape } = useOrientation()
+  const isCompactMobile = !isDesktop() && !isTablet()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -1187,7 +1188,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
 const renderProgressBar = () => (
-    <View style={styles.progressContainer}>
+    <View style={[styles.progressContainer, isCompactMobile && styles.progressContainerCompact]}>
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${(currentStep / TOTAL_STEPS) * 100}%` }]} />
       </View>
@@ -1204,7 +1205,7 @@ const renderProgressBar = () => (
       >
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={[styles.scrollContainer, isCompactMobile && styles.scrollContainerCompact]}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -1213,7 +1214,7 @@ const renderProgressBar = () => (
           {renderProgressBar()}
           {renderCountryModal()}
           
-          <View style={styles.content}>
+          <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
             {currentStep === 1 && renderIntroStep()}
             {currentStep === 2 && renderStep1()}
             {currentStep === 3 && renderStep2()}
@@ -1223,7 +1224,7 @@ const renderProgressBar = () => (
           </View>
 
           {currentStep < TOTAL_STEPS && (
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
             {currentStep > 1 && (
               <TouchableOpacity 
                 style={styles.backButton} 
@@ -1258,7 +1259,7 @@ const renderProgressBar = () => (
 
           {/* Botão para voltar ao login */}
           <TouchableOpacity 
-            style={styles.backToLoginButton} 
+            style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]} 
             onPress={async () => { await hardSignOut(); logout(); }}
           >
             <Ionicons name="log-out-outline" size={16} color="#FFD700" />
@@ -1285,8 +1286,16 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: Platform.OS === 'android' ? 180 : 120,
   },
+  scrollContainerCompact: {
+    paddingTop: 32,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: Platform.OS === 'android' ? 160 : 100,
+  },
   progressContainer: {
     marginBottom: 40,
+  },
+  progressContainerCompact: {
+    marginBottom: 20,
   },
   progressBar: {
     height: 4,
@@ -1309,6 +1318,9 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'flex-start',
+  },
+  contentCompact: {
+    gap: 4,
   },
   stepContainer: {
     alignItems: 'center',
@@ -1744,6 +1756,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
+  buttonContainerCompact: {
+    marginTop: 14,
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1804,6 +1819,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFD700',
+  },
+  backToLoginButtonCompact: {
+    marginTop: 12,
   },
   backToLoginText: {
     color: '#FFD700',
