@@ -5,7 +5,7 @@
  * APIs Prokerala, matching de casais, anÃ¡lises profissionais
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator, Platform, Linking } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -22,6 +22,11 @@ import ExpiryBanner from '../../components/ExpiryBanner'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
+const STRIPE_USD_PRICE_BY_PLAN: Record<string, number> = {
+  essential_monthly: 9.9,
+  pro_monthly: 19.9,
+  premium_monthly: 39.9,
+}
 
 const HUB_ACTIONS: Record<string, { labelKey: string; descriptionKey: string; icon: string; cost: number }> = {
   birth: { labelKey: 'premium.actions.birth.label', icon: 'star', descriptionKey: 'premium.actions.birth.desc', cost: 1 },
@@ -77,8 +82,10 @@ export default function PremiumScreen() {
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const stripeReturnHandledRef = useRef(false)
   const isPortuguese = language === 'pt-BR'
   const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>(isPortuguese ? 'mercadopago' : 'stripe')
+  const usesStripePricing = !isPortuguese || subscriptionProvider === 'stripe'
   const expiryInfo = useMemo(() => {
     return getExpiryBannerInfo({
       featureLabel: tr('premium.header.title', 'Premium'),
@@ -126,6 +133,34 @@ export default function PremiumScreen() {
       setSubscriptionProvider('stripe')
     }
   }, [isPortuguese, subscriptionProvider])
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !user?.uid) return
+    if (stripeReturnHandledRef.current) return
+    const params = new URLSearchParams(window.location.search || '')
+    const provider = params.get('provider')
+    const checkoutState = params.get('checkout')
+    const sessionId = params.get('session_id')
+    if (provider !== 'stripe') return
+    stripeReturnHandledRef.current = true
+
+    const syncAndRefresh = async () => {
+      try {
+        if (sessionId) {
+          await StripeService.syncCheckoutSession(sessionId, user.uid)
+        }
+      } catch (syncError) {
+        console.warn('Stripe return sync failed:', syncError)
+      } finally {
+        // Recarrega status de assinatura apos retorno do checkout.
+        try {
+          const cleanedUrl = `${window.location.origin}/Tabs/Premium${checkoutState ? `?checkout=${encodeURIComponent(checkoutState)}` : ''}`
+          window.history.replaceState({}, '', cleanedUrl)
+        } catch {}
+      }
+    }
+    syncAndRefresh()
+  }, [user?.uid])
 
   const openExternalCheckout = async (url: string) => {
     const targetUrl = String(url || '').trim()
@@ -283,12 +318,13 @@ export default function PremiumScreen() {
         return
       }
       if (effectiveProvider === 'stripe') {
+        const stripeAmount = STRIPE_USD_PRICE_BY_PLAN[planConfig.id] ?? planConfig.price
         const stripeSession = await StripeService.createCheckoutSession({
           userId: user.uid,
           planId: planConfig.id,
           email: user.email || '',
           name: user.displayName || user.email || tr('common.user', 'Usuario'),
-          amount: planConfig.price,
+          amount: stripeAmount,
           currency: 'usd',
         })
         const stripeUrl = stripeSession?.url
@@ -738,7 +774,11 @@ export default function PremiumScreen() {
             <View style={styles.planHeader}>
               <Text style={styles.planName}>{plan.name}</Text>
               <Text style={styles.planPrice}>
-                {plan.price === 0 ? tr('premium.plans.free', 'Gratis') : `R$ ${(plan.price || 0).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`}
+                {plan.price === 0
+                  ? tr('premium.plans.free', 'Gratis')
+                  : usesStripePricing
+                    ? `US$ ${(STRIPE_USD_PRICE_BY_PLAN[plan.id] ?? plan.price).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`
+                    : `R$ ${(plan.price || 0).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`}
               </Text>
             </View>
             <View style={styles.planFeatures}>

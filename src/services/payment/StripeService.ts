@@ -53,8 +53,8 @@ export class StripeService {
   static async createCheckoutSession(payload: StripeCheckoutPayload): Promise<StripeCheckoutResponse> {
     const body = {
       ...payload,
-      successUrl: `${this.FRONTEND_URL}/payment/success?provider=stripe&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${this.FRONTEND_URL}/payment/failure?provider=stripe`,
+      successUrl: `${this.FRONTEND_URL}/Tabs/Premium?provider=stripe&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${this.FRONTEND_URL}/Tabs/Premium?provider=stripe&checkout=cancel`,
     }
     const response = await fetch(`${this.BACKEND_URL}/stripe/create-checkout-session`, {
       method: 'POST',

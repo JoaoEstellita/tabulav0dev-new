@@ -50,14 +50,20 @@ export interface SubscriptionStatus {
 
 export class MercadoPagoService {
   private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
-  private static readonly FRONTEND_URL = (process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br').replace(/\/$/, '')
+  private static readonly FRONTEND_URL = (() => {
+    const raw = String(
+      process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br',
+    ).trim()
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+    return withProtocol.replace(/\/$/, '')
+  })()
 
   private static buildBackUrls() {
     if (typeof window !== 'undefined') {
       return {
-        success: `${this.FRONTEND_URL}/payment/success`,
-        failure: `${this.FRONTEND_URL}/payment/failure`,
-        pending: `${this.FRONTEND_URL}/payment/pending`,
+        success: `${this.FRONTEND_URL}/Tabs/Premium?provider=mercadopago&checkout=success`,
+        failure: `${this.FRONTEND_URL}/Tabs/Premium?provider=mercadopago&checkout=failure`,
+        pending: `${this.FRONTEND_URL}/Tabs/Premium?provider=mercadopago&checkout=pending`,
       }
     }
     return {
