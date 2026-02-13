@@ -22,18 +22,26 @@ export class AstrologerPremiumService {
   private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
 
   private static async request<T>(path: string, token: string, body: Record<string, any>) {
-    const response = await fetch(`${this.BACKEND_URL}${path}`, {
-      method: 'POST',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body || {}),
-    })
+    const isCreditsEndpoint = path.startsWith('/premium/credits/')
+    let response: Response
+    try {
+      response = await fetch(`${this.BACKEND_URL}${path}`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body || {}),
+      })
+    } catch (networkError) {
+      if (isCreditsEndpoint) {
+        return { ok: false, data: { items: [] } } as PremiumResponse<T>
+      }
+      throw networkError
+    }
 
     const payload = await response.json().catch(() => ({}))
-    const isCreditsEndpoint = path.startsWith('/premium/credits/')
     if (response.status === 404 && isCreditsEndpoint) {
       // Em alguns deploys o backend premium/credits pode nao estar publicado.
       // Nao quebra UI; retorna payload vazio para telas de creditos/historico.
@@ -50,15 +58,23 @@ export class AstrologerPremiumService {
   }
 
   private static async requestGet<T>(path: string, token: string) {
-    const response = await fetch(`${this.BACKEND_URL}${path}`, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    const payload = await response.json().catch(() => ({}))
     const isCreditsEndpoint = path.startsWith('/premium/credits/')
+    let response: Response
+    try {
+      response = await fetch(`${this.BACKEND_URL}${path}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    } catch (networkError) {
+      if (isCreditsEndpoint) {
+        return { ok: false, data: { items: [] } } as PremiumResponse<T>
+      }
+      throw networkError
+    }
+    const payload = await response.json().catch(() => ({}))
     if (response.status === 404 && isCreditsEndpoint) {
       return { ok: false, data: { items: [] } } as PremiumResponse<T>
     }

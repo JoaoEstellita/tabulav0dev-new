@@ -42,7 +42,13 @@ export interface StripeSyncResponse {
 
 export class StripeService {
   private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
-  private static readonly FRONTEND_URL = (process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br').replace(/\/$/, '')
+  private static readonly FRONTEND_URL = (() => {
+    const raw = String(
+      process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br',
+    ).trim()
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+    return withProtocol.replace(/\/$/, '')
+  })()
 
   static async createCheckoutSession(payload: StripeCheckoutPayload): Promise<StripeCheckoutResponse> {
     const body = {

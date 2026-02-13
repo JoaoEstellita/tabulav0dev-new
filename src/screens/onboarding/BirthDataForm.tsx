@@ -476,7 +476,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const iso = toIsoDateFromDisplay(formatted)
     if (iso) {
       setFormData(prev => ({ ...prev, birthDate: iso }))
+      return
     }
+
+    // Se digitacao parcial/invalida, limpa valor canonico para validar corretamente no "Next".
+    setFormData(prev => ({ ...prev, birthDate: '' }))
   }
 
   const handleBirthTimeInput = (text: string) => {
@@ -491,7 +495,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const timeValue = toTimeFromDisplay(formatted)
     if (timeValue) {
       setFormData(prev => ({ ...prev, birthTime: timeValue }))
+      return
     }
+
+    // Se digitacao parcial/invalida, limpa valor canonico para validar corretamente no "Next".
+    setFormData(prev => ({ ...prev, birthTime: '' }))
   }
 
   const openDatePicker = () => {
@@ -636,17 +644,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const removePhoto = () => {
+    const clearPhoto = () => {
+      setFormData(prev => ({ ...prev, profilePhoto: '' }))
+      try { localStorage.removeItem('tempProfilePhoto') } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      // Em web, remove direto para evitar bloqueios/interferencia do confirm em alguns browsers/PWA.
+      clearPhoto()
+      return
+    }
+
     Alert.alert(t('onboarding.photo.removeTitle'), t('onboarding.photo.removeBody'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('onboarding.photo.removeCta'),
           style: 'destructive',
-          onPress: () => {
-            setFormData(prev => ({ ...prev, profilePhoto: '' }))
-            if (typeof window !== 'undefined') {
-              try { localStorage.removeItem('tempProfilePhoto') } catch {}
-            }
-          },
+          onPress: clearPhoto,
         },
       ])
   }
@@ -669,6 +683,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep3 = () => {
     if (!formData.birthDate) {
+      if (birthDateDisplay.trim().length > 0) {
+        Alert.alert(t('common.attention'), t('onboarding.validation.birthDateInvalid'))
+        return false
+      }
       Alert.alert(t('common.attention'), t('onboarding.validation.birthDateRequired'))
       return false
     }
@@ -677,6 +695,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep4 = () => {
     if (!formData.birthTime) {
+      if (birthTimeDisplay.trim().length > 0) {
+        Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeInvalid'))
+        return false
+      }
       Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeRequired'))
       return false
     }
