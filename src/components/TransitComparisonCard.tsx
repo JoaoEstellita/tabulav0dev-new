@@ -220,6 +220,19 @@ export default function TransitComparisonCard({
     return getPlanetImageUri(planetName as PlanetKey)
   }, [])
 
+const getSignFromDegree = React.useCallback((degree: number): string => {
+  const signs =
+    language === 'en-US'
+      ? ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+      : language === 'es-ES'
+      ? ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis']
+      : language === 'it-IT'
+      ? ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci']
+      : ['\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem', 'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes']
+  const signIndex = Math.floor(degree / 30) % 12
+  return signs[signIndex]
+}, [language])
+
   const formatSignLine = React.useCallback((longitude: number, isRetrograde?: boolean): string => {
     const signName = getSignFromDegree(longitude)
     const signSymbol = getSignSymbol(signName)
@@ -362,19 +375,6 @@ const getPlanetKeyword = React.useCallback((planet: string): string => {
   }
   return map[key] || tl('dinâmica central', 'core dynamic', 'dinámica central', 'dinamica centrale')
 }, [tl])
-
-const getSignFromDegree = React.useCallback((degree: number): string => {
-  const signs =
-    language === 'en-US'
-      ? ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
-      : language === 'es-ES'
-      ? ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis']
-      : language === 'it-IT'
-      ? ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci']
-      : ['\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem', 'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes']
-  const signIndex = Math.floor(degree / 30) % 12
-  return signs[signIndex]
-}, [language])
 
 const translateSignName = React.useCallback((value: string): string => {
   const decoded = decodeUnicodeEscapes(value)
