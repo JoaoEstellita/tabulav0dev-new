@@ -18,7 +18,7 @@ import TransitInsightCard from './TransitInsightCard'
 import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../utils/astroInterpretation'
+import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
@@ -260,24 +260,6 @@ const getTimingLabel = (transit: BackendTransit): string | null => {
   const peakLabel = formatRelativeDay(transit.peakAt)
   if (transit.phase === 'peak') return peakLabel ? `Pico ${peakLabel}` : 'Pico'
   return transit.phaseLabel ? transit.phaseLabel : null
-}
-
-const normalizeNarrativeText = (value: unknown): string =>
-  String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-const isGenericNarrativeText = (value: unknown): boolean => {
-  const normalized = normalizeNarrativeText(value)
-  if (!normalized) return true
-  return (
-    normalized.includes('fase de integracao e calibragem') ||
-    normalized.includes('momento de observacao') ||
-    normalized.includes('traz uma fase')
-  )
 }
 
 const normalizeAspectKey = (value: string): string => {
@@ -1628,13 +1610,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return null
   }
 
-  const buildTransitTitle = (transit: any, forcedKind?: 'planet' | 'house') => {
-    const columnKind = forcedKind || getTransitColumnKind(transit)
+  const buildTransitTitle = (transit: any, _forcedKind?: 'planet' | 'house') => {
     const transitPlanet = planetLabel(transit?.transitPlanet || tl('Transito', 'Transit', 'Transito', 'Transito'))
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
     const houseTarget = getTransitNatalHouseLabel(transit)
-    const currentHouse = getTransitCurrentHouseLabel(transit)
     const personalHouse = houseTarget || getTransitOnNatalHouseLabel(transit)
     const rawTarget =
       transit?.natalPlanet ||
@@ -1642,33 +1622,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.target?.angle ||
       (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? planetLabel(String(rawTarget)) : ''
-    let title = ''
-    if (columnKind === 'house') {
-      if (personalHouse) {
-        title = tl(
-          `${transitPlanet} em trânsito pessoal na Casa ${personalHouse}`,
-          `${transitPlanet} in personal transit in House ${personalHouse}`,
-          `${transitPlanet} en tránsito personal en la Casa ${personalHouse}`,
-          `${transitPlanet} in transito personale nella Casa ${personalHouse}`
-        )
-      } else {
-        title = buildSharedTransitTitle({
-          transitPlanet,
-          aspectLabel: aspect,
-          targetLabel: '',
-          houseNumber: currentHouse || null,
-          areaHouses: null,
-        }, language)
-      }
-    } else {
-      title = buildSharedTransitTitle({
-        transitPlanet,
-        aspectLabel: aspect,
-        targetLabel: target,
-        houseNumber: null,
-        areaHouses: null,
-      }, language)
-    }
+    let title = buildSharedTransitTitle({
+      transitPlanet,
+      aspectLabel: aspect,
+      targetLabel: target,
+      houseNumber: null,
+      areaHouses: null,
+    }, language)
     if (personalHouse) {
       const hasHouseToken = /(?:\bcasa\b|\bhouse\b)\s*\d+/i.test(String(title || ''))
       if (!hasHouseToken) {
@@ -1843,166 +1803,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return null
   }
 
-  const buildDirectText = (transit: any, suggestion: any) => {
-    const planetCoreKeywords: Record<string, string> = {
-      sun: tl('identidade, visibilidade e direção', 'identity, visibility and direction', 'identidad, visibilidad y direccion', 'identita, visibilita e direzione'),
-      moon: tl('emoções, necessidades e vínculo', 'emotions, needs and bonding', 'emociones, necesidades y vinculo', 'emozioni, bisogni e legame'),
-      mercury: tl('comunicação, ideias e decisões', 'communication, ideas and decisions', 'comunicacion, ideas y decisiones', 'comunicazione, idee e decisioni'),
-      venus: tl('afeto, prazer e valores', 'affection, pleasure and values', 'afecto, placer y valores', 'affetto, piacere e valori'),
-      mars: tl('ação, desejo e iniciativa', 'action, desire and initiative', 'accion, deseo e iniciativa', 'azione, desiderio e iniziativa'),
-      jupiter: tl('expansão, oportunidades e confiança', 'expansion, opportunities and confidence', 'expansion, oportunidades y confianza', 'espansione, opportunita e fiducia'),
-      saturn: tl('estrutura, limites e responsabilidade', 'structure, limits and responsibility', 'estructura, limites y responsabilidad', 'struttura, limiti e responsabilita'),
-      uranus: tl('mudança, ruptura e autonomia', 'change, rupture and autonomy', 'cambio, ruptura y autonomia', 'cambiamento, rottura e autonomia'),
-      neptune: tl('sensibilidade, imaginação e propósito', 'sensitivity, imagination and purpose', 'sensibilidad, imaginacion y proposito', 'sensibilita, immaginazione e scopo'),
-      pluto: tl('poder, transformação e controle', 'power, transformation and control', 'poder, transformacion y control', 'potere, trasformazione e controllo'),
-    }
-    const aspectIntentKeywords: Record<string, string> = {
-      trigono: tl('fluxo natural e apoio', 'natural flow and support', 'flujo natural y apoyo', 'flusso naturale e supporto'),
-      sextil: tl('abertura de oportunidade com iniciativa', 'opportunity opening with initiative', 'apertura de oportunidad con iniciativa', 'apertura di opportunita con iniziativa'),
-      conjuncao: tl('intensificação direta do tema', 'direct intensification of the theme', 'intensificacion directa del tema', 'intensificazione diretta del tema'),
-      quadratura: tl('tensão de ajuste e fricção prática', 'adjustment tension and practical friction', 'tension de ajuste y friccion practica', 'tensione di aggiustamento e frizione pratica'),
-      oposicao: tl('polarização e necessidade de equilíbrio', 'polarization and need for balance', 'polarizacion y necesidad de equilibrio', 'polarizzazione e necessita di equilibrio'),
-      quincuncio: tl('recalibragem e adaptação fina', 'recalibration and fine adaptation', 'recalibracion y adaptacion fina', 'ricalibrazione e adattamento fine'),
-      semiquadratura: tl('atrito sutil e ajuste progressivo', 'subtle friction and progressive adjustment', 'friccion sutil y ajuste progresivo', 'attrito sottile e aggiustamento progressivo'),
-      sesquiquadratura: tl('pressão intermitente e reposicionamento', 'intermittent pressure and repositioning', 'presion intermitente y reposicionamiento', 'pressione intermittente e riposizionamento'),
-      semissextil: tl('ajuste discreto e refinamento', 'discrete adjustment and refinement', 'ajuste discreto y refinamiento', 'aggiustamento discreto e rifinitura'),
-      harmonic: tl('integração favorável', 'favorable integration', 'integracion favorable', 'integrazione favorevole'),
-      tense: tl('pressão desafiadora', 'challenging pressure', 'presion desafiante', 'pressione impegnativa'),
-      neutral: tl('observação e calibração', 'observation and calibration', 'observacion y calibracion', 'osservazione e calibrazione'),
-    }
-    const houseKeywords: Record<string, string> = {
-      '1': tl('autoimagem, presença e iniciativa pessoal', 'self-image, presence and personal initiative', 'autoimagen, presencia e iniciativa personal', 'immagine di sé, presenza e iniziativa personale'),
-      '2': tl('recursos, segurança material e autoestima', 'resources, material security and self-worth', 'recursos, seguridad material y autoestima', 'risorse, sicurezza materiale e autostima'),
-      '3': tl('comunicação, estudos e trocas cotidianas', 'communication, studies and daily exchanges', 'comunicacion, estudios e intercambios cotidianos', 'comunicazione, studio e scambi quotidiani'),
-      '4': tl('base emocional, família e pertencimento', 'emotional base, family and belonging', 'base emocional, familia y pertenencia', 'base emotiva, famiglia e appartenenza'),
-      '5': tl('expressão criativa, prazer e romance', 'creative expression, pleasure and romance', 'expresion creativa, placer y romance', 'espressione creativa, piacere e romanticismo'),
-      '6': tl('rotina, trabalho diário e saúde', 'routine, daily work and health', 'rutina, trabajo diario y salud', 'routine, lavoro quotidiano e salute'),
-      '7': tl('parcerias, contratos e reciprocidade', 'partnerships, agreements and reciprocity', 'alianzas, acuerdos y reciprocidad', 'partnership, accordi e reciprocita'),
-      '8': tl('intimidade, partilhas e transformações profundas', 'intimacy, shared matters and deep transformations', 'intimidad, recursos compartidos y transformaciones profundas', 'intimita, risorse condivise e trasformazioni profonde'),
-      '9': tl('visão, expansão e sentido de vida', 'vision, expansion and meaning', 'vision, expansion y sentido de vida', 'visione, espansione e senso della vita'),
-      '10': tl('carreira, reputação e direção pública', 'career, reputation and public direction', 'carrera, reputacion y direccion publica', 'carriera, reputazione e direzione pubblica'),
-      '11': tl('redes, projetos coletivos e futuro', 'networks, collective projects and future', 'redes, proyectos colectivos y futuro', 'reti, progetti collettivi e futuro'),
-      '12': tl('fechamentos, bastidores e interioridade', 'closures, backstage and inner life', 'cierres, bastidores e interioridad', 'chiusure, retroscena e interiorita'),
-    }
-    const angleKeywords: Record<string, string> = {
-      ASC: tl('identidade e forma de agir', 'identity and way of acting', 'identidad y forma de actuar', 'identita e modo di agire'),
-      MC: tl('carreira e posicionamento público', 'career and public positioning', 'carrera y posicionamiento publico', 'carriera e posizionamento pubblico'),
-      DSC: tl('parcerias e dinâmica relacional', 'partnerships and relational dynamics', 'alianzas y dinamica relacional', 'partnership e dinamica relazionale'),
-      IC: tl('raízes, casa e base emocional', 'roots, home and emotional base', 'raices, hogar y base emocional', 'radici, casa e base emotiva'),
-    }
-
-    const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
-    const transitPlanetRaw = String(transit?.transitPlanet || '').trim()
-    const transitPlanetLabel = planetLabel(transitPlanetRaw || tl('Transito', 'Transit', 'Transito', 'Transito'))
-    const transitPlanetKey = normalizeNarrativeText(transitPlanetRaw)
-    const transitKeywords = planetCoreKeywords[transitPlanetKey] || tl('ação, ajuste e resposta prática', 'action, adjustment and practical response', 'accion, ajuste y respuesta practica', 'azione, aggiustamento e risposta pratica')
-
-    const targetRaw = String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || '').trim()
-    const targetNormalized = String(targetRaw).toUpperCase().replace(/^NATAL_/, '').replace(/^NATAL:/, '')
-    const targetLabel = targetRaw ? planetLabel(targetRaw) : null
-    const targetKey = normalizeNarrativeText(targetNormalized)
-    const targetKeywords =
-      planetCoreKeywords[targetKey] ||
-      angleKeywords[targetNormalized] ||
-      (targetNormalized.startsWith('HOUSE_') ? houseKeywords[String(targetNormalized.replace('HOUSE_', ''))] : '') ||
-      ''
-
-    const houseLabel = getTransitNatalHouseLabel(transit) || getTransitOnNatalHouseLabel(transit) || null
-    const houseText = houseLabel ? houseKeywords[String(houseLabel)] : ''
-    const aspectLabel = getAspectLabel(aspectType)
-    const aspectIntent = aspectIntentKeywords[aspectType] || tl('movimento de ajuste', 'adjustment movement', 'movimiento de ajuste', 'movimento di aggiustamento')
-
-    const firstSentence = targetLabel
-      ? tl(
-          `${transitPlanetLabel} em ${aspectLabel} com ${targetLabel} ativa ${aspectIntent}, trabalhando ${transitKeywords}.`,
-          `${transitPlanetLabel} in ${aspectLabel} with ${targetLabel} activates ${aspectIntent}, working on ${transitKeywords}.`,
-          `${transitPlanetLabel} en ${aspectLabel} con ${targetLabel} activa ${aspectIntent}, trabajando ${transitKeywords}.`,
-          `${transitPlanetLabel} in ${aspectLabel} con ${targetLabel} attiva ${aspectIntent}, lavorando su ${transitKeywords}.`
-        )
-      : tl(
-          `${transitPlanetLabel} ativa ${aspectIntent}, trazendo foco em ${transitKeywords}.`,
-          `${transitPlanetLabel} activates ${aspectIntent}, bringing focus to ${transitKeywords}.`,
-          `${transitPlanetLabel} activa ${aspectIntent}, llevando foco a ${transitKeywords}.`,
-          `${transitPlanetLabel} attiva ${aspectIntent}, portando focus su ${transitKeywords}.`
-        )
-    const secondParts = [
-      targetKeywords ? tl(`No alvo, mexe com ${targetKeywords}`, `In the target, it touches ${targetKeywords}`, `En el objetivo, toca ${targetKeywords}`, `Sul target, tocca ${targetKeywords}`) : null,
-      houseText ? tl(`na Casa ${houseLabel} destaca ${houseText}`, `in House ${houseLabel} highlights ${houseText}`, `en la Casa ${houseLabel} destaca ${houseText}`, `in Casa ${houseLabel} evidenzia ${houseText}`) : null
-    ]
-      .filter(Boolean)
-      .join(` ${tl('e', 'and', 'y', 'e')} `)
-    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : tl('esta área', 'this area', 'esta area', 'questa area')
-    const secondSentence = secondParts
-      ? tl(
-          `${secondParts}, com impacto direto em ${areaHint}.`,
-          `${secondParts}, with direct impact on ${areaHint}.`,
-          `${secondParts}, con impacto directo en ${areaHint}.`,
-          `${secondParts}, con impatto diretto su ${areaHint}.`
-        )
-      : tl(
-          `A leitura nesta fase pede escolhas objetivas em ${areaHint}.`,
-          `This phase calls for objective choices in ${areaHint}.`,
-          `Esta fase pide decisiones objetivas en ${areaHint}.`,
-          `Questa fase richiede scelte obiettive in ${areaHint}.`
-        )
-    return `${firstSentence} ${secondSentence}`.replace(/\s+/g, ' ').trim()
-  }
-
-  const buildFullInterpretationText = (transit: any, suggestion: any, directText: string) => {
-    const astroNarrative = buildAstroTransitNarrative(transit, areaData?.name || '', language)
-    const normalizedDirect = normalizeNarrativeText(directText)
-
-    if (!suggestion) {
-      const fallbackSegments = [
-        astroNarrative.fullText,
-        tl(
-          'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
-          'Use this influence as context to prioritize a practical decision and review your rhythm before expanding moves.',
-          'Usa esta influencia como contexto para priorizar una decisión práctica y revisar tu ritmo antes de ampliar movimientos.',
-          'Usa questa influenza come contesto per dare priorità a una decisione pratica e rivedere il tuo ritmo prima di ampliare i movimenti.'
-        ),
-      ].filter((segment) => {
-        const normalized = normalizeNarrativeText(segment)
-        return normalized && normalized !== normalizedDirect && !isGenericNarrativeText(segment)
-      })
-      return fallbackSegments.length
-        ? mergeNarrativeSegments(fallbackSegments, { exclude: [directText] }).join('\n\n')
-        : directText
-    }
-
-    const segments: string[] = []
-    const addSegment = (value: unknown, prefix = '') => {
-      const raw = String(value || '').trim()
-      if (!raw) return
-      const normalized = normalizeNarrativeText(raw)
-      if (!normalized || normalized === normalizedDirect || isGenericNarrativeText(raw)) return
-      const text = `${prefix}${raw}`
-      const normalizedText = normalizeNarrativeText(text)
-      const alreadyExists = segments.some((segment) => normalizeNarrativeText(segment) === normalizedText)
-      if (!alreadyExists) segments.push(text)
-    }
-    addSegment(astroNarrative.fullText)
-    addSegment(suggestion?.deep?.opening)
-    addSegment(suggestion?.deep?.astrologicalWhy)
-    addSegment(suggestion?.deep?.centralTension, `${tl('Tensão central', 'Central tension', 'Tensión central', 'Tensione centrale')}: `)
-
-    const guidance = Array.isArray(suggestion?.deep?.practicalGuidance)
-      ? suggestion.deep.practicalGuidance.filter(Boolean).slice(0, 4)
-      : []
-    if (guidance.length) {
-      addSegment(`${tl('Orientação prática', 'Practical guidance', 'Orientación práctica', 'Orientamento pratico')}:\n- ${guidance.join('\n- ')}`)
-    }
-
-    addSegment(suggestion?.deep?.reflectionPrompt, `${tl('Pergunta-chave', 'Key question', 'Pregunta clave', 'Domanda chiave')}: `)
-    addSegment(suggestion?.deep?.integrationNote)
-    addSegment(suggestion?.statusLink?.scoreEffectHint, `${tl('Conexão com score', 'Score link', 'Conexión con score', 'Connessione con punteggio')}: `)
-    addSegment(suggestion?.card?.bestUse, `${tl('Melhor uso', 'Best use', 'Mejor uso', 'Uso migliore')}: `)
-    addSegment(suggestion?.card?.timingHint, `${tl('Timing', 'Timing', 'Timing', 'Tempistica')}: `)
-
-    const merged = mergeNarrativeSegments(segments, { exclude: [directText] })
-    return merged.length ? merged.join('\n\n') : directText
-  }
-
   const renderTransitList = (
     items: Array<{ transit: any; facetKind: 'planet' | 'house' }>,
     startIndex = 0,
@@ -2031,11 +1831,25 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const relativeTiming = getTimingLabelLocalized(transit)
       const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
       const transitTitle = buildTransitTitle(transit, facetKind)
-      const houseLabel = facetKind === 'house' ? getTransitHouseLabel(transit) : null
-      const houseLabelPrefix = facetKind === 'house' ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
+      const houseLabel = getTransitHouseLabel(transit)
+      const houseLabelPrefix = houseLabel ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
       const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
       const suggestion = getSuggestionForTransit(transit)
-      const directText = buildDirectText(transit, suggestion)
+      const unifiedNarrative = buildUnifiedTransitNarrative(
+        {
+          transitPlanet: transit?.transitPlanet,
+          aspectName: transit?.aspectName || transit?.type || transit?.aspectType,
+          natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
+          target: transit?.target,
+          house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
+          transitHouse: transit?.transitHouse ?? transit?.currentHouse,
+          phase: transit?.phase,
+          applying: transit?.isApplying ?? transit?.applying,
+        },
+        areaData?.name || '',
+        language
+      )
+      const directText = unifiedNarrative.shortText
       const backendSuggestion =
         suggestion &&
         (typeof (suggestion as any)?.title === 'string' ||
@@ -2080,23 +1894,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           onOpenDetailModal={() =>
             setDetailView({
               title: transitTitle,
-              directText,
-              fullText: buildFullInterpretationText(transit, suggestion, directText),
-              actionText: actionText || null,
+              directText: unifiedNarrative.modalIntro,
+              fullText: unifiedNarrative.modalBody,
+              actionText: actionText || unifiedNarrative.actionText || null,
               metaText: metaLine || null,
               statusText,
               statusColor,
               timingLabel: timingLabel || null,
-              keywords: buildArchetypeKeywordsForTransit(
-                {
-                  transitPlanet: transit?.transitPlanet,
-                  aspectName: transit?.aspectName || transit?.type || transit?.aspectType,
-                  natalPlanet: transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle,
-                  house: transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse,
-                },
-                areaData?.name || '',
-                language
-              ),
+              keywords: unifiedNarrative.keywords,
             })
           }
           detailMode="modal"

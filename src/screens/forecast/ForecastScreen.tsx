@@ -21,7 +21,7 @@ import {
 import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
+import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -164,7 +164,7 @@ function buildEventTitle(event: ForecastEvent, language: AppLanguage = 'pt-BR') 
 
 function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
   const domain = (event.domains || []).map((item) => formatDomainLabel(item, language as AppLanguage)).slice(0, 1).join(', ')
-  const narrative = buildAstroTransitNarrative(
+  const narrative = buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -173,7 +173,7 @@ function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
     domain || 'previsoes',
     language
   )
-  return narrative.directText
+  return narrative.shortText
 }
 
 function buildActionHint(event: ForecastEvent) {
@@ -187,7 +187,7 @@ function buildActionHint(event: ForecastEvent) {
 }
 
 function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, language = 'pt-BR') {
-  const out: string[] = buildArchetypeKeywordsForTransit(
+  const out = buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -195,7 +195,7 @@ function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, la
     },
     (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage)).slice(0, 1).join(', '),
     language
-  )
+  ).keywords
   const add = (value?: string | null) => {
     const token = String(value || '').trim()
     if (!token) return
@@ -216,7 +216,7 @@ function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, la
 
 function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[], language = 'pt-BR') {
   const domains = (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage)).join(', ')
-  const narrative = buildAstroTransitNarrative(
+  const narrative = buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -226,7 +226,7 @@ function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[
     language
   )
   const detail = detailLines.length ? `Dados tecnicos: ${detailLines.join(' - ')}.` : ''
-  return mergeNarrativeSegments([narrative.fullText, detail], { exclude: [narrative.directText] }).join('\n\n')
+  return [narrative.modalBody, detail].filter(Boolean).join('\n\n')
 }
 
 function formatDomainLabel(domain: string, language: AppLanguage = 'pt-BR') {

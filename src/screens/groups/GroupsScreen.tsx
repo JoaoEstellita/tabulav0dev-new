@@ -33,7 +33,7 @@ import ExpiryBanner from "../../components/ExpiryBanner"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from "../../utils/astroInterpretation"
+import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 
 const LIFE_AREA_OPTIONS = [
@@ -919,7 +919,7 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
 
 const buildTransitKeywords = (transit: any, areaKey?: string) => {
   const areaLabel = areaKey ? (LIFE_AREA_LABELS[areaKey] || areaKey) : ""
-  const out = buildArchetypeKeywordsForTransit(
+  const out = buildUnifiedTransitNarrative(
     {
       transitPlanet: transit?.transitPlanet,
       aspectName: transit?.aspectName || transit?.type || transit?.aspectType,
@@ -928,7 +928,7 @@ const buildTransitKeywords = (transit: any, areaKey?: string) => {
     },
     areaLabel || "grupos",
     language
-  )
+  ).keywords
   return out.slice(0, 5)
 }
 
@@ -1024,8 +1024,8 @@ const buildTransitDirectText = (
   tr?: LocalizeFn
 ) => {
   const tx = tr || ((_k: string, fallback: string) => fallback)
-  const astroNarrative = buildAstroTransitNarrative(transit, areaLabel, language)
-  if (astroNarrative?.directText) return astroNarrative.directText
+  const unified = buildUnifiedTransitNarrative(transit, areaLabel, language)
+  if (unified?.shortText) return unified.shortText
 
   const normalizedFallback = String(fallbackText || "").toLowerCase()
   const isGenericFallback =
@@ -1973,7 +1973,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const directText = buildTransitDirectText(transit, areaLabel, suggestion?.text, areaCritical, tr)
                         const statusLabel = areaCritical && status.kind === "harmonic" ? tr('groups.status.relief', 'Alivio') : status.label
                         const statusColor = areaCritical && status.kind === "harmonic" ? "#0EA5E9" : status.color
-                        const astroNarrative = buildAstroTransitNarrative(transit, areaLabel, language)
+                        const unifiedNarrative = buildUnifiedTransitNarrative(transit, areaLabel, language)
                         const suggestionText = String(suggestion?.text || '').trim()
                         const normalizedSuggestion = suggestionText
                           .toLowerCase()
@@ -1982,8 +1982,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const shouldUseSuggestionText = suggestionText.length > 20
                           && !normalizedSuggestion.includes("fase de integracao e calibragem")
                           && !normalizedSuggestion.includes("momento de observacao")
-                        const fullLines = mergeNarrativeSegments([
-                          astroNarrative.fullText,
+                        const fullLines = [
+                          unifiedNarrative.modalBody,
                           shouldUseSuggestionText ? suggestionText : "",
                           suggestion?.title
                             ? tr('groups.member.focusTitle', 'Foco: {title}', { title: String(suggestion.title) })
@@ -1991,7 +1991,11 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           mainPlanets.length
                             ? tr('groups.member.basePlanets', 'Planetas de base: {planets}', { planets: mainPlanets.slice(0, 5).join(", ") })
                             : "",
-                        ], { exclude: [directText] })
+                        ].filter((line) => {
+                          const value = String(line || '').trim()
+                          if (!value) return false
+                          return value !== String(directText || '').trim()
+                        })
                         const orbText = Number.isFinite(transit?.orb)
                           ? tr('groups.member.orb', 'Orb {value}deg', { value: Number(transit.orb).toFixed(1) })
                           : ""
@@ -2013,8 +2017,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           fullLines,
                           actionText: suggestion?.title
                             ? String(suggestion.title)
-                            : tr('groups.member.adjustNextStep', 'Ajuste o proximo passo com foco e constancia.'),
-                          metaText: [orbText, impactText].filter(Boolean).join(" • "),
+                            : (unifiedNarrative.actionText || tr('groups.member.adjustNextStep', 'Ajuste o proximo passo com foco e constancia.')),
+                          metaText: [unifiedNarrative.metaText, orbText, impactText].filter(Boolean).join(" • "),
                           impactValue01: computeTransitImpactValue(transit, areaCritical),
                           keywords: buildTransitKeywords(transit, key),
                         }

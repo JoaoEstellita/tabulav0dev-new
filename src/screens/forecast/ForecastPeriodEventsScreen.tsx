@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
-import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
+import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import type { AppLanguage } from '../../i18n/appI18n'
 
@@ -97,7 +97,7 @@ function buildEventTitle(event: ForecastEvent, language: AppLanguage = 'pt-BR') 
 }
 
 function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
-  const narrative = buildAstroTransitNarrative(
+  const narrative = buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -106,11 +106,11 @@ function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
     'previsoes',
     language
   )
-  return narrative.directText
+  return narrative.shortText
 }
 
 function buildFullEventInterpretation(event: ForecastEvent, language = 'pt-BR') {
-  const narrative = buildAstroTransitNarrative(
+  const narrative = buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -119,7 +119,7 @@ function buildFullEventInterpretation(event: ForecastEvent, language = 'pt-BR') 
     'previsoes',
     language
   )
-  return mergeNarrativeSegments([narrative.fullText], { exclude: [narrative.directText] }).join('\n\n')
+  return narrative.modalBody
 }
 
 function buildTimingLabel(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
@@ -137,7 +137,7 @@ function buildTimingLabel(event: ForecastEvent, language: AppLanguage = 'pt-BR')
 }
 
 function buildEventKeywords(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
-  const out: string[] = buildArchetypeKeywordsForTransit(
+  return buildUnifiedTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
       aspectName: event.aspect,
@@ -145,18 +145,7 @@ function buildEventKeywords(event: ForecastEvent, language: AppLanguage = 'pt-BR
     },
     'previsoes',
     language
-  )
-  const add = (value?: string | null) => {
-    const token = String(value || '').trim()
-    if (!token) return
-    if (!out.some((item) => item.toLowerCase() === token.toLowerCase())) out.push(token)
-  }
-  add(String(event.transitPlanet || ''))
-  add(normalizeAspectLabel(event.aspect || ''))
-  add(String(event.natalPoint || ''))
-  add(impactLabel(event.impact, language))
-  add(buildTimingLabel(event, language))
-  return out.slice(0, 5)
+  ).keywords.slice(0, 5)
 }
 
 function eventPriorityScore(event: ForecastEvent) {

@@ -724,3 +724,76 @@ export function buildAstroTransitNarrative(
     fullText: fullParts.join('\n\n'),
   }
 }
+
+export type UnifiedTransitNarrative = {
+  shortText: string
+  modalIntro: string
+  modalBody: string
+  keywords: string[]
+  actionText: string
+  metaText: string
+}
+
+export function buildUnifiedTransitNarrative(
+  transit: AnyTransit,
+  areaLabel?: string | null,
+  language?: string | null
+): UnifiedTransitNarrative {
+  const lang = getLang(language)
+  const tx = I18N[lang]
+  const narrative = buildAstroTransitNarrative(transit, areaLabel, lang)
+  const keywords = buildArchetypeKeywordsForTransit(transit, areaLabel, lang)
+  const aspectKey = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
+  const aspectLabel = getAspectLabel(aspectKey, lang) || tx.transitWord.toLowerCase()
+  const aspectMeaning = getAspectMeaning(aspectKey, lang)
+  const house = getHouseNumber(transit)
+  const targetLabel = getTargetLabel(transit, lang)
+  const area = getAreaLabel(areaLabel, lang)
+  const transitPlanetRaw = String(transit?.transitPlanet || tx.transitWord)
+  const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
+  const phaseLabel = getPhaseLabel(transit, lang)
+  const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
+
+  const modalIntro = (() => {
+    if (house && aspectKey) {
+      if (lang === 'en-US') return `${transitPlanet} in ${aspectLabel} with ${targetLabel} activates House ${house} (${houseMeaning}) in ${area}.`
+      if (lang === 'es-ES') return `${transitPlanet} en ${aspectLabel} con ${targetLabel} activa la Casa ${house} (${houseMeaning}) en ${area}.`
+      if (lang === 'it-IT') return `${transitPlanet} in ${aspectLabel} con ${targetLabel} attiva la Casa ${house} (${houseMeaning}) in ${area}.`
+      return `${transitPlanet} em ${aspectLabel} com ${targetLabel} ativa a Casa ${house} (${houseMeaning}) em ${area}.`
+    }
+    if (aspectKey) {
+      if (lang === 'en-US') return `${transitPlanet} in ${aspectLabel} with ${targetLabel} activates ${aspectMeaning} in ${area}.`
+      if (lang === 'es-ES') return `${transitPlanet} en ${aspectLabel} con ${targetLabel} activa ${aspectMeaning} en ${area}.`
+      if (lang === 'it-IT') return `${transitPlanet} in ${aspectLabel} con ${targetLabel} attiva ${aspectMeaning} in ${area}.`
+      return `${transitPlanet} em ${aspectLabel} com ${targetLabel} ativa ${aspectMeaning} em ${area}.`
+    }
+    if (house) {
+      if (lang === 'en-US') return `${transitPlanet} activates House ${house} (${houseMeaning}) in ${area}.`
+      if (lang === 'es-ES') return `${transitPlanet} activa la Casa ${house} (${houseMeaning}) en ${area}.`
+      if (lang === 'it-IT') return `${transitPlanet} attiva la Casa ${house} (${houseMeaning}) in ${area}.`
+      return `${transitPlanet} ativa a Casa ${house} (${houseMeaning}) em ${area}.`
+    }
+    return narrative.directText
+  })()
+
+  const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
+  const metaParts = [
+    `${tx.phasePrefix}: ${phaseLabel}.`,
+    buildScoreLink(aspectKey, areaLabel, lang),
+  ]
+  const modalBody = mergeNarrativeSegments([
+    modalIntro,
+    narrative.fullText,
+    actionText,
+    ...metaParts,
+  ], { exclude: [narrative.directText] }).join('\n\n')
+
+  return {
+    shortText: narrative.directText,
+    modalIntro,
+    modalBody: modalBody || narrative.fullText || narrative.directText,
+    keywords,
+    actionText,
+    metaText: metaParts.join(' '),
+  }
+}
