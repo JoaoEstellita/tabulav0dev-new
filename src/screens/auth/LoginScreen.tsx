@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import {
   View,
   Text,
@@ -45,6 +45,7 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [authError, setAuthError] = useState("")
   const [languageModalVisible, setLanguageModalVisible] = useState(false)
+  const passwordRef = useRef<TextInput | null>(null)
   const { signIn, signUp, signInWithGoogle } = useAuth()
   const { t, language, languages, setLanguage } = useAppLanguage()
 
@@ -232,12 +233,15 @@ export default function LoginScreen() {
                   }}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
                 />
               </View>
 
               <View style={styles.inputContainer}>
                 <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
+                  ref={passwordRef}
                   style={styles.input}
                   placeholder={t("login.password")}
                   placeholderTextColor="#666"
@@ -247,24 +251,30 @@ export default function LoginScreen() {
                     if (authError) setAuthError("")
                   }}
                   secureTextEntry
+                  returnKeyType={isLogin ? "go" : "next"}
+                  onSubmitEditing={() => {
+                    if (isLogin) handleAuth()
+                  }}
                 />
               </View>
 
               {!isLogin && (
                 <View style={styles.inputContainer}>
                   <Ionicons name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder={t("login.confirmPassword")}
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("login.confirmPassword")}
                     placeholderTextColor="#666"
                     value={confirmPassword}
-                    onChangeText={(text) => {
-                      setConfirmPassword(text)
-                      if (authError) setAuthError("")
-                    }}
-                    secureTextEntry
-                  />
-                </View>
+                  onChangeText={(text) => {
+                    setConfirmPassword(text)
+                    if (authError) setAuthError("")
+                  }}
+                  secureTextEntry
+                  returnKeyType="go"
+                  onSubmitEditing={handleAuth}
+                />
+              </View>
               )}
 
               <TouchableOpacity

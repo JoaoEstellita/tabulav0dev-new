@@ -100,7 +100,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     if (!isoDate) return ''
     const parts = isoDate.split('-')
     if (parts.length !== 3) return isoDate
+    const order = getDateOrder()
+    if (order === 'MDY') return `${parts[1]}/${parts[2]}/${parts[0]}`
     return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+
+  const getDateOrder = (): 'DMY' | 'MDY' => {
+    const country = (formData.birthCountryCode || '').toUpperCase()
+    if (country === 'US') return 'MDY'
+    if (language === 'en-US' && !country) return 'MDY'
+    return 'DMY'
   }
 
   const formatDateInput = (value: string) => {
@@ -113,8 +122,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const toIsoDateFromDisplay = (value: string) => {
     const digits = value.replace(/\D/g, '')
     if (digits.length !== 8) return null
-    const day = parseInt(digits.slice(0, 2), 10)
-    const month = parseInt(digits.slice(2, 4), 10)
+    const order = getDateOrder()
+    const first = parseInt(digits.slice(0, 2), 10)
+    const second = parseInt(digits.slice(2, 4), 10)
+    const day = order === 'MDY' ? second : first
+    const month = order === 'MDY' ? first : second
     const year = parseInt(digits.slice(4, 8), 10)
     if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null
     if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) return null
@@ -630,6 +642,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }
 
   const validateStep2 = () => {
+    if (language !== 'pt-BR' && !formData.birthCountryCode) {
+      Alert.alert(t('common.attention'), t('onboarding.validation.countryRequired'))
+      return false
+    }
     if (!formData.fullName.trim()) {
       Alert.alert(t('common.attention'), t('onboarding.validation.nameRequired'))
       return false
@@ -987,7 +1003,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <TextInput
           ref={birthDateInputRef}
           style={styles.dateInput}
-          placeholder={t('onboarding.date.placeholder')}
+          placeholder={getDateOrder() === 'MDY' ? 'MM/DD/YYYY' : 'DD/MM/YYYY'}
           placeholderTextColor="#8E8E93"
           value={birthDateDisplay}
           onChangeText={handleBirthDateInput}
@@ -1002,9 +1018,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           }}
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
-        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
-          <Ionicons name="calendar-outline" size={20} color="#FFD700" />
-        </TouchableOpacity>
       </View>
 
       {showDatePicker && Platform.OS !== 'web' && (
@@ -1065,9 +1078,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           }}
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
-        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
-          <Ionicons name="time-outline" size={20} color="#FFD700" />
-        </TouchableOpacity>
       </View>
 
       {showTimePicker && Platform.OS !== 'web' && (
