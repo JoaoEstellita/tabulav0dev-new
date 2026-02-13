@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -86,6 +87,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [countryQuery, setCountryQuery] = useState('')
   const [countryOptions, setCountryOptions] = useState<CountryOption[]>([])
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const [countryModalVisible, setCountryModalVisible] = useState(false)
   const [searchingCountry, setSearchingCountry] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
   const [notificationsGranted, setNotificationsGranted] = useState(false)
@@ -771,58 +773,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       <View style={styles.filterRow}>
         <Text style={styles.filterTitle}>{t('onboarding.field.country')}</Text>
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowCountrySuggestions(true)}>
+        <TouchableOpacity
+          style={styles.countrySelectorButton}
+          onPress={() => {
+            setCountryModalVisible(true)
+            setShowCountrySuggestions(true)
+          }}
+        >
+          <View style={styles.countrySelectorLeft}>
             <Ionicons name="globe-outline" size={20} color="#FFD700" />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.locationInput}
-            placeholder={t('onboarding.field.country')}
-            placeholderTextColor="#8E8E93"
-            value={countryQuery}
-            onChangeText={(text) => {
-              setCountryQuery(text)
-              setShowCountrySuggestions(true)
-            }}
-            onFocus={() => setShowCountrySuggestions(true)}
-            onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
-          />
-          {searchingCountry ? (
-            <ActivityIndicator size="small" color="#FFD700" style={styles.searchIndicator} />
-          ) : (
-            <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowCountrySuggestions(true)}>
-              <Ionicons name="chevron-down" size={18} color="#FFD700" />
-            </TouchableOpacity>
-          )}
-        </View>
-        {showCountrySuggestions && countryOptions.length > 0 && (
-          <View style={styles.suggestionsContainer}>
-            <Text style={styles.suggestionsTitle}>{t('onboarding.field.country')}</Text>
-            <FlatList
-              data={countryOptions.slice(0, 20)}
-              keyExtractor={(item) => item.code}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.suggestionItem}
-                  onPress={() => {
-                    handleCountryChange(item)
-                  }}
-                >
-                  <Text style={styles.countrySuggestionFlag}>{item.flag}</Text>
-                  <Text style={styles.suggestionText}>{item.name}</Text>
-                  <Text style={styles.countryCodeText}>{item.code}</Text>
-                </TouchableOpacity>
-              )}
-            />
+            <Text style={styles.countrySelectorText}>
+              {selectedCountry
+                ? `${selectedCountry.flag} ${selectedCountry.name}`
+                : t('onboarding.field.country')}
+            </Text>
           </View>
-        )}
-        {showCountrySuggestions && !searchingCountry && countryQuery.length >= 2 && countryOptions.length === 0 && (
-          <View style={styles.emptyStateCard}>
-            <Ionicons name="search-outline" size={20} color="#FFD700" />
-            <Text style={styles.emptyStateText}>{t('onboarding.country.empty')}</Text>
-          </View>
-        )}
+          <Ionicons name="chevron-forward" size={18} color="#FFD700" />
+        </TouchableOpacity>
         {selectedCountry && (
           <Text style={styles.helperInlineText}>
             {t('onboarding.country.selected', { country: selectedCountry.name })}
@@ -864,6 +831,88 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       <Text style={styles.helpText}>{t('onboarding.profile.help')}</Text>
     </View>
+  )
+
+  const renderCountryModal = () => (
+    <Modal
+      visible={countryModalVisible}
+      animationType="slide"
+      transparent
+      onRequestClose={() => {
+        setCountryModalVisible(false)
+        setShowCountrySuggestions(false)
+      }}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <View style={styles.modalHeader}>
+            <View>
+              <Text style={styles.modalTitle}>{t('onboarding.field.country')}</Text>
+              <Text style={styles.modalSubtitle}>{t('onboarding.country.prompt')}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setCountryModalVisible(false)
+                setShowCountrySuggestions(false)
+              }}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={18} color="#FFD700" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TouchableOpacity style={styles.inputIconButton}>
+              <Ionicons name="search" size={20} color="#FFD700" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.locationInput}
+              placeholder={t('onboarding.field.country')}
+              placeholderTextColor="#8E8E93"
+              value={countryQuery}
+              onChangeText={(text) => {
+                setCountryQuery(text)
+                setShowCountrySuggestions(true)
+              }}
+              autoFocus
+            />
+            {searchingCountry ? (
+              <ActivityIndicator size="small" color="#FFD700" style={styles.searchIndicator} />
+            ) : null}
+          </View>
+
+          {countryOptions.length > 0 ? (
+            <FlatList
+              data={countryOptions.slice(0, 80)}
+              keyExtractor={(item) => item.code}
+              keyboardShouldPersistTaps="handled"
+              style={styles.modalList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    handleCountryChange(item)
+                    setCountryModalVisible(false)
+                    setShowCountrySuggestions(false)
+                  }}
+                >
+                  <Text style={styles.countrySuggestionFlag}>{item.flag}</Text>
+                  <Text style={styles.suggestionText}>{item.name}</Text>
+                  <Text style={styles.countryCodeText}>{item.code}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          ) : (
+            !searchingCountry && (
+              <View style={styles.emptyStateCard}>
+                <Ionicons name="search-outline" size={20} color="#FFD700" />
+                <Text style={styles.emptyStateText}>{t('onboarding.country.empty')}</Text>
+              </View>
+            )
+          )}
+        </View>
+      </View>
+    </Modal>
   )
 
   const renderStep2 = () => (
@@ -1113,6 +1162,7 @@ const renderProgressBar = () => (
         >
         <ResponsiveContainer style={styles.responsiveContent}>
           {renderProgressBar()}
+          {renderCountryModal()}
           
           <View style={styles.content}>
             {currentStep === 1 && renderIntroStep()}
@@ -1277,6 +1327,27 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 12,
     zIndex: 5,
+  },
+  countrySelectorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#2C2C2E',
+    borderWidth: 1,
+    borderColor: '#444',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    minHeight: 52,
+  },
+  countrySelectorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  countrySelectorText: {
+    color: '#FFFFFF',
+    fontSize: FONT_SIZES.md,
   },
   filterTitle: {
     color: '#FFD700',
@@ -1543,6 +1614,51 @@ const styles = StyleSheet.create({
     color: '#D1D5DB',
     fontSize: FONT_SIZES.sm,
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.58)',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+  modalCard: {
+    backgroundColor: '#161A2A',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.25)',
+    padding: 12,
+    maxHeight: '82%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    gap: 8,
+  },
+  modalTitle: {
+    color: '#F8FAFC',
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '800',
+  },
+  modalSubtitle: {
+    color: '#A0A0A0',
+    fontSize: FONT_SIZES.sm,
+    marginTop: 2,
+  },
+  modalCloseButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,215,0,0.08)',
+  },
+  modalList: {
+    maxHeight: 360,
   },
   pickerContainer: {
     backgroundColor: '#2C2C2E',
