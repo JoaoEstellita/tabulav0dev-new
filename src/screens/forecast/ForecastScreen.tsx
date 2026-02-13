@@ -10,7 +10,7 @@ import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import type { AppLanguage } from '../../i18n/appI18n'
+import { translate, type AppLanguage } from '../../i18n/appI18n'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
@@ -84,13 +84,6 @@ const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v2'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v2'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
-
-function labelFromScoreValue(score: number | null) {
-  if (typeof score !== 'number') return '--'
-  if (score < STATUS_THRESHOLDS.criticalBelow) return 'Critico'
-  if (score >= STATUS_THRESHOLDS.positiveAbove) return 'Positivo'
-  return 'Neutro'
-}
 
 function scoreColor(score: number) {
   if (score < STATUS_THRESHOLDS.criticalBelow) return '#FF6B6B'
@@ -170,7 +163,7 @@ function buildEventTitle(event: ForecastEvent, language: AppLanguage = 'pt-BR') 
 }
 
 function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
-  const domain = (event.domains || []).map((item) => formatDomainLabel(item)).slice(0, 1).join(', ')
+  const domain = (event.domains || []).map((item) => formatDomainLabel(item, language as AppLanguage)).slice(0, 1).join(', ')
   const narrative = buildAstroTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
@@ -200,7 +193,7 @@ function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, la
       aspectName: event.aspect,
       natalPlanet: event.natalPoint,
     },
-    (event.domains || []).map((d) => formatDomainLabel(d)).slice(0, 1).join(', '),
+    (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage)).slice(0, 1).join(', '),
     language
   )
   const add = (value?: string | null) => {
@@ -216,13 +209,13 @@ function buildEventKeywords(event: ForecastEvent, phaseLabel?: string | null, la
   add(natalPoint)
   add(impactLabel(event.impact))
   add(phaseLabel || null)
-  const domains = (event.domains || []).map((d) => formatDomainLabel(d))
+  const domains = (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage))
   domains.slice(0, 2).forEach((domain) => add(domain))
   return out.slice(0, 5)
 }
 
 function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[], language = 'pt-BR') {
-  const domains = (event.domains || []).map((d) => formatDomainLabel(d)).join(', ')
+  const domains = (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage)).join(', ')
   const narrative = buildAstroTransitNarrative(
     {
       transitPlanet: event.transitPlanet,
@@ -236,8 +229,12 @@ function buildFullEventInterpretation(event: ForecastEvent, detailLines: string[
   return mergeNarrativeSegments([narrative.fullText, detail], { exclude: [narrative.directText] }).join('\n\n')
 }
 
-function formatDomainLabel(domain: string) {
+function formatDomainLabel(domain: string, language: AppLanguage = 'pt-BR') {
   const key = normalizeLifeArea(domain) || String(domain || '').trim().toLowerCase()
+  if (key) {
+    const localized = translate(language, `lifeArea.${key}`)
+    if (localized !== `lifeArea.${key}`) return localized
+  }
   if (LIFE_AREA_LABELS[key]) return LIFE_AREA_LABELS[key]
   if (!key) return 'Area'
   return key.charAt(0).toUpperCase() + key.slice(1)
@@ -300,24 +297,19 @@ const MemoCalendar: any = React.memo(Calendar as any)
 const MemoAreaPill = React.memo(function MemoAreaPill({
   label,
   score,
+  statusText,
   active,
   color,
   onPress,
 }: {
   label: string
   score: number | null
+  statusText: string
   active: boolean
   color: string
   onPress: () => void
 }) {
   const value = typeof score === 'number' ? Math.round(score) : null
-  const statusText = value === null
-    ? '--'
-    : value < STATUS_THRESHOLDS.criticalBelow
-    ? 'Critico'
-    : value >= STATUS_THRESHOLDS.positiveAbove
-    ? 'Positivo'
-    : 'Moderado'
   const valueColor = value === null
     ? '#FFFFFF'
     : value < STATUS_THRESHOLDS.criticalBelow
@@ -377,6 +369,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards,
   selectedDomainKey,
   onSelectDomain,
+  resolveScoreLabel,
+  resolveDomainLabel,
   globalStatusLabel,
   noDataLabel,
 }: {
@@ -386,6 +380,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
   selectedDomainKey: string | null
   onSelectDomain: (domain: string | null) => void
+  resolveScoreLabel: (score: number | null) => string
+  resolveDomainLabel: (domain: string) => string
   globalStatusLabel: string
   noDataLabel: string
 }) {
@@ -411,7 +407,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
               {score}
             </Text>
             <Text style={[styles.dayScoreLabel, { color: scoreColor(score) }]}>
-              {' '}{labelFromScoreValue(score)}
+              {' '}{resolveScoreLabel(score)}
             </Text>
           </Text>
         </View>
@@ -423,7 +419,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
         <View style={styles.areaPillGrid}>
           {lifeAreaCards.map((item) => {
             const isActive = selectedDomainKey === item.domain
-            const label = formatDomainLabel(item.domain)
+            const label = resolveDomainLabel(item.domain)
             const color = getAreaColor(item.domain)
             return (
               <View
@@ -433,6 +429,7 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
                 <MemoAreaPill
                   label={label}
                   score={item.score}
+                  statusText={resolveScoreLabel(item.score)}
                   active={isActive}
                   color={color}
                   onPress={() => onSelectDomain(isActive ? null : item.domain)}
@@ -517,6 +514,19 @@ export default function ForecastScreen() {
       return value === key ? fallback : value
     },
     [t]
+  )
+  const resolveScoreLabel = useCallback(
+    (score: number | null) => {
+      if (typeof score !== 'number') return '--'
+      if (score < STATUS_THRESHOLDS.criticalBelow) return tr('forecast.status.critical', 'Critical')
+      if (score >= STATUS_THRESHOLDS.positiveAbove) return tr('forecast.status.positive', 'Positive')
+      return tr('forecast.status.moderate', 'Moderate')
+    },
+    [tr]
+  )
+  const resolveDomainLabel = useCallback(
+    (domain: string) => formatDomainLabel(domain, language),
+    [language]
   )
   const formatEventTimingLabel = useCallback(
     (label: string, delta: number) => {
@@ -793,7 +803,7 @@ export default function ForecastScreen() {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
-  const strongCountsByDate = useMemo(() => {
+  const positiveCountsByDate = useMemo(() => {
     if (Object.keys(countsFromStatusRange.strong).length) return countsFromStatusRange.strong
     if (data?.dailyBadges) {
       const map: Record<string, number> = {}
@@ -947,9 +957,9 @@ export default function ForecastScreen() {
     const isDisabled = state === 'disabled'
     const isToday = state === 'today'
     const criticalCount = dateKey ? criticalCountsByDate[dateKey] : 0
-    const strongCount = dateKey ? strongCountsByDate[dateKey] : 0
+    const positiveCount = dateKey ? positiveCountsByDate[dateKey] : 0
     const showCritical = typeof criticalCount === 'number' && criticalCount > 0
-    const showStrong = typeof strongCount === 'number' && strongCount > 0
+    const showPositive = typeof positiveCount === 'number' && positiveCount > 0
     return (
       <TouchableOpacity
         style={styles.dayCell}
@@ -967,23 +977,23 @@ export default function ForecastScreen() {
         >
           {date?.day}
         </Text>
-        {(showCritical || showStrong) && (
+        {(showCritical || showPositive) && (
           <View style={styles.dayBadges}>
             {showCritical && (
               <View style={styles.dayBadgeCritical}>
                 <Text style={styles.dayBadgeText}>{criticalCount}</Text>
               </View>
             )}
-            {showStrong && (
+            {showPositive && (
               <View style={styles.dayBadgeStrong}>
-                <Text style={styles.dayBadgeText}>{strongCount}</Text>
+                <Text style={styles.dayBadgeText}>{positiveCount}</Text>
               </View>
             )}
           </View>
         )}
       </TouchableOpacity>
     )
-  }, [criticalCountsByDate, data?.dailyBadges, handleCalendarPress, selectedDate, strongCountsByDate])
+  }, [criticalCountsByDate, data?.dailyBadges, handleCalendarPress, selectedDate, positiveCountsByDate])
 
 
   const formatEventAreas = useCallback((domains: string[]) => {
@@ -991,8 +1001,8 @@ export default function ForecastScreen() {
     const normalized = domains.map((domain) => normalizeLifeArea(domain)).filter(Boolean)
     const unique = Array.from(new Set(normalized))
     const ordered = LIFE_AREA_ORDER.filter((area) => unique.includes(area))
-    return ordered.map((area) => formatDomainLabel(area)).join(', ')
-  }, [])
+    return ordered.map((area) => formatDomainLabel(area, language)).join(', ')
+  }, [language])
 
   const buildEventDetailLines = useCallback((event: ForecastEvent, dateKey: string | null) => {
     if (!dateKey) return []
@@ -1381,6 +1391,8 @@ export default function ForecastScreen() {
               lifeAreaCards={lifeAreaCards}
               selectedDomainKey={selectedDomainKey}
               onSelectDomain={handleSelectDomain}
+              resolveScoreLabel={resolveScoreLabel}
+              resolveDomainLabel={resolveDomainLabel}
               globalStatusLabel={tr('forecast.globalStatus', 'Status Geral')}
               noDataLabel={tr('forecast.noDataForDay', 'Sem dados para o dia selecionado.')}
             />
@@ -1805,11 +1817,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 8,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#22C55E',
     alignItems: 'center',
   },
   dayBadgeText: {
-    color: '#0F0F23',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
   },

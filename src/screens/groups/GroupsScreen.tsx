@@ -1111,7 +1111,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         const bucket = mapPercentageToBucket(percentage ?? undefined)
         return {
           key,
-          label: LIFE_AREA_LABELS[key] || key,
+          label: lifeAreaLabel(key),
           percentage,
           bucket,
         }
