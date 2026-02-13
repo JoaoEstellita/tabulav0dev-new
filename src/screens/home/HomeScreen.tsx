@@ -131,48 +131,47 @@ type MoonDetails = {
 }
 
 export default function HomeScreen() {
-  try {
-    useAutoScheduleNotifications()
-    const { language, t } = useAppLanguage()
-    const tr = React.useCallback((key: string, fallback: string, vars?: Record<string, string | number>) => {
-      const value = t(key, vars as any)
-      return value === key ? fallback : value
-    }, [t])
-    const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
-      if (language === 'en-US') return en
-      if (language === 'es-ES') return es
-      if (language === 'it-IT') return it
-      return pt
-    }, [language])
-    const { user } = useAuth()
-    const navigation = useNavigation()
-    const { unreadCount } = useNotificationStore()
-    const {
-      transitData,
-      loading,
-      error,
-      refreshData,
-      backendLifeAreas,
-      backendCurrentTransits,
-      backendStatusPersonal,
-      localOverrideActive
-    } = useLifeAreas()
-    const { settings } = useUserSettings()
-    const { statusPersonal } = useTransits(null)
-    const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
-    const previousHouseSystemRef = useRef<HouseSystem | null>(null)
-    const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
-    const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
-    const [moonLine2, setMoonLine2] = useState<string | null>(null)
-    const [moonModalVisible, setMoonModalVisible] = useState(false)
-    const [moonDetails, setMoonDetails] = useState<MoonDetails>({
-      phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
-      phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
-      currentVoidLabel: tr('profile.moon.no', 'Nao'),
-      nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsao'),
-      upcomingPhases: [],
-    })
-    const moonPress = usePressScale()
+  useAutoScheduleNotifications()
+  const { language, t } = useAppLanguage()
+  const tr = React.useCallback((key: string, fallback: string, vars?: Record<string, string | number>) => {
+    const value = t(key, vars as any)
+    return value === key ? fallback : value
+  }, [t])
+  const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }, [language])
+  const { user } = useAuth()
+  const navigation = useNavigation()
+  const { unreadCount } = useNotificationStore()
+  const {
+    transitData,
+    loading,
+    error,
+    refreshData,
+    backendLifeAreas,
+    backendCurrentTransits,
+    backendStatusPersonal,
+    localOverrideActive
+  } = useLifeAreas()
+  const { settings } = useUserSettings()
+  const { statusPersonal } = useTransits(null)
+  const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
+  const previousHouseSystemRef = useRef<HouseSystem | null>(null)
+  const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
+  const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
+  const [moonLine2, setMoonLine2] = useState<string | null>(null)
+  const [moonModalVisible, setMoonModalVisible] = useState(false)
+  const [moonDetails, setMoonDetails] = useState<MoonDetails>({
+    phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
+    phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
+    currentVoidLabel: tr('profile.moon.no', 'Nao'),
+    nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsao'),
+    upcomingPhases: [],
+  })
+  const moonPress = usePressScale()
 
     // Garantir que o motor use o sistema salvo ao entrar na Home
     useEffect(() => {
@@ -777,20 +776,6 @@ export default function HomeScreen() {
         </Modal>
       </LinearGradient>
     )
-  } catch (error) {
-    console.error('?? ERRO CR\u00CDTICO NO HOMESCREEN:', error)
-    return (
-      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Ionicons name="warning" size={48} color="#EF4444" />
-          <Text style={styles.loadingText}>{tl('Carregando seus trÃ¢nsitos...', 'Loading your transits...', 'Cargando tus trÃ¡nsitos...', 'Caricamento dei tuoi transiti...')}</Text>
-          <Text style={styles.errorText}>
-            {error instanceof Error ? error.message : 'Erro desconhecido'}
-          </Text>
-        </View>
-      </LinearGradient>
-    )
-  }
 }
 
 const styles = StyleSheet.create({
