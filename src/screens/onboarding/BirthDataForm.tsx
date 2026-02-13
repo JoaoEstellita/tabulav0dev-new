@@ -610,16 +610,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         const asset = result.assets[0]
         console.log('📸 Foto selecionada:', asset.uri)
         
-        // Redimensionar a imagem para otimizar
+        // Redimensionar e converter para dataUrl para comportamento consistente
+        // entre mobile/web e melhor persistencia durante onboarding.
         const manipulatedImage = await ImageManipulator.manipulateAsync(
           asset.uri,
           [{ resize: { width: 300, height: 300 } }],
-          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
         )
+
+        const dataUrl = manipulatedImage.base64
+          ? `data:image/jpeg;base64,${manipulatedImage.base64}`
+          : manipulatedImage.uri
 
         setFormData(prev => ({
           ...prev,
-          profilePhoto: manipulatedImage.uri,
+          profilePhoto: dataUrl,
         }))
 
         console.log('✅ Foto processada e salva')
@@ -636,7 +641,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         {
           text: t('onboarding.photo.removeCta'),
           style: 'destructive',
-          onPress: () => setFormData(prev => ({ ...prev, profilePhoto: '' })),
+          onPress: () => {
+            setFormData(prev => ({ ...prev, profilePhoto: '' }))
+            if (typeof window !== 'undefined') {
+              try { localStorage.removeItem('tempProfilePhoto') } catch {}
+            }
+          },
         },
       ])
   }
@@ -876,7 +886,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         {formData.profilePhoto ? (
           <View style={styles.photoSelected}>
             <Image source={{ uri: formData.profilePhoto }} style={styles.profilePhoto} />
-            <TouchableOpacity style={styles.removePhotoButton} onPress={removePhoto}>
+            <TouchableOpacity style={styles.removePhotoButton} onPress={removePhoto} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="close-circle" size={24} color="#EF4444" />
             </TouchableOpacity>
           </View>
@@ -1581,10 +1591,13 @@ const styles = StyleSheet.create({
   },
   removePhotoButton: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: 8,
+    right: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 14,
+    padding: 2,
+    zIndex: 20,
+    elevation: 6,
   },
   nameInput: {
     flex: 1,
