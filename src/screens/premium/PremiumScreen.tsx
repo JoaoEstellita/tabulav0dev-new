@@ -157,6 +157,26 @@ export default function PremiumScreen() {
     }
   }, [])
 
+  const cleanupCheckoutUrlParams = () => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('provider')
+      url.searchParams.delete('checkout')
+      url.searchParams.delete('session_id')
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (!checkoutNotice) return
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return
+    const timer = setTimeout(() => {
+      cleanupCheckoutUrlParams()
+    }, 4500)
+    return () => clearTimeout(timer)
+  }, [checkoutNotice])
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined' || !user?.uid) return
     if (stripeReturnHandledRef.current) return
@@ -993,7 +1013,13 @@ export default function PremiumScreen() {
           ]}
         >
           <Text style={styles.checkoutNoticeText}>{checkoutNotice.message}</Text>
-          <TouchableOpacity onPress={() => setCheckoutNotice(null)} style={styles.checkoutNoticeClose}>
+          <TouchableOpacity
+            onPress={() => {
+              setCheckoutNotice(null)
+              cleanupCheckoutUrlParams()
+            }}
+            style={styles.checkoutNoticeClose}
+          >
             <Ionicons name="close" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
