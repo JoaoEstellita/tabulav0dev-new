@@ -290,7 +290,7 @@ export default function HomeScreen() {
         loadLunarCalendar()
         initializeNotifications()
       }
-    }, [user])
+    }, [user, language, settings?.timezone])
 
     // Toast simples ao reprocessar casas natais
     useEffect(() => {

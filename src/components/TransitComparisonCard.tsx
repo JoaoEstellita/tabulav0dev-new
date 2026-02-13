@@ -548,12 +548,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     if (exactDate && !Number.isNaN(exactDate.getTime())) {
       const nowDay = toDayStart(now).getTime()
       const exactDay = toDayStart(exactDate).getTime()
-      if (nowDay === exactDay) phaseLabel = 'Pico'
-      else if (nowDay < exactDay) phaseLabel = 'Em aprox'
-      else phaseLabel = 'Afastando'
+      if (nowDay === exactDay) phaseLabel = 'peak'
+      else if (nowDay < exactDay) phaseLabel = 'approaching'
+      else phaseLabel = 'moving'
       daysToPeak = daysDiff(now, exactDate)
     } else if (startDate && !Number.isNaN(startDate.getTime())) {
-      phaseLabel = now.getTime() < startDate.getTime() ? 'Em aprox' : 'Afastando'
+      phaseLabel = now.getTime() < startDate.getTime() ? 'approaching' : 'moving'
       daysToPeak = now.getTime() < startDate.getTime() ? daysDiff(now, startDate) : null
     }
     return {
@@ -577,7 +577,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     } | null) => {
       if (!windowInfo) return tl('Em curso', 'In progress', 'En curso', 'In corso')
       const parts: string[] = []
-      if (windowInfo.phaseLabel === 'Em aprox') {
+      if (windowInfo.phaseLabel === 'approaching' || windowInfo.phaseLabel === 'Em aprox') {
         const lead = typeof windowInfo.daysToPeak === 'number' ? windowInfo.daysToPeak : windowInfo.days
         parts.push(
           typeof lead === 'number'
@@ -586,9 +586,9 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         )
       } else if (windowInfo.phaseLabel) {
         const mapped =
-          windowInfo.phaseLabel === 'Pico'
+          windowInfo.phaseLabel === 'peak' || windowInfo.phaseLabel === 'Pico'
             ? tl('Pico', 'Peak', 'Pico', 'Picco')
-            : windowInfo.phaseLabel === 'Afastando'
+            : windowInfo.phaseLabel === 'moving' || windowInfo.phaseLabel === 'Afastando'
             ? tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
             : windowInfo.phaseLabel
         parts.push(mapped)
@@ -1052,7 +1052,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     house?: number | null
     days?: number | null
     phase?: string | null
-    scope: 'pessoal' | 'coletivo' | 'casa'
+    scope: 'personal' | 'collective' | 'house'
   }) => {
     const keyword = getPlanetKeyword(params.planet)
     const houseFocus = params.house ? getHouseFocus(params.house) || `${tl('temas da', 'themes of', 'temas de la', 'temi della')} ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('contexto atual', 'current context', 'contexto actual', 'contesto attuale')
@@ -1065,11 +1065,20 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       ? tl('tensão produtiva pedindo ajuste de rota', 'productive tension requiring route adjustment', 'tensión productiva que pide ajuste de rumbo', 'tensione produttiva che richiede un aggiustamento di rotta')
       : tl('movimento de recalibração gradual', 'gradual recalibration movement', 'movimiento de recalibración gradual', 'movimento di ricalibrazione graduale')
     const windowLabel = params.days ? tl(`em uma janela de cerca de ${params.days} dias`, `within a window of about ${params.days} days`, `en una ventana de unos ${params.days} días`, `in una finestra di circa ${params.days} giorni`) : tl('neste ciclo', 'in this cycle', 'en este ciclo', 'in questo ciclo')
-    const phaseLabel = params.phase ? tl(` Fase atual: ${params.phase}.`, ` Current phase: ${params.phase}.`, ` Fase actual: ${params.phase}.`, ` Fase attuale: ${params.phase}.`) : ''
+    const phaseKey = normalizeKey(String(params.phase || ''))
+    const phaseText =
+      phaseKey === 'peak'
+        ? tl('Peak', 'Peak', 'Pico', 'Picco')
+        : phaseKey === 'approaching' || phaseKey === 'emaprox' || phaseKey === 'enaprox'
+        ? tl('Em aproximação', 'Approaching', 'En aproximación', 'In avvicinamento')
+        : phaseKey === 'moving' || phaseKey === 'afastando' || phaseKey === 'alejandose'
+        ? tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
+        : (params.phase || '')
+    const phaseLabel = phaseText ? tl(` Fase atual: ${phaseText}.`, ` Current phase: ${phaseText}.`, ` Fase actual: ${phaseText}.`, ` Fase attuale: ${phaseText}.`) : ''
     const scopeLabel =
-      params.scope === 'pessoal'
+      params.scope === 'personal'
         ? tl('No plano pessoal,', 'On a personal level,', 'En el plano personal,', 'Nel piano personale,')
-        : params.scope === 'coletivo'
+        : params.scope === 'collective'
         ? tl('No plano coletivo,', 'On a collective level,', 'En el plano colectivo,', 'Nel piano collettivo,')
         : tl('No eixo de casas,', 'In the house axis,', 'En el eje de casas,', 'Nell asse delle case,')
 
@@ -1217,7 +1226,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>Tábula Estelar</Text>
+            <Text style={styles.sectionTitle}>{tl('Tábula Estelar', 'Star Board', 'Tabula Estelar', 'Tabula Stellare')}</Text>
           </View>
           <View style={styles.systemBadge}>
             <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem, language)}</Text>
@@ -1442,7 +1451,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     house: comparison.current.house,
                     days: windowInfo?.days || null,
                     phase: windowInfo?.phaseLabel || null,
-                    scope: 'pessoal'
+                    scope: 'personal'
                   })
                   return (
                     <View key={idx} style={styles.aspectItem}>
@@ -1497,7 +1506,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     house: comparison.current.house,
                     days: windowInfo?.days || null,
                     phase: windowInfo?.phaseLabel || null,
-                    scope: 'coletivo'
+                    scope: 'collective'
                   })
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
@@ -1552,7 +1561,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     house: houseAspect.house,
                     days: windowInfo?.days || null,
                     phase: windowInfo?.phaseLabel || null,
-                    scope: 'casa'
+                    scope: 'house'
                   })
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>

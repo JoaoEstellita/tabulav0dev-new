@@ -1,25 +1,27 @@
-export type AspectType = 'conjuncao' | 'sextil' | 'quadratura' | 'trigono' | 'oposicao'
+﻿export type AspectType = 'conjuncao' | 'sextil' | 'quadratura' | 'trigono' | 'oposicao'
 export type AppLanguage = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
-const PLANET_PT: Record<string, string> = {
-  sun: 'Sol',
-  moon: 'Lua',
-  mercury: 'Merc\u00FArio',
-  venus: 'V\u00EAnus',
-  mars: 'Marte',
-  jupiter: 'J\u00FApiter',
-  saturn: 'Saturno',
-  uranus: 'Urano',
-  neptune: 'Netuno',
-  pluto: 'Plut\u00E3o',
-  chiron: 'Quiron',
-  lilith: 'Lilith',
-  northnode: 'Nodo Norte',
-  southnode: 'Nodo Sul',
-}
-
 const PLANET_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
-  'pt-BR': PLANET_PT,
+  'pt-BR': {
+    sun: 'Sol',
+    moon: 'Lua',
+    mercury: 'Mercurio',
+    venus: 'Venus',
+    mars: 'Marte',
+    jupiter: 'Jupiter',
+    saturn: 'Saturno',
+    uranus: 'Urano',
+    neptune: 'Netuno',
+    pluto: 'Plutao',
+    chiron: 'Quiron',
+    lilith: 'Lilith',
+    northnode: 'Nodo Norte',
+    southnode: 'Nodo Sul',
+    asc: 'Ascendente',
+    dc: 'Descendente',
+    mc: 'Meio do Ceu',
+    ic: 'Fundo do Ceu',
+  },
   'en-US': {
     sun: 'Sun',
     moon: 'Moon',
@@ -35,6 +37,10 @@ const PLANET_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     lilith: 'Lilith',
     northnode: 'North Node',
     southnode: 'South Node',
+    asc: 'Ascendant',
+    dc: 'Descendant',
+    mc: 'Midheaven',
+    ic: 'Imum Coeli',
   },
   'es-ES': {
     sun: 'Sol',
@@ -42,15 +48,19 @@ const PLANET_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     mercury: 'Mercurio',
     venus: 'Venus',
     mars: 'Marte',
-    jupiter: 'Júpiter',
+    jupiter: 'Jupiter',
     saturn: 'Saturno',
     uranus: 'Urano',
     neptune: 'Neptuno',
-    pluto: 'Plutón',
-    chiron: 'Quirón',
+    pluto: 'Pluton',
+    chiron: 'Quiron',
     lilith: 'Lilith',
     northnode: 'Nodo Norte',
     southnode: 'Nodo Sur',
+    asc: 'Ascendente',
+    dc: 'Descendente',
+    mc: 'Medio Cielo',
+    ic: 'Fondo del Cielo',
   },
   'it-IT': {
     sun: 'Sole',
@@ -67,7 +77,67 @@ const PLANET_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     lilith: 'Lilith',
     northnode: 'Nodo Nord',
     southnode: 'Nodo Sud',
+    asc: 'Ascendente',
+    dc: 'Discendente',
+    mc: 'Medio Cielo',
+    ic: 'Fondo Cielo',
   },
+}
+
+const PLANET_ALIASES_TO_CANONICAL: Record<string, string> = {
+  sun: 'sun',
+  sol: 'sun',
+  sole: 'sun',
+  moon: 'moon',
+  lua: 'moon',
+  luna: 'moon',
+  mercury: 'mercury',
+  mercurio: 'mercury',
+  venus: 'venus',
+  mars: 'mars',
+  marte: 'mars',
+  jupiter: 'jupiter',
+  giove: 'jupiter',
+  saturn: 'saturn',
+  saturno: 'saturn',
+  uranus: 'uranus',
+  urano: 'uranus',
+  neptune: 'neptune',
+  netuno: 'neptune',
+  neptuno: 'neptune',
+  nettuno: 'neptune',
+  pluto: 'pluto',
+  plutao: 'pluto',
+  pluton: 'pluto',
+  plutone: 'pluto',
+  chiron: 'chiron',
+  quiron: 'chiron',
+  chirone: 'chiron',
+  lilith: 'lilith',
+  northnode: 'northnode',
+  'nodo norte': 'northnode',
+  southnode: 'southnode',
+  'nodo sul': 'southnode',
+  'nodo sur': 'southnode',
+  asc: 'asc',
+  ascendente: 'asc',
+  ascendant: 'asc',
+  dc: 'dc',
+  descendant: 'dc',
+  descendente: 'dc',
+  discendente: 'dc',
+  mc: 'mc',
+  midheaven: 'mc',
+  'meio do ceu': 'mc',
+  meiodoceu: 'mc',
+  'medio cielo': 'mc',
+  ic: 'ic',
+  'imum coeli': 'ic',
+  imumcoeli: 'ic',
+  'fundo do ceu': 'ic',
+  fundodoceu: 'ic',
+  'fondo del cielo': 'ic',
+  'fondo cielo': 'ic',
 }
 
 const ASPECT_SYMBOL: Record<AspectType, string> = {
@@ -83,6 +153,7 @@ const normalizeText = (value: string): string =>
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .trim()
 
 export function decodeUnicodeEscapes(value: string): string {
   return String(value || '').replace(/\\u([0-9a-fA-F]{4})/g, (_match, code) =>
@@ -91,16 +162,15 @@ export function decodeUnicodeEscapes(value: string): string {
 }
 
 export function translatePlanetPT(name: string): string {
-  const decoded = decodeUnicodeEscapes(name)
-  const key = normalizeText(decoded)
-  return PLANET_PT[key] || decoded
+  return translatePlanet(name, 'pt-BR')
 }
 
 export function translatePlanet(name: string, language: AppLanguage = 'pt-BR'): string {
   const decoded = decodeUnicodeEscapes(name)
-  const key = normalizeText(decoded)
-  const dictionary = PLANET_BY_LANGUAGE[language] || PLANET_PT
-  return dictionary[key] || PLANET_PT[key] || decoded
+  const normalized = normalizeText(decoded)
+  const key = PLANET_ALIASES_TO_CANONICAL[normalized] || normalized
+  const dictionary = PLANET_BY_LANGUAGE[language] || PLANET_BY_LANGUAGE['pt-BR']
+  return dictionary[key] || PLANET_BY_LANGUAGE['pt-BR'][key] || decoded
 }
 
 export function getAspectSymbol(type: string): string {
@@ -136,7 +206,7 @@ export function formatPeakETA(window?: { start?: string | Date; exact?: string |
   const days = Math.floor(abs / (24 * 60 * 60 * 1000))
   const hours = Math.floor((abs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
   const label = days > 0 ? `${days}d` : `${hours}h`
-  return sign >= 0 ? `pico em ${label}` : `pico há ${label}`
+  return sign >= 0 ? `pico em ${label}` : `pico ha ${label}`
 }
 
 export function aspectNature(type: string): 'harmonico' | 'desafiador' | 'conjuncao' | 'outro' {
@@ -155,6 +225,3 @@ export function windowsIntersect(a?: { start?: any; end?: any }, b?: { start?: a
   const be = new Date(b.end).getTime()
   return as <= be && ae >= bs
 }
-
-
-

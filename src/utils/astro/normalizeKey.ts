@@ -3,4 +3,5 @@ export function normalizeKey(value: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .trim()
 }

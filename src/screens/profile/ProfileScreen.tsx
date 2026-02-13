@@ -170,7 +170,7 @@ export default function ProfileScreen() {
     if (user) {
       loadLunarCalendar()
     }
-  }, [user])
+  }, [user, language, settings?.timezone])
 
   const normalizePhaseLabel = (raw?: string | null) => {
     if (!raw) return ""

@@ -21,6 +21,7 @@ import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPr
 import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../utils/astroInterpretation'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { useAppLanguage } from '../hooks/useAppLanguage'
+import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v1'
@@ -576,6 +577,24 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     if (language === 'es-ES') return es
     if (language === 'it-IT') return it
     return pt
+  }, [language])
+  const getAspectLabel = React.useCallback((type: string): string => {
+    const normalized = normalizeAspectKey(type)
+    if (normalized === 'harmonic') return tl('harmônico', 'harmonic', 'armonico', 'armonico')
+    if (normalized === 'tense') return tl('desafiador', 'challenging', 'desafiante', 'impegnativo')
+    if (normalized === 'neutral') return tl('neutro', 'neutral', 'neutro', 'neutro')
+    if (normalized === 'trigono') return tl('trígono', 'trine', 'trígono', 'trigono')
+    if (normalized === 'sextil') return tl('sextil', 'sextile', 'sextil', 'sestile')
+    if (normalized === 'quadratura') return tl('quadratura', 'square', 'cuadratura', 'quadratura')
+    if (normalized === 'oposicao') return tl('oposição', 'opposition', 'oposición', 'opposizione')
+    if (normalized === 'quincuncio') return tl('quincúncio', 'quincunx', 'quincuncio', 'quinconce')
+    if (normalized === 'semiquadratura') return tl('semiquadratura', 'semisquare', 'semi-cuadratura', 'semiquadratura')
+    if (normalized === 'sesquiquadratura') return tl('sesquiquadratura', 'sesquiquadrate', 'sesquicuadratura', 'sesquiquadratura')
+    if (normalized === 'semissextil') return tl('semissextil', 'semisextile', 'semisextil', 'semisestile')
+    return String(type || '')
+  }, [tl])
+  const planetLabel = React.useCallback((value: unknown) => {
+    return translatePlanetLabel(String(value || ''), language)
   }, [language])
 
   const [showTechnical, setShowTechnical] = React.useState(false)
@@ -1264,10 +1283,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       .filter((planet) => safeNumber(planet.dignityScore) > 0)
       .sort((a, b) => safeNumber(b.dignityScore) - safeNumber(a.dignityScore))
     const topDignitySummary = topDignityPlanets
-      .map((planet) => `${translate('planets', planet.planet)} (+${safeNumber(planet.dignityScore)})`)
+      .map((planet) => `${planetLabel(planet.planet)} (+${safeNumber(planet.dignityScore)})`)
       .join(', ')
     const topDignityReasons = topDignityPlanets
-      .map((planet) => `${translate('planets', planet.planet)}: ${planet.dignityReason}`)
+      .map((planet) => `${planetLabel(planet.planet)}: ${planet.dignityReason}`)
       .join(' | ')
     const topTransitSignals = [...transitItems]
       .sort((a, b) => Math.abs(safeNumber(b.impact, 0)) - Math.abs(safeNumber(a.impact, 0)))
@@ -1275,10 +1294,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         const tone = getTransitToneCategory(transit)
         const targetRaw =
           transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || getTransitNatalHouseLabel(transit)
-        const targetLabel = targetRaw ? translate('planets', String(targetRaw)) : null
+        const targetLabel = targetRaw ? planetLabel(String(targetRaw)) : null
         const aspectLabel = getAspectLabel(String(transit?.aspectName || transit?.type || ''))
         const title = targetLabel
-          ? `${translate('planets', transit?.transitPlanet)} ${aspectLabel} ${targetLabel}`
+          ? `${planetLabel(transit?.transitPlanet)} ${aspectLabel} ${targetLabel}`
           : buildTransitTitle(transit, getTransitColumnKind(transit))
         return {
           title,
@@ -1308,7 +1327,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       .map((aspect) => {
         const normalized = normalizeAspectKey(aspect.type)
         return {
-          title: `${translate('planets', aspect.planet)} ${getAspectLabel(aspect.type)} ${translate('planets', aspect.with)}`,
+          title: `${planetLabel(aspect.planet)} ${getAspectLabel(aspect.type)} ${planetLabel(aspect.with)}`,
           meta: `Orb ${safeFixed(aspect.orb)}°`,
           value: `${safeFixed(aspect.score, 1)}`,
           icon: 'git-compare-outline',
@@ -1329,7 +1348,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       .filter((planet) => safeNumber(planet.houseScore, 0) > 0)
       .sort((a, b) => safeNumber(b.houseScore, 0) - safeNumber(a.houseScore, 0))
       .map((planet) => ({
-        title: translate('planets', planet.planet),
+        title: planetLabel(planet.planet),
         meta: planet.houseReason,
         value: `+${safeNumber(planet.houseScore, 0)}`,
         tone: 'harmonic' as const,
@@ -1346,7 +1365,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       )
       .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
       .map((condition) => ({
-        title: `${translate('planets', condition.planet)} • ${condition.condition}`,
+        title: `${planetLabel(condition.planet)} • ${condition.condition}`,
         meta: condition.description,
         value: `${condition.score >= 0 ? '+' : ''}${safeNumber(condition.score, 0)}`,
         tone: condition.score > 0 ? ('harmonic' as const) : condition.score < 0 ? ('challenging' as const) : ('neutral' as const),
@@ -1475,7 +1494,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           tl('Mede afinidade do planeta com o signo atual (domicílio/exaltação fortalecem; detrimento/queda enfraquecem).', 'Measures planet affinity with current sign (domicile/exaltation strengthen; detriment/fall weaken).', 'Mide la afinidad del planeta con el signo actual (domicilio/exaltación fortalecen; detrimento/caída debilitan).', 'Misura l affinità del pianeta con il segno attuale (domicilio/esaltazione rafforzano; detrimento/caduta indeboliscono).'),
         metric: `${dignityCount} ${tl('relevantes', 'relevant', 'relevantes', 'rilevanti')}`,
         rows: topDignityPlanets.map((planet) => ({
-          title: translate('planets', planet.planet),
+          title: planetLabel(planet.planet),
           meta: planet.dignityReason,
           value: `+${safeNumber(planet.dignityScore, 0)}`,
           tone: 'harmonic',
@@ -1611,7 +1630,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const buildTransitTitle = (transit: any, forcedKind?: 'planet' | 'house') => {
     const columnKind = forcedKind || getTransitColumnKind(transit)
-    const transitPlanet = translate('planets', transit?.transitPlanet || 'Trânsito')
+    const transitPlanet = planetLabel(transit?.transitPlanet || tl('Transito', 'Transit', 'Transito', 'Transito'))
     const rawAspect = String(transit?.aspectName || transit?.type || '').trim()
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
     const houseTarget = getTransitNatalHouseLabel(transit)
@@ -1621,11 +1640,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       transit?.target?.natalPlanet ||
       transit?.target?.angle ||
       (houseTarget ? `Casa ${houseTarget}` : '')
-    const target = rawTarget ? translate('planets', String(rawTarget)) : ''
+    const target = rawTarget ? planetLabel(String(rawTarget)) : ''
     if (columnKind === 'house') {
       const personalHouse = houseTarget || getTransitOnNatalHouseLabel(transit)
       if (personalHouse) {
-        return `${transitPlanet} em trânsito pessoal na Casa ${personalHouse}`
+        return tl(
+          `${transitPlanet} em trânsito pessoal na Casa ${personalHouse}`,
+          `${transitPlanet} in personal transit in House ${personalHouse}`,
+          `${transitPlanet} en tránsito personal en la Casa ${personalHouse}`,
+          `${transitPlanet} in transito personale nella Casa ${personalHouse}`
+        )
       }
       return buildSharedTransitTitle({
         transitPlanet,
@@ -1735,7 +1759,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const getDurationLabel = (transit: any) => {
     const windowDays = safeNumber(transit?.window?.days, 0)
-    if (windowDays > 0) return `${windowDays} dias`
+    if (windowDays > 0) return `${windowDays} ${tl('dias', 'days', 'dias', 'giorni')}`
     const startAt = transit?.startAt || transit?.window?.start
     const endAt = transit?.endAt || transit?.window?.end
     if (startAt && endAt) {
@@ -1743,41 +1767,41 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const end = new Date(endAt).getTime()
       if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
         const days = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)))
-        return `${days} dias`
+        return `${days} ${tl('dias', 'days', 'dias', 'giorni')}`
       }
     }
-    if (transit?.durationClass === 'curto') return 'curto prazo'
-    if (transit?.durationClass === 'medio') return 'médio prazo'
-    if (transit?.durationClass === 'longo') return 'longo prazo'
+    if (transit?.durationClass === 'curto') return tl('curto prazo', 'short term', 'corto plazo', 'breve termine')
+    if (transit?.durationClass === 'medio') return tl('médio prazo', 'mid term', 'mediano plazo', 'medio termine')
+    if (transit?.durationClass === 'longo') return tl('longo prazo', 'long term', 'largo plazo', 'lungo termine')
     return null
   }
 
   const buildDirectText = (transit: any, suggestion: any) => {
     const planetCoreKeywords: Record<string, string> = {
-      sun: 'identidade, visibilidade e direção',
-      moon: 'emoções, necessidades e vínculo',
-      mercury: 'comunicação, ideias e decisões',
-      venus: 'afeto, prazer e valores',
-      mars: 'ação, desejo e iniciativa',
-      jupiter: 'expansão, oportunidades e confiança',
-      saturn: 'estrutura, limites e responsabilidade',
-      uranus: 'mudança, ruptura e autonomia',
-      neptune: 'sensibilidade, imaginação e propósito',
-      pluto: 'poder, transformação e controle',
+      sun: tl('identidade, visibilidade e direção', 'identity, visibility and direction', 'identidad, visibilidad y direccion', 'identita, visibilita e direzione'),
+      moon: tl('emoções, necessidades e vínculo', 'emotions, needs and bonding', 'emociones, necesidades y vinculo', 'emozioni, bisogni e legame'),
+      mercury: tl('comunicação, ideias e decisões', 'communication, ideas and decisions', 'comunicacion, ideas y decisiones', 'comunicazione, idee e decisioni'),
+      venus: tl('afeto, prazer e valores', 'affection, pleasure and values', 'afecto, placer y valores', 'affetto, piacere e valori'),
+      mars: tl('ação, desejo e iniciativa', 'action, desire and initiative', 'accion, deseo e iniciativa', 'azione, desiderio e iniziativa'),
+      jupiter: tl('expansão, oportunidades e confiança', 'expansion, opportunities and confidence', 'expansion, oportunidades y confianza', 'espansione, opportunita e fiducia'),
+      saturn: tl('estrutura, limites e responsabilidade', 'structure, limits and responsibility', 'estructura, limites y responsabilidad', 'struttura, limiti e responsabilita'),
+      uranus: tl('mudança, ruptura e autonomia', 'change, rupture and autonomy', 'cambio, ruptura y autonomia', 'cambiamento, rottura e autonomia'),
+      neptune: tl('sensibilidade, imaginação e propósito', 'sensitivity, imagination and purpose', 'sensibilidad, imaginacion y proposito', 'sensibilita, immaginazione e scopo'),
+      pluto: tl('poder, transformação e controle', 'power, transformation and control', 'poder, transformacion y control', 'potere, trasformazione e controllo'),
     }
     const aspectIntentKeywords: Record<string, string> = {
-      trigono: 'fluxo natural e apoio',
-      sextil: 'abertura de oportunidade com iniciativa',
-      conjuncao: 'intensificação direta do tema',
-      quadratura: 'tensão de ajuste e fricção prática',
-      oposicao: 'polarização e necessidade de equilíbrio',
-      quincuncio: 'recalibragem e adaptação fina',
-      semiquadratura: 'atrito sutil e ajuste progressivo',
-      sesquiquadratura: 'pressão intermitente e reposicionamento',
-      semissextil: 'ajuste discreto e refinamento',
-      harmonic: 'integração favorável',
-      tense: 'pressão desafiadora',
-      neutral: 'observação e calibração',
+      trigono: tl('fluxo natural e apoio', 'natural flow and support', 'flujo natural y apoyo', 'flusso naturale e supporto'),
+      sextil: tl('abertura de oportunidade com iniciativa', 'opportunity opening with initiative', 'apertura de oportunidad con iniciativa', 'apertura di opportunita con iniziativa'),
+      conjuncao: tl('intensificação direta do tema', 'direct intensification of the theme', 'intensificacion directa del tema', 'intensificazione diretta del tema'),
+      quadratura: tl('tensão de ajuste e fricção prática', 'adjustment tension and practical friction', 'tension de ajuste y friccion practica', 'tensione di aggiustamento e frizione pratica'),
+      oposicao: tl('polarização e necessidade de equilíbrio', 'polarization and need for balance', 'polarizacion y necesidad de equilibrio', 'polarizzazione e necessita di equilibrio'),
+      quincuncio: tl('recalibragem e adaptação fina', 'recalibration and fine adaptation', 'recalibracion y adaptacion fina', 'ricalibrazione e adattamento fine'),
+      semiquadratura: tl('atrito sutil e ajuste progressivo', 'subtle friction and progressive adjustment', 'friccion sutil y ajuste progresivo', 'attrito sottile e aggiustamento progressivo'),
+      sesquiquadratura: tl('pressão intermitente e reposicionamento', 'intermittent pressure and repositioning', 'presion intermitente y reposicionamiento', 'pressione intermittente e riposizionamento'),
+      semissextil: tl('ajuste discreto e refinamento', 'discrete adjustment and refinement', 'ajuste discreto y refinamiento', 'aggiustamento discreto e rifinitura'),
+      harmonic: tl('integração favorável', 'favorable integration', 'integracion favorable', 'integrazione favorevole'),
+      tense: tl('pressão desafiadora', 'challenging pressure', 'presion desafiante', 'pressione impegnativa'),
+      neutral: tl('observação e calibração', 'observation and calibration', 'observacion y calibracion', 'osservazione e calibrazione'),
     }
     const houseKeywords: Record<string, string> = {
       '1': 'autoimagem, presença e iniciativa pessoal',
@@ -1794,21 +1818,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       '12': 'fechamentos, bastidores e interioridade',
     }
     const angleKeywords: Record<string, string> = {
-      ASC: 'identidade e forma de agir',
-      MC: 'carreira e posicionamento público',
-      DSC: 'parcerias e dinâmica relacional',
-      IC: 'raízes, casa e base emocional',
+      ASC: tl('identidade e forma de agir', 'identity and way of acting', 'identidad y forma de actuar', 'identita e modo di agire'),
+      MC: tl('carreira e posicionamento público', 'career and public positioning', 'carrera y posicionamiento publico', 'carriera e posizionamento pubblico'),
+      DSC: tl('parcerias e dinâmica relacional', 'partnerships and relational dynamics', 'alianzas y dinamica relacional', 'partnership e dinamica relazionale'),
+      IC: tl('raízes, casa e base emocional', 'roots, home and emotional base', 'raices, hogar y base emocional', 'radici, casa e base emotiva'),
     }
 
     const aspectType = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
     const transitPlanetRaw = String(transit?.transitPlanet || '').trim()
-    const transitPlanetLabel = translate('planets', transitPlanetRaw || 'Trânsito')
+    const transitPlanetLabel = planetLabel(transitPlanetRaw || tl('Transito', 'Transit', 'Transito', 'Transito'))
     const transitPlanetKey = normalizeNarrativeText(transitPlanetRaw)
-    const transitKeywords = planetCoreKeywords[transitPlanetKey] || 'ação, ajuste e resposta prática'
+    const transitKeywords = planetCoreKeywords[transitPlanetKey] || tl('ação, ajuste e resposta prática', 'action, adjustment and practical response', 'accion, ajuste y respuesta practica', 'azione, aggiustamento e risposta pratica')
 
     const targetRaw = String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || '').trim()
     const targetNormalized = String(targetRaw).toUpperCase().replace(/^NATAL_/, '').replace(/^NATAL:/, '')
-    const targetLabel = targetRaw ? translate('planets', targetRaw) : null
+    const targetLabel = targetRaw ? planetLabel(targetRaw) : null
     const targetKey = normalizeNarrativeText(targetNormalized)
     const targetKeywords =
       planetCoreKeywords[targetKey] ||
@@ -1819,18 +1843,41 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const houseLabel = getTransitNatalHouseLabel(transit) || getTransitOnNatalHouseLabel(transit) || null
     const houseText = houseLabel ? houseKeywords[String(houseLabel)] : ''
     const aspectLabel = getAspectLabel(aspectType)
-    const aspectIntent = aspectIntentKeywords[aspectType] || 'movimento de ajuste'
+    const aspectIntent = aspectIntentKeywords[aspectType] || tl('movimento de ajuste', 'adjustment movement', 'movimiento de ajuste', 'movimento di aggiustamento')
 
     const firstSentence = targetLabel
-      ? `${transitPlanetLabel} em ${aspectLabel} com ${targetLabel} ativa ${aspectIntent}, trabalhando ${transitKeywords}.`
-      : `${transitPlanetLabel} ativa ${aspectIntent}, trazendo foco em ${transitKeywords}.`
-    const secondParts = [targetKeywords ? `No alvo, mexe com ${targetKeywords}` : null, houseText ? `na Casa ${houseLabel} destaca ${houseText}` : null]
+      ? tl(
+          `${transitPlanetLabel} em ${aspectLabel} com ${targetLabel} ativa ${aspectIntent}, trabalhando ${transitKeywords}.`,
+          `${transitPlanetLabel} in ${aspectLabel} with ${targetLabel} activates ${aspectIntent}, working on ${transitKeywords}.`,
+          `${transitPlanetLabel} en ${aspectLabel} con ${targetLabel} activa ${aspectIntent}, trabajando ${transitKeywords}.`,
+          `${transitPlanetLabel} in ${aspectLabel} con ${targetLabel} attiva ${aspectIntent}, lavorando su ${transitKeywords}.`
+        )
+      : tl(
+          `${transitPlanetLabel} ativa ${aspectIntent}, trazendo foco em ${transitKeywords}.`,
+          `${transitPlanetLabel} activates ${aspectIntent}, bringing focus to ${transitKeywords}.`,
+          `${transitPlanetLabel} activa ${aspectIntent}, llevando foco a ${transitKeywords}.`,
+          `${transitPlanetLabel} attiva ${aspectIntent}, portando focus su ${transitKeywords}.`
+        )
+    const secondParts = [
+      targetKeywords ? tl(`No alvo, mexe com ${targetKeywords}`, `In the target, it touches ${targetKeywords}`, `En el objetivo, toca ${targetKeywords}`, `Sul target, tocca ${targetKeywords}`) : null,
+      houseText ? tl(`na Casa ${houseLabel} destaca ${houseText}`, `in House ${houseLabel} highlights ${houseText}`, `en la Casa ${houseLabel} destaca ${houseText}`, `in Casa ${houseLabel} evidenzia ${houseText}`) : null
+    ]
       .filter(Boolean)
-      .join(' e ')
-    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : 'esta área'
+      .join(` ${tl('e', 'and', 'y', 'e')} `)
+    const areaHint = typeof areaData?.name === 'string' ? String(areaData.name).toLowerCase() : tl('esta área', 'this area', 'esta area', 'questa area')
     const secondSentence = secondParts
-      ? `${secondParts}, com impacto direto em ${areaHint}.`
-      : `A leitura nesta fase pede escolhas objetivas em ${areaHint}.`
+      ? tl(
+          `${secondParts}, com impacto direto em ${areaHint}.`,
+          `${secondParts}, with direct impact on ${areaHint}.`,
+          `${secondParts}, con impacto directo en ${areaHint}.`,
+          `${secondParts}, con impatto diretto su ${areaHint}.`
+        )
+      : tl(
+          `A leitura nesta fase pede escolhas objetivas em ${areaHint}.`,
+          `This phase calls for objective choices in ${areaHint}.`,
+          `Esta fase pide decisiones objetivas en ${areaHint}.`,
+          `Questa fase richiede scelte obiettive in ${areaHint}.`
+        )
     return `${firstSentence} ${secondSentence}`.replace(/\s+/g, ' ').trim()
   }
 
@@ -1841,7 +1888,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     if (!suggestion) {
       const fallbackSegments = [
         astroNarrative.fullText,
-        'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
+        tl(
+          'Use esta influência como contexto para priorizar uma decisão prática e revisar seu ritmo antes de ampliar movimentos.',
+          'Use this influence as context to prioritize a practical decision and review your rhythm before expanding moves.',
+          'Usa esta influencia como contexto para priorizar una decisión práctica y revisar tu ritmo antes de ampliar movimientos.',
+          'Usa questa influenza come contesto per dare priorità a una decisione pratica e rivedere il tuo ritmo prima di ampliare i movimenti.'
+        ),
       ].filter((segment) => {
         const normalized = normalizeNarrativeText(segment)
         return normalized && normalized !== normalizedDirect && !isGenericNarrativeText(segment)
@@ -1865,20 +1917,20 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     addSegment(astroNarrative.fullText)
     addSegment(suggestion?.deep?.opening)
     addSegment(suggestion?.deep?.astrologicalWhy)
-    addSegment(suggestion?.deep?.centralTension, 'Tensão central: ')
+    addSegment(suggestion?.deep?.centralTension, `${tl('Tensão central', 'Central tension', 'Tensión central', 'Tensione centrale')}: `)
 
     const guidance = Array.isArray(suggestion?.deep?.practicalGuidance)
       ? suggestion.deep.practicalGuidance.filter(Boolean).slice(0, 4)
       : []
     if (guidance.length) {
-      addSegment(`Orientação prática:\n- ${guidance.join('\n- ')}`)
+      addSegment(`${tl('Orientação prática', 'Practical guidance', 'Orientación práctica', 'Orientamento pratico')}:\n- ${guidance.join('\n- ')}`)
     }
 
-    addSegment(suggestion?.deep?.reflectionPrompt, 'Pergunta-chave: ')
+    addSegment(suggestion?.deep?.reflectionPrompt, `${tl('Pergunta-chave', 'Key question', 'Pregunta clave', 'Domanda chiave')}: `)
     addSegment(suggestion?.deep?.integrationNote)
-    addSegment(suggestion?.statusLink?.scoreEffectHint, 'Conexão com score: ')
-    addSegment(suggestion?.card?.bestUse, 'Melhor uso: ')
-    addSegment(suggestion?.card?.timingHint, 'Timing: ')
+    addSegment(suggestion?.statusLink?.scoreEffectHint, `${tl('Conexão com score', 'Score link', 'Conexión con score', 'Connessione con punteggio')}: `)
+    addSegment(suggestion?.card?.bestUse, `${tl('Melhor uso', 'Best use', 'Mejor uso', 'Uso migliore')}: `)
+    addSegment(suggestion?.card?.timingHint, `${tl('Timing', 'Timing', 'Timing', 'Tempistica')}: `)
 
     const merged = mergeNarrativeSegments(segments, { exclude: [directText] })
     return merged.length ? merged.join('\n\n') : directText
@@ -2312,7 +2364,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                               >
                                 {imageUri ? <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} /> : null}
                                 <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                                  {translate('planets', planet)}
+                                  {planetLabel(planet)}
                                 </Text>
                               </TouchableOpacity>
                             )
@@ -2428,12 +2480,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 .filter(Boolean)
                 .join(' • ')
             } else {
-              transitMeta = [transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${translate('planets', transit.natalPlanet)}` : '', orbLabel]
+              transitMeta = [transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${planetLabel(transit.natalPlanet)}` : '', orbLabel]
                 .filter(Boolean)
                 .join(' • ')
             }
           } else if (aspect) {
-            transitTitle = `${translate('planets', aspect.planet1)} em ${translate('aspects', aspect.type)} com ${translate('planets', aspect.planet2)}`
+            transitTitle = `${planetLabel(aspect.planet1)} ${getAspectLabel(aspect.type)} ${planetLabel(aspect.planet2)}`
             transitMeta = `${tl('Força', 'Strength', 'Fuerza', 'Forza')} ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
             suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
           }
@@ -2487,7 +2539,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               .slice()
               .sort((a, b) => safeNumber(b.totalScore) - safeNumber(a.totalScore))
               .slice(0, 5)
-              .map((p) => `${p.planet} (${p.totalScore})`)
+              .map((p) => `${planetLabel(p.planet)} (${p.totalScore})`)
               .join(' • ')}
           </Text>
         ) : null}
@@ -2501,7 +2553,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         {planetBreakdown.map((planet, index) => (
           <View key={planet.planet} style={styles.planetBreakdownCard}>
             <View style={styles.planetHeader}>
-              <Text style={styles.planetName}>{planet.planet}</Text>
+              <Text style={styles.planetName}>{planetLabel(planet.planet)}</Text>
               <Text style={styles.planetTotal}>{planet.totalScore} pts</Text>
               <Text style={styles.planetPercentage}>({planet.percentageOfTotal}%)</Text>
             </View>
@@ -2555,7 +2607,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     <View key={aspectIndex} style={styles.aspectRow}>
                       <View style={styles.aspectLabel}>
                                                  <Text style={styles.aspectLabelText}>
-                           {aspectIcon} {translate('aspects', aspect.type)} {tl('com', 'with', 'con', 'con')} {translate('planets', aspect.with)}:
+                           {aspectIcon} {getAspectLabel(aspect.type)} {tl('com', 'with', 'con', 'con')} {planetLabel(aspect.with)}:
                          </Text>
                       </View>
                       <View style={styles.aspectValue}>
