@@ -26,8 +26,9 @@ export class NatalAscService {
 		const localISO = `${birthDate}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`
 
 		const body = {
-			// Para obter pacote natal no backend, enviamos natalISO; datetimeLocal pode ser agora
-			datetimeLocal: new Date().toISOString().slice(0,19),
+			// Backend exige datetimeISO (ou year/month/day) para o "momento atual".
+			// Usamos ISO UTC para garantir compatibilidade total.
+			datetimeISO: new Date().toISOString(),
 			timezone: tz?.timeZoneId || undefined,
 			lat: latitude,
 			lon: longitude,
