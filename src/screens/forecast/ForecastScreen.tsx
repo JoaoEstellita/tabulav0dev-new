@@ -760,10 +760,8 @@ export default function ForecastScreen() {
     const strong: Record<string, number> = {}
     Object.entries(dayStatusByDate).forEach(([dateKey, day]) => {
       if (day?.badges) {
-        const criticalCount = Number(day.badges.criticalCount || 0)
-        const strongCount = Number(day.badges.strongCount || 0)
-        if (criticalCount > 0) critical[dateKey] = criticalCount
-        if (strongCount > 0) strong[dateKey] = strongCount
+        critical[dateKey] = Number(day.badges.criticalCount || 0)
+        strong[dateKey] = Number(day.badges.strongCount || 0)
         return
       }
       const areas = day?.lifeAreas || {}
@@ -775,14 +773,18 @@ export default function ForecastScreen() {
         if (score < STATUS_THRESHOLDS.criticalBelow) criticalCount += 1
         if (score >= STATUS_THRESHOLDS.positiveAbove) strongCount += 1
       })
-      if (criticalCount > 0) critical[dateKey] = criticalCount
-      if (strongCount > 0) strong[dateKey] = strongCount
+      critical[dateKey] = criticalCount
+      strong[dateKey] = strongCount
     })
-    return { critical, strong }
+    return {
+      critical,
+      strong,
+      hasRangeData: Object.keys(dayStatusByDate).length > 0,
+    }
   }, [dayStatusByDate])
 
   const criticalCountsByDate = useMemo(() => {
-    if (Object.keys(countsFromStatusRange.critical).length) return countsFromStatusRange.critical
+    if (countsFromStatusRange.hasRangeData) return countsFromStatusRange.critical
     if (data?.dailyBadges) {
       const map: Record<string, number> = {}
       Object.entries(data.dailyBadges).forEach(([key, value]) => {
@@ -797,14 +799,14 @@ export default function ForecastScreen() {
       if (criticalCount > 0) counts[dateKey] = criticalCount
     })
     return counts
-  }, [countsFromStatusRange.critical, data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
+  }, [countsFromStatusRange.critical, countsFromStatusRange.hasRangeData, data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
 
   const totalCriticalCount = useMemo(() => {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
   const positiveCountsByDate = useMemo(() => {
-    if (Object.keys(countsFromStatusRange.strong).length) return countsFromStatusRange.strong
+    if (countsFromStatusRange.hasRangeData) return countsFromStatusRange.strong
     if (data?.dailyBadges) {
       const map: Record<string, number> = {}
       Object.entries(data.dailyBadges).forEach(([key, value]) => {
@@ -819,7 +821,7 @@ export default function ForecastScreen() {
       if (strongCount > 0) counts[dateKey] = strongCount
     })
     return counts
-  }, [countsFromStatusRange.strong, data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
+  }, [countsFromStatusRange.strong, countsFromStatusRange.hasRangeData, data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
 
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
