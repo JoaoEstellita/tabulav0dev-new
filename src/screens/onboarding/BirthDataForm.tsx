@@ -91,6 +91,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [searchingCountry, setSearchingCountry] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
   const [notificationsGranted, setNotificationsGranted] = useState(false)
+  const scrollRef = useRef<ScrollView | null>(null)
   const birthDateInputRef = useRef<TextInput | null>(null)
   const birthTimeInputRef = useRef<TextInput | null>(null)
 
@@ -492,10 +493,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   useEffect(() => {
     if (currentStep === 3) {
-      setTimeout(() => birthDateInputRef.current?.focus(), 80)
+      setTimeout(() => {
+        birthDateInputRef.current?.focus()
+        scrollRef.current?.scrollToEnd({ animated: true })
+      }, 80)
     }
     if (currentStep === 4) {
-      setTimeout(() => birthTimeInputRef.current?.focus(), 80)
+      setTimeout(() => {
+        birthTimeInputRef.current?.focus()
+        scrollRef.current?.scrollToEnd({ animated: true })
+      }, 80)
     }
   }, [currentStep])
 
@@ -970,6 +977,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           keyboardType="number-pad"
           inputMode="numeric"
           returnKeyType="next"
+          onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
         <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
           <Ionicons name="calendar-outline" size={20} color="#FFD700" />
@@ -1027,6 +1035,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           keyboardType="number-pad"
           inputMode="numeric"
           returnKeyType="next"
+          onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
         <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
           <Ionicons name="time-outline" size={20} color="#FFD700" />
@@ -1194,6 +1203,7 @@ const renderProgressBar = () => (
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 16}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
@@ -1273,7 +1283,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: 60,
-    paddingBottom: 120,
+    paddingBottom: Platform.OS === 'android' ? 180 : 120,
   },
   progressContainer: {
     marginBottom: 40,
