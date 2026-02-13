@@ -1,3 +1,5 @@
+import type { AppLanguage } from '../i18n/appI18n'
+
 export const HOUSE_SYSTEMS = ['placidus', 'whole-sign', 'psychological-shift'] as const
 export type HouseSystem = (typeof HOUSE_SYSTEMS)[number]
 
@@ -10,12 +12,18 @@ export function normalizeHouseSystem(value: unknown): HouseSystem {
   return 'whole-sign'
 }
 
-export function formatHouseSystemLabel(system: HouseSystem): string {
+export function formatHouseSystemLabel(system: HouseSystem, language: AppLanguage = 'pt-BR'): string {
   switch (system) {
     case 'whole-sign':
+      if (language === 'en-US') return 'Whole Sign Houses'
+      if (language === 'es-ES') return 'Casas Enteras'
+      if (language === 'it-IT') return 'Case Intere'
       return 'Casas Inteiras'
     case 'psychological-shift':
-      return 'Psicologico'
+      if (language === 'en-US') return 'Psychological Shift'
+      if (language === 'es-ES') return 'Cambio Psicológico'
+      if (language === 'it-IT') return 'Spostamento Psicologico'
+      return 'Psicológico'
     case 'placidus':
     default:
       return 'Placidus'

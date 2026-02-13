@@ -1370,7 +1370,7 @@ export default function SettingsScreen() {
                         <Ionicons name="home" size={20} color="#FFD700" />
                       </View>
                       <View style={styles.itemText}>
-                        <Text style={styles.itemTitle}>{formatHouseSystemLabel(system)}</Text>
+                        <Text style={styles.itemTitle}>{formatHouseSystemLabel(system, language)}</Text>
                         <Text style={styles.itemSubtitle}>
                           {houseSystemDescriptions[system] || t('settings.houses.applyFallback')}
                         </Text>

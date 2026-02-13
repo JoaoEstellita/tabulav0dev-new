@@ -1,4 +1,5 @@
 export type AspectType = 'conjuncao' | 'sextil' | 'quadratura' | 'trigono' | 'oposicao'
+export type AppLanguage = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
 const PLANET_PT: Record<string, string> = {
   sun: 'Sol',
@@ -15,6 +16,58 @@ const PLANET_PT: Record<string, string> = {
   lilith: 'Lilith',
   northnode: 'Nodo Norte',
   southnode: 'Nodo Sul',
+}
+
+const PLANET_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
+  'pt-BR': PLANET_PT,
+  'en-US': {
+    sun: 'Sun',
+    moon: 'Moon',
+    mercury: 'Mercury',
+    venus: 'Venus',
+    mars: 'Mars',
+    jupiter: 'Jupiter',
+    saturn: 'Saturn',
+    uranus: 'Uranus',
+    neptune: 'Neptune',
+    pluto: 'Pluto',
+    chiron: 'Chiron',
+    lilith: 'Lilith',
+    northnode: 'North Node',
+    southnode: 'South Node',
+  },
+  'es-ES': {
+    sun: 'Sol',
+    moon: 'Luna',
+    mercury: 'Mercurio',
+    venus: 'Venus',
+    mars: 'Marte',
+    jupiter: 'Júpiter',
+    saturn: 'Saturno',
+    uranus: 'Urano',
+    neptune: 'Neptuno',
+    pluto: 'Plutón',
+    chiron: 'Quirón',
+    lilith: 'Lilith',
+    northnode: 'Nodo Norte',
+    southnode: 'Nodo Sur',
+  },
+  'it-IT': {
+    sun: 'Sole',
+    moon: 'Luna',
+    mercury: 'Mercurio',
+    venus: 'Venere',
+    mars: 'Marte',
+    jupiter: 'Giove',
+    saturn: 'Saturno',
+    uranus: 'Urano',
+    neptune: 'Nettuno',
+    pluto: 'Plutone',
+    chiron: 'Chirone',
+    lilith: 'Lilith',
+    northnode: 'Nodo Nord',
+    southnode: 'Nodo Sud',
+  },
 }
 
 const ASPECT_SYMBOL: Record<AspectType, string> = {
@@ -41,6 +94,13 @@ export function translatePlanetPT(name: string): string {
   const decoded = decodeUnicodeEscapes(name)
   const key = normalizeText(decoded)
   return PLANET_PT[key] || decoded
+}
+
+export function translatePlanet(name: string, language: AppLanguage = 'pt-BR'): string {
+  const decoded = decodeUnicodeEscapes(name)
+  const key = normalizeText(decoded)
+  const dictionary = PLANET_BY_LANGUAGE[language] || PLANET_PT
+  return dictionary[key] || PLANET_PT[key] || decoded
 }
 
 export function getAspectSymbol(type: string): string {

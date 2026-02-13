@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, ScrollView,
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
-import { decodeUnicodeEscapes, translatePlanetPT } from '../utils/astro/pt'
+import { decodeUnicodeEscapes, translatePlanet } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import useTransits from '../hooks/useTransits'
@@ -99,112 +99,6 @@ const PLANET_ICONS: Record<string, string> = {
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 
 const PLANET_TOKEN = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/gi
-const PLANET_KEYWORDS: Record<string, string> = {
-  Sun: 'direção e identidade',
-  Moon: 'emoções e segurança',
-  Mercury: 'mente e comunicação',
-  Venus: 'vínculos e valores',
-  Mars: 'ação e iniciativa',
-  Jupiter: 'expansão e visão',
-  Saturn: 'estrutura e responsabilidade',
-  Uranus: 'mudança e liberdade',
-  Neptune: 'sensibilidade e imaginação',
-  Pluto: 'profundidade e transformação'
-}
-
-const PLANET_MEANING_CONTENT: Record<string, {
-  title: string
-  essence: string
-  inAspect: string
-  inHouse: string
-  keywords: string[]
-}> = {
-  Sun: {
-    title: 'Sol',
-    essence: 'Centro da identidade, vitalidade e direção de vida.',
-    inAspect: 'Nos aspectos, o Sol mostra como sua vontade encontra apoio ou tensão para se expressar com clareza.',
-    inHouse: 'Na casa, o Sol ilumina onde você precisa assumir protagonismo, consistência e presença.',
-    keywords: ['identidade', 'propósito', 'vitalidade']
-  },
-  Moon: {
-    title: 'Lua',
-    essence: 'Emoções, memória afetiva, segurança e ritmo interno.',
-    inAspect: 'Nos aspectos, a Lua revela como você reage, acolhe e regula seus estados emocionais.',
-    inHouse: 'Na casa, a Lua destaca onde você busca pertencimento, cuidado e estabilidade emocional.',
-    keywords: ['emoções', 'vínculo', 'segurança']
-  },
-  Mercury: {
-    title: 'Mercúrio',
-    essence: 'Mente, comunicação, aprendizagem e decisões.',
-    inAspect: 'Nos aspectos, Mercúrio indica como ideias se alinham, entram em ruído ou ganham precisão.',
-    inHouse: 'Na casa, Mercúrio mostra onde organizar informação, conversar melhor e ajustar estratégia.',
-    keywords: ['mente', 'comunicação', 'estratégia']
-  },
-  Venus: {
-    title: 'Vênus',
-    essence: 'Valores, vínculos, prazer, estética e trocas afetivas.',
-    inAspect: 'Nos aspectos, Vênus mostra qualidade das conexões: harmonia, ajuste de valor ou tensão relacional.',
-    inHouse: 'Na casa, Vênus indica onde cultivar reciprocidade, beleza e escolhas coerentes com seus valores.',
-    keywords: ['valores', 'afeto', 'reciprocidade']
-  },
-  Mars: {
-    title: 'Marte',
-    essence: 'Ação, iniciativa, coragem, impulso e limites.',
-    inAspect: 'Nos aspectos, Marte mostra onde há aceleração, atrito criativo ou necessidade de direção objetiva.',
-    inHouse: 'Na casa, Marte marca onde agir com foco, canalizar energia e evitar reação impulsiva.',
-    keywords: ['ação', 'iniciativa', 'limites']
-  },
-  Jupiter: {
-    title: 'Júpiter',
-    essence: 'Expansão, confiança, visão de futuro e sentido.',
-    inAspect: 'Nos aspectos, Júpiter amplia oportunidades, crenças e o alcance das decisões.',
-    inHouse: 'Na casa, Júpiter mostra onde crescer com consistência, evitando excesso e dispersão.',
-    keywords: ['expansão', 'visão', 'crescimento']
-  },
-  Saturn: {
-    title: 'Saturno',
-    essence: 'Estrutura, disciplina, responsabilidade e maturação.',
-    inAspect: 'Nos aspectos, Saturno pede ajuste realista: prazo, método, limite e comprometimento.',
-    inHouse: 'Na casa, Saturno mostra onde consolidar base sólida antes de acelerar.',
-    keywords: ['estrutura', 'disciplina', 'maturidade']
-  },
-  Uranus: {
-    title: 'Urano',
-    essence: 'Inovação, liberdade, ruptura de padrão e atualização.',
-    inAspect: 'Nos aspectos, Urano sinaliza mudanças súbitas e necessidade de flexibilidade inteligente.',
-    inHouse: 'Na casa, Urano ativa reinvenção e novas formas de agir fora do automático.',
-    keywords: ['mudança', 'liberdade', 'inovação']
-  },
-  Neptune: {
-    title: 'Netuno',
-    essence: 'Sensibilidade, imaginação, empatia e inspiração.',
-    inAspect: 'Nos aspectos, Netuno amplia intuição e simbolismo, pedindo clareza para evitar confusão.',
-    inHouse: 'Na casa, Netuno mostra onde refinar escuta interna, propósito e compaixão com limite.',
-    keywords: ['intuição', 'sensibilidade', 'imaginação']
-  },
-  Pluto: {
-    title: 'Plutão',
-    essence: 'Transformação profunda, poder pessoal e renascimento.',
-    inAspect: 'Nos aspectos, Plutão expõe padrões intensos para cura, reposicionamento e fortalecimento.',
-    inHouse: 'Na casa, Plutão indica onde ocorre depuração, desapego e reconstrução estrutural.',
-    keywords: ['transformação', 'profundidade', 'renascimento']
-  },
-}
-
-const HOUSE_FOCUS: Record<number, string> = {
-  1: 'identidade e presença',
-  2: 'recursos e estabilidade',
-  3: 'comunicação e aprendizado',
-  4: 'base emocional e família',
-  5: 'criatividade e expressão',
-  6: 'rotina e organização',
-  7: 'parcerias e acordos',
-  8: 'trocas profundas e desapego',
-  9: 'sentido e expansão',
-  10: 'carreira e reputação',
-  11: 'rede e projetos',
-  12: 'fechamentos e interiorização'
-}
 
 const ELEMENT_KEYS = ['fire', 'earth', 'air', 'water'] as const
 const MODALITY_KEYS = ['cardinal', 'fixed', 'mutable'] as const
@@ -320,7 +214,7 @@ export default function TransitComparisonCard({
     return `${degreeInSign.toFixed(1)}\u00B0`
   }
 
-  const translatePlanetName = (planetName: string): string => translatePlanetPT(planetName)
+  const translatePlanetName = React.useCallback((planetName: string): string => translatePlanet(planetName, language), [language])
   const resolvePlanetImageUri = React.useCallback((planetName: string): string | undefined => {
     if (!(planetName in PLANET_ICONS)) return undefined
     return getPlanetImageUri(planetName as PlanetKey)
@@ -330,12 +224,13 @@ export default function TransitComparisonCard({
     const signName = getSignFromDegree(longitude)
     const signSymbol = getSignSymbol(signName)
     return `${formatDegreeInSign(longitude)} ${signSymbol ? `${signSymbol} ` : ''}${signName}${isRetrograde ? ' (Rx)' : ''}`
-  }, [])
+  }, [getSignFromDegree])
 
-const translatePlanetTokens = (text: string): string =>
+const translatePlanetTokens = React.useCallback((text: string): string =>
   decodeUnicodeEscapes(String(text || ''))
-    .replace(PLANET_TOKEN, (match) => translatePlanetPT(match))
+    .replace(PLANET_TOKEN, (match) => translatePlanet(match, language))
     .replace(/\bdeg\b/gi, '\u00B0')
+  , [language])
 
 const replaceEmojiTokens = (value: string): string => {
   return String(value || '')
@@ -357,91 +252,167 @@ const sanitizeChangeText = (value: string): string => {
 }
 
 
-const translateElement = (element: string): string => {
-  const translations: Record<string, string> = {
-    fire: 'Fogo',
-    earth: 'Terra',
-    air: 'Ar',
-    water: '\u00C1gua',
-    fogo: 'Fogo',
-    terra: 'Terra',
-    ar: 'Ar',
-    agua: '\u00C1gua'
-  }
+const translateElement = React.useCallback((element: string): string => {
   const cleaned = sanitizeChangeText(element)
   const key = normalizeKey(cleaned)
-  return translations[key] || cleaned
-}
+  const dictionaries: Record<string, Record<string, string>> = {
+    'pt-BR': { fire: 'Fogo', earth: 'Terra', air: 'Ar', water: '\u00C1gua', fogo: 'Fogo', terra: 'Terra', ar: 'Ar', agua: '\u00C1gua' },
+    'en-US': { fire: 'Fire', earth: 'Earth', air: 'Air', water: 'Water', fogo: 'Fire', terra: 'Earth', ar: 'Air', agua: 'Water' },
+    'es-ES': { fire: 'Fuego', earth: 'Tierra', air: 'Aire', water: 'Agua', fogo: 'Fuego', terra: 'Tierra', ar: 'Aire', agua: 'Agua' },
+    'it-IT': { fire: 'Fuoco', earth: 'Terra', air: 'Aria', water: 'Acqua', fogo: 'Fuoco', terra: 'Terra', ar: 'Aria', agua: 'Acqua' },
+  }
+  const dictionary = dictionaries[language] || dictionaries['pt-BR']
+  return dictionary[key] || cleaned
+}, [language])
 
 const getElementIconName = (value: string): keyof typeof Ionicons.glyphMap =>
   ELEMENT_ICONS[normalizeElementKey(value)] || FALLBACK_ICON
 const getModalityIconName = (value: string): keyof typeof Ionicons.glyphMap =>
   MODALITY_ICONS[normalizeModalityKey(value)] || FALLBACK_ICON
 
-const translateModality = (modality: string): string => {
-  const translations: Record<string, string> = {
-    cardinal: 'Cardeal',
-    fixed: 'Fixo',
-    mutable: 'Mut\u00E1vel',
-    cardeal: 'Cardeal',
-    fixo: 'Fixo',
-    mutavel: 'Mut\u00E1vel'
+const translateModality = React.useCallback((modality: string): string => {
+  const dictionaries: Record<string, Record<string, string>> = {
+    'pt-BR': { cardinal: 'Cardeal', fixed: 'Fixo', mutable: 'Mut\u00E1vel', cardeal: 'Cardeal', fixo: 'Fixo', mutavel: 'Mut\u00E1vel' },
+    'en-US': { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable', cardeal: 'Cardinal', fixo: 'Fixed', mutavel: 'Mutable' },
+    'es-ES': { cardinal: 'Cardinal', fixed: 'Fijo', mutable: 'Mutable', cardeal: 'Cardinal', fixo: 'Fijo', mutavel: 'Mutable' },
+    'it-IT': { cardinal: 'Cardinale', fixed: 'Fisso', mutable: 'Mutevole', cardeal: 'Cardinale', fixo: 'Fisso', mutavel: 'Mutevole' },
   }
   const decoded = decodeUnicodeEscapes(modality)
   const key = normalizeKey(decoded)
-  return translations[key] || decoded
-}
+  const dictionary = dictionaries[language] || dictionaries['pt-BR']
+  return dictionary[key] || decoded
+}, [language])
 
-const formatStatusLabel = (status: string | null) => {
+const formatStatusLabel = React.useCallback((status: string | null) => {
   if (!status) return ''
-  const map: Record<string, string> = {
-    excelente: 'Excelente',
-    bom: 'Bom',
-    neutro: 'Neutro',
-    desafiador: 'Desafiador',
-    critico: 'Cr\u00EDtico'
+  const map: Record<string, Record<string, string>> = {
+    'pt-BR': { excelente: 'Excelente', good: 'Bom', bom: 'Bom', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiador', desafiador: 'Desafiador', critical: 'Cr\u00EDtico', critico: 'Cr\u00EDtico' },
+    'en-US': { excelente: 'Excellent', good: 'Good', bom: 'Good', neutral: 'Neutral', neutro: 'Neutral', challenging: 'Challenging', desafiador: 'Challenging', critical: 'Critical', critico: 'Critical' },
+    'es-ES': { excelente: 'Excelente', good: 'Bueno', bom: 'Bueno', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiante', desafiador: 'Desafiante', critical: 'Cr\u00EDtico', critico: 'Cr\u00EDtico' },
+    'it-IT': { excelente: 'Eccellente', good: 'Buono', bom: 'Buono', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Impegnativo', desafiador: 'Impegnativo', critical: 'Critico', critico: 'Critico' },
   }
-  return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
-}
+  const key = String(status).toLowerCase()
+  const dictionary = map[language] || map['pt-BR']
+  return dictionary[key] || decodeUnicodeEscapes(status)
+}, [language])
 
-const formatAreaStatus = (value: string | number | null | undefined) => {
+const formatAreaStatus = React.useCallback((value: string | number | null | undefined) => {
   if (typeof value === 'number') {
-    if (value >= 70) return 'Excelente'
-    if (value >= 40) return 'Moderado'
-    return 'CrÝtico'
+    if (value >= 70) return tl('Excelente', 'Excellent', 'Excelente', 'Eccellente')
+    if (value >= 40) return tl('Moderado', 'Moderate', 'Moderado', 'Moderato')
+    return tl('Crítico', 'Critical', 'Crítico', 'Critico')
   }
   return formatStatusLabel(value || null)
-}
+}, [formatStatusLabel, tl])
 
-const getSignFromDegree = (degree: number): string => {
-  const signs = [
-    '\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem',
-    'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes'
-  ]
+const getHouseFocus = React.useCallback((house?: number | null): string => {
+  const fallback = tl('área de ajuste', 'adjustment area', 'área de ajuste', 'area di regolazione')
+  if (!house) return fallback
+  const map: Record<number, string> = {
+    1: tl('identidade e presença', 'identity and presence', 'identidad y presencia', 'identità e presenza'),
+    2: tl('recursos e estabilidade', 'resources and stability', 'recursos y estabilidad', 'risorse e stabilità'),
+    3: tl('comunicação e aprendizado', 'communication and learning', 'comunicación y aprendizaje', 'comunicazione e apprendimento'),
+    4: tl('base emocional e família', 'emotional base and family', 'base emocional y familia', 'base emotiva e famiglia'),
+    5: tl('criatividade e expressão', 'creativity and expression', 'creatividad y expresión', 'creatività ed espressione'),
+    6: tl('rotina e organização', 'routine and organization', 'rutina y organización', 'routine e organizzazione'),
+    7: tl('parcerias e acordos', 'partnerships and agreements', 'alianzas y acuerdos', 'partnership e accordi'),
+    8: tl('trocas profundas e desapego', 'deep exchanges and release', 'intercambios profundos y desapego', 'scambi profondi e distacco'),
+    9: tl('sentido e expansão', 'meaning and expansion', 'sentido y expansión', 'senso ed espansione'),
+    10: tl('carreira e reputação', 'career and reputation', 'carrera y reputación', 'carriera e reputazione'),
+    11: tl('rede e projetos', 'network and projects', 'red y proyectos', 'rete e progetti'),
+    12: tl('fechamentos e interiorização', 'closures and introspection', 'cierres e interiorización', 'chiusure e interiorizzazione'),
+  }
+  return map[house] || fallback
+}, [tl])
+
+const getPlanetKeyword = React.useCallback((planet: string): string => {
+  const key = normalizeKey(planet)
+  const map: Record<string, string> = {
+    sun: tl('direção e identidade', 'direction and identity', 'dirección e identidad', 'direzione e identità'),
+    moon: tl('emoções e segurança', 'emotions and security', 'emociones y seguridad', 'emozioni e sicurezza'),
+    mercury: tl('mente e comunicação', 'mind and communication', 'mente y comunicación', 'mente e comunicazione'),
+    venus: tl('vínculos e valores', 'bonds and values', 'vínculos y valores', 'legami e valori'),
+    mars: tl('ação e iniciativa', 'action and initiative', 'acción e iniciativa', 'azione e iniziativa'),
+    jupiter: tl('expansão e visão', 'expansion and vision', 'expansión y visión', 'espansione e visione'),
+    saturn: tl('estrutura e responsabilidade', 'structure and responsibility', 'estructura y responsabilidad', 'struttura e responsabilità'),
+    uranus: tl('mudança e liberdade', 'change and freedom', 'cambio y libertad', 'cambiamento e libertà'),
+    neptune: tl('sensibilidade e imaginação', 'sensitivity and imagination', 'sensibilidad e imaginación', 'sensibilità e immaginazione'),
+    pluto: tl('profundidade e transformação', 'depth and transformation', 'profundidad y transformación', 'profondità e trasformazione'),
+  }
+  return map[key] || tl('dinâmica central', 'core dynamic', 'dinámica central', 'dinamica centrale')
+}, [tl])
+
+const getSignFromDegree = React.useCallback((degree: number): string => {
+  const signs =
+    language === 'en-US'
+      ? ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+      : language === 'es-ES'
+      ? ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis']
+      : language === 'it-IT'
+      ? ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci']
+      : ['\u00C1ries', 'Touro', 'G\u00EAmeos', 'C\u00E2ncer', 'Le\u00E3o', 'Virgem', 'Libra', 'Escorpi\u00E3o', 'Sagit\u00E1rio', 'Capric\u00F3rnio', 'Aqu\u00E1rio', 'Peixes']
   const signIndex = Math.floor(degree / 30) % 12
   return signs[signIndex]
-}
+}, [language])
+
+const translateSignName = React.useCallback((value: string): string => {
+  const decoded = decodeUnicodeEscapes(value)
+  const key = normalizeKey(decoded)
+  const dictionary: Record<string, Record<string, string>> = {
+    'pt-BR': { aries: '\u00C1ries', taurus: 'Touro', touro: 'Touro', gemini: 'G\u00EAmeos', gemeos: 'G\u00EAmeos', cancer: 'C\u00E2ncer', leo: 'Le\u00E3o', virgo: 'Virgem', libra: 'Libra', scorpio: 'Escorpi\u00E3o', escorpiao: 'Escorpi\u00E3o', sagittarius: 'Sagit\u00E1rio', sagitario: 'Sagit\u00E1rio', capricorn: 'Capric\u00F3rnio', capricornio: 'Capric\u00F3rnio', aquarius: 'Aqu\u00E1rio', aquario: 'Aqu\u00E1rio', pisces: 'Peixes', peixes: 'Peixes' },
+    'en-US': { aries: 'Aries', taurus: 'Taurus', touro: 'Taurus', gemini: 'Gemini', gemeos: 'Gemini', cancer: 'Cancer', leo: 'Leo', virgo: 'Virgo', libra: 'Libra', scorpio: 'Scorpio', escorpiao: 'Scorpio', sagittarius: 'Sagittarius', sagitario: 'Sagittarius', capricorn: 'Capricorn', capricornio: 'Capricorn', aquarius: 'Aquarius', aquario: 'Aquarius', pisces: 'Pisces', peixes: 'Pisces' },
+    'es-ES': { aries: 'Aries', taurus: 'Tauro', touro: 'Tauro', gemini: 'Géminis', gemeos: 'Géminis', cancer: 'Cáncer', leo: 'Leo', virgo: 'Virgo', libra: 'Libra', scorpio: 'Escorpio', escorpiao: 'Escorpio', sagittarius: 'Sagitario', sagitario: 'Sagitario', capricorn: 'Capricornio', capricornio: 'Capricornio', aquarius: 'Acuario', aquario: 'Acuario', pisces: 'Piscis', peixes: 'Piscis' },
+    'it-IT': { aries: 'Ariete', taurus: 'Toro', touro: 'Toro', gemini: 'Gemelli', gemeos: 'Gemelli', cancer: 'Cancro', leo: 'Leone', virgo: 'Vergine', libra: 'Bilancia', scorpio: 'Scorpione', escorpiao: 'Scorpione', sagittarius: 'Sagittario', sagitario: 'Sagittario', capricorn: 'Capricorno', capricornio: 'Capricorno', aquarius: 'Acquario', aquario: 'Acquario', pisces: 'Pesci', peixes: 'Pesci' },
+  }
+  const translations = dictionary[language] || dictionary['pt-BR']
+  return translations[key] || decoded
+}, [language])
 
 const SIGN_SYMBOLS: Record<string, string> = {
   aries: '♈',
+  ariete: '♈',
   touro: '♉',
+  taurus: '♉',
+  tauro: '♉',
+  toro: '♉',
   gemeos: '♊',
+  gemini: '♊',
+  geminis: '♊',
+  gemelli: '♊',
   cancer: '♋',
+  cancro: '♋',
   leao: '♌',
+  leo: '♌',
+  leone: '♌',
   virgem: '♍',
+  virgo: '♍',
+  vergine: '♍',
   libra: '♎',
   escorpiao: '♏',
+  scorpio: '♏',
+  escorpio: '♏',
+  scorpione: '♏',
   sagitario: '♐',
+  sagittarius: '♐',
+  sagittario: '♐',
   capricornio: '♑',
+  capricorn: '♑',
+  capricorno: '♑',
   aquario: '♒',
+  aquarius: '♒',
+  acuario: '♒',
+  acquario: '♒',
   peixes: '♓',
+  pisces: '♓',
+  piscis: '♓',
+  pesci: '♓',
 }
 
 const getSignSymbol = (signName: string): string => {
   return SIGN_SYMBOLS[normalizeKey(signName)] || ''
 }
 
-const SIGN_INFO: Record<string, { element: string; modality: string }> = {
+const SIGN_INFO_PT: Record<string, { element: string; modality: string }> = {
   'Áries': { element: 'Fogo', modality: 'Cardeal' },
   'Touro': { element: 'Terra', modality: 'Fixo' },
   'Gêmeos': { element: 'Ar', modality: 'Mutável' },
@@ -456,7 +427,7 @@ const SIGN_INFO: Record<string, { element: string; modality: string }> = {
   'Peixes': { element: 'Água', modality: 'Mutável' },
 }
 
-const NATURAL_HOUSE_SIGNS = [
+const NATURAL_HOUSE_SIGNS_PT = [
   'Áries',
   'Touro',
   'Gêmeos',
@@ -471,24 +442,17 @@ const NATURAL_HOUSE_SIGNS = [
   'Peixes',
 ] as const
 
-const translateAspectLabel = (type: string): string => {
+const translateAspectLabel = React.useCallback((type: string): string => {
   const key = normalizeKey(type)
-  const map: Record<string, string> = {
-    conjuncao: 'conjun\u00E7\u00E3o',
-    conjunction: 'conjun\u00E7\u00E3o',
-    sextil: 'sextil',
-    sextile: 'sextil',
-    quadratura: 'quadratura',
-    square: 'quadratura',
-    trigono: 'tr\u00EDgono',
-    trine: 'tr\u00EDgono',
-    oposicao: 'oposi\u00E7\u00E3o',
-    opposition: 'oposi\u00E7\u00E3o',
-    quincuncio: 'quinc\u00FAncio',
-    quincunx: 'quinc\u00FAncio'
+  const map: Record<string, Record<string, string>> = {
+    'pt-BR': { conjuncao: 'conjun\u00E7\u00E3o', conjunction: 'conjun\u00E7\u00E3o', sextil: 'sextil', sextile: 'sextil', quadratura: 'quadratura', square: 'quadratura', trigono: 'tr\u00EDgono', trine: 'tr\u00EDgono', oposicao: 'oposi\u00E7\u00E3o', opposition: 'oposi\u00E7\u00E3o', quincuncio: 'quinc\u00FAncio', quincunx: 'quinc\u00FAncio' },
+    'en-US': { conjuncao: 'conjunction', conjunction: 'conjunction', sextil: 'sextile', sextile: 'sextile', quadratura: 'square', square: 'square', trigono: 'trine', trine: 'trine', oposicao: 'opposition', opposition: 'opposition', quincuncio: 'quincunx', quincunx: 'quincunx' },
+    'es-ES': { conjuncao: 'conjunción', conjunction: 'conjunción', sextil: 'sextil', sextile: 'sextil', quadratura: 'cuadratura', square: 'cuadratura', trigono: 'trígono', trine: 'trígono', oposicao: 'oposici\u00F3n', opposition: 'oposici\u00F3n', quincuncio: 'quincuncio', quincunx: 'quincuncio' },
+    'it-IT': { conjuncao: 'congiunzione', conjunction: 'congiunzione', sextil: 'sestile', sextile: 'sestile', quadratura: 'quadratura', square: 'quadratura', trigono: 'trigono', trine: 'trigono', oposicao: 'opposizione', opposition: 'opposizione', quincuncio: 'quinconce', quincunx: 'quinconce' },
   }
-  return map[key] || decodeUnicodeEscapes(type)
-}
+  const dictionary = map[language] || map['pt-BR']
+  return dictionary[key] || decodeUnicodeEscapes(type)
+}, [language])
 const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const base = aspect
       .toLowerCase()
@@ -505,6 +469,47 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return ASPECT_ICONS[normalizeAspectKey(aspect)] || '\u2022'
   }
 
+  const SIGN_INFO = React.useMemo<Record<string, { element: string; modality: string }>>(() => {
+    if (language === 'en-US') {
+      return {
+        Aries: { element: 'Fire', modality: 'Cardinal' }, Taurus: { element: 'Earth', modality: 'Fixed' },
+        Gemini: { element: 'Air', modality: 'Mutable' }, Cancer: { element: 'Water', modality: 'Cardinal' },
+        Leo: { element: 'Fire', modality: 'Fixed' }, Virgo: { element: 'Earth', modality: 'Mutable' },
+        Libra: { element: 'Air', modality: 'Cardinal' }, Scorpio: { element: 'Water', modality: 'Fixed' },
+        Sagittarius: { element: 'Fire', modality: 'Mutable' }, Capricorn: { element: 'Earth', modality: 'Cardinal' },
+        Aquarius: { element: 'Air', modality: 'Fixed' }, Pisces: { element: 'Water', modality: 'Mutable' },
+      }
+    }
+    if (language === 'es-ES') {
+      return {
+        Aries: { element: 'Fuego', modality: 'Cardinal' }, Tauro: { element: 'Tierra', modality: 'Fijo' },
+        Géminis: { element: 'Aire', modality: 'Mutable' }, Cáncer: { element: 'Agua', modality: 'Cardinal' },
+        Leo: { element: 'Fuego', modality: 'Fijo' }, Virgo: { element: 'Tierra', modality: 'Mutable' },
+        Libra: { element: 'Aire', modality: 'Cardinal' }, Escorpio: { element: 'Agua', modality: 'Fijo' },
+        Sagitario: { element: 'Fuego', modality: 'Mutable' }, Capricornio: { element: 'Tierra', modality: 'Cardinal' },
+        Acuario: { element: 'Aire', modality: 'Fijo' }, Piscis: { element: 'Agua', modality: 'Mutable' },
+      }
+    }
+    if (language === 'it-IT') {
+      return {
+        Ariete: { element: 'Fuoco', modality: 'Cardinale' }, Toro: { element: 'Terra', modality: 'Fisso' },
+        Gemelli: { element: 'Aria', modality: 'Mutevole' }, Cancro: { element: 'Acqua', modality: 'Cardinale' },
+        Leone: { element: 'Fuoco', modality: 'Fisso' }, Vergine: { element: 'Terra', modality: 'Mutevole' },
+        Bilancia: { element: 'Aria', modality: 'Cardinale' }, Scorpione: { element: 'Acqua', modality: 'Fisso' },
+        Sagittario: { element: 'Fuoco', modality: 'Mutevole' }, Capricorno: { element: 'Terra', modality: 'Cardinale' },
+        Acquario: { element: 'Aria', modality: 'Fisso' }, Pesci: { element: 'Acqua', modality: 'Mutevole' },
+      }
+    }
+    return SIGN_INFO_PT
+  }, [language])
+
+  const NATURAL_HOUSE_SIGNS = React.useMemo(() => {
+    if (language === 'en-US') return ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+    if (language === 'es-ES') return ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis']
+    if (language === 'it-IT') return ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci']
+    return [...NATURAL_HOUSE_SIGNS_PT]
+  }, [language])
+
   const personalWindowMap = React.useMemo(() => {
     const map = new Map<string, { start?: string; exact?: string; end?: string; days?: number }>()
     if (!personalWindows?.length) return map
@@ -517,7 +522,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
   const formatDate = (date: Date | null): string | null => {
     if (!date || Number.isNaN(date.getTime())) return null
-    return date.toLocaleDateString('pt-BR')
+    return date.toLocaleDateString(language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR')
   }
 
   const resolveWindowInfo = (
@@ -643,7 +648,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const info = SIGN_INFO[sign]
     if (!info) return null
     return { sign, ...info }
-  }, [])
+  }, [SIGN_INFO, getSignFromDegree])
 
   const getNaturalHouseInfo = React.useCallback((house: number | null) => {
     if (!house || house < 1 || house > 12) return null
@@ -651,7 +656,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     const info = SIGN_INFO[sign]
     if (!info) return null
     return { sign, ...info }
-  }, [])
+  }, [NATURAL_HOUSE_SIGNS, SIGN_INFO])
 
   const getAreaInfluencesForPlanet = React.useCallback((planetName: string) => {
   if (!lifeAreasDebug || typeof lifeAreasDebug !== 'object') return []
@@ -665,22 +670,22 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       const statusLabel = formatAreaStatus(statusValue)
       const signScore = Number(planetDetail.signScore || 0)
       const houseScore = Number(planetDetail.houseScore || 0)
-      const houseLabel = planetDetail.house ? `Casa ${planetDetail.house}` : null
-      const signLabel = planetDetail.sign ? `Signo ${decodeUnicodeEscapes(planetDetail.sign)}` : null
+      const houseLabel = planetDetail.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${planetDetail.house}` : null
+      const signLabel = planetDetail.sign ? `${tl('Signo', 'Sign', 'Signo', 'Segno')} ${translateSignName(planetDetail.sign)}` : null
 
       const houseImpact =
-        houseScore >= 65 ? 'relevante' : houseScore <= 35 ? 'pouco relevante' : 'moderada'
+        houseScore >= 65 ? tl('relevante', 'relevant', 'relevante', 'rilevante') : houseScore <= 35 ? tl('pouco relevante', 'less relevant', 'poco relevante', 'poco rilevante') : tl('moderada', 'moderate', 'moderada', 'moderata')
       const signImpact =
-        signScore >= 70 ? 'dignidade' : signScore <= 35 ? 'debilidade' : 'neutro'
+        signScore >= 70 ? tl('dignidade', 'dignity', 'dignidad', 'dignità') : signScore <= 35 ? tl('debilidade', 'debilitated', 'debilidad', 'debolezza') : tl('neutro', 'neutral', 'neutro', 'neutro')
 
       const conditionTags = Array.isArray(planetDetail.conditions?.tags)
         ? planetDetail.conditions.tags
         : []
       const aspects = Array.isArray(planetDetail.aspects) ? planetDetail.aspects : []
-      const isHarmonious = (type: string) => ['trigono', 'sextil'].includes(normalizeKey(type))
+      const isHarmonious = (type: string) => ['trigono', 'trine', 'sextil', 'sextile'].includes(normalizeKey(type))
       const isChallenging = (type: string) =>
-        ['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura'].includes(normalizeKey(type))
-      const isNeutral = (type: string) => normalizeKey(type) === 'conjuncao'
+        ['quadratura', 'square', 'oposicao', 'opposition', 'quincuncio', 'quincunx', 'semiquadratura', 'sesquiquadratura'].includes(normalizeKey(type))
+      const isNeutral = (type: string) => ['conjuncao', 'conjunction'].includes(normalizeKey(type))
 
       const harmoniousCount = aspects.filter((a: any) => isHarmonious(a.type)).length
       const challengingCount = aspects.filter((a: any) => isChallenging(a.type)).length
@@ -694,11 +699,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         .join(' | ')
 
       const conditionLine = conditionTags.length
-        ? `Condiþ§es: ${conditionTags.join(', ')}`
+        ? `${tl('Condições', 'Conditions', 'Condiciones', 'Condizioni')}: ${conditionTags.join(', ')}`
         : null
 
-      const aspectLine = `Aspectos: ${harmoniousCount} harm¶nicos, ${challengingCount} desafiadores${
-        neutralCount ? `, ${neutralCount} neutros` : ''
+      const aspectLine = `${tl('Aspectos', 'Aspects', 'Aspectos', 'Aspetti')}: ${harmoniousCount} ${tl('harmônicos', 'harmonic', 'armónicos', 'armonici')}, ${challengingCount} ${tl('desafiadores', 'challenging', 'desafiantes', 'impegnativi')}${
+        neutralCount ? `, ${neutralCount} ${tl('neutros', 'neutral', 'neutros', 'neutri')}` : ''
       }`
 
       return {
@@ -716,7 +721,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       totalScore: number
       lines: string[]
     }>
-}, [lifeAreasDebug, lifeAreas])
+}, [formatAreaStatus, lifeAreas, lifeAreasDebug, tl, translateSignName])
 
   const confidenceValue = typeof statusPersonal?.confidence === 'number' && Number.isFinite(statusPersonal.confidence)
     ? formatMetricPercent(statusPersonal.confidence)
@@ -724,7 +729,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   const volatilityValue = typeof statusPersonal?.volatility === 'number' && Number.isFinite(statusPersonal.volatility)
     ? formatMetricPercent(statusPersonal.volatility)
     : null
-  const statusMetaLine = [confidenceValue ? `Confiança: ${confidenceValue}` : null, volatilityValue ? `Volatilidade: ${volatilityValue}` : null]
+  const statusMetaLine = [confidenceValue ? `${tl('Confiança', 'Confidence', 'Confianza', 'Confidenza')}: ${confidenceValue}` : null, volatilityValue ? `${tl('Volatilidade', 'Volatility', 'Volatilidad', 'Volatilità')}: ${volatilityValue}` : null]
     .filter(Boolean)
     .join(' • ')
 
@@ -797,38 +802,34 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     if (!planetMeaningPlanet) return null
     const comparison = comparisonByPlanet[planetMeaningPlanet]
     if (!comparison) return null
-    const content = PLANET_MEANING_CONTENT[planetMeaningPlanet] || {
+    const content = {
       title: translatePlanetName(planetMeaningPlanet),
       essence: tl(
-        'Força arquetípica em movimento.',
-        'Archetypal force in motion.',
-        'Fuerza arquetípica en movimiento.',
-        'Forza archetipica in movimento.'
+        'Força arquetípica em leitura aplicada.',
+        'Archetypal force in applied reading.',
+        'Fuerza arquetípica en lectura aplicada.',
+        'Forza archetipica in lettura applicata.'
       ),
       inAspect: tl(
-        'Nos aspectos, revela como a energia se combina com outras forças do mapa.',
-        'In aspects, it shows how this energy combines with other chart forces.',
-        'En los aspectos, muestra cómo esta energía se combina con otras fuerzas de la carta.',
-        'Negli aspetti, mostra come questa energia si combina con altre forze del tema.'
+        'Nos aspectos, mostra como a energia encontra apoio, tensão e ajuste.',
+        'In aspects, it shows how energy meets support, tension, and adjustment.',
+        'En los aspectos, muestra cómo la energía encuentra apoyo, tensión y ajuste.',
+        'Negli aspetti, mostra come l energia incontra supporto, tensione e regolazione.'
       ),
       inHouse: tl(
-        'Na casa, mostra o campo da vida mais ativado no momento.',
-        'In the house, it shows which life area is currently most activated.',
-        'En la casa, muestra qué área de vida está más activada ahora.',
-        'Nella casa, mostra quale area di vita è più attivata in questo momento.'
+        'Na casa, indica o campo da vida mais ativado no momento.',
+        'In the house, it indicates the life field most activated right now.',
+        'En la casa, indica el campo de vida más activado en este momento.',
+        'Nella casa, indica il campo della vita più attivato in questo momento.'
       ),
-      keywords: [
-        tl('força', 'strength', 'fuerza', 'forza'),
-        tl('contexto', 'context', 'contexto', 'contesto'),
-        tl('leitura', 'reading', 'lectura', 'lettura')
-      ]
+      keywords: [getPlanetKeyword(planetMeaningPlanet), tl('contexto', 'context', 'contexto', 'contesto'), tl('leitura', 'reading', 'lectura', 'lettura')],
     }
     const personalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps) || comparison.current.house
     const collectiveHouse = comparison.current.house
     const natalHouse = comparison.natal.house
-    const personalFocus = HOUSE_FOCUS[personalHouse || 0] || tl('área de ajuste', 'adjustment area', 'área de ajuste', 'area di regolazione')
-    const collectiveFocus = HOUSE_FOCUS[collectiveHouse || 0] || tl('campo coletivo', 'collective field', 'campo colectivo', 'campo collettivo')
-    const natalFocus = HOUSE_FOCUS[natalHouse || 0] || tl('base natal', 'natal baseline', 'base natal', 'base natale')
+    const personalFocus = getHouseFocus(personalHouse)
+    const collectiveFocus = getHouseFocus(collectiveHouse)
+    const natalFocus = getHouseFocus(natalHouse)
     const signLabel = getSignFromDegree(comparison.current.longitude)
     const personalAspectsCount = personalByTransitPlanet[planetMeaningPlanet]?.length || 0
     const collectiveAspectsCount = comparison.planetaryAspects.length
@@ -905,7 +906,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         `Nel tema natale, ${translatePlanetName(planetMeaningPlanet)} è in Casa ${natalHouse || '-'}: ${natalFocus}.`
       ),
     }
-  }, [planetMeaningPlanet, comparisonByPlanet, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName, tl])
+  }, [planetMeaningPlanet, comparisonByPlanet, getHouseFocus, getPlanetKeyword, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName, tl])
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,
@@ -1053,8 +1054,8 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     phase?: string | null
     scope: 'pessoal' | 'coletivo' | 'casa'
   }) => {
-    const keyword = PLANET_KEYWORDS[params.planet] || tl('dinâmica central', 'core dynamic', 'dinámica central', 'dinamica centrale')
-    const houseFocus = params.house ? HOUSE_FOCUS[params.house] || `${tl('temas da', 'themes of', 'temas de la', 'temi della')} ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('contexto atual', 'current context', 'contexto actual', 'contesto attuale')
+    const keyword = getPlanetKeyword(params.planet)
+    const houseFocus = params.house ? getHouseFocus(params.house) || `${tl('temas da', 'themes of', 'temas de la', 'temi della')} ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('contexto atual', 'current context', 'contexto actual', 'contesto attuale')
     const aspectKey = normalizeAspectKey(params.aspectType)
     const constructive = aspectKey === 'trigono' || aspectKey === 'sextil'
     const intense = aspectKey === 'quadratura' || aspectKey === 'oposicao' || aspectKey === 'quincuncio'
@@ -1073,10 +1074,20 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         : tl('No eixo de casas,', 'In the house axis,', 'En el eje de casas,', 'Nell asse delle case,')
 
     return {
-      short: `${scopeLabel} ${params.planet} ativa ${keyword} em ${houseFocus}: ${tone}.`,
+      short: tl(
+        `${scopeLabel} ${params.planet} ativa ${keyword} em ${houseFocus}: ${tone}.`,
+        `${scopeLabel} ${params.planet} activates ${keyword} in ${houseFocus}: ${tone}.`,
+        `${scopeLabel} ${params.planet} activa ${keyword} en ${houseFocus}: ${tone}.`,
+        `${scopeLabel} ${params.planet} attiva ${keyword} in ${houseFocus}: ${tone}.`
+      ),
       long:
-        `${params.planet} em ${translateAspectLabel(params.aspectType)} com ${params.targetLabel} ` +
-        `organiza foco em ${houseFocus}. ${tone} ${windowLabel}.${phaseLabel} ` +
+        tl(
+          `${params.planet} em ${translateAspectLabel(params.aspectType)} com ${params.targetLabel} organiza foco em ${houseFocus}.`,
+          `${params.planet} in ${translateAspectLabel(params.aspectType)} with ${params.targetLabel} organizes focus in ${houseFocus}.`,
+          `${params.planet} en ${translateAspectLabel(params.aspectType)} con ${params.targetLabel} organiza el foco en ${houseFocus}.`,
+          `${params.planet} in ${translateAspectLabel(params.aspectType)} con ${params.targetLabel} organizza il focus in ${houseFocus}.`
+        ) +
+        ` ${tone} ${windowLabel}.${phaseLabel} ` +
         tl(
           'Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.',
           'Practical reading: convert this trend into a small, clear and executable decision to avoid dispersion.',
@@ -1084,7 +1095,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           'Lettura pratica: trasforma questa tendenza in una decisione piccola, chiara ed eseguibile per evitare dispersione.'
         )
     }
-  }, [tl])
+  }, [getHouseFocus, getPlanetKeyword, tl, translateAspectLabel])
 
   const elementSignCounts = React.useMemo(
     () => ({
@@ -1139,7 +1150,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <Text style={styles.comparisonLabel}>{params.periodLabel}</Text>
         <View style={styles.balanceColumns}>
           <View style={styles.balanceColumn}>
-            <Text style={styles.balanceColumnTitle}>Signos</Text>
+            <Text style={styles.balanceColumnTitle}>{tl('Signos', 'Signs', 'Signos', 'Segni')}</Text>
             {params.signRows.map((row) => (
               <View key={`${params.periodLabel}-sign-${row.key}`} style={styles.balanceRowItem}>
                 <Ionicons name={iconFn(row.key)} size={12} color="#FFD700" />
@@ -1148,7 +1159,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             ))}
           </View>
           <View style={styles.balanceColumn}>
-            <Text style={styles.balanceColumnTitle}>Casas</Text>
+            <Text style={styles.balanceColumnTitle}>{tl('Casas', 'Houses', 'Casas', 'Case')}</Text>
             {params.signRows.map((row) => (
               <View key={`${params.periodLabel}-house-${row.key}`} style={styles.balanceRowItem}>
                 <Ionicons name={iconFn(row.key)} size={12} color="#FFD700" />
@@ -1157,7 +1168,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             ))}
           </View>
           <View style={styles.balanceColumn}>
-            <Text style={styles.balanceColumnTitle}>Balanço</Text>
+            <Text style={styles.balanceColumnTitle}>{tl('Balanço', 'Balance', 'Balance', 'Bilancio')}</Text>
             {params.signRows.map((row) => (
               <View key={`${params.periodLabel}-balance-${row.key}`} style={styles.balanceRowItem}>
                 <Ionicons name={iconFn(row.key)} size={12} color={predominant?.key === row.key ? '#34D399' : '#FFD700'} />
@@ -1168,14 +1179,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             ))}
             {predominant ? (
               <Text style={styles.balancePredominantText}>
-                Predominante: {labelFn(predominant.key)}
+                {tl('Predominante', 'Predominant', 'Predominante', 'Prevalente')}: {labelFn(predominant.key)}
               </Text>
             ) : null}
           </View>
         </View>
       </View>
     )
-  }, [])
+  }, [tl, translateElement, translateModality])
 
   return (
     <LinearGradient
@@ -1186,7 +1197,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         <>
           <View style={styles.cardHeader}>
             <Ionicons name="swap-horizontal" size={18} color="#FFD700" />
-            <Text style={styles.cardTitle}>Visão geral do período</Text>
+            <Text style={styles.cardTitle}>{tl('Visão geral do período', 'Period overview', 'Resumen del período', 'Panoramica del periodo')}</Text>
           </View>
           {statusPersonal ? (
             <View style={{ marginBottom: 8 }}>
@@ -1209,7 +1220,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             <Text style={styles.sectionTitle}>Tábula Estelar</Text>
           </View>
           <View style={styles.systemBadge}>
-            <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem)}</Text>
+            <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem, language)}</Text>
           </View>
         </View>
 
@@ -1681,7 +1692,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="analytics" size={20} color="#FFD700" />
             <Text style={styles.sectionTitle}>{tl('Resumo da Carta', 'Chart Summary', 'Resumen de la Carta', 'Riepilogo del Tema')}</Text>
-            {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>aprox</Text> : null}
+            {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>{tl('aprox', 'approx', 'aprox', 'appross')}</Text> : null}
           </View>
         </View>
 
@@ -1689,21 +1700,26 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           <View style={styles.weightMethodCard}>
             <Text style={styles.weightMethodTitle}>{tl('Método de peso do balanço', 'Balance weighting method', 'Metodo de peso del balance', 'Metodo di peso del bilancio')}</Text>
             <Text style={styles.weightMethodText}>
-              Balanço = (Signos x {Math.round(SIGN_WEIGHT * 100)}%) + (Casas x {Math.round(HOUSE_WEIGHT * 100)}%)
+              {tl('Balanço', 'Balance', 'Balance', 'Bilancio')} = ({tl('Signos', 'Signs', 'Signos', 'Segni')} x {Math.round(SIGN_WEIGHT * 100)}%) + ({tl('Casas', 'Houses', 'Casas', 'Case')} x {Math.round(HOUSE_WEIGHT * 100)}%)
             </Text>
             <Text style={styles.weightMethodText}>
-              Signos mostram o estilo de expressão; casas mostram a área ativada no mapa.
+              {tl(
+                'Signos mostram o estilo de expressão; casas mostram a área ativada no mapa.',
+                'Signs show expression style; houses show the area activated in the chart.',
+                'Los signos muestran el estilo de expresión; las casas muestran el área activada en la carta.',
+                'I segni mostrano lo stile di espressione; le case mostrano l area attivata nel tema.'
+              )}
             </Text>
           </View>
           <Text style={styles.analysisLabel}>{tl('Elementos (Signos | Casas | Balanço):', 'Elements (Signs | Houses | Balance):', 'Elementos (Signos | Casas | Balance):', 'Elementi (Segni | Case | Bilancio):')}</Text>
           <View style={styles.balanceGrid}>
             {renderBalanceColumns({
-              periodLabel: 'Natal',
+              periodLabel: tl('Natal', 'Natal', 'Natal', 'Natale'),
               signRows: weightedElementRows.natal,
               kind: 'element'
             })}
             {renderBalanceColumns({
-              periodLabel: 'Atual',
+              periodLabel: tl('Atual', 'Current', 'Actual', 'Attuale'),
               signRows: weightedElementRows.current,
               kind: 'element'
             })}
@@ -1714,12 +1730,12 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
           <Text style={styles.analysisLabel}>{tl('Modalidades (Signos | Casas | Balanço):', 'Modalities (Signs | Houses | Balance):', 'Modalidades (Signos | Casas | Balance):', 'Modalita (Segni | Case | Bilancio):')}</Text>
           <View style={styles.balanceGrid}>
             {renderBalanceColumns({
-              periodLabel: 'Natal',
+              periodLabel: tl('Natal', 'Natal', 'Natal', 'Natale'),
               signRows: weightedModalityRows.natal,
               kind: 'modality'
             })}
             {renderBalanceColumns({
-              periodLabel: 'Atual',
+              periodLabel: tl('Atual', 'Current', 'Actual', 'Attuale'),
               signRows: weightedModalityRows.current,
               kind: 'modality'
             })}

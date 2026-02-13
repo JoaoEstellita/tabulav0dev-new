@@ -91,7 +91,7 @@ interface UserProfile {
 }
 
 export default function ProfileScreen() {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
     const value = t(key, vars as any)
     return value === key ? fallback : value
@@ -247,8 +247,8 @@ export default function ProfileScreen() {
         if (exact && exact > now && upcomingPhases.length < 4) {
           const phaseEventKey = extractPhaseKey(event)
           upcomingPhases.push({
-            label: getMoonPhaseLabelFromKey(phaseEventKey as any),
-            when: formatLocalDateTime(exact, userTz),
+            label: getMoonPhaseLabelFromKey(phaseEventKey as any, language),
+            when: formatLocalDateTime(exact, userTz, language),
           })
         }
       }
@@ -274,12 +274,12 @@ export default function ProfileScreen() {
       const angle = getMoonPhaseAngle(now)
       const angleKey = getMoonPhaseKeyFromAngle(angle)
       const phaseKey = angle >= 315 ? "waningCrescent" : angleKey
-      let phaseLabel = getMoonPhaseLabelFromAngle(angle)
+      let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
       if (angle >= 315) phaseLabel = tr('profile.moon.balsamic', 'Lua Balsâmica')
 
       const line1 = isVoid ? `${phaseLabel} · ${tr('profile.moon.void', 'Lua Vazia')}` : phaseLabel
       const line2Base = nextExact
-        ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz) })
+        ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz, language) })
         : tr('profile.moon.updatingPhase', 'fase em atualização')
       setMoonPhaseKey(phaseKey)
       setMoonPhaseLabel(line1)
@@ -289,10 +289,10 @@ export default function ProfileScreen() {
         phaseLabel,
         phaseUntilLabel: line2Base,
         currentVoidLabel: isVoid && currentVoid?.endAt
-          ? tr('profile.moon.currentVoidYesUntil', 'Sim, até {time}', { time: formatLocalTime(new Date(currentVoid.endAt), userTz) })
+          ? tr('profile.moon.currentVoidYesUntil', 'Sim, até {time}', { time: formatLocalTime(new Date(currentVoid.endAt), userTz, language) })
           : tr('profile.moon.no', 'Não'),
         nextVoidLabel: nextVoidStart
-          ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` ${tr('profile.moon.until', 'até {date}', { date: formatLocalTime(nextVoidEnd, userTz) })}` : ""}`
+          ? `${formatLocalDateTime(nextVoidStart, userTz, language)}${nextVoidEnd ? ` ${tr('profile.moon.until', 'até {date}', { date: formatLocalTime(nextVoidEnd, userTz, language) })}` : ""}`
           : tr('profile.moon.noForecast', 'Sem previsão'),
         upcomingPhases,
       })

@@ -383,8 +383,8 @@ export default function HomeScreen() {
             if (exact && exact > now && upcomingPhases.length < 4) {
               const phaseEventKey = extractPhaseKey(event)
               upcomingPhases.push({
-                label: getMoonPhaseLabelFromKey(phaseEventKey as any),
-                when: formatLocalDateTime(exact, userTz),
+                label: getMoonPhaseLabelFromKey(phaseEventKey as any, language),
+                when: formatLocalDateTime(exact, userTz, language),
               })
             }
           } else if (type.includes('LUNAR_VOID')) {
@@ -403,14 +403,14 @@ export default function HomeScreen() {
         const angle = getMoonPhaseAngle(now)
         const angleKey = getMoonPhaseKeyFromAngle(angle)
         const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
-        let phaseLabel = getMoonPhaseLabelFromAngle(angle)
+        let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
         if (angle >= 315) phaseLabel = tl('Lua Balsâmica', 'Balsamic Moon', 'Luna balsámica', 'Luna balsamica')
         const line1 = currentVoid ? `${phaseLabel} · ${tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota')}` : phaseLabel
         const line2Base = nextExact
-          ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz) })
+          ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz, language) })
           : tr('profile.moon.updatingPhase', 'phase updating')
         const line2 = currentVoid && voidEnd
-          ? `${line2Base} · ${tl('Lua Vazia até', 'Void Moon until', 'Luna vacía hasta', 'Luna vuota fino a')} ${formatLocalTime(voidEnd, userTz)}`
+          ? `${line2Base} · ${tl('Lua Vazia até', 'Void Moon until', 'Luna vacía hasta', 'Luna vuota fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
           : line2Base
 
         setMoonPhaseKey(phaseKey)
@@ -420,10 +420,10 @@ export default function HomeScreen() {
           phaseLabel,
           phaseUntilLabel: line2Base,
           currentVoidLabel: currentVoid && voidEnd
-            ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz)}`
+            ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
             : tl('Não', 'No', 'No', 'No'),
           nextVoidLabel: nextVoidStart
-            ? `${formatLocalDateTime(nextVoidStart, userTz)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz)}` : ''}`
+            ? `${formatLocalDateTime(nextVoidStart, userTz, language)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz, language)}` : ''}`
             : tr('profile.moon.noForecast', 'No forecast'),
           upcomingPhases,
         })
@@ -579,7 +579,7 @@ export default function HomeScreen() {
                 <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
                 <Text style={styles.houseSystemLabel} numberOfLines={2}>
-                  {tl('Sistema', 'System', 'Sistema', 'Sistema')}: {formatHouseSystemLabel(houseSystem)}
+                  {tl('Sistema', 'System', 'Sistema', 'Sistema')}: {formatHouseSystemLabel(houseSystem, language)}
                   {statusPersonalLabel ? ` • ${statusPersonalLabel}` : ''}
                 </Text>
               </View>
