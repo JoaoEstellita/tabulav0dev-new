@@ -1635,37 +1635,52 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const aspect = rawAspect ? getAspectLabel(rawAspect) : ''
     const houseTarget = getTransitNatalHouseLabel(transit)
     const currentHouse = getTransitCurrentHouseLabel(transit)
+    const personalHouse = houseTarget || getTransitOnNatalHouseLabel(transit)
     const rawTarget =
       transit?.natalPlanet ||
       transit?.target?.natalPlanet ||
       transit?.target?.angle ||
       (houseTarget ? `Casa ${houseTarget}` : '')
     const target = rawTarget ? planetLabel(String(rawTarget)) : ''
+    let title = ''
     if (columnKind === 'house') {
-      const personalHouse = houseTarget || getTransitOnNatalHouseLabel(transit)
       if (personalHouse) {
-        return tl(
+        title = tl(
           `${transitPlanet} em trânsito pessoal na Casa ${personalHouse}`,
           `${transitPlanet} in personal transit in House ${personalHouse}`,
           `${transitPlanet} en tránsito personal en la Casa ${personalHouse}`,
           `${transitPlanet} in transito personale nella Casa ${personalHouse}`
         )
+      } else {
+        title = buildSharedTransitTitle({
+          transitPlanet,
+          aspectLabel: aspect,
+          targetLabel: '',
+          houseNumber: currentHouse || null,
+          areaHouses: null,
+        }, language)
       }
-      return buildSharedTransitTitle({
+    } else {
+      title = buildSharedTransitTitle({
         transitPlanet,
         aspectLabel: aspect,
-        targetLabel: '',
-        houseNumber: currentHouse || null,
+        targetLabel: target,
+        houseNumber: null,
         areaHouses: null,
       }, language)
     }
-    return buildSharedTransitTitle({
-      transitPlanet,
-      aspectLabel: aspect,
-      targetLabel: target,
-      houseNumber: null,
-      areaHouses: null,
-    }, language)
+    if (personalHouse) {
+      const hasHouseToken = /(?:\bcasa\b|\bhouse\b)\s*\d+/i.test(String(title || ''))
+      if (!hasHouseToken) {
+        title = tl(
+          `${title} • Casa ${personalHouse}`,
+          `${title} • House ${personalHouse}`,
+          `${title} • Casa ${personalHouse}`,
+          `${title} • Casa ${personalHouse}`
+        )
+      }
+    }
+    return title
   }
 
   const getTransitCurrentHouseLabel = (transit: any): string | null => {
@@ -2274,7 +2289,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
       return !!house && selectedHouseFilters.includes(house)
     })
-    const combinedTransits: Array<{ transit: any; facetKind: 'planet' | 'house' }> = [
+    const combinedTransitsRaw: Array<{ transit: any; facetKind: 'planet' | 'house' }> = [
       ...(selectedFacetFilters.includes('planet')
         ? filteredPlanetTransits.map((transit) => ({ transit, facetKind: 'planet' as const }))
         : []),
@@ -2283,6 +2298,40 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : []),
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
+    const transitStableKey = (transit: any) =>
+      String(
+        transit?.id ||
+        [
+          toIdentityToken(transit?.seriesId || ''),
+          toIdentityToken(transit?.contactIndex || ''),
+          toIdentityToken(transit?.transitPlanet || ''),
+          toIdentityToken(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.target?.house || ''),
+          toIdentityToken(transit?.aspectName || transit?.type || ''),
+          toIdentityToken(transit?.startAt || transit?.window?.start || ''),
+          toIdentityToken(transit?.peakAt || transit?.window?.exact || ''),
+          toIdentityToken(transit?.endAt || transit?.window?.end || ''),
+        ].join('|')
+      )
+    const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'planet' | 'house' }>) => {
+      const map = new Map<string, { transit: any; facetKind: 'planet' | 'house' }>()
+      items.forEach((entry) => {
+        const key = transitStableKey(entry.transit)
+        const existing = map.get(key)
+        if (!existing) {
+          map.set(key, entry)
+          return
+        }
+        if (existing.facetKind === 'planet' && entry.facetKind === 'house') {
+          map.set(key, entry)
+          return
+        }
+        if (getTransitPriorityScore(entry.transit) > getTransitPriorityScore(existing.transit)) {
+          map.set(key, entry)
+        }
+      })
+      return Array.from(map.values())
+    }
+    const combinedTransits = dedupeCombinedEntries(combinedTransitsRaw)
     const sortedTransits = sortTransitEntries(combinedTransits)
     const visibleTransitCards = renderTransitList(sortedTransits, 0, false)
     const activeFiltersCount =
