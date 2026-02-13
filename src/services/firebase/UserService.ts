@@ -152,6 +152,8 @@ class UserService {
           }
         } catch (err) {
           console.warn('⚠️ Falha ao processar foto. Prosseguindo sem foto.', err)
+          // Fallback: preserva ao menos a referência original para não perder a foto escolhida.
+          updateData.profilePhoto = birthData.profilePhoto
         }
       }
 

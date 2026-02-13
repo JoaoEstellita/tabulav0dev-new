@@ -773,7 +773,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                 key={option.code}
                 style={[styles.filterPill, active && styles.filterPillActive]}
                 onPress={async () => {
-                  setFormData(prev => ({ ...prev, language: option.code }))
+                  setFormData(prev => ({
+                    ...prev,
+                    language: option.code,
+                    ...(option.code !== 'pt-BR'
+                      ? {
+                          birthCountryCode: '',
+                          country: '',
+                          city: '',
+                          latitude: 0,
+                          longitude: 0,
+                        }
+                      : {}),
+                  }))
+                  if (option.code !== 'pt-BR') {
+                    setSelectedCountry(null)
+                    setCountryQuery('')
+                  }
                   await setLanguage(option.code)
                 }}
               >
@@ -978,6 +994,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           keyboardType="number-pad"
           inputMode="numeric"
           returnKeyType="next"
+          maxLength={10}
+          blurOnSubmit={false}
+          onSubmitEditing={() => {
+            birthTimeInputRef.current?.focus()
+            scrollRef.current?.scrollToEnd({ animated: true })
+          }}
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
         <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
@@ -1035,7 +1057,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onChangeText={handleBirthTimeInput}
           keyboardType="number-pad"
           inputMode="numeric"
-          returnKeyType="next"
+          returnKeyType="done"
+          maxLength={5}
+          onSubmitEditing={() => {
+            handleNext()
+            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80)
+          }}
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
         <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
