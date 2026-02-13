@@ -197,7 +197,7 @@ export default function PremiumScreen() {
       } finally {
         // Recarrega status de assinatura apos retorno do checkout.
         try {
-          const cleanedUrl = `${window.location.origin}/Tabs/Premium${checkoutState ? `?checkout=${encodeURIComponent(checkoutState)}` : ''}`
+          const cleanedUrl = `${window.location.origin}${window.location.pathname}${checkoutState ? `?checkout=${encodeURIComponent(checkoutState)}` : ''}`
           window.history.replaceState({}, '', cleanedUrl)
         } catch {}
       }
@@ -266,6 +266,18 @@ export default function PremiumScreen() {
         : []
       setCreditHistory(mapped)
     } catch (error: any) {
+      const raw = String(error?.message || '').toLowerCase()
+      const endpointUnavailable =
+        raw.includes('failed to fetch')
+        || raw.includes('network')
+        || raw.includes('404')
+        || raw.includes('not found')
+
+      if (endpointUnavailable) {
+        setCreditHistory([])
+        setCreditsHistoryError(null)
+        return
+      }
       setCreditsHistoryError(error?.message || tr('premium.creditsHistory.loadFailed', 'Falha ao carregar historico'))
     } finally {
       setCreditsHistoryLoading(false)

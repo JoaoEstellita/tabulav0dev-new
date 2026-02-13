@@ -47,6 +47,9 @@ export class AstrologerPremiumService {
       // Nao quebra UI; retorna payload vazio para telas de creditos/historico.
       return { ok: false, data: { items: [] } } as PremiumResponse<T>
     }
+    if (!response.ok && isCreditsEndpoint) {
+      return { ok: false, data: { items: [] } } as PremiumResponse<T>
+    }
     if (!response.ok) {
       const error = payload?.error || `HTTP_${response.status}`
       const message = payload?.message || payload?.error || 'Erro ao consultar premium'
@@ -76,6 +79,9 @@ export class AstrologerPremiumService {
     }
     const payload = await response.json().catch(() => ({}))
     if (response.status === 404 && isCreditsEndpoint) {
+      return { ok: false, data: { items: [] } } as PremiumResponse<T>
+    }
+    if (!response.ok && isCreditsEndpoint) {
       return { ok: false, data: { items: [] } } as PremiumResponse<T>
     }
     if (!response.ok) {

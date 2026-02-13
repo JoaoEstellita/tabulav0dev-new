@@ -72,6 +72,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   })
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
+  const [birthDateError, setBirthDateError] = useState('')
+  const [birthTimeError, setBirthTimeError] = useState('')
 
   // Estados para DateTimePicker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -467,6 +469,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const handleBirthDateInput = (text: string) => {
     const formatted = formatDateInput(text)
     setBirthDateDisplay(formatted)
+    setBirthDateError('')
 
     if (!formatted) {
       setFormData(prev => ({ ...prev, birthDate: '' }))
@@ -481,11 +484,15 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
     // Se digitacao parcial/invalida, limpa valor canonico para validar corretamente no "Next".
     setFormData(prev => ({ ...prev, birthDate: '' }))
+    if (formatted.length === 10) {
+      setBirthDateError(t('onboarding.validation.birthDateInvalid'))
+    }
   }
 
   const handleBirthTimeInput = (text: string) => {
     const formatted = formatTimeInput(text)
     setBirthTimeDisplay(formatted)
+    setBirthTimeError('')
 
     if (!formatted) {
       setFormData(prev => ({ ...prev, birthTime: '' }))
@@ -500,6 +507,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
     // Se digitacao parcial/invalida, limpa valor canonico para validar corretamente no "Next".
     setFormData(prev => ({ ...prev, birthTime: '' }))
+    if (formatted.length === 5) {
+      setBirthTimeError(t('onboarding.validation.birthTimeInvalid'))
+    }
   }
 
   const openDatePicker = () => {
@@ -684,24 +694,30 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const validateStep3 = () => {
     if (!formData.birthDate) {
       if (birthDateDisplay.trim().length > 0) {
+        setBirthDateError(t('onboarding.validation.birthDateInvalid'))
         Alert.alert(t('common.attention'), t('onboarding.validation.birthDateInvalid'))
         return false
       }
+      setBirthDateError(t('onboarding.validation.birthDateRequired'))
       Alert.alert(t('common.attention'), t('onboarding.validation.birthDateRequired'))
       return false
     }
+    setBirthDateError('')
     return true
   }
 
   const validateStep4 = () => {
     if (!formData.birthTime) {
       if (birthTimeDisplay.trim().length > 0) {
+        setBirthTimeError(t('onboarding.validation.birthTimeInvalid'))
         Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeInvalid'))
         return false
       }
+      setBirthTimeError(t('onboarding.validation.birthTimeRequired'))
       Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeRequired'))
       return false
     }
+    setBirthTimeError('')
     return true
   }
 
@@ -908,7 +924,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         {formData.profilePhoto ? (
           <View style={styles.photoSelected}>
             <Image source={{ uri: formData.profilePhoto }} style={styles.profilePhoto} />
-            <TouchableOpacity style={styles.removePhotoButton} onPress={removePhoto} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity
+              style={styles.removePhotoButton}
+              onPress={() => {
+                if (typeof window === 'undefined') removePhoto()
+              }}
+              onPressIn={() => {
+                if (typeof window !== 'undefined') removePhoto()
+              }}
+              hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+              activeOpacity={0.8}
+            >
               <Ionicons name="close-circle" size={24} color="#EF4444" />
             </TouchableOpacity>
           </View>
@@ -1018,6 +1044,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           )}
         </View>
       </View>
+      {!!birthDateError && <Text style={styles.fieldErrorText}>{birthDateError}</Text>}
     </Modal>
   )
 
@@ -1051,6 +1078,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
       </View>
+      {!!birthTimeError && <Text style={styles.fieldErrorText}>{birthTimeError}</Text>}
 
       {showDatePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
@@ -1620,6 +1648,14 @@ const styles = StyleSheet.create({
     padding: 2,
     zIndex: 20,
     elevation: 6,
+  },
+  fieldErrorText: {
+    width: '100%',
+    color: '#FF6B6B',
+    fontSize: FONT_SIZES.sm,
+    marginTop: -8,
+    marginBottom: 8,
+    textAlign: 'left',
   },
   nameInput: {
     flex: 1,

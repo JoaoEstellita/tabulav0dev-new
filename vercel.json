@@ -7,6 +7,16 @@
       "source": "/app/(.*)",
       "destination": "/index.html"
     },
+    { "source": "/Tabs", "destination": "/index.html" },
+    {
+      "source": "/Tabs/(.*)",
+      "destination": "/index.html"
+    },
+    { "source": "/payment", "destination": "/index.html" },
+    {
+      "source": "/payment/(.*)",
+      "destination": "/index.html"
+    },
     { "source": "/join", "destination": "/index.html" },
     {
       "source": "/join/(.*)",

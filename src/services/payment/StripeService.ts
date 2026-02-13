@@ -51,10 +51,11 @@ export class StripeService {
   })()
 
   static async createCheckoutSession(payload: StripeCheckoutPayload): Promise<StripeCheckoutResponse> {
+    const returnBase = `${this.FRONTEND_URL}/app`
     const body = {
       ...payload,
-      successUrl: `${this.FRONTEND_URL}/Tabs/Premium?provider=stripe&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${this.FRONTEND_URL}/Tabs/Premium?provider=stripe&checkout=cancel`,
+      successUrl: `${returnBase}?provider=stripe&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${returnBase}?provider=stripe&checkout=cancel`,
     }
     const response = await fetch(`${this.BACKEND_URL}/stripe/create-checkout-session`, {
       method: 'POST',
@@ -80,7 +81,7 @@ export class StripeService {
       cache: 'no-store',
       body: JSON.stringify({
         userId,
-        returnUrl: `${this.FRONTEND_URL}/premium`,
+        returnUrl: `${this.FRONTEND_URL}/app`,
       }),
     })
     const data = await response.json()
