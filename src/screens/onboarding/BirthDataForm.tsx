@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -67,7 +67,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     latitude: 0,
     longitude: 0,
     language,
-    birthCountryCode: 'BR',
+    birthCountryCode: language === 'pt-BR' ? 'BR' : '',
   })
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
@@ -91,6 +91,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [searchingCountry, setSearchingCountry] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
   const [notificationsGranted, setNotificationsGranted] = useState(false)
+  const birthDateInputRef = useRef<TextInput | null>(null)
+  const birthTimeInputRef = useRef<TextInput | null>(null)
 
   const formatDateDisplay = (isoDate: string) => {
     if (!isoDate) return ''
@@ -198,10 +200,15 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       const options = await LocationService.getCountries(query, formData.language)
       setCountryOptions(options)
       if (!selectedCountry) {
-        const initial = options.find((item) => item.code === formData.birthCountryCode) || options[0]
+        let initial: CountryOption | undefined
+        if (formData.birthCountryCode) {
+          initial = options.find((item) => item.code === formData.birthCountryCode)
+        } else if (formData.language === 'pt-BR') {
+          initial = options.find((item) => item.code === 'BR')
+        }
         if (initial) {
           setSelectedCountry(initial)
-          setCountryQuery(`${initial.flag} ${initial.name}`)
+          setCountryQuery(initial.name)
           setFormData((prev) => ({
             ...prev,
             birthCountryCode: initial.code,
@@ -247,6 +254,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   }, [language])
 
   useEffect(() => {
+    if (language === 'pt-BR') return
+    // Fora de pt-BR, pais inicial deve ficar vazio (sem pre-selecao automatica)
+    setSelectedCountry(null)
+    setCountryQuery('')
+    setFormData((prev) => ({
+      ...prev,
+      birthCountryCode: '',
+      country: '',
+      city: '',
+      latitude: 0,
+      longitude: 0,
+    }))
+  }, [language])
+
+  useEffect(() => {
     loadCountryOptions(countryQuery)
   }, [countryQuery, formData.language])
 
@@ -258,7 +280,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         const translated = options.find((item) => item.code === selectedCountry.code)
         if (!translated) return
         setSelectedCountry(translated)
-        setCountryQuery(`${translated.flag} ${translated.name}`)
+        setCountryQuery(translated.name)
         setFormData((prev) => ({ ...prev, country: translated.name }))
       } catch (error) {
         console.error('Erro ao sincronizar nome do pais com idioma:', error)
@@ -357,7 +379,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       longitude: 0,
     }))
     setSelectedCountry(country)
-    setCountryQuery(`${country.flag} ${country.name}`)
+    setCountryQuery(country.name)
     setShowCountrySuggestions(false)
     setSelectedLocation(null)
     setLocationQuery('')
@@ -467,6 +489,15 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     if (Platform.OS === 'web') return
     setShowTimePicker(true)
   }
+
+  useEffect(() => {
+    if (currentStep === 3) {
+      setTimeout(() => birthDateInputRef.current?.focus(), 80)
+    }
+    if (currentStep === 4) {
+      setTimeout(() => birthTimeInputRef.current?.focus(), 80)
+    }
+  }, [currentStep])
 
   // Funções para manipulação de foto
   const requestPermissions = async () => {
@@ -723,7 +754,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const renderIntroStep = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons name="sparkles-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
       <Text style={styles.introKicker}>{t('onboarding.step.intro.kicker')}</Text>
       <View style={styles.filterRow}>
         <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
@@ -759,6 +789,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <View style={styles.introFeatureRow}>
           <Ionicons name="notifications-outline" size={18} color="#FFD700" />
           <Text style={styles.introLine}>{t('onboarding.step.intro.item3')}</Text>
+        </View>
+        <View style={styles.introFeatureRow}>
+          <Ionicons name="planet-outline" size={18} color="#FFD700" />
+          <Text style={styles.introLine}>{t('onboarding.step.intro.item4')}</Text>
         </View>
       </View>
     </View>
@@ -923,19 +957,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       <Text style={styles.stepDescription}>{t('onboarding.step.date.description')}</Text>
 
       <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.inputIconButton} onPress={openDatePicker}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
           <Ionicons name="calendar" size={20} color="#FFD700" />
         </TouchableOpacity>
         <TextInput
+          ref={birthDateInputRef}
           style={styles.dateInput}
           placeholder={t('onboarding.date.placeholder')}
           placeholderTextColor="#8E8E93"
           value={birthDateDisplay}
           onChangeText={handleBirthDateInput}
-          keyboardType={Platform.OS === 'web' ? 'default' : 'number-pad'}
+          keyboardType="number-pad"
+          inputMode="numeric"
           returnKeyType="next"
         />
-        <TouchableOpacity style={styles.inputIconButton} onPress={openDatePicker}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
           <Ionicons name="calendar-outline" size={20} color="#FFD700" />
         </TouchableOpacity>
       </View>
@@ -978,19 +1014,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       <Text style={styles.stepDescription}>{t('onboarding.step.time.description')}</Text>
 
       <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.inputIconButton} onPress={openTimePicker}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
           <Ionicons name="time" size={20} color="#FFD700" />
         </TouchableOpacity>
         <TextInput
+          ref={birthTimeInputRef}
           style={styles.dateInput}
           placeholder={t('onboarding.time.placeholder')}
           placeholderTextColor="#8E8E93"
           value={birthTimeDisplay}
           onChangeText={handleBirthTimeInput}
-          keyboardType={Platform.OS === 'web' ? 'default' : 'number-pad'}
+          keyboardType="number-pad"
+          inputMode="numeric"
           returnKeyType="next"
         />
-        <TouchableOpacity style={styles.inputIconButton} onPress={openTimePicker}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
           <Ionicons name="time-outline" size={20} color="#FFD700" />
         </TouchableOpacity>
       </View>
@@ -1152,7 +1190,8 @@ const renderProgressBar = () => (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 16}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}

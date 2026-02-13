@@ -205,14 +205,6 @@ export default function LoginScreen() {
 
               <Logo tagline={t("login.tagline")} />
               <Text style={styles.brandTitle}>TABULA ESTELAR</Text>
-              <Text style={styles.brandSubtitle}>
-                {tl(
-                  "Seu guia astrologico pessoal em tempo real",
-                  "Your personal real-time astrology guide",
-                  "Tu guia astrologica personal en tiempo real",
-                  "La tua guida astrologica personale in tempo reale"
-                )}
-              </Text>
             </View>
 
             <View style={styles.formContainer}>

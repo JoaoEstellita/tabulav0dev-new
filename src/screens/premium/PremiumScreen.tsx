@@ -127,15 +127,6 @@ export default function PremiumScreen() {
     }
   }, [isPortuguese, subscriptionProvider])
 
-  useEffect(() => {
-    if (route?.params?.openTab) return
-    if (!hasActivePlan) {
-      setSelectedTab('features')
-      return
-    }
-    if (selectedTab === 'features') setSelectedTab('hub')
-  }, [hasActivePlan, route?.params?.openTab, selectedTab])
-
   const openExternalCheckout = async (url: string) => {
     const targetUrl = String(url || '').trim()
     if (!targetUrl) throw new Error(tr('subscription.error.openPaymentLink', 'Nao foi possivel abrir o link de pagamento.'))
