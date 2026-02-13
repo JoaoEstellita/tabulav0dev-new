@@ -50,8 +50,9 @@ export default function PremiumScreen() {
   const route = useRoute<any>()
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
+  const hasActivePlan = !!subscription?.active
   const hasHubAccess = isAdmin || (subscription?.active && (planId.startsWith('premium_') || planId === 'premium_monthly' || planId.startsWith('pro_') || planId === 'pro_monthly'))
-  const [selectedTab, setSelectedTab] = useState<'features' | 'hub' | 'credits' | 'history'>(hasHubAccess ? 'hub' : 'features')
+  const [selectedTab, setSelectedTab] = useState<'features' | 'hub' | 'credits' | 'history'>(hasActivePlan ? 'hub' : 'features')
   const [targetDate, setTargetDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [partnerBirthDate, setPartnerBirthDate] = useState('')
   const [partnerBirthTime, setPartnerBirthTime] = useState('')
@@ -125,6 +126,25 @@ export default function PremiumScreen() {
       setSubscriptionProvider('stripe')
     }
   }, [isPortuguese, subscriptionProvider])
+
+  useEffect(() => {
+    if (route?.params?.openTab) return
+    if (!hasActivePlan) {
+      setSelectedTab('features')
+      return
+    }
+    if (selectedTab === 'features') setSelectedTab('hub')
+  }, [hasActivePlan, route?.params?.openTab, selectedTab])
+
+  const openExternalCheckout = async (url: string) => {
+    const targetUrl = String(url || '').trim()
+    if (!targetUrl) throw new Error(tr('subscription.error.openPaymentLink', 'Nao foi possivel abrir o link de pagamento.'))
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.location.assign(targetUrl)
+      return
+    }
+    await Linking.openURL(targetUrl)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -238,7 +258,7 @@ export default function PremiumScreen() {
                 Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
                 return
               }
-              await Linking.openURL(checkoutUrl)
+              await openExternalCheckout(checkoutUrl)
             } catch (error: any) {
               Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.purchaseStartFailed', 'Não foi possível iniciar a compra agora.'))
             } finally {
@@ -285,7 +305,7 @@ export default function PremiumScreen() {
           Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.stripeLinkFailed', 'Não foi possível gerar o link Stripe.'))
           return
         }
-        await Linking.openURL(stripeUrl)
+        await openExternalCheckout(stripeUrl)
         return
       }
       const preference = await MercadoPagoService.createPaymentPreference({
@@ -302,7 +322,7 @@ export default function PremiumScreen() {
         Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
         return
       }
-      await Linking.openURL(checkoutUrl)
+      await openExternalCheckout(checkoutUrl)
     } catch (error: any) {
       const raw = String(error?.message || '').trim()
       const safeMessage = raw.length > 3 ? raw : tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
@@ -888,6 +908,16 @@ export default function PremiumScreen() {
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Header Premium */}
       <View style={styles.header}>
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerTopSpacer} />
+          <TouchableOpacity
+            style={styles.openPlansButton}
+            onPress={() => setSelectedTab('features')}
+          >
+            <Ionicons name="wallet-outline" size={14} color="#0F0F23" />
+            <Text style={styles.openPlansButtonText}>{tr('premium.cta.openPlans', 'Abrir planos')}</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.headerTitle}>{tr('premium.header.title', 'Premium')}</Text>
         <Text style={styles.headerSubtitle}>{tr('premium.header.subtitle', 'Planos e serviços premium')}</Text>
       </View>
@@ -901,14 +931,6 @@ export default function PremiumScreen() {
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'features' && styles.activeTab]}
-          onPress={() => setSelectedTab('features')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'features' && styles.activeTabText]}>
-            {tr('premium.tab.plans', 'Planos')}
-          </Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
           onPress={() => setSelectedTab('hub')}
@@ -951,6 +973,30 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     alignItems: 'center',
+  },
+  headerTopRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  headerTopSpacer: {
+    width: 8,
+  },
+  openPlansButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  openPlansButtonText: {
+    color: '#0F0F23',
+    fontSize: 12,
+    fontWeight: '700',
   },
   headerTitle: {
     fontSize: 28,
