@@ -76,7 +76,8 @@ export default function PremiumScreen() {
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
-  const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>('mercadopago')
+  const isPortuguese = language === 'pt-BR'
+  const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>(isPortuguese ? 'mercadopago' : 'stripe')
   const expiryInfo = useMemo(() => {
     return getExpiryBannerInfo({
       featureLabel: tr('premium.header.title', 'Premium'),
@@ -118,6 +119,12 @@ export default function PremiumScreen() {
       setSelectedTab(requestedTab)
     }
   }, [route?.params?.openTab])
+
+  useEffect(() => {
+    if (!isPortuguese && subscriptionProvider !== 'stripe') {
+      setSubscriptionProvider('stripe')
+    }
+  }, [isPortuguese, subscriptionProvider])
 
   useEffect(() => {
     if (!user) return
@@ -258,12 +265,13 @@ export default function PremiumScreen() {
       return
     }
     try {
+      const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
       const planConfig = MercadoPagoService.getPlanById(plan.id)
       if (!planConfig) {
         Alert.alert(tr('premium.alert.invalidPlan.title', 'Plano inválido'), tr('premium.alert.invalidPlan.body', 'Não foi possível localizar o plano selecionado.'))
         return
       }
-      if (subscriptionProvider === 'stripe') {
+      if (effectiveProvider === 'stripe') {
         const stripeSession = await StripeService.createCheckoutSession({
           userId: user.uid,
           planId: planConfig.id,
@@ -295,8 +303,10 @@ export default function PremiumScreen() {
         return
       }
       await Linking.openURL(checkoutUrl)
-    } catch (error) {
-      Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.'))
+    } catch (error: any) {
+      const raw = String(error?.message || '').trim()
+      const safeMessage = raw.length > 3 ? raw : tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
+      Alert.alert(tr('common.error', 'Erro'), safeMessage)
     }
   }
   const partnerPayload = useMemo(() => ({
@@ -675,8 +685,16 @@ export default function PremiumScreen() {
         <View style={styles.providerChoiceRow}>
           <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
           <TouchableOpacity
-            style={[styles.providerChoiceButton, subscriptionProvider === 'mercadopago' && styles.providerChoiceButtonActive]}
-            onPress={() => setSubscriptionProvider('mercadopago')}
+            style={[
+              styles.providerChoiceButton,
+              subscriptionProvider === 'mercadopago' && styles.providerChoiceButtonActive,
+              !isPortuguese && styles.providerChoiceButtonDisabled,
+            ]}
+            onPress={() => {
+              if (!isPortuguese) return
+              setSubscriptionProvider('mercadopago')
+            }}
+            disabled={!isPortuguese}
           >
             <Text style={[styles.providerChoiceText, subscriptionProvider === 'mercadopago' && styles.providerChoiceTextActive]}>
               {t('subscription.provider.mercado')}
@@ -691,6 +709,11 @@ export default function PremiumScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        {!isPortuguese ? (
+          <Text style={styles.providerHintText}>
+            {tr('subscription.provider.autoStripeHint', 'Para idiomas internacionais, os pagamentos usam Stripe automaticamente.')}
+          </Text>
+        ) : null}
         {subscriptionPlans.map(plan => (
           <TouchableOpacity
             key={plan.id}
@@ -1269,6 +1292,9 @@ const styles = StyleSheet.create({
   providerChoiceButtonActive: {
     borderColor: '#FFD700',
   },
+  providerChoiceButtonDisabled: {
+    opacity: 0.45,
+  },
   providerChoiceText: {
     color: '#B8B8C3',
     fontSize: 12,
@@ -1276,6 +1302,11 @@ const styles = StyleSheet.create({
   },
   providerChoiceTextActive: {
     color: '#FFD700',
+  },
+  providerHintText: {
+    color: '#9CA3AF',
+    fontSize: 12,
+    marginBottom: 10,
   },
   compareTable: {
     backgroundColor: '#1C1C1E',

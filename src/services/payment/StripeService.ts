@@ -57,7 +57,11 @@ export class StripeService {
     })
     const data = await response.json()
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.error?.message || 'Falha ao criar checkout Stripe')
+      const detailMessage =
+        data?.error?.details?.message
+        || data?.error?.message
+        || 'Falha ao criar checkout Stripe'
+      throw new Error(String(detailMessage))
     }
     return data
   }
