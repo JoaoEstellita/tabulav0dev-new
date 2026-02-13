@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-02-11-1';
+const SW_VERSION = '2026-02-13-1';
 const CACHE_NAME = `tabula-estelar-${SW_VERSION}`;
 const urlsToCache = [
   '/',
@@ -23,9 +23,22 @@ self.addEventListener('install', (event) => {
 // Fetch event
 self.addEventListener('fetch', (event) => {
   const request = event.request;
+  const requestUrl = request.url || '';
+  const sameOrigin = requestUrl.startsWith(self.location.origin);
+  const isApiRequest =
+    requestUrl.includes('/api/') ||
+    requestUrl.includes('/stripe/') ||
+    requestUrl.includes('/mercado-pago/') ||
+    requestUrl.includes('/premium/');
   const accept = request.headers.get('accept') || '';
   const isHtmlRequest = request.mode === 'navigate' || accept.includes('text/html');
   const isWebBundleRequest = request.url.includes('/_expo/static/js/web/');
+
+  if (isApiRequest || !sameOrigin) {
+    // Never cache API/cross-origin requests; always hit network.
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
 
   if (isHtmlRequest) {
     // Network-first for HTML to avoid stale bundle references after deploys.

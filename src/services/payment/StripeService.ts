@@ -53,6 +53,7 @@ export class StripeService {
     const response = await fetch(`${this.BACKEND_URL}/stripe/create-checkout-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
       body: JSON.stringify(body),
     })
     const data = await response.json()
@@ -70,6 +71,7 @@ export class StripeService {
     const response = await fetch(`${this.BACKEND_URL}/stripe/create-portal-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
       body: JSON.stringify({
         userId,
         returnUrl: `${this.FRONTEND_URL}/premium`,
@@ -86,6 +88,7 @@ export class StripeService {
     const response = await fetch(`${this.BACKEND_URL}/stripe/sync-checkout-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
       body: JSON.stringify({ sessionId, userId }),
     })
     const data = await response.json()

@@ -24,6 +24,7 @@ export class AstrologerPremiumService {
   private static async request<T>(path: string, token: string, body: Record<string, any>) {
     const response = await fetch(`${this.BACKEND_URL}${path}`, {
       method: 'POST',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
@@ -45,6 +46,7 @@ export class AstrologerPremiumService {
   private static async requestGet<T>(path: string, token: string) {
     const response = await fetch(`${this.BACKEND_URL}${path}`, {
       method: 'GET',
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -116,6 +118,7 @@ export class AstrologerPremiumService {
   static async exportPdf(token: string, payload: Record<string, any>) {
     const response = await fetch(`${this.BACKEND_URL}/premium/export-pdf`, {
       method: 'POST',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
