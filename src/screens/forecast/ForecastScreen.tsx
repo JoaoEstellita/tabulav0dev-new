@@ -78,11 +78,11 @@ type ForecastResponse = {
 const PERIODS = [7, 30, 90, 360]
 
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
-const FORECAST_CACHE_PREFIX = 'forecast_cache_v2'
+const FORECAST_CACHE_PREFIX = 'forecast_cache_v3'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
-const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v2'
+const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v3'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
-const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v2'
+const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v3'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
 
 function scoreColor(score: number) {
