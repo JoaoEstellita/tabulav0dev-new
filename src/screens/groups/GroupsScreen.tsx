@@ -906,13 +906,15 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
     : targetAngle
     ? String(targetAngle)
     : targetHouse
+  const currentHouseNumberMatch = currentHouse.match(/(\d{1,2})/)
+  const currentHouseNumber = currentHouseNumberMatch ? Number(currentHouseNumberMatch[1]) : null
   return buildSharedTransitTitle({
     transitPlanet,
     aspectLabel: aspect,
     targetLabel: target,
-    houseNumber: currentHouse.replace("Casa ", ""),
+    houseNumber: currentHouseNumber,
     areaHouses: areaKey && AREA_HOUSES[areaKey] ? AREA_HOUSES[areaKey] : null,
-  })
+  }, language)
 }
 
 const buildTransitKeywords = (transit: any, areaKey?: string) => {

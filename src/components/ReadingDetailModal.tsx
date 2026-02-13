@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { useAppLanguage } from '../hooks/useAppLanguage'
+import { translatePlanet } from '../utils/astro/pt'
 
 type ReadingDetailModalProps = {
   visible: boolean
@@ -137,7 +138,7 @@ const buildDefaultKeywords = (
 export default function ReadingDetailModal({
   visible,
   onClose,
-  statusLabel = 'Neutro',
+  statusLabel,
   statusColor = '#64748B',
   title,
   timingLabel,
@@ -147,26 +148,116 @@ export default function ReadingDetailModal({
   actionText,
   metaText,
   keywords,
-  closeLabel = 'Fechar',
+  closeLabel,
   secondaryActionLabel,
   onSecondaryAction,
 }: ReadingDetailModalProps) {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const tr = (key: string, fallback: string) => {
     const value = t(key)
     return value === key ? fallback : value
   }
+  const resolvedStatusLabel = statusLabel || tr('common.neutral', 'Neutral')
+  const resolvedCloseLabel = closeLabel || tr('common.close', 'Close')
+  const localizeAstroText = React.useCallback((input: string): string => {
+    let text = String(input || '')
+    if (!text) return text
+
+    const aspectMap: Record<string, Record<string, string>> = {
+      'en-US': {
+        conjuncao: 'conjunction',
+        trigono: 'trine',
+        sextil: 'sextile',
+        quadratura: 'square',
+        oposicao: 'opposition',
+        quincuncio: 'quincunx',
+        semissextil: 'semisextile',
+        semiquadratura: 'semisquare',
+        sesquiquadratura: 'sesquiquadrate',
+        harmonico: 'harmonic',
+        desafiador: 'challenging',
+        neutro: 'neutral',
+      },
+      'es-ES': {
+        conjuncao: 'conjuncion',
+        trigono: 'trigono',
+        sextil: 'sextil',
+        quadratura: 'cuadratura',
+        oposicao: 'oposicion',
+        quincuncio: 'quincuncio',
+        semissextil: 'semisextil',
+        semiquadratura: 'semicuadratura',
+        sesquiquadratura: 'sesquicuadratura',
+        harmonico: 'armonico',
+        desafiador: 'desafiante',
+        neutro: 'neutro',
+      },
+      'it-IT': {
+        conjuncao: 'congiunzione',
+        trigono: 'trigono',
+        sextil: 'sestile',
+        quadratura: 'quadratura',
+        oposicao: 'opposizione',
+        quincuncio: 'quinconce',
+        semissextil: 'semisestile',
+        semiquadratura: 'semiquadratura',
+        sesquiquadratura: 'sesquiquadratura',
+        harmonico: 'armonico',
+        desafiador: 'impegnativo',
+        neutro: 'neutro',
+      },
+      'pt-BR': {},
+    }
+
+    const map = aspectMap[language] || {}
+    Object.entries(map).forEach(([from, to]) => {
+      const re = new RegExp(`\\b${from}\\b`, 'gi')
+      text = text.replace(re, to)
+    })
+
+    text = text.replace(/\bCasa\s+(\d{1,2})\b/gi, (_m, n) => {
+      if (language === 'en-US') return `House ${n}`
+      if (language === 'es-ES') return `Casa ${n}`
+      if (language === 'it-IT') return `Casa ${n}`
+      return `Casa ${n}`
+    })
+
+    text = text.replace(/\bPico\b/gi, language === 'en-US' ? 'Peak' : language === 'es-ES' ? 'Pico' : language === 'it-IT' ? 'Picco' : 'Pico')
+    text = text.replace(/\bAfastando\b/gi, language === 'en-US' ? 'Moving away' : language === 'es-ES' ? 'Alejandose' : language === 'it-IT' ? 'In allontanamento' : 'Afastando')
+    text = text.replace(/\bEm aprox\b/gi, language === 'en-US' ? 'Approaching' : language === 'es-ES' ? 'En aproximacion' : language === 'it-IT' ? 'In avvicinamento' : 'Em aprox')
+
+    text = text.replace(/\bate\b/gi, language === 'en-US' ? 'until' : language === 'es-ES' ? 'hasta' : language === 'it-IT' ? 'fino al' : 'ate')
+    text = text.replace(/\btermina hoje\b/gi, language === 'en-US' ? 'ends today' : language === 'es-ES' ? 'termina hoy' : language === 'it-IT' ? 'termina oggi' : 'termina hoje')
+
+    PLANET_KEYS.forEach((planet) => {
+      const pt = PLANET_LABELS_PT[planet]
+      const translated = translatePlanet(pt, language)
+      const rePt = new RegExp(`\\b${pt}\\b`, 'gi')
+      const reEn = new RegExp(`\\b${planet}\\b`, 'gi')
+      text = text.replace(rePt, translated).replace(reEn, translatePlanet(planet, language))
+    })
+
+    return text
+  }, [language])
+
+  const localizedTitle = React.useMemo(() => localizeAstroText(title), [title, localizeAstroText])
+  const localizedSubtitle = React.useMemo(() => (subtitle ? localizeAstroText(subtitle) : subtitle), [subtitle, localizeAstroText])
+  const localizedTimingLabel = React.useMemo(() => (timingLabel ? localizeAstroText(timingLabel) : timingLabel), [timingLabel, localizeAstroText])
+  const localizedDirectText = React.useMemo(() => localizeAstroText(directText), [directText, localizeAstroText])
+  const localizedFullText = React.useMemo(() => localizeAstroText(fullText), [fullText, localizeAstroText])
+  const localizedActionText = React.useMemo(() => (actionText ? localizeAstroText(actionText) : actionText), [actionText, localizeAstroText])
+  const localizedMetaText = React.useMemo(() => (metaText ? localizeAstroText(metaText) : metaText), [metaText, localizeAstroText])
   const { width } = useWindowDimensions()
   const isNarrow = width <= 430
-  const planetKeys = React.useMemo(() => extractPlanetsFromText(`${title} ${directText}`), [title, directText])
-  const planetKey = planetKeys[0] || resolvePlanetFromText(`${title} ${directText}`)
+  const planetKeys = React.useMemo(() => extractPlanetsFromText(`${localizedTitle} ${localizedDirectText}`), [localizedTitle, localizedDirectText])
+  const planetKey = planetKeys[0] || resolvePlanetFromText(`${localizedTitle} ${localizedDirectText}`)
   const secondaryPlanetKey = planetKeys.length > 1 ? planetKeys[1] : null
   const imageUri = planetKey ? getPlanetImageUri(planetKey) : null
   const secondaryImageUri = secondaryPlanetKey ? getPlanetImageUri(secondaryPlanetKey) : null
-  const aspectSymbol = React.useMemo(() => extractAspectSymbol(title), [title])
+  const aspectSymbol = React.useMemo(() => extractAspectSymbol(localizedTitle), [localizedTitle])
   const keywordChips = React.useMemo(
-    () => (Array.isArray(keywords) && keywords.length ? keywords : buildDefaultKeywords(title, subtitle, statusLabel, timingLabel)),
-    [keywords, title, subtitle, statusLabel, timingLabel]
+    () => (Array.isArray(keywords) && keywords.length ? keywords.map((k) => localizeAstroText(k)) : buildDefaultKeywords(localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel)),
+    [keywords, localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel, localizeAstroText]
   )
 
   return (
@@ -200,17 +291,17 @@ export default function ReadingDetailModal({
               </View>
             ) : null}
             <View style={styles.heroBody}>
-              <Text style={[styles.title, isNarrow ? styles.titleNarrow : null]}>{title}</Text>
-              {subtitle ? (
-                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{subtitle}</Text>
+              <Text style={[styles.title, isNarrow ? styles.titleNarrow : null]}>{localizedTitle}</Text>
+              {localizedSubtitle ? (
+                <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{localizedSubtitle}</Text>
               ) : (
                 <Text style={[styles.subtitle, isNarrow ? styles.subtitleNarrow : null]}>{tr('reading.modal.subtitle', 'Applied reading for the current context')}</Text>
               )}
               <View style={styles.heroMetaRow}>
                 <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                  <Text style={styles.statusText}>{statusLabel}</Text>
+                  <Text style={styles.statusText}>{resolvedStatusLabel}</Text>
                 </View>
-                {timingLabel ? <Text style={[styles.timing, isNarrow ? styles.timingNarrow : null]}>{timingLabel}</Text> : null}
+                {localizedTimingLabel ? <Text style={[styles.timing, isNarrow ? styles.timingNarrow : null]}>{localizedTimingLabel}</Text> : null}
               </View>
             </View>
             <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
@@ -231,25 +322,25 @@ export default function ReadingDetailModal({
 
             <View style={styles.sectionCard}>
               <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.keyReading', 'Key reading')}</Text>
-              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{directText}</Text>
+              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedDirectText}</Text>
             </View>
 
             <View style={styles.sectionCard}>
               <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.appliedInterpretation', 'Applied interpretation')}</Text>
-              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{fullText}</Text>
+              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText}</Text>
             </View>
 
-            {actionText ? (
+            {localizedActionText ? (
               <View style={styles.sectionCard}>
                 <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.practicalUse', 'Practical use')}</Text>
-                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{actionText}</Text>
+                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedActionText}</Text>
               </View>
             ) : null}
 
-            {metaText ? (
+            {localizedMetaText ? (
               <View style={styles.sectionCard}>
                 <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.technicalContext', 'Technical context')}</Text>
-                <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{metaText}</Text>
+                <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{localizedMetaText}</Text>
               </View>
             ) : null}
           </ScrollView>
@@ -264,7 +355,7 @@ export default function ReadingDetailModal({
           ) : null}
 
           <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>{closeLabel}</Text>
+            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>{resolvedCloseLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>

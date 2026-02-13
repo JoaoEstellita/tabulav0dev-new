@@ -10,6 +10,7 @@ import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import type { AppLanguage } from '../../i18n/appI18n'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import {
   LIFE_AREA_LABELS,
@@ -153,7 +154,7 @@ function normalizeAspectLabel(rawAspect: string) {
   return map[value] || value
 }
 
-function buildEventTitle(event: ForecastEvent) {
+function buildEventTitle(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
   const transitPlanet = String(event.transitPlanet || '').trim()
   const natalPoint = String(event.natalPoint || '').trim()
   const aspect = normalizeAspectLabel(event.aspect || '')
@@ -165,7 +166,7 @@ function buildEventTitle(event: ForecastEvent) {
     aspectLabel: aspect,
     targetLabel: natalPoint,
     houseNumber,
-  })
+  }, language)
 }
 
 function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
@@ -1157,7 +1158,7 @@ export default function ForecastScreen() {
       const impactValue01 = Math.max(0.08, Math.min(1, Number(event.intensity || 0)))
       return {
         event,
-        title: buildEventTitle(event),
+        title: buildEventTitle(event, language),
         statusLabel,
         statusColor,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),

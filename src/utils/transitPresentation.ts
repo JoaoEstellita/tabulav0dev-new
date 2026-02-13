@@ -1,3 +1,6 @@
+import type { AppLanguage } from '../i18n/appI18n'
+import { translatePlanet } from './astro/pt'
+
 export function normalizeTextToken(value: unknown): string {
   return String(value || '')
     .trim()
@@ -65,16 +68,51 @@ const ASPECT_SYMBOLS: Record<string, string> = {
   sesquiquadratura: '\u26BC',
 }
 
-const ASPECT_LABELS: Record<string, string> = {
-  conjuncao: 'Conjuncao',
-  oposicao: 'Oposicao',
-  quadratura: 'Quadratura',
-  trigono: 'Trigono',
-  sextil: 'Sextil',
-  quincuncio: 'Quincuncio',
-  semissextil: 'Semissextil',
-  semiquadratura: 'Semiquadratura',
-  sesquiquadratura: 'Sesquiquadratura',
+const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
+  'pt-BR': {
+    conjuncao: 'Conjuncao',
+    oposicao: 'Oposicao',
+    quadratura: 'Quadratura',
+    trigono: 'Trigono',
+    sextil: 'Sextil',
+    quincuncio: 'Quincuncio',
+    semissextil: 'Semissextil',
+    semiquadratura: 'Semiquadratura',
+    sesquiquadratura: 'Sesquiquadratura',
+  },
+  'en-US': {
+    conjuncao: 'Conjunction',
+    oposicao: 'Opposition',
+    quadratura: 'Square',
+    trigono: 'Trine',
+    sextil: 'Sextile',
+    quincuncio: 'Quincunx',
+    semissextil: 'Semisextile',
+    semiquadratura: 'Semisquare',
+    sesquiquadratura: 'Sesquiquadrate',
+  },
+  'es-ES': {
+    conjuncao: 'Conjuncion',
+    oposicao: 'Oposicion',
+    quadratura: 'Cuadratura',
+    trigono: 'Trigono',
+    sextil: 'Sextil',
+    quincuncio: 'Quincuncio',
+    semissextil: 'Semisextil',
+    semiquadratura: 'Semicuadratura',
+    sesquiquadratura: 'Sesquicuadratura',
+  },
+  'it-IT': {
+    conjuncao: 'Congiunzione',
+    oposicao: 'Opposizione',
+    quadratura: 'Quadratura',
+    trigono: 'Trigono',
+    sextil: 'Sestile',
+    quincuncio: 'Quinconce',
+    semissextil: 'Semisestile',
+    semiquadratura: 'Semiquadratura',
+    sesquiquadratura: 'Sesquiquadratura',
+  },
 }
 
 function normalizeAspectToken(value: string): string {
@@ -102,11 +140,16 @@ export function toRomanHouse(value: unknown): string | null {
   return roman[n - 1] || null
 }
 
-function formatHouseLabel(value: unknown): string {
+function formatHouseLabel(value: unknown, language: AppLanguage = 'pt-BR'): string {
+  const houseWord =
+    language === 'en-US' ? 'House' :
+    language === 'es-ES' ? 'Casa' :
+    language === 'it-IT' ? 'Casa' :
+    'Casa'
   const roman = toRomanHouse(value)
-  if (roman) return `Casa ${roman}`
+  if (roman) return `${houseWord} ${roman}`
   const fallback = extractHouseNumber(value)
-  return fallback ? `Casa ${fallback}` : ''
+  return fallback ? `${houseWord} ${fallback}` : ''
 }
 
 function parseHouseNumberFromText(value: string): number | null {
@@ -121,13 +164,17 @@ export function buildTransitTitle(params: {
   targetLabel?: unknown
   houseNumber?: unknown
   areaHouses?: Array<number | string> | null
-}): string {
-  const transitPlanet = sanitizeTransitToken(params.transitPlanet) || 'Transito'
+}, language: AppLanguage = 'pt-BR'): string {
+  const fallbackTransit = language === 'en-US' ? 'Transit' : language === 'es-ES' ? 'Transito' : language === 'it-IT' ? 'Transito' : 'Transito'
+  const transitPlanetRaw = sanitizeTransitToken(params.transitPlanet) || fallbackTransit
+  const transitPlanet = translatePlanet(transitPlanetRaw, language)
   const aspectLabel = sanitizeTransitToken(params.aspectLabel)
   const aspectKey = normalizeAspectToken(aspectLabel)
-  const aspectText = aspectKey ? (ASPECT_LABELS[aspectKey] || aspectLabel) : ''
+  const labels = ASPECT_LABELS_BY_LANGUAGE[language] || ASPECT_LABELS_BY_LANGUAGE['pt-BR']
+  const aspectText = aspectKey ? (labels[aspectKey] || aspectLabel) : ''
   const aspectSymbol = aspectKey ? (ASPECT_SYMBOLS[aspectKey] || '') : ''
-  const targetLabel = sanitizeTransitToken(params.targetLabel)
+  const targetLabelRaw = sanitizeTransitToken(params.targetLabel)
+  const targetLabel = targetLabelRaw ? translatePlanet(targetLabelRaw, language) : ''
   const houseNumber = extractHouseNumber(params.houseNumber)
   const areaHouses = Array.isArray(params.areaHouses)
     ? params.areaHouses
@@ -143,17 +190,42 @@ export function buildTransitTitle(params: {
   }
   if (aspectLabel && targetIsHouse) {
     const houseLabel = targetHouseNumber
-      ? formatHouseLabel(targetHouseNumber)
+      ? formatHouseLabel(targetHouseNumber, language)
       : houseNumber
-      ? formatHouseLabel(houseNumber)
+      ? formatHouseLabel(houseNumber, language)
       : targetLabel
     return `${transitPlanet} ${aspectText || aspectLabel}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${houseLabel}`.trim()
   }
-  if (aspectText && houseNumber) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${formatHouseLabel(houseNumber)}`
-  if (aspectText && areaHousesLabel) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} Casas ${areaHousesLabel}`
-  if (houseNumber) return `${transitPlanet} em transito na ${formatHouseLabel(houseNumber)}`
-  if (areaHousesLabel) return `${transitPlanet} em transito nas Casas ${areaHousesLabel}`
-  if (targetLabel) return `${transitPlanet} com ${targetLabel}`
+  if (aspectText && houseNumber) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${formatHouseLabel(houseNumber, language)}`
+  if (aspectText && areaHousesLabel) {
+    const housesWord =
+      language === 'en-US' ? 'Houses' :
+      language === 'es-ES' ? 'Casas' :
+      language === 'it-IT' ? 'Case' :
+      'Casas'
+    return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${housesWord} ${areaHousesLabel}`
+  }
+  if (houseNumber) {
+    if (language === 'en-US') return `${transitPlanet} in active transit in ${formatHouseLabel(houseNumber, language)}`
+    if (language === 'es-ES') return `${transitPlanet} en transito activo en ${formatHouseLabel(houseNumber, language)}`
+    if (language === 'it-IT') return `${transitPlanet} in transito attivo in ${formatHouseLabel(houseNumber, language)}`
+    return `${transitPlanet} em transito na ${formatHouseLabel(houseNumber, language)}`
+  }
+  if (areaHousesLabel) {
+    if (language === 'en-US') return `${transitPlanet} in active transit in Houses ${areaHousesLabel}`
+    if (language === 'es-ES') return `${transitPlanet} en transito activo en Casas ${areaHousesLabel}`
+    if (language === 'it-IT') return `${transitPlanet} in transito attivo nelle Case ${areaHousesLabel}`
+    return `${transitPlanet} em transito nas Casas ${areaHousesLabel}`
+  }
+  if (targetLabel) {
+    if (language === 'en-US') return `${transitPlanet} with ${targetLabel}`
+    if (language === 'es-ES') return `${transitPlanet} con ${targetLabel}`
+    if (language === 'it-IT') return `${transitPlanet} con ${targetLabel}`
+    return `${transitPlanet} com ${targetLabel}`
+  }
   if (aspectText) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''}`.trim()
+  if (language === 'en-US') return `${transitPlanet} in active transit`
+  if (language === 'es-ES') return `${transitPlanet} en transito activo`
+  if (language === 'it-IT') return `${transitPlanet} in transito attivo`
   return `${transitPlanet} em transito ativo`
 }

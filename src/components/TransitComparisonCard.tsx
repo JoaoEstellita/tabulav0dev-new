@@ -325,6 +325,27 @@ const getHouseFocus = React.useCallback((house?: number | null): string => {
   return map[house] || fallback
 }, [tl])
 
+const getLocalizedHouseMeaning = React.useCallback((house?: number | null, fallback?: string | null): string => {
+  if (house && Number.isFinite(house)) {
+    const map: Record<number, string> = {
+      1: tl('identidade', 'identity', 'identidad', 'identita'),
+      2: tl('recursos', 'resources', 'recursos', 'risorse'),
+      3: tl('comunicação', 'communication', 'comunicacion', 'comunicazione'),
+      4: tl('lar', 'home', 'hogar', 'casa'),
+      5: tl('criatividade', 'creativity', 'creatividad', 'creativita'),
+      6: tl('rotina', 'routine', 'rutina', 'routine'),
+      7: tl('parcerias', 'partnerships', 'alianzas', 'partnership'),
+      8: tl('transformação', 'transformation', 'transformacion', 'trasformazione'),
+      9: tl('expansão', 'expansion', 'expansion', 'espansione'),
+      10: tl('carreira', 'career', 'carrera', 'carriera'),
+      11: tl('projetos', 'projects', 'proyectos', 'progetti'),
+      12: tl('interiorização', 'introspection', 'interiorizacion', 'interiorita'),
+    }
+    if (map[house]) return map[house]
+  }
+  return decodeUnicodeEscapes(String(fallback || ''))
+}, [tl])
+
 const getPlanetKeyword = React.useCallback((planet: string): string => {
   const key = normalizeKey(planet)
   const map: Record<string, string> = {
@@ -1557,7 +1578,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                   const reading = buildAspectReading({
                     planet: comparison.name,
                     aspectType: houseAspect.aspect,
-                    targetLabel: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} (${houseAspect.meaning})`,
+                    targetLabel: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} (${getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning)})`,
                     house: houseAspect.house,
                     days: windowInfo?.days || null,
                     phase: windowInfo?.phaseLabel || null,
@@ -1574,7 +1595,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                         ]}
                         onPress={() =>
                           openDetailModal({
-                            title: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} • ${houseAspect.meaning}`,
+                            title: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} • ${getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning)}`,
                             subtitle: `${tl('Aspecto com casa', 'House aspect', 'Aspecto con casa', 'Aspetto con casa')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
@@ -1583,13 +1604,13 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                               translatePlanetName(comparison.name),
                               translateAspectLabel(houseAspect.aspect),
                               `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house}`,
-                              houseAspect.meaning,
+                              getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning),
                             ],
                           })
                         }
                       >
                         <View style={styles.aspectLine}>
-                          <Text style={styles.aspectText}>{tl('Casa', 'House', 'Casa', 'Casa')} {houseAspect.house} - {houseAspect.meaning}</Text>
+                          <Text style={styles.aspectText}>{tl('Casa', 'House', 'Casa', 'Casa')} {houseAspect.house} - {getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning)}</Text>
                         </View>
                         <View style={styles.aspectActionsRow}>
                           <Text style={styles.aspectMetaInline}>{formatWindowInline(windowInfo)}</Text>

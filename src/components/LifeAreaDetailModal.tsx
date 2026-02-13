@@ -1657,7 +1657,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         targetLabel: '',
         houseNumber: currentHouse || null,
         areaHouses: null,
-      })
+      }, language)
     }
     return buildSharedTransitTitle({
       transitPlanet,
@@ -1665,7 +1665,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       targetLabel: target,
       houseNumber: null,
       areaHouses: null,
-    })
+    }, language)
   }
 
   const getTransitCurrentHouseLabel = (transit: any): string | null => {
@@ -1728,6 +1728,58 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const natalHouse = getTransitNatalHouseLabel(transit)
     if (natalHouse) return tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')
     return tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
+  }
+
+  const getHouseNameByNumber = (houseLabel: string | null): string => {
+    if (!houseLabel) return ''
+    const houseIndex = Number(houseLabel)
+    if (!Number.isFinite(houseIndex) || houseIndex < 1 || houseIndex > 12) {
+      return `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseLabel}`
+    }
+    const names: Record<number, string> = {
+      1: tl('Identidade', 'Identity', 'Identidad', 'Identita'),
+      2: tl('Recursos', 'Resources', 'Recursos', 'Risorse'),
+      3: tl('Comunicação', 'Communication', 'Comunicacion', 'Comunicazione'),
+      4: tl('Lar', 'Home', 'Hogar', 'Casa'),
+      5: tl('Criatividade', 'Creativity', 'Creatividad', 'Creativita'),
+      6: tl('Trabalho', 'Work', 'Trabajo', 'Lavoro'),
+      7: tl('Parcerias', 'Partnerships', 'Alianzas', 'Partnership'),
+      8: tl('Transformação', 'Transformation', 'Transformacion', 'Trasformazione'),
+      9: tl('Expansão', 'Expansion', 'Expansion', 'Espansione'),
+      10: tl('Carreira', 'Career', 'Carrera', 'Carriera'),
+      11: tl('Amizades', 'Friendships', 'Amistades', 'Amicizie'),
+      12: tl('Espiritual', 'Spiritual', 'Espiritual', 'Spirituale'),
+    }
+    return names[houseIndex] || `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseLabel}`
+  }
+
+  const getTimingLabelLocalized = (transit: BackendTransit | null): string | null => {
+    if (!transit) return null
+    const toDate = (iso?: string | null) => {
+      if (!iso) return null
+      const date = new Date(iso)
+      return Number.isFinite(date.getTime()) ? date : null
+    }
+    const now = new Date()
+    const endDate = toDate(transit?.endAt || transit?.window?.end || null)
+    if (endDate) {
+      const dateLabel = endDate.toLocaleDateString(
+        language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR',
+        { day: '2-digit', month: '2-digit' }
+      )
+      return tl(`até ${dateLabel}`, `until ${dateLabel}`, `hasta ${dateLabel}`, `fino al ${dateLabel}`)
+    }
+
+    const peakDate = toDate(transit?.peakAt || transit?.window?.exact || null)
+    const phase = String(transit?.phase || '').toLowerCase()
+    if (phase === 'peak') {
+      if (!peakDate) return tl('Pico', 'Peak', 'Pico', 'Picco')
+      const diffDays = Math.round((peakDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      if (diffDays === 0) return tl('Pico hoje', 'Peak today', 'Pico hoy', 'Picco oggi')
+      if (diffDays > 0) return tl(`Pico em ${diffDays}d`, `Peak in ${diffDays}d`, `Pico en ${diffDays}d`, `Picco tra ${diffDays}g`)
+      return tl(`Pico há ${Math.abs(diffDays)}d`, `Peak ${Math.abs(diffDays)}d ago`, `Pico hace ${Math.abs(diffDays)}d`, `Picco ${Math.abs(diffDays)}g fa`)
+    }
+    return null
   }
 
   const getPhaseLabel = (transit: any) => {
@@ -1804,18 +1856,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       neutral: tl('observação e calibração', 'observation and calibration', 'observacion y calibracion', 'osservazione e calibrazione'),
     }
     const houseKeywords: Record<string, string> = {
-      '1': 'autoimagem, presença e iniciativa pessoal',
-      '2': 'recursos, segurança material e autoestima',
-      '3': 'comunicação, estudos e trocas cotidianas',
-      '4': 'base emocional, família e pertencimento',
-      '5': 'expressão criativa, prazer e romance',
-      '6': 'rotina, trabalho diário e saúde',
-      '7': 'parcerias, contratos e reciprocidade',
-      '8': 'intimidade, partilhas e transformações profundas',
-      '9': 'visão, expansão e sentido de vida',
-      '10': 'carreira, reputação e direção pública',
-      '11': 'redes, projetos coletivos e futuro',
-      '12': 'fechamentos, bastidores e interioridade',
+      '1': tl('autoimagem, presença e iniciativa pessoal', 'self-image, presence and personal initiative', 'autoimagen, presencia e iniciativa personal', 'immagine di sé, presenza e iniziativa personale'),
+      '2': tl('recursos, segurança material e autoestima', 'resources, material security and self-worth', 'recursos, seguridad material y autoestima', 'risorse, sicurezza materiale e autostima'),
+      '3': tl('comunicação, estudos e trocas cotidianas', 'communication, studies and daily exchanges', 'comunicacion, estudios e intercambios cotidianos', 'comunicazione, studio e scambi quotidiani'),
+      '4': tl('base emocional, família e pertencimento', 'emotional base, family and belonging', 'base emocional, familia y pertenencia', 'base emotiva, famiglia e appartenenza'),
+      '5': tl('expressão criativa, prazer e romance', 'creative expression, pleasure and romance', 'expresion creativa, placer y romance', 'espressione creativa, piacere e romanticismo'),
+      '6': tl('rotina, trabalho diário e saúde', 'routine, daily work and health', 'rutina, trabajo diario y salud', 'routine, lavoro quotidiano e salute'),
+      '7': tl('parcerias, contratos e reciprocidade', 'partnerships, agreements and reciprocity', 'alianzas, acuerdos y reciprocidad', 'partnership, accordi e reciprocita'),
+      '8': tl('intimidade, partilhas e transformações profundas', 'intimacy, shared matters and deep transformations', 'intimidad, recursos compartidos y transformaciones profundas', 'intimita, risorse condivise e trasformazioni profonde'),
+      '9': tl('visão, expansão e sentido de vida', 'vision, expansion and meaning', 'vision, expansion y sentido de vida', 'visione, espansione e senso della vita'),
+      '10': tl('carreira, reputação e direção pública', 'career, reputation and public direction', 'carrera, reputacion y direccion publica', 'carriera, reputazione e direzione pubblica'),
+      '11': tl('redes, projetos coletivos e futuro', 'networks, collective projects and future', 'redes, proyectos colectivos y futuro', 'reti, progetti collettivi e futuro'),
+      '12': tl('fechamentos, bastidores e interioridade', 'closures, backstage and inner life', 'cierres, bastidores e interioridad', 'chiusure, retroscena e interiorita'),
     }
     const angleKeywords: Record<string, string> = {
       ASC: tl('identidade e forma de agir', 'identity and way of acting', 'identidad y forma de actuar', 'identita e modo di agire'),
@@ -1961,7 +2013,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : tl('Neutro', 'Neutral', 'Neutro', 'Neutro')
       const phaseLabel = getPhaseLabel(transit)
       const durationLabel = getDurationLabel(transit)
-      const relativeTiming = getTimingLabel(transit)
+      const relativeTiming = getTimingLabelLocalized(transit)
       const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
       const transitTitle = buildTransitTitle(transit, facetKind)
       const houseLabel = facetKind === 'house' ? getTransitHouseLabel(transit) : null
@@ -2473,9 +2525,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             const houseLabel = getTransitHouseLabel(transit)
             const orbLabel = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : ''
             if (columnKind === 'house') {
-              const houseName = houseLabel
-                ? TRANSLATIONS.houses[Number(houseLabel) as keyof typeof TRANSLATIONS.houses] || `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseLabel}`
-                : ''
+              const houseName = getHouseNameByNumber(houseLabel)
               transitMeta = [houseLabel ? `${tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')} ${houseLabel}` : '', houseName, orbLabel]
                 .filter(Boolean)
                 .join(' • ')
@@ -2489,7 +2539,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
             transitMeta = `${tl('Força', 'Strength', 'Fuerza', 'Forza')} ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
             suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
           }
-          const timingLabel = transit ? getTimingLabel(transit) : null
+          const timingLabel = transit ? getTimingLabelLocalized(transit) : null
 
           return (
             <View key={suggestion.id || suggestion.transitId} style={styles.suggestionCard}>

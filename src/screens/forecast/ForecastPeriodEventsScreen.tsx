@@ -5,6 +5,7 @@ import ReadingDetailModal from '../../components/ReadingDetailModal'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildAstroTransitNarrative, buildArchetypeKeywordsForTransit, mergeNarrativeSegments } from '../../utils/astroInterpretation'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import type { AppLanguage } from '../../i18n/appI18n'
 
 type ForecastEvent = {
   id: string
@@ -39,8 +40,6 @@ type EventDetail = {
   metaText: string
 }
 
-const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-
 function parseUTCDateString(value: string) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!match) return null
@@ -50,17 +49,20 @@ function parseUTCDateString(value: string) {
   return new Date(Date.UTC(year, month - 1, day))
 }
 
-function formatDateShort(date: Date) {
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = MONTHS_PT[date.getUTCMonth()]
-  const year = date.getUTCFullYear()
-  return `${day} ${month} ${year}`
+function formatDateShort(date: Date, language: AppLanguage = 'pt-BR') {
+  const locale = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
+  return date.toLocaleDateString(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
 }
 
-function impactLabel(impact: ForecastEvent['impact']) {
-  if (impact === 'UP') return 'Positivo'
-  if (impact === 'DOWN') return 'Desafiador'
-  return 'Misto'
+function impactLabel(impact: ForecastEvent['impact'], language: AppLanguage = 'pt-BR') {
+  if (impact === 'UP') return language === 'en-US' ? 'Positive' : language === 'es-ES' ? 'Positivo' : language === 'it-IT' ? 'Positivo' : 'Positivo'
+  if (impact === 'DOWN') return language === 'en-US' ? 'Challenging' : language === 'es-ES' ? 'Desafiante' : language === 'it-IT' ? 'Impegnativo' : 'Desafiador'
+  return language === 'en-US' ? 'Mixed' : language === 'es-ES' ? 'Mixto' : language === 'it-IT' ? 'Misto' : 'Misto'
 }
 
 function normalizeAspectLabel(rawAspect: string) {
@@ -79,7 +81,7 @@ function normalizeAspectLabel(rawAspect: string) {
   return map[value] || value
 }
 
-function buildEventTitle(event: ForecastEvent) {
+function buildEventTitle(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
   const transitPlanet = String(event.transitPlanet || '').trim()
   const natalPoint = String(event.natalPoint || '').trim()
   const aspect = normalizeAspectLabel(event.aspect || '')
@@ -91,7 +93,7 @@ function buildEventTitle(event: ForecastEvent) {
     aspectLabel: aspect,
     targetLabel: natalPoint,
     houseNumber,
-  })
+  }, language)
 }
 
 function buildDirectEventText(event: ForecastEvent, language = 'pt-BR') {
@@ -120,13 +122,21 @@ function buildFullEventInterpretation(event: ForecastEvent, language = 'pt-BR') 
   return mergeNarrativeSegments([narrative.fullText], { exclude: [narrative.directText] }).join('\n\n')
 }
 
-function buildTimingLabel(event: ForecastEvent) {
+function buildTimingLabel(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
   const exactDate = parseUTCDateString((event.exactAt || '').slice(0, 10))
-  if (!exactDate) return 'Sem janela definida'
-  return `Pico em ${formatDateShort(exactDate)}`
+  if (!exactDate) {
+    if (language === 'en-US') return 'No defined window'
+    if (language === 'es-ES') return 'Sin ventana definida'
+    if (language === 'it-IT') return 'Nessuna finestra definita'
+    return 'Sem janela definida'
+  }
+  if (language === 'en-US') return `Peak on ${formatDateShort(exactDate, language)}`
+  if (language === 'es-ES') return `Pico en ${formatDateShort(exactDate, language)}`
+  if (language === 'it-IT') return `Picco il ${formatDateShort(exactDate, language)}`
+  return `Pico em ${formatDateShort(exactDate, language)}`
 }
 
-function buildEventKeywords(event: ForecastEvent, language = 'pt-BR') {
+function buildEventKeywords(event: ForecastEvent, language: AppLanguage = 'pt-BR') {
   const out: string[] = buildArchetypeKeywordsForTransit(
     {
       transitPlanet: event.transitPlanet,
@@ -144,8 +154,8 @@ function buildEventKeywords(event: ForecastEvent, language = 'pt-BR') {
   add(String(event.transitPlanet || ''))
   add(normalizeAspectLabel(event.aspect || ''))
   add(String(event.natalPoint || ''))
-  add(impactLabel(event.impact))
-  add(buildTimingLabel(event))
+  add(impactLabel(event.impact, language))
+  add(buildTimingLabel(event, language))
   return out.slice(0, 5)
 }
 
@@ -233,14 +243,14 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const dateObj = parseUTCDateString(item.date)
-          const header = dateObj ? formatDateShort(dateObj) : item.date
+          const header = dateObj ? formatDateShort(dateObj, language) : item.date
           return (
             <View style={styles.dayBlock}>
               <Text style={styles.dayTitle}>{header}</Text>
               {item.events.map((event) => {
-                const statusLabel = impactLabel(event.impact)
+                const statusLabel = impactLabel(event.impact, language)
                 const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
-                const title = buildEventTitle(event)
+                const title = buildEventTitle(event, language)
                 const directText = buildDirectEventText(event, language)
                 const intensity = `Intensidade ${Math.round((event.intensity || 0) * 100)}%`
                 const orb = typeof event.orbMax === 'number' ? `Orb ${event.orbMax.toFixed(1)} deg` : ''

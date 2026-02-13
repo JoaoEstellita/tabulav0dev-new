@@ -90,6 +90,109 @@ interface UserProfile {
   }
 }
 
+const buildDefaultProfile = (email?: string | null, fallbackName = 'Usuario'): UserProfile => ({
+  displayName: email?.split("@")[0] || fallbackName,
+  birthDate: "",
+  birthTime: "",
+  birthLocation: {
+    city: "",
+    country: "",
+    latitude: 0,
+    longitude: 0,
+  },
+  zodiacSign: "",
+  preferences: {
+    notifications: {
+      pushEnabled: true,
+      pushIncludeMemberName: false,
+      quietHours: { enabled: false, start: "22:00", end: "08:00" },
+      push: {
+        types: {
+          member_status_critical: true,
+          user_status_critical: true,
+          group_message: false,
+        },
+        limits: {
+          member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },
+          user_status_critical: { dailyLimit: 3, throttleMinutes: 240 },
+          group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
+        },
+      },
+      inApp: {
+        types: {
+          member_status_critical: true,
+          user_status_critical: true,
+          group_message: true,
+        },
+      },
+    },
+    privacy: {
+      showStatusToGroups: true,
+      allowGroupInvites: true,
+      shareTransitDurations: true,
+      shareLocation: false,
+    },
+    theme: "dark",
+  },
+  stats: {
+    groupsJoined: 0,
+    alertsSent: 0,
+    alertsReceived: 0,
+    daysActive: 1,
+  },
+})
+
+const sanitizeUserProfile = (raw: any, email?: string | null, fallbackName = 'Usuario'): UserProfile => {
+  const defaults = buildDefaultProfile(email, fallbackName)
+  const birthLocation = raw?.birthLocation || {}
+  return {
+    ...defaults,
+    ...raw,
+    displayName: raw?.displayName || defaults.displayName,
+    birthLocation: {
+      ...defaults.birthLocation,
+      ...birthLocation,
+    },
+    preferences: {
+      ...defaults.preferences,
+      ...(raw?.preferences || {}),
+      notifications: {
+        ...defaults.preferences.notifications,
+        ...(raw?.preferences?.notifications || {}),
+        push: {
+          ...defaults.preferences.notifications.push,
+          ...(raw?.preferences?.notifications?.push || {}),
+          types: {
+            ...defaults.preferences.notifications.push?.types,
+            ...(raw?.preferences?.notifications?.push?.types || {}),
+          },
+          limits: {
+            ...defaults.preferences.notifications.push?.limits,
+            ...(raw?.preferences?.notifications?.push?.limits || {}),
+          },
+        },
+        inApp: {
+          ...defaults.preferences.notifications.inApp,
+          ...(raw?.preferences?.notifications?.inApp || {}),
+          types: {
+            ...defaults.preferences.notifications.inApp?.types,
+            ...(raw?.preferences?.notifications?.inApp?.types || {}),
+          },
+        },
+      },
+      privacy: {
+        ...defaults.preferences.privacy,
+        ...(raw?.preferences?.privacy || {}),
+      },
+      theme: (raw?.preferences?.theme as "dark" | "light" | "auto") || defaults.preferences.theme,
+    },
+    stats: {
+      ...defaults.stats,
+      ...(raw?.stats || {}),
+    },
+  }
+}
+
 export default function ProfileScreen() {
   const { t, language } = useAppLanguage()
   const tr = (key: string, fallback: string, vars?: Record<string, string | number>) => {
@@ -307,60 +410,14 @@ export default function ProfileScreen() {
       const userDoc = await getDoc(doc(db, "users", user!.uid))
 
       if (userDoc.exists()) {
-        setProfile(userDoc.data() as UserProfile)
+        const safeProfile = sanitizeUserProfile(
+          userDoc.data(),
+          user?.email,
+          tr('common.user', 'Usuario')
+        )
+        setProfile(safeProfile)
       } else {
-        // Criar perfil padrão
-        const defaultProfile: UserProfile = {
-          displayName: user!.email?.split("@")[0] || tr('common.user', 'Usuario'),
-          birthDate: "",
-          birthTime: "",
-          birthLocation: {
-            city: "",
-            country: "",
-            latitude: 0,
-            longitude: 0,
-          },
-          zodiacSign: "",
-          preferences: {
-            notifications: {
-              pushEnabled: true,
-              pushIncludeMemberName: false,
-              quietHours: { enabled: false, start: "22:00", end: "08:00" },
-              push: {
-                types: {
-                  member_status_critical: true,
-                  user_status_critical: true,
-                  group_message: false,
-                },
-                limits: {
-                  member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },
-                  user_status_critical: { dailyLimit: 3, throttleMinutes: 240 },
-                  group_message: { dailyLimit: 20, throttleMinutes: 10, burstWindowMinutes: 10 },
-                },
-              },
-              inApp: {
-                types: {
-                  member_status_critical: true,
-                  user_status_critical: true,
-                  group_message: true,
-                },
-              },
-            },
-            privacy: {
-              showStatusToGroups: true,
-              allowGroupInvites: true,
-              shareTransitDurations: true,
-              shareLocation: false,
-            },
-            theme: "dark",
-          },
-          stats: {
-            groupsJoined: 0,
-            alertsSent: 0,
-            alertsReceived: 0,
-            daysActive: 1,
-          },
-        }
+        const defaultProfile = buildDefaultProfile(user?.email, tr('common.user', 'Usuario'))
 
         await setDoc(doc(db, "users", user!.uid), defaultProfile)
         setProfile(defaultProfile)

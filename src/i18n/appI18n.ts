@@ -30,7 +30,12 @@ const dictionaries: Record<AppLanguage, Dict> = {
     'common.loading': 'Carregando...',
     'common.error': 'Erro',
     'common.success': 'Sucesso',
+    'common.neutral': 'Neutro',
     'common.ok': 'OK',
+    'pwa.install.title': 'Instalar app',
+    'pwa.install.subtitle': 'Adicione o Tabula Estelar a sua tela inicial',
+    'pwa.install.cta': 'Instalar',
+    'pwa.install.manual': 'Para instalar o Tabula Estelar, use o botao de instalacao do navegador na barra de endereco.',
     'common.attention': 'Atencao',
     'onboarding.progress': '{current} de {total}',
     'onboarding.step.intro.title': 'Antes de comecar',
@@ -435,7 +440,12 @@ const dictionaries: Record<AppLanguage, Dict> = {
     'common.loading': 'Loading...',
     'common.error': 'Error',
     'common.success': 'Success',
+    'common.neutral': 'Neutral',
     'common.ok': 'OK',
+    'pwa.install.title': 'Install app',
+    'pwa.install.subtitle': 'Add Tabula Estelar to your home screen',
+    'pwa.install.cta': 'Install',
+    'pwa.install.manual': 'To install Tabula Estelar, use your browser install button in the address bar.',
     'common.attention': 'Attention',
     'onboarding.progress': '{current} of {total}',
     'onboarding.step.intro.title': 'Before you start',
@@ -840,7 +850,12 @@ const dictionaries: Record<AppLanguage, Dict> = {
     'common.loading': 'Cargando...',
     'common.error': 'Error',
     'common.success': 'Exito',
+    'common.neutral': 'Neutro',
     'common.ok': 'OK',
+    'pwa.install.title': 'Instalar app',
+    'pwa.install.subtitle': 'Agrega Tabula Estelar a tu pantalla de inicio',
+    'pwa.install.cta': 'Instalar',
+    'pwa.install.manual': 'Para instalar Tabula Estelar, usa el boton de instalacion del navegador en la barra de direcciones.',
     'common.attention': 'Atencion',
     'onboarding.progress': '{current} de {total}',
     'onboarding.step.intro.title': 'Antes de empezar',
@@ -1197,7 +1212,12 @@ const dictionaries: Record<AppLanguage, Dict> = {
     'common.loading': 'Caricamento...',
     'common.error': 'Errore',
     'common.success': 'Successo',
+    'common.neutral': 'Neutro',
     'common.ok': 'OK',
+    'pwa.install.title': 'Installa app',
+    'pwa.install.subtitle': 'Aggiungi Tabula Estelar alla schermata iniziale',
+    'pwa.install.cta': 'Installa',
+    'pwa.install.manual': 'Per installare Tabula Estelar, usa il pulsante di installazione del browser nella barra degli indirizzi.',
     'common.attention': 'Attenzione',
     'onboarding.progress': '{current} di {total}',
     'onboarding.step.intro.title': 'Prima di iniziare',
@@ -3094,10 +3114,34 @@ const postPatchReadingModal: Record<AppLanguage, Dict> = {
 
 export const normalizeLanguage = (value?: string | null): AppLanguage => {
   const raw = String(value || 'pt-BR').trim()
-  if (raw === 'pt' || raw.toLowerCase() === 'pt-br') return 'pt-BR'
-  if (raw === 'en' || raw.toLowerCase() === 'en-us') return 'en-US'
-  if (raw === 'es' || raw.toLowerCase() === 'es-es') return 'es-ES'
-  if (raw === 'it' || raw.toLowerCase() === 'it-it') return 'it-IT'
+  const normalized = raw.toLowerCase().replace(/_/g, '-')
+  if (
+    normalized === 'pt' ||
+    normalized === 'pt-br' ||
+    normalized.startsWith('pt') ||
+    normalized.includes('portuguese') ||
+    normalized.includes('portugues')
+  ) return 'pt-BR'
+  if (
+    normalized === 'en' ||
+    normalized === 'en-us' ||
+    normalized.startsWith('en') ||
+    normalized.includes('english')
+  ) return 'en-US'
+  if (
+    normalized === 'es' ||
+    normalized === 'es-es' ||
+    normalized.startsWith('es') ||
+    normalized.includes('spanish') ||
+    normalized.includes('espanol')
+  ) return 'es-ES'
+  if (
+    normalized === 'it' ||
+    normalized === 'it-it' ||
+    normalized.startsWith('it') ||
+    normalized.includes('italian') ||
+    normalized.includes('italiano')
+  ) return 'it-IT'
   return 'pt-BR'
 }
 
