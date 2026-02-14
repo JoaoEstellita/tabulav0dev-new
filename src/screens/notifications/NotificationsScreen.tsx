@@ -9,6 +9,7 @@ import {
   Pressable,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 import { useNotificationStore, NotificationItem, NotificationTemplate } from "../../context/NotificationStore"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 
@@ -48,11 +49,16 @@ const formatTimeLabel = (value: any, language: string) => {
 
 const renderTemplate = (template?: NotificationTemplate, vars?: Record<string, any>) => {
   const safeVars = vars || {}
-  const apply = (text?: string) =>
-    (text || "").replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, key) => {
-      const value = safeVars[key.trim()]
+  const applyVars = (input: string, pattern: RegExp) =>
+    input.replace(pattern, (_, key) => {
+      const value = safeVars[String(key).trim()]
       return value === undefined || value === null ? "" : String(value)
     })
+  const apply = (text?: string) => {
+    const raw = String(text || "")
+    const withDouble = applyVars(raw, /\{\{\s*([^}]+)\s*\}\}/g)
+    return applyVars(withDouble, /\{([a-zA-Z0-9_.-]+)\}/g)
+  }
   return {
     title: apply(template?.title),
     body: apply(template?.body),
@@ -229,6 +235,38 @@ const isGroupNotification = (item: NotificationItem) => {
   return false
 }
 
+type NotificationSectionKey = "critical" | "astro" | "group" | "digest"
+
+const getNotificationPriority = (item: NotificationItem) => {
+  const type = String(item.type || "").toLowerCase()
+  const map: Record<string, number> = {
+    user_status_critical: 120,
+    member_status_critical: 118,
+    user_status_critical_recovered: 110,
+    astro_event_personal: 100,
+    astro_event_collective: 96,
+    daily_summary: 88,
+    weekly_digest: 86,
+    weekly_summary: 86,
+    forecast_weekly: 86,
+    critical_active_summary: 86,
+    user_status_highlight: 80,
+    user_status_positive: 76,
+    member_status_positive: 74,
+    group_status: 70,
+    group_message: 40,
+  }
+  return map[type] ?? 50
+}
+
+const getNotificationSection = (item: NotificationItem): NotificationSectionKey => {
+  if (getNotificationSeverity(item) === "critical") return "critical"
+  const type = String(item.type || "").toLowerCase()
+  if (type.startsWith("astro_event")) return "astro"
+  if (isGroupNotification(item)) return "group"
+  return "digest"
+}
+
 const matchesFilter = (item: NotificationItem, filter: string) => {
   if (filter === "all") return true
   if (filter === "critical") return getNotificationSeverity(item) === "critical"
@@ -239,6 +277,7 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
 
 export default function NotificationsScreen() {
   const { t, language } = useAppLanguage()
+  const navigation = useNavigation<any>()
   const [filter, setFilter] = useState("all")
   const [activeItem, setActiveItem] = useState<NotificationItem | null>(null)
   const {
@@ -257,15 +296,61 @@ export default function NotificationsScreen() {
     return notifications.filter((item) => matchesFilter(item, filter))
   }, [notifications, filter])
 
-  const grouped = useMemo(() => {
-    const groups = new Map<string, NotificationItem[]>()
-    filteredNotifications.forEach((item) => {
-      const label = formatDateLabel(item.createdAt, language, t)
-      if (!groups.has(label)) groups.set(label, [])
-      groups.get(label)?.push(item)
+  const sectioned = useMemo(() => {
+    const sectionOrder: NotificationSectionKey[] = ["critical", "astro", "group", "digest"]
+    const result: Record<NotificationSectionKey, NotificationItem[]> = {
+      critical: [],
+      astro: [],
+      group: [],
+      digest: [],
+    }
+    const ordered = [...filteredNotifications].sort((a, b) => {
+      const p = getNotificationPriority(b) - getNotificationPriority(a)
+      if (p !== 0) return p
+      const ta = a.createdAt?.toMillis?.() || 0
+      const tb = b.createdAt?.toMillis?.() || 0
+      return tb - ta
     })
-    return Array.from(groups.entries())
-  }, [filteredNotifications, language, t])
+    ordered.forEach((item) => result[getNotificationSection(item)].push(item))
+    return sectionOrder
+      .map((key) => ({ key, items: result[key] }))
+      .filter((entry) => entry.items.length > 0)
+  }, [filteredNotifications])
+
+  const sectionTitle = (key: NotificationSectionKey) => {
+    if (key === "critical") return t("notif.section.critical")
+    if (key === "astro") return t("notif.section.astro")
+    if (key === "group") return t("notif.section.group")
+    return t("notif.section.digest")
+  }
+
+  const openNotificationTarget = async (item: NotificationItem) => {
+    if (!item.isRead) await markAsRead(item.id)
+    const link: any =
+      (item.deepLink as any) ||
+      ((item.templateVars as any)?.deepLink as any) ||
+      ((item.meta as any)?.deepLink as any) ||
+      null
+    if (link?.screen) {
+      navigation.navigate(link.screen, link.params || {})
+      return
+    }
+    const type = String(item.type || "").toLowerCase()
+    if (isGroupNotification(item)) {
+      navigation.navigate("Groups", item.groupId ? { groupId: item.groupId } : undefined)
+      return
+    }
+    if (
+      type.includes("forecast") ||
+      type.includes("daily") ||
+      type.includes("weekly") ||
+      type.startsWith("astro_event")
+    ) {
+      navigation.navigate("Forecast")
+      return
+    }
+    navigation.navigate("Home")
+  }
 
   const handleOpenNotification = async (item: NotificationItem) => {
     if (!item.isRead) {
@@ -325,55 +410,68 @@ export default function NotificationsScreen() {
         ) : filteredNotifications.length === 0 ? (
           <Text style={styles.emptyText}>{t("notif.empty")}</Text>
         ) : (
-          grouped.map(([label, items]) => (
-            <View key={label} style={styles.groupSection}>
-              <Text style={styles.groupTitle}>{label}</Text>
-              {items.map((item) => {
+          sectioned.map((section) => (
+            <View key={section.key} style={styles.groupSection}>
+              <Text style={styles.groupTitle}>{sectionTitle(section.key)}</Text>
+              <Text style={styles.groupSubtitle}>{section.items.length}</Text>
+
+              {section.items.map((item) => {
                 const severity = getNotificationSeverity(item)
                 const icon = getSeverityIcon(severity)
                 const text = resolveNotificationText(item, templates, t)
                 const areaTags = buildLifeAreaTags(item, t)
                 const percentValue = resolvePercentageTag(item)
+                const dateLabel = formatDateLabel(item.createdAt, language, t)
+                const timeLabel = formatTimeLabel(item.createdAt, language)
+
                 return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[styles.card, !item.isRead && styles.cardUnread]}
-                    onPress={() => handleOpenNotification(item)}
-                  >
+                  <View key={item.id} style={[styles.card, !item.isRead && styles.cardUnread]}>
                     <View style={styles.iconWrap}>
                       <Ionicons name={icon.name as any} size={20} color={icon.color} />
                     </View>
-                    <View style={styles.content}>
-                      <Text style={styles.cardTitle}>{text.title}</Text>
-                      <Text style={styles.cardBody}>{text.body}</Text>
-                      {item.createdAt?.toDate ? (
-                        <Text style={styles.cardTime}>{formatTimeLabel(item.createdAt, language)}</Text>
-                      ) : null}
-                      <View style={styles.tags}>
-                        {item.groupName ? (
-                          <View style={styles.tag}>
-                            <Text style={styles.tagText}>{item.groupName}</Text>
-                          </View>
+
+                    <TouchableOpacity style={styles.cardMain} onPress={() => handleOpenNotification(item)}>
+                      <View style={styles.content}>
+                        <Text style={styles.cardTitle}>{text.title}</Text>
+                        <Text style={styles.cardBody}>{text.body}</Text>
+                        {item.createdAt?.toDate ? (
+                          <Text style={styles.cardTime}>{`${dateLabel} • ${timeLabel}`}</Text>
                         ) : null}
-                        {areaTags.map((areaLabel, index) => (
-                          <View key={`${item.id}_area_${index}`} style={styles.tag}>
-                            <Text style={styles.tagText}>{areaLabel}</Text>
-                          </View>
-                        ))}
-                        {typeof percentValue === "number" ? (
-                          <View style={styles.tag}>
-                            <Text style={styles.tagText}>{percentValue}%</Text>
-                          </View>
-                        ) : null}
+                        <View style={styles.tags}>
+                          {item.groupName ? (
+                            <View style={styles.tag}>
+                              <Text style={styles.tagText}>{item.groupName}</Text>
+                            </View>
+                          ) : null}
+                          {areaTags.map((areaLabel, index) => (
+                            <View key={`${item.id}_area_${index}`} style={styles.tag}>
+                              <Text style={styles.tagText}>{areaLabel}</Text>
+                            </View>
+                          ))}
+                          {typeof percentValue === "number" ? (
+                            <View style={styles.tag}>
+                              <Text style={styles.tagText}>{percentValue}%</Text>
+                            </View>
+                          ) : null}
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.cardActionButton}
+                      onPress={() => openNotificationTarget(item)}
+                    >
+                      <Ionicons name="arrow-redo-outline" size={18} color="#FFD700" />
+                    </TouchableOpacity>
+
                     {!item.isRead && <View style={styles.unreadDot} />}
-                  </TouchableOpacity>
+                  </View>
                 )
               })}
             </View>
           ))
         )}
+
         {hasMore && !loading && (
           <TouchableOpacity
             style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
@@ -410,18 +508,14 @@ export default function NotificationsScreen() {
                 {resolveCriticalAreasText(activeItem) ? (
                   <View style={styles.modalSection}>
                     <Text style={styles.modalSectionTitle}>{t("notif.criticalAreas")}</Text>
-                    <Text style={styles.modalSectionText}>
-                      {resolveCriticalAreasText(activeItem)}
-                    </Text>
+                    <Text style={styles.modalSectionText}>{resolveCriticalAreasText(activeItem)}</Text>
                   </View>
                 ) : null}
 
                 {resolveTransitsText(activeItem) ? (
                   <View style={styles.modalSection}>
                     <Text style={styles.modalSectionTitle}>{t("notif.relatedTransits")}</Text>
-                    <Text style={styles.modalSectionText}>
-                      {resolveTransitsText(activeItem)}
-                    </Text>
+                    <Text style={styles.modalSectionText}>{resolveTransitsText(activeItem)}</Text>
                   </View>
                 ) : null}
 
@@ -437,6 +531,14 @@ export default function NotificationsScreen() {
                     ))}
                   </View>
                 ) : null}
+
+                <TouchableOpacity
+                  style={styles.modalActionButton}
+                  onPress={() => openNotificationTarget(activeItem)}
+                >
+                  <Ionicons name="open-outline" size={16} color="#0F0F23" />
+                  <Text style={styles.modalActionButtonText}>{t("notif.action.open")}</Text>
+                </TouchableOpacity>
               </>
             ) : null}
           </Pressable>
@@ -537,6 +639,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
+    marginBottom: 2,
+  },
+  groupSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 11,
     marginBottom: 8,
   },
   card: {
@@ -550,6 +657,9 @@ const styles = StyleSheet.create({
   },
   cardUnread: {
     borderColor: "rgba(255,215,0,0.4)",
+  },
+  cardMain: {
+    flex: 1,
   },
   iconWrap: {
     width: 32,
@@ -602,6 +712,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginLeft: 8,
   },
+  cardActionButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginLeft: 8,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(15, 15, 35, 0.8)",
@@ -649,5 +769,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
+  },
+  modalActionButton: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 12,
+    paddingVertical: 10,
+    backgroundColor: "#FFD700",
+  },
+  modalActionButtonText: {
+    color: "#0F0F23",
+    fontWeight: "700",
   },
 })

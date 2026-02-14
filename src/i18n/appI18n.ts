@@ -3176,6 +3176,41 @@ const postPatchReadingModal: Record<AppLanguage, Dict> = {
   Object.assign(dictionaries[lang], postPatchReadingModal[lang])
 })
 
+const postPatchNotifications: Record<AppLanguage, Dict> = {
+  'pt-BR': {
+    'notif.section.critical': 'Criticos',
+    'notif.section.astro': 'Astrologicos',
+    'notif.section.group': 'Grupos',
+    'notif.section.digest': 'Resumo',
+    'notif.action.open': 'Abrir',
+  },
+  'en-US': {
+    'notif.section.critical': 'Critical',
+    'notif.section.astro': 'Astro',
+    'notif.section.group': 'Groups',
+    'notif.section.digest': 'Digest',
+    'notif.action.open': 'Open',
+  },
+  'es-ES': {
+    'notif.section.critical': 'Criticos',
+    'notif.section.astro': 'Astrologicos',
+    'notif.section.group': 'Grupos',
+    'notif.section.digest': 'Resumen',
+    'notif.action.open': 'Abrir',
+  },
+  'it-IT': {
+    'notif.section.critical': 'Critici',
+    'notif.section.astro': 'Astrologici',
+    'notif.section.group': 'Gruppi',
+    'notif.section.digest': 'Riepilogo',
+    'notif.action.open': 'Apri',
+  },
+}
+
+;(Object.keys(postPatchNotifications) as AppLanguage[]).forEach((lang) => {
+  Object.assign(dictionaries[lang], postPatchNotifications[lang])
+})
+
 export const normalizeLanguage = (value?: string | null): AppLanguage => {
   const raw = String(value || 'pt-BR').trim()
   const normalized = raw.toLowerCase().replace(/_/g, '-')
