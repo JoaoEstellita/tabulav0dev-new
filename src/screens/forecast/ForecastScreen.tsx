@@ -967,11 +967,18 @@ export default function ForecastScreen() {
 
   const calendarMarkedDates = useMemo(() => {
     const marks: Record<string, any> = {}
-    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
-      const impacts = new Set(items.map((event) => event.impact))
+    const allDateKeys = Array.from(
+      new Set([
+        ...Object.keys(criticalCountsByDate),
+        ...Object.keys(positiveCountsByDate),
+      ])
+    )
+    allDateKeys.forEach((dateKey) => {
+      const criticalCount = Number(criticalCountsByDate[dateKey] || 0)
+      const positiveCount = Number(positiveCountsByDate[dateKey] || 0)
       const dots = []
-      if (impacts.has('UP')) dots.push({ color: '#4ECDC4' })
-      if (impacts.has('DOWN')) dots.push({ color: '#FF6B6B' })
+      if (positiveCount > 0) dots.push({ color: '#4ECDC4' })
+      if (criticalCount > 0) dots.push({ color: '#FF6B6B' })
       if (!dots.length) dots.push({ color: '#FFD166' })
       marks[dateKey] = { marked: true, dots }
     })
@@ -984,7 +991,7 @@ export default function ForecastScreen() {
       }
     }
     return marks
-  }, [eventsByDate, selectedDate])
+  }, [criticalCountsByDate, positiveCountsByDate, selectedDate])
 
   const renderCalendarDay = useCallback(({ date, state }: any) => {
     const dateKey = date?.dateString
