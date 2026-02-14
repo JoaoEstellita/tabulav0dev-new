@@ -995,38 +995,24 @@ export default function ForecastScreen() {
     const strong: Record<string, number> = {}
     Object.entries(dayStatusByDate).forEach(([dateKey, day]) => {
       const areas = day?.lifeAreas || {}
-      const hasAreas = Object.keys(areas).length > 0
+      const areaValues = Object.values(areas) as Array<any>
+      const hasAreas = areaValues.length > 0
       let criticalCount = 0
       let strongCount = 0
-      Object.values(areas).forEach((area: any) => {
-        const rawStatus = String(area?.status || '').trim().toLowerCase()
-        const status = rawStatus === 'critical'
-          ? 'critico'
-          : rawStatus === 'challenging'
-          ? 'desafiador'
-          : rawStatus === 'neutral'
-          ? 'neutro'
-          : rawStatus === 'positive'
-          ? 'bom'
-          : rawStatus === 'excellent'
-          ? 'excelente'
-          : rawStatus
-        if (status === 'critico' || status === 'desafiador') {
-          criticalCount += 1
-          return
-        }
-        if (status === 'bom' || status === 'excelente') {
-          strongCount += 1
-          return
-        }
+      let numericAreasCount = 0
+
+      // Regra de contagem alinhada ao card:
+      // crítico/positivo no calendário devem refletir o mesmo critério baseado em percentage.
+      areaValues.forEach((area: any) => {
         const score = typeof area?.percentage === 'number' ? area.percentage : null
         if (score === null) return
+        numericAreasCount += 1
         if (score < STATUS_THRESHOLDS.criticalBelow) criticalCount += 1
         if (score >= STATUS_THRESHOLDS.positiveAbove) strongCount += 1
       })
-      // Preferir sempre os contadores de áreas para manter calendário e cards coerentes.
-      // Só usar badges do backend como fallback quando não houver lifeAreas no payload.
-      if (!hasAreas && day?.badges) {
+
+      // Fallback: usar badges do backend apenas quando não houver percentages válidos.
+      if ((!hasAreas || numericAreasCount === 0) && day?.badges) {
         criticalCount = Number(day.badges.criticalCount || 0)
         strongCount = Number(day.badges.strongCount || 0)
       }
