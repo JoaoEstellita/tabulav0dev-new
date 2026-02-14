@@ -48,6 +48,7 @@ import {
   getMoonPhaseLabelFromKey
 } from '../../utils/moonPhase'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
+import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
@@ -468,9 +469,8 @@ export default function HomeScreen() {
           }, 0) / activeTransits.length
         : null
       const movementScore = (() => {
-        if (typeof area?.movementScore === 'number' && Number.isFinite(area.movementScore)) {
-          return Math.max(0, Math.min(100, Math.round(area.movementScore)))
-        }
+        const normalized = normalizeAxisScore((area as any)?.movementScore)
+        if (normalized !== null) return normalized
         const densityScore = Math.min(100, activeTransits.length * 14)
         const impactScore = avgImpact !== null ? Math.min(100, Math.round(avgImpact * 100)) : null
         if (impactScore === null && densityScore === 0) return null

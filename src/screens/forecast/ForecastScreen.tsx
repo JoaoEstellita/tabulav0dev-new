@@ -22,6 +22,7 @@ import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
+import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from '../../utils/statusAxes'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
@@ -322,8 +323,8 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
   onPress: () => void
 }) {
   const value = typeof score === 'number' ? Math.round(score) : null
-  const movement = typeof movementScore === 'number' ? Math.round(Math.max(0, Math.min(100, movementScore))) : null
-  const attention = typeof attentionScore === 'number' ? Math.round(Math.max(0, Math.min(100, attentionScore))) : null
+  const movement = normalizeAxisScore(movementScore)
+  const attention = normalizeAxisScore(attentionScore)
   const valueColor = value === null
     ? '#FFFFFF'
     : value < STATUS_THRESHOLDS.criticalBelow
@@ -346,14 +347,14 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
         {value ?? '--'} {statusText}
       </Text>
       <View style={styles.areaAxisRow}>
-        <Text style={styles.areaAxisLabel}>M</Text>
+        <Text style={styles.areaAxisLabel}>{getAxisShortLabel('movement')}</Text>
         <View style={styles.areaAxisTrack}>
           <View style={[styles.areaAxisFill, styles.areaAxisFillMovement, { width: `${movement ?? 0}%` }]} />
         </View>
         <Text style={styles.areaAxisValue}>{movement ?? '--'}</Text>
       </View>
       <View style={styles.areaAxisRow}>
-        <Text style={styles.areaAxisLabel}>A</Text>
+        <Text style={styles.areaAxisLabel}>{getAxisShortLabel('attention')}</Text>
         <View style={styles.areaAxisTrack}>
           <View style={[styles.areaAxisFill, styles.areaAxisFillAttention, { width: `${attention ?? 0}%` }]} />
         </View>
@@ -842,44 +843,16 @@ export default function ForecastScreen() {
   }, [dayStatusByDate])
 
   const criticalCountsByDate = useMemo(() => {
-    if (countsFromStatusRange.hasRangeData) return countsFromStatusRange.critical
-    if (data?.dailyBadges) {
-      const map: Record<string, number> = {}
-      Object.entries(data.dailyBadges).forEach(([key, value]) => {
-        if (typeof value?.criticalCount === 'number') map[key] = value.criticalCount
-      })
-      return map
-    }
-    if (data?.dailyCounts?.critical) return data.dailyCounts.critical
-    const counts: Record<string, number> = {}
-    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
-      const criticalCount = items.filter((event) => event.impact === 'DOWN').length
-      if (criticalCount > 0) counts[dateKey] = criticalCount
-    })
-    return counts
-  }, [countsFromStatusRange.critical, countsFromStatusRange.hasRangeData, data?.dailyBadges, data?.dailyCounts?.critical, eventsByDate])
+    return countsFromStatusRange.critical
+  }, [countsFromStatusRange.critical])
 
   const totalCriticalCount = useMemo(() => {
     return Object.values(criticalCountsByDate).reduce((sum, value) => sum + value, 0)
   }, [criticalCountsByDate])
 
   const positiveCountsByDate = useMemo(() => {
-    if (countsFromStatusRange.hasRangeData) return countsFromStatusRange.strong
-    if (data?.dailyBadges) {
-      const map: Record<string, number> = {}
-      Object.entries(data.dailyBadges).forEach(([key, value]) => {
-        if (typeof value?.strongCount === 'number') map[key] = value.strongCount
-      })
-      return map
-    }
-    if (data?.dailyCounts?.strong) return data.dailyCounts.strong
-    const counts: Record<string, number> = {}
-    Object.entries(eventsByDate).forEach(([dateKey, items]) => {
-      const strongCount = items.filter((event) => event.intensity >= 0.6).length
-      if (strongCount > 0) counts[dateKey] = strongCount
-    })
-    return counts
-  }, [countsFromStatusRange.strong, countsFromStatusRange.hasRangeData, data?.dailyBadges, data?.dailyCounts?.strong, eventsByDate])
+    return countsFromStatusRange.strong
+  }, [countsFromStatusRange.strong])
 
   const isDateInRange = useCallback((dateKey: string) => {
     if (!rangeFromStr || !rangeToStr) return true
@@ -2147,10 +2120,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   areaAxisFillMovement: {
-    backgroundColor: '#22D3EE',
+    backgroundColor: STATUS_AXIS_COLORS.movement,
   },
   areaAxisFillAttention: {
-    backgroundColor: '#F97316',
+    backgroundColor: STATUS_AXIS_COLORS.attention,
   },
   areaAxisValue: {
     minWidth: 22,

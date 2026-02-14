@@ -10,6 +10,11 @@ import {
 } from '../constants/lifeAreas'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { normalizeKey } from '../utils/astro/normalizeKey'
+import {
+  getAxisLongLabel,
+  normalizeAxisScore,
+  STATUS_AXIS_COLORS,
+} from '../utils/statusAxes'
 
 interface LifeAreaCardProps {
   area: LifeArea
@@ -59,20 +64,18 @@ export default function LifeAreaCard({
   const statusValue = Number.isFinite(area.status) ? area.status : null
   const statusColor = typeof statusValue === 'number' ? getStatusColor(statusValue) : '#B0B0B0'
   const statusText = typeof statusValue === 'number' ? getStatusText(statusValue) : '—'
-  const rawMovement = Number((area as any)?.movementScore)
-  const movementFromArea = Number.isFinite(rawMovement) ? Math.round(rawMovement) : null
+  const movementFromArea = normalizeAxisScore((area as any)?.movementScore)
   const movementFromTransitCount = typeof transitCount === 'number'
     ? Math.min(100, Math.max(0, Math.round(transitCount * 16)))
     : null
   const movementValue = movementFromArea ?? movementFromTransitCount
-  const rawAttention = Number((area as any)?.attentionScore)
-  const attentionFromArea = Number.isFinite(rawAttention) ? Math.round(rawAttention) : null
+  const attentionFromArea = normalizeAxisScore((area as any)?.attentionScore)
   const attentionFromStatus = typeof statusValue === 'number'
     ? Math.min(100, Math.max(0, Math.round(100 - statusValue)))
     : null
   const attentionValue = attentionFromArea ?? attentionFromStatus
-  const movementColor = '#22D3EE'
-  const attentionColor = '#F97316'
+  const movementColor = STATUS_AXIS_COLORS.movement
+  const attentionColor = STATUS_AXIS_COLORS.attention
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -114,7 +117,7 @@ export default function LifeAreaCard({
 
         <View style={[styles.movementRow, compact && styles.movementRowCompact]}>
           <Text style={styles.movementLabel}>
-            {tl('Intensidade', 'Intensity', 'Intensidad', 'Intensita')}
+            {getAxisLongLabel('movement', language)}
           </Text>
           <Text style={styles.movementValue}>
             {typeof movementValue === 'number' ? `${movementValue}%` : '—'}
@@ -134,7 +137,7 @@ export default function LifeAreaCard({
 
         <View style={[styles.movementRow, compact && styles.movementRowCompact]}>
           <Text style={styles.movementLabel}>
-            {tl('Atencao', 'Attention', 'Atencion', 'Attenzione')}
+            {getAxisLongLabel('attention', language)}
           </Text>
           <Text style={styles.movementValue}>
             {typeof attentionValue === 'number' ? `${attentionValue}%` : '—'}

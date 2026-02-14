@@ -36,6 +36,7 @@ import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transi
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
+import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
 
 const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
   key,
@@ -1391,12 +1392,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           const percentage =
                             typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
                           const fillColor = mapBucketToColor(entry.bucket)
-                          const movement = typeof entry.movementScore === "number"
-                            ? Math.round(Math.max(0, Math.min(100, entry.movementScore)))
-                            : null
-                          const attention = typeof entry.attentionScore === "number"
-                            ? Math.round(Math.max(0, Math.min(100, entry.attentionScore)))
-                            : null
+                          const movement = normalizeAxisScore(entry.movementScore)
+                          const attention = normalizeAxisScore(entry.attentionScore)
                           const cardColors = LIFE_AREA_COLORS[entry.key] || ["#4B5563", "#6B7280"]
                           return (
                             <TouchableOpacity
@@ -1428,7 +1425,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                   />
                                 </View>
                                 <View style={styles.memberAxisRow}>
-                                  <Text style={styles.memberAxisLabel}>M</Text>
+                                  <Text style={styles.memberAxisLabel}>{getAxisShortLabel('movement')}</Text>
                                   <View style={styles.memberAxisTrack}>
                                     <View
                                       style={[
@@ -1441,7 +1438,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                   <Text style={styles.memberAxisValue}>{movement ?? "--"}</Text>
                                 </View>
                                 <View style={styles.memberAxisRow}>
-                                  <Text style={styles.memberAxisLabel}>A</Text>
+                                  <Text style={styles.memberAxisLabel}>{getAxisShortLabel('attention')}</Text>
                                   <View style={styles.memberAxisTrack}>
                                     <View
                                       style={[
@@ -2483,10 +2480,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   memberAxisFillMovement: {
-    backgroundColor: "#22D3EE",
+    backgroundColor: STATUS_AXIS_COLORS.movement,
   },
   memberAxisFillAttention: {
-    backgroundColor: "#F97316",
+    backgroundColor: STATUS_AXIS_COLORS.attention,
   },
   memberAxisValue: {
     color: "#FFFFFF",
