@@ -1086,6 +1086,26 @@ const getBucketPriority = (bucket: string) => {
       return 3
   }
 }
+
+const normalizeAreaStatusKey = (value?: string | null) => {
+  const raw = String(value || '').trim().toLowerCase()
+  if (!raw) return ''
+  if (raw === 'critical') return 'critico'
+  if (raw === 'challenging') return 'desafiador'
+  if (raw === 'neutral') return 'neutro'
+  if (raw === 'positive') return 'bom'
+  if (raw === 'excellent') return 'excelente'
+  return raw
+}
+
+const mapStatusToBucket = (status?: string | null) => {
+  const key = normalizeAreaStatusKey(status)
+  if (key === 'critico' || key === 'desafiador') return 'critical'
+  if (key === 'bom' || key === 'excelente') return 'positive'
+  if (key === 'neutro') return 'attention'
+  return null
+}
+
 const buildMemberAreaEntries = (member: GroupMember) => {
     const lifeAreas = resolveMemberLifeAreas(member)
     const sharedAreas = resolveSharedAreas(member)
@@ -1103,11 +1123,15 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         const data = (lifeAreas as any)?.[key]
         if (!data) return null
         const percentage = coerceNumber(data.percentage ?? data.status)
-        const bucket = mapPercentageToBucket(percentage ?? undefined)
+        const movementScore = coerceNumber(data.movementScore)
+        const attentionScore = coerceNumber(data.attentionScore)
+        const bucket = mapStatusToBucket(data.status) || mapPercentageToBucket(percentage ?? undefined)
         return {
           key,
           label: lifeAreaLabel(key),
           percentage,
+          movementScore,
+          attentionScore,
           bucket,
         }
       })
@@ -1115,6 +1139,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         key: string
         label: string
         percentage: number | null
+        movementScore: number | null
+        attentionScore: number | null
         bucket: string
       }>
   }
@@ -1365,6 +1391,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           const percentage =
                             typeof entry.percentage === "number" ? Math.round(entry.percentage) : null
                           const fillColor = mapBucketToColor(entry.bucket)
+                          const movement = typeof entry.movementScore === "number"
+                            ? Math.round(Math.max(0, Math.min(100, entry.movementScore)))
+                            : null
+                          const attention = typeof entry.attentionScore === "number"
+                            ? Math.round(Math.max(0, Math.min(100, entry.attentionScore)))
+                            : null
                           const cardColors = LIFE_AREA_COLORS[entry.key] || ["#4B5563", "#6B7280"]
                           return (
                             <TouchableOpacity
@@ -1394,6 +1426,32 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                       },
                                     ]}
                                   />
+                                </View>
+                                <View style={styles.memberAxisRow}>
+                                  <Text style={styles.memberAxisLabel}>M</Text>
+                                  <View style={styles.memberAxisTrack}>
+                                    <View
+                                      style={[
+                                        styles.memberAxisFill,
+                                        styles.memberAxisFillMovement,
+                                        { width: `${movement ?? 0}%` },
+                                      ]}
+                                    />
+                                  </View>
+                                  <Text style={styles.memberAxisValue}>{movement ?? "--"}</Text>
+                                </View>
+                                <View style={styles.memberAxisRow}>
+                                  <Text style={styles.memberAxisLabel}>A</Text>
+                                  <View style={styles.memberAxisTrack}>
+                                    <View
+                                      style={[
+                                        styles.memberAxisFill,
+                                        styles.memberAxisFillAttention,
+                                        { width: `${attention ?? 0}%` },
+                                      ]}
+                                    />
+                                  </View>
+                                  <Text style={styles.memberAxisValue}>{attention ?? "--"}</Text>
                                 </View>
                               </LinearGradient>
                             </TouchableOpacity>
@@ -2377,6 +2435,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 7,
     paddingHorizontal: 7,
+    minHeight: 84,
   },
   memberStatusMiniLabel: {
     color: "#FFFFFF",
@@ -2399,6 +2458,42 @@ const styles = StyleSheet.create({
   memberStatusMiniFill: {
     height: "100%",
     borderRadius: 999,
+  },
+  memberAxisRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 3,
+  },
+  memberAxisLabel: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 8,
+    fontWeight: "700",
+    width: 8,
+  },
+  memberAxisTrack: {
+    flex: 1,
+    height: 2.5,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    overflow: "hidden",
+  },
+  memberAxisFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+  memberAxisFillMovement: {
+    backgroundColor: "#22D3EE",
+  },
+  memberAxisFillAttention: {
+    backgroundColor: "#F97316",
+  },
+  memberAxisValue: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontWeight: "700",
+    minWidth: 18,
+    textAlign: "right",
   },
   memberDetailEmpty: {
     color: "#888",

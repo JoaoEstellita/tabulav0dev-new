@@ -65,7 +65,14 @@ export default function LifeAreaCard({
     ? Math.min(100, Math.max(0, Math.round(transitCount * 16)))
     : null
   const movementValue = movementFromArea ?? movementFromTransitCount
+  const rawAttention = Number((area as any)?.attentionScore)
+  const attentionFromArea = Number.isFinite(rawAttention) ? Math.round(rawAttention) : null
+  const attentionFromStatus = typeof statusValue === 'number'
+    ? Math.min(100, Math.max(0, Math.round(100 - statusValue)))
+    : null
+  const attentionValue = attentionFromArea ?? attentionFromStatus
   const movementColor = '#22D3EE'
+  const attentionColor = '#F97316'
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -120,6 +127,26 @@ export default function LifeAreaCard({
               {
                 width: `${typeof movementValue === 'number' ? Math.min(100, Math.max(0, movementValue)) : 0}%`,
                 backgroundColor: movementColor,
+              },
+            ]}
+          />
+        </View>
+
+        <View style={[styles.movementRow, compact && styles.movementRowCompact]}>
+          <Text style={styles.movementLabel}>
+            {tl('Atencao', 'Attention', 'Atencion', 'Attenzione')}
+          </Text>
+          <Text style={styles.movementValue}>
+            {typeof attentionValue === 'number' ? `${attentionValue}%` : '—'}
+          </Text>
+        </View>
+        <View style={styles.movementTrack}>
+          <View
+            style={[
+              styles.movementFill,
+              {
+                width: `${typeof attentionValue === 'number' ? Math.min(100, Math.max(0, attentionValue)) : 0}%`,
+                backgroundColor: attentionColor,
               },
             ]}
           />

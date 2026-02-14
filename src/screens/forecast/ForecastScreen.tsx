@@ -51,7 +51,15 @@ type ForecastEvent = {
 type DayStatusResponse = {
   date: string
   global: { score: number | null; level: string | null }
-  lifeAreas: Record<string, { percentage: number | null; status: string | null }>
+  lifeAreas: Record<
+    string,
+    {
+      percentage: number | null
+      status: string | null
+      movementScore?: number | null
+      attentionScore?: number | null
+    }
+  >
   badges?: { criticalCount?: number; strongCount?: number }
   meta?: { cached?: boolean; rulesVersion?: string; durationMs?: number }
 }
@@ -298,6 +306,8 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
   label,
   score,
   statusText,
+  movementScore,
+  attentionScore,
   active,
   color,
   onPress,
@@ -305,11 +315,15 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
   label: string
   score: number | null
   statusText: string
+  movementScore?: number | null
+  attentionScore?: number | null
   active: boolean
   color: string
   onPress: () => void
 }) {
   const value = typeof score === 'number' ? Math.round(score) : null
+  const movement = typeof movementScore === 'number' ? Math.round(Math.max(0, Math.min(100, movementScore))) : null
+  const attention = typeof attentionScore === 'number' ? Math.round(Math.max(0, Math.min(100, attentionScore))) : null
   const valueColor = value === null
     ? '#FFFFFF'
     : value < STATUS_THRESHOLDS.criticalBelow
@@ -331,6 +345,20 @@ const MemoAreaPill = React.memo(function MemoAreaPill({
       <Text style={[styles.areaPillValue, { color: valueColor }]}>
         {value ?? '--'} {statusText}
       </Text>
+      <View style={styles.areaAxisRow}>
+        <Text style={styles.areaAxisLabel}>M</Text>
+        <View style={styles.areaAxisTrack}>
+          <View style={[styles.areaAxisFill, styles.areaAxisFillMovement, { width: `${movement ?? 0}%` }]} />
+        </View>
+        <Text style={styles.areaAxisValue}>{movement ?? '--'}</Text>
+      </View>
+      <View style={styles.areaAxisRow}>
+        <Text style={styles.areaAxisLabel}>A</Text>
+        <View style={styles.areaAxisTrack}>
+          <View style={[styles.areaAxisFill, styles.areaAxisFillAttention, { width: `${attention ?? 0}%` }]} />
+        </View>
+        <Text style={styles.areaAxisValue}>{attention ?? '--'}</Text>
+      </View>
     </TouchableOpacity>
   )
 })
@@ -377,7 +405,15 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
   isLoading: boolean
   dayStatus: DayStatusResponse | null
   selectedPoint: ForecastSeriesPoint | null
-  lifeAreaCards: Array<{ domain: string; score: number | null; status: string | null; critical: boolean; transitCount: number }>
+  lifeAreaCards: Array<{
+    domain: string
+    score: number | null
+    status: string | null
+    movementScore: number | null
+    attentionScore: number | null
+    critical: boolean
+    transitCount: number
+  }>
   selectedDomainKey: string | null
   onSelectDomain: (domain: string | null) => void
   resolveScoreLabel: (score: number | null) => string
@@ -430,6 +466,8 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
                   label={label}
                   score={item.score}
                   statusText={resolveScoreLabel(item.score)}
+                  movementScore={item.movementScore}
+                  attentionScore={item.attentionScore}
                   active={isActive}
                   color={color}
                   onPress={() => onSelectDomain(isActive ? null : item.domain)}
@@ -768,6 +806,26 @@ export default function ForecastScreen() {
       let criticalCount = 0
       let strongCount = 0
       Object.values(areas).forEach((area) => {
+        const rawStatus = String(area?.status || '').trim().toLowerCase()
+        const status = rawStatus === 'critical'
+          ? 'critico'
+          : rawStatus === 'challenging'
+          ? 'desafiador'
+          : rawStatus === 'neutral'
+          ? 'neutro'
+          : rawStatus === 'positive'
+          ? 'bom'
+          : rawStatus === 'excellent'
+          ? 'excelente'
+          : rawStatus
+        if (status === 'critico' || status === 'desafiador') {
+          criticalCount += 1
+          return
+        }
+        if (status === 'bom' || status === 'excelente') {
+          strongCount += 1
+          return
+        }
         const score = typeof area?.percentage === 'number' ? area.percentage : null
         if (score === null) return
         if (score < STATUS_THRESHOLDS.criticalBelow) criticalCount += 1
@@ -1114,10 +1172,18 @@ export default function ForecastScreen() {
       const transitCount = selectedEventsRaw.filter((event) =>
         (event.domains || []).some((value) => normalizeLifeArea(value) === domain)
       ).length
+      const movementRaw = Number(statusArea?.movementScore)
+      const attentionRaw = Number(statusArea?.attentionScore)
+      const movementFromStatus = Number.isFinite(movementRaw) ? Math.round(Math.max(0, Math.min(100, movementRaw))) : null
+      const attentionFromStatus = Number.isFinite(attentionRaw) ? Math.round(Math.max(0, Math.min(100, attentionRaw))) : null
+      const movementFallback = Math.min(100, Math.max(0, Math.round(transitCount * 16)))
+      const attentionFallback = score === null ? null : Math.min(100, Math.max(0, Math.round(100 - score)))
       return {
         domain,
         score,
         status: statusArea?.status || null,
+        movementScore: movementFromStatus ?? movementFallback,
+        attentionScore: attentionFromStatus ?? attentionFallback,
         critical: typeof rawScore === 'number' && rawScore < STATUS_THRESHOLDS.criticalBelow,
         transitCount,
       }
@@ -2038,7 +2104,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 5,
     paddingHorizontal: 8,
-    minHeight: 40,
+    minHeight: 58,
     justifyContent: 'center',
   },
   areaPillActive: {
@@ -2054,6 +2120,43 @@ const styles = StyleSheet.create({
   areaPillValue: {
     color: '#FFFFFF',
     fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  areaAxisRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 1,
+  },
+  areaAxisLabel: {
+    width: 10,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  areaAxisTrack: {
+    flex: 1,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+  },
+  areaAxisFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  areaAxisFillMovement: {
+    backgroundColor: '#22D3EE',
+  },
+  areaAxisFillAttention: {
+    backgroundColor: '#F97316',
+  },
+  areaAxisValue: {
+    minWidth: 22,
+    textAlign: 'right',
+    color: '#FFFFFF',
+    fontSize: 9,
     fontWeight: '700',
   },
   domainChip: {
