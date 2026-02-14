@@ -191,6 +191,12 @@ const resolveCriticalAreasText = (item: NotificationItem) => {
   )
 }
 
+const resolveTransitsText = (item: NotificationItem) => {
+  const vars = item.templateVars || {}
+  const meta = item.meta || {}
+  return vars.transitsText || meta.transitsText || ""
+}
+
 const resolveLifeAreaEntries = (item: NotificationItem, t: (key: string) => string) => {
   const vars = item.templateVars || {}
   const meta = item.meta || {}
@@ -406,6 +412,15 @@ export default function NotificationsScreen() {
                     <Text style={styles.modalSectionTitle}>{t("notif.criticalAreas")}</Text>
                     <Text style={styles.modalSectionText}>
                       {resolveCriticalAreasText(activeItem)}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {resolveTransitsText(activeItem) ? (
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>{t("notif.relatedTransits")}</Text>
+                    <Text style={styles.modalSectionText}>
+                      {resolveTransitsText(activeItem)}
                     </Text>
                   </View>
                 ) : null}
