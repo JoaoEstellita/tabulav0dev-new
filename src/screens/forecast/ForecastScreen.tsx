@@ -9,6 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
+import { db } from '../../config/firebase'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { translate, type AppLanguage } from '../../i18n/appI18n'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
@@ -93,6 +95,40 @@ const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v3'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v3'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
+const FORECAST_EVENT_FILTERS_KEY_PREFIX = 'forecast_event_filters_v1'
+
+type ForecastSortBy = 'impact_desc' | 'recent_desc' | 'peak_near' | 'intensity_desc' | 'orb_asc'
+type ForecastFilterCategory = 'transits' | 'aspects' | 'dignities' | 'houseStrength' | 'conditions' | 'sort'
+type ForecastCondition = 'retrograde' | 'stationary' | 'applying' | 'separating' | 'exact'
+type ForecastTransitKind = 'planet_planet' | 'planet_house'
+type ForecastDignity = 'domicile_exalted' | 'debilitated' | 'neutral' | 'unknown'
+type ForecastHouseStrength = 'angular' | 'succedent' | 'cadent' | 'unknown'
+
+type ForecastEventFilterState = {
+  version: number
+  transitKinds: ForecastTransitKind[]
+  aspects: string[]
+  dignities: ForecastDignity[]
+  houseStrengths: ForecastHouseStrength[]
+  conditions: ForecastCondition[]
+  impacts: Array<'UP' | 'DOWN' | 'MIXED'>
+  domains: string[]
+  sortBy: ForecastSortBy
+  updatedAt: number
+}
+
+const DEFAULT_EVENT_FILTERS: ForecastEventFilterState = {
+  version: 1,
+  transitKinds: [],
+  aspects: [],
+  dignities: [],
+  houseStrengths: [],
+  conditions: [],
+  impacts: [],
+  domains: [],
+  sortBy: 'impact_desc',
+  updatedAt: 0,
+}
 
 function scoreColor(score: number) {
   if (score < STATUS_THRESHOLDS.criticalBelow) return '#FF6B6B'
@@ -138,6 +174,63 @@ function impactLabel(impact: ForecastEvent['impact']) {
   if (impact === 'UP') return 'Positivo'
   if (impact === 'DOWN') return 'Desafiador'
   return 'Misto'
+}
+
+function toAspectKey(raw: string) {
+  return normalizeAspectLabel(raw || '').toLowerCase()
+}
+
+function inferTransitKind(event: ForecastEvent): ForecastTransitKind {
+  const target = String(event.natalPoint || '')
+  return /(?:casa|house)\s*\d{1,2}/i.test(target) ? 'planet_house' : 'planet_planet'
+}
+
+function inferConditions(event: ForecastEvent, phase?: { label: string; meta?: string } | null): ForecastCondition[] {
+  const out: ForecastCondition[] = []
+  const fullText = `${event.shortText || ''} ${event.aspect || ''} ${event.natalPoint || ''}`.toLowerCase()
+  const phaseText = `${phase?.label || ''} ${phase?.meta || ''}`.toLowerCase()
+  if (/retr[oó]grad|retrograde/.test(fullText)) out.push('retrograde')
+  if (/estacion|station/.test(fullText)) out.push('stationary')
+  if (phaseText.includes('aprox') || phaseText.includes('faltam') || phaseText.includes('approach')) out.push('applying')
+  if (phaseText.includes('afastando') || phaseText.includes('moving away') || phaseText.includes('separat')) out.push('separating')
+  if (phaseText.includes('pico') || phaseText.includes('peak') || phaseText.includes('hoje')) out.push('exact')
+  if (!out.length && typeof event.orbMax === 'number' && event.orbMax <= 1) out.push('exact')
+  return Array.from(new Set(out))
+}
+
+function inferDignity(event: ForecastEvent): ForecastDignity {
+  const anyEvent = event as any
+  const raw = String(anyEvent?.dignity || anyEvent?.dignityLevel || anyEvent?.transitDignity || '').toLowerCase()
+  if (!raw) return 'unknown'
+  if (/(domic|exalt|forte|strong|own sign|domicilio)/.test(raw)) return 'domicile_exalted'
+  if (/(queda|fall|detrim|debil|fraca|weak)/.test(raw)) return 'debilitated'
+  return 'neutral'
+}
+
+function inferHouseStrength(event: ForecastEvent): ForecastHouseStrength {
+  const anyEvent = event as any
+  const raw = String(anyEvent?.houseStrength || anyEvent?.house_strength || '').toLowerCase()
+  if (!raw) return 'unknown'
+  if (/angular/.test(raw)) return 'angular'
+  if (/suced|succedent/.test(raw)) return 'succedent'
+  if (/cadent|cadente/.test(raw)) return 'cadent'
+  return 'unknown'
+}
+
+function normalizeEventDomains(domains: string[]) {
+  return (domains || []).map((d) => normalizeLifeArea(d)).filter(Boolean) as string[]
+}
+
+function getFiltersActiveCount(filters: ForecastEventFilterState) {
+  return (
+    filters.transitKinds.length +
+    filters.aspects.length +
+    filters.dignities.length +
+    filters.houseStrengths.length +
+    filters.conditions.length +
+    filters.impacts.length +
+    filters.domains.length
+  )
 }
 
 function normalizeAspectLabel(rawAspect: string) {
@@ -483,13 +576,16 @@ const MemoDaySummary = React.memo(function MemoDaySummary({
 })
 
 const MemoDayEvents = React.memo(function MemoDayEvents({
-  selectedEvents,
+  selectedEventsCount,
   eventDisplayData,
   onOpenEventDetail,
   dayEventsLabel,
   noEventsLabel,
+  filterButtons,
+  activeFilterCount,
+  onClearFilters,
 }: {
-  selectedEvents: ForecastEvent[]
+  selectedEventsCount: number
   eventDisplayData: Array<{
     event: ForecastEvent
     phase: { label: string; meta?: string } | null
@@ -505,14 +601,30 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   onOpenEventDetail: (eventId: string) => void
   dayEventsLabel: string
   noEventsLabel: string
+  filterButtons: Array<{ key: string; label: string; onPress: () => void }>
+  activeFilterCount: number
+  onClearFilters: () => void
 }) {
   const visibleEvents = eventDisplayData
   return (
     <View>
       <View style={styles.eventHeaderRow}>
         <Text style={styles.dayPanelLabel}>{dayEventsLabel}</Text>
+        <Text style={styles.filterActiveText}>
+          {activeFilterCount > 0 ? `${activeFilterCount} ${activeFilterCount === 1 ? 'ativo' : 'ativos'}` : '0 ativos'}
+        </Text>
       </View>
-      {selectedEvents.length === 0 && (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterButtonRow}>
+        {filterButtons.map((button) => (
+          <TouchableOpacity key={button.key} style={styles.filterChip} onPress={button.onPress}>
+            <Text style={styles.filterChipText}>{button.label}</Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity style={[styles.filterChip, styles.filterChipClear]} onPress={onClearFilters}>
+          <Text style={styles.filterChipText}>Limpar</Text>
+        </TouchableOpacity>
+      </ScrollView>
+      {selectedEventsCount === 0 && (
         <Text style={styles.emptyText}>{noEventsLabel}</Text>
       )}
       {visibleEvents.map((item) => (
@@ -589,6 +701,9 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [selectedEventDetailId, setSelectedEventDetailId] = useState<string | null>(null)
+  const [eventFilters, setEventFilters] = useState<ForecastEventFilterState>(DEFAULT_EVENT_FILTERS)
+  const [filterCategoryOpen, setFilterCategoryOpen] = useState<ForecastFilterCategory | null>(null)
+  const [filtersHydrated, setFiltersHydrated] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
@@ -608,6 +723,11 @@ export default function ForecastScreen() {
       isActive: subscription?.active === true,
     })
   }, [isAdmin, planId, subscription?.active])
+
+  const filtersStorageKey = useMemo(
+    () => `${FORECAST_EVENT_FILTERS_KEY_PREFIX}:${user?.uid || 'anon'}`,
+    [user?.uid]
+  )
   const hasExtendedForecast = maxDaysAllowed > 7
   const granularity = 'day'
   const expiryInfo = useMemo(() => {
@@ -747,6 +867,82 @@ export default function ForecastScreen() {
   useEffect(() => {
     fetchForecast()
   }, [fetchForecast])
+
+  useEffect(() => {
+    let mounted = true
+    const loadFilters = async () => {
+      try {
+        const localRaw = await AsyncStorage.getItem(filtersStorageKey)
+        let localState: ForecastEventFilterState | null = null
+        if (localRaw) {
+          localState = { ...DEFAULT_EVENT_FILTERS, ...JSON.parse(localRaw) }
+        }
+        if (mounted && localState) setEventFilters(localState)
+
+        if (user?.uid) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid))
+          const remote = userDoc.data()?.preferences?.forecastEventFilters as Partial<ForecastEventFilterState> | undefined
+          if (remote && mounted) {
+            const remoteState = { ...DEFAULT_EVENT_FILTERS, ...remote }
+            const pickRemote = Number(remoteState.updatedAt || 0) >= Number(localState?.updatedAt || 0)
+            if (pickRemote) {
+              setEventFilters(remoteState)
+              await AsyncStorage.setItem(filtersStorageKey, JSON.stringify(remoteState))
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Falha ao carregar filtros de previsoes', error)
+      } finally {
+        if (mounted) setFiltersHydrated(true)
+      }
+    }
+    loadFilters()
+    return () => {
+      mounted = false
+    }
+  }, [filtersStorageKey, user?.uid])
+
+  const persistEventFilters = useCallback(
+    async (next: ForecastEventFilterState) => {
+      try {
+        await AsyncStorage.setItem(filtersStorageKey, JSON.stringify(next))
+      } catch (error) {
+        console.warn('Falha ao persistir filtros localmente', error)
+      }
+      if (!user?.uid) return
+      try {
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            preferences: {
+              forecastEventFilters: next,
+            },
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        )
+      } catch (error) {
+        console.warn('Falha ao persistir filtros remotamente', error)
+      }
+    },
+    [filtersStorageKey, user?.uid]
+  )
+
+  const updateEventFilters = useCallback(
+    (updater: (prev: ForecastEventFilterState) => ForecastEventFilterState) => {
+      setEventFilters((prev) => {
+        const next = {
+          ...updater(prev),
+          updatedAt: Date.now(),
+          version: 1,
+        }
+        if (filtersHydrated) persistEventFilters(next)
+        return next
+      })
+    },
+    [filtersHydrated, persistEventFilters]
+  )
 
   const series = data?.series || []
   const seriesSorted = useMemo(
@@ -1235,6 +1431,207 @@ export default function ForecastScreen() {
     })
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
 
+  const availableFilterOptions = useMemo(() => {
+    const transitKinds = new Set<ForecastTransitKind>()
+    const aspects = new Set<string>()
+    const dignities = new Set<ForecastDignity>()
+    const houseStrengths = new Set<ForecastHouseStrength>()
+    const conditions = new Set<ForecastCondition>()
+    const impacts = new Set<'UP' | 'DOWN' | 'MIXED'>()
+    const domains = new Set<string>()
+
+    selectedEventsRaw.forEach((event) => {
+      transitKinds.add(inferTransitKind(event))
+      aspects.add(toAspectKey(event.aspect))
+      dignities.add(inferDignity(event))
+      houseStrengths.add(inferHouseStrength(event))
+      inferConditions(event, eventPhaseMap[event.id] || null).forEach((condition) => conditions.add(condition))
+      impacts.add(event.impact)
+      normalizeEventDomains(event.domains || []).forEach((domain) => domains.add(domain))
+    })
+
+    return {
+      transitKinds: Array.from(transitKinds),
+      aspects: Array.from(aspects),
+      dignities: Array.from(dignities),
+      houseStrengths: Array.from(houseStrengths),
+      conditions: Array.from(conditions),
+      impacts: Array.from(impacts),
+      domains: Array.from(domains),
+    }
+  }, [eventPhaseMap, selectedEventsRaw])
+
+  const filteredEventDisplayData = useMemo(() => {
+    const withMeta = eventDisplayData.map((item) => {
+      const aspectKey = toAspectKey(item.event.aspect)
+      const transitKind = inferTransitKind(item.event)
+      const dignity = inferDignity(item.event)
+      const houseStrength = inferHouseStrength(item.event)
+      const conditions = inferConditions(item.event, item.phase)
+      const domains = normalizeEventDomains(item.event.domains || [])
+      return {
+        ...item,
+        meta: {
+          aspectKey,
+          transitKind,
+          dignity,
+          houseStrength,
+          conditions,
+          domains,
+        },
+      }
+    })
+
+    const filtered = withMeta.filter((item) => {
+      const { meta, event } = item
+      if (eventFilters.transitKinds.length && !eventFilters.transitKinds.includes(meta.transitKind)) return false
+      if (eventFilters.aspects.length && !eventFilters.aspects.includes(meta.aspectKey)) return false
+      if (eventFilters.dignities.length && !eventFilters.dignities.includes(meta.dignity)) return false
+      if (eventFilters.houseStrengths.length && !eventFilters.houseStrengths.includes(meta.houseStrength)) return false
+      if (eventFilters.conditions.length && !eventFilters.conditions.some((condition) => meta.conditions.includes(condition))) return false
+      if (eventFilters.impacts.length && !eventFilters.impacts.includes(event.impact)) return false
+      if (eventFilters.domains.length && !eventFilters.domains.some((domain) => meta.domains.includes(domain))) return false
+      return true
+    })
+
+    const selectedDateRef = selectedDateKey
+    const sorted = filtered.slice().sort((a, b) => {
+      const aEvent = a.event
+      const bEvent = b.event
+      switch (eventFilters.sortBy) {
+        case 'intensity_desc':
+          return Number(bEvent.intensity || 0) - Number(aEvent.intensity || 0)
+        case 'orb_asc':
+          return Number(aEvent.orbMax ?? 999) - Number(bEvent.orbMax ?? 999)
+        case 'recent_desc':
+          return String(bEvent.exactAt || '').localeCompare(String(aEvent.exactAt || ''))
+        case 'peak_near': {
+          const aExact = parseUTCDateString((aEvent.exactAt || '').slice(0, 10))
+          const bExact = parseUTCDateString((bEvent.exactAt || '').slice(0, 10))
+          const sel = selectedDateRef ? parseUTCDateString(selectedDateRef) : null
+          const aDelta = aExact && sel ? Math.abs(diffDaysUTC(sel, aExact)) : 999
+          const bDelta = bExact && sel ? Math.abs(diffDaysUTC(sel, bExact)) : 999
+          return aDelta - bDelta
+        }
+        case 'impact_desc':
+        default:
+          return eventPriorityScore(bEvent, selectedDateRef) - eventPriorityScore(aEvent, selectedDateRef)
+      }
+    })
+
+    return sorted
+  }, [eventDisplayData, eventFilters, selectedDateKey])
+
+  const activeFilterCount = useMemo(() => getFiltersActiveCount(eventFilters), [eventFilters])
+
+  const toggleInArray = <T extends string>(list: T[], value: T) =>
+    list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
+
+  const clearAllFilters = useCallback(() => {
+    updateEventFilters((prev) => ({
+      ...prev,
+      transitKinds: [],
+      aspects: [],
+      dignities: [],
+      houseStrengths: [],
+      conditions: [],
+      impacts: [],
+      domains: [],
+    }))
+  }, [updateEventFilters])
+
+  const filterCategoryButtons: Array<{ key: ForecastFilterCategory; label: string }> = useMemo(
+    () => [
+      { key: 'transits', label: tr('forecast.filters.transits', 'Transitos') },
+      { key: 'aspects', label: tr('forecast.filters.aspects', 'Aspectos') },
+      { key: 'dignities', label: tr('forecast.filters.dignities', 'Dignidades') },
+      { key: 'houseStrength', label: tr('forecast.filters.houseStrength', 'Forca de casa') },
+      { key: 'conditions', label: tr('forecast.filters.conditions', 'Condicoes') },
+      { key: 'sort', label: tr('forecast.filters.sort', 'Ordenacao') },
+    ],
+    [tr]
+  )
+
+  const filterModalOptions = useMemo(() => {
+    switch (filterCategoryOpen) {
+      case 'transits':
+        return availableFilterOptions.transitKinds.map((item) => ({
+          key: item,
+          label: item === 'planet_house' ? tr('forecast.filters.transit.planetHouse', 'Planeta x Casa') : tr('forecast.filters.transit.planetPlanet', 'Planeta x Planeta'),
+          selected: eventFilters.transitKinds.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, transitKinds: toggleInArray(prev.transitKinds, item) })),
+        }))
+      case 'aspects':
+        return availableFilterOptions.aspects.map((item) => ({
+          key: item,
+          label: item,
+          selected: eventFilters.aspects.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, aspects: toggleInArray(prev.aspects, item) })),
+        }))
+      case 'dignities':
+        return availableFilterOptions.dignities.map((item) => ({
+          key: item,
+          label:
+            item === 'domicile_exalted'
+              ? tr('forecast.filters.dignity.strong', 'Domicilio/Exaltacao')
+              : item === 'debilitated'
+              ? tr('forecast.filters.dignity.weak', 'Detrimento/Queda')
+              : item === 'neutral'
+              ? tr('forecast.filters.dignity.neutral', 'Neutra')
+              : tr('forecast.filters.dignity.unknown', 'Nao informado'),
+          selected: eventFilters.dignities.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, dignities: toggleInArray(prev.dignities, item) })),
+        }))
+      case 'houseStrength':
+        return availableFilterOptions.houseStrengths.map((item) => ({
+          key: item,
+          label:
+            item === 'angular'
+              ? tr('forecast.filters.house.angular', 'Angular')
+              : item === 'succedent'
+              ? tr('forecast.filters.house.succedent', 'Sucedente')
+              : item === 'cadent'
+              ? tr('forecast.filters.house.cadent', 'Cadente')
+              : tr('forecast.filters.house.unknown', 'Nao informado'),
+          selected: eventFilters.houseStrengths.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, houseStrengths: toggleInArray(prev.houseStrengths, item) })),
+        }))
+      case 'conditions':
+        return availableFilterOptions.conditions.map((item) => ({
+          key: item,
+          label:
+            item === 'retrograde'
+              ? tr('forecast.filters.condition.retrograde', 'Retrogrado')
+              : item === 'stationary'
+              ? tr('forecast.filters.condition.stationary', 'Estacionario')
+              : item === 'applying'
+              ? tr('forecast.filters.condition.applying', 'Aplicando')
+              : item === 'separating'
+              ? tr('forecast.filters.condition.separating', 'Separando')
+              : tr('forecast.filters.condition.exact', 'Exato'),
+          selected: eventFilters.conditions.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, conditions: toggleInArray(prev.conditions, item) })),
+        }))
+      case 'sort': {
+        const options: Array<{ key: ForecastSortBy; label: string }> = [
+          { key: 'impact_desc', label: tr('forecast.sort.impact', 'Maior impacto') },
+          { key: 'peak_near', label: tr('forecast.sort.peak', 'Mais perto do pico') },
+          { key: 'recent_desc', label: tr('forecast.sort.recent', 'Mais recente') },
+          { key: 'intensity_desc', label: tr('forecast.sort.intensity', 'Maior intensidade') },
+          { key: 'orb_asc', label: tr('forecast.sort.orb', 'Menor orb') },
+        ]
+        return options.map((item) => ({
+          key: item.key,
+          label: item.label,
+          selected: eventFilters.sortBy === item.key,
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, sortBy: item.key })),
+        }))
+      }
+      default:
+        return []
+    }
+  }, [availableFilterOptions, eventFilters, filterCategoryOpen, tr, updateEventFilters])
+
   useEffect(() => {
     if (!debouncedFetchDate) return
     if (!isDateInRange(debouncedFetchDate)) return
@@ -1448,14 +1845,21 @@ export default function ForecastScreen() {
             />
 
             <MemoDayEvents
-              selectedEvents={selectedEvents}
-              eventDisplayData={eventDisplayData}
+              selectedEventsCount={selectedEvents.length}
+              eventDisplayData={filteredEventDisplayData}
               onOpenEventDetail={openEventDetail}
               dayEventsLabel={tr('forecast.dayEvents', 'Eventos do dia')}
               noEventsLabel={tr(
                 'forecast.noEventsForDay',
                 'Sem eventos. Dia mais calmo para organizar suas prioridades.'
               )}
+              filterButtons={filterCategoryButtons.map((button) => ({
+                key: button.key,
+                label: button.label,
+                onPress: () => setFilterCategoryOpen(button.key),
+              }))}
+              activeFilterCount={activeFilterCount}
+              onClearFilters={clearAllFilters}
             />
           </View>
 
@@ -1468,6 +1872,52 @@ export default function ForecastScreen() {
           )}
         </ScrollView>
       )}
+      <Modal
+        visible={filterCategoryOpen !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFilterCategoryOpen(null)}
+      >
+        <TouchableOpacity
+          style={styles.filterModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setFilterCategoryOpen(null)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.filterModalCard}
+            onPress={() => {}}
+          >
+            <View style={styles.filterModalHeader}>
+              <Text style={styles.filterModalTitle}>
+                {filterCategoryOpen
+                  ? filterCategoryButtons.find((button) => button.key === filterCategoryOpen)?.label || tr('forecast.filters.title', 'Filtros')
+                  : tr('forecast.filters.title', 'Filtros')}
+              </Text>
+              <TouchableOpacity onPress={() => setFilterCategoryOpen(null)}>
+                <Ionicons name="close" size={20} color="#FFD700" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.filterModalBody}>
+              {filterModalOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[styles.filterOption, option.selected && styles.filterOptionSelected]}
+                  onPress={option.onToggle}
+                >
+                  <Text style={[styles.filterOptionText, option.selected && styles.filterOptionTextSelected]}>
+                    {option.label}
+                  </Text>
+                  {option.selected ? <Ionicons name="checkmark-circle" size={16} color="#FFD700" /> : null}
+                </TouchableOpacity>
+              ))}
+              {!filterModalOptions.length ? (
+                <Text style={styles.emptyText}>{tr('forecast.filters.noOptions', 'Sem opcoes para este dia.')}</Text>
+              ) : null}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
       {(() => {
         const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
         if (!detail) return null
@@ -1969,6 +2419,90 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  filterActiveText: {
+    color: '#B0B0B0',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingRight: 8,
+  },
+  filterChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: '#2A2A2E',
+    borderWidth: 1,
+    borderColor: '#3A3A42',
+  },
+  filterChipText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterChipClear: {
+    borderColor: '#FFD700',
+  },
+  filterModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  filterModalCard: {
+    backgroundColor: '#1C1C1E',
+    borderWidth: 1,
+    borderColor: '#2A2A2E',
+    borderRadius: 14,
+    maxHeight: '78%',
+    overflow: 'hidden',
+  },
+  filterModalHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2E',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  filterModalTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  filterModalBody: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  filterOption: {
+    minHeight: 42,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#2A2A2E',
+    backgroundColor: '#141418',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  filterOptionSelected: {
+    borderColor: '#FFD700',
+    backgroundColor: '#2A2A2E',
+  },
+  filterOptionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  filterOptionTextSelected: {
+    color: '#FFD700',
   },
   periodEventsSection: {
     marginTop: 16,
