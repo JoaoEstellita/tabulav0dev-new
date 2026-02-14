@@ -29,6 +29,7 @@ export default function LifeAreaCard({
   area,
   onPress,
   calculationFactors,
+  transitCount,
   compact = false,
 }: LifeAreaCardProps) {
   const { language, t } = useAppLanguage()

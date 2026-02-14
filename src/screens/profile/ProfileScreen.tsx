@@ -275,6 +275,59 @@ export default function ProfileScreen() {
     }
   }, [user, language, settings?.timezone])
 
+  const getDateOrderForDisplay = (): 'DMY' | 'MDY' => {
+    const countryRaw = String(profile?.birthLocation?.country || '').trim().toLowerCase()
+    const isUSCountry =
+      countryRaw === 'us' ||
+      countryRaw === 'usa' ||
+      countryRaw.includes('united states') ||
+      countryRaw.includes('estados unidos')
+    if (isUSCountry) return 'MDY'
+    if (language === 'en-US' && !countryRaw) return 'MDY'
+    return 'DMY'
+  }
+
+  const getDayTokenForDisplay = () => (language === 'it-IT' ? 'GG' : 'DD')
+  const getYearTokenForDisplay = () => (language === 'en-US' ? 'YYYY' : 'AAAA')
+  const getBirthDateMaskForDisplay = () => {
+    const order = getDateOrderForDisplay()
+    const dayToken = getDayTokenForDisplay()
+    const yearToken = getYearTokenForDisplay()
+    return order === 'MDY' ? `MM/${dayToken}/${yearToken}` : `${dayToken}/MM/${yearToken}`
+  }
+
+  const normalizeBirthDateToIso = (value?: string) => {
+    const raw = String(value || '').trim()
+    if (!raw) return ''
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+    if (isoMatch) return raw
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length !== 8) return null
+    const order = getDateOrderForDisplay()
+    const first = parseInt(digits.slice(0, 2), 10)
+    const second = parseInt(digits.slice(2, 4), 10)
+    const day = order === 'MDY' ? second : first
+    const month = order === 'MDY' ? first : second
+    const year = parseInt(digits.slice(4, 8), 10)
+    if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null
+    if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) return null
+    const check = new Date(Date.UTC(year, month - 1, day))
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() + 1 !== month || check.getUTCDate() !== day) return null
+    return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
+      .toString()
+      .padStart(2, '0')}`
+  }
+
+  const formatBirthDateForDisplay = (value?: string) => {
+    if (!value) return tr('profile.info.notInformed', 'Não informado')
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).trim())
+    if (!isoMatch) return String(value)
+    const [, year, month, day] = isoMatch
+    return getDateOrderForDisplay() === 'MDY'
+      ? `${month}/${day}/${year}`
+      : `${day}/${month}/${year}`
+  }
+
   const normalizePhaseLabel = (raw?: string | null) => {
     if (!raw) return ""
     return raw.toLowerCase()
@@ -446,6 +499,14 @@ export default function ProfileScreen() {
     if (!profile) return
 
     try {
+      const normalizedBirthDate = normalizeBirthDateToIso(profile.birthDate)
+      if (profile.birthDate && !normalizedBirthDate) {
+        Alert.alert(
+          tr('profile.alert.errorTitle', 'Erro'),
+          `${tr('profile.input.birthDate', 'Data de nascimento')} ${getBirthDateMaskForDisplay()}`
+        )
+        return
+      }
       let updatedPhoto = profile.profilePhoto || null
       if (user && updatedPhoto && updatedPhoto.startsWith('data:')) {
         setSavingPhoto(true)
@@ -455,7 +516,7 @@ export default function ProfileScreen() {
 
       const payload = {
         displayName: profile.displayName,
-        birthDate: profile.birthDate,
+        birthDate: normalizedBirthDate || '',
         birthTime: profile.birthTime,
         birthLocation: profile.birthLocation,
         zodiacSign: profile.zodiacSign,
@@ -779,7 +840,7 @@ export default function ProfileScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder={tr('profile.input.birthDate', 'Data de nascimento (DD/MM/AAAA)')}
+                placeholder={`${tr('profile.input.birthDate', 'Data de nascimento')} (${getBirthDateMaskForDisplay()})`}
                 placeholderTextColor="#888"
                 value={profile.birthDate}
                 onChangeText={(text) => setProfile({ ...profile, birthDate: text })}
@@ -807,7 +868,7 @@ export default function ProfileScreen() {
             <View style={styles.infoContainer}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>{tr('profile.info.birthDate', 'Data de Nascimento:')}</Text>
-                <Text style={styles.infoValue}>{profile.birthDate || tr('profile.info.notInformed', 'Não informado')}</Text>
+                <Text style={styles.infoValue}>{formatBirthDateForDisplay(profile.birthDate)}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>{tr('profile.info.birthTime', 'Horário:')}</Text>

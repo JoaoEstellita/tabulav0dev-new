@@ -114,6 +114,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return 'DMY'
   }
 
+  const getDayToken = () => (language === 'it-IT' ? 'GG' : 'DD')
+  const getYearToken = () => (language === 'en-US' ? 'YYYY' : 'AAAA')
+  const getDatePlaceholder = () => {
+    const order = getDateOrder()
+    const dayToken = getDayToken()
+    const yearToken = getYearToken()
+    if (order === 'MDY') return `MM/${dayToken}/${yearToken}`
+    return `${dayToken}/MM/${yearToken}`
+  }
+
   const formatDateInput = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8)
     if (digits.length <= 2) return digits
@@ -1062,7 +1072,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         <TextInput
           ref={birthDateInputRef}
           style={styles.dateInput}
-          placeholder={getDateOrder() === 'MDY' ? 'MM/DD/YYYY' : 'DD/MM/YYYY'}
+          placeholder={getDatePlaceholder()}
           placeholderTextColor="#8E8E93"
           value={birthDateDisplay}
           onChangeText={handleBirthDateInput}

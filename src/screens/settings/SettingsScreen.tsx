@@ -667,8 +667,12 @@ export default function SettingsScreen() {
     if (!user?.uid) return;
     try {
       setSavingProfile(true);
-      if (birthDate && !isValidBirthDate(birthDate)) {
-        Alert.alert(tr('settings.alert.invalidBirthDate.title', 'Data inválida'), tr('settings.alert.invalidBirthDate.body', 'Use o formato AAAA-MM-DD.'));
+      const normalizedBirthDate = normalizeBirthDateToIso(birthDate);
+      if (birthDate && !normalizedBirthDate) {
+        Alert.alert(
+          tr('settings.alert.invalidBirthDate.title', 'Data inválida'),
+          getInvalidBirthDateMessage()
+        );
         return;
       }
       if (birthTime && !isValidBirthTime(birthTime)) {
@@ -692,8 +696,8 @@ export default function SettingsScreen() {
       if (whatsappPhone) {
         payload.whatsappPhone = whatsappPhone;
       }
-      if (birthDate) {
-        payload.birthDate = birthDate;
+      if (normalizedBirthDate) {
+        payload.birthDate = normalizedBirthDate;
       }
       if (birthTime) {
         payload.birthTime = birthTime;
@@ -701,7 +705,7 @@ export default function SettingsScreen() {
       if (birthLocation) {
         payload.birthLocation = birthLocation;
       }
-      if (birthDate && birthTime && birthLocation?.latitude && birthLocation?.longitude) {
+      if (normalizedBirthDate && birthTime && birthLocation?.latitude && birthLocation?.longitude) {
         payload.birthDataComplete = true;
         payload.lastBirthDataEdit = serverTimestamp();
       }
@@ -749,6 +753,75 @@ export default function SettingsScreen() {
     if (location.state) return `${location.city}, ${location.state}`;
     if (location.country) return `${location.city}, ${location.country}`;
     return location.city;
+  };
+
+  const getDateOrderForDisplay = (): 'DMY' | 'MDY' => {
+    const countryRaw = String(birthLocation?.country || '').trim().toLowerCase();
+    const isUSCountry =
+      countryRaw === 'us' ||
+      countryRaw === 'usa' ||
+      countryRaw.includes('united states') ||
+      countryRaw.includes('estados unidos');
+    if (isUSCountry) return 'MDY';
+    if (language === 'en-US' && !countryRaw) return 'MDY';
+    return 'DMY';
+  };
+
+  const getDayTokenForDisplay = () => (language === 'it-IT' ? 'GG' : 'DD');
+  const getYearTokenForDisplay = () => (language === 'en-US' ? 'YYYY' : 'AAAA');
+
+  const getBirthDateMaskForDisplay = () => {
+    const order = getDateOrderForDisplay();
+    const dayToken = getDayTokenForDisplay();
+    const yearToken = getYearTokenForDisplay();
+    return order === 'MDY' ? `MM/${dayToken}/${yearToken}` : `${dayToken}/MM/${yearToken}`;
+  };
+
+  const getInvalidBirthDateMessage = () => {
+    const mask = getBirthDateMaskForDisplay();
+    if (language === 'en-US') return `Use format ${mask}.`;
+    if (language === 'es-ES') return `Usa el formato ${mask}.`;
+    if (language === 'it-IT') return `Usa il formato ${mask}.`;
+    return `Use o formato ${mask}.`;
+  };
+
+  const getBirthDateFormatHint = () => {
+    const mask = getBirthDateMaskForDisplay();
+    if (language === 'en-US') return `Use date format ${mask} and time HH:MM.`;
+    if (language === 'es-ES') return `Usa fecha ${mask} y hora HH:MM.`;
+    if (language === 'it-IT') return `Usa data ${mask} e ora HH:MM.`;
+    return `Use data no formato ${mask} e horário HH:MM.`;
+  };
+
+  const normalizeBirthDateToIso = (value: string) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (isValidBirthDate(raw)) return raw;
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length !== 8) return null;
+    const order = getDateOrderForDisplay();
+    const first = parseInt(digits.slice(0, 2), 10);
+    const second = parseInt(digits.slice(2, 4), 10);
+    const day = order === 'MDY' ? second : first;
+    const month = order === 'MDY' ? first : second;
+    const year = parseInt(digits.slice(4, 8), 10);
+    if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
+    if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const check = new Date(Date.UTC(year, month - 1, day));
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() + 1 !== month || check.getUTCDate() !== day) return null;
+    return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
+      .toString()
+      .padStart(2, '0')}`;
+  };
+
+  const formatBirthDateForDisplay = (value: string) => {
+    if (!value) return t('settings.profile.notInformed');
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    if (!isoMatch) return value;
+    const [, year, month, day] = isoMatch;
+    return getDateOrderForDisplay() === 'MDY'
+      ? `${month}/${day}/${year}`
+      : `${day}/${month}/${year}`;
   };
 
   const handleEditProfile = async () => {
@@ -1217,7 +1290,7 @@ export default function SettingsScreen() {
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder={t('settings.profile.birthDatePlaceholder')}
+                    placeholder={getBirthDateMaskForDisplay()}
                     placeholderTextColor="#888"
                     value={birthDate}
                     onChangeText={setBirthDate}
@@ -1245,7 +1318,7 @@ export default function SettingsScreen() {
                     onChangeText={handleLocationQueryChange}
                     onFocus={() => setShowLocationSuggestions(true)}
                   />
-                  <Text style={styles.helperText}>{t('settings.profile.formatHint')}</Text>
+                  <Text style={styles.helperText}>{getBirthDateFormatHint()}</Text>
                   {showLocationSuggestions && locationSuggestions.length > 0 && (
                     <View style={styles.suggestionsContainer}>
                       {locationSuggestions.map((item, idx) => (
@@ -1265,7 +1338,7 @@ export default function SettingsScreen() {
                   <Text style={styles.userName}>{profileName || t('settings.profile.defaultUser')}</Text>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>{t('settings.profile.labelDate')}</Text>
-                    <Text style={styles.infoValue}>{birthDate || t('settings.profile.notInformed')}</Text>
+                    <Text style={styles.infoValue}>{formatBirthDateForDisplay(birthDate)}</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>{t('settings.profile.labelTime')}</Text>
