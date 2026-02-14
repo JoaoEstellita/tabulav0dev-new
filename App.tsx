@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { registerAndroidDeviceToken } from './src/services/notifications/registerDeviceToken';
 import { useAuth } from './src/hooks/useAuth';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyService';
 
 function AppContent() {
   const { showModal, setShowModal, loading } = useSubscriptionCheck();
@@ -21,6 +22,10 @@ function AppContent() {
       registerAndroidDeviceToken(user.uid).catch(() => {})
     }
   }, [user?.uid])
+
+  useEffect(() => {
+    ensureStatusPolicyLoaded().catch(() => {})
+  }, [])
 
   if (loading) return null; // Pode exibir um splash ou loader
 

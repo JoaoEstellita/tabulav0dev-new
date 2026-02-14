@@ -1,4 +1,21 @@
 # 🔒 INSTRUÇÕES DE SEGURANÇA FIREBASE
+## Estado Atual (2026-02)
+
+Colecoes/subcolecoes que precisam estar cobertas nas regras em producao:
+- `users/{uid}`
+- `users/{uid}/webPushSubscriptions/{subId}`
+- `users/{uid}/fcmTokens/{tokenId}`
+- `userStatus/{uid}`
+- `groups/{groupId}`
+- `groupMemberSettings/{docId}`
+- `groupAlerts/{alertId}`
+- `groupActivities/{activityId}`
+- `couples/{relationshipId}`
+- `notifications/{notificationId}`
+
+Observacao:
+- `userStatus/{uid}` hoje e lido no cliente e tambem recebe escrita de fluxos cliente especificos.
+- Se a estrategia mudar para "somente backend escreve userStatus", atualizar app e regras juntos no mesmo deploy.
 
 ## ⚠️ URGENTE: Aplicar Regras de Segurança
 
