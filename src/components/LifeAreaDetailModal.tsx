@@ -1256,11 +1256,78 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const renderScoreComponentsSection = () => {
+    const statusMeta = (areaData as any)?.statusMeta || (areaData as any)?.status_meta || null
+    const rawDrivers = Array.isArray(statusMeta?.drivers)
+      ? statusMeta.drivers
+      : Array.isArray((areaData as any)?.drivers)
+      ? (areaData as any).drivers
+      : []
     const aspectsCount = planetBreakdown.reduce((sum, planet) => sum + safeArray(planet.natalAspects).length, 0)
     const conditionsCount = planetBreakdown.reduce((sum, planet) => sum + safeArray(planet.accidentalConditions).length, 0)
     const dignityCount = planetBreakdown.filter((planet) => safeNumber(planet.dignityScore) > 0).length
     const houseCount = planetBreakdown.filter((planet) => safeNumber(planet.houseScore) > 0).length
     const transitsCount = transitItems.length
+    const topDriversV2 = [...rawDrivers]
+      .sort((a: any, b: any) => {
+        const scoreA = Math.max(
+          Math.abs(safeNumber(a?.impact, 0)),
+          Math.abs(safeNumber(a?.contribution, 0)),
+          Math.abs(safeNumber(a?.score, 0)),
+          Math.abs(safeNumber(a?.attentionWeight, 0)),
+          Math.abs(safeNumber(a?.movementWeight, 0))
+        )
+        const scoreB = Math.max(
+          Math.abs(safeNumber(b?.impact, 0)),
+          Math.abs(safeNumber(b?.contribution, 0)),
+          Math.abs(safeNumber(b?.score, 0)),
+          Math.abs(safeNumber(b?.attentionWeight, 0)),
+          Math.abs(safeNumber(b?.movementWeight, 0))
+        )
+        return scoreB - scoreA
+      })
+      .slice(0, 5)
+      .map((driver: any) => {
+        const movement = safeNumber(
+          driver?.movementWeight ??
+            driver?.movement ??
+            driver?.movementScore ??
+            driver?.deltaMovement ??
+            driver?.movementDelta,
+          NaN
+        )
+        const attention = safeNumber(
+          driver?.attentionWeight ??
+            driver?.attention ??
+            driver?.attentionScore ??
+            driver?.deltaAttention ??
+            driver?.attentionDelta,
+          NaN
+        )
+        const combined = safeNumber(driver?.impact ?? driver?.contribution ?? driver?.score, NaN)
+        const axisMeta: string[] = []
+        if (Number.isFinite(movement)) axisMeta.push(`M ${movement >= 0 ? '+' : ''}${safeFixed(movement, 2)}`)
+        if (Number.isFinite(attention)) axisMeta.push(`A ${attention >= 0 ? '+' : ''}${safeFixed(attention, 2)}`)
+        if (!axisMeta.length && Number.isFinite(combined)) axisMeta.push(`W ${combined >= 0 ? '+' : ''}${safeFixed(combined, 2)}`)
+        const confidence = String(driver?.confidence || driver?.confidenceLevel || driver?.confianca || '').trim()
+        const driverType = String(driver?.type || driver?.kind || driver?.tipo || '').trim()
+        const metaParts = [axisMeta.join(' • '), confidence, driverType].filter(Boolean)
+        const tone = Number.isFinite(attention) && attention > 0
+          ? 'challenging'
+          : Number.isFinite(movement) && movement >= 0
+          ? 'harmonic'
+          : Number.isFinite(combined) && combined >= 0
+          ? 'harmonic'
+          : Number.isFinite(combined) && combined < 0
+          ? 'challenging'
+          : 'neutral'
+        return {
+          title: String(driver?.label || driver?.title || driver?.factorName || driver?.factorLabel || driver?.factorId || driver?.id || 'Driver'),
+          meta: metaParts.join(' • '),
+          value: axisMeta[0] || '',
+          tone: tone as 'harmonic' | 'challenging' | 'neutral',
+          icon: 'flash-outline',
+        }
+      })
     const topDignityPlanets = planetBreakdown
       .filter((planet) => safeNumber(planet.dignityScore) > 0)
       .sort((a, b) => safeNumber(b.dignityScore) - safeNumber(a.dignityScore))
@@ -1355,6 +1422,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       }))
 
     const chips: Array<{ key: string; label: string; value: string; tone?: 'positive' | 'neutral' | 'warning'; info: string }> = [
+      ...(rawDrivers.length
+        ? [
+            {
+              key: 'driversV2',
+              label: tl('Drivers V2', 'Drivers V2', 'Drivers V2', 'Driver V2'),
+              value: String(rawDrivers.length),
+              tone: 'positive' as const,
+              info: tl(
+                `${rawDrivers.length} fatores V2 ativos explicam a variação de movimento e atenção desta área.`,
+                `${rawDrivers.length} active V2 factors explain this area movement and attention variation.`,
+                `${rawDrivers.length} factores V2 activos explican la variación de movimiento y atención de esta área.`,
+                `${rawDrivers.length} fattori V2 attivi spiegano la variazione di movimento e attenzione di quest area.`
+              ),
+            },
+          ]
+        : []),
       {
         key: 'transits',
         label: tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti'),
@@ -1458,6 +1541,21 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         }>
       }
     > = {
+      ...(rawDrivers.length
+        ? {
+            driversV2: {
+              title: tl('Top Drivers V2', 'Top Drivers V2', 'Top Drivers V2', 'Top Driver V2'),
+              summary: tl(
+                'Fatores estruturais do motor V2 com maior peso no status desta área.',
+                'Structural V2 engine factors with highest weight for this area status.',
+                'Factores estructurales del motor V2 con mayor peso en el estado de esta área.',
+                'Fattori strutturali del motore V2 con il peso maggiore nello stato di quest area.'
+              ),
+              metric: `${rawDrivers.length} ${tl('fatores', 'factors', 'factores', 'fattori')}`,
+              rows: topDriversV2,
+            },
+          }
+        : {}),
       transits: {
         title: tl('Trânsitos ativos no score', 'Active transits in score', 'Tránsitos activos en la puntuación', 'Transiti attivi nel punteggio'),
         summary: tl('Gatilhos dinâmicos que mais estão pesando agora para esta área.', 'Dynamic triggers weighing most for this area now.', 'Disparadores dinámicos que más pesan ahora en esta área.', 'Trigger dinamici che stanno pesando di più ora per quest area.'),

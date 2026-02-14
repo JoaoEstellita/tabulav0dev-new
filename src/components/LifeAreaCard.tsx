@@ -11,6 +11,7 @@ import {
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { normalizeKey } from '../utils/astro/normalizeKey'
 import {
+  getAxisShortLabel,
   getAxisLongLabel,
   normalizeAxisScore,
   STATUS_AXIS_COLORS,
@@ -76,6 +77,12 @@ export default function LifeAreaCard({
   const attentionValue = attentionFromArea ?? attentionFromStatus
   const movementColor = STATUS_AXIS_COLORS.movement
   const attentionColor = STATUS_AXIS_COLORS.attention
+  const rawDrivers = Array.isArray((area as any)?.statusMeta?.drivers)
+    ? (area as any).statusMeta.drivers
+    : []
+  const topFactorCount = rawDrivers.length
+  const movementHot = typeof movementValue === 'number' && movementValue >= 70
+  const attentionHot = typeof attentionValue === 'number' && attentionValue >= 70
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -91,6 +98,23 @@ export default function LifeAreaCard({
             <Text style={[styles.areaName, compact && styles.areaNameCompact]} numberOfLines={1}>
               {translateAreaName(area.name)}
             </Text>
+          </View>
+          <View style={styles.signalBadges}>
+            {attentionHot ? (
+              <View style={[styles.signalBadge, styles.signalBadgeAttention]}>
+                <Text style={styles.signalBadgeText}>{getAxisShortLabel('attention')}</Text>
+              </View>
+            ) : null}
+            {movementHot ? (
+              <View style={[styles.signalBadge, styles.signalBadgeMovement]}>
+                <Text style={styles.signalBadgeText}>{getAxisShortLabel('movement')}</Text>
+              </View>
+            ) : null}
+            {topFactorCount > 0 ? (
+              <View style={[styles.signalBadge, styles.signalBadgeFactors]}>
+                <Text style={styles.signalBadgeText}>F{Math.min(9, topFactorCount)}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -270,5 +294,36 @@ const styles = StyleSheet.create({
   movementFill: {
     height: '100%',
     borderRadius: 999,
+  },
+  signalBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  signalBadge: {
+    minWidth: 20,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(2,6,23,0.28)',
+  },
+  signalBadgeAttention: {
+    backgroundColor: 'rgba(249,115,22,0.28)',
+  },
+  signalBadgeMovement: {
+    backgroundColor: 'rgba(34,211,238,0.22)',
+  },
+  signalBadgeFactors: {
+    backgroundColor: 'rgba(250,204,21,0.22)',
+  },
+  signalBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 })
