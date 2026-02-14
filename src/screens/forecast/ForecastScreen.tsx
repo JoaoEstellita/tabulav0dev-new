@@ -798,15 +798,11 @@ export default function ForecastScreen() {
     const critical: Record<string, number> = {}
     const strong: Record<string, number> = {}
     Object.entries(dayStatusByDate).forEach(([dateKey, day]) => {
-      if (day?.badges) {
-        critical[dateKey] = Number(day.badges.criticalCount || 0)
-        strong[dateKey] = Number(day.badges.strongCount || 0)
-        return
-      }
       const areas = day?.lifeAreas || {}
+      const hasAreas = Object.keys(areas).length > 0
       let criticalCount = 0
       let strongCount = 0
-      Object.values(areas).forEach((area) => {
+      Object.values(areas).forEach((area: any) => {
         const rawStatus = String(area?.status || '').trim().toLowerCase()
         const status = rawStatus === 'critical'
           ? 'critico'
@@ -832,6 +828,12 @@ export default function ForecastScreen() {
         if (score < STATUS_THRESHOLDS.criticalBelow) criticalCount += 1
         if (score >= STATUS_THRESHOLDS.positiveAbove) strongCount += 1
       })
+      // Preferir sempre os contadores de áreas para manter calendário e cards coerentes.
+      // Só usar badges do backend como fallback quando não houver lifeAreas no payload.
+      if (!hasAreas && day?.badges) {
+        criticalCount = Number(day.badges.criticalCount || 0)
+        strongCount = Number(day.badges.strongCount || 0)
+      }
       critical[dateKey] = criticalCount
       strong[dateKey] = strongCount
     })
