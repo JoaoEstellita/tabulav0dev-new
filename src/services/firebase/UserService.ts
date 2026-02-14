@@ -1,6 +1,6 @@
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '../../config/firebase'
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || ''
+import { backendFetch, getBackendBaseUrl } from '../backend/client'
 import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { cleanUndefined } from '../../utils/clean'
@@ -131,9 +131,10 @@ class UserService {
           } else {
             const isWeb = typeof window !== 'undefined'
             // No Web: prioriza backend para evitar CORS
-            if (isWeb && BACKEND_URL) {
-              const resp = await fetch(`${BACKEND_URL}/api/upload/profile-photo`, {
+            if (isWeb && getBackendBaseUrl()) {
+              const resp = await backendFetch('/api/upload/profile-photo', {
                 method: 'POST',
+                auth: true,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, dataUrl: birthData.profilePhoto }),
               })

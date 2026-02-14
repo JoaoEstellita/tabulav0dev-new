@@ -12,6 +12,7 @@ import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { useNotificationStore } from "../../context/NotificationStore"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit } from "firebase/firestore"
 import { db } from "../../config/firebase"
+import { backendFetch } from "../../services/backend/client"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
@@ -234,10 +235,9 @@ export default function ProfileScreen() {
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
-      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
-      if (!base) return null
-      const response = await fetch(`${base}/api/upload/profile-photo`, {
+      const response = await backendFetch('/api/upload/profile-photo', {
         method: 'POST',
+        auth: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, dataUrl }),
       })
@@ -253,8 +253,9 @@ export default function ProfileScreen() {
   const forceBackendStatusRefresh = async (uid: string, reason: string) => {
     if (!BACKEND_URL) return
     try {
-      await fetch(`${BACKEND_URL}/api/status-refresh`, {
+      await backendFetch('/api/status-refresh', {
         method: 'POST',
+        auth: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: uid, force: true, reason }),
       })

@@ -35,6 +35,7 @@ import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
 import { collection, doc, getDoc, getDocs, limit, query, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { backendFetch } from '../../services/backend/client';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
 
 const { width } = Dimensions.get('window');
@@ -513,8 +514,9 @@ export default function SettingsScreen() {
   const forceBackendStatusRefresh = async (uid: string, reason: string) => {
     if (!BACKEND_URL) return;
     try {
-      await fetch(`${BACKEND_URL}/api/status-refresh`, {
+      await backendFetch('/api/status-refresh', {
         method: 'POST',
+        auth: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: uid, force: true, reason }),
       });
@@ -549,10 +551,9 @@ export default function SettingsScreen() {
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
-      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
-      if (!base) return null;
-      const response = await fetch(base + "/api/upload/profile-photo", {
+      const response = await backendFetch('/api/upload/profile-photo', {
         method: "POST",
+        auth: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, dataUrl }),
       });
