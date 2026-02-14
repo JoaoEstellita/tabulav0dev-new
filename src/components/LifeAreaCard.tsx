@@ -59,6 +59,13 @@ export default function LifeAreaCard({
   const statusValue = Number.isFinite(area.status) ? area.status : null
   const statusColor = typeof statusValue === 'number' ? getStatusColor(statusValue) : '#B0B0B0'
   const statusText = typeof statusValue === 'number' ? getStatusText(statusValue) : '—'
+  const rawMovement = Number((area as any)?.movementScore)
+  const movementFromArea = Number.isFinite(rawMovement) ? Math.round(rawMovement) : null
+  const movementFromTransitCount = typeof transitCount === 'number'
+    ? Math.min(100, Math.max(0, Math.round(transitCount * 16)))
+    : null
+  const movementValue = movementFromArea ?? movementFromTransitCount
+  const movementColor = '#22D3EE'
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -98,12 +105,25 @@ export default function LifeAreaCard({
           />
         </View>
 
-        {!compact && (
-          <View style={styles.ctaRow}>
-            <Text style={styles.ctaText}>{tl('Ver justificativas', 'View reasons', 'Ver justificaciones', 'Vedi motivazioni')}</Text>
-            <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-          </View>
-        )}
+        <View style={[styles.movementRow, compact && styles.movementRowCompact]}>
+          <Text style={styles.movementLabel}>
+            {tl('Intensidade', 'Intensity', 'Intensidad', 'Intensita')}
+          </Text>
+          <Text style={styles.movementValue}>
+            {typeof movementValue === 'number' ? `${movementValue}%` : '—'}
+          </Text>
+        </View>
+        <View style={styles.movementTrack}>
+          <View
+            style={[
+              styles.movementFill,
+              {
+                width: `${typeof movementValue === 'number' ? Math.min(100, Math.max(0, movementValue)) : 0}%`,
+                backgroundColor: movementColor,
+              },
+            ]}
+          />
+        </View>
       </LinearGradient>
     </TouchableOpacity>
   )
@@ -184,20 +204,41 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   progressFill: {
     height: '100%',
     borderRadius: 999,
   },
-  ctaRow: {
+  movementRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  ctaText: {
-    fontSize: 12,
+  movementRowCompact: {
+    marginBottom: 3,
+  },
+  movementLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.82)',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  movementValue: {
+    fontSize: 10,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  movementTrack: {
+    height: 3.5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    overflow: 'hidden',
+  },
+  movementFill: {
+    height: '100%',
+    borderRadius: 999,
   },
 })

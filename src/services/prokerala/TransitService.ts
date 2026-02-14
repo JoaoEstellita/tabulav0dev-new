@@ -37,6 +37,7 @@ interface TransitAspect {
 export interface LifeArea {
   name: string
   status: number  // 0-100
+  movementScore?: number | null
   trend: 'positive' | 'negative' | 'stable'
   description: string
   criticalLevel: boolean

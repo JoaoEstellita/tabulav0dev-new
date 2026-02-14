@@ -22,6 +22,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import useTransits from '../../hooks/useTransits'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
+import { LIFE_AREA_ORDER } from '../../constants/lifeAreas'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import { doc, getDoc } from 'firebase/firestore'
@@ -83,17 +84,6 @@ const extractPhaseKey = (event: any) => {
 }
 
 const getUserTimezone = (tz?: string | null) => tz || 'America/Sao_Paulo'
-
-const LIFE_AREA_ORDER = [
-  'amor',
-  'carreira',
-  'financas',
-  'saude',
-  'familia',
-  'espiritualidade',
-  'comunicacao',
-  'transformacao',
-]
 
 const PLANET_ORDER: PlanetKey[] = [
   'Sun',
@@ -470,11 +460,31 @@ export default function HomeScreen() {
       const percentage = typeof area?.percentage === 'number'
         ? area.percentage
         : (typeof area?.status === 'number' ? area.status : null)
+      const activeTransits = Array.isArray(area?.activeTransits) ? area.activeTransits : []
+      const avgImpact = activeTransits.length
+        ? activeTransits.reduce((sum: number, item: any) => {
+            const raw = Number(item?.impact)
+            return sum + (Number.isFinite(raw) ? Math.abs(raw) : 0)
+          }, 0) / activeTransits.length
+        : null
+      const movementScore = (() => {
+        if (typeof area?.movementScore === 'number' && Number.isFinite(area.movementScore)) {
+          return Math.max(0, Math.min(100, Math.round(area.movementScore)))
+        }
+        const densityScore = Math.min(100, activeTransits.length * 14)
+        const impactScore = avgImpact !== null ? Math.min(100, Math.round(avgImpact * 100)) : null
+        if (impactScore === null && densityScore === 0) return null
+        const merged = impactScore === null
+          ? densityScore
+          : Math.round((densityScore * 0.55) + (impactScore * 0.45))
+        return Math.max(0, Math.min(100, merged))
+      })()
       return {
         name,
         ...area,
         status: typeof percentage === 'number' ? percentage : 0,
         percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
+        movementScore,
         criticalLevel: typeof percentage === 'number' ? percentage < STATUS_THRESHOLDS.criticalBelow : !!area?.criticalLevel,
       }
     }, [])

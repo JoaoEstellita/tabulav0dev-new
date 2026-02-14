@@ -35,17 +35,12 @@ import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
+import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 
-const LIFE_AREA_OPTIONS = [
-  { key: "amor", label: "Amor" },
-  { key: "carreira", label: "Carreira" },
-  { key: "financas", label: "Financas" },
-  { key: "saude", label: "Saude" },
-  { key: "familia", label: "Família" },
-  { key: "espiritualidade", label: "Espiritualidade" },
-  { key: "comunicacao", label: "Comunicação" },
-  { key: "transformacao", label: "Transformação" },
-]
+const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
+  key,
+  label: SHARED_LIFE_AREA_LABELS[key] || key,
+}))
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
 
