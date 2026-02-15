@@ -17,7 +17,8 @@
     "deploy:pwa": "npm run build:pwa && vercel --prod",
     "test": "npm exec vitest run --pool=forks --poolOptions.forks.singleFork",
     "guard:forecast": "node scripts/check-forecast-guard.js",
-    "guard:i18n": "node scripts/check-i18n-hardcoded.js"
+    "guard:i18n": "node scripts/check-i18n-hardcoded.js",
+    "smoke:rc": "npm exec vitest run src/services/status/__tests__/status-policy.smoke.spec.ts src/services/backend/__tests__/client.smoke.spec.ts --pool=forks --poolOptions.forks.singleFork"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
