@@ -22,12 +22,9 @@ export class GroupNotificationService {
     try {
       console.log('Enviando notificacao de grupo:', data.notificationType)
 
-      const base = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
-      const response = await fetch(`${base}/api/group/notify`, {
+      const response = await backendFetch('/api/group/notify', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        auth: true,
         body: JSON.stringify({
           groupId: data.groupId,
           title: data.notificationType === 'custom_message' ? 'Mensagem do grupo' : 'Tabula Estelar',
@@ -137,14 +134,11 @@ export class GroupNotificationService {
     percentage: number
     description: string
   }): Promise<void> {
-    // Usar um ID de sistema para alertas automaticos
-    const systemSenderId = 'system_astrology_alert'
-    
     const message = `Alerta automatico: ${criticalData.area} em ${criticalData.percentage}%. ${criticalData.description}`
 
     await this.sendGroupNotification({
       groupId,
-      senderId: systemSenderId,
+      senderId: '',
       notificationType: 'critical_alert',
       customMessage: message,
       eventData: criticalData
@@ -159,14 +153,11 @@ export class GroupNotificationService {
     percentage: number
     description: string
   }): Promise<void> {
-    // Usar um ID de sistema para alertas automaticos
-    const systemSenderId = 'system_astrology_alert'
-    
     const message = `Energia favoravel: ${favorableData.area} em ${favorableData.percentage}%. ${favorableData.description}`
 
     await this.sendGroupNotification({
       groupId,
-      senderId: systemSenderId,
+      senderId: '',
       notificationType: 'favorable_event',
       customMessage: message,
       eventData: favorableData
@@ -175,3 +166,4 @@ export class GroupNotificationService {
 }
 
 export default GroupNotificationService
+import { backendFetch } from "../backend/client"
