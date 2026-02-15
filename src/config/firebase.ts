@@ -3,6 +3,7 @@ import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
 import { getMessaging } from 'firebase/messaging'
 import { getStorage } from 'firebase/storage'
+import { ReCaptchaV3Provider, getToken as getAppCheckSdkToken, initializeAppCheck } from 'firebase/app-check'
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM',
@@ -34,7 +35,6 @@ const initAppCheckWeb = async () => {
   }
 
   try {
-    const { ReCaptchaV3Provider, initializeAppCheck } = await import('firebase/app-check')
     appCheckInstance = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true,
@@ -52,9 +52,8 @@ export const getAppCheckToken = async (): Promise<string | null> => {
   const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
   if (!siteKey || !appCheckInitialized) return null
   try {
-    const { getToken } = await import('firebase/app-check')
     if (!appCheckInstance) return null
-    const tokenResult = await getToken(appCheckInstance, false)
+    const tokenResult = await getAppCheckSdkToken(appCheckInstance, false)
     return tokenResult?.token || null
   } catch {
     return null
