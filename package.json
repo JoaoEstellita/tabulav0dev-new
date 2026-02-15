@@ -73,7 +73,7 @@
     "@types/react": "~19.0.10",
     "firebase-tools": "^13.35.1",
     "typescript": "~5.8.3",
-    "vitest": "^1.6.1"
+    "vitest": "^4.0.18"
   },
   "private": true
 }
