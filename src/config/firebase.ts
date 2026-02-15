@@ -36,7 +36,15 @@ const initAppCheckWeb = async () => {
   if (typeof window === 'undefined') return
   const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
   const keyInfo = describeAppCheckKey(siteKey)
-  console.log('App Check key diagnostic:', keyInfo)
+  const appCheckInfo = {
+    projectId: firebaseConfig.projectId,
+    appId: firebaseConfig.appId,
+    siteKeyKind: keyInfo.kind,
+    siteKeyPreview: keyInfo.preview,
+    origin: window.location.origin,
+  }
+  ;(globalThis as any).__APPCHECK_INFO__ = appCheckInfo
+  console.log('App Check key diagnostic:', appCheckInfo)
   if (!siteKey) return
   if (keyInfo.kind !== 'recaptcha_site_key') {
     console.warn(
