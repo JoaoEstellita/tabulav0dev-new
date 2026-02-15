@@ -99,6 +99,19 @@ const PLANET_ORDER: PlanetKey[] = [
   'Pluto',
 ]
 
+const detectWebBundleTag = (): string | null => {
+  try {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return null
+    const scripts = Array.from(document.querySelectorAll('script[src]')) as HTMLScriptElement[]
+    for (const script of scripts) {
+      const src = script.getAttribute('src') || ''
+      const match = /index-([a-f0-9]{7,})\.js/i.exec(src)
+      if (match?.[1]) return match[1].slice(0, 8)
+    }
+  } catch {}
+  return null
+}
+
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
   Sun: 'â˜‰',
@@ -178,10 +191,11 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedArea, setSelectedArea] = useState<any>(null)
     const [modalVisible, setModalVisible] = useState(false)
-    const scrollRef = useRef<ScrollView>(null)
-    const { width } = useWindowDimensions()
-    const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
-    const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
+  const scrollRef = useRef<ScrollView>(null)
+  const { width } = useWindowDimensions()
+  const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
+  const buildTag = React.useMemo(() => detectWebBundleTag(), [])
+  const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
     const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
     const planetQuickNav = React.useMemo(() => {
@@ -615,6 +629,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </Animated.View>
           </View>
+          {buildTag ? (
+            <View style={styles.buildTagWrap}>
+              <Text style={styles.buildTagText}>build {buildTag}</Text>
+            </View>
+          ) : null}
 
           {/* Status das Areas de Vida */}
           {lifeAreasForDisplay && (
@@ -1159,6 +1178,16 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#000',
     fontWeight: '600',
+  },
+  buildTagWrap: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  buildTagText: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 0.2,
   },
   moonModalBackdrop: {
     flex: 1,
