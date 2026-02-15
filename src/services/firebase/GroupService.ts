@@ -183,6 +183,36 @@ class GroupService {
   // Buscar grupos do usuario
   async getUserGroups(userId: string): Promise<Group[]> {
     try {
+      if (BACKEND_URL) {
+        try {
+          const response = await backendFetch('/api/group/list', {
+            method: "GET",
+            auth: true,
+          })
+          if (response.ok) {
+            const payload = await response.json()
+            if (payload?.ok && Array.isArray(payload.groups)) {
+              return payload.groups.map((group: any) => ({
+                id: group.id,
+                name: group.name || "",
+                description: group.description || "",
+                createdBy: group.createdBy || "",
+                members: Array.isArray(group.members) ? group.members : [],
+                createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
+                isPrivate: !!group.isPrivate,
+                inviteCode: group.inviteCode || undefined,
+                inviteEnabled: group.inviteEnabled !== false,
+                inviteExpiresAt: group.inviteExpiresAt ? new Date(group.inviteExpiresAt) : null,
+                sharedLifeAreas: group.sharedLifeAreas || [],
+                notifiedLifeAreas: group.notifiedLifeAreas || [],
+              })) as Group[]
+            }
+          }
+        } catch (error) {
+          console.warn("List groups via backend falhou, tentando direto:", error)
+        }
+      }
+
       const q = query(
         collection(db, "groups"),
         where("members", "array-contains", userId),
@@ -196,8 +226,23 @@ class GroupService {
         createdAt: doc.data().createdAt?.toDate() || new Date(),
       })) as Group[]
     } catch (error) {
-      console.error("Erro ao buscar grupos:", error)
-      return []
+      console.error("Erro ao buscar grupos (query ordenada):", error)
+      try {
+        const qFallback = query(
+          collection(db, "groups"),
+          where("members", "array-contains", userId),
+        )
+        const fallbackSnapshot = await getDocs(qFallback)
+        const fallback = fallbackSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+        })) as Group[]
+        return fallback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      } catch (fallbackError) {
+        console.error("Erro ao buscar grupos (fallback):", fallbackError)
+        return []
+      }
     }
   }
 
