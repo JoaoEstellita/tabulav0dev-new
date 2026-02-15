@@ -10,8 +10,10 @@ Este documento substitui instrucoes antigas e deve refletir somente colecoes rea
 - `users/{uid}`
 - `users/{uid}/webPushSubscriptions/{subId}`
 - `users/{uid}/fcmTokens/{tokenId}`
+- `fcmTokens/{docId}` (legado de compatibilidade)
 - `userStatus/{uid}`
 - `groups/{groupId}`
+- `groups/{groupId}/memberStatus/{uid}`
 - `groupMemberSettings/{docId}`
 - `groupActivities/{activityId}`
 - `groupAlerts/{alertId}`
@@ -26,15 +28,18 @@ Este documento substitui instrucoes antigas e deve refletir somente colecoes rea
 - `users/{uid}`: read/write somente `request.auth.uid == uid`
 - `userStatus/{uid}`:
   - read: somente o proprio usuario
-  - write: bloquear cliente direto (fluxo oficial via backend/Admin SDK)
+  - write: bloqueado no cliente (fluxo oficial via backend/Admin SDK)
 
 ### Push e tokens
 - `users/{uid}/webPushSubscriptions/{subId}`: read/write somente proprio usuario
 - `users/{uid}/fcmTokens/{tokenId}`: read/write somente proprio usuario
+- `fcmTokens/{docId}`: somente dono (`userId`) para compatibilidade de clientes antigos
 
 ### Grupos
 - `groups`: leitura e update apenas para membros
-- `groupMemberSettings`, `groupActivities`, `groupAlerts`: validar membro do grupo
+- `groups/{groupId}/memberStatus/{uid}`: leitura para membro; escrita so do proprio uid membro
+- `groupMemberSettings`: leitura/escrita apenas do proprio uid membro
+- `groupActivities`, `groupAlerts`: leitura para membro; escrita somente backend/Admin SDK
 
 ### Notificacoes
 - `notifications`: leitura apenas para dono (`userId == request.auth.uid`)

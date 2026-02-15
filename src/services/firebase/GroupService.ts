@@ -288,13 +288,10 @@ class GroupService {
   // Atualizar status astrologico do usuario
   async updateUserStatus(userId: string, status: AstrologicalStatus, birthData?: any): Promise<void> {
     try {
-      const userStatusRef = doc(db, "userStatus", userId)
-
-      await setDoc(userStatusRef, {
-        astrologicalStatus: status,
-        lastStatusUpdate: Timestamp.now(),
-        birthData,
-      }, { merge: true })
+      // Security hardening:
+      // userStatus is backend-owned and no longer writable by client rules.
+      // Keep only group-side notifications in client flow.
+      void birthData
 
       // Se status critico, criar alerta para grupos e enviar notificacoes
       if (status.overall === "critical" || status.overall === "challenging") {
@@ -318,66 +315,11 @@ class GroupService {
     lifeAreasSignature?: string
   ): Promise<void> {
     try {
-      const statusPersonal = transitData.currentTransits?.statusPersonal
-      const overall = this.mapLevelToOverall(statusPersonal?.level)
-
-      const status: AstrologicalStatus = {
-        overall,
-        mood: statusPersonal?.level || "neutro",
-        energy: statusPersonal?.score || 50,
-        challenges: [],
-        opportunities: [],
-        criticalTransits: [],
-      }
-
-      const userStatusRef = doc(db, "userStatus", userId)
-      const now = Date.now()
-
-      const wrote = await runTransaction(db, async (tx) => {
-        const snap = await tx.get(userStatusRef)
-        const existing = snap.exists() ? snap.data() : null
-        const validUntil = existing?.validUntil?.toDate
-          ? existing.validUntil.toDate()
-          : existing?.validUntil instanceof Date
-            ? existing.validUntil
-            : null
-        const backendCalcVersion = typeof existing?.calcVersion === "string" &&
-          existing.calcVersion.startsWith("status-backend-")
-        const hasBackend = existing?.source === "backend" || backendCalcVersion
-        const isFresh = hasBackend && validUntil && validUntil.getTime() > now
-        if (isFresh) return false
-
-        const isStale = !validUntil || validUntil.getTime() <= now
-        const allowWrite = !snap.exists() || isStale || !existing?.calcVersion
-        if (!allowWrite) return false
-
-        if (lifeAreasSignature && existing?.lifeAreasSignature === lifeAreasSignature) {
-          return false
-        }
-
-        tx.set(
-          userStatusRef,
-          {
-            astrologicalStatus: status,
-            statusPersonal,
-            lifeAreas: transitData.lifeAreas,
-            lifeAreasSignature: lifeAreasSignature || null,
-            source: "client",
-            clientComputedAt: Timestamp.now(),
-            clientValidUntil: null,
-            clientCalcVersion: "status-client-fallback",
-            lastStatusUpdate: Timestamp.now(),
-            updatedAt: Timestamp.now(),
-            birthData,
-          },
-          { merge: true }
-        )
-        return true
-      })
-
-      if (wrote) {
-        await this.updateGroupMemberStatus(userId, transitData)
-      }
+      // Security hardening:
+      // client no longer writes userStatus; keep only memberStatus sync for groups.
+      void birthData
+      void lifeAreasSignature
+      await this.updateGroupMemberStatus(userId, transitData)
     } catch (error) {
       console.error("Erro ao atualizar status por areas:", error)
     }
