@@ -23,6 +23,7 @@ console.log('Firebase init config:', {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 let appCheckInitialized = false
 let appCheckInstance: any = null
+let appCheckDisabledForSession = false
 
 const describeAppCheckKey = (value: string) => {
   if (!value) return { kind: 'missing', preview: 'missing' }
@@ -37,6 +38,12 @@ const initAppCheckWeb = async () => {
   const keyInfo = describeAppCheckKey(siteKey)
   console.log('App Check key diagnostic:', keyInfo)
   if (!siteKey) return
+  if (keyInfo.kind !== 'recaptcha_site_key') {
+    console.warn(
+      'App Check disabled: EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY is not a valid reCAPTCHA site key format.'
+    )
+    return
+  }
 
   const debugToken = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || '').trim()
   if (debugToken) {
@@ -59,12 +66,17 @@ void initAppCheckWeb()
 export const getAppCheckToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null
   const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
-  if (!siteKey || !appCheckInitialized) return null
+  if (!siteKey || !appCheckInitialized || appCheckDisabledForSession) return null
   try {
     if (!appCheckInstance) return null
     const tokenResult = await getAppCheckSdkToken(appCheckInstance, false)
     return tokenResult?.token || null
-  } catch {
+  } catch (error: any) {
+    const msg = String(error?.message || error || '').toLowerCase()
+    if (msg.includes('403') || msg.includes('forbidden') || msg.includes('throttle')) {
+      appCheckDisabledForSession = true
+      console.warn('App Check disabled for this session after token failure:', error)
+    }
     return null
   }
 }
