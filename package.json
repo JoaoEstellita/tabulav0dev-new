@@ -71,7 +71,7 @@
     "@firebase/rules-unit-testing": "^5.0.0",
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "firebase-tools": "^13.35.1",
+    "firebase-tools": "^15.6.0",
     "typescript": "~5.8.3",
     "vitest": "^1.6.1"
   },
