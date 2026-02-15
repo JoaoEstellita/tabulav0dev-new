@@ -6,8 +6,14 @@ const rawBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || ''
 export const getBackendBaseUrl = () => rawBackendUrl.replace(/\/$/, '')
 
 export const getAuthHeader = async () => {
-  const waitForUser = async (timeoutMs = 2500): Promise<User | null> => {
+  const waitForUser = async (timeoutMs = 8000): Promise<User | null> => {
     if (auth.currentUser) return auth.currentUser
+    if (typeof (auth as any).authStateReady === 'function') {
+      try {
+        await (auth as any).authStateReady()
+      } catch {}
+      if (auth.currentUser) return auth.currentUser
+    }
     return new Promise((resolve) => {
       let settled = false
       const timeout = setTimeout(() => {
@@ -51,6 +57,8 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
     const authValue = authHeaders.Authorization
     if (authValue) {
       mergedHeaders.set('Authorization', authValue)
+    } else {
+      throw new Error('auth_required_missing_token')
     }
   }
   if (withAppCheck) {

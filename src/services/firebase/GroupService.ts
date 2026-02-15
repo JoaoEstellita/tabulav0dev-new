@@ -182,34 +182,57 @@ class GroupService {
 
   // Buscar grupos do usuario
   async getUserGroups(userId: string): Promise<Group[]> {
+    const mapGroupsPayload = (payload: any): Group[] => {
+      if (!payload?.ok || !Array.isArray(payload.groups)) return []
+      return payload.groups.map((group: any) => ({
+        id: group.id,
+        name: group.name || "",
+        description: group.description || "",
+        createdBy: group.createdBy || "",
+        members: Array.isArray(group.members) ? group.members : [],
+        createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
+        isPrivate: !!group.isPrivate,
+        inviteCode: group.inviteCode || undefined,
+        inviteEnabled: group.inviteEnabled !== false,
+        inviteExpiresAt: group.inviteExpiresAt ? new Date(group.inviteExpiresAt) : null,
+        sharedLifeAreas: group.sharedLifeAreas || [],
+        notifiedLifeAreas: group.notifiedLifeAreas || [],
+      })) as Group[]
+    }
+
     try {
       if (BACKEND_URL) {
-        try {
+        const fetchFromBackend = async (): Promise<Group[] | null> => {
           const response = await backendFetch('/api/group/list', {
             method: "GET",
             auth: true,
           })
-          if (response.ok) {
-            const payload = await response.json()
-            if (payload?.ok && Array.isArray(payload.groups)) {
-              return payload.groups.map((group: any) => ({
-                id: group.id,
-                name: group.name || "",
-                description: group.description || "",
-                createdBy: group.createdBy || "",
-                members: Array.isArray(group.members) ? group.members : [],
-                createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
-                isPrivate: !!group.isPrivate,
-                inviteCode: group.inviteCode || undefined,
-                inviteEnabled: group.inviteEnabled !== false,
-                inviteExpiresAt: group.inviteExpiresAt ? new Date(group.inviteExpiresAt) : null,
-                sharedLifeAreas: group.sharedLifeAreas || [],
-                notifiedLifeAreas: group.notifiedLifeAreas || [],
-              })) as Group[]
-            }
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}))
+            const errorMessage = payload?.error || `http_${response.status}`
+            throw new Error(`group_list_backend_failed:${errorMessage}`)
           }
+          const payload = await response.json()
+          return mapGroupsPayload(payload)
+        }
+
+        try {
+          const direct = await fetchFromBackend()
+          if (direct) return direct
         } catch (error) {
-          console.warn("List groups via backend falhou, tentando direto:", error)
+          console.warn("List groups via backend falhou (1a tentativa):", error)
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1200))
+
+        try {
+          const retry = await fetchFromBackend()
+          if (retry) return retry
+        } catch (error) {
+          console.warn("List groups via backend falhou (2a tentativa):", error)
+          // Com as regras atuais, leitura direta de groups pode falhar por permissao.
+          // Mantemos fallback apenas quando nao houver backend configurado.
+          return []
         }
       }
 
