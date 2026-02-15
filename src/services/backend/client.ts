@@ -1,11 +1,33 @@
 import { auth, getAppCheckToken } from '../../config/firebase'
+import { onAuthStateChanged, type User } from 'firebase/auth'
 
 const rawBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || ''
 
 export const getBackendBaseUrl = () => rawBackendUrl.replace(/\/$/, '')
 
 export const getAuthHeader = async () => {
-  const current = auth.currentUser
+  const waitForUser = async (timeoutMs = 2500): Promise<User | null> => {
+    if (auth.currentUser) return auth.currentUser
+    return new Promise((resolve) => {
+      let settled = false
+      const timeout = setTimeout(() => {
+        if (settled) return
+        settled = true
+        unsub()
+        resolve(auth.currentUser || null)
+      }, timeoutMs)
+      const unsub = onAuthStateChanged(auth, (user) => {
+        if (settled) return
+        if (!user) return
+        settled = true
+        clearTimeout(timeout)
+        unsub()
+        resolve(user)
+      })
+    })
+  }
+
+  const current = await waitForUser()
   if (!current) return {}
   const token = await current.getIdToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
