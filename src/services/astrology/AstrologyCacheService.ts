@@ -44,6 +44,18 @@ class AstrologyCacheService {
   
   // Cache local (AsyncStorage) para acesso r+ípido
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'
+  private toValidDate(input: any, fallback: Date = new Date()): Date {
+    if (input instanceof Date && !Number.isNaN(input.getTime())) return input
+    if (input?.toDate && typeof input.toDate === 'function') {
+      const converted = input.toDate()
+      if (converted instanceof Date && !Number.isNaN(converted.getTime())) return converted
+    }
+    if (typeof input === 'string' || typeof input === 'number') {
+      const parsed = new Date(input)
+      if (!Number.isNaN(parsed.getTime())) return parsed
+    }
+    return fallback
+  }
   
   private getCurrentHouseSystem(): string {
     return normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
@@ -199,8 +211,8 @@ class AstrologyCacheService {
       if (localCache) {
         const parsedCache = JSON.parse(localCache)
         // Converter timestamps de volta para Date
-        parsedCache.lastUpdate = new Date(parsedCache.lastUpdate)
-        parsedCache.expiresAt = new Date(parsedCache.expiresAt)
+        parsedCache.lastUpdate = this.toValidDate(parsedCache.lastUpdate)
+        parsedCache.expiresAt = this.toValidDate(parsedCache.expiresAt, new Date(parsedCache.lastUpdate.getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000)))
         
         console.log('­ƒô¦ Cache local encontrado')
         return parsedCache
@@ -212,9 +224,11 @@ class AstrologyCacheService {
       
       if (cacheDoc.exists()) {
         const data: any = cacheDoc.data()
+        const lastUpdate = this.toValidDate(data?.lastUpdate)
+        const expiresAt = this.toValidDate(data?.expiresAt, new Date(lastUpdate.getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000)))
         const cache: AstrologyCache = {
-          lastUpdate: data?.lastUpdate?.toDate ? data.lastUpdate.toDate() : new Date(data?.lastUpdate || Date.now()),
-          expiresAt: data?.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data?.expiresAt || Date.now()),
+          lastUpdate,
+          expiresAt,
           dailyRequestCount: Number(data?.dailyRequestCount || 0),
           lastRequestDate: String(data?.lastRequestDate || this.getTodayString()),
           planetPositions: Array.isArray(data?.planetPositions) ? data.planetPositions : [],
@@ -230,8 +244,8 @@ class AstrologyCacheService {
         // Salva no cache local para pr+¦xima vez
         await AsyncStorage.setItem(localCacheKey, JSON.stringify({
           ...cache,
-          lastUpdate: cache.lastUpdate.toISOString(),
-          expiresAt: cache.expiresAt.toISOString()
+          lastUpdate: this.toValidDate(cache.lastUpdate).toISOString(),
+          expiresAt: this.toValidDate(cache.expiresAt, new Date(this.toValidDate(cache.lastUpdate).getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000))).toISOString()
         }))
         
         console.log('Ô£à Cache do Firestore carregado e salvo localmente')
@@ -346,8 +360,8 @@ class AstrologyCacheService {
       const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`
       await AsyncStorage.setItem(localCacheKey, JSON.stringify({
         ...cache,
-        lastUpdate: cache.lastUpdate.toISOString(),
-        expiresAt: cache.expiresAt.toISOString()
+        lastUpdate: this.toValidDate(cache.lastUpdate).toISOString(),
+        expiresAt: this.toValidDate(cache.expiresAt, new Date(this.toValidDate(cache.lastUpdate).getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000))).toISOString()
       }))
       
       console.log(`­ƒÆ¥ Cache salvo - Fonte: ${source}, Requests hoje: ${dailyRequestCount}/${this.MAX_DAILY_REQUESTS}`)
