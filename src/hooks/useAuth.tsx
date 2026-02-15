@@ -15,7 +15,7 @@ import {
   getRedirectResult,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, runTransaction, Timestamp } from "firebase/firestore"
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
 
 interface AuthContextType {
@@ -135,32 +135,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const recordUserActivity = async (authUser: User) => {
     const userRef = doc(db, 'users', authUser.uid)
     try {
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(userRef)
-        const data = snap.exists() ? snap.data() : {}
-        const timeZone =
-          (data?.settings as any)?.timezone ||
-          (data as any)?.timezone ||
-          'America/Sao_Paulo'
-        const { dayKey, endOfDayUtc } = buildDayKeyAndHotUntil(new Date(), timeZone)
-        const previousDayKey = (data as any)?.dayKey || null
-        const previousCount = typeof (data as any)?.loginCountToday === 'number'
-          ? (data as any).loginCountToday
-          : 0
-        const resetCount = previousDayKey !== dayKey
-        const nextCount = (resetCount ? 0 : previousCount) + 1
-        const shouldHot = nextCount >= 2
-        tx.set(
-          userRef,
-          {
-            lastSeenAt: serverTimestamp(),
-            dayKey,
-            loginCountToday: nextCount,
-            hotUntil: shouldHot ? Timestamp.fromDate(endOfDayUtc) : null,
-          },
-          { merge: true }
-        )
-      })
+      const snap = await getDoc(userRef)
+      const data = snap.exists() ? snap.data() : {}
+      const timeZone =
+        (data?.settings as any)?.timezone ||
+        (data as any)?.timezone ||
+        'America/Sao_Paulo'
+      const { dayKey, endOfDayUtc } = buildDayKeyAndHotUntil(new Date(), timeZone)
+      const previousDayKey = (data as any)?.dayKey || null
+      const previousCount = typeof (data as any)?.loginCountToday === 'number'
+        ? (data as any).loginCountToday
+        : 0
+      const resetCount = previousDayKey !== dayKey
+      const nextCount = (resetCount ? 0 : previousCount) + 1
+      const shouldHot = nextCount >= 2
+
+      await setDoc(
+        userRef,
+        {
+          lastSeenAt: serverTimestamp(),
+          dayKey,
+          loginCountToday: nextCount,
+          hotUntil: shouldHot ? Timestamp.fromDate(endOfDayUtc) : null,
+        },
+        { merge: true }
+      )
     } catch (error) {
       console.warn('Falha ao registrar atividade do usuario:', error)
     }

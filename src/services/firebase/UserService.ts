@@ -142,19 +142,17 @@ class UserService {
                 const { url } = await resp.json()
                 updateData.profilePhoto = url
               } else {
-                console.warn('Upload backend falhou', await resp.text())
-                // Tenta Storage como alternativa
-                updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+                console.warn('Upload backend falhou. Prosseguindo sem foto.', await resp.text())
               }
-            } else {
+            } else if (!isWeb) {
               // Em native (ou se BACKEND_URL ausente), tenta Storage direto
               updateData.profilePhoto = await this.uploadProfilePhoto(userId, birthData.profilePhoto)
+            } else {
+              console.warn('BACKEND_URL ausente no web. Prosseguindo sem foto.')
             }
           }
         } catch (err) {
           console.warn('⚠️ Falha ao processar foto. Prosseguindo sem foto.', err)
-          // Fallback: preserva ao menos a referência original para não perder a foto escolhida.
-          updateData.profilePhoto = birthData.profilePhoto
         }
       }
 
@@ -195,7 +193,7 @@ class UserService {
           }
         }
 
-        await setDoc(userRef, newUserData)
+        await setDoc(userRef, newUserData, { merge: true })
       }
 
       await this.upsertPublicProfile(userId, {
