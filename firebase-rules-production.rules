@@ -16,7 +16,7 @@ service cloud.firestore {
 
     function onlyReadFlagsChanged() {
       return request.resource.data.userId == resource.data.userId &&
-        request.resource.data.diff(resource.data).changedKeys().hasOnly(['isRead', 'readAt']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
     }
 
     match /users/{userId} {

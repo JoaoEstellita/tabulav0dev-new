@@ -18,7 +18,9 @@
     "test": "npm exec vitest run --pool=forks --poolOptions.forks.singleFork",
     "guard:forecast": "node scripts/check-forecast-guard.js",
     "guard:i18n": "node scripts/check-i18n-hardcoded.js",
-    "smoke:rc": "npm exec vitest run src/services/status/__tests__/status-policy.smoke.spec.ts src/services/backend/__tests__/client.smoke.spec.ts --pool=forks --poolOptions.forks.singleFork"
+    "smoke:rc": "npm exec vitest run src/services/status/__tests__/status-policy.smoke.spec.ts src/services/backend/__tests__/client.smoke.spec.ts --pool=forks --poolOptions.forks.singleFork",
+    "test:rules": "firebase emulators:exec --only firestore \"npm exec vitest run src/firestore-rules/__tests__/firestore.rules.spec.ts --pool=forks --poolOptions.forks.singleFork\"",
+    "smoke:security": "npm run smoke:rc && npm run test:rules"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -61,8 +63,10 @@
     "react-native-web": "^0.20.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "firebase-tools": "^13.35.1",
     "typescript": "~5.8.3",
     "vitest": "^1.6.1"
   },

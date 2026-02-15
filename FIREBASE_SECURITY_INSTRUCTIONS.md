@@ -55,6 +55,12 @@ Este documento substitui instrucoes antigas e deve refletir somente colecoes rea
    - notifications
 4. Revisar logs de negacao de regra no console
 
+## App Check (Web)
+- Variavel obrigatoria para ativar: `EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY`
+- Variavel opcional de debug local: `EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN`
+- Com site key configurada, o app inicializa App Check no bootstrap do Firebase (`src/config/firebase.ts`).
+- Em desenvolvimento, usar debug token apenas localmente (nao publicar em ambiente produtivo).
+
 ## Anti-drift
 - Nao usar colecoes legadas neste documento (`coupleRelationships`, `astrologyCache`, etc.)
 - Qualquer nova colecao de runtime deve ser adicionada aqui e nas rules no mesmo PR.

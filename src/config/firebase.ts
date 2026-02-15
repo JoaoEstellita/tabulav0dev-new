@@ -22,6 +22,29 @@ console.log('🔥 Inicializando Firebase com config real:', {
 // Initialize Firebase (singleton)
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
+const initAppCheckWeb = async () => {
+  if (typeof window === 'undefined') return
+  const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
+  if (!siteKey) return
+
+  const debugToken = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || '').trim()
+  if (debugToken) {
+    ;(globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken
+  }
+
+  try {
+    const { initializeAppCheck, ReCaptchaV3Provider } = await import('firebase/app-check')
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    })
+    console.log('✅ Firebase App Check inicializado (web)')
+  } catch (error) {
+    console.warn('⚠️ Falha ao inicializar App Check (web):', error)
+  }
+}
+void initAppCheckWeb()
+
 // Initialize Auth + persistência local no Web
 const auth = getAuth(app)
 // Ignorar erro assíncrono de ambientes nativos sem localStorage
