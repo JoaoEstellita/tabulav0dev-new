@@ -24,9 +24,18 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 let appCheckInitialized = false
 let appCheckInstance: any = null
 
+const describeAppCheckKey = (value: string) => {
+  if (!value) return { kind: 'missing', preview: 'missing' }
+  if (value.startsWith('6L')) return { kind: 'recaptcha_site_key', preview: `${value.slice(0, 4)}...${value.slice(-4)}` }
+  if (value.startsWith('AIza')) return { kind: 'firebase_api_key_incorrect', preview: `${value.slice(0, 4)}...${value.slice(-4)}` }
+  return { kind: 'unknown_format', preview: `${value.slice(0, 4)}...${value.slice(-4)}` }
+}
+
 const initAppCheckWeb = async () => {
   if (typeof window === 'undefined') return
   const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
+  const keyInfo = describeAppCheckKey(siteKey)
+  console.log('App Check key diagnostic:', keyInfo)
   if (!siteKey) return
 
   const debugToken = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || '').trim()
