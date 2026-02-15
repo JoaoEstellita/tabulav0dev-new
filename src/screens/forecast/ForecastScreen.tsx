@@ -25,8 +25,7 @@ import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from '../../utils/statusAxes'
-
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
+import { backendFetch } from '../../services/backend/client'
 
 type ForecastSeriesPoint = {
   date: string
@@ -758,7 +757,6 @@ export default function ForecastScreen() {
     setLimitedBanner(false)
     setMissingBirthData(false)
     try {
-      const token = await user.getIdToken()
       const today = new Date()
       const utcToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
       const from = buildDateUTCString(utcToday)
@@ -785,13 +783,12 @@ export default function ForecastScreen() {
         }
       }
 
-      const url = `${BACKEND_URL}/api/forecast?userId=${encodeURIComponent(user.uid)}&from=${from}&to=${to}&granularity=${granularity}`
-      const resp = await fetch(url, {
+      const resp = await backendFetch(`/api/forecast?userId=${encodeURIComponent(user.uid)}&from=${from}&to=${to}&granularity=${granularity}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        auth: true,
       })
       if (!resp.ok) {
         let payload: any = null
@@ -834,14 +831,13 @@ export default function ForecastScreen() {
         } catch (_) {
           // ignore cache errors
         }
-        const rangeUrl = `${BACKEND_URL}/api/forecast-status-range?userId=${encodeURIComponent(user.uid)}&from=${payload.range.from}&to=${payload.range.to}`
         try {
-          const rangeResp = await fetch(rangeUrl, {
+          const rangeResp = await backendFetch(`/api/forecast-status-range?userId=${encodeURIComponent(user.uid)}&from=${payload.range.from}&to=${payload.range.to}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
             },
+            auth: true,
           })
           if (rangeResp.ok) {
             const rangePayload: DayStatusRangeResponse = await rangeResp.json()
@@ -1093,14 +1089,12 @@ export default function ForecastScreen() {
       // ignore cache errors
     }
     try {
-      const token = await user.getIdToken()
-      const url = `${BACKEND_URL}/api/forecast-status-day?userId=${encodeURIComponent(user.uid)}&date=${dateKey}`
-      const resp = await fetch(url, {
+      const resp = await backendFetch(`/api/forecast-status-day?userId=${encodeURIComponent(user.uid)}&date=${dateKey}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        auth: true,
       })
       if (!resp.ok) return
       const payload: DayStatusResponse = await resp.json()

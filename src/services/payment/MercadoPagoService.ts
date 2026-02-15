@@ -6,6 +6,7 @@
  */
 
 import { PLAN_DEFINITIONS } from '../../constants/plans'
+import { backendFetch } from '../backend/client'
 
 export interface SubscriptionPlan {
   id: string
@@ -49,7 +50,6 @@ export interface SubscriptionStatus {
 }
 
 export class MercadoPagoService {
-  private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
   private static readonly FRONTEND_URL = (() => {
     const raw = String(
       process.env.EXPO_PUBLIC_FRONTEND_URL || process.env.EXPO_PUBLIC_SITE_URL || 'https://tabulaestelar.com.br',
@@ -87,11 +87,12 @@ export class MercadoPagoService {
 
   static async createPaymentPreference(paymentData: PaymentData): Promise<PaymentPreference> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/mercado-pago/create-preference`, {
+      const response = await backendFetch('/api/mercado-pago/create-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        auth: true,
         body: JSON.stringify({
           userId: paymentData.userId,
           planId: paymentData.planId,
@@ -106,7 +107,7 @@ export class MercadoPagoService {
             currency_id: 'BRL'
           }],
           external_reference: paymentData.externalReference,
-          notification_url: `${this.BACKEND_URL}/mercado-pago/webhook`,
+          notification_url: `${(process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')}/api/mercado-pago/webhook`,
           back_urls: this.buildBackUrls(),
           auto_return: 'approved',
           payment_method: paymentData.paymentMethod || null
@@ -127,9 +128,10 @@ export class MercadoPagoService {
 
   static async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription`, {
+      const response = await backendFetch('/api/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        auth: true,
         body: JSON.stringify({ action: 'status', userId })
       })
 
@@ -165,11 +167,12 @@ export class MercadoPagoService {
 
   static async startFreeTrial(userId: string, planId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription`, {
+      const response = await backendFetch('/api/subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        auth: true,
         body: JSON.stringify({ action: 'start-trial', userId, planId })
       })
 
@@ -182,11 +185,12 @@ export class MercadoPagoService {
 
   static async cancelSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription`, {
+      const response = await backendFetch('/api/subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        auth: true,
         body: JSON.stringify({ action: 'cancel', userId })
       })
 
@@ -199,11 +203,12 @@ export class MercadoPagoService {
 
   static async reactivateSubscription(userId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.BACKEND_URL}/subscription`, {
+      const response = await backendFetch('/api/subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        auth: true,
         body: JSON.stringify({ action: 'reactivate', userId })
       })
 

@@ -16,10 +16,11 @@ import {
   Timestamp,
   runTransaction,
 } from "firebase/firestore"
-import { auth, db } from "../../config/firebase"
+import { db } from "../../config/firebase"
 import GroupNotificationService from "../notifications/GroupNotificationService"
 import type { LocalTransitData } from "../astrology/LocalAstrologyService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
+import { backendFetch } from "../backend/client"
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
 
@@ -224,13 +225,12 @@ class GroupService {
     try {
       if (BACKEND_URL) {
         try {
-          const token = await auth.currentUser?.getIdToken()
-          const response = await fetch(`${BACKEND_URL}/api/group/join`, {
+          const response = await backendFetch('/api/group/join', {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            auth: true,
             body: JSON.stringify({ inviteCode, userId }),
           })
 
@@ -414,13 +414,12 @@ class GroupService {
     try {
       if (BACKEND_URL) {
         try {
-          const token = await auth.currentUser?.getIdToken()
-          const response = await fetch(`${BACKEND_URL}/api/group/status`, {
+          const response = await backendFetch('/api/group/status', {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            auth: true,
             body: JSON.stringify({ groupId }),
           })
 
@@ -570,9 +569,10 @@ class GroupService {
     try {
       if (BACKEND_URL) {
         try {
-          const response = await fetch(`${BACKEND_URL}/api/group/invite`, {
+          const response = await backendFetch('/api/group/invite', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            auth: false,
             body: JSON.stringify({ inviteCode }),
           })
 
@@ -757,13 +757,12 @@ class GroupService {
     if (!groupId || !requesterId) throw new Error("Dados incompletos")
 
     if (BACKEND_URL) {
-      const token = await auth.currentUser?.getIdToken()
-      const response = await fetch(`${BACKEND_URL}/api/group/invite-settings`, {
+      const response = await backendFetch('/api/group/invite-settings', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        auth: true,
         body: JSON.stringify({
           groupId,
           inviteEnabled: settings.inviteEnabled,
@@ -818,13 +817,12 @@ class GroupService {
 
     if (BACKEND_URL) {
       try {
-        const token = await auth.currentUser?.getIdToken()
-        const response = await fetch(`${BACKEND_URL}/api/group/remove-member`, {
+        const response = await backendFetch('/api/group/remove-member', {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
+          auth: true,
           body: JSON.stringify({ groupId, memberId }),
         })
         if (!response.ok) {
@@ -853,13 +851,12 @@ class GroupService {
 
     if (BACKEND_URL) {
       try {
-        const token = await auth.currentUser?.getIdToken()
-        const response = await fetch(`${BACKEND_URL}/api/group/leave`, {
+        const response = await backendFetch('/api/group/leave', {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
+          auth: true,
           body: JSON.stringify({ groupId }),
         })
         if (!response.ok) {

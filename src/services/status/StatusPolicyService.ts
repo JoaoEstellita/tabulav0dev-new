@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { applyRuntimeStatusThresholds } from '../../constants/statusThresholds'
+import { backendFetch } from '../backend/client'
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
 const POLICY_CACHE_KEY = 'status_policy_cache_v1'
 const POLICY_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 
@@ -42,10 +42,9 @@ const writeCache = async (payload: StatusPolicyPayload) => {
 }
 
 const fetchPolicy = async () => {
-  if (!BACKEND_URL) return null
-  const resp = await fetch(`${BACKEND_URL}/api/status-policy`, {
+  const resp = await backendFetch('/api/status-policy', {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }
   })
   if (!resp.ok) return null
   const payload = (await resp.json()) as StatusPolicyPayload
@@ -82,4 +81,3 @@ export const ensureStatusPolicyLoaded = async () => {
     inFlight = null
   }
 }
-
