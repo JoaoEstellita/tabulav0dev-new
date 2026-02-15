@@ -32,7 +32,7 @@
     "@react-navigation/stack": "^7.4.4",
     "animejs": "^3.2.1",
     "astronomy-engine": "^2.1.19",
-    "axios": "^1.11.0",
+    "axios": "^1.13.5",
     "ephemeris": "^2.2.0",
     "expo": "53.0.22",
     "expo-constants": "^17.1.7",
@@ -61,6 +61,11 @@
     "react-native-svg": "^15.11.2",
     "react-native-view-shot": "^4.0.3",
     "react-native-web": "^0.20.0"
+  },
+  "overrides": {
+    "axios": "^1.13.5",
+    "lodash": "^4.17.23",
+    "undici": "^7.22.0"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",

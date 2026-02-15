@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "15 7 * * 1"
+  workflow_dispatch:
 
 jobs:
   frontend-security-smoke:
@@ -32,3 +35,6 @@ jobs:
 
       - name: Firestore rules tests
         run: npm run test:rules
+
+      - name: NPM audit (prod deps, high+)
+        run: npm audit --omit=dev --audit-level=high
