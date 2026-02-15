@@ -1,3 +1,5 @@
+// Runtime defaults only.
+// Single source of truth must come from GET /api/status-policy loaded at app startup.
 export const STATUS_THRESHOLDS = {
   criticalBelow: 35,
   positiveAbove: 62,
