@@ -1,4 +1,4 @@
-const SW_VERSION = '2026-02-13-1';
+const SW_VERSION = '2026-02-15-2';
 const CACHE_NAME = `tabula-estelar-${SW_VERSION}`;
 const urlsToCache = [
   '/',
