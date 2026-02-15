@@ -14,6 +14,7 @@ describe('backend client smoke', () => {
           getIdToken: vi.fn(async () => 'test-token'),
         },
       },
+      getAppCheckToken: vi.fn(async () => null),
     }))
 
     const fetchMock = vi.fn(async () => ({ ok: true }))
@@ -44,6 +45,7 @@ describe('backend client smoke', () => {
           getIdToken: vi.fn(async () => 'test-token'),
         },
       },
+      getAppCheckToken: vi.fn(async () => null),
     }))
 
     const fetchMock = vi.fn(async () => ({ ok: true }))
@@ -60,6 +62,26 @@ describe('backend client smoke', () => {
     const calls = fetchMock.mock.calls as any[]
     const headers = calls[0][1].headers as Headers
     expect(headers.get('Authorization')).toBeNull()
+
+    vi.unstubAllGlobals()
+  })
+
+  it('injects App Check token when available', async () => {
+    vi.doMock('../../../config/firebase', () => ({
+      auth: { currentUser: null },
+      getAppCheckToken: vi.fn(async () => 'appcheck-token'),
+    }))
+
+    const fetchMock = vi.fn(async () => ({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock as any)
+
+    const { backendFetch } = await import('../client')
+
+    await backendFetch('/api/status-policy', { method: 'GET' })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const headers = (fetchMock.mock.calls as any[])[0][1].headers as Headers
+    expect(headers.get('X-Firebase-AppCheck')).toBe('appcheck-token')
 
     vi.unstubAllGlobals()
   })

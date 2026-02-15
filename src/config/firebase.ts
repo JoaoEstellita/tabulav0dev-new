@@ -1,26 +1,27 @@
-import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
+import { getApp, getApps, initializeApp } from 'firebase/app'
+import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
 import { getMessaging } from 'firebase/messaging'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM",
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "tabula-estelar-84fdc.firebaseapp.com",
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "tabula-estelar-84fdc",
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "tabula-estelar-84fdc.appspot.com",
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "729037358278",
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:729037358278:web:35bd0e39a865439a00c3c7",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'tabula-estelar-84fdc.firebaseapp.com',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'tabula-estelar-84fdc',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'tabula-estelar-84fdc.appspot.com',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '729037358278',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:729037358278:web:35bd0e39a865439a00c3c7',
 }
 
-console.log('🔥 Inicializando Firebase com config real:', {
-  apiKey: firebaseConfig.apiKey ? '✅ Configurado' : '❌ Não configurado',
-  authDomain: firebaseConfig.authDomain ? '✅ Configurado' : '❌ Não configurado',
-  projectId: firebaseConfig.projectId ? '✅ Configurado' : '❌ Não configurado',
+console.log('Firebase init config:', {
+  apiKey: firebaseConfig.apiKey ? 'configured' : 'missing',
+  authDomain: firebaseConfig.authDomain ? 'configured' : 'missing',
+  projectId: firebaseConfig.projectId ? 'configured' : 'missing',
 })
 
-// Initialize Firebase (singleton)
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
+let appCheckInitialized = false
+let appCheckInstance: any = null
 
 const initAppCheckWeb = async () => {
   if (typeof window === 'undefined') return
@@ -33,32 +34,43 @@ const initAppCheckWeb = async () => {
   }
 
   try {
-    const { initializeAppCheck, ReCaptchaV3Provider } = await import('firebase/app-check')
-    initializeAppCheck(app, {
+    const { ReCaptchaV3Provider, initializeAppCheck } = await import('firebase/app-check')
+    appCheckInstance = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true,
     })
-    console.log('✅ Firebase App Check inicializado (web)')
+    appCheckInitialized = true
+    console.log('Firebase App Check initialized (web)')
   } catch (error) {
-    console.warn('⚠️ Falha ao inicializar App Check (web):', error)
+    console.warn('Failed to initialize App Check (web):', error)
   }
 }
 void initAppCheckWeb()
 
-// Initialize Auth + persistência local no Web
+export const getAppCheckToken = async (): Promise<string | null> => {
+  if (typeof window === 'undefined') return null
+  const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
+  if (!siteKey || !appCheckInitialized) return null
+  try {
+    const { getToken } = await import('firebase/app-check')
+    if (!appCheckInstance) return null
+    const tokenResult = await getToken(appCheckInstance, false)
+    return tokenResult?.token || null
+  } catch {
+    return null
+  }
+}
+
 const auth = getAuth(app)
-// Ignorar erro assíncrono de ambientes nativos sem localStorage
 try {
   void setPersistence(auth, browserLocalPersistence)
 } catch {}
 
-// Initialize Firestore com endurecimento para Web
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
   experimentalForceLongPolling: true,
 })
 
-// Initialize Storage
 const storage = getStorage(app)
 
 let messaging: ReturnType<typeof getMessaging> | undefined
@@ -70,6 +82,6 @@ if (typeof window !== 'undefined') {
   }
 }
 
-console.log('✅ Firebase inicializado com sucesso')
+console.log('Firebase initialized')
 
-export { auth, db, storage, messaging }
+export { auth, db, messaging, storage }

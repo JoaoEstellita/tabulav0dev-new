@@ -1,4 +1,4 @@
-import { auth } from '../../config/firebase'
+import { auth, getAppCheckToken } from '../../config/firebase'
 
 const rawBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || ''
 
@@ -13,6 +13,7 @@ export const getAuthHeader = async () => {
 
 type BackendFetchOptions = RequestInit & {
   auth?: boolean
+  appCheck?: boolean
 }
 
 export const backendFetch = async (path: string, options: BackendFetchOptions = {}) => {
@@ -21,13 +22,19 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
     throw new Error('EXPO_PUBLIC_BACKEND_URL not configured')
   }
 
-  const { auth: withAuth = false, headers, ...rest } = options
+  const { auth: withAuth = false, appCheck: withAppCheck = true, headers, ...rest } = options
   const mergedHeaders = new Headers(headers || {})
   if (withAuth) {
     const authHeaders = await getAuthHeader()
     const authValue = authHeaders.Authorization
     if (authValue) {
       mergedHeaders.set('Authorization', authValue)
+    }
+  }
+  if (withAppCheck) {
+    const appCheckToken = await getAppCheckToken()
+    if (appCheckToken) {
+      mergedHeaders.set('X-Firebase-AppCheck', appCheckToken)
     }
   }
 
