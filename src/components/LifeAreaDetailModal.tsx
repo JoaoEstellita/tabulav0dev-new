@@ -21,6 +21,7 @@ import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPr
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
+import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
@@ -187,6 +188,39 @@ const toIdentityToken = (value: unknown): string =>
 
 const safeArray = <T,>(value: T[] | null | undefined): T[] =>
   Array.isArray(value) ? value : []
+
+const normalizePlanetToken = (value: string): string =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+const PLANET_IMAGE_MAP: Record<string, PlanetKey> = {
+  sun: 'Sun',
+  sol: 'Sun',
+  moon: 'Moon',
+  lua: 'Moon',
+  mercury: 'Mercury',
+  mercurio: 'Mercury',
+  venus: 'Venus',
+  mars: 'Mars',
+  marte: 'Mars',
+  jupiter: 'Jupiter',
+  saturn: 'Saturn',
+  saturno: 'Saturn',
+  uranus: 'Uranus',
+  urano: 'Uranus',
+  neptune: 'Neptune',
+  netuno: 'Neptune',
+  pluto: 'Pluto',
+  plutao: 'Pluto',
+}
+
+const resolvePlanetImageKey = (value: string): PlanetKey | null => {
+  const token = normalizePlanetToken(value)
+  return PLANET_IMAGE_MAP[token] || null
+}
 
 const normalizeMetric01 = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null
@@ -612,8 +646,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           facetFilters?: Array<'major' | 'minor' | 'house'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
-          planetFilters?: string[]
-          houseFilters?: string[]
           filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
@@ -631,12 +663,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         }
         if (parsed.sortMode === 'impact' || parsed.sortMode === 'recent') {
           setSelectedSortMode(parsed.sortMode)
-        }
-        if (Array.isArray(parsed.planetFilters)) {
-          setSelectedPlanetFilters(parsed.planetFilters.filter((value) => typeof value === 'string' && value.trim().length > 0))
-        }
-        if (Array.isArray(parsed.houseFilters)) {
-          setSelectedHouseFilters(parsed.houseFilters.filter((value) => typeof value === 'string' && value.trim().length > 0))
         }
         if (typeof parsed.filtersExpanded === 'boolean') {
           setFiltersExpanded(parsed.filtersExpanded)
@@ -659,12 +685,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       facetFilters: selectedFacetFilters,
       toneFilter: selectedToneFilter,
       sortMode: selectedSortMode,
-      planetFilters: selectedPlanetFilters,
-      houseFilters: selectedHouseFilters,
       filtersExpanded,
     })
     AsyncStorage.setItem(MODAL_FILTER_PREFS_KEY, payload).catch(() => null)
-  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, selectedPlanetFilters, selectedHouseFilters, filtersExpanded])
+  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, filtersExpanded])
+
+  React.useEffect(() => {
+    if (!visible) {
+      setSelectedPlanetFilters([])
+      setSelectedHouseFilters([])
+    }
+  }, [visible])
 
   React.useEffect(() => {
     setActiveScoreComponent(null)
@@ -2356,45 +2387,60 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         </TouchableOpacity>
                       </View>
                       {availablePlanets.length ? (
-                        <View style={styles.facetToggleRow}>
-                          {availablePlanets.map((planet) => {
-                            const active = selectedPlanetFilters.includes(planet)
-                            return (
-                              <TouchableOpacity
-                                key={`planet-${planet}`}
-                                onPress={() =>
-                                  setSelectedPlanetFilters((prev) =>
-                                    prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
-                                  )
-                                }
-                                style={[styles.toneToggleChip, active ? styles.toneToggleChipActive : null]}
-                              >
-                                <Text style={[styles.toneToggleText, active ? styles.toneToggleTextActive : null]}>{planet}</Text>
-                              </TouchableOpacity>
-                            )
-                          })}
+                        <View style={styles.filterBlock}>
+                          <Text style={styles.filterTitle}>{tl('Filtro • Planetas', 'Filter • Planets', 'Filtro • Planetas', 'Filtro • Pianeti')}</Text>
+                          <View style={styles.filterRow}>
+                            {availablePlanets.map((planet) => {
+                              const active = selectedPlanetFilters.includes(planet)
+                              const imageKey = resolvePlanetImageKey(planet)
+                              const imageUri = imageKey ? getPlanetImageUri(imageKey) : null
+                              return (
+                                <TouchableOpacity
+                                  key={`planet-${planet}`}
+                                  onPress={() =>
+                                    setSelectedPlanetFilters((prev) =>
+                                      prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
+                                    )
+                                  }
+                                  style={[styles.filterChip, active ? styles.filterChipSelected : null]}
+                                >
+                                  {imageUri ? (
+                                    <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} resizeMode="cover" />
+                                  ) : (
+                                    <Ionicons name="planet" size={14} color={active ? '#9A3412' : '#64748B'} />
+                                  )}
+                                  <Text style={[styles.filterChipText, active ? styles.filterChipTextSelected : null]}>
+                                    {planetLabel(planet)}
+                                  </Text>
+                                </TouchableOpacity>
+                              )
+                            })}
+                          </View>
                         </View>
                       ) : null}
                       {availableHouses.length ? (
-                        <View style={styles.facetToggleRow}>
-                          {availableHouses.map((house) => {
-                            const active = selectedHouseFilters.includes(house)
-                            return (
-                              <TouchableOpacity
-                                key={`house-${house}`}
-                                onPress={() =>
-                                  setSelectedHouseFilters((prev) =>
-                                    prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
-                                  )
-                                }
-                                style={[styles.toneToggleChip, active ? styles.toneToggleChipActive : null]}
-                              >
-                                <Text style={[styles.toneToggleText, active ? styles.toneToggleTextActive : null]}>
-                                  {tl('Casa', 'House', 'Casa', 'Casa')} {house}
-                                </Text>
-                              </TouchableOpacity>
-                            )
-                          })}
+                        <View style={styles.filterBlock}>
+                          <Text style={styles.filterTitle}>{tl('Filtro • Casas', 'Filter • Houses', 'Filtro • Casas', 'Filtro • Case')}</Text>
+                          <View style={styles.filterRow}>
+                            {availableHouses.map((house) => {
+                              const active = selectedHouseFilters.includes(house)
+                              return (
+                                <TouchableOpacity
+                                  key={`house-${house}`}
+                                  onPress={() =>
+                                    setSelectedHouseFilters((prev) =>
+                                      prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
+                                    )
+                                  }
+                                  style={[styles.filterChip, active ? styles.filterChipSelected : null]}
+                                >
+                                  <Text style={[styles.filterChipText, active ? styles.filterChipTextSelected : null]}>
+                                    {tl('Casa', 'House', 'Casa', 'Casa')} {house}
+                                  </Text>
+                                </TouchableOpacity>
+                              )
+                            })}
+                          </View>
                         </View>
                       ) : null}
                       <View style={styles.toneToggleRow}>
