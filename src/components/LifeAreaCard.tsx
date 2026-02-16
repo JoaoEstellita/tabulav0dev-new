@@ -78,6 +78,8 @@ export default function LifeAreaCard({
   const attentionValue = attentionFromArea ?? attentionFromStatus
   const movementColor = STATUS_AXIS_COLORS.movement
   const attentionColor = STATUS_AXIS_COLORS.attention
+  const movementHot = typeof movementValue === 'number' && movementValue >= 70
+  const attentionHot = typeof attentionValue === 'number' && attentionValue >= 70
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <LinearGradient
@@ -93,14 +95,20 @@ export default function LifeAreaCard({
               {translateAreaName(area.name)}
             </Text>
           </View>
-          <View style={styles.signalBadges}>
-            <View style={[styles.signalBadge, styles.signalBadgeAttention]}>
-              <Text style={styles.signalBadgeText}>{getAxisShortLabel('attention')}</Text>
+          {(attentionHot || movementHot) ? (
+            <View style={styles.signalBadges}>
+              {attentionHot ? (
+                <View style={[styles.signalBadge, styles.signalBadgeAttention]}>
+                  <Text style={styles.signalBadgeText}>{getAxisShortLabel('attention')}</Text>
+                </View>
+              ) : null}
+              {movementHot ? (
+                <View style={[styles.signalBadge, styles.signalBadgeMovement]}>
+                  <Text style={styles.signalBadgeText}>{getAxisShortLabel('movement')}</Text>
+                </View>
+              ) : null}
             </View>
-            <View style={[styles.signalBadge, styles.signalBadgeMovement]}>
-              <Text style={styles.signalBadgeText}>{getAxisShortLabel('movement')}</Text>
-            </View>
-          </View>
+          ) : null}
         </View>
 
         <View style={[styles.statusRow, compact && styles.statusRowCompact]}>

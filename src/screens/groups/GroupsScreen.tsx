@@ -1395,6 +1395,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           const fillColor = mapBucketToColor(entry.bucket)
                           const movement = normalizeAxisScore(entry.movementScore)
                           const attention = normalizeAxisScore(entry.attentionScore)
+                          const movementHot = typeof movement === "number" && movement >= 70
+                          const attentionHot = typeof attention === "number" && attention >= 70
                           const cardColors = LIFE_AREA_COLORS[entry.key] || ["#4B5563", "#6B7280"]
                           return (
                             <TouchableOpacity
@@ -1412,14 +1414,20 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                   <Text style={styles.memberStatusMiniLabel} numberOfLines={1}>
                                     {entry.label}
                                   </Text>
-                                  <View style={styles.memberSignalBadges}>
-                                    <View style={[styles.memberSignalBadge, styles.memberSignalBadgeMovement]}>
-                                      <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('movement')}</Text>
+                                  {(movementHot || attentionHot) ? (
+                                    <View style={styles.memberSignalBadges}>
+                                      {movementHot ? (
+                                        <View style={[styles.memberSignalBadge, styles.memberSignalBadgeMovement]}>
+                                          <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('movement')}</Text>
+                                        </View>
+                                      ) : null}
+                                      {attentionHot ? (
+                                        <View style={[styles.memberSignalBadge, styles.memberSignalBadgeAttention]}>
+                                          <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('attention')}</Text>
+                                        </View>
+                                      ) : null}
                                     </View>
-                                    <View style={[styles.memberSignalBadge, styles.memberSignalBadgeAttention]}>
-                                      <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('attention')}</Text>
-                                    </View>
-                                  </View>
+                                  ) : null}
                                 </View>
                                 <Text style={styles.memberStatusMiniValue}>
                                   {percentage !== null ? `${percentage}%` : "--"}
