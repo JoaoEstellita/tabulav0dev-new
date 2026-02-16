@@ -576,9 +576,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
-  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major', 'minor', 'house'])
+  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
+  const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
+  const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
   const { width: viewportWidth } = useWindowDimensions()
   const isCompactViewport = viewportWidth <= 430
@@ -610,6 +612,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           facetFilters?: Array<'major' | 'minor' | 'house'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
+          planetFilters?: string[]
+          houseFilters?: string[]
           filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
@@ -620,17 +624,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           : []
         if (nextFacetFilters.length) {
           const normalized = Array.from(new Set(nextFacetFilters))
-          const migrated: Array<'major' | 'minor' | 'house'> =
-            normalized.includes('house') || normalized.length !== 2
-              ? normalized
-              : [...normalized, 'house']
-          setSelectedFacetFilters(migrated)
+          setSelectedFacetFilters(normalized)
         }
         if (parsed.toneFilter === 'all' || parsed.toneFilter === 'challenging' || parsed.toneFilter === 'harmonic') {
           setSelectedToneFilter(parsed.toneFilter)
         }
         if (parsed.sortMode === 'impact' || parsed.sortMode === 'recent') {
           setSelectedSortMode(parsed.sortMode)
+        }
+        if (Array.isArray(parsed.planetFilters)) {
+          setSelectedPlanetFilters(parsed.planetFilters.filter((value) => typeof value === 'string' && value.trim().length > 0))
+        }
+        if (Array.isArray(parsed.houseFilters)) {
+          setSelectedHouseFilters(parsed.houseFilters.filter((value) => typeof value === 'string' && value.trim().length > 0))
         }
         if (typeof parsed.filtersExpanded === 'boolean') {
           setFiltersExpanded(parsed.filtersExpanded)
@@ -653,10 +659,12 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       facetFilters: selectedFacetFilters,
       toneFilter: selectedToneFilter,
       sortMode: selectedSortMode,
+      planetFilters: selectedPlanetFilters,
+      houseFilters: selectedHouseFilters,
       filtersExpanded,
     })
     AsyncStorage.setItem(MODAL_FILTER_PREFS_KEY, payload).catch(() => null)
-  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, filtersExpanded])
+  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, selectedPlanetFilters, selectedHouseFilters, filtersExpanded])
 
   React.useEffect(() => {
     setActiveScoreComponent(null)
@@ -2190,11 +2198,40 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           ].join('|')
       )
     const dedupedTransits = dedupeByKey(orderedTransits, transitStableKey)
+    const planetOrder = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    const availablePlanets = Array.from(
+      new Set(
+        dedupedTransits
+          .map((transit) => String(transit?.transitPlanet || '').trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => {
+      const idxA = planetOrder.indexOf(a)
+      const idxB = planetOrder.indexOf(b)
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b)
+      if (idxA === -1) return 1
+      if (idxB === -1) return -1
+      return idxA - idxB
+    })
+    const availableHouses = Array.from(
+      new Set(
+        dedupedTransits
+          .map((transit) => getTransitHouseLabel(transit))
+          .filter((value): value is string => Boolean(value))
+      )
+    ).sort((a, b) => Number(a) - Number(b))
     const toneMatchesFilter = (transit: any): boolean => {
       if (selectedToneFilter === 'all') return true
       const tone = getTransitToneCategory(transit)
       if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
       return tone === 'challenging'
+    }
+    const planetHouseMatchesFilter = (transit: any): boolean => {
+      const transitPlanet = String(transit?.transitPlanet || '').trim()
+      const transitHouse = getTransitHouseLabel(transit)
+      const planetMatch = selectedPlanetFilters.length === 0 || selectedPlanetFilters.includes(transitPlanet)
+      const houseMatch = selectedHouseFilters.length === 0 || (transitHouse ? selectedHouseFilters.includes(transitHouse) : false)
+      return planetMatch && houseMatch
     }
     const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }> = [
       ...(selectedFacetFilters.includes('major')
@@ -2216,6 +2253,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : []),
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
+      .filter(({ transit }) => planetHouseMatchesFilter(transit))
     const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>) => {
       const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' | 'house' }>()
       const facetPriority: Record<'major' | 'minor' | 'house', number> = { major: 1, minor: 2, house: 3 }
@@ -2242,7 +2280,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const activeFiltersCount =
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
-      (selectedFacetFilters.length === 3 ? 0 : 1)
+      (selectedFacetFilters.length === 1 && selectedFacetFilters[0] === 'major' ? 0 : 1) +
+      (selectedPlanetFilters.length ? 1 : 0) +
+      (selectedHouseFilters.length ? 1 : 0)
 
     return (
       <View style={styles.section}>
@@ -2315,6 +2355,48 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           </Text>
                         </TouchableOpacity>
                       </View>
+                      {availablePlanets.length ? (
+                        <View style={styles.facetToggleRow}>
+                          {availablePlanets.map((planet) => {
+                            const active = selectedPlanetFilters.includes(planet)
+                            return (
+                              <TouchableOpacity
+                                key={`planet-${planet}`}
+                                onPress={() =>
+                                  setSelectedPlanetFilters((prev) =>
+                                    prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
+                                  )
+                                }
+                                style={[styles.toneToggleChip, active ? styles.toneToggleChipActive : null]}
+                              >
+                                <Text style={[styles.toneToggleText, active ? styles.toneToggleTextActive : null]}>{planet}</Text>
+                              </TouchableOpacity>
+                            )
+                          })}
+                        </View>
+                      ) : null}
+                      {availableHouses.length ? (
+                        <View style={styles.facetToggleRow}>
+                          {availableHouses.map((house) => {
+                            const active = selectedHouseFilters.includes(house)
+                            return (
+                              <TouchableOpacity
+                                key={`house-${house}`}
+                                onPress={() =>
+                                  setSelectedHouseFilters((prev) =>
+                                    prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
+                                  )
+                                }
+                                style={[styles.toneToggleChip, active ? styles.toneToggleChipActive : null]}
+                              >
+                                <Text style={[styles.toneToggleText, active ? styles.toneToggleTextActive : null]}>
+                                  {tl('Casa', 'House', 'Casa', 'Casa')} {house}
+                                </Text>
+                              </TouchableOpacity>
+                            )
+                          })}
+                        </View>
+                      ) : null}
                       <View style={styles.toneToggleRow}>
                         <TouchableOpacity
                           onPress={() => setSelectedToneFilter('all')}
@@ -2355,6 +2437,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
                             {tl('Mais recente', 'Most recent', 'Más reciente', 'Più recente')}
                           </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedFacetFilters(['major'])
+                            setSelectedToneFilter('all')
+                            setSelectedSortMode('impact')
+                            setSelectedPlanetFilters([])
+                            setSelectedHouseFilters([])
+                          }}
+                          style={styles.toneToggleChip}
+                        >
+                          <Text style={styles.toneToggleText}>{tl('Limpar', 'Clear', 'Limpiar', 'Pulisci')}</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
