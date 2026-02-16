@@ -564,6 +564,11 @@ function buildScoreLink(aspectKey: string, areaLabel?: string | null, language?:
   return `Conexao com o status: o efeito em ${area} depende mais da consistencia das escolhas do que da intensidade do transito.`
 }
 
+function stripActionPrefix(text: string, prefix: string): string {
+  const safePrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return text.replace(new RegExp(`^${safePrefix}`, 'i'), '').trim()
+}
+
 function sanitizeNarrativeText(value: string): string {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
   if (!text) return ''
@@ -700,23 +705,68 @@ export function buildAstroTransitNarrative(
   const safeDirectText = sanitizeNarrativeText(directText)
     || interpolate(tx.direct.fallback, { planet: transitPlanet, area })
 
+  const actionCore = stripActionPrefix(actionHint, tx.practicalActionPrefix)
+  const technicalNarrative = (() => {
+    if (lang === 'en-US') {
+      return pickVariant(seed, [
+        `${transitPlanet} activates themes of ${planetMeaning}, shaping decisions in ${area}.`,
+        `${transitPlanet} highlights ${planetMeaning}, making this tone more visible in ${area}.`,
+        `${transitPlanet} works through ${planetMeaning}, setting the strategic tone for ${area}.`,
+      ], 4)
+    }
+    if (lang === 'es-ES') {
+      return pickVariant(seed, [
+        `${transitPlanet} activa temas de ${planetMeaning}, moldeando decisiones en ${area}.`,
+        `${transitPlanet} destaca ${planetMeaning}, dejando este tono mas visible en ${area}.`,
+        `${transitPlanet} opera por ${planetMeaning}, definiendo el tono estrategico en ${area}.`,
+      ], 4)
+    }
+    if (lang === 'it-IT') {
+      return pickVariant(seed, [
+        `${transitPlanet} attiva temi di ${planetMeaning}, influenzando le decisioni in ${area}.`,
+        `${transitPlanet} mette in evidenza ${planetMeaning}, rendendo questo tono piu visibile in ${area}.`,
+        `${transitPlanet} opera tramite ${planetMeaning}, definendo il tono strategico in ${area}.`,
+      ], 4)
+    }
+    return pickVariant(seed, [
+      `${transitPlanet} ativa temas de ${planetMeaning}, moldando decisoes em ${area}.`,
+      `${transitPlanet} destaca ${planetMeaning}, deixando esse tom mais visivel em ${area}.`,
+      `${transitPlanet} opera por ${planetMeaning}, definindo o tom estrategico em ${area}.`,
+    ], 4)
+  })()
+
+  const positionNarrative = (() => {
+    if (house) {
+      if (lang === 'en-US') return `With emphasis on House ${house} (${houseMeaning}), the practical focus moves to concrete adjustments in this domain.`
+      if (lang === 'es-ES') return `Con enfasis en la Casa ${house} (${houseMeaning}), el foco practico pasa a ajustes concretos en este dominio.`
+      if (lang === 'it-IT') return `Con enfasi sulla Casa ${house} (${houseMeaning}), il focus pratico passa ad aggiustamenti concreti in questo ambito.`
+      return `Com enfase na Casa ${house} (${houseMeaning}), o foco pratico migra para ajustes concretos neste dominio.`
+    }
+    if (lang === 'en-US') return `The activated target (${targetLabel}) shows where this movement is being concentrated in your chart.`
+    if (lang === 'es-ES') return `El objetivo activado (${targetLabel}) muestra donde se concentra este movimiento en tu carta.`
+    if (lang === 'it-IT') return `Il target attivato (${targetLabel}) mostra dove questo movimento si concentra nel tema.`
+    return `O alvo ativado (${targetLabel}) mostra onde esse movimento esta sendo concentrado no seu mapa.`
+  })()
+
+  const phaseNarrative = (() => {
+    if (lang === 'en-US') return `Timing now is ${phaseLabel}, and the aspect pattern points to ${aspectMeaning}.`
+    if (lang === 'es-ES') return `La fase temporal esta ${phaseLabel}, y el padron del aspecto apunta a ${aspectMeaning}.`
+    if (lang === 'it-IT') return `La fase temporale e ${phaseLabel}, e il pattern dell aspetto indica ${aspectMeaning}.`
+    return `A fase temporal esta ${phaseLabel}, e o padrao do aspecto aponta para ${aspectMeaning}.`
+  })()
+
+  const guidanceNarrative = (() => {
+    if (lang === 'en-US') return `${actionCore} ${scoreLink}`
+    if (lang === 'es-ES') return `${actionCore} ${scoreLink}`
+    if (lang === 'it-IT') return `${actionCore} ${scoreLink}`
+    return `${actionCore} ${scoreLink}`
+  })()
+
   const fullParts = mergeNarrativeSegments([
-    pickVariant(seed, [
-      `${tx.technicalPrefix}: ${transitPlanet} simboliza ${planetMeaning}.`,
-      `${tx.technicalBasePrefix}: ${transitPlanet} atua sobre ${planetMeaning}.`,
-      `${tx.technicalFundamentPrefix}: ${transitPlanet} mobiliza ${planetMeaning}.`,
-    ], 4),
-    house
-      ? `${tx.currentPositionPrefix}: ${tx.houseWord} ${house} (${houseMeaning}).`
-      : `${tx.activatedTargetPrefix}: ${targetLabel}.`,
-    `${tx.focusedAspectPrefix}: ${aspectMeaning}.`,
-    `${tx.phasePrefix}: ${phaseLabel}.`,
-    pickVariant(seed, [
-      `${tx.practicalApplicationPrefix}: ${actionHint.replace(new RegExp(`^${tx.practicalActionPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'), '')}`,
-      `${tx.practicalDirectionPrefix}: ${actionHint.replace(new RegExp(`^${tx.practicalActionPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'), '')}`,
-      `${tx.recommendedUsePrefix}: ${actionHint.replace(new RegExp(`^${tx.practicalActionPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'), '')}`,
-    ], 5),
-    scoreLink,
+    technicalNarrative,
+    positionNarrative,
+    phaseNarrative,
+    guidanceNarrative,
   ], { exclude: [safeDirectText] })
 
   return {
@@ -753,38 +803,55 @@ export function buildUnifiedTransitNarrative(
   const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const phaseLabel = getPhaseLabel(transit, lang)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
+  const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
+  const actionCore = stripActionPrefix(actionText, tx.practicalActionPrefix)
+  const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
+  const seed = buildSeed(transit)
 
   const modalIntro = (() => {
-    if (house && aspectKey) {
-      if (lang === 'en-US') return `${transitPlanet} in ${aspectLabel} with ${targetLabel} activates House ${house} (${houseMeaning}) in ${area}.`
-      if (lang === 'es-ES') return `${transitPlanet} en ${aspectLabel} con ${targetLabel} activa la Casa ${house} (${houseMeaning}) en ${area}.`
-      if (lang === 'it-IT') return `${transitPlanet} in ${aspectLabel} con ${targetLabel} attiva la Casa ${house} (${houseMeaning}) in ${area}.`
-      return `${transitPlanet} em ${aspectLabel} com ${targetLabel} ativa a Casa ${house} (${houseMeaning}) em ${area}.`
-    }
-    if (aspectKey) {
-      if (lang === 'en-US') return `${transitPlanet} in ${aspectLabel} with ${targetLabel} activates ${aspectMeaning} in ${area}.`
-      if (lang === 'es-ES') return `${transitPlanet} en ${aspectLabel} con ${targetLabel} activa ${aspectMeaning} en ${area}.`
-      if (lang === 'it-IT') return `${transitPlanet} in ${aspectLabel} con ${targetLabel} attiva ${aspectMeaning} in ${area}.`
-      return `${transitPlanet} em ${aspectLabel} com ${targetLabel} ativa ${aspectMeaning} em ${area}.`
-    }
-    if (house) {
-      if (lang === 'en-US') return `${transitPlanet} activates House ${house} (${houseMeaning}) in ${area}.`
-      if (lang === 'es-ES') return `${transitPlanet} activa la Casa ${house} (${houseMeaning}) en ${area}.`
-      if (lang === 'it-IT') return `${transitPlanet} attiva la Casa ${house} (${houseMeaning}) in ${area}.`
-      return `${transitPlanet} ativa a Casa ${house} (${houseMeaning}) em ${area}.`
-    }
-    return narrative.directText
+    const dynamicLine = (() => {
+      if (house && aspectKey && aspectKey !== 'neutral') {
+        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete in ${area}.`
+        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto en ${area}.`
+        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto in ${area}.`
+        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto em ${area}.`
+      }
+      if (house) {
+        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices in ${area}.`
+        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas en ${area}.`
+        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche in ${area}.`
+        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas em ${area}.`
+      }
+      if (lang === 'en-US') return `${transitPlanet} activates ${aspectMeaning} in ${area}, asking for strategic reading of timing and priorities.`
+      if (lang === 'es-ES') return `${transitPlanet} activa ${aspectMeaning} en ${area}, pidiendo lectura estrategica de fase y prioridades.`
+      if (lang === 'it-IT') return `${transitPlanet} attiva ${aspectMeaning} in ${area}, chiedendo una lettura strategica di fase e priorita.`
+      return `${transitPlanet} ativa ${aspectMeaning} em ${area}, pedindo leitura estrategica de fase e prioridades.`
+    })()
+    return pickVariant(seed, [dynamicLine], 0)
   })()
 
-  const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
+  const strategyBlock = (() => {
+    if (house && aspectKey) {
+      if (lang === 'en-US') return `Current phase is ${phaseLabel}. This combination tends to evolve with practical sequence: first read the pattern, then adjust execution.`
+      if (lang === 'es-ES') return `La fase actual es ${phaseLabel}. Esta combinacion tiende a evolucionar con secuencia practica: primero leer el patron, luego ajustar la ejecucion.`
+      if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}. Questa combinazione tende a evolvere con una sequenza pratica: prima leggere il pattern, poi regolare l esecuzione.`
+      return `A fase atual e ${phaseLabel}. Essa combinacao tende a evoluir em sequencia pratica: primeiro ler o padrao, depois ajustar a execucao.`
+    }
+    if (lang === 'en-US') return `Current phase is ${phaseLabel}, so consistency of choices is more important than isolated intensity spikes.`
+    if (lang === 'es-ES') return `La fase actual es ${phaseLabel}, por eso la consistencia de decisiones importa mas que picos aislados de intensidad.`
+    if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}, quindi la coerenza delle scelte conta piu dei picchi isolati di intensita.`
+    return `A fase atual e ${phaseLabel}, por isso a consistencia das escolhas importa mais do que picos isolados de intensidade.`
+  })()
+
   const metaParts = [
     `${tx.phasePrefix}: ${phaseLabel}.`,
-    buildScoreLink(aspectKey, areaLabel, lang),
+    scoreLink,
   ]
   const modalBody = mergeNarrativeSegments([
     modalIntro,
+    strategyBlock,
     narrative.fullText,
-    actionText,
+    actionCore,
     ...metaParts,
   ], { exclude: [narrative.directText] }).join('\n\n')
 
