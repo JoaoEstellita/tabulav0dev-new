@@ -613,11 +613,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
-          ? parsed.facetFilters.filter((value) => value === 'major' || value === 'minor' || value === 'house')
+          ? parsed.facetFilters.filter(
+              (value): value is 'major' | 'minor' | 'house' =>
+                value === 'major' || value === 'minor' || value === 'house'
+            )
           : []
         if (nextFacetFilters.length) {
           const normalized = Array.from(new Set(nextFacetFilters))
-          const migrated =
+          const migrated: Array<'major' | 'minor' | 'house'> =
             normalized.includes('house') || normalized.length !== 2
               ? normalized
               : [...normalized, 'house']
@@ -2095,12 +2098,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const getTransitColumnKind = (transit: any): 'planet' | 'house' => {
     const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
     const targetAngle = String(transit?.target?.angle || '').toUpperCase()
+    if (['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)) return 'house'
     const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
+    if (['ASC', 'MC', 'DSC', 'IC'].includes(normalizedTarget)) return 'house'
     const planetTargets = new Set([
       'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
-      'ASC', 'MC', 'DSC', 'IC'
     ])
-    const isPlanetTarget = planetTargets.has(normalizedTarget) || ['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)
+    const isPlanetTarget = planetTargets.has(normalizedTarget)
     if (isPlanetTarget) return 'planet'
 
     const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
@@ -2194,10 +2198,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
     const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }> = [
       ...(selectedFacetFilters.includes('major')
-        ? dedupedTransits.filter((transit) => isMajorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'major' as const }))
+        ? dedupedTransits
+            .filter((transit) => getTransitColumnKind(transit) === 'planet')
+            .filter((transit) => isMajorAspectTransit(transit))
+            .map((transit) => ({ transit, facetKind: 'major' as const }))
         : []),
       ...(selectedFacetFilters.includes('minor')
-        ? dedupedTransits.filter((transit) => isMinorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'minor' as const }))
+        ? dedupedTransits
+            .filter((transit) => getTransitColumnKind(transit) === 'planet')
+            .filter((transit) => isMinorAspectTransit(transit))
+            .map((transit) => ({ transit, facetKind: 'minor' as const }))
         : []),
       ...(selectedFacetFilters.includes('house')
         ? dedupedTransits
@@ -2359,7 +2369,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               {selectedFacetFilters.length === 0 ? (
                 <Text style={styles.emptyColumnText}>
                   {tl(
-                    'Ative ao menos um tipo de aspecto (maior ou menor).',
+                    'Ative ao menos um tipo de filtro.',
                     'Enable at least one filter type.',
                     'Activa al menos un tipo de filtro.',
                     'Attiva almeno un tipo di filtro.'

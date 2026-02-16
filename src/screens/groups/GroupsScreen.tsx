@@ -73,6 +73,28 @@ const AREA_HOUSES: Record<string, number[]> = {
   transformacao: [8, 12],
 }
 
+type MemberTransitFacet = "major" | "minor" | "house"
+type MemberTransitTone = "all" | "challenging" | "harmonic"
+type MemberTransitSort = "impact" | "recent"
+type MemberAreaTransitItem = {
+  id: string
+  columnKind: "planet" | "house"
+  rank: number
+  title: string
+  houseLabel: string | null
+  houseLabelPrefix: string
+  technicalTypeLabel: string
+  statusLabel: string
+  statusColor: string
+  timingLabel: string
+  directText: string
+  fullLines: string[]
+  actionText: string
+  metaText: string
+  impactValue01: number
+  keywords: string[]
+}
+
 export default function GroupsScreen() {
   const { t, language } = useAppLanguage()
   const route = useRoute<any>()
@@ -145,6 +167,10 @@ export default function GroupsScreen() {
   } | null>(null)
   const [showMemberAreaModal, setShowMemberAreaModal] = useState(false)
   const [showMemberAreaCalc, setShowMemberAreaCalc] = useState(false)
+  const [memberTransitFacetFilters, setMemberTransitFacetFilters] = useState<MemberTransitFacet[]>(["major", "minor", "house"])
+  const [memberTransitToneFilter, setMemberTransitToneFilter] = useState<MemberTransitTone>("all")
+  const [memberTransitSortMode, setMemberTransitSortMode] = useState<MemberTransitSort>("impact")
+  const [memberTransitFiltersExpanded, setMemberTransitFiltersExpanded] = useState(false)
   const [selectedMemberTransitDetail, setSelectedMemberTransitDetail] = useState<{
     title: string
     statusLabel: string
@@ -945,15 +971,19 @@ const getTransitTechnicalTypeLabel = (transit: any, tr?: LocalizeFn) => {
 }
 
 const getTransitColumnKind = (transit: any): "planet" | "house" => {
+  const hasAngleTarget = !!transit?.target?.angle
+  if (hasAngleTarget) return "house"
+  const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || "").toUpperCase()
+  const normalizedTarget = rawTarget.replace(/^NATAL_/, "").replace(/^NATAL:/, "")
+  if (["ASC", "MC", "DSC", "IC"].includes(normalizedTarget)) return "house"
+
   const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
   const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
   const explicitHouseTarget =
-    String(transit?.natalPlanet || transit?.target?.natalPlanet || '')
-      .toUpperCase()
-      .startsWith('HOUSE_')
+    rawTarget.startsWith("HOUSE_")
   const rawType = String(transit?.aspectName || transit?.type || transit?.aspectType || '').toLowerCase()
-  const hasPlanetOrAngleTarget = !!(transit?.target?.natalPlanet || transit?.natalPlanet || transit?.target?.angle)
-  if (hasPlanetOrAngleTarget && !explicitHouseTarget) return "planet"
+  const hasPlanetTarget = !!(transit?.target?.natalPlanet || transit?.natalPlanet)
+  if (hasPlanetTarget && !explicitHouseTarget) return "planet"
   if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return "house"
 
   const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
@@ -971,7 +1001,7 @@ const getTransitColumnKind = (transit: any): "planet" | "house" => {
     "desafiador",
     "neutro",
   ].includes(aspectType)
-  if (hasRecognizedAspect && hasPlanetOrAngleTarget) {
+  if (hasRecognizedAspect && hasPlanetTarget) {
     return "planet"
   }
   return "house"
@@ -1011,6 +1041,39 @@ const classifyTransitStatus = (transit: any, tr?: LocalizeFn) => {
   if (isHarmonic) return { kind: "harmonic", label: tx('groups.status.harmonic', 'Harmonico'), color: "#22C55E" }
   if (isTense) return { kind: "tense", label: tx('groups.status.challenging', 'Desafiador'), color: "#EF4444" }
   return { kind: "neutral", label: tx('groups.status.neutral', 'Neutro'), color: "#64748B" }
+}
+
+const isMinorAspectTransit = (transit: any) => {
+  const type = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  return ["semissextil", "semiquadratura", "sesquiquadratura", "quincuncio"].includes(type)
+}
+
+const isMajorAspectTransit = (transit: any) => {
+  if (isMinorAspectTransit(transit)) return false
+  const type = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  if (["trigono", "sextil", "quadratura", "oposicao", "conjuncao", "harmonico", "desafiador", "neutro"].includes(type)) {
+    return true
+  }
+  const rawType = normalizeLabelKey(String(transit?.aspectName || transit?.type || transit?.aspectType || ""))
+  if (rawType.includes("ingress") || rawType.includes("casa") || rawType.includes("house")) return false
+  return !!(transit?.natalPlanet || transit?.target?.natalPlanet)
+}
+
+const getTransitRecencyDistance = (transit: any): number => {
+  const toMs = (value: unknown) => {
+    const ms = new Date(String(value || "")).getTime()
+    return Number.isFinite(ms) ? ms : null
+  }
+  const now = Date.now()
+  const phase = String(transit?.phase || "").toLowerCase()
+  const startAt = toMs(transit?.startAt || transit?.window?.start || null)
+  const peakAt = toMs(transit?.peakAt || transit?.window?.exact || null)
+  const endAt = toMs(transit?.endAt || transit?.window?.end || null)
+  const byPhase = phase === "start" ? peakAt : phase === "peak" ? peakAt : phase === "end" ? endAt : null
+  if (byPhase !== null) return Math.abs(byPhase - now)
+  const candidates = [startAt, peakAt, endAt].filter((value): value is number => value !== null)
+  if (!candidates.length) return Number.MAX_SAFE_INTEGER
+  return Math.min(...candidates.map((value) => Math.abs(value - now)))
 }
 
 const buildTransitDirectText = (
@@ -1898,6 +1961,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
           setSelectedMemberArea(null)
           setSelectedMemberTransitDetail(null)
           setShowMemberAreaCalc(false)
+          setMemberTransitFacetFilters(["major", "minor", "house"])
+          setMemberTransitToneFilter("all")
+          setMemberTransitSortMode("impact")
+          setMemberTransitFiltersExpanded(false)
         }}
       >
         <View style={styles.memberAreaBackdrop}>
@@ -2021,7 +2088,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     {(() => {
                       const areaLabel = lifeAreaLabel(key)
                       const areaCritical = bucket === "critical"
-                      const baseTransits = (areaTransits.length ? areaTransits : activeTransitItems).map((transit: any, index: number) => {
+                      const baseTransits: MemberAreaTransitItem[] = (areaTransits.length ? areaTransits : activeTransitItems).map((transit: any, index: number) => {
                         const status = classifyTransitStatus(transit, tr)
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
@@ -2107,10 +2174,84 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         )
                       }
 
-                      const orderedTransits = [...baseTransits]
-                        .sort((a, b) => b.rank - a.rank)
-                      const planetTransits = orderedTransits.filter((item) => item.columnKind === "planet")
-                      const houseTransits = orderedTransits.filter((item) => item.columnKind === "house")
+                      const transitStableKey = (item: MemberAreaTransitItem) =>
+                        String(
+                          item?.id ||
+                            [
+                              String(item?.title || ""),
+                              String(item?.timingLabel || ""),
+                              String(item?.technicalTypeLabel || ""),
+                              String(item?.houseLabel || ""),
+                            ].join("|")
+                        )
+                      const dedupedMap = new Map<string, MemberAreaTransitItem>()
+                      baseTransits.forEach((item: MemberAreaTransitItem) => {
+                        const key = transitStableKey(item)
+                        const existing = dedupedMap.get(key)
+                        if (!existing || item.rank > existing.rank) dedupedMap.set(key, item)
+                      })
+                      const dedupedTransits = Array.from(dedupedMap.values())
+
+                      const toneMatches = (item: MemberAreaTransitItem) => {
+                        if (memberTransitToneFilter === "all") return true
+                        const tone = classifyTransitStatus(item, tr).kind
+                        if (memberTransitToneFilter === "harmonic") return tone === "harmonic"
+                        return tone === "tense"
+                      }
+
+                      const combinedRaw = [
+                        ...(memberTransitFacetFilters.includes("major")
+                          ? dedupedTransits
+                              .filter((item: MemberAreaTransitItem) => item.columnKind === "planet")
+                              .filter((item: MemberAreaTransitItem) => isMajorAspectTransit(item))
+                              .map((item: MemberAreaTransitItem) => ({ item, facetKind: "major" as const }))
+                          : []),
+                        ...(memberTransitFacetFilters.includes("minor")
+                          ? dedupedTransits
+                              .filter((item: MemberAreaTransitItem) => item.columnKind === "planet")
+                              .filter((item: MemberAreaTransitItem) => isMinorAspectTransit(item))
+                              .map((item: MemberAreaTransitItem) => ({ item, facetKind: "minor" as const }))
+                          : []),
+                        ...(memberTransitFacetFilters.includes("house")
+                          ? dedupedTransits
+                              .filter((item: MemberAreaTransitItem) => item.columnKind === "house")
+                              .map((item: MemberAreaTransitItem) => ({ item, facetKind: "house" as const }))
+                          : []),
+                      ].filter(({ item }) => toneMatches(item))
+
+                      const facetPriority: Record<MemberTransitFacet, number> = { major: 1, minor: 2, house: 3 }
+                      const combinedMap = new Map<string, { item: MemberAreaTransitItem; facetKind: MemberTransitFacet }>()
+                      combinedRaw.forEach((entry) => {
+                        const key = transitStableKey(entry.item)
+                        const existing = combinedMap.get(key)
+                        if (!existing) {
+                          combinedMap.set(key, entry)
+                          return
+                        }
+                        if (facetPriority[entry.facetKind] > facetPriority[existing.facetKind]) {
+                          combinedMap.set(key, entry)
+                          return
+                        }
+                        if (entry.item.rank > existing.item.rank) {
+                          combinedMap.set(key, entry)
+                        }
+                      })
+
+                      const orderedTransits = Array.from(combinedMap.values())
+                        .map((entry) => entry.item)
+                        .sort((a, b) => {
+                          if (memberTransitSortMode === "recent") {
+                            const recentDelta = getTransitRecencyDistance(a) - getTransitRecencyDistance(b)
+                            if (recentDelta !== 0) return recentDelta
+                            return b.rank - a.rank
+                          }
+                          return b.rank - a.rank
+                        })
+
+                      const activeFiltersCount =
+                        (memberTransitToneFilter !== "all" ? 1 : 0) +
+                        (memberTransitSortMode !== "impact" ? 1 : 0) +
+                        (memberTransitFacetFilters.length === 3 ? 0 : 1)
 
                       const renderTransitCard = (item: any, index: number) => (
                         <TransitInsightCard
@@ -2165,25 +2306,119 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               {tr('groups.member.transitsInArea', '{count} transitos na area', { count: orderedTransits.length })}
                             </Text>
                           </View>
-                          {planetTransits.length ? (
-                            <View style={styles.memberTransitSection}>
-                              <View style={styles.memberTransitColumnHeader}>
-                                <Text style={styles.memberTransitColumnTitle}>{tr('groups.member.planetPlanet', 'Planeta x Planeta')}</Text>
-                                <Text style={styles.memberTransitColumnMeta}>{planetTransits.length}</Text>
+                          <View style={styles.memberTransitSection}>
+                            <TouchableOpacity
+                              style={styles.memberTransitFiltersToggleBar}
+                              onPress={() => setMemberTransitFiltersExpanded((prev) => !prev)}
+                            >
+                              <Text style={styles.memberTransitFiltersTitle}>{tr("groups.member.filtersAndSorting", "Filtros e Ordenacao")}</Text>
+                              <View style={styles.memberTransitFiltersMetaWrap}>
+                                <Text style={styles.memberTransitFiltersMeta}>{activeFiltersCount} {tr("groups.member.active", "ativos")}</Text>
+                                <Ionicons
+                                  name={memberTransitFiltersExpanded ? "chevron-up" : "chevron-down"}
+                                  size={14}
+                                  color="#9A3412"
+                                />
                               </View>
-                              {planetTransits.map((item, index) => renderTransitCard(item, index))}
-                            </View>
-                          ) : null}
+                            </TouchableOpacity>
 
-                          {houseTransits.length ? (
-                            <View style={styles.memberTransitSection}>
-                              <View style={styles.memberTransitColumnHeader}>
-                                <Text style={styles.memberTransitColumnTitle}>{tr('groups.member.planetHouse', 'Planeta x Casa')}</Text>
-                                <Text style={styles.memberTransitColumnMeta}>{houseTransits.length}</Text>
+                            {memberTransitFiltersExpanded ? (
+                              <View style={styles.memberTransitFiltersBody}>
+                                <View style={styles.memberTransitFilterRow}>
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      setMemberTransitFacetFilters((prev) =>
+                                        prev.includes("major") ? prev.filter((item) => item !== "major") : [...prev, "major"]
+                                      )
+                                    }
+                                    style={[styles.memberTransitFilterChip, memberTransitFacetFilters.includes("major") ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitFacetFilters.includes("major") ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.majorAspects", "Aspectos maiores")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      setMemberTransitFacetFilters((prev) =>
+                                        prev.includes("minor") ? prev.filter((item) => item !== "minor") : [...prev, "minor"]
+                                      )
+                                    }
+                                    style={[styles.memberTransitFilterChip, memberTransitFacetFilters.includes("minor") ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitFacetFilters.includes("minor") ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.minorAspects", "Aspectos menores")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      setMemberTransitFacetFilters((prev) =>
+                                        prev.includes("house") ? prev.filter((item) => item !== "house") : [...prev, "house"]
+                                      )
+                                    }
+                                    style={[styles.memberTransitFilterChip, memberTransitFacetFilters.includes("house") ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitFacetFilters.includes("house") ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.planetsInHouses", "Planetas nas casas")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                                <View style={styles.memberTransitFilterRow}>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitToneFilter("all")}
+                                    style={[styles.memberTransitFilterChip, memberTransitToneFilter === "all" ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitToneFilter === "all" ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.all", "Todos")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitToneFilter("challenging")}
+                                    style={[styles.memberTransitFilterChip, memberTransitToneFilter === "challenging" ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitToneFilter === "challenging" ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.challenging", "Desafiador")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitToneFilter("harmonic")}
+                                    style={[styles.memberTransitFilterChip, memberTransitToneFilter === "harmonic" ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitToneFilter === "harmonic" ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.harmonic", "Harmonico")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitSortMode("impact")}
+                                    style={[styles.memberTransitFilterChip, memberTransitSortMode === "impact" ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitSortMode === "impact" ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.mostImpact", "Mais impacto")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitSortMode("recent")}
+                                    style={[styles.memberTransitFilterChip, memberTransitSortMode === "recent" ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitSortMode === "recent" ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.mostRecent", "Mais recente")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
                               </View>
-                              {houseTransits.map((item, index) => renderTransitCard(item, index))}
-                            </View>
-                          ) : null}
+                            ) : null}
+
+                            {memberTransitFacetFilters.length === 0 ? (
+                              <Text style={styles.memberAreaEmpty}>
+                                {tr("groups.member.enableAtLeastOneFilter", "Ative ao menos um tipo de filtro.")}
+                              </Text>
+                            ) : orderedTransits.length ? (
+                              orderedTransits.map((item, index) => renderTransitCard(item, index))
+                            ) : (
+                              <Text style={styles.memberAreaEmpty}>
+                                {tr("groups.member.noTransitForSelectedFilters", "Nenhum transito para os filtros selecionados.")}
+                              </Text>
+                            )}
+                          </View>
 
                           <TouchableOpacity
                             style={styles.memberCalcToggle}
@@ -2253,6 +2488,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 setSelectedMemberArea(null)
                 setSelectedMemberTransitDetail(null)
                 setShowMemberAreaCalc(false)
+                setMemberTransitFacetFilters(["major", "minor", "house"])
+                setMemberTransitToneFilter("all")
+                setMemberTransitSortMode("impact")
+                setMemberTransitFiltersExpanded(false)
               }}
             >
               <Text style={styles.memberAreaCloseText}>{tr('common.close', 'Fechar')}</Text>
@@ -2612,6 +2851,64 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(148, 163, 184, 0.25)",
     backgroundColor: "rgba(15, 23, 42, 0.35)",
+  },
+  memberTransitFiltersToggleBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "rgba(148, 163, 184, 0.25)",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginBottom: 10,
+  },
+  memberTransitFiltersTitle: {
+    color: "#E2E8F0",
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  memberTransitFiltersMetaWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  memberTransitFiltersMeta: {
+    color: "#FB923C",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  memberTransitFiltersBody: {
+    gap: 8,
+    marginBottom: 10,
+  },
+  memberTransitFilterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  memberTransitFilterChip: {
+    borderWidth: 1,
+    borderColor: "rgba(148, 163, 184, 0.35)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  memberTransitFilterChipActive: {
+    borderColor: "#F59E0B",
+    backgroundColor: "rgba(245, 158, 11, 0.18)",
+  },
+  memberTransitFilterChipText: {
+    color: "#CBD5E1",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  memberTransitFilterChipTextActive: {
+    color: "#FDE68A",
   },
   memberTransitColumnHeader: {
     flexDirection: "row",
