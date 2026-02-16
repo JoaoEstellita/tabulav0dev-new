@@ -576,7 +576,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
-  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor'>>(['major', 'minor'])
+  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major', 'minor', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
@@ -607,15 +607,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         const raw = await AsyncStorage.getItem(MODAL_FILTER_PREFS_KEY)
         if (!raw || cancelled) return
         const parsed = JSON.parse(raw || '{}') as {
-          facetFilters?: Array<'major' | 'minor'>
+          facetFilters?: Array<'major' | 'minor' | 'house'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
           filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
-          ? parsed.facetFilters.filter((value) => value === 'major' || value === 'minor')
+          ? parsed.facetFilters.filter((value) => value === 'major' || value === 'minor' || value === 'house')
           : []
-        if (nextFacetFilters.length) setSelectedFacetFilters(Array.from(new Set(nextFacetFilters)))
+        if (nextFacetFilters.length) {
+          const normalized = Array.from(new Set(nextFacetFilters))
+          const migrated =
+            normalized.includes('house') || normalized.length !== 2
+              ? normalized
+              : [...normalized, 'house']
+          setSelectedFacetFilters(migrated)
+        }
         if (parsed.toneFilter === 'all' || parsed.toneFilter === 'challenging' || parsed.toneFilter === 'harmonic') {
           setSelectedToneFilter(parsed.toneFilter)
         }
@@ -1893,7 +1900,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const renderTransitList = (
-    items: Array<{ transit: any; facetKind: 'major' | 'minor' }>,
+    items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>,
     startIndex = 0,
     featured = false
   ) =>
@@ -2083,7 +2090,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       if (!candidates.length) return Number.MAX_SAFE_INTEGER
       return Math.min(...candidates.map((value) => Math.abs(value - now)))
     }
-    const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' }>) => {
+    const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>) => {
       return [...items].sort((a, b) => {
         if (selectedSortMode === 'recent') {
           const recentDelta = getTransitRecencyDistance(a.transit) - getTransitRecencyDistance(b.transit)
@@ -2122,17 +2129,23 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
       return tone === 'challenging'
     }
-    const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' }> = [
+    const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }> = [
       ...(selectedFacetFilters.includes('major')
         ? dedupedTransits.filter((transit) => isMajorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'major' as const }))
         : []),
       ...(selectedFacetFilters.includes('minor')
         ? dedupedTransits.filter((transit) => isMinorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'minor' as const }))
         : []),
+      ...(selectedFacetFilters.includes('house')
+        ? dedupedTransits
+            .filter((transit) => getTransitColumnKind(transit) === 'house')
+            .map((transit) => ({ transit, facetKind: 'house' as const }))
+        : []),
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
-    const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' }>) => {
-      const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' }>()
+    const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>) => {
+      const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' | 'house' }>()
+      const facetPriority: Record<'major' | 'minor' | 'house', number> = { major: 1, minor: 2, house: 3 }
       items.forEach((entry) => {
         const key = transitStableKey(entry.transit)
         const existing = map.get(key)
@@ -2140,7 +2153,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           map.set(key, entry)
           return
         }
-        if (existing.facetKind === 'major' && entry.facetKind === 'minor') {
+        if (facetPriority[entry.facetKind] > facetPriority[existing.facetKind]) {
           map.set(key, entry)
           return
         }
@@ -2156,7 +2169,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const activeFiltersCount =
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
-      (selectedFacetFilters.length === 2 ? 0 : 1)
+      (selectedFacetFilters.length === 3 ? 0 : 1)
 
     return (
       <View style={styles.section}>
@@ -2216,6 +2229,18 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                             {tl('Aspectos menores', 'Minor aspects', 'Aspectos menores', 'Aspetti minori')}
                           </Text>
                         </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setSelectedFacetFilters((prev) =>
+                              prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
+                            )
+                          }
+                          style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
+                            {tl('Planetas nas casas', 'Planets in houses', 'Planetas en las casas', 'Pianeti nelle case')}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                       <View style={styles.toneToggleRow}>
                         <TouchableOpacity
@@ -2272,9 +2297,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 <Text style={styles.emptyColumnText}>
                   {tl(
                     'Ative ao menos um tipo de aspecto (maior ou menor).',
-                    'Enable at least one aspect type (major or minor).',
-                    'Activa al menos un tipo de aspecto (mayor o menor).',
-                    'Attiva almeno un tipo di aspetto (maggiore o minore).'
+                    'Enable at least one filter type.',
+                    'Activa al menos un tipo de filtro.',
+                    'Attiva almeno un tipo di filtro.'
                   )}
                 </Text>
               ) : visibleTransitCards.length ? (
