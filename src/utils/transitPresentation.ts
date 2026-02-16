@@ -79,6 +79,7 @@ const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     semissextil: 'Semissextil',
     semiquadratura: 'Semiquadratura',
     sesquiquadratura: 'Sesquiquadratura',
+    ingress: 'Ingresso',
   },
   'en-US': {
     conjuncao: 'Conjunction',
@@ -90,6 +91,7 @@ const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     semissextil: 'Semisextile',
     semiquadratura: 'Semisquare',
     sesquiquadratura: 'Sesquiquadrate',
+    ingress: 'Ingress',
   },
   'es-ES': {
     conjuncao: 'Conjuncion',
@@ -101,6 +103,7 @@ const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     semissextil: 'Semisextil',
     semiquadratura: 'Semicuadratura',
     sesquiquadratura: 'Sesquicuadratura',
+    ingress: 'Ingreso',
   },
   'it-IT': {
     conjuncao: 'Congiunzione',
@@ -112,6 +115,7 @@ const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
     semissextil: 'Semisestile',
     semiquadratura: 'Semiquadratura',
     sesquiquadratura: 'Sesquiquadratura',
+    ingress: 'Ingresso',
   },
 }
 
@@ -130,6 +134,7 @@ function normalizeAspectToken(value: string): string {
   if (normalized.includes('opos')) return 'oposicao'
   if (normalized.includes('quinc')) return 'quincuncio'
   if (normalized.includes('conj')) return 'conjuncao'
+  if (normalized.includes('ingress') || normalized.includes('ingresso') || normalized.includes('ingreso')) return 'ingress'
   return normalized
 }
 

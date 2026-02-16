@@ -718,7 +718,62 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       astrologyData as any,
       astrologyDataFallback as any
     )
-    return mergedAreaTransits.map(mapTransitToReal).sort((a, b) => b.strength - a.strength)
+    const nowIso = new Date().toISOString()
+    const areaKey = String(areaData?.name || '').toLowerCase()
+    const relevantPlanets = new Set(getRelevantPlanetsForArea(areaKey).map((planet) => String(planet).toUpperCase()))
+    const generatedHouseTransits: RealTransitData[] = []
+    const seenPlanetHouse = new Set<string>()
+
+    const appendPlanetHouseTransits = (source: any, sourceLabel: string) => {
+      const planets = safeArray<any>(source?.planets)
+      planets.forEach((planet) => {
+        const transitPlanet = String(planet?.name || '').trim()
+        if (!transitPlanet) return
+        if (relevantPlanets.size > 0 && !relevantPlanets.has(transitPlanet.toUpperCase())) return
+        const houseValue = Number(planet?.house)
+        if (!Number.isFinite(houseValue) || houseValue < 1 || houseValue > 12) return
+        const house = Math.round(houseValue)
+        const planetHouseKey = `${transitPlanet.toUpperCase()}:${house}`
+        if (seenPlanetHouse.has(planetHouseKey)) return
+        seenPlanetHouse.add(planetHouseKey)
+
+        const speedAbs = Math.abs(safeNumber(planet?.speed, 0))
+        const statusStrength = safeNumber(planet?.planetaryStatus?.score, NaN)
+        const strength =
+          Number.isFinite(statusStrength) && statusStrength > 0
+            ? Math.max(30, Math.min(95, statusStrength))
+            : Math.max(35, Math.min(90, 55 + Math.round(speedAbs * 6)))
+
+        generatedHouseTransits.push({
+          id: `house:${areaKey}:${sourceLabel}:${transitPlanet}:${house}`,
+          transitPlanet,
+          target: { house },
+          type: 'ingress',
+          aspectName: 'ingress',
+          aspectType: 'ingress',
+          orb: 0,
+          isApplying: false,
+          strength,
+          impact: Math.max(0, Math.min(100, Math.round(strength * 0.8))),
+          natalHouseImpacted: house,
+          transitHouse: house,
+          currentHouse: house,
+          phase: 'peak',
+          phaseLabel: 'Ativo',
+          startAt: source?.timestamp || nowIso,
+          peakAt: source?.timestamp || nowIso,
+          endAt: null,
+        })
+      })
+    }
+
+    appendPlanetHouseTransits(astrologyData as any, 'primary')
+    appendPlanetHouseTransits(astrologyDataFallback as any, 'fallback')
+
+    return mergedAreaTransits
+      .map(mapTransitToReal)
+      .concat(generatedHouseTransits)
+      .sort((a, b) => b.strength - a.strength)
   }
 
   const getNatalAspects = (): NatalAspectData[] => {
@@ -833,18 +888,26 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   //  FUNCOES AUXILIARES PARA CALCULOS ASTROLOGICOS
-  const getRelevantHousesForArea = (areaName: string): number[] => {
-    const areaConfig: Record<string, number[]> = {
-      amor: [5, 7],
-      carreira: [10, 6],
-      financas: [2, 8],
-      saude: [1, 6],
-      familia: [4, 10],
-      espiritualidade: [9, 12],
-      comunicacao: [3, 9],
-      transformacao: [8, 12]
+  const getAreaConfigForModal = (areaName: string): { houses: number[]; planets: string[] } => {
+    const areaConfig: Record<string, { houses: number[]; planets: string[] }> = {
+      amor: { houses: [5, 7], planets: ['Venus', 'Mars'] },
+      carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'] },
+      financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'] },
+      saude: { houses: [1, 6], planets: ['Mars', 'Sun'] },
+      familia: { houses: [4, 10], planets: ['Moon', 'Saturn'] },
+      espiritualidade: { houses: [9, 12], planets: ['Neptune', 'Jupiter'] },
+      comunicacao: { houses: [3, 9], planets: ['Mercury', 'Uranus'] },
+      transformacao: { houses: [8, 12], planets: ['Pluto', 'Uranus'] }
     }
-    return areaConfig[areaName] || []
+    return areaConfig[areaName] || { houses: [], planets: [] }
+  }
+
+  const getRelevantHousesForArea = (areaName: string): number[] => {
+    return getAreaConfigForModal(areaName).houses
+  }
+
+  const getRelevantPlanetsForArea = (areaName: string): string[] => {
+    return getAreaConfigForModal(areaName).planets
   }
 
   const getHouseAngularMultiplier = (house: number): number => {
