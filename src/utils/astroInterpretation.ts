@@ -581,6 +581,109 @@ function getAreaLabel(areaLabel?: string | null, language?: string | null): stri
   return value.toLowerCase()
 }
 
+function normalizeAreaKey(value?: string | null): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function getAreaContextTone(areaLabel?: string | null, language?: string | null): string {
+  const lang = getLang(language)
+  const key = normalizeAreaKey(areaLabel)
+
+  const areaMapPt: Record<string, string> = {
+    amor: 'No plano relacional, o momento exige qualidade de presenca e acordos claros.',
+    carreira: 'No plano profissional, o momento favorece estrategia, consistencia e escolha de prioridades.',
+    financas: 'No plano financeiro, o momento pede criterio, previsibilidade e decisao sem impulso.',
+    familia: 'No plano familiar, o momento pede ajuste de limites e combinados mais objetivos.',
+    saude: 'No plano de saude e rotina, o momento pede regularidade e leitura realista dos sinais do corpo.',
+    espiritualidade: 'No plano espiritual, o momento favorece pratica simples, constancia e discernimento.',
+    comunicacao: 'No plano da comunicacao, o momento pede precisao de linguagem e revisao antes de concluir.',
+    transformacao: 'No plano de transformacao, o momento favorece cortes conscientes e reorganizacao progressiva.',
+  }
+
+  const areaMapEn: Record<string, string> = {
+    amor: 'In relationships, this phase calls for presence quality and clear agreements.',
+    carreira: 'In career matters, this phase supports strategy, consistency, and priority choices.',
+    financas: 'In finances, this phase asks for criteria, predictability, and non-impulsive decisions.',
+    familia: 'In family dynamics, this phase asks for boundary adjustments and clearer agreements.',
+    saude: 'In health and routine, this phase asks for regularity and realistic body-signal reading.',
+    espiritualidade: 'In spirituality, this phase supports simple practice, consistency, and discernment.',
+    comunicacao: 'In communication, this phase asks for precise wording and review before closing.',
+    transformacao: 'In transformation themes, this phase supports conscious cuts and progressive reorganization.',
+  }
+
+  const areaMapEs: Record<string, string> = {
+    amor: 'En lo relacional, este momento pide calidad de presencia y acuerdos claros.',
+    carreira: 'En lo profesional, este momento favorece estrategia, consistencia y prioridades claras.',
+    financas: 'En finanzas, este momento pide criterio, previsibilidad y decisiones sin impulso.',
+    familia: 'En lo familiar, este momento pide ajuste de limites y acuerdos mas objetivos.',
+    saude: 'En salud y rutina, este momento pide regularidad y lectura realista de las senales del cuerpo.',
+    espiritualidade: 'En lo espiritual, este momento favorece practica simple, constancia y discernimiento.',
+    comunicacao: 'En comunicacion, este momento pide precision de lenguaje y revision antes de cerrar.',
+    transformacao: 'En transformacion, este momento favorece cortes conscientes y reorganizacion progresiva.',
+  }
+
+  const areaMapIt: Record<string, string> = {
+    amor: 'Sul piano relazionale, questo momento richiede qualita di presenza e accordi chiari.',
+    carreira: 'Sul piano professionale, questo momento favorisce strategia, coerenza e priorita chiare.',
+    financas: 'Sul piano finanziario, questo momento richiede criterio, prevedibilita e decisioni non impulsive.',
+    familia: 'Sul piano familiare, questo momento richiede aggiustamento dei limiti e accordi piu chiari.',
+    saude: 'Su salute e routine, questo momento richiede regolarita e lettura realistica dei segnali del corpo.',
+    espiritualidade: 'Sul piano spirituale, questo momento favorisce pratica semplice, costanza e discernimento.',
+    comunicacao: 'Nella comunicazione, questo momento richiede precisione e revisione prima di chiudere.',
+    transformacao: 'Sul piano della trasformazione, questo momento favorisce tagli consapevoli e riorganizzazione progressiva.',
+  }
+
+  const aliases: Record<string, string> = {
+    amor: 'amor',
+    love: 'amor',
+    amore: 'amor',
+
+    carreira: 'carreira',
+    career: 'carreira',
+    carrera: 'carreira',
+    carriera: 'carreira',
+
+    financas: 'financas',
+    finanzas: 'financas',
+    finanze: 'financas',
+    finances: 'financas',
+
+    familia: 'familia',
+    family: 'familia',
+    famiglia: 'familia',
+
+    saude: 'saude',
+    salud: 'saude',
+    salute: 'saude',
+    health: 'saude',
+
+    espiritualidade: 'espiritualidade',
+    espiritualidad: 'espiritualidade',
+    spiritualita: 'espiritualidade',
+    spirituality: 'espiritualidade',
+
+    comunicacao: 'comunicacao',
+    comunicacion: 'comunicacao',
+    comunicazione: 'comunicacao',
+    communication: 'comunicacao',
+
+    transformacao: 'transformacao',
+    transformacion: 'transformacao',
+    trasformazione: 'transformacao',
+    transformation: 'transformacao',
+  }
+
+  const canonical = aliases[key] || key
+  if (lang === 'en-US') return areaMapEn[canonical] || ''
+  if (lang === 'es-ES') return areaMapEs[canonical] || ''
+  if (lang === 'it-IT') return areaMapIt[canonical] || ''
+  return areaMapPt[canonical] || ''
+}
+
 function buildActionHint(aspectKey: string, house: number | null, areaLabel?: string | null, language?: string | null): string {
   const lang = getLang(language)
   const area = getAreaLabel(areaLabel, lang)
@@ -715,6 +818,7 @@ export function buildAstroTransitNarrative(
   const area = getAreaLabel(areaLabel, lang)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
   const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
+  const areaTone = getAreaContextTone(areaLabel, lang)
   const actionHint = buildActionHint(aspectKey, house, areaLabel, lang)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
   const phaseVerb = pickVariant(seed, ['sinaliza', 'reforca', 'reorganiza'], 1)
@@ -831,6 +935,7 @@ export function buildAstroTransitNarrative(
 
   const fullParts = mergeNarrativeSegments([
     technicalNarrative,
+    areaTone,
     positionNarrative,
     phaseNarrative,
     guidanceNarrative,
@@ -870,6 +975,8 @@ export function buildUnifiedTransitNarrative(
   const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const phaseLabel = getPhaseLabel(transit, lang)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
+  const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
+  const areaTone = getAreaContextTone(areaLabel, lang)
   const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
   const actionCore = stripActionPrefix(actionText, tx.practicalActionPrefix)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
@@ -916,6 +1023,7 @@ export function buildUnifiedTransitNarrative(
   ]
   const modalBody = mergeNarrativeSegments([
     modalIntro,
+    areaTone,
     strategyBlock,
     narrative.fullText,
     actionCore,
