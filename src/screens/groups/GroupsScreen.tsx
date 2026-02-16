@@ -1202,7 +1202,17 @@ const buildMemberAreaEntries = (member: GroupMember) => {
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
   const summaryMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
 
-  const statusCounts = summaryMembers.reduce(
+  const memberStatusCounts = summaryMembers.reduce(
+    (acc, member) => {
+      const bucket = getMemberSummaryBucket(member)
+      if (bucket === "critical") acc.critical += 1
+      if (bucket === "positive") acc.positive += 1
+      return acc
+    },
+    { critical: 0, positive: 0 }
+  )
+
+  const areaStatusCounts = summaryMembers.reduce(
     (acc, member) => {
       buildMemberAreaEntries(member).forEach((entry) => {
         if (entry.bucket === "critical") acc.critical += 1
@@ -1310,15 +1320,21 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 <Text style={styles.sectionTitle}>{tr('groups.section.generalStatus', 'Status geral')}</Text>
                 <View style={styles.groupSummaryCounters}>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
-                    <Text style={styles.groupSummaryValueCompact}>{statusCounts.critical}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalPlural', 'Criticos')}</Text>
+                    <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.critical}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalMembers', 'Membros criticos')}</Text>
                   </View>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
-                    <Text style={styles.groupSummaryValueCompact}>{statusCounts.positive}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positivePlural', 'Positivos')}</Text>
+                    <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.positive}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positiveMembers', 'Membros positivos')}</Text>
                   </View>
                 </View>
               </View>
+              <Text style={styles.groupSummaryHint}>
+                {tr('groups.status.areaCriticalNow', 'Areas criticas agora: {count}', { count: areaStatusCounts.critical })}
+              </Text>
+              <Text style={[styles.groupSummaryHint, styles.groupSummaryHintCompact]}>
+                {tr('groups.status.areaPositiveNow', 'Areas positivas agora: {count}', { count: areaStatusCounts.positive })}
+              </Text>
               {highlightMembers.length > 0 && (
                 <>
                   <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
@@ -3668,6 +3684,9 @@ const styles = StyleSheet.create({
     color: "#AAAAAA",
     fontSize: 12,
     marginTop: 12,
+  },
+  groupSummaryHintCompact: {
+    marginTop: 4,
   },
   attentionCard: {
     backgroundColor: "#14142b",
