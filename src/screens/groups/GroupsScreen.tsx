@@ -1200,7 +1200,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const otherMembers = sortedMembers.filter((member) => member.userId !== user?.uid)
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
-  const summaryMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
+  // Keep group counters aligned with the member cards that are actually visible.
+  const summaryMembers = visibleMembers
 
   const memberStatusCounts = summaryMembers.reduce(
     (acc, member) => {
