@@ -37,6 +37,7 @@ import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
+import { STATUS_THRESHOLDS } from "../../constants/statusThresholds"
 
 const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
   key,
@@ -753,8 +754,8 @@ export default function GroupsScreen() {
 
   const mapPercentageToBucket = (percentage?: number | null) => {
     if (typeof percentage !== "number") return "neutral"
-    if (percentage >= 60) return "positive"
-    if (percentage >= 40) return "attention"
+    if (percentage >= STATUS_THRESHOLDS.positiveAbove) return "positive"
+    if (percentage >= STATUS_THRESHOLDS.criticalBelow) return "attention"
     return "critical"
   }
 
@@ -1101,9 +1102,9 @@ const normalizeAreaStatusKey = (value?: string | null) => {
 
 const mapStatusToBucket = (status?: string | null) => {
   const key = normalizeAreaStatusKey(status)
-  if (key === 'critico' || key === 'desafiador') return 'critical'
+  if (key === 'critico') return 'critical'
   if (key === 'bom' || key === 'excelente') return 'positive'
-  if (key === 'neutro') return 'attention'
+  if (key === 'desafiador' || key === 'neutro') return 'attention'
   return null
 }
 
