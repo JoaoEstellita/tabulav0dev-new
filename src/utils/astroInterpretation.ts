@@ -104,6 +104,65 @@ const HOUSE_SYMBOLISM_IT: Record<number, string> = {
   12: 'chiusure, ritiro ed elaborazione interiore',
 }
 
+const HOUSE_POSITIONAL_FOCUS: Record<AppLanguage, Record<number, string>> = {
+  'pt-BR': {
+    1: 'autoimagem, energia fisica e iniciativa',
+    2: 'recursos, seguranca material e valor pessoal',
+    3: 'comunicacao pratica, estudos e acordos curtos',
+    4: 'base emocional, familia e estrutura de lar',
+    5: 'expressao afetiva, criatividade e prazer',
+    6: 'rotina, metodo e organizacao do cotidiano',
+    7: 'relacoes, pactos e alinhamento com o outro',
+    8: 'intimidade, partilhas e transformacao interna',
+    9: 'visao de longo alcance, fe e aprendizado',
+    10: 'carreira, reputacao e direcao publica',
+    11: 'rede de apoio, colaboracoes e futuro',
+    12: 'fechamentos, descanso e limpeza de padroes',
+  },
+  'en-US': {
+    1: 'self-image, physical energy and initiative',
+    2: 'resources, material safety and personal value',
+    3: 'practical communication, studies and short agreements',
+    4: 'emotional foundation, family and home structure',
+    5: 'affection expression, creativity and joy',
+    6: 'routine, method and daily organization',
+    7: 'relationships, agreements and alignment with others',
+    8: 'intimacy, shared resources and inner transformation',
+    9: 'long-range vision, meaning and learning',
+    10: 'career, reputation and public direction',
+    11: 'support network, collaboration and future goals',
+    12: 'closures, rest and pattern release',
+  },
+  'es-ES': {
+    1: 'autoimagen, energia fisica e iniciativa',
+    2: 'recursos, seguridad material y valor personal',
+    3: 'comunicacion practica, estudios y acuerdos cortos',
+    4: 'base emocional, familia y estructura del hogar',
+    5: 'expresion afectiva, creatividad y disfrute',
+    6: 'rutina, metodo y organizacion diaria',
+    7: 'vinculos, pactos y alineacion con el otro',
+    8: 'intimidad, recursos compartidos y transformacion interna',
+    9: 'vision de largo alcance, sentido y aprendizaje',
+    10: 'carrera, reputacion y direccion publica',
+    11: 'red de apoyo, colaboraciones y futuro',
+    12: 'cierres, descanso y limpieza de patrones',
+  },
+  'it-IT': {
+    1: 'immagine di se, energia fisica e iniziativa',
+    2: 'risorse, sicurezza materiale e valore personale',
+    3: 'comunicazione pratica, studio e accordi brevi',
+    4: 'base emotiva, famiglia e struttura della casa',
+    5: 'espressione affettiva, creativita e piacere',
+    6: 'routine, metodo e organizzazione quotidiana',
+    7: 'relazioni, patti e allineamento con l altro',
+    8: 'intimita, risorse condivise e trasformazione interna',
+    9: 'visione di lungo periodo, senso e apprendimento',
+    10: 'carriera, reputazione e direzione pubblica',
+    11: 'rete di supporto, collaborazioni e futuro',
+    12: 'chiusure, riposo e rilascio dei vecchi schemi',
+  },
+}
+
 const ASPECT_MEANING: Record<string, string> = {
   conjuncao: 'concentracao forte de energia no mesmo tema',
   oposicao: 'polaridade que pede equilibrio entre extremos',
@@ -391,6 +450,12 @@ function getHouseSymbolism(language: AppLanguage, house: number): string {
   return HOUSE_SYMBOLISM[house] || ''
 }
 
+function getHousePositionalFocus(language: AppLanguage, house: number): string {
+  return HOUSE_POSITIONAL_FOCUS[language]?.[house]
+    || HOUSE_POSITIONAL_FOCUS['pt-BR']?.[house]
+    || ''
+}
+
 function normalizeAspect(value: unknown): string {
   const raw = String(value || '')
     .trim()
@@ -519,17 +584,18 @@ function getAreaLabel(areaLabel?: string | null, language?: string | null): stri
 function buildActionHint(aspectKey: string, house: number | null, areaLabel?: string | null, language?: string | null): string {
   const lang = getLang(language)
   const area = getAreaLabel(areaLabel, lang)
+  const houseFocus = house ? getHousePositionalFocus(lang, house) : ''
   if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
-    if (lang === 'en-US') return `Practical action: reduce friction, set one objective priority in ${area}, and adjust pace for 48h.`
-    if (lang === 'es-ES') return `Accion practica: reduce friccion, define una prioridad objetiva en ${area} y ajusta el ritmo por 48h.`
-    if (lang === 'it-IT') return `Azione pratica: riduci attrito, definisci una priorita oggettiva in ${area} e regola il ritmo per 48h.`
-    return `Acao pratica: reduza atrito, defina uma prioridade objetiva em ${area} e ajuste o ritmo por 48h.`
+    if (lang === 'en-US') return `Practical action: reduce friction, set one objective priority in ${area}, and adjust pace for 48h${houseFocus ? ` with focus on ${houseFocus}` : ''}.`
+    if (lang === 'es-ES') return `Accion practica: reduce friccion, define una prioridad objetiva en ${area} y ajusta el ritmo por 48h${houseFocus ? ` con foco en ${houseFocus}` : ''}.`
+    if (lang === 'it-IT') return `Azione pratica: riduci attrito, definisci una priorita oggettiva in ${area} e regola il ritmo per 48h${houseFocus ? ` con focus su ${houseFocus}` : ''}.`
+    return `Acao pratica: reduza atrito, defina uma prioridade objetiva em ${area} e ajuste o ritmo por 48h${houseFocus ? ` com foco em ${houseFocus}` : ''}.`
   }
   if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
-    if (lang === 'en-US') return `Practical action: use the flow to complete one concrete delivery in ${area}.`
-    if (lang === 'es-ES') return `Accion practica: aprovecha la fluidez para concluir una entrega concreta en ${area}.`
-    if (lang === 'it-IT') return `Azione pratica: sfrutta la fluidita per completare un risultato concreto in ${area}.`
-    return `Acao pratica: aproveite a fluidez para concluir uma entrega concreta em ${area}.`
+    if (lang === 'en-US') return `Practical action: use the flow to complete one concrete delivery in ${area}${houseFocus ? `, prioritizing ${houseFocus}` : ''}.`
+    if (lang === 'es-ES') return `Accion practica: aprovecha la fluidez para concluir una entrega concreta en ${area}${houseFocus ? `, priorizando ${houseFocus}` : ''}.`
+    if (lang === 'it-IT') return `Azione pratica: sfrutta la fluidita per completare un risultato concreto in ${area}${houseFocus ? `, dando priorita a ${houseFocus}` : ''}.`
+    return `Acao pratica: aproveite a fluidez para concluir uma entrega concreta em ${area}${houseFocus ? `, priorizando ${houseFocus}` : ''}.`
   }
   if (aspectKey === 'ingress' && house) {
     if (lang === 'en-US') return `Practical action: reorganize your schedule around House ${house} themes and track daily effects.`
@@ -537,10 +603,10 @@ function buildActionHint(aspectKey: string, house: number | null, areaLabel?: st
     if (lang === 'it-IT') return `Azione pratica: riorganizza l agenda secondo i temi della Casa ${house} e monitora l effetto quotidiano.`
     return `Acao pratica: reorganize a agenda conforme os temas da Casa ${house} e acompanhe o efeito no dia a dia.`
   }
-  if (lang === 'en-US') return `Practical action: observe signals, log decisions, and execute one simple next step in ${area}.`
-  if (lang === 'es-ES') return `Accion practica: observa senales, registra decisiones y ejecuta un siguiente paso simple en ${area}.`
-  if (lang === 'it-IT') return `Azione pratica: osserva i segnali, registra le decisioni ed esegui un passo semplice in ${area}.`
-  return `Acao pratica: observe sinais, registre decisoes e execute um proximo passo simples em ${area}.`
+  if (lang === 'en-US') return `Practical action: observe signals, log decisions, and execute one simple next step in ${area}${houseFocus ? ` connected to ${houseFocus}` : ''}.`
+  if (lang === 'es-ES') return `Accion practica: observa senales, registra decisiones y ejecuta un siguiente paso simple en ${area}${houseFocus ? ` conectado con ${houseFocus}` : ''}.`
+  if (lang === 'it-IT') return `Azione pratica: osserva i segnali, registra le decisioni ed esegui un passo semplice in ${area}${houseFocus ? ` collegato a ${houseFocus}` : ''}.`
+  return `Acao pratica: observe sinais, registre decisoes e execute um proximo passo simples em ${area}${houseFocus ? ` conectado a ${houseFocus}` : ''}.`
 }
 
 function buildScoreLink(aspectKey: string, areaLabel?: string | null, language?: string | null): string {
@@ -648,6 +714,7 @@ export function buildAstroTransitNarrative(
   const phaseLabel = getPhaseLabel(transit, lang)
   const area = getAreaLabel(areaLabel, lang)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
+  const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
   const actionHint = buildActionHint(aspectKey, house, areaLabel, lang)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
   const phaseVerb = pickVariant(seed, ['sinaliza', 'reforca', 'reorganiza'], 1)
@@ -811,16 +878,16 @@ export function buildUnifiedTransitNarrative(
   const modalIntro = (() => {
     const dynamicLine = (() => {
       if (house && aspectKey && aspectKey !== 'neutral') {
-        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete in ${area}.`
-        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto en ${area}.`
-        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto in ${area}.`
-        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto em ${area}.`
+        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete in ${area}${positionalFocus ? `, especially in ${positionalFocus}` : ''}.`
+        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto en ${area}${positionalFocus ? `, especialmente en ${positionalFocus}` : ''}.`
+        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto in ${area}${positionalFocus ? `, soprattutto in ${positionalFocus}` : ''}.`
+        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto em ${area}${positionalFocus ? `, especialmente em ${positionalFocus}` : ''}.`
       }
       if (house) {
-        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices in ${area}.`
-        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas en ${area}.`
-        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche in ${area}.`
-        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas em ${area}.`
+        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices in ${area}${positionalFocus ? ` around ${positionalFocus}` : ''}.`
+        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas en ${area}${positionalFocus ? ` alrededor de ${positionalFocus}` : ''}.`
+        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche in ${area}${positionalFocus ? ` attorno a ${positionalFocus}` : ''}.`
+        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas em ${area}${positionalFocus ? ` em torno de ${positionalFocus}` : ''}.`
       }
       if (lang === 'en-US') return `${transitPlanet} activates ${aspectMeaning} in ${area}, asking for strategic reading of timing and priorities.`
       if (lang === 'es-ES') return `${transitPlanet} activa ${aspectMeaning} en ${area}, pidiendo lectura estrategica de fase y prioridades.`
