@@ -19,30 +19,11 @@ import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
-import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 
 const { height } = Dimensions.get('window')
-const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v1'
-
-const PLANET_IMAGE_ORDER: PlanetKey[] = [
-  'Sun',
-  'Moon',
-  'Mercury',
-  'Venus',
-  'Mars',
-  'Jupiter',
-  'Saturn',
-  'Uranus',
-  'Neptune',
-  'Pluto',
-]
-
-const toPlanetImageKey = (value: unknown): PlanetKey | null => {
-  const token = String(value || '').trim()
-  return PLANET_IMAGE_ORDER.includes(token as PlanetKey) ? (token as PlanetKey) : null
-}
+const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
 
 // Sistema de cores e icones por area de vida (mantendo identidade original)
 const AREA_ICONS: Record<string, string> = {
@@ -283,6 +264,20 @@ const normalizeAspectKey = (value: string): string => {
   if (normalized.includes('neutral') || normalized.includes('neutro')) return 'neutral'
   return normalized
 }
+
+const MINOR_ASPECT_KEYS = new Set([
+  'quincuncio',
+  'semissextil',
+  'semiquadratura',
+  'sesquiquadratura',
+])
+
+const isMinorAspectTransit = (transit: any): boolean => {
+  const aspectKey = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
+  return MINOR_ASPECT_KEYS.has(aspectKey)
+}
+
+const isMajorAspectTransit = (transit: any): boolean => !isMinorAspectTransit(transit)
 
 const getAspectLabel = (type: string): string => {
   const normalized = normalizeAspectKey(type)
@@ -581,9 +576,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
-  const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
-  const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
-  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'planet' | 'house'>>(['planet', 'house'])
+  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor'>>(['major', 'minor'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
@@ -614,13 +607,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         const raw = await AsyncStorage.getItem(MODAL_FILTER_PREFS_KEY)
         if (!raw || cancelled) return
         const parsed = JSON.parse(raw || '{}') as {
-          facetFilters?: Array<'planet' | 'house'>
+          facetFilters?: Array<'major' | 'minor'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
           filtersExpanded?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
-          ? parsed.facetFilters.filter((value) => value === 'planet' || value === 'house')
+          ? parsed.facetFilters.filter((value) => value === 'major' || value === 'minor')
           : []
         if (nextFacetFilters.length) setSelectedFacetFilters(Array.from(new Set(nextFacetFilters)))
         if (parsed.toneFilter === 'all' || parsed.toneFilter === 'challenging' || parsed.toneFilter === 'harmonic') {
@@ -657,8 +650,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   React.useEffect(() => {
     setActiveScoreComponent(null)
-    setSelectedPlanetFilters([])
-    setSelectedHouseFilters([])
   }, [visible, areaData?.name])
 
   //  DADOS REAIS DO ENGINE ASTROLaâ€œGICO
@@ -1902,7 +1893,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const renderTransitList = (
-    items: Array<{ transit: any; facetKind: 'planet' | 'house' }>,
+    items: Array<{ transit: any; facetKind: 'major' | 'minor' }>,
     startIndex = 0,
     featured = false
   ) =>
@@ -1928,7 +1919,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const durationLabel = getDurationLabel(transit)
       const relativeTiming = getTimingLabelLocalized(transit)
       const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
-      const transitTitle = buildTransitTitle(transit, facetKind)
+      const transitTitle = buildTransitTitle(transit, getTransitColumnKind(transit))
       const houseLabel = getTransitHouseLabel(transit)
       const houseLabelPrefix = houseLabel ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
       const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
@@ -2064,47 +2055,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const renderTransitsSection = () => {
     const orderedTransits = [...transitItems].sort((a, b) => getTransitPriorityScore(b) - getTransitPriorityScore(a))
-    const planetTargets = new Set([
-      'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
-      'ASC', 'MC', 'DSC', 'IC'
-    ])
-    const hasPlanetFacet = (transit: any): boolean => {
-      const rawTarget = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').toUpperCase()
-      const targetAngle = String(transit?.target?.angle || '').toUpperCase()
-      const normalizedTarget = rawTarget.replace(/^NATAL_/, '').replace(/^NATAL:/, '')
-      if (['ASC', 'MC', 'DSC', 'IC'].includes(targetAngle)) return true
-      if (planetTargets.has(normalizedTarget)) return true
-      if (rawTarget && !rawTarget.startsWith('HOUSE_') && !rawTarget.startsWith('CASA')) return true
-      return false
-    }
-    const hasHouseFacet = (transit: any): boolean => {
-      const personalHouse = getTransitOnNatalHouseLabel(transit)
-      if (personalHouse) return true
-      const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
-      return Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
-    }
-    const toPlanetFacetKey = (transit: any) => {
-      const normalizedAspect = normalizeAspectKey(String(transit?.aspectName || transit?.type || ''))
-      const target = String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || 'NA')
-      return [
-        toIdentityToken(transit?.seriesId || ''),
-        toIdentityToken(transit?.contactIndex || ''),
-        toIdentityToken(transit?.transitPlanet || 'NA'),
-        toIdentityToken(target),
-        toIdentityToken(normalizedAspect || 'NA'),
-        toIdentityToken(transit?.phase || ''),
-      ].join('|')
-    }
-    const toHouseFacetKey = (transit: any) => {
-      const personalHouse = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit) || 'NA'
-      return [
-        toIdentityToken(transit?.seriesId || ''),
-        toIdentityToken(transit?.contactIndex || ''),
-        toIdentityToken(transit?.transitPlanet || 'NA'),
-        toIdentityToken(personalHouse),
-        toIdentityToken(transit?.phase || ''),
-      ].join('|')
-    }
     const dedupeByKey = (items: any[], keyBuilder: (transit: any) => string) => {
       const map = new Map<string, any>()
       items.forEach((item) => {
@@ -2133,7 +2083,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       if (!candidates.length) return Number.MAX_SAFE_INTEGER
       return Math.min(...candidates.map((value) => Math.abs(value - now)))
     }
-    const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'planet' | 'house' }>) => {
+    const sortTransitEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' }>) => {
       return [...items].sort((a, b) => {
         if (selectedSortMode === 'recent') {
           const recentDelta = getTransitRecencyDistance(a.transit) - getTransitRecencyDistance(b.transit)
@@ -2151,72 +2101,38 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         return getTransitPriorityScore(b.transit) - getTransitPriorityScore(a.transit)
       })
     }
-
-    const planetDriverTransits = orderedTransits.filter((transit) => hasPlanetFacet(transit))
-    const houseDriverTransits = orderedTransits.filter((transit) => hasHouseFacet(transit))
-    const planetTransits = dedupeByKey(planetDriverTransits, toPlanetFacetKey)
-    const houseTransits = dedupeByKey(houseDriverTransits, toHouseFacetKey)
+    const transitStableKey = (transit: any) =>
+      String(
+        transit?.id ||
+          [
+            toIdentityToken(transit?.seriesId || ''),
+            toIdentityToken(transit?.contactIndex || ''),
+            toIdentityToken(transit?.transitPlanet || ''),
+            toIdentityToken(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.target?.house || ''),
+            toIdentityToken(transit?.aspectName || transit?.type || ''),
+            toIdentityToken(transit?.startAt || transit?.window?.start || ''),
+            toIdentityToken(transit?.peakAt || transit?.window?.exact || ''),
+            toIdentityToken(transit?.endAt || transit?.window?.end || ''),
+          ].join('|')
+      )
+    const dedupedTransits = dedupeByKey(orderedTransits, transitStableKey)
     const toneMatchesFilter = (transit: any): boolean => {
       if (selectedToneFilter === 'all') return true
       const tone = getTransitToneCategory(transit)
       if (selectedToneFilter === 'harmonic') return tone === 'harmonic'
       return tone === 'challenging'
     }
-    const planetFilterOptions = Array.from(
-      new Set(planetTransits.map((transit) => String(transit?.transitPlanet || '').trim()).filter(Boolean))
-    ).sort((a, b) => {
-      const aKey = toPlanetImageKey(a)
-      const bKey = toPlanetImageKey(b)
-      const aIndex = aKey ? PLANET_IMAGE_ORDER.indexOf(aKey) : Number.MAX_SAFE_INTEGER
-      const bIndex = bKey ? PLANET_IMAGE_ORDER.indexOf(bKey) : Number.MAX_SAFE_INTEGER
-      if (aIndex !== bIndex) return aIndex - bIndex
-      return a.localeCompare(b, 'pt-BR')
-    })
-    const areaKey = String(areaData?.name || '').toLowerCase()
-    const relevantAreaHouses = getRelevantHousesForArea(areaKey).map((house) => String(house))
-    const houseFromTransits = houseTransits
-      .map((transit) => getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit))
-      .filter((value): value is string => !!value)
-    const houseFilterOptions = Array.from(new Set([...relevantAreaHouses, ...houseFromTransits])).sort(
-      (a, b) => Number(a) - Number(b)
-    )
-    const matchesSelectedPlanet = (transit: any) => {
-      if (!selectedPlanetFilters.length) return true
-      const transitPlanet = String(transit?.transitPlanet || '').trim()
-      return !!transitPlanet && selectedPlanetFilters.includes(transitPlanet)
-    }
-    const filteredPlanetTransits = planetTransits.filter((transit) => matchesSelectedPlanet(transit))
-    const filteredHouseTransits = houseTransits.filter((transit) => {
-      if (!matchesSelectedPlanet(transit)) return false
-      if (!selectedHouseFilters.length) return true
-      const house = getTransitOnNatalHouseLabel(transit) || getTransitNatalHouseLabel(transit)
-      return !!house && selectedHouseFilters.includes(house)
-    })
-    const combinedTransitsRaw: Array<{ transit: any; facetKind: 'planet' | 'house' }> = [
-      ...(selectedFacetFilters.includes('planet')
-        ? filteredPlanetTransits.map((transit) => ({ transit, facetKind: 'planet' as const }))
+    const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' }> = [
+      ...(selectedFacetFilters.includes('major')
+        ? dedupedTransits.filter((transit) => isMajorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'major' as const }))
         : []),
-      ...(selectedFacetFilters.includes('house')
-        ? filteredHouseTransits.map((transit) => ({ transit, facetKind: 'house' as const }))
+      ...(selectedFacetFilters.includes('minor')
+        ? dedupedTransits.filter((transit) => isMinorAspectTransit(transit)).map((transit) => ({ transit, facetKind: 'minor' as const }))
         : []),
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
-    const transitStableKey = (transit: any) =>
-      String(
-        transit?.id ||
-        [
-          toIdentityToken(transit?.seriesId || ''),
-          toIdentityToken(transit?.contactIndex || ''),
-          toIdentityToken(transit?.transitPlanet || ''),
-          toIdentityToken(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.target?.house || ''),
-          toIdentityToken(transit?.aspectName || transit?.type || ''),
-          toIdentityToken(transit?.startAt || transit?.window?.start || ''),
-          toIdentityToken(transit?.peakAt || transit?.window?.exact || ''),
-          toIdentityToken(transit?.endAt || transit?.window?.end || ''),
-        ].join('|')
-      )
-    const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'planet' | 'house' }>) => {
-      const map = new Map<string, { transit: any; facetKind: 'planet' | 'house' }>()
+    const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' }>) => {
+      const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' }>()
       items.forEach((entry) => {
         const key = transitStableKey(entry.transit)
         const existing = map.get(key)
@@ -2224,7 +2140,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           map.set(key, entry)
           return
         }
-        if (existing.facetKind === 'planet' && entry.facetKind === 'house') {
+        if (existing.facetKind === 'major' && entry.facetKind === 'minor') {
           map.set(key, entry)
           return
         }
@@ -2238,8 +2154,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const sortedTransits = sortTransitEntries(combinedTransits)
     const visibleTransitCards = renderTransitList(sortedTransits, 0, false)
     const activeFiltersCount =
-      selectedPlanetFilters.length +
-      selectedHouseFilters.length +
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
       (selectedFacetFilters.length === 2 ? 0 : 1)
@@ -2281,25 +2195,25 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         <TouchableOpacity
                           onPress={() =>
                             setSelectedFacetFilters((prev) =>
-                              prev.includes('planet') ? prev.filter((item) => item !== 'planet') : [...prev, 'planet']
+                              prev.includes('major') ? prev.filter((item) => item !== 'major') : [...prev, 'major']
                             )
                           }
-                          style={[styles.toneToggleChip, selectedFacetFilters.includes('planet') ? styles.toneToggleChipActive : null]}
+                          style={[styles.toneToggleChip, selectedFacetFilters.includes('major') ? styles.toneToggleChipActive : null]}
                         >
-                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('planet') ? styles.toneToggleTextActive : null]}>
-                            {tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')}
+                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('major') ? styles.toneToggleTextActive : null]}>
+                            {tl('Aspectos maiores', 'Major aspects', 'Aspectos mayores', 'Aspetti maggiori')}
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() =>
                             setSelectedFacetFilters((prev) =>
-                              prev.includes('house') ? prev.filter((item) => item !== 'house') : [...prev, 'house']
+                              prev.includes('minor') ? prev.filter((item) => item !== 'minor') : [...prev, 'minor']
                             )
                           }
-                          style={[styles.toneToggleChip, selectedFacetFilters.includes('house') ? styles.toneToggleChipActive : null]}
+                          style={[styles.toneToggleChip, selectedFacetFilters.includes('minor') ? styles.toneToggleChipActive : null]}
                         >
-                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('house') ? styles.toneToggleTextActive : null]}>
-                            {tl('Planeta x Casa', 'Planet x House', 'Planeta x Casa', 'Pianeta x Casa')}
+                          <Text style={[styles.toneToggleText, selectedFacetFilters.includes('minor') ? styles.toneToggleTextActive : null]}>
+                            {tl('Aspectos menores', 'Minor aspects', 'Aspectos menores', 'Aspetti minori')}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -2346,62 +2260,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <View style={styles.filtersSection}>
-                      <View style={styles.filterBlock}>
-                        <Text style={styles.filterTitle}>
-                          {tl('Filtro • Planeta x Planeta', 'Filter • Planet x Planet', 'Filtro • Planeta x Planeta', 'Filtro • Pianeta x Pianeta')}
-                        </Text>
-                        <View style={styles.filterRow}>
-                          {planetFilterOptions.map((planet) => {
-                            const selected = selectedPlanetFilters.includes(planet)
-                            const planetKey = toPlanetImageKey(planet)
-                            const imageUri = planetKey ? getPlanetImageUri(planetKey) : undefined
-                            return (
-                              <TouchableOpacity
-                                key={`planet-filter-${planet}`}
-                                style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
-                                onPress={() =>
-                                  setSelectedPlanetFilters((prev) =>
-                                    prev.includes(planet) ? prev.filter((item) => item !== planet) : [...prev, planet]
-                                  )
-                                }
-                              >
-                                {imageUri ? <Image source={{ uri: imageUri }} style={styles.filterChipPlanetImage} /> : null}
-                                <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                                  {planetLabel(planet)}
-                                </Text>
-                              </TouchableOpacity>
-                            )
-                          })}
-                        </View>
-                      </View>
-
-                      <View style={styles.filterBlock}>
-                        <Text style={styles.filterTitle}>
-                          {tl('Filtro • Planeta x Casa', 'Filter • Planet x House', 'Filtro • Planeta x Casa', 'Filtro • Pianeta x Casa')}
-                        </Text>
-                        <View style={styles.filterRow}>
-                          {houseFilterOptions.map((house) => {
-                            const selected = selectedHouseFilters.includes(house)
-                            return (
-                              <TouchableOpacity
-                                key={`house-filter-${house}`}
-                                style={[styles.filterChip, selected ? styles.filterChipSelected : null]}
-                                onPress={() =>
-                                  setSelectedHouseFilters((prev) =>
-                                    prev.includes(house) ? prev.filter((item) => item !== house) : [...prev, house]
-                                  )
-                                }
-                              >
-                                <Text style={[styles.filterChipText, selected ? styles.filterChipTextSelected : null]}>
-                                  {tl('Casa', 'House', 'Casa', 'Casa')} {house}
-                                </Text>
-                              </TouchableOpacity>
-                            )
-                          })}
-                        </View>
-                      </View>
-                    </View>
                   </>
                 ) : null}
                 <View style={styles.transitHeaderTitleWrap}>
@@ -2413,10 +2271,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               {selectedFacetFilters.length === 0 ? (
                 <Text style={styles.emptyColumnText}>
                   {tl(
-                    'Ative ao menos um tipo de trânsito (Planeta x Planeta ou Planeta x Casa).',
-                    'Enable at least one transit type (Planet x Planet or Planet x House).',
-                    'Activa al menos un tipo de tránsito (Planeta x Planeta o Planeta x Casa).',
-                    'Attiva almeno un tipo di transito (Pianeta x Pianeta o Pianeta x Casa).'
+                    'Ative ao menos um tipo de aspecto (maior ou menor).',
+                    'Enable at least one aspect type (major or minor).',
+                    'Activa al menos un tipo de aspecto (mayor o menor).',
+                    'Attiva almeno un tipo di aspetto (maggiore o minore).'
                   )}
                 </Text>
               ) : visibleTransitCards.length ? (
@@ -2467,29 +2325,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
           let transitTitle = tl('Trânsito', 'Transit', 'Tránsito', 'Transito')
           let transitMeta = ''
-          let suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
+          let suggestionContextLabel = tl('Aspecto maior', 'Major aspect', 'Aspecto mayor', 'Aspetto maggiore')
           if (transit) {
-            const columnKind = getTransitColumnKind(transit)
-            suggestionContextLabel = columnKind === 'house'
-              ? tl('Planeta x Casa', 'Planet x House', 'Planeta x Casa', 'Pianeta x Casa')
-              : tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
+            suggestionContextLabel = isMinorAspectTransit(transit)
+              ? tl('Aspecto menor', 'Minor aspect', 'Aspecto menor', 'Aspetto minore')
+              : tl('Aspecto maior', 'Major aspect', 'Aspecto mayor', 'Aspetto maggiore')
             transitTitle = buildTransitTitle(transit)
             const houseLabel = getTransitHouseLabel(transit)
             const orbLabel = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : ''
-            if (columnKind === 'house') {
-              const houseName = getHouseNameByNumber(houseLabel)
-              transitMeta = [houseLabel ? `${tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')} ${houseLabel}` : '', houseName, orbLabel]
-                .filter(Boolean)
-                .join(' • ')
-            } else {
-              transitMeta = [transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${planetLabel(transit.natalPlanet)}` : '', orbLabel]
-                .filter(Boolean)
-                .join(' • ')
-            }
+            const houseName = getHouseNameByNumber(houseLabel)
+            transitMeta = [
+              houseLabel ? `${tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')} ${houseLabel}` : '',
+              houseName,
+              transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${planetLabel(transit.natalPlanet)}` : '',
+              orbLabel,
+            ]
+              .filter(Boolean)
+              .join(' • ')
           } else if (aspect) {
             transitTitle = `${planetLabel(aspect.planet1)} ${getAspectLabel(aspect.type)} ${planetLabel(aspect.planet2)}`
             transitMeta = `${tl('Força', 'Strength', 'Fuerza', 'Forza')} ${aspect.score} • Orb ${safeFixed(aspect.orb)}°`
-            suggestionContextLabel = tl('Planeta x Planeta', 'Planet x Planet', 'Planeta x Planeta', 'Pianeta x Pianeta')
+            suggestionContextLabel = MINOR_ASPECT_KEYS.has(normalizeAspectKey(String(aspect.type || '')))
+              ? tl('Aspecto menor', 'Minor aspect', 'Aspecto menor', 'Aspetto minore')
+              : tl('Aspecto maior', 'Major aspect', 'Aspecto mayor', 'Aspetto maggiore')
           }
           const timingLabel = transit ? getTimingLabelLocalized(transit) : null
 
