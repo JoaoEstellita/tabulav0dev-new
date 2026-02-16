@@ -94,10 +94,11 @@ const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v3'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v3'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
-const FORECAST_EVENT_FILTERS_KEY_PREFIX = 'forecast_event_filters_v1'
+const FORECAST_EVENT_FILTERS_KEY_PREFIX = 'forecast_event_filters_v2'
 
-type ForecastSortBy = 'impact_desc' | 'recent_desc' | 'peak_near' | 'intensity_desc' | 'orb_asc'
-type ForecastFilterCategory = 'transits' | 'aspects' | 'dignities' | 'houseStrength' | 'conditions' | 'sort'
+type ForecastSortBy = 'impact_desc' | 'recent_desc'
+type ForecastFilterCategory = 'aspectType' | 'sort'
+type ForecastAspectType = 'major' | 'minor'
 type ForecastCondition = 'retrograde' | 'stationary' | 'applying' | 'separating' | 'exact'
 type ForecastTransitKind = 'planet_planet' | 'planet_house'
 type ForecastDignity = 'domicile_exalted' | 'debilitated' | 'neutral' | 'unknown'
@@ -105,28 +106,30 @@ type ForecastHouseStrength = 'angular' | 'succedent' | 'cadent' | 'unknown'
 
 type ForecastEventFilterState = {
   version: number
-  transitKinds: ForecastTransitKind[]
-  aspects: string[]
-  dignities: ForecastDignity[]
-  houseStrengths: ForecastHouseStrength[]
-  conditions: ForecastCondition[]
-  impacts: Array<'UP' | 'DOWN' | 'MIXED'>
-  domains: string[]
+  aspectTypes: ForecastAspectType[]
   sortBy: ForecastSortBy
   updatedAt: number
 }
 
 const DEFAULT_EVENT_FILTERS: ForecastEventFilterState = {
-  version: 1,
-  transitKinds: [],
-  aspects: [],
-  dignities: [],
-  houseStrengths: [],
-  conditions: [],
-  impacts: [],
-  domains: [],
+  version: 2,
+  aspectTypes: [],
   sortBy: 'impact_desc',
   updatedAt: 0,
+}
+
+function sanitizeForecastEventFilters(raw: Partial<ForecastEventFilterState> | null | undefined): ForecastEventFilterState {
+  const nextSortBy: ForecastSortBy = raw?.sortBy === 'recent_desc' ? 'recent_desc' : 'impact_desc'
+  const nextAspectTypes = Array.isArray(raw?.aspectTypes)
+    ? raw!.aspectTypes.filter((item): item is ForecastAspectType => item === 'major' || item === 'minor')
+    : []
+  return {
+    ...DEFAULT_EVENT_FILTERS,
+    sortBy: nextSortBy,
+    aspectTypes: Array.from(new Set(nextAspectTypes)),
+    updatedAt: Number(raw?.updatedAt || 0),
+    version: 2,
+  }
 }
 
 function scoreColor(score: number) {
@@ -179,6 +182,12 @@ function toAspectKey(raw: string) {
   return normalizeAspectLabel(raw || '').toLowerCase()
 }
 
+function inferAspectType(event: ForecastEvent): ForecastAspectType {
+  const key = toAspectKey(event.aspect)
+  const major = new Set(['conjuncao', 'oposicao', 'quadratura', 'trigono', 'sextil'])
+  return major.has(key) ? 'major' : 'minor'
+}
+
 function inferTransitKind(event: ForecastEvent): ForecastTransitKind {
   const target = String(event.natalPoint || '')
   return /(?:casa|house)\s*\d{1,2}/i.test(target) ? 'planet_house' : 'planet_planet'
@@ -221,15 +230,7 @@ function normalizeEventDomains(domains: string[]) {
 }
 
 function getFiltersActiveCount(filters: ForecastEventFilterState) {
-  return (
-    filters.transitKinds.length +
-    filters.aspects.length +
-    filters.dignities.length +
-    filters.houseStrengths.length +
-    filters.conditions.length +
-    filters.impacts.length +
-    filters.domains.length
-  )
+  return filters.aspectTypes.length + (filters.sortBy !== DEFAULT_EVENT_FILTERS.sortBy ? 1 : 0)
 }
 
 function normalizeAspectLabel(rawAspect: string) {
@@ -871,7 +872,7 @@ export default function ForecastScreen() {
         const localRaw = await AsyncStorage.getItem(filtersStorageKey)
         let localState: ForecastEventFilterState | null = null
         if (localRaw) {
-          localState = { ...DEFAULT_EVENT_FILTERS, ...JSON.parse(localRaw) }
+          localState = sanitizeForecastEventFilters(JSON.parse(localRaw))
         }
         if (mounted && localState) setEventFilters(localState)
 
@@ -879,7 +880,7 @@ export default function ForecastScreen() {
           const userDoc = await getDoc(doc(db, 'users', user.uid))
           const remote = userDoc.data()?.preferences?.forecastEventFilters as Partial<ForecastEventFilterState> | undefined
           if (remote && mounted) {
-            const remoteState = { ...DEFAULT_EVENT_FILTERS, ...remote }
+            const remoteState = sanitizeForecastEventFilters(remote)
             const pickRemote = Number(remoteState.updatedAt || 0) >= Number(localState?.updatedAt || 0)
             if (pickRemote) {
               setEventFilters(remoteState)
@@ -931,7 +932,7 @@ export default function ForecastScreen() {
         const next = {
           ...updater(prev),
           updatedAt: Date.now(),
-          version: 1,
+          version: 2,
         }
         if (filtersHydrated) persistEventFilters(next)
         return next
@@ -1412,65 +1413,31 @@ export default function ForecastScreen() {
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
 
   const availableFilterOptions = useMemo(() => {
-    const transitKinds = new Set<ForecastTransitKind>()
-    const aspects = new Set<string>()
-    const dignities = new Set<ForecastDignity>()
-    const houseStrengths = new Set<ForecastHouseStrength>()
-    const conditions = new Set<ForecastCondition>()
-    const impacts = new Set<'UP' | 'DOWN' | 'MIXED'>()
-    const domains = new Set<string>()
+    const aspectTypes = new Set<ForecastAspectType>()
 
     selectedEventsRaw.forEach((event) => {
-      transitKinds.add(inferTransitKind(event))
-      aspects.add(toAspectKey(event.aspect))
-      dignities.add(inferDignity(event))
-      houseStrengths.add(inferHouseStrength(event))
-      inferConditions(event, eventPhaseMap[event.id] || null).forEach((condition) => conditions.add(condition))
-      impacts.add(event.impact)
-      normalizeEventDomains(event.domains || []).forEach((domain) => domains.add(domain))
+      aspectTypes.add(inferAspectType(event))
     })
 
     return {
-      transitKinds: Array.from(transitKinds),
-      aspects: Array.from(aspects),
-      dignities: Array.from(dignities),
-      houseStrengths: Array.from(houseStrengths),
-      conditions: Array.from(conditions),
-      impacts: Array.from(impacts),
-      domains: Array.from(domains),
+      aspectTypes: Array.from(aspectTypes),
     }
-  }, [eventPhaseMap, selectedEventsRaw])
+  }, [selectedEventsRaw])
 
   const filteredEventDisplayData = useMemo(() => {
     const withMeta = eventDisplayData.map((item) => {
-      const aspectKey = toAspectKey(item.event.aspect)
-      const transitKind = inferTransitKind(item.event)
-      const dignity = inferDignity(item.event)
-      const houseStrength = inferHouseStrength(item.event)
-      const conditions = inferConditions(item.event, item.phase)
-      const domains = normalizeEventDomains(item.event.domains || [])
+      const aspectType = inferAspectType(item.event)
       return {
         ...item,
         meta: {
-          aspectKey,
-          transitKind,
-          dignity,
-          houseStrength,
-          conditions,
-          domains,
+          aspectType,
         },
       }
     })
 
     const filtered = withMeta.filter((item) => {
-      const { meta, event } = item
-      if (eventFilters.transitKinds.length && !eventFilters.transitKinds.includes(meta.transitKind)) return false
-      if (eventFilters.aspects.length && !eventFilters.aspects.includes(meta.aspectKey)) return false
-      if (eventFilters.dignities.length && !eventFilters.dignities.includes(meta.dignity)) return false
-      if (eventFilters.houseStrengths.length && !eventFilters.houseStrengths.includes(meta.houseStrength)) return false
-      if (eventFilters.conditions.length && !eventFilters.conditions.some((condition) => meta.conditions.includes(condition))) return false
-      if (eventFilters.impacts.length && !eventFilters.impacts.includes(event.impact)) return false
-      if (eventFilters.domains.length && !eventFilters.domains.some((domain) => meta.domains.includes(domain))) return false
+      const { meta } = item
+      if (eventFilters.aspectTypes.length && !eventFilters.aspectTypes.includes(meta.aspectType)) return false
       return true
     })
 
@@ -1479,20 +1446,8 @@ export default function ForecastScreen() {
       const aEvent = a.event
       const bEvent = b.event
       switch (eventFilters.sortBy) {
-        case 'intensity_desc':
-          return Number(bEvent.intensity || 0) - Number(aEvent.intensity || 0)
-        case 'orb_asc':
-          return Number(aEvent.orbMax ?? 999) - Number(bEvent.orbMax ?? 999)
         case 'recent_desc':
           return String(bEvent.exactAt || '').localeCompare(String(aEvent.exactAt || ''))
-        case 'peak_near': {
-          const aExact = parseUTCDateString((aEvent.exactAt || '').slice(0, 10))
-          const bExact = parseUTCDateString((bEvent.exactAt || '').slice(0, 10))
-          const sel = selectedDateRef ? parseUTCDateString(selectedDateRef) : null
-          const aDelta = aExact && sel ? Math.abs(diffDaysUTC(sel, aExact)) : 999
-          const bDelta = bExact && sel ? Math.abs(diffDaysUTC(sel, bExact)) : 999
-          return aDelta - bDelta
-        }
         case 'impact_desc':
         default:
           return eventPriorityScore(bEvent, selectedDateRef) - eventPriorityScore(aEvent, selectedDateRef)
@@ -1510,23 +1465,14 @@ export default function ForecastScreen() {
   const clearAllFilters = useCallback(() => {
     updateEventFilters((prev) => ({
       ...prev,
-      transitKinds: [],
-      aspects: [],
-      dignities: [],
-      houseStrengths: [],
-      conditions: [],
-      impacts: [],
-      domains: [],
+      aspectTypes: [],
+      sortBy: DEFAULT_EVENT_FILTERS.sortBy,
     }))
   }, [updateEventFilters])
 
   const filterCategoryButtons: Array<{ key: ForecastFilterCategory; label: string }> = useMemo(
     () => [
-      { key: 'transits', label: tr('forecast.filters.transits', 'Transitos') },
-      { key: 'aspects', label: tr('forecast.filters.aspects', 'Aspectos') },
-      { key: 'dignities', label: tr('forecast.filters.dignities', 'Dignidades') },
-      { key: 'houseStrength', label: tr('forecast.filters.houseStrength', 'Forca de casa') },
-      { key: 'conditions', label: tr('forecast.filters.conditions', 'Condicoes') },
+      { key: 'aspectType', label: tr('forecast.filters.aspectType', 'Aspectos') },
       { key: 'sort', label: tr('forecast.filters.sort', 'Ordenacao') },
     ],
     [tr]
@@ -1534,71 +1480,20 @@ export default function ForecastScreen() {
 
   const filterModalOptions = useMemo(() => {
     switch (filterCategoryOpen) {
-      case 'transits':
-        return availableFilterOptions.transitKinds.map((item) => ({
-          key: item,
-          label: item === 'planet_house' ? tr('forecast.filters.transit.planetHouse', 'Planeta x Casa') : tr('forecast.filters.transit.planetPlanet', 'Planeta x Planeta'),
-          selected: eventFilters.transitKinds.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, transitKinds: toggleInArray(prev.transitKinds, item) })),
-        }))
-      case 'aspects':
-        return availableFilterOptions.aspects.map((item) => ({
-          key: item,
-          label: item,
-          selected: eventFilters.aspects.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, aspects: toggleInArray(prev.aspects, item) })),
-        }))
-      case 'dignities':
-        return availableFilterOptions.dignities.map((item) => ({
+      case 'aspectType':
+        return availableFilterOptions.aspectTypes.map((item) => ({
           key: item,
           label:
-            item === 'domicile_exalted'
-              ? tr('forecast.filters.dignity.strong', 'Domicilio/Exaltacao')
-              : item === 'debilitated'
-              ? tr('forecast.filters.dignity.weak', 'Detrimento/Queda')
-              : item === 'neutral'
-              ? tr('forecast.filters.dignity.neutral', 'Neutra')
-              : tr('forecast.filters.dignity.unknown', 'Nao informado'),
-          selected: eventFilters.dignities.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, dignities: toggleInArray(prev.dignities, item) })),
-        }))
-      case 'houseStrength':
-        return availableFilterOptions.houseStrengths.map((item) => ({
-          key: item,
-          label:
-            item === 'angular'
-              ? tr('forecast.filters.house.angular', 'Angular')
-              : item === 'succedent'
-              ? tr('forecast.filters.house.succedent', 'Sucedente')
-              : item === 'cadent'
-              ? tr('forecast.filters.house.cadent', 'Cadente')
-              : tr('forecast.filters.house.unknown', 'Nao informado'),
-          selected: eventFilters.houseStrengths.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, houseStrengths: toggleInArray(prev.houseStrengths, item) })),
-        }))
-      case 'conditions':
-        return availableFilterOptions.conditions.map((item) => ({
-          key: item,
-          label:
-            item === 'retrograde'
-              ? tr('forecast.filters.condition.retrograde', 'Retrogrado')
-              : item === 'stationary'
-              ? tr('forecast.filters.condition.stationary', 'Estacionario')
-              : item === 'applying'
-              ? tr('forecast.filters.condition.applying', 'Aplicando')
-              : item === 'separating'
-              ? tr('forecast.filters.condition.separating', 'Separando')
-              : tr('forecast.filters.condition.exact', 'Exato'),
-          selected: eventFilters.conditions.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, conditions: toggleInArray(prev.conditions, item) })),
+            item === 'major'
+              ? tr('forecast.filters.aspectType.major', 'Aspectos maiores')
+              : tr('forecast.filters.aspectType.minor', 'Aspectos menores'),
+          selected: eventFilters.aspectTypes.includes(item),
+          onToggle: () => updateEventFilters((prev) => ({ ...prev, aspectTypes: toggleInArray(prev.aspectTypes, item) })),
         }))
       case 'sort': {
         const options: Array<{ key: ForecastSortBy; label: string }> = [
           { key: 'impact_desc', label: tr('forecast.sort.impact', 'Maior impacto') },
-          { key: 'peak_near', label: tr('forecast.sort.peak', 'Mais perto do pico') },
           { key: 'recent_desc', label: tr('forecast.sort.recent', 'Mais recente') },
-          { key: 'intensity_desc', label: tr('forecast.sort.intensity', 'Maior intensidade') },
-          { key: 'orb_asc', label: tr('forecast.sort.orb', 'Menor orb') },
         ]
         return options.map((item) => ({
           key: item.key,
