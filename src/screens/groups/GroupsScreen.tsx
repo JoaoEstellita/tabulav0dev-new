@@ -1408,23 +1408,22 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               }}
                             >
                               <LinearGradient colors={cardColors as [string, string]} style={styles.memberStatusMiniInner}>
-                                <Text style={styles.memberStatusMiniLabel} numberOfLines={1}>
-                                  {entry.label}
-                                </Text>
+                                <View style={styles.memberStatusMiniHeader}>
+                                  <Text style={styles.memberStatusMiniLabel} numberOfLines={1}>
+                                    {entry.label}
+                                  </Text>
+                                  <View style={styles.memberSignalBadges}>
+                                    <View style={[styles.memberSignalBadge, styles.memberSignalBadgeMovement]}>
+                                      <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('movement')}</Text>
+                                    </View>
+                                    <View style={[styles.memberSignalBadge, styles.memberSignalBadgeAttention]}>
+                                      <Text style={styles.memberSignalBadgeText}>{getAxisShortLabel('attention')}</Text>
+                                    </View>
+                                  </View>
+                                </View>
                                 <Text style={styles.memberStatusMiniValue}>
                                   {percentage !== null ? `${percentage}%` : "--"}
                                 </Text>
-                                <View style={styles.memberStatusMiniTrack}>
-                                  <View
-                                    style={[
-                                      styles.memberStatusMiniFill,
-                                      {
-                                        width: `${Math.min(100, Math.max(0, percentage || 0))}%`,
-                                        backgroundColor: fillColor,
-                                      },
-                                    ]}
-                                  />
-                                </View>
                                 <View style={styles.memberAxisRow}>
                                   <Text style={styles.memberAxisLabel}>{getAxisShortLabel('movement')}</Text>
                                   <View style={styles.memberAxisTrack}>
@@ -2433,12 +2432,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 7,
     paddingHorizontal: 7,
-    minHeight: 84,
+    minHeight: 80,
+  },
+  memberStatusMiniHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 4,
   },
   memberStatusMiniLabel: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "600",
+    flexShrink: 1,
   },
   memberStatusMiniValue: {
     color: "#FFFFFF",
@@ -2446,16 +2452,31 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 2,
   },
-  memberStatusMiniTrack: {
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
-    overflow: "hidden",
-    marginTop: 4,
+  memberSignalBadges: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
   },
-  memberStatusMiniFill: {
-    height: "100%",
-    borderRadius: 999,
+  memberSignalBadge: {
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+  },
+  memberSignalBadgeMovement: {
+    backgroundColor: STATUS_AXIS_COLORS.movement,
+  },
+  memberSignalBadgeAttention: {
+    backgroundColor: STATUS_AXIS_COLORS.attention,
+  },
+  memberSignalBadgeText: {
+    color: "#0B1020",
+    fontSize: 7,
+    fontWeight: "800",
   },
   memberAxisRow: {
     flexDirection: "row",

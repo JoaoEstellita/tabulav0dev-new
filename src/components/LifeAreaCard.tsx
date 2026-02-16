@@ -78,13 +78,6 @@ export default function LifeAreaCard({
   const attentionValue = attentionFromArea ?? attentionFromStatus
   const movementColor = STATUS_AXIS_COLORS.movement
   const attentionColor = STATUS_AXIS_COLORS.attention
-  const rawDrivers = Array.isArray((area as any)?.statusMeta?.drivers)
-    ? (area as any).statusMeta.drivers
-    : []
-  const topFactorCount = rawDrivers.length
-  const movementHot = typeof movementValue === 'number' && movementValue >= 70
-  const attentionHot = typeof attentionValue === 'number' && attentionValue >= 70
-
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <LinearGradient
@@ -101,21 +94,12 @@ export default function LifeAreaCard({
             </Text>
           </View>
           <View style={styles.signalBadges}>
-            {attentionHot ? (
-              <View style={[styles.signalBadge, styles.signalBadgeAttention]}>
-                <Text style={styles.signalBadgeText}>{getAxisShortLabel('attention')}</Text>
-              </View>
-            ) : null}
-            {movementHot ? (
-              <View style={[styles.signalBadge, styles.signalBadgeMovement]}>
-                <Text style={styles.signalBadgeText}>{getAxisShortLabel('movement')}</Text>
-              </View>
-            ) : null}
-            {topFactorCount > 0 ? (
-              <View style={[styles.signalBadge, styles.signalBadgeFactors]}>
-                <Text style={styles.signalBadgeText}>F{Math.min(9, topFactorCount)}</Text>
-              </View>
-            ) : null}
+            <View style={[styles.signalBadge, styles.signalBadgeAttention]}>
+              <Text style={styles.signalBadgeText}>{getAxisShortLabel('attention')}</Text>
+            </View>
+            <View style={[styles.signalBadge, styles.signalBadgeMovement]}>
+              <Text style={styles.signalBadgeText}>{getAxisShortLabel('movement')}</Text>
+            </View>
           </View>
         </View>
 
@@ -126,18 +110,6 @@ export default function LifeAreaCard({
           <Text style={[styles.statusText, { color: statusColor }]}>
             {statusText}
           </Text>
-        </View>
-
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${typeof statusValue === 'number' ? Math.min(100, Math.max(0, statusValue)) : 0}%`,
-                backgroundColor: statusColor,
-              },
-            ]}
-          />
         </View>
 
         <View style={[styles.movementRow, compact && styles.movementRowCompact]}>
@@ -254,17 +226,6 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 8,
   },
-  progressTrack: {
-    height: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 999,
-  },
   movementRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -309,20 +270,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.35)',
     backgroundColor: 'rgba(2,6,23,0.28)',
   },
   signalBadgeAttention: {
-    backgroundColor: 'rgba(249,115,22,0.28)',
+    backgroundColor: STATUS_AXIS_COLORS.attention,
   },
   signalBadgeMovement: {
-    backgroundColor: 'rgba(34,211,238,0.22)',
-  },
-  signalBadgeFactors: {
-    backgroundColor: 'rgba(250,204,21,0.22)',
+    backgroundColor: STATUS_AXIS_COLORS.movement,
   },
   signalBadgeText: {
-    color: '#FFFFFF',
+    color: '#0B1020',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.2,
