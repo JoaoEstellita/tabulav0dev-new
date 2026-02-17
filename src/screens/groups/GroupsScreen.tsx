@@ -1263,25 +1263,14 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const otherMembers = sortedMembers.filter((member) => member.userId !== user?.uid)
   const visibleMembers = otherMembers.filter((member) => hasVisibleStatus(member))
-  // Keep group counters aligned with the member cards that are actually visible.
-  const summaryMembers = visibleMembers
+  // Summary must reflect the whole group state (including current user when status is visible).
+  const summaryMembers = sortedMembers.filter((member) => hasVisibleStatus(member))
 
   const memberStatusCounts = summaryMembers.reduce(
     (acc, member) => {
       const bucket = getMemberSummaryBucket(member)
       if (bucket === "critical") acc.critical += 1
       if (bucket === "positive") acc.positive += 1
-      return acc
-    },
-    { critical: 0, positive: 0 }
-  )
-
-  const areaStatusCounts = summaryMembers.reduce(
-    (acc, member) => {
-      buildMemberAreaEntries(member).forEach((entry) => {
-        if (entry.bucket === "critical") acc.critical += 1
-        if (entry.bucket === "positive") acc.positive += 1
-      })
       return acc
     },
     { critical: 0, positive: 0 }
@@ -1385,28 +1374,22 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 <View style={styles.groupSummaryCounters}>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
                     <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.critical}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalMembers', 'Membros criticos')}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalCount', 'Críticos')}</Text>
                   </View>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
                     <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.positive}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positiveMembers', 'Membros positivos')}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positiveCount', 'Positivos')}</Text>
                   </View>
                 </View>
               </View>
-              <Text style={styles.groupSummaryHint}>
-                {tr('groups.status.areaCriticalNow', 'Areas criticas agora: {count}', { count: areaStatusCounts.critical })}
-              </Text>
-              <Text style={[styles.groupSummaryHint, styles.groupSummaryHintCompact]}>
-                {tr('groups.status.areaPositiveNow', 'Areas positivas agora: {count}', { count: areaStatusCounts.positive })}
-              </Text>
               {highlightMembers.length > 0 && (
                 <>
                   <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
                     <Text style={styles.sectionTitle}>{tr('groups.section.needsAttention', 'Precisa de atencao')}</Text>
-                    {visibleMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
-                      <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
-                        <Text style={styles.attentionLink}>{tr('groups.action.viewAll', 'Ver todos')}</Text>
-                      </TouchableOpacity>
+                      {summaryMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
+                        <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
+                          <Text style={styles.attentionLink}>{tr('groups.action.viewAll', 'Ver todos')}</Text>
+                        </TouchableOpacity>
                     )}
                   </View>
                   {highlightMembers.map((member) => {
@@ -2248,6 +2231,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           return b.rank - a.rank
                         })
 
+                      const aspectTransits = orderedTransits.filter((item) => item.columnKind !== "house")
+                      const houseTransits = orderedTransits.filter((item) => item.columnKind === "house")
+
                       const activeFiltersCount =
                         (memberTransitToneFilter !== "all" ? 1 : 0) +
                         (memberTransitSortMode !== "impact" ? 1 : 0) +
@@ -2412,7 +2398,30 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                 {tr("groups.member.enableAtLeastOneFilter", "Ative ao menos um tipo de filtro.")}
                               </Text>
                             ) : orderedTransits.length ? (
-                              orderedTransits.map((item, index) => renderTransitCard(item, index))
+                              <>
+                                {aspectTransits.length ? (
+                                  <View style={styles.memberTransitSubsection}>
+                                    <View style={styles.memberTransitSubsectionHeader}>
+                                      <Text style={styles.memberTransitSubsectionTitle}>
+                                        {tr("groups.member.aspectsSection", "Aspectos")}
+                                      </Text>
+                                      <Text style={styles.memberTransitSubsectionMeta}>{aspectTransits.length}</Text>
+                                    </View>
+                                    {aspectTransits.map((item, index) => renderTransitCard(item, index))}
+                                  </View>
+                                ) : null}
+                                {houseTransits.length ? (
+                                  <View style={styles.memberTransitSubsection}>
+                                    <View style={styles.memberTransitSubsectionHeader}>
+                                      <Text style={styles.memberTransitSubsectionTitle}>
+                                        {tr("groups.member.planetsInHouses", "Planetas nas casas")}
+                                      </Text>
+                                      <Text style={styles.memberTransitSubsectionMeta}>{houseTransits.length}</Text>
+                                    </View>
+                                    {houseTransits.map((item, index) => renderTransitCard(item, aspectTransits.length + index))}
+                                  </View>
+                                ) : null}
+                              </>
                             ) : (
                               <Text style={styles.memberAreaEmpty}>
                                 {tr("groups.member.noTransitForSelectedFilters", "Nenhum transito para os filtros selecionados.")}
@@ -2928,6 +2937,31 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 11,
     fontWeight: "700",
+  },
+  memberTransitSubsection: {
+    width: "100%",
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  memberTransitSubsectionHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  memberTransitSubsectionTitle: {
+    color: "#E2E8F0",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  memberTransitSubsectionMeta: {
+    color: "#FB923C",
+    fontSize: 11,
+    fontWeight: "800",
   },
   memberCalcToggle: {
     marginTop: 8,
