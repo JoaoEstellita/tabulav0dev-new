@@ -543,11 +543,21 @@ class GroupService {
           const shouldLoadStatus = memberId === viewerId
           const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
-          const subscriptionStatus = String(userData?.subscription?.status || "").toLowerCase()
+          const subscriptionStatus = String(
+            memberStatus?.subscriptionStatus ||
+              publicData?.subscriptionStatus ||
+              ""
+          ).toLowerCase()
           const subscriptionActive =
-            subscriptionStatus === "active" ||
-            subscriptionStatus === "trial" ||
-            this.isTrialWindowActive(userData?.trialStart)
+            typeof memberStatus?.subscriptionActive === "boolean"
+              ? memberStatus.subscriptionActive
+              : typeof publicData?.subscriptionActive === "boolean"
+              ? publicData.subscriptionActive
+              : subscriptionStatus === "active" ||
+                subscriptionStatus === "trial" ||
+                this.isTrialWindowActive(
+                  memberStatus?.trialStart || publicData?.trialStart
+                )
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
           const email = publicData.email || memberId
           const lifeAreas = memberStatus?.lifeAreas || statusData?.lifeAreas
