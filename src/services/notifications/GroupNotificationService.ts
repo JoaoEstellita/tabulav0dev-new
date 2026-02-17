@@ -25,6 +25,9 @@ export class GroupNotificationService {
       const response = await backendFetch('/api/group/notify', {
         method: 'POST',
         auth: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           groupId: data.groupId,
           title: data.notificationType === 'custom_message' ? 'Mensagem do grupo' : 'Tabula Estelar',
