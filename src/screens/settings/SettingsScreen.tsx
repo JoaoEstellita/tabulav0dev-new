@@ -126,20 +126,20 @@ export default function SettingsScreen() {
       title: t('settings.section.notifications'),
       items: [
         {
-          id: 'register_webpush',
-          title: t('settings.item.registerWebpush.title'),
-          subtitle: t('settings.item.registerWebpush.subtitle'),
-          icon: 'notifications-outline',
-          type: 'button',
-          onPress: () => handleWebPushPress(),
-        },
-        {
           id: 'notification_options',
           title: t('settings.item.notificationOptions.title'),
           subtitle: t('settings.item.notificationOptions.subtitle'),
           icon: 'options-outline',
           type: 'button',
           onPress: () => navigation.navigate('NotificationPreferences' as never),
+        },
+        {
+          id: 'register_webpush',
+          title: t('settings.item.registerWebpush.title'),
+          subtitle: t('settings.item.registerWebpush.subtitle'),
+          icon: 'notifications-outline',
+          type: 'button',
+          onPress: () => handleWebPushPress(),
         },
       ],
     },
@@ -1393,7 +1393,6 @@ export default function SettingsScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.language.title')}</Text>
-            <Text style={styles.sectionNote}>{t('settings.language.subtitle')}</Text>
             <View style={styles.languagePills}>
               {languages.map((item) => {
                 const active = item.code === language

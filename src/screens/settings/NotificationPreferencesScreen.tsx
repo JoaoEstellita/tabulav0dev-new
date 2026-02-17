@@ -228,6 +228,8 @@ export default function NotificationPreferencesScreen() {
         contentContainerStyle={[styles.scrollContent, isWeb && styles.scrollContentWeb]}
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        alwaysBounceVertical
         scrollEnabled
       >
         <View style={styles.header}>
@@ -583,7 +585,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: 140,
     flexGrow: 1,
   },
   scrollContentWeb: {
