@@ -726,7 +726,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       duration: 180,
       useNativeDriver: true,
     }).start(() => {
-      swipeTranslateY.setValue(0)
       isSwipeClosingRef.current = false
       onClose()
     })
