@@ -34,7 +34,7 @@ import { useNotificationStore } from "../context/NotificationStore"
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
-const TAB_ORDER = ["Home", "Forecast", "Groups", "Notifications", "Premium", "Settings"]
+const TAB_ORDER = ["Home", "Groups", "Forecast", "Premium", "Notifications", "Settings"]
 const SWIPE_THRESHOLD = 0.25
 const SWIPE_ANIMATION_MS = 260
 let lastSwipeDirection: "left" | "right" | null = null
@@ -220,15 +220,6 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Forecast" options={{ title: t("nav.forecast"), headerShown: false }}>
-        {() => (
-          <ErrorBoundary>
-            <SwipeableTabScreen>
-              <ForecastScreen />
-            </SwipeableTabScreen>
-          </ErrorBoundary>
-        )}
-      </Tab.Screen>
       <Tab.Screen name="Groups" options={{ title: t("nav.groups"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
@@ -238,11 +229,11 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Notifications" options={{ title: t("nav.notifications"), headerShown: false }}>
+      <Tab.Screen name="Forecast" options={{ title: t("nav.forecast"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
-              <NotificationsScreen />
+              <ForecastScreen />
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}
@@ -252,6 +243,15 @@ function MainTabs() {
           <ErrorBoundary>
             <SwipeableTabScreen>
               <PremiumScreen />
+            </SwipeableTabScreen>
+          </ErrorBoundary>
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Notifications" options={{ title: t("nav.notifications"), headerShown: false }}>
+        {() => (
+          <ErrorBoundary>
+            <SwipeableTabScreen>
+              <NotificationsScreen />
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}
