@@ -1929,20 +1929,49 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return names[houseIndex] || `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseLabel}`
   }
 
-  const getTimingLabelLocalized = (transit: BackendTransit | null): string | null => {
+  const getTimingLabelLocalized = (
+    transit: BackendTransit | null,
+    forcedKind?: 'planet' | 'house'
+  ): string | null => {
     if (!transit) return null
+    const transitKind = forcedKind || getTransitColumnKind(transit)
     const toDate = (iso?: string | null) => {
       if (!iso) return null
       const date = new Date(iso)
       return Number.isFinite(date.getTime()) ? date : null
     }
-    const now = new Date()
-    const endDate = toDate(transit?.endAt || transit?.window?.end || null)
-    if (endDate) {
-      const dateLabel = endDate.toLocaleDateString(
+    const formatDate = (date: Date) =>
+      date.toLocaleDateString(
         language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR',
         { day: '2-digit', month: '2-digit' }
       )
+    const now = new Date()
+    const startDate = toDate(transit?.startAt || transit?.window?.start || null)
+    const endDate = toDate(transit?.endAt || transit?.window?.end || null)
+    if (transitKind === 'house') {
+      if (startDate && endDate) {
+        return tl(
+          `de ${formatDate(startDate)} até ${formatDate(endDate)}`,
+          `from ${formatDate(startDate)} to ${formatDate(endDate)}`,
+          `de ${formatDate(startDate)} hasta ${formatDate(endDate)}`,
+          `dal ${formatDate(startDate)} al ${formatDate(endDate)}`
+        )
+      }
+      if (startDate) {
+        return tl(
+          `desde ${formatDate(startDate)}`,
+          `since ${formatDate(startDate)}`,
+          `desde ${formatDate(startDate)}`,
+          `dal ${formatDate(startDate)}`
+        )
+      }
+      if (endDate) {
+        return tl(`até ${formatDate(endDate)}`, `until ${formatDate(endDate)}`, `hasta ${formatDate(endDate)}`, `fino al ${formatDate(endDate)}`)
+      }
+      return null
+    }
+    if (endDate) {
+      const dateLabel = formatDate(endDate)
       return tl(`até ${dateLabel}`, `until ${dateLabel}`, `hasta ${dateLabel}`, `fino al ${dateLabel}`)
     }
 
@@ -2029,9 +2058,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         : tl('Neutro', 'Neutral', 'Neutro', 'Neutro')
       const phaseLabel = getPhaseLabel(transit)
       const durationLabel = getDurationLabel(transit)
-      const relativeTiming = getTimingLabelLocalized(transit)
+      const transitKind = getTransitColumnKind(transit)
+      const relativeTiming = getTimingLabelLocalized(transit, transitKind)
       const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
-      const transitTitle = buildTransitTitle(transit, getTransitColumnKind(transit))
+      const transitTitle = buildTransitTitle(transit, transitKind)
       const houseLabel = getTransitHouseLabel(transit)
       const houseLabelPrefix = houseLabel ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
       const transitKey = `${getTransitKey(transit, absoluteIndex)}-${facetKind}`
@@ -2307,7 +2337,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
     const combinedTransits = dedupeCombinedEntries(combinedTransitsRaw)
     const sortedTransits = sortTransitEntries(combinedTransits)
-    const visibleTransitCards = renderTransitList(sortedTransits, 0, false)
+    const aspectEntries = sortedTransits.filter((entry) => entry.facetKind !== 'house')
+    const houseEntries = sortedTransits.filter((entry) => entry.facetKind === 'house')
+    const aspectTransitCards = renderTransitList(aspectEntries, 0, false)
+    const houseTransitCards = renderTransitList(houseEntries, aspectEntries.length, false)
     const activeFiltersCount =
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
@@ -2386,6 +2419,62 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           </Text>
                         </TouchableOpacity>
                       </View>
+                      <View style={styles.toneToggleRow}>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('all')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
+                            {tl('Todos', 'All', 'Todos', 'Tutti')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('challenging')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
+                            {tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedToneFilter('harmonic')}
+                          style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
+                            {tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.toneToggleRow}>
+                        <TouchableOpacity
+                          onPress={() => setSelectedSortMode('impact')}
+                          style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
+                            {tl('Mais impacto', 'Most impact', 'Mayor impacto', 'Maggiore impatto')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedSortMode('recent')}
+                          style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
+                            {tl('Mais recente', 'Most recent', 'Más reciente', 'Più recente')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedFacetFilters(['major'])
+                            setSelectedToneFilter('all')
+                            setSelectedSortMode('impact')
+                            setSelectedPlanetFilters([])
+                            setSelectedHouseFilters([])
+                          }}
+                          style={styles.toneToggleChip}
+                        >
+                          <Text style={styles.toneToggleText}>{tl('Limpar', 'Clear', 'Limpiar', 'Pulisci')}</Text>
+                        </TouchableOpacity>
+                      </View>
                       {availablePlanets.length ? (
                         <View style={styles.filterBlock}>
                           <Text style={styles.filterTitle}>{tl('Filtro • Planetas', 'Filter • Planets', 'Filtro • Planetas', 'Filtro • Pianeti')}</Text>
@@ -2443,67 +2532,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           </View>
                         </View>
                       ) : null}
-                      <View style={styles.toneToggleRow}>
-                        <TouchableOpacity
-                          onPress={() => setSelectedToneFilter('all')}
-                          style={[styles.toneToggleChip, selectedToneFilter === 'all' ? styles.toneToggleChipActive : null]}
-                        >
-                          <Text style={[styles.toneToggleText, selectedToneFilter === 'all' ? styles.toneToggleTextActive : null]}>
-                            {tl('Todos', 'All', 'Todos', 'Tutti')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setSelectedToneFilter('challenging')}
-                          style={[styles.toneToggleChip, selectedToneFilter === 'challenging' ? styles.toneToggleChipActive : null]}
-                        >
-                          <Text style={[styles.toneToggleText, selectedToneFilter === 'challenging' ? styles.toneToggleTextActive : null]}>
-                            {tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setSelectedToneFilter('harmonic')}
-                          style={[styles.toneToggleChip, selectedToneFilter === 'harmonic' ? styles.toneToggleChipActive : null]}
-                        >
-                          <Text style={[styles.toneToggleText, selectedToneFilter === 'harmonic' ? styles.toneToggleTextActive : null]}>
-                            {tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setSelectedSortMode('impact')}
-                          style={[styles.toneToggleChip, selectedSortMode === 'impact' ? styles.toneToggleChipActive : null]}
-                        >
-                          <Text style={[styles.toneToggleText, selectedSortMode === 'impact' ? styles.toneToggleTextActive : null]}>
-                            {tl('Mais impacto', 'Most impact', 'Mayor impacto', 'Maggiore impatto')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setSelectedSortMode('recent')}
-                          style={[styles.toneToggleChip, selectedSortMode === 'recent' ? styles.toneToggleChipActive : null]}
-                        >
-                          <Text style={[styles.toneToggleText, selectedSortMode === 'recent' ? styles.toneToggleTextActive : null]}>
-                            {tl('Mais recente', 'Most recent', 'Más reciente', 'Più recente')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedFacetFilters(['major'])
-                            setSelectedToneFilter('all')
-                            setSelectedSortMode('impact')
-                            setSelectedPlanetFilters([])
-                            setSelectedHouseFilters([])
-                          }}
-                          style={styles.toneToggleChip}
-                        >
-                          <Text style={styles.toneToggleText}>{tl('Limpar', 'Clear', 'Limpiar', 'Pulisci')}</Text>
-                        </TouchableOpacity>
-                      </View>
                     </View>
                   </>
                 ) : null}
                 <View style={styles.transitHeaderTitleWrap}>
                   <Text style={styles.transitColumnTitle}>{tl('Lista de trânsitos', 'Transit list', 'Lista de tránsitos', 'Lista dei transiti')}</Text>
                   <Text style={styles.transitColumnDescription}>{tl('Leitura combinada pelos filtros ativos', 'Combined reading from active filters', 'Lectura combinada por filtros activos', 'Lettura combinata dai filtri attivi')}</Text>
-                  <Text style={styles.transitColumnMeta}>{visibleTransitCards.length}</Text>
+                  <Text style={styles.transitColumnMeta}>{aspectTransitCards.length + houseTransitCards.length}</Text>
                 </View>
               </View>
               {selectedFacetFilters.length === 0 ? (
@@ -2515,8 +2550,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                     'Attiva almeno un tipo di filtro.'
                   )}
                 </Text>
-              ) : visibleTransitCards.length ? (
-                visibleTransitCards
+              ) : (aspectTransitCards.length + houseTransitCards.length) ? (
+                <>
+                  {aspectTransitCards.length ? (
+                    <View style={styles.transitSubsection}>
+                      <View style={styles.transitSubsectionHeader}>
+                        <Text style={styles.transitSubsectionTitle}>
+                          {tl('Aspectos', 'Aspects', 'Aspectos', 'Aspetti')}
+                        </Text>
+                        <Text style={styles.transitSubsectionMeta}>{aspectTransitCards.length}</Text>
+                      </View>
+                      {aspectTransitCards}
+                    </View>
+                  ) : null}
+                  {houseTransitCards.length ? (
+                    <View style={styles.transitSubsection}>
+                      <View style={styles.transitSubsectionHeader}>
+                        <Text style={styles.transitSubsectionTitle}>
+                          {tl('Planetas nas casas', 'Planets in houses', 'Planetas en las casas', 'Pianeti nelle case')}
+                        </Text>
+                        <Text style={styles.transitSubsectionMeta}>{houseTransitCards.length}</Text>
+                      </View>
+                      {houseTransitCards}
+                    </View>
+                  ) : null}
+                </>
               ) : (
                 <Text style={styles.emptyColumnText}>{tl('Nenhum trânsito para os filtros selecionados.', 'No transits for selected filters.', 'No hay tránsitos para los filtros seleccionados.', 'Nessun transito per i filtri selezionati.')}</Text>
               )}
@@ -2587,7 +2645,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               ? tl('Aspecto menor', 'Minor aspect', 'Aspecto menor', 'Aspetto minore')
               : tl('Aspecto maior', 'Major aspect', 'Aspecto mayor', 'Aspetto maggiore')
           }
-          const timingLabel = transit ? getTimingLabelLocalized(transit) : null
+          const timingLabel = transit ? getTimingLabelLocalized(transit, getTransitColumnKind(transit)) : null
 
           return (
             <View key={suggestion.id || suggestion.transitId} style={styles.suggestionCard}>
@@ -3490,6 +3548,30 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 9,
     paddingVertical: 2,
+  },
+  transitSubsection: {
+    width: '100%',
+    marginTop: 6,
+  },
+  transitSubsectionHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    marginBottom: 6,
+  },
+  transitSubsectionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1E293B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  transitSubsectionMeta: {
+    fontSize: 11,
+    color: '#9A3412',
+    fontWeight: '800',
   },
   emptyState: {
     padding: DESIGN_SYSTEM.spacing.lg,
