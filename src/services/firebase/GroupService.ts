@@ -69,6 +69,7 @@ export interface GroupMember {
   }
   subscriptionActive?: boolean
   subscriptionStatus?: string | null
+  isAdmin?: boolean
 }
 
 export interface GroupAlert {
@@ -506,6 +507,10 @@ class GroupService {
             if (payload?.ok && Array.isArray(payload.members)) {
               return payload.members.map((member: any) => {
                 const lifeAreas = member.lifeAreas || member.astrologicalStatus?.lifeAreas || undefined
+                const memberAdmin =
+                  member?.isAdmin === true ||
+                  member?.role === "admin" ||
+                  member?.roles?.admin === true
               return {
                 userId: member.userId,
                 email: member.email || member.userId,
@@ -517,8 +522,9 @@ class GroupService {
                 sharedLifeAreas: member.sharedLifeAreas,
                 lifeAreas,
                 areaTransits: member.areaTransits || undefined,
-                subscriptionActive: member.subscriptionActive !== false,
+                subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
                 subscriptionStatus: member.subscriptionStatus || null,
+                isAdmin: memberAdmin,
               }
             }) as GroupMember[]
           }
@@ -534,22 +540,31 @@ class GroupService {
       const group = groupDoc.data() as Group
       const members = await Promise.all(
         (group.members || []).map(async (memberId) => {
-          const [publicDoc, memberStatusDoc] = await Promise.all([
+          const [publicDoc, memberStatusDoc, userDoc] = await Promise.all([
             getDoc(doc(db, "userPublicProfiles", memberId)),
             getDoc(doc(db, "groups", groupId, "memberStatus", memberId)),
+            getDoc(doc(db, "users", memberId)),
           ])
           const publicData = publicDoc.exists() ? publicDoc.data() : {}
           const memberStatus = memberStatusDoc.exists() ? memberStatusDoc.data() : {}
+          const userData = userDoc.exists() ? userDoc.data() : {}
           const shouldLoadStatus = memberId === viewerId
           const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
+          const adminFlag =
+            userData?.isAdmin === true ||
+            userData?.role === "admin" ||
+            userData?.roles?.admin === true
           const subscriptionStatus = String(
             memberStatus?.subscriptionStatus ||
+              userData?.subscription?.status ||
               publicData?.subscriptionStatus ||
               ""
           ).toLowerCase()
           const subscriptionActive =
-            typeof memberStatus?.subscriptionActive === "boolean"
+            adminFlag
+              ? true
+              : typeof memberStatus?.subscriptionActive === "boolean"
               ? memberStatus.subscriptionActive
               : typeof publicData?.subscriptionActive === "boolean"
               ? publicData.subscriptionActive
@@ -575,6 +590,7 @@ class GroupService {
             birthData: statusData?.birthData,
             subscriptionActive,
             subscriptionStatus: subscriptionStatus || null,
+            isAdmin: adminFlag,
           } as GroupMember
         })
       )

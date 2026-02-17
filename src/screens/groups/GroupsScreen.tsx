@@ -802,7 +802,7 @@ export default function GroupsScreen() {
   }
 
   const hasVisibleStatus = (member: GroupMember) => {
-    if (member.subscriptionActive === false) return false
+    if (!member.isAdmin && member.subscriptionActive === false) return false
     if (member.shareStatus === false || member.shareEnabled === false) return false
     const lifeAreas = resolveMemberLifeAreas(member)
     const sharedAreas = resolveSharedAreas(member)
@@ -1507,6 +1507,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         </Text>
                         <Text style={styles.memberRowUpdate} numberOfLines={1}>
                           {member.subscriptionActive === false
+                            && !member.isAdmin
                             ? tr('groups.member.noSubscription', 'Sem assinatura')
                             : !hasStatus
                             ? tr('groups.label.privateStatus', 'Status privado')
