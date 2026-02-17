@@ -15,7 +15,7 @@ import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useRoute } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
-import MercadoPagoService from '../../services/payment/MercadoPagoService'
+import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
 import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
 import ExpiryBanner from '../../components/ExpiryBanner'
@@ -26,6 +26,12 @@ const STRIPE_USD_PRICE_BY_PLAN: Record<string, number> = {
   essential_monthly: 9.9,
   pro_monthly: 19.9,
   premium_monthly: 39.9,
+}
+
+const STRIPE_USD_PRICE_BY_GIFT_PLAN: Record<string, number> = {
+  gift_essential_monthly: 9.9,
+  gift_pro_monthly: 19.9,
+  gift_premium_monthly: 39.9,
 }
 
 const HUB_ACTIONS: Record<string, { labelKey: string; descriptionKey: string; icon: string; cost: number }> = {
@@ -82,12 +88,23 @@ export default function PremiumScreen() {
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const [giftOptions, setGiftOptions] = useState<GiftSubscriptionOption[]>([])
+  const [giftCodes, setGiftCodes] = useState<GiftSubscriptionCode[]>([])
+  const [giftLoading, setGiftLoading] = useState(false)
+  const [giftPurchaseLoading, setGiftPurchaseLoading] = useState<string | null>(null)
+  const [giftRedeemCode, setGiftRedeemCode] = useState('')
+  const [giftRedeemLoading, setGiftRedeemLoading] = useState(false)
   const stripeReturnHandledRef = useRef(false)
   const checkoutNoticeHandledRef = useRef(false)
   const [checkoutNotice, setCheckoutNotice] = useState<{ type: 'success' | 'cancel' | 'pending' | 'failure'; message: string } | null>(null)
   const isPortuguese = language === 'pt-BR'
   const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>(isPortuguese ? 'mercadopago' : 'stripe')
   const usesStripePricing = !isPortuguese || subscriptionProvider === 'stripe'
+  const canBuyGiftSubscriptions = isAdmin || hasActivePlan
+  const normalizedGiftCodes = useMemo(
+    () => [...giftCodes].sort((a, b) => (String(b.createdAt || '').localeCompare(String(a.createdAt || '')))),
+    [giftCodes]
+  )
   const expiryInfo = useMemo(() => {
     return getExpiryBannerInfo({
       featureLabel: tr('premium.header.title', 'Premium'),
@@ -243,6 +260,28 @@ export default function PremiumScreen() {
     return () => {
       active = false
     }
+  }, [user?.uid])
+
+  const refreshGiftData = async () => {
+    if (!user?.uid) return
+    setGiftLoading(true)
+    try {
+      const [options, codes] = await Promise.all([
+        MercadoPagoService.getGiftSubscriptionOptions(user.uid),
+        MercadoPagoService.getGiftSubscriptionCodes(user.uid),
+      ])
+      setGiftOptions(Array.isArray(options) ? options : [])
+      setGiftCodes(Array.isArray(codes) ? codes : [])
+    } catch {
+      setGiftOptions([])
+      setGiftCodes([])
+    } finally {
+      setGiftLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshGiftData()
   }, [user?.uid])
 
   const fetchCreditsHistory = async () => {
@@ -409,6 +448,104 @@ export default function PremiumScreen() {
       const raw = String(error?.message || '').trim()
       const safeMessage = raw.length > 3 ? raw : tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
       Alert.alert(tr('common.error', 'Erro'), safeMessage)
+    }
+  }
+
+  const handlePurchaseGiftSubscription = async (option: GiftSubscriptionOption) => {
+    if (!user?.uid) {
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.subscribe', 'Faça login para assinar.'))
+      return
+    }
+    if (!canBuyGiftSubscriptions) {
+      Alert.alert(
+        tr('premium.gift.requiresPlan.title', 'Plano ativo necessário'),
+        tr('premium.gift.requiresPlan.body', 'Você precisa estar com assinatura ativa para comprar assinaturas extras.')
+      )
+      return
+    }
+    if (giftPurchaseLoading) return
+
+    const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
+    const displayPrice = effectiveProvider === 'stripe' ? `US$ ${(option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0).toFixed(2)}` : `R$ ${(option.priceBRL || 0).toFixed(2)}`
+    Alert.alert(
+      tr('premium.gift.confirm.title', 'Confirmar assinatura extra'),
+      tr('premium.gift.confirm.body', 'Comprar 1 código para o plano {plan} por {price}?', {
+        plan: option.label || option.targetPlanId,
+        price: displayPrice,
+      }),
+      [
+        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+        {
+          text: tr('premium.gift.confirm.cta', 'Comprar'),
+          onPress: async () => {
+            try {
+              setGiftPurchaseLoading(option.id)
+              if (effectiveProvider === 'stripe') {
+                const stripeSession = await StripeService.createCheckoutSession({
+                  userId: user.uid,
+                  planId: option.id,
+                  email: user.email || '',
+                  name: user.displayName || user.email || tr('common.user', 'Usuario'),
+                  amount: option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0,
+                  currency: 'usd',
+                })
+                const stripeUrl = stripeSession?.url
+                if (!stripeUrl) {
+                  Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.stripeLinkFailed', 'Não foi possível gerar o link Stripe.'))
+                  return
+                }
+                await openExternalCheckout(stripeUrl)
+                return
+              }
+              const preference = await MercadoPagoService.createPaymentPreference({
+                userId: user.uid,
+                planId: option.id,
+                email: user.email || '',
+                name: user.displayName || user.email || tr('common.user', 'Usuario'),
+                amount: option.priceBRL,
+                description: `${tr('premium.gift.label', 'Assinatura extra')} ${option.label}`,
+                externalReference: MercadoPagoService.generateExternalReference(user.uid, option.id),
+              })
+              const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
+              if (!checkoutUrl) {
+                Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
+                return
+              }
+              await openExternalCheckout(checkoutUrl)
+            } catch (error: any) {
+              const message = String(error?.message || '').trim() || tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
+              Alert.alert(tr('common.error', 'Erro'), message)
+            } finally {
+              setGiftPurchaseLoading(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  const handleRedeemGiftCode = async () => {
+    if (!user?.uid) {
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.subscribe', 'Faça login para assinar.'))
+      return
+    }
+    const code = String(giftRedeemCode || '').trim()
+    if (!code) {
+      Alert.alert(tr('premium.gift.redeem.empty.title', 'Código necessário'), tr('premium.gift.redeem.empty.body', 'Digite o código para ativar a assinatura.'))
+      return
+    }
+    setGiftRedeemLoading(true)
+    try {
+      const result = await MercadoPagoService.redeemGiftSubscriptionCode(user.uid, code)
+      if (!result.ok) {
+        Alert.alert(tr('common.error', 'Erro'), result.message || tr('premium.gift.redeem.fail', 'Não foi possível ativar o código.'))
+        return
+      }
+      setGiftRedeemCode('')
+      await refreshGiftData()
+      Alert.alert(tr('premium.gift.redeem.success.title', 'Código ativado'), tr('premium.gift.redeem.success.body', 'A assinatura foi ativada com sucesso nesta conta.'))
+    } finally {
+      setGiftRedeemLoading(false)
     }
   }
   const partnerPayload = useMemo(() => ({
@@ -895,6 +1032,94 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>—</Text>
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
+        </View>
+      </View>
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>{tr('premium.gift.title', 'Assinaturas extras (presentear)')}</Text>
+        {canBuyGiftSubscriptions ? (
+          <>
+            {giftLoading ? (
+              <ActivityIndicator color="#FFD700" />
+            ) : (
+              <>
+                {giftOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={styles.giftOptionCard}
+                    onPress={() => handlePurchaseGiftSubscription(option)}
+                    disabled={giftPurchaseLoading === option.id}
+                  >
+                    <View style={styles.giftOptionHeader}>
+                      <Text style={styles.giftOptionTitle}>{tr('premium.gift.planLabel', '{plan} • 1 código', { plan: option.label || option.targetPlanId })}</Text>
+                      {giftPurchaseLoading === option.id ? (
+                        <ActivityIndicator color="#FFD700" />
+                      ) : (
+                        <Text style={styles.giftOptionPrice}>
+                          {usesStripePricing ? `US$ ${(option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0).toFixed(2)}` : `R$ ${(option.priceBRL || 0).toFixed(2)}`}
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={styles.giftOptionDescription}>
+                      {tr('premium.gift.description', 'Após a compra você recebe um código para compartilhar com outra pessoa.')}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <View style={styles.giftCodesSection}>
+                  <View style={styles.giftCodesHeader}>
+                    <Text style={styles.giftCodesTitle}>{tr('premium.gift.codes.title', 'Seus códigos')}</Text>
+                    <TouchableOpacity style={styles.giftRefreshButton} onPress={refreshGiftData}>
+                      <Text style={styles.giftRefreshButtonText}>{tr('common.refresh', 'Atualizar')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {normalizedGiftCodes.length === 0 ? (
+                    <Text style={styles.emptyText}>{tr('premium.gift.codes.empty', 'Você ainda não tem códigos gerados.')}</Text>
+                  ) : (
+                    normalizedGiftCodes.map((item) => (
+                      <View key={item.id} style={styles.giftCodeItem}>
+                        <Text style={styles.giftCodeValue}>{item.code}</Text>
+                        <Text style={styles.giftCodeMeta}>
+                          {tr('premium.gift.codes.meta', '{plan} • {status}', {
+                            plan: item.targetPlanLabel || item.targetPlanId || '-',
+                            status: item.status || 'unknown',
+                          })}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              </>
+            )}
+          </>
+        ) : (
+          <View style={styles.giftLockedBox}>
+            <Text style={styles.lockedText}>
+              {tr('premium.gift.locked', 'Ative uma assinatura para comprar códigos extras e presentear outras pessoas.')}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>{tr('premium.gift.redeem.title', 'Ativar código recebido')}</Text>
+        <View style={styles.giftRedeemBox}>
+          <TextInput
+            style={styles.input}
+            placeholder={tr('premium.gift.redeem.placeholder', 'Digite o código (ex.: TAB-ABCD-EFGH)')}
+            placeholderTextColor="#888"
+            value={giftRedeemCode}
+            onChangeText={setGiftRedeemCode}
+            autoCapitalize="characters"
+          />
+          <TouchableOpacity
+            style={styles.giftRedeemButton}
+            onPress={handleRedeemGiftCode}
+            disabled={giftRedeemLoading}
+          >
+            {giftRedeemLoading ? (
+              <ActivityIndicator color="#0F0F23" />
+            ) : (
+              <Text style={styles.giftRedeemButtonText}>{tr('premium.gift.redeem.cta', 'Ativar código')}</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
       <View style={styles.plansContainer}>
@@ -1543,6 +1768,109 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#CCCCCC',
     marginBottom: 4,
+  },
+  giftOptionCard: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  giftOptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 8,
+  },
+  giftOptionTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    flex: 1,
+  },
+  giftOptionPrice: {
+    color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  giftOptionDescription: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  giftCodesSection: {
+    marginTop: 6,
+    backgroundColor: '#171728',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  giftCodesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  giftCodesTitle: {
+    color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  giftRefreshButton: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  giftRefreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  giftCodeItem: {
+    backgroundColor: '#232336',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  giftCodeValue: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  giftCodeMeta: {
+    color: '#B8B8C3',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  giftLockedBox: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  giftRedeemBox: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 12,
+  },
+  giftRedeemButton: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  giftRedeemButtonText: {
+    color: '#0F0F23',
+    fontWeight: '700',
+    fontSize: 13,
   },
   creditCard: {
     backgroundColor: '#1C1C1E',

@@ -49,6 +49,29 @@ export interface SubscriptionStatus {
   trialEndsAt: Date | null
 }
 
+export interface GiftSubscriptionOption {
+  id: string
+  targetPlanId: string
+  label: string
+  durationDays: number
+  priceBRL: number
+  priceUSD: number
+}
+
+export interface GiftSubscriptionCode {
+  id: string
+  code: string
+  status: 'available' | 'redeemed' | 'disabled_owner_inactive' | string
+  giftPlanId: string | null
+  targetPlanId: string | null
+  targetPlanLabel: string | null
+  durationDays: number
+  validUntil: string | null
+  createdAt: string | null
+  redeemedByUid: string | null
+  redeemedAt: string | null
+}
+
 export class MercadoPagoService {
   private static readonly FRONTEND_URL = (() => {
     const raw = String(
@@ -216,6 +239,59 @@ export class MercadoPagoService {
     } catch (error) {
       console.error('Erro ao reativar assinatura:', error)
       return false
+    }
+  }
+
+  static async getGiftSubscriptionOptions(userId: string): Promise<GiftSubscriptionOption[]> {
+    try {
+      const response = await backendFetch('/api/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        auth: true,
+        body: JSON.stringify({ action: 'gift-options', userId }),
+      })
+      if (!response.ok) return []
+      const data = await response.json()
+      return Array.isArray(data?.data?.giftOptions) ? data.data.giftOptions : []
+    } catch (error) {
+      console.error('Erro ao buscar opcoes de assinatura extra:', error)
+      return []
+    }
+  }
+
+  static async getGiftSubscriptionCodes(userId: string): Promise<GiftSubscriptionCode[]> {
+    try {
+      const response = await backendFetch('/api/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        auth: true,
+        body: JSON.stringify({ action: 'gift-list', userId }),
+      })
+      if (!response.ok) return []
+      const data = await response.json()
+      return Array.isArray(data?.data?.codes) ? data.data.codes : []
+    } catch (error) {
+      console.error('Erro ao buscar codigos de assinatura extra:', error)
+      return []
+    }
+  }
+
+  static async redeemGiftSubscriptionCode(userId: string, giftCode: string): Promise<{ ok: boolean; message?: string }> {
+    try {
+      const response = await backendFetch('/api/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        auth: true,
+        body: JSON.stringify({ action: 'gift-redeem', userId, giftCode }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.ok === false) {
+        return { ok: false, message: data?.error?.message || 'Nao foi possivel ativar o codigo.' }
+      }
+      return { ok: true }
+    } catch (error) {
+      console.error('Erro ao resgatar codigo de assinatura extra:', error)
+      return { ok: false, message: 'Nao foi possivel ativar o codigo.' }
     }
   }
 
