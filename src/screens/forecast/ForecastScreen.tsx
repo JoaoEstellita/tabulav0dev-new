@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, InteractionManager, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, InteractionManager, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
@@ -24,6 +24,7 @@ import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from '../../utils/statusAxes'
 import { backendFetch } from '../../services/backend/client'
+import StarLoader from '../../components/StarLoader'
 
 type ForecastSeriesPoint = {
   date: string
@@ -1397,7 +1398,7 @@ export default function ForecastScreen() {
 
       {loading && (
         <View style={styles.loading}>
-          <ActivityIndicator size="large" color="#FFD700" />
+          <StarLoader size={34} color="#FFD700" />
           <Text style={styles.loadingText}>
             {tr('forecast.loading', 'Carregando previsoes...')}
           </Text>

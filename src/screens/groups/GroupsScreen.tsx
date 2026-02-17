@@ -33,6 +33,7 @@ import TransitInsightCard from "../../components/TransitInsightCard"
 import InviteService from "../../services/InviteService"
 import Avatar from "../../components/Avatar"
 import ExpiryBanner from "../../components/ExpiryBanner"
+import StarLoader from "../../components/StarLoader"
 import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
@@ -1411,6 +1412,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
         <View style={styles.loadingContainer}>
+          <StarLoader size={36} color="#FFD700" />
           <Text style={styles.loadingText}>{tr('groups.loading', 'Carregando grupos...')}</Text>
         </View>
       </LinearGradient>
@@ -2739,6 +2741,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "#FFFFFF",
     fontSize: 16,
+    marginTop: 8,
   },
   header: {
     paddingTop: 20,
