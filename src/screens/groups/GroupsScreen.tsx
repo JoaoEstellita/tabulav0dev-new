@@ -206,11 +206,19 @@ export default function GroupsScreen() {
   })()
 
   useEffect(() => {
-    if (user) {
-      loadUserGroups()
-      loadCoupleRelationship()
+    if (!user) return
+    if (!isPremium) {
+      setGroups([])
+      setSelectedGroup(null)
+      setGroupMembers([])
+      setGroupAlerts([])
+      setGroupActivities([])
+      setLoading(false)
+      return
     }
-  }, [user])
+    loadUserGroups()
+    loadCoupleRelationship()
+  }, [user, isPremium])
 
   useEffect(() => {
     if (!user) return
@@ -794,6 +802,7 @@ export default function GroupsScreen() {
   }
 
   const hasVisibleStatus = (member: GroupMember) => {
+    if (member.subscriptionActive === false) return false
     if (member.shareStatus === false || member.shareEnabled === false) return false
     const lifeAreas = resolveMemberLifeAreas(member)
     const sharedAreas = resolveSharedAreas(member)
@@ -1320,6 +1329,28 @@ const buildMemberAreaEntries = (member: GroupMember) => {
     )
   }
 
+  if (!isPremium) {
+    return (
+      <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.lockedState}>
+            <Ionicons name="lock-closed-outline" size={56} color="#FFD700" />
+            <Text style={styles.lockedStateTitle}>{tr('groupsAccess.title', 'Acesso aos grupos')}</Text>
+            <Text style={styles.lockedStateText}>
+              {tr('groupsAccess.subtitle', 'Ative o Premium para criar e participar de grupos.')}
+            </Text>
+            <TouchableOpacity
+              style={styles.lockedStateButton}
+              onPress={() => (navigation as any).navigate("Premium", { openTab: "features" })}
+            >
+              <Text style={styles.lockedStateButtonText}>{tr('groupsAccess.cta', 'Ver planos')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    )
+  }
+
   return (
     <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
       <ScrollView
@@ -1471,7 +1502,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           {member.displayName}
                         </Text>
                         <Text style={styles.memberRowUpdate} numberOfLines={1}>
-                          {!hasStatus
+                          {member.subscriptionActive === false
+                            ? tr('groups.member.noSubscription', 'Sem assinatura')
+                            : !hasStatus
                             ? tr('groups.label.privateStatus', 'Status privado')
                             : member.lastStatusUpdate
                             ? tr('groups.label.updatedAgo', 'Atualizado ha {time}', { time: formatRelativeTime(new Date(member.lastStatusUpdate)) })
@@ -1639,6 +1672,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             </Text>
             <TouchableOpacity style={styles.createFirstGroupButton} onPress={() => setShowCreateModal(true)}>
               <Text style={styles.createFirstGroupButtonText}>{tr('groups.empty.createFirst', 'Criar primeiro grupo')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.joinByCodeButton} onPress={() => setShowJoinModal(true)}>
+              <Text style={styles.joinByCodeButtonText}>{tr('groups.empty.joinByCode', 'Inserir codigo de convite')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -3285,6 +3321,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 64,
+    paddingHorizontal: 20,
   },
   emptyStateTitle: {
     color: "#FFFFFF",
@@ -3309,6 +3346,55 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  joinByCodeButton: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#FFD700",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    backgroundColor: "transparent",
+  },
+  joinByCodeButtonText: {
+    color: "#FFD700",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  lockedState: {
+    marginTop: 72,
+    marginHorizontal: 20,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.35)",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    padding: 24,
+    alignItems: "center",
+  },
+  lockedStateTitle: {
+    marginTop: 12,
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  lockedStateText: {
+    marginTop: 10,
+    color: "#C6C6D3",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  lockedStateButton: {
+    marginTop: 16,
+    backgroundColor: "#FFD700",
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  lockedStateButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,

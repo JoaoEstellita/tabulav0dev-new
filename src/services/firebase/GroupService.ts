@@ -67,6 +67,8 @@ export interface GroupMember {
     datetime: string
     coordinates: { latitude: number; longitude: number }
   }
+  subscriptionActive?: boolean
+  subscriptionStatus?: string | null
 }
 
 export interface GroupAlert {
@@ -130,6 +132,14 @@ class GroupService {
     "comunicacao",
     "transformacao",
   ]
+
+  private isTrialWindowActive(trialStartRaw: unknown) {
+    if (typeof trialStartRaw !== "string") return false
+    const trialStart = new Date(trialStartRaw)
+    if (Number.isNaN(trialStart.getTime())) return false
+    const trialEndsAt = new Date(trialStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+    return Date.now() < trialEndsAt.getTime()
+  }
 
   private filterLifeAreas(
     lifeAreas: Record<string, { percentage?: number; status?: string; influences?: string[]; mainPlanets?: string[] }> | undefined,
@@ -496,20 +506,22 @@ class GroupService {
             if (payload?.ok && Array.isArray(payload.members)) {
               return payload.members.map((member: any) => {
                 const lifeAreas = member.lifeAreas || member.astrologicalStatus?.lifeAreas || undefined
-                return {
-                  userId: member.userId,
-                  email: member.email || member.userId,
-                  displayName: member.displayName || member.userId,
-                  profilePhoto: member.profilePhoto || undefined,
+              return {
+                userId: member.userId,
+                email: member.email || member.userId,
+                displayName: member.displayName || member.userId,
+                profilePhoto: member.profilePhoto || undefined,
                   joinedAt: new Date(),
                   astrologicalStatus: member.astrologicalStatus || undefined,
                   lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
-                  sharedLifeAreas: member.sharedLifeAreas,
-                  lifeAreas,
-                  areaTransits: member.areaTransits || undefined,
-                }
-              }) as GroupMember[]
-            }
+                sharedLifeAreas: member.sharedLifeAreas,
+                lifeAreas,
+                areaTransits: member.areaTransits || undefined,
+                subscriptionActive: member.subscriptionActive !== false,
+                subscriptionStatus: member.subscriptionStatus || null,
+              }
+            }) as GroupMember[]
+          }
           }
         } catch (error) {
           console.warn("Status via backend falhou, tentando direto:", error)
@@ -531,6 +543,11 @@ class GroupService {
           const shouldLoadStatus = memberId === viewerId
           const statusDoc = shouldLoadStatus ? await getDoc(doc(db, "userStatus", memberId)) : null
           const statusData = statusDoc && statusDoc.exists && statusDoc.exists() ? statusDoc.data() : null
+          const subscriptionStatus = String(userData?.subscription?.status || "").toLowerCase()
+          const subscriptionActive =
+            subscriptionStatus === "active" ||
+            subscriptionStatus === "trial" ||
+            this.isTrialWindowActive(userData?.trialStart)
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
           const email = publicData.email || memberId
           const lifeAreas = memberStatus?.lifeAreas || statusData?.lifeAreas
@@ -546,6 +563,8 @@ class GroupService {
             sharedLifeAreas: memberStatus?.sharedLifeAreas || group.sharedLifeAreas || this.LIFE_AREAS,
             lifeAreas,
             birthData: statusData?.birthData,
+            subscriptionActive,
+            subscriptionStatus: subscriptionStatus || null,
           } as GroupMember
         })
       )
