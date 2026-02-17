@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   Animated,
   PanResponder,
+  Platform,
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
@@ -27,6 +28,7 @@ import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
+const CAN_USE_NATIVE_DRIVER = Platform.OS !== 'web'
 
 // Sistema de cores e icones por area de vida (mantendo identidade original)
 const AREA_ICONS: Record<string, string> = {
@@ -704,9 +706,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       setSelectedPlanetFilters([])
       setSelectedHouseFilters([])
       scrollOffsetYRef.current = 0
-      swipeTranslateY.setValue(0)
       isSwipeClosingRef.current = false
+      return
     }
+    // Reset only when opening to avoid one-frame "jump back" during close.
+    swipeTranslateY.setValue(0)
   }, [visible, swipeTranslateY])
 
   const animateSwipeBack = React.useCallback(() => {
@@ -714,7 +718,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       toValue: 0,
       bounciness: 0,
       speed: 24,
-      useNativeDriver: true,
+      useNativeDriver: CAN_USE_NATIVE_DRIVER,
     }).start()
   }, [swipeTranslateY])
 
@@ -724,7 +728,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     Animated.timing(swipeTranslateY, {
       toValue: height * 0.75,
       duration: 180,
-      useNativeDriver: true,
+      useNativeDriver: CAN_USE_NATIVE_DRIVER,
     }).start(() => {
       isSwipeClosingRef.current = false
       onClose()
