@@ -38,11 +38,13 @@ import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
 import { STATUS_THRESHOLDS } from "../../constants/statusThresholds"
+import { backendFetch } from "../../services/backend/client"
 
 const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
   key,
   label: SHARED_LIFE_AREA_LABELS[key] || key,
 }))
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
 
@@ -184,6 +186,7 @@ export default function GroupsScreen() {
   } | null>(null)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
+  const lastSelfStatusRefreshAtRef = useRef<number>(0)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
@@ -378,6 +381,26 @@ export default function GroupsScreen() {
     if (!selectedGroup) return
 
     try {
+      if (user?.uid && BACKEND_URL) {
+        const nowMs = Date.now()
+        const elapsedMs = nowMs - lastSelfStatusRefreshAtRef.current
+        if (elapsedMs > 60_000) {
+          try {
+            await backendFetch(`/api/status-refresh?userId=${encodeURIComponent(user.uid)}&force=1`, {
+              method: "POST",
+              auth: true,
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ userId: user.uid, force: 1, reason: "groups_screen_sync" }),
+            })
+            lastSelfStatusRefreshAtRef.current = Date.now()
+          } catch (refreshError) {
+            console.warn("Falha ao sincronizar status antes de carregar grupo:", refreshError)
+          }
+        }
+      }
+
       const [members, alerts, activities] = await Promise.all([
         GroupService.getGroupMembersWithStatus(selectedGroup.id, user?.uid),
         GroupService.getGroupAlerts(selectedGroup.id),
@@ -1190,7 +1213,12 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         const percentage = coerceNumber(data.percentage ?? data.status)
         const movementScore = coerceNumber(data.movementScore)
         const attentionScore = coerceNumber(data.attentionScore)
-        const bucket = mapStatusToBucket(data.status) || mapPercentageToBucket(percentage ?? undefined)
+        // Keep group classification aligned with profile cards:
+        // when percentage exists, it is the source of truth for thresholds.
+        const bucket =
+          percentage !== null
+            ? mapPercentageToBucket(percentage)
+            : (mapStatusToBucket(data.status) || "attention")
         return {
           key,
           label: lifeAreaLabel(key),
@@ -1268,9 +1296,11 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
   const memberStatusCounts = summaryMembers.reduce(
     (acc, member) => {
-      const bucket = getMemberSummaryBucket(member)
-      if (bucket === "critical") acc.critical += 1
-      if (bucket === "positive") acc.positive += 1
+      const entries = buildMemberAreaEntries(member)
+      entries.forEach((entry) => {
+        if (entry.bucket === "critical") acc.critical += 1
+        if (entry.bucket === "positive") acc.positive += 1
+      })
       return acc
     },
     { critical: 0, positive: 0 }
