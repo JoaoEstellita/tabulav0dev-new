@@ -9,6 +9,8 @@ import {
   Dimensions,
   StyleSheet,
   useWindowDimensions,
+  Animated,
+  PanResponder,
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
@@ -630,6 +632,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     timingLabel: string | null
     keywords: string[]
   } | null>(null)
+  const scrollOffsetYRef = React.useRef(0)
+  const swipeTranslateY = React.useRef(new Animated.Value(0)).current
+  const isSwipeClosingRef = React.useRef(false)
   const isDefaultFacetSelection =
     selectedFacetFilters.length === 2 &&
     selectedFacetFilters.includes('major') &&
@@ -698,8 +703,63 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     if (!visible) {
       setSelectedPlanetFilters([])
       setSelectedHouseFilters([])
+      scrollOffsetYRef.current = 0
+      swipeTranslateY.setValue(0)
+      isSwipeClosingRef.current = false
     }
-  }, [visible])
+  }, [visible, swipeTranslateY])
+
+  const animateSwipeBack = React.useCallback(() => {
+    Animated.spring(swipeTranslateY, {
+      toValue: 0,
+      bounciness: 0,
+      speed: 24,
+      useNativeDriver: true,
+    }).start()
+  }, [swipeTranslateY])
+
+  const closeBySwipe = React.useCallback(() => {
+    if (isSwipeClosingRef.current) return
+    isSwipeClosingRef.current = true
+    Animated.timing(swipeTranslateY, {
+      toValue: height * 0.75,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      swipeTranslateY.setValue(0)
+      isSwipeClosingRef.current = false
+      onClose()
+    })
+  }, [onClose, swipeTranslateY])
+
+  const modalPanResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          if (!visible) return false
+          const atTop = scrollOffsetYRef.current <= 2
+          const isDownward = gestureState.dy > 10
+          const isMostlyVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.15
+          return atTop && isDownward && isMostlyVertical
+        },
+        onPanResponderMove: (_, gestureState) => {
+          const nextY = Math.max(0, gestureState.dy)
+          swipeTranslateY.setValue(nextY)
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const shouldClose = gestureState.dy > 110 || gestureState.vy > 1.05
+          if (shouldClose) {
+            closeBySwipe()
+            return
+          }
+          animateSwipeBack()
+        },
+        onPanResponderTerminate: () => {
+          animateSwipeBack()
+        },
+      }),
+    [animateSwipeBack, closeBySwipe, swipeTranslateY, visible]
+  )
 
   React.useEffect(() => {
     setActiveScoreComponent(null)
@@ -3050,16 +3110,31 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+        <Animated.View
+          style={[
+            styles.modalContent,
+            {
+              transform: [{ translateY: swipeTranslateY }],
+            },
+          ]}
+          {...modalPanResponder.panHandlers}
+        >
           {renderHeader()}
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={(event) => {
+              scrollOffsetYRef.current = event.nativeEvent.contentOffset.y
+            }}
+          >
             {renderScoreComponentsSection()}
             {renderTransitsSection()}
             {renderMetricLevelsSection()}
             {renderCalculationToggle()}
             {showTechnical ? renderCalculationsSection() : null}
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
 
       <ReadingDetailModal
