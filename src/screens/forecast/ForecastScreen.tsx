@@ -9,8 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import ReadingDetailModal from '../../components/ReadingDetailModal'
-import { db } from '../../config/firebase'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { translate, type AppLanguage } from '../../i18n/appI18n'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
@@ -94,29 +92,10 @@ const FORECAST_DAY_STATUS_CACHE_PREFIX = 'forecast_day_status_v3'
 const FORECAST_DAY_STATUS_CACHE_TTL_MS = 5 * 60 * 1000
 const FORECAST_DAY_STATUS_RANGE_CACHE_PREFIX = 'forecast_day_status_range_v3'
 const FORECAST_DAY_STATUS_RANGE_CACHE_TTL_MS = 10 * 60 * 1000
-const FORECAST_EVENT_FILTERS_KEY_PREFIX = 'forecast_event_filters_v2'
-
-type ForecastSortBy = 'impact_desc' | 'recent_desc'
-type ForecastFilterCategory = 'aspectType' | 'sort'
-type ForecastAspectType = 'major' | 'minor'
 type ForecastCondition = 'retrograde' | 'stationary' | 'applying' | 'separating' | 'exact'
 type ForecastTransitKind = 'planet_planet' | 'planet_house'
 type ForecastDignity = 'domicile_exalted' | 'debilitated' | 'neutral' | 'unknown'
 type ForecastHouseStrength = 'angular' | 'succedent' | 'cadent' | 'unknown'
-
-type ForecastEventFilterState = {
-  version: number
-  aspectTypes: ForecastAspectType[]
-  sortBy: ForecastSortBy
-  updatedAt: number
-}
-
-const DEFAULT_EVENT_FILTERS: ForecastEventFilterState = {
-  version: 2,
-  aspectTypes: [],
-  sortBy: 'impact_desc',
-  updatedAt: 0,
-}
 
 LocaleConfig.locales['pt-BR'] = {
   monthNames: ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
@@ -141,20 +120,6 @@ LocaleConfig.locales['it-IT'] = {
   monthNamesShort: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
   dayNames: ['Domenica', 'Lunedi', 'Martedi', 'Mercoledi', 'Giovedi', 'Venerdi', 'Sabato'],
   dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'],
-}
-
-function sanitizeForecastEventFilters(raw: Partial<ForecastEventFilterState> | null | undefined): ForecastEventFilterState {
-  const nextSortBy: ForecastSortBy = raw?.sortBy === 'recent_desc' ? 'recent_desc' : 'impact_desc'
-  const nextAspectTypes = Array.isArray(raw?.aspectTypes)
-    ? raw!.aspectTypes.filter((item): item is ForecastAspectType => item === 'major' || item === 'minor')
-    : []
-  return {
-    ...DEFAULT_EVENT_FILTERS,
-    sortBy: nextSortBy,
-    aspectTypes: Array.from(new Set(nextAspectTypes)),
-    updatedAt: Number(raw?.updatedAt || 0),
-    version: 2,
-  }
 }
 
 function scoreColor(score: number) {
@@ -203,16 +168,6 @@ function impactLabel(impact: ForecastEvent['impact']) {
   return 'Misto'
 }
 
-function toAspectKey(raw: string) {
-  return normalizeAspectLabel(raw || '').toLowerCase()
-}
-
-function inferAspectType(event: ForecastEvent): ForecastAspectType {
-  const key = toAspectKey(event.aspect)
-  const major = new Set(['conjuncao', 'oposicao', 'quadratura', 'trigono', 'sextil'])
-  return major.has(key) ? 'major' : 'minor'
-}
-
 function inferTransitKind(event: ForecastEvent): ForecastTransitKind {
   const target = String(event.natalPoint || '')
   return /(?:casa|house)\s*\d{1,2}/i.test(target) ? 'planet_house' : 'planet_planet'
@@ -252,10 +207,6 @@ function inferHouseStrength(event: ForecastEvent): ForecastHouseStrength {
 
 function normalizeEventDomains(domains: string[]) {
   return (domains || []).map((d) => normalizeLifeArea(d)).filter(Boolean) as string[]
-}
-
-function getFiltersActiveCount(filters: ForecastEventFilterState) {
-  return filters.aspectTypes.length + (filters.sortBy !== DEFAULT_EVENT_FILTERS.sortBy ? 1 : 0)
 }
 
 function normalizeAspectLabel(rawAspect: string) {
@@ -606,9 +557,6 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   onOpenEventDetail,
   dayEventsLabel,
   noEventsLabel,
-  filterButtons,
-  activeFilterCount,
-  onClearFilters,
 }: {
   selectedEventsCount: number
   eventDisplayData: Array<{
@@ -626,29 +574,11 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
   onOpenEventDetail: (eventId: string) => void
   dayEventsLabel: string
   noEventsLabel: string
-  filterButtons: Array<{ key: string; label: string; onPress: () => void }>
-  activeFilterCount: number
-  onClearFilters: () => void
 }) {
   const visibleEvents = eventDisplayData
   return (
     <View>
-      <View style={styles.eventHeaderRow}>
-        <Text style={styles.dayPanelLabel}>{dayEventsLabel}</Text>
-        <Text style={styles.filterActiveText}>
-          {activeFilterCount > 0 ? `${activeFilterCount} ${activeFilterCount === 1 ? 'ativo' : 'ativos'}` : '0 ativos'}
-        </Text>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterButtonRow}>
-        {filterButtons.map((button) => (
-          <TouchableOpacity key={button.key} style={styles.filterChip} onPress={button.onPress}>
-            <Text style={styles.filterChipText}>{button.label}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity style={[styles.filterChip, styles.filterChipClear]} onPress={onClearFilters}>
-          <Text style={styles.filterChipText}>Limpar</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <Text style={styles.dayPanelLabel}>{dayEventsLabel}</Text>
       {selectedEventsCount === 0 && (
         <Text style={styles.emptyText}>{noEventsLabel}</Text>
       )}
@@ -733,9 +663,6 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [selectedEventDetailId, setSelectedEventDetailId] = useState<string | null>(null)
-  const [eventFilters, setEventFilters] = useState<ForecastEventFilterState>(DEFAULT_EVENT_FILTERS)
-  const [filterCategoryOpen, setFilterCategoryOpen] = useState<ForecastFilterCategory | null>(null)
-  const [filtersHydrated, setFiltersHydrated] = useState(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
@@ -756,10 +683,6 @@ export default function ForecastScreen() {
     })
   }, [isAdmin, planId, subscription?.active])
 
-  const filtersStorageKey = useMemo(
-    () => `${FORECAST_EVENT_FILTERS_KEY_PREFIX}:${user?.uid || 'anon'}`,
-    [user?.uid]
-  )
   const hasExtendedForecast = maxDaysAllowed > 7
   const granularity = 'day'
   const expiryInfo = useMemo(() => {
@@ -896,82 +819,6 @@ export default function ForecastScreen() {
   useEffect(() => {
     fetchForecast()
   }, [fetchForecast])
-
-  useEffect(() => {
-    let mounted = true
-    const loadFilters = async () => {
-      try {
-        const localRaw = await AsyncStorage.getItem(filtersStorageKey)
-        let localState: ForecastEventFilterState | null = null
-        if (localRaw) {
-          localState = sanitizeForecastEventFilters(JSON.parse(localRaw))
-        }
-        if (mounted && localState) setEventFilters(localState)
-
-        if (user?.uid) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid))
-          const remote = userDoc.data()?.preferences?.forecastEventFilters as Partial<ForecastEventFilterState> | undefined
-          if (remote && mounted) {
-            const remoteState = sanitizeForecastEventFilters(remote)
-            const pickRemote = Number(remoteState.updatedAt || 0) >= Number(localState?.updatedAt || 0)
-            if (pickRemote) {
-              setEventFilters(remoteState)
-              await AsyncStorage.setItem(filtersStorageKey, JSON.stringify(remoteState))
-            }
-          }
-        }
-      } catch (error) {
-        console.warn('Falha ao carregar filtros de previsoes', error)
-      } finally {
-        if (mounted) setFiltersHydrated(true)
-      }
-    }
-    loadFilters()
-    return () => {
-      mounted = false
-    }
-  }, [filtersStorageKey, user?.uid])
-
-  const persistEventFilters = useCallback(
-    async (next: ForecastEventFilterState) => {
-      try {
-        await AsyncStorage.setItem(filtersStorageKey, JSON.stringify(next))
-      } catch (error) {
-        console.warn('Falha ao persistir filtros localmente', error)
-      }
-      if (!user?.uid) return
-      try {
-        await setDoc(
-          doc(db, 'users', user.uid),
-          {
-            preferences: {
-              forecastEventFilters: next,
-            },
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        )
-      } catch (error) {
-        console.warn('Falha ao persistir filtros remotamente', error)
-      }
-    },
-    [filtersStorageKey, user?.uid]
-  )
-
-  const updateEventFilters = useCallback(
-    (updater: (prev: ForecastEventFilterState) => ForecastEventFilterState) => {
-      setEventFilters((prev) => {
-        const next = {
-          ...updater(prev),
-          updatedAt: Date.now(),
-          version: 2,
-        }
-        if (filtersHydrated) persistEventFilters(next)
-        return next
-      })
-    },
-    [filtersHydrated, persistEventFilters]
-  )
 
   const series = data?.series || []
   const seriesSorted = useMemo(
@@ -1444,101 +1291,6 @@ export default function ForecastScreen() {
     })
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
 
-  const availableFilterOptions = useMemo(() => {
-    const aspectTypes = new Set<ForecastAspectType>()
-
-    selectedEventsRaw.forEach((event) => {
-      aspectTypes.add(inferAspectType(event))
-    })
-
-    return {
-      aspectTypes: Array.from(aspectTypes),
-    }
-  }, [selectedEventsRaw])
-
-  const filteredEventDisplayData = useMemo(() => {
-    const withMeta = eventDisplayData.map((item) => {
-      const aspectType = inferAspectType(item.event)
-      return {
-        ...item,
-        meta: {
-          aspectType,
-        },
-      }
-    })
-
-    const filtered = withMeta.filter((item) => {
-      const { meta } = item
-      if (eventFilters.aspectTypes.length && !eventFilters.aspectTypes.includes(meta.aspectType)) return false
-      return true
-    })
-
-    const selectedDateRef = selectedDateKey
-    const sorted = filtered.slice().sort((a, b) => {
-      const aEvent = a.event
-      const bEvent = b.event
-      switch (eventFilters.sortBy) {
-        case 'recent_desc':
-          return String(bEvent.exactAt || '').localeCompare(String(aEvent.exactAt || ''))
-        case 'impact_desc':
-        default:
-          return eventPriorityScore(bEvent, selectedDateRef) - eventPriorityScore(aEvent, selectedDateRef)
-      }
-    })
-
-    return sorted
-  }, [eventDisplayData, eventFilters, selectedDateKey])
-
-  const activeFilterCount = useMemo(() => getFiltersActiveCount(eventFilters), [eventFilters])
-
-  const toggleInArray = <T extends string>(list: T[], value: T) =>
-    list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
-
-  const clearAllFilters = useCallback(() => {
-    updateEventFilters((prev) => ({
-      ...prev,
-      aspectTypes: [],
-      sortBy: DEFAULT_EVENT_FILTERS.sortBy,
-    }))
-  }, [updateEventFilters])
-
-  const filterCategoryButtons: Array<{ key: ForecastFilterCategory; label: string }> = useMemo(
-    () => [
-      { key: 'aspectType', label: tr('forecast.filters.aspectType', 'Aspectos') },
-      { key: 'sort', label: tr('forecast.filters.sort', 'Ordenacao') },
-    ],
-    [tr]
-  )
-
-  const filterModalOptions = useMemo(() => {
-    switch (filterCategoryOpen) {
-      case 'aspectType':
-        return availableFilterOptions.aspectTypes.map((item) => ({
-          key: item,
-          label:
-            item === 'major'
-              ? tr('forecast.filters.aspectType.major', 'Aspectos maiores')
-              : tr('forecast.filters.aspectType.minor', 'Aspectos menores'),
-          selected: eventFilters.aspectTypes.includes(item),
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, aspectTypes: toggleInArray(prev.aspectTypes, item) })),
-        }))
-      case 'sort': {
-        const options: Array<{ key: ForecastSortBy; label: string }> = [
-          { key: 'impact_desc', label: tr('forecast.sort.impact', 'Maior impacto') },
-          { key: 'recent_desc', label: tr('forecast.sort.recent', 'Mais recente') },
-        ]
-        return options.map((item) => ({
-          key: item.key,
-          label: item.label,
-          selected: eventFilters.sortBy === item.key,
-          onToggle: () => updateEventFilters((prev) => ({ ...prev, sortBy: item.key })),
-        }))
-      }
-      default:
-        return []
-    }
-  }, [availableFilterOptions, eventFilters, filterCategoryOpen, tr, updateEventFilters])
-
   useEffect(() => {
     if (!debouncedFetchDate) return
     if (!isDateInRange(debouncedFetchDate)) return
@@ -1748,20 +1500,13 @@ export default function ForecastScreen() {
 
             <MemoDayEvents
               selectedEventsCount={selectedEvents.length}
-              eventDisplayData={filteredEventDisplayData}
+              eventDisplayData={eventDisplayData}
               onOpenEventDetail={openEventDetail}
               dayEventsLabel={tr('forecast.dayEvents', 'Eventos do dia')}
               noEventsLabel={tr(
                 'forecast.noEventsForDay',
                 'Sem eventos. Dia mais calmo para organizar suas prioridades.'
               )}
-              filterButtons={filterCategoryButtons.map((button) => ({
-                key: button.key,
-                label: button.label,
-                onPress: () => setFilterCategoryOpen(button.key),
-              }))}
-              activeFilterCount={activeFilterCount}
-              onClearFilters={clearAllFilters}
             />
           </View>
 
@@ -1774,52 +1519,6 @@ export default function ForecastScreen() {
           )}
         </ScrollView>
       )}
-      <Modal
-        visible={filterCategoryOpen !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setFilterCategoryOpen(null)}
-      >
-        <TouchableOpacity
-          style={styles.filterModalBackdrop}
-          activeOpacity={1}
-          onPress={() => setFilterCategoryOpen(null)}
-        >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.filterModalCard}
-            onPress={() => {}}
-          >
-            <View style={styles.filterModalHeader}>
-              <Text style={styles.filterModalTitle}>
-                {filterCategoryOpen
-                  ? filterCategoryButtons.find((button) => button.key === filterCategoryOpen)?.label || tr('forecast.filters.title', 'Filtros')
-                  : tr('forecast.filters.title', 'Filtros')}
-              </Text>
-              <TouchableOpacity onPress={() => setFilterCategoryOpen(null)}>
-                <Ionicons name="close" size={20} color="#FFD700" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.filterModalBody}>
-              {filterModalOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={[styles.filterOption, option.selected && styles.filterOptionSelected]}
-                  onPress={option.onToggle}
-                >
-                  <Text style={[styles.filterOptionText, option.selected && styles.filterOptionTextSelected]}>
-                    {option.label}
-                  </Text>
-                  {option.selected ? <Ionicons name="checkmark-circle" size={16} color="#FFD700" /> : null}
-                </TouchableOpacity>
-              ))}
-              {!filterModalOptions.length ? (
-                <Text style={styles.emptyText}>{tr('forecast.filters.noOptions', 'Sem opcoes para este dia.')}</Text>
-              ) : null}
-            </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
       {(() => {
         const detail = eventDisplayData.find((item) => item.event.id === selectedEventDetailId) || null
         if (!detail) return null
