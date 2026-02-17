@@ -1359,21 +1359,31 @@ const buildMemberAreaEntries = (member: GroupMember) => {
       >
         {/* Header com seletor de grupos */}
         <View style={styles.header}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupSelector}>
-            {(groups || []).map((group) => (
-              <TouchableOpacity
-                key={group.id}
-                style={[styles.groupTab, selectedGroup?.id === group.id && styles.groupTabActive]}
-                onPress={() => setSelectedGroup(group)}
-              >
-                <Text style={[styles.groupTabText, selectedGroup?.id === group.id && styles.groupTabTextActive]}>
-                  {group.name}
-                </Text>
+          <View style={styles.headerTopRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupSelector}>
+              {(groups || []).map((group) => (
+                <TouchableOpacity
+                  key={group.id}
+                  style={[styles.groupTab, selectedGroup?.id === group.id && styles.groupTabActive]}
+                  onPress={() => setSelectedGroup(group)}
+                >
+                  <Text style={[styles.groupTabText, selectedGroup?.id === group.id && styles.groupTabTextActive]}>
+                    {group.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={styles.headerActionsInline}>
+              {groups.length > 1 ? (
+                <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
+                  <Ionicons name="swap-vertical" size={18} color="#FFD700" />
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupActions}>
+                <Ionicons name="add" size={20} color="#FFD700" />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          
+            </View>
+          </View>
         </View>
 
         {expiryInfo.show && (
@@ -1394,12 +1404,6 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                 </View>
                 <View style={styles.groupHeaderActionsColumn}>
                   <View style={styles.groupHeaderActionsRow}>
-                    <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
-                      <Ionicons name="swap-vertical" size={18} color="#FFD700" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupActions}>
-                      <Ionicons name="add" size={20} color="#FFD700" />
-                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.groupHeaderActionButton}
                       onPress={() => {
@@ -1409,23 +1413,23 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     >
                       <Ionicons name="ellipsis-horizontal" size={18} color="#FFD700" />
                     </TouchableOpacity>
+                    <TouchableOpacity style={styles.groupHeaderPreferencesButton} onPress={openGroupSettings}>
+                      <Ionicons name="options" size={12} color="#FFD700" />
+                      <Text style={styles.groupHeaderPreferencesText}>{tr('groups.label.preferences', 'Preferencias')}</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.groupHeaderPreferencesButton} onPress={openGroupSettings}>
-                    <Ionicons name="options" size={12} color="#FFD700" />
-                    <Text style={styles.groupHeaderPreferencesText}>{tr('groups.label.preferences', 'Preferencias')}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.groupHeaderMetaRow}>
+                    <Text style={styles.groupMetaTextInline}>
+                      {tr('groups.label.membersCount', '{count} membros', { count: selectedGroup.members?.length || groupMembers.length })}
+                    </Text>
+                    <Text style={styles.groupMetaDot}>-</Text>
+                    <Text style={styles.groupMetaTextInline}>
+                      {tr('groups.label.areasCount', '{count} areas', {
+                        count: (selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length,
+                      })}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.groupHeaderMetaRow}>
-                <Text style={styles.groupMetaTextInline}>
-                  {tr('groups.label.membersCount', '{count} membros', { count: selectedGroup.members?.length || groupMembers.length })}
-                </Text>
-                <Text style={styles.groupMetaDot}>-</Text>
-                <Text style={styles.groupMetaTextInline}>
-                  {tr('groups.label.areasCount', '{count} areas', {
-                    count: (selectedGroup.sharedLifeAreas || LIFE_AREA_KEYS).length,
-                  })}
-                </Text>
               </View>
             </View>
 
@@ -1758,6 +1762,20 @@ const buildMemberAreaEntries = (member: GroupMember) => {
             >
               <Text style={styles.modalButtonConfirmText}>{tr('groups.action.joinGroup', 'Entrar em grupo')}</Text>
             </TouchableOpacity>
+            {selectedGroup ? (
+              <TouchableOpacity
+                style={[styles.modalButtonConfirm, styles.modalButtonFullWidth]}
+                onPress={() => {
+                  setShowGroupActionsModal(false)
+                  setSelectedGroupForDetail(selectedGroup)
+                  setShowGroupDetail(true)
+                }}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {tr('groups.action.inviteMember', 'Convidar um membro para este grupo')}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -2642,9 +2660,16 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 20,
     paddingBottom: 16,
+  },
+  headerTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  headerActionsInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   groupSelector: {
     flex: 1,
