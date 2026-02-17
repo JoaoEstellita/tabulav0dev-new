@@ -1362,6 +1362,20 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     )
   }
 
+  const maxTransitImpactAbs = Math.max(
+    0.0001,
+    ...transitItems.map((transit) => Math.abs(safeNumber(transit?.impact, 0)))
+  )
+  const normalizeTransitImpact01 = (transit: any): number => {
+    const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+    if (impactAbs > 0) {
+      const relative = impactAbs / maxTransitImpactAbs
+      return Math.max(0.08, Math.min(1, relative))
+    }
+    const orb = Math.abs(safeNumber(transit?.orb, 2.5))
+    return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
+  }
+
   const renderScoreComponentsSection = () => {
     const statusMeta = (areaData as any)?.statusMeta || (areaData as any)?.status_meta || null
     const rawDrivers = Array.isArray(statusMeta?.drivers)
@@ -1526,19 +1540,6 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const topDignityReasons = topDignityPlanets
       .map((planet) => `${planetLabel(planet.planet)}: ${planet.dignityReason}`)
       .join(' | ')
-    const maxTransitImpactAbs = Math.max(
-      0.0001,
-      ...transitItems.map((transit) => Math.abs(safeNumber(transit?.impact, 0)))
-    )
-    const normalizeTransitImpact01 = (transit: any): number => {
-      const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
-      if (impactAbs > 0) {
-        const relative = impactAbs / maxTransitImpactAbs
-        return Math.max(0.08, Math.min(1, relative))
-      }
-      const orb = Math.abs(safeNumber(transit?.orb, 2.5))
-      return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
-    }
     const topTransitSignals = [...transitItems]
       .sort((a, b) => Math.abs(safeNumber(b.impact, 0)) - Math.abs(safeNumber(a.impact, 0)))
       .map((transit) => {
