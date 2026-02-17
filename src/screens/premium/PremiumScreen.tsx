@@ -232,6 +232,22 @@ export default function PremiumScreen() {
     await Linking.openURL(targetUrl)
   }
 
+  const confirmForCheckout = async (title: string, message: string, confirmLabel: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return window.confirm(`${title}\n\n${message}`)
+    }
+    return new Promise<boolean>((resolve) => {
+      Alert.alert(
+        title,
+        message,
+        [
+          { text: tr('common.cancel', 'Cancelar'), style: 'cancel', onPress: () => resolve(false) },
+          { text: confirmLabel, onPress: () => resolve(true) },
+        ],
+      )
+    })
+  }
+
   useEffect(() => {
     if (!user) return
     let active = true
@@ -467,61 +483,56 @@ export default function PremiumScreen() {
 
     const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
     const displayPrice = effectiveProvider === 'stripe' ? `US$ ${(option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0).toFixed(2)}` : `R$ ${(option.priceBRL || 0).toFixed(2)}`
-    Alert.alert(
+    const confirmed = await confirmForCheckout(
       tr('premium.gift.confirm.title', 'Confirmar assinatura extra'),
       tr('premium.gift.confirm.body', 'Comprar 1 código para o plano {plan} por {price}?', {
         plan: option.label || option.targetPlanId,
         price: displayPrice,
       }),
-      [
-        { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
-        {
-          text: tr('premium.gift.confirm.cta', 'Comprar'),
-          onPress: async () => {
-            try {
-              setGiftPurchaseLoading(option.id)
-              if (effectiveProvider === 'stripe') {
-                const stripeSession = await StripeService.createCheckoutSession({
-                  userId: user.uid,
-                  planId: option.id,
-                  email: user.email || '',
-                  name: user.displayName || user.email || tr('common.user', 'Usuario'),
-                  amount: option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0,
-                  currency: 'usd',
-                })
-                const stripeUrl = stripeSession?.url
-                if (!stripeUrl) {
-                  Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.stripeLinkFailed', 'Não foi possível gerar o link Stripe.'))
-                  return
-                }
-                await openExternalCheckout(stripeUrl)
-                return
-              }
-              const preference = await MercadoPagoService.createPaymentPreference({
-                userId: user.uid,
-                planId: option.id,
-                email: user.email || '',
-                name: user.displayName || user.email || tr('common.user', 'Usuario'),
-                amount: option.priceBRL,
-                description: `${tr('premium.gift.label', 'Assinatura extra')} ${option.label}`,
-                externalReference: MercadoPagoService.generateExternalReference(user.uid, option.id),
-              })
-              const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
-              if (!checkoutUrl) {
-                Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
-                return
-              }
-              await openExternalCheckout(checkoutUrl)
-            } catch (error: any) {
-              const message = String(error?.message || '').trim() || tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
-              Alert.alert(tr('common.error', 'Erro'), message)
-            } finally {
-              setGiftPurchaseLoading(null)
-            }
-          },
-        },
-      ]
+      tr('premium.gift.confirm.cta', 'Comprar'),
     )
+    if (!confirmed) return
+
+    try {
+      setGiftPurchaseLoading(option.id)
+      if (effectiveProvider === 'stripe') {
+        const stripeSession = await StripeService.createCheckoutSession({
+          userId: user.uid,
+          planId: option.id,
+          email: user.email || '',
+          name: user.displayName || user.email || tr('common.user', 'Usuario'),
+          amount: option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0,
+          currency: 'usd',
+        })
+        const stripeUrl = stripeSession?.url
+        if (!stripeUrl) {
+          Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.stripeLinkFailed', 'Não foi possível gerar o link Stripe.'))
+          return
+        }
+        await openExternalCheckout(stripeUrl)
+        return
+      }
+      const preference = await MercadoPagoService.createPaymentPreference({
+        userId: user.uid,
+        planId: option.id,
+        email: user.email || '',
+        name: user.displayName || user.email || tr('common.user', 'Usuario'),
+        amount: option.priceBRL,
+        description: `${tr('premium.gift.label', 'Assinatura extra')} ${option.label}`,
+        externalReference: MercadoPagoService.generateExternalReference(user.uid, option.id),
+      })
+      const checkoutUrl = preference?.checkout_url || preference?.init_point || preference?.sandbox_init_point
+      if (!checkoutUrl) {
+        Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.paymentLinkFailed', 'Não foi possível gerar o link de pagamento.'))
+        return
+      }
+      await openExternalCheckout(checkoutUrl)
+    } catch (error: any) {
+      const message = String(error?.message || '').trim() || tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.')
+      Alert.alert(tr('common.error', 'Erro'), message)
+    } finally {
+      setGiftPurchaseLoading(null)
+    }
   }
 
   const handleRedeemGiftCode = async () => {
