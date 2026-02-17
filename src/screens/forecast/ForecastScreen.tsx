@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
-import { Calendar } from 'react-native-calendars'
+import { Calendar, LocaleConfig } from 'react-native-calendars'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
@@ -116,6 +116,31 @@ const DEFAULT_EVENT_FILTERS: ForecastEventFilterState = {
   aspectTypes: [],
   sortBy: 'impact_desc',
   updatedAt: 0,
+}
+
+LocaleConfig.locales['pt-BR'] = {
+  monthNames: ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+  monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+  dayNames: ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'],
+  dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+}
+LocaleConfig.locales['en-US'] = {
+  monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+}
+LocaleConfig.locales['es-ES'] = {
+  monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+  monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'],
+}
+LocaleConfig.locales['it-IT'] = {
+  monthNames: ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'],
+  monthNamesShort: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+  dayNames: ['Domenica', 'Lunedi', 'Martedi', 'Mercoledi', 'Giovedi', 'Venerdi', 'Sabato'],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'],
 }
 
 function sanitizeForecastEventFilters(raw: Partial<ForecastEventFilterState> | null | undefined): ForecastEventFilterState {
@@ -666,6 +691,13 @@ export default function ForecastScreen() {
     },
     [t]
   )
+  useEffect(() => {
+    const locale =
+      language === 'pt-BR' || language === 'en-US' || language === 'es-ES' || language === 'it-IT'
+        ? language
+        : 'en-US'
+    LocaleConfig.defaultLocale = locale
+  }, [language])
   const resolveScoreLabel = useCallback(
     (score: number | null) => {
       if (typeof score !== 'number') return '--'
@@ -1559,19 +1591,6 @@ export default function ForecastScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View />
-          <View style={styles.planBadge}>
-            <Text style={styles.planBadgeText}>
-              {tr('forecast.currentPlan', 'Plano atual: {plan}', { plan: currentPlan.name })}
-            </Text>
-          </View>
-        </View>
-        <Text style={styles.subtitle}>
-          {tr('forecast.subtitle', 'Status previsto dos proximos dias')}
-        </Text>
-      </View>
       {expiryInfo.show && (
           <ExpiryBanner
             message={expiryMessage}
@@ -1581,20 +1600,27 @@ export default function ForecastScreen() {
       )}
 
       <View style={styles.periodRow}>
-        {PERIODS.map((days) => {
-          const locked = days > maxDaysAllowed
-          const selected = periodDays === days
-          return (
-            <TouchableOpacity
-              key={days}
-              style={[styles.periodButton, selected && styles.periodButtonActive, locked && styles.periodButtonLocked]}
-              onPress={() => handleSelectPeriod(days)}
-            >
-              <Text style={[styles.periodText, selected && styles.periodTextActive]}>{days}d</Text>
-              {locked && <Ionicons name="lock-closed" size={12} color="#888" />}
-            </TouchableOpacity>
-          )
-        })}
+        <View style={styles.periodButtonsWrap}>
+          {PERIODS.map((days) => {
+            const locked = days > maxDaysAllowed
+            const selected = periodDays === days
+            return (
+              <TouchableOpacity
+                key={days}
+                style={[styles.periodButton, selected && styles.periodButtonActive, locked && styles.periodButtonLocked]}
+                onPress={() => handleSelectPeriod(days)}
+              >
+                <Text style={[styles.periodText, selected && styles.periodTextActive]}>{days}d</Text>
+                {locked && <Ionicons name="lock-closed" size={12} color="#888" />}
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+        <View style={styles.planBadge}>
+          <Text style={styles.planBadgeText}>
+            {tr('forecast.currentPlan', 'Plano atual: {plan}', { plan: currentPlan.name })}
+          </Text>
+        </View>
       </View>
 
       {limitedBanner && (
@@ -1646,6 +1672,7 @@ export default function ForecastScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.calendarWrapper}>
             <MemoCalendar
+              locale={language}
               markingType="multi-dot"
               current={selectedMonthKey || selectedDateKey || rangeFromStr || undefined}
               minDate={rangeFromStr || undefined}
@@ -1883,8 +1910,16 @@ const styles = StyleSheet.create({
   },
   periodRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     gap: 8,
+  },
+  periodButtonsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
   },
   periodButton: {
     flexDirection: 'row',
