@@ -111,7 +111,7 @@ const buildDefaultProfile = (email?: string | null, fallbackName = 'Usuario'): U
         types: {
           member_status_critical: true,
           user_status_critical: true,
-          group_message: false,
+          group_message: true,
         },
         limits: {
           member_status_critical: { dailyLimit: 5, throttleMinutes: 60 },

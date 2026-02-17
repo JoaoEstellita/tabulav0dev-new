@@ -253,6 +253,25 @@ export default function GroupsScreen() {
   }, [selectedGroup])
 
   useEffect(() => {
+    if (!isPremium || !selectedGroup?.id) {
+      setGroupAlerts([])
+      return
+    }
+
+    const unsubscribe = GroupService.subscribeToGroupAlerts(selectedGroup.id, (alerts) => {
+      setGroupAlerts(alerts)
+    })
+
+    return () => {
+      try {
+        unsubscribe?.()
+      } catch {
+        // no-op
+      }
+    }
+  }, [isPremium, selectedGroup?.id])
+
+  useEffect(() => {
     const params = route?.params || {}
     const focusKey = `${params.groupId || ""}_${params.memberId || ""}_${params.lifeArea || ""}`
     if (focusKey && lastFocusKeyRef.current !== focusKey) {
@@ -616,6 +635,7 @@ export default function GroupsScreen() {
       
       setShowMessageModal(false)
       setGroupMessage("")
+      await loadGroupData()
       Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.messageSent', 'Mensagem enviada para o grupo!'))
       
     } catch (error: any) {
