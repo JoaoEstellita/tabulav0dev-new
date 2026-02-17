@@ -11,6 +11,9 @@ import {
   TextInput,
   Modal,
   RefreshControl,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
@@ -47,6 +50,7 @@ const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
+const WINDOW_HEIGHT = Dimensions.get("window").height
 
 const LIFE_AREA_LABELS = LIFE_AREA_OPTIONS.reduce((acc, area) => {
   acc[area.key] = area.label
@@ -187,6 +191,9 @@ export default function GroupsScreen() {
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
   const lastSelfStatusRefreshAtRef = useRef<number>(0)
+  const memberAreaScrollOffsetYRef = useRef(0)
+  const memberAreaSwipeY = useRef(new Animated.Value(0)).current
+  const memberAreaSwipeClosingRef = useRef(false)
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
@@ -204,6 +211,67 @@ export default function GroupsScreen() {
     if (daysLeft <= 0) return expiryInfo.message
     return `${expiryInfo.message} (${daysLeft} dias)`
   })()
+
+  const closeMemberAreaModal = () => {
+    setShowMemberAreaModal(false)
+    setSelectedMemberArea(null)
+    setSelectedMemberTransitDetail(null)
+    setShowMemberAreaCalc(false)
+    setMemberTransitFacetFilters(["major", "minor", "house"])
+    setMemberTransitToneFilter("all")
+    setMemberTransitSortMode("impact")
+    setMemberTransitFiltersExpanded(false)
+    memberAreaScrollOffsetYRef.current = 0
+    memberAreaSwipeY.setValue(0)
+    memberAreaSwipeClosingRef.current = false
+  }
+
+  const animateMemberAreaSwipeBack = () => {
+    Animated.spring(memberAreaSwipeY, {
+      toValue: 0,
+      bounciness: 0,
+      speed: 24,
+      useNativeDriver: true,
+    }).start()
+  }
+
+  const closeMemberAreaBySwipe = () => {
+    if (memberAreaSwipeClosingRef.current) return
+    memberAreaSwipeClosingRef.current = true
+    Animated.timing(memberAreaSwipeY, {
+      toValue: WINDOW_HEIGHT * 0.72,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      closeMemberAreaModal()
+    })
+  }
+
+  const memberAreaPanResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      if (!showMemberAreaModal) return false
+      if (selectedMemberTransitDetail) return false
+      const atTop = memberAreaScrollOffsetYRef.current <= 2
+      const isDownward = gestureState.dy > 10
+      const isMostlyVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.15
+      return atTop && isDownward && isMostlyVertical
+    },
+    onPanResponderMove: (_, gestureState) => {
+      const nextY = Math.max(0, gestureState.dy)
+      memberAreaSwipeY.setValue(nextY)
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      const shouldClose = gestureState.dy > 110 || gestureState.vy > 1.05
+      if (shouldClose) {
+        closeMemberAreaBySwipe()
+        return
+      }
+      animateMemberAreaSwipeBack()
+    },
+    onPanResponderTerminate: () => {
+      animateMemberAreaSwipeBack()
+    },
+  })
 
   useEffect(() => {
     if (!user) return
@@ -2044,19 +2112,18 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         visible={showMemberAreaModal}
         transparent
         animationType="fade"
-        onRequestClose={() => {
-          setShowMemberAreaModal(false)
-          setSelectedMemberArea(null)
-          setSelectedMemberTransitDetail(null)
-          setShowMemberAreaCalc(false)
-          setMemberTransitFacetFilters(["major", "minor", "house"])
-          setMemberTransitToneFilter("all")
-          setMemberTransitSortMode("impact")
-          setMemberTransitFiltersExpanded(false)
-        }}
+        onRequestClose={closeMemberAreaModal}
       >
         <View style={styles.memberAreaBackdrop}>
-          <View style={styles.memberAreaCard}>
+          <Animated.View
+            style={[
+              styles.memberAreaCard,
+              {
+                transform: [{ translateY: memberAreaSwipeY }],
+              },
+            ]}
+            {...memberAreaPanResponder.panHandlers}
+          >
             {(() => {
               if (!selectedMemberArea) return null
               const { member, key } = selectedMemberArea
@@ -2172,6 +2239,10 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                   <ScrollView
                     style={styles.memberAreaContent}
                     showsVerticalScrollIndicator={false}
+                    scrollEventThrottle={16}
+                    onScroll={(event) => {
+                      memberAreaScrollOffsetYRef.current = event.nativeEvent.contentOffset.y
+                    }}
                   >
                     {(() => {
                       const areaLabel = lifeAreaLabel(key)
@@ -2597,20 +2668,11 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
             <TouchableOpacity
               style={styles.memberAreaClose}
-              onPress={() => {
-                setShowMemberAreaModal(false)
-                setSelectedMemberArea(null)
-                setSelectedMemberTransitDetail(null)
-                setShowMemberAreaCalc(false)
-                setMemberTransitFacetFilters(["major", "minor", "house"])
-                setMemberTransitToneFilter("all")
-                setMemberTransitSortMode("impact")
-                setMemberTransitFiltersExpanded(false)
-              }}
+              onPress={closeMemberAreaModal}
             >
               <Text style={styles.memberAreaCloseText}>{tr('common.close', 'Fechar')}</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
