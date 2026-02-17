@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import React, { useMemo, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput, Platform, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, ScrollView, Switch, ActivityIndicator, TextInput, Platform, TouchableOpacity, SafeAreaView } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
@@ -222,16 +222,19 @@ export default function NotificationPreferencesScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={[styles.container, isWeb && styles.containerWeb]}>
-      <ScrollView
-        style={[styles.scrollView, isWeb && styles.scrollViewWeb]}
-        contentContainerStyle={[styles.scrollContent, isWeb && styles.scrollContentWeb]}
-        showsVerticalScrollIndicator
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-        alwaysBounceVertical
-        scrollEnabled
-      >
+    <SafeAreaView style={[styles.container, isWeb && styles.containerWeb]}>
+      <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={[styles.container, isWeb && styles.containerWeb]}>
+        <ScrollView
+          style={[styles.scrollView, isWeb && styles.scrollViewWeb]}
+          contentContainerStyle={[styles.scrollContent, isWeb && styles.scrollContentWeb]}
+          showsVerticalScrollIndicator
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          alwaysBounceVertical
+          overScrollMode="always"
+          scrollEventThrottle={16}
+          scrollEnabled
+        >
         <View style={styles.header}>
           <Text style={styles.title}>{t("nprefs.title")}</Text>
           <Text style={styles.subtitle}>
@@ -557,15 +560,16 @@ export default function NotificationPreferencesScreen() {
             </View>
           </>
         )}
-      </ScrollView>
+        </ScrollView>
 
-      {saving && (
-        <View style={styles.savingOverlay}>
-          <ActivityIndicator size="small" color="#FFD700" />
-          <Text style={styles.savingText}>{t("common.saving")}</Text>
-        </View>
-      )}
-    </LinearGradient>
+        {saving && (
+          <View style={styles.savingOverlay}>
+            <ActivityIndicator size="small" color="#FFD700" />
+            <Text style={styles.savingText}>{t("common.saving")}</Text>
+          </View>
+        )}
+      </LinearGradient>
+    </SafeAreaView>
   )
 }
 
@@ -585,8 +589,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 140,
-    flexGrow: 1,
+    paddingBottom: 180,
   },
   scrollContentWeb: {
     paddingBottom: 120,
