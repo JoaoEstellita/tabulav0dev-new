@@ -420,7 +420,7 @@ export default function GroupNotificationSettings({
               />
             </View>
 
-            <View style={styles.settingItem}>
+            <View style={[styles.settingItem, styles.settingItemStacked]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Prioridade</Text>
                 <Text style={styles.settingDescription}>
@@ -450,7 +450,7 @@ export default function GroupNotificationSettings({
               </View>
             </View>
 
-            <View style={styles.settingItem}>
+            <View style={[styles.settingItem, styles.settingItemStacked]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Cooldown do grupo (push)</Text>
                 <Text style={styles.settingDescription}>
@@ -788,6 +788,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
   },
+  settingItemStacked: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
   settingInfo: {
     flex: 1,
     marginRight: 16,
@@ -810,6 +814,8 @@ const styles = StyleSheet.create({
   },
   priorityButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
     gap: 8,
   },
   priorityButton: {
