@@ -610,7 +610,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
 
   const [showTechnical, setShowTechnical] = React.useState(false)
   const [activeScoreComponent, setActiveScoreComponent] = React.useState<string | null>(null)
-  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major'])
+  const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
@@ -630,6 +630,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     timingLabel: string | null
     keywords: string[]
   } | null>(null)
+  const isDefaultFacetSelection =
+    selectedFacetFilters.length === 2 &&
+    selectedFacetFilters.includes('major') &&
+    selectedFacetFilters.includes('house')
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
@@ -2344,7 +2348,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const activeFiltersCount =
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
-      (selectedFacetFilters.length === 1 && selectedFacetFilters[0] === 'major' ? 0 : 1) +
+      (isDefaultFacetSelection ? 0 : 1) +
       (selectedPlanetFilters.length ? 1 : 0) +
       (selectedHouseFilters.length ? 1 : 0)
 
@@ -2464,7 +2468,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => {
-                            setSelectedFacetFilters(['major'])
+                            setSelectedFacetFilters(['major', 'house'])
                             setSelectedToneFilter('all')
                             setSelectedSortMode('impact')
                             setSelectedPlanetFilters([])
