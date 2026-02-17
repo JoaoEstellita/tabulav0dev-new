@@ -1435,6 +1435,88 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           icon: 'flash-outline',
         }
       })
+    const driverBalanceRows = [...rawDrivers]
+      .map((driver: any) => {
+        const movement = safeNumber(
+          driver?.movementWeight ??
+            driver?.movement ??
+            driver?.movementScore ??
+            driver?.deltaMovement ??
+            driver?.movementDelta,
+          NaN
+        )
+        const attention = safeNumber(
+          driver?.attentionWeight ??
+            driver?.attention ??
+            driver?.attentionScore ??
+            driver?.deltaAttention ??
+            driver?.attentionDelta,
+          NaN
+        )
+        const combined = safeNumber(driver?.impact ?? driver?.contribution ?? driver?.score, NaN)
+        const supportScore = Number.isFinite(movement)
+          ? Math.max(0, movement)
+          : Number.isFinite(combined)
+          ? Math.max(0, combined)
+          : 0
+        const pressureScore = Number.isFinite(attention)
+          ? Math.max(0, attention)
+          : Number.isFinite(combined)
+          ? Math.max(0, -combined)
+          : 0
+        const title = String(
+          driver?.label ||
+            driver?.title ||
+            driver?.factorName ||
+            driver?.factorLabel ||
+            driver?.factorId ||
+            driver?.id ||
+            'Driver'
+        )
+        return {
+          title,
+          supportScore,
+          pressureScore,
+          movement,
+          attention,
+          combined,
+        }
+      })
+      .filter((item) => item.supportScore > 0 || item.pressureScore > 0)
+    const topSupportDriversRaw = [...driverBalanceRows]
+      .filter((item) => item.supportScore > 0)
+      .sort((a, b) => b.supportScore - a.supportScore)
+      .slice(0, 3)
+    const topSupportDrivers = topSupportDriversRaw
+      .map((item) => ({
+        title: item.title,
+        meta: Number.isFinite(item.movement)
+          ? `M +${safeFixed(item.movement, 2)}`
+          : Number.isFinite(item.combined)
+          ? `W +${safeFixed(Math.abs(item.combined), 2)}`
+          : '',
+        value: `+${safeFixed(item.supportScore, 2)}`,
+        tone: 'harmonic' as const,
+        icon: 'trending-up-outline',
+      }))
+    const topPressureDriversRaw = [...driverBalanceRows]
+      .filter((item) => item.pressureScore > 0)
+      .sort((a, b) => b.pressureScore - a.pressureScore)
+      .slice(0, 3)
+    const topPressureDrivers = topPressureDriversRaw
+      .map((item) => ({
+        title: item.title,
+        meta: Number.isFinite(item.attention)
+          ? `A +${safeFixed(item.attention, 2)}`
+          : Number.isFinite(item.combined)
+          ? `W -${safeFixed(Math.abs(item.combined), 2)}`
+          : '',
+        value: `+${safeFixed(item.pressureScore, 2)}`,
+        tone: 'challenging' as const,
+        icon: 'trending-down-outline',
+      }))
+    const supportSum = topSupportDriversRaw.reduce((sum, item) => sum + item.supportScore, 0)
+    const pressureSum = topPressureDriversRaw.reduce((sum, item) => sum + item.pressureScore, 0)
     const topDignityPlanets = planetBreakdown
       .filter((planet) => safeNumber(planet.dignityScore) > 0)
       .sort((a, b) => safeNumber(b.dignityScore) - safeNumber(a.dignityScore))
@@ -1444,6 +1526,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const topDignityReasons = topDignityPlanets
       .map((planet) => `${planetLabel(planet.planet)}: ${planet.dignityReason}`)
       .join(' | ')
+    const maxTransitImpactAbs = Math.max(
+      0.0001,
+      ...transitItems.map((transit) => Math.abs(safeNumber(transit?.impact, 0)))
+    )
+    const normalizeTransitImpact01 = (transit: any): number => {
+      const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+      if (impactAbs > 0) {
+        const relative = impactAbs / maxTransitImpactAbs
+        return Math.max(0.08, Math.min(1, relative))
+      }
+      const orb = Math.abs(safeNumber(transit?.orb, 2.5))
+      return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
+    }
     const topTransitSignals = [...transitItems]
       .sort((a, b) => Math.abs(safeNumber(b.impact, 0)) - Math.abs(safeNumber(a.impact, 0)))
       .map((transit) => {
@@ -1458,7 +1553,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         return {
           title,
           meta: [getPhaseLabel(transit), getDurationLabel(transit)].filter(Boolean).join(' • '),
-          value: `${Math.round(Math.abs(safeNumber(transit?.impact, 0)) * 100)}%`,
+          value: `${Math.round(normalizeTransitImpact01(transit) * 100)}%`,
           tone,
           icon: 'pulse-outline',
         }
@@ -1541,6 +1636,22 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                 `${rawDrivers.length} active V2 factors explain this area movement and attention variation.`,
                 `${rawDrivers.length} factores V2 activos explican la variación de movimiento y atención de esta área.`,
                 `${rawDrivers.length} fattori V2 attivi spiegano la variazione di movimento e attenzione di quest area.`
+              ),
+            },
+          ]
+        : []),
+      ...(rawDrivers.length
+        ? [
+            {
+              key: 'balance',
+              label: tl('Balanço', 'Balance', 'Balance', 'Bilancio'),
+              value: `${Math.round(supportSum)} / ${Math.round(pressureSum)}`,
+              tone: pressureSum > supportSum ? ('warning' as const) : ('positive' as const),
+              info: tl(
+                'Mostra a soma dos principais vetores de suporte (movimento) vs pressão (atenção) no score.',
+                'Shows the sum of key support vectors (movement) vs pressure (attention) in score.',
+                'Muestra la suma de los principales vectores de soporte (movimiento) vs presión (atención) en el puntaje.',
+                'Mostra la somma dei principali vettori di supporto (movimento) vs pressione (attenzione) nel punteggio.'
               ),
             },
           ]
@@ -1660,6 +1771,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               ),
               metric: `${rawDrivers.length} ${tl('fatores', 'factors', 'factores', 'fattori')}`,
               rows: topDriversV2,
+            },
+            balance: {
+              title: tl('Balanço do score', 'Score balance', 'Balance del puntaje', 'Bilancio del punteggio'),
+              summary: tl(
+                'Os fatores abaixo explicam, em termos práticos, por que a área sobe ou cai: suporte (M) versus pressão (A).',
+                'The factors below explain, in practical terms, why this area rises or drops: support (M) versus pressure (A).',
+                'Los factores de abajo explican, en términos prácticos, por qué esta área sube o baja: soporte (M) frente a presión (A).',
+                'I fattori sotto spiegano, in termini pratici, perché quest area sale o scende: supporto (M) vs pressione (A).'
+              ),
+              metric: `${tl('Suporte', 'Support', 'Soporte', 'Supporto')} ${Math.round(supportSum)} • ${tl('Pressão', 'Pressure', 'Presión', 'Pressione')} ${Math.round(pressureSum)}`,
+              rows: [...topPressureDrivers, ...topSupportDrivers].slice(0, 6),
             },
           }
         : {}),
@@ -2104,13 +2226,17 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const sourceCount = Array.isArray(backendSuggestion?.provenance) ? backendSuggestion.provenance.length : 0
       const sourceText = sourceCount > 0 ? `${tl('Fontes mapeadas', 'Mapped sources', 'Fuentes mapeadas', 'Fonti mappate')}: ${sourceCount}` : null
       const orbText = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : null
-      const impactText = Number.isFinite(transit?.impact) ? `${tl('Impacto', 'Impact', 'Impacto', 'Impatto')} ${safeFixed(transit.impact, 2)}` : null
+      const impactText = `${tl('Impacto relativo', 'Relative impact', 'Impacto relativo', 'Impatto relativo')} ${Math.round(
+        Math.max(0, Math.min(1, (() => {
+          const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
+          if (impactAbs > 0) return impactAbs / maxTransitImpactAbs
+          const orb = Math.abs(safeNumber(transit?.orb, 2.5))
+          return (3 - Math.min(3, orb)) / 3
+        })())) * 100
+      )}%`
       const metaLine = [orbText, impactText, confidenceText, sourceText].filter(Boolean).join(' • ')
       const impactValue01 = (() => {
-        const impactAbs = Math.abs(safeNumber(transit?.impact, 0))
-        if (impactAbs > 0) return Math.max(0.08, Math.min(1, impactAbs / 1.5))
-        const orb = Math.abs(safeNumber(transit?.orb, 2.5))
-        return Math.max(0.08, Math.min(1, (3 - Math.min(3, orb)) / 3))
+        return normalizeTransitImpact01(transit)
       })()
 
       return (
