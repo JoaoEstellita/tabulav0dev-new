@@ -19,7 +19,6 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import useTransits from '../../hooks/useTransits'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER } from '../../constants/lifeAreas'
@@ -32,7 +31,7 @@ import { AnimatedMount } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
 import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotifications'
 import type { HouseSystem } from '../../astro/houseSystem'
-import { normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem'
+import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes } from '../../utils/astro/pt'
@@ -99,19 +98,6 @@ const PLANET_ORDER: PlanetKey[] = [
   'Pluto',
 ]
 
-const detectWebBundleTag = (): string | null => {
-  try {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return null
-    const scripts = Array.from(document.querySelectorAll('script[src]')) as HTMLScriptElement[]
-    for (const script of scripts) {
-      const src = script.getAttribute('src') || ''
-      const match = /index-([a-f0-9]{7,})\.js/i.exec(src)
-      if (match?.[1]) return match[1].slice(0, 8)
-    }
-  } catch {}
-  return null
-}
-
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
   Sun: 'â˜‰',
@@ -157,16 +143,16 @@ export default function HomeScreen() {
     refreshData,
     backendLifeAreas,
     backendCurrentTransits,
-    backendStatusPersonal,
     localOverrideActive
   } = useLifeAreas()
   const { settings } = useUserSettings()
-  const { statusPersonal } = useTransits(null)
   const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
   const previousHouseSystemRef = useRef<HouseSystem | null>(null)
   const [moonPhaseKey, setMoonPhaseKey] = useState<string | null>(null)
   const [moonPhaseLabel, setMoonPhaseLabel] = useState<string | null>(null)
   const [moonLine2, setMoonLine2] = useState<string | null>(null)
+  const [moonVoidLabel, setMoonVoidLabel] = useState<string | null>(null)
+  const [moonVoidLine2, setMoonVoidLine2] = useState<string | null>(null)
   const [moonModalVisible, setMoonModalVisible] = useState(false)
   const [moonDetails, setMoonDetails] = useState<MoonDetails>({
     phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
@@ -194,7 +180,6 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
-  const buildTag = React.useMemo(() => detectWebBundleTag(), [])
   const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
     const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
@@ -409,17 +394,21 @@ export default function HomeScreen() {
         const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
         let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
         if (angle >= 315) phaseLabel = tl('Lua Balsâmica', 'Balsamic Moon', 'Luna balsámica', 'Luna balsamica')
-        const line1 = currentVoid ? `${phaseLabel} · ${tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota')}` : phaseLabel
+        const line1 = phaseLabel
         const line2Base = nextExact
           ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz, language) })
           : tr('profile.moon.updatingPhase', 'phase updating')
-        const line2 = currentVoid && voidEnd
-          ? `${line2Base} · ${tl('Lua Vazia até', 'Void Moon until', 'Luna vacía hasta', 'Luna vuota fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
-          : line2Base
+        const line2 = line2Base
+        const voidLine1 = currentVoid ? tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota') : null
+        const voidLine2 = currentVoid && voidEnd
+          ? `${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
+          : null
 
         setMoonPhaseKey(phaseKey)
         setMoonPhaseLabel(line1)
         setMoonLine2(line2)
+        setMoonVoidLabel(voidLine1)
+        setMoonVoidLine2(voidLine2)
         setMoonDetails({
           phaseLabel,
           phaseUntilLabel: line2Base,
@@ -503,26 +492,6 @@ export default function HomeScreen() {
       }
     }, [])
 
-    const statusPersonalLabel = React.useMemo(() => {
-      const source = backendStatusPersonal || statusPersonal
-      const rawLevel = String(source?.level || '').toLowerCase()
-      const map: Record<string, string> = {
-        excellent: tl('Excelente', 'Excellent', 'Excelente', 'Eccellente'),
-        excelente: tl('Excelente', 'Excellent', 'Excelente', 'Eccellente'),
-        good: tl('Bom', 'Good', 'Bueno', 'Buono'),
-        bom: tl('Bom', 'Good', 'Bueno', 'Buono'),
-        neutral: tl('Neutro', 'Neutral', 'Neutro', 'Neutro'),
-        neutro: tl('Neutro', 'Neutral', 'Neutro', 'Neutro'),
-        challenging: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo'),
-        desafiador: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo'),
-        critical: tl('Crítico', 'Critical', 'Crítico', 'Critico'),
-        critico: tl('Crítico', 'Critical', 'Crítico', 'Critico'),
-      }
-      const score = typeof source?.score === 'number' ? Math.round(source.score) : null
-      if (score === null) return null
-      return `${tl('Status pessoal', 'Personal status', 'Estado personal', 'Stato personale')}: ${map[rawLevel] || tl('Neutro', 'Neutral', 'Neutro', 'Neutro')} (${score}%)`
-    }, [backendStatusPersonal?.level, backendStatusPersonal?.score, statusPersonal?.level, statusPersonal?.score])
-
     if (loading && !transitData) {
       return (
         <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -584,7 +553,7 @@ export default function HomeScreen() {
           }
         >
           {/* Header */}
-          <View style={styles.header}>
+      <View style={styles.header}>
             <View style={styles.userSection}>
               <View style={styles.avatarContainer}>
                 {userProfile?.profilePhoto ? (
@@ -600,11 +569,8 @@ export default function HomeScreen() {
               </View>
               <View style={styles.headerContent}>
                 <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
+                <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
                 <Text style={styles.date}>{formatDate()}</Text>
-                <Text style={styles.houseSystemLabel} numberOfLines={2}>
-                  {tl('Sistema', 'System', 'Sistema', 'Sistema')}: {formatHouseSystemLabel(houseSystem, language)}
-                  {statusPersonalLabel ? ` • ${statusPersonalLabel}` : ''}
-                </Text>
               </View>
             </View>
 
@@ -625,15 +591,20 @@ export default function HomeScreen() {
                   <Text style={styles.moonLegendLine2} numberOfLines={1}>
                     {moonLine2 || tr('profile.moon.updatingPhase', 'phase updating')}
                   </Text>
+                  {moonVoidLabel ? (
+                    <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                      {moonVoidLabel}
+                    </Text>
+                  ) : null}
+                  {moonVoidLine2 ? (
+                    <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                      {moonVoidLine2}
+                    </Text>
+                  ) : null}
                 </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
-          {buildTag ? (
-            <View style={styles.buildTagWrap}>
-              <Text style={styles.buildTagText}>build {buildTag}</Text>
-            </View>
-          ) : null}
 
           {/* Status das Areas de Vida */}
           {lifeAreasForDisplay && (
