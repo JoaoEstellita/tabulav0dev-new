@@ -85,6 +85,7 @@ type MemberTransitTone = "all" | "challenging" | "harmonic"
 type MemberTransitSort = "impact" | "recent"
 type MemberAreaTransitItem = {
   id: string
+  rawTransit: any
   columnKind: "planet" | "house"
   rank: number
   title: string
@@ -101,6 +102,8 @@ type MemberAreaTransitItem = {
   impactValue01: number
   keywords: string[]
 }
+
+const getTransitSource = (transitLike: any) => transitLike?.rawTransit || transitLike || {}
 
 export default function GroupsScreen() {
   const { t, language } = useAppLanguage()
@@ -1165,31 +1168,34 @@ const classifyTransitStatus = (transit: any, tr?: LocalizeFn) => {
 }
 
 const isMinorAspectTransit = (transit: any) => {
-  const type = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  const source = getTransitSource(transit)
+  const type = normalizeAspectType(source?.aspectName || source?.type || source?.aspectType || "")
   return ["semissextil", "semiquadratura", "sesquiquadratura", "quincuncio"].includes(type)
 }
 
 const isMajorAspectTransit = (transit: any) => {
+  const source = getTransitSource(transit)
   if (isMinorAspectTransit(transit)) return false
-  const type = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
+  const type = normalizeAspectType(source?.aspectName || source?.type || source?.aspectType || "")
   if (["trigono", "sextil", "quadratura", "oposicao", "conjuncao", "harmonico", "desafiador", "neutro"].includes(type)) {
     return true
   }
-  const rawType = normalizeLabelKey(String(transit?.aspectName || transit?.type || transit?.aspectType || ""))
+  const rawType = normalizeLabelKey(String(source?.aspectName || source?.type || source?.aspectType || ""))
   if (rawType.includes("ingress") || rawType.includes("casa") || rawType.includes("house")) return false
-  return !!(transit?.natalPlanet || transit?.target?.natalPlanet)
+  return !!(source?.natalPlanet || source?.target?.natalPlanet)
 }
 
 const getTransitRecencyDistance = (transit: any): number => {
+  const source = getTransitSource(transit)
   const toMs = (value: unknown) => {
     const ms = new Date(String(value || "")).getTime()
     return Number.isFinite(ms) ? ms : null
   }
   const now = Date.now()
-  const phase = String(transit?.phase || "").toLowerCase()
-  const startAt = toMs(transit?.startAt || transit?.window?.start || null)
-  const peakAt = toMs(transit?.peakAt || transit?.window?.exact || null)
-  const endAt = toMs(transit?.endAt || transit?.window?.end || null)
+  const phase = String(source?.phase || "").toLowerCase()
+  const startAt = toMs(source?.startAt || source?.window?.start || null)
+  const peakAt = toMs(source?.peakAt || source?.window?.exact || null)
+  const endAt = toMs(source?.endAt || source?.window?.end || null)
   const byPhase = phase === "start" ? peakAt : phase === "peak" ? peakAt : phase === "end" ? endAt : null
   if (byPhase !== null) return Math.abs(byPhase - now)
   const candidates = [startAt, peakAt, endAt].filter((value): value is number => value !== null)
@@ -2313,6 +2319,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           : ""
                         return {
                           id: String(transit?.id || `member-transit-${index}`),
+                          rawTransit: transit,
                           columnKind: getTransitColumnKind(transit),
                           rank: computeTransitPriority(transit, areaCritical),
                           title,
@@ -2361,7 +2368,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
 
                       const toneMatches = (item: MemberAreaTransitItem) => {
                         if (memberTransitToneFilter === "all") return true
-                        const tone = classifyTransitStatus(item, tr).kind
+                        const tone = classifyTransitStatus(item.rawTransit, tr).kind
                         if (memberTransitToneFilter === "harmonic") return tone === "harmonic"
                         return tone === "tense"
                       }
