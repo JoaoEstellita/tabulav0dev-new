@@ -2254,16 +2254,21 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
                         const transitHouseLabel = getTransitCurrentHouse(transit)
-                        const houseLabel = transitHouseLabel || natalHouseLabel || null
-                        const houseLabelPrefix = transitHouseLabel
-                          ? tr('groups.member.currentTransitHouse', 'Casa de transito atual')
-                          : tr('groups.member.natalActivatedHouse', 'Casa natal ativada')
+                        const houseLabel = natalHouseLabel || transitHouseLabel || null
+                        const houseLabelPrefix = natalHouseLabel
+                          ? tr('groups.member.natalActivatedHouse', 'Casa natal ativada')
+                          : tr('groups.member.currentTransitHouse', 'Casa de transito atual')
                         const areaHousesText = AREA_HOUSES[key]?.length ? AREA_HOUSES[key].join("/") : ""
                         const technicalParts = [getTransitTechnicalTypeLabel(transit, tr)]
                         if (transitHouseLabel && natalHouseLabel && transitHouseLabel !== natalHouseLabel) {
                           technicalParts.push(
                             tr('groups.member.natalActivatedHouseValue', 'Casa natal ativada: {house}', {
                               house: natalHouseLabel.replace("Casa ", ""),
+                            })
+                          )
+                          technicalParts.push(
+                            tr('groups.member.currentTransitHouseValue', 'Casa de transito atual: {house}', {
+                              house: transitHouseLabel.replace("Casa ", ""),
                             })
                           )
                         }

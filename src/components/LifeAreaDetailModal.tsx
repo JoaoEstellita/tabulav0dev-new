@@ -2085,15 +2085,29 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   }
 
   const getTransitHouseLabel = (transit: any): string | null => {
-    return getTransitCurrentHouseLabel(transit) || getTransitNatalHouseLabel(transit)
+    return getTransitNatalHouseLabel(transit) || getTransitCurrentHouseLabel(transit)
   }
 
   const getTransitHousePrefix = (transit: any): string => {
-    const currentHouse = getTransitCurrentHouseLabel(transit)
-    if (currentHouse) return tl('Casa de trânsito atual', 'Current transit house', 'Casa de tránsito actual', 'Casa di transito attuale')
     const natalHouse = getTransitNatalHouseLabel(transit)
     if (natalHouse) return tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')
+    const currentHouse = getTransitCurrentHouseLabel(transit)
+    if (currentHouse) return tl('Casa de trânsito atual', 'Current transit house', 'Casa de tránsito actual', 'Casa di transito attuale')
     return tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
+  }
+
+  const getTransitSecondaryHouseContext = (transit: any): string | null => {
+    const natalHouse = getTransitNatalHouseLabel(transit)
+    const currentHouse = getTransitCurrentHouseLabel(transit)
+    if (natalHouse && currentHouse && natalHouse !== currentHouse) {
+      return tl(
+        `Casa de trânsito atual ${currentHouse}`,
+        `Current transit house ${currentHouse}`,
+        `Casa de tránsito actual ${currentHouse}`,
+        `Casa di transito attuale ${currentHouse}`
+      )
+    }
+    return null
   }
 
   const getHouseNameByNumber = (houseLabel: string | null): string => {
@@ -2250,7 +2264,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       const durationLabel = getDurationLabel(transit)
       const transitKind = getTransitColumnKind(transit)
       const relativeTiming = getTimingLabelLocalized(transit, transitKind)
-      const timingLabel = [phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
+      const secondaryHouseContext = getTransitSecondaryHouseContext(transit)
+      const timingLabel = [secondaryHouseContext, phaseLabel, durationLabel, relativeTiming].filter(Boolean).join(' • ')
       const transitTitle = buildTransitTitle(transit, transitKind)
       const houseLabel = getTransitHouseLabel(transit)
       const houseLabelPrefix = houseLabel ? getTransitHousePrefix(transit) : tl('Casa de trânsito', 'Transit house', 'Casa de tránsito', 'Casa di transito')
@@ -2822,10 +2837,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               : tl('Aspecto maior', 'Major aspect', 'Aspecto mayor', 'Aspetto maggiore')
             transitTitle = buildTransitTitle(transit)
             const houseLabel = getTransitHouseLabel(transit)
+            const houseLabelPrefix = getTransitHousePrefix(transit)
+            const secondaryHouseContext = getTransitSecondaryHouseContext(transit)
             const orbLabel = Number.isFinite(transit?.orb) ? `Orb ${safeFixed(transit.orb)}°` : ''
             const houseName = getHouseNameByNumber(houseLabel)
             transitMeta = [
-              houseLabel ? `${tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')} ${houseLabel}` : '',
+              houseLabel ? `${houseLabelPrefix} ${houseLabel}` : '',
+              secondaryHouseContext || '',
               houseName,
               transit?.natalPlanet ? `${tl('Alvo natal', 'Natal target', 'Objetivo natal', 'Target natale')}: ${planetLabel(transit.natalPlanet)}` : '',
               orbLabel,
