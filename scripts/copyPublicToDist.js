@@ -27,6 +27,8 @@ function copyIfExists(relPath) {
 // Core files
 copyIfExists('landing.html')
 copyIfExists('manifest.json')
+copyIfExists('robots.txt')
+copyIfExists('sitemap.xml')
 copyIfExists('sw.js')
 copyIfExists(path.join('abrir', 'index.html'))
 
