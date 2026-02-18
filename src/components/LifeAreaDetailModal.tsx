@@ -1000,12 +1000,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const getAreaConfigForModal = (areaName: string): { houses: number[]; planets: string[] } => {
     const areaConfig: Record<string, { houses: number[]; planets: string[] }> = {
       amor: { houses: [5, 7], planets: ['Venus', 'Mars'] },
+      love: { houses: [5, 7], planets: ['Venus', 'Mars'] },
       carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'] },
+      career: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'] },
       financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'] },
+      finances: { houses: [2, 8], planets: ['Venus', 'Jupiter'] },
       saude: { houses: [1, 6], planets: ['Mars', 'Sun'] },
+      health: { houses: [1, 6], planets: ['Mars', 'Sun'] },
       familia: { houses: [4, 10], planets: ['Moon', 'Saturn'] },
+      family: { houses: [4, 10], planets: ['Moon', 'Saturn'] },
       espiritualidade: { houses: [9, 12], planets: ['Neptune', 'Jupiter'] },
+      spirituality: { houses: [9, 12], planets: ['Neptune', 'Jupiter'] },
       comunicacao: { houses: [3, 9], planets: ['Mercury', 'Uranus'] },
+      communication: { houses: [3, 9], planets: ['Mercury', 'Uranus'] },
       transformacao: { houses: [8, 12], planets: ['Pluto', 'Uranus'] }
     }
     return areaConfig[areaName] || { houses: [], planets: [] }
@@ -2469,12 +2476,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       )
     const dedupedTransits = dedupeByKey(orderedTransits, transitStableKey)
     const planetOrder = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    const structuralPlanets = getRelevantPlanetsForArea(areaData.name)
+      .map((planet) => String(planet || '').trim())
+      .filter(Boolean)
     const availablePlanets = Array.from(
-      new Set(
-        dedupedTransits
+      new Set([
+        ...structuralPlanets,
+        ...dedupedTransits
           .map((transit) => String(transit?.transitPlanet || '').trim())
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ])
     ).sort((a, b) => {
       const idxA = planetOrder.indexOf(a)
       const idxB = planetOrder.indexOf(b)
@@ -2483,12 +2494,14 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       if (idxB === -1) return -1
       return idxA - idxB
     })
+    const structuralHouses = getRelevantHousesForArea(areaData.name).map((house) => String(house))
     const availableHouses = Array.from(
-      new Set(
-        dedupedTransits
+      new Set([
+        ...structuralHouses,
+        ...dedupedTransits
           .map((transit) => getTransitHouseLabel(transit))
-          .filter((value): value is string => Boolean(value))
-      )
+          .filter((value): value is string => Boolean(value)),
+      ])
     ).sort((a, b) => Number(a) - Number(b))
     const toneMatchesFilter = (transit: any): boolean => {
       if (selectedToneFilter === 'all') return true
