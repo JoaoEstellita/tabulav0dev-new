@@ -61,7 +61,7 @@ export class AstroNotificationOrchestrator {
         `📝 ${(await AstroNotificationOrchestrator.getUserShortName(userId))}, veja seus destaques Pessoais e os movimentos Coletivos de hoje.`,
         hour,
         minute,
-        { type: 'daily_overview', navTarget: 'home-daily' }
+        { type: 'daily_summary', navTarget: 'home-daily' }
       )
     }
 

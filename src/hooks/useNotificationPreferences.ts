@@ -62,14 +62,12 @@ export type NotificationPreferences = {
   }
   inApp: {
     types: {
-      user_status?: boolean
       member_status_critical: boolean
       user_status_critical: boolean
       user_status_critical_recovered?: boolean
       user_status_highlight?: boolean
       member_status_positive?: boolean
       user_status_positive?: boolean
-      group_status?: boolean
       group_message: boolean
       astro_event_personal?: boolean
       astro_event_collective?: boolean
@@ -138,14 +136,12 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   },
   inApp: {
     types: {
-      user_status: false,
       member_status_critical: true,
       user_status_critical: true,
       user_status_critical_recovered: false,
       user_status_highlight: false,
       member_status_positive: false,
       user_status_positive: false,
-      group_status: false,
       group_message: true,
       astro_event_personal: false,
       astro_event_collective: false,
@@ -156,6 +152,8 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 }
 
 const LEGACY_WEEKLY_KEYS = ['critical_active_summary', 'weekly_summary', 'forecast_weekly'] as const
+const LEGACY_DAILY_KEYS = ['daily_ready', 'daily_overview'] as const
+const LEGACY_GENERIC_KEYS = ['user_status', 'group_status'] as const
 
 const sanitizePreferences = (prefs: NotificationPreferences): NotificationPreferences => {
   const clean = mergeDeep(DEFAULT_PREFERENCES, prefs || {}) as NotificationPreferences
@@ -169,8 +167,9 @@ const sanitizePreferences = (prefs: NotificationPreferences): NotificationPrefer
   if (pushTypes.weekly_digest === undefined) pushTypes.weekly_digest = weeklyEnabledByLegacyPush
   if (inAppTypes.weekly_digest === undefined) inAppTypes.weekly_digest = weeklyEnabledByLegacyInApp
 
-  if (inAppTypes.daily_summary === undefined && typeof inAppTypes.daily_ready === 'boolean') {
-    inAppTypes.daily_summary = inAppTypes.daily_ready
+  if (inAppTypes.daily_summary === undefined) {
+    const dailyEnabledByLegacy = !LEGACY_DAILY_KEYS.every((key) => inAppTypes[key] === false)
+    inAppTypes.daily_summary = dailyEnabledByLegacy
   }
 
   if (!pushLimits.weekly_digest) {
@@ -181,7 +180,16 @@ const sanitizePreferences = (prefs: NotificationPreferences): NotificationPrefer
     if (legacyLimit) pushLimits.weekly_digest = legacyLimit
   }
 
-  delete inAppTypes.daily_ready
+  LEGACY_DAILY_KEYS.forEach((key) => {
+    delete pushTypes[key]
+    delete inAppTypes[key]
+    delete pushLimits[key]
+  })
+  LEGACY_GENERIC_KEYS.forEach((key) => {
+    delete pushTypes[key]
+    delete inAppTypes[key]
+    delete pushLimits[key]
+  })
   LEGACY_WEEKLY_KEYS.forEach((key) => {
     delete pushTypes[key]
     delete inAppTypes[key]

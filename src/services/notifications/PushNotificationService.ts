@@ -38,7 +38,7 @@ export class PushNotificationService {
     // Emojis padronizados: ⭐ Pessoal, ✨ Coletivo, 📝 Resumo Diário, ⚠ Crítico, 💹 Favorável, 👥 Grupo
     if (type === 'personal_alert') return { prefix: '⭐ ', color: '#10B981' }
     if (type === 'weekly_digest' || type === 'monthly_digest') return { prefix: '✨ ', color: '#F59E0B' }
-    if (type === 'daily_overview') return { prefix: '📝 ', color: '#8B5CF6' }
+    if (type === 'daily_summary') return { prefix: '📝 ', color: '#8B5CF6' }
     if (type === 'group') return { prefix: '👥 ' }
     if (type === 'critical_alert') return { prefix: '⚠ ', color: '#EF4444' }
     if (type === 'favorable_event') return { prefix: '💹 ', color: '#10B981' }
