@@ -2146,7 +2146,8 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               const areaTransits = Array.isArray(member.areaTransits?.[key])
                 ? member.areaTransits?.[key]
                 : []
-              const transitAspects = areaTransits.map((transit: any) => {
+              const mergedTransitItems = [...activeTransitItems, ...areaTransits]
+              const transitAspects = mergedTransitItems.map((transit: any) => {
                 const label = `${formatPlanetLabel(transit.transitPlanet)} ${formatAspectLabel(transit.type)} ${formatPlanetLabel(transit.natalPlanet)}`
                 const duration = formatTransitDuration(transit)
                 return duration ? `${label} (${duration})` : label
@@ -2186,7 +2187,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
               const fallbackSuggestionItems =
                 suggestionItems.length
                   ? suggestionItems
-                  : (activeTransitItems.length ? activeTransitItems : areaTransits)
+                  : (mergedTransitItems.length ? mergedTransitItems : [])
                       .slice(0, 2)
                       .map((transit: any, index: number) => {
                         const aspectType = String(transit.aspectType || transit.type || "")
@@ -2249,7 +2250,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                     {(() => {
                       const areaLabel = lifeAreaLabel(key)
                       const areaCritical = bucket === "critical"
-                      const baseTransits: MemberAreaTransitItem[] = (areaTransits.length ? areaTransits : activeTransitItems).map((transit: any, index: number) => {
+                      const baseTransits: MemberAreaTransitItem[] = mergedTransitItems.map((transit: any, index: number) => {
                         const status = classifyTransitStatus(transit, tr)
                         const title = buildTransitTitle(transit, key)
                         const natalHouseLabel = getTransitNatalHouse(transit)
