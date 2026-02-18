@@ -12,10 +12,17 @@ type StatusPolicyPayload = {
     criticalBelow?: number
     positiveAbove?: number
   }
+  ui?: {
+    modalFilters?: {
+      strongOnlyThresholdDefault?: number
+      strongOnlyThresholdByArea?: Record<string, number>
+    }
+  }
 }
 
 let sessionInitialized = false
 let inFlight: Promise<StatusPolicyPayload | null> | null = null
+let latestPolicy: StatusPolicyPayload | null = null
 
 const readCache = async () => {
   try {
@@ -62,6 +69,7 @@ export const ensureStatusPolicyLoaded = async () => {
     const cached = await readCache()
     if (cached?.thresholds) {
       applyRuntimeStatusThresholds(cached.thresholds)
+      latestPolicy = cached
       sessionInitialized = true
       return cached
     }
@@ -70,6 +78,7 @@ export const ensureStatusPolicyLoaded = async () => {
     if (remote?.thresholds) {
       applyRuntimeStatusThresholds(remote.thresholds)
       await writeCache(remote)
+      latestPolicy = remote
     }
     sessionInitialized = true
     return remote
@@ -81,3 +90,5 @@ export const ensureStatusPolicyLoaded = async () => {
     inFlight = null
   }
 }
+
+export const getStatusPolicySnapshot = () => latestPolicy

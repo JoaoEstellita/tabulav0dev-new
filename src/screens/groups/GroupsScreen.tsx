@@ -44,6 +44,7 @@ import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_L
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
 import { STATUS_THRESHOLDS } from "../../constants/statusThresholds"
 import { backendFetch } from "../../services/backend/client"
+import { ensureStatusPolicyLoaded, getStatusPolicySnapshot } from "../../services/status/StatusPolicyService"
 
 const LIFE_AREA_OPTIONS = SHARED_LIFE_AREA_ORDER.map((key) => ({
   key,
@@ -185,6 +186,8 @@ export default function GroupsScreen() {
   const [memberTransitFiltersExpanded, setMemberTransitFiltersExpanded] = useState(false)
   const [memberTransitStrongOnly, setMemberTransitStrongOnly] = useState(false)
   const [memberTransitPrefsLoaded, setMemberTransitPrefsLoaded] = useState(false)
+  const [memberStrongThresholdByArea, setMemberStrongThresholdByArea] = useState<Record<string, number>>({})
+  const [memberStrongThresholdDefault, setMemberStrongThresholdDefault] = useState(0.6)
   const [selectedMemberTransitDetail, setSelectedMemberTransitDetail] = useState<{
     title: string
     statusLabel: string
@@ -205,6 +208,13 @@ export default function GroupsScreen() {
   const memberTransitPrefsStorageKey = selectedMemberArea
     ? `${GROUP_MEMBER_MODAL_FILTER_PREFS_KEY}:${String(user?.uid || "anon")}:${String(selectedMemberArea.key || "unknown")}`
     : null
+  const memberAreaStrongThreshold = (() => {
+    const areaKey = String(selectedMemberArea?.key || "").trim().toLowerCase()
+    const byArea = memberStrongThresholdByArea?.[areaKey]
+    const fallback = Number.isFinite(memberStrongThresholdDefault) ? memberStrongThresholdDefault : 0.6
+    const raw = Number.isFinite(byArea) ? Number(byArea) : fallback
+    return Math.max(0, Math.min(1, raw))
+  })()
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
@@ -310,6 +320,39 @@ export default function GroupsScreen() {
     memberTransitToneFilter,
     showMemberAreaModal,
   ])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadPolicyThresholds = async () => {
+      try {
+        await ensureStatusPolicyLoaded()
+        if (cancelled) return
+        const snapshot = getStatusPolicySnapshot()
+        const modalFilters = snapshot?.ui?.modalFilters
+        const defaultThreshold = Number(modalFilters?.strongOnlyThresholdDefault)
+        if (Number.isFinite(defaultThreshold)) {
+          setMemberStrongThresholdDefault(Math.max(0, Math.min(1, defaultThreshold)))
+        }
+        const byArea = modalFilters?.strongOnlyThresholdByArea
+        if (byArea && typeof byArea === "object") {
+          const next: Record<string, number> = {}
+          Object.keys(byArea).forEach((key) => {
+            const normalizedKey = String(key || "").trim().toLowerCase()
+            const value = Number((byArea as Record<string, unknown>)[key])
+            if (!normalizedKey || !Number.isFinite(value)) return
+            next[normalizedKey] = Math.max(0, Math.min(1, value))
+          })
+          setMemberStrongThresholdByArea(next)
+        }
+      } catch {
+        // keep default threshold on failures
+      }
+    }
+    loadPolicyThresholds()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const animateMemberAreaSwipeBack = () => {
     Animated.spring(memberAreaSwipeY, {
@@ -2474,7 +2517,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           : []),
                       ]
                         .filter(({ item }) => toneMatches(item))
-                        .filter(({ item }) => !memberTransitStrongOnly || item.impactValue01 >= 0.6)
+                        .filter(({ item }) => !memberTransitStrongOnly || item.impactValue01 >= memberAreaStrongThreshold)
 
                       const facetPriority: Record<MemberTransitFacet, number> = { major: 1, minor: 2, house: 3 }
                       const combinedMap = new Map<string, { item: MemberAreaTransitItem; facetKind: MemberTransitFacet }>()

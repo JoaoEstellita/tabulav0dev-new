@@ -26,6 +26,7 @@ import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { auth } from '../config/firebase'
+import { ensureStatusPolicyLoaded, getStatusPolicySnapshot } from '../services/status/StatusPolicyService'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
@@ -619,6 +620,8 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
   const [strongOnly, setStrongOnly] = React.useState(false)
+  const [strongThresholdByArea, setStrongThresholdByArea] = React.useState<Record<string, number>>({})
+  const [strongThresholdDefault, setStrongThresholdDefault] = React.useState(0.6)
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
@@ -648,6 +651,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     () => `${MODAL_FILTER_PREFS_KEY}:${currentUserUid}:${String(areaData?.name || 'unknown').toLowerCase()}`,
     [currentUserUid, areaData?.name]
   )
+  const areaStrongThreshold = React.useMemo(() => {
+    const areaKey = String(areaData?.name || '').trim().toLowerCase()
+    const byArea = strongThresholdByArea?.[areaKey]
+    const fallback = Number.isFinite(strongThresholdDefault) ? strongThresholdDefault : 0.6
+    const raw = Number.isFinite(byArea) ? Number(byArea) : fallback
+    return Math.max(0, Math.min(1, raw))
+  }, [areaData?.name, strongThresholdByArea, strongThresholdDefault])
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
@@ -701,6 +711,39 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       cancelled = true
     }
   }, [filterPrefsStorageKey])
+
+  React.useEffect(() => {
+    let cancelled = false
+    const loadPolicyThresholds = async () => {
+      try {
+        await ensureStatusPolicyLoaded()
+        if (cancelled) return
+        const snapshot = getStatusPolicySnapshot()
+        const modalFilters = snapshot?.ui?.modalFilters
+        const defaultThreshold = Number(modalFilters?.strongOnlyThresholdDefault)
+        if (Number.isFinite(defaultThreshold)) {
+          setStrongThresholdDefault(Math.max(0, Math.min(1, defaultThreshold)))
+        }
+        const byArea = modalFilters?.strongOnlyThresholdByArea
+        if (byArea && typeof byArea === 'object') {
+          const next: Record<string, number> = {}
+          Object.keys(byArea).forEach((key) => {
+            const normalizedKey = String(key || '').trim().toLowerCase()
+            const value = Number((byArea as Record<string, unknown>)[key])
+            if (!normalizedKey || !Number.isFinite(value)) return
+            next[normalizedKey] = Math.max(0, Math.min(1, value))
+          })
+          setStrongThresholdByArea(next)
+        }
+      } catch {
+        // keep local default threshold on failures
+      }
+    }
+    loadPolicyThresholds()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   React.useEffect(() => {
     if (!filterPrefsLoaded) return
@@ -2550,7 +2593,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
       .filter(({ transit }) => planetHouseMatchesFilter(transit))
-      .filter(({ transit }) => !strongOnly || safeNumber(transit?.impactValue01, 0) >= 0.6)
+      .filter(({ transit }) => !strongOnly || safeNumber(transit?.impactValue01, 0) >= areaStrongThreshold)
     const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>) => {
       const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' | 'house' }>()
       const facetPriority: Record<'major' | 'minor' | 'house', number> = { major: 1, minor: 2, house: 3 }
