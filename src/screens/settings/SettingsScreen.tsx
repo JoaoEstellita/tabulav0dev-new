@@ -84,6 +84,7 @@ export default function SettingsScreen() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [profilePhotoDirty, setProfilePhotoDirty] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   type PushPermission = 'granted' | 'denied' | 'default' | 'undetermined' | 'unknown' | 'unsupported';
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
@@ -216,6 +217,16 @@ export default function SettingsScreen() {
           type: 'button',
           onPress: () => openFeedback(),
         },
+        ...(isAdminUser
+          ? [{
+              id: 'admin_diagnostics',
+              title: tr('settings.item.adminDiagnostics.title', 'Painel Admin'),
+              subtitle: tr('settings.item.adminDiagnostics.subtitle', 'Diagnóstico de status e notificações'),
+              icon: 'analytics',
+              type: 'button' as const,
+              onPress: () => navigation.navigate('AdminDiagnostics' as never),
+            }]
+          : []),
       ],
     },
     {
@@ -232,7 +243,7 @@ export default function SettingsScreen() {
         },
       ],
     },
-  ]), [navigation, t]);
+  ]), [navigation, t, isAdminUser]);
 
   const [settingsSections, setSettingsSections] = useState<SettingsSection[]>(() => buildSettingsSections());
 
@@ -531,6 +542,8 @@ export default function SettingsScreen() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) return;
       const data = userDoc.data() || {};
+      const adminFlag = data?.isAdmin === true || data?.role === 'admin' || data?.roles?.admin === true;
+      setIsAdminUser(adminFlag);
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
       setBirthDate(data.birthDate || "");
       setBirthTime(data.birthTime || "");

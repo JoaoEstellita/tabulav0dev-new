@@ -21,6 +21,7 @@ import ForecastScreen from "../screens/forecast/ForecastScreen"
 import ForecastPeriodEventsScreen from "../screens/forecast/ForecastPeriodEventsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
 import PlanetTimelineScreen from "../screens/analysis/PlanetTimelineScreen"
+import AdminDiagnosticsScreen from "../screens/admin/AdminDiagnosticsScreen"
 import PaymentSuccessScreen from "../screens/payment/PaymentSuccessScreen"
 import PaymentPendingScreen from "../screens/payment/PaymentPendingScreen"
 import PaymentFailureScreen from "../screens/payment/PaymentFailureScreen"
@@ -284,6 +285,11 @@ function RootNavigator() {
         name="NotificationPreferences"
         component={NotificationPreferencesScreen}
         options={{ headerShown: true, title: t("nav.notificationPrefs"), headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
+      />
+      <RootStack.Screen
+        name="AdminDiagnostics"
+        component={AdminDiagnosticsScreen}
+        options={{ headerShown: true, title: 'Diagnóstico Admin', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
       />
       <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} options={{ headerShown: true, title: 'Detalhe do Trânsito', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PersonalTransits" component={require('../screens/transits/PersonalTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Pessoais', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
