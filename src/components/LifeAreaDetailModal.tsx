@@ -25,6 +25,7 @@ import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
+import { auth } from '../config/firebase'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
@@ -617,6 +618,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   const [selectedFacetFilters, setSelectedFacetFilters] = React.useState<Array<'major' | 'minor' | 'house'>>(['major', 'house'])
   const [selectedToneFilter, setSelectedToneFilter] = React.useState<'all' | 'challenging' | 'harmonic'>('all')
   const [selectedSortMode, setSelectedSortMode] = React.useState<'impact' | 'recent'>('impact')
+  const [strongOnly, setStrongOnly] = React.useState(false)
   const [selectedPlanetFilters, setSelectedPlanetFilters] = React.useState<string[]>([])
   const [selectedHouseFilters, setSelectedHouseFilters] = React.useState<string[]>([])
   const [filterPrefsLoaded, setFilterPrefsLoaded] = React.useState(false)
@@ -641,6 +643,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     selectedFacetFilters.length === 2 &&
     selectedFacetFilters.includes('major') &&
     selectedFacetFilters.includes('house')
+  const currentUserUid = String(auth.currentUser?.uid || 'anon')
+  const filterPrefsStorageKey = React.useMemo(
+    () => `${MODAL_FILTER_PREFS_KEY}:${currentUserUid}:${String(areaData?.name || 'unknown').toLowerCase()}`,
+    [currentUserUid, areaData?.name]
+  )
 
   //  OBTER CORES E aÂCONES ESPECaÂFICOS DA aÂREA
   const areaColors = AREA_COLORS[areaData.name] || ['#4B5563', '#6B7280']
@@ -650,14 +657,16 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   React.useEffect(() => {
     let cancelled = false
     const loadFilterPreferences = async () => {
+      setFilterPrefsLoaded(false)
       try {
-        const raw = await AsyncStorage.getItem(MODAL_FILTER_PREFS_KEY)
+        const raw = await AsyncStorage.getItem(filterPrefsStorageKey)
         if (!raw || cancelled) return
         const parsed = JSON.parse(raw || '{}') as {
           facetFilters?: Array<'major' | 'minor' | 'house'>
           toneFilter?: 'all' | 'challenging' | 'harmonic'
           sortMode?: 'impact' | 'recent'
           filtersExpanded?: boolean
+          strongOnly?: boolean
         }
         const nextFacetFilters = Array.isArray(parsed.facetFilters)
           ? parsed.facetFilters.filter(
@@ -678,6 +687,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         if (typeof parsed.filtersExpanded === 'boolean') {
           setFiltersExpanded(parsed.filtersExpanded)
         }
+        if (typeof parsed.strongOnly === 'boolean') {
+          setStrongOnly(parsed.strongOnly)
+        }
       } catch {
         // ignore preference parse/read failures and keep safe defaults
       } finally {
@@ -688,7 +700,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [filterPrefsStorageKey])
 
   React.useEffect(() => {
     if (!filterPrefsLoaded) return
@@ -697,9 +709,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       toneFilter: selectedToneFilter,
       sortMode: selectedSortMode,
       filtersExpanded,
+      strongOnly,
     })
-    AsyncStorage.setItem(MODAL_FILTER_PREFS_KEY, payload).catch(() => null)
-  }, [filterPrefsLoaded, selectedFacetFilters, selectedToneFilter, selectedSortMode, filtersExpanded])
+    AsyncStorage.setItem(filterPrefsStorageKey, payload).catch(() => null)
+  }, [filterPrefsLoaded, filterPrefsStorageKey, selectedFacetFilters, selectedToneFilter, selectedSortMode, filtersExpanded, strongOnly])
 
   React.useEffect(() => {
     if (!visible) {
@@ -2537,6 +2550,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     ]
       .filter(({ transit }) => toneMatchesFilter(transit))
       .filter(({ transit }) => planetHouseMatchesFilter(transit))
+      .filter(({ transit }) => !strongOnly || safeNumber(transit?.impactValue01, 0) >= 0.6)
     const dedupeCombinedEntries = (items: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }>) => {
       const map = new Map<string, { transit: any; facetKind: 'major' | 'minor' | 'house' }>()
       const facetPriority: Record<'major' | 'minor' | 'house', number> = { major: 1, minor: 2, house: 3 }
@@ -2567,8 +2581,10 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       (selectedToneFilter !== 'all' ? 1 : 0) +
       (selectedSortMode !== 'impact' ? 1 : 0) +
       (isDefaultFacetSelection ? 0 : 1) +
+      (strongOnly ? 1 : 0) +
       (selectedPlanetFilters.length ? 1 : 0) +
       (selectedHouseFilters.length ? 1 : 0)
+    const collapsedSummaryText = `${tl('Aspectos', 'Aspects', 'Aspectos', 'Aspetti')}: ${aspectTransitCards.length} • ${tl('Casas', 'Houses', 'Casas', 'Case')}: ${houseTransitCards.length}`
 
     return (
       <View style={styles.section}>
@@ -2685,10 +2701,19 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                           </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                          onPress={() => setStrongOnly((prev) => !prev)}
+                          style={[styles.toneToggleChip, strongOnly ? styles.toneToggleChipActive : null]}
+                        >
+                          <Text style={[styles.toneToggleText, strongOnly ? styles.toneToggleTextActive : null]}>
+                            {tl('Somente ativos fortes', 'Strong active only', 'Solo activos fuertes', 'Solo attivi forti')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
                           onPress={() => {
                             setSelectedFacetFilters(['major', 'house'])
                             setSelectedToneFilter('all')
                             setSelectedSortMode('impact')
+                            setStrongOnly(false)
                             setSelectedPlanetFilters([])
                             setSelectedHouseFilters([])
                           }}
@@ -2756,6 +2781,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                       ) : null}
                     </View>
                   </>
+                ) : null}
+                {!filtersExpanded ? (
+                  <Text style={styles.filtersToggleSummary}>{collapsedSummaryText}</Text>
                 ) : null}
                 <View style={styles.transitHeaderTitleWrap}>
                   <Text style={styles.transitColumnTitle}>{tl('Lista de trânsitos', 'Transit list', 'Lista de tránsitos', 'Lista dei transiti')}</Text>
@@ -3663,6 +3691,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#9A3412',
+  },
+  filtersToggleSummary: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   filterBlock: {
     backgroundColor: '#FFFFFF',

@@ -15,6 +15,7 @@ import {
   PanResponder,
   Dimensions,
 } from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
 import { useNavigation, useRoute } from "@react-navigation/native"
@@ -52,6 +53,7 @@ const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "
 
 const LIFE_AREA_KEYS = LIFE_AREA_OPTIONS.map((area) => area.key)
 const WINDOW_HEIGHT = Dimensions.get("window").height
+const GROUP_MEMBER_MODAL_FILTER_PREFS_KEY = "groups_member_modal_filter_prefs_v1"
 
 const LIFE_AREA_LABELS = LIFE_AREA_OPTIONS.reduce((acc, area) => {
   acc[area.key] = area.label
@@ -181,6 +183,8 @@ export default function GroupsScreen() {
   const [memberTransitToneFilter, setMemberTransitToneFilter] = useState<MemberTransitTone>("all")
   const [memberTransitSortMode, setMemberTransitSortMode] = useState<MemberTransitSort>("impact")
   const [memberTransitFiltersExpanded, setMemberTransitFiltersExpanded] = useState(false)
+  const [memberTransitStrongOnly, setMemberTransitStrongOnly] = useState(false)
+  const [memberTransitPrefsLoaded, setMemberTransitPrefsLoaded] = useState(false)
   const [selectedMemberTransitDetail, setSelectedMemberTransitDetail] = useState<{
     title: string
     statusLabel: string
@@ -198,6 +202,9 @@ export default function GroupsScreen() {
   const memberAreaScrollOffsetYRef = useRef(0)
   const memberAreaSwipeY = useRef(new Animated.Value(0)).current
   const memberAreaSwipeClosingRef = useRef(false)
+  const memberTransitPrefsStorageKey = selectedMemberArea
+    ? `${GROUP_MEMBER_MODAL_FILTER_PREFS_KEY}:${String(user?.uid || "anon")}:${String(selectedMemberArea.key || "unknown")}`
+    : null
 
   const isPremium = isAdmin || trialActive || subscription?.active === true
   const expiryInfo = getExpiryBannerInfo({
@@ -225,10 +232,84 @@ export default function GroupsScreen() {
     setMemberTransitToneFilter("all")
     setMemberTransitSortMode("impact")
     setMemberTransitFiltersExpanded(false)
+    setMemberTransitStrongOnly(false)
     memberAreaScrollOffsetYRef.current = 0
     memberAreaSwipeY.setValue(0)
     memberAreaSwipeClosingRef.current = false
   }
+
+  useEffect(() => {
+    let cancelled = false
+    const loadMemberTransitPrefs = async () => {
+      if (!memberTransitPrefsStorageKey || !showMemberAreaModal) {
+        setMemberTransitPrefsLoaded(false)
+        return
+      }
+      setMemberTransitPrefsLoaded(false)
+      try {
+        const raw = await AsyncStorage.getItem(memberTransitPrefsStorageKey)
+        if (!raw || cancelled) return
+        const parsed = JSON.parse(raw || "{}") as {
+          facetFilters?: MemberTransitFacet[]
+          toneFilter?: MemberTransitTone
+          sortMode?: MemberTransitSort
+          filtersExpanded?: boolean
+          strongOnly?: boolean
+        }
+        const nextFacetFilters = Array.isArray(parsed.facetFilters)
+          ? parsed.facetFilters.filter(
+              (value): value is MemberTransitFacet =>
+                value === "major" || value === "minor" || value === "house"
+            )
+          : []
+        if (nextFacetFilters.length) {
+          setMemberTransitFacetFilters(Array.from(new Set(nextFacetFilters)))
+        }
+        if (parsed.toneFilter === "all" || parsed.toneFilter === "challenging" || parsed.toneFilter === "harmonic") {
+          setMemberTransitToneFilter(parsed.toneFilter)
+        }
+        if (parsed.sortMode === "impact" || parsed.sortMode === "recent") {
+          setMemberTransitSortMode(parsed.sortMode)
+        }
+        if (typeof parsed.filtersExpanded === "boolean") {
+          setMemberTransitFiltersExpanded(parsed.filtersExpanded)
+        }
+        if (typeof parsed.strongOnly === "boolean") {
+          setMemberTransitStrongOnly(parsed.strongOnly)
+        }
+      } catch {
+        // keep defaults on parse/read failures
+      } finally {
+        if (!cancelled) setMemberTransitPrefsLoaded(true)
+      }
+    }
+
+    loadMemberTransitPrefs()
+    return () => {
+      cancelled = true
+    }
+  }, [memberTransitPrefsStorageKey, showMemberAreaModal])
+
+  useEffect(() => {
+    if (!memberTransitPrefsLoaded || !memberTransitPrefsStorageKey || !showMemberAreaModal) return
+    const payload = JSON.stringify({
+      facetFilters: memberTransitFacetFilters,
+      toneFilter: memberTransitToneFilter,
+      sortMode: memberTransitSortMode,
+      filtersExpanded: memberTransitFiltersExpanded,
+      strongOnly: memberTransitStrongOnly,
+    })
+    AsyncStorage.setItem(memberTransitPrefsStorageKey, payload).catch(() => null)
+  }, [
+    memberTransitFacetFilters,
+    memberTransitFiltersExpanded,
+    memberTransitPrefsLoaded,
+    memberTransitPrefsStorageKey,
+    memberTransitSortMode,
+    memberTransitStrongOnly,
+    memberTransitToneFilter,
+    showMemberAreaModal,
+  ])
 
   const animateMemberAreaSwipeBack = () => {
     Animated.spring(memberAreaSwipeY, {
@@ -2391,7 +2472,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               .filter((item: MemberAreaTransitItem) => item.columnKind === "house")
                               .map((item: MemberAreaTransitItem) => ({ item, facetKind: "house" as const }))
                           : []),
-                      ].filter(({ item }) => toneMatches(item))
+                      ]
+                        .filter(({ item }) => toneMatches(item))
+                        .filter(({ item }) => !memberTransitStrongOnly || item.impactValue01 >= 0.6)
 
                       const facetPriority: Record<MemberTransitFacet, number> = { major: 1, minor: 2, house: 3 }
                       const combinedMap = new Map<string, { item: MemberAreaTransitItem; facetKind: MemberTransitFacet }>()
@@ -2428,7 +2511,9 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const activeFiltersCount =
                         (memberTransitToneFilter !== "all" ? 1 : 0) +
                         (memberTransitSortMode !== "impact" ? 1 : 0) +
-                        (memberTransitFacetFilters.length === 3 ? 0 : 1)
+                        (memberTransitFacetFilters.length === 3 ? 0 : 1) +
+                        (memberTransitStrongOnly ? 1 : 0)
+                      const collapsedSummary = `${tr("groups.member.aspectsSection", "Aspectos")}: ${aspectTransits.length} • ${tr("groups.member.housesSection", "Casas")}: ${houseTransits.length}`
 
                       const renderTransitCard = (item: any, index: number) => (
                         <TransitInsightCard
@@ -2489,18 +2574,21 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               onPress={() => setMemberTransitFiltersExpanded((prev) => !prev)}
                             >
                               <Text style={styles.memberTransitFiltersTitle}>{tr("groups.member.filtersAndSorting", "Filtros e Ordenacao")}</Text>
-                              <View style={styles.memberTransitFiltersMetaWrap}>
-                                <Text style={styles.memberTransitFiltersMeta}>{activeFiltersCount} {tr("groups.member.active", "ativos")}</Text>
+                                <View style={styles.memberTransitFiltersMetaWrap}>
+                                  <Text style={styles.memberTransitFiltersMeta}>{activeFiltersCount} {tr("groups.member.active", "ativos")}</Text>
                                 <Ionicons
                                   name={memberTransitFiltersExpanded ? "chevron-up" : "chevron-down"}
                                   size={14}
                                   color="#9A3412"
                                 />
-                              </View>
-                            </TouchableOpacity>
+                                </View>
+                              </TouchableOpacity>
+                              {!memberTransitFiltersExpanded ? (
+                                <Text style={styles.memberTransitFiltersSummary}>{collapsedSummary}</Text>
+                              ) : null}
 
-                            {memberTransitFiltersExpanded ? (
-                              <View style={styles.memberTransitFiltersBody}>
+                              {memberTransitFiltersExpanded ? (
+                                <View style={styles.memberTransitFiltersBody}>
                                 <View style={styles.memberTransitFilterRow}>
                                   <TouchableOpacity
                                     onPress={() =>
@@ -2578,6 +2666,27 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                                   >
                                     <Text style={[styles.memberTransitFilterChipText, memberTransitSortMode === "recent" ? styles.memberTransitFilterChipTextActive : null]}>
                                       {tr("groups.member.mostRecent", "Mais recente")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => setMemberTransitStrongOnly((prev) => !prev)}
+                                    style={[styles.memberTransitFilterChip, memberTransitStrongOnly ? styles.memberTransitFilterChipActive : null]}
+                                  >
+                                    <Text style={[styles.memberTransitFilterChipText, memberTransitStrongOnly ? styles.memberTransitFilterChipTextActive : null]}>
+                                      {tr("groups.member.strongOnly", "Somente ativos fortes")}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      setMemberTransitFacetFilters(["major", "house"])
+                                      setMemberTransitToneFilter("all")
+                                      setMemberTransitSortMode("impact")
+                                      setMemberTransitStrongOnly(false)
+                                    }}
+                                    style={styles.memberTransitFilterChip}
+                                  >
+                                    <Text style={styles.memberTransitFilterChipText}>
+                                      {tr("groups.member.clear", "Limpar")}
                                     </Text>
                                   </TouchableOpacity>
                                 </View>
@@ -3079,6 +3188,13 @@ const styles = StyleSheet.create({
     color: "#FB923C",
     fontSize: 11,
     fontWeight: "700",
+  },
+  memberTransitFiltersSummary: {
+    color: "#94A3B8",
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 10,
+    paddingHorizontal: 4,
   },
   memberTransitFiltersBody: {
     gap: 8,
