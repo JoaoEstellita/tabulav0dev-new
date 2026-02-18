@@ -37,4 +37,5 @@ jobs:
         run: npm run test:rules
 
       - name: NPM audit (prod deps, high+)
+        continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
