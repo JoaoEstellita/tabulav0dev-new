@@ -5,6 +5,19 @@ import { useAuth } from '../../hooks/useAuth'
 import { backendFetch } from '../../services/backend/client'
 
 type AnyObj = Record<string, any>
+type AdminUserItem = {
+  uid: string
+  displayName: string
+  email: string | null
+  isAdmin: boolean
+  subscriptionActive: boolean
+  plan: string | null
+  lastStatusAt: string | null
+  statusScore: number | null
+  statusLevel: string | null
+  criticalAreas: number
+  positiveAreas: number
+}
 
 const JsonBlock = ({ title, value }: { title: string; value: unknown }) => {
   const content = useMemo(() => {
@@ -24,19 +37,52 @@ const JsonBlock = ({ title, value }: { title: string; value: unknown }) => {
 
 export default function AdminDiagnosticsScreen() {
   const { user } = useAuth()
+  const [query, setQuery] = useState('')
   const [targetUid, setTargetUid] = useState(user?.uid || '')
-  const [loading, setLoading] = useState(false)
+  const [users, setUsers] = useState<AdminUserItem[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingDiag, setLoadingDiag] = useState(false)
+  const [busyUid, setBusyUid] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [adminOverview, setAdminOverview] = useState<AnyObj | null>(null)
   const [userDiag, setUserDiag] = useState<AnyObj | null>(null)
 
-  const runLoad = async () => {
-    setLoading(true)
+  const loadUsers = async (opts: { reset?: boolean } = {}) => {
+    const reset = opts.reset === true
+    if (loadingUsers) return
+    setLoadingUsers(true)
     setError(null)
     try {
+      const params = new URLSearchParams()
+      params.set('limit', '30')
+      if (query.trim()) params.set('q', query.trim())
+      if (!reset && nextCursor) params.set('cursor', nextCursor)
+      const resp = await backendFetch(`/api/admin-users-status?${params.toString()}`, { auth: true, method: 'GET' })
+      const json = await resp.json().catch(() => ({}))
+      if (!resp.ok) throw new Error(json?.error || `admin_users_${resp.status}`)
+      const incoming = Array.isArray(json?.users) ? json.users : []
+      setUsers((prev) => (reset ? incoming : [...prev, ...incoming]))
+      setNextCursor(json?.nextCursor || null)
+      if (reset && incoming.length > 0 && !targetUid) {
+        setTargetUid(incoming[0]?.uid || '')
+      }
+    } catch (e: any) {
+      setError(e?.message || 'Falha ao carregar lista de usuários')
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const runDiag = async () => {
+    setLoadingDiag(true)
+    setError(null)
+    try {
+      const uid = String(targetUid || '').trim()
+      if (!uid) throw new Error('uid_obrigatorio')
       const [adminResp, userResp] = await Promise.all([
         backendFetch('/api/diag/admin', { auth: true, method: 'GET' }),
-        backendFetch(`/api/diag/user/${encodeURIComponent(targetUid || user?.uid || '')}`, { auth: true, method: 'GET' }),
+        backendFetch(`/api/diag/user/${encodeURIComponent(uid)}`, { auth: true, method: 'GET' }),
       ])
       const adminJson = await adminResp.json().catch(() => ({}))
       const userJson = await userResp.json().catch(() => ({}))
@@ -45,32 +91,134 @@ export default function AdminDiagnosticsScreen() {
       setAdminOverview(adminJson)
       setUserDiag(userJson)
     } catch (e: any) {
-      setError(e?.message || 'Falha ao carregar diagnóstico admin')
+      setError(e?.message || 'Falha ao carregar diagnóstico')
     } finally {
-      setLoading(false)
+      setLoadingDiag(false)
+    }
+  }
+
+  const recalcUser = async (uid: string) => {
+    setBusyUid(uid)
+    setError(null)
+    try {
+      const resp = await backendFetch('/api/admin-recalculate-status', {
+        auth: true,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid }),
+      })
+      const json = await resp.json().catch(() => ({}))
+      if (!resp.ok) throw new Error(json?.error || `recalc_${resp.status}`)
+
+      setUsers((prev) =>
+        prev.map((entry) =>
+          entry.uid === uid
+            ? {
+                ...entry,
+                statusScore: Number.isFinite(Number(json?.statusPersonal?.score)) ? Number(json.statusPersonal.score) : entry.statusScore,
+                statusLevel: json?.statusPersonal?.level || entry.statusLevel,
+                lastStatusAt: json?.computedAt || entry.lastStatusAt,
+                criticalAreas: Number.isFinite(Number(json?.counts?.criticalAreas)) ? Number(json.counts.criticalAreas) : entry.criticalAreas,
+                positiveAreas: Number.isFinite(Number(json?.counts?.positiveAreas)) ? Number(json.counts.positiveAreas) : entry.positiveAreas,
+              }
+            : entry
+        )
+      )
+
+      if (targetUid === uid) {
+        await runDiag()
+      }
+    } catch (e: any) {
+      setError(e?.message || `Falha ao recalcular ${uid}`)
+    } finally {
+      setBusyUid(null)
     }
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Diagnóstico Admin</Text>
-        <Text style={styles.subtitle}>Painel técnico de status e notificações</Text>
+        <Text style={styles.title}>Painel Admin</Text>
+        <Text style={styles.subtitle}>Usuários, recálculo de status e diagnóstico técnico</Text>
 
         <View style={styles.inputWrap}>
-          <Text style={styles.label}>UID para inspeção</Text>
-          <TextInput
-            style={styles.input}
-            value={targetUid}
-            onChangeText={setTargetUid}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="UID do usuário"
-            placeholderTextColor="#7B809A"
-          />
-          <TouchableOpacity style={styles.button} onPress={runLoad} disabled={loading}>
-            {loading ? <ActivityIndicator color="#0F0F23" /> : <Text style={styles.buttonText}>Atualizar diagnóstico</Text>}
-          </TouchableOpacity>
+          <Text style={styles.label}>Buscar usuário (nome, email ou UID)</Text>
+          <View style={styles.inline}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              value={query}
+              onChangeText={setQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Ex.: Joao ou @gmail.com"
+              placeholderTextColor="#7B809A"
+            />
+            <TouchableOpacity style={styles.smallButton} onPress={() => loadUsers({ reset: true })} disabled={loadingUsers}>
+              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Buscar</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.block}>
+          <Text style={styles.blockTitle}>Usuários</Text>
+          {users.map((entry) => (
+            <TouchableOpacity
+              key={entry.uid}
+              style={[styles.userRow, targetUid === entry.uid ? styles.userRowActive : null]}
+              onPress={() => setTargetUid(entry.uid)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.userName}>
+                  {entry.displayName}
+                  {entry.isAdmin ? ' • admin' : ''}
+                </Text>
+                <Text style={styles.userMeta}>{entry.email || entry.uid}</Text>
+                <Text style={styles.userMeta}>
+                  score {entry.statusScore ?? '—'} • {entry.statusLevel || '—'} • críticos {entry.criticalAreas} • positivos {entry.positiveAreas}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.recalcButton}
+                onPress={() => recalcUser(entry.uid)}
+                disabled={busyUid === entry.uid}
+              >
+                {busyUid === entry.uid ? (
+                  <ActivityIndicator size="small" color="#0F0F23" />
+                ) : (
+                  <Text style={styles.recalcText}>Recalcular</Text>
+                )}
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))}
+
+          <View style={styles.inline}>
+            <TouchableOpacity
+              style={[styles.smallButton, { marginTop: 8 }]}
+              onPress={() => loadUsers({ reset: users.length === 0 })}
+              disabled={loadingUsers}
+            >
+              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Carregar mais</Text>}
+            </TouchableOpacity>
+            <Text style={styles.userMeta}>{nextCursor ? 'há mais páginas' : 'fim da lista'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.inputWrap}>
+          <Text style={styles.label}>UID para diagnóstico detalhado</Text>
+          <View style={styles.inline}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              value={targetUid}
+              onChangeText={setTargetUid}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="UID do usuário"
+              placeholderTextColor="#7B809A"
+            />
+            <TouchableOpacity style={styles.smallButton} onPress={runDiag} disabled={loadingDiag}>
+              {loadingDiag ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Diagnóstico</Text>}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -94,6 +242,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
+  inline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   label: { color: '#D7DCF5', fontWeight: '700', marginBottom: 8 },
   input: {
     backgroundColor: '#101528',
@@ -105,13 +254,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 10,
   },
-  button: {
+  smallButton: {
     backgroundColor: '#FFD700',
     borderRadius: 10,
     paddingVertical: 10,
+    paddingHorizontal: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: { color: '#0F0F23', fontWeight: '800' },
+  smallButtonText: { color: '#0F0F23', fontWeight: '800' },
   error: {
     color: '#FF8D8D',
     marginBottom: 10,
@@ -131,5 +282,25 @@ const styles = StyleSheet.create({
   },
   blockTitle: { color: '#FFFFFF', fontWeight: '800', marginBottom: 8 },
   blockBody: { color: '#C9CEE6', fontFamily: 'monospace', fontSize: 12, lineHeight: 17 },
+  userRow: {
+    borderWidth: 1,
+    borderColor: '#2B3050',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  userRowActive: { borderColor: '#FFD700' },
+  userName: { color: '#FFFFFF', fontWeight: '800' },
+  userMeta: { color: '#A9AEC4', fontSize: 12, marginTop: 2 },
+  recalcButton: {
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  recalcText: { color: '#0F0F23', fontWeight: '800', fontSize: 12 },
 })
 
