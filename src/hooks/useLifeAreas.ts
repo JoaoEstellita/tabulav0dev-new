@@ -159,6 +159,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
             body: JSON.stringify({ userId: user.uid }),
           })
           if (!refreshResponse.ok) {
+            if (refreshResponse.status === 401) {
+              statusRefreshStaleSession = true
+              throw new Error('stale_session')
+            }
             let errorPayload: any = null
             try {
               errorPayload = await refreshResponse.clone().json()
@@ -211,6 +215,15 @@ export function useLifeAreas(): UseLifeAreasReturn {
             setBackendStatusPersonal(backendStatusPersonalValue)
           }
         } catch (refreshError) {
+          const refreshMessage =
+            refreshError instanceof Error ? refreshError.message.toLowerCase() : String(refreshError || '').toLowerCase()
+          if (
+            refreshMessage.includes('stale_session') ||
+            refreshMessage.includes('stale_auth_time') ||
+            refreshMessage.includes('auth_required_missing_token')
+          ) {
+            statusRefreshStaleSession = true
+          }
           console.warn('Falha ao atualizar status via backend:', refreshError)
         } finally {
           statusRefreshInFlightRef.current = false
