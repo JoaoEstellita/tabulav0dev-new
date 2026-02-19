@@ -139,6 +139,27 @@ describe('astroInterpretation catalog integration', () => {
     expect(text).toContain('visibility')
   })
 
+  it('applies curated ingress overrides in all locales with same canonical key', () => {
+    const transit = {
+      transitPlanet: 'Pluto',
+      aspectName: 'ingress',
+      house: 10,
+      phase: 'active',
+    }
+    const pt = buildUnifiedTransitNarrative(transit, 'carreira', 'pt-BR')
+    const en = buildUnifiedTransitNarrative(transit, 'carreira', 'en-US')
+    const es = buildUnifiedTransitNarrative(transit, 'carreira', 'es-ES')
+    const it = buildUnifiedTransitNarrative(transit, 'carreira', 'it-IT')
+
+    expect(pt.transitKey).toBe(en.transitKey)
+    expect(en.transitKey).toBe(es.transitKey)
+    expect(es.transitKey).toBe(it.transitKey)
+    expect(pt.shortText.toLowerCase()).toContain('casa 10')
+    expect(en.shortText.toLowerCase()).toContain('house 10')
+    expect(es.shortText.toLowerCase()).toContain('casa 10')
+    expect(it.shortText.toLowerCase()).toContain('casa 10')
+  })
+
   it('normalizes angle aliases in catalog resolver (MC/IC/DSC)', () => {
     const mc = buildUnifiedTransitNarrative(
       { transitPlanet: 'Jupiter', aspectName: 'oposicao', target: { angle: 'MC' }, phase: 'active' },

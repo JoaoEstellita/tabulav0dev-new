@@ -39,5 +39,24 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Saturno em sextil a Jupiter combina expansao com realismo estrategico. O periodo favorece crescimento com planejamento, sem perder seguranca de base. Avance com metas concretas, prazos claros e revisoes periodicas.',
   'transit:saturn|trigono|jupiter':
     'Saturno em trigono a Jupiter sustenta crescimento consistente, com equilibrio entre visao e execucao. A fase tende a facilitar progresso solido quando ha metodo e paciencia. Estruture oportunidades em etapas para ampliar resultados duradouros.',
+  'transit:pluto|ingress|house_10':
+    'Plutao em ingresso na Casa 10 tende a iniciar um ciclo de reposicionamento profundo na carreira, reputacao e direcao publica. O periodo costuma pedir escolhas mais autenticas, com menos concessao ao que nao representa sua verdade atual. Avance com estrategia de medio prazo e ajuste a exposicao conforme sua capacidade real de sustentar o novo nivel.',
+  'transit:pluto|ingress|house_4':
+    'Plutao em ingresso na Casa 4 tende a aprofundar temas de base emocional, familia e estrutura de lar. Este ciclo pode revelar padroes antigos que ja nao sustentam seguranca interna com qualidade. O melhor uso da fase e reorganizar fundamentos com calma, firmeza e limites mais conscientes.',
+  'transit:saturn|ingress|house_10':
+    'Saturno em ingresso na Casa 10 marca uma fase de consolidacao profissional por responsabilidade, consistencia e criterio. A tendencia e reduzir dispersao, priorizar entregas concretas e alinhar expectativa com processo real. Use o periodo para estruturar reputacao com passos sustentaveis e previsiveis.',
+  'transit:saturn|ingress|house_6':
+    'Saturno em ingresso na Casa 6 favorece reorganizacao de rotina, trabalho diario e saude funcional com metodo. O ciclo tende a pedir disciplina simples, ritmos mais estaveis e cortes no que gera sobrecarga recorrente. Pequenos ajustes repetidos costumam produzir ganho relevante no medio prazo.',
+  'transit:jupiter|ingress|house_2':
+    'Jupiter em ingresso na Casa 2 tende a ampliar oportunidades sobre recursos, valores e seguranca material. A fase favorece crescimento quando existe planejamento, criterio de risco e acompanhamento de resultados. Expansao com base pratica tende a ser mais produtiva do que entusiasmo sem estrutura.',
+  'transit:jupiter|ingress|house_11':
+    'Jupiter em ingresso na Casa 11 abre janela favoravel para redes, colaboracoes e projetos coletivos de futuro. O ciclo tende a ampliar conexoes uteis quando ha clareza de objetivo e reciprocidade real. Priorize alianças consistentes e transforme contatos em cooperacao concreta.',
+  'transit:uranus|ingress|house_7':
+    'Urano em ingresso na Casa 7 tende a renovar dinamicas de parceria, acordos e vinculos importantes. O periodo pode pedir mais autonomia, flexibilidade e conversa franca sobre expectativas dos dois lados. Ajustes conscientes ajudam a evitar rupturas por reacao e favorecem evolucao do vinculo.',
+  'transit:neptune|ingress|house_12':
+    'Netuno em ingresso na Casa 12 tende a ampliar sensibilidade, intuicao e processos de encerramento interno. A fase pode aumentar percepcao sutil, exigindo mais discernimento para separar intuicao de idealizacao. Rotinas de descanso, silencio e higiene mental ajudam a estabilizar a leitura desse ciclo.',
+  'transit:mars|ingress|house_10':
+    'Marte em ingresso na Casa 10 aumenta impulso para agir na carreira e ocupar espaco de forma mais visivel. A energia favorece iniciativa, desde que haja direcao clara e regulacao de ritmo para evitar desgaste. Execute por prioridades e converta urgencia em progresso mensuravel.',
+  'transit:sun|ingress|house_10':
+    'Sol em ingresso na Casa 10 ilumina metas publicas, responsabilidade e direcao profissional. O momento tende a favorecer visibilidade quando voce combina presenca, consistencia e mensagem objetiva. Foque no essencial e use a exposicao para fortalecer posicionamento com coerencia.',
 }
-
