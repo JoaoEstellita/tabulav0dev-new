@@ -1,6 +1,6 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: Txt/curated/catalog_clean_candidates.json
-// Generated at: 2026-02-19T01:50:34.363Z
+// Generated at: 2026-02-19T02:33:05.255Z
 
 export type TransitCatalogEntry = {
   text: string
@@ -69,6 +69,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "text": "Você pode encontrar-se mais do que um pouco de aquisição, e sua apreciação atual por praticamente tudo pode levá-lo a gastar demais, satisfazer demais. Você ganhará ganhos na carreira por sua capacidade de sentir qualidade e escolher de acordo.",
     "sourceKey": "JU.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
+  },
+  "transit:jupiter|ingress|house_1": {
+    "text": "Sua carreira pode ser construída em torno da forma como se apresenta--a maneira que você se deparar com os outros. Sua personalidade espontânea e a capacidade de fascinar os outros são elementos importantes para ser bem sucedido.",
+    "sourceKey": "JU.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_10": {
+    "text": "É natural para você colocar suas habilidades gerenciais e práticas para trabalhar. Você usar suas habilidades organizacionais afiadas para construir uma carreira e estar a par sobre como as coisas funcionam.",
+    "sourceKey": "JU.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_11": {
+    "text": "Você poderia fazer uma carreira através do trabalho de grupos ou comunidades, qualquer coisa envolvendo tenta trazer idéias e sonhos em grande escala e humanitários à realidade. Seus ideais e visão interior mantém o que é melhor para todos, já na sua mente.",
+    "sourceKey": "JU.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_12": {
+    "text": "Você poderia brilhar em uma carreira que envolve a compreensão e auto-sacrifício. Psicologia, aconselhamento..--guiando os outros para ser perdoando e aceitação..--pode ser uma habilidade especial que você tem.",
+    "sourceKey": "JU.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_2": {
+    "text": "Sua carreira ou caminho de vida pode depender de seu talento para responder tudo o que é novo e desafiador. O mundo dos negócios pode chamar por sua capacidade de reagir e construir sobre as oportunidades.",
+    "sourceKey": "JU.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_3": {
+    "text": "Nascido investigador e pesquisador, sempre perguntando, pesquisando, seguindo as coisas à sua conclusão lógica. Sua carreira provavelmente será construída em torno destas qualidades --comunicação, fazer conexões, pensamentos e idéias e assim por diante.",
+    "sourceKey": "JU.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_4": {
+    "text": "Sua carreira pode ser construída na sua busca de raízes e segurança. Você se encontra através de lar e família (tudo interno), e seria excelente se pudesse de alguma forma ganhar a vida nestas áreas.",
+    "sourceKey": "JU.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_5": {
+    "text": "Você pode ser bem sucedido trabalhando com criatividade e auto-expressão através das artes e teatro, esportes, crianças. Você pode encontrar-se um guia e mestre para os outros quando se trata criar conteúdo.",
+    "sourceKey": "JU.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_6": {
+    "text": "A carreira em uma das ocupações de serviço ou saúde é possível, para que você pode encontrar-se automaticamente a cuidar das necessidades dos outros. Sua ocupação envolve saúde, comida e todas as tentativas de restaurar, salvar e fazer o melhor das coisas.",
+    "sourceKey": "JU.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_7": {
+    "text": "Seu caminho de vida envolve relações muito próximas com os outros. Isto poderia ser através de um casamento ou outra forma de yoga (União).",
+    "sourceKey": "JU.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_8": {
+    "text": "O seu caminho de vida envolve cortar as superficialidades e desmascarar a realidade de uma situação. Isto pode significar que o mundo dos negócios é um livro aberto para você..--fácil de ler.",
+    "sourceKey": "JU.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:jupiter|ingress|house_9": {
+    "text": "Sua devoção e a busca da verdade podem levá-lo através do globo e certamente para os confins da filosofia e pensamentos religiosos. Sua carreira pode depender de sua necessidade de alcançar o cerne a essência, o coração de cada pergunta.",
+    "sourceKey": "JU.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:jupiter|oposicao|ascendente": {
     "text": "Isso marca o advento de um bom tempo na vida profissional e social. Um tempo de pagamento de dívidas acabou; A realização real é possível agora. Você pode ter que sacrificar alguma vida pessoal para ganhar esse crescimento externo.",
@@ -365,6 +425,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceKey": "MA.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
+  "transit:mars|ingress|house_1": {
+    "text": "Você se fazer perceber; como ser visto e conhecido..--para se comunicar com os outros. Aparência pessoal (a maneira que se apresenta) também é um fator motivador.",
+    "sourceKey": "MA.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_10": {
+    "text": "É levado a gerenciar e controlar as coisas. Um desejo de organizar e ser prático eleva-se a uma pequena obsessão.",
+    "sourceKey": "MA.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_11": {
+    "text": "Você tem o espírito de comunidade real, para trabalhar com outras pessoas em projetos de interesse humanitário. Uma vontade de fazer seus sonhos altruístas uma realidade mantém-se movendo na direção de objetivos do grupo e de trabalho.",
+    "sourceKey": "MA.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_12": {
+    "text": "Um alto grau de motivação quando se trata de dar e de sacrifício pessoal. Você tende a compreender e aceitar e é facilmente movido pelos problemas dos outros.",
+    "sourceKey": "MA.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_2": {
+    "text": "Você está motivado quando se trata de bens e coisas materiais. Uma vontade de responder, próprio, e construir em cima de tudo o que apareça em seu caminho.",
+    "sourceKey": "MA.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_3": {
+    "text": "Motivação implacável para a busca de conhecimento, pesquisa e tudo que se trata de comunicações de todas as formas..--telefone, voz, letras, computadores e similares.",
+    "sourceKey": "MA.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_4": {
+    "text": "Levado a criar raízes, cavar e encontrar os limites de tudo o que você está envolvido; Essa vontade de estar sempre seguro o empurra para chegar à Fundação das coisas. Você está motivado está em casa e tudo sobre família.",
+    "sourceKey": "MA.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_5": {
+    "text": "Conduzido para se destacar em qualquer forma de expressão física e criativa..--esportes, teatro, artes e ofícios, tanto faz. Esta vontade de se expressar, para falar e ser ouvido, impulsiona-o em muitas situação interessantes.",
+    "sourceKey": "MA.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_6": {
+    "text": "Você está muito motivado quando se trata de assuntos de cuidados e serviços..--cuidando dos detalhes. Você está acima de qualquer tarefa que requer conservação..--separar o trigo do joio.",
+    "sourceKey": "MA.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_7": {
+    "text": "Você está altamente motivado quando se trata de relacionamentos (sociais ou privados) e se esforça para levantar-se acima de personalidades. Vontade de ver a unidade em tudo, para se casar ou juntar todas as disparidades.",
+    "sourceKey": "MA.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_8": {
+    "text": "Não está contente com as aparências, é levado a reduzir tudo para o essencial, o âmago da questão. Este impulso convincente para integridade e desprezo para o superficial pode ofender alguns.",
+    "sourceKey": "MA.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mars|ingress|house_9": {
+    "text": "Você pode acabar viajando pelo mundo. Um impulso interior para encontrar o coração da verdade em todas as coisas pode impulsioná-lo infinitamente.",
+    "sourceKey": "MA.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
   "transit:mars|oposicao|jupiter": {
     "text": "As considerações emocionais podem bloquear ou se opor à forma como você procede com um projeto ou plano. Alguém pode ficar insistente ou obscuro as escolhas reais e o caminho certo.",
     "sourceKey": "MA.OPP.JU",
@@ -634,6 +754,61 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "text": "É fácil ver o que você valoriza e se preocupa. Seu senso de apreciação é agudizado e em foco. Um bom dia para selecionar os novos móveis da casa ou para avaliar as suas explorações.",
     "sourceKey": "ME.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
+  },
+  "transit:mercury|ingress|house_1": {
+    "text": "Você pensa muito sobre as aparências..--como as coisas se tornam a aparecer para os outros. Você é muito bem-apessoado e ciente das personalidades.",
+    "sourceKey": "ME.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_11": {
+    "text": "Sua mente corre para valores humanitários e pensamentos do que poderia (e deveria) ser. Idéias relacionadas com trabalho de grupo e objetivos (o que torna sua visão interior real) são naturais.",
+    "sourceKey": "ME.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_12": {
+    "text": "Sua mente está naturalmente interessada em tudo que é psicológico e abaixo da superfície das coisas. Idéias de auto-sacrifício e compaixão..--como servir e ajudar os outros..--são o que você tende a pensar.",
+    "sourceKey": "ME.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_2": {
+    "text": "Você ama estudar e questionar e esta sempre perguntando e pesquisando, usando sua mente para a investigação. Você desfruta de comunicação em todas as suas formas..--falados e escritos, através de computadores e assim por diante.",
+    "sourceKey": "ME.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_3": {
+    "text": "Você tem uma mente boa para os negócios. Você tende a pensar ao longo de linhas que são práticos e conservador, sempre chegando com idéias som e produtivas.",
+    "sourceKey": "ME.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_4": {
+    "text": "Sua mente tende a se estabelecer em questões de segurança..--em casa, família e tal. Seus pensamentos possuem sentimentos e grande substância.",
+    "sourceKey": "ME.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_5": {
+    "text": "Você pode expressar os sentimentos e colocar as emoções em palavras. Isto poderia dar-lhe um dom para o dramático, oratória, poesia e as artes.",
+    "sourceKey": "ME.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_6": {
+    "text": "Você é hábil em usar a sua mente de forma analítica. Especialista em controle de qualidade, você pode sempre encontrar as maçãs podres.",
+    "sourceKey": "ME.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_7": {
+    "text": "Você adora se comunicar e discutir idéias com outras pessoas. Suas idéias são sempre justas e imparciais, especialmente quando se trata de outras pessoas, a cena social.",
+    "sourceKey": "ME.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_8": {
+    "text": "Uma inclinação muito analítica e sua mente se destaca na tomada de decisões concretas. Suas idéias vão além das questões superficiais, o que poderiam significar um interesse em psicologia profunda e temas ocultos e místicos.",
+    "sourceKey": "ME.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:mercury|ingress|house_9": {
+    "text": "Sua mente e pensamentos sempre gravitam para o que é duradouro, verdade, ou da essência. Filosofia e religião são assuntos que muitas vezes ocupam você.",
+    "sourceKey": "ME.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:mercury|oposicao|ascendente": {
     "text": "Você se encontra outro orientado agora, com muitos pensamentos e idéias para parceria, em vez de fazer as coisas sozinho. Os amigos podem achar você menos egocêntrico do que o habitual.",
@@ -919,6 +1094,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "text": "Você pode se mudar para apreciar e descobrir a beleza em sua vida e naqueles ao seu redor. Ao mesmo tempo, tudo poderia assumir valor e importância agregados. Tenha cuidado para não gastar demais ou se preocupar muito agora. Apreciar.",
     "sourceKey": "MO.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
+  },
+  "transit:moon|ingress|house_1": {
+    "text": "Você sempre consegue acabar no centro das atenções, com o apoio das pessoas ao seu redor. Sua aparência e a forma se comunicar aos outros poder lhe trazer realizações.",
+    "sourceKey": "MO.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_10": {
+    "text": "você tem uma percepção natural e compreensão sobre o que o público quer. Sua carreira recebe todos os tipos de apoio de outras pessoas, e você se sente em casa, tornando prática e as decisões de gestão.",
+    "sourceKey": "MO.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_11": {
+    "text": "Precisa ser parte de um grupo e tirar força e encorajamento dos seus amigos e conhecidos. Trabalhando com os outros, especialmente na Comunidade ou esforços humanitários, é perfeito para você.",
+    "sourceKey": "MO.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_12": {
+    "text": "Psicologia..--no trabalho de grupo em particular..--é uma área que você pode sempre procurar para apoio e incentivo. Você pode se encontrar aconselhamento ou ministrar aos outros, ajudando-os a compreender e aceitar as suas vidas.",
+    "sourceKey": "MO.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_2": {
+    "text": "Coisas boas (o suporte que você precisa) sempre parecem vir para você. Amigos, colegas de trabalho e circunstâncias sorte de velhas planícies oferecem encorajamento e apoio.",
+    "sourceKey": "MO.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_3": {
+    "text": "Você tem um talento especial para colocar os sentimentos em um grupo de palavras e pode servir como um professor ou um porta-voz. A comunicação é uma área onde você sempre pode obter suporte e apoio de amigos e colegas de trabalho.",
+    "sourceKey": "MO.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_4": {
+    "text": "Você olha pra casa e família pelo apoio e encorajamento. História (pessoal ou não) lhe interessa, e tende para a nostalgia.",
+    "sourceKey": "MO.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_5": {
+    "text": "Você é mais expressivo quando impelidO por um grupo ou em um ambiente que você sente favorável. Você pode desfrutar de desportos de grupo ou trabalhar com crianças ou animais.",
+    "sourceKey": "MO.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_6": {
+    "text": "Você sempre encontra apoio dos outros quando você virar a atenção para a saúde, alimentos, nutrição e áreas onde o serviço ou atenção aos detalhes estão no foco de alto. Você pode gostar de trabalhar com um grupo de outros onde você pode exercitar sua discriminação.",
+    "sourceKey": "MO.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_7": {
+    "text": "Seus amigos, parceiros e relacionamentos significam muito para você. Eles são uma fonte primária de força, e você sempre procura apoio e incentivo.",
+    "sourceKey": "MO.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_8": {
+    "text": "O seu senso de negócios afiado nunca é mais acentuado do que quando você está trabalhando com ou para os outros..--um grupo, corporação e assim por diante. Suas ações recebem apoio ao seu redor.",
+    "sourceKey": "MO.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:moon|ingress|house_9": {
+    "text": "Seu senso de honestidade e a verdade é algo que outros sentem em si e suportam. Você vai acabar ensinando ou guiando grupos em matéria de religião ou filosofia.",
+    "sourceKey": "MO.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:moon|oposicao|ascendente": {
     "text": "Sentindo-se mais interior e mais como compartilhar algum tempo com seu amante ou com amigos íntimos. Talvez não seja um momento para ser muito extrovertido ou tentar apresentar-se ao mundo. Você está se sentindo mais reflexivo do que expressivo agora.",
@@ -1220,6 +1455,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceKey": "NE.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
+  "transit:neptune|ingress|house_1": {
+    "text": "Você é um encanto..--capaz de encantar os outros e colocá-los sob seu feitiço. Você consegue se comunicar com um sentido quase místico para um grupo.",
+    "sourceKey": "NE.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_10": {
+    "text": "Suas habilidades práticas estão ligadas à sua visão interior quase mística. Você manifesta seus sonhos e ideais de forma organizada e limpa.",
+    "sourceKey": "NE.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_11": {
+    "text": "Seu sonho de um mundo onde a unidade e a harmonia são uma realidade. Trabalho de grupo ou comunidade com altos objectivos (grande altruísmo) seria o ideal para você.",
+    "sourceKey": "NE.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_12": {
+    "text": "Você tem ideais muito elevados e uma visão de unidade e união. Você tende a ser abnegado, compreensivo e sempre interessado em tudo o que é psicológico, místico e afins.",
+    "sourceKey": "NE.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_2": {
+    "text": "Você é muito idealista quando se trata de bens, finanças, e como você opta por fazer a sua vida. Sua resposta para o que a vida oferece-lhe sempre é muito elevada, embora nem sempre prático.",
+    "sourceKey": "NE.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_3": {
+    "text": "Sua mente tende a ser muito imaginativa e não preocupado com fatos e números. Em vez disso, ideias e a escrita de um recurso de natureza mística ou poético.",
+    "sourceKey": "NE.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_4": {
+    "text": "Família, casa e segurança parece ser o ideal para você. Você pode ser muito criativo com sua instalação doméstica e em casa, ou um senso de comunidade e unidade permeia sua vida familiar.",
+    "sourceKey": "NE.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_5": {
+    "text": "Você tem uma grande imaginação, criativa, talvez um forte sentido para a dramática e a habilidade de expressar idéias de um sabor místico ou de outro mundo. Entreter as crianças (e adultos) com histórias encantadoras e afins é indicado.",
+    "sourceKey": "NE.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_6": {
+    "text": "Você é muito criativo quando se trata de sua saúde, o alimento que você come e como você se cuida. Rápido para tirar a foto, você pode encontrar-se ajudar os outros a ver os benefícios que podem trazer cuidados adequados (mental, físico e tal).",
+    "sourceKey": "NE.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_7": {
+    "text": "Nunca abandonou seus ideais quando se trata de relações de qualquer tipo. Sua imaginação está no seu melhor quando você está sendo social ou relativo aos outros.",
+    "sourceKey": "NE.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_8": {
+    "text": "Você está muito confiante e idealista quando se trata de tomar conta do negócio, descer ao âmago do questão. Você vê o melhor em uma situação, tornando-se difícil dizer não ou deixar algo de lado.",
+    "sourceKey": "NE.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:neptune|ingress|house_9": {
+    "text": "Os seus sonhos e ideais então em tudo o que é puro e verdadeiro. Filosofia e religião são sua fuga e refúgio do mundo mundano.",
+    "sourceKey": "NE.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
   "transit:neptune|oposicao|ascendente": {
     "text": "Você tende a idealizar os outros, em particular seus parceiros e relacionamentos, durante esse período de tempo. Está ciente de você que um espírito de comunidade e de união é preferível às diferenças pessoais.",
     "sourceKey": "NE.OPP.AS",
@@ -1514,6 +1809,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "text": "Fique parado para soltar muita madeira morta, em particular no que diz respeito ao que você aprecia e valoriza - o seu sistema de valores. Esta pode ser uma mudança permanente que deixa você apreciando apenas as coisas essenciais e duradouras.",
     "sourceKey": "PL.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
+  },
+  "transit:pluto|ingress|house_1": {
+    "text": "Está muito out-front e sincero, provavelmente não é conhecido por seu grande senso de diplomacia ou tato. Sua paixão, intensidade e abordagem à vida são óbvios para todos que você conhece.",
+    "sourceKey": "PL.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_10": {
+    "text": "Enorme senso prático traz praticidade através de toda a burocracia e expõe as decisões corretas de cada vez. Você pode ter uma capacidade de organizar e gerenciar tudo o que é vulnerável e sensível no ser humano psique...",
+    "sourceKey": "PL.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_11": {
+    "text": "Seu ardente zelo para com o mundo ideal e sua necessidade de fazer parte de um grupo de almas afins são fatores importantes na sua maquiagem. Você aprende e cresce através de seus esforços para ajudar os outros e fazer sua visão interior uma realidade.",
+    "sourceKey": "PL.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_12": {
+    "text": "A nascido psicólogo. Você não pode ajudar, mas cava abaixo da superfície da psique humana e suas vulnerabilidades.",
+    "sourceKey": "PL.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_2": {
+    "text": "Você pode ser uma pessoa de negócio fantástico, como você tem uma habilidade para superar a superfície das coisas e separar o que que tem real valor. Na área de posses ou bens materiais, você vai passar por muitas mudanças e aprender muito.",
+    "sourceKey": "PL.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_3": {
+    "text": "Um bom detetive ou pesquisador. Você não pode ajudar, mas passar por tudo o que é superficial.",
+    "sourceKey": "PL.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_4": {
+    "text": "Você pode passar por uma série de mudanças que afetam o seu senso de segurança. Sua casa e família e situação poderia ser um foco para o crescimento e aprendizagem real..--uma área de grande sensibilidade e vulnerabilidade.",
+    "sourceKey": "PL.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_5": {
+    "text": "Você é muito sensível (mesmo vulnerável) quando se trata de expressar-se, retirá-lo. Períodos de intensa criatividade permitem passar por mudanças e crescimento interior.",
+    "sourceKey": "PL.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_6": {
+    "text": "Você tende a ser radical quando se trata de auto-análise, que inclui comida, cuidados de saúde, bem-estar físico. Servir e cuidar de si mesmo e outros são uma fonte primária de crescimento interior e de mudança.",
+    "sourceKey": "PL.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_7": {
+    "text": "Mudança e crescimento interior tendem a vir através de seus relacionamentos com amigos e amantes. Casamento, União (yoga) será muito intenso e não superficial.",
+    "sourceKey": "PL.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_8": {
+    "text": "Você vai através de aparições em um esforço para ficar por baixo, para trás e no coração ou essência. Você pode encontrar o ocultismo, a psicologia, a iniciação e o misticismo de grande interesse.",
+    "sourceKey": "PL.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:pluto|ingress|house_9": {
+    "text": "É apaixonado em sua busca pela verdade e essência. Nada superficial ou efêmera prende sua atenção.",
+    "sourceKey": "PL.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:pluto|oposicao|ascendente": {
     "text": "Seus relacionamentos (parcerias, amantes) são agora muito intensos e sempre tão pessoais. Na verdade, eles são capazes de transformá-lo no nível mais básico. Um tempo de crescimento interno real através de outras pessoas, a vida social.",
@@ -1815,6 +2170,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceKey": "SA.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
+  "transit:saturn|ingress|house_1": {
+    "text": "Você é muito conservador quando se trata de sua aparência pessoal e comunicação com os outros. Você é imparcial e possui favoritos ou se torna excessivamente pessoal.",
+    "sourceKey": "SA.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_10": {
+    "text": "Sua carreira, visão prática e habilidades são de importância central para você. Você não é nada se não organizado e pático em deliberar nesta área da vida.",
+    "sourceKey": "SA.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_11": {
+    "text": "Você trabalha duro para tornar seus sonhos e ideais, uma realidade. Você trabalha duro no trabalho da Comunidade ou grupo.",
+    "sourceKey": "SA.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_12": {
+    "text": "Você é muito sério quando se trata de auto-sacrifício e faz todo o que possível para facilitar as coisas para outras pessoas. Você vai pela psicologia, a psique humana e coisas místicas.",
+    "sourceKey": "SA.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_2": {
+    "text": "Você poderia ser frugal quando se trata de posses, sempre limitando suas compras para o que é essencial e tem valor. Este mesmo tema realiza em sua resposta para as pessoas.",
+    "sourceKey": "SA.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_3": {
+    "text": "Você não desperdiça palavras, e as comunicações tendem a ser curtas diretas ao ponto. Você é muito determinado e deliberado, quando se trata de trabalho mental e faria um excelente pesquisador ou cientista.",
+    "sourceKey": "SA.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_4": {
+    "text": "Você tem necessidades muito simples em relação a casa e arredores. Alguns podem achar você frugal.",
+    "sourceKey": "SA.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_5": {
+    "text": "Você se verá difícil de desapegar-se, também tende a ser prudente e comedid expressar seus sentimentos. Sentimento criativos pode ser difícil, pois você é muito duro consigo mesmo nesta área.",
+    "sourceKey": "SA.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_6": {
+    "text": "Suas faculdades críticas são graves, e pode ser difícil para você exercê-los. Uma vez que você liga sua luz analítica, você tende a ser implacável na avaliação.",
+    "sourceKey": "SA.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_7": {
+    "text": "Relações são tão importantes para você que poderia ser um obstáculo às vezes. Pode ser difícil para você estar por perto, como você é muito exigente dos outros.",
+    "sourceKey": "SA.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_8": {
+    "text": "Você pode ser muito exigente quando se trata do que é essencial ou central a uma situação. Você é exigente quando se trata de descer ao âmago da questão.",
+    "sourceKey": "SA.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:saturn|ingress|house_9": {
+    "text": "Religião, filosofia e verdade são essenciais para sua vida. Você é meticuloso e deliberada, quando se trata de triagem através de idéias e valores para o que é sólido e duradouro.",
+    "sourceKey": "SA.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
   "transit:saturn|oposicao|ascendente": {
     "text": "Desta vez marca o fim de vários anos de trabalho árduo, uma espécie de aprendizado de sua parte. Agora você começa a se mover para cima e para fora. Vá em frente! Uma série de anos muito bem sucedidos estão chegando agora, durante o qual o mundo deve se curvar à sua liderança.",
     "sourceKey": "SA.OPP.AS",
@@ -2109,6 +2524,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "text": "Tenha cuidado para não participar de uma série de gastos, pois você pode apreciar a beleza e o valor de tudo o que você encontra hoje. Você pode se sentir amoroso e caloroso para quem está à sua volta, e você aprecia sua própria vida e auto, em geral.",
     "sourceKey": "SU.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
+  },
+  "transit:sun|ingress|house_1": {
+    "text": "Você tende a ser frontal e apresentável. Sua aparência pessoal é importante para você e você coloca um monte de pensamento e esforço como se apresenta ou se depara.",
+    "sourceKey": "SU.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_10": {
+    "text": "Você é muito orientado a carreira e sua reputação pessoal e a honra são de extrema importância. Você possui um senso natural de organização e dicas práticas e pode nos superar em gerenciar ou supervisionar os outros...",
+    "sourceKey": "SU.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_11": {
+    "text": "perfeito como um líder de grupo, onde seu idealismo inato e amor para a humanidade podem florescer. Trabalho de grupo ou comunidade..--qualquer coisa que é altruísta ou serve ao bem comum..--é onde você pode ser encontrado.",
+    "sourceKey": "SU.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_12": {
+    "text": "Você naturalmente é uma pessoa generosa, sacrifica seus próprios interesses por causa de uma visão interior..--o que você sente é certo. Um psicólogo nascido, você pode se encontrar aconselhamento e cuidar das necessidades mentais dos outros.",
+    "sourceKey": "SU.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_2": {
+    "text": "É muito sensível e provavelmente não é pouco possessivo. Você tende a pegar as coisas, e sucesso material..--dinheiro, casa, segurança, posses,..--é muito importante.",
+    "sourceKey": "SU.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_3": {
+    "text": "Você é muito comunicativa, não é um pouco curioso e gosta de falar, falar, escrever e assim por diante. Estudo, pesquisa e investigações de todos os tipos interessam você.",
+    "sourceKey": "SU.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_4": {
+    "text": "Casa, família e segurança são importantes para você. Você adora criar raízes e construir uma base.",
+    "sourceKey": "SU.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_5": {
+    "text": "Você é muito expressivo quando se trata de seus sentimentos e emoções..--você usa seu coração na manga. A criatividade de todos os tipos é importante para você..--música, teatro, arte, poesia.",
+    "sourceKey": "SU.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_6": {
+    "text": "Você é um bom trabalhador, sempre pensando e cuidando de coisas. Você é naturalmente orientada a serviços e desfrutar de cuidar das necessidades dos outros.",
+    "sourceKey": "SU.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_7": {
+    "text": "Ama uma vida social..--amigos e relacionamentos desempenham um papel importante em sua maquiagem. Estreitar laços (casamento, yoga) é muito importantes para você.",
+    "sourceKey": "SU.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_8": {
+    "text": "O que você vê e o que você ganha não é suficiente para você. Você quer mais do que as aparências e está disposto a cavar para baixo para obter o cerne das coisas.",
+    "sourceKey": "SU.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:sun|ingress|house_9": {
+    "text": "Você é direto e sincero e tende a escavar passado e aparências e resolver sobre a verdade por dentro de tudo. Tudo sobre idéias, filosofia e religião, e o que a vida é.",
+    "sourceKey": "SU.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:sun|oposicao|ascendente": {
     "text": "Você pode experimentar oposição à sua maneira de se apresentar. Alguém poderia desafiar seu senso de identidade. Você pode não ser capaz de se comunicar ou de se entrever o melhor que desejar.",
@@ -2410,6 +2885,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceKey": "UR.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
+  "transit:uranus|ingress|house_1": {
+    "text": "A tendência de ser excêntrico e não convencionais em aparência e maneirismos. Talvez a sua abordagem à vida é incomum ou diferente.",
+    "sourceKey": "UR.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_10": {
+    "text": "Você é original e perspicaz quando se trata de questões práticas..--trabalho, carreira e tal. Independente, você pode ter uma abordagem não-convencional para o trabalho, especialmente sobre como você organiza ou gerencia.",
+    "sourceKey": "UR.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_11": {
+    "text": "Você pode desfrutar de amigos excêntricos ou não convencionais e grupos com algum tipo de sabor humanitária vai apelar. Você tem idéias muito originais, quando se trata de comunidade, tornando nossos sonhos coletivos em realidade.",
+    "sourceKey": "UR.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_12": {
+    "text": "Pode ser não-convencional em matéria de psicologia, psique e tudo que é místico ou espiritual. Maneiras incomuns para ajudar ou cuidar dos outros.",
+    "sourceKey": "UR.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_2": {
+    "text": "Você pode ter formas incomuns de responder para o que a vida oferece-lhe, com o resultado que a maneira que ganha a vida é um pouco excêntrico. Seu meio de suporte pode ser individualista e diferente do grupo.",
+    "sourceKey": "UR.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_3": {
+    "text": "você tem discernimento quando se trata de algo ligado à investigação, estudo e o mundo das idéias. Sua abordagem mental independente de resolução de problemas e de comunicação encontra você chegando com conexões novas e diferentes.",
+    "sourceKey": "UR.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_4": {
+    "text": "Você é muito independente quando se trata de sua própria segurança e a família. Isso poderia significar uma casa de estilo pouco convencional ou mobiliário ou uma abordagem diferente para a história, nostalgia e sentimento.",
+    "sourceKey": "UR.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_5": {
+    "text": "Você está pouco convencional... quando se trata de auto-expressão e gozo.",
+    "sourceKey": "UR.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_6": {
+    "text": "Você é inovador quando se trata de auto-análise e auto-cuidado, alimentos, dieta, saúde e assim por diante. Você pode ver novas maneiras de fazer uso do status quo.",
+    "sourceKey": "UR.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_7": {
+    "text": "Parece que afirmar a sua independência nas relações e a cena social. Não convencionais, para dizer o mínimo, bem pode desfrutar um tipo diferente de casamento ou amizade.",
+    "sourceKey": "UR.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_8": {
+    "text": "Relâmpago rápido, você parece ter uma visão direta para o que é inútil em uma situação e o que vale a pena. Você tem maneiras novas e não-convencionais ver o que é importante.",
+    "sourceKey": "UR.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:uranus|ingress|house_9": {
+    "text": "Inconvencional em matéria de filosofia e religião, você sempre encontrar novas maneiras de chegar após e no que é realmente importante. Seus insights sobre a verdade e o eterno torná-o independente e um pouco de um solitário.",
+    "sourceKey": "UR.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
   "transit:uranus|oposicao|ascendente": {
     "text": "Um tempo para descobrir os outros ou para encontrar-se capaz de responder a amigos ou amantes e entrar em relacionamentos com um renovado sentimento de amor e compaixão. Avanços reais, vontade de tentar abordagens novas e diferentes para os relacionamentos.",
     "sourceKey": "UR.OPP.AS",
@@ -2700,6 +3235,66 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceKey": "VE.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
+  "transit:venus|ingress|house_1": {
+    "text": "Você valoriza uma boa aparência..--como as pessoas se apresentam. Você valoriza a abordagem pessoal e é muito exigente, pessoalmente, quando se trata de assuntos de sabor e arte.",
+    "sourceKey": "VE.01",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_10": {
+    "text": "Ama organização em grande escala, a carreira ou negócios estarão sempre perto de seu coração. Seu senso de discriminação quando se trata de questões práticas é excelente, e dá valor aos outros.",
+    "sourceKey": "VE.10",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_11": {
+    "text": "Amor por projetos comunitários e qualquer tipo de trabalho de grupo. Seu senso de valores se encontra ao lado do altruísmo e humanismo em cada turno.",
+    "sourceKey": "VE.11",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_12": {
+    "text": "você pode apreciar as dificuldades dos outros e de ser a compreensão dos problemas que eles podem estar tendo. Dá valor a uma certa quantidade de auto-sacrifício e uma atitude de doação.",
+    "sourceKey": "VE.12",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_2": {
+    "text": "Tem um amor natural de posses e o mundo material. Você valoriza a arte e tudo que é belo e bom.",
+    "sourceKey": "VE.02",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_3": {
+    "text": "Você adora se comunicar e perseguir as conversas. Os apelos do mundo mental para você são muito exigentes (mas apreciativo) quando se trata de conceitos, idéias, pensamentos e afins.",
+    "sourceKey": "VE.03",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_4": {
+    "text": "Ama suas raízes, casa e família, antepassados ou história em geral. Você provavelmente é um colecionador e muito discriminador nesta área.",
+    "sourceKey": "VE.04",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_5": {
+    "text": "Provavelmente ama o teatro e tudo que é criativo, expressivo e artistico. Você aprecia o dramático, e cenas emocionais são um sinal de vida para você.",
+    "sourceKey": "VE.05",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_6": {
+    "text": "Você gosta de fazer as coisas com cuidado e desfrutar sendo discriminado e exato. Suas faculdades críticas são excelentes, e você pode sempre escolher o que vale a economia e o que não é.",
+    "sourceKey": "VE.06",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_7": {
+    "text": "Ama a vida social e as relações de todos os tipos..--parceiros, casamentos, professores e tal. Você é muito sensível e este valor em outros.",
+    "sourceKey": "VE.07",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_8": {
+    "text": "Você não liga muito para o superficial. Você aprecia encontrar o caminho da superfície até o coração..--o esqueleto da matéria.",
+    "sourceKey": "VE.08",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
+  "transit:venus|ingress|house_9": {
+    "text": "Seu amor de verdade faz filosofia e idéias religiosas um hábito ao longo da vida. Você aprecia as coisas de um nível global ou universal e amaria viajar.",
+    "sourceKey": "VE.09",
+    "sourceFile": "Engl. Planet_in_House.txt"
+  },
   "transit:venus|oposicao|ascendente": {
     "text": "Outras pessoas podem não apreciar a forma como você aparece ou se apresentam. Você pode se preocupar muito com o que os outros pensam em você.",
     "sourceKey": "VE.OPP.AS",
@@ -2938,7 +3533,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
 } as const;
 
 export const TRANSIT_CATALOG_PTBR_META = {
-  generatedAt: '2026-02-19T01:50:34.363Z',
-  entries: 585,
+  generatedAt: '2026-02-19T02:33:05.255Z',
+  entries: 704,
   source: 'Txt/curated/catalog_clean_candidates.json',
 } as const;

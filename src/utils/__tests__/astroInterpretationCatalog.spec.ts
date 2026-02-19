@@ -33,5 +33,20 @@ describe('astroInterpretation catalog integration', () => {
     expect(narrative.shortText.toLowerCase()).toContain('jupiter')
     expect(narrative.shortText).not.toContain('Você faz o seu caminho agora')
   })
-})
 
+  it('resolves catalog key for planets in houses (ingress)', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Moon',
+        aspectName: 'ingress',
+        house: 2,
+        phase: 'active',
+      },
+      'financas',
+      'pt-BR'
+    )
+
+    expect(narrative.shortText).toContain('Coisas boas (o suporte que você precisa)')
+    expect(narrative.shortText).not.toMatch(/\{[a-zA-Z0-9_.-]+\}/)
+  })
+})

@@ -625,6 +625,14 @@ function normalizeTransitToken(value: unknown): string {
 function buildCatalogTransitKey(transit: AnyTransit): string | null {
   const planet = normalizeTransitToken(transit?.transitPlanet)
   const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
+  if (!planet || !aspect) return null
+
+  if (aspect === 'ingress') {
+    const houseNumber = getHouseNumber(transit)
+    if (!houseNumber || houseNumber < 1 || houseNumber > 12) return null
+    return `transit:${planet}|ingress|house_${houseNumber}`
+  }
+
   const targetRaw = normalizeTransitToken(
     transit?.natalPlanet
     || transit?.target?.natalPlanet
@@ -632,7 +640,7 @@ function buildCatalogTransitKey(transit: AnyTransit): string | null {
     || transit?.natalPoint
   )
   const target = TARGET_ALIASES_TO_CANONICAL[targetRaw] || targetRaw
-  if (!planet || !aspect || !target) return null
+  if (!target) return null
   return `transit:${planet}|${aspect}|${target}`
 }
 
