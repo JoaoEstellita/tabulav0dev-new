@@ -1,6 +1,7 @@
 export type TransitValence = 'positive' | 'neutral' | 'alert'
 
 export type TransitInterpretationV2 = {
+  transitKey: string
   header: string
   subheader: string
   tldr: string
@@ -20,10 +21,11 @@ export type TransitInterpretationV2 = {
 }
 
 type BuildTransitV2Input = {
+  transitKey?: string | null
+  aspectKey?: string | null
   title: string
   lifeArea?: string | null
   houseLabel?: string | null
-  statusLabel?: string | null
   timingLabel?: string | null
   shortText: string
   fullText: string
@@ -31,7 +33,14 @@ type BuildTransitV2Input = {
   metaText?: string | null
 }
 
-const FORBIDDEN_DETERMINISTIC = ['vai acontecer', 'com certeza', 'inevitavel', 'garantido']
+const FORBIDDEN_DETERMINISTIC = [
+  'vai acontecer',
+  'com certeza',
+  'inevitavel',
+  'inevitável',
+  'garantido',
+  'garantida',
+]
 
 const compact = (value: string): string => String(value || '').replace(/\s+/g, ' ').trim()
 
@@ -83,7 +92,7 @@ const buildMedium = (base: string, shortText: string, area: string, house: strin
 
 const buildLong = (base: string, medium: string, action: string, area: string, house: string): string => {
   const paragraphs = splitParagraphs(base)
-  const first = withAreaHouse(paragraphs[0] || medium, area, house)
+  const first = sanitizeDeterministicLanguage(withAreaHouse(paragraphs[0] || medium, area, house))
   const second = paragraphs[1] || 'Observe como essa dinamica aparece no cotidiano e ajuste ritmo, comunicacao e prioridades.'
   const third = action || 'Micro-acao: escolha um ajuste pequeno hoje e revise em 24h.'
   const fourth = 'Pergunta de reflexao: qual decisao, hoje, reduz ruído e aumenta consistencia?'
@@ -92,10 +101,22 @@ const buildLong = (base: string, medium: string, action: string, area: string, h
     .join('\n\n')
 }
 
-const inferValence = (statusLabel?: string | null): TransitValence => {
-  const label = compact(statusLabel || '').toLowerCase()
-  if (label.includes('desafi') || label.includes('alert') || label.includes('crit')) return 'alert'
-  if (label.includes('harm') || label.includes('posit')) return 'positive'
+const inferValence = (aspectKey?: string | null, title?: string | null): TransitValence => {
+  const key = compact(aspectKey || '').toLowerCase()
+  const label = compact(title || '').toLowerCase()
+  const normalized = key || label
+  if (
+    normalized.includes('quadratura') ||
+    normalized.includes('oposicao') ||
+    normalized.includes('semiquadratura') ||
+    normalized.includes('sesquiquadratura') ||
+    normalized.includes('quincuncio')
+  ) {
+    return 'alert'
+  }
+  if (normalized.includes('trigono') || normalized.includes('sextil')) {
+    return 'positive'
+  }
   return 'neutral'
 }
 
@@ -123,7 +144,7 @@ export const hasUnrenderedPlaceholder = (value: string): boolean => /\{[a-zA-Z0-
 export function buildTransitInterpretationV2(input: BuildTransitV2Input): TransitInterpretationV2 {
   const area = compact(input.lifeArea || 'sua area atual').toLowerCase()
   const house = compact(input.houseLabel || '')
-  const valence = inferValence(input.statusLabel)
+  const valence = inferValence(input.aspectKey, input.title)
   const confidence = inferConfidence(input.timingLabel, input.metaText)
   const tldrRaw = splitSentences(input.shortText)[0] || 'Leitura de tendencia para orientar seu proximo passo.'
   const tldr = sanitizeDeterministicLanguage(withAreaHouse(tldrRaw, area, house)).slice(0, 140)
@@ -146,6 +167,7 @@ export function buildTransitInterpretationV2(input: BuildTransitV2Input): Transi
   if (!compact(input.metaText || '')) uncertaintyNotes.push('Metadados tecnicos reduzidos; leitura em modo essencial.')
 
   return {
+    transitKey: compact(input.transitKey || input.title).toLowerCase(),
     header: compact(input.title),
     subheader: `Leitura aplicada em ${area}${house ? ` • ${house}` : ''}`,
     tldr,

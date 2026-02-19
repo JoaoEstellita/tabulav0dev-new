@@ -574,6 +574,21 @@ function buildSeed(transit: AnyTransit): number {
   return Math.abs(hash)
 }
 
+function buildCanonicalTransitKey(transit: AnyTransit): string {
+  const parts = [
+    String(transit?.id || '').trim().toLowerCase(),
+    String(transit?.transitPlanet || '').trim().toLowerCase(),
+    normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType),
+    String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint || '')
+      .trim()
+      .toLowerCase(),
+    String(getHouseNumber(transit) || '').trim().toLowerCase(),
+    String(transit?.phase || '').trim().toLowerCase(),
+  ].filter(Boolean)
+  if (!parts.length) return 'transit:unknown'
+  return `transit:${parts.join('|')}`
+}
+
 function pickVariant(seed: number, options: string[], offset = 0): string {
   if (!options.length) return ''
   return options[(seed + offset) % options.length]
@@ -953,6 +968,7 @@ export function buildAstroTransitNarrative(
 }
 
 export type UnifiedTransitNarrative = {
+  transitKey?: string
   shortText: string
   modalIntro: string
   modalBody: string
@@ -980,6 +996,7 @@ export function buildUnifiedTransitNarrative(
   const transitPlanetRaw = String(transit?.transitPlanet || tx.transitWord)
   const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const phaseLabel = getPhaseLabel(transit, lang)
+  const transitKey = buildCanonicalTransitKey(transit)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
   const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
   const areaTone = getAreaContextTone(areaLabel, lang)
@@ -1040,10 +1057,11 @@ export function buildUnifiedTransitNarrative(
     if (!isInterpretationV2Enabled()) return null
     const houseLabel = house ? (lang === 'en-US' ? `House ${house}` : `Casa ${house}`) : null
     return buildTransitInterpretationV2({
+      transitKey,
+      aspectKey,
       title: `${transitPlanet} ${aspectLabel} ${targetLabel}`.trim(),
       lifeArea: area,
       houseLabel,
-      statusLabel: aspectLabel,
       timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
       shortText: narrative.directText,
       fullText: modalBody || narrative.fullText || narrative.directText,
@@ -1053,6 +1071,7 @@ export function buildUnifiedTransitNarrative(
   })()
 
   return {
+    transitKey,
     shortText: narrative.directText,
     modalIntro,
     modalBody: modalBody || narrative.fullText || narrative.directText,
