@@ -7,6 +7,7 @@ import {
 import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../data/transitCatalogOverridesI18n'
+import { TRANSIT_CATALOG_BLOCKED_KEYS } from '../data/transitCatalogBlockedKeys'
 
 type AnyTransit = Record<string, any>
 
@@ -740,6 +741,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
     const overrideSanitized = sanitizeCatalogText(overrideText)
     if (overrideSanitized) return overrideSanitized
   }
+  if (TRANSIT_CATALOG_BLOCKED_KEYS.has(key)) return null
   const entry = TRANSIT_CATALOG_PTBR[key]
   if (!entry?.text) return null
   const sanitized = sanitizeCatalogText(entry.text)

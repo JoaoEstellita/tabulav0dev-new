@@ -1,5 +1,6 @@
 ﻿import { describe, expect, it } from 'vitest'
 import { buildUnifiedTransitNarrative } from '../astroInterpretation'
+import { TRANSIT_CATALOG_PTBR } from '../../data/transitCatalogPtBR'
 
 describe('astroInterpretation catalog integration', () => {
   it('prioritizes canonical pt-BR catalog text when transit key matches', () => {
@@ -158,5 +159,26 @@ describe('astroInterpretation catalog integration', () => {
     expect(text).toContain('foco no essencial')
     expect(text).not.toContain('vai acontecer')
     expect(text).not.toContain('inevitavel')
+  })
+
+  it('falls back to generated narrative for blocked pt-BR catalog keys without override', () => {
+    const key = 'transit:saturn|oposicao|pluto'
+    const rawCatalog = TRANSIT_CATALOG_PTBR[key]?.text || ''
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Saturn',
+        aspectName: 'oposicao',
+        target: { natalPlanet: 'Pluto' },
+        phase: 'active',
+      },
+      'transformacao',
+      'pt-BR'
+    )
+
+    expect(rawCatalog.length).toBeGreaterThan(20)
+    expect(narrative.shortText.length).toBeGreaterThan(20)
+    expect(narrative.shortText).not.toBe(rawCatalog)
+    expect(narrative.shortText).not.toContain('Ã')
+    expect(narrative.shortText).not.toContain('\uFFFD')
   })
 })
