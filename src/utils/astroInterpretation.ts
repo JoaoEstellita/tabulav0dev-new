@@ -645,13 +645,24 @@ function buildCatalogTransitKey(transit: AnyTransit): string | null {
 }
 
 function sanitizeCatalogText(value: string): string {
+  const fixMojibake = (input: string): string => {
+    const score = (s: string) => {
+      const replacement = (s.match(/\uFFFD/g) || []).length
+      const mojibake = (s.match(/Ã.|Â|â€|â€™|â€œ|â€/g) || []).length
+      return replacement * 4 + mojibake
+    }
+    const bytes = new Uint8Array(Array.from(input).map((ch) => ch.charCodeAt(0) & 0xff))
+    const rescued = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+    return score(rescued) < score(input) ? rescued : input
+  }
+
   const replacements: Array<[RegExp, string]> = [
     [/\bvai acontecer\b/gi, 'tende a acontecer'],
     [/\bcom certeza\b/gi, 'com boa chance'],
     [/\binevitavel\b/gi, 'mais provavel'],
     [/\bgarantid[oa]\b/gi, 'favorecido'],
   ]
-  let out = String(value || '')
+  let out = fixMojibake(String(value || ''))
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }

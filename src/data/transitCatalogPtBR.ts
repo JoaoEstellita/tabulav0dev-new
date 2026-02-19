@@ -1,6 +1,6 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: Txt/curated/catalog_clean_candidates.json
-// Generated at: 2026-02-19T02:33:05.255Z
+// Generated at: 2026-02-19T03:00:16.898Z
 
 export type TransitCatalogEntry = {
   text: string
@@ -71,7 +71,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:jupiter|ingress|house_1": {
-    "text": "Sua carreira pode ser construída em torno da forma como se apresenta--a maneira que você se deparar com os outros. Sua personalidade espontânea e a capacidade de fascinar os outros são elementos importantes para ser bem sucedido.",
+    "text": "Sua carreira pode ser construída em torno da forma como se apresenta--a maneira que você se deparar com os outros. Sua personalidade espont\"nea e a capacidade de fascinar os outros são elementos importantes para ser bem sucedido.",
     "sourceKey": "JU.01",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -231,7 +231,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:jupiter|quadratura|saturn": {
-    "text": "Seu caminho ou carreira podem estar em ângulo reto com seu próprio senso de segurança e responsabilidades. Um forte trade-off para figurar. Você não pode ganhar, então algumas negociações estão em ordem. Tente cortar um caminho que inclui ambos.",
+    "text": "Seu caminho ou carreira podem estar em \"ngulo reto com seu próprio senso de segurança e responsabilidades. Um forte trade-off para figurar. Você não pode ganhar, então algumas negociações estão em ordem. Tente cortar um caminho que inclui ambos.",
     "sourceKey": "JU.SQR.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -411,7 +411,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:mars|conjuncao|sun": {
-    "text": "Você pode ser especialmente dinâmico e assertivo agora. Há muita energia e unidade disponível, e você pode ter um desejo de avançar.",
+    "text": "Você pode ser especialmente din\"mico e assertivo agora. Há muita energia e unidade disponível, e você pode ter um desejo de avançar.",
     "sourceKey": "MA.CNJ.SU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -476,7 +476,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:mars|ingress|house_8": {
-    "text": "Não está contente com as aparências, é levado a reduzir tudo para o essencial, o âmago da questão. Este impulso convincente para integridade e desprezo para o superficial pode ofender alguns.",
+    "text": "Não está contente com as aparências, é levado a reduzir tudo para o essencial, o \"mago da questão. Este impulso convincente para integridade e desprezo para o superficial pode ofender alguns.",
     "sourceKey": "MA.08",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -521,7 +521,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:mars|oposicao|saturn": {
-    "text": "O status quo pode encontrar-se com alguma oposição. O estado emocional de alguém pode bloquear seus próprios interesses. A beligerância e a oposição podem ser antecipadas.",
+    "text": "O status quo pode encontrar-se com alguma oposição. O estado emocional de alguém pode bloquear seus próprios interesses. A beliger\"ncia e a oposição podem ser antecipadas.",
     "sourceKey": "MA.OPP.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -781,7 +781,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:mercury|ingress|house_4": {
-    "text": "Sua mente tende a se estabelecer em questões de segurança..--em casa, família e tal. Seus pensamentos possuem sentimentos e grande substância.",
+    "text": "Sua mente tende a se estabelecer em questões de segurança..--em casa, família e tal. Seus pensamentos possuem sentimentos e grande subst\"ncia.",
     "sourceKey": "ME.04",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -1036,17 +1036,17 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|ascendente": {
-    "text": "Comunicando (recebendo sua mensagem para outros) está em alta agora. Seu tempo deve ser perfeito, e aqueles ao seu redor devem achar você mais espontâneo e vivo.",
+    "text": "Comunicando (recebendo sua mensagem para outros) está em alta agora. Seu tempo deve ser perfeito, e aqueles ao seu redor devem achar você mais espont\"neo e vivo.",
     "sourceKey": "MO.CNJ.AS",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|jupiter": {
-    "text": "Você pode encontrar-se servindo para orientar alguém mais novo do que você em questões de importância. Ou, você pode perceber como proceder com planos e decisões em relação à sua situação de vida.",
+    "text": "Você pode encontrar-se servindo para orientar alguém mais novo do que você em questões de import\"ncia. Ou, você pode perceber como proceder com planos e decisões em relação à sua situação de vida.",
     "sourceKey": "MO.CNJ.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|mars": {
-    "text": "Tudo aponta para você tomar a iniciativa hoje. Você pode sentir um grande apoio por parte de quem está à sua volta, ou as circunstâncias podem ditar sua ação. Você se sente saudável e natural.",
+    "text": "Tudo aponta para você tomar a iniciativa hoje. Você pode sentir um grande apoio por parte de quem está à sua volta, ou as circunst\"ncias podem ditar sua ação. Você se sente saudável e natural.",
     "sourceKey": "MO.CNJ.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1056,7 +1056,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|mercury": {
-    "text": "Um bom momento para ler um livro romântico ou participar de um filme. Idéias e pensamentos terão maior significado e forma agora. Você pode ser muito eloquente ou contundente em falar ou se comunicar. As pessoas entenderão exatamente o que você quer dizer.",
+    "text": "Um bom momento para ler um livro rom\"ntico ou participar de um filme. Idéias e pensamentos terão maior significado e forma agora. Você pode ser muito eloquente ou contundente em falar ou se comunicar. As pessoas entenderão exatamente o que você quer dizer.",
     "sourceKey": "MO.CNJ.ME",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1086,12 +1086,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|uranus": {
-    "text": "Outros podem achar você especialmente espirituoso e excêntrico no momento. Você pode ter insights ou avanços em relação à sua situação de vida ou circunstâncias da vida. Outros valorizam sua independência e qualidades únicas.",
+    "text": "Outros podem achar você especialmente espirituoso e excêntrico no momento. Você pode ter insights ou avanços em relação à sua situação de vida ou circunst\"ncias da vida. Outros valorizam sua independência e qualidades únicas.",
     "sourceKey": "MO.CNJ.UR",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|conjuncao|venus": {
-    "text": "Você pode se mudar para apreciar e descobrir a beleza em sua vida e naqueles ao seu redor. Ao mesmo tempo, tudo poderia assumir valor e importância agregados. Tenha cuidado para não gastar demais ou se preocupar muito agora. Apreciar.",
+    "text": "Você pode se mudar para apreciar e descobrir a beleza em sua vida e naqueles ao seu redor. Ao mesmo tempo, tudo poderia assumir valor e import\"ncia agregados. Tenha cuidado para não gastar demais ou se preocupar muito agora. Apreciar.",
     "sourceKey": "MO.CNJ.VE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1116,7 +1116,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:moon|ingress|house_2": {
-    "text": "Coisas boas (o suporte que você precisa) sempre parecem vir para você. Amigos, colegas de trabalho e circunstâncias sorte de velhas planícies oferecem encorajamento e apoio.",
+    "text": "Coisas boas (o suporte que você precisa) sempre parecem vir para você. Amigos, colegas de trabalho e circunst\"ncias sorte de velhas planícies oferecem encorajamento e apoio.",
     "sourceKey": "MO.02",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -1161,12 +1161,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|oposicao|jupiter": {
-    "text": "Não é talvez o melhor momento para tomar decisões importantes que afetam sua situação de vida ou circunstâncias da vida. Outros podem desafiar sua autoridade ou a direção que você está tomando. Os eventos poderiam conspirar para tornar difícil para você agir.",
+    "text": "Não é talvez o melhor momento para tomar decisões importantes que afetam sua situação de vida ou circunst\"ncias da vida. Outros podem desafiar sua autoridade ou a direção que você está tomando. Os eventos poderiam conspirar para tornar difícil para você agir.",
     "sourceKey": "MO.OPP.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|oposicao|mars": {
-    "text": "As circunstâncias podem parecer conspirar para irritar você ou fazer você se tornar emocional. Alguém poderia desafiá-lo ou encontrar uma maneira de irritar você. Pode ser difícil manter a calma e controlar.",
+    "text": "As circunst\"ncias podem parecer conspirar para irritar você ou fazer você se tornar emocional. Alguém poderia desafiá-lo ou encontrar uma maneira de irritar você. Pode ser difícil manter a calma e controlar.",
     "sourceKey": "MO.OPP.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1226,7 +1226,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|quadratura|mars": {
-    "text": "Outras pessoas, ou as circunstâncias gerais em que se encontra no presente, podem se unir para irritar ou irritar você. Você poderia encontrar-se super emocional e voando do punho. Um momento difícil para relaxar e manter a calma.",
+    "text": "Outras pessoas, ou as circunst\"ncias gerais em que se encontra no presente, podem se unir para irritar ou irritar você. Você poderia encontrar-se super emocional e voando do punho. Um momento difícil para relaxar e manter a calma.",
     "sourceKey": "MO.SQR.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1316,7 +1316,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|sextil|saturn": {
-    "text": "Você pode encontrar-se a ser usado pelos seus amigos, ou pode ser que as circunstâncias o forçam a se reorganizar e a ser mais conservador. Tudo isso deve ser bastante simples. Suas qualidades mais taciturnas são evidentes e são valiosas.",
+    "text": "Você pode encontrar-se a ser usado pelos seus amigos, ou pode ser que as circunst\"ncias o forçam a se reorganizar e a ser mais conservador. Tudo isso deve ser bastante simples. Suas qualidades mais taciturnas são evidentes e são valiosas.",
     "sourceKey": "MO.SXT.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1376,7 +1376,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:moon|trigono|saturn": {
-    "text": "Você pode encontrar-se a ser usado pelos seus amigos, ou pode ser que as circunstâncias o forçam a se reorganizar e a ser mais conservador. Tudo isso deve ser bastante simples. Suas qualidades mais taciturnas são evidentes e são valiosas.",
+    "text": "Você pode encontrar-se a ser usado pelos seus amigos, ou pode ser que as circunst\"ncias o forçam a se reorganizar e a ser mais conservador. Tudo isso deve ser bastante simples. Suas qualidades mais taciturnas são evidentes e são valiosas.",
     "sourceKey": "MO.TRI.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1506,7 +1506,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:neptune|ingress|house_8": {
-    "text": "Você está muito confiante e idealista quando se trata de tomar conta do negócio, descer ao âmago do questão. Você vê o melhor em uma situação, tornando-se difícil dizer não ou deixar algo de lado.",
+    "text": "Você está muito confiante e idealista quando se trata de tomar conta do negócio, descer ao \"mago do questão. Você vê o melhor em uma situação, tornando-se difícil dizer não ou deixar algo de lado.",
     "sourceKey": "NE.08",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -1616,7 +1616,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:neptune|quadratura|saturn": {
-    "text": "Poderia haver uma tendência para ver suas realizações como tendo quase nenhuma substância durante esse período. Um conjunto falso de ideais pode induzir você em erro e fazer com que você negligencie suas responsabilidades e se perca no que equivale a um monte de nada.",
+    "text": "Poderia haver uma tendência para ver suas realizações como tendo quase nenhuma subst\"ncia durante esse período. Um conjunto falso de ideais pode induzir você em erro e fazer com que você negligencie suas responsabilidades e se perca no que equivale a um monte de nada.",
     "sourceKey": "NE.SQR.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1891,7 +1891,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:pluto|oposicao|mercury": {
-    "text": "Um momento em que seus pensamentos e experiências internas e pessoais não podem ser colocados em palavras, ou melhor não ser. Ideias e comunicação em geral tendem a ser superficiais, deliberadamente evitando qualquer coisa de substância ou controvérsia.",
+    "text": "Um momento em que seus pensamentos e experiências internas e pessoais não podem ser colocados em palavras, ou melhor não ser. Ideias e comunicação em geral tendem a ser superficiais, deliberadamente evitando qualquer coisa de subst\"ncia ou controvérsia.",
     "sourceKey": "PL.OPP.ME",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -1936,7 +1936,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:pluto|quadratura|jupiter": {
-    "text": "Sua carreira pode acabar em ângulo reto para suas próprias sensibilidades internas e necessidade de crescimento e mudança. O material emocional que surge de dentro de você pode desafiar e ameaçar o caminho atual que você viaja, fazendo com que você pare e considere isso com cuidado.",
+    "text": "Sua carreira pode acabar em \"ngulo reto para suas próprias sensibilidades internas e necessidade de crescimento e mudança. O material emocional que surge de dentro de você pode desafiar e ameaçar o caminho atual que você viaja, fazendo com que você pare e considere isso com cuidado.",
     "sourceKey": "PL.SQR.JU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2176,7 +2176,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:saturn|ingress|house_10": {
-    "text": "Sua carreira, visão prática e habilidades são de importância central para você. Você não é nada se não organizado e pático em deliberar nesta área da vida.",
+    "text": "Sua carreira, visão prática e habilidades são de import\"ncia central para você. Você não é nada se não organizado e pático em deliberar nesta área da vida.",
     "sourceKey": "SA.10",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -2221,7 +2221,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:saturn|ingress|house_8": {
-    "text": "Você pode ser muito exigente quando se trata do que é essencial ou central a uma situação. Você é exigente quando se trata de descer ao âmago da questão.",
+    "text": "Você pode ser muito exigente quando se trata do que é essencial ou central a uma situação. Você é exigente quando se trata de descer ao \"mago da questão.",
     "sourceKey": "SA.08",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -2236,12 +2236,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|jupiter": {
-    "text": "As circunstâncias podem bloquear ou desafiar seu caminho ou carreira. O progresso ou o crescimento podem diminuir ou parecer inexistentes. Pode ser difícil tomar decisões, ter um senso de direção e resolver problemas. Outra pessoa poderia estar no seu caminho.",
+    "text": "As circunst\"ncias podem bloquear ou desafiar seu caminho ou carreira. O progresso ou o crescimento podem diminuir ou parecer inexistentes. Pode ser difícil tomar decisões, ter um senso de direção e resolver problemas. Outra pessoa poderia estar no seu caminho.",
     "sourceKey": "SA.OPP.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|mars": {
-    "text": "O desafio emocional, provavelmente oferecido por alguém próximo a você, pode marcar esse período de tempo. As circunstâncias podem pressioná-lo e tendem a revelar o rebelde em você. Você pode se sentir frustrado e frustrado por eventos. O autocontrole está em ordem.",
+    "text": "O desafio emocional, provavelmente oferecido por alguém próximo a você, pode marcar esse período de tempo. As circunst\"ncias podem pressioná-lo e tendem a revelar o rebelde em você. Você pode se sentir frustrado e frustrado por eventos. O autocontrole está em ordem.",
     "sourceKey": "SA.OPP.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2266,12 +2266,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|pluto": {
-    "text": "As circunstâncias podem parecer trabalhar contra você e trazer questões muito sensíveis à tona. As mudanças que você quer fazer ou estão fazendo podem ser desafiadas por alguém próximo a você ou por eventos. Isso poderia aquecer e ser um momento explosivo.",
+    "text": "As circunst\"ncias podem parecer trabalhar contra você e trazer questões muito sensíveis à tona. As mudanças que você quer fazer ou estão fazendo podem ser desafiadas por alguém próximo a você ou por eventos. Isso poderia aquecer e ser um momento explosivo.",
     "sourceKey": "SA.OPP.PL",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|saturn": {
-    "text": "Um grande momento de mudança, onde as circunstâncias conseguem chamar a atenção e algum tipo de desafio ou ponto de viragem é esperado. Nossa resposta aqui depende de como agimos até agora e pode prever o fluxo de eventos nos próximos anos.",
+    "text": "Um grande momento de mudança, onde as circunst\"ncias conseguem chamar a atenção e algum tipo de desafio ou ponto de viragem é esperado. Nossa resposta aqui depende de como agimos até agora e pode prever o fluxo de eventos nos próximos anos.",
     "sourceKey": "SA.OPP.SA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2281,7 +2281,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|uranus": {
-    "text": "As circunstâncias podem conspirar para limitar e impedir o seu senso de independência e originalidade. Poderia ser difícil encontrar soluções fáceis para os problemas no momento. As forças ou eventos conservadores podem desafiar ou opor-se às suas idéias e sensação de liberdade.",
+    "text": "As circunst\"ncias podem conspirar para limitar e impedir o seu senso de independência e originalidade. Poderia ser difícil encontrar soluções fáceis para os problemas no momento. As forças ou eventos conservadores podem desafiar ou opor-se às suas idéias e sensação de liberdade.",
     "sourceKey": "SA.OPP.UR",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2306,7 +2306,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|mercury": {
-    "text": "Muita energia mental se agita, mas pode ser difícil colocá-la no trabalho. As circunstâncias podem ser difíceis em relação à comunicação, escrita, idéias e similares. As coisas podem ficar apertadas, e você pode achar difícil pensar ou estudar durante esse período.",
+    "text": "Muita energia mental se agita, mas pode ser difícil colocá-la no trabalho. As circunst\"ncias podem ser difíceis em relação à comunicação, escrita, idéias e similares. As coisas podem ficar apertadas, e você pode achar difícil pensar ou estudar durante esse período.",
     "sourceKey": "SA.SQR.ME",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2326,17 +2326,17 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|saturn": {
-    "text": "Isso pode ser um momento um pouco difícil, quando as circunstâncias podem bloqueá-lo ou mantê-lo parado. É fácil agora trabalhar em objetivos cruzados para seus próprios interesses. Um bom momento para dar um passo atrás e reavaliar seus objetivos e objetivos. Isto pode tomar algum tempo.",
+    "text": "Isso pode ser um momento um pouco difícil, quando as circunst\"ncias podem bloqueá-lo ou mantê-lo parado. É fácil agora trabalhar em objetivos cruzados para seus próprios interesses. Um bom momento para dar um passo atrás e reavaliar seus objetivos e objetivos. Isto pode tomar algum tempo.",
     "sourceKey": "SA.SQR.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|sun": {
-    "text": "As circunstâncias podem afetar você de maneira muito direta. A grande roda de mudança pode parecer mover-se no ritmo de um caracol ou parar a parada. Um tempo durante o qual tudo o que você faz pode parecer mais difícil e requer um grande esforço. Pode ser difícil.",
+    "text": "As circunst\"ncias podem afetar você de maneira muito direta. A grande roda de mudança pode parecer mover-se no ritmo de um caracol ou parar a parada. Um tempo durante o qual tudo o que você faz pode parecer mais difícil e requer um grande esforço. Pode ser difícil.",
     "sourceKey": "SA.SQR.SU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|uranus": {
-    "text": "Este pode não ser um momento fácil, pois eventos e circunstâncias podem conspirar para bloquear o seu senso de liberdade e independência. Alguém desafia suas idéias, as considera pouco convencionais. Pode não ser fácil encontrar soluções novas e adequadas aos problemas agora.",
+    "text": "Este pode não ser um momento fácil, pois eventos e circunst\"ncias podem conspirar para bloquear o seu senso de liberdade e independência. Alguém desafia suas idéias, as considera pouco convencionais. Pode não ser fácil encontrar soluções novas e adequadas aos problemas agora.",
     "sourceKey": "SA.SQR.UR",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2346,17 +2346,17 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|ascendente": {
-    "text": "As circunstâncias externas tendem a funcionar a seu favor. Você pode achar que você está mais organizado do que antes, capaz de atingir novos níveis de autodisciplina. Um bom tempo durante o qual os eventos parecem se organizar para sua vantagem.",
+    "text": "As circunst\"ncias externas tendem a funcionar a seu favor. Você pode achar que você está mais organizado do que antes, capaz de atingir novos níveis de autodisciplina. Um bom tempo durante o qual os eventos parecem se organizar para sua vantagem.",
     "sourceKey": "SA.SXT.AS",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|jupiter": {
-    "text": "As circunstâncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
+    "text": "As circunst\"ncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
     "sourceKey": "SA.SXT.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|mars": {
-    "text": "Circunstâncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
+    "text": "Circunst\"ncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
     "sourceKey": "SA.SXT.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2376,7 +2376,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|neptune": {
-    "text": "As circunstâncias devem funcionar juntas para ajudar a divulgar seus ideais, tornar mais fácil a realização de seus sonhos. Você pode encontrar-se examinando e testando ideais, separando o trigo da palha. Em suma, um bom momento para projetar sua imagem.",
+    "text": "As circunst\"ncias devem funcionar juntas para ajudar a divulgar seus ideais, tornar mais fácil a realização de seus sonhos. Você pode encontrar-se examinando e testando ideais, separando o trigo da palha. Em suma, um bom momento para projetar sua imagem.",
     "sourceKey": "SA.SXT.NE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2386,12 +2386,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|saturn": {
-    "text": "As circunstâncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
+    "text": "As circunst\"ncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
     "sourceKey": "SA.SXT.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|sun": {
-    "text": "Um tempo durante o qual as circunstâncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
+    "text": "Um tempo durante o qual as circunst\"ncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
     "sourceKey": "SA.SXT.SU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2401,22 +2401,22 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|venus": {
-    "text": "As circunstâncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
+    "text": "As circunst\"ncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
     "sourceKey": "SA.SXT.VE",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|ascendente": {
-    "text": "As circunstâncias externas tendem a funcionar a seu favor. Você pode achar que você está mais organizado do que antes, capaz de atingir novos níveis de autodisciplina. Um bom tempo durante o qual os eventos parecem se organizar para sua vantagem.",
+    "text": "As circunst\"ncias externas tendem a funcionar a seu favor. Você pode achar que você está mais organizado do que antes, capaz de atingir novos níveis de autodisciplina. Um bom tempo durante o qual os eventos parecem se organizar para sua vantagem.",
     "sourceKey": "SA.TRI.AS",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|jupiter": {
-    "text": "As circunstâncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
+    "text": "As circunst\"ncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
     "sourceKey": "SA.TRI.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|mars": {
-    "text": "Circunstâncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
+    "text": "Circunst\"ncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
     "sourceKey": "SA.TRI.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2436,7 +2436,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|neptune": {
-    "text": "As circunstâncias devem funcionar juntas para ajudar a divulgar seus ideais, tornar mais fácil a realização de seus sonhos. Você pode encontrar-se examinando e testando ideais, separando o trigo da palha. Em suma, um bom momento para projetar sua imagem.",
+    "text": "As circunst\"ncias devem funcionar juntas para ajudar a divulgar seus ideais, tornar mais fácil a realização de seus sonhos. Você pode encontrar-se examinando e testando ideais, separando o trigo da palha. Em suma, um bom momento para projetar sua imagem.",
     "sourceKey": "SA.TRI.NE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2446,12 +2446,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|saturn": {
-    "text": "As circunstâncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
+    "text": "As circunst\"ncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
     "sourceKey": "SA.TRI.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|sun": {
-    "text": "Um tempo durante o qual as circunstâncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
+    "text": "Um tempo durante o qual as circunst\"ncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
     "sourceKey": "SA.TRI.SU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2461,7 +2461,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|venus": {
-    "text": "As circunstâncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
+    "text": "As circunst\"ncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
     "sourceKey": "SA.TRI.VE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2496,7 +2496,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|conjuncao|neptune": {
-    "text": "Hoje você pode se sentir muito sonhador e imaginativo. Um bom livro ou filme pode assumir maior importância. Você poderia encontrar-se ignorando a prática em favor de considerar suas perspectivas mais eternas para o momento.",
+    "text": "Hoje você pode se sentir muito sonhador e imaginativo. Um bom livro ou filme pode assumir maior import\"ncia. Você poderia encontrar-se ignorando a prática em favor de considerar suas perspectivas mais eternas para o momento.",
     "sourceKey": "SU.CNJ.NE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2531,7 +2531,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:sun|ingress|house_10": {
-    "text": "Você é muito orientado a carreira e sua reputação pessoal e a honra são de extrema importância. Você possui um senso natural de organização e dicas práticas e pode nos superar em gerenciar ou supervisionar os outros...",
+    "text": "Você é muito orientado a carreira e sua reputação pessoal e a honra são de extrema import\"ncia. Você possui um senso natural de organização e dicas práticas e pode nos superar em gerenciar ou supervisionar os outros...",
     "sourceKey": "SU.10",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -2621,7 +2621,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|oposicao|pluto": {
-    "text": "Sua própria necessidade interna de mudança e crescimento pode ser ameaçada por pessoas mais velhas ou por circunstâncias. Poderia haver alguns acontecimentos secretos ou desonestrados - nos bastidores também. Tensão de natureza psicológica ou política pode estar presente.",
+    "text": "Sua própria necessidade interna de mudança e crescimento pode ser ameaçada por pessoas mais velhas ou por circunst\"ncias. Poderia haver alguns acontecimentos secretos ou desonestrados - nos bastidores também. Tensão de natureza psicológica ou política pode estar presente.",
     "sourceKey": "SU.OPP.PL",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2636,7 +2636,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|oposicao|uranus": {
-    "text": "Alguém pode se opor a você e frustrar seu senso de independência hoje. Você pode sentir-se silenciado ou frustrado em um relacionamento, seja romântico, uma amizade ou trabalho relacionado. Novas ideias e idéias podem ser lentas até agora. Alguém mais velho pode sufocar você.",
+    "text": "Alguém pode se opor a você e frustrar seu senso de independência hoje. Você pode sentir-se silenciado ou frustrado em um relacionamento, seja rom\"ntico, uma amizade ou trabalho relacionado. Novas ideias e idéias podem ser lentas até agora. Alguém mais velho pode sufocar você.",
     "sourceKey": "SU.OPP.UR",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2671,7 +2671,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|quadratura|moon": {
-    "text": "Você pode ter uma sensação de circunstâncias trabalhando contra você ou sentir a falta de apoio e amor da parte de você. Você poderia entrar em conflito com pessoas mais jovens ou velhos hábitos. Seu sistema de suporte (ambiente) pode se sentir estressado.",
+    "text": "Você pode ter uma sensação de circunst\"ncias trabalhando contra você ou sentir a falta de apoio e amor da parte de você. Você poderia entrar em conflito com pessoas mais jovens ou velhos hábitos. Seu sistema de suporte (ambiente) pode se sentir estressado.",
     "sourceKey": "SU.SQR.MO",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2731,7 +2731,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|sextil|moon": {
-    "text": "Um bom dia que deve fluir. Em particular, você fará bem em atividades que incluem crianças, pessoas mais jovens e sua casa e arredores. Você poderia sentir um verdadeiro apoio e harmonia neste momento para as circunstâncias e para aqueles que o rodeiam.",
+    "text": "Um bom dia que deve fluir. Em particular, você fará bem em atividades que incluem crianças, pessoas mais jovens e sua casa e arredores. Você poderia sentir um verdadeiro apoio e harmonia neste momento para as circunst\"ncias e para aqueles que o rodeiam.",
     "sourceKey": "SU.SXT.MO",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2791,7 +2791,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|trigono|moon": {
-    "text": "Um bom dia que deve fluir. Em particular, você fará bem em atividades que incluem crianças, pessoas mais jovens e sua casa e arredores. Você poderia sentir um verdadeiro apoio e harmonia neste momento para as circunstâncias e para aqueles que o rodeiam.",
+    "text": "Um bom dia que deve fluir. Em particular, você fará bem em atividades que incluem crianças, pessoas mais jovens e sua casa e arredores. Você poderia sentir um verdadeiro apoio e harmonia neste momento para as circunst\"ncias e para aqueles que o rodeiam.",
     "sourceKey": "SU.TRI.MO",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2936,7 +2936,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Planet_in_House.txt"
   },
   "transit:uranus|ingress|house_8": {
-    "text": "Relâmpago rápido, você parece ter uma visão direta para o que é inútil em uma situação e o que vale a pena. Você tem maneiras novas e não-convencionais ver o que é importante.",
+    "text": "Rel\"mpago rápido, você parece ter uma visão direta para o que é inútil em uma situação e o que vale a pena. Você tem maneiras novas e não-convencionais ver o que é importante.",
     "sourceKey": "UR.08",
     "sourceFile": "Engl. Planet_in_House.txt"
   },
@@ -3533,7 +3533,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
 } as const;
 
 export const TRANSIT_CATALOG_PTBR_META = {
-  generatedAt: '2026-02-19T02:33:05.255Z',
+  generatedAt: '2026-02-19T03:00:16.898Z',
   entries: 704,
   source: 'Txt/curated/catalog_clean_candidates.json',
 } as const;
