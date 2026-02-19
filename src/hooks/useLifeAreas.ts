@@ -82,6 +82,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     let backendLifeAreasValue: Record<string, any> | null = null
     let backendCurrentTransitsValue: any | null = null
     let backendStatusPersonalValue: { score?: number; level?: string } | null = null
+    let statusRefreshStaleSession = false
 
     try {
       setLoading(true)
@@ -148,8 +149,8 @@ export function useLifeAreas(): UseLifeAreasReturn {
       if (!backendFresh && BACKEND_URL && !statusRefreshInFlightRef.current) {
         statusRefreshInFlightRef.current = true
         try {
-          const token = await user.getIdToken()
-          await fetch(`${BACKEND_URL}/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
+          const token = await user.getIdToken(true)
+          const refreshResponse = await fetch(`${BACKEND_URL}/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -157,6 +158,24 @@ export function useLifeAreas(): UseLifeAreasReturn {
             },
             body: JSON.stringify({ userId: user.uid }),
           })
+          if (!refreshResponse.ok) {
+            let errorPayload: any = null
+            try {
+              errorPayload = await refreshResponse.json()
+            } catch {
+              errorPayload = null
+            }
+            const reason = String(errorPayload?.reason || '').toLowerCase()
+            const errorCode = String(errorPayload?.error || '').toLowerCase()
+            if (
+              refreshResponse.status === 401 &&
+              (reason === 'stale_auth_time' || errorCode === 'stale_session')
+            ) {
+              statusRefreshStaleSession = true
+              throw new Error('stale_session')
+            }
+            throw new Error(`status_refresh_${refreshResponse.status}`)
+          }
           const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
           if (statusSnap.exists()) {
             const statusData = statusSnap.data()
@@ -236,11 +255,22 @@ export function useLifeAreas(): UseLifeAreasReturn {
         (!IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK)
 
       if (shouldRunLocal && !canUseLocalEngineFallback && !debugLocalOverride) {
+        const hasBackendSnapshot =
+          !!backendLifeAreasValue &&
+          typeof backendLifeAreasValue === 'object' &&
+          Object.keys(backendLifeAreasValue).length > 0
         setIsUsingLocalEngine(false)
         setLocalOverrideActive(false)
         localOverrideActiveRef.current = false
-        if (!backendLifeAreasValue || !backendFresh) {
-          setError('Status do backend indisponível no momento. Tente novamente em instantes.')
+        if (!hasBackendSnapshot) {
+          setError(
+            statusRefreshStaleSession
+              ? 'Sessao expirada por seguranca. Faca login novamente para atualizar seu status.'
+              : 'Status do backend indisponivel no momento. Tente novamente em instantes.'
+          )
+        } else if (statusRefreshStaleSession) {
+          // Mantem o snapshot ja salvo e evita tela de erro fatal.
+          setError(null)
         }
         return
       }
@@ -469,5 +499,6 @@ function getDefaultMessage(area: string): string {
 
   return defaultMessages[area as keyof typeof defaultMessages] || `Estou passando por um momento critico em ${area}. Pedindo energias positivas!`
 }
+
 
 
