@@ -4,8 +4,31 @@ import {
   buildTransitInterpretationV2,
   type TransitInterpretationV2,
 } from './transitInterpretationV2'
+import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 
 type AnyTransit = Record<string, any>
+
+const TARGET_ALIASES_TO_CANONICAL: Record<string, string> = {
+  sun: 'sun',
+  moon: 'moon',
+  mercury: 'mercury',
+  venus: 'venus',
+  mars: 'mars',
+  jupiter: 'jupiter',
+  saturn: 'saturn',
+  uranus: 'uranus',
+  neptune: 'neptune',
+  pluto: 'pluto',
+  ascendente: 'ascendente',
+  ascendant: 'ascendente',
+  asc: 'ascendente',
+  as: 'ascendente',
+  meio_do_ceu: 'meio_do_ceu',
+  meio_do_céu: 'meio_do_ceu',
+  medio_cielo: 'meio_do_ceu',
+  midheaven: 'meio_do_ceu',
+  mc: 'meio_do_ceu',
+}
 
 const PLANET_SYMBOLISM: Record<string, string> = {
   Sun: 'identidade, direcao e vitalidade',
@@ -589,6 +612,54 @@ function buildCanonicalTransitKey(transit: AnyTransit): string {
   return `transit:${parts.join('|')}`
 }
 
+function normalizeTransitToken(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, '_')
+}
+
+function buildCatalogTransitKey(transit: AnyTransit): string | null {
+  const planet = normalizeTransitToken(transit?.transitPlanet)
+  const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
+  const targetRaw = normalizeTransitToken(
+    transit?.natalPlanet
+    || transit?.target?.natalPlanet
+    || transit?.target?.angle
+    || transit?.natalPoint
+  )
+  const target = TARGET_ALIASES_TO_CANONICAL[targetRaw] || targetRaw
+  if (!planet || !aspect || !target) return null
+  return `transit:${planet}|${aspect}|${target}`
+}
+
+function sanitizeCatalogText(value: string): string {
+  const replacements: Array<[RegExp, string]> = [
+    [/\bvai acontecer\b/gi, 'tende a acontecer'],
+    [/\bcom certeza\b/gi, 'com boa chance'],
+    [/\binevitavel\b/gi, 'mais provavel'],
+    [/\bgarantid[oa]\b/gi, 'favorecido'],
+  ]
+  let out = String(value || '')
+  for (const [pattern, replacement] of replacements) {
+    out = out.replace(pattern, replacement)
+  }
+  return sanitizeNarrativeText(out)
+}
+
+function resolveCatalogTransitText(transit: AnyTransit, language?: string | null): string | null {
+  const lang = getLang(language)
+  if (lang !== 'pt-BR') return null
+  const key = buildCatalogTransitKey(transit)
+  if (!key) return null
+  const entry = TRANSIT_CATALOG_PTBR[key]
+  if (!entry?.text) return null
+  return sanitizeCatalogText(entry.text)
+}
+
 function pickVariant(seed: number, options: string[], offset = 0): string {
   if (!options.length) return ''
   return options[(seed + offset) % options.length]
@@ -986,6 +1057,8 @@ export function buildUnifiedTransitNarrative(
   const lang = getLang(language)
   const tx = I18N[lang]
   const narrative = buildAstroTransitNarrative(transit, areaLabel, lang)
+  const catalogDirectText = resolveCatalogTransitText(transit, lang)
+  const directText = catalogDirectText || narrative.directText
   const keywords = buildArchetypeKeywordsForTransit(transit, areaLabel, lang)
   const aspectKey = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
   const aspectLabel = getAspectLabel(aspectKey, lang) || tx.transitWord.toLowerCase()
@@ -1048,10 +1121,10 @@ export function buildUnifiedTransitNarrative(
     modalIntro,
     areaTone,
     strategyBlock,
-    narrative.fullText,
+    catalogDirectText ? `${catalogDirectText}\n\n${narrative.fullText}` : narrative.fullText,
     actionCore,
     ...metaParts,
-  ], { exclude: [narrative.directText] }).join('\n\n')
+  ], { exclude: [directText] }).join('\n\n')
 
   const interpretationV2 = (() => {
     if (!isInterpretationV2Enabled()) return null
@@ -1063,8 +1136,8 @@ export function buildUnifiedTransitNarrative(
       lifeArea: area,
       houseLabel,
       timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
-      shortText: narrative.directText,
-      fullText: modalBody || narrative.fullText || narrative.directText,
+      shortText: directText,
+      fullText: modalBody || narrative.fullText || directText,
       actionText,
       metaText: metaParts.join(' '),
     })
@@ -1072,9 +1145,9 @@ export function buildUnifiedTransitNarrative(
 
   return {
     transitKey,
-    shortText: narrative.directText,
+    shortText: directText,
     modalIntro,
-    modalBody: modalBody || narrative.fullText || narrative.directText,
+    modalBody: modalBody || narrative.fullText || directText,
     keywords,
     actionText,
     metaText: metaParts.join(' '),
