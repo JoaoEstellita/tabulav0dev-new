@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { buildUnifiedTransitNarrative } from '../astroInterpretation'
 
 describe('astroInterpretation catalog integration', () => {
@@ -19,7 +19,7 @@ describe('astroInterpretation catalog integration', () => {
     expect(narrative.shortText.toLowerCase()).toContain('visibilidade')
   })
 
-  it('keeps standard generator for non-pt-BR locales', () => {
+  it('applies curated override for en-US when transit key matches', () => {
     const narrative = buildUnifiedTransitNarrative(
       {
         transitPlanet: 'Jupiter',
@@ -32,7 +32,24 @@ describe('astroInterpretation catalog integration', () => {
     )
 
     expect(narrative.shortText.toLowerCase()).toContain('jupiter')
-    expect(narrative.shortText).not.toContain('Você faz o seu caminho agora')
+    expect(narrative.shortText.toLowerCase()).toContain('visibility')
+    expect(narrative.shortText.toLowerCase()).not.toContain('will happen for sure')
+  })
+
+  it('applies curated override for es-ES and it-IT with same semantic base', () => {
+    const baseTransit = {
+      transitPlanet: 'Saturn',
+      aspectName: 'sextil',
+      target: { natalPlanet: 'Jupiter' },
+      phase: 'active',
+    }
+    const es = buildUnifiedTransitNarrative(baseTransit, 'carreira', 'es-ES')
+    const it = buildUnifiedTransitNarrative(baseTransit, 'carreira', 'it-IT')
+
+    expect(es.shortText.toLowerCase()).toContain('expansion')
+    expect(it.shortText.toLowerCase()).toContain('espansione')
+    expect(es.shortText.toLowerCase()).not.toContain('inevitable')
+    expect(it.shortText.toLowerCase()).not.toContain('inevitabile')
   })
 
   it('resolves catalog key for planets in houses (ingress)', () => {
