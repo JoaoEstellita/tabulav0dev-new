@@ -68,8 +68,34 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
     }
   }
 
-  return fetch(`${base}${path}`, {
+  const requestInit: RequestInit = {
     ...rest,
     headers: mergedHeaders,
-  })
+  }
+
+  const doFetch = () => fetch(`${base}${path}`, requestInit)
+  let response = await doFetch()
+
+  // Retry once for stale auth sessions by forcing Firebase token refresh.
+  if (withAuth && response.status === 401) {
+    let shouldRetry = false
+    try {
+      const data = await response.clone().json().catch(() => null)
+      const reason = typeof data?.reason === 'string' ? data.reason : ''
+      const code = typeof data?.error === 'string' ? data.error : ''
+      shouldRetry = reason === 'stale_auth_time' || code === 'stale_session'
+    } catch {}
+
+    if (shouldRetry && auth.currentUser) {
+      try {
+        const refreshed = await auth.currentUser.getIdToken(true)
+        if (refreshed) {
+          mergedHeaders.set('Authorization', `Bearer ${refreshed}`)
+          response = await doFetch()
+        }
+      } catch {}
+    }
+  }
+
+  return response
 }
