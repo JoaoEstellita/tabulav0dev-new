@@ -2153,6 +2153,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     return getTransitNatalHouseLabel(transit) || getTransitCurrentHouseLabel(transit)
   }
 
+  const getTransitHouseLabels = (transit: any): string[] => {
+    const labels = [getTransitNatalHouseLabel(transit), getTransitCurrentHouseLabel(transit)].filter(
+      (value): value is string => Boolean(value)
+    )
+    return Array.from(new Set(labels))
+  }
+
   const getTransitHousePrefix = (transit: any): string => {
     const natalHouse = getTransitNatalHouseLabel(transit)
     if (natalHouse) return tl('Casa natal ativada', 'Activated natal house', 'Casa natal activada', 'Casa natale attivata')
@@ -2557,9 +2564,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     const availableHouses = Array.from(
       new Set([
         ...structuralHouses,
-        ...dedupedTransits
-          .map((transit) => getTransitHouseLabel(transit))
-          .filter((value): value is string => Boolean(value)),
+        ...dedupedTransits.flatMap((transit) => getTransitHouseLabels(transit)),
       ])
     ).sort((a, b) => Number(a) - Number(b))
     const toneMatchesFilter = (transit: any): boolean => {
@@ -2570,9 +2575,11 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     }
     const planetHouseMatchesFilter = (transit: any): boolean => {
       const transitPlanet = String(transit?.transitPlanet || '').trim()
-      const transitHouse = getTransitHouseLabel(transit)
+      const transitHouses = getTransitHouseLabels(transit)
       const planetMatch = selectedPlanetFilters.length === 0 || selectedPlanetFilters.includes(transitPlanet)
-      const houseMatch = selectedHouseFilters.length === 0 || (transitHouse ? selectedHouseFilters.includes(transitHouse) : false)
+      const houseMatch =
+        selectedHouseFilters.length === 0 ||
+        transitHouses.some((houseLabel) => selectedHouseFilters.includes(houseLabel))
       return planetMatch && houseMatch
     }
     const combinedTransitsRaw: Array<{ transit: any; facetKind: 'major' | 'minor' | 'house' }> = [

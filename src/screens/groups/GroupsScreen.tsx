@@ -1148,6 +1148,21 @@ const getTransitCurrentHouse = (transit: any) => {
   return `Casa ${Math.round(houseNumber)}`
 }
 
+const getTransitHouseLabels = (transit: any): string[] => {
+  const targetHouseValue =
+    transit?.target?.house ??
+    transit?.natalHouseImpacted ??
+    transit?.natalHouse ??
+    null
+  const targetHouseNumber = Number(targetHouseValue)
+  const targetHouse =
+    Number.isFinite(targetHouseNumber) && targetHouseNumber >= 1 && targetHouseNumber <= 12
+      ? `Casa ${Math.round(targetHouseNumber)}`
+      : ""
+  const labels = [targetHouse, getTransitCurrentHouse(transit)].filter((value): value is string => Boolean(value))
+  return Array.from(new Set(labels))
+}
+
 const getTransitHouseTarget = (transit: any) => {
   const houseValue =
     transit?.target?.house ??
@@ -1173,7 +1188,7 @@ const buildTransitTitle = (transit: any, areaKey?: string) => {
   const aspect = formatAspectLabel(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const targetPlanet = transit?.natalPlanet || transit?.target?.natalPlanet
   const targetAngle = transit?.target?.angle
-  const targetHouse = getTransitHouseTarget(transit)
+  const targetHouse = getTransitHouseTarget(transit) || getTransitCurrentHouse(transit)
   const currentHouse = getTransitCurrentHouse(transit)
   const target = targetPlanet
     ? formatPlanetLabel(targetPlanet)
@@ -1216,7 +1231,7 @@ const getTransitTechnicalTypeLabel = (transit: any, tr?: LocalizeFn) => {
   if (targetAngle) {
     return tx('groups.member.tech.angle', 'Aspecto com angulo ({angle})', { angle: String(targetAngle).toUpperCase() })
   }
-  const house = getTransitHouseTarget(transit)
+  const house = getTransitHouseTarget(transit) || getTransitCurrentHouse(transit)
   if (house) return tx('groups.member.tech.house', 'Planeta em casa ({house})', { house: house.replace("Casa ", "") })
   return tx('groups.member.tech.context', 'Transito contextual da area')
 }
@@ -1230,12 +1245,14 @@ const getTransitColumnKind = (transit: any): "planet" | "house" => {
 
   const targetHouse = Number(transit?.target?.house ?? transit?.natalHouseImpacted ?? transit?.natalHouse)
   const hasHouseTarget = Number.isFinite(targetHouse) && targetHouse >= 1 && targetHouse <= 12
+  const currentHouse = Number(transit?.transitHouse ?? transit?.currentHouse)
+  const hasCurrentHouse = Number.isFinite(currentHouse) && currentHouse >= 1 && currentHouse <= 12
   const explicitHouseTarget =
     rawTarget.startsWith("HOUSE_")
   const rawType = String(transit?.aspectName || transit?.type || transit?.aspectType || '').toLowerCase()
   const hasPlanetTarget = !!(transit?.target?.natalPlanet || transit?.natalPlanet)
   if (hasPlanetTarget && !explicitHouseTarget) return "planet"
-  if (hasHouseTarget || explicitHouseTarget || rawType.includes('ingress')) return "house"
+  if (hasHouseTarget || hasCurrentHouse || explicitHouseTarget || rawType.includes('ingress')) return "house"
 
   const aspectType = normalizeAspectType(transit?.aspectName || transit?.type || transit?.aspectType || "")
   const hasRecognizedAspect = [
@@ -2386,15 +2403,16 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                       const baseTransits: MemberAreaTransitItem[] = mergedTransitItems.map((transit: any, index: number) => {
                         const status = classifyTransitStatus(transit, tr)
                         const title = buildTransitTitle(transit, key)
+                        const houseLabels = getTransitHouseLabels(transit)
                         const natalHouseLabel = getTransitNatalHouse(transit)
                         const transitHouseLabel = getTransitCurrentHouse(transit)
-                        const houseLabel = natalHouseLabel || transitHouseLabel || null
+                        const houseLabel = houseLabels[0] || null
                         const houseLabelPrefix = natalHouseLabel
                           ? tr('groups.member.natalActivatedHouse', 'Casa natal ativada')
                           : tr('groups.member.currentTransitHouse', 'Casa de transito atual')
                         const areaHousesText = AREA_HOUSES[key]?.length ? AREA_HOUSES[key].join("/") : ""
                         const technicalParts = [getTransitTechnicalTypeLabel(transit, tr)]
-                        if (transitHouseLabel && natalHouseLabel && transitHouseLabel !== natalHouseLabel) {
+                        if (houseLabels.length > 1 && transitHouseLabel && natalHouseLabel && transitHouseLabel !== natalHouseLabel) {
                           technicalParts.push(
                             tr('groups.member.natalActivatedHouseValue', 'Casa natal ativada: {house}', {
                               house: natalHouseLabel.replace("Casa ", ""),
