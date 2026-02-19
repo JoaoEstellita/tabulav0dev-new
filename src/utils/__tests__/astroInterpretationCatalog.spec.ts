@@ -106,4 +106,20 @@ describe('astroInterpretation catalog integration', () => {
     expect(ic.shortText.length).toBeGreaterThan(20)
     expect(dsc.shortText.length).toBeGreaterThan(20)
   })
+
+  it('sanitizes status wording from area labels', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Saturn',
+        aspectName: 'quadratura',
+        target: { natalPlanet: 'Moon' },
+        house: 4,
+        phase: 'active',
+      },
+      'Status Familia',
+      'pt-BR'
+    )
+    const merged = `${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody}`.toLowerCase()
+    expect(merged).not.toContain('status familia')
+  })
 })

@@ -741,7 +741,12 @@ function pickVariant(seed: number, options: string[], offset = 0): string {
 
 function getAreaLabel(areaLabel?: string | null, language?: string | null): string {
   const lang = getLang(language)
-  const value = String(areaLabel || '').trim()
+  const value = String(areaLabel || '')
+    .trim()
+    .replace(/\bstatus\b/gi, '')
+    .replace(/\bestado\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
   if (!value) return I18N[lang].areaDefault
   return value.toLowerCase()
 }
