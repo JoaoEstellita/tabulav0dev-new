@@ -176,6 +176,38 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluto trine Sun increases concentration, purpose clarity, and consistency of direction. This phase tends to support grounded and sustainable transformation. Use the period to consolidate identity and direction with maturity.',
     'transit:saturn|oposicao|ascendente':
       'Saturn opposition Ascendant can test limits in relationships, agreements, and shared responsibility. This cycle asks for mature posture, listening, and clearer boundaries. Realistic adjustments in coexistence tend to reduce friction and improve stability.',
+    'transit:pluto|conjuncao|mars':
+      'Pluto conjunct Mars intensifies willpower, competitiveness, and the urge to act with force. This cycle asks for self-regulation to avoid impulsive conflict and energy waste. Channel intensity into structural goals and strategic choices.',
+    'transit:sun|oposicao|uranus':
+      'Sun opposition Uranus can bring rhythm breaks, reaction to limits, and urgent need for freedom. This phase asks for flexibility with responsibility to avoid abrupt decisions. Reassess priorities and adjust direction without losing coherence.',
+    'transit:uranus|quadratura|sun':
+      'Uranus square Sun signals tension between current identity and need for change. The cycle can bring restlessness, impatience, and desire to flip everything quickly. Innovate in stages to preserve foundation and gain stable autonomy.',
+    'transit:saturn|oposicao|sun':
+      'Saturn opposition Sun raises external pressure and tests personal consistency. The period may require more discipline, boundary adjustment, and focus on essentials. Build sustainable routines and move with criteria, without excessive self-criticism.',
+    'transit:saturn|quadratura|venus':
+      'Saturn square Venus can trigger review of affective expectations and material values. This cycle asks for emotional maturity, clear boundaries, and more realistic choices. Strengthen reciprocity and reduce draining agreements.',
+    'transit:sun|conjuncao|mercury':
+      'Sun conjunct Mercury favors mental clarity, communication focus, and objective decisions. This phase tends to support important conversations, study, and idea organization. Prioritize simple messages aligned with essentials.',
+    'transit:jupiter|conjuncao|moon':
+      'Jupiter conjunct Moon expands sensitivity, emotional support, and sense of inner nourishment. This cycle can favor affective openness and broader understanding of emotional needs. Avoid emotional excess and keep balance in choices.',
+    'transit:jupiter|oposicao|pluto':
+      'Jupiter opposition Pluto can magnify disputes around vision, control, and power decisions. This period asks you to calibrate ambition with ethics, depth, and limits. Consistent growth comes from strategy, not extreme moves.',
+    'transit:neptune|quadratura|venus':
+      'Neptune square Venus can bring affective idealization and confusion about value and reciprocity. This cycle asks for discernment between intuition and projection. Observe concrete signals before formalizing emotional or financial agreements.',
+    'transit:saturn|sextil|moon':
+      'Saturn sextile Moon helps stabilize emotions through routine and affective responsibility. This phase favors mature conversations and better inner time management. Small care habits bring security and continuity.',
+    'transit:saturn|trigono|moon':
+      'Saturn trine Moon favors emotional consistency, sobriety, and confidence in everyday choices. The cycle tends to support stable agreements and healthy boundaries. Use this period to consolidate your emotional base with simplicity.',
+    'transit:venus|conjuncao|jupiter':
+      'Venus conjunct Jupiter expands pleasure, generosity, and opportunities for harmony in relationships. This phase favors encounters, agreements, and a more positive relational climate. Use the flow with moderation to avoid overextension.',
+    'transit:uranus|sextil|venus':
+      'Uranus sextile Venus favors affective and financial renewal with more lightness and creativity. The cycle supports value updates and new relationship formats. Innovate consciously to preserve both freedom and reciprocity.',
+    'transit:uranus|trigono|venus':
+      'Uranus trine Venus eases update of relationships, tastes, and value choices with natural flow. This phase tends to increase authenticity without unnecessary rupture. Test new ways of exchange with balance.',
+    'transit:jupiter|quadratura|moon':
+      'Jupiter square Moon can amplify emotional oscillation and expectation of immediate response. This cycle asks for moderation to avoid overreaction in feelings and decisions. Adjust pace, prioritize essentials, and keep affective realism.',
+    'transit:neptune|quadratura|moon':
+      'Neptune square Moon can increase sensitivity, emotional fog, and difficulty defining inner boundaries. This phase asks for rest, mental hygiene, and reality checks before reacting. Strengthen grounding routines to reduce emotional confusion.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -350,6 +382,38 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluton en trigono al Sol amplifica concentracion, claridad de proposito y consistencia de rumbo. La fase tiende a favorecer transformaciones bien sostenidas. Usa el periodo para consolidar identidad y direccion con madurez.',
     'transit:saturn|oposicao|ascendente':
       'Saturno en oposicion al Ascendente puede probar limites en relaciones, acuerdos y responsabilidades compartidas. El ciclo pide postura madura, escucha y definicion clara de fronteras. Ajustes realistas de convivencia suelen reducir friccion y mejorar estabilidad.',
+    'transit:pluto|conjuncao|mars':
+      'Pluton en conjuncion con Marte intensifica voluntad, competitividad y necesidad de actuar con fuerza. El ciclo pide autocontrol para evitar conflictos impulsivos y desgaste de energia. Canaliza intensidad en metas estructurales y decisiones estrategicas.',
+    'transit:sun|oposicao|uranus':
+      'Sol en oposicion a Urano puede traer ruptura de ritmo, reaccion a limites y deseo de libertad inmediata. La fase pide flexibilidad con responsabilidad para evitar decisiones bruscas. Revisa prioridades y ajusta rumbo sin perder coherencia.',
+    'transit:uranus|quadratura|sun':
+      'Urano en cuadratura al Sol senala tension entre identidad actual y necesidad de cambio. El ciclo puede generar inquietud, impaciencia y ganas de cambiar todo de golpe. Innova por etapas para preservar base y ganar autonomia estable.',
+    'transit:saturn|oposicao|sun':
+      'Saturno en oposicion al Sol aumenta exigencia externa y prueba de consistencia personal. El periodo puede requerir mas disciplina, ajuste de limites y foco en lo esencial. Estructura rutinas sostenibles y avanza con criterio, sin autocritica excesiva.',
+    'transit:saturn|quadratura|venus':
+      'Saturno en cuadratura con Venus puede traer revision de expectativas afectivas y valores materiales. El ciclo pide madurez emocional, limites claros y elecciones mas realistas. Fortalece lo reciproco y reduce acuerdos que drenan energia.',
+    'transit:sun|conjuncao|mercury':
+      'Sol en conjuncion con Mercurio favorece claridad mental, foco comunicativo y decision objetiva. La fase tiende a apoyar conversaciones importantes, estudio y organizacion de ideas. Prioriza mensajes simples alineados con lo esencial.',
+    'transit:jupiter|conjuncao|moon':
+      'Jupiter en conjuncion con Luna amplifica sensibilidad, contencion y percepcion de apoyo emocional. El ciclo puede favorecer apertura afectiva y vision mas amplia de necesidades internas. Evita excesos emocionales y mantén equilibrio en elecciones.',
+    'transit:jupiter|oposicao|pluto':
+      'Jupiter en oposicion a Pluton puede ampliar disputas de vision, control y poder de decision. El periodo pide calibrar ambicion con etica, profundidad y sentido de limite. El crecimiento consistente llega por estrategia, no por extremos.',
+    'transit:neptune|quadratura|venus':
+      'Neptuno en cuadratura con Venus puede generar idealizacion afectiva y confusion sobre valor y reciprocidad. El ciclo pide discernimiento para diferenciar intuicion de proyeccion. Observa senales concretas antes de cerrar acuerdos emocionales o financieros.',
+    'transit:saturn|sextil|moon':
+      'Saturno en sextil con Luna ayuda a estabilizar emociones mediante rutina y responsabilidad afectiva. La fase favorece conversaciones maduras y mejor gestion del tiempo interno. Pequenos habitos de cuidado traen seguridad y continuidad.',
+    'transit:saturn|trigono|moon':
+      'Saturno en trigono con Luna favorece consistencia emocional, sobriedad y confianza en decisiones cotidianas. El ciclo tiende a apoyar acuerdos estables y limites saludables. Usa el periodo para consolidar base afectiva con simplicidad.',
+    'transit:venus|conjuncao|jupiter':
+      'Venus en conjuncion con Jupiter amplifica placer, generosidad y oportunidades de armonia en vinculos. La fase favorece encuentros, acuerdos y clima relacional mas positivo. Aprovecha el flujo con moderacion para evitar excesos.',
+    'transit:uranus|sextil|venus':
+      'Urano en sextil con Venus favorece renovacion afectiva y financiera con mas ligereza y creatividad. El ciclo apoya ajustes de valor personal y nuevos formatos de vinculo. Innova con consciencia para sostener libertad y reciprocidad.',
+    'transit:uranus|trigono|venus':
+      'Urano en trigono con Venus facilita actualizar relaciones, gustos y elecciones de valor con naturalidad. La fase tiende a ampliar autenticidad sin ruptura innecesaria. Prueba nuevas formas de intercambio con equilibrio.',
+    'transit:jupiter|quadratura|moon':
+      'Jupiter en cuadratura con Luna puede ampliar oscilacion emocional y expectativa de respuesta inmediata. El ciclo pide moderacion para evitar exageros en reacciones y decisiones. Ajusta ritmo, prioriza lo esencial y mantén realismo afectivo.',
+    'transit:neptune|quadratura|moon':
+      'Neptuno en cuadratura con Luna puede aumentar sensibilidad, niebla emocional y dificultad para definir limites internos. La fase pide descanso, higiene mental y verificacion de realidad antes de reaccionar. Fortalece rutina de centrado para reducir confusion afectiva.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -524,5 +588,37 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Plutone in trigono al Sole aumenta concentrazione, chiarezza di scopo e coerenza di direzione. La fase tende a favorire trasformazioni ben ancorate e sostenibili. Usa il periodo per consolidare identita e rotta con maturita.',
     'transit:saturn|oposicao|ascendente':
       'Saturno in opposizione all Ascendente puo testare limiti in relazioni, accordi e responsabilita condivise. Il ciclo richiede postura matura, ascolto e confini piu chiari. Aggiustamenti realistici nella convivenza tendono a ridurre attrito e migliorare stabilita.',
+    'transit:pluto|conjuncao|mars':
+      'Plutone in congiunzione con Marte intensifica volonta, competitivita e bisogno di agire con forza. Il ciclo richiede autocontrollo per evitare conflitti impulsivi e spreco di energia. Convoglia intensita verso obiettivi strutturali e decisioni strategiche.',
+    'transit:sun|oposicao|uranus':
+      'Sole in opposizione a Urano puo portare rottura di ritmo, reazione ai limiti e desiderio immediato di liberta. La fase richiede flessibilita con responsabilita per evitare decisioni brusche. Rivedi priorita e correggi rotta senza perdere coerenza.',
+    'transit:uranus|quadratura|sun':
+      'Urano in quadratura al Sole segnala tensione tra identita attuale e bisogno di cambiamento. Il ciclo puo generare inquietudine, impazienza e desiderio di cambiare tutto subito. Innova per fasi per preservare base e guadagnare autonomia stabile.',
+    'transit:saturn|oposicao|sun':
+      'Saturno in opposizione al Sole aumenta pressione esterna e test di coerenza personale. Il periodo puo richiedere piu disciplina, regolazione dei limiti e focus sull essenziale. Struttura routine sostenibili e avanza con criterio, senza autocritica eccessiva.',
+    'transit:saturn|quadratura|venus':
+      'Saturno in quadratura con Venere puo portare revisione di aspettative affettive e valori materiali. Il ciclo richiede maturita emotiva, confini chiari e scelte piu realistiche. Rafforza cio che e reciproco e riduci accordi che drenano energia.',
+    'transit:sun|conjuncao|mercury':
+      'Sole in congiunzione con Mercurio favorisce chiarezza mentale, focus comunicativo e decisione oggettiva. La fase tende a sostenere conversazioni importanti, studio e organizzazione delle idee. Dai priorita a messaggi semplici e centrati sull essenziale.',
+    'transit:jupiter|conjuncao|moon':
+      'Giove in congiunzione con Luna amplia sensibilita, accoglienza e percezione di supporto emotivo. Il ciclo puo favorire apertura affettiva e visione piu ampia dei bisogni interiori. Evita eccessi emotivi e mantieni equilibrio nelle scelte.',
+    'transit:jupiter|oposicao|pluto':
+      'Giove in opposizione a Plutone puo ampliare conflitti di visione, controllo e potere decisionale. Il periodo richiede calibrare ambizione con etica, profondita e senso del limite. La crescita stabile nasce da strategia, non da mosse estreme.',
+    'transit:neptune|quadratura|venus':
+      'Nettuno in quadratura con Venere puo generare idealizzazione affettiva e confusione su valore e reciprocita. Il ciclo richiede discernimento per distinguere intuizione da proiezione. Osserva segnali concreti prima di accordi emotivi o finanziari.',
+    'transit:saturn|sextil|moon':
+      'Saturno in sestile con Luna aiuta a stabilizzare emozioni tramite routine e responsabilita affettiva. La fase favorisce dialoghi maturi e migliore gestione del tempo interiore. Piccole abitudini di cura portano sicurezza e continuita.',
+    'transit:saturn|trigono|moon':
+      'Saturno in trigono con Luna favorisce coerenza emotiva, sobrietaa e fiducia nelle scelte quotidiane. Il ciclo tende a sostenere accordi stabili e limiti salutari. Usa il periodo per consolidare base affettiva con semplicita.',
+    'transit:venus|conjuncao|jupiter':
+      'Venere in congiunzione con Giove amplia piacere, generosita e opportunita di armonia nei legami. La fase favorisce incontri, accordi e clima relazionale piu positivo. Sfrutta il flusso con moderazione per evitare eccessi.',
+    'transit:uranus|sextil|venus':
+      'Urano in sestile con Venere favorisce rinnovamento affettivo e finanziario con piu leggerezza e creativita. Il ciclo sostiene aggiornamenti di valore personale e nuovi formati di legame. Innova con consapevolezza per mantenere liberta e reciprocita.',
+    'transit:uranus|trigono|venus':
+      'Urano in trigono con Venere facilita aggiornare relazioni, gusti e scelte di valore con naturalezza. La fase tende ad ampliare autenticita senza rotture inutili. Sperimenta nuovi modi di scambio con equilibrio.',
+    'transit:jupiter|quadratura|moon':
+      'Giove in quadratura con Luna puo ampliare oscillazione emotiva e aspettativa di risposta immediata. Il ciclo richiede moderazione per evitare eccessi nelle reazioni e nelle decisioni. Regola ritmo, priorita essenziale e realismo affettivo.',
+    'transit:neptune|quadratura|moon':
+      'Nettuno in quadratura con Luna puo aumentare sensibilita, nebbia emotiva e difficolta nel definire confini interiori. La fase richiede riposo, igiene mentale e verifica della realta prima di reagire. Rafforza routine di centratura per ridurre confusione affettiva.',
   },
 }
