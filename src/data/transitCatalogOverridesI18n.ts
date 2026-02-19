@@ -136,6 +136,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluto opposite Venus intensifies themes of bonds, value, and reciprocity. This cycle may expose attachment or control dynamics requiring conscious repositioning. Seek more authentic agreements with clear boundaries.',
     'transit:uranus|conjuncao|saturn':
       'Uranus conjunct Saturn combines disruption and structure, asking old models to update. This phase favors innovation with responsibility rather than destructive rupture. Progressive adjustments tend to work better than abrupt turns.',
+    'transit:uranus|sextil|mercury':
+      'Uranus sextile Mercury favors fresh ideas, fast connections, and smart mental adjustments. This phase tends to support innovation in communication without losing functionality. Test new approaches, then validate impact before scaling.',
+    'transit:uranus|trigono|mercury':
+      'Uranus trine Mercury improves clarity to think beyond old patterns with more flow. This period supports agile learning, intellectual creativity, and process updates. Turn insights into practical steps to secure real gains.',
+    'transit:sun|oposicao|neptune':
+      'Sun opposition Neptune can increase confusion between objective focus and idealization. This cycle asks you to separate subtle perception from expectations without evidence. Simplify priorities and verify facts before deciding.',
+    'transit:moon|oposicao|mercury':
+      'Moon opposition Mercury can intensify conflict between emotional reaction and rational interpretation. This phase asks for care with impulsive messages and quick conclusions. Pause, organize what you feel, then communicate clearly.',
+    'transit:saturn|oposicao|mercury':
+      'Saturn opposition Mercury brings a test of mental and communicational consistency. The period may demand more review, criteria, and patience with timing or feedback. Structure arguments with data and advance in verifiable steps.',
+    'transit:sun|conjuncao|pluto':
+      'Sun conjunct Pluto intensifies focus, control themes, and the need for authenticity. This cycle supports deep change when choices are conscious and strategic. Direct energy to essentials and avoid unproductive power disputes.',
+    'transit:uranus|oposicao|mercury':
+      'Uranus opposition Mercury can bring mental disruption, unexpected information, and perspective shifts. This phase asks for flexibility without losing criteria in fact evaluation. Revise plans quickly, but keep final decisions grounded.',
+    'transit:pluto|quadratura|jupiter':
+      'Pluto square Jupiter can magnify ambition and pressure growth limits. This cycle asks you to calibrate expansion with strategic depth and responsibility. Avoid excess and prioritize sustainable long-term progress.',
+    'transit:uranus|conjuncao|meio_do_ceu':
+      'Uranus conjunct Midheaven tends to accelerate professional repositioning and shifts in public image. This phase favors career innovation when experimentation has clear direction. Update positioning without breaking essential structure.',
+    'transit:uranus|quadratura|moon':
+      'Uranus square Moon can increase emotional instability and immediate need for freedom. This phase asks for routine and relational adjustments to reduce reactivity. Small conscious changes usually work better than abrupt cuts.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -270,6 +290,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluton en oposicion a Venus intensifica temas de vinculo, valor personal y reciprocidad. El ciclo puede mostrar dinamicas de apego y control que piden reposicionamiento consciente. Busca acuerdos mas autenticos con limites claros.',
     'transit:uranus|conjuncao|saturn':
       'Urano en conjuncion a Saturno combina renovacion y estructura, y pide actualizar modelos antiguos. Esta fase favorece innovar con responsabilidad sin destruir lo que aun funciona. Ajustes progresivos suelen rendir mejor que giros bruscos.',
+    'transit:uranus|sextil|mercury':
+      'Urano en sextil con Mercurio favorece ideas nuevas, conexiones rapidas y ajustes mentales inteligentes. Esta fase tiende a impulsar innovacion en comunicacion sin perder funcionalidad. Prueba enfoques distintos y valida impacto antes de escalar.',
+    'transit:uranus|trigono|mercury':
+      'Urano en trigono con Mercurio aporta claridad para pensar fuera del patron con mas fluidez. El periodo favorece aprendizaje agil, creatividad intelectual y actualizacion de procesos. Convierte insights en pasos practicos para consolidar avance real.',
+    'transit:sun|oposicao|neptune':
+      'Sol en oposicion a Neptuno puede aumentar confusion entre foco objetivo e idealizacion. Este ciclo pide separar percepcion sensible de expectativas sin base concreta. Simplifica prioridades y confirma datos antes de decidir.',
+    'transit:moon|oposicao|mercury':
+      'Luna en oposicion a Mercurio puede acentuar conflicto entre reaccion emocional y lectura racional. La fase pide cuidado con mensajes impulsivos y conclusiones inmediatas. Haz una pausa, ordena lo que sientes y comunica con claridad.',
+    'transit:saturn|oposicao|mercury':
+      'Saturno en oposicion a Mercurio trae prueba de consistencia mental y comunicacional. El periodo puede exigir mas revision, criterio y paciencia con tiempos o respuestas. Estructura argumentos con datos y avanza por etapas verificables.',
+    'transit:sun|conjuncao|pluto':
+      'Sol en conjuncion con Pluton intensifica foco, control y necesidad de autenticidad. Este ciclo favorece cambios profundos cuando actuas con consciencia y estrategia. Dirige energia a lo esencial y evita disputas de poder improductivas.',
+    'transit:uranus|oposicao|mercury':
+      'Urano en oposicion a Mercurio puede traer rupturas de ideas, noticias inesperadas y cambios de perspectiva. La fase pide flexibilidad sin perder criterio al evaluar hechos. Revisa planes rapido, pero decide con base objetiva.',
+    'transit:pluto|quadratura|jupiter':
+      'Pluton en cuadratura con Jupiter puede ampliar ambicion y tensionar limites de crecimiento. Este ciclo pide calibrar expansion con profundidad estrategica y responsabilidad. Evita excesos y prioriza avances sostenibles a largo plazo.',
+    'transit:uranus|conjuncao|meio_do_ceu':
+      'Urano en conjuncion al Medio Cielo tiende a acelerar reposicionamiento profesional y cambio de imagen publica. La fase favorece innovacion de carrera cuando hay experimentacion con direccion clara. Actualiza posicionamiento sin romper estructura esencial.',
+    'transit:uranus|quadratura|moon':
+      'Urano en cuadratura con Luna puede aumentar inestabilidad emocional y necesidad inmediata de libertad. La fase pide ajustar rutina afectiva para reducir reactividad en hogar y vinculos cercanos. Cambios pequenos y conscientes suelen funcionar mejor que cortes bruscos.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -404,5 +444,25 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Plutone in opposizione a Venere intensifica temi di legame, valore personale e reciprocita. Il ciclo puo mostrare dinamiche di attaccamento o controllo da riposizionare con consapevolezza. Cerca accordi piu autentici con confini chiari.',
     'transit:uranus|conjuncao|saturn':
       'Urano in congiunzione a Saturno combina rinnovamento e struttura, chiedendo aggiornamento dei modelli precedenti. Questa fase favorisce innovazione responsabile senza distruggere cio che ancora funziona. Aggiustamenti progressivi rendono piu dei cambi bruschi.',
+    'transit:uranus|sextil|mercury':
+      'Urano in sestile con Mercurio favorisce idee nuove, connessioni rapide e aggiustamenti mentali intelligenti. Questa fase tende a sostenere innovazione nella comunicazione senza perdere funzionalita. Prova approcci diversi e valida l impatto prima di scalare.',
+    'transit:uranus|trigono|mercury':
+      'Urano in trigono con Mercurio migliora chiarezza per pensare fuori schema con piu fluidita. Il periodo favorisce apprendimento agile, creativita intellettuale e aggiornamento dei processi. Trasforma gli insight in passi pratici per consolidare risultati reali.',
+    'transit:sun|oposicao|neptune':
+      'Sole in opposizione a Nettuno puo aumentare confusione tra focus oggettivo e idealizzazione. Questo ciclo chiede di distinguere percezione sottile da aspettative senza base concreta. Semplifica priorita e verifica i fatti prima di decidere.',
+    'transit:moon|oposicao|mercury':
+      'Luna in opposizione a Mercurio puo accentuare conflitto tra reazione emotiva e lettura razionale. La fase richiede cura con messaggi impulsivi e conclusioni immediate. Fai una pausa, ordina cio che senti e comunica con chiarezza.',
+    'transit:saturn|oposicao|mercury':
+      'Saturno in opposizione a Mercurio porta un test di coerenza mentale e comunicativa. Il periodo puo richiedere piu revisione, criterio e pazienza con tempi o risposte. Struttura argomenti con dati e avanza per fasi verificabili.',
+    'transit:sun|conjuncao|pluto':
+      'Sole in congiunzione con Plutone intensifica focus, controllo e bisogno di autenticita. Questo ciclo favorisce cambi profondi quando agisci con consapevolezza e strategia. Dirigi energia sull essenziale ed evita conflitti di potere improduttivi.',
+    'transit:uranus|oposicao|mercury':
+      'Urano in opposizione a Mercurio puo portare rotture di idee, notizie inattese e cambi di prospettiva. La fase chiede flessibilita senza perdere criterio nella valutazione dei fatti. Rivedi i piani rapidamente, ma decidi su basi oggettive.',
+    'transit:pluto|quadratura|jupiter':
+      'Plutone in quadratura con Giove puo ampliare ambizione e mettere sotto pressione i limiti di crescita. Questo ciclo chiede di calibrare espansione con profondita strategica e responsabilita. Evita eccessi e dai priorita a progressi sostenibili di lungo periodo.',
+    'transit:uranus|conjuncao|meio_do_ceu':
+      'Urano in congiunzione al Medio Cielo tende ad accelerare riposizionamento professionale e cambio d immagine pubblica. La fase favorisce innovazione di carriera quando sperimentazione e direzione sono chiare. Aggiorna il posizionamento senza rompere la struttura essenziale.',
+    'transit:uranus|quadratura|moon':
+      'Urano in quadratura con Luna puo aumentare instabilita emotiva e bisogno immediato di liberta. La fase chiede di regolare routine affettiva per ridurre reattivita in casa e nei legami vicini. Piccoli cambiamenti consapevoli funzionano meglio di tagli bruschi.',
   },
 }

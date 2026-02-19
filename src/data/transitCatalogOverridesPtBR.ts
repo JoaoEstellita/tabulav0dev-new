@@ -131,4 +131,24 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Plutao em oposicao a Venus intensifica temas de vinculo, valor pessoal e reciprocidade. O ciclo pode revelar dinamicas de apego e controle que pedem reposicionamento consciente. Busque relacoes e acordos mais autenticos, com limites claros.',
   'transit:uranus|conjuncao|saturn':
     'Urano em conjuncao a Saturno combina ruptura e estrutura, pedindo atualizacao de modelos antigos. O periodo favorece inovar com responsabilidade, sem destruir o que ainda sustenta seu processo. Ajustes progressivos tendem a render mais do que mudancas abruptas.',
+  'transit:uranus|sextil|mercury':
+    'Urano em sextil com Mercurio favorece ideias novas, conexoes rapidas e ajuste inteligente de rotas mentais. O periodo tende a facilitar inovacao na comunicacao sem perder funcionalidade. Teste abordagens diferentes, mas valide impacto antes de escalar.',
+  'transit:uranus|trigono|mercury':
+    'Urano em trigono com Mercurio amplia clareza para pensar fora do padrao com mais fluidez. A fase favorece aprendizado agil, criatividade intelectual e atualizacao de processos. Transforme insights em passos praticos para consolidar ganho real.',
+  'transit:sun|oposicao|neptune':
+    'Sol em oposicao a Netuno pode aumentar duvidas entre foco objetivo e idealizacao. O ciclo pede diferenciar percepcao sensivel de expectativa sem base concreta. Simplifique prioridades e confirme fatos antes de decidir.',
+  'transit:moon|oposicao|mercury':
+    'Lua em oposicao a Mercurio pode acentuar conflito entre emocao do momento e leitura racional. A fase pede cuidado com mensagens impulsivas e conclusoes imediatas. Pause, organize o que sente e depois comunique com objetividade.',
+  'transit:saturn|oposicao|mercury':
+    'Saturno em oposicao a Mercurio traz teste de consistencia mental e comunicacional. O periodo pode exigir mais revisao, criterio e paciência com prazos ou respostas. Estruture argumentos com dados e avance em etapas verificaveis.',
+  'transit:sun|conjuncao|pluto':
+    'Sol em conjuncao com Plutao intensifica foco, vontade de controle e necessidade de autenticidade. O ciclo favorece mudancas profundas quando voce atua com consciencia e estrategia. Direcione energia para o essencial e evite disputas de poder improdutivas.',
+  'transit:uranus|oposicao|mercury':
+    'Urano em oposicao a Mercurio pode trazer rupturas de ideia, noticias inesperadas e mudancas de perspectiva. A fase pede flexibilidade sem perder criterio na avaliacao dos fatos. Revise planos rapidamente, mas mantenha decisao final em base objetiva.',
+  'transit:pluto|quadratura|jupiter':
+    'Plutao em quadratura com Jupiter pode ampliar ambicao e tensionar limites de crescimento. O ciclo pede calibrar expansao com profundidade estrategica e responsabilidade. Evite exageros e priorize avancos sustentaveis de longo prazo.',
+  'transit:uranus|conjuncao|meio_do_ceu':
+    'Urano em conjuncao ao Meio do Ceu tende a acelerar reposicionamento profissional e mudanca de imagem publica. O periodo favorece inovacao de carreira quando ha experimentacao com direcao clara. Atualize seu posicionamento sem romper estrutura essencial.',
+  'transit:uranus|quadratura|moon':
+    'Urano em quadratura com Lua pode aumentar instabilidade emocional e necessidade de liberdade imediata. A fase pede ajustar rotina afetiva para reduzir reatividade em casa e nos vinculos proximos. Mudancas pequenas e conscientes costumam funcionar melhor que cortes bruscos.',
 }
