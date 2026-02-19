@@ -1,6 +1,8 @@
-ï»¿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { buildUnifiedTransitNarrative } from '../astroInterpretation'
 import { TRANSIT_CATALOG_PTBR } from '../../data/transitCatalogPtBR'
+import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../../data/transitCatalogOverridesPtBR'
+import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../../data/transitCatalogOverridesI18n'
 
 describe('astroInterpretation catalog integration', () => {
   it('prioritizes canonical pt-BR catalog text when transit key matches', () => {
@@ -125,8 +127,8 @@ describe('astroInterpretation catalog integration', () => {
     const narrative = buildUnifiedTransitNarrative(
       {
         transitPlanet: 'Jupiter',
-        aspectName: 'ConjunÃ§Ã£o',
-        target: { angle: 'Meio do CÃ©u' },
+        aspectName: 'Conjunção',
+        target: { angle: 'Meio do Céu' },
         phase: 'ACTIVE',
       },
       'carreira',
@@ -234,7 +236,17 @@ describe('astroInterpretation catalog integration', () => {
     expect(rawCatalog.length).toBeGreaterThan(20)
     expect(narrative.shortText.length).toBeGreaterThan(20)
     expect(narrative.shortText).not.toBe(rawCatalog)
-    expect(narrative.shortText).not.toContain('Ãƒ')
+    expect(narrative.shortText).not.toContain('Ã')
     expect(narrative.shortText).not.toContain('\uFFFD')
+  })
+  it('keeps curated override keyset aligned across en/es/it locales', () => {
+    const ptKeys = Object.keys(TRANSIT_CATALOG_PTBR_OVERRIDES).sort()
+    const enKeys = Object.keys(TRANSIT_CATALOG_I18N_OVERRIDES['en-US'] || {}).sort()
+    const esKeys = Object.keys(TRANSIT_CATALOG_I18N_OVERRIDES['es-ES'] || {}).sort()
+    const itKeys = Object.keys(TRANSIT_CATALOG_I18N_OVERRIDES['it-IT'] || {}).sort()
+
+    expect(enKeys).toEqual(ptKeys)
+    expect(esKeys).toEqual(ptKeys)
+    expect(itKeys).toEqual(ptKeys)
   })
 })

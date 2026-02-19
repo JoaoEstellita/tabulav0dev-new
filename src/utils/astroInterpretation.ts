@@ -27,12 +27,18 @@ const TARGET_ALIASES_TO_CANONICAL: Record<string, string> = {
   asc: 'ascendente',
   as: 'ascendente',
   meio_do_ceu: 'meio_do_ceu',
+  meio_do_cu: 'meio_do_ceu',
+  meio_do_c_u: 'meio_do_ceu',
+  meio_do_c: 'meio_do_ceu',
   meio_do_céu: 'meio_do_ceu',
   medio_cielo: 'meio_do_ceu',
   midheaven: 'meio_do_ceu',
   mc: 'meio_do_ceu',
   ic: 'fundo_do_ceu',
   fundo_do_ceu: 'fundo_do_ceu',
+  fundo_do_cu: 'fundo_do_ceu',
+  fundo_do_c_u: 'fundo_do_ceu',
+  fundo_do_c: 'fundo_do_ceu',
   fundo_do_céu: 'fundo_do_ceu',
   imum_coeli: 'fundo_do_ceu',
   dsc: 'descendente',
@@ -84,6 +90,33 @@ const PLANET_LABELS: Record<AppLanguage, Record<string, string>> = {
   'it-IT': {
     Sun: 'Sole', Moon: 'Luna', Mercury: 'Mercurio', Venus: 'Venere', Mars: 'Marte',
     Jupiter: 'Giove', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Nettuno', Pluto: 'Plutone',
+  },
+}
+
+const ANGLE_LABELS: Record<AppLanguage, Record<string, string>> = {
+  'pt-BR': {
+    ascendente: 'Ascendente',
+    meio_do_ceu: 'Meio do Ceu',
+    fundo_do_ceu: 'Fundo do Ceu',
+    descendente: 'Descendente',
+  },
+  'en-US': {
+    ascendente: 'Ascendant',
+    meio_do_ceu: 'Midheaven',
+    fundo_do_ceu: 'Imum Coeli',
+    descendente: 'Descendant',
+  },
+  'es-ES': {
+    ascendente: 'Ascendente',
+    meio_do_ceu: 'Medio Cielo',
+    fundo_do_ceu: 'Fondo del Cielo',
+    descendente: 'Descendente',
+  },
+  'it-IT': {
+    ascendente: 'Ascendente',
+    meio_do_ceu: 'Medio Cielo',
+    fundo_do_ceu: 'Fondo Cielo',
+    descendente: 'Discendente',
   },
 }
 
@@ -549,6 +582,10 @@ function getTargetLabel(transit: AnyTransit, language?: string | null): string {
   const target = transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint
   if (!target) return I18N[lang].yourNatalChart
   const raw = String(target)
+  const canonicalTarget = TARGET_ALIASES_TO_CANONICAL[normalizeTransitToken(raw)] || ''
+  if (canonicalTarget && ANGLE_LABELS[lang][canonicalTarget]) {
+    return ANGLE_LABELS[lang][canonicalTarget]
+  }
   return PLANET_LABELS[lang][raw] || PLANET_PT[raw] || raw
 }
 
