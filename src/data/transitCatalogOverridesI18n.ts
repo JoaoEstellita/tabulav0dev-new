@@ -156,6 +156,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Uranus conjunct Midheaven tends to accelerate professional repositioning and shifts in public image. This phase favors career innovation when experimentation has clear direction. Update positioning without breaking essential structure.',
     'transit:uranus|quadratura|moon':
       'Uranus square Moon can increase emotional instability and immediate need for freedom. This phase asks for routine and relational adjustments to reduce reactivity. Small conscious changes usually work better than abrupt cuts.',
+    'transit:jupiter|sextil|sun':
+      'Jupiter sextile Sun supports practical confidence, growth vision, and broader decisions. This cycle tends to help progress when enthusiasm is paired with criteria. Use opportunities with planning to sustain results.',
+    'transit:jupiter|trigono|sun':
+      'Jupiter trine Sun increases flow to expand goals with stronger inner confidence. This phase can ease recognition and progress when focus stays on essentials. Use the moment to consolidate gains without overpacing.',
+    'transit:uranus|conjuncao|ascendente':
+      'Uranus conjunct Ascendant tends to mark personal repositioning and changes in your style of action. This period favors authenticity, autonomy, and identity updates in daily life. Renew how you present yourself with responsible freedom.',
+    'transit:pluto|sextil|mars':
+      'Pluto sextile Mars strengthens determination, strategy, and depth of action. This cycle favors reducing dispersion and focusing on high-impact tasks. Direct energy precisely to avoid unnecessary wear.',
+    'transit:pluto|trigono|mars':
+      'Pluto trine Mars increases execution power and persistence for meaningful change. This phase tends to support consistent action with less reactivity and more strategic intention. Move in stages and consolidate structural gains.',
+    'transit:pluto|quadratura|moon':
+      'Pluto square Moon can intensify emotional vulnerability and security themes. This cycle asks for emotional regulation and review of old protective patterns. Clear conversations and supportive routines help maintain stability.',
+    'transit:moon|conjuncao|sun':
+      'Moon conjunct Sun marks an emotional reset point and intention alignment. This phase supports simple priority adjustments and openness to new action cycles. Define one short consistent step to give direction to the day.',
+    'transit:pluto|sextil|sun':
+      'Pluto sextile Sun favors inner strengthening and more authentic repositioning. This cycle can support deeper choices without dramatic rupture. Focus effort on what has long-term value.',
+    'transit:pluto|trigono|sun':
+      'Pluto trine Sun increases concentration, purpose clarity, and consistency of direction. This phase tends to support grounded and sustainable transformation. Use the period to consolidate identity and direction with maturity.',
+    'transit:saturn|oposicao|ascendente':
+      'Saturn opposition Ascendant can test limits in relationships, agreements, and shared responsibility. This cycle asks for mature posture, listening, and clearer boundaries. Realistic adjustments in coexistence tend to reduce friction and improve stability.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -310,6 +330,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Urano en conjuncion al Medio Cielo tiende a acelerar reposicionamiento profesional y cambio de imagen publica. La fase favorece innovacion de carrera cuando hay experimentacion con direccion clara. Actualiza posicionamiento sin romper estructura esencial.',
     'transit:uranus|quadratura|moon':
       'Urano en cuadratura con Luna puede aumentar inestabilidad emocional y necesidad inmediata de libertad. La fase pide ajustar rutina afectiva para reducir reactividad en hogar y vinculos cercanos. Cambios pequenos y conscientes suelen funcionar mejor que cortes bruscos.',
+    'transit:jupiter|sextil|sun':
+      'Jupiter en sextil al Sol favorece confianza practica, vision de crecimiento y decisiones mas amplias. Este ciclo tiende a apoyar avances cuando entusiasmo y criterio van juntos. Aprovecha oportunidades con planificacion para sostener resultados.',
+    'transit:jupiter|trigono|sun':
+      'Jupiter en trigono al Sol aumenta fluidez para expandir metas con mayor seguridad interna. La fase puede facilitar reconocimiento y progreso cuando hay foco en lo esencial. Usa el momento para consolidar avances sin exceder el ritmo.',
+    'transit:uranus|conjuncao|ascendente':
+      'Urano en conjuncion al Ascendente tiende a marcar reposicionamiento personal y cambio en el estilo de accion. Este periodo favorece autenticidad, autonomia y ajustes de identidad en lo cotidiano. Renueva tu forma de presentarte con libertad responsable.',
+    'transit:pluto|sextil|mars':
+      'Pluton en sextil con Marte fortalece determinacion, estrategia y capacidad de actuar con profundidad. El ciclo favorece reducir dispersion y enfocar tareas de alto impacto. Dirige energia con precision para evitar desgaste innecesario.',
+    'transit:pluto|trigono|mars':
+      'Pluton en trigono con Marte amplifica fuerza de ejecucion y persistencia para cambios relevantes. La fase tiende a favorecer accion constante, con menos reaccion impulsiva y mas intencion estrategica. Avanza por etapas y consolida ganancia estructural.',
+    'transit:pluto|quadratura|moon':
+      'Pluton en cuadratura con Luna puede intensificar vulnerabilidad emocional y temas de seguridad afectiva. El ciclo pide regular reactividad y revisar patrones antiguos de proteccion. Conversaciones claras y rutina de apoyo ayudan a sostener estabilidad.',
+    'transit:moon|conjuncao|sun':
+      'Luna en conjuncion con Sol marca un punto de reinicio emocional y alineacion de intencion. Esta fase favorece ajustes simples de prioridad y apertura a nuevos ciclos de accion. Define un paso corto y constante para dar direccion al dia.',
+    'transit:pluto|sextil|sun':
+      'Pluton en sextil al Sol favorece fortalecimiento interno y reposicionamiento mas autentico. Este ciclo puede apoyar decisiones profundas sin ruptura dramatica. Enfoca esfuerzo en lo que tiene valor a largo plazo.',
+    'transit:pluto|trigono|sun':
+      'Pluton en trigono al Sol amplifica concentracion, claridad de proposito y consistencia de rumbo. La fase tiende a favorecer transformaciones bien sostenidas. Usa el periodo para consolidar identidad y direccion con madurez.',
+    'transit:saturn|oposicao|ascendente':
+      'Saturno en oposicion al Ascendente puede probar limites en relaciones, acuerdos y responsabilidades compartidas. El ciclo pide postura madura, escucha y definicion clara de fronteras. Ajustes realistas de convivencia suelen reducir friccion y mejorar estabilidad.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -464,5 +504,25 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Urano in congiunzione al Medio Cielo tende ad accelerare riposizionamento professionale e cambio d immagine pubblica. La fase favorisce innovazione di carriera quando sperimentazione e direzione sono chiare. Aggiorna il posizionamento senza rompere la struttura essenziale.',
     'transit:uranus|quadratura|moon':
       'Urano in quadratura con Luna puo aumentare instabilita emotiva e bisogno immediato di liberta. La fase chiede di regolare routine affettiva per ridurre reattivita in casa e nei legami vicini. Piccoli cambiamenti consapevoli funzionano meglio di tagli bruschi.',
+    'transit:jupiter|sextil|sun':
+      'Giove in sestile al Sole favorisce fiducia pratica, visione di crescita e decisioni piu ampie. Questo ciclo tende a sostenere avanzamenti quando entusiasmo e criterio procedono insieme. Sfrutta opportunita con pianificazione per rendere i risultati stabili.',
+    'transit:jupiter|trigono|sun':
+      'Giove in trigono al Sole aumenta fluidita nell espansione degli obiettivi con piu sicurezza interiore. La fase puo facilitare riconoscimento e progresso quando il focus resta sull essenziale. Usa il momento per consolidare avanzamenti senza forzare il ritmo.',
+    'transit:uranus|conjuncao|ascendente':
+      'Urano in congiunzione all Ascendente tende a segnare riposizionamento personale e cambiamento nello stile d azione. Questo periodo favorisce autenticita, autonomia e aggiornamenti di identita nella routine. Rinnova il modo di presentarti con liberta responsabile.',
+    'transit:pluto|sextil|mars':
+      'Plutone in sestile con Marte rafforza determinazione, strategia e capacita di agire con profondita. Il ciclo favorisce ridurre dispersione e concentrarsi su compiti ad alto impatto. Dirigi energia con precisione per evitare usura inutile.',
+    'transit:pluto|trigono|mars':
+      'Plutone in trigono con Marte amplia forza esecutiva e perseveranza per cambiamenti rilevanti. La fase tende a favorire azione costante, con meno reattivita e piu intenzione strategica. Procedi per fasi e consolida guadagno strutturale.',
+    'transit:pluto|quadratura|moon':
+      'Plutone in quadratura con Luna puo intensificare vulnerabilita emotiva e temi di sicurezza affettiva. Il ciclo chiede regolazione della reattivita e revisione di schemi protettivi antichi. Dialoghi chiari e routine di supporto aiutano a mantenere stabilita.',
+    'transit:moon|conjuncao|sun':
+      'Luna in congiunzione con Sole segna un punto di reset emotivo e allineamento d intenzione. La fase favorisce aggiustamenti semplici di priorita e apertura a nuovi cicli d azione. Definisci un passo breve e costante per dare direzione alla giornata.',
+    'transit:pluto|sextil|sun':
+      'Plutone in sestile al Sole favorisce rafforzamento interiore e riposizionamento piu autentico. Questo ciclo puo sostenere scelte profonde senza rottura drammatica. Concentrati su cio che ha valore nel lungo periodo.',
+    'transit:pluto|trigono|sun':
+      'Plutone in trigono al Sole aumenta concentrazione, chiarezza di scopo e coerenza di direzione. La fase tende a favorire trasformazioni ben ancorate e sostenibili. Usa il periodo per consolidare identita e rotta con maturita.',
+    'transit:saturn|oposicao|ascendente':
+      'Saturno in opposizione all Ascendente puo testare limiti in relazioni, accordi e responsabilita condivise. Il ciclo richiede postura matura, ascolto e confini piu chiari. Aggiustamenti realistici nella convivenza tendono a ridurre attrito e migliorare stabilita.',
   },
 }

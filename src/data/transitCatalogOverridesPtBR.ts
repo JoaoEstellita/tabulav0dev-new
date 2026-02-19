@@ -151,4 +151,24 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Urano em conjuncao ao Meio do Ceu tende a acelerar reposicionamento profissional e mudanca de imagem publica. O periodo favorece inovacao de carreira quando ha experimentacao com direcao clara. Atualize seu posicionamento sem romper estrutura essencial.',
   'transit:uranus|quadratura|moon':
     'Urano em quadratura com Lua pode aumentar instabilidade emocional e necessidade de liberdade imediata. A fase pede ajustar rotina afetiva para reduzir reatividade em casa e nos vinculos proximos. Mudancas pequenas e conscientes costumam funcionar melhor que cortes bruscos.',
+  'transit:jupiter|sextil|sun':
+    'Jupiter em sextil ao Sol favorece confianca pratica, visao de crescimento e decisoes mais amplas. O ciclo tende a apoiar avancos quando voce combina entusiasmo com criterio. Aproveite oportunidades com planejamento para sustentar resultados.',
+  'transit:jupiter|trigono|sun':
+    'Jupiter em trigono ao Sol aumenta fluidez para expandir metas com mais seguranca interna. A fase pode facilitar reconhecimento e progresso quando ha foco no essencial. Use o momento para consolidar avancos sem exagerar no ritmo.',
+  'transit:uranus|conjuncao|ascendente':
+    'Urano em conjuncao ao Ascendente tende a marcar reposicionamento pessoal e mudanca de estilo de acao. O periodo favorece autenticidade, autonomia e ajustes de identidade no cotidiano. Renove sua forma de se apresentar com liberdade responsavel.',
+  'transit:pluto|sextil|mars':
+    'Plutao em sextil com Marte fortalece determinacao, estrategia e capacidade de agir com profundidade. O ciclo favorece cortes de dispersao e foco em tarefas de alto impacto. Direcione energia com precisao para evitar desgaste desnecessario.',
+  'transit:pluto|trigono|mars':
+    'Plutao em trigono com Marte amplia forca de execucao e persistencia para mudancas relevantes. A fase tende a favorecer acao consistente, com menos impulso reativo e mais intencao estrategica. Avance por etapas e consolide ganho estrutural.',
+  'transit:pluto|quadratura|moon':
+    'Plutao em quadratura com Lua pode intensificar vulnerabilidades emocionais e temas de seguranca afetiva. O ciclo pede regular reatividade e revisar padroes antigos de protecao. Conversas claras e rotina de suporte ajudam a atravessar a fase com estabilidade.',
+  'transit:moon|conjuncao|sun':
+    'Lua em conjuncao com Sol marca ponto de reinicio emocional e alinhamento de intencao. A fase favorece ajustes simples de prioridade e abertura para novos ciclos de acao. Defina um passo curto e consistente para dar direcao ao dia.',
+  'transit:pluto|sextil|sun':
+    'Plutao em sextil ao Sol favorece fortalecimento interno e reposicionamento com mais autenticidade. O ciclo pode apoiar decisoes profundas sem necessidade de ruptura dramatica. Concentre esforco no que tem valor de longo prazo.',
+  'transit:pluto|trigono|sun':
+    'Plutao em trigono ao Sol amplia poder de concentracao, clareza de proposito e consistencia de caminho. A fase tende a favorecer transformacoes bem ancoradas e sustentaveis. Use o periodo para consolidar identidade e direcao com maturidade.',
+  'transit:saturn|oposicao|ascendente':
+    'Saturno em oposicao ao Ascendente pode testar limites em relacoes, acordos e responsabilidade compartilhada. O ciclo pede postura madura, escuta e definicao clara de fronteiras. Ajustes realistas de convivencia tendem a reduzir atrito e ampliar estabilidade.',
 }
