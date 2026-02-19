@@ -69,4 +69,41 @@ describe('astroInterpretation catalog integration', () => {
     expect(merged).not.toContain('conexion con el estado')
     expect(merged).not.toContain('connessione con lo stato')
   })
+
+  it('builds stable transitKey independent of transient id field', () => {
+    const base = {
+      transitPlanet: 'Saturn',
+      aspectName: 'quadratura',
+      target: { natalPlanet: 'Moon' },
+      house: 10,
+      phase: 'peak',
+    }
+    const a = buildUnifiedTransitNarrative({ ...base, id: 'abc-123' }, 'carreira', 'pt-BR')
+    const b = buildUnifiedTransitNarrative({ ...base, id: 'xyz-999' }, 'carreira', 'pt-BR')
+    expect(a.transitKey).toBe(b.transitKey)
+    expect(a.transitKey).toContain('saturn')
+    expect(a.transitKey).toContain('quadratura')
+  })
+
+  it('normalizes angle aliases in catalog resolver (MC/IC/DSC)', () => {
+    const mc = buildUnifiedTransitNarrative(
+      { transitPlanet: 'Jupiter', aspectName: 'oposicao', target: { angle: 'MC' }, phase: 'active' },
+      'carreira',
+      'pt-BR'
+    )
+    const ic = buildUnifiedTransitNarrative(
+      { transitPlanet: 'Jupiter', aspectName: 'oposicao', target: { angle: 'IC' }, phase: 'active' },
+      'familia',
+      'pt-BR'
+    )
+    const dsc = buildUnifiedTransitNarrative(
+      { transitPlanet: 'Jupiter', aspectName: 'oposicao', target: { angle: 'DSC' }, phase: 'active' },
+      'amor',
+      'pt-BR'
+    )
+
+    expect(mc.shortText.length).toBeGreaterThan(20)
+    expect(ic.shortText.length).toBeGreaterThan(20)
+    expect(dsc.shortText.length).toBeGreaterThan(20)
+  })
 })

@@ -28,6 +28,14 @@ const TARGET_ALIASES_TO_CANONICAL: Record<string, string> = {
   medio_cielo: 'meio_do_ceu',
   midheaven: 'meio_do_ceu',
   mc: 'meio_do_ceu',
+  ic: 'fundo_do_ceu',
+  fundo_do_ceu: 'fundo_do_ceu',
+  fundo_do_céu: 'fundo_do_ceu',
+  imum_coeli: 'fundo_do_ceu',
+  dsc: 'descendente',
+  descendant: 'descendente',
+  descendente: 'descendente',
+  dc: 'descendente',
 }
 
 const PLANET_SYMBOLISM: Record<string, string> = {
@@ -597,18 +605,49 @@ function buildSeed(transit: AnyTransit): number {
   return Math.abs(hash)
 }
 
+function normalizePhase(value: unknown): string {
+  const phase = String(value || '').trim().toLowerCase()
+  if (!phase) return 'active'
+  if (['start', 'begin', 'initial', 'inicio', 'início'].includes(phase)) return 'start'
+  if (['peak', 'pico', 'exact', 'exato', 'exacto'].includes(phase)) return 'peak'
+  if (['end', 'finish', 'ending', 'fim', 'final'].includes(phase)) return 'end'
+  return phase
+}
+
+function resolveCanonicalTransitTarget(transit: AnyTransit): { type: 'planet' | 'angle' | 'house' | 'unknown'; value: string } {
+  const house = getHouseNumber(transit)
+  if (house && normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType) === 'ingress') {
+    return { type: 'house', value: `house_${house}` }
+  }
+
+  const rawTarget = normalizeTransitToken(
+    transit?.natalPlanet
+    || transit?.target?.natalPlanet
+    || transit?.target?.angle
+    || transit?.natalPoint
+  )
+  const canonical = TARGET_ALIASES_TO_CANONICAL[rawTarget] || rawTarget
+  if (!canonical) return { type: 'unknown', value: 'unknown' }
+  if (canonical.startsWith('house_')) return { type: 'house', value: canonical }
+  if (['ascendente', 'meio_do_ceu', 'fundo_do_ceu', 'descendente', 'asc', 'mc', 'ic', 'dc'].includes(canonical)) {
+    return { type: 'angle', value: canonical }
+  }
+  return { type: 'planet', value: canonical }
+}
+
 function buildCanonicalTransitKey(transit: AnyTransit): string {
+  const planet = normalizeTransitToken(transit?.transitPlanet) || 'unknown_planet'
+  const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType) || 'neutral'
+  const target = resolveCanonicalTransitTarget(transit)
+  const house = getHouseNumber(transit)
+  const phase = normalizePhase(transit?.phase)
   const parts = [
-    String(transit?.id || '').trim().toLowerCase(),
-    String(transit?.transitPlanet || '').trim().toLowerCase(),
-    normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType),
-    String(transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint || '')
-      .trim()
-      .toLowerCase(),
-    String(getHouseNumber(transit) || '').trim().toLowerCase(),
-    String(transit?.phase || '').trim().toLowerCase(),
+    planet,
+    aspect,
+    `${target.type}:${target.value}`,
+    house ? `h${house}` : '',
+    phase ? `phase:${phase}` : '',
   ].filter(Boolean)
-  if (!parts.length) return 'transit:unknown'
   return `transit:${parts.join('|')}`
 }
 
@@ -633,15 +672,9 @@ function buildCatalogTransitKey(transit: AnyTransit): string | null {
     return `transit:${planet}|ingress|house_${houseNumber}`
   }
 
-  const targetRaw = normalizeTransitToken(
-    transit?.natalPlanet
-    || transit?.target?.natalPlanet
-    || transit?.target?.angle
-    || transit?.natalPoint
-  )
-  const target = TARGET_ALIASES_TO_CANONICAL[targetRaw] || targetRaw
-  if (!target) return null
-  return `transit:${planet}|${aspect}|${target}`
+  const target = resolveCanonicalTransitTarget(transit)
+  if (target.type === 'unknown') return null
+  return `transit:${planet}|${aspect}|${target.value}`
 }
 
 function sanitizeCatalogText(value: string): string {
