@@ -49,4 +49,24 @@ describe('astroInterpretation catalog integration', () => {
     expect(narrative.shortText.length).toBeGreaterThan(30)
     expect(narrative.shortText).not.toMatch(/\{[a-zA-Z0-9_.-]+\}/)
   })
+
+  it('does not mention status wording in unified narrative fields', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Saturn',
+        aspectName: 'quadratura',
+        target: { natalPlanet: 'Moon' },
+        house: 4,
+        phase: 'peak',
+      },
+      'familia',
+      'pt-BR'
+    )
+
+    const merged = `${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody} ${narrative.actionText} ${narrative.metaText}`.toLowerCase()
+    expect(merged).not.toContain('conexao com o status')
+    expect(merged).not.toContain('status link')
+    expect(merged).not.toContain('conexion con el estado')
+    expect(merged).not.toContain('connessione con lo stato')
+  })
 })

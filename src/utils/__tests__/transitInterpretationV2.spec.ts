@@ -98,3 +98,23 @@ test('derives valence from aspect semantics, not status labels', () => {
   expect(alertTransit.valence).toBe('alert')
   expect(positiveTransit.valence).toBe('positive')
 })
+
+test('does not mention status wording in interpretation text blocks', () => {
+  const result = buildTransitInterpretationV2({
+    transitKey: 'transit:venus|sextil|moon|4|active',
+    aspectKey: 'sextil',
+    title: 'Venus sextil Lua',
+    lifeArea: 'familia',
+    houseLabel: 'Casa 4',
+    timingLabel: 'Em aproximacao',
+    shortText: 'A fase favorece acordos mais suaves no lar.',
+    fullText: 'A leitura indica margem para alinhar rotina e afeto com mais clareza.',
+    actionText: 'Escolha uma conversa objetiva e curta para hoje.',
+    metaText: 'Orb 1.1',
+  })
+
+  const merged = `${result.tldr} ${result.medium} ${result.long} ${result.confidenceWhy}`.toLowerCase()
+  expect(merged).not.toContain('status')
+  expect(merged).not.toContain('estado')
+  expect(merged).not.toContain('stato')
+})
