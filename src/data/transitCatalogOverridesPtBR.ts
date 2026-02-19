@@ -203,4 +203,6 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em quadratura com Lua pode ampliar oscilacao emocional e expectativa de resposta imediata. O ciclo pede moderacao para evitar exageros nas reacoes e nas decisoes. Ajuste ritmo, priorize o essencial e mantenha realismo afetivo.',
   'transit:neptune|quadratura|moon':
     'Netuno em quadratura com Lua pode aumentar sensibilidade, neblina emocional e dificuldade de definir limites internos. A fase pede descanso, higiene mental e verificacao da realidade antes de reagir. Fortaleca rotina de centramento para reduzir confusao afetiva.',
+  'transit:moon|ingress|house_2':
+    'Lua em ingresso na Casa 2 destaca seguranca material, valor pessoal e necessidades de estabilidade no cotidiano. A fase favorece revisar gastos, conforto e prioridades praticas com mais sensibilidade. Pequenos ajustes financeiros e organizacao simples tendem a trazer mais tranquilidade.',
 }
