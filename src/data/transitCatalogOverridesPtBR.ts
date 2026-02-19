@@ -59,4 +59,30 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Marte em ingresso na Casa 10 aumenta impulso para agir na carreira e ocupar espaco de forma mais visivel. A energia favorece iniciativa, desde que haja direcao clara e regulacao de ritmo para evitar desgaste. Execute por prioridades e converta urgencia em progresso mensuravel.',
   'transit:sun|ingress|house_10':
     'Sol em ingresso na Casa 10 ilumina metas publicas, responsabilidade e direcao profissional. O momento tende a favorecer visibilidade quando voce combina presenca, consistencia e mensagem objetiva. Foque no essencial e use a exposicao para fortalecer posicionamento com coerencia.',
+  'transit:pluto|conjuncao|meio_do_ceu':
+    'Plutao em conjuncao ao Meio do Ceu concentra energia de transformacao na carreira e na imagem publica. A fase tende a exigir decisoes mais profundas sobre direcao, autoridade e legado profissional. Avance com estrategia e consistencia, evitando movimentos extremos por pressao do momento.',
+  'transit:pluto|oposicao|fundo_do_ceu':
+    'Plutao em oposicao ao Fundo do Ceu pode ativar tensao entre demandas profissionais e base emocional. O ciclo costuma pedir reorganizacao entre ambicao externa e necessidades de seguranca interna. Busque equilibrio pratico entre exposicao, descanso e limites no ambiente pessoal.',
+  'transit:pluto|trigono|jupiter':
+    'Plutao em trigono com Jupiter favorece crescimento com profundidade, visao estrategica e reposicionamento inteligente. O periodo tende a ampliar oportunidades quando ha foco em qualidade e sustentabilidade de longo prazo. Priorize avancos estruturais em vez de ganhos rapidos sem base.',
+  'transit:pluto|sesquiquadratura|moon':
+    'Plutao em sesquiquadratura com Lua pode elevar sensibilidade e reatividade em temas emocionais e familiares. A fase pede observar gatilhos com mais consciencia para evitar respostas impulsivas. Pequenos ajustes de rotina e dialogo claro ajudam a reduzir desgaste interno.',
+  'transit:pluto|sesquiquadratura|mars':
+    'Plutao em sesquiquadratura com Marte aumenta tensao entre impulso de agir e necessidade de controle. O ciclo pode gerar pressa, irritacao ou disputa de forca quando faltam prioridades claras. Direcione energia para tarefas essenciais e evite confrontos que nao trazem progresso real.',
+  'transit:saturn|conjuncao|neptune':
+    'Saturno em conjuncao com Netuno combina realismo e sensibilidade, pedindo traducao de ideal em estrutura concreta. O periodo favorece separar intuicao util de ilusoes improdutivas com metodo e criterio. Transforme inspiracao em plano pratico, com etapas simples e acompanhamento regular.',
+  'transit:mercury|semiquadratura|pluto':
+    'Mercurio em semiquadratura com Plutao intensifica pensamento investigativo e tende a aumentar rigidez mental. A fase pede cuidado com comunicacao reativa, suspeitas excessivas e conclusoes precipitadas. Valide fatos, simplifique mensagens e mantenha abertura para revisao de ponto de vista.',
+  'transit:sun|semissextil|neptune':
+    'Sol em semissextil com Netuno amplia percepcao sutil e imaginacao, com necessidade de manter clareza de rumo. O momento pode ser produtivo para criatividade e refinamento de sensibilidade sem perder criterio pratico. Organize prioridades e cheque detalhes para evitar dispersao.',
+  'transit:moon|ingress|house_4':
+    'Lua em ingresso na Casa 4 destaca necessidades de acolhimento, intimidade e reorganizacao do lar. O ciclo tende a aumentar sensibilidade aos temas familiares e ao clima emocional da casa. Favorece desacelerar, ajustar rotina domestica e fortalecer a base afetiva com simplicidade.',
+  'transit:sun|ingress|house_4':
+    'Sol em ingresso na Casa 4 ilumina temas de casa, familia e estrutura interna de seguranca. A fase favorece dar atencao a fundamentos emocionais e a organizacao do ambiente pessoal. Pequenas decisoes sobre limites, descanso e convivio tendem a trazer mais estabilidade.',
+  'transit:mars|ingress|house_4':
+    'Marte em ingresso na Casa 4 aumenta iniciativa e intensidade em assuntos domesticos e familiares. O periodo pode trazer impulso para resolver pendencias de casa, com risco de atrito se houver pressa excessiva. Direcione energia para ajustes praticos e mantenha tom objetivo nas conversas sensiveis.',
+  'transit:jupiter|ingress|house_4':
+    'Jupiter em ingresso na Casa 4 tende a ampliar foco em familia, lar e senso de pertencimento. A fase pode favorecer melhorias de ambiente e acordos que tragam maior conforto emocional. Expanda com planejamento para que crescimento domestico seja sustentavel no tempo.',
+  'transit:saturn|ingress|house_4':
+    'Saturno em ingresso na Casa 4 marca fase de consolidacao de base emocional e estrutura familiar. O ciclo pede organizar responsabilidades domesticas, limites e prioridades afetivas com mais maturidade. Ajustes constantes e realistas fortalecem seguranca interna e estabilidade no cotidiano.',
 }
