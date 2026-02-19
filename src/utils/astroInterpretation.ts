@@ -346,7 +346,7 @@ const I18N = {
     practicalApplicationPrefix: 'Aplicacao pratica',
     practicalDirectionPrefix: 'Direcionamento pratico',
     recommendedUsePrefix: 'Uso recomendado',
-    scoreLinkPrefix: 'Conexao com o status',
+    scoreLinkPrefix: 'Leitura pratica',
     phases: {
       peak: 'em pico',
       start: 'em aproximacao',
@@ -378,7 +378,7 @@ const I18N = {
     practicalApplicationPrefix: 'Practical application',
     practicalDirectionPrefix: 'Practical direction',
     recommendedUsePrefix: 'Recommended use',
-    scoreLinkPrefix: 'Status link',
+    scoreLinkPrefix: 'Practical reading',
     phases: {
       peak: 'at peak',
       start: 'approaching',
@@ -410,7 +410,7 @@ const I18N = {
     practicalApplicationPrefix: 'Aplicacion practica',
     practicalDirectionPrefix: 'Direccion practica',
     recommendedUsePrefix: 'Uso recomendado',
-    scoreLinkPrefix: 'Conexion con el estado',
+    scoreLinkPrefix: 'Lectura practica',
     phases: {
       peak: 'en pico',
       start: 'en aproximacion',
@@ -442,7 +442,7 @@ const I18N = {
     practicalApplicationPrefix: 'Applicazione pratica',
     practicalDirectionPrefix: 'Direzione pratica',
     recommendedUsePrefix: 'Uso consigliato',
-    scoreLinkPrefix: 'Connessione con lo stato',
+    scoreLinkPrefix: 'Lettura pratica',
     phases: {
       peak: 'al picco',
       start: 'in avvicinamento',
@@ -679,6 +679,7 @@ function sanitizeCatalogText(value: string): string {
     [/\bcom certeza\b/gi, 'com boa chance'],
     [/\binevitavel\b/gi, 'mais provavel'],
     [/\bgarantid[oa]\b/gi, 'favorecido'],
+    [/\bstatus quo\b/gi, 'padrao atual'],
   ]
   let out = fixMojibake(String(value || ''))
   for (const [pattern, replacement] of replacements) {
@@ -847,21 +848,21 @@ function buildScoreLink(aspectKey: string, areaLabel?: string | null, language?:
   const lang = getLang(language)
   const area = getAreaLabel(areaLabel, lang)
   if (['quadratura', 'oposicao', 'quincuncio', 'semiquadratura', 'sesquiquadratura', 'tense'].includes(aspectKey)) {
-    if (lang === 'en-US') return `Status link: this pattern tends to pressure ${area} under impulse; score improves with strategic adjustment.`
-    if (lang === 'es-ES') return `Conexion con el estado: este patron tiende a presionar ${area} si actuas por impulso; el score mejora con ajuste de estrategia.`
-    if (lang === 'it-IT') return `Connessione con lo stato: questo schema tende a premere ${area} se agisci d impulso; il punteggio migliora con aggiustamento strategico.`
-    return `Conexao com o status: este padrao tende a pressionar ${area} se voce agir no impulso; o score melhora com ajuste de estrategia.`
+    if (lang === 'en-US') return `Practical reading: this pattern can pressure ${area} under impulse; outcomes improve with strategic adjustment.`
+    if (lang === 'es-ES') return `Lectura practica: este patron puede presionar ${area} si actuas por impulso; el resultado mejora con ajuste de estrategia.`
+    if (lang === 'it-IT') return `Lettura pratica: questo schema puo mettere pressione su ${area} se agisci d impulso; il risultato migliora con un aggiustamento strategico.`
+    return `Leitura pratica: este padrao pode pressionar ${area} se voce agir no impulso; o resultado melhora com ajuste de estrategia.`
   }
   if (['trigono', 'sextil', 'harmonic'].includes(aspectKey)) {
-    if (lang === 'en-US') return `Status link: this pattern tends to support ${area}; score rises when potential becomes concrete action.`
-    if (lang === 'es-ES') return `Conexion con el estado: este patron tiende a favorecer ${area}; el score sube cuando conviertes potencial en accion concreta.`
-    if (lang === 'it-IT') return `Connessione con lo stato: questo schema tende a favorire ${area}; il punteggio sale quando il potenziale diventa azione concreta.`
-    return `Conexao com o status: este padrao tende a favorecer ${area}; o score sobe quando voce transforma potencial em acao concreta.`
+    if (lang === 'en-US') return `Practical reading: this pattern tends to support ${area}; results improve when potential becomes concrete action.`
+    if (lang === 'es-ES') return `Lectura practica: este patron tiende a favorecer ${area}; el resultado sube cuando conviertes potencial en accion concreta.`
+    if (lang === 'it-IT') return `Lettura pratica: questo schema tende a favorire ${area}; il risultato cresce quando il potenziale diventa azione concreta.`
+    return `Leitura pratica: este padrao tende a favorecer ${area}; o resultado melhora quando voce transforma potencial em acao concreta.`
   }
-  if (lang === 'en-US') return `Status link: effect on ${area} depends more on consistent choices than transit intensity.`
-  if (lang === 'es-ES') return `Conexion con el estado: el efecto en ${area} depende mas de la consistencia de tus decisiones que de la intensidad del transito.`
-  if (lang === 'it-IT') return `Connessione con lo stato: l effetto su ${area} dipende piu dalla coerenza delle scelte che dall intensita del transito.`
-  return `Conexao com o status: o efeito em ${area} depende mais da consistencia das escolhas do que da intensidade do transito.`
+  if (lang === 'en-US') return `Practical reading: effect on ${area} depends more on consistent choices than transit intensity.`
+  if (lang === 'es-ES') return `Lectura practica: el efecto en ${area} depende mas de la consistencia de tus decisiones que de la intensidad del transito.`
+  if (lang === 'it-IT') return `Lettura pratica: l effetto su ${area} dipende piu dalla coerenza delle scelte che dall intensita del transito.`
+  return `Leitura pratica: o efeito em ${area} depende mais da consistencia das escolhas do que da intensidade do transito.`
 }
 
 function stripActionPrefix(text: string, prefix: string): string {
