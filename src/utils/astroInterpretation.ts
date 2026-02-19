@@ -41,6 +41,10 @@ const TARGET_ALIASES_TO_CANONICAL: Record<string, string> = {
   dc: 'descendente',
 }
 
+type CatalogEntry = { text?: string }
+type CatalogMap = Record<string, CatalogEntry>
+type CatalogTextMap = Record<string, string>
+
 const PLANET_SYMBOLISM: Record<string, string> = {
   Sun: 'identidade, direcao e vitalidade',
   Moon: 'emocao, seguranca e habitos',
@@ -664,6 +668,46 @@ function normalizeTransitToken(value: unknown): string {
     .replace(/\s+/g, '_')
 }
 
+function normalizeCatalogKey(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '')
+}
+
+function buildNormalizedCatalogMap<T>(source: Record<string, T>): Record<string, T> {
+  const normalized: Record<string, T> = {}
+  Object.entries(source || {}).forEach(([rawKey, value]) => {
+    const key = normalizeCatalogKey(rawKey)
+    if (!key) return
+    if (typeof normalized[key] === 'undefined') {
+      normalized[key] = value
+    }
+  })
+  return normalized
+}
+
+const TRANSIT_CATALOG_PTBR_NORMALIZED = buildNormalizedCatalogMap<CatalogEntry>(
+  TRANSIT_CATALOG_PTBR as CatalogMap
+)
+const TRANSIT_CATALOG_PTBR_OVERRIDES_NORMALIZED = buildNormalizedCatalogMap<string>(
+  TRANSIT_CATALOG_PTBR_OVERRIDES as CatalogTextMap
+)
+const TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED = new Set<string>(
+  Array.from(TRANSIT_CATALOG_BLOCKED_KEYS).map((key) => normalizeCatalogKey(key)).filter(Boolean)
+)
+const TRANSIT_CATALOG_I18N_OVERRIDES_NORMALIZED: Partial<Record<AppLanguage, CatalogTextMap>> = (() => {
+  const out: Partial<Record<AppLanguage, CatalogTextMap>> = {}
+  ;(Object.keys(TRANSIT_CATALOG_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = TRANSIT_CATALOG_I18N_OVERRIDES[lang]
+    if (!map) return
+    out[lang] = buildNormalizedCatalogMap<string>(map)
+  })
+  return out
+})()
+
 function buildCatalogTransitKey(transit: AnyTransit): string | null {
   const planet = normalizeTransitToken(transit?.transitPlanet)
   const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
@@ -728,21 +772,28 @@ function sanitizeCatalogText(value: string): string {
 
 function resolveCatalogTransitText(transit: AnyTransit, language?: string | null): string | null {
   const lang = getLang(language)
-  const key = buildCatalogTransitKey(transit)
-  if (!key) return null
-  const i18nOverrideText = TRANSIT_CATALOG_I18N_OVERRIDES[lang]?.[key]
+  const keyRaw = buildCatalogTransitKey(transit)
+  if (!keyRaw) return null
+  const key = normalizeCatalogKey(keyRaw)
+  const i18nOverrideText =
+    TRANSIT_CATALOG_I18N_OVERRIDES_NORMALIZED[lang]?.[key] ||
+    TRANSIT_CATALOG_I18N_OVERRIDES[lang]?.[keyRaw]
   if (i18nOverrideText) {
     const i18nOverrideSanitized = sanitizeCatalogText(i18nOverrideText)
     if (i18nOverrideSanitized) return i18nOverrideSanitized
   }
   if (lang !== 'pt-BR') return null
-  const overrideText = TRANSIT_CATALOG_PTBR_OVERRIDES[key]
+  const overrideText =
+    TRANSIT_CATALOG_PTBR_OVERRIDES_NORMALIZED[key] ||
+    TRANSIT_CATALOG_PTBR_OVERRIDES[keyRaw]
   if (overrideText) {
     const overrideSanitized = sanitizeCatalogText(overrideText)
     if (overrideSanitized) return overrideSanitized
   }
-  if (TRANSIT_CATALOG_BLOCKED_KEYS.has(key)) return null
-  const entry = TRANSIT_CATALOG_PTBR[key]
+  if (TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED.has(key) || TRANSIT_CATALOG_BLOCKED_KEYS.has(keyRaw)) return null
+  const entry =
+    TRANSIT_CATALOG_PTBR_NORMALIZED[key] ||
+    (TRANSIT_CATALOG_PTBR as CatalogMap)[keyRaw]
   if (!entry?.text) return null
   const sanitized = sanitizeCatalogText(entry.text)
   return sanitized || null

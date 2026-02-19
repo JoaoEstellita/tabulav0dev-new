@@ -104,6 +104,41 @@ describe('astroInterpretation catalog integration', () => {
     expect(a.transitKey).toContain('quadratura')
   })
 
+  it('keeps the same canonical transitKey across locales', () => {
+    const transit = {
+      transitPlanet: 'Jupiter',
+      aspectName: 'conjuncao',
+      target: { angle: 'MC' },
+      phase: 'active',
+    }
+    const pt = buildUnifiedTransitNarrative(transit, 'carreira', 'pt-BR')
+    const en = buildUnifiedTransitNarrative(transit, 'carreira', 'en-US')
+    const es = buildUnifiedTransitNarrative(transit, 'carreira', 'es-ES')
+    const it = buildUnifiedTransitNarrative(transit, 'carreira', 'it-IT')
+
+    expect(pt.transitKey).toBe(en.transitKey)
+    expect(en.transitKey).toBe(es.transitKey)
+    expect(es.transitKey).toBe(it.transitKey)
+  })
+
+  it('resolves i18n curated text with noisy aliases/accented input', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Jupiter',
+        aspectName: 'Conjunção',
+        target: { angle: 'Meio do Céu' },
+        phase: 'ACTIVE',
+      },
+      'carreira',
+      'en-US'
+    )
+
+    const text = narrative.shortText.toLowerCase()
+    expect(text).toContain('jupiter')
+    expect(text).toContain('midheaven')
+    expect(text).toContain('visibility')
+  })
+
   it('normalizes angle aliases in catalog resolver (MC/IC/DSC)', () => {
     const mc = buildUnifiedTransitNarrative(
       { transitPlanet: 'Jupiter', aspectName: 'oposicao', target: { angle: 'MC' }, phase: 'active' },
