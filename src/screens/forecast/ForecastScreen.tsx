@@ -22,6 +22,7 @@ import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
+import type { TransitInterpretationV2 } from '../../utils/transitInterpretationV2'
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from '../../utils/statusAxes'
 import { backendFetch } from '../../services/backend/client'
 import StarLoader from '../../components/StarLoader'
@@ -571,6 +572,7 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     metaText: string
     impactValue01: number
     impactLabel: string
+    interpretationV2?: TransitInterpretationV2 | null
   }>
   onOpenEventDetail: (eventId: string) => void
   dayEventsLabel: string
@@ -1273,13 +1275,22 @@ export default function ForecastScreen() {
       const statusLabel = localizedImpactLabel(event.impact)
       const statusColor = event.impact === 'UP' ? '#22C55E' : event.impact === 'DOWN' ? '#EF4444' : '#D97706'
       const impactValue01 = Math.max(0.08, Math.min(1, Number(event.intensity || 0)))
+      const unifiedNarrative = buildUnifiedTransitNarrative(
+        {
+          transitPlanet: event.transitPlanet,
+          aspectName: event.aspect,
+          natalPlanet: event.natalPoint,
+        },
+        (event.domains || []).map((d) => formatDomainLabel(d, language as AppLanguage)).slice(0, 1).join(', ') || 'previsoes',
+        language
+      )
       return {
         event,
         title: buildEventTitle(event, language),
         statusLabel,
         statusColor,
         phase: eventPhaseMap[event.id] || buildEventPhase(selectedDateKey, event),
-        directText: buildDirectEventText(event, language),
+        directText: unifiedNarrative.shortText || buildDirectEventText(event, language),
         actionHint,
         metaText,
         impactValue01,
@@ -1288,6 +1299,7 @@ export default function ForecastScreen() {
           `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
           { value: Math.round(impactValue01 * 100) }
         ),
+        interpretationV2: unifiedNarrative.interpretationV2 || null,
       }
     })
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
@@ -1541,6 +1553,7 @@ export default function ForecastScreen() {
             actionText={detail.actionHint}
             metaText={detail.metaText}
             keywords={buildEventKeywords(detail.event, detail.phase?.label || null, language)}
+            interpretationV2={detail.interpretationV2 || null}
           />
         )
       })()}

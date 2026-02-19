@@ -1,4 +1,9 @@
 import { normalizeLanguage, type AppLanguage } from '../i18n/appI18n'
+import { isInterpretationV2Enabled } from './featureFlags'
+import {
+  buildTransitInterpretationV2,
+  type TransitInterpretationV2,
+} from './transitInterpretationV2'
 
 type AnyTransit = Record<string, any>
 
@@ -954,6 +959,7 @@ export type UnifiedTransitNarrative = {
   keywords: string[]
   actionText: string
   metaText: string
+  interpretationV2?: TransitInterpretationV2 | null
 }
 
 export function buildUnifiedTransitNarrative(
@@ -1030,6 +1036,22 @@ export function buildUnifiedTransitNarrative(
     ...metaParts,
   ], { exclude: [narrative.directText] }).join('\n\n')
 
+  const interpretationV2 = (() => {
+    if (!isInterpretationV2Enabled()) return null
+    const houseLabel = house ? (lang === 'en-US' ? `House ${house}` : `Casa ${house}`) : null
+    return buildTransitInterpretationV2({
+      title: `${transitPlanet} ${aspectLabel} ${targetLabel}`.trim(),
+      lifeArea: area,
+      houseLabel,
+      statusLabel: aspectLabel,
+      timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
+      shortText: narrative.directText,
+      fullText: modalBody || narrative.fullText || narrative.directText,
+      actionText,
+      metaText: metaParts.join(' '),
+    })
+  })()
+
   return {
     shortText: narrative.directText,
     modalIntro,
@@ -1037,5 +1059,6 @@ export function buildUnifiedTransitNarrative(
     keywords,
     actionText,
     metaText: metaParts.join(' '),
+    interpretationV2,
   }
 }

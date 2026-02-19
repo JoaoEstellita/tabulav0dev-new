@@ -22,6 +22,7 @@ import ReadingDetailModal from './ReadingDetailModal'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
+import type { TransitInterpretationV2 } from '../utils/transitInterpretationV2'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
@@ -638,6 +639,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
     statusColor: string
     timingLabel: string | null
     keywords: string[]
+    interpretationV2?: TransitInterpretationV2 | null
   } | null>(null)
   const scrollOffsetYRef = React.useRef(0)
   const swipeTranslateY = React.useRef(new Animated.Value(0)).current
@@ -2405,6 +2407,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               statusColor,
               timingLabel: timingLabel || null,
               keywords: unifiedNarrative.keywords,
+              interpretationV2: unifiedNarrative.interpretationV2 || null,
             })
           }
           detailMode="modal"
@@ -3254,6 +3257,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
         actionText={detailView?.actionText || null}
         metaText={detailView?.metaText || null}
         keywords={detailView?.keywords || []}
+        interpretationV2={detailView?.interpretationV2 || null}
       />
     </Modal>
   )

@@ -5,6 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { translatePlanet } from '../utils/astro/pt'
+import { TRANSIT_MODAL_UI_PTBR } from '../i18n/transitModalUi'
+import type { TransitInterpretationV2 } from '../utils/transitInterpretationV2'
 
 type ReadingDetailModalProps = {
   visible: boolean
@@ -19,6 +21,7 @@ type ReadingDetailModalProps = {
   actionText?: string | null
   metaText?: string | null
   keywords?: string[]
+  interpretationV2?: TransitInterpretationV2 | null
   closeLabel?: string
   secondaryActionLabel?: string | null
   onSecondaryAction?: (() => void) | null
@@ -148,6 +151,7 @@ export default function ReadingDetailModal({
   actionText,
   metaText,
   keywords,
+  interpretationV2,
   closeLabel,
   secondaryActionLabel,
   onSecondaryAction,
@@ -259,6 +263,28 @@ export default function ReadingDetailModal({
     () => (Array.isArray(keywords) && keywords.length ? keywords.map((k) => localizeAstroText(k)) : buildDefaultKeywords(localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel)),
     [keywords, localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel, localizeAstroText]
   )
+  const resolvedV2 = interpretationV2 || null
+  const localizedV2 = React.useMemo(() => {
+    if (!resolvedV2) return null
+    const mapList = (values: string[]) => values.map((value) => localizeAstroText(value))
+    return {
+      ...resolvedV2,
+      header: localizeAstroText(resolvedV2.header),
+      subheader: localizeAstroText(resolvedV2.subheader),
+      tldr: localizeAstroText(resolvedV2.tldr),
+      medium: localizeAstroText(resolvedV2.medium),
+      long: localizeAstroText(resolvedV2.long),
+      confidenceWhy: localizeAstroText(resolvedV2.confidenceWhy),
+      timeWindow: localizeAstroText(resolvedV2.timeWindow),
+      exactness: localizeAstroText(resolvedV2.exactness),
+      actionables: mapList(resolvedV2.actionables || []),
+      uncertaintyNotes: mapList(resolvedV2.uncertaintyNotes || []),
+      callouts: {
+        opportunities: mapList(resolvedV2.callouts?.opportunities || []),
+        watchOuts: mapList(resolvedV2.callouts?.watchOuts || []),
+      },
+    }
+  }, [resolvedV2, localizeAstroText])
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
@@ -320,29 +346,99 @@ export default function ReadingDetailModal({
               </View>
             ) : null}
 
-            <View style={styles.sectionCard}>
-              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.keyReading', 'Key reading')}</Text>
-              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedDirectText}</Text>
-            </View>
+            {localizedV2 ? (
+              <>
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.tldr}</Text>
+                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.tldr}</Text>
+                </View>
 
-            <View style={styles.sectionCard}>
-              <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.appliedInterpretation', 'Applied interpretation')}</Text>
-              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText}</Text>
-            </View>
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.quickExplanation}</Text>
+                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.medium}</Text>
+                </View>
 
-            {localizedActionText ? (
-              <View style={styles.sectionCard}>
-                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.practicalUse', 'Practical use')}</Text>
-                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedActionText}</Text>
-              </View>
-            ) : null}
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.deepDive}</Text>
+                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.long}</Text>
+                </View>
 
-            {localizedMetaText ? (
-              <View style={styles.sectionCard}>
-                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.technicalContext', 'Technical context')}</Text>
-                <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{localizedMetaText}</Text>
-              </View>
-            ) : null}
+                {localizedV2.callouts?.opportunities?.length ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.opportunities}</Text>
+                    {localizedV2.callouts.opportunities.slice(0, 3).map((item) => (
+                      <Text key={`opp-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+
+                {localizedV2.callouts?.watchOuts?.length ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.watchOuts}</Text>
+                    {localizedV2.callouts.watchOuts.slice(0, 3).map((item) => (
+                      <Text key={`watch-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+
+                {localizedV2.actionables?.length ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.actionPlan}</Text>
+                    {localizedV2.actionables.slice(0, 3).map((item) => (
+                      <Text key={`act-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.confidence}</Text>
+                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                    {Math.round((localizedV2.confidenceScore || 0) * 100)}% • {localizedV2.confidenceWhy}
+                  </Text>
+                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                    {TRANSIT_MODAL_UI_PTBR.timing}: {localizedV2.timeWindow}
+                  </Text>
+                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                    Exatidão: {localizedV2.exactness}
+                  </Text>
+                </View>
+
+                {localizedV2.uncertaintyNotes?.length ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.uncertainty}</Text>
+                    {localizedV2.uncertaintyNotes.map((item) => (
+                      <Text key={`unc-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.keyReading', 'Key reading')}</Text>
+                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedDirectText}</Text>
+                </View>
+
+                <View style={styles.sectionCard}>
+                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.appliedInterpretation', 'Applied interpretation')}</Text>
+                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText}</Text>
+                </View>
+
+                {localizedActionText ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.practicalUse', 'Practical use')}</Text>
+                    <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedActionText}</Text>
+                  </View>
+                ) : null}
+
+                {localizedMetaText ? (
+                  <View style={styles.sectionCard}>
+                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.technicalContext', 'Technical context')}</Text>
+                    <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{localizedMetaText}</Text>
+                  </View>
+                ) : null}
+              </>
+            )}
           </ScrollView>
 
           {secondaryActionLabel && onSecondaryAction ? (

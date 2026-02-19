@@ -39,6 +39,7 @@ import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
+import type { TransitInterpretationV2 } from "../../utils/transitInterpretationV2"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
@@ -104,6 +105,7 @@ type MemberAreaTransitItem = {
   metaText: string
   impactValue01: number
   keywords: string[]
+  interpretationV2?: TransitInterpretationV2 | null
 }
 
 const getTransitSource = (transitLike: any) => transitLike?.rawTransit || transitLike || {}
@@ -198,6 +200,7 @@ export default function GroupsScreen() {
     actionText?: string
     metaText?: string
     keywords?: string[]
+    interpretationV2?: TransitInterpretationV2 | null
   } | null>(null)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
@@ -2461,6 +2464,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                           metaText: [unifiedNarrative.metaText, orbText, impactText].filter(Boolean).join(" • "),
                           impactValue01: computeTransitImpactValue(transit, areaCritical),
                           keywords: buildTransitKeywords(transit, key),
+                          interpretationV2: unifiedNarrative.interpretationV2 || null,
                         }
                       })
 
@@ -2590,6 +2594,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
                               actionText: item.actionText,
                               metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
                               keywords: item.keywords,
+                              interpretationV2: item.interpretationV2 || null,
                             })
                           }}
                           modalOpenByCard
@@ -2855,6 +2860,7 @@ const buildMemberAreaEntries = (member: GroupMember) => {
         actionText={selectedMemberTransitDetail?.actionText || null}
         metaText={selectedMemberTransitDetail?.metaText || null}
         keywords={selectedMemberTransitDetail?.keywords || []}
+        interpretationV2={selectedMemberTransitDetail?.interpretationV2 || null}
       />
 
       <GroupDetailModal
