@@ -1,6 +1,6 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: Txt/curated/catalog_clean_candidates.json
-// Generated at: 2026-02-19T03:00:16.898Z
+// Generated at: 2026-02-19T03:15:24.661Z
 
 export type TransitCatalogEntry = {
   text: string
@@ -3533,7 +3533,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
 } as const;
 
 export const TRANSIT_CATALOG_PTBR_META = {
-  generatedAt: '2026-02-19T03:00:16.898Z',
+  generatedAt: '2026-02-19T03:15:24.661Z',
   entries: 704,
   source: 'Txt/curated/catalog_clean_candidates.json',
 } as const;

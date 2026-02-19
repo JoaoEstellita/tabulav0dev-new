@@ -645,15 +645,33 @@ function buildCatalogTransitKey(transit: AnyTransit): string | null {
 }
 
 function sanitizeCatalogText(value: string): string {
+  const countToken = (text: string, token: string): number => {
+    if (!token) return 0
+    return String(text).split(token).length - 1
+  }
+
+  const catalogCorruptionScore = (input: string): number => {
+    const s = String(input || '')
+    const replacement = countToken(s, '\uFFFD')
+    const mojibake =
+      countToken(s, '\u00C3')
+      + countToken(s, '\u00C2')
+      + countToken(s, '\u00E2\u20AC')
+    return replacement * 4 + mojibake
+  }
+
+  const isCatalogTextReliable = (input: string): boolean => {
+    const text = String(input || '').trim()
+    if (!text || text.length < 50) return false
+    if (catalogCorruptionScore(text) > 1) return false
+    const alpha = (text.match(/[A-Za-z]/g) || []).length
+    return alpha / text.length >= 0.45
+  }
+
   const fixMojibake = (input: string): string => {
-    const score = (s: string) => {
-      const replacement = (s.match(/\uFFFD/g) || []).length
-      const mojibake = (s.match(/Ã.|Â|â€|â€™|â€œ|â€/g) || []).length
-      return replacement * 4 + mojibake
-    }
     const bytes = new Uint8Array(Array.from(input).map((ch) => ch.charCodeAt(0) & 0xff))
     const rescued = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
-    return score(rescued) < score(input) ? rescued : input
+    return catalogCorruptionScore(rescued) < catalogCorruptionScore(input) ? rescued : input
   }
 
   const replacements: Array<[RegExp, string]> = [
@@ -666,7 +684,9 @@ function sanitizeCatalogText(value: string): string {
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }
-  return sanitizeNarrativeText(out)
+  const sanitized = sanitizeNarrativeText(out)
+  if (!isCatalogTextReliable(sanitized)) return ''
+  return sanitized
 }
 
 function resolveCatalogTransitText(transit: AnyTransit, language?: string | null): string | null {
@@ -676,7 +696,8 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
   if (!key) return null
   const entry = TRANSIT_CATALOG_PTBR[key]
   if (!entry?.text) return null
-  return sanitizeCatalogText(entry.text)
+  const sanitized = sanitizeCatalogText(entry.text)
+  return sanitized || null
 }
 
 function pickVariant(seed: number, options: string[], offset = 0): string {
