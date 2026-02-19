@@ -90,6 +90,52 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter entering House 4 tends to expand focus on home, family, and emotional belonging. The phase may favor environmental improvements and supportive household agreements. Expand with planning so domestic growth remains sustainable over time.',
     'transit:saturn|ingress|house_4':
       'Saturn entering House 4 marks a phase of consolidating emotional foundations and family structure. The cycle asks for clearer domestic responsibilities, boundaries, and priorities. Consistent realistic adjustments strengthen inner and household stability.',
+    'transit:saturn|oposicao|jupiter':
+      'Saturn opposite Jupiter asks you to calibrate expansion with concrete limits. This phase may expose either over-optimism or excessive rigidity, requiring balance between vision and execution. Review goals, timing, and resources to grow safely.',
+    'transit:moon|oposicao|jupiter':
+      'Moon opposite Jupiter can amplify emotional reactions and short-term expectations. This cycle favors moderating excess and returning to realistic choices. Brief pauses and clearer priorities help avoid dispersion.',
+    'transit:saturn|oposicao|pluto':
+      'Saturn opposite Pluto intensifies tests around structure, power, and resilience. The cycle asks for maturity to sustain deep changes without impulsive rupture. Move in stages with strategy and clear boundaries.',
+    'transit:sun|quadratura|moon':
+      'Sun square Moon can create friction between conscious intention and emotional need. This phase asks for alignment between what you want to do and what your inner rhythm can sustain. Simple routine and communication adjustments reduce conflict.',
+    'transit:saturn|sextil|neptune':
+      'Saturn sextile Neptune supports turning intuition into practical structure. This phase helps shape sensitive ideas through method and consistency. Build inspiration into small verifiable steps.',
+    'transit:saturn|trigono|neptune':
+      'Saturn trine Neptune sustains balance between sensitivity and realism. This period favors consolidating long-term visions with discipline and criteria. Good timing to structure creative or spiritual projects practically.',
+    'transit:sun|sextil|moon':
+      'Sun sextile Moon supports integration between intention and emotion. This phase tends to improve flow in conversations, routine adjustments, and daily choices. Use it to align internal and external priorities.',
+    'transit:sun|trigono|moon':
+      'Sun trine Moon strengthens coherence between identity and emotional needs. This period often supports stable organization of important choices. Use it to consolidate habits that sustain continuity.',
+    'transit:saturn|sextil|ascendente':
+      'Saturn sextile Ascendant favors grounded posture, focus, and self-management. This phase supports steady progress when discipline and boundaries are clear. Small commitments kept consistently build trust.',
+    'transit:saturn|trigono|ascendente':
+      'Saturn trine Ascendant reinforces maturity, presence, and stable pacing. This period helps organize responsibilities without unnecessary overload. Keep consistency and prioritize durable foundations.',
+    'transit:saturn|oposicao|saturn':
+      'Saturn opposite Saturn marks a review point for long-term structures. This cycle may expose real limits in older models and ask for objective reorganization. Focus on essentials and recalculate commitments for continuity.',
+    'transit:moon|sextil|saturn':
+      'Moon sextile Saturn helps regulate emotions with practicality and steadiness. This phase favors mature conversations and better emotional routine management. Good period to reinforce supportive structure.',
+    'transit:moon|trigono|saturn':
+      'Moon trine Saturn favors emotional stability and balanced responsibility. This cycle supports prudent decisions without emotional hardening. Use the moment to consolidate healthy agreements and limits.',
+    'transit:moon|quadratura|mars':
+      'Moon square Mars can increase irritability and emotional impulsiveness. This phase asks for care with quick reactions in daily friction. Slow down, breathe before acting, and direct energy into concrete tasks.',
+    'transit:moon|conjuncao|uranus':
+      'Moon conjunct Uranus raises emotional need for freedom and rapid change. This cycle may bring mood shifts and surprises in close interactions. Flexibility with clear limits helps maintain balance.',
+    'transit:moon|oposicao|mars':
+      'Moon opposite Mars can heighten reactivity in relationships and immediate choices. This phase asks you to calibrate impulse with listening to avoid unnecessary wear. Prioritize objective dialogue and strategic pauses.',
+    'transit:moon|conjuncao|mars':
+      'Moon conjunct Mars increases affective intensity and urgency to act. This period can be productive for resolving pending matters, with risk of emotional haste. Channel energy into short actions and avoid reactive disputes.',
+    'transit:saturn|quadratura|moon':
+      'Saturn square Moon may increase emotional pressure and need for containment. This cycle asks for simple discipline, emotional structure, and adequate recovery. Organize supportive routines to prevent inner overload.',
+    'transit:moon|quadratura|jupiter':
+      'Moon square Jupiter can inflate expectations and mood oscillation around outcomes. This phase asks for moderation to avoid emotional overreach. Reassess priorities and stay with what is viable now.',
+    'transit:uranus|sextil|moon':
+      'Uranus sextile Moon favors emotional renewal with more lightness and creativity. This period helps test new habits without abrupt rupture. Small conscious changes can quickly improve wellbeing.',
+    'transit:uranus|trigono|moon':
+      'Uranus trine Moon supports updating emotional patterns with autonomy. This phase tends to open room for more authentic daily choices. Use flexibility to adjust routine and bonds responsibly.',
+    'transit:pluto|oposicao|venus':
+      'Pluto opposite Venus intensifies themes of bonds, value, and reciprocity. This cycle may expose attachment or control dynamics requiring conscious repositioning. Seek more authentic agreements with clear boundaries.',
+    'transit:uranus|conjuncao|saturn':
+      'Uranus conjunct Saturn combines disruption and structure, asking old models to update. This phase favors innovation with responsibility rather than destructive rupture. Progressive adjustments tend to work better than abrupt turns.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -178,6 +224,52 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en ingreso a Casa 4 tiende a ampliar foco en hogar, familia y pertenencia emocional. Esta fase puede favorecer mejoras del entorno y acuerdos familiares de apoyo. Expande con planificacion para sostener crecimiento domestico en el tiempo.',
     'transit:saturn|ingress|house_4':
       'Saturno en ingreso a Casa 4 marca fase de consolidacion de base emocional y estructura familiar. El ciclo pide ordenar responsabilidades domesticas, limites y prioridades afectivas con mayor madurez. Ajustes constantes y realistas fortalecen seguridad interna y estabilidad cotidiana.',
+    'transit:saturn|oposicao|jupiter':
+      'Saturno en oposicion a Jupiter pide calibrar expansion con limites concretos. Esta fase puede mostrar exceso de optimismo o rigidez, y requiere equilibrio entre vision y ejecucion. Revisa metas, tiempos y recursos para crecer con seguridad.',
+    'transit:moon|oposicao|jupiter':
+      'Luna en oposicion a Jupiter puede amplificar reaccion emocional y expectativa inmediata. El ciclo favorece moderar excesos y volver a decisiones realistas. Pausas breves y prioridades claras ayudan a evitar dispersion.',
+    'transit:saturn|oposicao|pluto':
+      'Saturno en oposicion a Pluton intensifica pruebas de estructura, poder y resistencia. Esta fase pide madurez para sostener cambios profundos sin ruptura impulsiva. Avanza por etapas con estrategia y limites definidos.',
+    'transit:sun|quadratura|moon':
+      'Sol en cuadratura con Luna puede generar friccion entre voluntad consciente y necesidad emocional. Esta fase pide alinear lo que quieres hacer con el ritmo interno disponible. Ajustes simples de rutina y comunicacion reducen conflicto.',
+    'transit:saturn|sextil|neptune':
+      'Saturno en sextil a Neptuno favorece traducir intuicion en estructura practica. Esta fase ayuda a dar forma a ideas sensibles con metodo y constancia. Convierte inspiracion en pasos pequenos y verificables.',
+    'transit:saturn|trigono|neptune':
+      'Saturno en trigono a Neptuno sostiene equilibrio entre sensibilidad y realismo. El periodo favorece consolidar vision de largo plazo con disciplina y criterio. Buen momento para estructurar proyectos creativos o espirituales con base practica.',
+    'transit:sun|sextil|moon':
+      'Sol en sextil con Luna facilita integracion entre voluntad y emocion. Esta fase mejora fluidez en conversaciones, ajustes de rutina y decisiones cotidianas. Aprovecha para alinear prioridades internas y externas.',
+    'transit:sun|trigono|moon':
+      'Sol en trigono con Luna refuerza coherencia entre identidad y necesidades emocionales. El periodo suele traer mayor estabilidad para organizar elecciones importantes. Aprovecha para consolidar habitos sostenibles.',
+    'transit:saturn|sextil|ascendente':
+      'Saturno en sextil al Ascendente favorece postura solida, foco y autogestion. Esta fase apoya avances constantes cuando hay disciplina y limites claros. Pequenos compromisos sostenidos construyen confianza.',
+    'transit:saturn|trigono|ascendente':
+      'Saturno en trigono al Ascendente fortalece madurez, presencia y ritmo estable. El periodo facilita ordenar responsabilidades sin sobrecarga innecesaria. Mantener constancia ayuda a consolidar base duradera.',
+    'transit:saturn|oposicao|saturn':
+      'Saturno en oposicion a Saturno marca un punto de revision de estructuras de largo plazo. El ciclo puede evidenciar limites reales en modelos antiguos y pedir reorganizacion objetiva. Enfocate en lo esencial y recalibra compromisos.',
+    'transit:moon|sextil|saturn':
+      'Luna en sextil a Saturno ayuda a regular emociones con practicidad y sobriedad. Esta fase favorece conversaciones maduras y mejor organizacion afectiva cotidiana. Buen momento para reforzar estructura de apoyo.',
+    'transit:moon|trigono|saturn':
+      'Luna en trigono a Saturno favorece estabilidad emocional y responsabilidad equilibrada. El ciclo facilita decisiones prudentes sin endurecimiento excesivo. Usa el momento para consolidar acuerdos y limites saludables.',
+    'transit:moon|quadratura|mars':
+      'Luna en cuadratura con Marte puede aumentar irritacion e impulsividad emocional. La fase pide cuidado con reacciones rapidas en roces diarios. Baja velocidad, respira y canaliza energia en tareas concretas.',
+    'transit:moon|conjuncao|uranus':
+      'Luna en conjuncion con Urano aumenta necesidad de libertad emocional y cambio rapido. Este ciclo puede traer variaciones de humor y sorpresas en vinculos cercanos. Flexibilidad con limites claros ayuda a sostener equilibrio.',
+    'transit:moon|oposicao|mars':
+      'Luna en oposicion a Marte puede elevar reactividad en relaciones y decisiones inmediatas. La fase pide calibrar impulso y escucha para evitar desgaste innecesario. Prioriza dialogo objetivo y pausas estrategicas.',
+    'transit:moon|conjuncao|mars':
+      'Luna en conjuncion con Marte aumenta intensidad afectiva y urgencia por actuar. El periodo puede ser productivo para resolver pendientes, con riesgo de prisa emocional. Dirige energia a acciones cortas y evita discusiones reactivas.',
+    'transit:saturn|quadratura|moon':
+      'Saturno en cuadratura con Luna puede elevar exigencia emocional y necesidad de contencion. El ciclo pide cuidar base afectiva con disciplina simple y descanso suficiente. Organiza rutinas de soporte para evitar sobrecarga interna.',
+    'transit:moon|quadratura|jupiter':
+      'Luna en cuadratura con Jupiter puede inflar expectativas y oscilacion emocional frente a resultados. Esta fase pide moderacion para evitar exceso afectivo o decisorio. Revisa prioridades y mantente en lo viable ahora.',
+    'transit:uranus|sextil|moon':
+      'Urano en sextil con Luna favorece renovacion emocional con mas ligereza y creatividad. El periodo ayuda a probar habitos nuevos sin ruptura brusca. Pequenos cambios conscientes mejoran bienestar rapidamente.',
+    'transit:uranus|trigono|moon':
+      'Urano en trigono con Luna facilita actualizar patrones emocionales con autonomia. Esta fase abre espacio para elecciones mas autenticas en lo cotidiano. Usa la flexibilidad para ajustar rutina y vinculos con responsabilidad.',
+    'transit:pluto|oposicao|venus':
+      'Pluton en oposicion a Venus intensifica temas de vinculo, valor personal y reciprocidad. El ciclo puede mostrar dinamicas de apego y control que piden reposicionamiento consciente. Busca acuerdos mas autenticos con limites claros.',
+    'transit:uranus|conjuncao|saturn':
+      'Urano en conjuncion a Saturno combina renovacion y estructura, y pide actualizar modelos antiguos. Esta fase favorece innovar con responsabilidad sin destruir lo que aun funciona. Ajustes progresivos suelen rendir mejor que giros bruscos.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -266,5 +358,51 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in ingresso in Casa 4 tende ad ampliare focus su casa, famiglia e senso di appartenenza emotiva. Questa fase puo favorire miglioramenti dell ambiente e accordi familiari di supporto. Espandi con pianificazione per rendere la crescita domestica sostenibile nel tempo.',
     'transit:saturn|ingress|house_4':
       'Saturno in ingresso in Casa 4 indica una fase di consolidamento della base emotiva e della struttura familiare. Il ciclo chiede di ordinare responsabilita domestiche, confini e priorita affettive con maggiore maturita. Aggiustamenti costanti e realistici rafforzano sicurezza interiore e stabilita quotidiana.',
+    'transit:saturn|oposicao|jupiter':
+      'Saturno in opposizione a Giove chiede di calibrare espansione e limiti concreti. Questa fase puo mostrare eccesso di ottimismo o rigidita, e richiede equilibrio tra visione ed esecuzione. Rivedi obiettivi, tempi e risorse per crescere in modo sicuro.',
+    'transit:moon|oposicao|jupiter':
+      'Luna in opposizione a Giove puo amplificare reattivita emotiva e aspettative immediate. Il ciclo favorisce moderazione e ritorno a scelte realistiche. Pause brevi e priorita piu chiare aiutano a ridurre dispersione.',
+    'transit:saturn|oposicao|pluto':
+      'Saturno in opposizione a Plutone intensifica test su struttura, potere e resilienza. Questa fase chiede maturita per sostenere cambiamenti profondi senza rotture impulsive. Procedi per tappe con strategia e confini definiti.',
+    'transit:sun|quadratura|moon':
+      'Sole in quadratura con Luna puo creare attrito tra intenzione cosciente e bisogno emotivo. La fase chiede allineamento tra cio che vuoi fare e il ritmo interno disponibile. Aggiustamenti semplici di routine e comunicazione riducono tensione.',
+    'transit:saturn|sextil|neptune':
+      'Saturno in sestile a Nettuno favorisce tradurre intuizione in struttura pratica. Questa fase aiuta a dare forma concreta a idee sensibili con metodo e continuita. Trasforma ispirazione in piccoli passi verificabili.',
+    'transit:saturn|trigono|neptune':
+      'Saturno in trigono a Nettuno sostiene equilibrio tra sensibilita e realismo. Il periodo favorisce consolidare visioni di lungo periodo con disciplina e criterio. Buon momento per strutturare progetti creativi o spirituali in modo pratico.',
+    'transit:sun|sextil|moon':
+      'Sole in sestile con Luna facilita integrazione tra volonta ed emozione. Questa fase tende a migliorare fluidita in dialoghi, aggiustamenti di routine e scelte quotidiane. Usala per allineare priorita interne ed esterne.',
+    'transit:sun|trigono|moon':
+      'Sole in trigono con Luna rafforza coerenza tra identita e bisogni emotivi. Il periodo porta spesso maggiore stabilita nell organizzare scelte importanti. Approfittane per consolidare abitudini sostenibili.',
+    'transit:saturn|sextil|ascendente':
+      'Saturno in sestile all Ascendente favorisce postura solida, focus e autogestione. Questa fase sostiene progresso costante quando disciplina e confini sono chiari. Piccoli impegni mantenuti nel tempo costruiscono fiducia.',
+    'transit:saturn|trigono|ascendente':
+      'Saturno in trigono all Ascendente rafforza maturita, presenza e ritmo stabile. Il periodo aiuta a organizzare responsabilita senza sovraccarico inutile. Costanza e priorita corrette consolidano basi durevoli.',
+    'transit:saturn|oposicao|saturn':
+      'Saturno in opposizione a Saturno segna un punto di revisione delle strutture di lungo periodo. Il ciclo puo mostrare limiti reali dei modelli precedenti e richiedere riorganizzazione oggettiva. Concentrati sull essenziale e ricalibra gli impegni.',
+    'transit:moon|sextil|saturn':
+      'Luna in sestile a Saturno aiuta a regolare emozioni con praticita e sobrietaa. Questa fase favorisce dialoghi maturi e migliore organizzazione affettiva quotidiana. Buon momento per rafforzare struttura di supporto.',
+    'transit:moon|trigono|saturn':
+      'Luna in trigono a Saturno favorisce stabilita emotiva e responsabilita equilibrata. Il ciclo facilita decisioni prudenti senza irrigidimento eccessivo. Usa il momento per consolidare accordi e confini sani.',
+    'transit:moon|quadratura|mars':
+      'Luna in quadratura con Marte puo aumentare irritabilita e impulsivita emotiva. La fase richiede attenzione a reazioni rapide nei conflitti quotidiani. Riduci velocita, respira e convoglia energia in compiti concreti.',
+    'transit:moon|conjuncao|uranus':
+      'Luna in congiunzione con Urano aumenta bisogno di liberta emotiva e cambiamento rapido. Questo ciclo puo portare oscillazioni d umore e sorprese nei legami vicini. Flessibilita con confini chiari aiuta a mantenere equilibrio.',
+    'transit:moon|oposicao|mars':
+      'Luna in opposizione a Marte puo aumentare reattivita in relazioni e scelte immediate. La fase chiede di calibrare impulso e ascolto per evitare usura inutile. Priorita a dialogo oggettivo e pause strategiche.',
+    'transit:moon|conjuncao|mars':
+      'Luna in congiunzione con Marte aumenta intensita affettiva e urgenza di agire. Il periodo puo essere produttivo per risolvere arretrati, con rischio di fretta emotiva. Dirigi energia in azioni brevi ed evita discussioni reattive.',
+    'transit:saturn|quadratura|moon':
+      'Saturno in quadratura con Luna puo aumentare pressione emotiva e bisogno di contenimento. Il ciclo chiede cura della base affettiva con disciplina semplice e recupero adeguato. Organizza routine di supporto per evitare sovraccarico interno.',
+    'transit:moon|quadratura|jupiter':
+      'Luna in quadratura con Giove puo gonfiare aspettative e oscillazioni emotive sui risultati. Questa fase richiede moderazione per evitare eccessi affettivi o decisionali. Rivedi priorita e resta su cio che e fattibile ora.',
+    'transit:uranus|sextil|moon':
+      'Urano in sestile con Luna favorisce rinnovamento emotivo con piu leggerezza e creativita. Il periodo aiuta a sperimentare nuove abitudini senza rotture brusche. Piccoli cambiamenti consapevoli migliorano rapidamente il benessere.',
+    'transit:uranus|trigono|moon':
+      'Urano in trigono con Luna facilita aggiornare schemi emotivi con maggiore autonomia. Questa fase apre spazio a scelte quotidiane piu autentiche. Usa la flessibilita per regolare routine e legami in modo responsabile.',
+    'transit:pluto|oposicao|venus':
+      'Plutone in opposizione a Venere intensifica temi di legame, valore personale e reciprocita. Il ciclo puo mostrare dinamiche di attaccamento o controllo da riposizionare con consapevolezza. Cerca accordi piu autentici con confini chiari.',
+    'transit:uranus|conjuncao|saturn':
+      'Urano in congiunzione a Saturno combina rinnovamento e struttura, chiedendo aggiornamento dei modelli precedenti. Questa fase favorisce innovazione responsabile senza distruggere cio che ancora funziona. Aggiustamenti progressivi rendono piu dei cambi bruschi.',
   },
 }
