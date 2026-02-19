@@ -5,6 +5,7 @@ import {
   type TransitInterpretationV2,
 } from './transitInterpretationV2'
 import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
+import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
 
 type AnyTransit = Record<string, any>
 
@@ -728,6 +729,11 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
   if (lang !== 'pt-BR') return null
   const key = buildCatalogTransitKey(transit)
   if (!key) return null
+  const overrideText = TRANSIT_CATALOG_PTBR_OVERRIDES[key]
+  if (overrideText) {
+    const overrideSanitized = sanitizeCatalogText(overrideText)
+    if (overrideSanitized) return overrideSanitized
+  }
   const entry = TRANSIT_CATALOG_PTBR[key]
   if (!entry?.text) return null
   const sanitized = sanitizeCatalogText(entry.text)

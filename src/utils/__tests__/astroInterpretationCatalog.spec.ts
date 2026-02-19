@@ -16,6 +16,7 @@ describe('astroInterpretation catalog integration', () => {
 
     expect(narrative.shortText).not.toMatch(/\{[a-zA-Z0-9_.-]+\}/)
     expect(narrative.shortText.length).toBeGreaterThan(40)
+    expect(narrative.shortText.toLowerCase()).toContain('visibilidade')
   })
 
   it('keeps standard generator for non-pt-BR locales', () => {
@@ -121,5 +122,24 @@ describe('astroInterpretation catalog integration', () => {
     )
     const merged = `${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody}`.toLowerCase()
     expect(merged).not.toContain('status familia')
+  })
+
+  it('applies pt-BR override text before generated catalog entry', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Saturn',
+        aspectName: 'quadratura',
+        target: { natalPlanet: 'Sun' },
+        phase: 'active',
+      },
+      'carreira',
+      'pt-BR'
+    )
+
+    const text = narrative.shortText.toLowerCase()
+    expect(text).toContain('responsabilidade')
+    expect(text).toContain('foco no essencial')
+    expect(text).not.toContain('vai acontecer')
+    expect(text).not.toContain('inevitavel')
   })
 })
