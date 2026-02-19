@@ -6,6 +6,7 @@ import LocalAstrologyService, { type LocalTransitData, type CacheStatus } from '
 import UserService from '../services/firebase/UserService'
 import GroupNotificationService from '../services/notifications/GroupNotificationService'
 import GroupService from '../services/firebase/GroupService'
+import { backendFetch } from '../services/backend/client'
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { publishAstrologyData } from '../context/AstrologyDataProvider'
@@ -149,27 +150,43 @@ export function useLifeAreas(): UseLifeAreasReturn {
       if (!backendFresh && BACKEND_URL && !statusRefreshInFlightRef.current) {
         statusRefreshInFlightRef.current = true
         try {
-          const token = await user.getIdToken(true)
-          const refreshResponse = await fetch(`${BACKEND_URL}/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
+          const refreshResponse = await backendFetch(`/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
             method: 'POST',
+            auth: true,
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ userId: user.uid }),
           })
           if (!refreshResponse.ok) {
             let errorPayload: any = null
             try {
-              errorPayload = await refreshResponse.json()
+              errorPayload = await refreshResponse.clone().json()
             } catch {
-              errorPayload = null
+              try {
+                errorPayload = await refreshResponse.text()
+              } catch {
+                errorPayload = null
+              }
             }
-            const reason = String(errorPayload?.reason || '').toLowerCase()
-            const errorCode = String(errorPayload?.error || '').toLowerCase()
+            const payloadObj =
+              errorPayload && typeof errorPayload === 'object'
+                ? errorPayload
+                : {}
+            const payloadText =
+              typeof errorPayload === 'string'
+                ? errorPayload.toLowerCase()
+                : ''
+            const reason = String(payloadObj?.reason || '').toLowerCase()
+            const errorCode = String(payloadObj?.error || '').toLowerCase()
             if (
               refreshResponse.status === 401 &&
-              (reason === 'stale_auth_time' || errorCode === 'stale_session')
+              (
+                reason === 'stale_auth_time' ||
+                errorCode === 'stale_session' ||
+                payloadText.includes('stale_auth_time') ||
+                payloadText.includes('stale_session')
+              )
             ) {
               statusRefreshStaleSession = true
               throw new Error('stale_session')
