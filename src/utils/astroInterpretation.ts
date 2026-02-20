@@ -1118,7 +1118,6 @@ export function buildAstroTransitNarrative(
   const area = getAreaLabel(areaLabel, lang)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
   const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
-  const areaTone = getAreaContextTone(areaLabel, lang)
   const actionHint = buildActionHint(aspectKey, house, areaLabel, lang)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
   const phaseVerb = pickVariant(seed, ['sinaliza', 'reforca', 'reorganiza'], 1)
@@ -1228,7 +1227,6 @@ export function buildAstroTransitNarrative(
 
   const fullParts = mergeNarrativeSegments([
     technicalNarrative,
-    areaTone,
     positionNarrative,
     phaseNarrative,
   ], { exclude: [safeDirectText] })
@@ -1266,14 +1264,12 @@ export function buildUnifiedTransitNarrative(
   const aspectMeaning = getAspectMeaning(aspectKey, lang)
   const house = getHouseNumber(transit)
   const targetLabel = getTargetLabel(transit, lang)
-  const area = getAreaLabel(areaLabel, lang)
   const transitPlanetRaw = String(transit?.transitPlanet || tx.transitWord)
   const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const phaseLabel = getPhaseLabel(transit, lang)
   const transitKey = buildCanonicalTransitKey(transit)
   const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
   const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
-  const areaTone = getAreaContextTone(areaLabel, lang)
   const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
   const actionCore = stripActionPrefix(actionText, tx.practicalActionPrefix)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
@@ -1282,21 +1278,21 @@ export function buildUnifiedTransitNarrative(
   const modalIntro = (() => {
     const dynamicLine = (() => {
       if (house && aspectKey && aspectKey !== 'neutral') {
-        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete in ${area}${positionalFocus ? `, especially in ${positionalFocus}` : ''}.`
-        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto en ${area}${positionalFocus ? `, especialmente en ${positionalFocus}` : ''}.`
-        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto in ${area}${positionalFocus ? `, soprattutto in ${positionalFocus}` : ''}.`
-        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto em ${area}${positionalFocus ? `, especialmente em ${positionalFocus}` : ''}.`
+        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete${positionalFocus ? `, especially in ${positionalFocus}` : ''}.`
+        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto${positionalFocus ? `, especialmente en ${positionalFocus}` : ''}.`
+        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto${positionalFocus ? `, soprattutto in ${positionalFocus}` : ''}.`
+        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto${positionalFocus ? `, especialmente em ${positionalFocus}` : ''}.`
       }
       if (house) {
-        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices in ${area}${positionalFocus ? ` around ${positionalFocus}` : ''}.`
-        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas en ${area}${positionalFocus ? ` alrededor de ${positionalFocus}` : ''}.`
-        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche in ${area}${positionalFocus ? ` attorno a ${positionalFocus}` : ''}.`
-        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas em ${area}${positionalFocus ? ` em torno de ${positionalFocus}` : ''}.`
+        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices${positionalFocus ? ` around ${positionalFocus}` : ''}.`
+        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas${positionalFocus ? ` alrededor de ${positionalFocus}` : ''}.`
+        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche${positionalFocus ? ` attorno a ${positionalFocus}` : ''}.`
+        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas${positionalFocus ? ` em torno de ${positionalFocus}` : ''}.`
       }
-      if (lang === 'en-US') return `${transitPlanet} activates ${aspectMeaning} in ${area}, asking for strategic reading of timing and priorities.`
-      if (lang === 'es-ES') return `${transitPlanet} activa ${aspectMeaning} en ${area}, pidiendo lectura estrategica de fase y prioridades.`
-      if (lang === 'it-IT') return `${transitPlanet} attiva ${aspectMeaning} in ${area}, chiedendo una lettura strategica di fase e priorita.`
-      return `${transitPlanet} ativa ${aspectMeaning} em ${area}, pedindo leitura estrategica de fase e prioridades.`
+      if (lang === 'en-US') return `${transitPlanet} activates ${aspectMeaning}, asking for strategic reading of timing and priorities.`
+      if (lang === 'es-ES') return `${transitPlanet} activa ${aspectMeaning}, pidiendo lectura estrategica de fase y prioridades.`
+      if (lang === 'it-IT') return `${transitPlanet} attiva ${aspectMeaning}, chiedendo una lettura strategica di fase e priorita.`
+      return `${transitPlanet} ativa ${aspectMeaning}, pedindo leitura estrategica de fase e prioridades.`
     })()
     return pickVariant(seed, [dynamicLine], 0)
   })()
@@ -1306,7 +1302,6 @@ export function buildUnifiedTransitNarrative(
   const metaParts = [`${tx.phasePrefix}: ${phaseLabel}.`, scoreLink]
   const modalBody = mergeNarrativeSegments([
     modalIntro,
-    areaTone,
     strategyBlock,
     catalogDirectText ? `${catalogDirectText}\n\n${narrative.fullText}` : narrative.fullText,
   ], { exclude: [directText] }).join('\n\n')
