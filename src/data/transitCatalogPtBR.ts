@@ -1,6 +1,6 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 // Source: Txt/curated/catalog_clean_candidates.json
-// Generated at: 2026-02-19T03:15:24.661Z
+// Generated at: 2026-02-20T17:17:05.385Z
 
 export type TransitCatalogEntry = {
   text: string
@@ -26,7 +26,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:jupiter|conjuncao|meio_do_ceu": {
-    "text": "Jupiter conjunto ao Meio do Ceu amplia visibilidade e abre espaco para crescimento profissional. O ciclo favorece reconhecimento quando ha direcao clara e entrega consistente. Evite prometer mais do que consegue sustentar; foque em um passo de cada vez.",
+    "text": "Você faz o seu caminho agora usando a visão prática e o senso comum. Isso pode ser algum tipo de marca de alta água para sua carreira, reconhecimento e assim por diante. Ao mesmo tempo, uma mudança de direção está em ordem, encontrando você em uma curva gradual para mais internação.",
     "sourceKey": "JU.CNJ.MC",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -266,7 +266,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:jupiter|sextil|meio_do_ceu": {
-    "text": "Jupiter em sextil ao Meio do Ceu facilita avancos na carreira por apoio externo, boas conexoes e timing favoravel. A oportunidade tende a aparecer quando voce se posiciona com iniciativa. Priorize acordos realistas e mantenha foco no que gera resultado continuo.",
+    "text": "Você faz o seu caminho agora usando a visão prática e o senso comum. Isso pode ser algum tipo de marca de alta água para sua carreira, reconhecimento e assim por diante. Ao mesmo tempo, uma mudança de direção está em ordem, encontrando você em uma curva gradual para mais internação.",
     "sourceKey": "JU.SXT.MC",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -326,7 +326,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:jupiter|trigono|meio_do_ceu": {
-    "text": "Jupiter em trigono ao Meio do Ceu aumenta fluidez para progresso profissional e consolidacao de reputacao. Este transito costuma ampliar confianca e abertura de caminhos. Use a fase para estruturar metas de medio prazo e transformar chance em execucao pratica.",
+    "text": "Você faz o seu caminho agora usando a visão prática e o senso comum. Isso pode ser algum tipo de marca de alta água para sua carreira, reconhecimento e assim por diante. Ao mesmo tempo, uma mudança de direção está em ordem, encontrando você em uma curva gradual para mais internação.",
     "sourceKey": "JU.TRI.MC",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2241,7 +2241,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|mars": {
-    "text": "Saturno em oposicao a Marte pede calibracao entre impulso e limite. A sensacao de freio pode gerar irritacao se houver pressa. Use a fase para ajustar estrategia, reduzir atrito e manter acao com disciplina.",
+    "text": "O desafio emocional, provavelmente oferecido por alguém próximo a você, pode marcar esse período de tempo. As circunst\"ncias podem pressioná-lo e tendem a revelar o rebelde em você. Você pode se sentir frustrado e frustrado por eventos. O autocontrole está em ordem.",
     "sourceKey": "SA.OPP.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2281,7 +2281,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|oposicao|uranus": {
-    "text": "Saturno em oposicao a Urano ativa conflito entre estabilidade e mudanca. A tensao aumenta quando regras antigas travam ajustes necessarios. O melhor uso e negociar transicao: preservar o essencial enquanto atualiza o que ja nao funciona.",
+    "text": "As circunst\"ncias podem conspirar para limitar e impedir o seu senso de independência e originalidade. Poderia ser difícil encontrar soluções fáceis para os problemas no momento. As forças ou eventos conservadores podem desafiar ou opor-se às suas idéias e sensação de liberdade.",
     "sourceKey": "SA.OPP.UR",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2306,7 +2306,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|mercury": {
-    "text": "Saturno em quadratura a Mercurio exige comunicacao objetiva, revisao de premissas e maior precisao mental. Pode haver demora, ruido ou autocobranca elevada. Priorize clareza, escuta ativa e decisoes baseadas em dados.",
+    "text": "Muita energia mental se agita, mas pode ser difícil colocá-la no trabalho. As circunst\"ncias podem ser difíceis em relação à comunicação, escrita, idéias e similares. As coisas podem ficar apertadas, e você pode achar difícil pensar ou estudar durante esse período.",
     "sourceKey": "SA.SQR.ME",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2326,17 +2326,17 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|saturn": {
-    "text": "Saturno em quadratura com Saturno marca fase de revisao de estruturas, responsabilidades e limites pessoais. Pode haver pressao por maturidade e reorganizacao de prioridades. O ganho vem ao simplificar compromissos e sustentar rotina com constancia.",
+    "text": "Isso pode ser um momento um pouco difícil, quando as circunst\"ncias podem bloqueá-lo ou mantê-lo parado. É fácil agora trabalhar em objetivos cruzados para seus próprios interesses. Um bom momento para dar um passo atrás e reavaliar seus objetivos e objetivos. Isto pode tomar algum tempo.",
     "sourceKey": "SA.SQR.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|sun": {
-    "text": "Saturno em quadratura ao Sol sinaliza fase de teste de identidade, foco e resistencia. Cobrancas aumentam e pedem realinhamento de prioridades. Fortalece quem simplifica, organiza e sustenta o essencial.",
+    "text": "As circunst\"ncias podem afetar você de maneira muito direta. A grande roda de mudança pode parecer mover-se no ritmo de um caracol ou parar a parada. Um tempo durante o qual tudo o que você faz pode parecer mais difícil e requer um grande esforço. Pode ser difícil.",
     "sourceKey": "SA.SQR.SU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|quadratura|uranus": {
-    "text": "Saturno em quadratura a Urano pressiona por mudancas praticas em sistemas que ficaram rigidos. Pode haver friccao entre controle e autonomia. A saida mais produtiva e testar ajustes pequenos com criterio e continuidade.",
+    "text": "Este pode não ser um momento fácil, pois eventos e circunst\"ncias podem conspirar para bloquear o seu senso de liberdade e independência. Alguém desafia suas idéias, as considera pouco convencionais. Pode não ser fácil encontrar soluções novas e adequadas aos problemas agora.",
     "sourceKey": "SA.SQR.UR",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2351,12 +2351,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|jupiter": {
-    "text": "Saturno em sextil a Jupiter equilibra expansao com responsabilidade. Bom periodo para crescer sem perder estrutura, combinando visao e metodo. Planejamento realista aumenta a chance de resultado duradouro.",
+    "text": "As circunst\"ncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
     "sourceKey": "SA.SXT.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|mars": {
-    "text": "Saturno em sextil a Marte ajuda a canalizar energia para acao objetiva e organizada. O ciclo favorece produtividade com metodo, ritmo e disciplina. Evite dispersao; concentre esforco no que tem impacto direto.",
+    "text": "Circunst\"ncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
     "sourceKey": "SA.SXT.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2386,12 +2386,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|saturn": {
-    "text": "Saturno em sextil com Saturno apoia consolidacao de estrutura, limites saudaveis e planejamento realista. Fase adequada para organizar responsabilidades e reforcar fundamentos. Pequenos ajustes agora previnem sobrecarga depois.",
+    "text": "As circunst\"ncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
     "sourceKey": "SA.SXT.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|sun": {
-    "text": "Saturno em sextil ao Sol favorece disciplina, foco e consolidacao de identidade em projetos importantes. O periodo ajuda a construir credibilidade por consistencia, nao por pressa. Boas decisoes agora tendem a gerar estabilidade adiante.",
+    "text": "Um tempo durante o qual as circunst\"ncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
     "sourceKey": "SA.SXT.SU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2401,7 +2401,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|sextil|venus": {
-    "text": "Saturno em sextil a Venus favorece relacoes mais maduras, acordos claros e melhor gestao de valores e recursos. Bom momento para construir vinculos com previsibilidade. Qualidade cresce quando ha limite e compromisso.",
+    "text": "As circunst\"ncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
     "sourceKey": "SA.SXT.VE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2411,12 +2411,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|jupiter": {
-    "text": "Saturno em trigono a Jupiter favorece crescimento sustentavel, com estrategia clara e base solida. O transito ajuda a transformar oportunidade em progresso concreto. Avance com prudencia e consistencia.",
+    "text": "As circunst\"ncias externas e o fluxo de eventos tornam mais fácil para você tomar decisões claras, ver o caminho à frente e avançar. As coisas parecem cair no lugar, e o progresso é fácil. Tenha cuidado para não exceder ou morder mais do que você pode mastigar.",
     "sourceKey": "SA.TRI.JU",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|mars": {
-    "text": "Saturno em trigono a Marte combina forca de execucao com estrategia, favorecendo progresso constante. Bom momento para concluir pendencias e fortalecer base de longo prazo. Resultado vem da repeticao bem feita.",
+    "text": "Circunst\"ncias podem impelir você a um grande esforço e trabalho árduo. As coisas estão funcionando em vez de contra você, então não se segure. No entanto, não exagere e tente ir muito longe muito rápido. Deixe as coisas seguir seu curso natural, o que deve ser fácil agora.",
     "sourceKey": "SA.TRI.MA",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2446,12 +2446,12 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|saturn": {
-    "text": "Saturno em trigono com Saturno indica maturidade, estabilidade e capacidade de sustentar escolhas com firmeza. O periodo favorece crescimento solido e revisao de metas com pragmatismo. Menos urgencia, mais consistencia.",
+    "text": "As circunst\"ncias externas são favoráveis, e deve ser fácil para você avançar em projetos e em todos os aspectos de sua vida. As coisas podem parecer quase mágicas na forma como eles funcionam a seu favor. Um ótimo momento para organizar e fazer as coisas serem realizadas.",
     "sourceKey": "SA.TRI.SA",
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|sun": {
-    "text": "Saturno em trigono ao Sol fortalece responsabilidade, clareza de direcao e capacidade de manter compromissos. Ha suporte para estruturar metas e entregar com regularidade. A fase pede paciencia estrategica e passos sustentaveis.",
+    "text": "Um tempo durante o qual as circunst\"ncias se inclinam para sua vontade e as coisas têm uma maneira de trabalhar sem problemas. Aqui é uma oportunidade real para completar e desenvolver dificuldades e projetos que exigem tanto esforço a longo prazo quanto um alto grau de disciplina.",
     "sourceKey": "SA.TRI.SU",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2461,7 +2461,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:saturn|trigono|venus": {
-    "text": "Saturno em trigono a Venus apoia estabilidade afetiva e financeira por escolhas consistentes. A fase favorece consolidar o que tem valor real. Menos excesso, mais criterio e continuidade.",
+    "text": "As circunst\"ncias podem aumentar e estimular a apreciação e o gozo da sua situação de vida. Seu sistema de valores pode se aprofundar, proporcionando-lhe uma melhor sensação de discriminação e bom gosto. Comprar, selecionar cores e assim por diante estão em alto.",
     "sourceKey": "SA.TRI.VE",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -2621,7 +2621,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
     "sourceFile": "Engl. Transit.txt"
   },
   "transit:sun|oposicao|pluto": {
-    "text": "Sol em oposicao a Plutao aumenta intensidade emocional e necessidade de equilibrar controle e flexibilidade. Podem surgir disputas de poder ou reacoes defensivas. O melhor caminho e agir com transparencia e evitar extremos.",
+    "text": "Sua própria necessidade interna de mudança e crescimento pode ser ameaçada por pessoas mais velhas ou por circunst\"ncias. Poderia haver alguns acontecimentos secretos ou desonestrados - nos bastidores também. Tensão de natureza psicológica ou política pode estar presente.",
     "sourceKey": "SU.OPP.PL",
     "sourceFile": "Engl. Transit.txt"
   },
@@ -3533,7 +3533,7 @@ export const TRANSIT_CATALOG_PTBR: Record<string, TransitCatalogEntry> =
 } as const;
 
 export const TRANSIT_CATALOG_PTBR_META = {
-  generatedAt: '2026-02-19T03:15:24.661Z',
+  generatedAt: '2026-02-20T17:17:05.385Z',
   entries: 704,
   source: 'Txt/curated/catalog_clean_candidates.json',
 } as const;
