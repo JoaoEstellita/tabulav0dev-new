@@ -1025,47 +1025,35 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     []
   )
 
-  const buildColumnInterpretation = React.useCallback((params: {
-    planet: string
-    contextLabel: string
-    signLabel: string
-    signElement: string
-    signModality: string
+  const buildColumnNarrativeFromPosition = React.useCallback((params: {
+    planetName: string
     house: number | null
-    houseByCusp?: { sign: string; element: string; modality: string } | null
-    houseNatural?: { sign: string; element: string; modality: string } | null
+    contextLabel: string
+    signLabel?: string
   }) => {
-    const houseLabel = params.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('Casa indefinida', 'Undefined house', 'Casa indefinida', 'Casa indefinita')
-    const short = tl(
-      `${params.planet} em ${params.signLabel} (${params.signElement}/${params.signModality}) atuando em ${houseLabel}.`,
-      `${params.planet} in ${params.signLabel} (${params.signElement}/${params.signModality}) acting in ${houseLabel}.`,
-      `${params.planet} en ${params.signLabel} (${params.signElement}/${params.signModality}) actuando en ${houseLabel}.`,
-      `${params.planet} in ${params.signLabel} (${params.signElement}/${params.signModality}) attivo in ${houseLabel}.`
+    const targetLabel = params.signLabel
+      ? `${params.signLabel}${params.house ? ` • ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : ''}`
+      : (params.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('Casa indefinida', 'Undefined house', 'Casa indefinida', 'Casa indefinita'))
+    const unified = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: params.planetName,
+        aspectName: 'ingress',
+        type: 'ingress',
+        targetType: 'house',
+        targetLabel,
+        house: params.house || undefined,
+        houseCurrent: params.house || undefined,
+        phase: 'active',
+      },
+      params.contextLabel,
+      language
     )
-    const long =
-      tl(
-        `${params.contextLabel} integra três camadas: planeta, signo e casa.\n\n`,
-        `${params.contextLabel} integrates three layers: planet, sign and house.\n\n`,
-        `${params.contextLabel} integra tres capas: planeta, signo y casa.\n\n`,
-        `${params.contextLabel} integra tre livelli: pianeta, segno e casa.\n\n`
-      ) +
-      tl(
-        `Planeta + signo: ${params.planet} em ${params.signLabel} indica expressão por ${params.signElement} e modo ${params.signModality}.\n\n`,
-        `Planet + sign: ${params.planet} in ${params.signLabel} indicates expression through ${params.signElement} and ${params.signModality} mode.\n\n`,
-        `Planeta + signo: ${params.planet} en ${params.signLabel} indica expresión por ${params.signElement} y modo ${params.signModality}.\n\n`,
-        `Pianeta + segno: ${params.planet} in ${params.signLabel} indica espressione tramite ${params.signElement} e modalità ${params.signModality}.\n\n`
-      ) +
-      tl(`Casa ativada: ${houseLabel}.`, `Activated house: ${houseLabel}.`, `Casa activada: ${houseLabel}.`, `Casa attivata: ${houseLabel}.`) +
-      `${params.houseByCusp ? tl(` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` House by cusp (calculation): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` Casa por cúspide (cálculo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`, ` Casa per cuspide (calcolo): ${params.houseByCusp.sign} (${params.houseByCusp.element}/${params.houseByCusp.modality}).`) : ''}` +
-      `${params.houseNatural ? tl(` Casa natural (arquétipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Natural house (archetype): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Casa natural (arquetipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`, ` Casa naturale (archetipo): ${params.houseNatural.sign} (${params.houseNatural.element}/${params.houseNatural.modality}).\n\n`) : '\n\n'}` +
-      tl(
-        'Síntese prática: leia este ponto como junção de estilo (signo) + tema (casa) + função (planeta), priorizando decisões que combinem ritmo e contexto real do momento.',
-        'Practical synthesis: read this point as a merge of style (sign) + theme (house) + function (planet), prioritizing decisions that match rhythm and real context.',
-        'Síntesis práctica: lee este punto como unión de estilo (signo) + tema (casa) + función (planeta), priorizando decisiones con ritmo y contexto real.',
-        'Sintesi pratica: leggi questo punto come unione di stile (segno) + tema (casa) + funzione (pianeta), privilegiando decisioni coerenti con ritmo e contesto reale.'
-      )
-    return { short, long }
-  }, [tl])
+    return {
+      short: unified.shortText,
+      long: unified.modalBody,
+      keywords: unified.keywords,
+    }
+  }, [language, tl])
 
   const buildDetailNarrativeFromTransit = React.useCallback((transit: Record<string, any>) => {
     const unified = buildUnifiedTransitNarrative(transit, null, language)
@@ -1262,10 +1250,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
             {/* Comparacao em 3 colunas: Natal | Transito c/ Natal | Posicao Atual */}
             <View style={styles.comparisonGrid}>
               {(() => {
-                const natalHouseInfo = getHouseSignInfo(comparison.natal.house, natalHousesCusps)
-                const currentHouseInfo = getHouseSignInfo(comparison.current.house, housesCusps)
                 const transitOnNatalHouse = getHouseFromCusps(comparison.current.longitude, natalHousesCusps)
-                const transitOnNatalInfo = getHouseSignInfo(transitOnNatalHouse, natalHousesCusps)
                 const natalNaturalInfo = getNaturalHouseInfo(comparison.natal.house)
                 const transitOnNatalNaturalInfo = getNaturalHouseInfo(transitOnNatalHouse)
                 const currentNaturalInfo = getNaturalHouseInfo(comparison.current.house)
@@ -1276,28 +1261,18 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       style={styles.comparisonColumn}
                       onPress={() => {
                         const signLabel = getSignFromDegree(comparison.natal.longitude)
-                        const interp = buildColumnInterpretation({
-                          planet: translatePlanetName(comparison.name),
+                        const interp = buildColumnNarrativeFromPosition({
+                          planetName: comparison.name,
                           contextLabel: tl('Leitura Natal', 'Natal Reading', 'Lectura Natal', 'Lettura Natale'),
                           signLabel,
-                          signElement: translateElement(comparison.natal.element),
-                          signModality: translateModality(comparison.natal.modality),
                           house: comparison.natal.house,
-                          houseByCusp: natalHouseInfo,
-                          houseNatural: natalNaturalInfo,
                         })
                         openDetailModal({
                           title: `${translatePlanetName(comparison.name)} • ${tl('Natal', 'Natal', 'Natal', 'Natale')}`,
                           subtitle: `${signLabel} • ${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.natal.house}`,
                           short: interp.short,
                           long: interp.long,
-                          keywords: [
-                            tl('natal', 'natal', 'natal', 'natale'),
-                            signLabel,
-                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.natal.house}`,
-                            translateElement(comparison.natal.element),
-                            translateModality(comparison.natal.modality),
-                          ],
+                          keywords: interp.keywords,
                         })
                       }}
                     >
@@ -1317,28 +1292,26 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       style={styles.comparisonColumn}
                       onPress={() => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
-                        const interp = buildColumnInterpretation({
-                          planet: translatePlanetName(comparison.name),
-                          contextLabel: tl('Leitura Trânsito Pessoal', 'Personal Transit Reading', 'Lectura Tránsito Personal', 'Lettura Transito Personale'),
-                          signLabel,
-                          signElement: translateElement(comparison.current.element),
-                          signModality: translateModality(comparison.current.modality),
-                          house: transitOnNatalHouse,
-                          houseByCusp: transitOnNatalInfo,
-                          houseNatural: transitOnNatalNaturalInfo,
-                        })
+                        const unified = buildUnifiedTransitNarrative(
+                          {
+                            transitPlanet: comparison.name,
+                            aspectName: 'ingress',
+                            type: 'ingress',
+                            targetType: 'house',
+                            targetLabel: transitOnNatalHouse ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${transitOnNatalHouse}` : undefined,
+                            house: transitOnNatalHouse || undefined,
+                            houseCurrent: transitOnNatalHouse || undefined,
+                            phase: 'active',
+                          },
+                          tl('Trânsito Pessoal', 'Personal Transit', 'Tránsito Personal', 'Transito Personale'),
+                          language
+                        )
                         openDetailModal({
                           title: `${translatePlanetName(comparison.name)} • ${tl('Trânsito Pessoal', 'Personal Transit', 'Tránsito Personal', 'Transito Personale')}`,
                           subtitle: `${signLabel} • ${tl('Casa', 'House', 'Casa', 'Casa')} ${transitOnNatalHouse || '-'}`,
-                          short: interp.short,
-                          long: interp.long,
-                          keywords: [
-                            tl('trânsito pessoal', 'personal transit', 'tránsito personal', 'transito personale'),
-                            signLabel,
-                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${transitOnNatalHouse || '-'}`,
-                            translateElement(comparison.current.element),
-                            translateModality(comparison.current.modality),
-                          ],
+                          short: unified.shortText,
+                          long: unified.modalBody,
+                          keywords: unified.keywords,
                         })
                       }}
                     >
@@ -1358,28 +1331,26 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                       style={styles.comparisonColumn}
                       onPress={() => {
                         const signLabel = getSignFromDegree(comparison.current.longitude)
-                        const interp = buildColumnInterpretation({
-                          planet: translatePlanetName(comparison.name),
-                          contextLabel: tl('Leitura Trânsito Coletivo', 'Collective Transit Reading', 'Lectura Tránsito Colectivo', 'Lettura Transito Collettivo'),
-                          signLabel,
-                          signElement: translateElement(comparison.current.element),
-                          signModality: translateModality(comparison.current.modality),
-                          house: comparison.current.house,
-                          houseByCusp: currentHouseInfo,
-                          houseNatural: currentNaturalInfo,
-                        })
+                        const unified = buildUnifiedTransitNarrative(
+                          {
+                            transitPlanet: comparison.name,
+                            aspectName: 'ingress',
+                            type: 'ingress',
+                            targetType: 'house',
+                            targetLabel: comparison.current.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}` : undefined,
+                            house: comparison.current.house || undefined,
+                            houseCurrent: comparison.current.house || undefined,
+                            phase: 'active',
+                          },
+                          tl('Trânsito Coletivo', 'Collective Transit', 'Tránsito Colectivo', 'Transito Collettivo'),
+                          language
+                        )
                         openDetailModal({
                           title: `${translatePlanetName(comparison.name)} • ${tl('Trânsito Coletivo', 'Collective Transit', 'Tránsito Colectivo', 'Transito Collettivo')}`,
                           subtitle: `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
-                          short: interp.short,
-                          long: interp.long,
-                          keywords: [
-                            tl('trânsito coletivo', 'collective transit', 'tránsito colectivo', 'transito collettivo'),
-                            signLabel,
-                            `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
-                            translateElement(comparison.current.element),
-                            translateModality(comparison.current.modality),
-                          ],
+                          short: unified.shortText,
+                          long: unified.modalBody,
+                          keywords: unified.keywords,
                         })
                       }}
                     >

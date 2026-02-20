@@ -798,10 +798,24 @@ function sanitizeCatalogText(value: string): string {
     [/\bgarantid[oa]\b/gi, 'favorecido'],
     [/\bstatus quo\b/gi, 'padrao atual'],
   ]
+  const noisyPatterns: RegExp[] = [
+    /(?:neste|nesta|nesse|nessa|no|na)\s+(?:ciclo|momento|janela)[^.!?]{0,120}\bfoco recai em\b[^.!?]*[.!?]?/gi,
+    /(?:in this|at this|during this)\s+(?:cycle|moment|window)[^.!?]{0,140}\bfocus (?:falls|turns) to\b[^.!?]*[.!?]?/gi,
+    /(?:en este|en esta)\s+(?:ciclo|momento|ventana)[^.!?]{0,140}\bel foco recae en\b[^.!?]*[.!?]?/gi,
+    /(?:in questo|in questa)\s+(?:ciclo|momento|finestra)[^.!?]{0,140}\bil focus ricade su\b[^.!?]*[.!?]?/gi,
+    /(?:current phase is|la fase actual es|la fase attuale e|fase atual:)\s*[^.!?]*\.\s*(?:this|esta|questa)\s+combin(?:ation|acion|azione)[^.!?]*[.!?]?/gi,
+  ]
   let out = fixMojibake(String(value || ''))
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }
+  for (const pattern of noisyPatterns) {
+    out = out.replace(pattern, '')
+  }
+  out = out
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .trim()
   const sanitized = sanitizeNarrativeText(out)
   if (!isCatalogTextReliable(sanitized)) return ''
   return sanitized
@@ -1281,18 +1295,7 @@ export function buildUnifiedTransitNarrative(
     return pickVariant(seed, [dynamicLine], 0)
   })()
 
-  const strategyBlock = (() => {
-    if (house && aspectKey) {
-      if (lang === 'en-US') return `Current phase is ${phaseLabel}. This combination tends to evolve with practical sequence: first read the pattern, then adjust execution.`
-      if (lang === 'es-ES') return `La fase actual es ${phaseLabel}. Esta combinacion tiende a evolucionar con secuencia practica: primero leer el patron, luego ajustar la ejecucion.`
-      if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}. Questa combinazione tende a evolvere con una sequenza pratica: prima leggere il pattern, poi regolare l esecuzione.`
-      return `Fase atual: ${phaseLabel}.`
-    }
-    if (lang === 'en-US') return `Current phase is ${phaseLabel}, so consistency of choices is more important than isolated intensity spikes.`
-    if (lang === 'es-ES') return `La fase actual es ${phaseLabel}, por eso la consistencia de decisiones importa mas que picos aislados de intensidad.`
-    if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}, quindi la coerenza delle scelte conta piu dei picchi isolati di intensita.`
-    return `Fase atual: ${phaseLabel}.`
-  })()
+  const strategyBlock = ''
 
   const metaParts = [
     `${tx.phasePrefix}: ${phaseLabel}.`,
