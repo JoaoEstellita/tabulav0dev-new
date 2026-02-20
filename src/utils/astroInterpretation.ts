@@ -857,6 +857,30 @@ function buildCatalogTransitKey(transit: AnyTransit): string | null {
   return `transit:${planet}|${aspect}|${target.value}`
 }
 
+function stripRedundantNarrativeBoilerplate(value: string): string {
+  let out = String(value || '')
+
+  const rules: RegExp[] = [
+    /\bfoco recai em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+    /\ba fase atual\s+(?:esta|est[aá])\s+(?:em|no|na)\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+    /\b(?:esta|essa)\s+combinac[aã]o\s+tende a evoluir em sequ[êe]ncia pr[aá]tica[:.]?\s*(?:primeiro[^.]*\.)?(?:\s*depois[^.]*\.)?/gi,
+    /\bprimeiro\s+ler\s+o\s+padrao,\s*depois\s+ajustar\s+a\s+execu[cç][aã]o[.!?]?/gi,
+    /\bneste ciclo\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+    /\bneste momento\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+    /\bem aproxima[cç][aã]o,\s*neste momento\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+    /\bafastando,\s*neste ciclo\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
+  ]
+
+  for (const rule of rules) {
+    out = out.replace(rule, ' ')
+  }
+
+  return out
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .trim()
+}
+
 function sanitizeCatalogText(value: string): string {
   const countToken = (text: string, token: string): number => {
     if (!token) return 0
@@ -894,24 +918,11 @@ function sanitizeCatalogText(value: string): string {
     [/\bgarantid[oa]\b/gi, 'favorecido'],
     [/\bstatus quo\b/gi, 'padrao atual'],
   ]
-  const noisyPatterns: RegExp[] = [
-    /(?:neste|nesta|nesse|nessa|no|na)\s+(?:ciclo|momento|janela)[^.!?]{0,120}\bfoco recai em\b[^.!?]*[.!?]?/gi,
-    /(?:in this|at this|during this)\s+(?:cycle|moment|window)[^.!?]{0,140}\bfocus (?:falls|turns) to\b[^.!?]*[.!?]?/gi,
-    /(?:en este|en esta)\s+(?:ciclo|momento|ventana)[^.!?]{0,140}\bel foco recae en\b[^.!?]*[.!?]?/gi,
-    /(?:in questo|in questa)\s+(?:ciclo|momento|finestra)[^.!?]{0,140}\bil focus ricade su\b[^.!?]*[.!?]?/gi,
-    /(?:current phase is|la fase actual es|la fase attuale e|fase atual:)\s*[^.!?]*\.\s*(?:this|esta|questa)\s+combin(?:ation|acion|azione)[^.!?]*[.!?]?/gi,
-    /(?:a\s+)?fase\s+atual\s+(?:e|é)\s*(?:de\s+)?(?:pico|aproximacao|aproximação|afastamento|separacao|separação|ativa|ativo)[^.!?]*[.!?]?/gi,
-    /(?:the\s+)?current\s+phase\s+is\s*(?:peak|applying|approaching|separating|active)[^.!?]*[.!?]?/gi,
-    /(?:la\s+)?fase\s+actual\s+es\s*(?:pico|aproximacion|acercamiento|separacion|activa)[^.!?]*[.!?]?/gi,
-    /(?:la\s+)?fase\s+attuale\s+e\s*(?:picco|avvicinamento|separazione|attiva)[^.!?]*[.!?]?/gi,
-  ]
   let out = fixMojibake(String(value || ''))
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }
-  for (const pattern of noisyPatterns) {
-    out = out.replace(pattern, '')
-  }
+  out = stripRedundantNarrativeBoilerplate(out)
   out = out
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1')
@@ -1127,7 +1138,7 @@ function stripActionPrefix(text: string, prefix: string): string {
 }
 
 function sanitizeNarrativeText(value: string): string {
-  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  const text = stripRedundantNarrativeBoilerplate(String(value || '')).replace(/\s+/g, ' ').trim()
   if (!text) return ''
   const banned = ['nesta area', 'nesta area.', 'fase de calibragem']
   const normalized = text
