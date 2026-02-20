@@ -804,6 +804,10 @@ function sanitizeCatalogText(value: string): string {
     /(?:en este|en esta)\s+(?:ciclo|momento|ventana)[^.!?]{0,140}\bel foco recae en\b[^.!?]*[.!?]?/gi,
     /(?:in questo|in questa)\s+(?:ciclo|momento|finestra)[^.!?]{0,140}\bil focus ricade su\b[^.!?]*[.!?]?/gi,
     /(?:current phase is|la fase actual es|la fase attuale e|fase atual:)\s*[^.!?]*\.\s*(?:this|esta|questa)\s+combin(?:ation|acion|azione)[^.!?]*[.!?]?/gi,
+    /(?:a\s+)?fase\s+atual\s+(?:e|é)\s*(?:de\s+)?(?:pico|aproximacao|aproximação|afastamento|separacao|separação|ativa|ativo)[^.!?]*[.!?]?/gi,
+    /(?:the\s+)?current\s+phase\s+is\s*(?:peak|applying|approaching|separating|active)[^.!?]*[.!?]?/gi,
+    /(?:la\s+)?fase\s+actual\s+es\s*(?:pico|aproximacion|acercamiento|separacion|activa)[^.!?]*[.!?]?/gi,
+    /(?:la\s+)?fase\s+attuale\s+e\s*(?:picco|avvicinamento|separazione|attiva)[^.!?]*[.!?]?/gi,
   ]
   let out = fixMojibake(String(value || ''))
   for (const [pattern, replacement] of replacements) {
@@ -826,6 +830,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
   const keyRaw = buildCatalogTransitKey(transit)
   if (!keyRaw) return null
   const key = normalizeCatalogKey(keyRaw)
+  const isBlocked = TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED.has(key) || TRANSIT_CATALOG_BLOCKED_KEYS.has(keyRaw)
   const i18nOverrideText =
     TRANSIT_CATALOG_I18N_OVERRIDES_NORMALIZED[lang]?.[key] ||
     TRANSIT_CATALOG_I18N_OVERRIDES[lang]?.[keyRaw]
@@ -833,6 +838,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
     const i18nOverrideSanitized = sanitizeCatalogText(i18nOverrideText)
     if (i18nOverrideSanitized) return i18nOverrideSanitized
   }
+  if (lang !== 'pt-BR' && isBlocked) return null
   if (lang !== 'pt-BR') return null
   const overrideText =
     TRANSIT_CATALOG_PTBR_OVERRIDES_NORMALIZED[key] ||
@@ -841,7 +847,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
     const overrideSanitized = sanitizeCatalogText(overrideText)
     if (overrideSanitized) return overrideSanitized
   }
-  if (TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED.has(key) || TRANSIT_CATALOG_BLOCKED_KEYS.has(keyRaw)) return null
+  if (isBlocked) return null
   const entry =
     TRANSIT_CATALOG_PTBR_NORMALIZED[key] ||
     (TRANSIT_CATALOG_PTBR as CatalogMap)[keyRaw]

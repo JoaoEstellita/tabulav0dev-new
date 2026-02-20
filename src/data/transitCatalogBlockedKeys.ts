@@ -10,6 +10,7 @@ export const TRANSIT_CATALOG_BLOCKED_KEYS = new Set<string>([
   'transit:moon|conjuncao|mars',
   'transit:moon|conjuncao|sun',
   'transit:moon|conjuncao|uranus',
+  'transit:moon|ingress|house_2',
   'transit:moon|oposicao|jupiter',
   'transit:moon|oposicao|mars',
   'transit:moon|oposicao|mercury',

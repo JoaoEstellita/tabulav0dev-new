@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+ï»¿import { describe, expect, it } from 'vitest'
 import { buildUnifiedTransitNarrative } from '../astroInterpretation'
 import { TRANSIT_CATALOG_PTBR } from '../../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../../data/transitCatalogOverridesPtBR'
@@ -71,6 +71,25 @@ describe('astroInterpretation catalog integration', () => {
     expect(narrative.shortText).not.toMatch(/\{[a-zA-Z0-9_.-]+\}/)
   })
 
+  it('never leaks raw pt-BR catalog copy into en-US fallback narrative', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Moon',
+        aspectName: 'ingress',
+        house: 3,
+        phase: 'active',
+      },
+      'comunicacao',
+      'en-US'
+    )
+
+    const text = narrative.shortText.toLowerCase()
+    expect(text.length).toBeGreaterThan(20)
+    expect(text).not.toContain('vocÃª')
+    expect(text).not.toContain('voce')
+    expect(text).not.toContain('Ãƒ')
+    expect(text).not.toContain('\uFFFD')
+  })
   it('does not mention status wording in unified narrative fields', () => {
     const narrative = buildUnifiedTransitNarrative(
       {
@@ -127,8 +146,8 @@ describe('astroInterpretation catalog integration', () => {
     const narrative = buildUnifiedTransitNarrative(
       {
         transitPlanet: 'Jupiter',
-        aspectName: 'Conjunção',
-        target: { angle: 'Meio do Céu' },
+        aspectName: 'ConjunÃ§Ã£o',
+        target: { angle: 'Meio do CÃ©u' },
         phase: 'ACTIVE',
       },
       'carreira',
@@ -236,7 +255,7 @@ describe('astroInterpretation catalog integration', () => {
     expect(rawCatalog.length).toBeGreaterThan(20)
     expect(narrative.shortText.length).toBeGreaterThan(20)
     expect(narrative.shortText).not.toBe(rawCatalog)
-    expect(narrative.shortText).not.toContain('Ã')
+    expect(narrative.shortText).not.toContain('Ãƒ')
     expect(narrative.shortText).not.toContain('\uFFFD')
   })
   it('keeps curated override keyset aligned across en/es/it locales', () => {
