@@ -8,6 +8,10 @@ import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../data/transitCatalogOverridesI18n'
 import { TRANSIT_CATALOG_BLOCKED_KEYS } from '../data/transitCatalogBlockedKeys'
+import {
+  TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N,
+  TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR,
+} from '../data/transitCatalogP1AutoOverrides'
 
 type AnyTransit = Record<string, any>
 
@@ -737,16 +741,34 @@ function buildNormalizedCatalogMap<T>(source: Record<string, T>): Record<string,
 const TRANSIT_CATALOG_PTBR_NORMALIZED = buildNormalizedCatalogMap<CatalogEntry>(
   TRANSIT_CATALOG_PTBR as CatalogMap
 )
+const TRANSIT_CATALOG_PTBR_EFFECTIVE_OVERRIDES: CatalogTextMap = {
+  ...TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR,
+  ...TRANSIT_CATALOG_PTBR_OVERRIDES,
+}
+const TRANSIT_CATALOG_I18N_EFFECTIVE_OVERRIDES: Partial<Record<AppLanguage, CatalogTextMap>> = {
+  'en-US': {
+    ...(TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N['en-US'] || {}),
+    ...(TRANSIT_CATALOG_I18N_OVERRIDES['en-US'] || {}),
+  },
+  'es-ES': {
+    ...(TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N['es-ES'] || {}),
+    ...(TRANSIT_CATALOG_I18N_OVERRIDES['es-ES'] || {}),
+  },
+  'it-IT': {
+    ...(TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N['it-IT'] || {}),
+    ...(TRANSIT_CATALOG_I18N_OVERRIDES['it-IT'] || {}),
+  },
+}
 const TRANSIT_CATALOG_PTBR_OVERRIDES_NORMALIZED = buildNormalizedCatalogMap<string>(
-  TRANSIT_CATALOG_PTBR_OVERRIDES as CatalogTextMap
+  TRANSIT_CATALOG_PTBR_EFFECTIVE_OVERRIDES
 )
 const TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED = new Set<string>(
   Array.from(TRANSIT_CATALOG_BLOCKED_KEYS).map((key) => normalizeCatalogKey(key)).filter(Boolean)
 )
 const TRANSIT_CATALOG_I18N_OVERRIDES_NORMALIZED: Partial<Record<AppLanguage, CatalogTextMap>> = (() => {
   const out: Partial<Record<AppLanguage, CatalogTextMap>> = {}
-  ;(Object.keys(TRANSIT_CATALOG_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
-    const map = TRANSIT_CATALOG_I18N_OVERRIDES[lang]
+  ;(Object.keys(TRANSIT_CATALOG_I18N_EFFECTIVE_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = TRANSIT_CATALOG_I18N_EFFECTIVE_OVERRIDES[lang]
     if (!map) return
     out[lang] = buildNormalizedCatalogMap<string>(map)
   })
@@ -841,7 +863,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
   const isBlocked = TRANSIT_CATALOG_BLOCKED_KEYS_NORMALIZED.has(key) || TRANSIT_CATALOG_BLOCKED_KEYS.has(keyRaw)
   const i18nOverrideText =
     TRANSIT_CATALOG_I18N_OVERRIDES_NORMALIZED[lang]?.[key] ||
-    TRANSIT_CATALOG_I18N_OVERRIDES[lang]?.[keyRaw]
+    TRANSIT_CATALOG_I18N_EFFECTIVE_OVERRIDES[lang]?.[keyRaw]
   if (i18nOverrideText) {
     const i18nOverrideSanitized = sanitizeCatalogText(i18nOverrideText)
     if (i18nOverrideSanitized) return i18nOverrideSanitized
@@ -850,7 +872,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
   if (lang !== 'pt-BR') return null
   const overrideText =
     TRANSIT_CATALOG_PTBR_OVERRIDES_NORMALIZED[key] ||
-    TRANSIT_CATALOG_PTBR_OVERRIDES[keyRaw]
+    TRANSIT_CATALOG_PTBR_EFFECTIVE_OVERRIDES[keyRaw]
   if (overrideText) {
     const overrideSanitized = sanitizeCatalogText(overrideText)
     if (overrideSanitized) return overrideSanitized
