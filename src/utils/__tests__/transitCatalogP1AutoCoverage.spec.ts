@@ -22,6 +22,7 @@ const MAJOR_TARGETS = new Set([
   'meio_do_ceu',
   'fundo_do_ceu',
 ])
+const HOUSE_TARGET_RX = /^house_([1-9]|1[0-2])$/
 const DETERMINISTIC_TOKENS = [
   'vai acontecer',
   'com certeza',
@@ -41,6 +42,14 @@ function isP1Key(key: string): boolean {
 
 function isIngressKey(key: string): boolean {
   return /^transit:[a-z_]+\|ingress\|house_([1-9]|1[0-2])$/.test(key)
+}
+
+function isAspectHouseKey(key: string): boolean {
+  const match = key.match(/^transit:([a-z_]+)\|([a-z_]+)\|([a-z0-9_]+)$/)
+  if (!match) return false
+  const aspect = match[2]
+  const target = match[3]
+  return ASPECT_KEYS.has(aspect) && HOUSE_TARGET_RX.test(target)
 }
 
 function hasDeterministicLanguage(text: string): boolean {
@@ -73,6 +82,18 @@ describe('transit catalog P1 auto overrides coverage', () => {
         ? TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR
         : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]
       const missing = ingressKeys.filter((key) => !map[key])
+      expect(missing).toEqual([])
+    })
+  })
+
+  it('covers all aspect-house keys in pt/en/es/it auto maps', () => {
+    const aspectHouseKeys = Object.keys(TRANSIT_CATALOG_PTBR).filter(isAspectHouseKey)
+    const locales: Array<'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'> = ['pt-BR', 'en-US', 'es-ES', 'it-IT']
+    locales.forEach((locale) => {
+      const map = locale === 'pt-BR'
+        ? TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR
+        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]
+      const missing = aspectHouseKeys.filter((key) => !map[key])
       expect(missing).toEqual([])
     })
   })

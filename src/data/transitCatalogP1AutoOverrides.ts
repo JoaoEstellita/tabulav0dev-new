@@ -2,7 +2,20 @@ import { TRANSIT_CATALOG_PTBR } from './transitCatalogPtBR'
 
 type Locale = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
-const ASPECT_KEYS = new Set(['conjuncao', 'oposicao', 'quadratura', 'trigono', 'sextil'])
+const ASPECT_KEYS = new Set([
+  'conjuncao',
+  'oposicao',
+  'quadratura',
+  'trigono',
+  'sextil',
+  'quincuncio',
+  'semissextil',
+  'semiquadratura',
+  'sesquiquadratura',
+  'harmonic',
+  'tense',
+  'neutral',
+])
 const AUTO_ASPECT_TARGETS = new Set([
   'sun',
   'moon',
@@ -18,6 +31,18 @@ const AUTO_ASPECT_TARGETS = new Set([
   'descendente',
   'meio_do_ceu',
   'fundo_do_ceu',
+  'house_1',
+  'house_2',
+  'house_3',
+  'house_4',
+  'house_5',
+  'house_6',
+  'house_7',
+  'house_8',
+  'house_9',
+  'house_10',
+  'house_11',
+  'house_12',
 ])
 
 const PLANET_LABELS: Record<Locale, Record<string, string>> = {
@@ -101,6 +126,13 @@ const ASPECT_LABELS: Record<Locale, Record<string, string>> = {
     quadratura: 'quadratura',
     trigono: 'trigono',
     sextil: 'sextil',
+    quincuncio: 'quincuncio',
+    semissextil: 'semissextil',
+    semiquadratura: 'semiquadratura',
+    sesquiquadratura: 'sesquiquadratura',
+    harmonic: 'harmonico',
+    tense: 'desafiador',
+    neutral: 'neutro',
   },
   'en-US': {
     conjuncao: 'conjunction',
@@ -108,6 +140,13 @@ const ASPECT_LABELS: Record<Locale, Record<string, string>> = {
     quadratura: 'square',
     trigono: 'trine',
     sextil: 'sextile',
+    quincuncio: 'quincunx',
+    semissextil: 'semisextile',
+    semiquadratura: 'semisquare',
+    sesquiquadratura: 'sesquiquadrate',
+    harmonic: 'harmonic',
+    tense: 'challenging',
+    neutral: 'neutral',
   },
   'es-ES': {
     conjuncao: 'conjuncion',
@@ -115,6 +154,13 @@ const ASPECT_LABELS: Record<Locale, Record<string, string>> = {
     quadratura: 'cuadratura',
     trigono: 'trigono',
     sextil: 'sextil',
+    quincuncio: 'quincuncio',
+    semissextil: 'semisextil',
+    semiquadratura: 'semicuadratura',
+    sesquiquadratura: 'sesquicuadratura',
+    harmonic: 'armonico',
+    tense: 'desafiante',
+    neutral: 'neutro',
   },
   'it-IT': {
     conjuncao: 'congiunzione',
@@ -122,6 +168,13 @@ const ASPECT_LABELS: Record<Locale, Record<string, string>> = {
     quadratura: 'quadratura',
     trigono: 'trigono',
     sextil: 'sestile',
+    quincuncio: 'quinconce',
+    semissextil: 'semisestile',
+    semiquadratura: 'semiquadratura',
+    sesquiquadratura: 'sesquiquadratura',
+    harmonic: 'armonico',
+    tense: 'sfidante',
+    neutral: 'neutro',
   },
 }
 
@@ -132,6 +185,13 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quadratura: 'ajuste pratico com mais exigencia',
     trigono: 'fluidez para consolidar avancos',
     sextil: 'oportunidade que pede iniciativa',
+    quincuncio: 'ajuste fino de rota e expectativas',
+    semissextil: 'refino discreto em pontos de detalhe',
+    semiquadratura: 'friccao leve que pede calibragem',
+    sesquiquadratura: 'atrito intermitente com necessidade de reposicao',
+    harmonic: 'apoio de contexto para avancar com fluidez',
+    tense: 'tensao produtiva que pede estrutura',
+    neutral: 'observacao objetiva sem puxar extremos',
   },
   'en-US': {
     conjuncao: 'focus and concentration on the same theme',
@@ -139,6 +199,13 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quadratura: 'practical adjustment under higher pressure',
     trigono: 'flow to consolidate progress',
     sextil: 'opportunity that depends on initiative',
+    quincuncio: 'fine route and expectation adjustment',
+    semissextil: 'subtle refinement of detail points',
+    semiquadratura: 'light friction asking for calibration',
+    sesquiquadratura: 'intermittent friction requiring repositioning',
+    harmonic: 'context support to move with flow',
+    tense: 'productive tension requiring structure',
+    neutral: 'objective observation without extremes',
   },
   'es-ES': {
     conjuncao: 'foco y concentracion en el mismo tema',
@@ -146,6 +213,13 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quadratura: 'ajuste practico con mayor exigencia',
     trigono: 'fluidez para consolidar avances',
     sextil: 'oportunidad que requiere iniciativa',
+    quincuncio: 'ajuste fino de ruta y expectativas',
+    semissextil: 'refino discreto en puntos de detalle',
+    semiquadratura: 'friccion leve que pide calibracion',
+    sesquiquadratura: 'friccion intermitente con necesidad de reposicion',
+    harmonic: 'apoyo de contexto para avanzar con fluidez',
+    tense: 'tension productiva que pide estructura',
+    neutral: 'observacion objetiva sin extremos',
   },
   'it-IT': {
     conjuncao: 'focus e concentrazione sullo stesso tema',
@@ -153,6 +227,13 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quadratura: 'aggiustamento pratico con maggiore pressione',
     trigono: 'fluidita per consolidare progressi',
     sextil: 'opportunita che richiede iniziativa',
+    quincuncio: 'aggiustamento fine di rotta e aspettative',
+    semissextil: 'rifinitura discreta dei dettagli',
+    semiquadratura: 'attrito leggero che richiede calibrazione',
+    sesquiquadratura: 'attrito intermittente che richiede riposizionamento',
+    harmonic: 'supporto di contesto per avanzare con fluidita',
+    tense: 'tensione produttiva che richiede struttura',
+    neutral: 'osservazione oggettiva senza estremi',
   },
 }
 
@@ -323,12 +404,21 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
   if (!parsed) return null
   const planet = PLANET_LABELS[locale][parsed.planet]
   const aspect = ASPECT_LABELS[locale][parsed.aspect]
-  const target = TARGET_LABELS[locale][parsed.target]
   const theme = ASPECT_THEME[locale][parsed.aspect]
-  if (!planet || !aspect || !target || !theme) return null
-  const angleFocus = ANGLE_FOCUS[locale][parsed.target]
+  if (!planet || !aspect || !theme) return null
+  const houseTarget = getIngressHouse(parsed.target)
+  const target =
+    houseTarget != null
+      ? locale === 'en-US'
+        ? `House ${houseTarget}`
+        : `Casa ${houseTarget}`
+      : TARGET_LABELS[locale][parsed.target]
+  if (!target) return null
+  const angleFocus = houseTarget == null ? ANGLE_FOCUS[locale][parsed.target] : null
+  const houseFocus = houseTarget != null ? HOUSE_FOCUS[locale][houseTarget] : null
   const targetFocus =
     angleFocus ||
+    houseFocus ||
     (locale === 'pt-BR'
       ? `dinamica simbolizada por ${target}`
       : locale === 'en-US'
