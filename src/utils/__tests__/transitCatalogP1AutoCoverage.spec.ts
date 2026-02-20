@@ -14,8 +14,13 @@ const MAJOR_TARGETS = new Set([
   'mars',
   'jupiter',
   'saturn',
+  'uranus',
+  'neptune',
+  'pluto',
   'ascendente',
+  'descendente',
   'meio_do_ceu',
+  'fundo_do_ceu',
 ])
 const DETERMINISTIC_TOKENS = [
   'vai acontecer',
@@ -32,6 +37,10 @@ function isP1Key(key: string): boolean {
   const aspect = match[2]
   const target = match[3]
   return ASPECT_KEYS.has(aspect) && MAJOR_TARGETS.has(target)
+}
+
+function isIngressKey(key: string): boolean {
+  return /^transit:[a-z_]+\|ingress\|house_([1-9]|1[0-2])$/.test(key)
 }
 
 function hasDeterministicLanguage(text: string): boolean {
@@ -56,6 +65,18 @@ describe('transit catalog P1 auto overrides coverage', () => {
     })
   })
 
+  it('covers all ingress keys in pt/en/es/it auto maps', () => {
+    const ingressKeys = Object.keys(TRANSIT_CATALOG_PTBR).filter(isIngressKey)
+    const locales: Array<'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'> = ['pt-BR', 'en-US', 'es-ES', 'it-IT']
+    locales.forEach((locale) => {
+      const map = locale === 'pt-BR'
+        ? TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR
+        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]
+      const missing = ingressKeys.filter((key) => !map[key])
+      expect(missing).toEqual([])
+    })
+  })
+
   it('keeps auto-generated P1 text non-deterministic and resolved', () => {
     const samples: string[] = [
       ...Object.values(TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR),
@@ -76,4 +97,3 @@ describe('transit catalog P1 auto overrides coverage', () => {
     expect(bad).toEqual([])
   })
 })
-
