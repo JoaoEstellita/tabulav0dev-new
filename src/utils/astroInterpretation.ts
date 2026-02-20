@@ -929,6 +929,9 @@ function sanitizeCatalogText(value: string): string {
     [/\binevitavel\b/gi, 'mais provavel'],
     [/\bgarantid[oa]\b/gi, 'favorecido'],
     [/\bstatus quo\b/gi, 'padrao atual'],
+    [/\bmarca\s+de\s+alta\s+[aÃÁàÀ]gua\b/gi, 'marco relevante'],
+    [/\bcurva\s+gradual\s+para\s+mais\s+interna[cç][aã]o\b/gi, 'movimento gradual de reposicionamento interno'],
+    [/\be\s+assim\s+por\s+diante\b/gi, ''],
   ]
   let out = fixMojibake(normalizeEscapedQuoteNoise(String(value || '')))
   for (const [pattern, replacement] of replacements) {

@@ -56,4 +56,23 @@ describe('catalog text sanitization', () => {
     expect(merged).not.toContain('circunst\\"ncias')
     expect(merged).not.toContain('\\"')
   })
+
+  it('rewrites literal-translation artifacts in jupiter-midheaven catalog copy', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Jupiter',
+        aspectName: 'conjuncao',
+        target: { angle: 'MC' },
+        house: 10,
+        phase: 'applying',
+      },
+      'carreira',
+      'pt-BR'
+    )
+
+    const merged = `${narrative.shortText} ${narrative.modalBody}`.toLowerCase()
+    expect(merged).not.toContain('marca de alta agua')
+    expect(merged).not.toContain('curva gradual para mais internacao')
+    expect(merged).not.toContain('e assim por diante')
+  })
 })
