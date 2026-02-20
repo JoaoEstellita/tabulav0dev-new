@@ -1218,19 +1218,11 @@ export function buildAstroTransitNarrative(
     return `A fase temporal esta ${phaseLabel}, e o padrao do aspecto aponta para ${aspectMeaning}.`
   })()
 
-  const guidanceNarrative = (() => {
-    if (lang === 'en-US') return `${actionCore} ${scoreLink}`
-    if (lang === 'es-ES') return `${actionCore} ${scoreLink}`
-    if (lang === 'it-IT') return `${actionCore} ${scoreLink}`
-    return `${actionCore} ${scoreLink}`
-  })()
-
   const fullParts = mergeNarrativeSegments([
     technicalNarrative,
     areaTone,
     positionNarrative,
     phaseNarrative,
-    guidanceNarrative,
   ], { exclude: [safeDirectText] })
 
   return {
@@ -1303,17 +1295,12 @@ export function buildUnifiedTransitNarrative(
 
   const strategyBlock = ''
 
-  const metaParts = [
-    `${tx.phasePrefix}: ${phaseLabel}.`,
-    scoreLink,
-  ]
+  const metaParts = [`${tx.phasePrefix}: ${phaseLabel}.`, scoreLink]
   const modalBody = mergeNarrativeSegments([
     modalIntro,
     areaTone,
     strategyBlock,
     catalogDirectText ? `${catalogDirectText}\n\n${narrative.fullText}` : narrative.fullText,
-    actionCore,
-    ...metaParts,
   ], { exclude: [directText] }).join('\n\n')
 
   const interpretationV2 = (() => {
