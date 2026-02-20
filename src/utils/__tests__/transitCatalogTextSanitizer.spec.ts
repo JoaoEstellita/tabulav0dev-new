@@ -20,5 +20,23 @@ describe('catalog text sanitization', () => {
     expect(merged).not.toContain('a fase atual')
     expect(merged).not.toContain('sequencia pratica')
   })
-})
 
+  it('drops noisy catalog copy and falls back to generated narrative', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Saturn',
+        aspectName: 'quadratura',
+        target: { natalPlanet: 'Saturn' },
+        house: 10,
+        phase: 'active',
+      },
+      'carreira',
+      'pt-BR'
+    )
+
+    const merged = `${narrative.shortText} ${narrative.modalBody}`
+    expect(merged).not.toContain('Ã')
+    expect(merged).not.toContain('�')
+    expect(merged).not.toContain('\\"')
+  })
+})

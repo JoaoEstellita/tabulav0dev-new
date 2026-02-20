@@ -901,6 +901,9 @@ function sanitizeCatalogText(value: string): string {
     const text = String(input || '').trim()
     if (!text || text.length < 50) return false
     if (catalogCorruptionScore(text) > 1) return false
+    if (/(?:Ã|Â|�)/.test(text)) return false
+    if (/[A-Za-z]\"[A-Za-z]/.test(text)) return false
+    if (/\\\"/.test(text)) return false
     const alpha = (text.match(/[A-Za-z]/g) || []).length
     return alpha / text.length >= 0.45
   }
