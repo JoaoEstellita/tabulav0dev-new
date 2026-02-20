@@ -619,10 +619,18 @@ export function buildArchetypeKeywordsForTransit(
   const house = getHouseNumber(transit)
   const targetRaw = String(transit?.natalPlanet || transit?.target?.natalPlanet || '').trim()
 
+  const transitPlanetLabel = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
+  const aspectLabel = getAspectLabel(aspectKey, lang)
+  const targetLabel = getTargetLabel(transit, lang)
+
+  add(transitPlanetLabel || null)
+  add(aspectLabel || null)
+  if (targetLabel && targetLabel !== I18N[lang].yourNatalChart) add(targetLabel)
   add(getPlanetArchetypeWord(transitPlanetRaw))
   add(getAspectArchetype(aspectKey, lang))
   if (targetRaw && PLANET_SYMBOLISM[targetRaw]) add(getPlanetArchetypeWord(targetRaw))
   if (house) {
+    add(`${I18N[lang].houseWord} ${house}`)
     const houseMeaning = getHouseSymbolism(lang, house)
     add(houseMeaning.split(',')[0]?.trim() || `${I18N[lang].houseWord} ${house}`)
   }
