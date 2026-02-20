@@ -406,7 +406,7 @@ const I18N = {
     direct: {
       ingress: '{planet} ingressa na {houseLabel} {house}, ativando {houseMeaning}. {phaseLabel}, isso {phaseVerb} prioridades em {area}.',
       houseNeutral: '{planet} na {houseLabel} {house} ativa {houseMeaning}. {phaseLabel}, isso {flowVerb} ajuste de ritmo em {area}.',
-      aspect: '{planet} em {aspectKey} com {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge} o foco recai em {area}.',
+      aspect: '{planet} em {aspectKey} com {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge}.',
       fallback: '{planet} ativa um ciclo de ajustes praticos em {area}.',
     },
   },
@@ -438,7 +438,7 @@ const I18N = {
     direct: {
       ingress: '{planet} enters {houseLabel} {house}, activating {houseMeaning}. {phaseLabel}, this {phaseVerb} priorities in {area}.',
       houseNeutral: '{planet} in {houseLabel} {house} activates {houseMeaning}. {phaseLabel}, this {flowVerb} pace adjustment in {area}.',
-      aspect: '{planet} in {aspectKey} with {targetLabel} indicates {aspectMeaning}. {phaseLabel}, {phaseBridge} focus lands on {area}.',
+      aspect: '{planet} in {aspectKey} with {targetLabel} indicates {aspectMeaning}. {phaseLabel}, {phaseBridge}.',
       fallback: '{planet} activates a practical adjustment cycle in {area}.',
     },
   },
@@ -470,7 +470,7 @@ const I18N = {
     direct: {
       ingress: '{planet} ingresa en {houseLabel} {house}, activando {houseMeaning}. {phaseLabel}, esto {phaseVerb} prioridades en {area}.',
       houseNeutral: '{planet} en {houseLabel} {house} activa {houseMeaning}. {phaseLabel}, esto {flowVerb} ajuste de ritmo en {area}.',
-      aspect: '{planet} en {aspectKey} con {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge} el foco recae en {area}.',
+      aspect: '{planet} en {aspectKey} con {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge}.',
       fallback: '{planet} activa un ciclo de ajustes practicos en {area}.',
     },
   },
@@ -502,7 +502,7 @@ const I18N = {
     direct: {
       ingress: '{planet} entra in {houseLabel} {house}, attivando {houseMeaning}. {phaseLabel}, questo {phaseVerb} priorita in {area}.',
       houseNeutral: '{planet} in {houseLabel} {house} attiva {houseMeaning}. {phaseLabel}, questo {flowVerb} il ritmo in {area}.',
-      aspect: '{planet} in {aspectKey} con {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge} il focus ricade su {area}.',
+      aspect: '{planet} in {aspectKey} con {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge}.',
       fallback: '{planet} attiva un ciclo di aggiustamenti pratici in {area}.',
     },
   },
@@ -1002,7 +1002,7 @@ function buildScoreLink(aspectKey: string, areaLabel?: string | null, language?:
   if (lang === 'en-US') return `Practical reading: effect on ${area} depends more on consistent choices than transit intensity.`
   if (lang === 'es-ES') return `Lectura practica: el efecto en ${area} depende mas de la consistencia de tus decisiones que de la intensidad del transito.`
   if (lang === 'it-IT') return `Lettura pratica: l effetto su ${area} dipende piu dalla coerenza delle scelte che dall intensita del transito.`
-  return `Leitura pratica: o efeito em ${area} depende mais da consistencia das escolhas do que da intensidade do transito.`
+  return 'Leitura pratica: observe o transito no cotidiano e ajuste em pequenos passos.'
 }
 
 function stripActionPrefix(text: string, prefix: string): string {
@@ -1286,12 +1286,12 @@ export function buildUnifiedTransitNarrative(
       if (lang === 'en-US') return `Current phase is ${phaseLabel}. This combination tends to evolve with practical sequence: first read the pattern, then adjust execution.`
       if (lang === 'es-ES') return `La fase actual es ${phaseLabel}. Esta combinacion tiende a evolucionar con secuencia practica: primero leer el patron, luego ajustar la ejecucion.`
       if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}. Questa combinazione tende a evolvere con una sequenza pratica: prima leggere il pattern, poi regolare l esecuzione.`
-      return `A fase atual e ${phaseLabel}. Essa combinacao tende a evoluir em sequencia pratica: primeiro ler o padrao, depois ajustar a execucao.`
+      return `Fase atual: ${phaseLabel}.`
     }
     if (lang === 'en-US') return `Current phase is ${phaseLabel}, so consistency of choices is more important than isolated intensity spikes.`
     if (lang === 'es-ES') return `La fase actual es ${phaseLabel}, por eso la consistencia de decisiones importa mas que picos aislados de intensidad.`
     if (lang === 'it-IT') return `La fase attuale e ${phaseLabel}, quindi la coerenza delle scelte conta piu dei picchi isolati di intensita.`
-    return `A fase atual e ${phaseLabel}, por isso a consistencia das escolhas importa mais do que picos isolados de intensidade.`
+    return `Fase atual: ${phaseLabel}.`
   })()
 
   const metaParts = [
