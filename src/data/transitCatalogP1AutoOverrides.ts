@@ -215,6 +215,84 @@ const HOUSE_FOCUS: Record<Locale, Record<number, string>> = {
   },
 }
 
+const PLANET_INGRESS_STYLE: Record<Locale, Record<string, string>> = {
+  'pt-BR': {
+    sun: 'dar direcao ao que precisa de visibilidade',
+    moon: 'organizar o clima emocional e as necessidades imediatas',
+    mercury: 'clarear conversas, mensagens e ajustes de rota',
+    venus: 'refinar vinculos, valores e trocas com mais qualidade',
+    mars: 'agir com objetividade e evitar dispersao de energia',
+    jupiter: 'expandir com criterio e consolidar aprendizados',
+    saturn: 'estruturar limites, prazos e rotina com maturidade',
+    uranus: 'renovar padroes com liberdade e responsabilidade',
+    neptune: 'combinar sensibilidade com discernimento pratico',
+    pluto: 'aprofundar mudancas com consistencia e estrategia',
+  },
+  'en-US': {
+    sun: 'bring direction to what needs visibility',
+    moon: 'organize emotional climate and immediate needs',
+    mercury: 'clarify conversations, messages, and course corrections',
+    venus: 'refine bonds, values, and exchanges with more quality',
+    mars: 'act with objectivity and avoid energy dispersion',
+    jupiter: 'expand with criteria and consolidate learning',
+    saturn: 'structure limits, deadlines, and routine with maturity',
+    uranus: 'renew patterns with freedom and responsibility',
+    neptune: 'combine sensitivity with practical discernment',
+    pluto: 'deepen change with consistency and strategy',
+  },
+  'es-ES': {
+    sun: 'dar direccion a lo que pide visibilidad',
+    moon: 'ordenar el clima emocional y las necesidades inmediatas',
+    mercury: 'aclarar conversaciones, mensajes y ajustes de rumbo',
+    venus: 'refinar vinculos, valores e intercambios con mas calidad',
+    mars: 'actuar con objetividad y evitar dispersion de energia',
+    jupiter: 'expandir con criterio y consolidar aprendizajes',
+    saturn: 'estructurar limites, plazos y rutina con madurez',
+    uranus: 'renovar patrones con libertad y responsabilidad',
+    neptune: 'combinar sensibilidad con discernimiento practico',
+    pluto: 'profundizar cambios con consistencia y estrategia',
+  },
+  'it-IT': {
+    sun: 'dare direzione a cio che richiede visibilita',
+    moon: 'organizzare il clima emotivo e i bisogni immediati',
+    mercury: 'chiarire conversazioni, messaggi e correzioni di rotta',
+    venus: 'rifinire legami, valori e scambi con maggiore qualita',
+    mars: 'agire con oggettivita evitando dispersione di energia',
+    jupiter: 'espandere con criterio e consolidare apprendimenti',
+    saturn: 'strutturare limiti, scadenze e routine con maturita',
+    uranus: 'rinnovare schemi con liberta e responsabilita',
+    neptune: 'unire sensibilita e discernimento pratico',
+    pluto: 'approfondire trasformazioni con coerenza e strategia',
+  },
+}
+
+const ANGLE_FOCUS: Record<Locale, Record<string, string>> = {
+  'pt-BR': {
+    ascendente: 'identidade, postura e forma de iniciar movimentos',
+    descendente: 'vinculos, acordos e equilibrio entre necessidades',
+    meio_do_ceu: 'direcao publica, carreira e reputacao',
+    fundo_do_ceu: 'base emocional, lar e sustentacao interna',
+  },
+  'en-US': {
+    ascendente: 'identity, posture, and how you initiate movement',
+    descendente: 'bonds, agreements, and balance of needs',
+    meio_do_ceu: 'public direction, career, and reputation',
+    fundo_do_ceu: 'emotional base, home, and inner support',
+  },
+  'es-ES': {
+    ascendente: 'identidad, postura y forma de iniciar movimientos',
+    descendente: 'vinculos, acuerdos y equilibrio de necesidades',
+    meio_do_ceu: 'direccion publica, carrera y reputacion',
+    fundo_do_ceu: 'base emocional, hogar y sosten interno',
+  },
+  'it-IT': {
+    ascendente: 'identita, postura e modo di iniziare le azioni',
+    descendente: 'legami, accordi ed equilibrio dei bisogni',
+    meio_do_ceu: 'direzione pubblica, carriera e reputazione',
+    fundo_do_ceu: 'base emotiva, casa e sostegno interiore',
+  },
+}
+
 function parseTransitKey(key: string): { planet: string; aspect: string; target: string } | null {
   const match = key.match(/^transit:([a-z_]+)\|([a-z_]+)\|([a-z0-9_]+)$/)
   if (!match) return null
@@ -248,17 +326,27 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
   const target = TARGET_LABELS[locale][parsed.target]
   const theme = ASPECT_THEME[locale][parsed.aspect]
   if (!planet || !aspect || !target || !theme) return null
+  const angleFocus = ANGLE_FOCUS[locale][parsed.target]
+  const targetFocus =
+    angleFocus ||
+    (locale === 'pt-BR'
+      ? `dinamica simbolizada por ${target}`
+      : locale === 'en-US'
+        ? `theme represented by ${target}`
+        : locale === 'es-ES'
+          ? `dinamica simbolizada por ${target}`
+          : `dinamica rappresentata da ${target}`)
 
   if (locale === 'pt-BR') {
-    return `${planet} em ${aspect} com ${target} ativa uma fase de ${theme}. O momento favorece leitura objetiva do contexto e escolhas graduais, sem movimentos extremos. Ajuste prioridades com constancia para transformar o sinal em progresso sustentavel.`
+    return `${planet} em ${aspect} com ${target} ativa uma fase de ${theme}. O aspecto toca ${targetFocus} e pede calibragem entre timing e decisao. Prefira passos progressivos: leitura clara do contexto, ajuste de prioridade e execucao consistente.`
   }
   if (locale === 'en-US') {
-    return `${planet} in ${aspect} with ${target} activates a phase of ${theme}. This moment favors objective context reading and gradual choices instead of extreme moves. Adjust priorities with consistency to turn this signal into sustainable progress.`
+    return `${planet} in ${aspect} with ${target} activates a phase of ${theme}. The aspect touches ${targetFocus} and asks for calibration between timing and decision. Prefer progressive moves: clear context reading, priority adjustment, and consistent execution.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ${aspect} con ${target} activa una fase de ${theme}. Este momento favorece una lectura objetiva del contexto y decisiones graduales, evitando extremos. Ajusta prioridades con constancia para convertir esta senal en progreso sostenible.`
+    return `${planet} en ${aspect} con ${target} activa una fase de ${theme}. El aspecto toca ${targetFocus} y pide calibrar tiempo y decision. Prioriza pasos progresivos: lectura clara del contexto, ajuste de prioridades y ejecucion constante.`
   }
-  return `${planet} in ${aspect} con ${target} attiva una fase di ${theme}. Questo momento favorisce lettura oggettiva del contesto e scelte graduali, evitando mosse estreme. Regola le priorita con costanza per trasformare questo segnale in progresso sostenibile.`
+  return `${planet} in ${aspect} con ${target} attiva una fase di ${theme}. L aspetto tocca ${targetFocus} e richiede calibrare tempi e decisioni. Meglio passi progressivi: lettura chiara del contesto, priorita regolate ed esecuzione costante.`
 }
 
 function buildIngressOverride(locale: Locale, key: string): string | null {
@@ -268,18 +356,19 @@ function buildIngressOverride(locale: Locale, key: string): string | null {
   if (!house) return null
   const planet = PLANET_LABELS[locale][parsed.planet]
   const focus = HOUSE_FOCUS[locale][house]
-  if (!planet || !focus) return null
+  const style = PLANET_INGRESS_STYLE[locale][parsed.planet]
+  if (!planet || !focus || !style) return null
 
   if (locale === 'pt-BR') {
-    return `${planet} em ingresso na Casa ${house} abre uma fase de reorganizacao em ${focus}. O periodo tende a funcionar melhor com ritmo simples, escolhas objetivas e revisao de prioridades. Transforme o impulso em passos praticos e consistentes.`
+    return `${planet} em ingresso na Casa ${house} abre uma fase de reorganizacao em ${focus}. O sinal favorece ${style}, com ritmo simples e revisao pragmatica de prioridades. Traduza o impulso em uma acao concreta por vez e acompanhe o que realmente sustenta resultado.`
   }
   if (locale === 'en-US') {
-    return `${planet} entering House ${house} starts a phase of reorganization in ${focus}. This period usually works better with simple pacing, objective choices, and priority review. Turn impulse into practical and consistent steps.`
+    return `${planet} entering House ${house} starts a reorganization phase in ${focus}. The signal supports ${style}, with simple pacing and pragmatic priority review. Turn impulse into one concrete action at a time and track what truly sustains results.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ingreso en Casa ${house} abre una fase de reorganizacion en ${focus}. Este periodo suele funcionar mejor con ritmo simple, decisiones objetivas y revision de prioridades. Convierte el impulso en pasos practicos y consistentes.`
+    return `${planet} en ingreso en Casa ${house} abre una fase de reorganizacion en ${focus}. La senal favorece ${style}, con ritmo simple y revision pragmatica de prioridades. Convierte el impulso en una accion concreta por vez y observa lo que sostiene resultados.`
   }
-  return `${planet} in ingresso in Casa ${house} apre una fase di riorganizzazione in ${focus}. Questo periodo funziona meglio con ritmo semplice, scelte oggettive e revisione delle priorita. Trasforma l impulso in passi pratici e costanti.`
+  return `${planet} in ingresso in Casa ${house} apre una fase di riorganizzazione in ${focus}. Il segnale favorisce ${style}, con ritmo semplice e revisione pragmatica delle priorita. Trasforma l impulso in un azione concreta alla volta e osserva cio che regge i risultati.`
 }
 
 function buildAutoOverrides(locale: Locale): Record<string, string> {
