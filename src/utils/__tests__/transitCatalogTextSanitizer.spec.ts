@@ -39,4 +39,21 @@ describe('catalog text sanitization', () => {
     expect(merged).not.toContain('�')
     expect(merged).not.toContain('\\"')
   })
+
+  it('normalizes escaped-quote corpus noise tokens', () => {
+    const narrative = buildUnifiedTransitNarrative(
+      {
+        transitPlanet: 'Moon',
+        aspectName: 'ingress',
+        house: 2,
+        phase: 'active',
+      },
+      'financas',
+      'pt-BR'
+    )
+
+    const merged = `${narrative.shortText} ${narrative.modalBody}`.toLowerCase()
+    expect(merged).not.toContain('circunst\\"ncias')
+    expect(merged).not.toContain('\\"')
+  })
 })

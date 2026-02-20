@@ -914,6 +914,15 @@ function sanitizeCatalogText(value: string): string {
     return catalogCorruptionScore(rescued) < catalogCorruptionScore(input) ? rescued : input
   }
 
+  const normalizeEscapedQuoteNoise = (input: string): string => {
+    let out = String(input || '')
+    // Common broken token from imported corpus (e.g. Circunst\"ncias).
+    out = out.replace(/circunst\\\"ncias/gi, 'circunstancias')
+    // Remove escaped-quote noise that appears in the middle of words.
+    out = out.replace(/([A-Za-zÀ-ÿ])\\\"([A-Za-zÀ-ÿ])/g, '$1$2')
+    return out
+  }
+
   const replacements: Array<[RegExp, string]> = [
     [/\bvai acontecer\b/gi, 'tende a acontecer'],
     [/\bcom certeza\b/gi, 'com boa chance'],
@@ -921,7 +930,7 @@ function sanitizeCatalogText(value: string): string {
     [/\bgarantid[oa]\b/gi, 'favorecido'],
     [/\bstatus quo\b/gi, 'padrao atual'],
   ]
-  let out = fixMojibake(String(value || ''))
+  let out = fixMojibake(normalizeEscapedQuoteNoise(String(value || '')))
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }
