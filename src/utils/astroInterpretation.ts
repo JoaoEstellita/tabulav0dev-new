@@ -369,6 +369,68 @@ const ASPECT_ARCHETYPE_I18N: Record<AppLanguage, Record<string, string>> = {
   },
 }
 
+const NARRATIVE_KEYWORD_LEXICON: Record<AppLanguage, Array<{ pattern: RegExp; label: string }>> = {
+  'pt-BR': [
+    { pattern: /\bcarreira|reputa[cç][aã]o|dire[cç][aã]o p[uú]blica\b/i, label: 'carreira' },
+    { pattern: /\bfam[ií]lia|lar|base emocional\b/i, label: 'familia' },
+    { pattern: /\brel[aã]c|v[ií]nculo|parceria|acordo\b/i, label: 'relacoes' },
+    { pattern: /\bfinan[cç]a|recursos|valor pessoal|seguran[cç]a material\b/i, label: 'financas' },
+    { pattern: /\brotina|sa[úu]de|descanso|organiza[cç][aã]o\b/i, label: 'rotina' },
+    { pattern: /\btransforma[cç][aã]o|reposicionamento|depura[cç][aã]o\b/i, label: 'transformacao' },
+    { pattern: /\bcomunica[cç][aã]o|conversa|mensagens|clareza mental\b/i, label: 'comunicacao' },
+    { pattern: /\bresponsabilidade|disciplina|estrutura|limites\b/i, label: 'estrutura' },
+    { pattern: /\boportunidade|expans[aã]o|crescimento\b/i, label: 'expansao' },
+    { pattern: /\bajuste|equil[ií]brio|calibragem\b/i, label: 'ajuste' },
+  ],
+  'en-US': [
+    { pattern: /\bcareer|reputation|public direction\b/i, label: 'career' },
+    { pattern: /\bfamily|home|emotional foundation\b/i, label: 'family' },
+    { pattern: /\brelationship|bond|partnership|agreement\b/i, label: 'relationships' },
+    { pattern: /\bfinance|resources|material safety\b/i, label: 'finances' },
+    { pattern: /\broutine|health|rest|organization\b/i, label: 'routine' },
+    { pattern: /\btransformation|repositioning|deep change\b/i, label: 'transformation' },
+    { pattern: /\bcommunication|conversation|messages|mental clarity\b/i, label: 'communication' },
+    { pattern: /\bresponsibility|discipline|structure|limits\b/i, label: 'structure' },
+    { pattern: /\bopportunity|expansion|growth\b/i, label: 'expansion' },
+    { pattern: /\badjustment|balance|calibration\b/i, label: 'adjustment' },
+  ],
+  'es-ES': [
+    { pattern: /\bcarrera|reputaci[oó]n|direcci[oó]n p[uú]blica\b/i, label: 'carrera' },
+    { pattern: /\bfamilia|hogar|base emocional\b/i, label: 'familia' },
+    { pattern: /\brelaci[oó]n|v[ií]nculo|pareja|acuerdo\b/i, label: 'relaciones' },
+    { pattern: /\bfinanzas|recursos|seguridad material\b/i, label: 'finanzas' },
+    { pattern: /\brutina|salud|descanso|organizaci[oó]n\b/i, label: 'rutina' },
+    { pattern: /\btransformaci[oó]n|reposicionamiento\b/i, label: 'transformacion' },
+    { pattern: /\bcomunicaci[oó]n|conversaci[oó]n|mensajes\b/i, label: 'comunicacion' },
+    { pattern: /\bresponsabilidad|disciplina|estructura|l[ií]mites\b/i, label: 'estructura' },
+    { pattern: /\boportunidad|expansi[oó]n|crecimiento\b/i, label: 'expansion' },
+    { pattern: /\bajuste|equilibrio|calibraci[oó]n\b/i, label: 'ajuste' },
+  ],
+  'it-IT': [
+    { pattern: /\bcarriera|reputazione|direzione pubblica\b/i, label: 'carriera' },
+    { pattern: /\bfamiglia|casa|base emotiva\b/i, label: 'famiglia' },
+    { pattern: /\brelazione|legame|partnership|accordo\b/i, label: 'relazioni' },
+    { pattern: /\bfinanz|risorse|sicurezza materiale\b/i, label: 'finanze' },
+    { pattern: /\broutine|salute|riposo|organizzazione\b/i, label: 'routine' },
+    { pattern: /\btrasformazione|riposizionamento\b/i, label: 'trasformazione' },
+    { pattern: /\bcomunicazione|conversazione|messaggi\b/i, label: 'comunicazione' },
+    { pattern: /\bresponsabilita|disciplina|struttura|limiti\b/i, label: 'struttura' },
+    { pattern: /\bopportunita|espansione|crescita\b/i, label: 'espansione' },
+    { pattern: /\baggiustamento|equilibrio|calibrazione\b/i, label: 'aggiustamento' },
+  ],
+}
+
+function extractNarrativeKeywords(text: string, lang: AppLanguage): string[] {
+  const source = String(text || '')
+  if (!source) return []
+  const lexicon = NARRATIVE_KEYWORD_LEXICON[lang] || NARRATIVE_KEYWORD_LEXICON['pt-BR']
+  const out: string[] = []
+  lexicon.forEach(({ pattern, label }) => {
+    if (pattern.test(source) && !out.includes(label)) out.push(label)
+  })
+  return out.slice(0, 3)
+}
+
 function getAspectLabel(aspectKey: string, lang: AppLanguage): string {
   return ASPECT_LABELS[lang][aspectKey] || ASPECT_LABELS['pt-BR'][aspectKey] || aspectKey
 }
@@ -639,6 +701,10 @@ export function buildArchetypeKeywordsForTransit(
     add(houseMeaning.split(',')[0]?.trim() || `${I18N[lang].houseWord} ${house}`)
   }
   add(areaLabel || null)
+  const narrativeSource = resolveCatalogTransitText(transit, lang)
+  if (narrativeSource) {
+    extractNarrativeKeywords(narrativeSource, lang).forEach((kw) => add(kw))
+  }
 
   return out.slice(0, 5)
 }
