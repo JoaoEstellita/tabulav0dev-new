@@ -13,6 +13,7 @@ import { normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSyst
 import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
+import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -1066,66 +1067,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     return { short, long }
   }, [tl])
 
-  const buildAspectReading = React.useCallback((params: {
-    planet: string
-    aspectType: string
-    targetLabel: string
-    house?: number | null
-    days?: number | null
-    phase?: string | null
-    scope: 'personal' | 'collective' | 'house'
-  }) => {
-    const keyword = getPlanetKeyword(params.planet)
-    const houseFocus = params.house ? getHouseFocus(params.house) || `${tl('temas da', 'themes of', 'temas de la', 'temi della')} ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('contexto atual', 'current context', 'contexto actual', 'contesto attuale')
-    const aspectKey = normalizeAspectKey(params.aspectType)
-    const constructive = aspectKey === 'trigono' || aspectKey === 'sextil'
-    const intense = aspectKey === 'quadratura' || aspectKey === 'oposicao' || aspectKey === 'quincuncio'
-    const tone = constructive
-      ? tl('janela favorável para avanço com consistência', 'favorable window for consistent progress', 'ventana favorable para avanzar con consistencia', 'finestra favorevole per avanzare con costanza')
-      : intense
-      ? tl('tensão produtiva pedindo ajuste de rota', 'productive tension requiring route adjustment', 'tensión productiva que pide ajuste de rumbo', 'tensione produttiva che richiede un aggiustamento di rotta')
-      : tl('movimento de recalibração gradual', 'gradual recalibration movement', 'movimiento de recalibración gradual', 'movimento di ricalibrazione graduale')
-    const windowLabel = params.days ? tl(`em uma janela de cerca de ${params.days} dias`, `within a window of about ${params.days} days`, `en una ventana de unos ${params.days} días`, `in una finestra di circa ${params.days} giorni`) : tl('neste ciclo', 'in this cycle', 'en este ciclo', 'in questo ciclo')
-    const phaseKey = normalizeKey(String(params.phase || ''))
-    const phaseText =
-      phaseKey === 'peak'
-        ? tl('Peak', 'Peak', 'Pico', 'Picco')
-        : phaseKey === 'approaching' || phaseKey === 'emaprox' || phaseKey === 'enaprox'
-        ? tl('Em aproximação', 'Approaching', 'En aproximación', 'In avvicinamento')
-        : phaseKey === 'moving' || phaseKey === 'afastando' || phaseKey === 'alejandose'
-        ? tl('Afastando', 'Moving away', 'Alejándose', 'In allontanamento')
-        : (params.phase || '')
-    const phaseLabel = phaseText ? tl(` Fase atual: ${phaseText}.`, ` Current phase: ${phaseText}.`, ` Fase actual: ${phaseText}.`, ` Fase attuale: ${phaseText}.`) : ''
-    const scopeLabel =
-      params.scope === 'personal'
-        ? tl('No plano pessoal,', 'On a personal level,', 'En el plano personal,', 'Nel piano personale,')
-        : params.scope === 'collective'
-        ? tl('No plano coletivo,', 'On a collective level,', 'En el plano colectivo,', 'Nel piano collettivo,')
-        : tl('No eixo de casas,', 'In the house axis,', 'En el eje de casas,', 'Nell asse delle case,')
-
+  const buildDetailNarrativeFromTransit = React.useCallback((transit: Record<string, any>) => {
+    const unified = buildUnifiedTransitNarrative(transit, null, language)
     return {
-      short: tl(
-        `${scopeLabel} ${params.planet} ativa ${keyword} em ${houseFocus}: ${tone}.`,
-        `${scopeLabel} ${params.planet} activates ${keyword} in ${houseFocus}: ${tone}.`,
-        `${scopeLabel} ${params.planet} activa ${keyword} en ${houseFocus}: ${tone}.`,
-        `${scopeLabel} ${params.planet} attiva ${keyword} in ${houseFocus}: ${tone}.`
-      ),
-      long:
-        tl(
-          `${params.planet} em ${translateAspectLabel(params.aspectType)} com ${params.targetLabel} organiza foco em ${houseFocus}.`,
-          `${params.planet} in ${translateAspectLabel(params.aspectType)} with ${params.targetLabel} organizes focus in ${houseFocus}.`,
-          `${params.planet} en ${translateAspectLabel(params.aspectType)} con ${params.targetLabel} organiza el foco en ${houseFocus}.`,
-          `${params.planet} in ${translateAspectLabel(params.aspectType)} con ${params.targetLabel} organizza il focus in ${houseFocus}.`
-        ) +
-        ` ${tone} ${windowLabel}.${phaseLabel} ` +
-        tl(
-          'Leitura prática: converta essa tendência em uma decisão pequena, clara e executável para evitar dispersão.',
-          'Practical reading: convert this trend into a small, clear and executable decision to avoid dispersion.',
-          'Lectura práctica: convierte esta tendencia en una decisión pequeña, clara y ejecutable para evitar dispersión.',
-          'Lettura pratica: trasforma questa tendenza in una decisione piccola, chiara ed eseguibile per evitare dispersione.'
-        )
+      short: unified.shortText,
+      long: unified.modalBody,
+      keywords: unified.keywords,
     }
-  }, [getHouseFocus, getPlanetKeyword, tl, translateAspectLabel])
+  }, [language])
 
   const elementSignCounts = React.useMemo(
     () => ({
@@ -1465,15 +1414,16 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 {personalByTransitPlanet[comparison.name].map((t, idx) => {
                   const key = `${t.transitPlanet}|${t.type}|${t.natalPlanet}`
                   const windowInfo = resolveWindowInfo((t as any).window || personalWindowMap.get(key))
-                  const reading = buildAspectReading({
-                    planet: t.transitPlanet,
-                    aspectType: t.type,
-                    targetLabel: translatePlanetName(t.natalPlanet),
+                  const transitForNarrative = {
+                    transitPlanet: t.transitPlanet,
+                    type: t.type,
+                    aspectName: t.type,
+                    targetPlanet: t.natalPlanet,
+                    targetLabel: t.natalPlanet,
                     house: comparison.current.house,
-                    days: windowInfo?.days || null,
-                    phase: windowInfo?.phaseLabel || null,
-                    scope: 'personal'
-                  })
+                    window: (t as any).window || personalWindowMap.get(key),
+                  }
+                  const reading = buildDetailNarrativeFromTransit(transitForNarrative)
                   return (
                     <View key={idx} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(t.type) }]}>{getAspectIcon(t.type)}</Text>
@@ -1489,13 +1439,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `${tl('Trânsito pessoal', 'Personal transit', 'Tránsito personal', 'Transito personale')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
-                            keywords: [
-                              tl('trânsito pessoal', 'personal transit', 'tránsito personal', 'transito personale'),
-                              translatePlanetName(t.transitPlanet),
-                              translateAspectLabel(t.type),
-                              translatePlanetName(t.natalPlanet),
-                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
-                            ],
+                            keywords: reading.keywords,
                           })
                         }
                       >
@@ -1520,15 +1464,16 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>{tr('transits.collective.title', 'Collective aspects')}:</Text>
                 {comparison.planetaryAspects.map((aspect, aspectIndex) => {
                   const windowInfo = resolveWindowInfo((aspect as any).window)
-                  const reading = buildAspectReading({
-                    planet: aspect.planet1,
-                    aspectType: aspect.type,
-                    targetLabel: translatePlanetName(aspect.planet2),
+                  const transitForNarrative = {
+                    transitPlanet: aspect.planet1,
+                    type: aspect.type,
+                    aspectName: aspect.type,
+                    targetPlanet: aspect.planet2,
+                    targetLabel: aspect.planet2,
                     house: comparison.current.house,
-                    days: windowInfo?.days || null,
-                    phase: windowInfo?.phaseLabel || null,
-                    scope: 'collective'
-                  })
+                    window: (aspect as any).window,
+                  }
+                  const reading = buildDetailNarrativeFromTransit(transitForNarrative)
                   return (
                     <View key={aspectIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(aspect.type) }]}>{getAspectIcon(aspect.type)}</Text>
@@ -1544,13 +1489,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `${tl('Aspecto coletivo', 'Collective aspect', 'Aspecto colectivo', 'Aspetto collettivo')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
-                            keywords: [
-                              tl('aspecto coletivo', 'collective aspect', 'aspecto colectivo', 'aspetto collettivo'),
-                              translatePlanetName(aspect.planet1),
-                              translateAspectLabel(aspect.type),
-                              translatePlanetName(aspect.planet2),
-                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${comparison.current.house}`,
-                            ],
+                            keywords: reading.keywords,
                           })
                         }
                       >
@@ -1575,15 +1514,17 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                 <Text style={styles.aspectsTitle}>{tl('Aspectos com casas', 'House aspects', 'Aspectos con casas', 'Aspetti con case')}:</Text>
                 {comparison.houseAspects.slice(0, 2).map((houseAspect, houseIndex) => {
                   const windowInfo = resolveWindowInfo((houseAspect as any).window)
-                  const reading = buildAspectReading({
-                    planet: comparison.name,
-                    aspectType: houseAspect.aspect,
-                    targetLabel: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house} (${getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning)})`,
+                  const transitForNarrative = {
+                    transitPlanet: comparison.name,
+                    type: houseAspect.aspect,
+                    aspectName: houseAspect.aspect,
+                    targetType: 'house',
+                    targetLabel: `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house}`,
                     house: houseAspect.house,
-                    days: windowInfo?.days || null,
-                    phase: windowInfo?.phaseLabel || null,
-                    scope: 'house'
-                  })
+                    houseCurrent: houseAspect.house,
+                    window: (houseAspect as any).window,
+                  }
+                  const reading = buildDetailNarrativeFromTransit(transitForNarrative)
                   return (
                     <View key={houseIndex} style={styles.aspectItem}>
                       <Text style={[styles.aspectIcon, { color: getAspectColor(houseAspect.aspect) }]}>{getAspectIcon(houseAspect.aspect)}</Text>
@@ -1599,13 +1540,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             subtitle: `${tl('Aspecto com casa', 'House aspect', 'Aspecto con casa', 'Aspetto con casa')} • ${translatePlanetName(comparison.name)}`,
                             short: reading.short,
                             long: reading.long,
-                            keywords: [
-                              tl('aspecto com casa', 'house aspect', 'aspecto con casa', 'aspetto con casa'),
-                              translatePlanetName(comparison.name),
-                              translateAspectLabel(houseAspect.aspect),
-                              `${tl('Casa', 'House', 'Casa', 'Casa')} ${houseAspect.house}`,
-                              getLocalizedHouseMeaning(houseAspect.house, houseAspect.meaning),
-                            ],
+                            keywords: reading.keywords,
                           })
                         }
                       >
