@@ -255,4 +255,24 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Plutao em oposicao a Marte eleva intensidade de acao e potencial de conflito por forca de vontade. O ciclo pede canalizar impulso com tecnica, evitando confronto por reatividade. Direcione energia para metas estruturais e conversas objetivas.',
   'transit:pluto|quadratura|mercury':
     'Plutao em quadratura com Mercurio pode aumentar pressao mental, fixacao e comunicacao mais dura. A fase pede revisar narrativas internas e checar fatos antes de concluir. Simplifique argumentos, reduza ruido e mantenha abertura para ajustar ponto de vista.',
+  'transit:jupiter|conjuncao|ascendente':
+    'Jupiter em conjuncao ao Ascendente amplia presenca, confianca e disposicao para iniciar movimentos pessoais. A fase favorece visibilidade quando voce combina entusiasmo com direcao clara. Evite exagerar promessas e alinhe imagem com entrega real.',
+  'transit:jupiter|conjuncao|jupiter':
+    'Jupiter em conjuncao com Jupiter marca janela de expansao e reposicionamento de visao. O ciclo favorece crescimento quando metas amplas viram plano pratico por etapas. Priorize oportunidades com aderencia ao seu momento atual.',
+  'transit:jupiter|conjuncao|mars':
+    'Jupiter em conjuncao com Marte aumenta iniciativa, coragem e impulso para acelerar decisoes. A fase tende a render melhor com foco tatico e controle de ritmo. Canalize energia em objetivos concretos para evitar dispersao por excesso de acao.',
+  'transit:jupiter|conjuncao|mercury':
+    'Jupiter em conjuncao com Mercurio amplia repertorio mental, aprendizado e capacidade de comunicar ideias. O periodo favorece estudos, acordos e planejamento com visao mais ampla. Estruture argumentos com clareza para transformar intuicao em resultado.',
+  'transit:jupiter|conjuncao|sun':
+    'Jupiter em conjuncao ao Sol fortalece confianca, sentido de direcao e abertura para novos ciclos de crescimento. A fase apoia protagonismo quando ha consistencia entre intencao e pratica. Use a visibilidade com criterio para consolidar avancos reais.',
+  'transit:jupiter|conjuncao|venus':
+    'Jupiter em conjuncao com Venus favorece harmonizacao de relacoes, valores e escolhas de bem-estar. O ciclo tende a ampliar oportunidades afetivas e financeiras quando ha reciprocidade e limite consciente. Aproveite o fluxo com moderacao para sustentar qualidade no longo prazo.',
+  'transit:jupiter|ingress|house_1':
+    'Jupiter em ingresso na Casa 1 inaugura fase de expansao pessoal, com mais iniciativa e desejo de reposicionamento. O momento favorece mudancas de postura, imagem e direcao de vida com horizonte mais amplo. Avance com autenticidade e mantenha foco no que e sustentavel.',
+  'transit:jupiter|ingress|house_3':
+    'Jupiter em ingresso na Casa 3 amplia comunicacao, aprendizado e trocas com o ambiente proximo. A fase favorece estudos, conversas estrategicas e circulacao de ideias com mais alcance. Organize prioridades para transformar informacao em decisao util.',
+  'transit:jupiter|ingress|house_5':
+    'Jupiter em ingresso na Casa 5 aumenta criatividade, expressao pessoal e abertura para experiencias prazerosas. O ciclo favorece projetos autorais, romances e iniciativas que pedem autenticidade. Use entusiasmo com criterio para manter continuidade e qualidade.',
+  'transit:jupiter|ingress|house_10':
+    'Jupiter em ingresso na Casa 10 tende a abrir fase de crescimento em carreira, reputacao e metas publicas. A janela favorece avancos quando visao estrategica se combina com execucao consistente. Priorize entregas-chave e consolide autoridade com resultados observaveis.',
 }

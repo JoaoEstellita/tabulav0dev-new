@@ -260,6 +260,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluto opposition Mars may intensify competitive pressure and conflict dynamics in action. This phase asks for self-regulation and strategic restraint under stress. Direct force toward constructive outcomes.',
     'transit:pluto|quadratura|mercury':
       'Pluto square Mercury can intensify thinking, suspicion, and communicational rigidity. This cycle asks for evidence-based analysis and cleaner dialogue. Recheck assumptions before committing to strong conclusions.',
+    'transit:jupiter|conjuncao|ascendente':
+      'Jupiter conjunct Ascendant can amplify presence, confidence, and willingness to initiate personal moves. This phase supports visibility when enthusiasm is paired with clear direction. Avoid overpromising and keep image aligned with real delivery.',
+    'transit:jupiter|conjuncao|jupiter':
+      'Jupiter conjunct Jupiter marks a window of expansion and broader perspective. This cycle favors growth when wide goals are translated into practical steps. Prioritize opportunities that match your current capacity.',
+    'transit:jupiter|conjuncao|mars':
+      'Jupiter conjunct Mars increases initiative, courage, and drive to accelerate decisions. This phase tends to work best with tactical focus and paced execution. Channel energy into concrete goals to avoid dispersion through excess action.',
+    'transit:jupiter|conjuncao|mercury':
+      'Jupiter conjunct Mercury expands mental range, learning, and communication capacity. The period favors study, agreements, and planning with a wider view. Structure arguments clearly to turn insight into useful outcomes.',
+    'transit:jupiter|conjuncao|sun':
+      'Jupiter conjunct Sun strengthens confidence, direction, and openness to growth cycles. This phase supports protagonism when intention is matched by consistent execution. Use visibility with criteria to consolidate durable progress.',
+    'transit:jupiter|conjuncao|venus':
+      'Jupiter conjunct Venus supports harmonization in relationships, values, and wellbeing choices. This cycle can broaden affective and financial opportunities when reciprocity and limits are present. Use the flow with moderation to preserve long-term quality.',
+    'transit:jupiter|ingress|house_1':
+      'Jupiter entering House 1 tends to begin a phase of personal expansion, initiative, and repositioning. The period supports posture, image, and direction changes with broader perspective. Move with authenticity and keep focus on sustainable progress.',
+    'transit:jupiter|ingress|house_3':
+      'Jupiter entering House 3 can expand communication, learning, and local exchanges. This phase supports study, strategic conversations, and broader circulation of ideas. Organize priorities so information becomes practical decisions.',
+    'transit:jupiter|ingress|house_5':
+      'Jupiter entering House 5 tends to increase creativity, personal expression, and openness to joyful experiences. The cycle supports authorial projects, romance, and authentic initiatives. Use enthusiasm with criteria to keep continuity and quality.',
+    'transit:jupiter|ingress|house_10':
+      'Jupiter entering House 10 can open a growth phase in career, reputation, and public goals. This window tends to favor progress when strategic vision is paired with consistent execution. Prioritize key deliveries and consolidate authority through observable results.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -518,6 +538,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluton en oposicion a Marte puede intensificar presion competitiva y dinamicas de conflicto al actuar. Esta fase pide autorregulacion y contencion estrategica bajo estres. Dirige fuerza hacia resultados constructivos.',
     'transit:pluto|quadratura|mercury':
       'Pluton en cuadratura con Mercurio puede intensificar pensamiento, sospecha y rigidez comunicativa. Este ciclo pide analisis basado en evidencia y dialogo mas limpio. Revisa supuestos antes de conclusiones tajantes.',
+    'transit:jupiter|conjuncao|ascendente':
+      'Jupiter en conjuncion al Ascendente puede ampliar presencia, confianza y disposicion para iniciar movimientos personales. Esta fase favorece visibilidad cuando entusiasmo y direccion clara van juntos. Evita prometer de mas y alinea imagen con entrega real.',
+    'transit:jupiter|conjuncao|jupiter':
+      'Jupiter en conjuncion con Jupiter marca una ventana de expansion y reposicionamiento de vision. Este ciclo favorece crecimiento cuando metas amplias se convierten en pasos practicos. Prioriza oportunidades alineadas con tu capacidad actual.',
+    'transit:jupiter|conjuncao|mars':
+      'Jupiter en conjuncion con Marte aumenta iniciativa, valentia e impulso para acelerar decisiones. Esta fase suele rendir mejor con foco tactico y control del ritmo. Canaliza energia en objetivos concretos para evitar dispersion por exceso de accion.',
+    'transit:jupiter|conjuncao|mercury':
+      'Jupiter en conjuncion con Mercurio amplia repertorio mental, aprendizaje y capacidad de comunicar ideas. El periodo favorece estudio, acuerdos y planificacion con vision mas amplia. Estructura argumentos con claridad para convertir intuicion en resultado util.',
+    'transit:jupiter|conjuncao|sun':
+      'Jupiter en conjuncion al Sol fortalece confianza, direccion y apertura a nuevos ciclos de crecimiento. Esta fase apoya protagonismo cuando intencion y practica se mantienen coherentes. Usa la visibilidad con criterio para consolidar avances reales.',
+    'transit:jupiter|conjuncao|venus':
+      'Jupiter en conjuncion con Venus favorece armonizacion de vinculos, valores y decisiones de bienestar. Este ciclo tiende a ampliar oportunidades afectivas y financieras cuando hay reciprocidad y limites claros. Aprovecha el flujo con moderacion para sostener calidad a largo plazo.',
+    'transit:jupiter|ingress|house_1':
+      'Jupiter en ingreso a Casa 1 inaugura una fase de expansion personal, con mas iniciativa y deseo de reposicionamiento. El periodo favorece cambios de postura, imagen y direccion de vida con horizonte mas amplio. Avanza con autenticidad y foco sostenible.',
+    'transit:jupiter|ingress|house_3':
+      'Jupiter en ingreso a Casa 3 amplia comunicacion, aprendizaje e intercambios con el entorno cercano. Esta fase favorece estudios, conversaciones estrategicas y circulacion de ideas con mayor alcance. Organiza prioridades para transformar informacion en decisiones utiles.',
+    'transit:jupiter|ingress|house_5':
+      'Jupiter en ingreso a Casa 5 aumenta creatividad, expresion personal y apertura a experiencias placenteras. El ciclo favorece proyectos de autoria, romances e iniciativas autenticas. Usa entusiasmo con criterio para mantener continuidad y calidad.',
+    'transit:jupiter|ingress|house_10':
+      'Jupiter en ingreso a Casa 10 tiende a abrir una fase de crecimiento en carrera, reputacion y objetivos publicos. Esta ventana favorece avances cuando vision estrategica y ejecucion constante van juntas. Prioriza entregas clave y consolida autoridad con resultados observables.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -776,5 +816,25 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Plutone in opposizione a Marte puo intensificare pressione competitiva e dinamiche conflittuali nell azione. Questa fase richiede autoregolazione e contenimento strategico sotto stress. Dirigi la forza verso risultati costruttivi.',
     'transit:pluto|quadratura|mercury':
       'Plutone in quadratura con Mercurio puo intensificare pensiero, sospetto e rigidita comunicativa. Questo ciclo richiede analisi basata su evidenze e dialogo piu pulito. Ricontrolla ipotesi prima di conclusioni drastiche.',
+    'transit:jupiter|conjuncao|ascendente':
+      'Giove in congiunzione all Ascendente puo ampliare presenza, fiducia e disponibilita ad avviare movimenti personali. Questa fase favorisce visibilita quando entusiasmo e direzione chiara procedono insieme. Evita promesse eccessive e mantieni coerenza con la consegna reale.',
+    'transit:jupiter|conjuncao|jupiter':
+      'Giove in congiunzione con Giove segna una finestra di espansione e riposizionamento della visione. Questo ciclo favorisce crescita quando obiettivi ampi diventano passi pratici. Dai priorita a opportunita compatibili con la tua capacita attuale.',
+    'transit:jupiter|conjuncao|mars':
+      'Giove in congiunzione con Marte aumenta iniziativa, coraggio e spinta ad accelerare decisioni. Questa fase tende a funzionare meglio con focus tattico e ritmo regolato. Convoglia energia su obiettivi concreti per evitare dispersione da eccesso di azione.',
+    'transit:jupiter|conjuncao|mercury':
+      'Giove in congiunzione con Mercurio amplia repertorio mentale, apprendimento e capacita comunicativa. Il periodo favorisce studio, accordi e pianificazione con visione piu ampia. Struttura argomenti con chiarezza per trasformare intuizione in risultato utile.',
+    'transit:jupiter|conjuncao|sun':
+      'Giove in congiunzione al Sole rafforza fiducia, direzione e apertura a nuovi cicli di crescita. Questa fase supporta protagonismo quando intenzione ed esecuzione restano coerenti. Usa visibilita con criterio per consolidare progressi reali.',
+    'transit:jupiter|conjuncao|venus':
+      'Giove in congiunzione con Venere favorisce armonizzazione di relazioni, valori e scelte di benessere. Il ciclo tende ad ampliare opportunita affettive e finanziarie quando reciprocita e limiti sono chiari. Sfrutta il flusso con moderazione per mantenere qualita nel lungo periodo.',
+    'transit:jupiter|ingress|house_1':
+      'Giove in ingresso in Casa 1 inaugura una fase di espansione personale, con piu iniziativa e desiderio di riposizionamento. Il periodo favorisce cambi di postura, immagine e direzione con orizzonte piu ampio. Avanza con autenticita e focus sostenibile.',
+    'transit:jupiter|ingress|house_3':
+      'Giove in ingresso in Casa 3 amplia comunicazione, apprendimento e scambi con l ambiente vicino. Questa fase favorisce studio, conversazioni strategiche e circolazione di idee con maggiore portata. Organizza priorita per trasformare informazione in decisioni utili.',
+    'transit:jupiter|ingress|house_5':
+      'Giove in ingresso in Casa 5 aumenta creativita, espressione personale e apertura a esperienze piacevoli. Il ciclo favorisce progetti autoriali, romance e iniziative autentiche. Usa entusiasmo con criterio per mantenere continuita e qualita.',
+    'transit:jupiter|ingress|house_10':
+      'Giove in ingresso in Casa 10 tende ad aprire una fase di crescita in carriera, reputazione e obiettivi pubblici. Questa finestra favorisce avanzamenti quando visione strategica ed esecuzione costante lavorano insieme. Dai priorita a consegne chiave e consolida autorevolezza con risultati osservabili.',
   },
 }
