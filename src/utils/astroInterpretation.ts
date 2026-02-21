@@ -1408,10 +1408,9 @@ export function buildUnifiedTransitNarrative(
   const modalIntro = directText
 
   const metaParts = [`${tx.phasePrefix}: ${phaseLabel}.`, scoreLink]
-  const modalBody = mergeNarrativeSegments(
-    [directText, catalogDirectText ? '' : narrative.fullText],
-    { exclude: [directText] }
-  ).join('\n\n') || directText
+  // Keep the opened modal semantically identical to the inline transit copy.
+  // Additional context must stay in action/meta blocks, not by changing the core narrative body.
+  const modalBody = directText
 
   const interpretationV2 = (() => {
     if (!isInterpretationV2Enabled()) return null
@@ -1424,7 +1423,7 @@ export function buildUnifiedTransitNarrative(
       houseLabel,
       timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
       shortText: directText,
-      fullText: modalBody || narrative.fullText || directText,
+      fullText: modalBody || directText,
       actionText,
       metaText: metaParts.join(' '),
     })
@@ -1434,7 +1433,7 @@ export function buildUnifiedTransitNarrative(
     transitKey,
     shortText: directText,
     modalIntro,
-    modalBody: modalBody || narrative.fullText || directText,
+    modalBody: modalBody || directText,
     keywords,
     actionText,
     metaText: metaParts.join(' '),
