@@ -302,6 +302,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Saturn entering House 3 asks for organizing mental routine, communication, and study with method. The phase supports consistent learning, objective agreements, and less dispersion. Structure schedule and messaging to gain practical clarity.',
     'transit:saturn|ingress|house_5':
       'Saturn entering House 5 can bring maturity to creativity, romance, and personal expression. The cycle favors quality and continuity when process commitment and clear limits are present. Build joy with responsibility and intention.',
+    'transit:uranus|conjuncao|moon':
+      'Uranus conjunct Moon tends to intensify the need for emotional freedom and updates in affective habits. This phase can bring mood fluctuation and unexpected routine changes. Regulate internal pace and adjust support routines gradually.',
+    'transit:uranus|conjuncao|mercury':
+      'Uranus conjunct Mercury expands mental restlessness, new ideas, and the urge to review assumptions quickly. The cycle supports intellectual innovation when method helps prioritize what matters. Turn insight into practical and measurable experiments.',
+    'transit:uranus|conjuncao|venus':
+      'Uranus conjunct Venus can accelerate reviews in relationships, values, and pleasure choices. This phase supports authenticity and new exchange formats when boundaries are clear. Innovate consciously to preserve reciprocity and stability.',
+    'transit:uranus|conjuncao|mars':
+      'Uranus conjunct Mars increases action impulse, urgency for change, and fast response to limits. The cycle works best when energy is channeled with strategy and objective focus. Reduce reactivity and execute in short validated steps.',
+    'transit:uranus|conjuncao|jupiter':
+      'Uranus conjunct Jupiter tends to expand future vision with a strong drive for experimentation. This phase supports new opportunities when risk is calibrated with criteria. Grow by iteration rather than all-in moves.',
+    'transit:uranus|conjuncao|uranus':
+      'Uranus conjunct Uranus marks a structural renewal cycle in identity and life direction. The phase can ask for deep repositioning toward present authenticity. Move with flexibility while keeping practical stability.',
+    'transit:uranus|ingress|house_1':
+      'Uranus entering House 1 starts a phase of personal repositioning, autonomy, and posture change. The period supports updating identity and action style with more authenticity. Renew your presence without losing consistency.',
+    'transit:uranus|ingress|house_3':
+      'Uranus entering House 3 expands mental movement, idea exchange, and communication pattern review. The phase supports fast learning and new local connection formats. Organize information flow to avoid dispersion.',
+    'transit:uranus|ingress|house_5':
+      'Uranus entering House 5 can open a freer creativity phase with changes in pleasure and personal expression. The cycle supports trying new languages with authentic intention. Innovate while maintaining affective responsibility and continuity.',
+    'transit:uranus|ingress|house_10':
+      'Uranus entering House 10 tends to open a turning point in career, reputation, and public direction. The phase supports professional updating when boldness is paired with strategy. Reposition goals and test new routes with objective metrics.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -602,6 +622,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Saturno en ingreso a Casa 3 pide ordenar rutina mental, comunicacion y estudio con metodo. Esta fase favorece aprendizaje consistente, acuerdos objetivos y menos dispersion. Estructura agenda y mensajes para ganar claridad practica.',
     'transit:saturn|ingress|house_5':
       'Saturno en ingreso a Casa 5 puede traer madurez para creatividad, romances y expresion personal. El ciclo favorece calidad y continuidad cuando hay compromiso con el proceso y limites claros. Construye disfrute con responsabilidad e intencion.',
+    'transit:uranus|conjuncao|moon':
+      'Urano en conjuncion con Luna tiende a intensificar necesidad de libertad emocional y actualizacion de habitos afectivos. Esta fase puede traer oscilacion de humor y cambios inesperados en la rutina. Regula el ritmo interno y ajusta soporte de forma gradual.',
+    'transit:uranus|conjuncao|mercury':
+      'Urano en conjuncion con Mercurio amplia inquietud mental, ideas nuevas y deseo de revisar certezas rapidamente. El ciclo favorece innovacion intelectual cuando existe metodo para priorizar lo esencial. Convierte intuicion en experimentos practicos y medibles.',
+    'transit:uranus|conjuncao|venus':
+      'Urano en conjuncion con Venus puede acelerar revision de vinculos, valores y decisiones de placer. Esta fase favorece autenticidad y nuevos formatos de intercambio cuando hay limites claros. Innova con consciencia para sostener reciprocidad y estabilidad.',
+    'transit:uranus|conjuncao|mars':
+      'Urano en conjuncion con Marte aumenta impulso de accion, urgencia de cambio y respuesta rapida a limites. El ciclo funciona mejor cuando energia se canaliza con estrategia y foco objetivo. Reduce reactividad y ejecuta en pasos cortos validados.',
+    'transit:uranus|conjuncao|jupiter':
+      'Urano en conjuncion con Jupiter tiende a ampliar vision de futuro con fuerte deseo de experimentacion. Esta fase favorece oportunidades nuevas cuando el riesgo esta calibrado con criterio. Crece por iteracion, no por apuestas extremas.',
+    'transit:uranus|conjuncao|uranus':
+      'Urano en conjuncion con Urano marca un ciclo de renovacion estructural de identidad y direccion de vida. La fase puede pedir reposicionamiento profundo hacia autenticidad actual. Avanza con flexibilidad y base practica.',
+    'transit:uranus|ingress|house_1':
+      'Urano en ingreso a Casa 1 inicia fase de reposicionamiento personal, autonomia y cambio de postura. El periodo favorece actualizar identidad y forma de actuar con mayor autenticidad. Renueva presencia sin perder consistencia.',
+    'transit:uranus|ingress|house_3':
+      'Urano en ingreso a Casa 3 amplia movimiento mental, intercambio de ideas y revision de patrones de comunicacion. La fase favorece aprendizaje rapido y nuevos formatos de conexion local. Organiza flujo de informacion para evitar dispersion.',
+    'transit:uranus|ingress|house_5':
+      'Urano en ingreso a Casa 5 puede abrir una fase mas libre de creatividad, con cambios en placer y expresion personal. El ciclo favorece probar lenguajes nuevos con intencion autentica. Innova manteniendo responsabilidad afectiva y continuidad.',
+    'transit:uranus|ingress|house_10':
+      'Urano en ingreso a Casa 10 tiende a abrir un punto de giro en carrera, reputacion y direccion publica. La fase favorece actualizacion profesional cuando audacia y estrategia van juntas. Reposiciona metas y prueba nuevas rutas con metricas objetivas.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -902,5 +942,25 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Saturno in ingresso in Casa 3 chiede di organizzare routine mentale, comunicazione e studio con metodo. Questa fase favorisce apprendimento consistente, accordi oggettivi e minore dispersione. Struttura agenda e messaggi per ottenere chiarezza pratica.',
     'transit:saturn|ingress|house_5':
       'Saturno in ingresso in Casa 5 puo portare maturita a creativita, romance ed espressione personale. Il ciclo favorisce qualita e continuita quando processo e limiti sono chiari. Costruisci piacere con responsabilita e intenzione.',
+    'transit:uranus|conjuncao|moon':
+      'Urano in congiunzione con Luna tende a intensificare bisogno di liberta emotiva e aggiornamento delle abitudini affettive. Questa fase puo portare oscillazioni d umore e cambiamenti inattesi nella routine. Regola il ritmo interno e aggiorna il supporto in modo graduale.',
+    'transit:uranus|conjuncao|mercury':
+      'Urano in congiunzione con Mercurio amplia irrequietezza mentale, idee nuove e desiderio di rivedere convinzioni rapidamente. Il ciclo favorisce innovazione intellettuale quando il metodo aiuta a dare priorita all essenziale. Trasforma insight in esperimenti pratici e misurabili.',
+    'transit:uranus|conjuncao|venus':
+      'Urano in congiunzione con Venere puo accelerare revisioni in relazioni, valori e scelte di piacere. La fase favorisce autenticita e nuovi formati di scambio quando i confini sono chiari. Innova con consapevolezza per mantenere reciprocita e stabilita.',
+    'transit:uranus|conjuncao|mars':
+      'Urano in congiunzione con Marte aumenta impulso d azione, urgenza di cambiamento e risposta rapida ai limiti. Il ciclo funziona meglio quando energia e incanalata con strategia e focus oggettivo. Riduci reattivita ed esegui in passi brevi validati.',
+    'transit:uranus|conjuncao|jupiter':
+      'Urano in congiunzione con Giove tende ad ampliare visione futura con forte spinta alla sperimentazione. Questa fase favorisce nuove opportunita quando il rischio e calibrato con criterio. Cresci per iterazione, evitando mosse estreme.',
+    'transit:uranus|conjuncao|uranus':
+      'Urano in congiunzione con Urano segna un ciclo di rinnovamento strutturale dell identita e della direzione di vita. La fase puo richiedere riposizionamento profondo verso autenticita attuale. Avanza con flessibilita e base pratica.',
+    'transit:uranus|ingress|house_1':
+      'Urano in ingresso in Casa 1 avvia una fase di riposizionamento personale, autonomia e cambio di postura. Il periodo favorisce aggiornare identita e stile d azione con maggiore autenticita. Rinnova presenza senza perdere coerenza.',
+    'transit:uranus|ingress|house_3':
+      'Urano in ingresso in Casa 3 amplia movimento mentale, scambio di idee e revisione dei pattern comunicativi. La fase favorisce apprendimento rapido e nuovi formati di connessione locale. Organizza il flusso informativo per evitare dispersione.',
+    'transit:uranus|ingress|house_5':
+      'Urano in ingresso in Casa 5 puo aprire una fase piu libera di creativita, con cambiamenti in piacere ed espressione personale. Il ciclo favorisce sperimentare linguaggi nuovi con intenzione autentica. Innova mantenendo responsabilita affettiva e continuita.',
+    'transit:uranus|ingress|house_10':
+      'Urano in ingresso in Casa 10 tende ad aprire un punto di svolta in carriera, reputazione e direzione pubblica. La fase favorisce aggiornamento professionale quando audacia e strategia procedono insieme. Riposiziona obiettivi e testa nuove rotte con metriche oggettive.',
   },
 }
