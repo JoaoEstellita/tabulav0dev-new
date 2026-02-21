@@ -663,7 +663,8 @@ function getPlanetArchetypeWord(planetRaw: string): string {
 export function buildArchetypeKeywordsForTransit(
   transit: AnyTransit,
   areaLabel?: string | null,
-  language?: string | null
+  language?: string | null,
+  narrativeText?: string | null
 ): string[] {
   const lang = getLang(language)
   const out: string[] = []
@@ -701,9 +702,11 @@ export function buildArchetypeKeywordsForTransit(
     add(houseMeaning.split(',')[0]?.trim() || `${I18N[lang].houseWord} ${house}`)
   }
   add(areaLabel || null)
-  const narrativeSource = resolveCatalogTransitText(transit, lang)
-  if (narrativeSource) {
-    extractNarrativeKeywords(narrativeSource, lang).forEach((kw) => add(kw))
+  const narrativeCandidates = [narrativeText, resolveCatalogTransitText(transit, lang)]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+  if (narrativeCandidates.length > 0) {
+    extractNarrativeKeywords(narrativeCandidates[0], lang).forEach((kw) => add(kw))
   }
 
   return out.slice(0, 5)
@@ -1392,7 +1395,7 @@ export function buildUnifiedTransitNarrative(
   const catalogDirectText = resolveCatalogTransitText(transit, lang)
   const directText = sanitizeNarrativeText(catalogDirectText || narrative.directText)
     || narrative.directText
-  const keywords = buildArchetypeKeywordsForTransit(transit, areaLabel, lang)
+  const keywords = buildArchetypeKeywordsForTransit(transit, areaLabel, lang, directText)
   const aspectKey = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
   const aspectLabel = getAspectLabel(aspectKey, lang) || tx.transitWord.toLowerCase()
   const house = getHouseNumber(transit)
