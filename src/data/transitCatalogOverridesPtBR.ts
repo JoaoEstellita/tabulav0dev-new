@@ -317,4 +317,30 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Urano em ingresso na Casa 5 pode abrir fase de criatividade mais livre, com mudancas em prazer e expressao pessoal. O ciclo favorece experimentar linguagens novas com intencao autentica. Inove mantendo responsabilidade afetiva e continuidade.',
   'transit:uranus|ingress|house_10':
     'Urano em ingresso na Casa 10 tende a abrir virada em carreira, reputacao e direcao publica. A fase favorece atualizacao profissional quando voce combina ousadia com estrategia. Reposicione metas e teste novas rotas com metricas objetivas.',
+  'transit:neptune|conjuncao|sun':
+    'Netuno em conjuncao ao Sol pode ampliar sensibilidade de identidade e busca de sentido na direcao pessoal. O ciclo pede alinhar inspiracao com clareza de limites para evitar dispersao. Converta intuicao em rotina concreta e verificavel.',
+  'transit:neptune|conjuncao|moon':
+    'Netuno em conjuncao com Lua tende a intensificar empatia, imaginacao e porosidade emocional. A fase pode favorecer refinamento afetivo quando ha boa regulacao de descanso e limites. Proteja energia interna com pausas, ancoragem e comunicacao objetiva.',
+  'transit:neptune|conjuncao|mercury':
+    'Netuno em conjuncao com Mercurio amplia intuicao mental e leitura simbolica, com risco de confusao em detalhes. O ciclo pede revisar dados, prazos e acordos com metodo antes de concluir. Equilibre inspiracao com verificacao pratica.',
+  'transit:neptune|conjuncao|venus':
+    'Netuno em conjuncao com Venus pode aumentar idealizacao em vinculos, valores e escolhas de prazer. A fase favorece sensibilidade estetica e abertura afetiva quando existe reciprocidade concreta. Mantenha discernimento para separar expectativa de realidade.',
+  'transit:neptune|conjuncao|mars':
+    'Netuno em conjuncao com Marte pode reduzir nitidez da acao e alternar entre impulso e desorganizacao de energia. O ciclo pede foco em prioridades simples, com ritmo sustentavel e pausas de recalibragem. Direcione forca para tarefas de impacto claro.',
+  'transit:neptune|conjuncao|jupiter':
+    'Netuno em conjuncao com Jupiter amplia visao de significado e desejo de crescimento com base idealista. A fase favorece expansao interna quando ha criterio para validar oportunidades concretas. Mantenha inspiracao, mas revise riscos e limites com objetividade.',
+  'transit:neptune|conjuncao|saturn':
+    'Netuno em conjuncao com Saturno tensiona estrutura e sensibilidade, pedindo nova forma de organizar o essencial. O ciclo favorece reconstruir metodo com mais flexibilidade e realismo emocional. Simplifique processos e consolide rotinas viaveis.',
+  'transit:neptune|conjuncao|neptune':
+    'Netuno em conjuncao com Netuno marca ciclo raro de refinamento simbolico e revisao profunda de sentido. A fase pode ampliar percepcao subjetiva e necessidade de escuta interna qualificada. Aterre visoes em passos pequenos para manter consistencia.',
+  'transit:neptune|conjuncao|ascendente':
+    'Netuno em conjuncao ao Ascendente pode alterar autoimagem, fronteiras e modo de se apresentar ao mundo. O ciclo pede autenticidade com protecao de energia para evitar dissolucao de limites. Ajuste postura com clareza e consistencia pratica.',
+  'transit:neptune|ingress|house_1':
+    'Netuno em ingresso na Casa 1 inicia fase de maior sensibilidade pessoal e revisao de identidade. O periodo favorece integrar intuicao com rotina concreta para evitar dispersao. Fortaleca limites e mantenha foco no que e viavel.',
+  'transit:neptune|ingress|house_3':
+    'Netuno em ingresso na Casa 3 amplia imaginacao, simbolismo e percepcao sutil na comunicacao. A fase pede mais criterio em mensagens, estudos e acordos para reduzir ruido. Registre informacoes-chave e valide entendimento antes de agir.',
+  'transit:neptune|ingress|house_5':
+    'Netuno em ingresso na Casa 5 pode abrir fase criativa sensivel, com mais inspiracao em expressao pessoal e afetos. O ciclo favorece arte, romance e prazer com tom contemplativo quando ha realismo de limite. Cuide de expectativas para sustentar qualidade.',
+  'transit:neptune|ingress|house_10':
+    'Netuno em ingresso na Casa 10 tende a ativar revisao de vocacao, imagem publica e direcao profissional. A fase favorece reposicionamento com sentido quando ha validacao pratica das escolhas. Estruture metas claras para evitar ambiguidade de rota.',
 }

@@ -322,7 +322,34 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Uranus entering House 5 can open a freer creativity phase with changes in pleasure and personal expression. The cycle supports trying new languages with authentic intention. Innovate while maintaining affective responsibility and continuity.',
     'transit:uranus|ingress|house_10':
       'Uranus entering House 10 tends to open a turning point in career, reputation, and public direction. The phase supports professional updating when boldness is paired with strategy. Reposition goals and test new routes with objective metrics.',
-  },
+  
+    'transit:neptune|ingress|house_1':
+      'Neptune entering House 1 can increase sensitivity in self-image, boundaries, and personal direction. This phase asks for clarity in identity choices so inspiration does not become confusion. Keep routines simple and verify decisions through concrete behavior.',
+    'transit:neptune|ingress|house_3':
+      'Neptune entering House 3 can expand imagination, symbolic thinking, and subtle communication. The cycle asks for extra discernment with messages, assumptions, and interpretations. Organize information flow and confirm key details before deciding.',
+    'transit:neptune|ingress|house_5':
+      'Neptune entering House 5 may heighten creativity, romantic idealization, and emotional projection. This phase supports artistic expression when expectations are grounded in reality. Use inspiration with practical limits to preserve consistency.',
+    'transit:neptune|ingress|house_10':
+      'Neptune entering House 10 can activate questions about vocation, meaning, and public positioning. The period favors purpose alignment but asks for realism in goals and exposure. Validate direction with observable milestones and clear agreements.',
+    'transit:neptune|conjuncao|sun':
+      'Neptune conjunct Sun can amplify sensitivity, imagination, and search for meaning in personal direction. This phase asks for clear identity references so inspiration does not dissolve focus. Keep commitments realistic and review assumptions before major decisions.',
+    'transit:neptune|conjuncao|moon':
+      'Neptune conjunct Moon may increase emotional permeability, empathy, and subjective perception. The cycle asks for emotional boundaries and clear routines to avoid overload or confusion. Rest, grounding, and direct communication help preserve stability.',
+    'transit:neptune|conjuncao|mercury':
+      'Neptune conjunct Mercury can broaden symbolic thinking and intuition, while reducing mental precision. This phase asks for careful communication and verification of facts before conclusions. Write priorities clearly and avoid decisions based only on impression.',
+    'transit:neptune|conjuncao|venus':
+      'Neptune conjunct Venus can heighten idealization in relationships, values, and pleasure choices. The cycle favors sensitivity and refinement when reciprocity and limits stay explicit. Observe concrete signals before emotional or financial commitments.',
+    'transit:neptune|conjuncao|mars':
+      'Neptune conjunct Mars can blur initiative, pace, and use of force in action. This phase asks for intentional rhythm, clear priorities, and disciplined execution. Channel energy into few essential goals to reduce dispersion.',
+    'transit:neptune|conjuncao|jupiter':
+      'Neptune conjunct Jupiter can expand vision and spirituality, with risk of overexpectation. The period asks for balancing faith and realism so growth remains sustainable. Keep plans anchored in evidence, timing, and resource limits.',
+    'transit:neptune|conjuncao|saturn':
+      'Neptune conjunct Saturn can test structures by confronting certainty with sensitivity and ambiguity. This phase asks for flexible planning and clear criteria to avoid rigidity or escape patterns. Rebuild foundations gradually with realistic checkpoints.',
+    'transit:neptune|conjuncao|neptune':
+      'Neptune conjunct Neptune marks a long-cycle sensitivity reset around meaning, intuition, and projection. The phase can dissolve old references and ask for subtler forms of orientation. Keep practical anchors active while inner vision is reorganized.',
+    'transit:neptune|conjuncao|ascendente':
+      'Neptune conjunct Ascendant can soften personal boundaries and alter how your presence is perceived. This phase asks for coherence between image, intention, and concrete actions. Clarify limits and communicate expectations explicitly to reduce noise.',
+},
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Jupiter en conjuncion al Medio Cielo puede aumentar visibilidad y abrir espacio para crecimiento profesional. Este ciclo favorece reconocimiento cuando hay direccion clara, ejecucion constante y expectativas realistas. Evita prometer de mas y consolida avances por etapas.',
@@ -642,7 +669,34 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Urano en ingreso a Casa 5 puede abrir una fase mas libre de creatividad, con cambios en placer y expresion personal. El ciclo favorece probar lenguajes nuevos con intencion autentica. Innova manteniendo responsabilidad afectiva y continuidad.',
     'transit:uranus|ingress|house_10':
       'Urano en ingreso a Casa 10 tiende a abrir un punto de giro en carrera, reputacion y direccion publica. La fase favorece actualizacion profesional cuando audacia y estrategia van juntas. Reposiciona metas y prueba nuevas rutas con metricas objetivas.',
-  },
+  
+    'transit:neptune|ingress|house_1':
+      'Neptuno en ingreso a Casa 1 puede aumentar sensibilidad en identidad, limites y direccion personal. Esta fase pide mayor claridad en decisiones de imagen para que inspiracion no derive en confusion. Sostener rutina simple y referencias concretas ayuda a mantener coherencia.',
+    'transit:neptune|ingress|house_3':
+      'Neptuno en ingreso a Casa 3 puede ampliar imaginacion, lectura simbolica y comunicacion subjetiva. El ciclo pide mayor discernimiento con mensajes, suposiciones e interpretaciones. Organiza flujo de informacion y confirma datos clave antes de decidir.',
+    'transit:neptune|ingress|house_5':
+      'Neptuno en ingreso a Casa 5 puede intensificar creatividad, idealizacion romantica y proyeccion afectiva. Esta fase favorece expresion artistica cuando las expectativas se mantienen realistas. Usa inspiracion con limites practicos para sostener continuidad.',
+    'transit:neptune|ingress|house_10':
+      'Neptuno en ingreso a Casa 10 puede activar preguntas sobre vocacion, sentido y posicion publica. El periodo favorece alineacion de proposito, pero pide realismo en metas y exposicion. Valida direccion con hitos observables y acuerdos claros.',
+    'transit:neptune|conjuncao|sun':
+      'Neptuno en conjuncion con Sol puede ampliar sensibilidad, imaginacion y busqueda de sentido en la direccion personal. Esta fase pide referencias claras de identidad para que inspiracion no diluya el foco. Mant?n compromisos realistas y revisa supuestos antes de decisiones mayores.',
+    'transit:neptune|conjuncao|moon':
+      'Neptuno en conjuncion con Luna puede elevar permeabilidad emocional, empatia y lectura subjetiva del entorno. El ciclo pide limites afectivos y rutina clara para evitar sobrecarga o confusion. Descanso, enraizamiento y comunicacion directa ayudan a estabilizar.',
+    'transit:neptune|conjuncao|mercury':
+      'Neptuno en conjuncion con Mercurio puede ampliar pensamiento simbolico e intuicion, reduciendo precision mental. Esta fase pide cuidado en comunicacion y verificacion de hechos antes de concluir. Escribe prioridades con claridad y evita decidir solo por impresion.',
+    'transit:neptune|conjuncao|venus':
+      'Neptuno en conjuncion con Venus puede aumentar idealizacion en vinculos, valores y decisiones de placer. El ciclo favorece sensibilidad y refinamiento cuando reciprocidad y limites son explicitos. Observa se?ales concretas antes de compromisos afectivos o financieros.',
+    'transit:neptune|conjuncao|mars':
+      'Neptuno en conjuncion con Marte puede difuminar iniciativa, ritmo y uso de fuerza en la accion. Esta fase pide cadencia intencional, prioridades claras y ejecucion disciplinada. Canaliza energia en pocos objetivos esenciales para reducir dispersion.',
+    'transit:neptune|conjuncao|jupiter':
+      'Neptuno en conjuncion con Jupiter puede ampliar vision y espiritualidad, con riesgo de expectativa excesiva. El periodo pide equilibrar confianza con realismo para que la expansion sea sostenible. Mant?n planes anclados en evidencia, timing y recursos.',
+    'transit:neptune|conjuncao|saturn':
+      'Neptuno en conjuncion con Saturno puede poner a prueba estructuras al confrontar certeza con sensibilidad y ambiguedad. Esta fase pide planificacion flexible y criterio claro para evitar rigidez o evasi?n. Reconstruye bases gradualmente con controles realistas.',
+    'transit:neptune|conjuncao|neptune':
+      'Neptuno en conjuncion con Neptuno marca un reajuste de ciclo largo en sentido, intuicion y proyeccion. La fase puede disolver referencias antiguas y pedir formas mas sutiles de orientacion. Conserva anclajes practicos mientras reorganizas vision interna.',
+    'transit:neptune|conjuncao|ascendente':
+      'Neptuno en conjuncion al Ascendente puede volver mas porosos los limites personales y cambiar la percepcion de tu presencia. Esta fase pide coherencia entre imagen, intencion y accion concreta. Aclara limites y comunica expectativas para reducir ruido.',
+},
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Giove in congiunzione al Medio Cielo puo aumentare visibilita e aprire spazio a crescita professionale. Questo ciclo favorisce riconoscimento quando direzione, costanza e aspettative restano realistiche. Evita promesse eccessive e consolida progressi per fasi.',
@@ -962,5 +1016,32 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Urano in ingresso in Casa 5 puo aprire una fase piu libera di creativita, con cambiamenti in piacere ed espressione personale. Il ciclo favorisce sperimentare linguaggi nuovi con intenzione autentica. Innova mantenendo responsabilita affettiva e continuita.',
     'transit:uranus|ingress|house_10':
       'Urano in ingresso in Casa 10 tende ad aprire un punto di svolta in carriera, reputazione e direzione pubblica. La fase favorisce aggiornamento professionale quando audacia e strategia procedono insieme. Riposiziona obiettivi e testa nuove rotte con metriche oggettive.',
-  },
+  
+    'transit:neptune|ingress|house_1':
+      'Nettuno in ingresso in Casa 1 puo aumentare sensibilita su identita, confini e direzione personale. Questa fase chiede piu chiarezza nelle scelte di immagine per evitare confusione. Mantenere routine semplice e riferimenti concreti aiuta a sostenere coerenza.',
+    'transit:neptune|ingress|house_3':
+      'Nettuno in ingresso in Casa 3 puo ampliare immaginazione, lettura simbolica e comunicazione soggettiva. Il ciclo chiede maggiore discernimento con messaggi, supposizioni e interpretazioni. Organizza il flusso informativo e conferma i dettagli prima di decidere.',
+    'transit:neptune|ingress|house_5':
+      'Nettuno in ingresso in Casa 5 puo intensificare creativita, idealizzazione romantica e proiezione affettiva. Questa fase favorisce espressione artistica quando aspettative restano realistiche. Usa ispirazione con limiti pratici per mantenere continuita.',
+    'transit:neptune|ingress|house_10':
+      'Nettuno in ingresso in Casa 10 puo attivare domande su vocazione, senso e posizionamento pubblico. Il periodo favorisce allineamento di scopo, ma richiede realismo in obiettivi ed esposizione. Valida direzione con tappe osservabili e accordi chiari.',
+    'transit:neptune|conjuncao|sun':
+      'Nettuno in congiunzione con Sole puo ampliare sensibilita, immaginazione e ricerca di senso nella direzione personale. Questa fase richiede riferimenti identitari chiari per evitare perdita di focus. Mantieni impegni realistici e verifica le ipotesi prima di scelte importanti.',
+    'transit:neptune|conjuncao|moon':
+      'Nettuno in congiunzione con Luna puo aumentare permeabilita emotiva, empatia e lettura soggettiva del contesto. Il ciclo richiede confini affettivi e routine chiare per evitare sovraccarico o confusione. Riposo, centratura e comunicazione diretta favoriscono stabilita.',
+    'transit:neptune|conjuncao|mercury':
+      'Nettuno in congiunzione con Mercurio puo ampliare pensiero simbolico e intuizione, riducendo precisione mentale. Questa fase richiede attenzione nella comunicazione e verifica dei fatti prima delle conclusioni. Scrivi priorita in modo chiaro ed evita decisioni basate solo su impressioni.',
+    'transit:neptune|conjuncao|venus':
+      'Nettuno in congiunzione con Venere puo aumentare idealizzazione in relazioni, valori e scelte di piacere. Il ciclo favorisce sensibilita e raffinatezza quando reciprocita e limiti restano espliciti. Osserva segnali concreti prima di impegni affettivi o finanziari.',
+    'transit:neptune|conjuncao|mars':
+      'Nettuno in congiunzione con Marte puo rendere meno chiari iniziativa, ritmo e uso della forza nell azione. Questa fase richiede cadenza intenzionale, priorita chiare ed esecuzione disciplinata. Convoglia energia su pochi obiettivi essenziali per ridurre dispersione.',
+    'transit:neptune|conjuncao|jupiter':
+      'Nettuno in congiunzione con Giove puo ampliare visione e spiritualita, con rischio di aspettative eccessive. Il periodo richiede equilibrio tra fiducia e realismo per mantenere espansione sostenibile. Tieni i piani ancorati a evidenze, timing e risorse.',
+    'transit:neptune|conjuncao|saturn':
+      'Nettuno in congiunzione con Saturno puo mettere alla prova strutture confrontando certezza con sensibilita e ambiguita. Questa fase richiede pianificazione flessibile e criteri chiari per evitare rigidita o fuga. Ricostruisci basi gradualmente con verifiche realistiche.',
+    'transit:neptune|conjuncao|neptune':
+      'Nettuno in congiunzione con Nettuno segna un riallineamento di ciclo lungo su senso, intuizione e proiezione. La fase puo dissolvere riferimenti vecchi e chiedere orientamento piu sottile. Mantieni ancoraggi pratici attivi mentre riorganizzi visione interiore.',
+    'transit:neptune|conjuncao|ascendente':
+      'Nettuno in congiunzione all Ascendente puo rendere piu porosi i confini personali e modificare la percezione della tua presenza. Questa fase richiede coerenza tra immagine, intenzione e azione concreta. Chiarisci limiti e aspettative per ridurre rumore relazionale.',
+},
 }
