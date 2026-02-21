@@ -188,7 +188,7 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quincuncio: 'ajuste fino de rota e expectativas',
     semissextil: 'refino discreto em pontos de detalhe',
     semiquadratura: 'friccao leve que pede calibragem',
-    sesquiquadratura: 'atrito intermitente com necessidade de reposicao',
+    sesquiquadratura: 'atrito intermitente que pede reposicionamento',
     harmonic: 'apoio de contexto para avancar com fluidez',
     tense: 'tensao produtiva que pede estrutura',
     neutral: 'observacao objetiva sem puxar extremos',
@@ -216,7 +216,7 @@ const ASPECT_THEME: Record<Locale, Record<string, string>> = {
     quincuncio: 'ajuste fino de ruta y expectativas',
     semissextil: 'refino discreto en puntos de detalle',
     semiquadratura: 'friccion leve que pide calibracion',
-    sesquiquadratura: 'friccion intermitente con necesidad de reposicion',
+    sesquiquadratura: 'friccion intermitente que pide reposicionamiento',
     harmonic: 'apoyo de contexto para avanzar con fluidez',
     tense: 'tension productiva que pide estructura',
     neutral: 'observacion objetiva sin extremos',
@@ -429,15 +429,15 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
 
   const planetStyle = PLANET_INGRESS_STYLE[locale][parsed.planet]
   if (locale === 'pt-BR') {
-    return `${planet} em ${aspect} com ${target} ativa uma fase de ${theme}. Este aspecto enfatiza ${targetFocus} e pede decisao mais consciente no ritmo atual. Vale direcionar a fase para ${planetStyle}, mantendo consistencia sem excesso de reacao.`
+    return `${planet} em ${aspect} com ${target} destaca ${theme}. O transito enfatiza ${targetFocus} e pede decisao consciente no ritmo atual. Direcione esse movimento para ${planetStyle}, com constancia e menos reatividade.`
   }
   if (locale === 'en-US') {
-    return `${planet} in ${aspect} with ${target} activates a phase of ${theme}. This aspect highlights ${targetFocus} and asks for more conscious decisions in the current rhythm. Use the phase to ${planetStyle}, with consistency and less reactivity.`
+    return `${planet} in ${aspect} with ${target} highlights ${theme}. This transit emphasizes ${targetFocus} and asks for conscious decisions in the current rhythm. Direct this movement to ${planetStyle}, with consistency and less reactivity.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ${aspect} con ${target} activa una fase de ${theme}. Este aspecto enfatiza ${targetFocus} y pide decisiones mas conscientes en el ritmo actual. Conviene orientar la fase para ${planetStyle}, con consistencia y menos reaccion.`
+    return `${planet} en ${aspect} con ${target} destaca ${theme}. Este transito enfatiza ${targetFocus} y pide decisiones conscientes en el ritmo actual. Conviene orientar este movimiento para ${planetStyle}, con consistencia y menos reaccion.`
   }
-  return `${planet} in ${aspect} con ${target} attiva una fase di ${theme}. Questo aspetto evidenzia ${targetFocus} e richiede decisioni piu consapevoli nel ritmo attuale. Conviene orientare la fase a ${planetStyle}, con coerenza e meno reattivita.`
+  return `${planet} in ${aspect} con ${target} evidenzia ${theme}. Questo transito mette in primo piano ${targetFocus} e richiede decisioni consapevoli nel ritmo attuale. Conviene orientare questo movimento a ${planetStyle}, con coerenza e meno reattivita.`
 }
 
 function buildIngressOverride(locale: Locale, key: string): string | null {
@@ -451,15 +451,15 @@ function buildIngressOverride(locale: Locale, key: string): string | null {
   if (!planet || !focus || !style) return null
 
   if (locale === 'pt-BR') {
-    return `${planet} em ingresso na Casa ${house} destaca temas de ${focus}. A passagem tende a favorecer ${style}, com ajuste gradual de prioridade. Foque em uma acao concreta ligada a esta casa e acompanhe o efeito no cotidiano.`
+    return `${planet} em ingresso na Casa ${house} destaca temas de ${focus}. O periodo favorece ${style}, com ajuste gradual de prioridades. Foque em uma acao concreta ligada a esta casa e acompanhe o efeito no cotidiano.`
   }
   if (locale === 'en-US') {
-    return `${planet} entering House ${house} highlights themes of ${focus}. This passage tends to support ${style}, with gradual priority adjustment. Focus on one concrete action tied to this house and track its daily effect.`
+    return `${planet} entering House ${house} highlights themes of ${focus}. This period supports ${style}, with gradual priority adjustment. Focus on one concrete action tied to this house and track its daily effect.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ingreso en Casa ${house} destaca temas de ${focus}. Este paso tiende a favorecer ${style}, con ajuste gradual de prioridades. Enfoca una accion concreta vinculada a esta casa y observa su efecto diario.`
+    return `${planet} en ingreso en Casa ${house} destaca temas de ${focus}. Este periodo favorece ${style}, con ajuste gradual de prioridades. Enfoca una accion concreta vinculada a esta casa y observa su efecto diario.`
   }
-  return `${planet} in ingresso in Casa ${house} evidenzia temi di ${focus}. Questo passaggio tende a favorire ${style}, con un aggiustamento graduale delle priorita. Concentrati su un azione concreta legata a questa casa e osservane l effetto quotidiano.`
+  return `${planet} in ingresso in Casa ${house} evidenzia temi di ${focus}. Questo periodo favorisce ${style}, con un aggiustamento graduale delle priorita. Concentrati su un azione concreta legata a questa casa e osservane l effetto quotidiano.`
 }
 
 function buildAutoOverrides(locale: Locale): Record<string, string> {
