@@ -47,18 +47,6 @@ const splitParagraphs = (value: string): string[] =>
     .map((part) => compact(part))
     .filter(Boolean)
 
-const withAreaHouse = (text: string, area: string, house: string): string => {
-  const normalized = compact(text)
-  const areaLower = area.toLowerCase()
-  const hasArea = normalized.toLowerCase().includes(areaLower)
-  const hasHouse = house ? normalized.toLowerCase().includes(house.toLowerCase()) : true
-  if (hasArea && hasHouse) return normalized
-  if (!hasArea && !hasHouse && house) return `${normalized} Nesta fase, o foco em ${area} passa por ${house}.`
-  if (!hasArea) return `${normalized} Isso aparece com mais forca em ${area}.`
-  if (!hasHouse && house) return `${normalized} O tema fica mais visivel em ${house}.`
-  return normalized
-}
-
 const sanitizeDeterministicLanguage = (text: string): string => {
   let out = String(text || '')
   FORBIDDEN_DETERMINISTIC.forEach((token) => {
@@ -68,7 +56,7 @@ const sanitizeDeterministicLanguage = (text: string): string => {
   return compact(out)
 }
 
-const buildMedium = (base: string, shortText: string, area: string, house: string): string => {
+const buildMedium = (base: string, shortText: string): string => {
   const fromBase = splitSentences(base)
   const fromShort = splitSentences(shortText)
   const merged = [...fromShort, ...fromBase].map(sanitizeDeterministicLanguage).filter(Boolean)
@@ -76,15 +64,19 @@ const buildMedium = (base: string, shortText: string, area: string, house: strin
   while (picked.length < 3) {
     picked.push('Use esta leitura como referencia de tendencia, nao como determinismo.')
   }
-  return withAreaHouse(picked.join(' '), area, house)
+  return compact(picked.join(' '))
 }
 
-const buildLong = (base: string, medium: string, action: string, area: string, house: string): string => {
+const buildLong = (base: string, medium: string, action: string): string => {
   const paragraphs = splitParagraphs(base)
-  const first = sanitizeDeterministicLanguage(withAreaHouse(paragraphs[0] || medium, area, house))
-  const second = paragraphs[1] || 'Observe como essa dinamica aparece no cotidiano e ajuste ritmo, comunicacao e prioridades.'
-  const third = action || 'Micro-acao: escolha um ajuste pequeno hoje e revise em 24h.'
-  const fourth = 'Pergunta de reflexao: qual decisao, hoje, reduz ruido e aumenta consistencia?'
+  const first = sanitizeDeterministicLanguage(paragraphs[0] || medium)
+  const second = sanitizeDeterministicLanguage(
+    paragraphs[1] || 'Observe como essa dinamica aparece no cotidiano e ajuste ritmo, comunicacao e prioridades.'
+  )
+  const third = sanitizeDeterministicLanguage(action || 'Micro-acao: escolha um ajuste pequeno hoje e revise em 24h.')
+  const fourth = sanitizeDeterministicLanguage(
+    paragraphs[2] || 'Pergunta de reflexao: qual decisao, hoje, reduz ruido e aumenta consistencia?'
+  )
   return [first, sanitizeDeterministicLanguage(second), sanitizeDeterministicLanguage(third), fourth]
     .slice(0, 5)
     .join('\n\n')
@@ -97,9 +89,9 @@ export function buildTransitInterpretationV2(input: BuildTransitV2Input): Transi
   const area = compact(input.lifeArea || 'sua area atual').toLowerCase()
   const house = compact(input.houseLabel || '')
   const tldrRaw = splitSentences(meaning.coreTheme)[0] || 'Leitura de tendencia para orientar seu proximo passo.'
-  const tldr = sanitizeDeterministicLanguage(withAreaHouse(tldrRaw, area, house)).slice(0, 140)
-  const medium = buildMedium(input.fullText, meaning.coreTheme, area, house)
-  const long = buildLong(input.fullText, medium, meaning.microAction, area, house)
+  const tldr = sanitizeDeterministicLanguage(tldrRaw).slice(0, 140)
+  const medium = buildMedium(input.fullText, meaning.coreTheme)
+  const long = buildLong(input.fullText, medium, meaning.microAction)
   const opportunities =
     meaning.tensionVsOpportunity === 'alert'
       ? ['Ajustar rota cedo reduz desgaste acumulado.']
@@ -127,4 +119,3 @@ export function buildTransitInterpretationV2(input: BuildTransitV2Input): Transi
     uncertaintyNotes: meaning.uncertaintyNotes,
   }
 }
-

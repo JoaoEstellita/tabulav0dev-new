@@ -46,8 +46,7 @@ test('renders all required sections without raw placeholders', () => {
   expect(sentenceCount(result.medium)).toBeLessThanOrEqual(4)
   expect(paragraphCount(result.long)).toBeGreaterThanOrEqual(3)
   expect(paragraphCount(result.long)).toBeLessThanOrEqual(5)
-  expect(result.medium.toLowerCase()).toContain('amor')
-  expect(result.medium.toLowerCase()).toContain('casa 7')
+  expect(result.medium.toLowerCase()).toContain('boa janela')
 })
 
 test('avoids deterministic fatalistic language', () => {

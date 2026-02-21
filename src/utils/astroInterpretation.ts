@@ -1371,54 +1371,28 @@ export function buildUnifiedTransitNarrative(
   const tx = I18N[lang]
   const narrative = buildAstroTransitNarrative(transit, areaLabel, lang)
   const catalogDirectText = resolveCatalogTransitText(transit, lang)
-  const directText = catalogDirectText || narrative.directText
+  const directText = sanitizeNarrativeText(catalogDirectText || narrative.directText)
+    || narrative.directText
   const keywords = buildArchetypeKeywordsForTransit(transit, areaLabel, lang)
   const aspectKey = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
   const aspectLabel = getAspectLabel(aspectKey, lang) || tx.transitWord.toLowerCase()
-  const aspectMeaning = getAspectMeaning(aspectKey, lang)
   const house = getHouseNumber(transit)
   const targetLabel = getTargetLabel(transit, lang)
   const transitPlanetRaw = String(transit?.transitPlanet || tx.transitWord)
   const transitPlanet = PLANET_LABELS[lang][transitPlanetRaw] || PLANET_PT[transitPlanetRaw] || transitPlanetRaw
   const phaseLabel = getPhaseLabel(transit, lang)
   const transitKey = buildCanonicalTransitKey(transit)
-  const houseMeaning = house ? getHouseSymbolism(lang, house) : ''
-  const positionalFocus = house ? getHousePositionalFocus(lang, house) : ''
   const actionText = buildActionHint(aspectKey, house, areaLabel, lang)
-  const actionCore = stripActionPrefix(actionText, tx.practicalActionPrefix)
   const scoreLink = buildScoreLink(aspectKey, areaLabel, lang)
-  const seed = buildSeed(transit)
-
-  const modalIntro = (() => {
-    const dynamicLine = (() => {
-      if (house && aspectKey && aspectKey !== 'neutral') {
-        if (lang === 'en-US') return `${transitPlanet} links ${aspectLabel} with ${targetLabel}, while House ${house} (${houseMeaning}) shows where this becomes concrete${positionalFocus ? `, especially in ${positionalFocus}` : ''}.`
-        if (lang === 'es-ES') return `${transitPlanet} vincula ${aspectLabel} con ${targetLabel}, y la Casa ${house} (${houseMeaning}) muestra donde esto se vuelve concreto${positionalFocus ? `, especialmente en ${positionalFocus}` : ''}.`
-        if (lang === 'it-IT') return `${transitPlanet} collega ${aspectLabel} a ${targetLabel}, mentre la Casa ${house} (${houseMeaning}) mostra dove questo diventa concreto${positionalFocus ? `, soprattutto in ${positionalFocus}` : ''}.`
-        return `${transitPlanet} conecta ${aspectLabel} com ${targetLabel}, enquanto a Casa ${house} (${houseMeaning}) mostra onde isso se torna concreto${positionalFocus ? `, especialmente em ${positionalFocus}` : ''}.`
-      }
-      if (house) {
-        if (lang === 'en-US') return `${transitPlanet} emphasizes House ${house} (${houseMeaning}), concentrating practical choices${positionalFocus ? ` around ${positionalFocus}` : ''}.`
-        if (lang === 'es-ES') return `${transitPlanet} enfatiza la Casa ${house} (${houseMeaning}), concentrando decisiones practicas${positionalFocus ? ` alrededor de ${positionalFocus}` : ''}.`
-        if (lang === 'it-IT') return `${transitPlanet} enfatizza la Casa ${house} (${houseMeaning}), concentrando scelte pratiche${positionalFocus ? ` attorno a ${positionalFocus}` : ''}.`
-        return `${transitPlanet} enfatiza a Casa ${house} (${houseMeaning}), concentrando escolhas praticas${positionalFocus ? ` em torno de ${positionalFocus}` : ''}.`
-      }
-      if (lang === 'en-US') return `${transitPlanet} activates ${aspectMeaning}, asking for strategic reading of timing and priorities.`
-      if (lang === 'es-ES') return `${transitPlanet} activa ${aspectMeaning}, pidiendo lectura estrategica de fase y prioridades.`
-      if (lang === 'it-IT') return `${transitPlanet} attiva ${aspectMeaning}, chiedendo una lettura strategica di fase e priorita.`
-      return `${transitPlanet} ativa ${aspectMeaning}, pedindo leitura estrategica de fase e prioridades.`
-    })()
-    return pickVariant(seed, [dynamicLine], 0)
-  })()
-
-  const strategyBlock = ''
+  // Keep modal text anchored to the same curated semantic base used in list cards.
+  // Extra technical context stays in metaText to avoid repetitive or off-tone copy drift.
+  const modalIntro = directText
 
   const metaParts = [`${tx.phasePrefix}: ${phaseLabel}.`, scoreLink]
-  const modalBody = mergeNarrativeSegments([
-    modalIntro,
-    strategyBlock,
-    catalogDirectText ? `${catalogDirectText}\n\n${narrative.fullText}` : narrative.fullText,
-  ], { exclude: [directText] }).join('\n\n')
+  const modalBody = mergeNarrativeSegments(
+    [directText, catalogDirectText ? '' : narrative.fullText],
+    { exclude: [directText] }
+  ).join('\n\n') || directText
 
   const interpretationV2 = (() => {
     if (!isInterpretationV2Enabled()) return null
