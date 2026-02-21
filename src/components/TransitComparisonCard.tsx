@@ -14,6 +14,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
+import type { TransitInterpretationV2 } from '../utils/transitInterpretationV2'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -761,6 +762,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
   const [detailModalShort, setDetailModalShort] = React.useState('')
   const [detailModalLong, setDetailModalLong] = React.useState('')
   const [detailModalKeywords, setDetailModalKeywords] = React.useState<string[]>([])
+  const [detailModalInterpretationV2, setDetailModalInterpretationV2] = React.useState<TransitInterpretationV2 | null>(null)
   const [planetMeaningModalOpen, setPlanetMeaningModalOpen] = React.useState(false)
   const [planetMeaningPlanet, setPlanetMeaningPlanet] = React.useState<string | null>(null)
 
@@ -798,12 +800,14 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     short: string
     long: string
     keywords?: string[]
+    interpretationV2?: TransitInterpretationV2 | null
   }) => {
     setDetailModalTitle(params.title)
     setDetailModalSubtitle(params.subtitle || '')
     setDetailModalShort(params.short)
     setDetailModalLong(params.long)
     setDetailModalKeywords(Array.isArray(params.keywords) ? params.keywords : [])
+    setDetailModalInterpretationV2(params.interpretationV2 || null)
     setDetailModalOpen(true)
   }, [])
 
@@ -1052,6 +1056,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       short: unified.shortText,
       long: unified.modalBody,
       keywords: unified.keywords,
+      interpretationV2: unified.interpretationV2 || null,
     }
   }, [language, tl])
 
@@ -1061,6 +1066,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       short: unified.shortText,
       long: unified.modalBody,
       keywords: unified.keywords,
+      interpretationV2: unified.interpretationV2 || null,
     }
   }, [language])
 
@@ -1273,6 +1279,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           short: interp.short,
                           long: interp.long,
                           keywords: interp.keywords,
+                          interpretationV2: interp.interpretationV2 || null,
                         })
                       }}
                     >
@@ -1312,6 +1319,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           short: unified.shortText,
                           long: unified.modalBody,
                           keywords: unified.keywords,
+                          interpretationV2: unified.interpretationV2 || null,
                         })
                       }}
                     >
@@ -1351,6 +1359,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                           short: unified.shortText,
                           long: unified.modalBody,
                           keywords: unified.keywords,
+                          interpretationV2: unified.interpretationV2 || null,
                         })
                       }}
                     >
@@ -1411,6 +1420,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             short: reading.short,
                             long: reading.long,
                             keywords: reading.keywords,
+                            interpretationV2: reading.interpretationV2 || null,
                           })
                         }
                       >
@@ -1461,6 +1471,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             short: reading.short,
                             long: reading.long,
                             keywords: reading.keywords,
+                            interpretationV2: reading.interpretationV2 || null,
                           })
                         }
                       >
@@ -1512,6 +1523,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                             short: reading.short,
                             long: reading.long,
                             keywords: reading.keywords,
+                            interpretationV2: reading.interpretationV2 || null,
                           })
                         }
                       >
@@ -1541,6 +1553,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         directText={detailModalShort}
         fullText={detailModalLong}
         keywords={detailModalKeywords}
+        interpretationV2={detailModalInterpretationV2}
       />
 
       <Modal
