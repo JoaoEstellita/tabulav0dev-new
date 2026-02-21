@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-02-21T21:52:27.595Z",
+  "totals": {
+    "base": 704,
+    "curatedPt": 167,
+    "autoOnly": 537,
+    "fallbackOnly": 0
+  },
+  "fallbackByPriority": {
+    "p1": 0,
+    "p2": 0,
+    "p3": 0
+  },
+  "topFallbackKeys": [],
+  "i18nParity": {
+    "en-US": {
+      "missing": [],
+      "extra": []
+    },
+    "es-ES": {
+      "missing": [],
+      "extra": []
+    },
+    "it-IT": {
+      "missing": [],
+      "extra": []
+    }
+  }
+}

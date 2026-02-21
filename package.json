@@ -18,6 +18,7 @@
     "test": "npm exec vitest run --pool=forks",
     "guard:forecast": "node scripts/check-forecast-guard.js",
     "guard:i18n": "node scripts/check-i18n-hardcoded.js",
+    "audit:transits": "node scripts/audit-transit-catalog-runtime-coverage.js",
     "smoke:rc": "npm exec vitest run src/services/status/__tests__/status-policy.smoke.spec.ts src/services/backend/__tests__/client.smoke.spec.ts --pool=forks",
     "test:rules": "firebase emulators:exec --only firestore \"npm exec vitest run src/firestore-rules/__tests__/firestore.rules.spec.ts --pool=forks\"",
     "smoke:security": "npm run smoke:rc && npm run test:rules"
