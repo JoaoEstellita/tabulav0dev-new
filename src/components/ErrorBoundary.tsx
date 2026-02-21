@@ -26,12 +26,12 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
     console.error('🔥 ERROR BOUNDARY CAUGHT:', error)
     console.error('🔥 ERROR INFO:', errorInfo)
     console.error('🔥 COMPONENT STACK:', errorInfo.componentStack)
-    
+
     // Verificar se é o erro de .map
     if (error.message.includes("Cannot read property 'map' of undefined")) {
       console.error('🎯 CAUGHT MAP ERROR! Component stack:', errorInfo.componentStack)
     }
-    
+
     this.setState({
       hasError: true,
       error,
@@ -49,15 +49,15 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
             <Text style={styles.message}>
               Encontramos um erro técnico. O app está sendo corrigido.
             </Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.retryButton}
               onPress={() => this.setState({ hasError: false, error: null, errorInfo: null })}
             >
               <Text style={styles.retryText}>Tentar Novamente</Text>
             </TouchableOpacity>
-            
-            {__DEV__ && (
+
+            {(
               <View style={styles.debugInfo}>
                 <Text style={styles.debugTitle}>Debug Info:</Text>
                 <Text style={styles.debugText}>

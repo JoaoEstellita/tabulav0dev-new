@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -27,6 +27,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.estellita.tabulaestelar",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "scheme": "tabulaestelar",
@@ -35,7 +36,9 @@
       "bundler": "metro",
       "build": {
         "babel": {
-          "include": ["@expo/vector-icons"]
+          "include": [
+            "@expo/vector-icons"
+          ]
         }
       },
       "pwa": {

@@ -1,9 +1,8 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
-import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth'
+import { getAuth, setPersistence } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
-import { getMessaging } from 'firebase/messaging'
 import { getStorage } from 'firebase/storage'
-import { ReCaptchaV3Provider, getToken as getAppCheckSdkToken, initializeAppCheck } from 'firebase/app-check'
+import { Platform } from 'react-native'
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDPH1K_JQnyjGePrqYnEuTe5U-pJChUDrM',
@@ -33,33 +32,34 @@ const describeAppCheckKey = (value: string) => {
 }
 
 const initAppCheckWeb = async () => {
-  if (typeof window === 'undefined') return
-  const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
-  const keyInfo = describeAppCheckKey(siteKey)
-  const appCheckInfo = {
-    projectId: firebaseConfig.projectId,
-    appId: firebaseConfig.appId,
-    siteKeyKind: keyInfo.kind,
-    siteKeyPreview: keyInfo.preview,
-    origin: window.location.origin,
-  }
-  ;(globalThis as any).__APPCHECK_INFO__ = appCheckInfo
-  console.log('App Check key diagnostic:', appCheckInfo)
-  if (!siteKey) return
-  if (keyInfo.kind !== 'recaptcha_site_key') {
-    console.warn(
-      'App Check disabled: EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY is not a valid reCAPTCHA site key format.'
-    )
-    return
-  }
-
-  const debugToken = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || '').trim()
-  if (debugToken) {
-    ;(globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken
-  }
-
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return
   try {
-    appCheckInstance = initializeAppCheck(app, {
+    const { ReCaptchaV3Provider, initializeAppCheck: initAC } = await import('firebase/app-check')
+    const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
+    const keyInfo = describeAppCheckKey(siteKey)
+    const appCheckInfo = {
+      projectId: firebaseConfig.projectId,
+      appId: firebaseConfig.appId,
+      siteKeyKind: keyInfo.kind,
+      siteKeyPreview: keyInfo.preview,
+      origin: window.location.origin,
+    }
+      ; (globalThis as any).__APPCHECK_INFO__ = appCheckInfo
+    console.log('App Check key diagnostic:', appCheckInfo)
+    if (!siteKey) return
+    if (keyInfo.kind !== 'recaptcha_site_key') {
+      console.warn(
+        'App Check disabled: EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY is not a valid reCAPTCHA site key format.'
+      )
+      return
+    }
+
+    const debugToken = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || '').trim()
+    if (debugToken) {
+      ; (globalThis as any).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken
+    }
+
+    appCheckInstance = initAC(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true,
     })
@@ -72,11 +72,12 @@ const initAppCheckWeb = async () => {
 void initAppCheckWeb()
 
 export const getAppCheckToken = async (): Promise<string | null> => {
-  if (typeof window === 'undefined') return null
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null
   const siteKey = (process.env.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY || '').trim()
   if (!siteKey || !appCheckInitialized || appCheckDisabledForSession) return null
   try {
     if (!appCheckInstance) return null
+    const { getToken: getAppCheckSdkToken } = await import('firebase/app-check')
     const tokenResult = await getAppCheckSdkToken(appCheckInstance, false)
     return tokenResult?.token || null
   } catch (error: any) {
@@ -90,9 +91,13 @@ export const getAppCheckToken = async (): Promise<string | null> => {
 }
 
 const auth = getAuth(app)
-try {
-  void setPersistence(auth, browserLocalPersistence)
-} catch {}
+if (Platform.OS === 'web') {
+  try {
+    import('firebase/auth').then(({ browserLocalPersistence }) => {
+      setPersistence(auth, browserLocalPersistence).catch(() => { })
+    }).catch(() => { })
+  } catch { }
+}
 
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
@@ -101,10 +106,11 @@ const db = initializeFirestore(app, {
 
 const storage = getStorage(app)
 
-let messaging: ReturnType<typeof getMessaging> | undefined
-if (typeof window !== 'undefined') {
+let messaging: any = undefined
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
   try {
-    messaging = getMessaging(app)
+    const firebaseMessaging = require('firebase/messaging')
+    messaging = firebaseMessaging.getMessaging(app)
   } catch {
     messaging = undefined
   }

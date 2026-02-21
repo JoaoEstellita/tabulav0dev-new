@@ -2,26 +2,49 @@
   "version": 2,
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
     {
       "source": "/app/(.*)",
       "destination": "/index.html"
     },
-    { "source": "/Tabs", "destination": "/index.html" },
+    {
+      "source": "/Tabs",
+      "destination": "/index.html"
+    },
     {
       "source": "/Tabs/(.*)",
       "destination": "/index.html"
     },
-    { "source": "/payment", "destination": "/index.html" },
+    {
+      "source": "/payment",
+      "destination": "/index.html"
+    },
     {
       "source": "/payment/(.*)",
       "destination": "/index.html"
     },
-    { "source": "/join", "destination": "/index.html" },
+    {
+      "source": "/join",
+      "destination": "/index.html"
+    },
     {
       "source": "/join/(.*)",
       "destination": "/index.html"
     },
-    { "source": "/", "destination": "/landing.html" }
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/",
+      "destination": "/landing.html"
+    }
   ]
 }
