@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Platform } from 'react-native'
 import { STATUS_THRESHOLDS } from '../constants/statusThresholds'
 import { useAuth } from './useAuth'
 import TransitService from '../services/prokerala/TransitService'
@@ -11,7 +12,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '../config/firebase'
 import { publishAstrologyData } from '../context/AstrologyDataProvider'
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'
 const BACKEND_ONLY_STATUS = process.env.EXPO_PUBLIC_BACKEND_ONLY_STATUS !== '0'
 const IS_PRODUCTION_BUILD = process.env.NODE_ENV === 'production'
@@ -91,7 +92,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       // Buscar dados de nascimento do usuario
       const userProfile = await UserService.getUserProfile(user.uid)
-      
+
       if (!userProfile?.birthDate || !userProfile?.birthTime || !userProfile?.birthLocation) {
         setError('Dados de nascimento incompletos')
         return
@@ -254,7 +255,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         lastBackendComputedAtRef.current = backendComputedAtMs
       }
 
-      const debugLocalOverride = typeof window !== 'undefined' && window.location.search.includes('debug=1')
+      const debugLocalOverride = Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.search?.includes?.('debug=1')
       const shouldRunLocal =
         forceRefresh ||
         houseSystemChanged ||
@@ -281,10 +282,11 @@ export function useLifeAreas(): UseLifeAreasReturn {
       }
 
       const canUseLocalEngineFallback =
-        !BACKEND_ONLY_STATUS &&
-        (!IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK)
+        Platform.OS !== 'web' ||
+        (!BACKEND_ONLY_STATUS && (!IS_PRODUCTION_BUILD || ENABLE_LOCAL_ENGINE_FALLBACK))
+      const allowEmergencyLocalFallback = statusRefreshStaleSession
 
-      if (shouldRunLocal && !canUseLocalEngineFallback && !debugLocalOverride) {
+      if (shouldRunLocal && !canUseLocalEngineFallback && !allowEmergencyLocalFallback && !debugLocalOverride) {
         const hasBackendSnapshot =
           !!backendLifeAreasValue &&
           typeof backendLifeAreasValue === 'object' &&
@@ -305,7 +307,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         return
       }
 
-      if (shouldRunLocal && (canUseLocalEngineFallback || debugLocalOverride)) {
+      if (shouldRunLocal && (canUseLocalEngineFallback || allowEmergencyLocalFallback || debugLocalOverride)) {
         console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
         const result = await LocalAstrologyService.getCurrentTransits(
           birthData,
@@ -407,7 +409,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
 
       // Buscar grupos do usuario
       const userGroups = await getUserGroups(user.uid)
-      
+
       if (userGroups.length === 0) {
         console.log(' Usuario nao participa de nenhum grupo')
         return
@@ -499,14 +501,14 @@ async function getUserGroups(userId: string): Promise<string[]> {
       collection(db, 'groups'),
       where('members', 'array-contains', userId)
     )
-    
+
     const snapshot = await getDocs(groupsQuery)
     const groups: string[] = []
-    
+
     snapshot.forEach(doc => {
       groups.push(doc.id)
     })
-    
+
     console.log(` Usuario participa de ${groups.length} grupo(s)`)
     return groups
   } catch (error) {
