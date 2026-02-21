@@ -427,16 +427,17 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
           ? `dinamica simbolizada por ${target}`
           : `dinamica rappresentata da ${target}`)
 
+  const planetStyle = PLANET_INGRESS_STYLE[locale][parsed.planet]
   if (locale === 'pt-BR') {
-    return `${planet} em ${aspect} com ${target} ativa uma fase de ${theme}. O aspecto toca ${targetFocus} e pede calibragem entre timing e decisao. Prefira passos progressivos: leitura clara do contexto, ajuste de prioridade e execucao consistente.`
+    return `${planet} em ${aspect} com ${target} ativa uma fase de ${theme}. Este aspecto enfatiza ${targetFocus} e pede decisao mais consciente no ritmo atual. Vale direcionar a fase para ${planetStyle}, mantendo consistencia sem excesso de reacao.`
   }
   if (locale === 'en-US') {
-    return `${planet} in ${aspect} with ${target} activates a phase of ${theme}. The aspect touches ${targetFocus} and asks for calibration between timing and decision. Prefer progressive moves: clear context reading, priority adjustment, and consistent execution.`
+    return `${planet} in ${aspect} with ${target} activates a phase of ${theme}. This aspect highlights ${targetFocus} and asks for more conscious decisions in the current rhythm. Use the phase to ${planetStyle}, with consistency and less reactivity.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ${aspect} con ${target} activa una fase de ${theme}. El aspecto toca ${targetFocus} y pide calibrar tiempo y decision. Prioriza pasos progresivos: lectura clara del contexto, ajuste de prioridades y ejecucion constante.`
+    return `${planet} en ${aspect} con ${target} activa una fase de ${theme}. Este aspecto enfatiza ${targetFocus} y pide decisiones mas conscientes en el ritmo actual. Conviene orientar la fase para ${planetStyle}, con consistencia y menos reaccion.`
   }
-  return `${planet} in ${aspect} con ${target} attiva una fase di ${theme}. L aspetto tocca ${targetFocus} e richiede calibrare tempi e decisioni. Meglio passi progressivi: lettura chiara del contesto, priorita regolate ed esecuzione costante.`
+  return `${planet} in ${aspect} con ${target} attiva una fase di ${theme}. Questo aspetto evidenzia ${targetFocus} e richiede decisioni piu consapevoli nel ritmo attuale. Conviene orientare la fase a ${planetStyle}, con coerenza e meno reattivita.`
 }
 
 function buildIngressOverride(locale: Locale, key: string): string | null {
@@ -450,15 +451,15 @@ function buildIngressOverride(locale: Locale, key: string): string | null {
   if (!planet || !focus || !style) return null
 
   if (locale === 'pt-BR') {
-    return `${planet} em ingresso na Casa ${house} abre uma fase de reorganizacao em ${focus}. O sinal favorece ${style}, com ritmo simples e revisao pragmatica de prioridades. Traduza o impulso em uma acao concreta por vez e acompanhe o que realmente sustenta resultado.`
+    return `${planet} em ingresso na Casa ${house} destaca temas de ${focus}. A passagem tende a favorecer ${style}, com ajuste gradual de prioridade. Foque em uma acao concreta ligada a esta casa e acompanhe o efeito no cotidiano.`
   }
   if (locale === 'en-US') {
-    return `${planet} entering House ${house} starts a reorganization phase in ${focus}. The signal supports ${style}, with simple pacing and pragmatic priority review. Turn impulse into one concrete action at a time and track what truly sustains results.`
+    return `${planet} entering House ${house} highlights themes of ${focus}. This passage tends to support ${style}, with gradual priority adjustment. Focus on one concrete action tied to this house and track its daily effect.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ingreso en Casa ${house} abre una fase de reorganizacion en ${focus}. La senal favorece ${style}, con ritmo simple y revision pragmatica de prioridades. Convierte el impulso en una accion concreta por vez y observa lo que sostiene resultados.`
+    return `${planet} en ingreso en Casa ${house} destaca temas de ${focus}. Este paso tiende a favorecer ${style}, con ajuste gradual de prioridades. Enfoca una accion concreta vinculada a esta casa y observa su efecto diario.`
   }
-  return `${planet} in ingresso in Casa ${house} apre una fase di riorganizzazione in ${focus}. Il segnale favorisce ${style}, con ritmo semplice e revisione pragmatica delle priorita. Trasforma l impulso in un azione concreta alla volta e osserva cio che regge i risultati.`
+  return `${planet} in ingresso in Casa ${house} evidenzia temi di ${focus}. Questo passaggio tende a favorire ${style}, con un aggiustamento graduale delle priorita. Concentrati su un azione concreta legata a questa casa e osservane l effetto quotidiano.`
 }
 
 function buildAutoOverrides(locale: Locale): Record<string, string> {
