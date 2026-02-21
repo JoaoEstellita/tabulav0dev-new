@@ -23,6 +23,26 @@ const hasDeterministicLanguage = (text: string): boolean => {
 }
 
 describe('curated transit catalog coverage', () => {
+  it('ensures i18n locales stay in sync with full curated pt-BR keyset', () => {
+    const ptKeys = new Set(Object.keys(TRANSIT_CATALOG_PTBR_OVERRIDES))
+    const diffByLocale: Record<string, { missing: string[]; extra: string[] }> = {}
+
+    LOCALES.forEach((locale) => {
+      const localeMap = TRANSIT_CATALOG_I18N_OVERRIDES[locale] || {}
+      const localeKeys = new Set(Object.keys(localeMap))
+
+      const missing = Array.from(ptKeys).filter((key) => !localeKeys.has(key))
+      const extra = Array.from(localeKeys).filter((key) => !ptKeys.has(key))
+
+      diffByLocale[locale] = { missing, extra }
+    })
+
+    LOCALES.forEach((locale) => {
+      expect(diffByLocale[locale].missing).toEqual([])
+      expect(diffByLocale[locale].extra).toEqual([])
+    })
+  })
+
   it('ensures every blocked key has curated pt-BR replacement', () => {
     const missingPt: string[] = []
     Array.from(TRANSIT_CATALOG_BLOCKED_KEYS).forEach((key) => {

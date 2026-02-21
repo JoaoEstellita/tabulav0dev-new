@@ -210,6 +210,56 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Neptune square Moon can increase sensitivity, emotional fog, and difficulty defining inner boundaries. This phase asks for rest, mental hygiene, and reality checks before reacting. Strengthen grounding routines to reduce emotional confusion.',
     'transit:moon|ingress|house_2':
       'Moon entering House 2 highlights material security, personal value, and practical stability needs in daily life. This phase favors reviewing spending, comfort, and practical priorities with greater sensitivity. Small financial adjustments and simple organization tend to bring more calm.',
+    'transit:saturn|quadratura|pluto':
+      'Saturn square Pluto can pressure deep structures, boundaries, and long-term commitments. This phase asks for strategic patience, realistic pacing, and careful resource management. Focus on sustainable rebuilding instead of forceful control moves.',
+    'transit:jupiter|quadratura|ascendente':
+      'Jupiter square Ascendant may amplify visibility and confidence, with risk of overextension in your image or promises. This phase works best with clear limits and practical consistency. Expand with criteria so growth remains reliable.',
+    'transit:jupiter|quadratura|mars':
+      'Jupiter square Mars can increase drive and ambition while reducing tactical precision. This cycle asks you to balance momentum with method and timing. Channel enthusiasm into measurable steps and avoid unnecessary friction.',
+    'transit:pluto|conjuncao|sun':
+      'Pluto conjunct Sun intensifies identity, direction, and personal power themes. This phase tends to demand authentic choices and deeper alignment with what truly matters. Move with strategy, discipline, and emotional regulation.',
+    'transit:pluto|quadratura|mars':
+      'Pluto square Mars can raise pressure, impatience, and control conflicts in action. This cycle asks for disciplined execution and careful use of force. Prioritize essential tasks and avoid reactive confrontations.',
+    'transit:saturn|conjuncao|jupiter':
+      'Saturn conjunct Jupiter combines expansion with structure and long-range planning. The period favors realistic growth, objective priorities, and stronger execution criteria. Build in stages to preserve sustainability.',
+    'transit:saturn|sextil|uranus':
+      'Saturn sextile Uranus supports innovation with consistency and operational grounding. This phase helps update systems without breaking what still works. Test changes in controlled steps and keep clear metrics.',
+    'transit:saturn|trigono|uranus':
+      'Saturn trine Uranus facilitates stable modernization and intelligent process renewal. The cycle favors practical innovation with low disruption. Consolidate improvements through method, cadence, and review.',
+    'transit:uranus|sextil|mars':
+      'Uranus sextile Mars boosts initiative, agility, and tactical experimentation. This phase tends to favor smart adjustments and faster execution with awareness. Keep focus on useful innovation, not pure acceleration.',
+    'transit:uranus|trigono|mars':
+      'Uranus trine Mars improves decisive action with flexibility and creative problem-solving. The cycle supports productive change when priorities are explicit. Use momentum to unlock practical progress.',
+    'transit:jupiter|oposicao|saturn':
+      'Jupiter opposition Saturn highlights tension between expansion and limits. This phase asks for balance between vision and feasibility in current commitments. Recalibrate goals, deadlines, and resource allocation.',
+    'transit:neptune|conjuncao|meio_do_ceu':
+      'Neptune conjunct Midheaven can increase sensitivity around vocation, image, and professional meaning. This phase asks for discernment between inspiration and projection. Keep direction clear and validate decisions with concrete signals.',
+    'transit:saturn|sextil|meio_do_ceu':
+      'Saturn sextile Midheaven supports professional consolidation through consistency and responsibility. This cycle favors stable growth built on quality execution. Strengthen positioning with realistic commitments.',
+    'transit:saturn|trigono|meio_do_ceu':
+      'Saturn trine Midheaven reinforces reputation, structure, and long-term career direction. The period tends to reward method, reliability, and disciplined delivery. Keep focus on fundamentals and sustainable progress.',
+    'transit:uranus|conjuncao|sun':
+      'Uranus conjunct Sun tends to accelerate identity updates and personal repositioning. This phase can increase need for autonomy and experimental choices. Innovate with responsibility to avoid abrupt instability.',
+    'transit:jupiter|oposicao|neptune':
+      'Jupiter opposition Neptune can amplify idealization, diffuse expectations, and optimism without verification. This cycle asks for clearer criteria and fact-checking before major decisions. Keep inspiration grounded in practical reality.',
+    'transit:jupiter|quadratura|neptune':
+      'Jupiter square Neptune may increase enthusiasm with reduced clarity around limits. This phase asks for discernment between meaningful vision and wishful projection. Review assumptions and pace expansion prudently.',
+    'transit:pluto|conjuncao|saturn':
+      'Pluto conjunct Saturn deepens structural transformation and responsibility themes. The cycle can demand mature decisions about control, endurance, and what must be rebuilt. Move in stages with strategy and clear boundaries.',
+    'transit:pluto|oposicao|jupiter':
+      'Pluto opposition Jupiter can intensify disputes around scale, power, and strategic direction. This phase asks for ethical expansion and realistic calibration of ambition. Prioritize durable influence over immediate magnitude.',
+    'transit:saturn|quadratura|mars':
+      'Saturn square Mars may create friction between urgency and constraints in execution. This cycle asks for discipline, timing, and reduction of impulsive effort. Convert pressure into methodical action.',
+    'transit:jupiter|quadratura|venus':
+      'Jupiter square Venus can increase pleasure-seeking and optimism in relational or financial choices. This phase favors moderation and clear value criteria. Expand with balance to avoid excess and regret.',
+    'transit:neptune|quadratura|saturn':
+      'Neptune square Saturn can test certainty, structure, and tolerance for ambiguity. This phase asks you to refine expectations and rebuild plans with realistic flexibility. Combine intuition with objective verification.',
+    'transit:pluto|oposicao|sun':
+      'Pluto opposition Sun can activate strong polarity around identity, authority, and personal direction. This cycle asks for conscious use of power and deeper alignment with core priorities. Avoid all-or-nothing reactions.',
+    'transit:pluto|oposicao|mars':
+      'Pluto opposition Mars may intensify competitive pressure and conflict dynamics in action. This phase asks for self-regulation and strategic restraint under stress. Direct force toward constructive outcomes.',
+    'transit:pluto|quadratura|mercury':
+      'Pluto square Mercury can intensify thinking, suspicion, and communicational rigidity. This cycle asks for evidence-based analysis and cleaner dialogue. Recheck assumptions before committing to strong conclusions.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -418,6 +468,56 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Neptuno en cuadratura con Luna puede aumentar sensibilidad, niebla emocional y dificultad para definir limites internos. La fase pide descanso, higiene mental y verificacion de realidad antes de reaccionar. Fortalece rutina de centrado para reducir confusion afectiva.',
     'transit:moon|ingress|house_2':
       'Luna en ingreso a Casa 2 destaca seguridad material, valor personal y necesidades de estabilidad practica en lo cotidiano. La fase favorece revisar gastos, confort y prioridades practicas con mayor sensibilidad. Pequenos ajustes financieros y organizacion simple suelen traer mas calma.',
+    'transit:saturn|quadratura|pluto':
+      'Saturno en cuadratura con Pluton puede presionar estructuras profundas, limites y compromisos de largo plazo. Esta fase pide paciencia estrategica, ritmo realista y gestion cuidadosa de recursos. Prioriza reconstruccion sostenible en lugar de control forzado.',
+    'transit:jupiter|quadratura|ascendente':
+      'Jupiter en cuadratura al Ascendente puede ampliar visibilidad y confianza, con riesgo de sobreextender imagen o promesas. Esta fase funciona mejor con limites claros y consistencia practica. Expande con criterio para sostener resultados.',
+    'transit:jupiter|quadratura|mars':
+      'Jupiter en cuadratura con Marte puede aumentar impulso y ambicion, pero bajar precision tactica. El ciclo pide equilibrar velocidad con metodo y timing. Convierte entusiasmo en pasos medibles y evita friccion innecesaria.',
+    'transit:pluto|conjuncao|sun':
+      'Pluton en conjuncion con Sol intensifica temas de identidad, direccion y poder personal. Esta fase suele pedir elecciones mas autenticas y alineacion profunda con lo esencial. Avanza con estrategia, disciplina y regulacion emocional.',
+    'transit:pluto|quadratura|mars':
+      'Pluton en cuadratura con Marte puede elevar presion, impaciencia y conflictos de control en la accion. Este ciclo pide ejecucion disciplinada y uso consciente de la fuerza. Prioriza tareas esenciales y evita confrontaciones reactivas.',
+    'transit:saturn|conjuncao|jupiter':
+      'Saturno en conjuncion con Jupiter combina expansion y estructura con mirada de largo plazo. El periodo favorece crecimiento realista, prioridades objetivas y criterio de ejecucion. Construye por etapas para mantener sostenibilidad.',
+    'transit:saturn|sextil|uranus':
+      'Saturno en sextil a Urano favorece innovacion con consistencia y base operativa. Esta fase ayuda a actualizar sistemas sin romper lo que aun funciona. Prueba cambios de forma controlada y con metricas claras.',
+    'transit:saturn|trigono|uranus':
+      'Saturno en trigono a Urano facilita modernizacion estable y renovacion inteligente de procesos. El ciclo favorece innovacion practica con baja disrupcion. Consolida mejoras con metodo y seguimiento.',
+    'transit:uranus|sextil|mars':
+      'Urano en sextil con Marte impulsa iniciativa, agilidad y experimentacion tactica. Esta fase suele favorecer ajustes inteligentes y ejecucion mas rapida con consciencia. Mantén foco en innovacion util, no en aceleracion vacia.',
+    'transit:uranus|trigono|mars':
+      'Urano en trigono con Marte mejora accion decidida con flexibilidad y resolucion creativa. El ciclo apoya cambios productivos cuando las prioridades estan claras. Usa el impulso para desbloquear progreso practico.',
+    'transit:jupiter|oposicao|saturn':
+      'Jupiter en oposicion a Saturno muestra tension entre expansion y limites. Esta fase pide equilibrio entre vision y viabilidad en compromisos actuales. Recalibra metas, plazos y distribucion de recursos.',
+    'transit:neptune|conjuncao|meio_do_ceu':
+      'Neptuno en conjuncion al Medio Cielo puede aumentar sensibilidad sobre vocacion, imagen y sentido profesional. Esta fase pide discernimiento entre inspiracion y proyeccion. Mantén direccion clara y valida decisiones con señales concretas.',
+    'transit:saturn|sextil|meio_do_ceu':
+      'Saturno en sextil al Medio Cielo favorece consolidacion profesional por constancia y responsabilidad. Este ciclo apoya crecimiento estable basado en calidad de ejecucion. Refuerza posicionamiento con compromisos realistas.',
+    'transit:saturn|trigono|meio_do_ceu':
+      'Saturno en trigono al Medio Cielo refuerza reputacion, estructura y direccion de carrera a largo plazo. El periodo suele recompensar metodo, fiabilidad y entrega disciplinada. Sostén foco en fundamentos y progreso estable.',
+    'transit:uranus|conjuncao|sun':
+      'Urano en conjuncion con Sol tiende a acelerar cambios de identidad y reposicionamiento personal. Esta fase puede aumentar necesidad de autonomia y decisiones experimentales. Innova con responsabilidad para evitar inestabilidad brusca.',
+    'transit:jupiter|oposicao|neptune':
+      'Jupiter en oposicion a Neptuno puede ampliar idealizacion y expectativas difusas sin verificacion. Este ciclo pide criterios claros y chequeo de hechos antes de decisiones grandes. Mantén inspiracion con base practica.',
+    'transit:jupiter|quadratura|neptune':
+      'Jupiter en cuadratura con Neptuno puede aumentar entusiasmo con menor claridad sobre limites reales. Esta fase pide discernir entre vision con fundamento y proyeccion optimista. Revisa supuestos y regula ritmo de expansion.',
+    'transit:pluto|conjuncao|saturn':
+      'Pluton en conjuncion con Saturno profundiza transformacion estructural y responsabilidades clave. El ciclo puede exigir decisiones maduras sobre control, resistencia y reconstruccion necesaria. Avanza por etapas con estrategia y limites claros.',
+    'transit:pluto|oposicao|jupiter':
+      'Pluton en oposicion a Jupiter puede intensificar disputas sobre escala, poder y direccion estrategica. Esta fase pide expansion etica y calibracion realista de la ambicion. Prioriza influencia sostenible sobre magnitud inmediata.',
+    'transit:saturn|quadratura|mars':
+      'Saturno en cuadratura con Marte puede generar friccion entre urgencia y restriccion en la ejecucion. Este ciclo pide disciplina, timing y reduccion de esfuerzo impulsivo. Convierte presion en accion metodica.',
+    'transit:jupiter|quadratura|venus':
+      'Jupiter en cuadratura con Venus puede aumentar busqueda de placer y optimismo en elecciones afectivas o financieras. Esta fase favorece moderacion y criterio de valor mas claro. Expande con equilibrio para evitar excesos.',
+    'transit:neptune|quadratura|saturn':
+      'Neptuno en cuadratura con Saturno puede tensionar certezas, estructura y tolerancia a la ambiguedad. Esta fase pide ajustar expectativas y reconstruir planes con flexibilidad realista. Combina intuicion con verificacion objetiva.',
+    'transit:pluto|oposicao|sun':
+      'Pluton en oposicion al Sol puede activar polaridad fuerte sobre identidad, autoridad y direccion personal. Este ciclo pide uso consciente del poder y alineacion profunda con prioridades reales. Evita respuestas de todo o nada.',
+    'transit:pluto|oposicao|mars':
+      'Pluton en oposicion a Marte puede intensificar presion competitiva y dinamicas de conflicto al actuar. Esta fase pide autorregulacion y contencion estrategica bajo estres. Dirige fuerza hacia resultados constructivos.',
+    'transit:pluto|quadratura|mercury':
+      'Pluton en cuadratura con Mercurio puede intensificar pensamiento, sospecha y rigidez comunicativa. Este ciclo pide analisis basado en evidencia y dialogo mas limpio. Revisa supuestos antes de conclusiones tajantes.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -626,5 +726,55 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Nettuno in quadratura con Luna puo aumentare sensibilita, nebbia emotiva e difficolta nel definire confini interiori. La fase richiede riposo, igiene mentale e verifica della realta prima di reagire. Rafforza routine di centratura per ridurre confusione affettiva.',
     'transit:moon|ingress|house_2':
       'Luna in ingresso in Casa 2 evidenzia sicurezza materiale, valore personale e bisogni di stabilita pratica nella quotidianita. La fase favorisce rivedere spese, comfort e priorita pratiche con maggiore sensibilita. Piccoli aggiustamenti finanziari e organizzazione semplice tendono a portare piu calma.',
+    'transit:saturn|quadratura|pluto':
+      'Saturno in quadratura con Plutone puo mettere pressione su strutture profonde, confini e impegni di lungo periodo. Questa fase richiede pazienza strategica, ritmo realistico e gestione attenta delle risorse. Dai priorita a una ricostruzione sostenibile invece che al controllo forzato.',
+    'transit:jupiter|quadratura|ascendente':
+      'Giove in quadratura all Ascendente puo ampliare visibilita e fiducia, con rischio di sovraesposizione o promesse eccessive. Questa fase funziona meglio con limiti chiari e coerenza pratica. Espandi con criterio per mantenere risultati affidabili.',
+    'transit:jupiter|quadratura|mars':
+      'Giove in quadratura con Marte puo aumentare slancio e ambizione, ma ridurre precisione tattica. Il ciclo richiede equilibrio tra velocita, metodo e tempi. Trasforma entusiasmo in passi misurabili ed evita attriti inutili.',
+    'transit:pluto|conjuncao|sun':
+      'Plutone in congiunzione con Sole intensifica temi di identita, direzione e potere personale. Questa fase tende a chiedere scelte piu autentiche e allineamento profondo con l essenziale. Avanza con strategia, disciplina e regolazione emotiva.',
+    'transit:pluto|quadratura|mars':
+      'Plutone in quadratura con Marte puo alzare pressione, impazienza e conflitti di controllo nell azione. Il ciclo richiede esecuzione disciplinata e uso consapevole della forza. Concentrati sui compiti essenziali ed evita scontri reattivi.',
+    'transit:saturn|conjuncao|jupiter':
+      'Saturno in congiunzione con Giove unisce espansione e struttura con visione di lungo periodo. Il periodo favorisce crescita realistica, priorita oggettive e criteri piu forti di esecuzione. Costruisci per fasi per mantenere sostenibilita.',
+    'transit:saturn|sextil|uranus':
+      'Saturno in sestile a Urano favorisce innovazione con continuita e base operativa solida. Questa fase aiuta ad aggiornare sistemi senza rompere cio che funziona ancora. Testa i cambiamenti in modo controllato e con metriche chiare.',
+    'transit:saturn|trigono|uranus':
+      'Saturno in trigono a Urano facilita modernizzazione stabile e rinnovo intelligente dei processi. Il ciclo favorisce innovazione pratica con bassa discontinuita. Consolida miglioramenti con metodo e revisione costante.',
+    'transit:uranus|sextil|mars':
+      'Urano in sestile con Marte aumenta iniziativa, agilita e sperimentazione tattica. Questa fase tende a favorire aggiustamenti intelligenti e azione piu rapida con consapevolezza. Mantieni focus su innovazione utile, non su accelerazione cieca.',
+    'transit:uranus|trigono|mars':
+      'Urano in trigono con Marte migliora azione decisa con flessibilita e problem solving creativo. Il ciclo sostiene cambiamenti produttivi quando le priorita sono esplicite. Usa slancio per sbloccare progresso concreto.',
+    'transit:jupiter|oposicao|saturn':
+      'Giove in opposizione a Saturno evidenzia tensione tra espansione e limiti. Questa fase richiede equilibrio tra visione e fattibilita negli impegni correnti. Ricalibra obiettivi, scadenze e distribuzione delle risorse.',
+    'transit:neptune|conjuncao|meio_do_ceu':
+      'Nettuno in congiunzione al Medio Cielo puo aumentare sensibilita su vocazione, immagine e senso professionale. Questa fase richiede discernimento tra ispirazione e proiezione. Mantieni direzione chiara e valida decisioni con segnali concreti.',
+    'transit:saturn|sextil|meio_do_ceu':
+      'Saturno in sestile al Medio Cielo favorisce consolidamento professionale attraverso costanza e responsabilita. Il ciclo sostiene crescita stabile basata su qualita di esecuzione. Rafforza il posizionamento con impegni realistici.',
+    'transit:saturn|trigono|meio_do_ceu':
+      'Saturno in trigono al Medio Cielo rafforza reputazione, struttura e direzione professionale di lungo periodo. Il periodo tende a premiare metodo, affidabilita e consegna disciplinata. Mantieni il focus sui fondamentali.',
+    'transit:uranus|conjuncao|sun':
+      'Urano in congiunzione con Sole tende ad accelerare aggiornamenti identitari e riposizionamento personale. Questa fase puo aumentare bisogno di autonomia e scelte sperimentali. Innova con responsabilita per evitare instabilita improvvisa.',
+    'transit:jupiter|oposicao|neptune':
+      'Giove in opposizione a Nettuno puo ampliare idealizzazione e aspettative diffuse senza verifica concreta. Il ciclo richiede criteri piu chiari e controllo dei fatti prima di decisioni importanti. Mantieni ispirazione con base pratica.',
+    'transit:jupiter|quadratura|neptune':
+      'Giove in quadratura con Nettuno puo aumentare entusiasmo con minore chiarezza sui limiti reali. Questa fase richiede distinguere tra visione fondata e proiezione ottimistica. Rivedi ipotesi e regola il ritmo di espansione.',
+    'transit:pluto|conjuncao|saturn':
+      'Plutone in congiunzione con Saturno approfondisce trasformazione strutturale e responsabilita centrali. Il ciclo puo richiedere decisioni mature su controllo, tenuta e ricostruzione necessaria. Procedi per fasi con strategia e confini netti.',
+    'transit:pluto|oposicao|jupiter':
+      'Plutone in opposizione a Giove puo intensificare conflitti su scala, potere e direzione strategica. Questa fase richiede espansione etica e calibrazione realistica dell ambizione. Dai priorita a influenza sostenibile, non a grandezza immediata.',
+    'transit:saturn|quadratura|mars':
+      'Saturno in quadratura con Marte puo creare attrito tra urgenza e restrizione nell esecuzione. Questo ciclo richiede disciplina, timing e riduzione dello sforzo impulsivo. Trasforma pressione in azione metodica.',
+    'transit:jupiter|quadratura|venus':
+      'Giove in quadratura con Venere puo aumentare ricerca di piacere e ottimismo in scelte affettive o finanziarie. Questa fase favorisce moderazione e criteri di valore piu chiari. Espandi con equilibrio per evitare eccessi.',
+    'transit:neptune|quadratura|saturn':
+      'Nettuno in quadratura con Saturno puo mettere in tensione certezze, struttura e tolleranza all ambiguita. Questa fase richiede rivedere aspettative e ricostruire piani con flessibilita realistica. Unisci intuizione e verifica oggettiva.',
+    'transit:pluto|oposicao|sun':
+      'Plutone in opposizione al Sole puo attivare forte polarita su identita, autorita e direzione personale. Questo ciclo richiede uso consapevole del potere e allineamento profondo con priorita reali. Evita reazioni estreme.',
+    'transit:pluto|oposicao|mars':
+      'Plutone in opposizione a Marte puo intensificare pressione competitiva e dinamiche conflittuali nell azione. Questa fase richiede autoregolazione e contenimento strategico sotto stress. Dirigi la forza verso risultati costruttivi.',
+    'transit:pluto|quadratura|mercury':
+      'Plutone in quadratura con Mercurio puo intensificare pensiero, sospetto e rigidita comunicativa. Questo ciclo richiede analisi basata su evidenze e dialogo piu pulito. Ricontrolla ipotesi prima di conclusioni drastiche.',
   },
 }
