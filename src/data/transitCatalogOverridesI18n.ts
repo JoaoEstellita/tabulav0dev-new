@@ -280,6 +280,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter entering House 5 tends to increase creativity, personal expression, and openness to joyful experiences. The cycle supports authorial projects, romance, and authentic initiatives. Use enthusiasm with criteria to keep continuity and quality.',
     'transit:jupiter|ingress|house_10':
       'Jupiter entering House 10 can open a growth phase in career, reputation, and public goals. This window tends to favor progress when strategic vision is paired with consistent execution. Prioritize key deliveries and consolidate authority through observable results.',
+    'transit:saturn|conjuncao|ascendente':
+      'Saturn conjunct Ascendant marks a phase of personal repositioning with more sobriety and responsibility. This cycle asks for reviewing posture, boundaries, and self-presentation in daily life. Consolidate long-term choices through discipline and consistent self-management.',
+    'transit:saturn|conjuncao|meio_do_ceu':
+      'Saturn conjunct Midheaven tends to concentrate focus on career, reputation, and public commitments. The phase supports structuring goals when delivery remains consistent and criteria stay clear. Prioritize essentials and reinforce authority through concrete results.',
+    'transit:saturn|conjuncao|sun':
+      'Saturn conjunct Sun can increase internal pressure and the need to reorganize personal direction. This cycle asks for maturity, focus on essentials, and sustainable pacing to consolidate progress. Work with realistic goals and steady daily execution.',
+    'transit:saturn|conjuncao|moon':
+      'Saturn conjunct Moon tends to bring emotional sobriety and a review of security needs. This phase asks to strengthen care routines, boundaries, and affective stability in daily life. Small consistent adjustments help reduce internal overload.',
+    'transit:saturn|conjuncao|mercury':
+      'Saturn conjunct Mercury raises mental demand, focus, and the need to structure thought with method. The cycle favors disciplined study, premise review, and objective communication. Organize information by priority before deciding.',
+    'transit:saturn|conjuncao|venus':
+      'Saturn conjunct Venus can ask for maturity in bonds, values, and wellbeing choices. This phase supports clarifying reciprocity and boundaries to protect what has real quality. Invest in what is consistent and avoid idealization or excess.',
+    'transit:saturn|conjuncao|mars':
+      'Saturn conjunct Mars combines action drive with a need for technique and pacing control. The cycle asks for efficiency, consistency, and lower reactivity to preserve energy. Channel force into clearly defined steps and verifiable goals.',
+    'transit:saturn|conjuncao|saturn':
+      'Saturn conjunct Saturn marks a structural maturation cycle and a review of core responsibilities. This phase asks for simplifying priorities, recalibrating goals, and sustaining what truly matters. Consistent decisions now tend to strengthen the long term.',
+    'transit:saturn|ingress|house_1':
+      'Saturn entering House 1 starts a phase of personal redefinition with more discipline and responsibility. The period supports consolidating identity and direction through concrete daily choices. Move with consistency and healthy boundaries.',
+    'transit:saturn|ingress|house_3':
+      'Saturn entering House 3 asks for organizing mental routine, communication, and study with method. The phase supports consistent learning, objective agreements, and less dispersion. Structure schedule and messaging to gain practical clarity.',
+    'transit:saturn|ingress|house_5':
+      'Saturn entering House 5 can bring maturity to creativity, romance, and personal expression. The cycle favors quality and continuity when process commitment and clear limits are present. Build joy with responsibility and intention.',
   },
   'es-ES': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -558,6 +580,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en ingreso a Casa 5 aumenta creatividad, expresion personal y apertura a experiencias placenteras. El ciclo favorece proyectos de autoria, romances e iniciativas autenticas. Usa entusiasmo con criterio para mantener continuidad y calidad.',
     'transit:jupiter|ingress|house_10':
       'Jupiter en ingreso a Casa 10 tiende a abrir una fase de crecimiento en carrera, reputacion y objetivos publicos. Esta ventana favorece avances cuando vision estrategica y ejecucion constante van juntas. Prioriza entregas clave y consolida autoridad con resultados observables.',
+    'transit:saturn|conjuncao|ascendente':
+      'Saturno en conjuncion al Ascendente marca una fase de reposicionamiento personal con mayor sobriedad y responsabilidad. Este ciclo pide revisar postura, limites y forma de presentarte en lo cotidiano. Consolida decisiones de largo plazo con disciplina y constancia.',
+    'transit:saturn|conjuncao|meio_do_ceu':
+      'Saturno en conjuncion al Medio Cielo tiende a concentrar foco en carrera, reputacion y compromisos publicos. La fase favorece estructurar metas cuando la entrega es constante y el criterio es claro. Prioriza lo esencial y fortalece autoridad con resultados concretos.',
+    'transit:saturn|conjuncao|sun':
+      'Saturno en conjuncion al Sol puede aumentar exigencia interna y necesidad de reorganizar direccion personal. Este ciclo pide madurez, foco en lo esencial y ritmo sostenible para consolidar avances. Trabaja con metas realistas y ejecucion diaria consistente.',
+    'transit:saturn|conjuncao|moon':
+      'Saturno en conjuncion con Luna tiende a traer sobriedad emocional y revision de necesidades de seguridad. La fase pide reforzar rutina de cuidado, limites y estabilidad afectiva en lo cotidiano. Ajustes pequenos y constantes ayudan a reducir sobrecarga interna.',
+    'transit:saturn|conjuncao|mercury':
+      'Saturno en conjuncion con Mercurio aumenta exigencia mental, foco y necesidad de ordenar el pensamiento con metodo. El ciclo favorece estudio disciplinado, revision de premisas y comunicacion objetiva. Organiza informacion por prioridad antes de decidir.',
+    'transit:saturn|conjuncao|venus':
+      'Saturno en conjuncion con Venus puede pedir madurez en vinculos, valores y decisiones de bienestar. Esta fase favorece definir reciprocidad y limites claros para proteger lo que tiene calidad real. Invierte en lo consistente y evita idealizacion o exceso.',
+    'transit:saturn|conjuncao|mars':
+      'Saturno en conjuncion con Marte combina impulso de accion con necesidad de tecnica y control de ritmo. El ciclo pide eficiencia, constancia y menor reactividad para preservar energia. Canaliza fuerza en etapas definidas y objetivos verificables.',
+    'transit:saturn|conjuncao|saturn':
+      'Saturno en conjuncion con Saturno marca un ciclo de maduracion estructural y revision de responsabilidades centrales. Esta fase pide simplificar prioridades, recalibrar metas y sostener lo que realmente importa. Decisiones consistentes ahora fortalecen el largo plazo.',
+    'transit:saturn|ingress|house_1':
+      'Saturno en ingreso a Casa 1 inicia una fase de redefinicion personal con mas disciplina y responsabilidad. El periodo favorece consolidar identidad y direccion mediante elecciones concretas en lo cotidiano. Avanza con constancia y limites saludables.',
+    'transit:saturn|ingress|house_3':
+      'Saturno en ingreso a Casa 3 pide ordenar rutina mental, comunicacion y estudio con metodo. Esta fase favorece aprendizaje consistente, acuerdos objetivos y menos dispersion. Estructura agenda y mensajes para ganar claridad practica.',
+    'transit:saturn|ingress|house_5':
+      'Saturno en ingreso a Casa 5 puede traer madurez para creatividad, romances y expresion personal. El ciclo favorece calidad y continuidad cuando hay compromiso con el proceso y limites claros. Construye disfrute con responsabilidad e intencion.',
   },
   'it-IT': {
     'transit:jupiter|conjuncao|meio_do_ceu':
@@ -836,5 +880,27 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in ingresso in Casa 5 aumenta creativita, espressione personale e apertura a esperienze piacevoli. Il ciclo favorisce progetti autoriali, romance e iniziative autentiche. Usa entusiasmo con criterio per mantenere continuita e qualita.',
     'transit:jupiter|ingress|house_10':
       'Giove in ingresso in Casa 10 tende ad aprire una fase di crescita in carriera, reputazione e obiettivi pubblici. Questa finestra favorisce avanzamenti quando visione strategica ed esecuzione costante lavorano insieme. Dai priorita a consegne chiave e consolida autorevolezza con risultati osservabili.',
+    'transit:saturn|conjuncao|ascendente':
+      'Saturno in congiunzione all Ascendente segna una fase di riposizionamento personale con maggiore sobrieta e responsabilita. Questo ciclo chiede di rivedere postura, confini e modo di presentarti nella quotidianita. Consolida scelte di lungo periodo con disciplina e continuita.',
+    'transit:saturn|conjuncao|meio_do_ceu':
+      'Saturno in congiunzione al Medio Cielo tende a concentrare focus su carriera, reputazione e impegni pubblici. La fase favorisce strutturare obiettivi quando consegna e criterio restano costanti. Dai priorita all essenziale e rafforza autorevolezza con risultati concreti.',
+    'transit:saturn|conjuncao|sun':
+      'Saturno in congiunzione al Sole puo aumentare pressione interna e bisogno di riorganizzare direzione personale. Questo ciclo richiede maturita, focus sull essenziale e ritmo sostenibile per consolidare progressi. Lavora con obiettivi realistici ed esecuzione quotidiana coerente.',
+    'transit:saturn|conjuncao|moon':
+      'Saturno in congiunzione con Luna tende a portare sobrieta emotiva e revisione dei bisogni di sicurezza. La fase richiede rafforzare routine di cura, confini e stabilita affettiva nel quotidiano. Piccoli aggiustamenti costanti aiutano a ridurre sovraccarico interno.',
+    'transit:saturn|conjuncao|mercury':
+      'Saturno in congiunzione con Mercurio aumenta richiesta mentale, focus e bisogno di organizzare pensiero con metodo. Il ciclo favorisce studio disciplinato, revisione delle premesse e comunicazione oggettiva. Ordina informazioni per priorita prima di decidere.',
+    'transit:saturn|conjuncao|venus':
+      'Saturno in congiunzione con Venere puo chiedere maturita in legami, valori e scelte di benessere. La fase favorisce chiarire reciprocita e limiti per proteggere cio che ha qualita reale. Investi nel coerente ed evita idealizzazione o eccesso.',
+    'transit:saturn|conjuncao|mars':
+      'Saturno in congiunzione con Marte combina spinta d azione con bisogno di tecnica e controllo del ritmo. Il ciclo richiede efficienza, costanza e minore reattivita per preservare energia. Convoglia forza in fasi definite e obiettivi verificabili.',
+    'transit:saturn|conjuncao|saturn':
+      'Saturno in congiunzione con Saturno segna un ciclo di maturazione strutturale e revisione delle responsabilita centrali. La fase richiede semplificare priorita, ricalibrare obiettivi e sostenere cio che conta davvero. Decisioni coerenti ora rafforzano il lungo periodo.',
+    'transit:saturn|ingress|house_1':
+      'Saturno in ingresso in Casa 1 avvia una fase di ridefinizione personale con piu disciplina e responsabilita. Il periodo favorisce consolidare identita e direzione tramite scelte concrete quotidiane. Avanza con costanza e confini salutari.',
+    'transit:saturn|ingress|house_3':
+      'Saturno in ingresso in Casa 3 chiede di organizzare routine mentale, comunicazione e studio con metodo. Questa fase favorisce apprendimento consistente, accordi oggettivi e minore dispersione. Struttura agenda e messaggi per ottenere chiarezza pratica.',
+    'transit:saturn|ingress|house_5':
+      'Saturno in ingresso in Casa 5 puo portare maturita a creativita, romance ed espressione personale. Il ciclo favorisce qualita e continuita quando processo e limiti sono chiari. Costruisci piacere con responsabilita e intenzione.',
   },
 }
