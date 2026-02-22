@@ -587,4 +587,294 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Marte em trigono com Urano favorece inovacao pratica sem necessidade de ruptura brusca. A fase tende a abrir espaco para testar solucoes novas com bom controle de risco. Experimente com criterio e escale apenas o que se prova util.',
   'transit:mars|trigono|venus':
     'Marte em trigono com Venus favorece iniciativa afetiva e cooperacao em acordos importantes. O ciclo tende a facilitar aproximacao quando desejo e reciprocidade estao equilibrados. Use assertividade com delicadeza para fortalecer vinculos.',
+
+  // ── Mars completion ─────────────────────────────────────────────────────
+  'transit:mars|sextil|sun':
+    'Marte em sextil ao Sol favorece iniciativa com boa leitura de direcao propria e energia disponivel. O ciclo tende a facilitar acao focada quando ha integracao entre vontade e prioridade real. Use o momento para avancar em metas concretas com objetividade.',
+  'transit:mars|sextil|meio_do_ceu':
+    'Marte em sextil ao Meio do Ceu favorece iniciativa na carreira com bom alinhamento de ritmo e direcao. O ciclo tende a apoiar movimentos estrategicos quando ha foco em metas de visibilidade. Execute por prioridades e acompanhe progresso com criterio.',
+  'transit:mars|trigono|sun':
+    'Marte em trigono ao Sol reforca fluidez entre iniciativa e sentido de direcao. A fase tende a favorecer avancos com menor reatividade e mais intencao consciente. Foque no essencial e consolide resultado com constancia.',
+  'transit:mars|trigono|meio_do_ceu':
+    'Marte em trigono ao Meio do Ceu amplia disposicao para agir com objetivo profissional e boa gestao de energia. A fase facilita avancos na direcao de carreira quando ha clareza e constancia. Consolide resultado executando por etapas objetivas.',
+  'transit:mars|oposicao|ascendente':
+    'Marte em oposicao ao Ascendente pode elevar tensao de postura e impulso de confronto nas interacoes cotidianas. A fase pede regular intensidade para preservar objetividade sem perder firmeza. Aja com clareza de intencao e reduza reacao automatica.',
+  'transit:mars|ingress|house_1':
+    'Marte em ingresso na Casa 1 aumenta energia pessoal, iniciativa e necessidade de afirmar direcao propria. A fase favorece avancos quando ha foco e controle de ritmo para evitar impulsividade. Execute por prioridades e monitore nivel de desgaste.',
+  'transit:mars|ingress|house_2':
+    'Marte em ingresso na Casa 2 aumenta impulso para agir sobre recursos, valores e seguranca material. O periodo pode trazer urgencia de resolver pendencias financeiras com mais forca. Direcione energia para ajustes praticos com criterio de risco.',
+  'transit:mars|ingress|house_3':
+    'Marte em ingresso na Casa 3 acelera comunicacao, estudos e movimentos no ambiente proximo. A fase pode trazer mais assertividade verbal, com risco de tom mais impaciente. Direcione energia para conversas produtivas e evite respostas por impulso.',
+  'transit:mars|ingress|house_5':
+    'Marte em ingresso na Casa 5 aumenta energia criativa, desejo de expressao e disposicao para projetos autorais. O ciclo favorece iniciativa quando ha organizacao de foco e moderacao de risco afetivo. Canalize impulso em criacao com continuidade.',
+  'transit:mars|ingress|house_6':
+    'Marte em ingresso na Casa 6 aumenta disposicao para resolver tarefas pendentes e reorganizar rotinas de trabalho. O periodo favorece eficiencia quando ha metodo e prioridade bem definidos. Evite sobrecarga excessiva e acompanhe energia disponivel.',
+  'transit:mars|ingress|house_7':
+    'Marte em ingresso na Casa 7 intensifica dinamicas de parceria, negociacao e alinhamento de limites em relacoes. O ciclo pode trazer maior assertividade em acordos, com risco de atrito se faltar escuta. Ajuste postura para preservar cooperacao sem abrir mao de firmeza.',
+  'transit:mars|ingress|house_8':
+    'Marte em ingresso na Casa 8 aumenta impulso para lidar com recursos compartilhados, confianca e transformacao interna. A fase favorece acao em pendencias profundas quando ha criterio e transparencia. Avance com cuidado e evite confrontos por forca.',
+  'transit:mars|ingress|house_9':
+    'Marte em ingresso na Casa 9 amplia iniciativa para estudar, planejar e expandir horizonte de longo alcance. O periodo favorece acao em projetos de formacao ou expansao quando ha objetivo claro. Use energia para traduzir visao em plano concreto.',
+  'transit:mars|ingress|house_11':
+    'Marte em ingresso na Casa 11 aumenta disposicao para engajar redes, projetos coletivos e metas de futuro. A fase favorece lideranca em colaboracoes quando ha foco e reciprocidade real. Direcione energia para aliancas com proposito e retorno concreto.',
+  'transit:mars|ingress|house_12':
+    'Marte em ingresso na Casa 12 pode gerar impulso interno de resolver pendencias antigas e organizar processos de encerramento. O ciclo favorece acao silenciosa e preparatoria quando ha criterio e descanso adequado. Evite pressa e respeite ritmo de recuperacao.',
+
+  // ── Mercury sextil ───────────────────────────────────────────────────────
+  'transit:mercury|sextil|sun':
+    'Mercurio em sextil ao Sol favorece integracao entre clareza mental e sentido de direcao. A fase tende a facilitar decisoes e comunicacoes alinhadas com prioridade real. Use o momento para organizar mensagens-chave e avancar com consistencia.',
+  'transit:mercury|sextil|moon':
+    'Mercurio em sextil com Lua facilita traduzir emocao em linguagem clara e ajustavel no cotidiano. O ciclo tende a apoiar conversas de acolhimento com mais objetividade. Use o momento para nomear necessidades e ajustar expectativas com escuta ativa.',
+  'transit:mercury|sextil|mercury':
+    'Mercurio em sextil com Mercurio favorece fluidez mental, revisao de ideias e conexoes rapidas entre informacoes. A fase tende a apoiar estudo, escrita e organizacao de processos com mais agilidade. Aproveite o momento para destravar temas pendentes com linguagem objetiva.',
+  'transit:mercury|sextil|venus':
+    'Mercurio em sextil com Venus favorece diplomacia, expressao de valor e conversa com mais elegancia relacional. O ciclo tende a facilitar acordos quando forma e conteudo estao equilibrados. Use a fase para fortalecer trocas com gentileza sem perder assertividade.',
+  'transit:mercury|sextil|mars':
+    'Mercurio em sextil com Marte favorece decisao agil, argumentacao assertiva e comunicacao objetiva. O ciclo tende a apoiar negociacoes quando ha foco claro e escuta ativa. Avance com clareza em conversas estrategicas e evite respostas por pressa.',
+  'transit:mercury|sextil|jupiter':
+    'Mercurio em sextil com Jupiter favorece expansao de repertorio, aprendizado e visao de contexto mais ampla. A fase tende a facilitar negociacoes e planejamento quando detalhe e panorama caminham juntos. Converta bons insights em plano concreto.',
+  'transit:mercury|sextil|saturn':
+    'Mercurio em sextil com Saturno favorece organizacao de pensamento, precisao na comunicacao e planejamento com metodo. O ciclo tende a apoiar revisao de contratos e acordos com mais pragmatismo. Estruture informacoes por prioridade antes de decidir.',
+  'transit:mercury|sextil|uranus':
+    'Mercurio em sextil com Urano favorece ideias novas, conexoes mentais rapidas e abertura para revisar processos. A fase tende a apoiar inovacao comunicacional quando ha criterio de validacao. Teste abordagens diferentes com foco e mensure impacto antes de escalar.',
+  'transit:mercury|sextil|neptune':
+    'Mercurio em sextil com Netuno favorece percepcao sutil, comunicacao criativa e leitura de contextos subjetivos. O ciclo tende a apoiar inspiracao quando ha ancoragem em fatos verificaveis. Registre ideias importantes e confirme entendimento antes de fechar acordos.',
+  'transit:mercury|sextil|pluto':
+    'Mercurio em sextil com Plutao favorece profundidade analitica e comunicacao estrategica com mais clareza de objetivo. O ciclo tende a apoiar investigacao e reformulacao de premissas com criterio. Direcione foco para o essencial e mantenha abertura para revisar hipoteses.',
+  'transit:mercury|sextil|ascendente':
+    'Mercurio em sextil ao Ascendente favorece clareza de expressao e melhora na leitura de interacoes sociais. A fase tende a facilitar alinhamento de posicionamento pessoal com comunicacao direta. Aproveite para organizar mensagens e ajustar postura com objetividade.',
+  'transit:mercury|sextil|meio_do_ceu':
+    'Mercurio em sextil ao Meio do Ceu favorece comunicacao profissional, alinhamento de narrativa e clareza de posicionamento. O ciclo tende a apoiar avanco em imagem e entrega quando mensagens sao consistentes. Priorize conversas estrategicas com foco e precisao.',
+
+  // ── Mercury trigono ──────────────────────────────────────────────────────
+  'transit:mercury|trigono|sun':
+    'Mercurio em trigono ao Sol reforca coerencia entre pensamento, intencao e forma de comunicar direcao. O periodo tende a facilitar decisoes quando prioridades estao claras e bem articuladas. Use a fase para consolidar narrativa central e reduzir dispersao.',
+  'transit:mercury|trigono|moon':
+    'Mercurio em trigono com Lua favorece equilibrio entre emocao e razao na comunicacao cotidiana. A fase tende a facilitar conversas delicadas com mais naturalidade e escuta. Aproveite para alinhar necessidades internas com objetivos externos de forma simples.',
+  'transit:mercury|trigono|mercury':
+    'Mercurio em trigono com Mercurio reforca clareza mental, agilidade de decisao e boa conexao entre ideias. O ciclo tende a facilitar estudo, escrita e organizacao de planos com mais fluidez. Converta repertorio organizado em avanco pratico e verificavel.',
+  'transit:mercury|trigono|venus':
+    'Mercurio em trigono com Venus favorece harmonia em conversas de valor, diplomacia e qualidade de troca. A fase tende a facilitar acordos relacionais e financeiros com menos atrito. Invista em comunicacao afetiva sem abrir mao de clareza e assertividade.',
+  'transit:mercury|trigono|mars':
+    'Mercurio em trigono com Marte favorece objetividade, firmeza de argumentacao e tomada de decisao agil. O ciclo tende a facilitar negociacoes quando mensagem e logica caminham juntos. Avance com clareza e mantenha escuta ativa para sustentar alinhamento.',
+  'transit:mercury|trigono|jupiter':
+    'Mercurio em trigono com Jupiter favorece sintese entre detalhe e visao ampla, com ganho para aprendizado e estrategia. A fase tende a apoiar conversas produtivas e planejamento de longo prazo. Converta boa percepcao em plano pratico com etapas verificaveis.',
+  'transit:mercury|trigono|saturn':
+    'Mercurio em trigono com Saturno reforca pensamento estruturado, comunicacao precisa e metodo de decisao. O ciclo tende a apoiar organizacao de informacoes e avanco em planejamento com mais solidez. Priorize o essencial e documente acordos para sustentar continuidade.',
+  'transit:mercury|trigono|uranus':
+    'Mercurio em trigono com Urano facilita inovacao mental e abertura para revisar certezas com mais fluidez. A fase tende a favorecer insights rapidos quando ha criterio para priorizacao. Transforme ideia nova em experimento pratico e mensuravel.',
+  'transit:mercury|trigono|neptune':
+    'Mercurio em trigono com Netuno favorece integracao entre intuicao e comunicacao com mais naturalidade. O ciclo tende a apoiar criatividade aplicada quando ha verificacao de fatos e contextos. Registre percepcoes importantes e confirme detalhes antes de decidir.',
+  'transit:mercury|trigono|pluto':
+    'Mercurio em trigono com Plutao amplia profundidade analitica e capacidade de reformular estrategia com criterio. A fase tende a facilitar diagnostico de raiz e comunicacao de mudancas estruturais. Direcione foco para o essencial e mantenha abertura a novas perspectivas.',
+  'transit:mercury|trigono|ascendente':
+    'Mercurio em trigono ao Ascendente favorece naturalidade na expressao, posicionamento claro e boa recepcao nas interacoes. O ciclo tende a apoiar conversas importantes com menor esforco de comunicacao. Aproveite a fluidez para fortalecer alinhamentos relevantes.',
+  'transit:mercury|trigono|meio_do_ceu':
+    'Mercurio em trigono ao Meio do Ceu reforca clareza de narrativa profissional e consistencia de posicionamento publico. A fase tende a facilitar visibilidade quando comunicacao e entrega estao alinhadas. Priorize mensagens estrategicas e avance com objetividade e coerencia.',
+
+  // ── Mercury oposicao ─────────────────────────────────────────────────────
+  'transit:mercury|oposicao|sun':
+    'Mercurio em oposicao ao Sol pode tensionar intencao e forma de comunicar direcao, gerando ruido entre plano e execucao. O periodo pede revisar premissas e alinhar mensagem central antes de decisoes importantes. Simplifique narrativa e valide prioridades com clareza.',
+  'transit:mercury|oposicao|moon':
+    'Mercurio em oposicao com Lua pode ampliar conflito entre necessidade emocional e comunicacao objetiva. O ciclo pede cuidado com mensagens impulsivas e interpretacoes precipitadas no cotidiano. Pause, organize o que sente e comunique com mais calma e precisao.',
+  'transit:mercury|oposicao|mercury':
+    'Mercurio em oposicao com Mercurio pode ativar divergencia de referencias, ritmo de raciocinio e criterios de decisao. A fase pede revisar premissas com metodo para evitar retrabalho por ruido comunicacional. Valide interpretacoes-chave antes de fechar acordos.',
+  'transit:mercury|oposicao|venus':
+    'Mercurio em oposicao com Venus pode tensionar diplomacia e franqueza em conversas afetivas ou de valor. O ciclo pede equilibrar forma e conteudo para preservar vinculo sem omitir pontos essenciais. Ajuste expectativa e linguagem para sustentar reciprocidade.',
+  'transit:mercury|oposicao|mars':
+    'Mercurio em oposicao com Marte pode aumentar velocidade de fala e argumentacao com queda de escuta e precisao. A fase pede cuidado com respostas reativas e conclusoes precipitadas em conversas sensiveis. Confirme fatos, simplifique mensagens e avance com objetividade.',
+  'transit:mercury|oposicao|jupiter':
+    'Mercurio em oposicao com Jupiter pode ampliar discurso e visao ampla com menos criterio de verificacao de detalhe. O ciclo pede equilibrar entusiasmo de ideia com checagem pratica antes de decidir. Simplifique e priorize o que e realmente viavel agora.',
+  'transit:mercury|oposicao|saturn':
+    'Mercurio em oposicao com Saturno pode tensionar ritmo mental e forma de comunicar com maior exigencia estrutural. A fase pede metodo, paciencia e criterios explicitos para evitar travamento decisorio. Organize argumentos e documente acordos com calma.',
+  'transit:mercury|oposicao|uranus':
+    'Mercurio em oposicao com Urano pode trazer oscilacao rapida de ideia e tensao entre inovacao e consistencia. O ciclo pede conter impulsos de ruptura comunicacional sem sufocar abertura para o novo. Valide abordagens novas antes de escalar e mantenha continuidade.',
+  'transit:mercury|oposicao|neptune':
+    'Mercurio em oposicao com Netuno pode aumentar ambiguidade, suposicoes e falta de clareza em dados importantes. A fase pede confirmar fatos, datas e responsabilidades com mais rigor antes de concluir. Documente acordos por escrito e valide entendimento reciproco.',
+  'transit:mercury|oposicao|pluto':
+    'Mercurio em oposicao com Plutao pode intensificar controle narrativo, rigidez de ponto de vista e tensao em disputas de interpretacao. O ciclo pede rigor analitico sem confronto desnecessario. Foque em evidencia verificavel e mantenha abertura para nuance.',
+  'transit:mercury|oposicao|ascendente':
+    'Mercurio em oposicao ao Ascendente pode trazer desencontro de tom, expressao e leitura de contexto nas interacoes cotidianas. A fase pede ajustar forma de comunicar para preservar clareza sem elevar tensao desnecessaria. Simplifique mensagens e confirme entendimento mutuo.',
+  'transit:mercury|oposicao|meio_do_ceu':
+    'Mercurio em oposicao ao Meio do Ceu pode tensionar comunicacao profissional e consistencia de posicionamento publico. O periodo pede revisar narrativa, prazos e alinhamento entre discurso e entrega. Ajustes simples de comunicacao tendem a reduzir ruido de imagem.',
+
+  // ── Mercury ingress ──────────────────────────────────────────────────────
+  'transit:mercury|ingress|house_1':
+    'Mercurio em ingresso na Casa 1 amplia clareza de comunicacao pessoal e rapidez de raciocinio sobre identidade e direcao. A fase favorece articular melhor o que voce quer e como se apresenta. Organize mensagens-chave e use o periodo para alinhar discurso com acao.',
+  'transit:mercury|ingress|house_2':
+    'Mercurio em ingresso na Casa 2 ativa foco mental em recursos, valores e decisoes de seguranca material. O ciclo favorece revisar financas, contratos e criterios de valor com mais clareza. Organize informacoes e priorize o que realmente sustenta estabilidade.',
+  'transit:mercury|ingress|house_3':
+    'Mercurio em ingresso na Casa 3 intensifica atividade mental, trocas locais e necessidade de comunicacao precisa. A fase favorece aprendizado rapido, escrita e conversas estrategicas no ambiente proximo. Organize fluxo de informacao e priorize mensagens de impacto.',
+  'transit:mercury|ingress|house_4':
+    'Mercurio em ingresso na Casa 4 ativa reflexao sobre base emocional, familia e estrutura de lar. O periodo favorece conversas maduras sobre limites, convivio e seguranca afetiva. Organize pendencias domesticas e alinhe expectativas com quem compartilha seu espaco.',
+  'transit:mercury|ingress|house_5':
+    'Mercurio em ingresso na Casa 5 amplia expressao criativa, ideia em torno de prazer e comunicacao mais espontanea. A fase favorece projetos autorais, romances e trocas com mais leveza e autenticidade. Use o momento para articular o que esta criando com clareza e intencao.',
+  'transit:mercury|ingress|house_6':
+    'Mercurio em ingresso na Casa 6 ativa atencao ao detalhe, rotina operacional e processos de trabalho diario. O ciclo favorece revisar metodo, instrucoes e comunicacoes tecnicas com mais precisao. Organize tarefas, prazos e prioridades para reduzir ruido e retrabalho.',
+  'transit:mercury|ingress|house_7':
+    'Mercurio em ingresso na Casa 7 amplia foco em conversas de parceria, acordos e alinhamento de expectativas em relacoes. A fase favorece negociacao clara e revisao de compromissos com o outro. Use o periodo para nomear limites e fortalecer base dos vinculos.',
+  'transit:mercury|ingress|house_8':
+    'Mercurio em ingresso na Casa 8 ativa pensamento investigativo e foco em confianca, recursos compartilhados e transformacao. O ciclo favorece pesquisa de fundo, revisao de acordos profundos e comunicacao de verdades sensiveis. Avance com criterio e abertura.',
+  'transit:mercury|ingress|house_9':
+    'Mercurio em ingresso na Casa 9 amplia repertorio mental, curiosidade sobre visao de mundo e planejamento de longo prazo. A fase favorece estudo, escrita sobre ideias amplas e conversas de sentido. Organize conhecimento novo em perspectiva aplicavel ao presente.',
+  'transit:mercury|ingress|house_10':
+    'Mercurio em ingresso na Casa 10 ativa comunicacao profissional, estrategia de posicionamento e clareza de mensagem publica. O periodo favorece alinhar narrativa de imagem com entregas concretas. Priorize conversas estrategicas e mensagens consistentes para fortalecer credibilidade.',
+  'transit:mercury|ingress|house_11':
+    'Mercurio em ingresso na Casa 11 ativa fluxo de ideias em rede, projetos coletivos e visao de futuro compartilhado. A fase favorece trocas com grupos, colaboracoes e brainstorming estrategico. Organize contribuicoes e priorize conversas com objetivo claro de resultado.',
+  'transit:mercury|ingress|house_12':
+    'Mercurio em ingresso na Casa 12 amplia reflexao interna, processamento de padroes antigos e leitura sutil de contextos. O ciclo favorece escrita introspectiva, organizacao de pendencias e revisao silenciosa de premissas. Use o periodo para integrar aprendizados antes de comunicar novas direcoes.',
+
+  // ── Venus conjuncao ──────────────────────────────────────────────────────
+  'transit:venus|conjuncao|sun':
+    'Venus em conjuncao ao Sol reforca expressao pessoal de valor, afeto e necessidade de harmonizacao no cotidiano. A fase favorece alinhamento entre o que voce quer e o que oferece com autenticidade. Use o momento para fortalecer imagem com equilibrio entre abertura e limite.',
+  'transit:venus|conjuncao|moon':
+    'Venus em conjuncao com Lua amplia sensibilidade emocional e necessidade de conforto, acolhimento e conexao afetiva. O ciclo pode facilitar trocas calorosas quando expectativas e limites estao claros. Priorize o que traz bem-estar com moderacao e criterio de reciprocidade.',
+  'transit:venus|conjuncao|mercury':
+    'Venus em conjuncao com Mercurio favorece comunicacao diplomatica, expressao de afeto e conversa com mais elegancia. O ciclo tende a facilitar acordos quando valores e posicoes estao bem articulados. Invista em linguagem clara e gentil para fortalecer vinculos e entendimento.',
+  'transit:venus|conjuncao|venus':
+    'Venus em conjuncao com Venus reforca valores pessoais, gosto estetico e sensibilidade para relacoes e prazer. A fase pode ampliar necessidade de harmonizacao e reconhecimento em vinculos. Use o momento para alinhar o que voce aprecia com o que sustenta bem-estar real.',
+  'transit:venus|conjuncao|mars':
+    'Venus em conjuncao com Marte combina atracao, desejo e necessidade de alinhamento entre afeto e acao. A fase favorece aproximacoes quando limites e expectativas estao claros entre as partes. Equilibre intensidade com escuta para preservar qualidade nas trocas.',
+  'transit:venus|conjuncao|saturn':
+    'Venus em conjuncao com Saturno combina afeto e responsabilidade, pedindo maturidade em escolhas de valor e vinculo. O ciclo favorece definicao clara de limites e reciprocidade sustentavel. Invista no que e consistente e reduza acordos que drenam mais do que sustentam.',
+  'transit:venus|conjuncao|uranus':
+    'Venus em conjuncao com Urano pode abrir revisoes em relacoes, valores e escolhas de prazer com menos apego ao padrao. A fase favorece autenticidade e novos formatos de troca quando ha clareza de limite. Inove com consciencia para preservar reciprocidade e estabilidade.',
+  'transit:venus|conjuncao|neptune':
+    'Venus em conjuncao com Netuno pode ampliar idealizacao em vinculos, estetica e escolhas afetivas e financeiras. O ciclo favorece sensibilidade e abertura quando ha discernimento claro sobre expectativas. Mantenha ancoragem em fatos e sinais concretos antes de firmar acordos.',
+  'transit:venus|conjuncao|pluto':
+    'Venus em conjuncao com Plutao intensifica dinamica de apego, valor e necessidade de profundidade em vinculos importantes. A fase pode ativar temas de controle ou transformacao nas relacoes. Avance com clareza de limite e abertura honesta para o que precisa mudar.',
+  'transit:venus|conjuncao|ascendente':
+    'Venus em conjuncao ao Ascendente amplia encanto, sociabilidade e abertura para conectar e harmonizar relacoes. A fase tende a facilitar primeiras impressoes positivas quando limites estao claros. Use o momento para ampliar rede com autenticidade e medida.',
+  'transit:venus|conjuncao|meio_do_ceu':
+    'Venus em conjuncao ao Meio do Ceu favorece reconhecimento publico por qualidade, estetica e bom relacionamento. O ciclo tende a abrir oportunidades de carreira ligadas a imagem e colaboracao. Use a visibilidade para fortalecer posicionamento com autenticidade e criterio.',
+
+  // ── Venus sextil ─────────────────────────────────────────────────────────
+  'transit:venus|sextil|sun':
+    'Venus em sextil ao Sol favorece expressao de valor pessoal, bem-estar e abertura relacional com mais naturalidade. O ciclo tende a facilitar reconhecimento e conexao quando ha autenticidade e moderacao. Use o momento para fortalecer imagem com equilibrio e coerencia.',
+  'transit:venus|sextil|moon':
+    'Venus em sextil com Lua favorece integracao entre sensibilidade e necessidade de conexao afetiva no cotidiano. A fase tende a ampliar acolhimento e leveza nos vinculos com menor reatividade. Pequenos gestos de cuidado podem melhorar qualidade de troca de forma consistente.',
+  'transit:venus|sextil|mercury':
+    'Venus em sextil com Mercurio favorece conversas diplomaticas, expressao de afeto e comunicacao com mais elegancia. O ciclo tende a facilitar acordos quando valores e posicoes estao bem articulados. Invista em linguagem gentil e assertiva para fortalecer entendimento.',
+  'transit:venus|sextil|venus':
+    'Venus em sextil com Venus favorece harmonizacao em relacoes, escolhas de prazer e expressao de valores com mais fluidez. A fase tende a ampliar bem-estar e abertura relacional quando ha reciprocidade e limite. Aproveite para fortalecer vinculos de qualidade com medida e constancia.',
+  'transit:venus|sextil|mars':
+    'Venus em sextil com Marte favorece iniciativa em relacoes e acordos com bom equilibrio entre desejo e cooperacao. O ciclo tende a facilitar aproximacoes quando limites e expectativas estao claros. Combine assertividade e diplomacia para fortalecer trocas significativas.',
+  'transit:venus|sextil|jupiter':
+    'Venus em sextil com Jupiter favorece expansao relacional, abertura para novos vinculos e experiencias de prazer com criterio. A fase tende a facilitar oportunidades sociais quando ha moderacao e reciprocidade clara. Aproveite o fluxo para consolidar conexoes de qualidade.',
+  'transit:venus|sextil|saturn':
+    'Venus em sextil com Saturno favorece escolhas maduras de vinculo, valor e compromisso sustentavel. O ciclo tende a apoiar estabilidade afetiva quando ha clareza de limite e expectativa realista. Invista no que tem base real e fortaleça o que sustenta qualidade no tempo.',
+  'transit:venus|sextil|uranus':
+    'Venus em sextil com Urano favorece renovacao afetiva e financeira com mais leveza e abertura para novos formatos. O ciclo apoia ajustes de valor e vinculo com criatividade e criterio. Inove com consciencia para manter autenticidade e reciprocidade.',
+  'transit:venus|sextil|neptune':
+    'Venus em sextil com Netuno favorece sensibilidade estetica, abertura empatica e conexao mais sutil nos vinculos. A fase tende a apoiar criatividade e inspiracao afetiva quando ha discernimento pratico. Mantenha ancoragem em fatos para evitar idealizacao de cenarios.',
+  'transit:venus|sextil|pluto':
+    'Venus em sextil com Plutao favorece profundidade relacional e revisao de valores com mais clareza estrategica. O ciclo tende a apoiar transformacoes positivas em vinculos quando ha abertura e criterio de limite. Priorize o que tem consistencia e valor real de longo prazo.',
+  'transit:venus|sextil|ascendente':
+    'Venus em sextil ao Ascendente favorece encanto natural, abertura social e facilidade nas primeiras interacoes. A fase tende a apoiar novos contatos e fortalecimento de vinculos existentes com autenticidade. Use o momento para ampliar presenca com equilibrio e clareza de limite.',
+  'transit:venus|sextil|meio_do_ceu':
+    'Venus em sextil ao Meio do Ceu favorece reconhecimento profissional por qualidade de relacao e sensibilidade estrategica. O ciclo tende a apoiar avanco em imagem e colaboracao quando ha criterio e consistencia. Priorize conexoes de valor para fortalecer posicionamento.',
+
+  // ── Venus trigono ────────────────────────────────────────────────────────
+  'transit:venus|trigono|sun':
+    'Venus em trigono ao Sol reforca coerencia entre valor pessoal, bem-estar e forma de se apresentar no cotidiano. O periodo tende a facilitar reconhecimento e conexao quando ha autenticidade e moderacao. Use a fase para consolidar imagem com equilibrio e clareza de limite.',
+  'transit:venus|trigono|moon':
+    'Venus em trigono com Lua favorece harmonia entre sensibilidade emocional e necessidade de conexao afetiva. A fase tende a ampliar acolhimento e estabilidade relacional com menor reatividade. Pequenos ajustes de cuidado podem melhorar bem-estar e qualidade das trocas.',
+  'transit:venus|trigono|mercury':
+    'Venus em trigono com Mercurio favorece harmonia em conversas de valor, diplomacia natural e comunicacao mais fluida. O ciclo tende a facilitar acordos e alinhamentos relacionais com mais leveza. Invista em expressao gentil e assertiva para fortalecer qualidade dos vinculos.',
+  'transit:venus|trigono|venus':
+    'Venus em trigono com Venus reforca expressao de valores pessoais e bem-estar afetivo com mais fluidez e integridade. A fase tende a ampliar prazer e abertura relacional quando ha clareza de limite. Use o momento para fortalecer vinculos e escolhas que sustentam qualidade no tempo.',
+  'transit:venus|trigono|mars':
+    'Venus em trigono com Marte favorece iniciativa afetiva e cooperacao em acordos importantes com menor atrito. O ciclo tende a facilitar aproximacao quando desejo e reciprocidade estao equilibrados. Use assertividade com delicadeza para fortalecer e expandir vinculos.',
+  'transit:venus|trigono|jupiter':
+    'Venus em trigono com Jupiter favorece expansao relacional, harmonizacao de acordos e abertura para mais prazer com moderacao. A fase tende a ampliar bem-estar quando ha reciprocidade clara e criterio de limite. Aproveite o fluxo para consolidar conexoes de qualidade e valor real.',
+  'transit:venus|trigono|saturn':
+    'Venus em trigono com Saturno favorece estabilidade afetiva e financeira com base em maturidade e consistencia. O ciclo tende a facilitar acordos de longo prazo quando valores e limites estao bem definidos. Invista no que tem base real e sustentabilidade no tempo.',
+  'transit:venus|trigono|uranus':
+    'Venus em trigono com Urano facilita atualizacao de relacoes, valores e escolhas de prazer com leveza e autenticidade. A fase tende a ampliar abertura sem exigir ruptura desnecessaria. Inove com consciencia para manter reciprocidade e estabilidade.',
+  'transit:venus|trigono|neptune':
+    'Venus em trigono com Netuno favorece sensibilidade estetica, empatia e conexao mais sutil nos vinculos afetivos. O ciclo tende a apoiar criatividade aplicada e abertura emocional com bom discernimento. Mantenha ancoragem pratica para transformar inspiracao em experiencia real.',
+  'transit:venus|trigono|pluto':
+    'Venus em trigono com Plutao favorece transformacao positiva em vinculos, profundidade de valor e revisao de escolhas com clareza. A fase tende a apoiar crescimento relacional quando ha abertura e limite consciente. Priorize o que tem consistencia e valor real de longo prazo.',
+  'transit:venus|trigono|ascendente':
+    'Venus em trigono ao Ascendente favorece naturalidade em relacoes, abertura social e boa recepcao de imagem pessoal. O ciclo tende a facilitar contatos e parcerias com leveza e autenticidade. Use a fase para ampliar presenca e fortalecer vinculos com equilibrio e clareza.',
+  'transit:venus|trigono|meio_do_ceu':
+    'Venus em trigono ao Meio do Ceu reforca reconhecimento profissional por qualidade relacional e sensibilidade estrategica. A fase tende a facilitar avancos em imagem e colaboracao com menor atrito. Priorize conexoes e entregas de qualidade para consolidar posicionamento.',
+
+  // ── Venus oposicao ───────────────────────────────────────────────────────
+  'transit:venus|oposicao|sun':
+    'Venus em oposicao ao Sol pode tensionar necessidade de reconhecimento e forma de expressar valor no cotidiano. O periodo pede alinhar o que voce quer oferecer com o que consegue sustentar com qualidade. Calibre expectativas e negocie limites com clareza.',
+  'transit:venus|oposicao|moon':
+    'Venus em oposicao com Lua pode ampliar oscilacao entre necessidade de conexao e sensibilidade emocional nos vinculos. A fase pede moderar expectativas afetivas para evitar oscilacao de proximidade e distancia. Alinhe o que precisa com o que esta disponivel no cotidiano.',
+  'transit:venus|oposicao|mercury':
+    'Venus em oposicao com Mercurio pode tensionar diplomacia e franqueza em conversas de valor e vinculo. O ciclo pede equilibrar escuta e objetividade para evitar mal-entendidos relacionais. Ajuste forma e conteudo para preservar conexao sem omitir o essencial.',
+  'transit:venus|oposicao|venus':
+    'Venus em oposicao com Venus pode ampliar conflito entre valores proprios e valores do outro em acordos importantes. A fase pede revisar expectativas de reciprocidade com mais realismo e abertura. Negocie limites com clareza para sustentar troca de qualidade.',
+  'transit:venus|oposicao|mars':
+    'Venus em oposicao com Marte pode tensionar desejo, afeto e forma de negociar proximidade e autonomia. A fase pede calibrar iniciativa e receptividade para evitar oscilacao entre aproximacao e conflito. Escuta ativa e acordos claros fortalecem a qualidade das trocas.',
+  'transit:venus|oposicao|jupiter':
+    'Venus em oposicao com Jupiter pode ampliar desejo de prazer e expectativa de reciprocidade alem do viavel. O ciclo pede moderar concessoes e escolhas afetivas para evitar excesso ou frustracao posterior. Revise com criterio e priorize qualidade sobre quantidade.',
+  'transit:venus|oposicao|saturn':
+    'Venus em oposicao com Saturno pode trazer revisao de expectativas afetivas e de valores com mais cobranca estrutural. O ciclo pede maturidade emocional e escolhas realistas de vinculo. Fortaleça o que e reciproco e reduza acordos que drenam mais do que sustentam.',
+  'transit:venus|oposicao|uranus':
+    'Venus em oposicao com Urano pode trazer instabilidade em relacoes e oscilacao entre necessidade de liberdade e conexao. A fase pede negociar autonomia e reciprocidade com clareza para evitar rupturas por reacao. Ajuste vinculo com criterio de autenticidade e limite.',
+  'transit:venus|oposicao|neptune':
+    'Venus em oposicao com Netuno pode ampliar idealizacao, projecao e confusao sobre valor e reciprocidade nos vinculos. O ciclo pede discernimento para separar intuicao de expectativa fantasiosa. Observe sinais concretos antes de firmar ou ampliar acordos afetivos.',
+  'transit:venus|oposicao|pluto':
+    'Venus em oposicao com Plutao pode intensificar apego, controle e dinamica de poder nos vinculos importantes. A fase pede postura consciente de limite para evitar escalada de confronto por valor ou dependencia. Avance com clareza de fronteira e abertura para o que precisa mudar.',
+  'transit:venus|oposicao|ascendente':
+    'Venus em oposicao ao Ascendente pode tensionar equilibrio entre necessidade de reconhecimento e demandas relacionais externas. A fase pede calibrar o que voce oferece com o que consegue sustentar com qualidade. Negocie limites com clareza para preservar cooperacao.',
+  'transit:venus|oposicao|meio_do_ceu':
+    'Venus em oposicao ao Meio do Ceu pode tensionar projecao publica e qualidade de relacionamentos em contextos profissionais. O ciclo pede alinhar imagem, base afetiva e limites de exposicao. Ajuste expectativas de reconhecimento e priorize qualidade sobre visibilidade.',
+
+  // ── Venus quadratura ─────────────────────────────────────────────────────
+  'transit:venus|quadratura|sun':
+    'Venus em quadratura ao Sol pode tensionar expressao de valor e necessidade de reconhecimento pessoal. O periodo pede calibrar expectativas de retorno afetivo e social com mais criterio. Foque em qualidade de entrega e autenticidade para fortalecer base de valor real.',
+  'transit:venus|quadratura|moon':
+    'Venus em quadratura com Lua pode ampliar sensibilidade afetiva e oscilacao entre necessidade de conforto e reciprocidade. A fase pede moderacao para evitar exigencia emocional excessiva. Alinhe o que precisa com o que esta disponivel e fortaleça limites com gentileza.',
+  'transit:venus|quadratura|mercury':
+    'Venus em quadratura com Mercurio pode tensionar diplomacia e franqueza em conversas de valor e vinculo. O ciclo pede equilibrar expressao e escuta para evitar mal-entendidos que desgastem relacoes. Ajuste linguagem e expectativa para manter reciprocidade.',
+  'transit:venus|quadratura|venus':
+    'Venus em quadratura com Venus pode ativar conflito interno entre o que voce valoriza e o que esta efetivamente escolhendo. A fase pede revisar prioridades de bem-estar e relacao com mais realismo. Simplifique escolhas e foque no que traz consistencia real.',
+  'transit:venus|quadratura|mars':
+    'Venus em quadratura com Marte pode tensionar desejo e cooperacao em relacoes, com risco de oscilacao entre aproximacao e conflito. A fase pede alinhar expectativa e limite para sustentar qualidade nas trocas. Escuta ativa e acordos diretos ajudam a preservar o vinculo.',
+  'transit:venus|quadratura|jupiter':
+    'Venus em quadratura com Jupiter pode ampliar desejo de prazer, gasto ou concessao afetiva alem do ideal. A fase pede equilibrio entre bem-estar imediato e valor de longo prazo. Revise escolhas com criterio e mantenha reciprocidade nas relacoes.',
+  'transit:venus|quadratura|saturn':
+    'Venus em quadratura com Saturno pode trazer revisao de expectativas afetivas e de valor com mais cobranca estrutural. O ciclo pede maturidade emocional, limites claros e escolhas mais realistas. Fortaleça o que e reciproco e reduza acordos que drenam energia.',
+  'transit:venus|quadratura|uranus':
+    'Venus em quadratura com Urano pode trazer instabilidade em relacoes, valores e escolhas de prazer com necessidade de liberdade imediata. A fase pede negociar autonomia e reciprocidade para evitar ruptura por reacao. Ajuste vinculo com criterio de autenticidade e limite.',
+  'transit:venus|quadratura|neptune':
+    'Venus em quadratura com Netuno pode gerar idealizacao afetiva e confusao sobre valor e reciprocidade nos vinculos. O ciclo pede discernimento para separar intuicao de expectativa projetada. Observe sinais concretos antes de ampliar ou firmar acordos emocionais.',
+  'transit:venus|quadratura|pluto':
+    'Venus em quadratura com Plutao pode intensificar apego, ciume e necessidade de controle em relacoes importantes. A fase pede postura consciente de limite para evitar escalada de conflito por poder ou valor. Avance com abertura para o que precisa mudar sem forcar resultados.',
+  'transit:venus|quadratura|ascendente':
+    'Venus em quadratura ao Ascendente pode tensionar necessidade de reconhecimento social e forma de se apresentar nos vinculos. O ciclo pede calibrar abertura e limite para evitar excesso de concessao ou distancia. Ajuste postura com autenticidade e criterio de reciprocidade.',
+  'transit:venus|quadratura|meio_do_ceu':
+    'Venus em quadratura ao Meio do Ceu pode tensionar relacionamentos profissionais e imagem publica com expectativas afetivas ou esteticas. O periodo pede separar vinculo de carreira com mais criterio. Priorize o que e congruente com suas metas e fortaleça base de valor real.',
+
+  // ── Venus ingress ────────────────────────────────────────────────────────
+  'transit:venus|ingress|house_1':
+    'Venus em ingresso na Casa 1 amplia charme natural, necessidade de harmonizacao e abertura para novas conexoes. A fase favorece expressao de valor pessoal com mais autenticidade e presenca. Use o momento para cultivar relacoes com equilibrio e clareza de limite.',
+  'transit:venus|ingress|house_2':
+    'Venus em ingresso na Casa 2 amplia atencao a recursos, valores pessoais e experiencias que trazem prazer e seguranca. O ciclo favorece revisar o que realmente importa em termos materiais e afetivos. Priorize escolhas que sustentem bem-estar com criterio e consistencia.',
+  'transit:venus|ingress|house_3':
+    'Venus em ingresso na Casa 3 favorece conversas harmonicas, expressao diplomatica e trocas de ideia com mais leveza. O periodo amplia abertura para aprender e se comunicar com afeto e cuidado. Aproveite para fortalecer relacoes locais e conversas que importam.',
+  'transit:venus|ingress|house_4':
+    'Venus em ingresso na Casa 4 favorece harmonizacao do ambiente domestico, conforto emocional e qualidade das relacoes familiares. A fase tende a ampliar desejo de paz e acolhimento no lar. Pequenos ajustes de convivio e de ambiente podem trazer mais bem-estar.',
+  'transit:venus|ingress|house_5':
+    'Venus em ingresso na Casa 5 amplia prazer, expressao criativa e abertura para romance e afeto com mais autenticidade. O ciclo favorece projetos de expressao pessoal, encontros e escolhas que tragam alegria. Use o momento com moderacao e criterio de reciprocidade.',
+  'transit:venus|ingress|house_6':
+    'Venus em ingresso na Casa 6 favorece harmonizacao da rotina, relacoes de trabalho e bem-estar funcional no cotidiano. A fase pode ampliar prazer nas tarefas diarias quando ha organizacao e criterio. Pequenos ajustes de ambiente e de dinamica de trabalho tendem a trazer mais leveza.',
+  'transit:venus|ingress|house_7':
+    'Venus em ingresso na Casa 7 amplia abertura relacional, desejo de parceria e necessidade de harmonizacao em acordos. O ciclo favorece novos vinculos e fortalecimento de relacoes existentes quando ha reciprocidade clara. Priorize cooperacao e definicao de limites com gentileza.',
+  'transit:venus|ingress|house_8':
+    'Venus em ingresso na Casa 8 amplia profundidade de vinculo, temas de recursos compartilhados e necessidade de confianca. A fase pode favorecer intimidade real quando ha abertura e limite consciente. Avance com criterio e clareza em acordos profundos e escolhas de valor.',
+  'transit:venus|ingress|house_9':
+    'Venus em ingresso na Casa 9 amplia abertura para aprendizado, expansao de visao e prazer em contatos culturais e de longo alcance. O ciclo favorece viagens, estudos e conexoes que ampliam horizonte afetivo. Use o periodo para cultivar o que expande sentido e qualidade de experiencia.',
+  'transit:venus|ingress|house_10':
+    'Venus em ingresso na Casa 10 favorece reconhecimento profissional por qualidade relacional, estetica e bom posicionamento. A fase pode ampliar oportunidades de colaboracao e visibilidade com criterio. Fortaleça imagem com autenticidade e cultive relacoes de valor na carreira.',
+  'transit:venus|ingress|house_11':
+    'Venus em ingresso na Casa 11 favorece harmonizacao em redes, colaboracoes e projetos de futuro compartilhado. O ciclo amplia abertura para novos vinculos e conexoes de qualidade com proposito. Priorize aliancas com reciprocidade real e contribua com autenticidade.',
+  'transit:venus|ingress|house_12':
+    'Venus em ingresso na Casa 12 amplia sensibilidade interna, necessidade de descanso afetivo e processos silenciosos de encerramento. A fase favorece cuidado de si mesmo, refinamento de relacoes e revisao do que sustenta bem-estar real. Use o periodo para integrar aprendizados relacionais.',
 }
