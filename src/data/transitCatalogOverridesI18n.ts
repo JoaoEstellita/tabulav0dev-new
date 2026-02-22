@@ -94,6 +94,12 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter trine Neptune favors inspiration, symbolic understanding, and meaning-oriented direction. This cycle tends to support subtle perception when grounded in practical criteria. Translate intuition into concrete steps and keep periodic reality checks.',
     'transit:jupiter|trigono|pluto':
       'Jupiter trine Pluto favors deep transformation with strategic expansion and sustained focus. This phase tends to support major repositioning when action is deliberate and structural. Prioritize essential moves with long-range consistency.',
+    'transit:jupiter|trigono|saturn':
+      'Jupiter trine Saturn favors consistent growth grounded in practical structure and timing discipline. This cycle tends to unite broad vision with execution method, supporting steadier progress with less waste. Organize priorities in stages to consolidate sustainable results.',
+    'transit:jupiter|trigono|uranus':
+      'Jupiter trine Uranus favors innovation with fluid adaptation and less need for abrupt disruption. This phase tends to open original opportunities when experimentation is paired with criteria and responsible scaling. Balance freedom and continuity to keep tangible progress.',
+    'transit:jupiter|trigono|venus':
+      'Jupiter trine Venus favors harmonization in relationships, agreements, and daily value choices. This cycle tends to expand cooperation and goodwill when expectations and boundaries are clear. Use the phase to strengthen quality exchanges with measure and consistency.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -525,6 +531,12 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en trigono con Neptuno favorece inspiracion, comprension simbolica y orientacion con sentido. Este ciclo suele apoyar percepcion sutil cuando se mantiene anclaje practico. Traduce intuicion en pasos concretos y sost?n chequeos de realidad periodicos.',
     'transit:jupiter|trigono|pluto':
       'Jupiter en trigono con Pluton favorece transformacion profunda con expansion estrategica y foco sostenido. Esta fase suele apoyar reposicionamientos de impacto cuando la accion es deliberada y estructural. Prioriza movimientos esenciales con consistencia de largo plazo.',
+    'transit:jupiter|trigono|saturn':
+      'Jupiter en trigono con Saturno favorece crecimiento consistente con base practica y buen criterio de tiempo. Este ciclo suele unir vision amplia y disciplina de ejecucion, facilitando avances con menos desgaste. Organiza prioridades por etapas para consolidar resultados sostenibles.',
+    'transit:jupiter|trigono|uranus':
+      'Jupiter en trigono con Urano favorece innovacion con adaptacion fluida y menor necesidad de ruptura brusca. Esta fase suele abrir oportunidades originales cuando pruebas con criterio y escalas con responsabilidad. Equilibra libertad y continuidad para mantener progreso tangible.',
+    'transit:jupiter|trigono|venus':
+      'Jupiter en trigono con Venus favorece armonizacion en vinculos, acuerdos y decisiones de valor cotidianas. Este ciclo suele ampliar cooperacion y buena voluntad cuando expectativas y limites estan claros. Aprovecha la fase para fortalecer intercambios de calidad con medida y constancia.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -956,6 +968,12 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in trigono con Nettuno favorisce ispirazione, comprensione simbolica e orientamento di senso. Questo ciclo tende a sostenere percezione sottile quando resta ancorata a criteri pratici. Traduci intuizione in passi concreti e mantieni verifiche di realta periodiche.',
     'transit:jupiter|trigono|pluto':
       'Giove in trigono con Plutone favorisce trasformazione profonda con espansione strategica e focus sostenuto. Questa fase tende a sostenere riposizionamenti di impatto quando l azione e deliberata e strutturale. Dai priorita a movimenti essenziali con coerenza di lungo periodo.',
+    'transit:jupiter|trigono|saturn':
+      'Giove in trigono con Saturno favorisce crescita consistente con base pratica e buon senso dei tempi. Questo ciclo tende a unire visione ampia e disciplina esecutiva, facilitando progressi con minore dispersione. Organizza priorita per fasi per consolidare risultati sostenibili.',
+    'transit:jupiter|trigono|uranus':
+      'Giove in trigono con Urano favorisce innovazione con adattamento fluido e minore bisogno di rotture brusche. Questa fase tende ad aprire opportunita originali quando sperimentazione e criterio restano insieme. Bilancia liberta e continuita per mantenere progresso concreto.',
+    'transit:jupiter|trigono|venus':
+      'Giove in trigono con Venere favorisce armonizzazione in relazioni, accordi e scelte di valore quotidiane. Questo ciclo tende ad ampliare cooperazione e buona disposizione quando aspettative e confini sono chiari. Usa la fase per rafforzare scambi di qualita con misura e coerenza.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

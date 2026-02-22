@@ -89,6 +89,12 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em trigono com Netuno favorece sintonia entre inspiracao e sentido de direcao. O ciclo tende a apoiar criatividade, espiritualidade e visao de futuro quando ha ancoragem pratica. Mantenha criterio para transformar intuicao em progresso concreto.',
   'transit:jupiter|trigono|pluto':
     'Jupiter em trigono com Plutao favorece expansao profunda, estrategia e capacidade de reposicionamento duradouro. A fase tende a abrir ganhos relevantes quando voce combina ambicao com responsabilidade. Avance por etapas para consolidar mudancas estruturais.',
+  'transit:jupiter|trigono|saturn':
+    'Jupiter em trigono com Saturno favorece crescimento consistente com base pratica e bom senso de timing. O ciclo tende a unir visao ampla e disciplina, facilitando avancos com menor desgaste. Estruture prioridades por etapas para consolidar resultados sustentaveis.',
+  'transit:jupiter|trigono|uranus':
+    'Jupiter em trigono com Urano favorece inovacao com fluidez e capacidade de atualizar rotas sem ruptura brusca. A fase tende a abrir oportunidades originais quando voce testa com criterio e escala com responsabilidade. Equilibre liberdade e continuidade para manter progresso real.',
+  'transit:jupiter|trigono|venus':
+    'Jupiter em trigono com Venus favorece harmonizacao em vinculos, acordos e escolhas de valor no cotidiano. O ciclo tende a ampliar cooperacao e boa vontade quando expectativas e limites estao claros. Use a fase para fortalecer trocas de qualidade com medida e consistencia.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
