@@ -10,6 +10,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter sextile Midheaven supports agreements and momentum for career development. This phase tends to be favorable for expansion with strategy and focus on priorities. Small, well-executed decisions can produce meaningful medium-term impact.',
     'transit:jupiter|trigono|meio_do_ceu':
       'Jupiter trine Midheaven improves flow in public and professional goals. Recognition is more likely when technical quality is paired with clear communication. Use this phase to build sustainable growth without excess confidence.',
+    'transit:jupiter|conjuncao|neptune':
+      'Jupiter conjunct Neptune expands imagination and long-range vision, with risk of idealization when criteria are weak. This phase favors inspiration when subtle perception is translated into practical, verifiable goals. Avoid broad promises without an execution plan and keep objective review cycles.',
+    'transit:jupiter|conjuncao|pluto':
+      'Jupiter conjunct Pluto intensifies growth ambition and the need for strategic repositioning. This cycle tends to support major advances when analysis is deep and long-range focus is clear. Direct expansion toward what is essential and reduce power-driven impulse moves.',
+    'transit:jupiter|conjuncao|saturn':
+      'Jupiter conjunct Saturn combines expansion and structure in the same decision point. This phase favors consistent growth when broad vision meets method, timing, and governance. Organize priorities in stages to convert opportunity into sustainable results.',
+    'transit:jupiter|conjuncao|uranus':
+      'Jupiter conjunct Uranus accelerates innovation and openness to new directions. The period may bring unconventional opportunities, asking for flexibility with responsible risk management. Test new paths with criteria and validation before scaling.',
+    'transit:jupiter|oposicao|ascendente':
+      'Jupiter opposite Ascendant may amplify relational demands and public exposure, pressuring personal balance. This phase asks you to align expectations between what you offer and what you can sustain with quality. Negotiate limits clearly to preserve cooperation and consistency.',
+    'transit:jupiter|oposicao|mercury':
+      'Jupiter opposite Mercury tends to amplify ideas and discourse, with risk of overconfidence in interpretation. This cycle favors learning when broad vision is balanced with objective verification. Revisit assumptions, simplify communication, and refine what is truly viable.',
+    'transit:jupiter|oposicao|moon':
+      'Jupiter opposite Moon may increase emotional fluctuation and expectation of immediate response. This phase asks for affective moderation to avoid exaggerated pacing and decisions. Balance inner care with practical priorities in daily life.',
+    'transit:jupiter|oposicao|sun':
+      'Jupiter opposite Sun can tension expansion drive against real limits of energy and context. The period asks for calibration of ambition, schedule, and resources so image and delivery stay coherent. More stable growth comes from selective focus and progressive execution.',
+    'transit:jupiter|oposicao|venus':
+      'Jupiter opposite Venus amplifies desire for pleasure, concession, and reciprocal validation. This phase asks for value calibration to avoid affective or financial excess. Prioritize choices that preserve balance between immediate satisfaction and sustainability.',
+    'transit:jupiter|oposicao|uranus':
+      'Jupiter opposite Uranus can bring fast swings between enthusiasm and plan disruption. This cycle asks for freedom with criteria, so consistency is not replaced by constant novelty. Make strategic adjustments without abandoning what already sustains results.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -357,6 +377,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en sextil al Medio Cielo facilita acuerdos e impulso para evolucion profesional. Esta fase suele favorecer expansion con estrategia y foco en prioridades. Decisiones pequenas y bien ejecutadas pueden generar impacto relevante a medio plazo.',
     'transit:jupiter|trigono|meio_do_ceu':
       'Jupiter en trigono al Medio Cielo mejora fluidez en metas publicas y profesionales. El reconocimiento es mas probable cuando calidad tecnica y comunicacion clara van juntas. Aprovecha la fase para crecimiento sostenible, sin exceso de confianza.',
+    'transit:jupiter|conjuncao|neptune':
+      'Jupiter en conjuncion con Neptuno amplifica imaginacion y vision de futuro, con riesgo de idealizacion cuando faltan criterios. Esta fase favorece inspiracion si conviertes percepcion sutil en objetivos concretos y verificables. Evita promesas amplias sin plan de ejecucion y manten revisiones objetivas.',
+    'transit:jupiter|conjuncao|pluto':
+      'Jupiter en conjuncion con Pluton intensifica ambicion de crecimiento y necesidad de reposicionamiento estrategico. Este ciclo suele apoyar avances relevantes cuando hay analisis profundo y foco de largo plazo. Dirige expansion a lo esencial y reduce movimientos por impulso de poder.',
+    'transit:jupiter|conjuncao|saturn':
+      'Jupiter en conjuncion con Saturno combina expansion y estructura en el mismo punto de decision. Esta fase favorece crecimiento consistente cuando vision amplia se une a metodo, plazo y gobernanza. Organiza prioridades por etapas para convertir oportunidad en resultado sostenible.',
+    'transit:jupiter|conjuncao|uranus':
+      'Jupiter en conjuncion con Urano acelera innovacion y apertura a nuevas direcciones. El periodo puede traer oportunidades fuera del patron y pide flexibilidad con gestion responsable del riesgo. Prueba caminos nuevos con criterio y validacion antes de escalar.',
+    'transit:jupiter|oposicao|ascendente':
+      'Jupiter en oposicion al Ascendente puede amplificar demandas relacionales y exposicion publica, tensionando el equilibrio personal. Esta fase pide ajustar expectativas entre lo que ofreces y lo que puedes sostener con calidad. Negocia limites con claridad para preservar cooperacion y consistencia.',
+    'transit:jupiter|oposicao|mercury':
+      'Jupiter en oposicion a Mercurio tiende a ampliar ideas y discurso, con riesgo de exceso de confianza en la interpretacion. Este ciclo favorece aprendizaje cuando vision amplia se equilibra con verificacion objetiva. Revisa premisas, simplifica mensajes y refina lo verdaderamente viable.',
+    'transit:jupiter|oposicao|moon':
+      'Jupiter en oposicion a la Luna puede aumentar oscilacion emocional y expectativa de respuesta inmediata. Esta fase pide moderacion afectiva para evitar exageraciones de ritmo y decision. Equilibra autocuidado interno con prioridades practicas de la rutina.',
+    'transit:jupiter|oposicao|sun':
+      'Jupiter en oposicion al Sol puede tensionar impulso de expansion con limites reales de energia y contexto. El periodo pide calibrar ambicion, agenda y recursos para mantener coherencia entre imagen y entrega. Un crecimiento mas estable surge de foco selectivo y ejecucion progresiva.',
+    'transit:jupiter|oposicao|venus':
+      'Jupiter en oposicion a Venus amplifica deseo de placer, concesion y expectativa de reciprocidad. Esta fase pide calibrar valor y medida para evitar excesos afectivos o financieros. Prioriza elecciones que sostengan equilibrio entre satisfaccion inmediata y sostenibilidad.',
+    'transit:jupiter|oposicao|uranus':
+      'Jupiter en oposicion a Urano puede traer giros rapidos entre entusiasmo y ruptura de plan. Este ciclo pide libertad con criterio para no cambiar consistencia por novedad constante. Haz ajustes estrategicos sin abandonar lo que ya sostiene resultados.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -704,6 +744,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in sestile al Medio Cielo facilita accordi e slancio per evoluzione professionale. La fase tende a favorire espansione con strategia e priorita chiare. Piccole decisioni ben eseguite possono avere impatto concreto nel medio periodo.',
     'transit:jupiter|trigono|meio_do_ceu':
       'Giove in trigono al Medio Cielo migliora fluidita negli obiettivi pubblici e professionali. Il riconoscimento e piu probabile quando qualita tecnica e comunicazione chiara procedono insieme. Usa la fase per crescita sostenibile senza eccesso di fiducia.',
+    'transit:jupiter|conjuncao|neptune':
+      'Giove in congiunzione con Nettuno amplia immaginazione e visione di lungo periodo, con rischio di idealizzazione quando mancano criteri. Questa fase favorisce ispirazione se traduci la percezione sottile in obiettivi pratici e verificabili. Evita promesse ampie senza piano esecutivo e mantieni revisioni oggettive.',
+    'transit:jupiter|conjuncao|pluto':
+      'Giove in congiunzione con Plutone intensifica ambizione di crescita e bisogno di riposizionamento strategico. Questo ciclo tende a favorire avanzamenti rilevanti quando analisi profonda e focus di lungo termine sono presenti. Dirigi espansione su cio che e essenziale e riduci mosse impulsive di potere.',
+    'transit:jupiter|conjuncao|saturn':
+      'Giove in congiunzione con Saturno combina espansione e struttura nello stesso punto decisionale. Questa fase favorisce crescita coerente quando visione ampia incontra metodo, tempi e governance. Organizza priorita per fasi per trasformare opportunita in risultati sostenibili.',
+    'transit:jupiter|conjuncao|uranus':
+      'Giove in congiunzione con Urano accelera innovazione e apertura a direzioni nuove. Il periodo puo portare opportunita fuori schema e richiede flessibilita con gestione responsabile del rischio. Sperimenta strade nuove con criterio e validazione prima di scalare.',
+    'transit:jupiter|oposicao|ascendente':
+      'Giove in opposizione all Ascendente puo amplificare richieste relazionali ed esposizione pubblica, mettendo pressione sull equilibrio personale. Questa fase chiede di allineare aspettative tra cio che offri e cio che puoi sostenere con qualita. Negozia confini con chiarezza per preservare cooperazione e coerenza.',
+    'transit:jupiter|oposicao|mercury':
+      'Giove in opposizione a Mercurio tende ad ampliare idee e discorso, con rischio di eccessiva fiducia nell interpretazione. Questo ciclo favorisce apprendimento quando visione ampia e verifica oggettiva restano in equilibrio. Rivedi premesse, semplifica messaggi e affina cio che e davvero praticabile.',
+    'transit:jupiter|oposicao|moon':
+      'Giove in opposizione alla Luna puo aumentare oscillazione emotiva e aspettativa di risposta immediata. Questa fase chiede moderazione affettiva per evitare eccessi di ritmo e decisione. Bilancia cura interiore e priorita pratiche della routine.',
+    'transit:jupiter|oposicao|sun':
+      'Giove in opposizione al Sole puo mettere in tensione impulso espansivo e limiti reali di energia e contesto. Il periodo chiede di calibrare ambizione, agenda e risorse per mantenere coerenza tra immagine e consegna. Una crescita piu stabile nasce da focus selettivo ed esecuzione progressiva.',
+    'transit:jupiter|oposicao|venus':
+      'Giove in opposizione a Venere amplifica desiderio di piacere, concessione e aspettativa di reciprocita. Questa fase chiede di calibrare valore e misura per evitare eccessi affettivi o finanziari. Privilegia scelte che mantengano equilibrio tra soddisfazione immediata e sostenibilita.',
+    'transit:jupiter|oposicao|uranus':
+      'Giove in opposizione a Urano puo portare oscillazioni rapide tra entusiasmo e rottura del piano. Questo ciclo chiede liberta con criterio per non sostituire la coerenza con novita continua. Fai aggiustamenti strategici senza abbandonare cio che gia sostiene risultati.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

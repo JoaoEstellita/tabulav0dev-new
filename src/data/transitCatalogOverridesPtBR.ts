@@ -5,6 +5,26 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em sextil ao Meio do Ceu facilita acordos e apoio para evolucao na carreira. A fase tende a ser favoravel para expandir com estrategia, sem perder foco nas prioridades. Pequenas decisoes bem executadas podem gerar impacto relevante no medio prazo.',
   'transit:jupiter|trigono|meio_do_ceu':
     'Jupiter em trigono ao Meio do Ceu aumenta fluidez em metas publicas e profissionais. Ha mais chance de reconhecimento quando voce combina qualidade tecnica com boa comunicacao. Use a fase para estruturar crescimento sustentavel, sem excesso de confianca.',
+  'transit:jupiter|conjuncao|neptune':
+    'Jupiter em conjuncao com Netuno amplia imaginacao e visao de futuro, com risco de idealizacao se faltar criterio. A fase favorece inspiracao quando voce traduz percepcao sutil em metas praticas e verificaveis. Evite promessas amplas sem plano de execucao e mantenha revisoes objetivas.',
+  'transit:jupiter|conjuncao|pluto':
+    'Jupiter em conjuncao com Plutao intensifica ambicao de crescimento e necessidade de reposicionamento estrategico. O ciclo tende a favorecer avancos relevantes quando ha profundidade de analise e foco no longo prazo. Direcione expansao para o que e essencial e reduza movimentos por impulso de poder.',
+  'transit:jupiter|conjuncao|saturn':
+    'Jupiter em conjuncao com Saturno combina expansao e estrutura no mesmo ponto de decisao. A fase favorece crescimento consistente quando visao ampla encontra metodo, prazo e governanca. Organize prioridades em etapas para transformar oportunidade em resultado sustentavel.',
+  'transit:jupiter|conjuncao|uranus':
+    'Jupiter em conjuncao com Urano acelera inovacao e abertura para novas direcoes. O periodo pode trazer oportunidades fora do padrao, pedindo flexibilidade com responsabilidade de risco. Experimente caminhos novos com criterio e validação antes de escalar.',
+  'transit:jupiter|oposicao|ascendente':
+    'Jupiter em oposicao ao Ascendente pode ampliar demandas de relacao e exposicao publica, tensionando equilibrio pessoal. A fase pede ajustar expectativas entre o que voce oferece e o que consegue sustentar com qualidade. Negocie limites com clareza para preservar cooperacao e consistencia.',
+  'transit:jupiter|oposicao|mercury':
+    'Jupiter em oposicao a Mercurio tende a ampliar ideias e discursos, com risco de excesso de confianca na leitura dos fatos. O ciclo favorece aprendizagem quando voce contrapoe visao ampla com verificacao objetiva. Revise premissas, simplifique mensagens e refine o que e realmente viavel.',
+  'transit:jupiter|oposicao|moon':
+    'Jupiter em oposicao a Lua pode aumentar oscilacao emocional e expectativa de resposta imediata. A fase pede moderacao afetiva para evitar exageros de ritmo e decisao. Equilibre acolhimento interno com prioridade pratica no cotidiano.',
+  'transit:jupiter|oposicao|sun':
+    'Jupiter em oposicao ao Sol pode tensionar vontade de expansao com limites reais de energia e contexto. O periodo pede calibrar ambicao, agenda e recursos para manter coerencia entre imagem e entrega. Crescimento mais estavel vem de foco seletivo e execucao progressiva.',
+  'transit:jupiter|oposicao|venus':
+    'Jupiter em oposicao a Venus amplia desejos de prazer, concessao e expectativa de reciprocidade. A fase pede ajustar valor e medida para evitar excessos afetivos ou financeiros. Priorize escolhas que preservem equilibrio entre satisfacao imediata e sustentabilidade.',
+  'transit:jupiter|oposicao|uranus':
+    'Jupiter em oposicao a Urano pode trazer viradas rapidas entre entusiasmo e ruptura de plano. O ciclo pede liberdade com criterio para nao trocar consistencia por novidade constante. Faça ajustes estrategicos sem abandonar o que ja sustenta resultado.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
