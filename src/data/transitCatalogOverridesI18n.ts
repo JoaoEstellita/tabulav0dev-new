@@ -46,6 +46,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter entering House 9 expands learning horizons, worldview, and long-range planning perspective. The period favors study and repertoire growth when new knowledge is applied practically. Turn insights into executable direction.',
     'transit:jupiter|ingress|house_12':
       'Jupiter entering House 12 expands closure processes, inner meaning, and quiet reprioritization. This phase favors maturation when introspection is paired with practical daily grounding. Use the period to clear excess and prepare a new cycle with greater clarity.',
+    'transit:jupiter|oposicao|jupiter':
+      'Jupiter opposite Jupiter can amplify extremes between confidence and overexpectation. This phase asks you to calibrate ambition with clear criteria to avoid promises beyond current delivery capacity. More stable growth comes from selective focus and realistic target review.',
+    'transit:jupiter|quadratura|jupiter':
+      'Jupiter square Jupiter tends to tension expansion pace and risk decisions. The cycle can trigger acceleration on too many fronts at once, reducing execution quality. Prioritize essentials and move in blocks to sustain consistent outcomes.',
+    'transit:jupiter|quadratura|mercury':
+      'Jupiter square Mercury may increase mental dispersion and overconfidence in quick conclusions. This phase asks for premise review, simpler messaging, and fact-checking before final decisions. Use broad vision with method to reduce strategic noise.',
+    'transit:jupiter|quadratura|pluto':
+      'Jupiter square Pluto intensifies ambition and may push all-or-nothing moves. This cycle asks for long-range strategy to avoid wear from excessive force. Direct growth toward structural change with clear governance.',
+    'transit:jupiter|quadratura|saturn':
+      'Jupiter square Saturn activates conflict between expansion drive and real operational limits. This phase asks for scope, timing, and resource adjustments to preserve consistency. Balancing boldness with discipline usually yields more sustainable progress.',
+    'transit:jupiter|quadratura|sun':
+      'Jupiter square Sun can inflate performance and visibility expectations beyond healthy pacing. The cycle asks for calibration between protagonism and real execution capacity. Focus on what produces concrete impact without scattering energy.',
+    'transit:jupiter|quadratura|uranus':
+      'Jupiter square Uranus can alternate enthusiasm and plan disruption in short intervals. This phase asks for freedom with criteria to avoid replacing consistency with permanent novelty. Innovate by iteration and validate each adjustment before scaling.',
+    'transit:jupiter|sextil|ascendente':
+      'Jupiter sextile Ascendant favors social confidence, useful contacts, and a more receptive presence. The cycle tends to support opportunities when posture and boundaries stay clear. Use the phase to broaden reach with authenticity and measure.',
+    'transit:jupiter|sextil|jupiter':
+      'Jupiter sextile Jupiter favors gradual expansion with a better sense of opportunity quality. The period tends to be productive for study, strategy, and medium-term repositioning. Grow with planning to consolidate durable gains.',
+    'transit:jupiter|sextil|mars':
+      'Jupiter sextile Mars combines initiative and growth vision with lower execution friction. This phase supports action guided by clear priorities and objective targets. Direct energy toward high-return fronts and keep progress reviews active.',
+    'transit:jupiter|sextil|mercury':
+      'Jupiter sextile Mercury favors communication, learning, and decisions with broader context clarity. The cycle supports strategic conversations and practical idea organization. Use the moment to unlock pending themes with objective language.',
+    'transit:jupiter|sextil|moon':
+      'Jupiter sextile Moon tends to expand emotional support and a more constructive reading of events. This phase favors reconciling sensitivity with daily pragmatism. Small routine adjustments can bring relief and greater stability.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -429,6 +453,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en ingreso a Casa 9 amplifica horizonte de aprendizaje, vision de mundo y planificacion de largo alcance. El periodo favorece estudio y expansion de repertorio cuando hay aplicacion practica. Convierte conocimiento nuevo en direccion ejecutable.',
     'transit:jupiter|ingress|house_12':
       'Jupiter en ingreso a Casa 12 amplifica procesos de cierre, sentido interno y reorganizacion silenciosa de prioridades. Esta fase favorece maduracion cuando introspeccion y practicidad cotidiana se combinan. Usa el periodo para limpiar excesos y preparar un nuevo ciclo con mayor claridad.',
+    'transit:jupiter|oposicao|jupiter':
+      'Jupiter en oposicion con Jupiter puede ampliar extremos entre confianza y exceso de expectativa. Esta fase pide calibrar ambicion con criterio para evitar promesas por encima de la capacidad real de entrega. Un crecimiento mas estable llega con foco selectivo y revision realista de metas.',
+    'transit:jupiter|quadratura|jupiter':
+      'Jupiter en cuadratura con Jupiter tiende a tensionar expansion, ritmo y decisiones de riesgo. El ciclo puede activar aceleracion en demasiados frentes a la vez y bajar calidad de ejecucion. Prioriza lo esencial y avanza por bloques para sostener resultados consistentes.',
+    'transit:jupiter|quadratura|mercury':
+      'Jupiter en cuadratura con Mercurio puede aumentar dispersion mental y confianza excesiva en conclusiones rapidas. Esta fase pide revisar premisas, simplificar mensajes y verificar hechos antes de decidir. Usa vision amplia con metodo para reducir ruido estrategico.',
+    'transit:jupiter|quadratura|pluto':
+      'Jupiter en cuadratura con Pluton intensifica ambicion y puede empujar movimientos de todo o nada. Este ciclo pide estrategia de largo plazo para evitar desgaste por exceso de fuerza. Dirige crecimiento a cambios estructurales con gobernanza clara.',
+    'transit:jupiter|quadratura|saturn':
+      'Jupiter en cuadratura con Saturno activa conflicto entre impulso de expansion y limites operativos reales. Esta fase pide ajustar alcance, plazos y recursos para mantener consistencia. Equilibrar audacia y disciplina suele producir progreso mas sostenible.',
+    'transit:jupiter|quadratura|sun':
+      'Jupiter en cuadratura al Sol puede inflar expectativas de rendimiento y exposicion mas alla de un ritmo saludable. El ciclo pide calibrar protagonismo con capacidad real de ejecucion. Enfocate en impacto concreto sin dispersar energia.',
+    'transit:jupiter|quadratura|uranus':
+      'Jupiter en cuadratura con Urano puede alternar entusiasmo y ruptura de plan en poco tiempo. Esta fase pide libertad con criterio para no cambiar consistencia por novedad permanente. Innova por iteracion y valida cada ajuste antes de escalar.',
+    'transit:jupiter|sextil|ascendente':
+      'Jupiter en sextil al Ascendente favorece confianza social, apertura de contactos y presencia mas receptiva. El ciclo suele apoyar oportunidades cuando postura y limites estan claros. Usa la fase para ampliar alcance con autenticidad y medida.',
+    'transit:jupiter|sextil|jupiter':
+      'Jupiter en sextil con Jupiter favorece expansion gradual y mejor lectura de oportunidad. El periodo suele ser productivo para estudio, estrategia y reposicionamiento de medio plazo. Crece con planificacion para consolidar ganancias duraderas.',
+    'transit:jupiter|sextil|mars':
+      'Jupiter en sextil con Marte combina iniciativa y vision de crecimiento con menos friccion de ejecucion. Esta fase favorece accion orientada por prioridades y objetivos claros. Dirige energia a frentes de alto retorno y mant?n revisiones de avance.',
+    'transit:jupiter|sextil|mercury':
+      'Jupiter en sextil con Mercurio favorece comunicacion, aprendizaje y decisiones con mayor claridad de contexto. El ciclo apoya conversaciones estrategicas y organizacion practica de ideas. Aprovecha para destrabar temas pendientes con lenguaje objetivo.',
+    'transit:jupiter|sextil|moon':
+      'Jupiter en sextil con la Luna tiende a ampliar contencion emocional y lectura mas constructiva de situaciones. Esta fase favorece reconciliar sensibilidad y pragmatismo en la rutina. Pequenos ajustes diarios pueden traer alivio y estabilidad.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -812,6 +860,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in ingresso in Casa 9 amplia orizzonte di apprendimento, visione del mondo e pianificazione di lungo periodo. Il periodo favorisce studio ed espansione del repertorio quando c e applicazione pratica. Trasforma nuova conoscenza in direzione eseguibile.',
     'transit:jupiter|ingress|house_12':
       'Giove in ingresso in Casa 12 amplia processi di chiusura, senso interiore e riprioritizzazione silenziosa. Questa fase favorisce maturazione quando introspezione e praticita quotidiana restano insieme. Usa il periodo per ridurre eccessi e preparare un nuovo ciclo con maggiore chiarezza.',
+    'transit:jupiter|oposicao|jupiter':
+      'Giove in opposizione con Giove puo amplificare gli estremi tra fiducia ed eccesso di aspettativa. Questa fase chiede di calibrare ambizione e criterio per evitare promesse oltre la reale capacita di consegna. Una crescita piu stabile nasce da focus selettivo e revisione realistica degli obiettivi.',
+    'transit:jupiter|quadratura|jupiter':
+      'Giove in quadratura con Giove tende a mettere in tensione espansione, ritmo e scelte di rischio. Il ciclo puo attivare accelerazione su troppi fronti insieme, riducendo la qualita esecutiva. Dai priorita all essenziale e procedi per blocchi per mantenere risultati coerenti.',
+    'transit:jupiter|quadratura|mercury':
+      'Giove in quadratura con Mercurio puo aumentare dispersione mentale e fiducia eccessiva in conclusioni rapide. Questa fase chiede revisione delle premesse, messaggi piu semplici e verifica dei fatti prima di decidere. Usa visione ampia con metodo per ridurre rumore strategico.',
+    'transit:jupiter|quadratura|pluto':
+      'Giove in quadratura con Plutone intensifica ambizione e puo spingere mosse da tutto-o-niente. Questo ciclo chiede strategia di lungo periodo per evitare usura da eccesso di forza. Dirigi crescita verso cambiamenti strutturali con governance chiara.',
+    'transit:jupiter|quadratura|saturn':
+      'Giove in quadratura con Saturno attiva conflitto tra impulso espansivo e limiti operativi reali. Questa fase chiede aggiustamenti di scopo, tempi e risorse per mantenere coerenza. Bilanciare audacia e disciplina tende a produrre progresso piu sostenibile.',
+    'transit:jupiter|quadratura|sun':
+      'Giove in quadratura al Sole puo gonfiare aspettative di prestazione ed esposizione oltre un ritmo sano. Il ciclo chiede di calibrare protagonismo e reale capacita esecutiva. Concentrati su cio che genera impatto concreto senza disperdere energia.',
+    'transit:jupiter|quadratura|uranus':
+      'Giove in quadratura con Urano puo alternare entusiasmo e rottura di piano in poco tempo. Questa fase chiede liberta con criterio per non sostituire la coerenza con novita continua. Innova per iterazioni e valida ogni aggiustamento prima di scalare.',
+    'transit:jupiter|sextil|ascendente':
+      'Giove in sestile all Ascendente favorisce fiducia sociale, apertura di contatti e presenza piu ricettiva. Il ciclo tende a sostenere opportunita quando postura e confini sono chiari. Usa la fase per ampliare raggio d azione con autenticita e misura.',
+    'transit:jupiter|sextil|jupiter':
+      'Giove in sestile con Giove favorisce espansione graduale e migliore lettura delle opportunita. Il periodo tende a essere produttivo per studio, strategia e riposizionamento nel medio termine. Cresci con pianificazione per consolidare guadagni durevoli.',
+    'transit:jupiter|sextil|mars':
+      'Giove in sestile con Marte combina iniziativa e visione di crescita con minore attrito esecutivo. Questa fase favorisce azione guidata da priorita chiare e obiettivi concreti. Dirigi energia verso fronti ad alto ritorno e mantieni revisioni di avanzamento.',
+    'transit:jupiter|sextil|mercury':
+      'Giove in sestile con Mercurio favorisce comunicazione, apprendimento e decisioni con maggiore chiarezza di contesto. Il ciclo sostiene conversazioni strategiche e organizzazione pratica delle idee. Sfrutta il momento per sbloccare temi in sospeso con linguaggio oggettivo.',
+    'transit:jupiter|sextil|moon':
+      'Giove in sestile con la Luna tende ad ampliare sostegno emotivo e una lettura piu costruttiva degli eventi. Questa fase favorisce conciliare sensibilita e pragmatismo nella routine. Piccoli aggiustamenti quotidiani possono portare sollievo e stabilita.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

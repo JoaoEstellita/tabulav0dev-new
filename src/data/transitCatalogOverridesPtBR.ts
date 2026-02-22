@@ -41,6 +41,30 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter ingressando na Casa 9 amplia horizonte de aprendizado, visao de mundo e planejamento de longo alcance. O periodo favorece estudos e expansao de repertorio quando ha aplicacao pratica. Transforme conhecimento novo em direcao executavel.',
   'transit:jupiter|ingress|house_12':
     'Jupiter ingressando na Casa 12 amplia processos de fechamento, sentido interno e reorganizacao silenciosa de prioridades. A fase favorece amadurecimento quando voce combina introspeccao com praticidade cotidiana. Use o periodo para limpar excessos e preparar um novo ciclo com mais clareza.',
+  'transit:jupiter|oposicao|jupiter':
+    'Jupiter em oposicao com Jupiter pode ampliar os extremos entre confianca e excesso de expectativa. A fase pede calibrar ambicao com criterio para evitar promessas maiores do que a capacidade de entrega. Crescimento mais estavel vem de foco seletivo e revisao realista de metas.',
+  'transit:jupiter|quadratura|jupiter':
+    'Jupiter em quadratura com Jupiter tende a tensionar expansao, ritmo e tomada de risco. O ciclo pode trazer vontade de acelerar tudo ao mesmo tempo, com queda de qualidade na execucao. Priorize o essencial e avance em blocos para sustentar resultado consistente.',
+  'transit:jupiter|quadratura|mercury':
+    'Jupiter em quadratura com Mercurio pode aumentar dispersao mental e confianca excessiva em conclusoes rapidas. A fase pede revisar premissas, simplificar mensagens e confirmar fatos antes de decidir. Use visao ampla com metodo para evitar ruído estrategico.',
+  'transit:jupiter|quadratura|pluto':
+    'Jupiter em quadratura com Plutao intensifica ambicao e pode levar a movimentos de tudo-ou-nada. O ciclo pede estrategia de longo prazo para evitar desgaste por excesso de forca. Direcione crescimento para mudancas estruturais e com governanca clara.',
+  'transit:jupiter|quadratura|saturn':
+    'Jupiter em quadratura com Saturno ativa conflito entre vontade de expandir e limites operacionais reais. A fase pede ajustar prazo, escopo e recursos para manter consistencia. Equilibrar ousadia com disciplina tende a gerar progresso mais sustentavel.',
+  'transit:jupiter|quadratura|sun':
+    'Jupiter em quadratura ao Sol pode inflar expectativas de desempenho e exposicao alem do ritmo saudavel. O ciclo pede calibrar protagonismo com capacidade real de execucao. Foque no que traz impacto concreto sem dispersar energia.',
+  'transit:jupiter|quadratura|uranus':
+    'Jupiter em quadratura com Urano pode alternar entusiasmo e ruptura de plano em pouco tempo. A fase pede liberdade com criterio para nao trocar consistencia por novidade permanente. Inove por iteracao e valide cada ajuste antes de escalar.',
+  'transit:jupiter|sextil|ascendente':
+    'Jupiter em sextil ao Ascendente favorece confianca social, abertura de contatos e presenca mais receptiva. O ciclo tende a apoiar oportunidades quando postura e limite estao claros. Use a fase para ampliar alcance com autenticidade e medida.',
+  'transit:jupiter|sextil|jupiter':
+    'Jupiter em sextil com Jupiter favorece expansao gradual com boa leitura de oportunidade. O periodo tende a ser produtivo para estudos, estrategia e reposicionamento de medio prazo. Cresca com planejamento para consolidar ganhos duradouros.',
+  'transit:jupiter|sextil|mars':
+    'Jupiter em sextil com Marte combina iniciativa e visao de crescimento com menor atrito de execucao. A fase favorece acao orientada por prioridade e objetivo claro. Direcione energia para frentes de alto retorno e mantenha revisoes de progresso.',
+  'transit:jupiter|sextil|mercury':
+    'Jupiter em sextil com Mercurio favorece comunicacao, aprendizado e tomada de decisao com mais clareza de contexto. O ciclo apoia conversas estrategicas e organizacao de ideias em plano pratico. Aproveite para destravar temas pendentes com linguagem objetiva.',
+  'transit:jupiter|sextil|moon':
+    'Jupiter em sextil com Lua tende a ampliar acolhimento emocional e leitura mais construtiva das situacoes. A fase favorece reconciliar sensibilidade com pragmatismo no cotidiano. Pequenos ajustes de rotina podem trazer alivio e estabilidade.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
