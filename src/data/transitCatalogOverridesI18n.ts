@@ -72,6 +72,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mars sextile Uranus favors practical innovation and route adjustment agility without losing base stability. This phase tends to support smart change when testing and validation criteria are present. Experiment with focus and scale only what works.',
     'transit:mars|sextil|venus':
       'Mars sextile Venus favors initiative in relationships and agreements with better balance between desire and cooperation. This cycle tends to ease approach dynamics when limits and expectations are clear. Combine assertiveness and diplomacy to strengthen exchanges.',
+    'transit:mars|trigono|ascendente':
+      'Mars trine Ascendant favors direct action with good timing and posture calibration. This phase tends to increase confidence for personal initiatives with lower friction. Use this flow to execute priorities with objectivity and consistency.',
+    'transit:mars|trigono|jupiter':
+      'Mars trine Jupiter combines initiative and expansion in a productive rhythm. This cycle tends to support progress when enthusiasm is linked to practical strategy. Direct energy toward meaningful goals and keep progress reviews active.',
+    'transit:mars|trigono|mars':
+      'Mars trine Mars reinforces execution drive and directional clarity. This phase usually favors productivity when priorities are well defined. Use the momentum to close open fronts without scattering energy.',
+    'transit:mars|trigono|mercury':
+      'Mars trine Mercury favors clarity for decisions and firm communication. This cycle tends to support negotiations and follow-through when arguments are objective. Keep active listening to sustain alignment in exchanges.',
+    'transit:mars|trigono|moon':
+      'Mars trine Moon favors integration between willpower and emotional sensitivity in daily life. This phase tends to support practical response without losing emotional care. Simple pacing adjustments can increase inner stability.',
+    'transit:mars|trigono|neptune':
+      'Mars trine Neptune favors turning intuition into action with better flow. This cycle tends to support applied creativity when goals have minimum clarity. Organize short steps to preserve continuity and reduce dispersion.',
+    'transit:mars|trigono|pluto':
+      'Mars trine Pluto increases determination, depth, and strategic change capacity. This phase tends to support structural decisions when action is guided by criteria. Direct intensity to essentials and consolidate long-term outcomes.',
+    'transit:mars|trigono|saturn':
+      'Mars trine Saturn combines discipline and initiative in an efficient way. This cycle tends to support sustainable progress when method and priority move together. Advance by stages to strengthen consistency.',
+    'transit:mars|trigono|uranus':
+      'Mars trine Uranus favors practical innovation without requiring abrupt rupture. This phase tends to open room for testing new solutions with solid risk control. Experiment with criteria and scale only what proves useful.',
+    'transit:mars|trigono|venus':
+      'Mars trine Venus favors affective initiative and cooperation in key agreements. This cycle tends to ease approach when desire and reciprocity are balanced. Use assertiveness with tact to strengthen bonds.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Jupiter conjunct Midheaven can increase visibility and open room for professional growth. This cycle favors recognition when direction is clear, execution is consistent, and expectations stay realistic. Avoid overpromising and consolidate progress in practical steps.',
     'transit:jupiter|sextil|meio_do_ceu':
@@ -643,6 +663,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte en sextil con Urano favorece innovacion practica y agilidad para ajustar ruta sin perder base. Esta fase tiende a apoyar cambios inteligentes cuando hay criterio de prueba y validacion. Experimenta con foco y escala solo lo que funciona.',
     'transit:mars|sextil|venus':
       'Marte en sextil con Venus favorece iniciativa en relaciones y acuerdos con mejor equilibrio entre deseo y cooperacion. Este ciclo tiende a facilitar acercamientos cuando limites y expectativas estan claros. Combina asertividad y diplomacia para fortalecer intercambios.',
+    'transit:mars|trigono|ascendente':
+      'Marte en trigono al Ascendente favorece accion directa con buena lectura de tiempo y postura. Esta fase tiende a aumentar confianza para iniciar movimientos personales con menos friccion. Usa este flujo para ejecutar prioridades con objetividad y constancia.',
+    'transit:mars|trigono|jupiter':
+      'Marte en trigono con Jupiter combina iniciativa y expansion en ritmo productivo. Este ciclo tiende a favorecer avances cuando entusiasmo y estrategia practica van juntos. Dirige energia a metas relevantes y revisa progreso por etapas.',
+    'transit:mars|trigono|mars':
+      'Marte en trigono con Marte refuerza impulso de ejecucion y sentido de direccion. Esta fase suele favorecer productividad cuando prioridades estan bien definidas. Aprovecha para cerrar frentes abiertos sin dispersar energia.',
+    'transit:mars|trigono|mercury':
+      'Marte en trigono con Mercurio favorece claridad para decidir y comunicar con firmeza. Este ciclo tiende a facilitar negociaciones y avances cuando argumentos son objetivos. Mantener escucha activa ayuda al alineamiento.',
+    'transit:mars|trigono|moon':
+      'Marte en trigono con la Luna favorece integracion entre voluntad y sensibilidad en la rutina. Esta fase tiende a facilitar respuesta practica sin perder cuidado emocional. Ajustes simples de ritmo pueden aumentar estabilidad interna.',
+    'transit:mars|trigono|neptune':
+      'Marte en trigono con Neptuno favorece transformar intuicion en accion con mas fluidez. Este ciclo tiende a apoyar creatividad aplicada cuando hay claridad minima de objetivos. Organiza pasos cortos para sostener continuidad y reducir dispersion.',
+    'transit:mars|trigono|pluto':
+      'Marte en trigono con Pluton amplifica determinacion, profundidad y capacidad de cambio estrategico. Esta fase tiende a favorecer decisiones estructurales cuando accion y criterio van juntos. Dirige intensidad a lo esencial y consolida resultados de largo plazo.',
+    'transit:mars|trigono|saturn':
+      'Marte en trigono con Saturno combina disciplina e iniciativa de forma eficiente. Este ciclo tiende a facilitar progreso sostenible cuando metodo y prioridad avanzan juntos. Avanza por etapas para reforzar consistencia.',
+    'transit:mars|trigono|uranus':
+      'Marte en trigono con Urano favorece innovacion practica sin exigir ruptura brusca. Esta fase tiende a abrir espacio para probar soluciones nuevas con buen control de riesgo. Experimenta con criterio y escala lo que demuestra utilidad.',
+    'transit:mars|trigono|venus':
+      'Marte en trigono con Venus favorece iniciativa afectiva y cooperacion en acuerdos importantes. Este ciclo tiende a facilitar acercamientos cuando deseo y reciprocidad estan equilibrados. Usa asertividad con tacto para fortalecer vinculos.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Jupiter en conjuncion al Medio Cielo puede aumentar visibilidad y abrir espacio para crecimiento profesional. Este ciclo favorece reconocimiento cuando hay direccion clara, ejecucion constante y expectativas realistas. Evita prometer de mas y consolida avances por etapas.',
     'transit:jupiter|sextil|meio_do_ceu':
@@ -1214,6 +1254,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte in sestile con Urano favorisce innovazione pratica e agilita nel correggere rotta senza perdere base. Questa fase tende a sostenere cambi intelligenti quando esistono criteri di test e validazione. Sperimenta con focus e scala solo cio che funziona.',
     'transit:mars|sextil|venus':
       'Marte in sestile con Venere favorisce iniziativa in relazioni e accordi con equilibrio migliore tra desiderio e cooperazione. Questo ciclo tende a facilitare avvicinamenti quando limiti e aspettative sono chiari. Combina assertivita e diplomazia per rafforzare scambi.',
+    'transit:mars|trigono|ascendente':
+      "Marte in trigono all Ascendente favorisce azione diretta con buon senso del tempo e della postura. Questa fase tende ad aumentare fiducia per avviare movimenti personali con meno attrito. Usa questo flusso per eseguire priorita con obiettivita e costanza.",
+    'transit:mars|trigono|jupiter':
+      'Marte in trigono con Giove combina iniziativa ed espansione in ritmo produttivo. Questo ciclo tende a favorire avanzamenti quando entusiasmo e strategia pratica procedono insieme. Dirigi energia verso obiettivi rilevanti e monitora progressi per fasi.',
+    'transit:mars|trigono|mars':
+      'Marte in trigono con Marte rafforza impulso esecutivo e senso di direzione. Questa fase tende a favorire produttivita quando priorita sono ben definite. Sfrutta lo slancio per chiudere fronti aperti senza disperdere energia.',
+    'transit:mars|trigono|mercury':
+      'Marte in trigono con Mercurio favorisce chiarezza nelle decisioni e comunicazione ferma. Questo ciclo tende a facilitare negoziazioni e avanzamenti quando argomenti sono oggettivi. Mantieni ascolto attivo per sostenere allineamento negli scambi.',
+    'transit:mars|trigono|moon':
+      'Marte in trigono con Luna favorisce integrazione tra volonta e sensibilita nella routine. Questa fase tende a facilitare risposte pratiche senza perdere cura emotiva. Piccoli aggiustamenti di ritmo possono aumentare stabilita interiore.',
+    'transit:mars|trigono|neptune':
+      'Marte in trigono con Nettuno favorisce trasformare intuizione in azione con maggiore fluidita. Questo ciclo tende a sostenere creativita applicata quando obiettivi hanno chiarezza minima. Organizza passi brevi per mantenere continuita e ridurre dispersione.',
+    'transit:mars|trigono|pluto':
+      'Marte in trigono con Plutone amplia determinazione, profondita e capacita di cambiamento strategico. Questa fase tende a favorire decisioni strutturali quando azione e criterio procedono insieme. Dirigi intensita verso essenziale e consolida risultati di lungo periodo.',
+    'transit:mars|trigono|saturn':
+      'Marte in trigono con Saturno combina disciplina e iniziativa in modo efficiente. Questo ciclo tende a facilitare progresso sostenibile quando metodo e priorita procedono insieme. Avanza per fasi per rafforzare coerenza.',
+    'transit:mars|trigono|uranus':
+      'Marte in trigono con Urano favorisce innovazione pratica senza richiedere rottura brusca. Questa fase tende ad aprire spazio per testare soluzioni nuove con buon controllo del rischio. Sperimenta con criterio ed espandi solo cio che dimostra utilita.',
+    'transit:mars|trigono|venus':
+      'Marte in trigono con Venere favorisce iniziativa affettiva e cooperazione in accordi importanti. Questo ciclo tende a facilitare avvicinamenti quando desiderio e reciprocita sono in equilibrio. Usa assertivita con tatto per rafforzare legami.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Giove in congiunzione al Medio Cielo puo aumentare visibilita e aprire spazio a crescita professionale. Questo ciclo favorisce riconoscimento quando direzione, costanza e aspettative restano realistiche. Evita promesse eccessive e consolida progressi per fasi.',
     'transit:jupiter|sextil|meio_do_ceu':
