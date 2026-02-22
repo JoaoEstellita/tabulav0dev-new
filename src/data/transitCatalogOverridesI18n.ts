@@ -883,6 +883,130 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Venus entering House 11 favors harmonization in networks, collaborations, and shared future projects. This cycle amplifies openness to new bonds and quality connections with purpose. Prioritize alliances with real reciprocity and contribute with authenticity.',
     'transit:venus|ingress|house_12':
       'Venus entering House 12 amplifies inner sensitivity, affective rest needs, and quiet closure processes. This phase favors self-care, relationship refinement, and revision of what sustains real well-being. Use the period to integrate relational learning.',
+    'transit:sun|conjuncao|ascendente':
+      'Sun conjunct natal Ascendant marks the start of a new annual cycle of personal expression and projection into the world. Vitality, presence and the need for clarity about who you are tend to be heightened during this period. Invest in defining what you want to project in this cycle.',
+    'transit:sun|conjuncao|jupiter':
+      'Sun conjunct natal Jupiter expands confidence, the drive for growth and openness to new possibilities. The cycle supports expansive initiatives when there is discernment about what truly deserves investment. Avoid excessive enthusiasm without grounding in what is realistic.',
+    'transit:sun|conjuncao|mars':
+      'Sun conjunct natal Mars intensifies available energy, the impulse to act and the capacity for focused effort. The cycle tends to strengthen determination and readiness to face challenges with decisiveness. Channel this force with clear direction to avoid impulsiveness.',
+    'transit:sun|conjuncao|meio_do_ceu':
+      'Sun conjunct natal Midheaven illuminates the professional path and expands public visibility. The period tends to favor recognition and opportunities related to social position and career. Define clearly what you want to show and what you intend to achieve.',
+    'transit:sun|conjuncao|moon':
+      'Sun conjunct natal Moon creates convergence between conscious identity and the inner emotional world. The cycle favors alignment between what you feel and what you want to build, reducing internal conflict. Use this period to integrate personal needs with the life direction you are pursuing.',
+    'transit:sun|conjuncao|neptune':
+      'Sun conjunct natal Neptune expands sensitivity, creativity and receptivity to what lies beyond the ordinary. The cycle favors artistic work, spiritual practices and empathy, but may temporarily reduce practical clarity. Maintain concrete anchors while exploring what is more subtle.',
+    'transit:sun|conjuncao|saturn':
+      'Sun conjunct natal Saturn calls attention to structure, responsibility and the weight of what still needs to be consolidated. The cycle invites honest assessment of what has been built and strengthening of what remains fragile. Meet demands as an opportunity for genuine maturity.',
+    'transit:sun|conjuncao|sun':
+      'Sun conjunct natal Sun marks the solar return, the beginning of a complete new annual cycle of identity and purpose. The moment invites review of the past year and clear definition of what to cultivate in the next twelve months. Set intentions with awareness of what is truly a priority.',
+    'transit:sun|conjuncao|uranus':
+      'Sun conjunct natal Uranus ignites the impulse to break from convention and express personal uniqueness. The cycle may bring sudden changes or an intense desire to alter what is established. Embrace originality with strategy to avoid unnecessary instability.',
+    'transit:sun|conjuncao|venus':
+      'Sun conjunct natal Venus highlights pleasure, aesthetics, creativity and what genuinely attracts and satisfies. The cycle tends to amplify ease of connection, affective expression and appreciation of what is beautiful and valuable. Invest in activities that nurture real satisfaction and quality relationships.',
+    'transit:sun|ingress|house_1':
+      'Sun transiting the 1st house highlights identity, physical presence and how you present yourself to the world. Vitality and the desire for direct personal expression tend to be in the foreground during this period. A good window to reaffirm who you are and what you want to project in this cycle.',
+    'transit:sun|ingress|house_2':
+      'Sun transiting the 2nd house brings attention to material resources, personal values and what is truly useful and valuable to you. The cycle favors review of finances and clarity about what sustains security and wellbeing. Prioritize material decisions with discernment and alignment with what genuinely matters.',
+    'transit:sun|ingress|house_3':
+      'Sun transiting the 3rd house illuminates communication, learning and everyday exchanges with the immediate environment. Curiosity, mobility and the drive to connect ideas and people tend to be heightened. A good cycle for writing, studying and strengthening nearby networks of contact.',
+    'transit:sun|ingress|house_5':
+      'Sun transiting the 5th house highlights creativity, playful expression, romance and the genuine pleasure of being who you are. The cycle favors artistic projects, recreational activities and affective connections with more authenticity. A good moment to cultivate what brings joy and express talents with confidence.',
+    'transit:sun|ingress|house_6':
+      'Sun transiting the 6th house brings focus to work, health, routines and the processes that sustain daily life. The cycle favors attention to detail, to the body and to the efficiency of daily habits. Adjust routines that support productivity and wellbeing in a consistent way.',
+    'transit:sun|ingress|house_7':
+      'Sun transiting the 7th house illuminates partnerships, relationships and what emerges through significant contact with others. Greater clarity about commitments, cooperation and what is sought in important relationships tends to come forward. A good window to address partnership themes with openness and honesty.',
+    'transit:sun|ingress|house_8':
+      'Sun transiting the 8th house deepens questions of transformation, shared resources and bonds of trust. Themes such as inheritance, joint investments and what needs to be released or renewed may come to the surface. A period favorable for insight about what is hidden and for genuine renewal processes.',
+    'transit:sun|ingress|house_9':
+      'Sun transiting the 9th house expands the focus to philosophy, travel, higher education and broader worldviews. Curiosity about the unknown and the drive to go beyond the familiar tend to be heightened. A good moment to study, travel and revisit beliefs with an open mind.',
+    'transit:sun|ingress|house_11':
+      'Sun transiting the 11th house highlights groups, social networks, collective projects and the ideals that guide the future. Connections with people of similar values and participation in collective initiatives may become relevant. A good window to collaborate, review long-term goals and strengthen alliances.',
+    'transit:sun|ingress|house_12':
+      'Sun transiting the 12th house invites a period of introspection, withdrawal and contact with what usually remains outside everyday awareness. Inner life, contemplative practices and behind-the-scenes work tend to become more important. A good moment to integrate experiences and process what still needs closure.',
+    'transit:sun|oposicao|ascendente':
+      'Sun opposite natal Ascendant coincides with the transit through the Descendant, bringing light to relationships and what others mirror back. The period tends to highlight agreements, partnerships and how identity expresses itself in relational context. A good window to revisit commitments with honesty and openness.',
+    'transit:sun|oposicao|jupiter':
+      'Sun opposite natal Jupiter may amplify tendencies toward excess or confidence out of proportion with what is realistically viable. The cycle invites checking whether optimism is grounded in solid foundations or only in momentary enthusiasm. Balance expansion and moderation to avoid promises beyond your capacity.',
+    'transit:sun|oposicao|mars':
+      'Sun opposite natal Mars may bring tension between personal will and external forces that offer resistance. Direct conflicts or competitions may become visible during this cycle. Channel energy assertively, without reactivity, to move through this period with less depletion.',
+    'transit:sun|oposicao|meio_do_ceu':
+      'Sun opposite natal Midheaven transits the IC, directing attention to private life, family and roots. The period invites assessing how the personal foundation sustains or limits public projection. A good moment to tend to the domestic environment and strengthen internal emotional support.',
+    'transit:sun|oposicao|mercury':
+      'Sun opposite natal Mercury may bring reversals in communications, perspectives or relevant information. Others may present viewpoints that contradict or challenge what seemed settled. Listen with openness and review conclusions before taking a definitive position.',
+    'transit:sun|oposicao|moon':
+      'Sun opposite natal Moon may create tension between emotional needs and the conscious direction of life. What you feel and what you want to accomplish may seem in conflict during this cycle. A good window for greater awareness of your own needs and how they relate to your objectives.',
+    'transit:sun|oposicao|saturn':
+      'Sun opposite natal Saturn brings assessment of limits, unresolved responsibilities and the weight of what still needs to be addressed. The cycle may reveal where structure is fragile or where discipline has been postponed. Meeting demands with honesty is the most productive path at this time.',
+    'transit:sun|oposicao|sun':
+      'Sun opposite natal Sun marks the midpoint of the annual cycle, bringing light to what was initiated at the solar return. The period tends to highlight relationships and what others reflect about your own path. A good window to assess the progress of the personal cycle with clarity.',
+    'transit:sun|oposicao|venus':
+      'Sun opposite natal Venus may create tension between what pleases and what is necessary, between pleasure and responsibility. Relationships or financial matters may require attention and review during this cycle. Clarity about what is genuinely valued helps make decisions with greater discernment.',
+    'transit:sun|quadratura|ascendente':
+      'Sun square natal Ascendant may bring friction between personal identity and expectations of the immediate context. The cycle invites adjustments in how you present yourself or in your relationship with the nearby environment. A good window to identify where personal expression calls for more authenticity.',
+    'transit:sun|quadratura|jupiter':
+      'Sun square natal Jupiter may amplify impulses toward expansion without sufficient grounding in what is realistically viable. Overconfidence, promises beyond capacity or disproportionate spending may emerge as challenges. Use discernment to separate what has foundation from what is only enthusiasm.',
+    'transit:sun|quadratura|mars':
+      'Sun square natal Mars generates friction between the will to act and the resistances the context offers. Conflict, impatience and energetic depletion may arise if action is forced without clear direction. Channel the pressure toward resolving concrete obstacles rather than reacting impulsively.',
+    'transit:sun|quadratura|meio_do_ceu':
+      'Sun square natal Midheaven creates tension between inner personal development and the demands of the professional or public path. Career, reputation or life direction choices may feel more demanding and less obvious during this period. Review whether external objectives reflect genuine values and needs before acting.',
+    'transit:sun|quadratura|mercury':
+      'Sun square natal Mercury may bring pressure on communications, decisions or processing of important information. Misunderstandings, cognitive overload or difficulty articulating thoughts may arise during this cycle. Slow down before communicating and verify what has been understood.',
+    'transit:sun|quadratura|neptune':
+      'Sun square natal Neptune may create confusion between what is real and what is idealized or projected. Clarity of perception may be temporarily compromised, making it prudent to verify before deciding. Work with creativity and intuition while maintaining solid practical anchors.',
+    'transit:sun|quadratura|pluto':
+      'Sun square natal Pluto puts power dynamics, control and transformations that resist being ignored in evidence. The cycle may bring confrontations with what is hidden or with forces operating behind the scenes. Honesty about what needs to change is the foundation for moving through this period with integrity.',
+    'transit:sun|quadratura|saturn':
+      'Sun square natal Saturn creates pressure between desires for expression and structural limitations or unfulfilled responsibilities. The cycle may feel heavy, with obstacles that require patience and discipline. Treat restrictions as information about what needs to be strengthened.',
+    'transit:sun|quadratura|sun':
+      'Sun square natal Sun activates a tension point in the annual cycle, bringing challenges related to identity and personal expression. The moment may reveal conflicts between who you want to be and what the context allows or requires. A good window to adjust course and realign direction with authenticity.',
+    'transit:sun|quadratura|uranus':
+      'Sun square natal Uranus may bring unexpected disruptions, abrupt changes or impulses of rebellion against the established. The desire for rupture may be intense, but without planning it may result in unnecessary instability. Integrate the need for change with a more strategic approach.',
+    'transit:sun|quadratura|venus':
+      'Sun square natal Venus may generate tension in relationships, financial matters or in what genuinely brings satisfaction. Decisions related to pleasure, money or affection may require more attention and care during this cycle. Review what is being valued and whether it aligns with real needs.',
+    'transit:sun|sextil|ascendente':
+      'Sun sextile natal Ascendant creates a moment of more fluid personal expression aligned with the environment. Identity finds natural channels of projection without great resistance or excessive effort. A good moment for initiatives involving presence, visibility and communication of what you represent.',
+    'transit:sun|sextil|jupiter':
+      'Sun sextile natal Jupiter favors optimism, openness to opportunity and a sense of accessible expansion. The cycle supports growth when there is willingness to move in the direction of what has been glimpsed. The confidence that arises tends to be well-grounded when applied with discernment.',
+    'transit:sun|sextil|mars':
+      'Sun sextile natal Mars makes energy available for focused action with fluidity and without the depletion of conflict. Personal initiatives, physical projects and assertion of will find good support during this cycle. A good moment to set in motion what has been in planning.',
+    'transit:sun|sextil|meio_do_ceu':
+      'Sun sextile natal Midheaven supports professional visibility and alignment between identity and career objectives. The cycle may open space for recognition or opportunities related to public position. A good moment to position yourself clearly about what you offer and what you seek.',
+    'transit:sun|sextil|mercury':
+      'Sun sextile natal Mercury favors mental clarity, ease of communication and efficient processing of information. Articulation of ideas tends to flow with greater naturalness, facilitating negotiations and exchanges. A good period for writing, learning or conducting important conversations.',
+    'transit:sun|sextil|neptune':
+      'Sun sextile natal Neptune opens space for creativity, intuition and sensitivity more receptive to what is not immediately visible. The cycle favors artistic work, contemplative practices and connection with what goes beyond the ordinary. Use imagination with intentionality as a productive tool.',
+    'transit:sun|sextil|pluto':
+      'Sun sextile natal Pluto favors access to depth and resources that are not normally mobilized with ease. The cycle supports significant changes conducted with focus and intention, without the resistance of tension aspects. A good window for working personal transformation with less friction.',
+    'transit:sun|sextil|saturn':
+      'Sun sextile natal Saturn supports productive discipline, effective structure and responsibility that energizes rather than burdens. Long-term projects, commitments and consistent work find good backing during this cycle. A favorable moment to consolidate what has been built with real effort.',
+    'transit:sun|sextil|sun':
+      'Sun sextile natal Sun creates a favorable window for personal expression and for activating the potential of the current annual cycle. Identity finds fluidity and the capacity to move toward what matters tends to be accessible. A good moment for initiatives that express who you are being right now.',
+    'transit:sun|sextil|uranus':
+      'Sun sextile natal Uranus favors originality, innovation and openness to perspectives outside the usual. The cycle supports creative changes and expression of what is singular without generating unnecessary disruption. A good moment to experiment, explore what is different and trust innovative intuition.',
+    'transit:sun|sextil|venus':
+      'Sun sextile natal Venus favors pleasure, creativity and affective connections with more ease and naturalness. Social exchanges, aesthetic projects and expression of what pleases tend to flow well during this cycle. A good moment to invest in relationships, art and activities that nurture genuine satisfaction.',
+    'transit:sun|trigono|ascendente':
+      'Sun trine natal Ascendant favors authentic expression and a presence in the world that finds natural resonance. Identity and how you are perceived tend to be well aligned during this cycle. A good moment to present yourself, lead personal projects and affirm direction with confidence.',
+    'transit:sun|trigono|jupiter':
+      'Sun trine natal Jupiter favors expansion, confidence and the sense that the path is open for real growth. Opportunities that arrive during this cycle tend to have genuine foundation and meet receptivity. A good moment to amplify what is working and take initiatives with optimism.',
+    'transit:sun|trigono|mars':
+      'Sun trine natal Mars brings available energy, courage and the capacity to act with clarity and purpose. Personal initiatives and projects requiring drive find good ground during this cycle. A favorable window for concrete achievements, assertive decisions and work that demands vigor.',
+    'transit:sun|trigono|meio_do_ceu':
+      'Sun trine natal Midheaven supports harmony between identity and professional path, with possible recognition and clarity of direction. The cycle favors career progression when there is effort and alignment with what you want to build. A good moment for initiatives that increase visibility with authenticity.',
+    'transit:sun|trigono|mercury':
+      'Sun trine natal Mercury favors clarity of thought, effective communication and connection between intention and expression. Ideas flow more easily and articulating what you think tends to be heightened during this cycle. A good moment for presenting projects, having important conversations and developing concepts.',
+    'transit:sun|trigono|neptune':
+      'Sun trine natal Neptune supports creativity, spirituality and a sensitivity that enriches perception of daily life. The cycle favors contact with the transcendent, whether in art, contemplation or empathy. A propitious window for integrating the subtler dimension of experience with practical life.',
+    'transit:sun|trigono|pluto':
+      'Sun trine natal Pluto favors deep transformation conducted with focus and intention, without the friction of tension aspects. The cycle may facilitate significant renewal in areas where real change was needed. A good moment for deepening what matters and releasing what has lost meaning.',
+    'transit:sun|trigono|saturn':
+      'Sun trine natal Saturn favors maturity, productive structure and the sense that effort meets concrete results. Projects requiring discipline and commitment tend to progress well during this cycle. A good window to consolidate what has been built and take on responsibilities with confidence.',
+    'transit:sun|trigono|sun':
+      'Sun trine natal Sun creates a moment of fluidity and inner alignment, with personal expression finding good conditions for flourishing. This point in the annual cycle favors initiatives, creativity and connection with one\'s own purpose. A good window to advance in projects that express who you are becoming.',
+    'transit:sun|trigono|uranus':
+      'Sun trine natal Uranus favors originality, freedom of expression and openness to what is singular and innovative. Changes during this cycle tend to be creative and well received, without the shock of forced disruptions. A good moment to explore what is authentic and different, trusting what emerges.',
+    'transit:sun|trigono|venus':
+      'Sun trine natal Venus brings harmony, pleasure and the sense that affective and creative connections are well sustained. The cycle favors artistic expression, relationships and the capacity to enjoy what life offers. A good window to cultivate beauty, affection and what genuinely satisfies.',
 },
   'es-ES': {
     'transit:mercury|conjuncao|ascendente':
@@ -1764,6 +1888,130 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Venus en ingreso en la Casa 11 favorece armonizacion en redes, colaboraciones y proyectos futuros compartidos. Este ciclo amplifica apertura a nuevos vinculos y conexiones de calidad con proposito. Prioriza alianzas con reciprocidad real y contribuye con autenticidad.',
     'transit:venus|ingress|house_12':
       'Venus en ingreso en la Casa 12 amplifica sensibilidad interna, necesidad de descanso afectivo y procesos de cierre tranquilo. Esta fase favorece autocuidado, refinamiento de relaciones y revision de lo que sustenta bienestar real. Usa el periodo para integrar aprendizajes relacionales.',
+    'transit:sun|conjuncao|ascendente':
+      'El Sol en conjuncion al Ascendente natal marca el inicio de un nuevo ciclo anual de expresion personal y proyeccion en el mundo. La vitalidad, la presencia y la necesidad de claridad sobre quien eres tienden a acentuarse durante este periodo. Invierte en definir lo que deseas proyectar en este ciclo.',
+    'transit:sun|conjuncao|jupiter':
+      'El Sol en conjuncion a Jupiter natal amplia la confianza, la disposicion para el crecimiento y la apertura a nuevas posibilidades. El ciclo favorece iniciativas de expansion cuando hay discernimiento sobre lo que realmente merece inversion. Evita el exceso de entusiasmo sin anclaje en lo que es viable.',
+    'transit:sun|conjuncao|mars':
+      'El Sol en conjuncion a Marte natal intensifica la energia disponible, el impulso de actuar y la capacidad de sostener esfuerzo focalizado. El ciclo tiende a fortalecer la determinacion y la disposicion para enfrentar desafios con decision. Canaliza la fuerza con direccion clara para evitar la precipitacion.',
+    'transit:sun|conjuncao|meio_do_ceu':
+      'El Sol en conjuncion al Medio Cielo natal ilumina la trayectoria profesional y amplia la visibilidad publica. El periodo tiende a favorecer reconocimiento y oportunidades relacionadas con la posicion social y la carrera. Define con claridad lo que deseas mostrar y lo que pretendes alcanzar.',
+    'transit:sun|conjuncao|moon':
+      'El Sol en conjuncion a la Luna natal crea convergencia entre identidad consciente y mundo emocional interno. El ciclo favorece alineacion entre lo que se siente y lo que se quiere construir, reduciendo conflictos internos. Usa el periodo para integrar necesidades personales con la direccion de vida que estas siguiendo.',
+    'transit:sun|conjuncao|neptune':
+      'El Sol en conjuncion a Neptuno natal amplia sensibilidad, creatividad y receptividad para lo que va mas alla de lo ordinario. El ciclo favorece el trabajo artistico, practicas espirituales y empatia, pero puede reducir temporalmente la claridad practica. Mantiene anclajes concretos mientras exploras lo mas sutil.',
+    'transit:sun|conjuncao|saturn':
+      'El Sol en conjuncion a Saturno natal llama la atencion hacia la estructura, la responsabilidad y el peso de lo que aun necesita consolidarse. El ciclo invita a una evaluacion honesta de lo construido y al fortalecimiento de lo que esta fragil. Enfrenta las exigencias como oportunidad de madurez genuina.',
+    'transit:sun|conjuncao|sun':
+      'El Sol en conjuncion al Sol natal marca el retorno solar, el inicio de un nuevo ciclo anual de identidad y proposito. El momento invita a revisar el ano anterior y a definir con claridad lo que se desea cultivar en los proximos doce meses. Establece intenciones con consciencia sobre lo que es realmente prioritario.',
+    'transit:sun|conjuncao|uranus':
+      'El Sol en conjuncion a Urano natal enciende el impulso de ruptura con lo convencional y de expresion de la singularidad personal. El ciclo puede traer cambios abruptos o un intenso deseo de alterar lo establecido. Abraza la originalidad con estrategia para evitar inestabilidad innecesaria.',
+    'transit:sun|conjuncao|venus':
+      'El Sol en conjuncion a Venus natal destaca el placer, la estetica, la creatividad y lo que genuinamente atrae y satisface. El ciclo tiende a ampliar la facilidad de conexion, la expresion afectiva y la apreciacion de lo bello y valioso. Invierte en actividades que nutran satisfaccion real y relaciones de calidad.',
+    'transit:sun|ingress|house_1':
+      'El Sol transitando por la Casa 1 destaca la identidad, la presencia fisica y la forma en que te presentas al mundo. La vitalidad y el deseo de expresion personal directa tienden a estar en primer plano. Buen momento para reafirmar quien eres y lo que deseas proyectar en este ciclo.',
+    'transit:sun|ingress|house_2':
+      'El Sol transitando por la Casa 2 trae atencion hacia los recursos materiales, los valores personales y lo que es realmente util y valioso para ti. El ciclo favorece la revision de finanzas y la claridad sobre lo que sostiene seguridad y bienestar. Prioriza decisiones materiales con criterio y alineacion con lo que genuinamente importa.',
+    'transit:sun|ingress|house_3':
+      'El Sol transitando por la Casa 3 ilumina la comunicacion, el aprendizaje y los intercambios cotidianos con el entorno mas inmediato. La curiosidad, la movilidad y la disposicion para conectar ideas y personas tienden a acentuarse. Buen ciclo para escribir, estudiar y fortalecer redes de contacto cercanas.',
+    'transit:sun|ingress|house_5':
+      'El Sol transitando por la Casa 5 destaca la creatividad, la expresion ludica, el romance y el placer genuino de ser quien eres. El ciclo favorece proyectos artisticos, actividades recreativas y conexiones afectivas con mas autenticidad. Buen momento para cultivar lo que trae alegria y expresar talentos con confianza.',
+    'transit:sun|ingress|house_6':
+      'El Sol transitando por la Casa 6 trae foco al trabajo, la salud, las rutinas y los procesos que sostienen el cotidiano. El ciclo favorece la atencion a los detalles, al cuerpo y a la eficiencia de los habitos diarios. Ajusta rutinas que sostienen productividad y bienestar de forma consistente.',
+    'transit:sun|ingress|house_7':
+      'El Sol transitando por la Casa 7 ilumina las asociaciones, las relaciones y lo que emerge a traves del contacto significativo con el otro. El periodo favorece mayor claridad sobre compromisos, cooperacion y lo que se busca en relaciones importantes. Buen momento para abordar temas de asociacion con apertura y honestidad.',
+    'transit:sun|ingress|house_8':
+      'El Sol transitando por la Casa 8 profundiza cuestiones de transformacion, recursos compartidos y vinculos de confianza. El ciclo puede traer a la superficie temas como herencias, inversiones conjuntas y lo que necesita liberarse o renovarse. Un periodo favorable para el insight sobre lo oculto y para procesos de renovacion real.',
+    'transit:sun|ingress|house_9':
+      'El Sol transitando por la Casa 9 expande el foco hacia la filosofia, los viajes, la educacion superior y visiones de mundo mas amplias. La curiosidad por lo desconocido y la disposicion para ir mas alla de lo familiar tienden a estar elevadas. Buen momento para estudiar, viajar y revisar creencias con mente abierta.',
+    'transit:sun|ingress|house_11':
+      'El Sol transitando por la Casa 11 destaca grupos, redes sociales, proyectos colectivos y los ideales que orientan el futuro. Las conexiones con personas de valores similares y la participacion en iniciativas colectivas pueden ganar relevancia. Buena ventana para colaborar, revisar metas a largo plazo y fortalecer alianzas.',
+    'transit:sun|ingress|house_12':
+      'El Sol transitando por la Casa 12 invita a un periodo de introspeccion, recogimiento y contacto con lo que normalmente queda fuera de la consciencia cotidiana. La vida interior, las practicas contemplativas y el trabajo entre bastidores tienden a ganar importancia. Buen momento para integrar experiencias y procesar lo que aun necesita cierre.',
+    'transit:sun|oposicao|ascendente':
+      'El Sol en oposicion al Ascendente natal coincide con el transito por el Descendente, trayendo luz a las relaciones y lo que el otro espeja. El periodo tiende a destacar acuerdos, asociaciones y como la identidad se expresa en el contexto relacional. Buena ventana para revisar compromisos con honestidad y apertura.',
+    'transit:sun|oposicao|jupiter':
+      'El Sol en oposicion a Jupiter natal puede amplificar tendencias al exceso o a una confianza desproporcionada respecto a lo que es realisticamente viable. El ciclo invita a verificar si el optimismo tiene base solida o solo entusiasmo momentaneo. Equilibra expansion y moderacion para evitar promesas mas alla de tu capacidad.',
+    'transit:sun|oposicao|mars':
+      'El Sol en oposicion a Marte natal puede traer tension entre la voluntad propia y las fuerzas externas que ofrecen resistencia. Conflictos directos o competencias pueden ganar visibilidad durante este ciclo. Canaliza la energia de forma asertiva, sin reactividad, para atravesar el periodo con menos desgaste.',
+    'transit:sun|oposicao|meio_do_ceu':
+      'El Sol en oposicion al Medio Cielo natal transita por el Fondo del Cielo, dirigiendo la atencion a la vida privada, la familia y las raices. El periodo invita a evaluar como la base personal sostiene o limita la proyeccion publica. Buen momento para cuidar el entorno domestico y fortalecer el soporte emocional interno.',
+    'transit:sun|oposicao|mercury':
+      'El Sol en oposicion a Mercurio natal puede traer giros en comunicaciones, perspectivas o informacion relevante. Otros pueden presentar puntos de vista que contradicen o desafian lo que parecia establecido. Escucha con apertura y revisa conclusiones antes de tomar una posicion definitiva.',
+    'transit:sun|oposicao|moon':
+      'El Sol en oposicion a la Luna natal puede crear tension entre necesidades emocionales y la direccion consciente de vida. Lo que se siente y lo que se quiere realizar pueden parecer en conflicto durante este ciclo. Buena ventana para mayor consciencia de las propias necesidades y como se relacionan con tus objetivos.',
+    'transit:sun|oposicao|saturn':
+      'El Sol en oposicion a Saturno natal trae evaluacion de limites, responsabilidades no resueltas y el peso de lo que aun necesita enfrentarse. El ciclo puede revelar donde la estructura esta fragil o donde la disciplina ha sido postergada. Afrontar las exigencias con honestidad es el camino mas productivo en este momento.',
+    'transit:sun|oposicao|sun':
+      'El Sol en oposicion al Sol natal marca el punto medio del ciclo anual, trayendo luz sobre lo que fue iniciado en el retorno solar. El periodo tiende a destacar las relaciones y lo que el otro refleja sobre tu propia trayectoria. Buena ventana para evaluar el progreso del ciclo personal con claridad.',
+    'transit:sun|oposicao|venus':
+      'El Sol en oposicion a Venus natal puede crear tension entre lo que agrada y lo que es necesario, entre el placer y la responsabilidad. Relaciones o asuntos financieros pueden pedir atencion y revision durante este ciclo. La claridad sobre lo que se valora genuinamente ayuda a tomar decisiones con mayor discernimiento.',
+    'transit:sun|quadratura|ascendente':
+      'El Sol en cuadratura al Ascendente natal puede traer friccion entre la identidad personal y las expectativas del contexto inmediato. El ciclo invita a ajustes en la forma de presentarse o en la relacion con el entorno proximo. Buena ventana para identificar donde la expresion personal pide mas autenticidad.',
+    'transit:sun|quadratura|jupiter':
+      'El Sol en cuadratura a Jupiter natal puede amplificar impulsos de expansion sin suficiente anclaje en lo que es realisticamente viable. Exceso de confianza, promesas mas alla de la capacidad o gastos desproporcionados pueden surgir como desafios. Usa el discernimiento para separar lo que tiene fundamento de lo que es solo entusiasmo.',
+    'transit:sun|quadratura|mars':
+      'El Sol en cuadratura a Marte natal genera friccion entre la voluntad de actuar y las resistencias que el contexto ofrece. Conflicto, impaciencia y desgaste energetico pueden surgir si la accion es forzada sin direccion clara. Canaliza la presion hacia resolver obstaculos concretos en lugar de reaccionar de forma impulsiva.',
+    'transit:sun|quadratura|meio_do_ceu':
+      'El Sol en cuadratura al Medio Cielo natal crea tension entre el desarrollo personal interno y las demandas de la trayectoria profesional. Las elecciones de carrera, reputacion o direccion de vida pueden sentirse mas exigentes durante este periodo. Revisa si los objetivos externos reflejan valores y necesidades genuinas antes de actuar.',
+    'transit:sun|quadratura|mercury':
+      'El Sol en cuadratura a Mercurio natal puede traer presion sobre comunicaciones, decisiones o el procesamiento de informacion importante. Malentendidos, sobrecarga cognitiva o dificultad para articular pensamientos pueden surgir durante este ciclo. Desacelera antes de comunicar y verifica lo que ha sido entendido.',
+    'transit:sun|quadratura|neptune':
+      'El Sol en cuadratura a Neptuno natal puede crear confusion entre lo que es real y lo que es idealizado o proyectado. La claridad de percepcion puede estar temporalmente comprometida, haciendo prudente verificar antes de decidir. Trabaja con creatividad e intuicion mientras mantienes anclajes practicos solidos.',
+    'transit:sun|quadratura|pluto':
+      'El Sol en cuadratura a Pluton natal pone en evidencia dinamicas de poder, control y transformaciones que piden atencion. El ciclo puede traer confrontaciones con lo que esta oculto o con fuerzas que operan entre bastidores. La honestidad sobre lo que necesita cambiar es la base para atravesar este periodo con integridad.',
+    'transit:sun|quadratura|saturn':
+      'El Sol en cuadratura a Saturno natal crea presion entre los deseos de expresion y las limitaciones estructurales o responsabilidades no cumplidas. El ciclo puede sentirse pesado, con obstaculos que exigen paciencia y disciplina. Trata las restricciones como informacion sobre lo que necesita fortalecerse.',
+    'transit:sun|quadratura|sun':
+      'El Sol en cuadratura al Sol natal activa un punto de tension en el ciclo anual, trayendo desafios relacionados con la identidad y la expresion personal. El momento puede revelar conflictos entre quien quieres ser y lo que el contexto permite o exige. Buena ventana para ajustar el rumbo y realinear la direccion con autenticidad.',
+    'transit:sun|quadratura|uranus':
+      'El Sol en cuadratura a Urano natal puede traer disrupciones inesperadas, cambios abruptos o impulsos de rebeldia contra lo establecido. El deseo de ruptura puede ser intenso, pero sin planificacion puede resultar en inestabilidad innecesaria. Integra la necesidad de cambio con un enfoque mas estrategico.',
+    'transit:sun|quadratura|venus':
+      'El Sol en cuadratura a Venus natal puede generar tension en relaciones, asuntos financieros o en lo que genuinamente trae satisfaccion. Las decisiones relacionadas con el placer, el dinero o el afecto pueden pedir mas atencion y cuidado durante este ciclo. Revisa lo que se esta valorando y si esta alineado con necesidades reales.',
+    'transit:sun|sextil|ascendente':
+      'El Sol en sextil al Ascendente natal crea un momento de expresion personal mas fluida y alineada con el entorno. La identidad encuentra canales naturales de proyeccion sin gran resistencia ni esfuerzo excesivo. Buen momento para iniciativas que impliquen presencia, visibilidad y comunicacion de lo que representas.',
+    'transit:sun|sextil|jupiter':
+      'El Sol en sextil a Jupiter natal favorece el optimismo, la apertura a oportunidades y una sensacion de expansion accesible. El ciclo apoya el crecimiento cuando hay disposicion para moverse en la direccion de lo vislumbrado. La confianza que surge tiende a estar bien fundamentada cuando se aplica con criterio.',
+    'transit:sun|sextil|mars':
+      'El Sol en sextil a Marte natal pone energia disponible para la accion enfocada con fluidez y sin el desgaste del conflicto. Las iniciativas personales, los proyectos fisicos y la afirmacion de la voluntad encuentran buen soporte durante este ciclo. Buen momento para poner en movimiento lo que estaba en planificacion.',
+    'transit:sun|sextil|meio_do_ceu':
+      'El Sol en sextil al Medio Cielo natal apoya la visibilidad profesional y el alineamiento entre identidad y objetivos de carrera. El ciclo puede abrir espacio para reconocimiento u oportunidades relacionadas con la posicion publica. Buen momento para posicionarse con claridad sobre lo que ofreces y lo que buscas.',
+    'transit:sun|sextil|mercury':
+      'El Sol en sextil a Mercurio natal favorece la claridad mental, la facilidad de comunicacion y el procesamiento eficiente de informacion. La articulacion de ideas tiende a fluir con mayor naturalidad, facilitando negociaciones e intercambios. Buen periodo para escribir, aprender o conducir conversaciones importantes.',
+    'transit:sun|sextil|neptune':
+      'El Sol en sextil a Neptuno natal abre espacio para la creatividad, la intuicion y una sensibilidad mas receptiva a lo que no es inmediatamente visible. El ciclo favorece el trabajo artistico, las practicas contemplativas y la conexion con lo que va mas alla de lo ordinario. Usa la imaginacion con intencionalidad como herramienta productiva.',
+    'transit:sun|sextil|pluto':
+      'El Sol en sextil a Pluton natal favorece el acceso a profundidad y recursos que normalmente no se movilizan con facilidad. El ciclo apoya cambios significativos conducidos con foco e intencion, sin la resistencia de los aspectos de tension. Buena ventana para trabajar la transformacion personal con menos friccion.',
+    'transit:sun|sextil|saturn':
+      'El Sol en sextil a Saturno natal apoya la disciplina productiva, la estructura eficaz y la responsabilidad que energiza en lugar de pesar. Los proyectos a largo plazo, los compromisos y el trabajo consistente encuentran buen respaldo durante este ciclo. Momento favorable para consolidar lo que ha sido construido con esfuerzo real.',
+    'transit:sun|sextil|sun':
+      'El Sol en sextil al Sol natal crea una ventana favorable para la expresion personal y para activar el potencial del ciclo anual en curso. La identidad encuentra fluidez y la capacidad de moverse hacia lo que importa tiende a estar accesible. Buen momento para iniciativas que expresen quien estas siendo ahora.',
+    'transit:sun|sextil|uranus':
+      'El Sol en sextil a Urano natal favorece la originalidad, la innovacion y la apertura a perspectivas fuera de lo habitual. El ciclo apoya cambios creativos y la expresion de lo singular sin generar disrupciones innecesarias. Buen momento para experimentar, explorar lo diferente y confiar en la intuicion innovadora.',
+    'transit:sun|sextil|venus':
+      'El Sol en sextil a Venus natal favorece el placer, la creatividad y las conexiones afectivas con mas facilidad y naturalidad. Los intercambios sociales, los proyectos esteticos y la expresion de lo que agrada tienden a fluir bien durante este ciclo. Buen momento para invertir en relaciones, arte y actividades que nutran satisfaccion genuina.',
+    'transit:sun|trigono|ascendente':
+      'El Sol en trigono al Ascendente natal favorece la expresion autentica y una presencia en el mundo que encuentra resonancia natural. La identidad y la forma en que eres percibido tienden a estar bien alineadas durante este ciclo. Buen momento para presentarte, liderar proyectos personales y afirmar tu direccion con confianza.',
+    'transit:sun|trigono|jupiter':
+      'El Sol en trigono a Jupiter natal favorece la expansion, la confianza y la sensacion de que el camino esta abierto para el crecimiento real. Las oportunidades que llegan durante este ciclo tienden a tener fundamento genuino y a encontrar receptividad. Buen momento para ampliar lo que esta funcionando y asumir iniciativas con optimismo.',
+    'transit:sun|trigono|mars':
+      'El Sol en trigono a Marte natal trae energia disponible, coraje y la capacidad de actuar con claridad y proposito. Las iniciativas personales y los proyectos que requieren disposicion encuentran buen terreno durante este ciclo. Ventana favorable para logros concretos, decisiones asertivas y trabajo que exige vigor.',
+    'transit:sun|trigono|meio_do_ceu':
+      'El Sol en trigono al Medio Cielo natal apoya la armonia entre identidad y trayectoria profesional, con posible reconocimiento y claridad de direccion. El ciclo favorece la progresion en la carrera cuando hay esfuerzo y alineacion con lo que se quiere construir. Buen momento para iniciativas que aumenten la visibilidad con autenticidad.',
+    'transit:sun|trigono|mercury':
+      'El Sol en trigono a Mercurio natal favorece la claridad de pensamiento, la comunicacion eficaz y la conexion entre intencion y expresion. Las ideas fluyen con mas facilidad y la articulacion de lo que se piensa tiende a estar elevada durante este ciclo. Buen momento para presentar proyectos, tener conversaciones importantes y desarrollar conceptos.',
+    'transit:sun|trigono|neptune':
+      'El Sol en trigono a Neptuno natal apoya la creatividad, la espiritualidad y una sensibilidad que enriquece la percepcion del cotidiano. El ciclo favorece el contacto con lo trascendente, ya sea en el arte, la contemplacion o la empatia. Ventana propicia para integrar la dimension mas sutil de la experiencia con la vida practica.',
+    'transit:sun|trigono|pluto':
+      'El Sol en trigono a Pluton natal favorece la transformacion profunda conducida con foco e intencion, sin las fricciones de los aspectos de tension. El ciclo puede facilitar renovacion significativa en areas donde habia necesidad de cambio real. Buen momento para profundizar lo que importa y liberar lo que ha perdido significado.',
+    'transit:sun|trigono|saturn':
+      'El Sol en trigono a Saturno natal favorece la madurez, la estructura productiva y la sensacion de que el esfuerzo encuentra resultados concretos. Los proyectos que requieren disciplina y compromiso tienden a progresar bien durante este ciclo. Buena ventana para consolidar lo construido y asumir responsabilidades con confianza.',
+    'transit:sun|trigono|sun':
+      'El Sol en trigono al Sol natal crea un momento de fluidez y alineamiento interno, con la expresion personal encontrando buenas condiciones para florecer. Este punto del ciclo anual favorece iniciativas, creatividad y conexion con el propio proposito. Buena ventana para avanzar en proyectos que expresen quien estas llegando a ser.',
+    'transit:sun|trigono|uranus':
+      'El Sol en trigono a Urano natal favorece la originalidad, la libertad de expresion y la apertura a lo que es singular e innovador. Los cambios durante este ciclo tienden a ser creativos y bien recibidos, sin el choque de disrupciones forzadas. Buen momento para explorar lo que es autentico y diferente, confiando en lo que emerge.',
+    'transit:sun|trigono|venus':
+      'El Sol en trigono a Venus natal trae armonia, placer y la sensacion de que las conexiones afectivas y creativas estan bien sostenidas. El ciclo favorece la expresion artistica, las relaciones y la capacidad de disfrutar lo que la vida ofrece. Buena ventana para cultivar belleza, afecto y lo que genuinamente satisface.',
 },
   'it-IT': {
     'transit:mercury|conjuncao|ascendente':
@@ -2645,5 +2893,129 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Venere in ingresso nella Casa 11 favorisce armonizzazione in reti, collaborazioni e progetti futuri condivisi. Questo ciclo amplifica apertura a nuovi legami e connessioni di qualita con scopo. Dai priorita ad alleanze con reciprocita reale e contribuisci con autenticita.',
     'transit:venus|ingress|house_12':
       'Venere in ingresso nella Casa 12 amplifica sensibilita interiore, bisogno di riposo affettivo e processi di chiusura tranquilla. Questa fase favorisce cura di se, raffinamento delle relazioni e revisione di cio che sostiene benessere reale. Usa il periodo per integrare apprendimenti relazionali.',
+    'transit:sun|conjuncao|ascendente':
+      'Il Sole in congiunzione al Ascendente natale segna l inizio di un nuovo ciclo annuale di espressione personale e proiezione nel mondo. La vitalita, la presenza e il bisogno di chiarezza su chi sei tendono ad accentuarsi durante questo periodo. Investi nel definire cio che desideri proiettare in questo ciclo.',
+    'transit:sun|conjuncao|jupiter':
+      'Il Sole in congiunzione a Giove natale amplia la fiducia, la disposizione alla crescita e l apertura verso nuove possibilita. Il ciclo favorisce iniziative di espansione quando vi e discernimento su cio che merita davvero investimento. Evita l entusiasmo eccessivo senza ancorarsi a cio che e realistico.',
+    'transit:sun|conjuncao|mars':
+      'Il Sole in congiunzione a Marte natale intensifica l energia disponibile, lo slancio ad agire e la capacita di sostenere sforzo focalizzato. Il ciclo tende a rafforzare la determinazione e la disponibilita ad affrontare le sfide con decisione. Canalizza la forza con direzione chiara per evitare impulsivita.',
+    'transit:sun|conjuncao|meio_do_ceu':
+      'Il Sole in congiunzione al Medio Cielo natale illumina il percorso professionale e amplia la visibilita pubblica. Il periodo tende a favorire riconoscimento e opportunita legate alla posizione sociale e alla carriera. Definisci con chiarezza cosa vuoi mostrare e cosa intendi raggiungere.',
+    'transit:sun|conjuncao|moon':
+      'Il Sole in congiunzione alla Luna natale crea convergenza tra identita consapevole e mondo emotivo interno. Il ciclo favorisce l allineamento tra cio che si sente e cio che si vuole costruire, riducendo i conflitti interni. Usa il periodo per integrare i bisogni personali con la direzione di vita che stai seguendo.',
+    'transit:sun|conjuncao|neptune':
+      'Il Sole in congiunzione a Nettuno natale amplia sensibilita, creativita e ricettivita verso cio che va oltre l ordinario. Il ciclo favorisce il lavoro artistico, le pratiche spirituali e l empatia, ma puo ridurre temporaneamente la chiarezza pratica. Mantieni ancoraggi concreti mentre esplori cio che e piu sottile.',
+    'transit:sun|conjuncao|saturn':
+      'Il Sole in congiunzione a Saturno natale richiama l attenzione sulla struttura, la responsabilita e il peso di cio che ancora deve essere consolidato. Il ciclo invita a una valutazione onesta di cio che e stato costruito e al rafforzamento di cio che e fragile. Affronta le esigenze come opportunita di maturita genuina.',
+    'transit:sun|conjuncao|sun':
+      'Il Sole in congiunzione al Sole natale segna il ritorno solare, l inizio di un nuovo ciclo annuale completo di identita e scopo. Il momento invita a rivedere l anno precedente e a definire con chiarezza cosa coltivare nei prossimi dodici mesi. Stabilisci intenzioni con consapevolezza di cio che e davvero prioritario.',
+    'transit:sun|conjuncao|uranus':
+      'Il Sole in congiunzione a Urano natale accende lo slancio verso la rottura con il convenzionale e l espressione della singolarita personale. Il ciclo puo portare cambiamenti bruschi o un intenso desiderio di alterare cio che e stabilito. Abbraccia l originalita con strategia per evitare instabilita non necessaria.',
+    'transit:sun|conjuncao|venus':
+      'Il Sole in congiunzione a Venere natale evidenzia piacere, estetica, creativita e cio che attrae e soddisfa genuinamente. Il ciclo tende ad amplificare la facilita di connessione, l espressione affettiva e l apprezzamento di cio che e bello e prezioso. Investi in attivita che nutrono soddisfazione reale e relazioni di qualita.',
+    'transit:sun|ingress|house_1':
+      'Il Sole in transito per la Casa 1 evidenzia l identita, la presenza fisica e il modo in cui ti presenti al mondo. La vitalita e il desiderio di espressione personale diretta tendono a essere in primo piano. Buona finestra per riaffermare chi sei e cosa vuoi proiettare in questo ciclo.',
+    'transit:sun|ingress|house_2':
+      'Il Sole in transito per la Casa 2 porta attenzione verso le risorse materiali, i valori personali e cio che e davvero utile e prezioso per te. Il ciclo favorisce la revisione delle finanze e la chiarezza su cio che sostiene sicurezza e benessere. Dai priorita alle decisioni materiali con criterio e allineamento a cio che conta genuinamente.',
+    'transit:sun|ingress|house_3':
+      'Il Sole in transito per la Casa 3 illumina la comunicazione, l apprendimento e gli scambi quotidiani con l ambiente piu immediato. La curiosita, la mobilita e la disponibilita a connettere idee e persone tendono ad accentuarsi. Buon ciclo per scrivere, studiare e rafforzare le reti di contatto vicine.',
+    'transit:sun|ingress|house_5':
+      'Il Sole in transito per la Casa 5 evidenzia la creativita, l espressione ludica, il romanticismo e il genuino piacere di essere se stessi. Il ciclo favorisce progetti artistici, attivita ricreative e connessioni affettive con piu autenticita. Buon momento per coltivare cio che porta gioia ed esprimere talenti con fiducia.',
+    'transit:sun|ingress|house_6':
+      'Il Sole in transito per la Casa 6 porta il focus sul lavoro, la salute, le routine e i processi che sostengono il quotidiano. Il ciclo favorisce l attenzione ai dettagli, al corpo e all efficienza delle abitudini quotidiane. Adatta le routine che sostengono produttivita e benessere in modo coerente.',
+    'transit:sun|ingress|house_7':
+      'Il Sole in transito per la Casa 7 illumina le partnership, le relazioni e cio che emerge attraverso il contatto significativo con l altro. Il periodo favorisce maggiore chiarezza su impegni, cooperazione e cio che si cerca in relazioni importanti. Buon momento per affrontare temi di partnership con apertura e onesta.',
+    'transit:sun|ingress|house_8':
+      'Il Sole in transito per la Casa 8 approfondisce le questioni di trasformazione, risorse condivise e legami di fiducia. Il ciclo puo portare in superficie temi come eredita, investimenti congiunti e cio che deve essere rilasciato o rinnovato. Un periodo favorevole per l intuizione su cio che e nascosto e per processi di rinnovamento reale.',
+    'transit:sun|ingress|house_9':
+      'Il Sole in transito per la Casa 9 espande il focus verso la filosofia, i viaggi, l istruzione superiore e visioni del mondo piu ampie. La curiosita per l ignoto e la disponibilita ad andare oltre il familiare tendono ad essere elevate. Buon momento per studiare, viaggiare e rivisitare le credenze con mente aperta.',
+    'transit:sun|ingress|house_11':
+      'Il Sole in transito per la Casa 11 evidenzia gruppi, reti sociali, progetti collettivi e gli ideali che orientano il futuro. Le connessioni con persone di valori simili e la partecipazione in iniziative collettive possono guadagnare rilevanza. Buona finestra per collaborare, rivedere obiettivi a lungo termine e rafforzare alleanze.',
+    'transit:sun|ingress|house_12':
+      'Il Sole in transito per la Casa 12 invita a un periodo di introspezione, raccoglimento e contatto con cio che normalmente resta fuori dalla coscienza quotidiana. La vita interiore, le pratiche contemplative e il lavoro dietro le quinte tendono a guadagnare importanza. Buon momento per integrare esperienze e processare cio che necessita ancora chiusura.',
+    'transit:sun|oposicao|ascendente':
+      'Il Sole in opposizione al Ascendente natale coincide con il transito per il Discendente, portando luce nelle relazioni e in cio che l altro rispecchia. Il periodo tende a evidenziare accordi, partnership e come l identita si esprime nel contesto relazionale. Buona finestra per riesaminare gli impegni con onesta e apertura.',
+    'transit:sun|oposicao|jupiter':
+      'Il Sole in opposizione a Giove natale puo amplificare tendenze all eccesso o a una fiducia sproporzionata rispetto a cio che e realisticamente fattibile. Il ciclo invita a verificare se l ottimismo ha basi solide o solo entusiasmo momentaneo. Bilancia espansione e moderazione per evitare promesse al di la della capacita.',
+    'transit:sun|oposicao|mars':
+      'Il Sole in opposizione a Marte natale puo portare tensione tra la volonta personale e le forze esterne che offrono resistenza. Conflitti diretti o competizioni possono guadagnare visibilita durante questo ciclo. Canalizza l energia in modo assertivo, senza reattivita, per attraversare il periodo con meno esaurimento.',
+    'transit:sun|oposicao|meio_do_ceu':
+      'Il Sole in opposizione al Medio Cielo natale transita per il Fondo del Cielo, dirigendo l attenzione alla vita privata, alla famiglia e alle radici. Il periodo invita a valutare come la base personale sostiene o limita la proiezione pubblica. Buon momento per prendersi cura del ambiente domestico e rafforzare il supporto emotivo interno.',
+    'transit:sun|oposicao|mercury':
+      'Il Sole in opposizione a Mercurio natale puo portare cambiamenti nelle comunicazioni, nelle prospettive o in informazioni rilevanti. Altri possono presentare punti di vista che contraddicono o mettono in discussione cio che sembrava stabilito. Ascolta con apertura e rivedi le conclusioni prima di prendere una posizione definitiva.',
+    'transit:sun|oposicao|moon':
+      'Il Sole in opposizione alla Luna natale puo creare tensione tra i bisogni emotivi e la direzione consapevole della vita. Cio che si sente e cio che si vuole realizzare possono sembrare in conflitto durante questo ciclo. Buona finestra per una maggiore consapevolezza dei propri bisogni e di come si relazionano ai tuoi obiettivi.',
+    'transit:sun|oposicao|saturn':
+      'Il Sole in opposizione a Saturno natale porta valutazione dei limiti, responsabilita irrisolte e il peso di cio che ancora deve essere affrontato. Il ciclo puo rivelare dove la struttura e fragile o dove la disciplina e stata rinviata. Affrontare le esigenze con onesta e il percorso piu produttivo in questo momento.',
+    'transit:sun|oposicao|sun':
+      'Il Sole in opposizione al Sole natale segna il punto medio del ciclo annuale, portando luce su cio che fu iniziato al ritorno solare. Il periodo tende a evidenziare le relazioni e cio che l altro riflette del tuo stesso percorso. Buona finestra per valutare il progresso del ciclo personale con chiarezza.',
+    'transit:sun|oposicao|venus':
+      'Il Sole in opposizione a Venere natale puo creare tensione tra cio che piace e cio che e necessario, tra piacere e responsabilita. Le relazioni o le questioni finanziarie possono richiedere attenzione e revisione durante questo ciclo. La chiarezza su cio che si valorizza genuinamente aiuta a prendere decisioni con maggiore discernimento.',
+    'transit:sun|quadratura|ascendente':
+      'Il Sole in quadratura al Ascendente natale puo portare attrito tra l identita personale e le aspettative del contesto immediato. Il ciclo invita ad aggiustamenti nel modo di presentarsi o nel rapporto con l ambiente vicino. Buona finestra per identificare dove l espressione personale richiede piu autenticita.',
+    'transit:sun|quadratura|jupiter':
+      'Il Sole in quadratura a Giove natale puo amplificare gli impulsi di espansione senza sufficiente ancoraggio a cio che e realisticamente fattibile. Eccesso di fiducia, promesse oltre la capacita o spese sproporzionate possono emergere come sfide. Usa il discernimento per separare cio che ha fondamento da cio che e solo entusiasmo.',
+    'transit:sun|quadratura|mars':
+      'Il Sole in quadratura a Marte natale genera attrito tra la volonta di agire e le resistenze che il contesto offre. Conflitto, impazienza ed esaurimento energetico possono emergere se l azione e forzata senza direzione chiara. Canalizza la pressione verso la risoluzione di ostacoli concreti invece di reagire impulsivamente.',
+    'transit:sun|quadratura|meio_do_ceu':
+      'Il Sole in quadratura al Medio Cielo natale crea tensione tra lo sviluppo personale interno e le richieste del percorso professionale. Le scelte di carriera, reputazione o direzione di vita possono sembrare piu impegnative durante questo periodo. Rivedi se gli obiettivi esterni riflettono valori e bisogni genuini prima di agire.',
+    'transit:sun|quadratura|mercury':
+      'Il Sole in quadratura a Mercurio natale puo portare pressione sulle comunicazioni, le decisioni o l elaborazione di informazioni importanti. Malintesi, sovraccarico cognitivo o difficolta ad articolare pensieri possono emergere durante questo ciclo. Rallenta prima di comunicare e verifica cio che e stato compreso.',
+    'transit:sun|quadratura|neptune':
+      'Il Sole in quadratura a Nettuno natale puo creare confusione tra cio che e reale e cio che e idealizzato o proiettato. La chiarezza percettiva puo essere temporaneamente compromessa, rendendo prudente verificare prima di decidere. Lavora con creativita e intuizione mantenendo ancoraggi pratici solidi.',
+    'transit:sun|quadratura|pluto':
+      'Il Sole in quadratura a Plutone natale mette in evidenza le dinamiche di potere, controllo e trasformazioni che chiedono attenzione. Il ciclo puo portare confronti con cio che e nascosto o con forze che operano dietro le quinte. L onesta su cio che deve cambiare e la base per attraversare questo periodo con integrita.',
+    'transit:sun|quadratura|saturn':
+      'Il Sole in quadratura a Saturno natale crea pressione tra i desideri di espressione e i limiti strutturali o le responsabilita non adempiute. Il ciclo puo sembrare pesante, con ostacoli che richiedono pazienza e disciplina. Tratta le restrizioni come informazioni su cio che deve essere rafforzato.',
+    'transit:sun|quadratura|sun':
+      'Il Sole in quadratura al Sole natale attiva un punto di tensione nel ciclo annuale, portando sfide legate all identita e all espressione personale. Il momento puo rivelare conflitti tra chi vuoi essere e cio che il contesto permette o richiede. Buona finestra per correggere la rotta e riallineare la direzione con autenticita.',
+    'transit:sun|quadratura|uranus':
+      'Il Sole in quadratura a Urano natale puo portare interruzioni inaspettate, cambiamenti bruschi o impulsi di ribellione contro lo stabilito. Il desiderio di rottura puo essere intenso, ma senza pianificazione puo risultare in instabilita non necessaria. Integra il bisogno di cambiamento con un approccio piu strategico.',
+    'transit:sun|quadratura|venus':
+      'Il Sole in quadratura a Venere natale puo generare tensione nelle relazioni, nelle questioni finanziarie o in cio che porta genuinamente soddisfazione. Le decisioni legate al piacere, al denaro o all affetto possono richiedere piu attenzione e cura durante questo ciclo. Rivedi cio che si sta valorizzando e se e allineato ai bisogni reali.',
+    'transit:sun|sextil|ascendente':
+      'Il Sole in sextile al Ascendente natale crea un momento di espressione personale piu fluida e allineata con l ambiente. L identita trova canali naturali di proiezione senza grande resistenza o sforzo eccessivo. Buon momento per iniziative che coinvolgono presenza, visibilita e comunicazione di cio che rappresenti.',
+    'transit:sun|sextil|jupiter':
+      'Il Sole in sextile a Giove natale favorisce ottimismo, apertura alle opportunita e una sensazione di espansione accessibile. Il ciclo supporta la crescita quando vi e disponibilita a muoversi nella direzione di cio che e stato intravisto. La fiducia che emerge tende ad essere ben fondata quando applicata con criterio.',
+    'transit:sun|sextil|mars':
+      'Il Sole in sextile a Marte natale mette a disposizione energia per l azione focalizzata con fluidita e senza l esaurimento del conflitto. Le iniziative personali, i progetti fisici e l affermazione della volonta trovano buon supporto durante questo ciclo. Buon momento per mettere in moto cio che era in pianificazione.',
+    'transit:sun|sextil|meio_do_ceu':
+      'Il Sole in sextile al Medio Cielo natale supporta la visibilita professionale e l allineamento tra identita e obiettivi di carriera. Il ciclo puo aprire spazio per riconoscimento od opportunita legate alla posizione pubblica. Buon momento per posizionarsi con chiarezza su cio che si offre e si cerca.',
+    'transit:sun|sextil|mercury':
+      'Il Sole in sextile a Mercurio natale favorisce la chiarezza mentale, la facilita di comunicazione e l elaborazione efficiente delle informazioni. L articolazione delle idee tende a scorrere con maggiore naturalezza, facilitando negoziazioni e scambi. Buon periodo per scrivere, apprendere o condurre conversazioni importanti.',
+    'transit:sun|sextil|neptune':
+      'Il Sole in sextile a Nettuno natale apre spazio per la creativita, l intuizione e una sensibilita piu ricettiva a cio che non e immediatamente visibile. Il ciclo favorisce il lavoro artistico, le pratiche contemplative e la connessione con cio che va oltre l ordinario. Usa l immaginazione con intenzionalita come strumento produttivo.',
+    'transit:sun|sextil|pluto':
+      'Il Sole in sextile a Plutone natale favorisce l accesso alla profondita e a risorse che normalmente non vengono mobilitate con facilita. Il ciclo supporta cambiamenti significativi condotti con focus e intenzione, senza la resistenza degli aspetti di tensione. Buona finestra per lavorare la trasformazione personale con meno attrito.',
+    'transit:sun|sextil|saturn':
+      'Il Sole in sextile a Saturno natale supporta la disciplina produttiva, la struttura efficace e la responsabilita che energizza invece di gravare. I progetti a lungo termine, gli impegni e il lavoro costante trovano buon supporto durante questo ciclo. Momento favorevole per consolidare cio che e stato costruito con vero impegno.',
+    'transit:sun|sextil|sun':
+      'Il Sole in sextile al Sole natale crea una finestra favorevole per l espressione personale e per attivare il potenziale del ciclo annuale in corso. L identita trova fluidita e la capacita di muoversi verso cio che conta tende ad essere accessibile. Buon momento per iniziative che esprimano chi sei adesso.',
+    'transit:sun|sextil|uranus':
+      'Il Sole in sextile a Urano natale favorisce originalita, innovazione e apertura verso prospettive fuori dal abituale. Il ciclo supporta cambiamenti creativi e l espressione di cio che e singolare senza generare interruzioni non necessarie. Buon momento per sperimentare, esplorare il diverso e fidarsi dell intuizione innovativa.',
+    'transit:sun|sextil|venus':
+      'Il Sole in sextile a Venere natale favorisce piacere, creativita e connessioni affettive con piu facilita e naturalezza. Gli scambi sociali, i progetti estetici e l espressione di cio che piace tendono a scorrere bene durante questo ciclo. Buon momento per investire in relazioni, arte e attivita che nutrono soddisfazione genuina.',
+    'transit:sun|trigono|ascendente':
+      'Il Sole in trigono al Ascendente natale favorisce l espressione autentica e una presenza nel mondo che trova risonanza naturale. L identita e il modo in cui sei percepito tendono ad essere ben allineati durante questo ciclo. Buon momento per presentarti, guidare progetti personali e affermare la tua direzione con fiducia.',
+    'transit:sun|trigono|jupiter':
+      'Il Sole in trigono a Giove natale favorisce l espansione, la fiducia e la sensazione che il percorso sia aperto per una crescita reale. Le opportunita che arrivano durante questo ciclo tendono ad avere fondamento genuino e a trovare ricettivita. Buon momento per ampliare cio che funziona e intraprendere iniziative con ottimismo.',
+    'transit:sun|trigono|mars':
+      'Il Sole in trigono a Marte natale porta energia disponibile, coraggio e la capacita di agire con chiarezza e scopo. Le iniziative personali e i progetti che richiedono disponibilita trovano buon terreno durante questo ciclo. Finestra favorevole per realizzazioni concrete, decisioni assertive e lavoro che richiede vigore.',
+    'transit:sun|trigono|meio_do_ceu':
+      'Il Sole in trigono al Medio Cielo natale supporta l armonia tra identita e percorso professionale, con possibile riconoscimento e chiarezza di direzione. Il ciclo favorisce la progressione nella carriera quando vi e sforzo e allineamento con cio che si vuole costruire. Buon momento per iniziative che aumentano la visibilita con autenticita.',
+    'transit:sun|trigono|mercury':
+      'Il Sole in trigono a Mercurio natale favorisce la chiarezza di pensiero, la comunicazione efficace e la connessione tra intenzione ed espressione. Le idee scorrono con piu facilita e l articolazione di cio che si pensa tende ad essere elevata durante questo ciclo. Buon momento per presentare progetti, avere conversazioni importanti e sviluppare concetti.',
+    'transit:sun|trigono|neptune':
+      'Il Sole in trigono a Nettuno natale supporta la creativita, la spiritualita e una sensibilita che arricchisce la percezione del quotidiano. Il ciclo favorisce il contatto con il trascendente, che sia nell arte, nella contemplazione o nell empatia. Finestra propizia per integrare la dimensione piu sottile dell esperienza con la vita pratica.',
+    'transit:sun|trigono|pluto':
+      'Il Sole in trigono a Plutone natale favorisce la trasformazione profonda condotta con focus e intenzione, senza gli attriti degli aspetti di tensione. Il ciclo puo facilitare il rinnovamento significativo in aree dove vi era bisogno di cambiamento reale. Buon momento per approfondire cio che conta e rilasciare cio che ha perso significato.',
+    'transit:sun|trigono|saturn':
+      'Il Sole in trigono a Saturno natale favorisce maturita, struttura produttiva e la sensazione che lo sforzo incontri risultati concreti. I progetti che richiedono disciplina e impegno tendono a progredire bene durante questo ciclo. Buona finestra per consolidare cio che e stato costruito e assumere responsabilita con fiducia.',
+    'transit:sun|trigono|sun':
+      'Il Sole in trigono al Sole natale crea un momento di fluidita e allineamento interno, con l espressione personale che trova buone condizioni per fiorire. Questo punto del ciclo annuale favorisce iniziative, creativita e connessione con il proprio scopo. Buona finestra per avanzare in progetti che esprimano chi stai diventando.',
+    'transit:sun|trigono|uranus':
+      'Il Sole in trigono a Urano natale favorisce originalita, liberta di espressione e apertura verso cio che e singolare e innovativo. I cambiamenti durante questo ciclo tendono ad essere creativi e ben accolti, senza lo shock di interruzioni forzate. Buon momento per esplorare cio che e autentico e diverso, fidandosi di cio che emerge.',
+    'transit:sun|trigono|venus':
+      'Il Sole in trigono a Venere natale porta armonia, piacere e la sensazione che le connessioni affettive e creative siano ben sostenute. Il ciclo favorisce l espressione artistica, le relazioni e la capacita di godere cio che la vita offre. Buona finestra per coltivare bellezza, affetto e cio che soddisfa genuinamente.',
 },
 }
