@@ -499,4 +499,52 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Netuno em ingresso na Casa 5 pode abrir fase criativa sensivel, com mais inspiracao em expressao pessoal e afetos. O ciclo favorece arte, romance e prazer com tom contemplativo quando ha realismo de limite. Cuide de expectativas para sustentar qualidade.',
   'transit:neptune|ingress|house_10':
     'Netuno em ingresso na Casa 10 tende a ativar revisao de vocacao, imagem publica e direcao profissional. A fase favorece reposicionamento com sentido quando ha validacao pratica das escolhas. Estruture metas claras para evitar ambiguidade de rota.',
+  'transit:mercury|conjuncao|ascendente':
+    'Mercurio em conjuncao ao Ascendente tende a aumentar clareza de fala, mobilidade mental e rapidez de resposta. A fase favorece apresentacoes, conversas importantes e ajustes de posicionamento pessoal. Organize mensagens-chave e mantenha objetividade para reduzir ruido.',
+  'transit:mercury|conjuncao|jupiter':
+    'Mercurio em conjuncao com Jupiter amplia visao de contexto e repertorio de ideias, com ganho para estrategia e aprendizado. O ciclo favorece sintese entre detalhe e panorama geral quando ha criterio de priorizacao. Converta insight em plano pratico com etapas verificaveis.',
+  'transit:mercury|conjuncao|mars':
+    'Mercurio em conjuncao com Marte acelera pensamento e decisao, aumentando impulso de argumentacao e resposta imediata. A fase favorece execucao quando ha foco e sequencia clara de prioridades. Evite conclusao apressada e valide fatos antes de fechar acordos.',
+  'transit:mercury|conjuncao|meio_do_ceu':
+    'Mercurio em conjuncao ao Meio do Ceu favorece visibilidade por comunicacao, estrategia e organizacao de narrativas profissionais. O periodo tende a abrir espaco para alinhamento de imagem e entrega objetiva. Priorize mensagens simples e consistentes para fortalecer credibilidade.',
+  'transit:mercury|conjuncao|mercury':
+    'Mercurio em conjuncao com Mercurio marca janela de alta atividade mental, revisao de ideias e atualizacao de criterios. A fase favorece estudo, escrita e reorganizacao de processos de decisao. Estruture informacao por relevancia para evitar sobrecarga cognitiva.',
+  'transit:mercury|conjuncao|moon':
+    'Mercurio em conjuncao com Lua aproxima pensamento e emocao, favorecendo conversas de acolhimento com clareza. O ciclo pode facilitar nomear sentimentos e ajustar expectativas no cotidiano. Mantenha escuta ativa para equilibrar sensibilidade e objetividade.',
+  'transit:mercury|conjuncao|neptune':
+    'Mercurio em conjuncao com Netuno amplia intuicao mental e leitura simbolica, com risco de ambiguidade em dados concretos. A fase favorece criatividade e percepcao sutil quando ha verificacao pratica. Registre combinados e revise detalhes para reduzir mal-entendidos.',
+  'transit:mercury|conjuncao|pluto':
+    'Mercurio em conjuncao com Plutao intensifica foco investigativo e profundidade analitica em temas sensiveis. O ciclo favorece diagnostico de raiz e reformulacao de estrategia com criterio. Evite rigidez discursiva e mantenha abertura para revisar hipoteses.',
+  'transit:mercury|conjuncao|saturn':
+    'Mercurio em conjuncao com Saturno favorece pensamento estruturado, disciplina intelectual e comunicacao objetiva. A fase tende a apoiar planejamento, revisao de contratos e definicao de metodo. Trabalhe com prazos claros e linguagem precisa para sustentar confianca.',
+  'transit:mercury|conjuncao|sun':
+    'Mercurio em conjuncao ao Sol reforca nitidez mental e alinhamento entre intencao e expressao. O periodo favorece decisoes quando prioridades estao bem definidas e comunicadas com simplicidade. Use a fase para esclarecer direcao e cortar dispersao.',
+  'transit:mercury|conjuncao|uranus':
+    'Mercurio em conjuncao com Urano acelera inovacao mental e abertura para ideias fora do padrao. A fase favorece breakthroughs quando intuicao rapida e validacao objetiva caminham juntas. Teste hipoteses em ciclos curtos antes de escalar mudancas.',
+  'transit:mercury|conjuncao|venus':
+    'Mercurio em conjuncao com Venus favorece diplomacia, conciliacao e qualidade de troca em dialogos importantes. O ciclo tende a facilitar acordos quando valores e limites estao claros. Invista em comunicacao gentil sem perder assertividade.',
+  'transit:mercury|quadratura|ascendente':
+    'Mercurio em quadratura ao Ascendente pode aumentar atrito de comunicacao e desencontro de tom nas interacoes. A fase pede ajustar forma de expressao para preservar clareza sem escalada de tensao. Simplifique mensagens e cheque entendimento reciproco.',
+  'transit:mercury|quadratura|jupiter':
+    'Mercurio em quadratura com Jupiter tende a ampliar ideias sem a mesma precisao de criterio. O ciclo pede equilibrio entre visao ampla e verificacao de detalhes antes de decidir. Evite promessas extensas sem plano operacional claro.',
+  'transit:mercury|quadratura|mars':
+    'Mercurio em quadratura com Marte pode acelerar fala e argumentacao, elevando risco de reatividade verbal. A fase pede pausas estrategicas para reduzir conflito improdutivo. Reordene prioridades e responda com objetividade, nao por impulso.',
+  'transit:mercury|quadratura|meio_do_ceu':
+    'Mercurio em quadratura ao Meio do Ceu pode tensionar narrativa publica e consistencia de posicionamento profissional. O periodo pede revisar mensagens, prazos e alinhamento entre discurso e entrega. Ajustes simples de comunicacao tendem a reduzir ruído de imagem.',
+  'transit:mercury|quadratura|mercury':
+    'Mercurio em quadratura com Mercurio pode trazer conflito entre referencias mentais, ritmo de decisao e organizacao de dados. A fase pede revisar premissas com metodo para evitar retrabalho. Priorize o essencial e valide interpretacoes-chave antes de concluir.',
+  'transit:mercury|quadratura|moon':
+    'Mercurio em quadratura com Lua pode gerar atrito entre logica e sensibilidade em temas do dia a dia. O ciclo pede traduzir emocao em linguagem clara para evitar ruído relacional. Combine escuta e objetividade para estabilizar conversas delicadas.',
+  'transit:mercury|quadratura|neptune':
+    'Mercurio em quadratura com Netuno pode aumentar confusao de contexto, suposicoes e falhas de detalhe. A fase pede confirmar fatos, datas e responsabilidades antes de fechar combinados. Documente acordos por escrito para reduzir ambiguidades.',
+  'transit:mercury|quadratura|pluto':
+    'Mercurio em quadratura com Plutao intensifica controle narrativo e rigidez em disputas de interpretacao. O ciclo pede rigor analitico sem paranoia nem confronto desnecessario. Foque em evidencia verificavel e mantenha abertura para nuance.',
+  'transit:mercury|quadratura|saturn':
+    'Mercurio em quadratura com Saturno pode trazer cobranca mental, peso decisorio e comunicacao mais travada. A fase pede metodo, paciencia e criterios explicitos para destravar avancos. Separe problemas em blocos e avance por etapas curtas.',
+  'transit:mercury|quadratura|sun':
+    'Mercurio em quadratura ao Sol pode tensionar clareza de direcao e forma de expressar prioridades. O periodo pede alinhar intencao, linguagem e plano de acao com mais consistencia. Revise narrativa central antes de comunicar decisoes importantes.',
+  'transit:mercury|quadratura|uranus':
+    'Mercurio em quadratura com Urano pode gerar mudancas bruscas de ideia e oscilacao entre insight e ruído. A fase pede conter impulsos de ruptura comunicacional sem sufocar inovacao. Valide experimentos em pequena escala e mantenha criterio de continuidade.',
+  'transit:mercury|quadratura|venus':
+    'Mercurio em quadratura com Venus pode tensionar diplomacia e franqueza em conversas afetivas ou de valor. O ciclo pede negociar forma e conteudo para preservar vinculo sem omitir pontos essenciais. Ajuste expectativa e linguagem para manter reciprocidade.',
 }

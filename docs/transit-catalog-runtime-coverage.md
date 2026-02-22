@@ -1,11 +1,11 @@
 # Transit Catalog Runtime Coverage
 
-Generated at: 2026-02-22T02:00:46.673Z
+Generated at: 2026-02-22T02:17:50.559Z
 
 ## Totals
 - Base keys: 704
-- Curated pt-BR keys: 245
-- Auto-only keys: 459
+- Curated pt-BR keys: 269
+- Auto-only keys: 435
 - Fallback-only keys: 0
 
 ## Fallback-only by priority
