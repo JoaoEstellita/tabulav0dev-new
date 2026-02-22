@@ -100,6 +100,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter trine Uranus favors innovation with fluid adaptation and less need for abrupt disruption. This phase tends to open original opportunities when experimentation is paired with criteria and responsible scaling. Balance freedom and continuity to keep tangible progress.',
     'transit:jupiter|trigono|venus':
       'Jupiter trine Venus favors harmonization in relationships, agreements, and daily value choices. This cycle tends to expand cooperation and goodwill when expectations and boundaries are clear. Use the phase to strengthen quality exchanges with measure and consistency.',
+    'transit:mars|conjuncao|ascendente':
+      'Mars conjunct Ascendant increases initiative drive and the need for personal assertion. This phase tends to favor direct action when priorities are organized and reactivity is reduced. Channel energy into clear moves with focus and self-regulation.',
+    'transit:mars|conjuncao|jupiter':
+      'Mars conjunct Jupiter amplifies courage, ambition, and momentum toward expansion. This cycle supports progress when boldness is paired with strategy and practical pacing. Adjust rhythm and scope to avoid overconfidence in execution.',
+    'transit:mars|conjuncao|mars':
+      'Mars conjunct Mars intensifies initiative energy and competitive tone in daily life. This phase tends to increase urgency to act, asking for discipline to keep consistency. Direct strength toward objective goals and reduce impulsive wear.',
+    'transit:mars|conjuncao|mercury':
+      'Mars conjunct Mercury accelerates thinking, communication, and decision speed. This cycle favors objectivity when assumptions are reviewed and messaging is clear. Avoid rushed conclusions and keep criteria in sensitive conversations.',
+    'transit:mars|conjuncao|moon':
+      'Mars conjunct Moon can raise emotional reactivity and demand for immediate response. This phase asks for balance between emotional expression and self-control to avoid unnecessary conflict. Brief pauses before acting help preserve clarity and connection.',
+    'transit:mars|conjuncao|neptune':
+      'Mars conjunct Neptune combines action impulse with expanded imagination and sensitivity. This cycle favors applied creativity when intuition is grounded in practical steps. Increase criteria so energy is not dispersed in undefined goals.',
+    'transit:mars|conjuncao|pluto':
+      'Mars conjunct Pluto intensifies willpower, strategic depth, and pattern-breaking capacity. This phase tends to strengthen high-impact decisions when direction is clear and self-control is active. Use intensity responsibly to avoid power-driven conflict.',
+    'transit:mars|conjuncao|saturn':
+      'Mars conjunct Saturn combines execution force and structural limits in the same point. This cycle may ask for active patience to convert pressure into consistent progress. Move in stages with method to reduce friction and waste.',
+    'transit:mars|conjuncao|sun':
+      'Mars conjunct Sun reinforces protagonism, initiative, and the will to lead your own agenda. This phase favors assertive action when intensity is balanced with real priorities. Focus on essentials to convert impulse into concrete results.',
+    'transit:mars|conjuncao|uranus':
+      'Mars conjunct Uranus accelerates change and raises the need for freedom in action. This cycle may open unconventional opportunities, asking for fast response with criteria. Innovate with safety to avoid impulsive breaks.',
+    'transit:mars|conjuncao|venus':
+      'Mars conjunct Venus amplifies magnetism, desire, and the need to align affection with action. This phase favors meaningful approach when boundaries and expectations are explicit. Balance intensity with listening to preserve exchange quality.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -537,6 +559,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en trigono con Urano favorece innovacion con adaptacion fluida y menor necesidad de ruptura brusca. Esta fase suele abrir oportunidades originales cuando pruebas con criterio y escalas con responsabilidad. Equilibra libertad y continuidad para mantener progreso tangible.',
     'transit:jupiter|trigono|venus':
       'Jupiter en trigono con Venus favorece armonizacion en vinculos, acuerdos y decisiones de valor cotidianas. Este ciclo suele ampliar cooperacion y buena voluntad cuando expectativas y limites estan claros. Aprovecha la fase para fortalecer intercambios de calidad con medida y constancia.',
+    'transit:mars|conjuncao|ascendente':
+      'Marte en conjuncion al Ascendente aumenta impulso de accion y necesidad de afirmacion personal. Esta fase suele favorecer iniciativa directa cuando ordenas prioridades y reduces reactividad. Canaliza energia en movimientos claros con foco y autocontrol.',
+    'transit:mars|conjuncao|jupiter':
+      'Marte en conjuncion con Jupiter amplifica coraje, ambicion y empuje de expansion. Este ciclo favorece avances cuando audacia y estrategia van juntas con ritmo realista. Ajusta velocidad y alcance para evitar exceso de confianza en la ejecucion.',
+    'transit:mars|conjuncao|mars':
+      'Marte en conjuncion con Marte intensifica energia de iniciativa y tono competitivo en la rutina. Esta fase suele aumentar urgencia de actuar y pedir disciplina para sostener consistencia. Dirige fuerza a metas objetivas y reduce desgaste impulsivo.',
+    'transit:mars|conjuncao|mercury':
+      'Marte en conjuncion con Mercurio acelera pensamiento, comunicacion y ritmo de decision. Este ciclo favorece objetividad cuando revisas premisas y aclaras mensajes. Evita conclusiones rapidas y mant?n criterio en conversaciones sensibles.',
+    'transit:mars|conjuncao|moon':
+      'Marte en conjuncion con la Luna puede elevar reactividad emocional y necesidad de respuesta inmediata. Esta fase pide equilibrio entre expresion afectiva y autocontrol para evitar conflictos innecesarios. Pausas breves antes de actuar ayudan a sostener claridad y vinculo.',
+    'transit:mars|conjuncao|neptune':
+      'Marte en conjuncion con Neptuno combina impulso de accion con imaginacion y sensibilidad amplias. Este ciclo favorece creatividad aplicada cuando la intuicion se ancla en pasos practicos. Refuerza criterio para no dispersar energia en metas difusas.',
+    'transit:mars|conjuncao|pluto':
+      'Marte en conjuncion con Pluton intensifica voluntad, profundidad estrategica y capacidad de romper patrones. Esta fase suele potenciar decisiones de impacto cuando hay direccion clara y autocontrol. Usa la intensidad con responsabilidad para evitar choques de poder.',
+    'transit:mars|conjuncao|saturn':
+      'Marte en conjuncion con Saturno combina fuerza de ejecucion y limite estructural en el mismo punto. Este ciclo puede pedir paciencia activa para transformar presion en progreso consistente. Avanza por etapas con metodo para reducir friccion y desperdicio.',
+    'transit:mars|conjuncao|sun':
+      'Marte en conjuncion al Sol refuerza protagonismo, iniciativa y voluntad de liderar tu agenda. Esta fase favorece accion afirmativa cuando intensidad y prioridad real se equilibran. Enfocate en lo esencial para convertir impulso en resultado concreto.',
+    'transit:mars|conjuncao|uranus':
+      'Marte en conjuncion con Urano acelera cambios y aumenta necesidad de libertad en la accion. Este ciclo puede abrir oportunidades fuera del patron, pidiendo respuesta rapida con criterio. Innova con seguridad para evitar rupturas por impulso.',
+    'transit:mars|conjuncao|venus':
+      'Marte en conjuncion con Venus amplifica magnetismo, deseo y necesidad de alinear afecto y accion. Esta fase favorece acercamientos cuando limites y expectativas estan claros. Equilibra intensidad con escucha para sostener calidad en los intercambios.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -974,6 +1018,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in trigono con Urano favorisce innovazione con adattamento fluido e minore bisogno di rotture brusche. Questa fase tende ad aprire opportunita originali quando sperimentazione e criterio restano insieme. Bilancia liberta e continuita per mantenere progresso concreto.',
     'transit:jupiter|trigono|venus':
       'Giove in trigono con Venere favorisce armonizzazione in relazioni, accordi e scelte di valore quotidiane. Questo ciclo tende ad ampliare cooperazione e buona disposizione quando aspettative e confini sono chiari. Usa la fase per rafforzare scambi di qualita con misura e coerenza.',
+    'transit:mars|conjuncao|ascendente':
+      'Marte in congiunzione all Ascendente aumenta impulso d azione e bisogno di affermazione personale. Questa fase tende a favorire iniziativa diretta quando priorita e reattivita sono ben regolate. Canalizza energia in mosse chiare con focus e autocontrollo.',
+    'transit:mars|conjuncao|jupiter':
+      'Marte in congiunzione con Giove amplifica coraggio, ambizione e slancio espansivo. Questo ciclo favorisce progressi quando audacia e strategia procedono insieme con ritmo realistico. Regola velocita e scopo per evitare eccesso di fiducia esecutiva.',
+    'transit:mars|conjuncao|mars':
+      'Marte in congiunzione con Marte intensifica energia d iniziativa e tono competitivo nella routine. Questa fase tende ad aumentare urgenza d azione, chiedendo disciplina per mantenere coerenza. Dirigi forza verso obiettivi chiari e riduci usura impulsiva.',
+    'transit:mars|conjuncao|mercury':
+      'Marte in congiunzione con Mercurio accelera pensiero, comunicazione e ritmo decisionale. Questo ciclo favorisce oggettivita quando premesse e messaggi vengono rivisti con cura. Evita conclusioni affrettate e mantieni criterio nei dialoghi sensibili.',
+    'transit:mars|conjuncao|moon':
+      'Marte in congiunzione con la Luna puo aumentare reattivita emotiva e richiesta di risposta immediata. Questa fase chiede equilibrio tra espressione affettiva e autocontrollo per evitare conflitti inutili. Brevi pause prima di agire aiutano a mantenere chiarezza e legame.',
+    'transit:mars|conjuncao|neptune':
+      'Marte in congiunzione con Nettuno combina impulso d azione con immaginazione e sensibilita ampliate. Questo ciclo favorisce creativita applicata quando intuizione resta ancorata a passi pratici. Rafforza criterio per non disperdere energia in obiettivi poco definiti.',
+    'transit:mars|conjuncao|pluto':
+      'Marte in congiunzione con Plutone intensifica volonta, profondita strategica e capacita di rompere schemi. Questa fase tende a potenziare decisioni di impatto quando direzione e autocontrollo sono presenti. Usa intensita con responsabilita per evitare scontri di potere.',
+    'transit:mars|conjuncao|saturn':
+      'Marte in congiunzione con Saturno combina forza esecutiva e limite strutturale nello stesso punto. Questo ciclo puo richiedere pazienza attiva per trasformare pressione in progresso coerente. Avanza per fasi con metodo per ridurre attrito e spreco.',
+    'transit:mars|conjuncao|sun':
+      'Marte in congiunzione al Sole rafforza protagonismo, iniziativa e volonta di guidare la tua agenda. Questa fase favorisce azione affermativa quando intensita e priorita reali sono equilibrate. Concentrati sull essenziale per convertire impulso in risultato concreto.',
+    'transit:mars|conjuncao|uranus':
+      'Marte in congiunzione con Urano accelera cambiamento e aumenta bisogno di liberta nell azione. Questo ciclo puo aprire opportunita fuori schema, chiedendo risposte rapide ma con criterio. Innova in sicurezza per evitare rotture impulsive.',
+    'transit:mars|conjuncao|venus':
+      'Marte in congiunzione con Venere amplifica magnetismo, desiderio e bisogno di allineare affetto e azione. Questa fase favorisce avvicinamenti quando confini e aspettative sono chiari. Bilancia intensita e ascolto per mantenere qualita negli scambi.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

@@ -95,6 +95,28 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em trigono com Urano favorece inovacao com fluidez e capacidade de atualizar rotas sem ruptura brusca. A fase tende a abrir oportunidades originais quando voce testa com criterio e escala com responsabilidade. Equilibre liberdade e continuidade para manter progresso real.',
   'transit:jupiter|trigono|venus':
     'Jupiter em trigono com Venus favorece harmonizacao em vinculos, acordos e escolhas de valor no cotidiano. O ciclo tende a ampliar cooperacao e boa vontade quando expectativas e limites estao claros. Use a fase para fortalecer trocas de qualidade com medida e consistencia.',
+  'transit:mars|conjuncao|ascendente':
+    'Marte em conjuncao ao Ascendente aumenta impulso de acao e necessidade de afirmacao pessoal. A fase tende a favorecer iniciativa quando voce organiza prioridade e evita resposta reativa. Canalize energia para movimentos diretos, com foco e autocontrole.',
+  'transit:mars|conjuncao|jupiter':
+    'Marte em conjuncao com Jupiter amplia coragem, ambicao e vontade de acelerar resultados. O ciclo favorece avancos quando ousadia e estrategia caminham juntas. Ajuste ritmo e escopo para evitar excesso de confianca na execucao.',
+  'transit:mars|conjuncao|mars':
+    'Marte em conjuncao com Marte intensifica energia de iniciativa e competitividade no cotidiano. A fase tende a aumentar urgencia de agir, pedindo disciplina para sustentar consistencia. Direcione forca para metas objetivas e reduza desgaste por impulsividade.',
+  'transit:mars|conjuncao|mercury':
+    'Marte em conjuncao com Mercurio acelera pensamento, comunicacao e tomada de decisao. O ciclo favorece objetividade quando ha revisao de premissas e clareza de mensagem. Evite conclusoes precipitadas e mantenha criterio em conversas sensiveis.',
+  'transit:mars|conjuncao|moon':
+    'Marte em conjuncao com Lua pode elevar reatividade emocional e necessidade de resposta imediata. A fase pede equilibrio entre expressao afetiva e autocontrole para evitar conflitos desnecessarios. Pequenas pausas antes de agir ajudam a preservar clareza e vinculo.',
+  'transit:mars|conjuncao|neptune':
+    'Marte em conjuncao com Netuno combina impulso de acao com imaginacao e sensibilidade ampliadas. O ciclo favorece criatividade aplicada quando voce ancora intuicao em passos praticos. Redobre criterio para nao dispersar energia em metas pouco definidas.',
+  'transit:mars|conjuncao|pluto':
+    'Marte em conjuncao com Plutao intensifica vontade, profundidade estrategica e capacidade de ruptura de padrao. A fase tende a potencializar decisoes de impacto quando ha autocontrole e direcao clara. Use a intensidade com responsabilidade para evitar confrontos por poder.',
+  'transit:mars|conjuncao|saturn':
+    'Marte em conjuncao com Saturno combina forca de execucao e limite estrutural no mesmo ponto. O ciclo pode pedir paciencia ativa para transformar pressao em progresso consistente. Avance por etapas com metodo para reduzir atrito e desperdicio.',
+  'transit:mars|conjuncao|sun':
+    'Marte em conjuncao ao Sol reforca protagonismo, iniciativa e vontade de liderar a propria agenda. A fase favorece acao afirmativa quando voce equilibra intensidade e prioridade real. Foque no essencial para converter impulso em resultado concreto.',
+  'transit:mars|conjuncao|uranus':
+    'Marte em conjuncao com Urano acelera mudancas e aumenta necessidade de liberdade na acao. O ciclo pode abrir oportunidades fora do padrao, pedindo resposta rapida com criterio. Inove com seguranca para evitar rupturas por impulso.',
+  'transit:mars|conjuncao|venus':
+    'Marte em conjuncao com Venus amplia magnetismo, desejo e necessidade de alinhamento entre afeto e acao. A fase favorece aproximacoes quando limites e expectativas estao claros. Equilibre intensidade com escuta para preservar qualidade nas trocas.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
