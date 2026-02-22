@@ -65,6 +65,30 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em sextil com Mercurio favorece comunicacao, aprendizado e tomada de decisao com mais clareza de contexto. O ciclo apoia conversas estrategicas e organizacao de ideias em plano pratico. Aproveite para destravar temas pendentes com linguagem objetiva.',
   'transit:jupiter|sextil|moon':
     'Jupiter em sextil com Lua tende a ampliar acolhimento emocional e leitura mais construtiva das situacoes. A fase favorece reconciliar sensibilidade com pragmatismo no cotidiano. Pequenos ajustes de rotina podem trazer alivio e estabilidade.',
+  'transit:jupiter|sextil|neptune':
+    'Jupiter em sextil com Netuno favorece inspiracao com mais possibilidade de aplicacao pratica. O ciclo tende a apoiar visao de longo prazo quando ha criterio para separar intuicao de idealizacao. Transforme percepcoes em acoes verificaveis e ajuste rota com regularidade.',
+  'transit:jupiter|sextil|pluto':
+    'Jupiter em sextil com Plutao favorece crescimento com profundidade, foco estrategico e reposicionamento consciente. A fase tende a apoiar decisoes de impacto quando voce evita atalhos e trabalha por etapas. Priorize mudancas estruturais que sustentem resultado duradouro.',
+  'transit:jupiter|sextil|saturn':
+    'Jupiter em sextil com Saturno combina expansao e disciplina de forma produtiva. O ciclo tende a facilitar avancos quando visao ampla encontra metodo, prazo e prioridade clara. Cresca com criterio para consolidar ganhos sem sobrecarga.',
+  'transit:jupiter|sextil|uranus':
+    'Jupiter em sextil com Urano favorece inovacao com bom potencial de implementacao gradual. A fase tende a abrir oportunidades fora do padrao sem exigir ruptura brusca. Teste novidades com metricas simples e escale apenas o que se prova util.',
+  'transit:jupiter|sextil|venus':
+    'Jupiter em sextil com Venus favorece harmonizacao em relacoes, acordos e escolhas de valor. O ciclo tende a ampliar cooperacao quando reciprocidade e limite estao claros. Aproveite o fluxo para fortalecer vinculos e priorizar qualidade de troca.',
+  'transit:jupiter|trigono|ascendente':
+    'Jupiter em trigono ao Ascendente tende a ampliar confianca social, visibilidade e abertura de caminhos. A fase favorece expansao de contato e presenca quando voce mantem autenticidade e medida. Use o momento para consolidar imagem coerente com sua entrega real.',
+  'transit:jupiter|trigono|jupiter':
+    'Jupiter em trigono com Jupiter favorece ciclo de crescimento com fluidez e boa leitura de oportunidade. O periodo tende a apoiar avancos em estudo, estrategia e horizonte de medio prazo. Expanda com planejamento para transformar impulso em resultado sustentavel.',
+  'transit:jupiter|trigono|mars':
+    'Jupiter em trigono com Marte amplia iniciativa, coragem e capacidade de execucao com menor atrito. A fase tende a favorecer movimento assertivo quando ha direcao e prioridade bem definidas. Direcione energia para frentes de alto impacto e acompanhe progresso.',
+  'transit:jupiter|trigono|mercury':
+    'Jupiter em trigono com Mercurio favorece clareza mental, comunicacao e aprendizado em ritmo produtivo. O ciclo tende a facilitar negociacoes e organizacao de ideias com visao de contexto. Converta boas percepcoes em plano pratico e verificavel.',
+  'transit:jupiter|trigono|moon':
+    'Jupiter em trigono com Lua favorece estabilidade emocional e ampliacao de apoio afetivo no cotidiano. A fase tende a facilitar escolhas mais construtivas, com menos reatividade e mais serenidade. Pequenos ajustes de rotina podem gerar bem-estar consistente.',
+  'transit:jupiter|trigono|neptune':
+    'Jupiter em trigono com Netuno favorece sintonia entre inspiracao e sentido de direcao. O ciclo tende a apoiar criatividade, espiritualidade e visao de futuro quando ha ancoragem pratica. Mantenha criterio para transformar intuicao em progresso concreto.',
+  'transit:jupiter|trigono|pluto':
+    'Jupiter em trigono com Plutao favorece expansao profunda, estrategia e capacidade de reposicionamento duradouro. A fase tende a abrir ganhos relevantes quando voce combina ambicao com responsabilidade. Avance por etapas para consolidar mudancas estruturais.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':

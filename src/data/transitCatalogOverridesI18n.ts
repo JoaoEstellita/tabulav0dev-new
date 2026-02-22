@@ -70,6 +70,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter sextile Mercury favors communication, learning, and decisions with broader context clarity. The cycle supports strategic conversations and practical idea organization. Use the moment to unlock pending themes with objective language.',
     'transit:jupiter|sextil|moon':
       'Jupiter sextile Moon tends to expand emotional support and a more constructive reading of events. This phase favors reconciling sensitivity with daily pragmatism. Small routine adjustments can bring relief and greater stability.',
+    'transit:jupiter|sextil|neptune':
+      'Jupiter sextile Neptune favors inspiration with stronger practical application potential. This cycle tends to support long-range vision when intuition is balanced with criteria. Turn perceptions into verifiable actions and adjust course with regular review.',
+    'transit:jupiter|sextil|pluto':
+      'Jupiter sextile Pluto favors growth with depth, strategic focus, and conscious repositioning. This phase tends to support high-impact decisions when shortcuts are avoided and execution is staged. Prioritize structural changes that sustain durable outcomes.',
+    'transit:jupiter|sextil|saturn':
+      'Jupiter sextile Saturn combines expansion and discipline in a productive rhythm. This cycle tends to ease progress when broad vision meets method, timing, and clear priorities. Grow with criteria to consolidate gains without overload.',
+    'transit:jupiter|sextil|uranus':
+      'Jupiter sextile Uranus favors innovation with good potential for gradual implementation. This phase tends to open unconventional opportunities without demanding abrupt rupture. Test novelty with simple metrics and scale only what proves useful.',
+    'transit:jupiter|sextil|venus':
+      'Jupiter sextile Venus favors harmonization in relationships, agreements, and value choices. This cycle tends to expand cooperation when reciprocity and boundaries are clear. Use the flow to strengthen bonds and prioritize exchange quality.',
+    'transit:jupiter|trigono|ascendente':
+      'Jupiter trine Ascendant tends to amplify social confidence, visibility, and pathway opening. This phase favors outreach and presence when authenticity is matched with measure. Use the momentum to consolidate an image aligned with real delivery.',
+    'transit:jupiter|trigono|jupiter':
+      'Jupiter trine Jupiter supports broad expansion with better rhythm and perspective. This cycle tends to favor learning, strategic planning, and medium-term growth steps. Keep practical criteria so opportunities become consistent gains.',
+    'transit:jupiter|trigono|mars':
+      'Jupiter trine Mars combines initiative and momentum with greater execution fluency. This phase tends to support assertive action when priorities are clear and effort is well directed. Channel energy into high-impact fronts and maintain progression review.',
+    'transit:jupiter|trigono|mercury':
+      'Jupiter trine Mercury favors communication, synthesis, and decision-making with contextual clarity. This cycle tends to support meaningful conversations and practical organization of ideas. Use the phase to align vision and execution in objective language.',
+    'transit:jupiter|trigono|moon':
+      'Jupiter trine Moon tends to increase emotional integration and a constructive response to daily demands. This phase favors well-being when sensitivity is combined with pragmatic organization. Small adjustments can produce stable relief and greater inner balance.',
+    'transit:jupiter|trigono|neptune':
+      'Jupiter trine Neptune favors inspiration, symbolic understanding, and meaning-oriented direction. This cycle tends to support subtle perception when grounded in practical criteria. Translate intuition into concrete steps and keep periodic reality checks.',
+    'transit:jupiter|trigono|pluto':
+      'Jupiter trine Pluto favors deep transformation with strategic expansion and sustained focus. This phase tends to support major repositioning when action is deliberate and structural. Prioritize essential moves with long-range consistency.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -477,6 +501,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en sextil con Mercurio favorece comunicacion, aprendizaje y decisiones con mayor claridad de contexto. El ciclo apoya conversaciones estrategicas y organizacion practica de ideas. Aprovecha para destrabar temas pendientes con lenguaje objetivo.',
     'transit:jupiter|sextil|moon':
       'Jupiter en sextil con la Luna tiende a ampliar contencion emocional y lectura mas constructiva de situaciones. Esta fase favorece reconciliar sensibilidad y pragmatismo en la rutina. Pequenos ajustes diarios pueden traer alivio y estabilidad.',
+    'transit:jupiter|sextil|neptune':
+      'Jupiter en sextil con Neptuno favorece inspiracion con mayor potencial de aplicacion practica. Este ciclo suele apoyar vision de largo plazo cuando la intuicion se equilibra con criterio. Convierte percepciones en acciones verificables y ajusta rumbo con revision periodica.',
+    'transit:jupiter|sextil|pluto':
+      'Jupiter en sextil con Pluton favorece crecimiento con profundidad, foco estrategico y reposicionamiento consciente. Esta fase suele apoyar decisiones de impacto cuando evitas atajos y avanzas por etapas. Prioriza cambios estructurales que sostengan resultados duraderos.',
+    'transit:jupiter|sextil|saturn':
+      'Jupiter en sextil con Saturno combina expansion y disciplina en un ritmo productivo. Este ciclo suele facilitar avances cuando vision amplia se une a metodo, plazo y prioridad clara. Crece con criterio para consolidar ganancias sin sobrecarga.',
+    'transit:jupiter|sextil|uranus':
+      'Jupiter en sextil con Urano favorece innovacion con buen potencial de implementacion gradual. Esta fase suele abrir oportunidades fuera del patron sin exigir ruptura brusca. Prueba novedades con metricas simples y escala solo lo que demuestra utilidad.',
+    'transit:jupiter|sextil|venus':
+      'Jupiter en sextil con Venus favorece armonizacion en relaciones, acuerdos y decisiones de valor. Este ciclo suele ampliar cooperacion cuando reciprocidad y limites estan claros. Aprovecha el flujo para fortalecer vinculos y priorizar calidad de intercambio.',
+    'transit:jupiter|trigono|ascendente':
+      'Jupiter en trigono al Ascendente tiende a ampliar confianza social, visibilidad y apertura de caminos. Esta fase favorece expansion de presencia cuando autenticidad se combina con medida. Usa el impulso para consolidar una imagen coherente con tu entrega real.',
+    'transit:jupiter|trigono|jupiter':
+      'Jupiter en trigono con Jupiter favorece expansion amplia con mejor ritmo y perspectiva. Este ciclo suele apoyar aprendizaje, planeacion estrategica y crecimiento de medio plazo. Mantener criterio practico ayuda a convertir oportunidades en ganancias consistentes.',
+    'transit:jupiter|trigono|mars':
+      'Jupiter en trigono con Marte combina iniciativa y empuje con mayor fluidez de ejecucion. Esta fase suele apoyar accion afirmativa cuando prioridades y direccion son claras. Dirige energia a frentes de alto impacto y mant?n revision de progreso.',
+    'transit:jupiter|trigono|mercury':
+      'Jupiter en trigono con Mercurio favorece comunicacion, sintesis y decisiones con claridad de contexto. Este ciclo suele apoyar conversaciones relevantes y organizacion practica de ideas. Aprovecha la fase para alinear vision y ejecucion en lenguaje objetivo.',
+    'transit:jupiter|trigono|moon':
+      'Jupiter en trigono con la Luna tiende a aumentar integracion emocional y respuesta constructiva ante demandas cotidianas. Esta fase favorece bienestar cuando sensibilidad y pragmatismo se combinan. Pequenos ajustes pueden traer alivio estable y mayor equilibrio interno.',
+    'transit:jupiter|trigono|neptune':
+      'Jupiter en trigono con Neptuno favorece inspiracion, comprension simbolica y orientacion con sentido. Este ciclo suele apoyar percepcion sutil cuando se mantiene anclaje practico. Traduce intuicion en pasos concretos y sost?n chequeos de realidad periodicos.',
+    'transit:jupiter|trigono|pluto':
+      'Jupiter en trigono con Pluton favorece transformacion profunda con expansion estrategica y foco sostenido. Esta fase suele apoyar reposicionamientos de impacto cuando la accion es deliberada y estructural. Prioriza movimientos esenciales con consistencia de largo plazo.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -884,6 +932,30 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in sestile con Mercurio favorisce comunicazione, apprendimento e decisioni con maggiore chiarezza di contesto. Il ciclo sostiene conversazioni strategiche e organizzazione pratica delle idee. Sfrutta il momento per sbloccare temi in sospeso con linguaggio oggettivo.',
     'transit:jupiter|sextil|moon':
       'Giove in sestile con la Luna tende ad ampliare sostegno emotivo e una lettura piu costruttiva degli eventi. Questa fase favorisce conciliare sensibilita e pragmatismo nella routine. Piccoli aggiustamenti quotidiani possono portare sollievo e stabilita.',
+    'transit:jupiter|sextil|neptune':
+      'Giove in sestile con Nettuno favorisce ispirazione con maggiore potenziale di applicazione pratica. Questo ciclo tende a sostenere visione di lungo periodo quando intuizione e criterio restano in equilibrio. Trasforma percezioni in azioni verificabili e correggi rotta con revisioni regolari.',
+    'transit:jupiter|sextil|pluto':
+      'Giove in sestile con Plutone favorisce crescita con profondita, focus strategico e riposizionamento consapevole. Questa fase tende a sostenere decisioni di impatto quando eviti scorciatoie e procedi per fasi. Dai priorita a cambiamenti strutturali che mantengano risultati duraturi.',
+    'transit:jupiter|sextil|saturn':
+      'Giove in sestile con Saturno combina espansione e disciplina in un ritmo produttivo. Questo ciclo tende a facilitare progressi quando visione ampia incontra metodo, tempi e priorita chiare. Cresci con criterio per consolidare guadagni senza sovraccarico.',
+    'transit:jupiter|sextil|uranus':
+      'Giove in sestile con Urano favorisce innovazione con buon potenziale di implementazione graduale. Questa fase tende ad aprire opportunita fuori standard senza richiedere rotture brusche. Testa novita con metriche semplici e scala solo cio che dimostra utilita.',
+    'transit:jupiter|sextil|venus':
+      'Giove in sestile con Venere favorisce armonizzazione in relazioni, accordi e scelte di valore. Questo ciclo tende ad ampliare cooperazione quando reciprocita e confini sono chiari. Usa il flusso per rafforzare legami e priorizzare qualita dello scambio.',
+    'transit:jupiter|trigono|ascendente':
+      'Giove in trigono all Ascendente tende ad ampliare fiducia sociale, visibilita e apertura di percorsi. Questa fase favorisce espansione della presenza quando autenticita e misura procedono insieme. Usa lo slancio per consolidare un immagine coerente con la tua consegna reale.',
+    'transit:jupiter|trigono|jupiter':
+      'Giove in trigono con Giove favorisce espansione ampia con ritmo e prospettiva migliori. Questo ciclo tende a sostenere apprendimento, pianificazione strategica e crescita nel medio periodo. Mantenere criterio pratico aiuta a trasformare opportunita in guadagni consistenti.',
+    'transit:jupiter|trigono|mars':
+      'Giove in trigono con Marte combina iniziativa e slancio con maggiore fluidita esecutiva. Questa fase tende a sostenere azione affermativa quando priorita e direzione sono chiare. Dirigi energia verso fronti ad alto impatto e mantieni revisione dei progressi.',
+    'transit:jupiter|trigono|mercury':
+      'Giove in trigono con Mercurio favorisce comunicazione, sintesi e decisioni con chiarezza di contesto. Questo ciclo tende a sostenere conversazioni rilevanti e organizzazione pratica delle idee. Sfrutta la fase per allineare visione ed esecuzione con linguaggio oggettivo.',
+    'transit:jupiter|trigono|moon':
+      'Giove in trigono con la Luna tende ad aumentare integrazione emotiva e risposta costruttiva alle richieste quotidiane. Questa fase favorisce benessere quando sensibilita e pragmatismo si integrano. Piccoli aggiustamenti possono portare sollievo stabile e maggiore equilibrio interiore.',
+    'transit:jupiter|trigono|neptune':
+      'Giove in trigono con Nettuno favorisce ispirazione, comprensione simbolica e orientamento di senso. Questo ciclo tende a sostenere percezione sottile quando resta ancorata a criteri pratici. Traduci intuizione in passi concreti e mantieni verifiche di realta periodiche.',
+    'transit:jupiter|trigono|pluto':
+      'Giove in trigono con Plutone favorisce trasformazione profonda con espansione strategica e focus sostenuto. Questa fase tende a sostenere riposizionamenti di impatto quando l azione e deliberata e strutturale. Dai priorita a movimenti essenziali con coerenza di lungo periodo.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':
