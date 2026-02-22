@@ -139,6 +139,28 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Marte em oposicao com Urano pode trazer viradas rapidas e impulso de ruptura em cenarios de pressao. O ciclo pede liberdade com criterio para nao trocar estrategia por reacao imediata. Ajustes rapidos funcionam melhor quando ha plano de contingencia.',
   'transit:mars|oposicao|venus':
     'Marte em oposicao com Venus pode aumentar polaridade entre desejo, afeto e forma de negociar proximidade. A fase pede alinhar expectativa e limite para evitar oscilacao entre aproximacao e conflito. Escuta ativa e acordos claros fortalecem a qualidade das trocas.',
+  'transit:mars|quadratura|ascendente':
+    'Marte em quadratura ao Ascendente pode aumentar irritacao, pressa e choque de postura nas interacoes. A fase pede ajustar forma de se afirmar para preservar clareza sem escalar conflito. Aja com objetividade e reduza reacao automatica.',
+  'transit:mars|quadratura|jupiter':
+    'Marte em quadratura com Jupiter tende a ampliar impulso e risco alem do que o contexto sustenta. O ciclo pede calibrar ambicao com criterio para evitar excesso de aposta na execucao. Priorize metas centrais e avance em blocos verificaveis.',
+  'transit:mars|quadratura|mars':
+    'Marte em quadratura com Marte intensifica atrito entre vontade, ritmo e direcao de acao. A fase pode elevar competitividade e desgaste quando falta coordenacao de prioridade. Use disciplina de foco para transformar tensao em produtividade.',
+  'transit:mars|quadratura|mercury':
+    'Marte em quadratura com Mercurio pode acelerar fala e pensamento com queda de escuta e precisao. O ciclo pede revisar argumentos e reduzir conclusao por impulso. Comunicacao simples e validação de fatos diminuem ruído e retrabalho.',
+  'transit:mars|quadratura|moon':
+    'Marte em quadratura com Lua pode elevar oscilacao emocional e resposta defensiva em temas sensiveis. A fase pede regular reatividade antes de decidir ou confrontar. Pequenas pausas e rotina de suporte ajudam a manter equilibrio.',
+  'transit:mars|quadratura|neptune':
+    'Marte em quadratura com Netuno pode misturar urgencia e indefinicao, gerando dispersao de energia. O ciclo pede transformar intuicao em plano concreto com etapas curtas. Evite agir sem checar objetivo, contexto e limite real.',
+  'transit:mars|quadratura|pluto':
+    'Marte em quadratura com Plutao intensifica tensao de poder, controle e forca de vontade. A fase pede autocontrole para nao converter pressao em confronto improdutivo. Direcione intensidade para ajuste estrutural e estrategia consistente.',
+  'transit:mars|quadratura|saturn':
+    'Marte em quadratura com Saturno pode trazer frustracao entre vontade de agir e restricao operacional. O ciclo pede paciencia ativa, metodo e ritmo sustentavel para reduzir desgaste. Progresso por etapas tende a render melhor que pressa.',
+  'transit:mars|quadratura|sun':
+    'Marte em quadratura ao Sol pode tensionar protagonismo, autoridade e forma de liderar acao. A fase pede equilibrio entre firmeza e cooperacao para manter eficiencia. Foque em entrega objetiva, com menos disputa de ego.',
+  'transit:mars|quadratura|uranus':
+    'Marte em quadratura com Urano pode trazer rupturas de ritmo e impulso de mudanca abrupta. O ciclo pede inovar com criterio para evitar decisoes reativas. Ajustes progressivos com plano de contingencia preservam resultado.',
+  'transit:mars|quadratura|venus':
+    'Marte em quadratura com Venus pode tensionar desejo, afeto e expectativa de reciprocidade. A fase pede alinhamento de limites e negociacao clara para evitar oscilacao relacional. Escuta ativa e acordos simples melhoram a qualidade do vinculo.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
