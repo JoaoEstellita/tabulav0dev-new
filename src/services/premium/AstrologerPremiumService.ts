@@ -19,7 +19,7 @@ export interface PremiumResponse<T = any> {
 }
 
 export class AstrologerPremiumService {
-  private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
+  private static readonly BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '') + '/api'
 
   private static async request<T>(path: string, token: string, body: Record<string, any>) {
     const isCreditsEndpoint = path.startsWith('/premium/credits/')
@@ -54,7 +54,7 @@ export class AstrologerPremiumService {
       const error = payload?.error || `HTTP_${response.status}`
       const message = payload?.message || payload?.error || 'Erro ao consultar premium'
       const err = new Error(message)
-      ;(err as any).code = error
+        ; (err as any).code = error
       throw err
     }
     return payload as PremiumResponse<T>
@@ -88,7 +88,7 @@ export class AstrologerPremiumService {
       const error = payload?.error || `HTTP_${response.status}`
       const message = payload?.message || payload?.error || 'Erro ao consultar premium'
       const err = new Error(message)
-      ;(err as any).code = error
+        ; (err as any).code = error
       throw err
     }
     return payload as PremiumResponse<T>
@@ -162,7 +162,7 @@ export class AstrologerPremiumService {
       const error = payloadError?.error || `HTTP_${response.status}`
       const message = payloadError?.message || payloadError?.error || 'Erro ao exportar PDF'
       const err = new Error(message)
-      ;(err as any).code = error
+        ; (err as any).code = error
       throw err
     }
     if (typeof (response as any).blob === 'function') {

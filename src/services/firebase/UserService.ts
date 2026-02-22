@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '../../config/firebase'
 import { backendFetch, getBackendBaseUrl } from '../backend/client'
@@ -66,10 +67,10 @@ class UserService {
   ): Promise<void> {
     try {
       const payload: { displayName: string; profilePhoto?: string | null; updatedAt: ReturnType<typeof serverTimestamp> } =
-        {
-          displayName: data.displayName || 'Usuario',
-          updatedAt: serverTimestamp(),
-        }
+      {
+        displayName: data.displayName || 'Usuario',
+        updatedAt: serverTimestamp(),
+      }
 
       if (data.profilePhoto !== undefined) {
         payload.profilePhoto = data.profilePhoto || null
@@ -106,10 +107,10 @@ class UserService {
   async saveBirthData(userId: string, birthData: BirthData): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)
-      
+
       // Verificar se usuário já existe
       const userDoc = await getDoc(userRef)
-      
+
       const updateData: any = cleanUndefined({
         displayName: birthData.fullName,
         birthDate: birthData.birthDate,
@@ -129,7 +130,7 @@ class UserService {
           if (isHttp) {
             updateData.profilePhoto = birthData.profilePhoto
           } else {
-            const isWeb = typeof window !== 'undefined'
+            const isWeb = Platform.OS === 'web'
             // No Web: prioriza backend para evitar CORS
             if (isWeb && getBackendBaseUrl()) {
               const resp = await backendFetch('/api/upload/profile-photo', {
@@ -213,7 +214,7 @@ class UserService {
   async canEditBirthData(userId: string): Promise<boolean> {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId))
-      
+
       if (!userDoc.exists()) return true // Primeiro cadastro
 
       const userData = userDoc.data()
@@ -236,11 +237,11 @@ class UserService {
   async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId))
-      
+
       if (userDoc.exists()) {
         return userDoc.data() as UserProfile
       }
-      
+
       return null
     } catch (error) {
       console.error('Erro ao buscar perfil do usuário:', error)
@@ -303,7 +304,7 @@ class UserService {
   async updateAlertMessage(userId: string, area: keyof UserProfile['alertMessages'], message: string): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)
-      
+
       await updateDoc(userRef, {
         [`alertMessages.${area}`]: message
       })

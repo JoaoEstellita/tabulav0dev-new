@@ -1,3 +1,5 @@
+import { Platform } from 'react-native'
+
 export type PlanetKey =
   | 'Sun'
   | 'Moon'
@@ -48,6 +50,12 @@ export const PLANET_IMAGE_LOCAL_PATHS: Partial<Record<PlanetKey, string>> = {}
 const buildFilename = (planet: PlanetKey): string =>
   `${PLANET_IMAGE_BASENAME[planet]}.${PLANET_IMAGE_FORMAT}`
 
+// On native, relative URLs like '/planets/Sun.png' won't work — prepend the domain
+const FRONTEND_ORIGIN = (() => {
+  const envUrl = process.env.EXPO_PUBLIC_FRONTEND_URL || 'https://tabulaestelar.com.br'
+  return envUrl.replace(/\/+$/, '')
+})()
+
 export const getPlanetImageUri = (planet: PlanetKey): string | undefined => {
   if (!USE_REMOTE_PLANET_IMAGES) {
     return PLANET_IMAGE_LOCAL_PATHS[planet]
@@ -56,5 +64,10 @@ export const getPlanetImageUri = (planet: PlanetKey): string | undefined => {
   if (!base) {
     return undefined
   }
-  return `${base}/${buildFilename(planet)}`
+  const path = `${base}/${buildFilename(planet)}`
+  // On native, relative paths don't resolve — make them absolute
+  if (Platform.OS !== 'web' && path.startsWith('/')) {
+    return `${FRONTEND_ORIGIN}${path}`
+  }
+  return path
 }

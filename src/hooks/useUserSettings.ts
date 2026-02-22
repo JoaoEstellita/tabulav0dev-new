@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import UserService from '../services/firebase/UserService'
 import AstrologyCacheService from '../services/astrology/AstrologyCacheService'
@@ -59,14 +60,14 @@ export function useUserSettings() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (Platform.OS !== 'web') return
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY || !event.newValue) return
       try {
         const parsed = JSON.parse(event.newValue)
         const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
         publishSharedSettings({ ...parsed, houseSystem: normalized })
-      } catch {}
+      } catch { }
     }
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
@@ -97,14 +98,14 @@ export function useUserSettings() {
         const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
         publishSharedSettings({ ...parsed, houseSystem: normalized })
         try {
-          ;(globalThis as any).__userHouseSystem = normalized
-        } catch {}
+          ; (globalThis as any).__userHouseSystem = normalized
+        } catch { }
       } else {
         const defaults = getDefaultSettings()
         publishSharedSettings(defaults)
         try {
-          ;(globalThis as any).__userHouseSystem = defaults.houseSystem
-        } catch {}
+          ; (globalThis as any).__userHouseSystem = defaults.houseSystem
+        } catch { }
         await saveSettings(defaults)
       }
 
@@ -115,12 +116,12 @@ export function useUserSettings() {
             const normalized = normalizeHouseSystem(hs)
             const merged = { ...(sharedSettings || getDefaultSettings()), houseSystem: normalized }
             try {
-              ;(globalThis as any).__userHouseSystem = normalized
-            } catch {}
+              ; (globalThis as any).__userHouseSystem = normalized
+            } catch { }
             await saveSettings(merged)
           }
         }
-      } catch {}
+      } catch { }
     } catch (error) {
       console.error('Erro ao carregar configuracoes:', error)
       const defaults = getDefaultSettings()
@@ -139,15 +140,15 @@ export function useUserSettings() {
       const normalized = normalizeHouseSystem(updates.houseSystem)
       newSettings.houseSystem = normalized
       try {
-        ;(globalThis as any).__userHouseSystem = normalized
-      } catch {}
-      if (typeof window !== 'undefined') {
+        ; (globalThis as any).__userHouseSystem = normalized
+      } catch { }
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }
       if (user?.uid) {
         try {
           await AstrologyCacheService.clearCache(user.uid)
-        } catch {}
+        } catch { }
       }
     }
 

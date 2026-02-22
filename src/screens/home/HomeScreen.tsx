@@ -50,7 +50,7 @@ import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
-try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch {}
+try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch { }
 
 const normalizePhaseLabel = (raw?: string | null) => {
   if (!raw) return ""
@@ -163,452 +163,452 @@ export default function HomeScreen() {
   })
   const moonPress = usePressScale()
 
-    // Garantir que o motor use o sistema salvo ao entrar na Home
-    useEffect(() => {
-      const normalized = normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
-      setHouseSystem(normalized)
-      ;(globalThis as any).__userHouseSystem = normalized
-      if (previousHouseSystemRef.current && previousHouseSystemRef.current !== normalized) {
-        refreshData(true)
-      }
-      previousHouseSystemRef.current = normalized
-    }, [settings?.houseSystem, refreshData])
+  // Garantir que o motor use o sistema salvo ao entrar na Home
+  useEffect(() => {
+    const normalized = normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
+    setHouseSystem(normalized)
+      ; (globalThis as any).__userHouseSystem = normalized
+    if (previousHouseSystemRef.current && previousHouseSystemRef.current !== normalized) {
+      refreshData(true)
+    }
+    previousHouseSystemRef.current = normalized
+  }, [settings?.houseSystem, refreshData])
 
-    const [refreshing, setRefreshing] = useState(false)
-    const [selectedArea, setSelectedArea] = useState<any>(null)
-    const [modalVisible, setModalVisible] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedArea, setSelectedArea] = useState<any>(null)
+  const [modalVisible, setModalVisible] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
-    const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
+  const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
-    const planetQuickNav = React.useMemo(() => {
-      return PLANET_ORDER.map((planet) => {
-        return {
-          planet,
-          imageUri: getPlanetImageUri(planet),
-        }
-      })
-    }, [])
+  const planetQuickNav = React.useMemo(() => {
+    return PLANET_ORDER.map((planet) => {
+      return {
+        planet,
+        imageUri: getPlanetImageUri(planet),
+      }
+    })
+  }, [])
 
-    const scrollToPlanetInTabula = React.useCallback((planet: PlanetKey) => {
-      try {
-        if (Platform.OS !== 'web' || typeof document === 'undefined') return
-        const element = document.getElementById(`tabula-planet-${planet}`)
-        if (!element) return
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        setTimeout(() => {
-          try { element.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch {}
-        }, 180)
-      } catch {}
-    }, [])
+  const scrollToPlanetInTabula = React.useCallback((planet: PlanetKey) => {
+    try {
+      if (Platform.OS !== 'web' || typeof document === 'undefined') return
+      const element = document.getElementById(`tabula-planet-${planet}`)
+      if (!element) return
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setTimeout(() => {
+        try { element.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { }
+      }, 180)
+    } catch { }
+  }, [])
 
-    // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
-    const handleAreaPress = (areaName: string, areaData: any) => {
-      setSelectedArea({
-        name: areaName,
-        ...areaData
-      })
-      setModalVisible(true)
-    }
+  // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
+  const handleAreaPress = (areaName: string, areaData: any) => {
+    setSelectedArea({
+      name: areaName,
+      ...areaData
+    })
+    setModalVisible(true)
+  }
 
 
-    const getLifeAreaFactors = React.useCallback((areaName: string): string[] => {
-      const debugArea = transitData?.currentTransits?.debug?.lifeAreas?.[areaName]
-      const planetDetails = debugArea?.planetDetails || []
-      if (!planetDetails.length) return []
-      const avg = (values: number[]) =>
-        Math.round(values.reduce((sum, val) => sum + val, 0) / Math.max(1, values.length))
-      const avgSign = avg(planetDetails.map((p: any) => Number(p.signScore || 0)))
-      const avgHouse = avg(planetDetails.map((p: any) => Number(p.houseScore || 0)))
-      const tags = Array.from(
-        new Set(
-          planetDetails
-            .flatMap((p: any) => (p.conditions?.tags || []))
-            .map((tag: string) => String(tag || '').trim())
-            .filter((tag: string) => tag.length > 0)
-        )
+  const getLifeAreaFactors = React.useCallback((areaName: string): string[] => {
+    const debugArea = transitData?.currentTransits?.debug?.lifeAreas?.[areaName]
+    const planetDetails = debugArea?.planetDetails || []
+    if (!planetDetails.length) return []
+    const avg = (values: number[]) =>
+      Math.round(values.reduce((sum, val) => sum + val, 0) / Math.max(1, values.length))
+    const avgSign = avg(planetDetails.map((p: any) => Number(p.signScore || 0)))
+    const avgHouse = avg(planetDetails.map((p: any) => Number(p.houseScore || 0)))
+    const tags = Array.from(
+      new Set(
+        planetDetails
+          .flatMap((p: any) => (p.conditions?.tags || []))
+          .map((tag: string) => String(tag || '').trim())
+          .filter((tag: string) => tag.length > 0)
       )
-      const aspectsCount = planetDetails.reduce((sum: number, p: any) => {
-        const count = Array.isArray(p.aspects) ? p.aspects.length : 0
-        return sum + count
-      }, 0)
-      return [
-        tl(
-          `Dignidade no signo: media ${avgSign} (forca essencial do planeta).`,
-          `Sign dignity: average ${avgSign} (planet essential strength).`,
-          `Dignidad en el signo: media ${avgSign} (fuerza esencial del planeta).`,
-          `Dignità nel segno: media ${avgSign} (forza essenziale del pianeta).`
-        ),
-        tl(
-          `Casa astrologica: media ${avgHouse} (relevancia da casa).`,
-          `Astrological house: average ${avgHouse} (house relevance).`,
-          `Casa astrológica: media ${avgHouse} (relevancia de la casa).`,
-          `Casa astrologica: media ${avgHouse} (rilevanza della casa).`
-        ),
-        tl(
-          `Condicoes acidentais: ${tags.length ? tags.join(', ') : 'nenhuma destacada'}.`,
-          `Accidental conditions: ${tags.length ? tags.join(', ') : 'none highlighted'}.`,
-          `Condiciones accidentales: ${tags.length ? tags.join(', ') : 'ninguna destacada'}.`,
-          `Condizioni accidentali: ${tags.length ? tags.join(', ') : 'nessuna evidenziata'}.`
-        ),
-        tl(
-          `Aspectos considerados: ${aspectsCount} (harmonicos e desafiadores).`,
-          `Considered aspects: ${aspectsCount} (harmonic and challenging).`,
-          `Aspectos considerados: ${aspectsCount} (armónicos y desafiantes).`,
-          `Aspetti considerati: ${aspectsCount} (armonici e impegnativi).`
-        ),
-        tl(
-          'Peso planetario: luminares/sociais/transpessoais ajustam a influencia.',
-          'Planetary weighting: luminaries/social/transpersonal adjust influence.',
-          'Peso planetario: luminares/sociales/transpersonales ajustan la influencia.',
-          'Peso planetario: luminari/sociali/transpersonali regolano l influenza.'
+    )
+    const aspectsCount = planetDetails.reduce((sum: number, p: any) => {
+      const count = Array.isArray(p.aspects) ? p.aspects.length : 0
+      return sum + count
+    }, 0)
+    return [
+      tl(
+        `Dignidade no signo: media ${avgSign} (forca essencial do planeta).`,
+        `Sign dignity: average ${avgSign} (planet essential strength).`,
+        `Dignidad en el signo: media ${avgSign} (fuerza esencial del planeta).`,
+        `Dignità nel segno: media ${avgSign} (forza essenziale del pianeta).`
+      ),
+      tl(
+        `Casa astrologica: media ${avgHouse} (relevancia da casa).`,
+        `Astrological house: average ${avgHouse} (house relevance).`,
+        `Casa astrológica: media ${avgHouse} (relevancia de la casa).`,
+        `Casa astrologica: media ${avgHouse} (rilevanza della casa).`
+      ),
+      tl(
+        `Condicoes acidentais: ${tags.length ? tags.join(', ') : 'nenhuma destacada'}.`,
+        `Accidental conditions: ${tags.length ? tags.join(', ') : 'none highlighted'}.`,
+        `Condiciones accidentales: ${tags.length ? tags.join(', ') : 'ninguna destacada'}.`,
+        `Condizioni accidentali: ${tags.length ? tags.join(', ') : 'nessuna evidenziata'}.`
+      ),
+      tl(
+        `Aspectos considerados: ${aspectsCount} (harmonicos e desafiadores).`,
+        `Considered aspects: ${aspectsCount} (harmonic and challenging).`,
+        `Aspectos considerados: ${aspectsCount} (armónicos y desafiantes).`,
+        `Aspetti considerati: ${aspectsCount} (armonici e impegnativi).`
+      ),
+      tl(
+        'Peso planetario: luminares/sociais/transpessoais ajustam a influencia.',
+        'Planetary weighting: luminaries/social/transpersonal adjust influence.',
+        'Peso planetario: luminares/sociales/transpersonales ajustan la influencia.',
+        'Peso planetario: luminari/sociali/transpersonali regolano l influenza.'
+      )
+    ]
+  }, [transitData?.currentTransits?.debug?.lifeAreas, tl])
+
+  const [userProfile, setUserProfile] = useState<{
+    displayName: string
+    profilePhoto?: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      loadUserProfile()
+      loadLunarCalendar()
+      initializeNotifications()
+    }
+  }, [user, language, settings?.timezone])
+
+  // Toast simples ao reprocessar casas natais
+  useEffect(() => {
+    const handler = () => {
+      try {
+        Alert.alert(
+          tl('Sucesso', 'Success', 'Éxito', 'Successo'),
+          tl('Casas recalculadas com sucesso!', 'Houses recalculated successfully!', '¡Casas recalculadas con éxito!', 'Case ricalcolate con successo!')
         )
-      ]
-    }, [transitData?.currentTransits?.debug?.lifeAreas, tl])
-
-    const [userProfile, setUserProfile] = useState<{
-      displayName: string
-      profilePhoto?: string
-    } | null>(null)
-
-    useEffect(() => {
-      if (user) {
-        loadUserProfile()
-        loadLunarCalendar()
-        initializeNotifications()
-      }
-    }, [user, language, settings?.timezone])
-
-    // Toast simples ao reprocessar casas natais
-    useEffect(() => {
-      const handler = () => {
-        try {
-          Alert.alert(
-            tl('Sucesso', 'Success', 'Éxito', 'Successo'),
-            tl('Casas recalculadas com sucesso!', 'Houses recalculated successfully!', '¡Casas recalculadas con éxito!', 'Case ricalcolate con successo!')
-          )
-          refreshData(true)
-        } catch {}
-      }
-      if (typeof window !== 'undefined') {
-        window.addEventListener('natal-houses-reprocessed', handler as any)
-        return () => window.removeEventListener('natal-houses-reprocessed', handler as any)
-      }
-    }, [])
-
-    // Recalcular quando sistema de casas for alterado via toggle global
-    useEffect(() => {
-      const onSysChanged = () => {
-        try { refreshData(true) } catch {}
-      }
-      if (typeof window !== 'undefined') {
-        window.addEventListener('house-system-changed', onSysChanged as any)
-        return () => window.removeEventListener('house-system-changed', onSysChanged as any)
-      }
-    }, [])
-
-    const initializeNotifications = async () => {
-      if (!user) return
-
-      try {
-        console.log('?? Inicializando notifica\u00E7\u00F5es push...')
-        // TODO: Implementar notifica\u00E7\u00F5es push quando o servi\u00E7o estiver dispon\u00EDvel
-        console.log('? Notifica\u00E7\u00F5es push configuradas com sucesso')
-      } catch (error) {
-        console.error('? Erro ao inicializar notifica\u00E7\u00F5es:', error)
-      }
+        refreshData(true)
+      } catch { }
     }
-
-    const loadUserProfile = async () => {
-      if (!user) return
-
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid))
-        if (userDoc.exists()) {
-          const userData = userDoc.data()
-          setUserProfile({
-            displayName: userData.displayName || userData.fullName || 'Usu\u00E1rio',
-            profilePhoto: userData.profilePhoto
-          })
-        }
-      } catch (error) {
-        console.error('Erro ao carregar perfil do UsuÃ¡rio:', error)
-      }
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('natal-houses-reprocessed', handler as any)
+      return () => window.removeEventListener('natal-houses-reprocessed', handler as any)
     }
+  }, [])
 
-    const loadLunarCalendar = async () => {
-      try {
-        const calendarDoc = await getDoc(doc(db, 'settings', 'astro_event_calendar'))
-        if (!calendarDoc.exists()) return
+  // Recalcular quando sistema de casas for alterado via toggle global
+  useEffect(() => {
+    const onSysChanged = () => {
+      try { refreshData(true) } catch { }
+    }
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('house-system-changed', onSysChanged as any)
+      return () => window.removeEventListener('house-system-changed', onSysChanged as any)
+    }
+  }, [])
 
-        const data = calendarDoc.data()
-        const events = Array.isArray(data?.events) ? data.events : []
-        const now = new Date()
-        const userTz = getUserTimezone(settings?.timezone)
+  const initializeNotifications = async () => {
+    if (!user) return
 
-        const toDate = (value: any) => {
-          if (!value) return null
-          if (typeof value?.toDate === 'function') return value.toDate()
-          const parsed = new Date(value)
-          return Number.isNaN(parsed.getTime()) ? null : parsed
-        }
+    try {
+      console.log('?? Inicializando notifica\u00E7\u00F5es push...')
+      // TODO: Implementar notifica\u00E7\u00F5es push quando o servi\u00E7o estiver dispon\u00EDvel
+      console.log('? Notifica\u00E7\u00F5es push configuradas com sucesso')
+    } catch (error) {
+      console.error('? Erro ao inicializar notifica\u00E7\u00F5es:', error)
+    }
+  }
 
-        let nextExact: Date | null = null
-        let currentVoid = false
-        let voidEnd: Date | null = null
-        let nextVoidStart: Date | null = null
-        let nextVoidEnd: Date | null = null
-        const upcomingPhases: Array<{ label: string; when: string }> = []
+  const loadUserProfile = async () => {
+    if (!user) return
 
-        for (const event of events) {
-          const type = String(event?.eventType || '').toUpperCase()
-          if (type === 'LUNAR_PHASE') {
-            const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
-            if (exact && exact > now && (!nextExact || exact < nextExact)) {
-              nextExact = exact
-            }
-            if (exact && exact > now && upcomingPhases.length < 4) {
-              const phaseEventKey = extractPhaseKey(event)
-              upcomingPhases.push({
-                label: getMoonPhaseLabelFromKey(phaseEventKey as any, language),
-                when: formatLocalDateTime(exact, userTz, language),
-              })
-            }
-          } else if (type.includes('LUNAR_VOID')) {
-            const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
-            const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
-            if (start && end && now >= start && now <= end) {
-              currentVoid = true
-              voidEnd = end
-            } else if (start && start > now && (!nextVoidStart || start < nextVoidStart)) {
-              nextVoidStart = start
-              nextVoidEnd = end
-            }
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        setUserProfile({
+          displayName: userData.displayName || userData.fullName || 'Usu\u00E1rio',
+          profilePhoto: userData.profilePhoto
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil do UsuÃ¡rio:', error)
+    }
+  }
+
+  const loadLunarCalendar = async () => {
+    try {
+      const calendarDoc = await getDoc(doc(db, 'settings', 'astro_event_calendar'))
+      if (!calendarDoc.exists()) return
+
+      const data = calendarDoc.data()
+      const events = Array.isArray(data?.events) ? data.events : []
+      const now = new Date()
+      const userTz = getUserTimezone(settings?.timezone)
+
+      const toDate = (value: any) => {
+        if (!value) return null
+        if (typeof value?.toDate === 'function') return value.toDate()
+        const parsed = new Date(value)
+        return Number.isNaN(parsed.getTime()) ? null : parsed
+      }
+
+      let nextExact: Date | null = null
+      let currentVoid = false
+      let voidEnd: Date | null = null
+      let nextVoidStart: Date | null = null
+      let nextVoidEnd: Date | null = null
+      const upcomingPhases: Array<{ label: string; when: string }> = []
+
+      for (const event of events) {
+        const type = String(event?.eventType || '').toUpperCase()
+        if (type === 'LUNAR_PHASE') {
+          const exact = toDate(event.exactAt) || toDate(event.peakAt) || toDate(event.exact)
+          if (exact && exact > now && (!nextExact || exact < nextExact)) {
+            nextExact = exact
+          }
+          if (exact && exact > now && upcomingPhases.length < 4) {
+            const phaseEventKey = extractPhaseKey(event)
+            upcomingPhases.push({
+              label: getMoonPhaseLabelFromKey(phaseEventKey as any, language),
+              when: formatLocalDateTime(exact, userTz, language),
+            })
+          }
+        } else if (type.includes('LUNAR_VOID')) {
+          const start = toDate(event.startAt) || toDate(event.beginAt) || toDate(event.start)
+          const end = toDate(event.endAt) || toDate(event.finishAt) || toDate(event.end)
+          if (start && end && now >= start && now <= end) {
+            currentVoid = true
+            voidEnd = end
+          } else if (start && start > now && (!nextVoidStart || start < nextVoidStart)) {
+            nextVoidStart = start
+            nextVoidEnd = end
           }
         }
-
-        const angle = getMoonPhaseAngle(now)
-        const angleKey = getMoonPhaseKeyFromAngle(angle)
-        const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
-        let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
-        if (angle >= 315) phaseLabel = tl('Lua Balsâmica', 'Balsamic Moon', 'Luna balsámica', 'Luna balsamica')
-        const line1 = phaseLabel
-        const line2Base = nextExact
-          ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz, language) })
-          : tr('profile.moon.updatingPhase', 'phase updating')
-        const line2 = line2Base
-        const voidLine1 = currentVoid ? tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota') : null
-        const voidLine2 = currentVoid && voidEnd
-          ? `${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
-          : null
-
-        setMoonPhaseKey(phaseKey)
-        setMoonPhaseLabel(line1)
-        setMoonLine2(line2)
-        setMoonVoidLabel(voidLine1)
-        setMoonVoidLine2(voidLine2)
-        setMoonDetails({
-          phaseLabel,
-          phaseUntilLabel: line2Base,
-          currentVoidLabel: currentVoid && voidEnd
-            ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
-            : tl('Não', 'No', 'No', 'No'),
-          nextVoidLabel: nextVoidStart
-            ? `${formatLocalDateTime(nextVoidStart, userTz, language)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz, language)}` : ''}`
-            : tr('profile.moon.noForecast', 'No forecast'),
-          upcomingPhases,
-        })
-      } catch (error) {
-        console.error('Erro ao carregar fases da lua:', error)
       }
-    }
 
-    const onRefresh = async () => {
-      setRefreshing(true)
-      await refreshData()
-      setRefreshing(false)
-    }
-
-    const getUserDisplayName = () => {
-      const raw =
-        userProfile?.displayName ||
-        user?.displayName ||
-        (user?.email ? user.email.split('@')[0] : '') ||
-        tl('Usuário', 'User', 'Usuario', 'Utente')
-      return decodeUnicodeEscapes(raw)
-    }
-
-    const formatDate = () => {
-      const locale = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
-      return new Date().toLocaleDateString(locale, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      })
-    }
-
-    const lifeAreasForDisplay = React.useMemo(() => {
-      return backendLifeAreas || transitData?.lifeAreas || null
-    }, [backendLifeAreas, transitData?.lifeAreas])
-
-    const orderedLifeAreas = React.useMemo(() => {
-      if (!lifeAreasForDisplay) return []
-      return LIFE_AREA_ORDER
-        .map((key) => [key, (lifeAreasForDisplay as any)[key]] as const)
-        .filter(([_, area]) => !!area)
-    }, [lifeAreasForDisplay])
-
-    const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
-      const percentage = typeof area?.percentage === 'number'
-        ? area.percentage
-        : (typeof area?.status === 'number' ? area.status : null)
-      const activeTransits = Array.isArray(area?.activeTransits) ? area.activeTransits : []
-      const avgImpact = activeTransits.length
-        ? activeTransits.reduce((sum: number, item: any) => {
-            const raw = Number(item?.impact)
-            return sum + (Number.isFinite(raw) ? Math.abs(raw) : 0)
-          }, 0) / activeTransits.length
+      const angle = getMoonPhaseAngle(now)
+      const angleKey = getMoonPhaseKeyFromAngle(angle)
+      const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
+      let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
+      if (angle >= 315) phaseLabel = tl('Lua Balsâmica', 'Balsamic Moon', 'Luna balsámica', 'Luna balsamica')
+      const line1 = phaseLabel
+      const line2Base = nextExact
+        ? tr('profile.moon.until', 'até {date}', { date: formatLocalDateTime(nextExact, userTz, language) })
+        : tr('profile.moon.updatingPhase', 'phase updating')
+      const line2 = line2Base
+      const voidLine1 = currentVoid ? tl('Lua Vazia', 'Void Moon', 'Luna vacía', 'Luna vuota') : null
+      const voidLine2 = currentVoid && voidEnd
+        ? `${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
         : null
-      const movementScore = (() => {
-        const normalized = normalizeAxisScore((area as any)?.movementScore)
-        if (normalized !== null) return normalized
-        const densityScore = Math.min(100, activeTransits.length * 14)
-        const impactScore = avgImpact !== null ? Math.min(100, Math.round(avgImpact * 100)) : null
-        if (impactScore === null && densityScore === 0) return null
-        const merged = impactScore === null
-          ? densityScore
-          : Math.round((densityScore * 0.55) + (impactScore * 0.45))
-        return Math.max(0, Math.min(100, merged))
-      })()
-      return {
-        name,
-        ...area,
-        status: typeof percentage === 'number' ? percentage : 0,
-        percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
-        movementScore,
-        criticalLevel: typeof percentage === 'number' ? percentage < STATUS_THRESHOLDS.criticalBelow : !!area?.criticalLevel,
-      }
-    }, [])
 
-    if (loading && !transitData) {
-      return (
-        <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-          <View style={styles.loadingContainer}>
-            <StarLoader size={36} color="#FFD700" />
-            <Text style={styles.loadingText}>
-              {tl('Carregando seus trânsitos...','Loading your transits...','Cargando tus tránsitos...','Caricamento dei tuoi transiti...')}
-            </Text>
-          </View>
-        </LinearGradient>
-      )
+      setMoonPhaseKey(phaseKey)
+      setMoonPhaseLabel(line1)
+      setMoonLine2(line2)
+      setMoonVoidLabel(voidLine1)
+      setMoonVoidLine2(voidLine2)
+      setMoonDetails({
+        phaseLabel,
+        phaseUntilLabel: line2Base,
+        currentVoidLabel: currentVoid && voidEnd
+          ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
+          : tl('Não', 'No', 'No', 'No'),
+        nextVoidLabel: nextVoidStart
+          ? `${formatLocalDateTime(nextVoidStart, userTz, language)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz, language)}` : ''}`
+          : tr('profile.moon.noForecast', 'No forecast'),
+        upcomingPhases,
+      })
+    } catch (error) {
+      console.error('Erro ao carregar fases da lua:', error)
     }
+  }
 
-    if (error && !transitData) {
-      return (
-        <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
-            <Text style={styles.errorTitle}>{tl('Erro', 'Error', 'Error', 'Errore')}</Text>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refreshData()}>
-              <Text style={styles.retryButtonText}>{tl('Tentar novamente', 'Try again', 'Intentar de nuevo', 'Riprova')}</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      )
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refreshData()
+    setRefreshing(false)
+  }
+
+  const getUserDisplayName = () => {
+    const raw =
+      userProfile?.displayName ||
+      user?.displayName ||
+      (user?.email ? user.email.split('@')[0] : '') ||
+      tl('Usuário', 'User', 'Usuario', 'Utente')
+    return decodeUnicodeEscapes(raw)
+  }
+
+  const formatDate = () => {
+    const locale = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
+    return new Date().toLocaleDateString(locale, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })
+  }
+
+  const lifeAreasForDisplay = React.useMemo(() => {
+    return backendLifeAreas || transitData?.lifeAreas || null
+  }, [backendLifeAreas, transitData?.lifeAreas])
+
+  const orderedLifeAreas = React.useMemo(() => {
+    if (!lifeAreasForDisplay) return []
+    return LIFE_AREA_ORDER
+      .map((key) => [key, (lifeAreasForDisplay as any)[key]] as const)
+      .filter(([_, area]) => !!area)
+  }, [lifeAreasForDisplay])
+
+  const normalizeDisplayArea = React.useCallback((name: string, area: any) => {
+    const percentage = typeof area?.percentage === 'number'
+      ? area.percentage
+      : (typeof area?.status === 'number' ? area.status : null)
+    const activeTransits = Array.isArray(area?.activeTransits) ? area.activeTransits : []
+    const avgImpact = activeTransits.length
+      ? activeTransits.reduce((sum: number, item: any) => {
+        const raw = Number(item?.impact)
+        return sum + (Number.isFinite(raw) ? Math.abs(raw) : 0)
+      }, 0) / activeTransits.length
+      : null
+    const movementScore = (() => {
+      const normalized = normalizeAxisScore((area as any)?.movementScore)
+      if (normalized !== null) return normalized
+      const densityScore = Math.min(100, activeTransits.length * 14)
+      const impactScore = avgImpact !== null ? Math.min(100, Math.round(avgImpact * 100)) : null
+      if (impactScore === null && densityScore === 0) return null
+      const merged = impactScore === null
+        ? densityScore
+        : Math.round((densityScore * 0.55) + (impactScore * 0.45))
+      return Math.max(0, Math.min(100, merged))
+    })()
+    return {
+      name,
+      ...area,
+      status: typeof percentage === 'number' ? percentage : 0,
+      percentage: typeof area?.percentage === 'number' ? area.percentage : percentage,
+      movementScore,
+      criticalLevel: typeof percentage === 'number' ? percentage < STATUS_THRESHOLDS.criticalBelow : !!area?.criticalLevel,
     }
+  }, [])
 
+  if (loading && !transitData) {
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-        {/* Starfield apenas no PWA/web */}
-        {typeof document !== 'undefined' && ((globalThis as any).__effectsIntensity !== 'low') && (
-          <View
-            // @ts-ignore
-            ref={(ref: any) => {
-              try {
-                if (ref && mountStarfield) mountStarfield(ref as unknown as HTMLElement, { count: 50 })
-              } catch {}
-            }}
-            style={{ position:'absolute', inset:0 }}
+        <View style={styles.loadingContainer}>
+          <StarLoader size={36} color="#FFD700" />
+          <Text style={styles.loadingText}>
+            {tl('Carregando seus trânsitos...', 'Loading your transits...', 'Cargando tus tránsitos...', 'Caricamento dei tuoi transiti...')}
+          </Text>
+        </View>
+      </LinearGradient>
+    )
+  }
+
+  if (error && !transitData) {
+    return (
+      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+          <Text style={styles.errorTitle}>{tl('Erro', 'Error', 'Error', 'Errore')}</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refreshData()}>
+            <Text style={styles.retryButtonText}>{tl('Tentar novamente', 'Try again', 'Intentar de nuevo', 'Riprova')}</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    )
+  }
+
+  return (
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      {/* Starfield apenas no PWA/web */}
+      {typeof document !== 'undefined' && ((globalThis as any).__effectsIntensity !== 'low') && (
+        <View
+          // @ts-ignore
+          ref={(ref: any) => {
+            try {
+              if (ref && mountStarfield) mountStarfield(ref as unknown as HTMLElement, { count: 50 })
+            } catch { }
+          }}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+      )}
+      {localOverrideActive && (
+        <View style={styles.statusToast}>
+          <Text style={styles.statusToastText}>{tl('Recarregando status', 'Refreshing status', 'Recargando estado', 'Aggiornamento stato')}</Text>
+        </View>
+      )}
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={showDesktopScrollbar}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFD700"
+            colors={['#FFD700']}
           />
-        )}
-        {localOverrideActive && (
-          <View style={styles.statusToast}>
-            <Text style={styles.statusToastText}>{tl('Recarregando status', 'Refreshing status', 'Recargando estado', 'Aggiornamento stato')}</Text>
-          </View>
-        )}
-        <ScrollView
-          ref={scrollRef}
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={showDesktopScrollbar}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#FFD700"
-              colors={['#FFD700']}
-            />
-          }
-        >
-          {/* Header */}
-      <View style={styles.header}>
-            <View style={styles.userSection}>
-              <View style={styles.avatarContainer}>
-                {userProfile?.profilePhoto ? (
-                  <Image
-                    source={{ uri: userProfile.profilePhoto }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <Ionicons name="person" size={24} color="#FFD700" />
-                  </View>
-                )}
-              </View>
-              <View style={styles.headerContent}>
-                <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
-                <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
-                <Text style={styles.date}>{formatDate()}</Text>
-              </View>
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.userSection}>
+            <View style={styles.avatarContainer}>
+              {userProfile?.profilePhoto ? (
+                <Image
+                  source={{ uri: userProfile.profilePhoto }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={24} color="#FFD700" />
+                </View>
+              )}
             </View>
-
-            <Animated.View style={moonPress.style}>
-              <TouchableOpacity
-                style={styles.notificationButton}
-                onPressIn={moonPress.onPressIn}
-                onPressOut={moonPress.onPressOut}
-                onPress={() => setMoonModalVisible(true)}
-              >
-                <View style={styles.moonIconWrap}>
-                  <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
-                </View>
-                <View style={styles.moonLegend}>
-                  <Text style={styles.moonLegendLine1} numberOfLines={1}>
-                    {moonPhaseLabel || tr('profile.moon.defaultLabel', 'Lua')}
-                  </Text>
-                  <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                    {moonLine2 || tr('profile.moon.updatingPhase', 'phase updating')}
-                  </Text>
-                  {moonVoidLabel ? (
-                    <Text style={styles.moonLegendLine1} numberOfLines={1}>
-                      {moonVoidLabel}
-                    </Text>
-                  ) : null}
-                  {moonVoidLine2 ? (
-                    <Text style={styles.moonLegendLine2} numberOfLines={1}>
-                      {moonVoidLine2}
-                    </Text>
-                  ) : null}
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
+            <View style={styles.headerContent}>
+              <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
+              <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
+              <Text style={styles.date}>{formatDate()}</Text>
+            </View>
           </View>
 
-          {/* Status das Areas de Vida */}
-          {lifeAreasForDisplay && (
-            <AnimatedMount>
+          <Animated.View style={moonPress.style}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPressIn={moonPress.onPressIn}
+              onPressOut={moonPress.onPressOut}
+              onPress={() => setMoonModalVisible(true)}
+            >
+              <View style={styles.moonIconWrap}>
+                <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+              </View>
+              <View style={styles.moonLegend}>
+                <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                  {moonPhaseLabel || tr('profile.moon.defaultLabel', 'Lua')}
+                </Text>
+                <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                  {moonLine2 || tr('profile.moon.updatingPhase', 'phase updating')}
+                </Text>
+                {moonVoidLabel ? (
+                  <Text style={styles.moonLegendLine1} numberOfLines={1}>
+                    {moonVoidLabel}
+                  </Text>
+                ) : null}
+                {moonVoidLine2 ? (
+                  <Text style={styles.moonLegendLine2} numberOfLines={1}>
+                    {moonVoidLine2}
+                  </Text>
+                ) : null}
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Status das Areas de Vida */}
+        {lifeAreasForDisplay && (
+          <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.lifeAreasGrid}>
                 {orderedLifeAreas.map(([name, area], index) => {
@@ -642,11 +642,11 @@ export default function HomeScreen() {
                 })}
               </View>
             </View>
-            </AnimatedMount>
-          )}
+          </AnimatedMount>
+        )}
 
 
-          {transitData?.currentTransits?.planetComparisons &&
+        {transitData?.currentTransits?.planetComparisons &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
               <View style={styles.planetStripSection}>
@@ -689,7 +689,7 @@ export default function HomeScreen() {
           )}
 
 
-          {transitData?.currentTransits?.planetComparisons &&
+        {transitData?.currentTransits?.planetComparisons &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
               <View style={styles.section}>
@@ -711,71 +711,71 @@ export default function HomeScreen() {
             </AnimatedMount>
           )}
 
-          {/* Espa\u00E7amento final */}
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
+        {/* Espa\u00E7amento final */}
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
 
-        {/* ?? MODAL DE DETALHES DA \u00C1REA */}
-        <LifeAreaDetailModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          areaData={selectedArea}
-          astrologyData={transitData?.currentTransits}
-          astrologyDataFallback={backendCurrentTransits}
-        />
+      {/* ?? MODAL DE DETALHES DA \u00C1REA */}
+      <LifeAreaDetailModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        areaData={selectedArea}
+        astrologyData={transitData?.currentTransits}
+        astrologyDataFallback={backendCurrentTransits}
+      />
 
-        {/* PWA Download Button */}
-        <PWADownloadButton />
+      {/* PWA Download Button */}
+      <PWADownloadButton />
 
-        <Modal
-          visible={moonModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setMoonModalVisible(false)}
+      <Modal
+        visible={moonModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoonModalVisible(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.moonModalBackdrop}
+          onPress={() => setMoonModalVisible(false)}
         >
           <TouchableOpacity
             activeOpacity={1}
-            style={styles.moonModalBackdrop}
-            onPress={() => setMoonModalVisible(false)}
+            style={styles.moonModalCard}
+            onPress={() => { }}
           >
+            <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
+            <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Moon now')}</Text>
+              <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
+              <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
+
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Void Moon')}</Text>
+              <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Current')}: {moonDetails.currentVoidLabel}</Text>
+              <Text style={styles.moonModalText}>{tr('profile.moon.modal.next', 'Next')}: {moonDetails.nextVoidLabel}</Text>
+
+              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.upcoming', 'Upcoming phases')}</Text>
+              {moonDetails.upcomingPhases.length ? (
+                moonDetails.upcomingPhases.map((item) => (
+                  <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
+                    <Text style={styles.moonModalItemLabel}>{item.label}</Text>
+                    <Text style={styles.moonModalItemWhen}>{item.when}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.moonModalText}>{tr('profile.moon.modal.noUpcoming', 'No upcoming events in calendar.')}</Text>
+              )}
+            </ScrollView>
             <TouchableOpacity
-              activeOpacity={1}
-              style={styles.moonModalCard}
-              onPress={() => {}}
+              style={styles.moonModalCloseButton}
+              onPress={() => setMoonModalVisible(false)}
             >
-              <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
-              <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
-                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Moon now')}</Text>
-                <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
-                <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
-
-                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Void Moon')}</Text>
-                <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Current')}: {moonDetails.currentVoidLabel}</Text>
-                <Text style={styles.moonModalText}>{tr('profile.moon.modal.next', 'Next')}: {moonDetails.nextVoidLabel}</Text>
-
-                <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.upcoming', 'Upcoming phases')}</Text>
-                {moonDetails.upcomingPhases.length ? (
-                  moonDetails.upcomingPhases.map((item) => (
-                    <View key={`${item.label}-${item.when}`} style={styles.moonModalItem}>
-                      <Text style={styles.moonModalItemLabel}>{item.label}</Text>
-                      <Text style={styles.moonModalItemWhen}>{item.when}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.moonModalText}>{tr('profile.moon.modal.noUpcoming', 'No upcoming events in calendar.')}</Text>
-                )}
-              </ScrollView>
-              <TouchableOpacity
-                style={styles.moonModalCloseButton}
-                onPress={() => setMoonModalVisible(false)}
-              >
-                <Text style={styles.moonModalCloseText}>{tr('common.close', 'Close')}</Text>
-              </TouchableOpacity>
+              <Text style={styles.moonModalCloseText}>{tr('common.close', 'Close')}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
-        </Modal>
-      </LinearGradient>
-    )
+        </TouchableOpacity>
+      </Modal>
+    </LinearGradient>
+  )
 }
 
 const styles = StyleSheet.create({

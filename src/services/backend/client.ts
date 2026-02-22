@@ -1,7 +1,7 @@
 import { auth, getAppCheckToken } from '../../config/firebase'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 
-const rawBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || ''
+const rawBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app'
 
 export const getBackendBaseUrl = () => rawBackendUrl.replace(/\/$/, '')
 
@@ -11,7 +11,7 @@ export const getAuthHeader = async () => {
     if (typeof (auth as any).authStateReady === 'function') {
       try {
         await (auth as any).authStateReady()
-      } catch {}
+      } catch { }
       if (auth.currentUser) return auth.currentUser
     }
     return new Promise((resolve) => {
@@ -84,7 +84,7 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
       const reason = typeof data?.reason === 'string' ? data.reason : ''
       const code = typeof data?.error === 'string' ? data.error : ''
       shouldRetry = reason === 'stale_auth_time' || code === 'stale_session'
-    } catch {}
+    } catch { }
 
     if (shouldRetry && auth.currentUser) {
       try {
@@ -93,7 +93,7 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
           mergedHeaders.set('Authorization', `Bearer ${refreshed}`)
           response = await doFetch()
         }
-      } catch {}
+      } catch { }
     }
   }
 

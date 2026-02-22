@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useRef, useState } from "react"
+import { Platform } from "react-native"
 import {
   type User,
   onAuthStateChanged,
@@ -10,9 +11,6 @@ import {
   signOut,
   deleteUser,
   GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
 } from "firebase/auth"
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
@@ -166,16 +164,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      getRedirectResult(auth)
-        .then(async (result) => {
-          if (result?.user) {
-            await ensureUserDocuments(result.user)
-          }
-        })
-        .catch((error) => {
-          console.warn('Falha ao processar retorno do Google:', error)
-        })
+    if (Platform.OS === 'web') {
+      import('firebase/auth').then(({ getRedirectResult }) => {
+        getRedirectResult(auth)
+          .then(async (result) => {
+            if (result?.user) {
+              await ensureUserDocuments(result.user)
+            }
+          })
+          .catch((error) => {
+            console.warn('Falha ao processar retorno do Google:', error)
+          })
+      }).catch(() => { })
     }
 
     const watchdog = setTimeout(() => {
@@ -299,24 +299,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('Tentando login com Google')
-      // Para web, usar popup
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web') {
+        const { signInWithPopup, signInWithRedirect } = await import('firebase/auth')
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
         const result = await signInWithPopup(auth, provider)
         await ensureUserDocuments(result.user)
         console.log('Login Google bem-sucedido:', result.user.uid)
       } else {
-        throw new Error('Google Sign-In nao disponivel no Expo Go. Use um development build.')
+        // Native Google Sign-In via @react-native-google-signin/google-signin
+        const { GoogleSignin } = require('@react-native-google-signin/google-signin')
+        const { signInWithCredential } = await import('firebase/auth')
+
+        GoogleSignin.configure({
+          webClientId: '729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com',
+        })
+
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true })
+        const signInResult = await GoogleSignin.signIn()
+
+        // v15 returns { data: { idToken } } or { idToken } depending on version
+        const idToken = signInResult?.data?.idToken || signInResult?.idToken
+        if (!idToken) {
+          throw new Error('Google Sign-In não retornou um token de autenticação.')
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken)
+        const firebaseResult = await signInWithCredential(auth, credential)
+        await ensureUserDocuments(firebaseResult.user)
+        console.log('Login Google nativo bem-sucedido:', firebaseResult.user.uid)
       }
     } catch (error: any) {
       console.error('Erro no login Google:', error.message)
       if (
-        typeof window !== 'undefined' &&
+        Platform.OS === 'web' &&
         (error.code === 'auth/popup-blocked' ||
           error.code === 'auth/popup-closed-by-user' ||
           error.code === 'auth/cancelled-popup-requested')
       ) {
+        const { signInWithRedirect } = await import('firebase/auth')
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
         await signInWithRedirect(auth, provider)
@@ -348,7 +369,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Forcar estado local imediatamente para refletir na navegacao
       setUser(null)
       setBirthDataComplete(false)
-      ;(globalThis as any).__userHouseSystem = undefined
+        ; (globalThis as any).__userHouseSystem = undefined
       console.log('Logout realizado com sucesso (estado limpo)')
 
     } catch (error) {

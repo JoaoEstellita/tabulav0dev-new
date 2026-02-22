@@ -31,6 +31,9 @@
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "scheme": "tabulaestelar",
+    "plugins": [
+      "@react-native-google-signin/google-signin"
+    ],
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",

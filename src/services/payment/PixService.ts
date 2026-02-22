@@ -19,7 +19,7 @@ export interface PixPaymentResponse {
   ticketUrl?: string
 }
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '') + '/api'
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '') + '/api'
 
 export async function createPixPayment(payload: PixPaymentPayload): Promise<PixPaymentResponse> {
   const response = await fetch(`${BACKEND_URL}/mercado-pago/pix-payment`, {

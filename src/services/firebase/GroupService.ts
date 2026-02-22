@@ -22,7 +22,7 @@ import type { LocalTransitData } from "../astrology/LocalAstrologyService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 import { backendFetch } from "../backend/client"
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "https://tabulav0dev-backend.vercel.app").replace(/\/$/, "")
 
 export interface Group {
   id: string
@@ -511,23 +511,23 @@ class GroupService {
                   member?.isAdmin === true ||
                   member?.role === "admin" ||
                   member?.roles?.admin === true
-              return {
-                userId: member.userId,
-                email: member.email || member.userId,
-                displayName: member.displayName || member.userId,
-                profilePhoto: member.profilePhoto || undefined,
+                return {
+                  userId: member.userId,
+                  email: member.email || member.userId,
+                  displayName: member.displayName || member.userId,
+                  profilePhoto: member.profilePhoto || undefined,
                   joinedAt: new Date(),
                   astrologicalStatus: member.astrologicalStatus || undefined,
                   lastStatusUpdate: member.lastStatusUpdate ? new Date(member.lastStatusUpdate) : undefined,
-                sharedLifeAreas: member.sharedLifeAreas,
-                lifeAreas,
-                areaTransits: member.areaTransits || undefined,
-                subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
-                subscriptionStatus: member.subscriptionStatus || null,
-                isAdmin: memberAdmin,
-              }
-            }) as GroupMember[]
-          }
+                  sharedLifeAreas: member.sharedLifeAreas,
+                  lifeAreas,
+                  areaTransits: member.areaTransits || undefined,
+                  subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
+                  subscriptionStatus: member.subscriptionStatus || null,
+                  isAdmin: memberAdmin,
+                }
+              }) as GroupMember[]
+            }
           }
         } catch (error) {
           console.warn("Status via backend falhou, tentando direto:", error)
@@ -557,22 +557,22 @@ class GroupService {
             userData?.roles?.admin === true
           const subscriptionStatus = String(
             memberStatus?.subscriptionStatus ||
-              userData?.subscription?.status ||
-              publicData?.subscriptionStatus ||
-              ""
+            userData?.subscription?.status ||
+            publicData?.subscriptionStatus ||
+            ""
           ).toLowerCase()
           const subscriptionActive =
             adminFlag
               ? true
               : typeof memberStatus?.subscriptionActive === "boolean"
-              ? memberStatus.subscriptionActive
-              : typeof publicData?.subscriptionActive === "boolean"
-              ? publicData.subscriptionActive
-              : subscriptionStatus === "active" ||
-                subscriptionStatus === "trial" ||
-                this.isTrialWindowActive(
-                  memberStatus?.trialStart || publicData?.trialStart
-                )
+                ? memberStatus.subscriptionActive
+                : typeof publicData?.subscriptionActive === "boolean"
+                  ? publicData.subscriptionActive
+                  : subscriptionStatus === "active" ||
+                  subscriptionStatus === "trial" ||
+                  this.isTrialWindowActive(
+                    memberStatus?.trialStart || publicData?.trialStart
+                  )
           const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
           const email = publicData.email || memberId
           const lifeAreas = memberStatus?.lifeAreas || statusData?.lifeAreas
@@ -616,8 +616,8 @@ class GroupService {
           (data.type === "critical_alert"
             ? "critical"
             : data.type === "favorable_event" || data.type === "daily_group_energy"
-            ? "positive"
-            : "neutral")
+              ? "positive"
+              : "neutral")
         const message = data.message || data.body || ""
         const userName = data.userName || data.senderName || "Usuario"
         const userId = data.userId || data.senderId || ""
@@ -654,8 +654,8 @@ class GroupService {
           (data.type === "critical_alert"
             ? "critical"
             : data.type === "favorable_event" || data.type === "daily_group_energy"
-            ? "positive"
-            : "neutral")
+              ? "positive"
+              : "neutral")
         const message = data.message || data.body || ""
         const userName = data.userName || data.senderName || "Usuario"
         const userId = data.userId || data.senderId || ""
@@ -1024,22 +1024,22 @@ class GroupService {
     const statusMessages = messages[status.overall as keyof typeof messages] || messages.challenging
     return statusMessages[Math.floor(Math.random() * statusMessages.length)]
   }
-  
+
   // Criar notificacoes favoraveis para grupos
   private async createFavorableGroupNotifications(userId: string, status: AstrologicalStatus): Promise<void> {
     try {
       const userGroups = await this.getUserGroups(userId)
-      
+
       // Buscar dados do usuario
       const userDoc = await getDoc(doc(db, 'users', userId))
       if (!userDoc.exists()) return
-      
+
       const userData = userDoc.data()
       const userName = userData.displayName || 'Um membro'
-      
+
       for (const group of userGroups) {
         const favorableMessage = this.generateFavorableMessage(status, userName)
-        
+
         // Enviar notificacao favoravel via backend
         try {
           await GroupNotificationService.sendAutomaticFavorableAlert(group.id, {
@@ -1047,7 +1047,7 @@ class GroupService {
             percentage: 85, // Simular alta energia
             description: favorableMessage
           })
-          
+
           console.log(` Notificacao favoravel enviada para grupo ${group.name}`)
         } catch (notificationError) {
           console.error('Erro ao enviar notificacao favoravel:', notificationError)
@@ -1057,7 +1057,7 @@ class GroupService {
       console.error('Erro ao criar notificacoes favoraveis:', error)
     }
   }
-  
+
   // Gerar mensagem favoravel
   private generateFavorableMessage(status: AstrologicalStatus, userName: string): string {
     const favorableMessages = {
@@ -1072,7 +1072,7 @@ class GroupService {
         `${userName} tem o cosmos a seu favor hoje!`,
       ],
     }
-    
+
     const statusMessages = favorableMessages[status.overall as keyof typeof favorableMessages] || favorableMessages.positive
     return statusMessages[Math.floor(Math.random() * statusMessages.length)]
   }

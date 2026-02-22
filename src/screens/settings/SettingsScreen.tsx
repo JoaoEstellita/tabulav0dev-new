@@ -39,7 +39,7 @@ import { backendFetch } from '../../services/backend/client';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
 
 const { width } = Dimensions.get('window');
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '');
 
 interface SettingsSection {
   id: string;
@@ -219,13 +219,13 @@ export default function SettingsScreen() {
         },
         ...(isAdminUser
           ? [{
-              id: 'admin_diagnostics',
-              title: tr('settings.item.adminDiagnostics.title', 'Painel Admin'),
-              subtitle: tr('settings.item.adminDiagnostics.subtitle', 'Diagnóstico de status e notificações'),
-              icon: 'analytics',
-              type: 'button' as const,
-              onPress: () => navigation.navigate('AdminDiagnostics' as never),
-            }]
+            id: 'admin_diagnostics',
+            title: tr('settings.item.adminDiagnostics.title', 'Painel Admin'),
+            subtitle: tr('settings.item.adminDiagnostics.subtitle', 'Diagnóstico de status e notificações'),
+            icon: 'analytics',
+            type: 'button' as const,
+            onPress: () => navigation.navigate('AdminDiagnostics' as never),
+          }]
           : []),
       ],
     },
@@ -582,7 +582,7 @@ export default function SettingsScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-        Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.galleryPermission', 'Precisamos de acesso à galeria para selecionar sua foto.'));
+      Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.galleryPermission', 'Precisamos de acesso à galeria para selecionar sua foto.'));
       return false;
     }
     return true;
@@ -595,7 +595,7 @@ export default function SettingsScreen() {
       if (source === "camera") {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== "granted") {
-      Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.cameraPermission', 'Precisamos de acesso à câmera.'));
+          Alert.alert(tr('settings.alert.permissionRequired', 'Permissão necessária'), tr('settings.alert.cameraPermission', 'Precisamos de acesso à câmera.'));
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -633,7 +633,7 @@ export default function SettingsScreen() {
   };
 
   const selectPhoto = async () => {
-    if (typeof window !== "undefined") {
+    if (Platform.OS === 'web') {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
@@ -907,7 +907,7 @@ export default function SettingsScreen() {
     setHouseSystem(normalized);
     await updateSettings({ houseSystem: normalized });
     if (user?.uid) {
-      try { await UserService.setHouseSystem(user.uid, normalized); } catch {}
+      try { await UserService.setHouseSystem(user.uid, normalized); } catch { }
       await forceBackendStatusRefresh(user.uid, 'settings_house_system_change');
     }
   };
@@ -915,20 +915,20 @@ export default function SettingsScreen() {
   const checkSubscriptionStatus = async () => {
     try {
       setIsLoading(true);
-      
+
       if (!user?.uid) {
         Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.userNotIdentified', 'Usuário não identificado.'));
         return;
       }
 
       const status = await MercadoPagoService.getSubscriptionStatus(user.uid);
-      
+
       if (status.isActive) {
         const plan = MercadoPagoService.getPlanById(status.planId || '');
         const planName = plan?.name || 'Premium';
-        const expiresAt = status.expiresAt ? 
+        const expiresAt = status.expiresAt ?
           new Date(status.expiresAt).toLocaleDateString('pt-BR') : 'N/A';
-        
+
         Alert.alert(
           tr('settings.alert.subscriptionActive.title', 'Assinatura Ativa'),
           tr('settings.alert.subscriptionActive.body', 'Plano: {plan}\nExpira em: {expiresAt}\n\nDeseja gerenciar sua assinatura?', { plan: planName, expiresAt }),
@@ -985,18 +985,20 @@ export default function SettingsScreen() {
       tr('settings.alert.deleteAccount.body', 'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão perdidos permanentemente.'),
       [
         { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
-        { text: tr('settings.alert.deleteAccount.confirm', 'Excluir'), style: 'destructive', onPress: async () => {
-          try {
-            setIsLoading(true);
-            await deleteUserAccount();
-            Alert.alert(tr('settings.alert.deleteAccount.deletedTitle', 'Conta excluída'), tr('settings.alert.deleteAccount.deletedBody', 'Sua conta foi excluída com sucesso.'));
-          } catch (error) {
-            console.error('Erro ao excluir conta:', error);
-            Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.deleteAccount.failed', 'Não foi possível excluir a conta. Tente novamente.'));
-          } finally {
-            setIsLoading(false);
+        {
+          text: tr('settings.alert.deleteAccount.confirm', 'Excluir'), style: 'destructive', onPress: async () => {
+            try {
+              setIsLoading(true);
+              await deleteUserAccount();
+              Alert.alert(tr('settings.alert.deleteAccount.deletedTitle', 'Conta excluída'), tr('settings.alert.deleteAccount.deletedBody', 'Sua conta foi excluída com sucesso.'));
+            } catch (error) {
+              console.error('Erro ao excluir conta:', error);
+              Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.deleteAccount.failed', 'Não foi possível excluir a conta. Tente novamente.'));
+            } finally {
+              setIsLoading(false);
+            }
           }
-        }}
+        }
       ]
     );
   };
@@ -1023,18 +1025,20 @@ export default function SettingsScreen() {
       tr('settings.alert.signOut.confirmBody', 'Tem certeza que deseja sair?'),
       [
         { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
-        { text: tr('settings.alert.signOut.confirm', 'Sair'), style: 'destructive', onPress: async () => {
-          try {
-            setIsLoading(true);
-            await logout();
-            Alert.alert(tr('common.success', 'Sucesso'), tr('settings.alert.signOut.success', 'Logout realizado com sucesso!'));
-          } catch (error) {
-            console.error('Erro no logout:', error);
-            Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.signOut.failed', 'Não foi possível fazer logout. Tente novamente.'));
-          } finally {
-            setIsLoading(false);
+        {
+          text: tr('settings.alert.signOut.confirm', 'Sair'), style: 'destructive', onPress: async () => {
+            try {
+              setIsLoading(true);
+              await logout();
+              Alert.alert(tr('common.success', 'Sucesso'), tr('settings.alert.signOut.success', 'Logout realizado com sucesso!'));
+            } catch (error) {
+              console.error('Erro no logout:', error);
+              Alert.alert(tr('common.error', 'Erro'), tr('settings.alert.signOut.failed', 'Não foi possível fazer logout. Tente novamente.'));
+            } finally {
+              setIsLoading(false);
+            }
           }
-        }}
+        }
       ]
     );
   };
@@ -1060,10 +1064,10 @@ export default function SettingsScreen() {
   };
 
   const handleToggle = (itemId: string, value: boolean) => {
-    setSettingsSections(prevSettings => 
+    setSettingsSections(prevSettings =>
       prevSettings.map(section => ({
         ...section,
-        items: section.items.map(item => 
+        items: section.items.map(item =>
           item.id === itemId ? { ...item, value } : item
         )
       }))
@@ -1101,10 +1105,10 @@ export default function SettingsScreen() {
       >
         <View style={styles.itemLeft}>
           <View style={[styles.iconContainer, isDanger && styles.dangerIcon]}>
-            <Ionicons 
-              name={item.icon as any} 
-              size={20} 
-              color={isDanger ? '#FF4444' : '#FFD700'} 
+            <Ionicons
+              name={item.icon as any}
+              size={20}
+              color={isDanger ? '#FF4444' : '#FFD700'}
             />
           </View>
           <View style={styles.itemText}>
@@ -1128,10 +1132,10 @@ export default function SettingsScreen() {
               thumbColor={item.value ? '#0a0e27' : '#f4f3f4'}
             />
           ) : (
-            <Ionicons 
-              name={isLink ? 'chevron-forward' : 'chevron-forward'} 
-              size={20} 
-              color={isDanger ? '#FF4444' : '#b0b0b0'} 
+            <Ionicons
+              name={isLink ? 'chevron-forward' : 'chevron-forward'}
+              size={20}
+              color={isDanger ? '#FF4444' : '#b0b0b0'}
             />
           )}
         </View>
@@ -1152,10 +1156,10 @@ export default function SettingsScreen() {
         >
           <View style={styles.itemLeft}>
             <View style={[styles.iconContainer, isDanger && styles.dangerIcon]}>
-              <Ionicons 
-                name={item.icon as any} 
-                size={20} 
-                color={isDanger ? '#FF4444' : '#FFD700'} 
+              <Ionicons
+                name={item.icon as any}
+                size={20}
+                color={isDanger ? '#FF4444' : '#FFD700'}
               />
             </View>
             <View style={styles.itemText}>
@@ -1179,10 +1183,10 @@ export default function SettingsScreen() {
                 thumbColor={item.value ? '#0a0e27' : '#f4f3f4'}
               />
             ) : (
-              <Ionicons 
-                name={isLink ? 'chevron-forward' : 'chevron-forward'} 
-                size={20} 
-                color={isDanger ? '#FF4444' : '#b0b0b0'} 
+              <Ionicons
+                name={isLink ? 'chevron-forward' : 'chevron-forward'}
+                size={20}
+                color={isDanger ? '#FF4444' : '#b0b0b0'}
               />
             )}
           </View>
@@ -1266,7 +1270,7 @@ export default function SettingsScreen() {
         colors={['#0a0e27', '#1a1f3a', '#2d1b69']}
         style={styles.gradient}
       >
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >

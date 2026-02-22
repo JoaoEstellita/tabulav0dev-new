@@ -13,6 +13,7 @@
  */
 
 import RealAstrologyEngine, { RealAstrologyData } from './RealAstrologyEngine'
+import { Platform } from 'react-native'
 import { publishAstrologyData } from '../../context/AstrologyDataProvider'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
@@ -72,7 +73,7 @@ export interface CacheStatus {
 }
 
 export class LocalAstrologyService {
-  
+
   /**
    * Busca apenas do cache (sem recalculo).
    */
@@ -87,13 +88,13 @@ export class LocalAstrologyService {
    * Substitui completamente as APIs externas
    */
   static async getCurrentTransits(
-    birthData: BirthData, 
-    userId: string, 
+    birthData: BirthData,
+    userId: string,
     forceRefresh: boolean = false
   ): Promise<{ data: LocalTransitData, cacheStatus: CacheStatus }> {
     try {
       console.log('🔮 Iniciando cálculos astrológicos LOCAIS...')
-      
+
       // 1. Verificar cache primeiro (se não for refresh forçado)
       if (!forceRefresh) {
         const cachedData = await this.getCachedData(userId)
@@ -114,7 +115,7 @@ export class LocalAstrologyService {
       try {
         const userProfile = await (await import('../firebase/UserService')).default.getUserProfile(userId)
         const wantsShare = userProfile?.preferences?.privacy?.showStatusToGroups === true
-        if (wantsShare && typeof navigator !== 'undefined' && navigator.geolocation) {
+        if (wantsShare && Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
           const coords: { latitude: number, longitude: number } = await new Promise((resolve, reject) => {
             const id = navigator.geolocation.getCurrentPosition(
               pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
@@ -127,7 +128,7 @@ export class LocalAstrologyService {
             currentLon = coords.longitude
           }
         }
-      } catch {}
+      } catch { }
 
       const realData = await RealAstrologyEngine.calculateRealAstrology(
         birthData.birthDate,
@@ -144,19 +145,19 @@ export class LocalAstrologyService {
         if (userProfile?.natalAscDeg && Array.isArray(userProfile?.natalCusps)) {
           const persistedSystem = normalizeHouseSystem(userProfile.natalSystem || houseSystem)
           if (persistedSystem === houseSystem) {
-            ;(realData as any).natal = (realData as any).natal || {}
-            ;(realData as any).natal.houses = {
-              ascendant: userProfile.natalAscDeg,
-              midheaven: userProfile.natalMcDeg || realData.midheaven,
-              cusps: userProfile.natalCusps,
-              approximate: !!userProfile.natalApproximate,
-              system: persistedSystem
-            }
+            ; (realData as any).natal = (realData as any).natal || {}
+              ; (realData as any).natal.houses = {
+                ascendant: userProfile.natalAscDeg,
+                midheaven: userProfile.natalMcDeg || realData.midheaven,
+                cusps: userProfile.natalCusps,
+                approximate: !!userProfile.natalApproximate,
+                system: persistedSystem
+              }
           } else {
             console.log('Cache natal ignorado: sistema de casas diferente do atual')
           }
         }
-      } catch {}
+      } catch { }
 
       // Publicar para Provider (e manter compat por enquanto)
       publishAstrologyData(realData)
@@ -171,9 +172,9 @@ export class LocalAstrologyService {
         ascendant: realData.ascendant,
         midheaven: realData.midheaven
       })
-      
+
       const processedData = this.processRealData(realData, birthData)
-      
+
       console.log('🔍 DEBUG - processedData:', {
         lifeAreasKeys: Object.keys(processedData.lifeAreas),
         lifeAreasCount: Object.keys(processedData.lifeAreas).length,
@@ -199,7 +200,7 @@ export class LocalAstrologyService {
       }
 
       console.log('🎯 Cálculos astrológicos LOCAIS concluídos com sucesso!')
-      
+
       return {
         data: processedData,
         cacheStatus
@@ -221,14 +222,14 @@ export class LocalAstrologyService {
 
     // Mapear áreas para o formato esperado pelo LifeAreaCard
     const mappedLifeAreas: Record<string, any> = {}
-    
+
     Object.entries(lifeAreas).forEach(([areaName, areaData]) => {
       // Converter percentage para status e adicionar propriedades necessárias
       mappedLifeAreas[areaName] = {
         name: areaName,
         status: areaData.percentage, // ✅ CONVERTER percentage para status
-        trend: areaData.percentage >= STATUS_THRESHOLDS.positiveAbove ? 'positive' : 
-               areaData.percentage >= STATUS_THRESHOLDS.criticalBelow ? 'stable' : 'negative',
+        trend: areaData.percentage >= STATUS_THRESHOLDS.positiveAbove ? 'positive' :
+          areaData.percentage >= STATUS_THRESHOLDS.criticalBelow ? 'stable' : 'negative',
         description: areaData.influences?.join(' • ') || 'Área da vida',
         criticalLevel: areaData.percentage < 25,
         influences: areaData.influences || [],
@@ -238,20 +239,20 @@ export class LocalAstrologyService {
 
     // Encontrar melhor e pior área
     const areas = Object.entries(lifeAreas)
-    const bestArea = areas.reduce((best, current) => 
+    const bestArea = areas.reduce((best, current) =>
       current[1].percentage > best[1].percentage ? current : best
     )[0]
-    
-    const challengingArea = areas.reduce((worst, current) => 
+
+    const challengingArea = areas.reduce((worst, current) =>
       current[1].percentage < worst[1].percentage ? current : worst
     )[0]
 
     // Analisar tendência geral
     const averageScore = areas.reduce((sum, [_, area]) => sum + area.percentage, 0) / areas.length
     const generalTrend = averageScore >= STATUS_THRESHOLDS.positiveAbove ? 'Período muito favorável' :
-                        averageScore >= 55 ? 'Período equilibrado' :
-                        averageScore >= STATUS_THRESHOLDS.criticalBelow ? 'Período de desafios moderados' :
-                        'Período que requer cautela'
+      averageScore >= 55 ? 'Período equilibrado' :
+        averageScore >= STATUS_THRESHOLDS.criticalBelow ? 'Período de desafios moderados' :
+          'Período que requer cautela'
 
     // Aspectos-chave (T→T) do dia: filtrar pares triviais (planeta consigo mesmo) e pegar os mais fortes
     const keyAspects = realData.aspects
@@ -297,14 +298,14 @@ export class LocalAstrologyService {
       key: realData.collectiveWeekly.key,
       keyAspects: (realData.collectiveWeekly.keyAspects || [])
         .filter(a => a.planet1 !== a.planet2)
-        .slice(0,5)
+        .slice(0, 5)
         .map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     } : undefined
     const monthlySnapshot = realData.collectiveMonthly ? {
       key: realData.collectiveMonthly.key,
       keyAspects: (realData.collectiveMonthly.keyAspects || [])
         .filter(a => a.planet1 !== a.planet2)
-        .slice(0,5)
+        .slice(0, 5)
         .map(a => `${a.planet1} ${a.type} ${a.planet2}`)
     } : undefined
 
@@ -321,8 +322,8 @@ export class LocalAstrologyService {
     const personalTransitsAll = (realData.transits?.personal || [])
     const masterAspects = personalTransitsAll
       .filter(t => t.isMaster)
-      .sort((a,b)=>b.strength-a.strength)
-      .slice(0,5)
+      .sort((a, b) => b.strength - a.strength)
+      .slice(0, 5)
       .map(t => ({ text: `${t.transitPlanet} ${t.type} ${t.natalPlanet} (${t.strength}%)`, strength: t.strength }))
 
     // Listas pessoais para Semana/Mês (heurística baseada em duração/força)
@@ -341,18 +342,18 @@ export class LocalAstrologyService {
         const day = now.getDay()
         const diffToMonday = (day === 0 ? -6 : 1 - day)
         const start = new Date(now)
-        start.setHours(0,0,0,0)
+        start.setHours(0, 0, 0, 0)
         start.setDate(start.getDate() + diffToMonday)
         const end = new Date(start)
         end.setDate(start.getDate() + 6)
-        end.setHours(23,59,59,999)
+        end.setHours(23, 59, 59, 999)
         return { start, end }
       }
       const m = key.match(/^(\d{4})-W(\d{2})$/)
       if (m) {
-        const year = parseInt(m[1],10)
-        const week = parseInt(m[2],10)
-        const jan4 = new Date(Date.UTC(year,0,4))
+        const year = parseInt(m[1], 10)
+        const week = parseInt(m[2], 10)
+        const jan4 = new Date(Date.UTC(year, 0, 4))
         const jan4Day = jan4.getUTCDay() || 7
         const monday = new Date(jan4)
         monday.setUTCDate(jan4.getUTCDate() - (jan4Day - 1) + (week - 1) * 7)
@@ -368,16 +369,16 @@ export class LocalAstrologyService {
       if (!key) {
         const start = new Date(now.getFullYear(), now.getMonth(), 1)
         const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        end.setHours(23,59,59,999)
+        end.setHours(23, 59, 59, 999)
         return { start, end }
       }
       const m = key.match(/^(\d{4})-(\d{2})$/)
       if (m) {
-        const year = parseInt(m[1],10)
-        const month = parseInt(m[2],10) - 1
+        const year = parseInt(m[1], 10)
+        const month = parseInt(m[2], 10) - 1
         const start = new Date(year, month, 1)
         const end = new Date(year, month + 1, 0)
-        end.setHours(23,59,59,999)
+        end.setHours(23, 59, 59, 999)
         return { start, end }
       }
       return getMonthRange(undefined)
@@ -415,24 +416,24 @@ export class LocalAstrologyService {
       weeklyPersonal: weeklyPersonalList,
       monthlyPersonal: monthlyPersonalList,
       personalToday: personalTransitsAll.map(t => `${t.transitPlanet} ${t.type} ${t.natalPlanet}`),
-      personalTodayRich: personalTransitsAll.map((t:any)=> ({
+      personalTodayRich: personalTransitsAll.map((t: any) => ({
         transitPlanet: t.transitPlanet,
         natalPlanet: t.natalPlanet,
         type: t.type,
         house: t.natalHouseImpacted || undefined,
-        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+        window: t.window ? { ...t.window, days: (t.windowDays || undefined) } : undefined,
       })),
-      weeklyPersonalRich: weeklyList.map((t:any)=> ({
+      weeklyPersonalRich: weeklyList.map((t: any) => ({
         transitPlanet: t.transitPlanet,
         natalPlanet: t.natalPlanet,
         type: t.type,
-        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+        window: t.window ? { ...t.window, days: (t.windowDays || undefined) } : undefined,
       })),
-      monthlyPersonalRich: monthlyList.map((t:any)=> ({
+      monthlyPersonalRich: monthlyList.map((t: any) => ({
         transitPlanet: t.transitPlanet,
         natalPlanet: t.natalPlanet,
         type: t.type,
-        window: t.window ? { ...t.window, days: (t.windowDays||undefined) } : undefined,
+        window: t.window ? { ...t.window, days: (t.windowDays || undefined) } : undefined,
       })),
     }
 
@@ -451,14 +452,14 @@ export class LocalAstrologyService {
     try {
       // Tentar cache do Firebase primeiro
       const cache = await AstrologyCacheService.getCache(userId)
-      
+
       if (cache && cache.calculatedData) {
         const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
         if (cache.houseSystem && cache.houseSystem !== currentSystem) {
           return null
         }
         const hoursOld = (Date.now() - new Date(cache.lastUpdate).getTime()) / (1000 * 60 * 60)
-        
+
         // Cache válido por 12 horas
         if (hoursOld < 12) {
           const cacheStatus: CacheStatus = {
@@ -509,9 +510,9 @@ export class LocalAstrologyService {
         house: planet.house || 1,
         isRetrograde: Boolean(planet.isRetrograde)
       }))
-      
+
       const cleanAspects = realData.aspects || []
-      
+
       // Limpar natalPlanets também (NOVO!)
       const cleanNatalPlanets = (realData.natalPlanets || []).map(planet => ({
         name: planet.name || 'Unknown',
@@ -524,7 +525,7 @@ export class LocalAstrologyService {
         house: planet.house || 1,
         isRetrograde: Boolean(planet.isRetrograde)
       }))
-      
+
       // Limpar dados processados também
       const deepSanitize = (obj: any): any => {
         if (obj === undefined) return null
@@ -558,13 +559,13 @@ export class LocalAstrologyService {
         lifeAreas: processedData.lifeAreas || {},
         dailyOverview: processedData.dailyOverview || {
           bestArea: 'N/A',
-          challengingArea: 'N/A', 
+          challengingArea: 'N/A',
           generalTrend: 'Analisando...',
           keyAspects: []
         },
         warnings: processedData.warnings || []
       })
-      
+
       console.log('🔍 DEBUG - Salvando cache:', {
         userId: userId ? 'presente' : 'AUSENTE',
         planetsCount: cleanPlanets.length,
@@ -593,17 +594,17 @@ export class LocalAstrologyService {
    */
   static async calculateDailyDataForAllUsers(): Promise<Map<string, LocalTransitData>> {
     console.log('🌅 Iniciando cálculos diários para todos os usuários...')
-    
+
     const results = new Map<string, LocalTransitData>()
-    
+
     try {
       // Aqui você buscaria todos os usuários do Firebase
       // Por enquanto, retornamos um mapa vazio
       // Em produção, isso seria executado como uma função serverless diária
-      
+
       console.log('✅ Cálculos diários concluídos')
       return results
-      
+
     } catch (error) {
       console.error('❌ Erro nos cálculos diários:', error)
       return results
@@ -632,10 +633,10 @@ export class LocalAstrologyService {
    */
   static generateAlertMessage(data: LocalTransitData): string {
     const { bestArea, challengingArea, generalTrend } = data.dailyOverview
-    
+
     return `🌟 Hoje: ${generalTrend}. ` +
-           `💫 Área favorável: ${bestArea}. ` +
-           `⚠️ Atenção para: ${challengingArea}.`
+      `💫 Área favorável: ${bestArea}. ` +
+      `⚠️ Atenção para: ${challengingArea}.`
   }
 }
 

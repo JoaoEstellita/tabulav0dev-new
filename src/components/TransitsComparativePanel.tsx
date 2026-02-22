@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import UserService from '../services/firebase/UserService'
 import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../astro/houseSystem'
@@ -29,16 +29,16 @@ export default function TransitsComparativePanel() {
       const normalized = normalizeHouseSystem(sys)
       setHouseSystem(normalized)
       await updateSettings({ houseSystem: sys })
-      ;(globalThis as any).__userHouseSystem = normalized
+        ; (globalThis as any).__userHouseSystem = normalized
       if (user?.uid) {
         try {
           await UserService.setHouseSystem(user.uid, normalized)
-        } catch {}
+        } catch { }
       }
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('house-system-changed'))
       }
-    } catch {}
+    } catch { }
   }, [])
 
   const topPersonal = [...personal].sort((a, b) => b.strength - a.strength).slice(0, 8)
@@ -178,8 +178,3 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
 })
-
-
-
-
-

@@ -170,7 +170,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const currentDate = selectedDate || tempDate
     setShowDatePicker(Platform.OS === 'ios')
     setTempDate(currentDate)
-    
+
     if (Platform.OS !== 'ios') {
       const iso = currentDate.toISOString().split('T')[0]
       setFormData(prev => ({
@@ -185,7 +185,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const currentTime = selectedTime || tempTime
     setShowTimePicker(Platform.OS === 'ios')
     setTempTime(currentTime)
-    
+
     if (Platform.OS !== 'ios') {
       const hours = currentTime.getHours().toString().padStart(2, '0')
       const minutes = currentTime.getMinutes().toString().padStart(2, '0')
@@ -263,15 +263,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     loadInitialData()
 
     // Carregar foto salva no localStorage
-    if (typeof window !== 'undefined') {
-      const savedPhoto = localStorage.getItem('tempProfilePhoto')
-      if (savedPhoto) {
-        setFormData(prev => ({
-          ...prev,
-          profilePhoto: savedPhoto,
-        }))
-        console.log('✅ Foto carregada do localStorage')
-      }
+    if (Platform.OS === 'web') {
+      try {
+        const savedPhoto = localStorage.getItem('tempProfilePhoto')
+        if (savedPhoto) {
+          setFormData(prev => ({
+            ...prev,
+            profilePhoto: savedPhoto,
+          }))
+          console.log('✅ Foto carregada do localStorage')
+        }
+      } catch { }
     }
   }, [])
 
@@ -382,7 +384,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const handleLocationQueryChange = (text: string) => {
     setLocationQuery(text)
     setSelectedLocation(null)
-    
+
     // Se o usuário limpar o campo, limpa também os dados
     if (!text) {
       setFormData(prev => ({
@@ -559,7 +561,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const selectPhoto = async () => {
     // Para web, usar input file nativo
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'image/*'
@@ -603,10 +605,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     if (!hasPermission) return
 
     Alert.alert(t('onboarding.photo.chooseTitle'), t('onboarding.photo.chooseBody'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('onboarding.photo.gallery'), onPress: () => pickImage('gallery') },
-        { text: t('onboarding.photo.camera'), onPress: () => pickImage('camera') },
-      ])
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('onboarding.photo.gallery'), onPress: () => pickImage('gallery') },
+      { text: t('onboarding.photo.camera'), onPress: () => pickImage('camera') },
+    ])
   }
 
   const pickImage = async (source: 'gallery' | 'camera') => {
@@ -637,7 +639,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0]
         console.log('📸 Foto selecionada:', asset.uri)
-        
+
         // Redimensionar e converter para dataUrl para comportamento consistente
         // entre mobile/web e melhor persistencia durante onboarding.
         const manipulatedImage = await ImageManipulator.manipulateAsync(
@@ -666,23 +668,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const removePhoto = () => {
     const clearPhoto = () => {
       setFormData(prev => ({ ...prev, profilePhoto: '' }))
-      try { localStorage.removeItem('tempProfilePhoto') } catch {}
+      try { if (Platform.OS === 'web') localStorage.removeItem('tempProfilePhoto') } catch { }
     }
 
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       // Em web, remove direto para evitar bloqueios/interferencia do confirm em alguns browsers/PWA.
       clearPhoto()
       return
     }
 
     Alert.alert(t('onboarding.photo.removeTitle'), t('onboarding.photo.removeBody'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('onboarding.photo.removeCta'),
-          style: 'destructive',
-          onPress: clearPhoto,
-        },
-      ])
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('onboarding.photo.removeCta'),
+        style: 'destructive',
+        onPress: clearPhoto,
+      },
+    ])
   }
 
   const validateStep2 = () => {
@@ -754,7 +756,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const handleNext = () => {
     let isValid = false
-    
+
     switch (currentStep) {
       case 1:
         isValid = true
@@ -785,11 +787,13 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const handleComplete = () => {
     let profilePhoto = formData.profilePhoto
-    if (!profilePhoto && typeof window !== 'undefined') {
-      const savedPhoto = localStorage.getItem('tempProfilePhoto')
-      if (savedPhoto) {
-        profilePhoto = savedPhoto
-      }
+    if (!profilePhoto && Platform.OS === 'web') {
+      try {
+        const savedPhoto = localStorage.getItem('tempProfilePhoto')
+        if (savedPhoto) {
+          profilePhoto = savedPhoto
+        }
+      } catch { }
     }
 
     const birthData: BirthData = {
@@ -852,12 +856,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                     language: option.code,
                     ...(option.code !== 'pt-BR'
                       ? {
-                          birthCountryCode: '',
-                          country: '',
-                          city: '',
-                          latitude: 0,
-                          longitude: 0,
-                        }
+                        birthCountryCode: '',
+                        country: '',
+                        city: '',
+                        latitude: 0,
+                        longitude: 0,
+                      }
                       : {}),
                   }))
                   if (option.code !== 'pt-BR') {
@@ -899,7 +903,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderStep1 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-      
+
       <Text style={styles.stepTitle}>{t('onboarding.step.profile.title')}</Text>
       <Text style={styles.stepDescription}>{t('onboarding.step.profile.description')}</Text>
 
@@ -936,12 +940,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
             <Image source={{ uri: formData.profilePhoto }} style={styles.profilePhoto} />
             <TouchableOpacity
               style={styles.removePhotoButton}
-              onPress={() => {
-                if (typeof window === 'undefined') removePhoto()
-              }}
-              onPressIn={() => {
-                if (typeof window !== 'undefined') removePhoto()
-              }}
+              onPress={() => removePhoto()}
+              onPressIn={undefined}
               hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
               activeOpacity={0.8}
             >
@@ -1061,7 +1061,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderStep2 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="calendar-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-      
+
       <Text style={styles.stepTitle}>{t('onboarding.step.date.title')}</Text>
       <Text style={styles.stepDescription}>{t('onboarding.step.date.description')}</Text>
 
@@ -1123,7 +1123,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderStep3 = () => (
     <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
       <Ionicons name="time-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-      
+
       <Text style={styles.stepTitle}>{t('onboarding.step.time.title')}</Text>
       <Text style={styles.stepDescription}>{t('onboarding.step.time.description')}</Text>
 
@@ -1294,7 +1294,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     </View>
   )
 
-const renderProgressBar = () => (
+  const renderProgressBar = () => (
     <View style={[styles.progressContainer, isCompactMobile && styles.progressContainerCompact]}>
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${(currentStep / TOTAL_STEPS) * 100}%` }]} />
@@ -1317,62 +1317,62 @@ const renderProgressBar = () => (
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        <ResponsiveContainer style={styles.responsiveContent}>
-          {renderProgressBar()}
-          {renderCountryModal()}
-          
-          <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
-            {currentStep === 1 && renderIntroStep()}
-            {currentStep === 2 && renderStep1()}
-            {currentStep === 3 && renderStep2()}
-            {currentStep === 4 && renderStep3()}
-            {currentStep === 5 && renderStep4()}
-            {currentStep === 6 && renderStep5()}
-          </View>
+          <ResponsiveContainer style={styles.responsiveContent}>
+            {renderProgressBar()}
+            {renderCountryModal()}
 
-          {currentStep < TOTAL_STEPS && (
-          <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
-            {currentStep > 1 && (
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setCurrentStep(currentStep - 1)}
-              >
-                <Ionicons name="arrow-back" size={20} color="#FFD700" />
-                <Text style={styles.backButtonText}>{t('common.back')}</Text>
-              </TouchableOpacity>
+            <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
+              {currentStep === 1 && renderIntroStep()}
+              {currentStep === 2 && renderStep1()}
+              {currentStep === 3 && renderStep2()}
+              {currentStep === 4 && renderStep3()}
+              {currentStep === 5 && renderStep4()}
+              {currentStep === 6 && renderStep5()}
+            </View>
+
+            {currentStep < TOTAL_STEPS && (
+              <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
+                {currentStep > 1 && (
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setCurrentStep(currentStep - 1)}
+                  >
+                    <Ionicons name="arrow-back" size={20} color="#FFD700" />
+                    <Text style={styles.backButtonText}>{t('common.back')}</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.nextButton,
+                    (loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
+                  ]}
+                  onPress={handleNext}
+                  disabled={loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())}
+                >
+                  {loading ? (
+                    <Text style={styles.nextButtonText}>{t('common.saving')}</Text>
+                  ) : (
+                    <>
+                      <Text style={styles.nextButtonText}>
+                        {t('common.next')}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={20} color="#000" />
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             )}
 
-            <TouchableOpacity 
-              style={[
-                styles.nextButton, 
-                (loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
-              ]} 
-              onPress={handleNext}
-              disabled={loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())}
+            {/* Botão para voltar ao login */}
+            <TouchableOpacity
+              style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
+              onPress={async () => { await hardSignOut(); logout(); }}
             >
-              {loading ? (
-                <Text style={styles.nextButtonText}>{t('common.saving')}</Text>
-              ) : (
-                <>
-                  <Text style={styles.nextButtonText}>
-                    {t('common.next')}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={20} color="#000" />
-                </>
-              )}
+              <Ionicons name="log-out-outline" size={16} color="#FFD700" />
+              <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
             </TouchableOpacity>
-          </View>
-          )}
-
-          {/* Botão para voltar ao login */}
-          <TouchableOpacity 
-            style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]} 
-            onPress={async () => { await hardSignOut(); logout(); }}
-          >
-            <Ionicons name="log-out-outline" size={16} color="#FFD700" />
-            <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
-          </TouchableOpacity>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>

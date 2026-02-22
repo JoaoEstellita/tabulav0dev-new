@@ -1,22 +1,33 @@
 ﻿import React, { useEffect, useState } from 'react'
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import {
-  getPwaDebug,
-  getPwaState,
-  promptInstall,
-  subscribePwaInstall,
-} from '../utils/pwaInstall'
-import { trackPwaInstallClick } from '../services/analytics/PwaInstallTracker'
+
+// PWA install utilities are web-only; lazy-load to avoid native crashes
+const getPwaStateSafe = () => ({ canInstall: false, isInstalled: true, isIos: false, isMobile: false, deferredPrompt: null })
 
 export default function PWADownloadButton() {
+  // This component is exclusively for PWA web — skip entirely on native
+  if (Platform.OS !== 'web') return null
+
+  return <PWADownloadButtonInner />
+}
+
+function PWADownloadButtonInner() {
+  const {
+    getPwaState,
+    subscribePwaInstall,
+    promptInstall,
+    getPwaDebug,
+  } = require('../utils/pwaInstall')
+  const { trackPwaInstallClick } = require('../services/analytics/PwaInstallTracker')
+
   const [pwaState, setPwaState] = useState(getPwaState())
   const [showButton, setShowButton] = useState(!getPwaState().isInstalled)
   const [showIosHelp, setShowIosHelp] = useState(false)
   const [showAndroidHelp, setShowAndroidHelp] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = subscribePwaInstall((next) => {
+    const unsubscribe = subscribePwaInstall((next: any) => {
       setPwaState(next)
       setShowButton(!next.isInstalled)
       if (next.isInstalled) {

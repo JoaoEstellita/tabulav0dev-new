@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "729037358278-861i1l88s1jmlvv0cvc7oj74i5pnnikg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.estellita.tabulaestelar",
+            "certificate_hash": "c4dcf183597e09b46dd20e4aa4fb41c273a1ee5f"
+          }
+        },
+        {
           "client_id": "729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "729037358278-csudf5cv2v9phm0d4oe5qvj31qojv8ac.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "729037358278-gm3r46e94osh5mji8tou7ace5036oakl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.estellita.tabulaestelar"
+              }
             }
           ]
         }

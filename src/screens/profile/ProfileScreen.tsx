@@ -28,7 +28,7 @@ import {
 } from '../../utils/moonPhase'
 // Removido reprocesso manual de casas natais deste fluxo
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 
 interface UserProfile {
   displayName: string
@@ -556,7 +556,7 @@ export default function ProfileScreen() {
   const selectPhoto = async () => {
     if (!profile || !user) return
 
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'image/*'
@@ -650,7 +650,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     // Web: usar confirm() para garantir fluxo sem modais nativos bloqueando estado
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       // eslint-disable-next-line no-restricted-globals
       const ok = window.confirm(tr('profile.logout.confirm', 'Tem certeza que deseja sair da sua conta?'))
       if (!ok) return
@@ -793,8 +793,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* Subscription Button */}
-        <TouchableOpacity 
-          style={styles.subscriptionButton} 
+        <TouchableOpacity
+          style={styles.subscriptionButton}
           onPress={() => navigation.navigate('Premium', { openTab: 'features' })}
           activeOpacity={0.8}
         >
@@ -809,8 +809,8 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* FAQ Button */}
-        <TouchableOpacity 
-          style={styles.faqButton} 
+        <TouchableOpacity
+          style={styles.faqButton}
           onPress={() => setShowFAQ(true)}
           activeOpacity={0.8}
         >
@@ -958,7 +958,7 @@ export default function ProfileScreen() {
           <TouchableOpacity
             activeOpacity={1}
             style={styles.moonModalCard}
-            onPress={() => {}}
+            onPress={() => { }}
           >
             <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Calendário Lunar')}</Text>
             <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
@@ -1003,7 +1003,7 @@ export default function ProfileScreen() {
           style={styles.moonModalBackdrop}
           onPress={() => setVoidInfoVisible(false)}
         >
-          <TouchableOpacity activeOpacity={1} style={styles.moonModalCard} onPress={() => {}}>
+          <TouchableOpacity activeOpacity={1} style={styles.moonModalCard} onPress={() => { }}>
             <Text style={styles.moonModalTitle}>{tr('profile.moon.void', 'Lua Vazia')}</Text>
             <Text style={styles.moonModalText}>
               {tr('profile.moon.voidInfo.body1', 'A Lua Vazia é um período entre o último aspecto da Lua em um signo e a entrada no próximo signo.')}
@@ -1027,7 +1027,7 @@ export default function ProfileScreen() {
 
       {/* FAQ Modal */}
       <FAQ visible={showFAQ} onClose={() => setShowFAQ(false)} />
-      
+
     </LinearGradient>
   )
 }
@@ -1044,10 +1044,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     ...(Platform.OS === 'web'
       ? ({
-          overflowY: 'scroll',
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#64748B rgba(15,23,42,0.35)',
-        } as any)
+        overflowY: 'scroll',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#64748B rgba(15,23,42,0.35)',
+      } as any)
       : null),
   },
   loadingContainer: {

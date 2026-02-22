@@ -5,6 +5,7 @@
  * - Gerenciamento de assinaturas
  */
 
+import { Platform } from 'react-native'
 import { PLAN_DEFINITIONS } from '../../constants/plans'
 import { backendFetch } from '../backend/client'
 
@@ -82,7 +83,7 @@ export class MercadoPagoService {
   })()
 
   private static buildBackUrls() {
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       return {
         success: `${this.FRONTEND_URL}/Tabs/Premium?provider=mercadopago&checkout=success`,
         failure: `${this.FRONTEND_URL}/Tabs/Premium?provider=mercadopago&checkout=failure`,
@@ -130,7 +131,7 @@ export class MercadoPagoService {
             currency_id: 'BRL'
           }],
           external_reference: paymentData.externalReference,
-          notification_url: `${(process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/$/, '')}/api/mercado-pago/webhook`,
+          notification_url: `${(process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')}/api/mercado-pago/webhook`,
           back_urls: this.buildBackUrls(),
           auto_return: 'approved',
           payment_method: paymentData.paymentMethod || null
