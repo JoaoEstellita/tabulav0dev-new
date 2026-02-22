@@ -52,6 +52,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mercury square Uranus can trigger abrupt idea shifts and oscillation between insight and noise. This phase asks to contain rupture impulses without suppressing innovation. Validate experiments on a small scale and preserve continuity criteria.',
     'transit:mercury|quadratura|venus':
       'Mercury square Venus can tension diplomacy and directness in affective or value-based conversations. This cycle asks to negotiate form and content to preserve connection without omitting essentials. Adjust expectations and language to sustain reciprocity.',
+    'transit:mars|sextil|ascendente':
+      'Mars sextile Ascendant favors initiative with better posture and pacing calibration. This phase tends to support direct action without unnecessary confrontation. Channel energy into objective decisions and consistent execution.',
+    'transit:mars|sextil|jupiter':
+      'Mars sextile Jupiter combines courage and strategy, favoring progress with opportunity awareness. This cycle tends to perform best when enthusiasm is paired with practical planning. Prioritize high-return fronts and track progress in stages.',
+    'transit:mars|sextil|mars':
+      'Mars sextile Mars reinforces initiative flow and focused action capacity. This phase favors productivity when priorities are clear and properly sequenced. Use the momentum to complete relevant pending tasks without dispersion.',
+    'transit:mars|sextil|mercury':
+      'Mars sextile Mercury favors assertive communication and faster decisions with good clarity. This cycle tends to support negotiations and follow-through when arguments are well structured. Keep objectivity with active listening to preserve alignment.',
+    'transit:mars|sextil|moon':
+      'Mars sextile Moon helps integrate action and emotion with lower reactivity. This phase favors routine adjustments and practical response to affective demands in daily life. Maintain sustainable pacing to preserve well-being and continuity.',
+    'transit:mars|sextil|neptune':
+      'Mars sextile Neptune favors turning intuition into practical movement with more flow. This cycle tends to support applied creativity when goals are minimally clear. Structure short steps to avoid energy dispersion.',
+    'transit:mars|sextil|pluto':
+      'Mars sextile Pluto strengthens determination, strategic focus, and deep action capacity. This phase favors structural change without requiring abrupt rupture. Direct intensity toward core goals and consolidate long-range consistency.',
+    'transit:mars|sextil|saturn':
+      'Mars sextile Saturn combines drive and discipline, favoring efficient execution. This cycle tends to open room for steady progress when method and priority move together. Advance in stages to consolidate sustainable outcomes.',
+    'transit:mars|sextil|uranus':
+      'Mars sextile Uranus favors practical innovation and route adjustment agility without losing base stability. This phase tends to support smart change when testing and validation criteria are present. Experiment with focus and scale only what works.',
+    'transit:mars|sextil|venus':
+      'Mars sextile Venus favors initiative in relationships and agreements with better balance between desire and cooperation. This cycle tends to ease approach dynamics when limits and expectations are clear. Combine assertiveness and diplomacy to strengthen exchanges.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Jupiter conjunct Midheaven can increase visibility and open room for professional growth. This cycle favors recognition when direction is clear, execution is consistent, and expectations stay realistic. Avoid overpromising and consolidate progress in practical steps.',
     'transit:jupiter|sextil|meio_do_ceu':
@@ -603,6 +623,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mercurio en cuadratura con Urano puede generar cambios bruscos de idea y oscilacion entre insight y ruido. Esta fase pide contener impulso de ruptura sin bloquear innovacion. Valida experimentos en pequena escala y preserva criterio de continuidad.',
     'transit:mercury|quadratura|venus':
       'Mercurio en cuadratura con Venus puede tensionar diplomacia y franqueza en dialogos afectivos o de valor. Este ciclo pide negociar forma y contenido para preservar vinculo sin omitir puntos esenciales. Ajusta expectativas y lenguaje para sostener reciprocidad.',
+    'transit:mars|sextil|ascendente':
+      'Marte en sextil al Ascendente favorece iniciativa con mejor calibracion de postura y ritmo. Esta fase tiende a facilitar accion directa sin confrontacion innecesaria. Canaliza energia en decisiones objetivas y ejecucion consistente.',
+    'transit:mars|sextil|jupiter':
+      'Marte en sextil con Jupiter combina coraje y estrategia, favoreciendo avances con lectura de oportunidad. Este ciclo suele rendir mejor cuando entusiasmo se combina con plan practico. Prioriza frentes de mayor retorno y sigue progreso por etapas.',
+    'transit:mars|sextil|mars':
+      'Marte en sextil con Marte refuerza fluidez de iniciativa y capacidad de accion enfocada. Esta fase favorece productividad cuando prioridades estan claras y bien secuenciadas. Usa el impulso para cerrar pendientes relevantes sin dispersion.',
+    'transit:mars|sextil|mercury':
+      'Marte en sextil con Mercurio favorece comunicacion asertiva y decisiones mas agiles con buena claridad. Este ciclo tiende a facilitar negociaciones y avances cuando argumentos estan bien estructurados. Mantener objetividad y escucha ayuda al alineamiento.',
+    'transit:mars|sextil|moon':
+      'Marte en sextil con Luna ayuda a integrar accion y emocion con menor reactividad. Esta fase favorece ajustes de rutina y respuesta practica a demandas afectivas del dia a dia. Mantener ritmo sostenible preserva bienestar y continuidad.',
+    'transit:mars|sextil|neptune':
+      'Marte en sextil con Neptuno favorece transformar intuicion en movimiento practico con mayor fluidez. Este ciclo tiende a apoyar creatividad aplicada cuando objetivos estan minimamente claros. Estructura pasos cortos para evitar dispersion de energia.',
+    'transit:mars|sextil|pluto':
+      'Marte en sextil con Pluton refuerza determinacion, foco estrategico y capacidad de accion profunda. Esta fase favorece cambios estructurales sin necesidad de ruptura brusca. Dirige intensidad a metas centrales y consolida consistencia a largo plazo.',
+    'transit:mars|sextil|saturn':
+      'Marte en sextil con Saturno combina impulso y disciplina, favoreciendo ejecucion eficiente. Este ciclo tiende a abrir espacio para progreso constante cuando metodo y prioridad avanzan juntos. Avanza por etapas para consolidar resultados sostenibles.',
+    'transit:mars|sextil|uranus':
+      'Marte en sextil con Urano favorece innovacion practica y agilidad para ajustar ruta sin perder base. Esta fase tiende a apoyar cambios inteligentes cuando hay criterio de prueba y validacion. Experimenta con foco y escala solo lo que funciona.',
+    'transit:mars|sextil|venus':
+      'Marte en sextil con Venus favorece iniciativa en relaciones y acuerdos con mejor equilibrio entre deseo y cooperacion. Este ciclo tiende a facilitar acercamientos cuando limites y expectativas estan claros. Combina asertividad y diplomacia para fortalecer intercambios.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Jupiter en conjuncion al Medio Cielo puede aumentar visibilidad y abrir espacio para crecimiento profesional. Este ciclo favorece reconocimiento cuando hay direccion clara, ejecucion constante y expectativas realistas. Evita prometer de mas y consolida avances por etapas.',
     'transit:jupiter|sextil|meio_do_ceu':
@@ -1154,6 +1194,26 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mercurio in quadratura con Urano puo generare cambi bruschi di idea e oscillazione tra insight e rumore. Questa fase chiede contenere impulso di rottura senza bloccare innovazione. Valida esperimenti su scala ridotta e preserva criterio di continuita.',
     'transit:mercury|quadratura|venus':
       'Mercurio in quadratura con Venere puo tensionare diplomazia e franchezza nei dialoghi affettivi o di valore. Questo ciclo chiede negoziare forma e contenuto per preservare il legame senza omettere punti essenziali. Regola aspettative e linguaggio per sostenere reciprocita.',
+    'transit:mars|sextil|ascendente':
+      "Marte in sestile all'Ascendente favorisce iniziativa con migliore calibrazione di postura e ritmo. Questa fase tende a facilitare azione diretta senza confronto inutile. Incanala energia in decisioni oggettive ed esecuzione coerente.",
+    'transit:mars|sextil|jupiter':
+      'Marte in sestile con Giove combina coraggio e strategia, favorendo avanzamenti con lettura di opportunita. Questo ciclo rende meglio quando entusiasmo e accompagnato da piano pratico. Dai priorita ai fronti a maggior ritorno e monitora progressi per fasi.',
+    'transit:mars|sextil|mars':
+      'Marte in sestile con Marte rafforza fluidita di iniziativa e capacita di azione focalizzata. Questa fase favorisce produttivita quando priorita sono chiare e ben sequenziate. Usa lo slancio per chiudere pendenze rilevanti senza dispersione.',
+    'transit:mars|sextil|mercury':
+      'Marte in sestile con Mercurio favorisce comunicazione assertiva e decisioni piu rapide con buona chiarezza. Questo ciclo tende a facilitare negoziazioni e avanzamento quando argomenti sono ben strutturati. Mantieni oggettivita e ascolto per preservare allineamento.',
+    'transit:mars|sextil|moon':
+      'Marte in sestile con Luna aiuta a integrare azione ed emozione con minore reattivita. Questa fase favorisce aggiustamenti di routine e risposta pratica alle richieste affettive quotidiane. Mantieni ritmo sostenibile per proteggere benessere e continuita.',
+    'transit:mars|sextil|neptune':
+      'Marte in sestile con Nettuno favorisce trasformare intuizione in movimento pratico con maggiore fluidita. Questo ciclo tende a sostenere creativita applicata quando obiettivi sono almeno chiari. Struttura passi brevi per evitare dispersione energetica.',
+    'transit:mars|sextil|pluto':
+      'Marte in sestile con Plutone rafforza determinazione, focus strategico e capacita di azione profonda. Questa fase favorisce cambiamenti strutturali senza richiedere rottura brusca. Dirigi intensita su obiettivi centrali e consolida coerenza di lungo periodo.',
+    'transit:mars|sextil|saturn':
+      'Marte in sestile con Saturno combina impulso e disciplina, favorendo esecuzione efficiente. Questo ciclo tende ad aprire spazio per progresso costante quando metodo e priorita procedono insieme. Avanza per fasi per consolidare risultati sostenibili.',
+    'transit:mars|sextil|uranus':
+      'Marte in sestile con Urano favorisce innovazione pratica e agilita nel correggere rotta senza perdere base. Questa fase tende a sostenere cambi intelligenti quando esistono criteri di test e validazione. Sperimenta con focus e scala solo cio che funziona.',
+    'transit:mars|sextil|venus':
+      'Marte in sestile con Venere favorisce iniziativa in relazioni e accordi con equilibrio migliore tra desiderio e cooperazione. Questo ciclo tende a facilitare avvicinamenti quando limiti e aspettative sono chiari. Combina assertivita e diplomazia per rafforzare scambi.',
     'transit:jupiter|conjuncao|meio_do_ceu':
       'Giove in congiunzione al Medio Cielo puo aumentare visibilita e aprire spazio a crescita professionale. Questo ciclo favorisce riconoscimento quando direzione, costanza e aspettative restano realistiche. Evita promesse eccessive e consolida progressi per fasi.',
     'transit:jupiter|sextil|meio_do_ceu':
