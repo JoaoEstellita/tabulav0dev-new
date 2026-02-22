@@ -1007,6 +1007,126 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Sun trine natal Uranus favors originality, freedom of expression and openness to what is singular and innovative. Changes during this cycle tend to be creative and well received, without the shock of forced disruptions. A good moment to explore what is authentic and different, trusting what emerges.',
     'transit:sun|trigono|venus':
       'Sun trine natal Venus brings harmony, pleasure and the sense that affective and creative connections are well sustained. The cycle favors artistic expression, relationships and the capacity to enjoy what life offers. A good window to cultivate beauty, affection and what genuinely satisfies.',
+    'transit:moon|conjuncao|ascendente':
+      'Moon conjunct natal Ascendant intensifies emotional expression and receptivity in direct contact with the environment. The period tends to make the internal state more visibly present in interaction and communication. A good window to notice how emotions shape first impressions.',
+    'transit:moon|conjuncao|jupiter':
+      'Moon conjunct natal Jupiter expands the emotional world, generosity and the need to find meaning in everyday experiences. The cycle favors genuine emotional optimism and openness to what nurtures real wellbeing. Observe whether excess enthusiasm obscures more fundamental needs.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'Moon conjunct natal Midheaven makes the emotional state more visibly linked to professional trajectory and public reputation. The cycle may bring moments when personal life and public image intersect more evidently. A good window to integrate emotional needs with career objectives.',
+    'transit:moon|conjuncao|mercury':
+      'Moon conjunct natal Mercury creates a link between the emotional world and mental processing, making feelings more articulable. The cycle favors deep conversations, reflective writing and expression of what normally remains internal. A good window to name and understand what is being felt.',
+    'transit:moon|conjuncao|moon':
+      'Moon conjunct natal Moon, the monthly lunar return, restarts the emotional and instinctive cycle of the month. The period invites review of the needs for care, comfort and belonging that guide automatic responses. A good moment to notice what this cycle\'s emotions are pointing toward.',
+    'transit:moon|conjuncao|neptune':
+      'Moon conjunct natal Neptune amplifies emotional permeability and receptivity to what is subtle, imaginative or spiritual. The cycle favors deep empathy, creativity and contact with what transcends the ordinary, but may dissolve boundaries. Maintain discernment about what belongs to you and what belongs to others.',
+    'transit:moon|conjuncao|pluto':
+      'Moon conjunct natal Pluto plunges the emotional world into depth, intensity and the need to transform what has stagnated. The cycle may bring intense feelings or confrontations with what is normally suppressed. A good window to work with what is hidden honestly and with care.',
+    'transit:moon|conjuncao|saturn':
+      'Moon conjunct natal Saturn may bring emotional weight, a sense of affective restriction or responsibilities that limit the natural flow of feelings. The cycle invites emotional maturity, honest assessment of real needs and structuring of how to care for oneself. A good moment to strengthen the emotional foundation with discernment.',
+    'transit:moon|conjuncao|venus':
+      'Moon conjunct natal Venus harmonizes the emotional world with pleasure, aesthetics and the need for quality affective connection. The cycle favors genuine satisfaction in relationships, creative activities and environments that nurture wellbeing. A good window to cultivate what genuinely pleases and nourishes emotionally.',
+    'transit:moon|ingress|house_1':
+      'Moon transiting the 1st house intensifies emotional expression and makes internal reactions more visibly present in daily life. The period favors self-awareness and direct contact with how the emotional state affects presence. A good window to notice what emotions reveal about current needs.',
+    'transit:moon|ingress|house_3':
+      'Moon transiting the 3rd house activates the emotional world through communication, learning and everyday exchanges. The period favors conversations charged with meaning and more attentive to what is felt. A good window to express what is internal and to receive what those nearby want to share.',
+    'transit:moon|ingress|house_5':
+      'Moon transiting the 5th house intensifies the need for creative expression, pleasure and affective connections that nurture authenticity. The cycle favors playful activities, artistic expression and relationships with more affection and reciprocity. A good period to cultivate what genuinely delights and satisfies emotionally.',
+    'transit:moon|ingress|house_6':
+      'Moon transiting the 6th house activates the emotional world through routine, work and care for the body. The period favors attention to what the body needs and to how emotions influence health and daily efficiency. A good window to adjust habits that support emotional and physical wellbeing.',
+    'transit:moon|ingress|house_7':
+      'Moon transiting the 7th house intensifies the need for connection, partnership and emotional receptivity in relating with others. The period favors greater sensitivity in relationships and clarity about what is sought in the bond. A good window to tend to significant relationships with attention and openness.',
+    'transit:moon|ingress|house_8':
+      'Moon transiting the 8th house takes the emotional world into zones of depth, transformation and real intimacy. The cycle favors contact with what lies beneath the surface, including fears, attachments and needs for renewal. A period of greater emotional intensity that can be well used with internal honesty.',
+    'transit:moon|ingress|house_9':
+      'Moon transiting the 9th house directs the emotional world toward the search for meaning, expanded perspective and the need to go beyond the familiar. The cycle favors emotional curiosity, openness to what is different and contact with what expands the sense of purpose. A good period to nourish belief and worldview with real experience.',
+    'transit:moon|ingress|house_10':
+      'Moon transiting the 10th house connects the emotional world to the professional path and public image. The period may make emotions more visibly present in the work and career context. A good window to notice how affective needs influence professional objectives and decisions.',
+    'transit:moon|ingress|house_11':
+      'Moon transiting the 11th house directs the emotional world toward groups, networks of belonging and collective ideals. The cycle favors the need for connection with community, friends and causes that resonate with personal values. A good moment to nurture collective relationships and notice what belonging nourishes.',
+    'transit:moon|ingress|house_12':
+      'Moon transiting the 12th house takes the emotional world into zones of withdrawal, quiet processing and contact with what does not normally emerge in daily awareness. The cycle favors emotional rest, dreams and contemplative practices. A good period to integrate feelings before a new lunar cycle begins.',
+    'transit:moon|oposicao|ascendente':
+      'Moon opposite natal Ascendant, transiting the Descendant, amplifies emotional receptivity in relationships and what the other mirrors about one\'s own needs. The cycle may make affective projections and what is expected from connection with others more visible. A good window to balance self-care and relational care.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'Moon opposite natal Midheaven, transiting the IC, intensifies inner life, family roots and what sustains emotionally. The cycle may bring tension between internal affective needs and demands of public or professional life. A good window to tend to the emotional foundation without neglecting external responsibilities.',
+    'transit:moon|oposicao|moon':
+      'Moon opposite natal Moon, the midpoint of the lunar cycle, illuminates what was activated at the monthly reset. The period may surface needs that were underground and confront the emotional state with the external environment. A good window to assess how much this cycle\'s emotions are being acknowledged.',
+    'transit:moon|oposicao|neptune':
+      'Moon opposite natal Neptune may create tension between concrete emotional needs and a very fluid inner world that is difficult to anchor. The cycle may bring affective confusion, projections or heightened sensitivity to the environment. A good window to maintain emotional discernment without denying the depth of what is felt.',
+    'transit:moon|oposicao|pluto':
+      'Moon opposite natal Pluto may bring emotional intensity, confrontation with what was suppressed and the need to transform stagnant affective patterns. The cycle may reveal power dynamics in relationships or internal forces that ask for recognition. A good window to work with what needs renewal in the emotional world.',
+    'transit:moon|oposicao|saturn':
+      'Moon opposite natal Saturn may bring emotional coolness, a sense of affective limitation or the weight of responsibilities that inhibit the natural flow of feelings. The cycle invites assessing what is being contained or denied and what structure actually supports real care. A good window to balance emotional maturity with genuine receptivity.',
+    'transit:moon|oposicao|sun':
+      'Moon opposite natal Sun corresponds to the personal full moon, bringing illumination about emotional needs in relation to conscious objectives. The period may make visible the conflicts between what is felt and what is sought to be accomplished. A good window to integrate intention and emotion with more awareness.',
+    'transit:moon|oposicao|uranus':
+      'Moon opposite natal Uranus may bring emotional instability, abrupt shifts in mood or the need to break from the familiar. The cycle may reveal tension between the need for security and the desire for freedom in the affective world. A good window to welcome the need for novelty without compromising the emotional support needed.',
+    'transit:moon|oposicao|venus':
+      'Moon opposite natal Venus may create tension between what is felt emotionally and what is considered pleasant or aesthetically satisfying. The cycle may reveal conflicts between genuine affective needs and what presents itself as attractive. A good window to distinguish what truly nourishes from what merely pleases superficially.',
+    'transit:moon|quadratura|ascendente':
+      'Moon square natal Ascendant may bring friction between the inner emotional world and how that state projects onto the environment. The cycle may make it more challenging to maintain coherence between what is felt and how one appears to the world. A good window to identify where emotional expression calls for more authenticity.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'Moon square natal Midheaven may bring tension between affective needs and the demands of career or public image. The cycle invites assessing how much the emotional world is being integrated or ignored in the professional path. A good window to adjust the relationship between inner life and external objectives.',
+    'transit:moon|quadratura|mercury':
+      'Moon square natal Mercury may create friction between the emotional world and the process of thought and communication. The cycle may make it harder to articulate feelings with precision or to integrate logic and emotion. A good window to slow down and find words that truly name what is being experienced.',
+    'transit:moon|quadratura|moon':
+      'Moon square natal Moon activates a tension point in the monthly cycle, revealing conflicts between emotional needs and the current context. The period may bring emotional instability or difficulty maintaining affective balance. A good window to identify what needs adjustment in how one\'s own needs are being tended to.',
+    'transit:moon|quadratura|neptune':
+      'Moon square natal Neptune may create emotional confusion, difficulty distinguishing what belongs to oneself from what belongs to others, or heightened sensitivity. The cycle invites greater affective discernment and avoiding decisions based only on fluid emotional states. A good window to work with what is felt with care and grounding.',
+    'transit:moon|quadratura|pluto':
+      'Moon square natal Pluto may bring emotional intensity, confrontation with deep affective patterns or the need for transformation that can no longer be postponed. The cycle invites honesty about what is being suppressed or denied in the emotional world. A good window to work with what needs transforming with courage and care.',
+    'transit:moon|quadratura|saturn':
+      'Moon square natal Saturn may bring heaviness, emotional coolness or a feeling of restriction that inhibits the flow of feelings. The cycle invites assessing where emotional rigidity or excess control is preventing real receptivity. A good window to balance maturity and emotional openness.',
+    'transit:moon|quadratura|sun':
+      'Moon square natal Sun creates tension between the inner emotional world and the conscious direction of life. The cycle may reveal conflicts between what is felt and what is sought to be built, asking for integration. A good window to acknowledge emotional needs without letting them dominate long-term decisions.',
+    'transit:moon|quadratura|uranus':
+      'Moon square natal Uranus may bring emotional instability, abrupt mood shifts or an impulsive need to break from the routine. The cycle invites welcoming the need for novelty without acting reactively or impulsively. A good window to find creative ways to include what is different in the emotional routine.',
+    'transit:moon|quadratura|venus':
+      'Moon square natal Venus may generate tension between genuine affective needs and what seems pleasant or aesthetically satisfying. The cycle may reveal conflicts in relationships or dissatisfaction with what was sought for superficial pleasure. A good window to distinguish what truly nourishes from what only pleases momentarily.',
+    'transit:moon|sextil|ascendente':
+      'Moon sextile natal Ascendant creates a window of more fluid emotional expression that is well received by the environment. The cycle favors receptivity, authenticity and ease of connection through presence. A good moment to share what is felt and to build affective bridges with the surroundings.',
+    'transit:moon|sextil|jupiter':
+      'Moon sextile natal Jupiter favors emotional wellbeing, generosity and a sense that affective needs can be met with more ease. The cycle supports genuine optimism and openness to experiences that expand the sense of satisfaction. A good moment to nourish what expands the inner world with discernment.',
+    'transit:moon|sextil|mars':
+      'Moon sextile natal Mars makes emotional energy available for action with more fluidity and less conflict between feeling and initiative. The cycle favors affective assertiveness and the capacity to act from what is felt. A good moment to set in motion what had been emotionally held back.',
+    'transit:moon|sextil|meio_do_ceu':
+      'Moon sextile natal Midheaven favors alignment between the emotional world and the professional path. The cycle supports career decisions that take genuine personal needs into account and nurture wellbeing. A good moment to integrate what is felt with what is sought to be built professionally.',
+    'transit:moon|sextil|mercury':
+      'Moon sextile natal Mercury favors the articulation of the emotional world in more fluid words and thoughts. The cycle supports reflective conversations, expressive writing and cognitive processing of feelings. A good moment to name what is being lived and to find those who know how to listen.',
+    'transit:moon|sextil|moon':
+      'Moon sextile natal Moon creates a window of emotional fluidity and natural alignment between internal needs and the context. The cycle favors receptivity, care for oneself and those nearby without great resistances. A good moment to notice what nourishes and to cultivate what sustains affective wellbeing.',
+    'transit:moon|sextil|neptune':
+      'Moon sextile natal Neptune favors sensitivity, intuition and openness to what is subtle and transcendent in the emotional world. The cycle supports creativity, empathy and contemplative practices that nourish inner life. A good moment to work with the imaginative and spiritual world with intentionality.',
+    'transit:moon|sextil|pluto':
+      'Moon sextile natal Pluto favors access to emotional depth with more ease and less resistance than in tension aspects. The cycle supports processes of affective transformation conducted with focus and intention. A good moment to work with what is hidden in the emotional world with courage and care.',
+    'transit:moon|sextil|sun':
+      'Moon sextile natal Sun creates a favorable window for alignment between the emotional world and the conscious direction of life. The cycle favors integration between what is felt and what is sought to be realized, with less internal conflict. A good moment to make decisions that honor both affective needs and long-term objectives.',
+    'transit:moon|sextil|uranus':
+      'Moon sextile natal Uranus favors openness to novelty, emotional creativity and the willingness to include what is different in the affective world. The cycle supports changes in the emotional field that are well received and do not generate unnecessary disruption. A good moment to explore new ways of caring for oneself and relating.',
+    'transit:moon|sextil|venus':
+      'Moon sextile natal Venus favors emotional harmony, pleasure and affective connections with more naturalness and genuine satisfaction. The cycle supports nurturing relationships, aesthetic activities and an expanded sense of wellbeing. A good moment to cultivate what genuinely pleases and nourishes in the affective world.',
+    'transit:moon|trigono|ascendente':
+      'Moon trine natal Ascendant favors authentic emotional expression and receptivity in the environment in a natural and well-received way. The cycle facilitates connection, affective presence and alignment between what is felt and how one appears. A good moment to cultivate relationships with authenticity and care.',
+    'transit:moon|trigono|jupiter':
+      'Moon trine natal Jupiter favors emotional wellbeing, generosity and the sense that the inner world is expanding with foundation. The cycle facilitates genuine satisfaction, affective optimism and openness to enriching experiences. A good moment to nourish what amplifies the sense of meaning and quality of life.',
+    'transit:moon|trigono|mars':
+      'Moon trine natal Mars favors emotional assertiveness, energy available to act from what is felt and the capacity to defend needs without conflict. The cycle facilitates integration between action and the affective world. A good moment to set in motion what had been held back through hesitation.',
+    'transit:moon|trigono|meio_do_ceu':
+      'Moon trine natal Midheaven favors harmony between the emotional world and the professional path, with the possibility that affective needs are sustained by career. The cycle facilitates decisions that integrate inner life and external objectives. A good moment to advance professionally in a way aligned with who you are.',
+    'transit:moon|trigono|mercury':
+      'Moon trine natal Mercury favors fluid articulation of the emotional world in thought and communication. The cycle facilitates expressing feelings with precision and integrating logic and emotion. A good moment for meaningful conversations, reflective writing and emotional processing through language.',
+    'transit:moon|trigono|moon':
+      'Moon trine natal Moon creates a moment of emotional fluidity and natural alignment between the internal rhythm and the lunar cycle. The cycle facilitates receptivity, self-care and affective wellbeing with more naturalness. A good moment to notice what the emotional world is asking for and to respond with gentleness.',
+    'transit:moon|trigono|neptune':
+      'Moon trine natal Neptune favors sensitivity, intuition and connection with what is subtle and transcendent in a fluid and productive way. The cycle facilitates creativity, empathy and contemplative practices that nourish inner life. A good moment to work with the imaginative world with openness and intentionality.',
+    'transit:moon|trigono|pluto':
+      'Moon trine natal Pluto favors deep emotional transformation conducted with focus and intention, without the friction of tension aspects. The cycle facilitates affective renewal and access to what was hidden in the emotional world. A good moment to deepen what matters and release what has lost affective value.',
+    'transit:moon|trigono|sun':
+      'Moon trine natal Sun favors alignment between the emotional world and the conscious direction of life, with natural integration between what is felt and what is sought to be realized. The cycle facilitates wellbeing, coherent decisions and the sense that inner and outer are in harmony. A good moment to advance with confidence.',
+    'transit:moon|trigono|uranus':
+      'Moon trine natal Uranus favors openness to the new in the emotional world, with creative changes that are well integrated. The cycle facilitates affective renewal, innovation in self-care and receptivity to the unexpected without loss of stability. A good moment to explore what is different and authentic in the emotional field.',
+    'transit:moon|trigono|venus':
+      'Moon trine natal Venus favors harmony, pleasure and affective connections sustained with naturalness and genuine satisfaction. The cycle facilitates emotional wellbeing, creative expression and nurturing relationships. A good moment to cultivate what genuinely pleases and nourishes, with openness and reciprocity.',
 },
   'es-ES': {
     'transit:mercury|conjuncao|ascendente':
@@ -2012,6 +2132,126 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'El Sol en trigono a Urano natal favorece la originalidad, la libertad de expresion y la apertura a lo que es singular e innovador. Los cambios durante este ciclo tienden a ser creativos y bien recibidos, sin el choque de disrupciones forzadas. Buen momento para explorar lo que es autentico y diferente, confiando en lo que emerge.',
     'transit:sun|trigono|venus':
       'El Sol en trigono a Venus natal trae armonia, placer y la sensacion de que las conexiones afectivas y creativas estan bien sostenidas. El ciclo favorece la expresion artistica, las relaciones y la capacidad de disfrutar lo que la vida ofrece. Buena ventana para cultivar belleza, afecto y lo que genuinamente satisface.',
+    'transit:moon|conjuncao|ascendente':
+      'La Luna en conjuncion al Ascendente natal intensifica la expresion emocional y la receptividad en el contacto directo con el entorno. El periodo tiende a hacer el estado interno mas visiblemente presente en la interaccion y la comunicacion. Buena ventana para notar como las emociones moldean la primera impresion.',
+    'transit:moon|conjuncao|jupiter':
+      'La Luna en conjuncion a Jupiter natal amplia el mundo emocional, la generosidad y la necesidad de encontrar significado en las experiencias cotidianas. El ciclo favorece el optimismo emocional genuino y la apertura hacia lo que nutre el bienestar real. Observa si el exceso de entusiasmo encubre necesidades mas fundamentales.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'La Luna en conjuncion al Medio Cielo natal hace el estado emocional mas visiblemente ligado a la trayectoria profesional y la reputacion publica. El ciclo puede traer momentos en que vida personal e imagen publica se cruzan de forma mas evidente. Buena ventana para integrar necesidades emocionales con objetivos de carrera.',
+    'transit:moon|conjuncao|mercury':
+      'La Luna en conjuncion a Mercurio natal crea un vinculo entre el mundo emocional y el procesamiento mental, haciendo los sentimientos mas articulables. El ciclo favorece conversaciones profundas, escritura reflexiva y expresion de lo que normalmente permanece interno. Buena ventana para nombrar y comprender lo que se esta sintiendo.',
+    'transit:moon|conjuncao|moon':
+      'La Luna en conjuncion a la Luna natal, el retorno lunar mensual, reinicia el ciclo emocional e instintivo del mes. El periodo invita a revisar las necesidades de cuidado, confort y pertenencia que guian las respuestas automaticas. Buen momento para percibir a donde apuntan las emociones de este ciclo.',
+    'transit:moon|conjuncao|neptune':
+      'La Luna en conjuncion a Neptuno natal amplia la permeabilidad emocional y la receptividad hacia lo sutil, imaginativo o espiritual. El ciclo favorece empatia profunda, creatividad y contacto con lo que trasciende lo ordinario, pero puede disolver limites. Mantiene discernimiento sobre lo que es tuyo y lo que es del otro.',
+    'transit:moon|conjuncao|pluto':
+      'La Luna en conjuncion a Pluton natal sumerge el mundo emocional en profundidad, intensidad y necesidad de transformar lo que ha quedado estancado. El ciclo puede traer sentimientos intensos o confrontaciones con lo que normalmente se suprime. Buena ventana para trabajar lo que esta oculto con honestidad y cuidado.',
+    'transit:moon|conjuncao|saturn':
+      'La Luna en conjuncion a Saturno natal puede traer peso emocional, sensacion de restriccion afectiva o responsabilidades que limitan el flujo natural de sentimientos. El ciclo invita a madurez emocional, evaluacion honesta de necesidades reales y estructuracion del autocuidado. Buen momento para fortalecer la base emocional con criterio.',
+    'transit:moon|conjuncao|venus':
+      'La Luna en conjuncion a Venus natal armoniza el mundo emocional con el placer, la estetica y la necesidad de conexion afectiva de calidad. El ciclo favorece satisfaccion genuina en relaciones, actividades creativas y entornos que nutren el bienestar. Buena ventana para cultivar lo que genuinamente agrada y alimenta emocionalmente.',
+    'transit:moon|ingress|house_1':
+      'La Luna transitando por la Casa 1 intensifica la expresion emocional y hace las reacciones internas mas visiblemente presentes en el dia a dia. El periodo favorece la autoconsciencia y el contacto directo con como el estado emocional afecta la presencia. Buena ventana para notar lo que las emociones revelan sobre las necesidades actuales.',
+    'transit:moon|ingress|house_3':
+      'La Luna transitando por la Casa 3 activa el mundo emocional a traves de la comunicacion, el aprendizaje y los intercambios cotidianos. El periodo favorece conversaciones cargadas de significado y mas atentas a lo que se siente. Buena ventana para expresar lo que es interno y para recibir lo que los proximos quieren compartir.',
+    'transit:moon|ingress|house_5':
+      'La Luna transitando por la Casa 5 intensifica la necesidad de expresion creativa, placer y conexiones afectivas que nutren autenticidad. El ciclo favorece actividades ludicas, expresion artistica y relaciones con mas afecto y reciprocidad. Buen periodo para cultivar lo que genuinamente alegra y satisface emocionalmente.',
+    'transit:moon|ingress|house_6':
+      'La Luna transitando por la Casa 6 activa el mundo emocional a traves de la rutina, el trabajo y el cuidado del cuerpo. El periodo favorece la atencion a lo que el cuerpo necesita y a como las emociones influyen en la salud y la eficiencia diaria. Buena ventana para ajustar habitos que sostienen bienestar emocional y fisico.',
+    'transit:moon|ingress|house_7':
+      'La Luna transitando por la Casa 7 intensifica la necesidad de conexion, asociacion y receptividad emocional en la relacion con el otro. El periodo favorece mayor sensibilidad en las relaciones y claridad sobre lo que se busca en el vinculo. Buena ventana para atender relaciones significativas con atencion y apertura.',
+    'transit:moon|ingress|house_8':
+      'La Luna transitando por la Casa 8 lleva el mundo emocional hacia zonas de profundidad, transformacion e intimidad real. El ciclo favorece el contacto con lo que esta debajo de la superficie, incluyendo miedos, apegos y necesidades de renovacion. Un periodo de mayor intensidad emocional que puede aprovecharse bien con honestidad interna.',
+    'transit:moon|ingress|house_9':
+      'La Luna transitando por la Casa 9 dirige el mundo emocional hacia la busqueda de significado, expansion de perspectiva y necesidad de ir mas alla de lo familiar. El ciclo favorece curiosidad emocional, apertura hacia lo diferente y contacto con lo que amplia el sentido de proposito. Buen periodo para nutrir la vision de mundo con experiencia real.',
+    'transit:moon|ingress|house_10':
+      'La Luna transitando por la Casa 10 conecta el mundo emocional a la trayectoria profesional y la imagen publica. El periodo puede hacer las emociones mas visiblemente presentes en el contexto de trabajo y carrera. Buena ventana para notar como las necesidades afectivas influyen en objetivos y decisiones profesionales.',
+    'transit:moon|ingress|house_11':
+      'La Luna transitando por la Casa 11 dirige el mundo emocional hacia grupos, redes de pertenencia e ideales colectivos. El ciclo favorece la necesidad de conexion con la comunidad, amigos y causas que resuenan con valores personales. Buen momento para nutrir relaciones colectivas y percibir lo que el sentido de pertenencia alimenta.',
+    'transit:moon|ingress|house_12':
+      'La Luna transitando por la Casa 12 lleva el mundo emocional hacia zonas de recogimiento, procesamiento silencioso y contacto con lo que normalmente no emerge en la consciencia cotidiana. El ciclo favorece descanso emocional, suenos y practicas contemplativas. Buen periodo para integrar sentimientos antes de que comience un nuevo ciclo lunar.',
+    'transit:moon|oposicao|ascendente':
+      'La Luna en oposicion al Ascendente natal, transitando por el Descendente, amplia la receptividad emocional en las relaciones y lo que el otro espeja sobre las propias necesidades. El ciclo puede hacer mas visibles las proyecciones afectivas y lo que se espera de la conexion con el otro. Buena ventana para equilibrar autocuidado y cuidado relacional.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'La Luna en oposicion al Medio Cielo natal, transitando por el Fondo del Cielo, intensifica la vida interior, las raices familiares y lo que sostiene emocionalmente. El ciclo puede traer tension entre necesidades afectivas internas y demandas de la vida publica o profesional. Buena ventana para cuidar la base emocional sin descuidar responsabilidades externas.',
+    'transit:moon|oposicao|moon':
+      'La Luna en oposicion a la Luna natal, el punto medio del ciclo lunar, ilumina lo que fue activado en la vuelta del ciclo mensual. El periodo puede traer a la superficie necesidades que estaban subterraneas y confrontar el estado emocional con el entorno externo. Buena ventana para evaluar en que medida las emociones de este ciclo estan siendo reconocidas.',
+    'transit:moon|oposicao|neptune':
+      'La Luna en oposicion a Neptuno natal puede crear tension entre necesidades emocionales concretas y un mundo interior muy fluido y dificil de anclar. El ciclo puede traer confusion afectiva, proyecciones o sensibilidad exacerbada al entorno. Buena ventana para mantener discernimiento emocional sin negar la profundidad de lo que se siente.',
+    'transit:moon|oposicao|pluto':
+      'La Luna en oposicion a Pluton natal puede traer intensidad emocional, confrontacion con lo que fue suprimido y necesidad de transformar patrones afectivos estancados. El ciclo puede revelar dinamicas de poder en las relaciones o fuerzas internas que piden reconocimiento. Buena ventana para trabajar lo que necesita renovacion en el mundo emocional.',
+    'transit:moon|oposicao|saturn':
+      'La Luna en oposicion a Saturno natal puede traer frialdad emocional, sensacion de limitacion afectiva o el peso de responsabilidades que inhiben el flujo natural de sentimientos. El ciclo invita a evaluar lo que esta siendo contenido o negado y que estructura sostiene el cuidado real. Buena ventana para equilibrar madurez emocional con receptividad genuina.',
+    'transit:moon|oposicao|sun':
+      'La Luna en oposicion al Sol natal corresponde a la luna llena del ciclo personal, trayendo iluminacion sobre necesidades emocionales en relacion con los objetivos conscientes. El periodo puede hacer mas visibles los conflictos entre lo que se siente y lo que se quiere realizar. Buena ventana para integrar intencion y emocion con mas consciencia.',
+    'transit:moon|oposicao|uranus':
+      'La Luna en oposicion a Urano natal puede traer inestabilidad emocional, cambios abruptos de humor o necesidad de ruptura con lo familiar. El ciclo puede revelar tension entre necesidad de seguridad y deseo de libertad en el mundo afectivo. Buena ventana para acoger la necesidad de novedad sin comprometer el soporte emocional necesario.',
+    'transit:moon|oposicao|venus':
+      'La Luna en oposicion a Venus natal puede crear tension entre lo que se siente emocionalmente y lo que se considera agradable o esteticamente satisfactorio. El ciclo puede revelar conflictos entre necesidades afectivas genuinas y lo que se presenta como atractivo. Buena ventana para distinguir lo que nutre de verdad de lo que solo agrada superficialmente.',
+    'transit:moon|quadratura|ascendente':
+      'La Luna en cuadratura al Ascendente natal puede traer friccion entre el mundo emocional interno y como ese estado se proyecta en el entorno. El ciclo puede hacer mas desafiante mantener coherencia entre lo que se siente y como uno aparece ante el mundo. Buena ventana para identificar donde la expresion emocional pide mas autenticidad.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'La Luna en cuadratura al Medio Cielo natal puede traer tension entre necesidades afectivas y las demandas de la carrera o la imagen publica. El ciclo invita a evaluar cuanto el mundo emocional esta siendo integrado o ignorado en la trayectoria profesional. Buena ventana para ajustar la relacion entre vida interior y objetivos externos.',
+    'transit:moon|quadratura|mercury':
+      'La Luna en cuadratura a Mercurio natal puede crear friccion entre el mundo emocional y el proceso de pensamiento y comunicacion. El ciclo puede hacer mas dificil articular sentimientos con precision o integrar logica y emocion. Buena ventana para desacelerar y encontrar palabras que nombren de verdad lo que se esta viviendo.',
+    'transit:moon|quadratura|moon':
+      'La Luna en cuadratura a la Luna natal activa un punto de tension en el ciclo mensual, revelando conflictos entre necesidades emocionales y el contexto actual. El periodo puede traer inestabilidad emocional o dificultad para mantener el equilibrio afectivo. Buena ventana para identificar lo que necesita ajuste en la forma de atender las propias necesidades.',
+    'transit:moon|quadratura|neptune':
+      'La Luna en cuadratura a Neptuno natal puede crear confusion emocional, dificultad para distinguir lo propio de lo ajeno o sensibilidad exacerbada. El ciclo invita a mayor discernimiento afectivo y a evitar decisiones basadas solo en estados emocionales fluidos. Buena ventana para trabajar lo que se siente con cuidado y anclaje.',
+    'transit:moon|quadratura|pluto':
+      'La Luna en cuadratura a Pluton natal puede traer intensidad emocional, confrontacion con patrones afectivos profundos o necesidad de transformacion que no puede postergarse mas. El ciclo invita a honestidad sobre lo que se suprime o niega en el mundo emocional. Buena ventana para trabajar lo que necesita transformarse con coraje y cuidado.',
+    'transit:moon|quadratura|saturn':
+      'La Luna en cuadratura a Saturno natal puede traer peso, frialdad emocional o una sensacion de restriccion que inhibe el flujo de sentimientos. El ciclo invita a evaluar donde la rigidez emocional o el exceso de control impide la receptividad real. Buena ventana para equilibrar madurez y apertura emocional.',
+    'transit:moon|quadratura|sun':
+      'La Luna en cuadratura al Sol natal crea tension entre el mundo emocional interno y la direccion consciente de vida. El ciclo puede revelar conflictos entre lo que se siente y lo que se quiere construir, pidiendo integracion. Buena ventana para reconocer necesidades emocionales sin dejar que dominen las decisiones a largo plazo.',
+    'transit:moon|quadratura|uranus':
+      'La Luna en cuadratura a Urano natal puede traer inestabilidad emocional, cambios abruptos de humor o necesidad impulsiva de ruptura con lo rutinario. El ciclo invita a acoger la necesidad de novedad sin actuar de forma reactiva o impulsiva. Buena ventana para encontrar formas creativas de incluir lo diferente en la rutina emocional.',
+    'transit:moon|quadratura|venus':
+      'La Luna en cuadratura a Venus natal puede generar tension entre necesidades afectivas genuinas y lo que parece agradable o esteticamente satisfactorio. El ciclo puede revelar conflictos en relaciones o insatisfaccion con lo que se busco por placer superficial. Buena ventana para distinguir lo que nutre de verdad de lo que solo agrada momentaneamente.',
+    'transit:moon|sextil|ascendente':
+      'La Luna en sextil al Ascendente natal crea una ventana de expresion emocional mas fluida y bien recibida por el entorno. El ciclo favorece receptividad, autenticidad y facilidad de conexion a traves de la presencia. Buen momento para compartir lo que se siente y para crear puentes afectivos con el entorno.',
+    'transit:moon|sextil|jupiter':
+      'La Luna en sextil a Jupiter natal favorece bienestar emocional, generosidad y la sensacion de que las necesidades afectivas pueden satisfacerse con mas facilidad. El ciclo apoya optimismo genuino y apertura hacia experiencias que amplian la satisfaccion. Buen momento para nutrir lo que expande el mundo interior con criterio.',
+    'transit:moon|sextil|mars':
+      'La Luna en sextil a Marte natal pone energia emocional disponible para la accion con mas fluidez y menos conflicto entre sentimiento e iniciativa. El ciclo favorece asertividad afectiva y la capacidad de actuar a partir de lo que se siente. Buen momento para poner en movimiento lo que habia sido contenido emocionalmente.',
+    'transit:moon|sextil|meio_do_ceu':
+      'La Luna en sextil al Medio Cielo natal favorece alineamiento entre el mundo emocional y la trayectoria profesional. El ciclo apoya decisiones de carrera que toman en cuenta necesidades personales genuinas y que nutren el bienestar. Buen momento para integrar lo que se siente con lo que se busca construir profesionalmente.',
+    'transit:moon|sextil|mercury':
+      'La Luna en sextil a Mercurio natal favorece la articulacion del mundo emocional en palabras y pensamientos mas fluidos. El ciclo apoya conversaciones reflexivas, escritura expresiva y procesamiento cognitivo de sentimientos. Buen momento para nombrar lo que se esta viviendo y para encontrar quien sepa escuchar.',
+    'transit:moon|sextil|moon':
+      'La Luna en sextil a la Luna natal crea una ventana de fluidez emocional y alineamiento natural entre las necesidades internas y el contexto. El ciclo favorece receptividad, cuidado de si y de los proximos sin grandes resistencias. Buen momento para percibir lo que nutre y para cultivar lo que sostiene el bienestar afectivo.',
+    'transit:moon|sextil|neptune':
+      'La Luna en sextil a Neptuno natal favorece sensibilidad, intuicion y apertura hacia lo sutil y trascendente en el mundo emocional. El ciclo apoya creatividad, empatia y practicas contemplativas que alimentan la vida interior. Buen momento para trabajar el mundo imaginativo y espiritual con intencionalidad.',
+    'transit:moon|sextil|pluto':
+      'La Luna en sextil a Pluton natal favorece el acceso a la profundidad emocional con mas facilidad y menos resistencia que en aspectos de tension. El ciclo apoya procesos de transformacion afectiva conducidos con foco e intencion. Buen momento para trabajar lo que esta oculto en el mundo emocional con coraje y cuidado.',
+    'transit:moon|sextil|sun':
+      'La Luna en sextil al Sol natal crea una ventana favorable para el alineamiento entre el mundo emocional y la direccion consciente de vida. El ciclo favorece integracion entre lo que se siente y lo que se busca realizar, con menos conflicto interno. Buen momento para tomar decisiones que honren tanto las necesidades afectivas como los objetivos a largo plazo.',
+    'transit:moon|sextil|uranus':
+      'La Luna en sextil a Urano natal favorece apertura hacia la novedad, creatividad emocional y disposicion para incluir lo diferente en el mundo afectivo. El ciclo apoya cambios en el campo emocional que son bien recibidos y no generan disrupciones innecesarias. Buen momento para explorar nuevas formas de cuidar de si y relacionarse.',
+    'transit:moon|sextil|venus':
+      'La Luna en sextil a Venus natal favorece armonia emocional, placer y conexiones afectivas con mas naturalidad y satisfaccion genuina. El ciclo apoya relaciones nutritivas, actividades esteticas y un sentido ampliado de bienestar. Buen momento para cultivar lo que genuinamente agrada y nutre en el mundo afectivo.',
+    'transit:moon|trigono|ascendente':
+      'La Luna en trigono al Ascendente natal favorece expresion emocional autentica y receptividad en el entorno de forma natural y bien recibida. El ciclo facilita conexion, presencia afectiva y alineamiento entre lo que se siente y como se aparece. Buen momento para cultivar relaciones con autenticidad y cuidado.',
+    'transit:moon|trigono|jupiter':
+      'La Luna en trigono a Jupiter natal favorece bienestar emocional, generosidad y la sensacion de que el mundo interior esta en expansion con fundamento. El ciclo facilita satisfaccion genuina, optimismo afectivo y apertura a experiencias enriquecedoras. Buen momento para nutrir lo que amplia el sentido de proposito y calidad de vida.',
+    'transit:moon|trigono|mars':
+      'La Luna en trigono a Marte natal favorece asertividad emocional, energia disponible para actuar a partir de lo que se siente y capacidad de defender necesidades sin conflicto. El ciclo facilita la integracion entre accion y mundo afectivo. Buen momento para poner en movimiento lo que habia sido contenido por hesitacion.',
+    'transit:moon|trigono|meio_do_ceu':
+      'La Luna en trigono al Medio Cielo natal favorece armonia entre el mundo emocional y la trayectoria profesional, con posibilidad de que necesidades afectivas sean sostenidas por la carrera. El ciclo facilita decisiones que integran vida interior y objetivos externos. Buen momento para avanzar profesionalmente de forma alineada con quien eres.',
+    'transit:moon|trigono|mercury':
+      'La Luna en trigono a Mercurio natal favorece articulacion fluida del mundo emocional en pensamiento y comunicacion. El ciclo facilita expresar sentimientos con precision e integrar logica y emocion. Buen momento para conversaciones significativas, escritura reflexiva y procesamiento emocional a traves del lenguaje.',
+    'transit:moon|trigono|moon':
+      'La Luna en trigono a la Luna natal crea un momento de fluidez emocional y alineamiento natural entre el ritmo interno y el ciclo lunar. El ciclo facilita receptividad, autocuidado y bienestar afectivo con mas naturalidad. Buen momento para percibir lo que el mundo emocional esta pidiendo y para responder con gentileza.',
+    'transit:moon|trigono|neptune':
+      'La Luna en trigono a Neptuno natal favorece sensibilidad, intuicion y conexion con lo sutil y trascendente de forma fluida y productiva. El ciclo facilita creatividad, empatia y practicas contemplativas que nutren la vida interior. Buen momento para trabajar el mundo imaginativo con apertura e intencionalidad.',
+    'transit:moon|trigono|pluto':
+      'La Luna en trigono a Pluton natal favorece transformacion emocional profunda conducida con foco e intencion, sin las fricciones de los aspectos de tension. El ciclo facilita renovacion afectiva y acceso a lo que estaba oculto en el mundo emocional. Buen momento para profundizar lo que importa y liberar lo que perdio valor afectivo.',
+    'transit:moon|trigono|sun':
+      'La Luna en trigono al Sol natal favorece alineamiento entre el mundo emocional y la direccion consciente de vida, con integracion natural entre lo que se siente y lo que se quiere realizar. El ciclo facilita bienestar, decisiones coherentes y la sensacion de que interior y exterior estan en armonia. Buen momento para avanzar con confianza.',
+    'transit:moon|trigono|uranus':
+      'La Luna en trigono a Urano natal favorece apertura hacia lo nuevo en el mundo emocional, con cambios creativos que son bien integrados. El ciclo facilita renovacion afectiva, innovacion en el autocuidado y receptividad hacia lo inesperado sin perder estabilidad. Buen momento para explorar lo que es diferente y autentico en el campo emocional.',
+    'transit:moon|trigono|venus':
+      'La Luna en trigono a Venus natal favorece armonia, placer y conexiones afectivas sostenidas con naturalidad y satisfaccion genuina. El ciclo facilita bienestar emocional, expresion creativa y relaciones nutritivas. Buen momento para cultivar lo que genuinamente agrada y nutre, con apertura y reciprocidad.',
 },
   'it-IT': {
     'transit:mercury|conjuncao|ascendente':
@@ -3017,5 +3257,125 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Il Sole in trigono a Urano natale favorisce originalita, liberta di espressione e apertura verso cio che e singolare e innovativo. I cambiamenti durante questo ciclo tendono ad essere creativi e ben accolti, senza lo shock di interruzioni forzate. Buon momento per esplorare cio che e autentico e diverso, fidandosi di cio che emerge.',
     'transit:sun|trigono|venus':
       'Il Sole in trigono a Venere natale porta armonia, piacere e la sensazione che le connessioni affettive e creative siano ben sostenute. Il ciclo favorisce l espressione artistica, le relazioni e la capacita di godere cio che la vita offre. Buona finestra per coltivare bellezza, affetto e cio che soddisfa genuinamente.',
+    'transit:moon|conjuncao|ascendente':
+      'La Luna in congiunzione al Ascendente natale intensifica l espressione emotiva e la ricettivita nel contatto diretto con l ambiente. Il periodo tende a rendere lo stato interno piu visibilmente presente nell interazione e nella comunicazione. Buona finestra per notare come le emozioni plasmano la prima impressione.',
+    'transit:moon|conjuncao|jupiter':
+      'La Luna in congiunzione a Giove natale amplia il mondo emotivo, la generosita e il bisogno di trovare significato nelle esperienze quotidiane. Il ciclo favorisce ottimismo emotivo genuino e apertura verso cio che nutre il benessere reale. Osserva se l eccesso di entusiasmo nasconde bisogni piu fondamentali.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'La Luna in congiunzione al Medio Cielo natale rende lo stato emotivo piu visibilmente legato al percorso professionale e alla reputazione pubblica. Il ciclo puo portare momenti in cui vita personale e immagine pubblica si incrociano in modo piu evidente. Buona finestra per integrare bisogni emotivi con obiettivi di carriera.',
+    'transit:moon|conjuncao|mercury':
+      'La Luna in congiunzione a Mercurio natale crea un legame tra il mondo emotivo e l elaborazione mentale, rendendo i sentimenti piu articolabili. Il ciclo favorisce conversazioni profonde, scrittura riflessiva e l espressione di cio che normalmente rimane interno. Buona finestra per nominare e comprendere cio che si sta sentendo.',
+    'transit:moon|conjuncao|moon':
+      'La Luna in congiunzione alla Luna natale, il ritorno lunare mensile, riavvia il ciclo emotivo e istintivo del mese. Il periodo invita a rivedere i bisogni di cura, conforto e appartenenza che guidano le risposte automatiche. Buon momento per notare dove stanno puntando le emozioni di questo ciclo.',
+    'transit:moon|conjuncao|neptune':
+      'La Luna in congiunzione a Nettuno natale amplia la permeabilita emotiva e la ricettivita verso cio che e sottile, immaginativo o spirituale. Il ciclo favorisce empatia profonda, creativita e contatto con cio che trascende l ordinario, ma puo dissolvere i confini. Mantieni discernimento su cio che e tuo e cio che e dell altro.',
+    'transit:moon|conjuncao|pluto':
+      'La Luna in congiunzione a Plutone natale immerge il mondo emotivo in profondita, intensita e necessita di trasformare cio che e rimasto stagnante. Il ciclo puo portare sentimenti intensi o confronti con cio che viene normalmente soppresso. Buona finestra per lavorare cio che e nascosto con onesta e cura.',
+    'transit:moon|conjuncao|saturn':
+      'La Luna in congiunzione a Saturno natale puo portare peso emotivo, sensazione di restrizione affettiva o responsabilita che limitano il flusso naturale dei sentimenti. Il ciclo invita a maturita emotiva, valutazione onesta dei bisogni reali e strutturazione della cura di se. Buon momento per rafforzare la base emotiva con criterio.',
+    'transit:moon|conjuncao|venus':
+      'La Luna in congiunzione a Venere natale armonizza il mondo emotivo con il piacere, l estetica e il bisogno di connessione affettiva di qualita. Il ciclo favorisce soddisfazione genuina nelle relazioni, attivita creative e ambienti che nutrono il benessere. Buona finestra per coltivare cio che genuinamente piace e alimenta emotivamente.',
+    'transit:moon|ingress|house_1':
+      'La Luna in transito per la Casa 1 intensifica l espressione emotiva e rende le reazioni interne piu visibilmente presenti nella vita quotidiana. Il periodo favorisce l autoconsapevolezza e il contatto diretto con come lo stato emotivo influenza la presenza. Buona finestra per notare cio che le emozioni rivelano sui bisogni attuali.',
+    'transit:moon|ingress|house_3':
+      'La Luna in transito per la Casa 3 attiva il mondo emotivo attraverso la comunicazione, l apprendimento e gli scambi quotidiani. Il periodo favorisce conversazioni cariche di significato e piu attente a cio che si sente. Buona finestra per esprimere cio che e interno e per ricevere cio che i vicini vogliono condividere.',
+    'transit:moon|ingress|house_5':
+      'La Luna in transito per la Casa 5 intensifica il bisogno di espressione creativa, piacere e connessioni affettive che nutrono l autenticita. Il ciclo favorisce attivita ludiche, espressione artistica e relazioni con piu affetto e reciprocita. Buon periodo per coltivare cio che genuinamente rallegra e soddisfa emotivamente.',
+    'transit:moon|ingress|house_6':
+      'La Luna in transito per la Casa 6 attiva il mondo emotivo attraverso la routine, il lavoro e la cura del corpo. Il periodo favorisce l attenzione a cio di cui il corpo ha bisogno e a come le emozioni influenzano la salute e l efficienza quotidiana. Buona finestra per adattare abitudini che sostengono il benessere emotivo e fisico.',
+    'transit:moon|ingress|house_7':
+      'La Luna in transito per la Casa 7 intensifica il bisogno di connessione, partnership e ricettivita emotiva nel rapporto con l altro. Il periodo favorisce maggiore sensibilita nelle relazioni e chiarezza su cio che si cerca nel legame. Buona finestra per prendersi cura delle relazioni significative con attenzione e apertura.',
+    'transit:moon|ingress|house_8':
+      'La Luna in transito per la Casa 8 porta il mondo emotivo nelle zone di profondita, trasformazione e vera intimita. Il ciclo favorisce il contatto con cio che sta sotto la superficie, inclusi timori, attaccamenti e bisogni di rinnovamento. Un periodo di maggiore intensita emotiva che puo essere ben utilizzato con onesta interna.',
+    'transit:moon|ingress|house_9':
+      'La Luna in transito per la Casa 9 dirige il mondo emotivo verso la ricerca di significato, l espansione della prospettiva e il bisogno di andare oltre il familiare. Il ciclo favorisce curiosita emotiva, apertura verso il diverso e contatto con cio che amplia il senso di scopo. Buon periodo per nutrire la visione del mondo con esperienza reale.',
+    'transit:moon|ingress|house_10':
+      'La Luna in transito per la Casa 10 connette il mondo emotivo al percorso professionale e all immagine pubblica. Il periodo puo rendere le emozioni piu visibilmente presenti nel contesto di lavoro e carriera. Buona finestra per notare come i bisogni affettivi influenzano obiettivi e decisioni professionali.',
+    'transit:moon|ingress|house_11':
+      'La Luna in transito per la Casa 11 dirige il mondo emotivo verso gruppi, reti di appartenenza e ideali collettivi. Il ciclo favorisce il bisogno di connessione con la comunita, gli amici e le cause che risuonano con i valori personali. Buon momento per nutrire le relazioni collettive e notare cosa alimenta il senso di appartenenza.',
+    'transit:moon|ingress|house_12':
+      'La Luna in transito per la Casa 12 porta il mondo emotivo nelle zone di raccoglimento, elaborazione silenziosa e contatto con cio che normalmente non emerge nella coscienza quotidiana. Il ciclo favorisce riposo emotivo, sogni e pratiche contemplative. Buon periodo per integrare sentimenti prima che inizi un nuovo ciclo lunare.',
+    'transit:moon|oposicao|ascendente':
+      'La Luna in opposizione al Ascendente natale, in transito per il Discendente, amplia la ricettivita emotiva nelle relazioni e cio che l altro specchia sui propri bisogni. Il ciclo puo rendere piu visibili le proiezioni affettive e cio che si aspetta dalla connessione con l altro. Buona finestra per bilanciare cura di se e cura relazionale.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'La Luna in opposizione al Medio Cielo natale, in transito per il Fondo del Cielo, intensifica la vita interiore, le radici familiari e cio che sostiene emotivamente. Il ciclo puo portare tensione tra bisogni affettivi interni e le richieste della vita pubblica o professionale. Buona finestra per prendersi cura della base emotiva senza trascurare le responsabilita esterne.',
+    'transit:moon|oposicao|moon':
+      'La Luna in opposizione alla Luna natale, il punto medio del ciclo lunare, illumina cio che fu attivato alla svolta del ciclo mensile. Il periodo puo portare in superficie bisogni che erano sotterranei e confrontare lo stato emotivo con l ambiente esterno. Buona finestra per valutare quanto le emozioni di questo ciclo stiano venendo riconosciute.',
+    'transit:moon|oposicao|neptune':
+      'La Luna in opposizione a Nettuno natale puo creare tensione tra bisogni emotivi concreti e un mondo interiore molto fluido e difficile da ancorare. Il ciclo puo portare confusione affettiva, proiezioni o sensibilita esacerbata all ambiente. Buona finestra per mantenere discernimento emotivo senza negare la profondita di cio che si sente.',
+    'transit:moon|oposicao|pluto':
+      'La Luna in opposizione a Plutone natale puo portare intensita emotiva, confronto con cio che era soppresso e necessita di trasformare pattern affettivi stagnanti. Il ciclo puo rivelare dinamiche di potere nelle relazioni o forze interne che chiedono riconoscimento. Buona finestra per lavorare cio che necessita rinnovamento nel mondo emotivo.',
+    'transit:moon|oposicao|saturn':
+      'La Luna in opposizione a Saturno natale puo portare freddezza emotiva, sensazione di limitazione affettiva o il peso di responsabilita che inibiscono il flusso naturale dei sentimenti. Il ciclo invita a valutare cosa viene contenuto o negato e quale struttura sostiene la cura reale. Buona finestra per bilanciare maturita emotiva con ricettivita genuina.',
+    'transit:moon|oposicao|sun':
+      'La Luna in opposizione al Sole natale corrisponde alla luna piena del ciclo personale, portando illuminazione sui bisogni emotivi in relazione agli obiettivi consapevoli. Il periodo puo rendere piu visibili i conflitti tra cio che si sente e cio che si vuole realizzare. Buona finestra per integrare intenzione ed emozione con piu consapevolezza.',
+    'transit:moon|oposicao|uranus':
+      'La Luna in opposizione a Urano natale puo portare instabilita emotiva, cambiamenti bruschi di umore o necessita di rottura con il familiare. Il ciclo puo rivelare tensione tra bisogno di sicurezza e desiderio di liberta nel mondo affettivo. Buona finestra per accogliere il bisogno di novita senza compromettere il supporto emotivo necessario.',
+    'transit:moon|oposicao|venus':
+      'La Luna in opposizione a Venere natale puo creare tensione tra cio che si sente emotivamente e cio che si considera piacevole o esteticamente soddisfacente. Il ciclo puo rivelare conflitti tra bisogni affettivi genuini e cio che si presenta come attraente. Buona finestra per distinguere cio che nutre davvero da cio che piace solo superficialmente.',
+    'transit:moon|quadratura|ascendente':
+      'La Luna in quadratura al Ascendente natale puo portare attrito tra il mondo emotivo interno e come quello stato si proietta nell ambiente. Il ciclo puo rendere piu difficile mantenere coerenza tra cio che si sente e come si appare al mondo. Buona finestra per identificare dove l espressione emotiva chiede piu autenticita.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'La Luna in quadratura al Medio Cielo natale puo portare tensione tra bisogni affettivi e le richieste della carriera o dell immagine pubblica. Il ciclo invita a valutare quanto il mondo emotivo viene integrato o ignorato nel percorso professionale. Buona finestra per aggiustare il rapporto tra vita interiore e obiettivi esterni.',
+    'transit:moon|quadratura|mercury':
+      'La Luna in quadratura a Mercurio natale puo creare attrito tra il mondo emotivo e il processo di pensiero e comunicazione. Il ciclo puo rendere piu difficile articolare i sentimenti con precisione o integrare logica ed emozione. Buona finestra per rallentare e trovare parole che nominino davvero cio che si sta vivendo.',
+    'transit:moon|quadratura|moon':
+      'La Luna in quadratura alla Luna natale attiva un punto di tensione nel ciclo mensile, rivelando conflitti tra bisogni emotivi e il contesto attuale. Il periodo puo portare instabilita emotiva o difficolta a mantenere l equilibrio affettivo. Buona finestra per identificare cosa necessita aggiustamento nel modo di prendersi cura dei propri bisogni.',
+    'transit:moon|quadratura|neptune':
+      'La Luna in quadratura a Nettuno natale puo creare confusione emotiva, difficolta a distinguere il proprio dal altrui, o sensibilita esacerbata. Il ciclo invita a maggiore discernimento affettivo e a evitare decisioni basate solo su stati emotivi fluidi. Buona finestra per lavorare cio che si sente con cura e ancoraggio.',
+    'transit:moon|quadratura|pluto':
+      'La Luna in quadratura a Plutone natale puo portare intensita emotiva, confronto con pattern affettivi profondi o necessita di trasformazione che non puo piu essere posticipata. Il ciclo invita all onesta su cio che viene soppresso o negato nel mondo emotivo. Buona finestra per lavorare cio che necessita trasformazione con coraggio e cura.',
+    'transit:moon|quadratura|saturn':
+      'La Luna in quadratura a Saturno natale puo portare pesantezza, freddezza emotiva o una sensazione di restrizione che inibisce il flusso dei sentimenti. Il ciclo invita a valutare dove la rigidita emotiva o l eccesso di controllo impedisce la ricettivita reale. Buona finestra per bilanciare maturita e apertura emotiva.',
+    'transit:moon|quadratura|sun':
+      'La Luna in quadratura al Sole natale crea tensione tra il mondo emotivo interno e la direzione consapevole della vita. Il ciclo puo rivelare conflitti tra cio che si sente e cio che si vuole costruire, chiedendo integrazione. Buona finestra per riconoscere i bisogni emotivi senza lasciare che dominino le decisioni a lungo termine.',
+    'transit:moon|quadratura|uranus':
+      'La Luna in quadratura a Urano natale puo portare instabilita emotiva, cambiamenti bruschi di umore o necessita impulsiva di rottura con il routinario. Il ciclo invita ad accogliere il bisogno di novita senza agire in modo reattivo o impulsivo. Buona finestra per trovare modi creativi di includere il diverso nella routine emotiva.',
+    'transit:moon|quadratura|venus':
+      'La Luna in quadratura a Venere natale puo generare tensione tra bisogni affettivi genuini e cio che sembra piacevole o esteticamente soddisfacente. Il ciclo puo rivelare conflitti nelle relazioni o insoddisfazione per cio che e stato cercato per piacere superficiale. Buona finestra per distinguere cio che nutre davvero da cio che piace solo momentaneamente.',
+    'transit:moon|sextil|ascendente':
+      'La Luna in sextile al Ascendente natale crea una finestra di espressione emotiva piu fluida e ben accolta dall ambiente. Il ciclo favorisce ricettivita, autenticita e facilita di connessione attraverso la presenza. Buon momento per condividere cio che si sente e per creare ponti affettivi con l entorno.',
+    'transit:moon|sextil|jupiter':
+      'La Luna in sextile a Giove natale favorisce benessere emotivo, generosita e la sensazione che i bisogni affettivi possano essere soddisfatti con piu facilita. Il ciclo supporta ottimismo genuino e apertura verso esperienze che ampliano la soddisfazione. Buon momento per nutrire cio che espande il mondo interiore con criterio.',
+    'transit:moon|sextil|mars':
+      'La Luna in sextile a Marte natale mette a disposizione energia emotiva per l azione con piu fluidita e meno conflitto tra sentimento e iniziativa. Il ciclo favorisce asertivita affettiva e la capacita di agire a partire da cio che si sente. Buon momento per mettere in moto cio che era stato emotivamente trattenuto.',
+    'transit:moon|sextil|meio_do_ceu':
+      'La Luna in sextile al Medio Cielo natale favorisce l allineamento tra il mondo emotivo e il percorso professionale. Il ciclo supporta decisioni di carriera che tengono conto dei bisogni personali genuini e che nutrono il benessere. Buon momento per integrare cio che si sente con cio che si cerca di costruire professionalmente.',
+    'transit:moon|sextil|mercury':
+      'La Luna in sextile a Mercurio natale favorisce l articolazione del mondo emotivo in parole e pensieri piu fluidi. Il ciclo supporta conversazioni riflessive, scrittura espressiva e l elaborazione cognitiva dei sentimenti. Buon momento per nominare cio che si sta vivendo e per trovare chi sappia ascoltare.',
+    'transit:moon|sextil|moon':
+      'La Luna in sextile alla Luna natale crea una finestra di fluidita emotiva e allineamento naturale tra i bisogni interni e il contesto. Il ciclo favorisce ricettivita, cura di se e di chi e vicino senza grandi resistenze. Buon momento per notare cio che nutre e per coltivare cio che sostiene il benessere affettivo.',
+    'transit:moon|sextil|neptune':
+      'La Luna in sextile a Nettuno natale favorisce sensibilita, intuizione e apertura verso il sottile e il trascendente nel mondo emotivo. Il ciclo supporta creativita, empatia e pratiche contemplative che nutrono la vita interiore. Buon momento per lavorare il mondo immaginativo e spirituale con intenzionalita.',
+    'transit:moon|sextil|pluto':
+      'La Luna in sextile a Plutone natale favorisce l accesso alla profondita emotiva con piu facilita e meno resistenza rispetto agli aspetti di tensione. Il ciclo supporta processi di trasformazione affettiva condotti con focus e intenzione. Buon momento per lavorare cio che e nascosto nel mondo emotivo con coraggio e cura.',
+    'transit:moon|sextil|sun':
+      'La Luna in sextile al Sole natale crea una finestra favorevole per l allineamento tra il mondo emotivo e la direzione consapevole della vita. Il ciclo favorisce l integrazione tra cio che si sente e cio che si cerca di realizzare, con meno conflitto interno. Buon momento per prendere decisioni che onorano sia i bisogni affettivi sia gli obiettivi a lungo termine.',
+    'transit:moon|sextil|uranus':
+      'La Luna in sextile a Urano natale favorisce apertura verso la novita, creativita emotiva e disponibilita a includere il diverso nel mondo affettivo. Il ciclo supporta cambiamenti nel campo emotivo che sono ben accolti e non generano interruzioni non necessarie. Buon momento per esplorare nuovi modi di prendersi cura di se e di relazionarsi.',
+    'transit:moon|sextil|venus':
+      'La Luna in sextile a Venere natale favorisce armonia emotiva, piacere e connessioni affettive con piu naturalezza e soddisfazione genuina. Il ciclo supporta relazioni nutritive, attivita estetiche e un senso ampliato di benessere. Buon momento per coltivare cio che genuinamente piace e nutre nel mondo affettivo.',
+    'transit:moon|trigono|ascendente':
+      'La Luna in trigono al Ascendente natale favorisce l espressione emotiva autentica e la ricettivita nell ambiente in modo naturale e ben accolto. Il ciclo facilita connessione, presenza affettiva e allineamento tra cio che si sente e come si appare. Buon momento per coltivare relazioni con autenticita e cura.',
+    'transit:moon|trigono|jupiter':
+      'La Luna in trigono a Giove natale favorisce benessere emotivo, generosita e la sensazione che il mondo interiore sia in espansione con fondamento. Il ciclo facilita soddisfazione genuina, ottimismo affettivo e apertura verso esperienze arricchenti. Buon momento per nutrire cio che amplia il senso di significato e qualita di vita.',
+    'transit:moon|trigono|mars':
+      'La Luna in trigono a Marte natale favorisce asertivita emotiva, energia disponibile per agire a partire da cio che si sente e capacita di difendere i bisogni senza conflitto. Il ciclo facilita l integrazione tra azione e mondo affettivo. Buon momento per mettere in moto cio che era stato trattenuto dall esitazione.',
+    'transit:moon|trigono|meio_do_ceu':
+      'La Luna in trigono al Medio Cielo natale favorisce armonia tra il mondo emotivo e il percorso professionale, con la possibilita che i bisogni affettivi vengano sostenuti dalla carriera. Il ciclo facilita decisioni che integrano vita interiore e obiettivi esterni. Buon momento per avanzare professionalmente in modo allineato con chi si e.',
+    'transit:moon|trigono|mercury':
+      'La Luna in trigono a Mercurio natale favorisce l articolazione fluida del mondo emotivo in pensiero e comunicazione. Il ciclo facilita l espressione dei sentimenti con precisione e l integrazione di logica ed emozione. Buon momento per conversazioni significative, scrittura riflessiva e l elaborazione emotiva attraverso il linguaggio.',
+    'transit:moon|trigono|moon':
+      'La Luna in trigono alla Luna natale crea un momento di fluidita emotiva e allineamento naturale tra il ritmo interno e il ciclo lunare. Il ciclo facilita ricettivita, cura di se e benessere affettivo con piu naturalezza. Buon momento per notare cosa chiede il mondo emotivo e per rispondere con gentilezza.',
+    'transit:moon|trigono|neptune':
+      'La Luna in trigono a Nettuno natale favorisce sensibilita, intuizione e connessione con il sottile e il trascendente in modo fluido e produttivo. Il ciclo facilita creativita, empatia e pratiche contemplative che nutrono la vita interiore. Buon momento per lavorare il mondo immaginativo con apertura e intenzionalita.',
+    'transit:moon|trigono|pluto':
+      'La Luna in trigono a Plutone natale favorisce la trasformazione emotiva profonda condotta con focus e intenzione, senza gli attriti degli aspetti di tensione. Il ciclo facilita il rinnovamento affettivo e l accesso a cio che era nascosto nel mondo emotivo. Buon momento per approfondire cio che conta e liberare cio che ha perso valore affettivo.',
+    'transit:moon|trigono|sun':
+      'La Luna in trigono al Sole natale favorisce l allineamento tra il mondo emotivo e la direzione consapevole della vita, con integrazione naturale tra cio che si sente e cio che si vuole realizzare. Il ciclo facilita benessere, decisioni coerenti e la sensazione che interno ed esterno siano in armonia. Buon momento per avanzare con fiducia.',
+    'transit:moon|trigono|uranus':
+      'La Luna in trigono a Urano natale favorisce apertura verso il nuovo nel mondo emotivo, con cambiamenti creativi che vengono ben integrati. Il ciclo facilita il rinnovamento affettivo, l innovazione nella cura di se e la ricettivita verso l inaspettato senza perdere stabilita. Buon momento per esplorare cio che e diverso e autentico nel campo emotivo.',
+    'transit:moon|trigono|venus':
+      'La Luna in trigono a Venere natale favorisce armonia, piacere e connessioni affettive sostenute con naturalezza e soddisfazione genuina. Il ciclo facilita benessere emotivo, espressione creativa e relazioni nutritive. Buon momento per coltivare cio che genuinamente piace e nutre, con apertura e reciprocita.',
 },
 }
