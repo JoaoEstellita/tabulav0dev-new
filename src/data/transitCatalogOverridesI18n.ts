@@ -30,6 +30,22 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter opposite Venus amplifies desire for pleasure, concession, and reciprocal validation. This phase asks for value calibration to avoid affective or financial excess. Prioritize choices that preserve balance between immediate satisfaction and sustainability.',
     'transit:jupiter|oposicao|uranus':
       'Jupiter opposite Uranus can bring fast swings between enthusiasm and plan disruption. This cycle asks for freedom with criteria, so consistency is not replaced by constant novelty. Make strategic adjustments without abandoning what already sustains results.',
+    'transit:jupiter|oposicao|mars':
+      'Jupiter opposite Mars can raise ambition and action pace beyond what context can sustain. This cycle asks for courage calibrated by strategy to avoid wear from excessive impulse. Direct energy to objective goals with staged execution and progress review.',
+    'transit:jupiter|oposicao|meio_do_ceu':
+      'Jupiter opposite Midheaven can tension public visibility against personal grounding and practical limits. This phase asks for alignment between projection, delivery, and sustainable capacity. Positioning adjustments tend to work better than abrupt moves.',
+    'transit:jupiter|quadratura|meio_do_ceu':
+      'Jupiter square Midheaven may amplify professional expectations without matching operational structure. The period asks for review of promises, timelines, and priorities to reduce strategic dispersion. More solid growth comes from selective focus and consistent execution.',
+    'transit:jupiter|ingress|house_6':
+      'Jupiter entering House 6 expands opportunities to improve routine, organization, and daily efficiency. This phase favors method upgrades when expansion is matched with simple discipline. Small accumulated gains can produce meaningful medium-term impact.',
+    'transit:jupiter|ingress|house_7':
+      'Jupiter entering House 7 expands opportunities for cooperation, agreements, and key relationship exchanges. This cycle favors alliances when expectations and boundaries are clearly negotiated. Prioritize concrete reciprocity to convert goodwill into stable outcomes.',
+    'transit:jupiter|ingress|house_8':
+      'Jupiter entering House 8 expands themes of shared resources, trust, and deeper transformation. This phase favors strategic reorganization when transparency and criteria support commitments. Move forward with clarity on risks, responsibilities, and timing.',
+    'transit:jupiter|ingress|house_9':
+      'Jupiter entering House 9 expands learning horizons, worldview, and long-range planning perspective. The period favors study and repertoire growth when new knowledge is applied practically. Turn insights into executable direction.',
+    'transit:jupiter|ingress|house_12':
+      'Jupiter entering House 12 expands closure processes, inner meaning, and quiet reprioritization. This phase favors maturation when introspection is paired with practical daily grounding. Use the period to clear excess and prepare a new cycle with greater clarity.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -397,6 +413,22 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Jupiter en oposicion a Venus amplifica deseo de placer, concesion y expectativa de reciprocidad. Esta fase pide calibrar valor y medida para evitar excesos afectivos o financieros. Prioriza elecciones que sostengan equilibrio entre satisfaccion inmediata y sostenibilidad.',
     'transit:jupiter|oposicao|uranus':
       'Jupiter en oposicion a Urano puede traer giros rapidos entre entusiasmo y ruptura de plan. Este ciclo pide libertad con criterio para no cambiar consistencia por novedad constante. Haz ajustes estrategicos sin abandonar lo que ya sostiene resultados.',
+    'transit:jupiter|oposicao|mars':
+      'Jupiter en oposicion a Marte puede elevar ambicion y ritmo de accion mas alla de lo sostenible por el contexto. Este ciclo pide calibrar valentia con estrategia para evitar desgaste por exceso de impulso. Dirige energia a objetivos concretos con etapas y revision de avance.',
+    'transit:jupiter|oposicao|meio_do_ceu':
+      'Jupiter en oposicion al Medio Cielo puede tensionar visibilidad publica con equilibrio personal y limites practicos. Esta fase pide alinear proyeccion, entrega y capacidad real para sostener resultados de calidad. Ajustes de posicionamiento suelen funcionar mejor que movimientos bruscos.',
+    'transit:jupiter|quadratura|meio_do_ceu':
+      'Jupiter en cuadratura al Medio Cielo puede ampliar expectativas profesionales sin la misma proporcion de estructura operativa. El periodo pide revisar promesas, plazos y prioridades para evitar dispersion estrategica. El crecimiento mas solido llega con foco selectivo y ejecucion constante.',
+    'transit:jupiter|ingress|house_6':
+      'Jupiter en ingreso a Casa 6 amplifica oportunidades de mejora en rutina, organizacion y eficiencia diaria. Esta fase favorece ajustes de metodo cuando expansion y disciplina simple avanzan juntas. Pequenas mejoras acumuladas pueden generar impacto relevante a medio plazo.',
+    'transit:jupiter|ingress|house_7':
+      'Jupiter en ingreso a Casa 7 amplifica oportunidades de cooperacion, acuerdos e intercambios en vinculos importantes. Este ciclo favorece alianzas cuando expectativas y limites estan bien negociados. Prioriza reciprocidad concreta para convertir buena voluntad en resultados estables.',
+    'transit:jupiter|ingress|house_8':
+      'Jupiter en ingreso a Casa 8 amplifica temas de recursos compartidos, confianza y transformacion profunda. Esta fase favorece reorganizacion estrategica cuando hay transparencia y criterio en compromisos. Avanza con claridad sobre riesgos, responsabilidades y plazos.',
+    'transit:jupiter|ingress|house_9':
+      'Jupiter en ingreso a Casa 9 amplifica horizonte de aprendizaje, vision de mundo y planificacion de largo alcance. El periodo favorece estudio y expansion de repertorio cuando hay aplicacion practica. Convierte conocimiento nuevo en direccion ejecutable.',
+    'transit:jupiter|ingress|house_12':
+      'Jupiter en ingreso a Casa 12 amplifica procesos de cierre, sentido interno y reorganizacion silenciosa de prioridades. Esta fase favorece maduracion cuando introspeccion y practicidad cotidiana se combinan. Usa el periodo para limpiar excesos y preparar un nuevo ciclo con mayor claridad.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -764,6 +796,22 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Giove in opposizione a Venere amplifica desiderio di piacere, concessione e aspettativa di reciprocita. Questa fase chiede di calibrare valore e misura per evitare eccessi affettivi o finanziari. Privilegia scelte che mantengano equilibrio tra soddisfazione immediata e sostenibilita.',
     'transit:jupiter|oposicao|uranus':
       'Giove in opposizione a Urano puo portare oscillazioni rapide tra entusiasmo e rottura del piano. Questo ciclo chiede liberta con criterio per non sostituire la coerenza con novita continua. Fai aggiustamenti strategici senza abbandonare cio che gia sostiene risultati.',
+    'transit:jupiter|oposicao|mars':
+      'Giove in opposizione a Marte puo aumentare ambizione e ritmo d azione oltre la capacita reale del contesto. Questo ciclo chiede di calibrare coraggio e strategia per evitare usura da impulso eccessivo. Dirigi energia su obiettivi concreti con fasi e revisioni di avanzamento.',
+    'transit:jupiter|oposicao|meio_do_ceu':
+      'Giove in opposizione al Medio Cielo puo mettere in tensione visibilita pubblica, equilibrio personale e limiti pratici. Questa fase chiede allineamento tra proiezione, consegna e capacita sostenibile. Aggiustamenti di posizionamento tendono a funzionare meglio di mosse brusche.',
+    'transit:jupiter|quadratura|meio_do_ceu':
+      'Giove in quadratura al Medio Cielo puo ampliare aspettative professionali senza pari struttura operativa. Il periodo chiede revisione di promesse, tempi e priorita per evitare dispersione strategica. Una crescita piu solida nasce da focus selettivo ed esecuzione costante.',
+    'transit:jupiter|ingress|house_6':
+      'Giove in ingresso in Casa 6 amplia opportunita di miglioramento in routine, organizzazione ed efficienza quotidiana. Questa fase favorisce aggiornamenti di metodo quando espansione e disciplina semplice procedono insieme. Piccoli guadagni accumulati possono generare impatto concreto nel medio periodo.',
+    'transit:jupiter|ingress|house_7':
+      'Giove in ingresso in Casa 7 amplia opportunita di cooperazione, accordi e scambi in relazioni importanti. Questo ciclo favorisce alleanze quando aspettative e confini sono negoziati con chiarezza. Privilegia reciprocita concreta per trasformare buona volonta in risultati stabili.',
+    'transit:jupiter|ingress|house_8':
+      'Giove in ingresso in Casa 8 amplia temi di risorse condivise, fiducia e trasformazione profonda. Questa fase favorisce riorganizzazione strategica quando trasparenza e criterio sostengono gli impegni. Procedi con chiarezza su rischi, responsabilita e tempi.',
+    'transit:jupiter|ingress|house_9':
+      'Giove in ingresso in Casa 9 amplia orizzonte di apprendimento, visione del mondo e pianificazione di lungo periodo. Il periodo favorisce studio ed espansione del repertorio quando c e applicazione pratica. Trasforma nuova conoscenza in direzione eseguibile.',
+    'transit:jupiter|ingress|house_12':
+      'Giove in ingresso in Casa 12 amplia processi di chiusura, senso interiore e riprioritizzazione silenziosa. Questa fase favorisce maturazione quando introspezione e praticita quotidiana restano insieme. Usa il periodo per ridurre eccessi e preparare un nuovo ciclo con maggiore chiarezza.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

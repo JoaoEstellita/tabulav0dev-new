@@ -25,6 +25,22 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Jupiter em oposicao a Venus amplia desejos de prazer, concessao e expectativa de reciprocidade. A fase pede ajustar valor e medida para evitar excessos afetivos ou financeiros. Priorize escolhas que preservem equilibrio entre satisfacao imediata e sustentabilidade.',
   'transit:jupiter|oposicao|uranus':
     'Jupiter em oposicao a Urano pode trazer viradas rapidas entre entusiasmo e ruptura de plano. O ciclo pede liberdade com criterio para nao trocar consistencia por novidade constante. Faça ajustes estrategicos sem abandonar o que ja sustenta resultado.',
+  'transit:jupiter|oposicao|mars':
+    'Jupiter em oposicao a Marte pode elevar ambicao e ritmo de acao alem do que o contexto suporta. O ciclo pede calibrar coragem com estrategia para evitar desgaste por excesso de impulso. Direcione energia para metas objetivas, com etapas e revisoes de progresso.',
+  'transit:jupiter|oposicao|meio_do_ceu':
+    'Jupiter em oposicao ao Meio do Ceu pode tensionar visibilidade publica e equilibrio entre direcao externa e base pessoal. A fase pede alinhar projeção, entrega e limites praticos para sustentar resultados com qualidade. Ajustes de posicionamento tendem a funcionar melhor que movimentos bruscos.',
+  'transit:jupiter|quadratura|meio_do_ceu':
+    'Jupiter em quadratura ao Meio do Ceu pode ampliar expectativas profissionais sem a mesma proporcao de estrutura operacional. O periodo pede revisar promessas, prazos e prioridades para evitar dispersao de foco. Crescimento mais solido vem de selecao estrategica e execucao consistente.',
+  'transit:jupiter|ingress|house_6':
+    'Jupiter ingressando na Casa 6 amplia possibilidades de melhoria em rotina, organizacao e eficiencia diaria. A fase favorece ajustes de metodo quando voce combina expansao com disciplina simples. Pequenos ganhos acumulados tendem a gerar impacto relevante no medio prazo.',
+  'transit:jupiter|ingress|house_7':
+    'Jupiter ingressando na Casa 7 amplia oportunidades de cooperacao, acordos e trocas em relacoes importantes. O ciclo favorece alianças quando expectativas e limites estao bem negociados. Priorize reciprocidade concreta para transformar boa vontade em resultados estaveis.',
+  'transit:jupiter|ingress|house_8':
+    'Jupiter ingressando na Casa 8 amplia temas de recursos compartilhados, confianca e transformacao profunda. A fase favorece reorganizacao estrategica quando ha transparencia e criterio em compromissos. Avance com clareza sobre riscos, responsabilidades e prazos.',
+  'transit:jupiter|ingress|house_9':
+    'Jupiter ingressando na Casa 9 amplia horizonte de aprendizado, visao de mundo e planejamento de longo alcance. O periodo favorece estudos e expansao de repertorio quando ha aplicacao pratica. Transforme conhecimento novo em direcao executavel.',
+  'transit:jupiter|ingress|house_12':
+    'Jupiter ingressando na Casa 12 amplia processos de fechamento, sentido interno e reorganizacao silenciosa de prioridades. A fase favorece amadurecimento quando voce combina introspeccao com praticidade cotidiana. Use o periodo para limpar excessos e preparar um novo ciclo com mais clareza.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
