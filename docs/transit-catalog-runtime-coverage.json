@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-22T01:36:30.070Z",
+  "generatedAt": "2026-02-22T01:41:44.416Z",
   "totals": {
     "base": 704,
-    "curatedPt": 223,
-    "autoOnly": 481,
+    "curatedPt": 234,
+    "autoOnly": 470,
     "fallbackOnly": 0
   },
   "fallbackByPriority": {

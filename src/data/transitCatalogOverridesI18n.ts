@@ -122,6 +122,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mars conjunct Uranus accelerates change and raises the need for freedom in action. This cycle may open unconventional opportunities, asking for fast response with criteria. Innovate with safety to avoid impulsive breaks.',
     'transit:mars|conjuncao|venus':
       'Mars conjunct Venus amplifies magnetism, desire, and the need to align affection with action. This phase favors meaningful approach when boundaries and expectations are explicit. Balance intensity with listening to preserve exchange quality.',
+    'transit:mars|oposicao|jupiter':
+      'Mars opposite Jupiter can amplify conquest drive beyond what context can support. This phase asks for balance between courage and criteria to avoid excessive execution risk. Adjust scope and pacing to sustain quality outcomes.',
+    'transit:mars|oposicao|mars':
+      'Mars opposite Mars tends to activate conflict of rhythm, will, and direction between opposite poles. This cycle asks for intensity regulation to reduce friction and energy waste. Focus on common objectives and avoid reactive confrontation.',
+    'transit:mars|oposicao|meio_do_ceu':
+      'Mars opposite Midheaven may tension public ambition against stability of personal foundations. This phase asks for alignment between external priorities and real energy capacity. Reorganize schedule and responsibilities to preserve long-range consistency.',
+    'transit:mars|oposicao|mercury':
+      'Mars opposite Mercury can increase mental haste, reactive debate, and listening difficulty. This cycle asks to slow conclusions and qualify arguments before deciding. Objective communication and strategic pauses reduce noise and conflict.',
+    'transit:mars|oposicao|moon':
+      'Mars opposite Moon may raise emotional irritation and demand for immediate response in close bonds. This phase asks for balance between assertiveness and care to avoid relational wear. Regulate inner pace before acting on sensitive themes.',
+    'transit:mars|oposicao|neptune':
+      'Mars opposite Neptune can alternate impulse and doubt, with risk of dispersion in unclear goals. This cycle asks to convert intuition into simple, verifiable planning so direction remains realistic. Avoid impulsive action without context and priority checks.',
+    'transit:mars|oposicao|pluto':
+      'Mars opposite Pluto intensifies power dynamics, control themes, and resistance in key processes. This phase asks for self-regulation so tension is not converted into unproductive confrontation. Direct force toward strategy and structural adjustment, not conflict escalation.',
+    'transit:mars|oposicao|saturn':
+      'Mars opposite Saturn can create a braking feeling between action drive and operational limits. This cycle asks for active patience, method, and staged progression to reduce frustration. Organized persistence tends to work better than haste.',
+    'transit:mars|oposicao|sun':
+      'Mars opposite Sun may tension protagonism, authority, and personal assertion style. This phase asks for calibrated intensity to sustain cooperation without losing directional firmness. Act with clear objectives and lower need to prove force.',
+    'transit:mars|oposicao|uranus':
+      'Mars opposite Uranus can bring rapid reversals and rupture impulse under pressure. This cycle asks for freedom with criteria so strategy is not replaced by immediate reaction. Fast adjustments work better when contingency planning exists.',
+    'transit:mars|oposicao|venus':
+      'Mars opposite Venus may increase polarity between desire, affection, and negotiation style in closeness. This phase asks to align expectations and boundaries to avoid oscillation between approach and conflict. Active listening and clear agreements strengthen exchange quality.',
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
@@ -581,6 +603,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte en conjuncion con Urano acelera cambios y aumenta necesidad de libertad en la accion. Este ciclo puede abrir oportunidades fuera del patron, pidiendo respuesta rapida con criterio. Innova con seguridad para evitar rupturas por impulso.',
     'transit:mars|conjuncao|venus':
       'Marte en conjuncion con Venus amplifica magnetismo, deseo y necesidad de alinear afecto y accion. Esta fase favorece acercamientos cuando limites y expectativas estan claros. Equilibra intensidad con escucha para sostener calidad en los intercambios.',
+    'transit:mars|oposicao|jupiter':
+      'Marte en oposicion con Jupiter puede ampliar impulso de conquista mas alla de lo que el contexto soporta. Esta fase pide equilibrar coraje y criterio para evitar riesgo excesivo en ejecucion. Ajusta alcance y ritmo para sostener resultados de calidad.',
+    'transit:mars|oposicao|mars':
+      'Marte en oposicion con Marte tiende a activar disputa de ritmo, voluntad y direccion entre polos opuestos. Este ciclo pide regular intensidad para reducir friccion y desgaste energetico. Enfocate en objetivos comunes y evita confrontacion reactiva.',
+    'transit:mars|oposicao|meio_do_ceu':
+      'Marte en oposicion al Medio Cielo puede tensionar ambicion publica y estabilidad de la base personal. Esta fase pide alinear prioridades externas con capacidad real de energia y rutina. Reorganiza agenda y responsabilidades para mantener consistencia.',
+    'transit:mars|oposicao|mercury':
+      'Marte en oposicion con Mercurio puede aumentar prisa mental, debate reactivo y dificultad para escuchar. Este ciclo pide frenar conclusiones y mejorar argumentos antes de decidir. Comunicacion objetiva y pausas estrategicas reducen ruido y conflicto.',
+    'transit:mars|oposicao|moon':
+      'Marte en oposicion con la Luna puede elevar irritacion emocional y necesidad de respuesta inmediata en vinculos cercanos. Esta fase pide equilibrio entre firmeza y cuidado para evitar desgaste relacional. Regula ritmo interno antes de actuar en temas sensibles.',
+    'transit:mars|oposicao|neptune':
+      'Marte en oposicion con Neptuno puede alternar impulso y duda, con riesgo de dispersion en metas poco claras. Este ciclo pide convertir intuicion en un plan simple y verificable para sostener direccion realista. Evita actuar por impulso sin revisar contexto y prioridad.',
+    'transit:mars|oposicao|pluto':
+      'Marte en oposicion con Pluton intensifica dinamicas de poder, control y resistencia en procesos clave. Esta fase pide autocontrol para no convertir tension en confrontacion improductiva. Dirige fuerza a estrategia y ajuste estructural, no a escalada de conflicto.',
+    'transit:mars|oposicao|saturn':
+      'Marte en oposicion con Saturno puede generar sensacion de freno entre impulso de accion y limite operativo. Este ciclo pide paciencia activa, metodo y avance por etapas para reducir frustracion. La persistencia ordenada suele rendir mejor que la prisa.',
+    'transit:mars|oposicao|sun':
+      'Marte en oposicion al Sol puede tensionar protagonismo, autoridad y forma de afirmacion personal. Esta fase pide calibrar intensidad para sostener cooperacion sin perder firmeza. Actua con objetivo claro y menor necesidad de demostrar fuerza.',
+    'transit:mars|oposicao|uranus':
+      'Marte en oposicion con Urano puede traer giros rapidos e impulso de ruptura bajo presion. Este ciclo pide libertad con criterio para no cambiar estrategia por reaccion inmediata. Ajustes veloces funcionan mejor cuando existe plan de contingencia.',
+    'transit:mars|oposicao|venus':
+      'Marte en oposicion con Venus puede aumentar polaridad entre deseo, afecto y modo de negociar cercania. Esta fase pide alinear expectativas y limites para evitar oscilacion entre acercamiento y conflicto. Escucha activa y acuerdos claros fortalecen la calidad del vinculo.',
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
@@ -1040,6 +1084,28 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte in congiunzione con Urano accelera cambiamento e aumenta bisogno di liberta nell azione. Questo ciclo puo aprire opportunita fuori schema, chiedendo risposte rapide ma con criterio. Innova in sicurezza per evitare rotture impulsive.',
     'transit:mars|conjuncao|venus':
       'Marte in congiunzione con Venere amplifica magnetismo, desiderio e bisogno di allineare affetto e azione. Questa fase favorisce avvicinamenti quando confini e aspettative sono chiari. Bilancia intensita e ascolto per mantenere qualita negli scambi.',
+    'transit:mars|oposicao|jupiter':
+      'Marte in opposizione con Giove puo amplificare impulso di conquista oltre quanto il contesto sostiene. Questa fase chiede equilibrio tra coraggio e criterio per evitare rischio esecutivo eccessivo. Regola scopo e ritmo per mantenere risultati di qualita.',
+    'transit:mars|oposicao|mars':
+      'Marte in opposizione con Marte tende ad attivare conflitto di ritmo, volonta e direzione tra poli opposti. Questo ciclo chiede regolazione dell intensita per ridurre attrito e dispersione energetica. Concentrati su obiettivi comuni ed evita confronto reattivo.',
+    'transit:mars|oposicao|meio_do_ceu':
+      'Marte in opposizione al Medio Cielo puo mettere in tensione ambizione pubblica e stabilita della base personale. Questa fase chiede allineamento tra priorita esterne e reale capacita energetica. Riorganizza agenda e responsabilita per mantenere coerenza nel tempo.',
+    'transit:mars|oposicao|mercury':
+      'Marte in opposizione con Mercurio puo aumentare fretta mentale, dibattito reattivo e difficolta di ascolto. Questo ciclo chiede di rallentare le conclusioni e qualificare gli argomenti prima di decidere. Comunicazione oggettiva e pause strategiche riducono rumore e conflitto.',
+    'transit:mars|oposicao|moon':
+      'Marte in opposizione con la Luna puo aumentare irritazione emotiva e richiesta di risposta immediata nei legami vicini. Questa fase chiede equilibrio tra assertivita e cura per evitare usura relazionale. Regola ritmo interno prima di agire su temi sensibili.',
+    'transit:mars|oposicao|neptune':
+      'Marte in opposizione con Nettuno puo alternare impulso e dubbio, con rischio di dispersione in obiettivi poco chiari. Questo ciclo chiede di tradurre intuizione in piano semplice e verificabile per mantenere direzione realistica. Evita azioni impulsive senza controllo di contesto e priorita.',
+    'transit:mars|oposicao|pluto':
+      'Marte in opposizione con Plutone intensifica dinamiche di potere, controllo e resistenza nei processi chiave. Questa fase chiede autocontrollo per non trasformare tensione in confronto improduttivo. Dirigi forza su strategia e aggiustamento strutturale, non su escalation del conflitto.',
+    'transit:mars|oposicao|saturn':
+      'Marte in opposizione con Saturno puo dare sensazione di freno tra impulso d azione e limite operativo. Questo ciclo chiede pazienza attiva, metodo e avanzamento per fasi per ridurre frustrazione. La perseveranza organizzata tende a funzionare meglio della fretta.',
+    'transit:mars|oposicao|sun':
+      'Marte in opposizione al Sole puo mettere in tensione protagonismo, autorita e stile di affermazione personale. Questa fase chiede intensita calibrata per sostenere cooperazione senza perdere fermezza di direzione. Agisci con obiettivo chiaro e minore bisogno di dimostrare forza.',
+    'transit:mars|oposicao|uranus':
+      'Marte in opposizione con Urano puo portare cambi rapidi e impulso di rottura sotto pressione. Questo ciclo chiede liberta con criterio per non sostituire strategia con reazione immediata. Aggiustamenti veloci funzionano meglio con piano di contingenza.',
+    'transit:mars|oposicao|venus':
+      'Marte in opposizione con Venere puo aumentare polarita tra desiderio, affetto e modalita di negoziare vicinanza. Questa fase chiede allineamento di aspettative e confini per evitare oscillazione tra avvicinamento e conflitto. Ascolto attivo e accordi chiari rafforzano la qualita dello scambio.',
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':

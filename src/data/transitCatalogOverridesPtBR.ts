@@ -117,6 +117,28 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Marte em conjuncao com Urano acelera mudancas e aumenta necessidade de liberdade na acao. O ciclo pode abrir oportunidades fora do padrao, pedindo resposta rapida com criterio. Inove com seguranca para evitar rupturas por impulso.',
   'transit:mars|conjuncao|venus':
     'Marte em conjuncao com Venus amplia magnetismo, desejo e necessidade de alinhamento entre afeto e acao. A fase favorece aproximacoes quando limites e expectativas estao claros. Equilibre intensidade com escuta para preservar qualidade nas trocas.',
+  'transit:mars|oposicao|jupiter':
+    'Marte em oposicao com Jupiter pode ampliar impulso de conquista alem do que o contexto suporta. A fase pede equilibrar coragem e criterio para evitar excesso de risco na execucao. Ajuste escopo e ritmo para sustentar resultado com qualidade.',
+  'transit:mars|oposicao|mars':
+    'Marte em oposicao com Marte tende a ativar disputa de ritmo, vontade e direcao entre polos opostos. O ciclo pede regulacao de intensidade para reduzir atrito e desperdicio de energia. Foque em objetivo comum e evite confronto por reatividade.',
+  'transit:mars|oposicao|meio_do_ceu':
+    'Marte em oposicao ao Meio do Ceu pode tensionar ambicao publica e estabilidade da base pessoal. A fase pede alinhar prioridades externas com limite real de energia e rotina. Reorganize agenda e responsabilidade para manter consistencia no longo prazo.',
+  'transit:mars|oposicao|mercury':
+    'Marte em oposicao com Mercurio pode aumentar pressa mental, debate reativo e dificuldade de escuta. O ciclo pede desacelerar conclusoes e qualificar argumentos antes de decidir. Comunicacao objetiva e pausas estrategicas reduzem ruído e conflito.',
+  'transit:mars|oposicao|moon':
+    'Marte em oposicao com Lua pode elevar irritacao emocional e necessidade de resposta imediata em vinculos proximos. A fase pede equilibrio entre assertividade e acolhimento para evitar desgaste relacional. Regule ritmo interno antes de agir em temas sensiveis.',
+  'transit:mars|oposicao|neptune':
+    'Marte em oposicao com Netuno pode alternar impulso e duvida, com risco de dispersao em metas pouco claras. O ciclo pede converter intuicao em plano simples e verificavel para manter direcao realista. Evite agir no impulso sem checar contexto e prioridade.',
+  'transit:mars|oposicao|pluto':
+    'Marte em oposicao com Plutao intensifica disputa de poder, controle e resistencia em processos importantes. A fase pede autocontrole para nao transformar tensao em confronto improdutivo. Direcione forca para estrategia e ajuste estrutural, nao para escalada de conflito.',
+  'transit:mars|oposicao|saturn':
+    'Marte em oposicao com Saturno pode gerar sensacao de freio entre vontade de agir e limite operacional. O ciclo pede paciencia ativa, com metodo e progressao por etapas, para reduzir frustracao. Persistencia organizada tende a funcionar melhor que pressa.',
+  'transit:mars|oposicao|sun':
+    'Marte em oposicao ao Sol pode tensionar protagonismo, autoridade e forma de afirmacao pessoal. A fase pede calibrar intensidade para sustentar colaboracao sem perder firmeza de direcao. Aja com clareza de objetivo e menor necessidade de provar forca.',
+  'transit:mars|oposicao|uranus':
+    'Marte em oposicao com Urano pode trazer viradas rapidas e impulso de ruptura em cenarios de pressao. O ciclo pede liberdade com criterio para nao trocar estrategia por reacao imediata. Ajustes rapidos funcionam melhor quando ha plano de contingencia.',
+  'transit:mars|oposicao|venus':
+    'Marte em oposicao com Venus pode aumentar polaridade entre desejo, afeto e forma de negociar proximidade. A fase pede alinhar expectativa e limite para evitar oscilacao entre aproximacao e conflito. Escuta ativa e acordos claros fortalecem a qualidade das trocas.',
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
