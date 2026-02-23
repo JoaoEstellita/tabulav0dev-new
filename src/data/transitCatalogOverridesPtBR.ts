@@ -1121,4 +1121,46 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Lua em trigono a Urano natal favorece abertura para o novo no mundo emocional, com mudancas criativas que sao bem integradas. O ciclo facilita renovacao afetiva, inovacao na forma de cuidar de si e receptividade para o inesperado sem perda de estabilidade. Um bom momento para explorar o que e diferente e autentico no campo emocional.',
   'transit:moon|trigono|venus':
     'Lua em trigono a Venus natal favorece harmonia, prazer e conexoes afetivas sustentadas com naturalidade e satisfacao genuina. O ciclo facilita bem-estar emocional, expressao criativa e relacionamentos nutritivos. Um bom momento para cultivar o que agrada e nutre de fato, com abertura e reciprocidade.',
+
+  // Saturn — entradas faltantes
+  'transit:saturn|conjuncao|pluto':
+    'Saturno em conjuncao a Plutao natal combina estrutura e poder transformador em um ciclo de reconfiguracoes profundas e duradouras. O periodo pode exigir decisoes definitivas sobre o que deve ser eliminado ou consolidado em bases mais solidas. Um momento de confronto com o que tem sido adiado e que agora pede resolucao estrutural.',
+  'transit:saturn|conjuncao|uranus':
+    'Saturno em conjuncao a Urano natal cria tensao criativa entre necessidade de ordem e impulso para ruptura e renovacao. O periodo pode trazer mudancas concretas em areas onde estruturas antigas nao comportam mais o novo. Um ciclo de reformulacao que pede equanimidade entre o que precisa ser mantido e o que precisa ser liberado.',
+  'transit:saturn|ingress|house_2':
+    'Saturno em ingresso na Casa 2 inicia um ciclo de revisao profunda dos habitos financeiros e dos valores que sustentam a vida material. O periodo convida a construir seguranca economica de forma consistente, eliminando gastos sem fundamento e desenvolvendo autodisciplina financeira. Uma boa janela para criar fundacoes materiais mais solidas e alinhadas com o que de fato tem valor.',
+  'transit:saturn|ingress|house_7':
+    'Saturno em ingresso na Casa 7 inicia um ciclo de seriedade e responsabilidade nas parcerias intimas e nos vinculos de longa duracao. O periodo pode trazer desafios que exigem amadurecimento e comprometimento real nos relacionamentos, revelando onde faltam bases solidas. Uma boa janela para consolidar parcerias genuinas ou para reconhecer as que nao sustentam mais a troca necessaria.',
+  'transit:saturn|ingress|house_8':
+    'Saturno em ingresso na Casa 8 inicia um ciclo de confronto com questoes de partilha, transformacao e recursos que envolvem outras pessoas. O periodo convida a reorganizar acordos financeiros compartilhados e a lidar com o que tem sido evitado no campo das transformacoes profundas. Uma boa janela para estabelecer fundamentos mais conscientes em relacoes de interdependencia.',
+  'transit:saturn|ingress|house_9':
+    'Saturno em ingresso na Casa 9 inicia um ciclo de revisao das crencas, da visao de mundo e dos compromissos com o aprendizado de longo prazo. O periodo convida a construir uma filosofia de vida mais estruturada, substituindo crencas vagas por compreensao aprofundada. Uma boa janela para comprometer-se com estudos serios, formacao continuada ou expansao baseada em fundamentos reais.',
+  'transit:saturn|ingress|house_11':
+    'Saturno em ingresso na Casa 11 inicia um ciclo de revisao dos vinculos coletivos, das redes sociais e dos objetivos de longo prazo. O periodo convida a avaliar com maturidade quais grupos e ideais realmente sustentam o caminho e quais sao apenas confortaveis em superficie. Uma boa janela para construir conexoes mais solidas e comprometer-se com metas coletivas com responsabilidade genuina.',
+  'transit:saturn|ingress|house_12':
+    'Saturno em ingresso na Casa 12 inicia um ciclo de confronto com o que foi reprimido, evitado ou deixado em segundo plano na vida interior. O periodo pode trazer uma sensacao de clausura ou recolhimento que, bem aproveitada, torna-se espaco para revisao profunda e organizacao do mundo subjetivo. Uma boa janela para trabalhar com o que existe nas sombras e para construir bases psicologicas mais integradas.',
+  'transit:saturn|oposicao|meio_do_ceu':
+    'Saturno em oposicao ao Meio do Ceu natal aponta tensao entre as demandas externas da carreira e as necessidades de enraizamento e vida domestica. O periodo pode trazer confrontos entre ambicao profissional e o que sustenta o interior. Uma boa janela para avaliar se a trajetoria externa esta alinhada com as fundacoes que dao suporte ao caminho.',
+  'transit:saturn|oposicao|moon':
+    'Saturno em oposicao a Lua natal tende a criar friccao entre a estrutura racional e as necessidades emocionais mais profundas. O periodo pode trazer sensacao de restricao afetiva, distancia emocional ou dificuldade em cuidar de si com a mesma atencao com que se lida com responsabilidades externas. Uma boa janela para reconhecer onde a disciplina substituiu o cuidado e para buscar maior integracao.',
+  'transit:saturn|oposicao|neptune':
+    'Saturno em oposicao a Netuno natal tensiona a linha entre o que e real e o que e idealizado, exigindo discernimento sobre onde a fantasia substitui a acao concreta. O periodo pode revelar decepcoes em areas onde havia projecao excessiva ou fuga da realidade. Uma boa janela para consolidar o que tem substancia e para liberar o que nao passa de ilusao sem fundamento.',
+  'transit:saturn|oposicao|venus':
+    'Saturno em oposicao a Venus natal tende a trazer friccao nos relacionamentos, na expressao afetiva ou na relacao com prazer e abundancia. O periodo pode revelar desalinhamentos entre o que se deseja e o que os comprometimentos reais oferecem. Uma boa janela para avaliar com honestidade o que nas relacoes precisa de mais estrutura e o que simplesmente nao corresponde mais ao que se precisa.',
+  'transit:saturn|quadratura|ascendente':
+    'Saturno em quadratura ao Ascendente natal pode criar friccao entre a necessidade de estrutura interna e a forma como se apresenta ao mundo externo. O periodo tende a revelar onde a identidade publica e a identidade privada estao em conflito, exigindo ajustes de autenticidade. Uma boa janela para trabalhar a coerencia entre o que se e e como se aparece nos espacos de contato.',
+  'transit:saturn|quadratura|jupiter':
+    'Saturno em quadratura a Jupiter natal cria tensao entre o impulso de expansao e os limites que a realidade impoe. O periodo pode trazer frustracoes quando o otimismo excede o que e possivel sustentar com os recursos disponiveis. Uma boa janela para calibrar ambicoes com o que e factivel e para transformar entusiasmo em plano concreto e sustentavel.',
+  'transit:saturn|quadratura|meio_do_ceu':
+    'Saturno em quadratura ao Meio do Ceu natal pode trazer desafios significativos na trajetoria profissional, revelando onde as fundacoes da carreira precisam ser revisadas. O periodo convida a confrontar expectativas irrealistas sobre a vida publica e a construir o caminho com mais honestidade estrutural. Uma boa janela para realinhar objetivos externos com o que de fato sustenta o percurso.',
+  'transit:saturn|quadratura|neptune':
+    'Saturno em quadratura a Netuno natal cria tensao entre a necessidade de forma e definicao e o impulso para dissolucao e transcendencia. O periodo pode revelar onde a falta de limites esta gerando confusao ou onde a rigidez excessiva esta sufocando criatividade e espiritualidade. Uma boa janela para encontrar estruturas que acolham o que e sutil sem perder clareza.',
+  'transit:saturn|sextil|mercury':
+    'Saturno em sextil a Mercurio natal favorece pensamento disciplinado, comunicacao precisa e capacidade de organizar ideias com clareza e autoridade. O ciclo facilita o aprendizado rigoroso, a escrita estruturada e o planejamento intelectual. Um bom momento para comprometer-se com projetos mentais que exigem consistencia e profundidade analitica.',
+  'transit:saturn|sextil|pluto':
+    'Saturno em sextil a Plutao natal favorece o uso construtivo do poder, com capacidade de transformar estruturas de forma profunda e sustentavel. O ciclo facilita a reorganizacao de areas da vida que precisavam de renovacao sem os atritos dos aspectos de tensao. Um bom momento para consolidar mudancas que vieram de processos transformadores anteriores.',
+  'transit:saturn|trigono|mercury':
+    'Saturno em trigono a Mercurio natal favorece clareza mental, capacidade de comunicar com autoridade e habilidade para organizar pensamentos e projetos de forma eficiente. O ciclo facilita o comprometimento com aprendizados exigentes e a expressao de ideias com maturidade e precisao. Um bom momento para avancar em projetos intelectuais com consistencia e foco.',
+  'transit:saturn|trigono|pluto':
+    'Saturno em trigono a Plutao natal favorece a transformacao de estruturas profundas de forma construtiva e com senso de proposito. O ciclo facilita a consolidacao de mudancas significativas que exigem durabilidade e intencao clara. Um bom momento para construir o que deve durar sobre bases que passaram por renovacao real.',
 }
