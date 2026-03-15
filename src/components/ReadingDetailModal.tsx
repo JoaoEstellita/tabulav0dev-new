@@ -415,12 +415,6 @@ export default function ReadingDetailModal({
             ) : (
               <>
                 <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.keyReading', 'Key reading')}</Text>
-                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedDirectText}</Text>
-                </View>
-
-                <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.appliedInterpretation', 'Applied interpretation')}</Text>
                   <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText}</Text>
                 </View>
 

@@ -57,12 +57,16 @@ const isTransitRelevantToArea = (areaKey: string, transit: PersonalTransitLike):
   if (!rule) return true
 
   const planet = String(transit?.transitPlanet || '')
-  const planetOk = !rule.planets.length || rule.planets.includes(planet)
-  if (!planetOk) return false
-
   const house = getTransitHouse(transit)
-  if (!house) return true
-  return !rule.houses.length || rule.houses.includes(house)
+
+  const planetOk = !rule.planets.length || rule.planets.includes(planet)
+  const houseOk = !rule.houses.length || rule.houses.includes(house)
+
+  // Condição 1: planeta + casa correspondem à área (lógica tradicional de aspectos)
+  if (planetOk && (!house || houseOk)) return true
+  // Condição 2: casa diretamente na área (house-entry transits — ex: Sol na Casa 7 → Amor)
+  if (house && rule.houses.includes(house)) return true
+  return false
 }
 
 const getPersonal = (astrologyData: AstrologyDataLike | null | undefined): PersonalTransitLike[] => {

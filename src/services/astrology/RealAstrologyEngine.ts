@@ -617,6 +617,8 @@ export class RealAstrologyEngine {
       const natalHouseByName = this.buildNatalHouseLookup(natalPlanets)
       for (const [areaName, cfg] of Object.entries(this.LIFE_AREAS)) {
         byArea[areaName] = personalTransits.filter(t => {
+          // Casa diretamente na área → inclui independente do planeta
+          if (cfg.houses.includes(t.natalHouseImpacted)) return true
           if (!cfg.planets.includes(t.transitPlanet)) return false
           return this.isTransitRelevantToArea(
             t.natalPlanet,
