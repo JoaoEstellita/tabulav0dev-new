@@ -614,9 +614,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(148,163,184,0.3)',
     backgroundColor: 'rgba(30, 58, 138, 0.22)',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    marginBottom: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
   },
   sectionLabel: {
     color: '#FBBF24',
@@ -630,8 +630,8 @@ const styles = StyleSheet.create({
   body: {
     color: '#F8FAFC',
     fontSize: 19,
-    lineHeight: 27,
-    marginBottom: 2,
+    lineHeight: 29,
+    marginBottom: 4,
   },
   bodyNarrow: {
     fontSize: 16,
