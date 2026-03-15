@@ -14,6 +14,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
+import { resolveNatalPlanetInHouseText } from '../utils/natalInterpretation'
 import type { TransitInterpretationV2 } from '../utils/transitInterpretationV2'
 
 interface TransitComparisonCardProps {
@@ -1035,6 +1036,20 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     contextLabel: string
     signLabel?: string
   }) => {
+    // Tentar catálogo natal primeiro
+    const natalText = params.house
+      ? resolveNatalPlanetInHouseText(params.planetName, params.house, language)
+      : null
+    if (natalText) {
+      const sentences = natalText.match(/[^.!?]+[.!?]+/g) || []
+      const short = sentences.slice(0, 1).join(' ').trim() || natalText
+      return {
+        short,
+        long: natalText,
+        keywords: [] as string[],
+        interpretationV2: null,
+      }
+    }
     const targetLabel = params.signLabel
       ? `${params.signLabel}${params.house ? ` • ${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : ''}`
       : (params.house ? `${tl('Casa', 'House', 'Casa', 'Casa')} ${params.house}` : tl('Casa indefinida', 'Undefined house', 'Casa indefinida', 'Casa indefinita'))
