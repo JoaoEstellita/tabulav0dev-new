@@ -12,6 +12,11 @@ describe('StatusPolicyService smoke', () => {
     const cache = new Map<string, string>()
     const applyRuntimeStatusThresholds = vi.fn()
 
+    vi.doMock('../../../config/firebase', () => ({
+      auth: { currentUser: null },
+      getAppCheckToken: vi.fn(async () => null),
+    }))
+
     vi.doMock('@react-native-async-storage/async-storage', () => ({
       default: {
         getItem: vi.fn(async (key: string) => cache.get(key) ?? null),
@@ -51,6 +56,11 @@ describe('StatusPolicyService smoke', () => {
   it('uses cached policy and skips remote fetch', async () => {
     const now = 1700000000000
     vi.spyOn(Date, 'now').mockReturnValue(now)
+
+    vi.doMock('../../../config/firebase', () => ({
+      auth: { currentUser: null },
+      getAppCheckToken: vi.fn(async () => null),
+    }))
 
     const cachedPayload = {
       fetchedAt: now,

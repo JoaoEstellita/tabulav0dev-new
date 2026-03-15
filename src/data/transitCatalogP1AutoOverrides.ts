@@ -479,10 +479,7 @@ function buildAutoOverrides(locale: Locale): Record<string, string> {
 }
 
 export const TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR = buildAutoOverrides('pt-BR')
-export const TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N: Record<
-  'en-US' | 'es-ES' | 'it-IT',
-  Record<string, string>
-> = {
+export const TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N: Partial<Record<Locale, Record<string, string>>> = {
   'en-US': buildAutoOverrides('en-US'),
   'es-ES': buildAutoOverrides('es-ES'),
   'it-IT': buildAutoOverrides('it-IT'),
