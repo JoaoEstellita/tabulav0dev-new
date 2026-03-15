@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '../../hooks/useAuth'
+import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { backendFetch } from '../../services/backend/client'
 
 type AnyObj = Record<string, any>
@@ -37,6 +38,7 @@ const JsonBlock = ({ title, value }: { title: string; value: unknown }) => {
 
 export default function AdminDiagnosticsScreen() {
   const { user } = useAuth()
+  const { t } = useAppLanguage()
   const [query, setQuery] = useState('')
   const [targetUid, setTargetUid] = useState(user?.uid || '')
   const [users, setUsers] = useState<AdminUserItem[]>([])
@@ -68,7 +70,7 @@ export default function AdminDiagnosticsScreen() {
         setTargetUid(incoming[0]?.uid || '')
       }
     } catch (e: any) {
-      setError(e?.message || 'Falha ao carregar lista de usuários')
+      setError(e?.message || t('admin.error.loadUsers'))
     } finally {
       setLoadingUsers(false)
     }
@@ -79,7 +81,7 @@ export default function AdminDiagnosticsScreen() {
     setError(null)
     try {
       const uid = String(targetUid || '').trim()
-      if (!uid) throw new Error('uid_obrigatorio')
+      if (!uid) throw new Error(t('admin.error.uidRequired'))
       const [adminResp, userResp] = await Promise.all([
         backendFetch('/api/diag/admin', { auth: true, method: 'GET' }),
         backendFetch(`/api/diag/user/${encodeURIComponent(uid)}`, { auth: true, method: 'GET' }),
@@ -91,7 +93,7 @@ export default function AdminDiagnosticsScreen() {
       setAdminOverview(adminJson)
       setUserDiag(userJson)
     } catch (e: any) {
-      setError(e?.message || 'Falha ao carregar diagnóstico')
+      setError(e?.message || t('admin.error.loadDiag'))
     } finally {
       setLoadingDiag(false)
     }
@@ -129,7 +131,7 @@ export default function AdminDiagnosticsScreen() {
         await runDiag()
       }
     } catch (e: any) {
-      setError(e?.message || `Falha ao recalcular ${uid}`)
+      setError(e?.message || t('admin.error.recalc', { uid }))
     } finally {
       setBusyUid(null)
     }
@@ -138,11 +140,11 @@ export default function AdminDiagnosticsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Painel Admin</Text>
-        <Text style={styles.subtitle}>Usuários, recálculo de status e diagnóstico técnico</Text>
+        <Text style={styles.title}>{t('admin.panel.title')}</Text>
+        <Text style={styles.subtitle}>{t('admin.panel.subtitle')}</Text>
 
         <View style={styles.inputWrap}>
-          <Text style={styles.label}>Buscar usuário (nome, email ou UID)</Text>
+          <Text style={styles.label}>{t('admin.search.label')}</Text>
           <View style={styles.inline}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -150,17 +152,17 @@ export default function AdminDiagnosticsScreen() {
               onChangeText={setQuery}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="Ex.: Joao ou @gmail.com"
+              placeholder={t('admin.search.placeholder')}
               placeholderTextColor="#7B809A"
             />
             <TouchableOpacity style={styles.smallButton} onPress={() => loadUsers({ reset: true })} disabled={loadingUsers}>
-              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Buscar</Text>}
+              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>{t('admin.search.button')}</Text>}
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.blockTitle}>Usuários</Text>
+          <Text style={styles.blockTitle}>{t('admin.users.title')}</Text>
           {users.map((entry) => (
             <TouchableOpacity
               key={entry.uid}
@@ -170,11 +172,16 @@ export default function AdminDiagnosticsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.userName}>
                   {entry.displayName}
-                  {entry.isAdmin ? ' • admin' : ''}
+                  {entry.isAdmin ? t('admin.users.adminBadge') : ''}
                 </Text>
                 <Text style={styles.userMeta}>{entry.email || entry.uid}</Text>
                 <Text style={styles.userMeta}>
-                  score {entry.statusScore ?? '—'} • {entry.statusLevel || '—'} • críticos {entry.criticalAreas} • positivos {entry.positiveAreas}
+                  {t('admin.users.meta', {
+                    score: String(entry.statusScore ?? '—'),
+                    level: entry.statusLevel || '—',
+                    critical: String(entry.criticalAreas),
+                    positive: String(entry.positiveAreas),
+                  })}
                 </Text>
               </View>
               <TouchableOpacity
@@ -185,7 +192,7 @@ export default function AdminDiagnosticsScreen() {
                 {busyUid === entry.uid ? (
                   <ActivityIndicator size="small" color="#0F0F23" />
                 ) : (
-                  <Text style={styles.recalcText}>Recalcular</Text>
+                  <Text style={styles.recalcText}>{t('admin.users.recalc')}</Text>
                 )}
               </TouchableOpacity>
             </TouchableOpacity>
@@ -197,14 +204,14 @@ export default function AdminDiagnosticsScreen() {
               onPress={() => loadUsers({ reset: users.length === 0 })}
               disabled={loadingUsers}
             >
-              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Carregar mais</Text>}
+              {loadingUsers ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>{t('admin.users.loadMore')}</Text>}
             </TouchableOpacity>
-            <Text style={styles.userMeta}>{nextCursor ? 'há mais páginas' : 'fim da lista'}</Text>
+            <Text style={styles.userMeta}>{nextCursor ? t('admin.users.hasMore') : t('admin.users.endList')}</Text>
           </View>
         </View>
 
         <View style={styles.inputWrap}>
-          <Text style={styles.label}>UID para diagnóstico detalhado</Text>
+          <Text style={styles.label}>{t('admin.diag.label')}</Text>
           <View style={styles.inline}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -212,18 +219,18 @@ export default function AdminDiagnosticsScreen() {
               onChangeText={setTargetUid}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="UID do usuário"
+              placeholder={t('admin.diag.placeholder')}
               placeholderTextColor="#7B809A"
             />
             <TouchableOpacity style={styles.smallButton} onPress={runDiag} disabled={loadingDiag}>
-              {loadingDiag ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>Diagnóstico</Text>}
+              {loadingDiag ? <ActivityIndicator size="small" color="#0F0F23" /> : <Text style={styles.smallButtonText}>{t('admin.diag.button')}</Text>}
             </TouchableOpacity>
           </View>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {adminOverview ? <JsonBlock title="Visão geral (admin)" value={adminOverview} /> : null}
-        {userDiag ? <JsonBlock title="Diagnóstico do usuário" value={userDiag} /> : null}
+        {adminOverview ? <JsonBlock title={t('admin.diag.overviewTitle')} value={adminOverview} /> : null}
+        {userDiag ? <JsonBlock title={t('admin.diag.userTitle')} value={userDiag} /> : null}
       </ScrollView>
     </SafeAreaView>
   )
@@ -303,4 +310,3 @@ const styles = StyleSheet.create({
   },
   recalcText: { color: '#0F0F23', fontWeight: '800', fontSize: 12 },
 })
-
