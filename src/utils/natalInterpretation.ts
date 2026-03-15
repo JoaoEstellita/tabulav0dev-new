@@ -3,6 +3,8 @@ import { NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../data/natalPlanetInHouse
 import { NATAL_PLANET_IN_HOUSE_I18N_OVERRIDES } from '../data/natalPlanetInHouseOverridesI18n'
 import { NATAL_PLANET_ASPECT_PTBR_OVERRIDES } from '../data/natalPlanetAspectOverridesPtBR'
 import { NATAL_PLANET_ASPECT_I18N_OVERRIDES } from '../data/natalPlanetAspectOverridesI18n'
+import { NATAL_RULER_IN_HOUSE_PTBR_OVERRIDES } from '../data/natalRulerInHouseOverridesPtBR'
+import { NATAL_RULER_IN_HOUSE_I18N_OVERRIDES } from '../data/natalRulerInHouseOverridesI18n'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -179,4 +181,52 @@ export function resolveNatalPlanetAspectText(
  */
 export function buildNatalAspectKeyPublic(planet1: string, aspect: string, planet2: string): string | null {
   return buildNatalAspectKey(planet1, aspect, planet2)
+}
+
+// ─── Natal Ruler in House Catalog ────────────────────────────────────────────
+
+function buildNatalRulerInHouseKey(rulerHouse: number, targetHouse: number): string | null {
+  if (!Number.isFinite(rulerHouse) || rulerHouse < 1 || rulerHouse > 12) return null
+  if (!Number.isFinite(targetHouse) || targetHouse < 1 || targetHouse > 12) return null
+  return `natal:ruler${rulerHouse}|house|${targetHouse}`
+}
+
+const RULER_PTBR_NORMALIZED = buildNormalizedMap(NATAL_RULER_IN_HOUSE_PTBR_OVERRIDES)
+
+const RULER_I18N_NORMALIZED: Partial<Record<AppLanguage, Record<string, string>>> = (() => {
+  const out: Partial<Record<AppLanguage, Record<string, string>>> = {}
+  ;(Object.keys(NATAL_RULER_IN_HOUSE_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = NATAL_RULER_IN_HOUSE_I18N_OVERRIDES[lang]
+    if (map) out[lang] = buildNormalizedMap(map)
+  })
+  return out
+})()
+
+/**
+ * Retorna o texto de interpretação para o regente de uma casa natal em outra casa.
+ * Retorna null se a chave não existir no catálogo.
+ */
+export function resolveNatalRulerInHouseText(
+  rulerHouse: number,
+  targetHouse: number,
+  language?: string | null,
+): string | null {
+  const keyRaw = buildNatalRulerInHouseKey(rulerHouse, targetHouse)
+  if (!keyRaw) return null
+  const key = normalizeCatalogKey(keyRaw)
+  const lang = normalizeLanguage(language)
+
+  if (lang !== 'pt-BR') {
+    const i18nText =
+      RULER_I18N_NORMALIZED[lang]?.[key] ||
+      NATAL_RULER_IN_HOUSE_I18N_OVERRIDES[lang]?.[keyRaw]
+    if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
+    return null
+  }
+
+  const ptText =
+    RULER_PTBR_NORMALIZED[key] ||
+    NATAL_RULER_IN_HOUSE_PTBR_OVERRIDES[keyRaw]
+  if (ptText && ptText.trim().length >= 50) return ptText.trim()
+  return null
 }

@@ -14,7 +14,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
-import { resolveNatalPlanetInHouseText } from '../utils/natalInterpretation'
+import { resolveNatalPlanetInHouseText, resolveNatalRulerInHouseText } from '../utils/natalInterpretation'
 import type { TransitInterpretationV2 } from '../utils/transitInterpretationV2'
 
 interface TransitComparisonCardProps {
@@ -1030,13 +1030,27 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     []
   )
 
+  // Regentes naturais de casa (mesma tabela usada no engine de cálculo)
+  const NATURAL_HOUSE_RULERS: Record<string, number[]> = {
+    mars:    [1, 8],
+    venus:   [2, 7],
+    mercury: [3, 6],
+    moon:    [4],
+    sun:     [5],
+    jupiter: [9, 12],
+    saturn:  [10, 11],
+    uranus:  [11],
+    neptune: [12],
+    pluto:   [8],
+  }
+
   const buildColumnNarrativeFromPosition = React.useCallback((params: {
     planetName: string
     house: number | null
     contextLabel: string
     signLabel?: string
   }) => {
-    // Tentar catálogo natal primeiro
+    // Tentar catálogo natal primeiro (planeta em casa)
     const natalText = params.house
       ? resolveNatalPlanetInHouseText(params.planetName, params.house, language)
       : null
@@ -1048,6 +1062,24 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         long: natalText,
         keywords: [] as string[],
         interpretationV2: null,
+      }
+    }
+    // Tentar catálogo de regente natal em casa (regente de casaX está na casaY)
+    if (params.house) {
+      const planetKey = params.planetName.toLowerCase()
+      const ruledHouses = NATURAL_HOUSE_RULERS[planetKey] || []
+      for (const rulerHouse of ruledHouses) {
+        const rulerText = resolveNatalRulerInHouseText(rulerHouse, params.house, language)
+        if (rulerText) {
+          const sentences = rulerText.match(/[^.!?]+[.!?]+/g) || []
+          const short = sentences.slice(0, 1).join(' ').trim() || rulerText
+          return {
+            short,
+            long: rulerText,
+            keywords: [] as string[],
+            interpretationV2: null,
+          }
+        }
       }
     }
     const targetLabel = params.signLabel
