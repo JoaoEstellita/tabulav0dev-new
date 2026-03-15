@@ -65,6 +65,9 @@ type NotificationContextValue = {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null)
 
+// Cache em nível de módulo — templates raramente mudam (só via admin)
+let _templateCache: { doc: Record<string, NotificationTemplate>; col: Record<string, NotificationTemplate> } | null = null
+
 const templateDocToMap = (data: any): Record<string, NotificationTemplate> => {
   if (!data) return {}
   if (data.templates && typeof data.templates === "object") {
@@ -158,6 +161,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     let canceled = false
     const loadTemplates = async () => {
       try {
+        if (_templateCache) {
+          if (!canceled) {
+            setDocTemplates(_templateCache.doc)
+            setCollectionTemplates(_templateCache.col)
+          }
+          return
+        }
         const templateRef = doc(db, "settings", "notification_templates")
         const templatesCollectionRef = collection(db, "settings", "notification_templates", "templates")
         const [templateSnap, templatesSnap] = await Promise.all([
@@ -165,13 +175,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           getDocs(templatesCollectionRef),
         ])
         if (canceled) return
-        const data = templateSnap.exists() ? templateSnap.data() : null
-        setDocTemplates(templateDocToMap(data))
-        const map: Record<string, NotificationTemplate> = {}
+        const docMap = templateDocToMap(templateSnap.exists() ? templateSnap.data() : null)
+        const colMap: Record<string, NotificationTemplate> = {}
         templatesSnap.docs.forEach((docSnap) => {
-          map[docSnap.id] = docSnap.data() as NotificationTemplate
+          colMap[docSnap.id] = docSnap.data() as NotificationTemplate
         })
-        setCollectionTemplates(map)
+        _templateCache = { doc: docMap, col: colMap }
+        setDocTemplates(docMap)
+        setCollectionTemplates(colMap)
       } catch (err) {
         console.error("templates fetch error", err)
       }

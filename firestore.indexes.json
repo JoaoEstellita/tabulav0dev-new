@@ -59,7 +59,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "read",
+          "fieldPath": "isRead",
           "order": "ASCENDING"
         },
         {
