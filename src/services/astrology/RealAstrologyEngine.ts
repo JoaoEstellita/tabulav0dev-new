@@ -520,6 +520,7 @@ export class RealAstrologyEngine {
         { name: 'Asc', longitude: natalHouses.ascendant, speed: 0 },
         { name: 'MC', longitude: natalHouses.midheaven, speed: 0 },
         { name: 'IC', longitude: (natalHouses.midheaven + 180) % 360, speed: 0 },
+        { name: 'Dsc', longitude: (natalHouses.ascendant + 180) % 360, speed: 0 },
       ]
       const aspectsTransitsToNatalTN = detectAspects(
         planetsWithHouses.map(p => ({ name: p.name, longitude: p.longitude, speed: p.speed })),
@@ -1526,12 +1527,20 @@ export class RealAstrologyEngine {
         'Uranus': 0.9, 'Neptune': 0.9, 'Pluto': 0.9 // Transpessoais
       }
 
-      // Score ponderado por importÃƒÂ¢ncia planetÃƒÂ¡ria
+      // Guard: sem planetas válidos → score neutro
+      if (planetScores.length === 0) {
+        lifeAreas[areaName] = { percentage: 50, status: 'neutro', influences: [], mainPlanets: [] }
+        continue
+      }
+
+      // Score ponderado — divide pela soma dos pesos (não pelo comprimento)
+      const totalWeight = config.planets.reduce(
+        (s, n) => s + (planetWeights[n] || 1.0), 0
+      )
       const weightedScore = planetScores.reduce((sum, score, i) => {
-        const planetName = config.planets[i]
-        const weight = planetWeights[planetName] || 1.0
+        const weight = planetWeights[config.planets[i]] || 1.0
         return sum + (score * weight)
-      }, 0) / planetScores.length
+      }, 0) / totalWeight
 
       // Score final baseado na lÃƒÂ³gica astrolÃƒÂ³gica real
       const finalScore = weightedScore
@@ -2047,6 +2056,7 @@ export class RealAstrologyEngine {
     byName.set('Asc', 1)
     byName.set('MC', 10)
     byName.set('IC', 4)
+    byName.set('Dsc', 7)
     return byName
   }
 
@@ -2063,7 +2073,8 @@ export class RealAstrologyEngine {
     const angleRelevant =
       (natalTarget === 'Asc' && relevantHouses.includes(1)) ||
       (natalTarget === 'MC' && relevantHouses.includes(10)) ||
-      (natalTarget === 'IC' && relevantHouses.includes(4))
+      (natalTarget === 'IC' && relevantHouses.includes(4)) ||
+      (natalTarget === 'Dsc' && relevantHouses.includes(7))
     const isRuler = relevantHouses.some(h => (RealAstrologyEngine.HOUSE_RULERS[h] || []).includes(natalTarget))
 
     return transitInRelevantHouse || natalInRelevantHouse || angleRelevant || isRuler

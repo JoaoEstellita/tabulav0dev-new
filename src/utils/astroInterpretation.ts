@@ -1422,7 +1422,7 @@ export function buildUnifiedTransitNarrative(
       transitKey,
       aspectKey,
       title: `${transitPlanet} ${aspectLabel} ${targetLabel}`.trim(),
-      lifeArea: area,
+      lifeArea: areaLabel,
       houseLabel,
       timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
       shortText: directText,
