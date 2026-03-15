@@ -28,6 +28,7 @@ import { translatePlanet as translatePlanetLabel } from '../utils/astro/pt'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import { auth } from '../config/firebase'
 import { ensureStatusPolicyLoaded, getStatusPolicySnapshot } from '../services/status/StatusPolicyService'
+import { resolveNatalPlanetAspectText } from '../utils/natalInterpretation'
 
 const { height } = Dimensions.get('window')
 const MODAL_FILTER_PREFS_KEY = 'life_area_modal_filter_prefs_v2'
@@ -3081,6 +3082,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
                         <Text style={styles.aspectDescriptionText}>
                           Orb: {safeFixed(aspect.orb)} {tl('graus', 'degrees', 'grados', 'gradi')} - {isHarmonious ? tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico') : isChallenging ? tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo') : tl('Neutro', 'Neutral', 'Neutro', 'Neutro')}
                         </Text>
+                        {(() => {
+                          const aspectInterpretation = resolveNatalPlanetAspectText(planet.planet, aspect.type, aspect.with, language)
+                          if (!aspectInterpretation) return null
+                          const sentences = aspectInterpretation.match(/[^.!?]+[.!?]+/g) || []
+                          const short = sentences.slice(0, 2).join(' ').trim() || aspectInterpretation
+                          return <Text style={[styles.aspectDescriptionText, { marginTop: 4, opacity: 0.85 }]}>{short}</Text>
+                        })()}
                       </View>
                     </View>
                   )
