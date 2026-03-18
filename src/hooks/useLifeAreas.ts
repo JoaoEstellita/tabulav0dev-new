@@ -308,7 +308,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       }
 
       if (shouldRunLocal && (canUseLocalEngineFallback || allowEmergencyLocalFallback || debugLocalOverride)) {
-        console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
+        if (__DEV__) console.log(' Usando calculos astrologicos LOCAIS (dados reais)...')
         const result = await LocalAstrologyService.getCurrentTransits(
           birthData,
           user.uid,
@@ -337,7 +337,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
           }
         }
 
-        console.log(' Dados astrologicos REAIS carregados:', {
+        if (__DEV__) console.log(' Dados astrologicos REAIS carregados:', {
           lifeAreas: Object.keys(result.data.lifeAreas).length,
           cacheSource: result.cacheStatus.cacheSource,
           hoursOld: result.cacheStatus.hoursOld,
@@ -366,7 +366,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
           setCacheStatus(result.cacheStatus)
         }
         setIsUsingLocalEngine(false)
-        console.log(' Usando status do backend (fresh).')
+        if (__DEV__) console.log(' Usando status do backend (fresh).')
       }
     } catch (err) {
       console.error(' Erro ao carregar dados de transito:', err)
@@ -403,7 +403,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         }))
 
       if (criticalAreas.length === 0) {
-        console.log(' Nenhuma area critica encontrada')
+        if (__DEV__) console.log(' Nenhuma area critica encontrada')
         return
       }
 
@@ -411,7 +411,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       const userGroups = await getUserGroups(user.uid)
 
       if (userGroups.length === 0) {
-        console.log(' Usuario nao participa de nenhum grupo')
+        if (__DEV__) console.log(' Usuario nao participa de nenhum grupo')
         return
       }
 
@@ -456,7 +456,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         }
       }
 
-      console.log(` Alertas enviados para ${criticalAreas.length} areas criticas`)
+      if (__DEV__) console.log(` Alertas enviados para ${criticalAreas.length} areas criticas`)
     } catch (err) {
       console.error(' Erro ao enviar alertas crticos:', err)
     }
@@ -509,7 +509,7 @@ async function getUserGroups(userId: string): Promise<string[]> {
       groups.push(doc.id)
     })
 
-    console.log(` Usuario participa de ${groups.length} grupo(s)`)
+    if (__DEV__) console.log(` Usuario participa de ${groups.length} grupo(s)`)
     return groups
   } catch (error) {
     console.error('Erro ao buscar grupos do usuario:', error)

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Modal, View, Text, TouchableOpacity, StyleSheet, PanResponder, Animated } from 'react-native'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface SubscriptionModalProps {
@@ -10,10 +10,39 @@ interface SubscriptionModalProps {
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
   const { t } = useAppLanguage()
+  const translateY = React.useRef(new Animated.Value(0)).current
+
+  const panResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, { dy, dx }) => dy > 10 && Math.abs(dy) > Math.abs(dx),
+        onPanResponderMove: (_, { dy }) => {
+          if (dy > 0) translateY.setValue(dy)
+        },
+        onPanResponderRelease: (_, { dy, vy }) => {
+          if (dy > 80 || vy > 1) {
+            Animated.timing(translateY, { toValue: 400, duration: 200, useNativeDriver: true }).start(() => {
+              translateY.setValue(0)
+              onClose()
+            })
+          } else {
+            Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start()
+          }
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start()
+        },
+      }),
+    [onClose, translateY]
+  )
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <Animated.View
+          style={[styles.container, { transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
+        >
           <Text style={styles.title}>{t('subscription.modal.title')}</Text>
           <Text style={styles.text}>{t('subscription.modal.body')}</Text>
           <TouchableOpacity style={styles.button} onPress={onSubscribe || onClose}>
@@ -22,7 +51,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>{t('common.close')}</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   )

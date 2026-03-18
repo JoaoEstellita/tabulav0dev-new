@@ -187,18 +187,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 6000)
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
+      if (__DEV__) console.log('Auth state changed:', user ? `User: ${user.uid.substring(0, 8)}...` : 'No user')
 
       setUser(user)
       if (user) {
-        console.log('Aguardando verificacao de dados...')
+        if (__DEV__) console.log('Aguardando verificacao de dados...')
         syncPublicProfile(user)
         recordUserActivity(user)
-        // Aguardar um pouco para garantir que o documento existe
+        // Verificar imediatamente — Firestore retorna erro se doc não existir, tratado no catch
         setTimeout(async () => {
           try {
             const isComplete = await checkBirthDataComplete(user.uid)
-            console.log('Verificacao completa, resultado:', isComplete)
+            if (__DEV__) console.log('Verificacao completa, resultado:', isComplete)
             setBirthDataComplete(isComplete)
           } catch (error) {
             console.error('Erro na verificacao:', error)
@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } finally {
             setLoading(false)
           }
-        }, 500)
+        }, 0)
       } else {
         setBirthDataComplete(false)
         setLoading(false)
@@ -224,13 +224,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const targetUserId = userId || currentUser?.uid
 
     if (!targetUserId) {
-      console.log('Nenhum usuario para verificar')
+      if (__DEV__) console.log('Nenhum usuario para verificar')
       setBirthDataComplete(false)
       return false
     }
 
     try {
-      console.log('Iniciando verificacao para usuario:', targetUserId.substring(0, 8) + '...')
+      if (__DEV__) console.log('Iniciando verificacao para usuario:', targetUserId.substring(0, 8) + '...')
       const userDoc = await getDoc(doc(db, 'users', targetUserId))
 
       if (userDoc.exists()) {
@@ -241,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const hasData = !!(userData.birthDate && userData.birthTime && userData.birthLocation && userData.displayName)
         const isComplete = hasFlag && hasData
 
-        console.log('Verificacao dados de nascimento:', {
+        if (__DEV__) console.log('Verificacao dados de nascimento:', {
           userId: targetUserId.substring(0, 8) + '...'
         })
 
@@ -249,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return isComplete
       }
 
-      console.log('Documento do usuario nao existe')
+      if (__DEV__) console.log('Documento do usuario nao existe')
       setBirthDataComplete(false)
       return false
     } catch (error) {
@@ -261,9 +261,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Tentando login com email:', email)
+      if (__DEV__) console.log('Tentando login com email:', email)
       const result = await signInWithEmailAndPassword(auth, email, password)
-      console.log('Login bem-sucedido:', result.user.uid)
+      if (__DEV__) console.log('Login bem-sucedido:', result.user.uid)
     } catch (error: any) {
       console.error('Erro no login:', error.message)
       throw error
@@ -272,7 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log('Tentando cadastro com email:', email)
+      if (__DEV__) console.log('Tentando cadastro com email:', email)
       const result = await createUserWithEmailAndPassword(auth, email, password)
 
       // Criar documento do usuario no Firestore
@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatedAt: new Date(),
       })
 
-      console.log('Cadastro bem-sucedido:', result.user.uid)
+      if (__DEV__) console.log('Cadastro bem-sucedido:', result.user.uid)
     } catch (error: any) {
       console.error('Erro no cadastro:', error.message)
       throw error
@@ -298,14 +298,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Tentando login com Google')
+      if (__DEV__) console.log('Tentando login com Google')
       if (Platform.OS === 'web') {
         const { signInWithPopup, signInWithRedirect } = await import('firebase/auth')
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
         const result = await signInWithPopup(auth, provider)
         await ensureUserDocuments(result.user)
-        console.log('Login Google bem-sucedido:', result.user.uid)
+        if (__DEV__) console.log('Login Google bem-sucedido:', result.user.uid)
       } else {
         // Native Google Sign-In via @react-native-google-signin/google-signin
         const { GoogleSignin } = require('@react-native-google-signin/google-signin')
@@ -327,7 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const credential = GoogleAuthProvider.credential(idToken)
         const firebaseResult = await signInWithCredential(auth, credential)
         await ensureUserDocuments(firebaseResult.user)
-        console.log('Login Google nativo bem-sucedido:', firebaseResult.user.uid)
+        if (__DEV__) console.log('Login Google nativo bem-sucedido:', firebaseResult.user.uid)
       }
     } catch (error: any) {
       console.error('Erro no login Google:', error.message)
@@ -355,11 +355,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      console.log('Iniciando logout...')
-      console.log('Usuario atual:', auth.currentUser?.uid)
+      if (__DEV__) console.log('Iniciando logout...')
+      if (__DEV__) console.log('Usuario atual:', auth.currentUser?.uid)
 
       if (!auth.currentUser) {
-        console.log('Nenhum usuario logado')
+        if (__DEV__) console.log('Nenhum usuario logado')
         setUser(null)
         setBirthDataComplete(false)
         return
@@ -370,7 +370,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setBirthDataComplete(false)
         ; (globalThis as any).__userHouseSystem = undefined
-      console.log('Logout realizado com sucesso (estado limpo)')
+      if (__DEV__) console.log('Logout realizado com sucesso (estado limpo)')
 
     } catch (error) {
       console.error('Erro no logout:', error)
@@ -388,15 +388,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Nenhum usuario logado')
       }
 
-      console.log('Iniciando exclusao de conta...')
+      if (__DEV__) console.log('Iniciando exclusao de conta...')
 
       // Deletar dados do Firestore primeiro
       await deleteDoc(doc(db, 'users', currentUser.uid))
-      console.log('Dados do Firestore deletados')
+      if (__DEV__) console.log('Dados do Firestore deletados')
 
       // Deletar conta do Firebase Auth
       await deleteUser(currentUser)
-      console.log('Conta deletada com sucesso')
+      if (__DEV__) console.log('Conta deletada com sucesso')
 
     } catch (error) {
       console.error('Erro ao deletar conta:', error)

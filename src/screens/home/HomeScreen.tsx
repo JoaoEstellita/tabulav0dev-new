@@ -11,6 +11,7 @@ import {
   Modal,
   Platform,
   useWindowDimensions,
+  PanResponder,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
@@ -154,6 +155,30 @@ export default function HomeScreen() {
   const [moonVoidLabel, setMoonVoidLabel] = useState<string | null>(null)
   const [moonVoidLine2, setMoonVoidLine2] = useState<string | null>(null)
   const [moonModalVisible, setMoonModalVisible] = useState(false)
+  const moonTranslateY = React.useRef(new Animated.Value(0)).current
+  const moonPanResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, { dy, dx }) => dy > 10 && Math.abs(dy) > Math.abs(dx),
+        onPanResponderMove: (_, { dy }) => {
+          if (dy > 0) moonTranslateY.setValue(dy)
+        },
+        onPanResponderRelease: (_, { dy, vy }) => {
+          if (dy > 80 || vy > 1) {
+            Animated.timing(moonTranslateY, { toValue: 600, duration: 200, useNativeDriver: true }).start(() => {
+              moonTranslateY.setValue(0)
+              setMoonModalVisible(false)
+            })
+          } else {
+            Animated.spring(moonTranslateY, { toValue: 0, useNativeDriver: true }).start()
+          }
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(moonTranslateY, { toValue: 0, useNativeDriver: true }).start()
+        },
+      }),
+    [moonTranslateY]
+  )
   const [moonDetails, setMoonDetails] = useState<MoonDetails>({
     phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
     phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
@@ -542,6 +567,7 @@ export default function HomeScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
+        removeClippedSubviews={true}
         showsVerticalScrollIndicator={showDesktopScrollbar}
         refreshControl={
           <RefreshControl
@@ -577,6 +603,7 @@ export default function HomeScreen() {
           <Animated.View style={moonPress.style}>
             <TouchableOpacity
               style={styles.notificationButton}
+              delayPressIn={0}
               onPressIn={moonPress.onPressIn}
               onPressOut={moonPress.onPressOut}
               onPress={() => setMoonModalVisible(true)}
@@ -656,6 +683,7 @@ export default function HomeScreen() {
                       key={`quick-planet-${planetItem.planet}`}
                       style={styles.planetStripItem}
                       activeOpacity={0.86}
+                      delayPressIn={0}
                       onPress={() => scrollToPlanetInTabula(planetItem.planet)}
                     >
                       {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
@@ -738,10 +766,9 @@ export default function HomeScreen() {
           style={styles.moonModalBackdrop}
           onPress={() => setMoonModalVisible(false)}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.moonModalCard}
-            onPress={() => { }}
+          <Animated.View
+            style={[styles.moonModalCard, { transform: [{ translateY: moonTranslateY }] }]}
+            {...moonPanResponder.panHandlers}
           >
             <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
             <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
@@ -771,7 +798,7 @@ export default function HomeScreen() {
             >
               <Text style={styles.moonModalCloseText}>{tr('common.close', 'Close')}</Text>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </Animated.View>
         </TouchableOpacity>
       </Modal>
     </LinearGradient>

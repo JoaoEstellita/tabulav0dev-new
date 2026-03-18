@@ -5,6 +5,7 @@ import UserService from '../../services/firebase/UserService'
 import { useAuth } from '../../hooks/useAuth'
 import NatalAscService from '../../services/astrology/NatalAscService'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import ErrorBoundary from '../../components/ErrorBoundary'
 
 export default function BirthDataFormContainer() {
   const [loading, setLoading] = useState(false)
@@ -47,5 +48,9 @@ export default function BirthDataFormContainer() {
     }
   }
 
-  return <BirthDataForm onComplete={handleComplete} loading={loading} />
+  return (
+    <ErrorBoundary>
+      <BirthDataForm onComplete={handleComplete} loading={loading} />
+    </ErrorBoundary>
+  )
 }

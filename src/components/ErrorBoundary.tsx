@@ -57,7 +57,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
               <Text style={styles.retryText}>Tentar Novamente</Text>
             </TouchableOpacity>
 
-            {(
+            {__DEV__ && (
               <View style={styles.debugInfo}>
                 <Text style={styles.debugTitle}>Debug Info:</Text>
                 <Text style={styles.debugText}>

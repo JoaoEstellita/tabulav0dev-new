@@ -175,6 +175,7 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
+      lazy={true}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap
@@ -273,7 +274,7 @@ function MainTabs() {
 function RootNavigator() {
   const { t } = useAppLanguage()
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+    <RootStack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
       <RootStack.Screen
         name="ForecastPeriodEvents"
@@ -347,31 +348,31 @@ export default function AppNavigator() {
     registerDeviceToken(user.uid).catch(() => {})
   }, [user?.uid])
 
-  console.log('🧭 AppNavigator render:', {
+  if (__DEV__) console.log('🧭 AppNavigator render:', {
     user: user ? `${user.uid.substring(0, 8)}...` : 'null',
     loading,
     birthDataComplete
   })
 
   if (loading) {
-    console.log('⏳ Showing loading state')
+    if (__DEV__) console.log('⏳ Showing loading state')
     return null // ou um componente de loading
   }
 
   // Se não estiver logado, mostra AuthStack
   if (!user) {
-    console.log('🔒 Showing AuthStack (no user)')
+    if (__DEV__) console.log('🔒 Showing AuthStack (no user)')
     return <NavigationContainer><AuthStack /></NavigationContainer>
   }
 
   // Se estiver logado mas dados de nascimento incompletos, mostra Onboarding
   if (user && !birthDataComplete) {
-    console.log('📝 Showing OnboardingStack (incomplete data)')
+    if (__DEV__) console.log('📝 Showing OnboardingStack (incomplete data)')
     return <NavigationContainer><OnboardingStack /></NavigationContainer>
   }
 
   // Se estiver logado e dados completos, mostra app principal
-  console.log('🏠 Showing MainTabs (complete data)')
+  if (__DEV__) console.log('🏠 Showing MainTabs (complete data)')
   return <NavigationContainer theme={NAV_THEME}><RootNavigator /></NavigationContainer>
 }
 

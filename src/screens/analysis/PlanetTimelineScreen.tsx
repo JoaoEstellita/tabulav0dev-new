@@ -7,7 +7,7 @@ import { translatePlanetPT } from '../../utils/astro/pt'
 import { getLifeAreaLabel } from '../../constants/lifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
-const formatDegree = (longitude: number) => `${longitude.toFixed(1)}°`
+const formatDegree = (longitude: number) => `${longitude.toFixed(1)}ï¿½`
 
 const getSignFromDegree = (degree: number): string => {
   const signs = [
@@ -84,8 +84,8 @@ export default function PlanetTimelineScreen() {
                   <Text style={styles.planetName}>{translatePlanetPT(planet.name)}</Text>
                 </View>
                 <Text style={styles.planetMeta}>
-                  {formatDegree(planet.longitude)} {getSignFromDegree(planet.longitude)} · {t('analysis.house')} {planet.house}
-                  {planet.isRetrograde ? ` · ${t('analysis.retrograde')}` : ''}
+                  {formatDegree(planet.longitude)} {getSignFromDegree(planet.longitude)} ï¿½ {t('analysis.house')} {planet.house}
+                  {planet.isRetrograde ? ` ï¿½ ${t('analysis.retrograde')}` : ''}
                 </Text>
                 <Text style={styles.planetFlowTitle}>{t('analysis.planetTimeline.trendTitle')}</Text>
                 <Text style={styles.planetFlowText}>{t('analysis.planetTimeline.trendSubtitle')}</Text>
@@ -108,7 +108,7 @@ export default function PlanetTimelineScreen() {
                     <Text style={styles.areaTitle}>{t('analysis.planetTimeline.areas')}</Text>
                     {areaKeys.map((areaKey) => (
                       <Text key={`${planet.name}-${areaKey}`} style={styles.areaItem}>
-                        • {getLifeAreaLabel(areaKey)}
+                        ï¿½ {getLifeAreaLabel(areaKey)}
                       </Text>
                     ))}
                   </View>
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   timelineChipText: {
     color: '#CBD5F5',
-    fontSize: 10,
+    fontSize: 12,
   },
   timelineLabel: {
     marginTop: 6,

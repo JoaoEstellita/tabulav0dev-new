@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:729037358278:web:35bd0e39a865439a00c3c7',
 }
 
-console.log('Firebase init config:', {
+if (__DEV__) console.log('Firebase init config:', {
   apiKey: firebaseConfig.apiKey ? 'configured' : 'missing',
   authDomain: firebaseConfig.authDomain ? 'configured' : 'missing',
   projectId: firebaseConfig.projectId ? 'configured' : 'missing',
@@ -45,7 +45,7 @@ const initAppCheckWeb = async () => {
       origin: window.location.origin,
     }
       ; (globalThis as any).__APPCHECK_INFO__ = appCheckInfo
-    console.log('App Check key diagnostic:', appCheckInfo)
+    if (__DEV__) console.log('App Check key diagnostic:', appCheckInfo)
     if (!siteKey) return
     if (keyInfo.kind !== 'recaptcha_site_key') {
       console.warn(
@@ -64,7 +64,7 @@ const initAppCheckWeb = async () => {
       isTokenAutoRefreshEnabled: true,
     })
     appCheckInitialized = true
-    console.log('Firebase App Check initialized (web)')
+    if (__DEV__) console.log('Firebase App Check initialized (web)')
   } catch (error) {
     console.warn('Failed to initialize App Check (web):', error)
   }
@@ -116,6 +116,6 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   }
 }
 
-console.log('Firebase initialized')
+if (__DEV__) console.log('Firebase initialized')
 
 export { auth, db, messaging, storage }

@@ -32,7 +32,15 @@
     },
     "scheme": "tabulaestelar",
     "plugins": [
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FFD700",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png",
