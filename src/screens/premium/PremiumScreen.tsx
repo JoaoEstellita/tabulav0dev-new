@@ -914,7 +914,11 @@ export default function PremiumScreen() {
                     <Text style={styles.summaryButtonText}>{showJson ? tr('premium.result.hideJson', 'Ocultar JSON') : tr('premium.result.viewJson', 'Ver JSON')}</Text>
                   </TouchableOpacity>
                 </View>
-                {showJson && <Text style={styles.resultText}>{formatResult(hubResult)}</Text>}
+                {showJson && (
+                  <ScrollView style={{ maxHeight: 300, marginTop: 8 }} nestedScrollEnabled showsVerticalScrollIndicator>
+                    <Text style={styles.resultText} selectable>{formatResult(hubResult)}</Text>
+                  </ScrollView>
+                )}
                 {hubMeta && (
                   <Text style={styles.metaText}>
                     {tr('premium.meta.cacheHit', 'cacheHit')}: {String(hubMeta.cacheHit)} · {tr('premium.meta.creditsRemaining', 'creditsRemaining')}: {hubMeta.creditsRemaining ?? tr('premium.meta.na', 'n/a')}

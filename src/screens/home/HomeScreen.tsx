@@ -594,6 +594,32 @@ export default function HomeScreen() {
     )
   }
 
+  if (!loading && !transitData && !error) {
+    return (
+      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+        <View style={styles.emptyStateContainer}>
+          <Ionicons name="planet-outline" size={56} color="#FFD700" style={{ opacity: 0.4 }} />
+          <Text style={styles.emptyStateTitle}>
+            {tl('Mapa em processamento', 'Chart processing', 'Mapa en proceso', 'Mappa in elaborazione')}
+          </Text>
+          <Text style={styles.emptyStateText}>
+            {tl(
+              'Seus dados astrológicos estão sendo calculados. Puxe para baixo para atualizar.',
+              'Your astrological data is being calculated. Pull down to refresh.',
+              'Tus datos astrológicos están siendo calculados. Desliza hacia abajo para actualizar.',
+              'I tuoi dati astrologici sono in elaborazione. Trascina verso il basso per aggiornare.'
+            )}
+          </Text>
+          <TouchableOpacity style={styles.emptyStateButton} onPress={() => refreshData()}>
+            <Text style={styles.emptyStateButtonText}>
+              {tl('Tentar novamente', 'Try again', 'Intentar de nuevo', 'Riprova')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    )
+  }
+
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Starfield apenas no PWA/web */}
@@ -888,6 +914,37 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  emptyStateTitle: {
+    color: '#FFD700',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    color: '#AAAAAA',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  emptyStateButton: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  emptyStateButtonText: {
+    color: '#FFD700',
+    fontSize: 14,
   },
   retryButtonText: {
     color: '#000',

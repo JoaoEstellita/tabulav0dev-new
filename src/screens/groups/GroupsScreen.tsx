@@ -20,7 +20,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { useAuth } from "../../hooks/useAuth"
 import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
 import GroupService, { type Group, type GroupMember, type GroupAlert, type GroupActivity } from "../../services/firebase/GroupService"
@@ -722,18 +722,39 @@ export default function GroupsScreen() {
     try {
       setCoupleLoading(true)
 
-      // TODO: Buscar partner por email
-      // Por enquanto, vou simular com um ID ficticio
-      Alert.alert(
-        tr('groups.alert.inDevelopmentTitle', 'Funcionalidade em desenvolvimento'),
-        tr(
-          'groups.alert.partnerInviteSoon',
-          'Em breve voce podera convidar seu parceiro pelo email. Por enquanto, peca para ele/ela criar uma conta no app.'
+      // Buscar parceiro pelo email no Firestore
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('email', '==', partnerEmail.trim().toLowerCase()))
+      const snap = await getDocs(q)
+
+      if (snap.empty) {
+        Alert.alert(
+          tr('groups.alert.partnerNotFoundTitle', 'Usuário não encontrado'),
+          tr('groups.alert.partnerNotFoundBody', 'Nenhum usuário com este email foi encontrado. Verifique se ele já tem conta no app.')
         )
+        return
+      }
+
+      const partnerId = snap.docs[0].id
+
+      if (partnerId === user.uid) {
+        Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.cannotAddSelf', 'Você não pode se adicionar como parceiro.'))
+        return
+      }
+
+      await CoupleService.createCoupleRelationship(user.uid, partnerId, 'dating')
+
+      Alert.alert(
+        tr('groups.alert.successTitle', 'Sucesso'),
+        tr('groups.alert.coupleCreated', 'Casal criado com sucesso!')
       )
 
       setShowCreateCoupleModal(false)
       setPartnerEmail('')
+
+      // Recarregar relacionamento
+      const updated = await CoupleService.getUserCoupleRelationship(user.uid)
+      setCoupleRelationship(updated)
     } catch (error) {
       console.error('Erro ao criar relacionamento:', error)
       Alert.alert(tr('groups.alert.errorTitle', 'Erro'), tr('groups.alert.coupleCreateFailed', 'Nao foi possivel criar o relacionamento'))

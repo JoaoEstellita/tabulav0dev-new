@@ -34,6 +34,11 @@ export default function BirthDataFormContainer() {
         )
       } catch (e) {
         console.warn('Nao foi possivel calcular ASC natal automaticamente no onboarding:', (e as any)?.message || e)
+        Alert.alert(
+          t('onboarding.approxChart.title') || 'Mapa aproximado',
+          t('onboarding.approxChart.body') || 'Não foi possível calcular o Ascendente com precisão. Seu mapa será exibido de forma aproximada. Você pode recalcular nas Configurações.',
+          [{ text: t('common.ok') || 'Ok', style: 'default' }]
+        )
       }
 
       await checkBirthDataComplete()

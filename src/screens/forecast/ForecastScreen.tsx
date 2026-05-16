@@ -1438,7 +1438,19 @@ export default function ForecastScreen() {
         </View>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && !data && (
+        <View style={styles.emptyState}>
+          <Ionicons name="telescope-outline" size={40} color="#FFD700" style={{ opacity: 0.4 }} />
+          <Text style={styles.emptyStateText}>
+            {tr('forecast.noData', 'Nenhuma previsão disponível. Tente novamente.')}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchForecast(true)}>
+            <Text style={styles.retryText}>{tr('forecast.retry', 'Tentar novamente')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!loading && !error && data && (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.calendarWrapper}>
             <MemoCalendar
@@ -1701,6 +1713,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     backgroundColor: '#FFD700',
+  },
+  emptyState: {
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  emptyStateText: {
+    color: '#AAAAAA',
+    fontSize: 14,
+    textAlign: 'center' as const,
+    lineHeight: 22,
   },
   retryText: {
     color: '#0F0F23',

@@ -278,12 +278,9 @@ export default function SettingsScreen() {
   // (Removido) Overrides de ASC - agora calculo e sempre automatico
 
   const loadSettings = async () => {
-    try {
-      // Carregar configuracoes salvas
-      // TODO: Implementar carregamento de configuracoes do backend
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-    }
+    // Configuracoes de sistema de casas ja sao carregadas via useUserSettings hook.
+    // loadProfile() carrega dados do Firestore incluindo preferences no mesmo useEffect.
+    // Esta funcao existe para futura expansao de configuracoes locais.
   };
 
   const refreshNotificationPermission = async () => {
