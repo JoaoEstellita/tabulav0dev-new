@@ -94,7 +94,7 @@ class NotificationService {
       }
 
       const userData = userDoc.data()
-      const token = userData.expoPushToken
+      const token = userData.notificationTokens?.expo || userData.expoPushToken
 
       if (!token) {
         console.log("Token de notificação não encontrado para o usuário")
