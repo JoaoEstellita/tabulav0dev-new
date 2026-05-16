@@ -702,6 +702,26 @@ export default function PremiumScreen() {
       Alert.alert(tr('premium.alert.noCredits.title', 'Sem créditos'), tr('premium.alert.noCredits.body', 'Créditos insuficientes para esta leitura.'))
       return
     }
+    if (action === 'synastry' || action === 'composite') {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      const timeRegex = /^\d{2}:\d{2}$/
+      if (!partnerBirthDate || !dateRegex.test(partnerBirthDate)) {
+        setHubError(tr('premium.error.partnerDateRequired', 'Data de nascimento do parceiro inválida. Use o formato AAAA-MM-DD.'))
+        return
+      }
+      if (!partnerBirthTime || !timeRegex.test(partnerBirthTime)) {
+        setHubError(tr('premium.error.partnerTimeRequired', 'Hora de nascimento do parceiro inválida. Use o formato HH:MM.'))
+        return
+      }
+      if (!partnerLat || isNaN(Number(partnerLat)) || !partnerLon || isNaN(Number(partnerLon))) {
+        setHubError(tr('premium.error.partnerCoordsRequired', 'Latitude e longitude do parceiro são obrigatórias.'))
+        return
+      }
+      if (!partnerTz) {
+        setHubError(tr('premium.error.partnerTzRequired', 'Fuso horário do parceiro é obrigatório.'))
+        return
+      }
+    }
     setHubLoading(true)
     setHubError(null)
     setLastAction(action)

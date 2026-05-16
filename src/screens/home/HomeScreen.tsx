@@ -12,6 +12,8 @@ import {
   Platform,
   useWindowDimensions,
   PanResponder,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Animated } from 'react-native'
@@ -120,6 +122,29 @@ type MoonDetails = {
   nextVoidLabel: string
   upcomingPhases: Array<{ label: string; when: string }>
 }
+
+const AREA_ITEM_STYLE = { width: '50%' as const }
+
+const AreaCardItem = React.memo(function AreaCardItem({
+  name,
+  area,
+  factors,
+  transitCount,
+  onPress,
+}: {
+  name: string
+  area: any
+  factors: string[] | undefined
+  transitCount: number
+  onPress: (name: string, area: any) => void
+}) {
+  const press = React.useCallback(() => onPress(name, area), [name, area, onPress])
+  return (
+    <View style={AREA_ITEM_STYLE}>
+      <LifeAreaCard area={area} onPress={press} calculationFactors={factors} transitCount={transitCount} />
+    </View>
+  )
+})
 
 export default function HomeScreen() {
   useAutoScheduleNotifications()
@@ -230,13 +255,13 @@ export default function HomeScreen() {
   }, [])
 
   // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
-  const handleAreaPress = (areaName: string, areaData: any) => {
+  const handleAreaPress = React.useCallback((areaName: string, areaData: any) => {
     setSelectedArea({
       name: areaName,
       ...areaData
     })
     setModalVisible(true)
-  }
+  }, [])
 
 
   const getLifeAreaFactors = React.useCallback((areaName: string): string[] => {
@@ -292,6 +317,14 @@ export default function HomeScreen() {
       )
     ]
   }, [transitData?.currentTransits?.debug?.lifeAreas, tl])
+
+  const allLifeAreaFactors = React.useMemo<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {}
+    for (const name of LIFE_AREA_ORDER) {
+      result[name] = getLifeAreaFactors(name)
+    }
+    return result
+  }, [getLifeAreaFactors])
 
   const [userProfile, setUserProfile] = useState<{
     displayName: string
@@ -517,6 +550,22 @@ export default function HomeScreen() {
     }
   }, [])
 
+  const memoizedAreas = React.useMemo(() => {
+    return orderedLifeAreas.map(([name, area]) => {
+      const normalizedArea = normalizeDisplayArea(name, area)
+      const byAreaCount = getAreaTransitCount(
+        name,
+        transitData?.currentTransits as any,
+        backendCurrentTransits as any
+      )
+      const activeTransitsCount = Array.isArray((normalizedArea as any)?.activeTransits)
+        ? (normalizedArea as any).activeTransits.length
+        : 0
+      const transitCount = Math.max(byAreaCount, activeTransitsCount)
+      return { name, normalizedArea, transitCount }
+    })
+  }, [orderedLifeAreas, normalizeDisplayArea, transitData?.currentTransits, backendCurrentTransits])
+
   if (loading && !transitData) {
     return (
       <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -567,7 +616,6 @@ export default function HomeScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scrollView}
-        removeClippedSubviews={true}
         showsVerticalScrollIndicator={showDesktopScrollbar}
         refreshControl={
           <RefreshControl
@@ -638,42 +686,33 @@ export default function HomeScreen() {
           <AnimatedMount>
             <View style={styles.section}>
               <View style={styles.lifeAreasGrid}>
-                {orderedLifeAreas.map(([name, area], index) => {
-                  // ??? Prote\u00E7\u00E3o extra para cada \u00E1rea
-                  if (!area || typeof area !== 'object') {
-                    console.warn('?? LifeArea inv\u00E1lida:', { name, area })
-                    return null
-                  }
-
-                  const normalizedArea = normalizeDisplayArea(name, area)
-                  const byAreaCount = getAreaTransitCount(
-                    name,
-                    transitData?.currentTransits as any,
-                    backendCurrentTransits as any
-                  )
-                  const activeTransitsCount = Array.isArray((normalizedArea as any)?.activeTransits)
-                    ? (normalizedArea as any).activeTransits.length
-                    : 0
-                  const transitCount = Math.max(byAreaCount, activeTransitsCount)
-
-                  return (
-                    <View key={name} style={styles.lifeAreaItem}>
-                      <LifeAreaCard
-                        area={normalizedArea}
-                        onPress={() => handleAreaPress(name, normalizedArea)}
-                        calculationFactors={getLifeAreaFactors(name)}
-                        transitCount={transitCount}
-                      />
-                    </View>
-                  )
-                })}
+                {memoizedAreas.map(({ name, normalizedArea, transitCount }) => (
+                  <AreaCardItem
+                    key={name}
+                    name={name}
+                    area={normalizedArea}
+                    factors={allLifeAreaFactors[name]}
+                    transitCount={transitCount}
+                    onPress={handleAreaPress}
+                  />
+                ))}
               </View>
             </View>
           </AnimatedMount>
         )}
 
 
-        {transitData?.currentTransits?.planetComparisons &&
+        {loading && !transitData && (
+          <View style={styles.chartLoadingContainer}>
+            <ActivityIndicator size="large" color="#FFD700" />
+            <Text style={styles.chartLoadingText}>
+              {tl('Calculando seu mapa…', 'Calculating your chart…', 'Calculando tu mapa…', 'Calcolando la tua mappa…')}
+            </Text>
+          </View>
+        )}
+
+        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+          transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
               <View style={styles.planetStripSection}>
@@ -717,7 +756,8 @@ export default function HomeScreen() {
           )}
 
 
-        {transitData?.currentTransits?.planetComparisons &&
+        {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
+          transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
               <View style={styles.section}>
@@ -734,6 +774,7 @@ export default function HomeScreen() {
                   lifeAreasDebug={transitData.currentTransits.debug?.lifeAreas || {}}
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
                   showOverviewHeader={false}
+                  housesApproximate={transitData.currentTransits.natalHousesApproximate ?? false}
                 />
               </View>
             </AnimatedMount>
@@ -761,11 +802,9 @@ export default function HomeScreen() {
         animationType="fade"
         onRequestClose={() => setMoonModalVisible(false)}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          style={styles.moonModalBackdrop}
-          onPress={() => setMoonModalVisible(false)}
-        >
+        <View style={styles.moonModalBackdrop}>
+          {/* Backdrop separado do card — evita que TouchableOpacity pai roube o toque do PanResponder filho */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMoonModalVisible(false)} />
           <Animated.View
             style={[styles.moonModalCard, { transform: [{ translateY: moonTranslateY }] }]}
             {...moonPanResponder.panHandlers}
@@ -799,7 +838,7 @@ export default function HomeScreen() {
               <Text style={styles.moonModalCloseText}>{tr('common.close', 'Close')}</Text>
             </TouchableOpacity>
           </Animated.View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </LinearGradient>
   )
@@ -1112,6 +1151,17 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 32,
+  },
+  chartLoadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  chartLoadingText: {
+    color: '#FFD700',
+    fontSize: 14,
+    opacity: 0.8,
   },
   statusToast: {
     position: 'absolute',

@@ -661,6 +661,7 @@ export default function ForecastScreen() {
   const [data, setData] = useState<ForecastResponse | null>(null)
   const [dayStatusByDate, setDayStatusByDate] = useState<Record<string, DayStatusResponse>>({})
   const [dayStatusLoadingDate, setDayStatusLoadingDate] = useState<string | null>(null)
+  const [dayRangeError, setDayRangeError] = useState(false)
   const [limitedBanner, setLimitedBanner] = useState(false)
   const [missingBirthData, setMissingBirthData] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -791,6 +792,7 @@ export default function ForecastScreen() {
           // ignore cache errors
         }
         try {
+          setDayRangeError(false)
           const rangeResp = await backendFetch(`/api/forecast-status-range?userId=${encodeURIComponent(user.uid)}&from=${payload.range.from}&to=${payload.range.to}`, {
             method: 'GET',
             headers: {
@@ -804,12 +806,15 @@ export default function ForecastScreen() {
             rangePayload.days.forEach((day) => {
               nextMap[day.date] = day
             })
-          setDayStatusByDate(nextMap)
-          AsyncStorage.setItem(rangeCacheKey, JSON.stringify({ cachedAt: Date.now(), payload: nextMap })).catch(() => null)
+            setDayStatusByDate(nextMap)
+            AsyncStorage.setItem(rangeCacheKey, JSON.stringify({ cachedAt: Date.now(), payload: nextMap })).catch(() => null)
+          } else {
+            setDayRangeError(true)
+          }
+        } catch (rangeError) {
+          console.warn('Day status range fetch failed', rangeError)
+          setDayRangeError(true)
         }
-      } catch (rangeError) {
-        console.warn('Day status range fetch failed', rangeError)
-      }
       }
     } catch (err: any) {
       console.warn('Forecast fetch failed', err?.message || err)
@@ -1459,6 +1464,13 @@ export default function ForecastScreen() {
                 selectedDayTextColor: '#0F0F23',
               }}
             />
+            {dayRangeError && (
+              <View style={styles.dayRangeWarning}>
+                <Text style={styles.dayRangeWarningText}>
+                  {tr('forecast.dayRangeError', 'Detalhes diários indisponíveis no momento.')}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.dayPanel}>
             <View style={styles.dayTitleRow}>
@@ -1813,6 +1825,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
     padding: 8,
+  },
+  dayRangeWarning: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 200, 0, 0.08)',
+    borderRadius: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: '#FFD700',
+  },
+  dayRangeWarningText: {
+    color: '#FFD700',
+    fontSize: 12,
+    opacity: 0.8,
   },
   criticalSummary: {
     backgroundColor: '#1C1C1E',

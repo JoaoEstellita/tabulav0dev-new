@@ -35,6 +35,7 @@ interface TransitComparisonCardProps {
     window?: { start?: string; exact?: string; end?: string; days?: number }
   }>
   showOverviewHeader?: boolean
+  housesApproximate?: boolean
 }
 const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   fire: 'flame',
@@ -161,7 +162,7 @@ const normalizeModalityKey = (value: string): string =>
       .trim()
   )
 
-export default function TransitComparisonCard({
+const TransitComparisonCard = React.memo(function TransitComparisonCard({
   planetComparisons, 
   chartSummary,
   ascendant,
@@ -173,7 +174,8 @@ export default function TransitComparisonCard({
   lifeAreas,
   lifeAreasDebug,
   personalWindows,
-  showOverviewHeader = true
+  showOverviewHeader = true,
+  housesApproximate,
 }: TransitComparisonCardProps) {
   const { width } = useWindowDimensions()
   const isNarrow = width < 900
@@ -201,7 +203,7 @@ export default function TransitComparisonCard({
       setHouseSystem(normalizeHouseSystem(settings.houseSystem))
     }
   }, [settings?.houseSystem])
-  const showApprox = false // placeholder: card nao recebe props de housesApproximate aqui
+  const showApprox = housesApproximate ?? false
   const personalByTransitPlanet = React.useMemo(() => {
     const map: Record<string, typeof personal> = {}
     for (const item of personal) {
@@ -1740,7 +1742,9 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       </View>
     </LinearGradient>
   )
-}
+})
+
+export default TransitComparisonCard
 
 function formatMetricPercent(value: number | null | undefined): string {
   if (typeof value !== 'number' || Number.isNaN(value)) return '--'
