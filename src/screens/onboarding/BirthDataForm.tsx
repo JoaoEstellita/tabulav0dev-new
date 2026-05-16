@@ -1364,14 +1364,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
               </View>
             )}
 
-            {/* Botão para voltar ao login */}
-            <TouchableOpacity
-              style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
-              onPress={async () => { await hardSignOut(); logout(); }}
-            >
-              <Ionicons name="log-out-outline" size={16} color="#FFD700" />
-              <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
-            </TouchableOpacity>
+            {/* Botão para voltar ao login — oculto no passo final (notificações) */}
+            {currentStep < TOTAL_STEPS && (
+              <TouchableOpacity
+                style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
+                onPress={async () => { await hardSignOut(); logout(); }}
+              >
+                <Ionicons name="log-out-outline" size={16} color="#FFD700" />
+                <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
+              </TouchableOpacity>
+            )}
           </ResponsiveContainer>
         </ScrollView>
       </KeyboardAvoidingView>

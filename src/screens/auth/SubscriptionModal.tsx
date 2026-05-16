@@ -10,7 +10,21 @@ interface SubscriptionModalProps {
 
 export default function SubscriptionModal({ visible, onClose, onSubscribe }: SubscriptionModalProps) {
   const { t } = useAppLanguage()
-  const translateY = React.useRef(new Animated.Value(0)).current
+  const translateY = React.useRef(new Animated.Value(400)).current
+
+  React.useEffect(() => {
+    if (visible) {
+      translateY.setValue(400)
+      Animated.timing(translateY, { toValue: 0, duration: 280, useNativeDriver: true }).start()
+    }
+  }, [visible, translateY])
+
+  const closeWithAnimation = React.useCallback(() => {
+    Animated.timing(translateY, { toValue: 400, duration: 200, useNativeDriver: true }).start(() => {
+      translateY.setValue(400)
+      onClose()
+    })
+  }, [translateY, onClose])
 
   const panResponder = React.useMemo(
     () =>
@@ -37,7 +51,7 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
   )
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="none">
       <View style={styles.overlay}>
         <Animated.View
           style={[styles.container, { transform: [{ translateY }] }]}
@@ -45,10 +59,10 @@ export default function SubscriptionModal({ visible, onClose, onSubscribe }: Sub
         >
           <Text style={styles.title}>{t('subscription.modal.title')}</Text>
           <Text style={styles.text}>{t('subscription.modal.body')}</Text>
-          <TouchableOpacity style={styles.button} onPress={onSubscribe || onClose}>
+          <TouchableOpacity style={styles.button} onPress={onSubscribe || closeWithAnimation}>
             <Text style={styles.buttonText}>{t('subscription.modal.subscribe')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity style={styles.closeButton} onPress={closeWithAnimation}>
             <Text style={styles.closeButtonText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </Animated.View>

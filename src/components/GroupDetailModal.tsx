@@ -182,7 +182,7 @@ export default function GroupDetailModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       presentationStyle="pageSheet"
     >
       <View style={styles.container}>

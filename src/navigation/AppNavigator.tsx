@@ -1,12 +1,13 @@
 "use client"
 import { useCallback, useEffect } from "react"
-import { Dimensions, Platform, PanResponder, View } from "react-native"
+import { Dimensions, Platform, View } from "react-native"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { DefaultTheme, NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -111,21 +112,16 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
     navigateToIndex(nextIndex, direction)
   }
 
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_event, gesture) => {
-      const { dx, dy } = gesture
-      if (Math.abs(dx) < 20) return false
-      if (Math.abs(dx) <= Math.abs(dy) * 1.2) return false
-      return true
-    },
-    onPanResponderMove: (_event, gesture) => {
-      translateX.value = Math.max(-screenWidth, Math.min(screenWidth, gesture.dx))
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
+    .onUpdate((event) => {
+      translateX.value = Math.max(-screenWidth, Math.min(screenWidth, event.translationX))
       opacity.value = 0.9
-    },
-    onPanResponderRelease: (_event, gesture) => {
-      handleSwipeEnd(gesture.dx)
-    },
-  })
+    })
+    .onEnd((event) => {
+      runOnJS(handleSwipeEnd)(event.translationX)
+    })
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -133,9 +129,11 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   }))
   return (
     <View style={styles.swipeContainer}>
-      <Animated.View style={[styles.swipeScene, animatedStyle]} {...panResponder.panHandlers}>
-        {children}
-      </Animated.View>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[styles.swipeScene, animatedStyle]}>
+          {children}
+        </Animated.View>
+      </GestureDetector>
     </View>
   )
 }
@@ -176,6 +174,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       lazy={true}
+      detachInactiveScreens={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap

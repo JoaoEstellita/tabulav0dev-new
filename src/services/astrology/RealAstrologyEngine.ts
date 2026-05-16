@@ -152,6 +152,7 @@ export interface RealAstrologyData {
   // Novos conjuntos de aspectos padronizados
   aspectsCurrentTT?: RealAspect[]
   aspectsTransitsToNatalTN?: RealAspect[]
+  aspectsNatalToNatal?: RealAspect[]
   transits?: {
     personal: Array<{
       transitPlanet: string
@@ -528,6 +529,13 @@ export class RealAstrologyEngine {
         aspectsConfig
       )
       console.log(`Ã¢Å“â€¦ Aspectos Pessoais calculados: ${aspectsTransitsToNatalTN.length}`)
+      // Aspectos Natais×Natais (N×N) — carta natal estática
+      const aspectsNatalToNatal = detectAspects(
+        natalSetForAspects,
+        natalSetForAspects,
+        aspectsConfig
+      )
+
 
       // 4. ANÃƒÂLISE REAL DAS ÃƒÂREAS DA VIDA
       // Para Status Pessoal: atribuir planetas do momento nas CASAS NATAIS e usar aspectos Pessoais
@@ -643,6 +651,7 @@ export class RealAstrologyEngine {
         // novos campos para consumo futuro na UI
         aspectsCurrentTT,
         aspectsTransitsToNatalTN,
+        aspectsNatalToNatal,
         houses: houses.cusps,
         ascendant: houses.ascendant,
         midheaven: houses.midheaven,

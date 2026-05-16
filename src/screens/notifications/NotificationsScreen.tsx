@@ -275,6 +275,70 @@ const matchesFilter = (item: NotificationItem, filter: string) => {
   return true
 }
 
+const NotificationCard = React.memo(function NotificationCard({
+  item,
+  templates,
+  language,
+  t,
+  onOpen,
+  onNavigate,
+}: {
+  item: NotificationItem
+  templates: NotificationTemplate[]
+  language: string
+  t: (key: string, vars?: Record<string, string | number>) => string
+  onOpen: (item: NotificationItem) => void
+  onNavigate: (item: NotificationItem) => void
+}) {
+  const severity = getNotificationSeverity(item)
+  const icon = getSeverityIcon(severity)
+  const text = resolveNotificationText(item, templates, t)
+  const areaTags = buildLifeAreaTags(item, t)
+  const percentValue = resolvePercentageTag(item)
+  const dateLabel = formatDateLabel(item.createdAt, language, t)
+  const timeLabel = formatTimeLabel(item.createdAt, language)
+  const handleOpen = React.useCallback(() => onOpen(item), [item, onOpen])
+  const handleNavigate = React.useCallback(() => onNavigate(item), [item, onNavigate])
+
+  return (
+    <View style={[styles.card, !item.isRead && styles.cardUnread]}>
+      <View style={styles.iconWrap}>
+        <Ionicons name={icon.name as any} size={20} color={icon.color} />
+      </View>
+      <TouchableOpacity style={styles.cardMain} onPress={handleOpen}>
+        <View style={styles.content}>
+          <Text style={styles.cardTitle}>{text.title}</Text>
+          <Text style={styles.cardBody}>{text.body}</Text>
+          {item.createdAt?.toDate ? (
+            <Text style={styles.cardTime}>{`${dateLabel} Â· ${timeLabel}`}</Text>
+          ) : null}
+          <View style={styles.tags}>
+            {item.groupName ? (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{item.groupName}</Text>
+              </View>
+            ) : null}
+            {areaTags.map((areaLabel, index) => (
+              <View key={`${item.id}_area_${index}`} style={styles.tag}>
+                <Text style={styles.tagText}>{areaLabel}</Text>
+              </View>
+            ))}
+            {typeof percentValue === "number" ? (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{percentValue}%</Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cardActionButton} onPress={handleNavigate}>
+        <Ionicons name="arrow-redo-outline" size={18} color="#FFD700" />
+      </TouchableOpacity>
+      {!item.isRead && <View style={styles.unreadDot} />}
+    </View>
+  )
+})
+
 export default function NotificationsScreen() {
   const { t, language } = useAppLanguage()
   const navigation = useNavigation<any>()
@@ -317,14 +381,14 @@ export default function NotificationsScreen() {
       .filter((entry) => entry.items.length > 0)
   }, [filteredNotifications])
 
-  const sectionTitle = (key: NotificationSectionKey) => {
+  const sectionTitle = React.useCallback((key: NotificationSectionKey) => {
     if (key === "critical") return t("notif.section.critical")
     if (key === "astro") return t("notif.section.astro")
     if (key === "group") return t("notif.section.group")
     return t("notif.section.digest")
-  }
+  }, [t])
 
-  const openNotificationTarget = async (item: NotificationItem) => {
+  const openNotificationTarget = React.useCallback(async (item: NotificationItem) => {
     if (!item.isRead) await markAsRead(item.id)
     const link: any =
       (item.deepLink as any) ||
@@ -350,14 +414,14 @@ export default function NotificationsScreen() {
       return
     }
     navigation.navigate("Home")
-  }
+  }, [markAsRead, navigation])
 
-  const handleOpenNotification = async (item: NotificationItem) => {
+  const handleOpenNotification = React.useCallback(async (item: NotificationItem) => {
     if (!item.isRead) {
       await markAsRead(item.id)
     }
     setActiveItem(item)
-  }
+  }, [markAsRead])
 
   return (
     <View style={styles.container}>
@@ -415,59 +479,17 @@ export default function NotificationsScreen() {
               <Text style={styles.groupTitle}>{sectionTitle(section.key)}</Text>
               <Text style={styles.groupSubtitle}>{section.items.length}</Text>
 
-              {section.items.map((item) => {
-                const severity = getNotificationSeverity(item)
-                const icon = getSeverityIcon(severity)
-                const text = resolveNotificationText(item, templates, t)
-                const areaTags = buildLifeAreaTags(item, t)
-                const percentValue = resolvePercentageTag(item)
-                const dateLabel = formatDateLabel(item.createdAt, language, t)
-                const timeLabel = formatTimeLabel(item.createdAt, language)
-
-                return (
-                  <View key={item.id} style={[styles.card, !item.isRead && styles.cardUnread]}>
-                    <View style={styles.iconWrap}>
-                      <Ionicons name={icon.name as any} size={20} color={icon.color} />
-                    </View>
-
-                    <TouchableOpacity style={styles.cardMain} onPress={() => handleOpenNotification(item)}>
-                      <View style={styles.content}>
-                        <Text style={styles.cardTitle}>{text.title}</Text>
-                        <Text style={styles.cardBody}>{text.body}</Text>
-                        {item.createdAt?.toDate ? (
-                          <Text style={styles.cardTime}>{`${dateLabel} • ${timeLabel}`}</Text>
-                        ) : null}
-                        <View style={styles.tags}>
-                          {item.groupName ? (
-                            <View style={styles.tag}>
-                              <Text style={styles.tagText}>{item.groupName}</Text>
-                            </View>
-                          ) : null}
-                          {areaTags.map((areaLabel, index) => (
-                            <View key={`${item.id}_area_${index}`} style={styles.tag}>
-                              <Text style={styles.tagText}>{areaLabel}</Text>
-                            </View>
-                          ))}
-                          {typeof percentValue === "number" ? (
-                            <View style={styles.tag}>
-                              <Text style={styles.tagText}>{percentValue}%</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.cardActionButton}
-                      onPress={() => openNotificationTarget(item)}
-                    >
-                      <Ionicons name="arrow-redo-outline" size={18} color="#FFD700" />
-                    </TouchableOpacity>
-
-                    {!item.isRead && <View style={styles.unreadDot} />}
-                  </View>
-                )
-              })}
+              {section.items.map((item) => (
+                <NotificationCard
+                  key={item.id}
+                  item={item}
+                  templates={templates}
+                  language={language}
+                  t={t}
+                  onOpen={handleOpenNotification}
+                  onNavigate={openNotificationTarget}
+                />
+              ))}
             </View>
           ))
         )}

@@ -582,13 +582,13 @@ interface NatalAspectData {
   isNeutral: boolean
 }
 
-export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
+export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
   visible,
   onClose,
   areaData,
   astrologyData,
   astrologyDataFallback
-}) => {
+}: LifeAreaDetailModalProps) {
   if (!areaData) return null
   const { language } = useAppLanguage()
   const tl = React.useCallback((pt: string, en: string, es: string, it: string) => {
@@ -768,8 +768,13 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       isSwipeClosingRef.current = false
       return
     }
-    // Reset only when opening to avoid one-frame "jump back" during close.
-    swipeTranslateY.setValue(0)
+    // Abre com slide-in controlado — animationType="none" elimina a animação do OS
+    swipeTranslateY.setValue(height * 0.6)
+    Animated.timing(swipeTranslateY, {
+      toValue: 0,
+      duration: 260,
+      useNativeDriver: CAN_USE_NATIVE_DRIVER,
+    }).start()
   }, [visible, swipeTranslateY])
 
   const animateSwipeBack = React.useCallback(() => {
@@ -1444,7 +1449,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
           <Text style={styles.areaName}>{areaData.name.toUpperCase()}</Text>
           <Text style={styles.areaScore}>{safeNumber(areaData.status)}%</Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity onPress={closeBySwipe} style={styles.closeButton}>
           <Ionicons name="close" size={24} color={DESIGN_SYSTEM.colors.white} />
         </TouchableOpacity>
       </View>
@@ -3096,6 +3101,48 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
               </View>
             )}
             
+            {/* Aspectos Natais×Natais */}
+            {(() => {
+              const natalNatalAspects = (astrologyData?.aspectsNatalToNatal || [])
+                .filter(a => {
+                  const p = planet.planet.toLowerCase()
+                  return a.planet1?.toLowerCase() === p || a.planet2?.toLowerCase() === p
+                })
+                .filter(a => {
+                  const type = (a.type || '').toLowerCase()
+                  return ['conjuncao','oposicao','quadratura','trigono','sextil'].includes(type)
+                })
+              if (natalNatalAspects.length === 0) return null
+              return (
+                <View style={styles.aspectsSection}>
+                  <Text style={styles.aspectsTitle}>{tl('Aspectos natais:', 'Natal aspects:', 'Aspectos natales:', 'Aspetti natali:')}</Text>
+                  {natalNatalAspects.map((aspect, idx) => {
+                    const other = aspect.planet1?.toLowerCase() === planet.planet.toLowerCase() ? aspect.planet2 : aspect.planet1
+                    const type = (aspect.type || '').toLowerCase()
+                    const isHarmonious = ['trigono','sextil'].includes(type)
+                    const isChallenging = ['quadratura','oposicao'].includes(type)
+                    const aspectColor = isHarmonious ? DESIGN_SYSTEM.colors.positive : isChallenging ? DESIGN_SYSTEM.colors.negative : DESIGN_SYSTEM.colors.secondary
+                    const interpretation = resolveNatalPlanetAspectText(planet.planet, type, other || '', language)
+                    if (!interpretation) return null
+                    const sentences = interpretation.match(/[^.!?]+[.!?]+/g) || []
+                    const short = sentences.slice(0, 2).join(' ').trim() || interpretation
+                    return (
+                      <View key={idx} style={styles.aspectRow}>
+                        <View style={[styles.aspectLabel, { flex: 2 }]}>
+                          <Text style={[styles.aspectLabelText, { color: aspectColor }]}>
+                            {getAspectLabel(type)} {tl('com', 'with', 'con', 'con')} {planetLabel(other || '')}
+                          </Text>
+                        </View>
+                        <View style={[styles.aspectDescription, { flex: 3 }]}>
+                          <Text style={styles.aspectDescriptionText}>{short}</Text>
+                        </View>
+                      </View>
+                    )
+                  })}
+                </View>
+              )
+            })()}
+
             {/* Condições Acidentais */}
             {planet.accidentalConditions.length > 0 && (
               <View style={styles.conditionsSection}>
@@ -3228,9 +3275,9 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="none"
       transparent={true}
-      onRequestClose={onClose}
+      onRequestClose={closeBySwipe}
     >
       <View style={styles.modalContainer}>
         <Animated.View
@@ -3276,7 +3323,7 @@ export const LifeAreaDetailModal: React.FC<LifeAreaDetailModalProps> = ({
       />
     </Modal>
   )
-}
+})
 
 const styles = StyleSheet.create({
   modalContainer: {

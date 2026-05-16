@@ -25,7 +25,7 @@ interface LifeAreaCardProps {
   compact?: boolean
 }
 
-export default function LifeAreaCard({
+const LifeAreaCard = React.memo(function LifeAreaCard({
   area,
   onPress,
   calculationFactors,
@@ -162,7 +162,9 @@ export default function LifeAreaCard({
       </LinearGradient>
     </TouchableOpacity>
   )
-}
+})
+
+export default LifeAreaCard
 
 const styles = StyleSheet.create({
   card: {

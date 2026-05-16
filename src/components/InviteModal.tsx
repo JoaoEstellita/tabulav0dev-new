@@ -149,7 +149,7 @@ export default function InviteModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       presentationStyle="pageSheet"
     >
       <View style={styles.container}>
