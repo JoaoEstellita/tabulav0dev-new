@@ -35,6 +35,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/monitoramento",
+      "destination": "/monitoramento.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy.html"
     },

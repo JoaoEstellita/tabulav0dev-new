@@ -707,6 +707,21 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
 
+        {/* Acesso rápido ao Cosmos */}
+        <TouchableOpacity
+          style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, backgroundColor: 'rgba(255,215,0,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,215,0,0.2)', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          activeOpacity={0.8}
+          onPress={() => (navigation as any).navigate('Cosmos')}
+        >
+          <View>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#FFD700', letterSpacing: 1 }}>✦ Cosmos</Text>
+            <Text style={{ fontSize: 12, color: '#8892a4', marginTop: 2 }}>
+              {tl('Mapa natal, perfil e mais', 'Natal chart, profile & more', 'Carta natal, perfil y más', 'Carta natale, profilo e altro')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,215,0,0.5)" />
+        </TouchableOpacity>
+
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
           <AnimatedMount>

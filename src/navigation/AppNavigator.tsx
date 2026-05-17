@@ -26,6 +26,9 @@ import AdminDiagnosticsScreen from "../screens/admin/AdminDiagnosticsScreen"
 import PaymentSuccessScreen from "../screens/payment/PaymentSuccessScreen"
 import PaymentPendingScreen from "../screens/payment/PaymentPendingScreen"
 import PaymentFailureScreen from "../screens/payment/PaymentFailureScreen"
+import CosmosScreen from "../screens/cosmos/CosmosScreen"
+import AstroProfileScreen from "../screens/cosmos/AstroProfileScreen"
+import NatalChartWheelScreen from "../screens/cosmos/NatalChartWheelScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
@@ -299,6 +302,9 @@ function RootNavigator() {
       <RootStack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: true, title: 'Pagamento aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentPending" component={PaymentPendingScreen} options={{ headerShown: true, title: 'Pagamento pendente', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentFailure" component={PaymentFailureScreen} options={{ headerShown: true, title: 'Pagamento não aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="Cosmos" component={CosmosScreen} options={{ headerShown: true, title: '✦ Cosmos', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFD700' }} />
+      <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
     </RootStack.Navigator>
   )
 }
