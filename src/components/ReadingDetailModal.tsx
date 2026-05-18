@@ -1,5 +1,5 @@
 import React from 'react'
-import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native'
+import { Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
@@ -253,6 +253,7 @@ export default function ReadingDetailModal({
   const localizedMetaText = React.useMemo(() => (metaText ? localizeAstroText(metaText) : metaText), [metaText, localizeAstroText])
   const { width } = useWindowDimensions()
   const isNarrow = width <= 430
+  const [showConfidence, setShowConfidence] = React.useState(false)
   const planetKeys = React.useMemo(() => extractPlanetsFromText(`${localizedTitle} ${localizedDirectText}`), [localizedTitle, localizedDirectText])
   const planetKey = planetKeys[0] || resolvePlanetFromText(`${localizedTitle} ${localizedDirectText}`)
   const secondaryPlanetKey = planetKeys.length > 1 ? planetKeys[1] : null
@@ -285,6 +286,14 @@ export default function ReadingDetailModal({
       },
     }
   }, [resolvedV2, localizeAstroText])
+
+  const bodyText = React.useMemo(() => {
+    if (!localizedV2?.long) return ''
+    const tldrStart = (localizedV2.tldr || '').slice(0, 45).toLowerCase()
+    const paras = localizedV2.long.split(/\n\n+/)
+    const filtered = paras.filter(p => p.toLowerCase().slice(0, 45) !== tldrStart)
+    return filtered.length > 0 ? filtered.join('\n\n') : localizedV2.long
+  }, [localizedV2?.long, localizedV2?.tldr])
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
@@ -331,41 +340,35 @@ export default function ReadingDetailModal({
               </View>
             </View>
             <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
-              <Ionicons name="close" size={18} color="#0F172A" />
+              <Ionicons name="close" size={18} color="#E2E8F0" />
             </TouchableOpacity>
           </LinearGradient>
 
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
             {keywordChips.length ? (
               <View style={styles.tagsRow}>
-                {keywordChips.slice(0, 4).map((keyword) => (
-                  <View key={keyword} style={styles.tag}>
-                    <Text style={styles.tagText}>{keyword}</Text>
-                  </View>
-                ))}
+                {keywordChips.slice(0, 4).map((keyword) => {
+                  const isHouse = /^casa\s+\d/i.test(keyword.trim())
+                  return (
+                    <View key={keyword} style={[styles.tag, isHouse && styles.tagHouse]}>
+                      <Text style={[styles.tagText, isHouse && styles.tagTextHouse]}>{keyword}</Text>
+                    </View>
+                  )
+                })}
               </View>
             ) : null}
 
             {localizedV2 ? (
               <>
-                <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.tldr}</Text>
-                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.tldr}</Text>
-                </View>
-
-                <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.quickExplanation}</Text>
-                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.medium}</Text>
-                </View>
-
-                <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.deepDive}</Text>
-                  <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedV2.long}</Text>
-                </View>
+                <Text style={[styles.tldrHeading, isNarrow ? styles.tldrHeadingNarrow : null]}>
+                  {localizedV2.tldr}
+                </Text>
+                <View style={styles.contentDivider} />
+                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{bodyText}</Text>
 
                 {localizedV2.callouts?.opportunities?.length ? (
                   <View style={styles.sectionCard}>
-                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.opportunities}</Text>
+                    <Text style={[styles.sectionLabelGreen, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.opportunities}</Text>
                     {localizedV2.callouts.opportunities.slice(0, 3).map((item) => (
                       <Text key={`opp-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
                     ))}
@@ -374,7 +377,7 @@ export default function ReadingDetailModal({
 
                 {localizedV2.callouts?.watchOuts?.length ? (
                   <View style={styles.sectionCard}>
-                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.watchOuts}</Text>
+                    <Text style={[styles.sectionLabelAmber, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.watchOuts}</Text>
                     {localizedV2.callouts.watchOuts.slice(0, 3).map((item) => (
                       <Text key={`watch-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
                     ))}
@@ -383,30 +386,29 @@ export default function ReadingDetailModal({
 
                 {localizedV2.actionables?.length ? (
                   <View style={styles.sectionCard}>
-                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.actionPlan}</Text>
+                    <Text style={[styles.sectionLabelBlue, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.actionPlan}</Text>
                     {localizedV2.actionables.slice(0, 3).map((item) => (
                       <Text key={`act-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
                     ))}
                   </View>
                 ) : null}
 
-                <View style={styles.sectionCard}>
-                  <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.confidence}</Text>
-                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
-                    {Math.round((localizedV2.confidenceScore || 0) * 100)}% • {localizedV2.confidenceWhy}
-                  </Text>
-                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
-                    {TRANSIT_MODAL_UI_PTBR.timing}: {localizedV2.timeWindow}
-                  </Text>
-                  <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
-                    Exatidão: {localizedV2.exactness}
-                  </Text>
-                </View>
-
-                {localizedV2.uncertaintyNotes?.length ? (
-                  <View style={styles.sectionCard}>
-                    <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{TRANSIT_MODAL_UI_PTBR.uncertainty}</Text>
-                    {localizedV2.uncertaintyNotes.map((item) => (
+                <TouchableOpacity style={styles.confidenceToggle} onPress={() => setShowConfidence(v => !v)} activeOpacity={0.7}>
+                  <Text style={styles.sectionLabelMuted}>{TRANSIT_MODAL_UI_PTBR.confidence}</Text>
+                  <Ionicons name={showConfidence ? 'chevron-up' : 'chevron-down'} size={14} color="#94A3B8" />
+                </TouchableOpacity>
+                {showConfidence ? (
+                  <View style={[styles.sectionCard, { marginTop: 0 }]}>
+                    <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                      {Math.round((localizedV2.confidenceScore || 0) * 100)}% • {localizedV2.confidenceWhy}
+                    </Text>
+                    <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                      {TRANSIT_MODAL_UI_PTBR.timing}: {localizedV2.timeWindow}
+                    </Text>
+                    <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>
+                      Exatidão: {localizedV2.exactness}
+                    </Text>
+                    {localizedV2.uncertaintyNotes?.map((item) => (
                       <Text key={`unc-${item}`} style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>• {item}</Text>
                     ))}
                   </View>
@@ -444,8 +446,15 @@ export default function ReadingDetailModal({
             </TouchableOpacity>
           ) : null}
 
-          <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-            <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>{resolvedCloseLabel}</Text>
+          <TouchableOpacity style={styles.doneButtonOuter} onPress={onClose} activeOpacity={0.85}>
+            <LinearGradient
+              colors={['#1645D4', '#0A2A8A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.doneButton}
+            >
+              <Text style={[styles.doneButtonText, isNarrow ? styles.doneButtonTextNarrow : null]}>{resolvedCloseLabel}</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -460,6 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 14,
+    ...Platform.select({ web: { backdropFilter: 'blur(8px)' } as any }),
   },
   card: {
     width: '100%',
@@ -479,9 +489,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   heroLeft: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.28)',
     alignItems: 'center',
@@ -489,9 +499,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   heroImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
   },
   heroFallback: {
     width: 42,
@@ -541,9 +551,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   subtitle: {
-    color: '#D6E4FF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '400',
     marginTop: 2,
   },
   subtitleNarrow: {
@@ -580,21 +590,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   scroll: {
     backgroundColor: '#132457',
     borderTopWidth: 1,
     borderTopColor: 'rgba(148, 163, 184, 0.25)',
-    paddingHorizontal: 12,
-    paddingTop: 10,
+    paddingHorizontal: 16,
+    paddingTop: 14,
     paddingBottom: 8,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 16,
   },
   tag: {
     borderRadius: 999,
@@ -604,65 +616,133 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
+  tagHouse: {
+    borderColor: '#6366F1',
+    backgroundColor: 'rgba(99,102,241,0.14)',
+  },
   tagText: {
     color: '#FDE047',
     fontSize: 12,
     fontWeight: '700',
   },
+  tagTextHouse: {
+    color: '#A5B4FC',
+  },
   sectionCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.3)',
-    backgroundColor: 'rgba(30, 58, 138, 0.22)',
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
   },
+  tldrHeading: {
+    color: '#F8FAFC',
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 26,
+    marginBottom: 14,
+    paddingHorizontal: 2,
+  },
+  tldrHeadingNarrow: {
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  contentDivider: {
+    height: 1,
+    backgroundColor: 'rgba(148,163,184,0.18)',
+    marginBottom: 16,
+  },
   sectionLabel: {
     color: '#FBBF24',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '800',
     marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  sectionLabelGreen: {
+    color: '#4ADE80',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  sectionLabelAmber: {
+    color: '#F97316',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  sectionLabelBlue: {
+    color: '#60A5FA',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  sectionLabelMuted: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   sectionLabelNarrow: {
-    fontSize: 14,
+    fontSize: 11,
+  },
+  confidenceToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+    marginBottom: 4,
   },
   body: {
     color: '#F8FAFC',
-    fontSize: 19,
-    lineHeight: 29,
-    marginBottom: 4,
+    fontSize: 16,
+    lineHeight: 25,
+    marginBottom: 16,
   },
   bodyNarrow: {
-    fontSize: 16,
-    lineHeight: 23,
-  },
-  meta: {
-    color: '#CBD5E1',
-    fontSize: 17,
-    lineHeight: 25,
-  },
-  metaNarrow: {
     fontSize: 14,
     lineHeight: 21,
   },
-  doneButton: {
+  meta: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 3,
+  },
+  metaNarrow: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  doneButtonOuter: {
     marginHorizontal: 12,
     marginTop: 2,
     marginBottom: 12,
-    height: 48,
     borderRadius: 10,
-    backgroundColor: '#082F8A',
+    overflow: 'hidden',
+  },
+  doneButton: {
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   doneButtonText: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
   },
   doneButtonTextNarrow: {
-    fontSize: 18,
+    fontSize: 15,
   },
   secondaryButton: {
     marginHorizontal: 12,

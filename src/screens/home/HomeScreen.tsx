@@ -51,6 +51,7 @@ import {
 } from '../../utils/moonPhase'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
+import Svg, { Circle, Line } from 'react-native-svg'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch { }
@@ -145,6 +146,39 @@ const AreaCardItem = React.memo(function AreaCardItem({
     </View>
   )
 })
+
+function MiniWheelIcon({ size = 40 }: { size?: number }) {
+  const cx = size / 2
+  const cy = size / 2
+  const rOuter = size * 0.44
+  const rInner = size * 0.28
+  const DEG2RAD = Math.PI / 180
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Anel externo */}
+      <Circle cx={cx} cy={cy} r={rOuter} stroke="#FFD700" strokeWidth={1.5} fill="rgba(255,215,0,0.07)" />
+      {/* Anel interno */}
+      <Circle cx={cx} cy={cy} r={rInner} stroke="#FFD700" strokeWidth={0.8} fill="none" strokeOpacity={0.45} />
+      {/* 12 divisões de casas */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const a = i * 30 * DEG2RAD
+        const cos = Math.cos(a); const sin = Math.sin(a)
+        return (
+          <Line
+            key={i}
+            x1={cx + rInner * cos} y1={cy + rInner * sin}
+            x2={cx + rOuter * cos} y2={cy + rOuter * sin}
+            stroke="#FFD700" strokeWidth={0.7} strokeOpacity={0.45}
+          />
+        )
+      })}
+      {/* Eixo ASC/DSC */}
+      <Line x1={cx - rOuter} y1={cy} x2={cx + rOuter} y2={cy} stroke="#FFD700" strokeWidth={1} strokeOpacity={0.7} />
+      {/* Eixo MC/IC */}
+      <Line x1={cx} y1={cy - rOuter} x2={cx} y2={cy + rOuter} stroke="#FFD700" strokeWidth={1} strokeOpacity={0.7} />
+    </Svg>
+  )
+}
 
 export default function HomeScreen() {
   useAutoScheduleNotifications()
@@ -329,6 +363,7 @@ export default function HomeScreen() {
   const [userProfile, setUserProfile] = useState<{
     displayName: string
     profilePhoto?: string
+    natalAscDeg?: number
   } | null>(null)
 
   useEffect(() => {
@@ -388,7 +423,8 @@ export default function HomeScreen() {
         const userData = userDoc.data()
         setUserProfile({
           displayName: userData.displayName || userData.fullName || 'Usu\u00E1rio',
-          profilePhoto: userData.profilePhoto
+          profilePhoto: userData.profilePhoto,
+          natalAscDeg: typeof userData.natalAscDeg === 'number' ? userData.natalAscDeg : undefined,
         })
       }
     } catch (error) {
@@ -669,6 +705,18 @@ export default function HomeScreen() {
             </View>
             <View style={styles.headerContent}>
               <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
+              {userProfile?.natalAscDeg != null && (() => {
+                try {
+                  const { degToSign: d2s } = require('../../astro')
+                  const { sign } = d2s(userProfile.natalAscDeg)
+                  const SIGN_SYM: Record<string, string> = { Aries:'♈',Taurus:'♉',Gemini:'♊',Cancer:'♋',Leo:'♌',Virgo:'♍',Libra:'♎',Scorpio:'♏',Sagittarius:'♐',Capricorn:'♑',Aquarius:'♒',Pisces:'♓' }
+                  return (
+                    <Text style={{ fontSize: 11, color: 'rgba(255,215,0,0.7)', marginBottom: 1 }}>
+                      Asc {SIGN_SYM[sign] || ''} {sign}
+                    </Text>
+                  )
+                } catch { return null }
+              })()}
               <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
               <Text style={styles.date}>{formatDate()}</Text>
             </View>
@@ -706,21 +754,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
-
-        {/* Acesso rápido ao Cosmos */}
-        <TouchableOpacity
-          style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, backgroundColor: 'rgba(255,215,0,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,215,0,0.2)', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-          activeOpacity={0.8}
-          onPress={() => (navigation as any).navigate('Cosmos')}
-        >
-          <View>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: '#FFD700', letterSpacing: 1 }}>✦ Cosmos</Text>
-            <Text style={{ fontSize: 12, color: '#8892a4', marginTop: 2 }}>
-              {tl('Mapa natal, perfil e mais', 'Natal chart, profile & more', 'Carta natal, perfil y más', 'Carta natale, profilo e altro')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="rgba(255,215,0,0.5)" />
-        </TouchableOpacity>
 
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
@@ -792,6 +825,15 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
+                {/* Botão Cosmos — abaixo dos planetas, centralizado */}
+                <TouchableOpacity
+                  style={styles.cosmosEntry}
+                  activeOpacity={0.78}
+                  onPress={() => (navigation as any).navigate('Cosmos')}
+                >
+                  <MiniWheelIcon size={44} />
+                  <Text style={styles.cosmosEntryLabel}>Tábula Estelar</Text>
+                </TouchableOpacity>
               </View>
             </AnimatedMount>
           )}
@@ -1164,8 +1206,22 @@ const styles = StyleSheet.create({
   },
   planetStripSection: {
     marginTop: -6,
-    marginBottom: 16,
+    marginBottom: 4,
     paddingHorizontal: 10,
+  },
+  cosmosEntry: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 6,
+  },
+  cosmosEntryLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFD700',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   planetStripRow: {
     flexDirection: 'row',

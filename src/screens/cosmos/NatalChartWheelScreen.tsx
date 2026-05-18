@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -11,7 +11,10 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Circle, Line, Path, Text as SvgText, G } from 'react-native-svg'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
@@ -57,10 +60,22 @@ function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
 // ─── Componente principal ─────────────────────────────────────────────────
 export default function NatalChartWheelScreen() {
   const { transitData, loading } = useLifeAreas()
+  const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
 
   const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
+  const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
+  const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
+
+  useEffect(() => {
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then(snap => {
+      const data = snap.data()
+      if (typeof data?.natalAscDeg === 'number') setFirestoreAscDeg(data.natalAscDeg)
+      if (Array.isArray(data?.natalCusps)) setFirestoreCusps(data.natalCusps)
+    }).catch(() => {})
+  }, [user?.uid])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en
@@ -71,9 +86,9 @@ export default function NatalChartWheelScreen() {
 
   const ct = transitData?.currentTransits
   const natalPlanets: RealPlanetPosition[] = ct?.natalPlanets ?? []
-  const ascDeg = ct?.natalAscendant ?? 0
+  const ascDeg = firestoreAscDeg ?? ct?.natalAscendant ?? 0
   const mcDeg = ct?.natalMidheaven ?? 0
-  const houseCusps: number[] = ct?.natalHouses ?? []
+  const houseCusps: number[] = firestoreCusps ?? ct?.natalHouses ?? []
   const aspects = ct?.aspectsNatalToNatal ?? []
 
   // Dimensões do SVG

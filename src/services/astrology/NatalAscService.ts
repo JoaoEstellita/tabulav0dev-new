@@ -19,23 +19,37 @@ export class NatalAscService {
 		const [y, m, d] = birthDate.split('-').map(n => parseInt(n, 10))
 		// Meio-dia UTC para evitar bordas de DST
 		const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
-		const tz = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
-		const approximate = !tz || typeof tz.offsetSec !== 'number'
+		let tz: { offsetSec: number; timeZoneId?: string } | null = null
+		try {
+			const tzData = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
+			// Só usa se offset for não-zero (0 = fallback UTC = provável falha do TZ service)
+			if (tzData && typeof tzData.offsetSec === 'number' && tzData.offsetSec !== 0) {
+				tz = tzData
+			}
+		} catch { /* timezone service falhou — usar natalISO com UTC calculado por longitude */ }
+		const approximate = !tz
 		const hh = parseInt(birthTime.split(':')[0] || '12', 10)
 		const mm = parseInt(birthTime.split(':')[1] || '00', 10)
-		const localISO = `${birthDate}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`
+
+		// Converte hora local → UTC para enviar ao backend
+		let natalUTCDate: Date
+		if (tz && typeof tz.offsetSec === 'number') {
+			natalUTCDate = new Date(Date.UTC(y, (m - 1), d, hh - tz.offsetSec / 3600, mm, 0))
+		} else {
+			// Aproximação por longitude: offset = lon/15 (negativo para oeste)
+			// UTC = local - offset, ex: BRT UTC-3 → lon=-43.17 → offset=-2.9h → UTC = local+3
+			const approxOffsetHours = longitude / 15
+			natalUTCDate = new Date(Date.UTC(y, (m - 1), d, hh - Math.round(approxOffsetHours), mm, 0))
+		}
 
 		const body = {
-			// Backend exige datetimeISO (ou year/month/day) para o "momento atual".
-			// Usamos ISO UTC para garantir compatibilidade total.
 			datetimeISO: new Date().toISOString(),
-			timezone: tz?.timeZoneId || undefined,
 			lat: latitude,
 			lon: longitude,
 			includeHouses: true,
 			system: normalizeHouseSystem(system),
-			natalLocal: localISO,
-			natalTimezone: tz?.timeZoneId || undefined,
+			// Envia como ISO UTC (sem ambiguidade de timezone)
+			natalISO: natalUTCDate.toISOString(),
 			natalLat: latitude,
 			natalLon: longitude,
 			bodies: ['Sun'],

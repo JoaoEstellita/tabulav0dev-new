@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -220,7 +222,17 @@ export default function CosmosScreen() {
   const isPremium = subscription?.status === 'active' || isInTrial
 
   const natalPlanets = transitData?.currentTransits?.natalPlanets ?? []
-  const natalAscDeg = transitData?.currentTransits?.natalAscendant ?? 0
+
+  const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
+  useEffect(() => {
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then(snap => {
+      const val = snap.data()?.natalAscDeg
+      if (typeof val === 'number') setFirestoreAscDeg(val)
+    }).catch(() => {})
+  }, [user?.uid])
+
+  const natalAscDeg = firestoreAscDeg ?? transitData?.currentTransits?.natalAscendant ?? 0
 
   const sunSign = useMemo(() => getPlanetNatalSign(natalPlanets, 'Sun'), [natalPlanets])
   const moonSign = useMemo(() => getPlanetNatalSign(natalPlanets, 'Moon'), [natalPlanets])
@@ -270,15 +282,9 @@ export default function CosmosScreen() {
         </View>
         {locked ? (
           <Ionicons name="lock-closed" size={16} color="#555" style={styles.cardLockIcon} />
-        ) : unavailable ? (
-          <View style={styles.soonBadge}>
-            <Text style={styles.soonText}>
-              {tl('Em breve', 'Soon', 'Próximo', 'Presto')}
-            </Text>
-          </View>
-        ) : (
+        ) : !unavailable ? (
           <Ionicons name="chevron-forward" size={16} color="#FFD700" style={styles.cardLockIcon} />
-        )}
+        ) : null}
       </TouchableOpacity>
     )
   }
@@ -289,6 +295,8 @@ export default function CosmosScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
+        scrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Hero */}
         <View style={styles.hero}>
@@ -350,7 +358,7 @@ export default function CosmosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, overflow: 'hidden' },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
 

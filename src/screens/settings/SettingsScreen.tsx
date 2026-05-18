@@ -178,6 +178,14 @@ export default function SettingsScreen() {
           type: 'link',
         },
         {
+          id: 'recalc_natal',
+          title: 'Recalcular Mapa Natal',
+          subtitle: 'Recalcula ASC e cúspides das casas',
+          icon: 'planet-outline',
+          type: 'button',
+          onPress: () => handleRecalcNatal(),
+        },
+        {
           id: 'faq',
           title: t('settings.item.faq.title'),
           subtitle: t('settings.item.faq.subtitle'),
@@ -897,7 +905,48 @@ export default function SettingsScreen() {
     setShowLocationSuggestions(false);
   };
 
-  // Reprocessar Casas Natais removido desta tela conforme solicitado
+  const handleRecalcNatal = async () => {
+    if (!user?.uid) return
+    const confirmed = await new Promise<boolean>(resolve => {
+      Alert.alert(
+        'Recalcular Mapa Natal',
+        'Isso vai recalcular o Ascendente e as cúspides das casas usando seus dados de nascimento e salvar no seu perfil. Continue?',
+        [
+          { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Recalcular', style: 'default', onPress: () => resolve(true) },
+        ]
+      )
+    })
+    if (!confirmed) return
+    setIsLoading(true)
+    try {
+      const userProfile = await UserService.getUserProfile(user.uid)
+      if (!userProfile?.birthDate || !userProfile?.birthLocation) {
+        Alert.alert('Erro', 'Dados de nascimento incompletos.')
+        return
+      }
+      const NatalAscService = (await import('../../services/astrology/NatalAscService')).default
+      const result = await NatalAscService.computeAndPersist(
+        user.uid,
+        userProfile.birthDate,
+        userProfile.birthTime || '12:00',
+        userProfile.birthLocation.latitude,
+        userProfile.birthLocation.longitude,
+        normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+      )
+      // Limpar cache astrológico para forçar reprocessamento
+      const { AstrologyCacheService } = await import('../../services/astrology/AstrologyCacheService')
+      const cacheService = new AstrologyCacheService()
+      await cacheService.clearCache(user.uid)
+      const { degToSign } = await import('../../astro')
+      const { sign } = degToSign(result.ascendant)
+      Alert.alert('Concluído ✓', `Ascendente recalculado: ${sign} (${result.ascendant.toFixed(1)}°)\n\nReabra o app para ver as mudanças.`)
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message || 'Não foi possível recalcular. Tente novamente.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleHouseSystemChange = async (system: HouseSystem) => {
     const normalized = normalizeHouseSystem(system);

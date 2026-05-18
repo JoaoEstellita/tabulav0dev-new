@@ -1236,16 +1236,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
 
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
-        <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="planet" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>{tl('Tábula Estelar', 'Star Board', 'Tabula Estelar', 'Tabula Stellare')}</Text>
-          </View>
-          <View style={styles.systemBadge}>
-            <Text style={styles.systemBadgeText}>{formatHouseSystemLabel(houseSystem, language)}</Text>
-          </View>
-        </View>
-
         {planetComparisons.map((comparison) => (
           <View key={comparison.name} nativeID={`tabula-planet-${comparison.name}`} style={styles.planetCard}>
             {(() => {

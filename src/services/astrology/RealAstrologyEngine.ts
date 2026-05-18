@@ -367,16 +367,29 @@ export class RealAstrologyEngine {
         const ts = Math.floor(Date.UTC(y, (m - 1), d, 12, 0, 0) / 1000)
         const { getTimezoneData } = await import('../timezone/TimezoneService')
         const tzData = await getTimezoneData(natalLat, natalLon, ts)
-        resolvedTz = { offsetSec: tzData.offsetSec, timeZoneId: tzData.timeZoneId }
-        if (resolvedTz && typeof resolvedTz.offsetSec === 'number') {
-          const offsetHours = resolvedTz.offsetSec / 3600
+        // Só usa se offset for não-zero (0 = fallback UTC = provável erro de TZ service)
+        if (tzData && typeof tzData.offsetSec === 'number' && tzData.offsetSec !== 0) {
+          resolvedTz = { offsetSec: tzData.offsetSec, timeZoneId: tzData.timeZoneId }
+          const offsetHours = tzData.offsetSec / 3600
           return new Date(Date.UTC(y, (m - 1), d, hh - offsetHours, mm, 0))
         }
+        // fallback: aproximar offset por longitude (evita erro de UTC para Brasil/EUA)
         const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
         const approx = approximateTimezoneOffsetHours(new Date(Date.UTC(y, (m - 1), d, 0, 0, 0)), natalLon, natalLat)
         return new Date(Date.UTC(y, (m - 1), d, hh - approx, mm, 0))
       } catch {
-        return new Date(`${birthDate}T${birthTime}:00`)
+        // fallback sem TZ service: usar longitude
+        try {
+          const [y2, m2, d2] = birthDate.split('-').map(n => parseInt(n, 10))
+          const [hh2, mm2] = birthTime.split(':').map(n => parseInt(n, 10))
+          const natalLon2 = (typeof options?.natalLon === 'number') ? options.natalLon : longitude
+          const natalLat2 = (typeof options?.natalLat === 'number') ? options.natalLat : latitude
+          const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
+          const approx = approximateTimezoneOffsetHours(new Date(Date.UTC(y2, (m2 - 1), d2, 0, 0, 0)), natalLon2, natalLat2)
+          return new Date(Date.UTC(y2, (m2 - 1), d2, hh2 - approx, mm2, 0))
+        } catch {
+          return new Date(`${birthDate}T${birthTime}:00Z`)
+        }
       }
     })()
     
@@ -575,6 +588,9 @@ export class RealAstrologyEngine {
         const natalName = a.planet2
         // Casa natal impactada: onde o planeta em trÃƒÂ¢nsito cai nas casas NATAIS
         const transitHouseNatal = currentOnNatalHouses.find(p => p.name === transitName)?.house || 0
+        // Ãngulos natais têm casa fixa — Asc=1, Dsc=7, MC=10, IC=4
+        const ANGLE_HOUSE: Record<string, number> = { Asc: 1, Dsc: 7, MC: 10, IC: 4 }
+        const natalHouseImpacted = ANGLE_HOUSE[natalName] ?? transitHouseNatal
         // SÃƒÂ©rie retrÃƒÂ³grada (marcaÃƒÂ§ÃƒÂ£o heurÃƒÂ­stica): id por par + tipo
         const seriesId = `${transitName}:${natalName}:${a.type}`
         const contactPhase: 'direct'|'retro' = (planetsWithHouses.find(p=>p.name===transitName)?.isRetrograde ? 'retro' : 'direct')
@@ -609,7 +625,7 @@ export class RealAstrologyEngine {
           orb: a.orb,
           isApplying: a.isApplying,
           strength: a.strength,
-          natalHouseImpacted: transitHouseNatal,
+          natalHouseImpacted: natalHouseImpacted,
           durationClass: this.classifyTransitDuration(transitName),
           seriesId,
           contactPhase,

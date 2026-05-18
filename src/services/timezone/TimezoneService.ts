@@ -9,7 +9,7 @@ export async function getTimezoneData(lat: number, lon: number, timestampSec: nu
     return await r.json()
   } catch (error) {
     console.error('❌ Erro ao buscar timezone:', error)
-    return { offsetSec: 0, timeZoneId: 'UTC' }
+    throw error // propaga erro — chamadores usam fallback por longitude
   }
 }
 

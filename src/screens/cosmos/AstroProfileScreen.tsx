@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
@@ -81,7 +84,17 @@ const barStyles = StyleSheet.create({
 
 export default function AstroProfileScreen() {
   const { transitData, loading } = useLifeAreas()
+  const { user } = useAuth()
   const { language } = useAppLanguage()
+
+  const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
+  useEffect(() => {
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then(snap => {
+      const val = snap.data()?.natalAscDeg
+      if (typeof val === 'number') setFirestoreAscDeg(val)
+    }).catch(() => {})
+  }, [user?.uid])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en
@@ -102,7 +115,7 @@ export default function AstroProfileScreen() {
 
   const elemental = ct?.chartSummary?.elemental?.natal
   const modality = ct?.chartSummary?.modality?.natal
-  const natalAsc = ct?.natalAscendant ?? 0
+  const natalAsc = firestoreAscDeg ?? ct?.natalAscendant ?? 0
   const natalMc = ct?.natalMidheaven ?? 0
 
   const ascSign = useMemo(() => {
