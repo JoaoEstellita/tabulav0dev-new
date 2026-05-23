@@ -73,6 +73,7 @@ export default function SettingsScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false);
   const [birthLocation, setBirthLocation] = useState<{
     city?: string;
     state?: string;
@@ -553,6 +554,7 @@ export default function SettingsScreen() {
       setBirthDate(data.birthDate || "");
       setBirthTime(data.birthTime || "");
       setWhatsappPhone(data.whatsappPhone || "");
+      setWhatsappOptIn(data.whatsappOptIn === true);
       setBirthLocation(data.birthLocation || null);
       if (data.birthLocation?.city) {
         const display = data.birthLocation.state
@@ -714,6 +716,10 @@ export default function SettingsScreen() {
       };
       if (whatsappPhone) {
         payload.whatsappPhone = whatsappPhone;
+        payload.whatsappOptIn = whatsappOptIn;
+        if (whatsappOptIn) {
+          payload.whatsappOptInAt = serverTimestamp();
+        }
       }
       if (normalizedBirthDate) {
         payload.birthDate = normalizedBirthDate;
@@ -1374,6 +1380,19 @@ export default function SettingsScreen() {
                     onChangeText={setWhatsappPhone}
                     keyboardType="phone-pad"
                   />
+                  {whatsappPhone.trim().length > 0 && (
+                    <View style={styles.optInRow}>
+                      <Text style={styles.optInLabel}>
+                        {tr('settings.profile.whatsappOptIn', 'Receber notificações do Astrólogo Tábula no WhatsApp')}
+                      </Text>
+                      <Switch
+                        value={whatsappOptIn}
+                        onValueChange={setWhatsappOptIn}
+                        trackColor={{ false: '#3C3C3E', true: '#6C63FF' }}
+                        thumbColor={whatsappOptIn ? '#fff' : '#888'}
+                      />
+                    </View>
+                  )}
                   <TextInput
                     style={styles.input}
                     placeholder={t('settings.profile.birthLocationPlaceholder')}
@@ -1412,6 +1431,18 @@ export default function SettingsScreen() {
                     <Text style={styles.infoLabel}>{t('settings.profile.labelWhatsapp')}</Text>
                     <Text style={styles.infoValue}>{whatsappPhone || t('settings.profile.notInformed')}</Text>
                   </View>
+                  {whatsappPhone ? (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>
+                        {tr('settings.profile.whatsappOptInLabel', 'Notif. WhatsApp')}
+                      </Text>
+                      <Text style={styles.infoValue}>
+                        {whatsappOptIn
+                          ? tr('settings.profile.whatsappOptInActive', 'Ativo')
+                          : tr('settings.profile.whatsappOptInInactive', 'Desativado')}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>{t('settings.profile.labelLocation')}</Text>
                     <Text style={styles.infoValue}>{formatBirthLocation(birthLocation)}</Text>
@@ -1794,6 +1825,19 @@ const styles = StyleSheet.create({
     color: '#9aa0b1',
     fontSize: 12,
     marginTop: 6,
+  },
+  optInRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  optInLabel: {
+    flex: 1,
+    color: '#ccc',
+    fontSize: 13,
+    marginRight: 12,
   },
   primaryButton: {
     backgroundColor: '#FFD700',
