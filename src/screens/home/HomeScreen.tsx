@@ -28,6 +28,7 @@ import { LIFE_AREA_ORDER } from '../../constants/lifeAreas'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import { doc, getDoc } from 'firebase/firestore'
+import ReadingService from '../../services/firebase/ReadingService'
 import { db } from '../../config/firebase'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount } from '../../ui/anim/adapter'
@@ -940,7 +941,18 @@ export default function HomeScreen() {
       {/* ?? MODAL DE DETALHES DA \u00C1REA */}
       <LifeAreaDetailModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={() => {
+          if (user?.uid && selectedArea) {
+            ReadingService.logReading(user.uid, {
+              areaName: selectedArea.name,
+              areaScore: selectedArea.status ?? 0,
+              areaTrend: selectedArea.trend ?? 'stable',
+              language,
+              source: 'app',
+            })
+          }
+          setModalVisible(false)
+        }}
         areaData={selectedArea}
         astrologyData={transitData?.currentTransits}
         astrologyDataFallback={backendCurrentTransits}
