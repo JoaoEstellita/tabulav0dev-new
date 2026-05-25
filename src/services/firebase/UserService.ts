@@ -58,6 +58,10 @@ export interface UserProfile {
   houseSystem?: import('../../astro/houseSystem').HouseSystem
   natalApproximate?: boolean
   natalTimeZoneId?: string
+  // WhatsApp
+  whatsappPhone?: string
+  whatsappOptIn?: boolean
+  whatsappOptInAt?: Date
 }
 
 class UserService {
