@@ -10,7 +10,7 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { useNotificationStore } from "../../context/NotificationStore"
-import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit } from "firebase/firestore"
+import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit, orderBy } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import { backendFetch } from "../../services/backend/client"
 import FCMService from "../../services/firebase/FCMService"
@@ -232,6 +232,24 @@ export default function ProfileScreen() {
     nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsão'),
     upcomingPhases: [],
   })
+  const [recentReadings, setRecentReadings] = useState<Array<{
+    id: string
+    areaName: string | null
+    areaScore: number | null
+    areaTrend: string | null
+    source: string
+    readAt: { seconds: number } | null
+  }>>([])
+
+  const formatTimeAgo = (ms: number) => {
+    const diff = Date.now() - ms
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return tr('profile.readings.justNow', 'agora')
+    if (mins < 60) return `${mins}min`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h`
+    return `${Math.floor(hrs / 24)}d`
+  }
 
   const uploadProfilePhoto = async (userId: string, dataUrl: string): Promise<string | null> => {
     try {
@@ -275,6 +293,17 @@ export default function ProfileScreen() {
       loadLunarCalendar()
     }
   }, [user, language, settings?.timezone])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    getDocs(query(
+      collection(db, 'users', user.uid, 'readings'),
+      orderBy('readAt', 'desc'),
+      limit(5)
+    )).then(snap => {
+      setRecentReadings(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })))
+    }).catch(() => {})
+  }, [user?.uid])
 
   const getDateOrderForDisplay = (): 'DMY' | 'MDY' => {
     const countryRaw = String(profile?.birthLocation?.country || '').trim().toLowerCase()
@@ -807,6 +836,36 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color="#8B5FBF" />
           </View>
         </TouchableOpacity>
+
+        {/* Leituras Recentes */}
+        {recentReadings.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{tr('profile.readings.title', 'Leituras Recentes')}</Text>
+            {recentReadings.map(r => (
+              <View key={r.id} style={styles.readingItem}>
+                <View style={styles.readingIconWrap}>
+                  <Ionicons
+                    name={r.areaTrend === 'positive' ? 'trending-up' : r.areaTrend === 'negative' ? 'trending-down' : 'remove'}
+                    size={16}
+                    color={r.areaTrend === 'positive' ? '#4CAF50' : r.areaTrend === 'negative' ? '#FF6B6B' : '#888'}
+                  />
+                </View>
+                <View style={styles.readingContent}>
+                  <Text style={styles.readingArea}>{r.areaName ?? tr('profile.readings.fullConsult', 'Consulta WA')}</Text>
+                  {r.areaScore != null && (
+                    <Text style={styles.readingScore}>{r.areaScore}/100</Text>
+                  )}
+                </View>
+                <View style={styles.readingMeta}>
+                  <Text style={styles.readingSource}>{r.source === 'whatsapp_agent' ? '📱 WA' : '⭐ App'}</Text>
+                  {r.readAt?.seconds != null && (
+                    <Text style={styles.readingTime}>{formatTimeAgo(r.readAt.seconds * 1000)}</Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* FAQ Button */}
         <TouchableOpacity
@@ -1361,6 +1420,47 @@ const styles = StyleSheet.create({
   subscriptionStatus: {
     fontSize: 12,
     color: "#8B5FBF",
+    marginTop: 2,
+  },
+  readingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
+  },
+  readingIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2C2C2E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  readingContent: {
+    flex: 1,
+  },
+  readingArea: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  readingScore: {
+    color: '#FFD700',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  readingMeta: {
+    alignItems: 'flex-end',
+  },
+  readingSource: {
+    fontSize: 11,
+    color: '#888',
+  },
+  readingTime: {
+    fontSize: 11,
+    color: '#888',
     marginTop: 2,
   },
   notificationModal: {

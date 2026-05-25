@@ -1031,6 +1031,11 @@ export default function PremiumScreen() {
                 <Text style={styles.currentBadgeText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
               </View>
             )}
+            {plan.id === 'pro_monthly' && !plan.current && (
+              <View style={styles.recommendedBadge}>
+                <Text style={styles.recommendedBadgeText}>{tr('premium.plans.recommended', 'Recomendado')}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ))}
       </View>
@@ -1062,10 +1067,10 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>10</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappBot', 'Chatbot WhatsApp')}</Text>
-            <Text style={styles.compareValue}>—</Text>
-            <Text style={styles.compareValue}>—</Text>
-            <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.whatsapp', 'WhatsApp')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappNotif', 'Notif.')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappNotif', 'Notif.')}</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappChatbot', 'Chatbot IA')}</Text>
           </View>
         </View>
       </View>
@@ -1937,6 +1942,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  recommendedBadge: {
+    backgroundColor: '#4ECDC4',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  recommendedBadgeText: {
+    color: '#0F0F23',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  compareValueHighlight: {
+    color: '#4ECDC4',
+    fontWeight: '700',
   },
   comingSoonContainer: {
     flex: 1,
