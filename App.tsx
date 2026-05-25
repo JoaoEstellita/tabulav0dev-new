@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { ErrorUtils, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/hooks/useAuth';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -12,6 +13,7 @@ import { registerAndroidDeviceToken } from './src/services/notifications/registe
 import { useAuth } from './src/hooks/useAuth';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyService';
+import ErrorReportingService from './src/services/firebase/ErrorReportingService';
 
 function AppContent() {
   const { showModal, setShowModal, loading } = useSubscriptionCheck();
@@ -39,6 +41,21 @@ function AppContent() {
 }
 
 export default function App() {
+  // Captura erros JS não tratados fora do React tree (async, native bridge)
+  useEffect(() => {
+    // ErrorUtils não existe em web — guard para compatibilidade PWA
+    if (Platform.OS === 'web') return
+    const previousHandler = ErrorUtils.getGlobalHandler()
+    ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
+      ErrorReportingService.logError(error, {
+        action: isFatal ? 'fatal_js_error' : 'unhandled_js_error',
+        source: 'global-handler',
+      })
+      previousHandler(error, isFatal)
+    })
+    return () => ErrorUtils.setGlobalHandler(previousHandler)
+  }, [])
+
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>

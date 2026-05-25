@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import ErrorReportingService from '../services/firebase/ErrorReportingService'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -36,6 +37,12 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
       hasError: true,
       error,
       errorInfo
+    })
+
+    // Persistir em Firestore para rastreamento em produção
+    ErrorReportingService.logError(error, {
+      source: 'error-boundary',
+      componentStack: errorInfo.componentStack ?? undefined,
     })
   }
 
