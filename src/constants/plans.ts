@@ -24,11 +24,12 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     creditsPerMonth: 0,
     includesGroups: true,
     includesChatbot: false,
-    requiresWhatsapp: false,
+    requiresWhatsapp: true,
     features: [
       'Acesso a grupos',
       'Forecast: 7 dias',
       'Alertas essenciais',
+      'Notificações WhatsApp',
     ],
   },
   {
@@ -40,7 +41,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     creditsPerMonth: 1,
     includesGroups: true,
     includesChatbot: false,
-    requiresWhatsapp: false,
+    requiresWhatsapp: true,
     features: [
       'Tudo do Essential +',
       'Forecast: 7/30/90 dias',

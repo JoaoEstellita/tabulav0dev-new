@@ -25,6 +25,7 @@ import * as Notifications from 'expo-notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserSettings } from '../../hooks/useUserSettings';
 import { useAppLanguage } from '../../hooks/useAppLanguage';
+import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
@@ -86,6 +87,8 @@ export default function SettingsScreen() {
   const [profilePhotoDirty, setProfilePhotoDirty] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const { subscription, isAdmin: isSubscriptionAdmin, trialActive } = useSubscriptionCheck();
+  const canUseWhatsApp = isAdminUser || isSubscriptionAdmin || trialActive || subscription?.status === 'active';
   type PushPermission = 'granted' | 'denied' | 'default' | 'undetermined' | 'unknown' | 'unsupported';
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
@@ -1372,15 +1375,31 @@ export default function SettingsScreen() {
                     value={birthTime}
                     onChangeText={setBirthTime}
                   />
-                  <TextInput
-                    style={styles.input}
-                    placeholder={t('settings.profile.whatsappPlaceholder')}
-                    placeholderTextColor="#888"
-                    value={whatsappPhone}
-                    onChangeText={setWhatsappPhone}
-                    keyboardType="phone-pad"
-                  />
-                  {whatsappPhone.trim().length > 0 && (
+                  <TouchableOpacity
+                    activeOpacity={canUseWhatsApp ? 1 : 0.6}
+                    onPress={canUseWhatsApp ? undefined : () => {
+                      Alert.alert(
+                        tr('settings.profile.whatsappPremiumTitle', 'Recurso Premium'),
+                        tr('settings.profile.whatsappPremiumMsg', 'Notificações via WhatsApp estão disponíveis nos planos pagos (Essential, Pro e Premium).'),
+                        [
+                          { text: tr('common.cancel', 'Cancelar'), style: 'cancel' },
+                          { text: tr('settings.profile.whatsappUpgradeCta', 'Ver Planos'), onPress: () => (navigation as any).navigate('Premium', { openTab: 'features' }) },
+                        ]
+                      );
+                    }}
+                  >
+                    <TextInput
+                      style={[styles.input, !canUseWhatsApp && { opacity: 0.4 }]}
+                      placeholder={t('settings.profile.whatsappPlaceholder')}
+                      placeholderTextColor="#888"
+                      value={whatsappPhone}
+                      onChangeText={canUseWhatsApp ? setWhatsappPhone : undefined}
+                      keyboardType="phone-pad"
+                      editable={canUseWhatsApp}
+                      pointerEvents={canUseWhatsApp ? 'auto' : 'none'}
+                    />
+                  </TouchableOpacity>
+                  {whatsappPhone.trim().length > 0 && canUseWhatsApp && (
                     <View style={styles.optInRow}>
                       <Text style={styles.optInLabel}>
                         {tr('settings.profile.whatsappOptIn', 'Receber notificações do Astrólogo Tábula no WhatsApp')}
