@@ -960,7 +960,7 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
     if (i18nOverrideSanitized) return i18nOverrideSanitized
   }
   if (lang !== 'pt-BR') {
-    if (isBlocked) return null
+    // isBlocked só gatea o base catalog (pt-BR only) — P1 i18n sempre consulta
     const i18nAutoText =
       TRANSIT_CATALOG_I18N_AUTO_OVERRIDES_NORMALIZED[lang]?.[key] ||
       TRANSIT_CATALOG_I18N_AUTO_OVERRIDES[lang]?.[keyRaw]
@@ -979,16 +979,18 @@ function resolveCatalogTransitText(transit: AnyTransit, language?: string | null
     if (overrideSanitized) return overrideSanitized
   }
 
-  if (isBlocked) return null
-
-  const entry =
-    TRANSIT_CATALOG_PTBR_NORMALIZED[key] ||
-    (TRANSIT_CATALOG_PTBR as CatalogMap)[keyRaw]
-  if (entry?.text) {
-    const sanitized = sanitizeCatalogText(entry.text)
-    if (sanitized) return sanitized
+  // Base catalog: bloqueado se isBlocked (texto de baixa qualidade)
+  if (!isBlocked) {
+    const entry =
+      TRANSIT_CATALOG_PTBR_NORMALIZED[key] ||
+      (TRANSIT_CATALOG_PTBR as CatalogMap)[keyRaw]
+    if (entry?.text) {
+      const sanitized = sanitizeCatalogText(entry.text)
+      if (sanitized) return sanitized
+    }
   }
 
+  // P1 sempre roda — é camada nova, independente do bloqueio do base catalog
   const ptAutoText =
     TRANSIT_CATALOG_PTBR_AUTO_OVERRIDES_NORMALIZED[key] ||
     TRANSIT_CATALOG_PTBR_AUTO_OVERRIDES[keyRaw]

@@ -390,6 +390,40 @@ const PLANET_PACE_PHRASE: Record<Locale, { fast: string; slow: string }> = {
   'it-IT': { fast: 'Questo transito breve', slow: 'Questo ciclo di lungo respiro' },
 }
 
+// Hash determinístico: mesmo key → mesmo índice sempre, entradas distintas → verbos distintos
+function aspectVerbIdx(key: string, count: number): number {
+  let h = 0
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) & 0xffff
+  return h % count
+}
+
+const ASPECT_VERBS: Record<Locale, Record<string, string[]>> = {
+  'pt-BR': {
+    fusion:     ['concentra', 'amplifica', 'intensifica'],
+    harmonic:   ['facilita', 'sustenta', 'expande'],
+    tense:      ['ativa', 'evidencia', 'tensiona'],
+    adjustment: ['sugere', 'aponta', 'sinaliza'],
+  },
+  'en-US': {
+    fusion:     ['concentrates', 'amplifies', 'intensifies'],
+    harmonic:   ['eases', 'supports', 'expands'],
+    tense:      ['activates', 'highlights', 'stresses'],
+    adjustment: ['suggests', 'signals', 'points to'],
+  },
+  'es-ES': {
+    fusion:     ['concentra', 'amplifica', 'intensifica'],
+    harmonic:   ['facilita', 'sostiene', 'expande'],
+    tense:      ['activa', 'evidencia', 'tensiona'],
+    adjustment: ['sugiere', 'apunta', 'senala'],
+  },
+  'it-IT': {
+    fusion:     ['concentra', 'amplifica', 'intensifica'],
+    harmonic:   ['agevola', 'sostiene', 'espande'],
+    tense:      ['attiva', 'evidenzia', 'tende'],
+    adjustment: ['suggerisce', 'segnala', 'indica'],
+  },
+}
+
 function parseTransitKey(key: string): { planet: string; aspect: string; target: string } | null {
   const match = key.match(/^transit:([a-z_]+)\|([a-z_]+)\|([a-z0-9_]+)$/)
   if (!match) return null
@@ -449,57 +483,64 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
   const pace = PLANET_PACE_PHRASE[locale][FAST_PLANETS.has(parsed.planet) ? 'fast' : 'slow']
   const asp = parsed.aspect
 
+  const category = FUSION_ASPECTS.has(asp) ? 'fusion'
+    : HARMONIC_ASPECTS.has(asp) ? 'harmonic'
+    : TENSE_ASPECTS.has(asp) ? 'tense'
+    : 'adjustment'
+  const verbs = ASPECT_VERBS[locale][category]
+  const verb = verbs[aspectVerbIdx(key, verbs.length)]
+
   if (locale === 'pt-BR') {
     if (FUSION_ASPECTS.has(asp)) {
-      return `${planet} em conjuncao com ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} em ponto unico de foco. Alinhe intencao com acao: dirija-se a ${planetStyle} com precisao e sem dispersao.`
+      return `${planet} em conjuncao com ${target} ${verb} ${theme}. ${pace} intensifica ${targetFocus} em ponto unico de foco. Alinhe intencao com acao: dirija-se a ${planetStyle} com precisao e sem dispersao.`
     }
     if (HARMONIC_ASPECTS.has(asp)) {
-      return `${planet} em ${aspect} com ${target} facilita ${theme}. ${pace} favorece ${targetFocus} sem grande esforco. Aproveite a abertura para ${planetStyle} — o momento convida sem pressionar.`
+      return `${planet} em ${aspect} com ${target} ${verb} ${theme}. ${pace} favorece ${targetFocus} sem grande esforco. Aproveite a abertura para ${planetStyle} — o momento convida sem pressionar.`
     }
     if (TENSE_ASPECTS.has(asp)) {
-      return `${planet} em ${aspect} com ${target} ativa ${theme}. ${pace} coloca em evidencia ${targetFocus}, pedindo clareza nas escolhas. Canalize a tensao para ${planetStyle}: estrutura e decisao contam mais que reatividade.`
+      return `${planet} em ${aspect} com ${target} ${verb} ${theme}. ${pace} coloca em evidencia ${targetFocus}, pedindo clareza nas escolhas. Canalize a tensao para ${planetStyle}: estrutura e decisao contam mais que reatividade.`
     }
     // ajuste (quincuncio, neutral)
-    return `${planet} em ${aspect} com ${target} sugere ${theme}. ${pace} aponta micro-ajuste em ${targetFocus} sem exigir grandes mudancas. Revise com calma o curso em ${planetStyle} — pequenas correcoes sao suficientes.`
+    return `${planet} em ${aspect} com ${target} ${verb} ${theme}. ${pace} aponta micro-ajuste em ${targetFocus} sem exigir grandes mudancas. Revise com calma o curso em ${planetStyle} — pequenas correcoes sao suficientes.`
   }
 
   if (locale === 'en-US') {
     if (FUSION_ASPECTS.has(asp)) {
-      return `${planet} in conjunction with ${target} concentrates ${theme}. ${pace} intensifies ${targetFocus} to a single point of focus. Align intention with action: direct this toward ${planetStyle} with precision and no dispersion.`
+      return `${planet} in conjunction with ${target} ${verb} ${theme}. ${pace} intensifies ${targetFocus} to a single point of focus. Align intention with action: direct this toward ${planetStyle} with precision and no dispersion.`
     }
     if (HARMONIC_ASPECTS.has(asp)) {
-      return `${planet} in ${aspect} with ${target} eases ${theme}. ${pace} supports ${targetFocus} without heavy effort. Use the opening to ${planetStyle} — the moment invites without pressing.`
+      return `${planet} in ${aspect} with ${target} ${verb} ${theme}. ${pace} supports ${targetFocus} without heavy effort. Use the opening to ${planetStyle} — the moment invites without pressing.`
     }
     if (TENSE_ASPECTS.has(asp)) {
-      return `${planet} in ${aspect} with ${target} activates ${theme}. ${pace} puts ${targetFocus} in the spotlight, asking for clear choices. Channel the tension into ${planetStyle}: structure and decision outweigh reactivity.`
+      return `${planet} in ${aspect} with ${target} ${verb} ${theme}. ${pace} puts ${targetFocus} in the spotlight, asking for clear choices. Channel the tension into ${planetStyle}: structure and decision outweigh reactivity.`
     }
     return `${planet} in ${aspect} with ${target} suggests ${theme}. ${pace} points to a micro-adjustment in ${targetFocus} without requiring major changes. Review your course in ${planetStyle} calmly — small corrections are enough.`
   }
 
   if (locale === 'es-ES') {
     if (FUSION_ASPECTS.has(asp)) {
-      return `${planet} en conjuncion con ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} en un punto unico de foco. Alinea intencion con accion: dirige esto a ${planetStyle} con precision y sin dispersion.`
+      return `${planet} en conjuncion con ${target} ${verb} ${theme}. ${pace} intensifica ${targetFocus} en un punto unico de foco. Alinea intencion con accion: dirige esto a ${planetStyle} con precision y sin dispersion.`
     }
     if (HARMONIC_ASPECTS.has(asp)) {
-      return `${planet} en ${aspect} con ${target} facilita ${theme}. ${pace} favorece ${targetFocus} sin gran esfuerzo. Aprovecha la apertura para ${planetStyle} — el momento invita sin presionar.`
+      return `${planet} en ${aspect} con ${target} ${verb} ${theme}. ${pace} favorece ${targetFocus} sin gran esfuerzo. Aprovecha la apertura para ${planetStyle} — el momento invita sin presionar.`
     }
     if (TENSE_ASPECTS.has(asp)) {
-      return `${planet} en ${aspect} con ${target} activa ${theme}. ${pace} pone en evidencia ${targetFocus}, pidiendo claridad en las elecciones. Canaliza la tension hacia ${planetStyle}: estructura y decision valen mas que reactividad.`
+      return `${planet} en ${aspect} con ${target} ${verb} ${theme}. ${pace} pone en evidencia ${targetFocus}, pidiendo claridad en las elecciones. Canaliza la tension hacia ${planetStyle}: estructura y decision valen mas que reactividad.`
     }
-    return `${planet} en ${aspect} con ${target} sugiere ${theme}. ${pace} apunta a un micro-ajuste en ${targetFocus} sin exigir grandes cambios. Revisa con calma el rumbo en ${planetStyle} — correcciones pequenas son suficientes.`
+    return `${planet} en ${aspect} con ${target} ${verb} ${theme}. ${pace} apunta a un micro-ajuste en ${targetFocus} sin exigir grandes cambios. Revisa con calma el rumbo en ${planetStyle} — correcciones pequenas son suficientes.`
   }
 
   // it-IT
   if (FUSION_ASPECTS.has(asp)) {
-    return `${planet} in congiunzione con ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} in un unico punto di fuoco. Allinea intenzione e azione: orienta questo verso ${planetStyle} con precisione e senza dispersione.`
+    return `${planet} in congiunzione con ${target} ${verb} ${theme}. ${pace} intensifica ${targetFocus} in un unico punto di fuoco. Allinea intenzione e azione: orienta questo verso ${planetStyle} con precisione e senza dispersione.`
   }
   if (HARMONIC_ASPECTS.has(asp)) {
-    return `${planet} in ${aspect} con ${target} agevola ${theme}. ${pace} favorisce ${targetFocus} senza grande sforzo. Approfitta dell apertura per ${planetStyle} — il momento invita senza spingere.`
+    return `${planet} in ${aspect} con ${target} ${verb} ${theme}. ${pace} favorisce ${targetFocus} senza grande sforzo. Approfitta dell apertura per ${planetStyle} — il momento invita senza spingere.`
   }
   if (TENSE_ASPECTS.has(asp)) {
-    return `${planet} in ${aspect} con ${target} attiva ${theme}. ${pace} mette in evidenza ${targetFocus}, richiedendo scelte chiare. Canalizza la tensione verso ${planetStyle}: struttura e decisione contano piu della reattivita.`
+    return `${planet} in ${aspect} con ${target} ${verb} ${theme}. ${pace} mette in evidenza ${targetFocus}, richiedendo scelte chiare. Canalizza la tensione verso ${planetStyle}: struttura e decisione contano piu della reattivita.`
   }
-  return `${planet} in ${aspect} con ${target} suggerisce ${theme}. ${pace} indica un micro-aggiustamento in ${targetFocus} senza richiedere grandi cambiamenti. Rivedi con calma la rotta in ${planetStyle} — piccole correzioni sono sufficienti.`
+  return `${planet} in ${aspect} con ${target} ${verb} ${theme}. ${pace} indica un micro-aggiustamento in ${targetFocus} senza richiedere grandi cambiamenti. Rivedi con calma la rotta in ${planetStyle} — piccole correzioni sono sufficienti.`
 }
 
 function buildIngressOverride(locale: Locale, key: string): string | null {
