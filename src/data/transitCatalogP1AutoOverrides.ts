@@ -374,6 +374,22 @@ const ANGLE_FOCUS: Record<Locale, Record<string, string>> = {
   },
 }
 
+// Planetas rápidos (dias) vs lentos (meses/anos)
+const FAST_PLANETS = new Set(['sun', 'moon', 'mercury', 'venus', 'mars'])
+
+// Categorias de aspecto por tom
+const FUSION_ASPECTS = new Set(['conjuncao'])
+const HARMONIC_ASPECTS = new Set(['trigono', 'sextil', 'semissextil', 'harmonic'])
+const TENSE_ASPECTS = new Set(['oposicao', 'quadratura', 'semiquadratura', 'sesquiquadratura', 'tense'])
+// quincuncio e neutral = ajuste fino
+
+const PLANET_PACE_PHRASE: Record<Locale, { fast: string; slow: string }> = {
+  'pt-BR': { fast: 'Este transito de poucos dias', slow: 'Este ciclo de longo alcance' },
+  'en-US': { fast: 'This short transit', slow: 'This longer cycle' },
+  'es-ES': { fast: 'Este transito breve', slow: 'Este ciclo de largo alcance' },
+  'it-IT': { fast: 'Questo transito breve', slow: 'Questo ciclo di lungo respiro' },
+}
+
 function parseTransitKey(key: string): { planet: string; aspect: string; target: string } | null {
   const match = key.match(/^transit:([a-z_]+)\|([a-z_]+)\|([a-z0-9_]+)$/)
   if (!match) return null
@@ -406,6 +422,7 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
   const aspect = ASPECT_LABELS[locale][parsed.aspect]
   const theme = ASPECT_THEME[locale][parsed.aspect]
   if (!planet || !aspect || !theme) return null
+
   const houseTarget = getIngressHouse(parsed.target)
   const target =
     houseTarget != null
@@ -414,6 +431,7 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
         : `Casa ${houseTarget}`
       : TARGET_LABELS[locale][parsed.target]
   if (!target) return null
+
   const angleFocus = houseTarget == null ? ANGLE_FOCUS[locale][parsed.target] : null
   const houseFocus = houseTarget != null ? HOUSE_FOCUS[locale][houseTarget] : null
   const targetFocus =
@@ -428,16 +446,60 @@ function buildAspectOverride(locale: Locale, key: string): string | null {
           : `dinamica rappresentata da ${target}`)
 
   const planetStyle = PLANET_INGRESS_STYLE[locale][parsed.planet]
+  const pace = PLANET_PACE_PHRASE[locale][FAST_PLANETS.has(parsed.planet) ? 'fast' : 'slow']
+  const asp = parsed.aspect
+
   if (locale === 'pt-BR') {
-    return `${planet} em ${aspect} com ${target} destaca ${theme}. O transito enfatiza ${targetFocus} e pede decisao consciente no ritmo atual. Direcione esse movimento para ${planetStyle}, com constancia e menos reatividade.`
+    if (FUSION_ASPECTS.has(asp)) {
+      return `${planet} em conjuncao com ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} em ponto unico de foco. Alinhe intencao com acao: dirija-se a ${planetStyle} com precisao e sem dispersao.`
+    }
+    if (HARMONIC_ASPECTS.has(asp)) {
+      return `${planet} em ${aspect} com ${target} facilita ${theme}. ${pace} favorece ${targetFocus} sem grande esforco. Aproveite a abertura para ${planetStyle} — o momento convida sem pressionar.`
+    }
+    if (TENSE_ASPECTS.has(asp)) {
+      return `${planet} em ${aspect} com ${target} ativa ${theme}. ${pace} coloca em evidencia ${targetFocus}, pedindo clareza nas escolhas. Canalize a tensao para ${planetStyle}: estrutura e decisao contam mais que reatividade.`
+    }
+    // ajuste (quincuncio, neutral)
+    return `${planet} em ${aspect} com ${target} sugere ${theme}. ${pace} aponta micro-ajuste em ${targetFocus} sem exigir grandes mudancas. Revise com calma o curso em ${planetStyle} — pequenas correcoes sao suficientes.`
   }
+
   if (locale === 'en-US') {
-    return `${planet} in ${aspect} with ${target} highlights ${theme}. This transit emphasizes ${targetFocus} and asks for conscious decisions in the current rhythm. Direct this movement to ${planetStyle}, with consistency and less reactivity.`
+    if (FUSION_ASPECTS.has(asp)) {
+      return `${planet} in conjunction with ${target} concentrates ${theme}. ${pace} intensifies ${targetFocus} to a single point of focus. Align intention with action: direct this toward ${planetStyle} with precision and no dispersion.`
+    }
+    if (HARMONIC_ASPECTS.has(asp)) {
+      return `${planet} in ${aspect} with ${target} eases ${theme}. ${pace} supports ${targetFocus} without heavy effort. Use the opening to ${planetStyle} — the moment invites without pressing.`
+    }
+    if (TENSE_ASPECTS.has(asp)) {
+      return `${planet} in ${aspect} with ${target} activates ${theme}. ${pace} puts ${targetFocus} in the spotlight, asking for clear choices. Channel the tension into ${planetStyle}: structure and decision outweigh reactivity.`
+    }
+    return `${planet} in ${aspect} with ${target} suggests ${theme}. ${pace} points to a micro-adjustment in ${targetFocus} without requiring major changes. Review your course in ${planetStyle} calmly — small corrections are enough.`
   }
+
   if (locale === 'es-ES') {
-    return `${planet} en ${aspect} con ${target} destaca ${theme}. Este transito enfatiza ${targetFocus} y pide decisiones conscientes en el ritmo actual. Conviene orientar este movimiento para ${planetStyle}, con consistencia y menos reaccion.`
+    if (FUSION_ASPECTS.has(asp)) {
+      return `${planet} en conjuncion con ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} en un punto unico de foco. Alinea intencion con accion: dirige esto a ${planetStyle} con precision y sin dispersion.`
+    }
+    if (HARMONIC_ASPECTS.has(asp)) {
+      return `${planet} en ${aspect} con ${target} facilita ${theme}. ${pace} favorece ${targetFocus} sin gran esfuerzo. Aprovecha la apertura para ${planetStyle} — el momento invita sin presionar.`
+    }
+    if (TENSE_ASPECTS.has(asp)) {
+      return `${planet} en ${aspect} con ${target} activa ${theme}. ${pace} pone en evidencia ${targetFocus}, pidiendo claridad en las elecciones. Canaliza la tension hacia ${planetStyle}: estructura y decision valen mas que reactividad.`
+    }
+    return `${planet} en ${aspect} con ${target} sugiere ${theme}. ${pace} apunta a un micro-ajuste en ${targetFocus} sin exigir grandes cambios. Revisa con calma el rumbo en ${planetStyle} — correcciones pequenas son suficientes.`
   }
-  return `${planet} in ${aspect} con ${target} evidenzia ${theme}. Questo transito mette in primo piano ${targetFocus} e richiede decisioni consapevoli nel ritmo attuale. Conviene orientare questo movimento a ${planetStyle}, con coerenza e meno reattivita.`
+
+  // it-IT
+  if (FUSION_ASPECTS.has(asp)) {
+    return `${planet} in congiunzione con ${target} concentra ${theme}. ${pace} intensifica ${targetFocus} in un unico punto di fuoco. Allinea intenzione e azione: orienta questo verso ${planetStyle} con precisione e senza dispersione.`
+  }
+  if (HARMONIC_ASPECTS.has(asp)) {
+    return `${planet} in ${aspect} con ${target} agevola ${theme}. ${pace} favorisce ${targetFocus} senza grande sforzo. Approfitta dell apertura per ${planetStyle} — il momento invita senza spingere.`
+  }
+  if (TENSE_ASPECTS.has(asp)) {
+    return `${planet} in ${aspect} con ${target} attiva ${theme}. ${pace} mette in evidenza ${targetFocus}, richiedendo scelte chiare. Canalizza la tensione verso ${planetStyle}: struttura e decisione contano piu della reattivita.`
+  }
+  return `${planet} in ${aspect} con ${target} suggerisce ${theme}. ${pace} indica un micro-aggiustamento in ${targetFocus} senza richiedere grandi cambiamenti. Rivedi con calma la rotta in ${planetStyle} — piccole correzioni sono sufficienti.`
 }
 
 function buildIngressOverride(locale: Locale, key: string): string | null {
@@ -450,16 +512,31 @@ function buildIngressOverride(locale: Locale, key: string): string | null {
   const style = PLANET_INGRESS_STYLE[locale][parsed.planet]
   if (!planet || !focus || !style) return null
 
+  const isFast = FAST_PLANETS.has(parsed.planet)
+
   if (locale === 'pt-BR') {
-    return `${planet} em ingresso na Casa ${house} destaca temas de ${focus}. O periodo favorece ${style}, com ajuste gradual de prioridades. Foque em uma acao concreta ligada a esta casa e acompanhe o efeito no cotidiano.`
+    if (isFast) {
+      return `${planet} em ingresso na Casa ${house} ativa brevemente temas de ${focus}. Momento oportuno para ${style} enquanto a janela durar. Identifique uma acao concreta e execute ja.`
+    }
+    return `${planet} em ingresso na Casa ${house} inaugura um ciclo em ${focus}. Este periodo favorece ${style} com paciencia e consistencia. Plante intencoes que durem — este transito constroi ao longo do tempo.`
   }
   if (locale === 'en-US') {
-    return `${planet} entering House ${house} highlights themes of ${focus}. This period supports ${style}, with gradual priority adjustment. Focus on one concrete action tied to this house and track its daily effect.`
+    if (isFast) {
+      return `${planet} entering House ${house} briefly activates themes of ${focus}. Seize the window to ${style} while it lasts. Identify one concrete action and follow through now.`
+    }
+    return `${planet} entering House ${house} opens a long cycle in ${focus}. This period supports ${style} with patience and consistency. Set intentions that can last — this transit builds over time.`
   }
   if (locale === 'es-ES') {
-    return `${planet} en ingreso en Casa ${house} destaca temas de ${focus}. Este periodo favorece ${style}, con ajuste gradual de prioridades. Enfoca una accion concreta vinculada a esta casa y observa su efecto diario.`
+    if (isFast) {
+      return `${planet} en ingreso en Casa ${house} activa brevemente temas de ${focus}. Aprovecha la ventana para ${style} mientras dure. Identifica una accion concreta y ejecutala ya.`
+    }
+    return `${planet} en ingreso en Casa ${house} inaugura un ciclo en ${focus}. Este periodo favorece ${style} con paciencia y consistencia. Siembra intenciones que duren — este transito construye a largo plazo.`
   }
-  return `${planet} in ingresso in Casa ${house} evidenzia temi di ${focus}. Questo periodo favorisce ${style}, con un aggiustamento graduale delle priorita. Concentrati su un azione concreta legata a questa casa e osservane l effetto quotidiano.`
+  // it-IT
+  if (isFast) {
+    return `${planet} in ingresso in Casa ${house} attiva brevemente temi di ${focus}. Cogli la finestra per ${style} finche dura. Individua un azione concreta e agisci subito.`
+  }
+  return `${planet} in ingresso in Casa ${house} apre un ciclo in ${focus}. Questo periodo favorisce ${style} con pazienza e coerenza. Pianifica intenzioni durature — questo transito costruisce nel tempo.`
 }
 
 function buildAutoOverrides(locale: Locale): Record<string, string> {
