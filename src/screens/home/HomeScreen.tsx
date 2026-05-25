@@ -37,7 +37,7 @@ import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { usePressScale } from '../../ui/motion/native/micro'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
-import { decodeUnicodeEscapes } from '../../utils/astro/pt'
+import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import MoonPhaseIcon from '../../components/MoonPhaseIcon'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -203,6 +203,7 @@ export default function HomeScreen() {
     refreshData,
     backendLifeAreas,
     backendCurrentTransits,
+    backendStatusPersonal,
     localOverrideActive
   } = useLifeAreas()
   const { settings } = useUserSettings()
@@ -547,6 +548,21 @@ export default function HomeScreen() {
     return backendLifeAreas || transitData?.lifeAreas || null
   }, [backendLifeAreas, transitData?.lifeAreas])
 
+  // Trânsito mais intenso do dia para a frase explicativa do score
+  const topTransit = React.useMemo(() => {
+    const comparisons = transitData?.currentTransits?.planetComparisons
+    if (!Array.isArray(comparisons) || comparisons.length === 0) return null
+    let best: { planet1: string; type: string; planet2: string; strength: number } | null = null
+    for (const comp of comparisons) {
+      for (const asp of (comp.planetaryAspects || [])) {
+        if (!best || asp.strength > best.strength) {
+          best = { planet1: asp.planet1, type: asp.type, planet2: asp.planet2, strength: asp.strength }
+        }
+      }
+    }
+    return best
+  }, [transitData?.currentTransits?.planetComparisons])
+
   const orderedLifeAreas = React.useMemo(() => {
     if (!lifeAreasForDisplay) return []
     return LIFE_AREA_ORDER
@@ -754,6 +770,60 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
+
+        {/* Score diário com explicação do trânsito mais intenso */}
+        {(backendStatusPersonal?.score != null || topTransit) && (() => {
+          const score = backendStatusPersonal?.score != null ? Math.round(backendStatusPersonal.score) : null
+          const level = backendStatusPersonal?.level || null
+          const levelLabel = level
+            ? tl(
+                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Desafiador' : 'Neutro',
+                level === 'positivo' ? 'Positive' : level === 'desafiador' ? 'Challenging' : 'Neutral',
+                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Desafiador' : 'Neutro',
+                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Impegnativo' : 'Neutro',
+              )
+            : null
+          const ASPECT_MAP: Record<string, Record<string, string>> = {
+            'pt-BR': { conjuncao: 'conjunção', conjunction: 'conjunção', sextil: 'sextil', sextile: 'sextil', quadratura: 'quadratura', square: 'quadratura', trigono: 'trígono', trine: 'trígono', oposicao: 'oposição', opposition: 'oposição' },
+            'en-US': { conjuncao: 'conjunction', conjunction: 'conjunction', sextil: 'sextile', sextile: 'sextile', quadratura: 'square', square: 'square', trigono: 'trine', trine: 'trine', oposicao: 'opposition', opposition: 'opposition' },
+            'es-ES': { conjuncao: 'conjunción', conjunction: 'conjunción', sextil: 'sextil', sextile: 'sextil', quadratura: 'cuadratura', square: 'cuadratura', trigono: 'trígono', trine: 'trígono', oposicao: 'oposición', opposition: 'oposición' },
+            'it-IT': { conjuncao: 'congiunzione', conjunction: 'congiunzione', sextil: 'sestile', sextile: 'sestile', quadratura: 'quadratura', square: 'quadratura', trigono: 'trigono', trine: 'trigono', oposicao: 'opposizione', opposition: 'opposizione' },
+          }
+          const aspectLabel = topTransit
+            ? (ASPECT_MAP[language] || ASPECT_MAP['pt-BR'])[topTransit.type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')] || topTransit.type
+            : null
+          const transitText = topTransit && aspectLabel
+            ? tl(
+                `${translatePlanet(topTransit.planet1, 'pt-BR')} em ${aspectLabel} com seu ${translatePlanet(topTransit.planet2, 'pt-BR')}`,
+                `${translatePlanet(topTransit.planet1, 'en-US')} in ${aspectLabel} with your ${translatePlanet(topTransit.planet2, 'en-US')}`,
+                `${translatePlanet(topTransit.planet1, 'es-ES')} en ${aspectLabel} con tu ${translatePlanet(topTransit.planet2, 'es-ES')}`,
+                `${translatePlanet(topTransit.planet1, 'it-IT')} in ${aspectLabel} con il tuo ${translatePlanet(topTransit.planet2, 'it-IT')}`,
+              )
+            : null
+          const scoreColor = score != null
+            ? (score >= 65 ? '#4CAF50' : score >= 40 ? '#FFD700' : '#FF6B6B')
+            : '#FFD700'
+          return (
+            <AnimatedMount>
+              <View style={styles.dailyScoreCard}>
+                {score != null && (
+                  <View style={styles.dailyScoreCircle}>
+                    <Text style={[styles.dailyScoreNumber, { color: scoreColor }]}>{score}</Text>
+                    <Text style={styles.dailyScoreMax}>/100</Text>
+                  </View>
+                )}
+                <View style={styles.dailyScoreInfo}>
+                  {levelLabel && (
+                    <Text style={[styles.dailyScoreLevel, { color: scoreColor }]}>{levelLabel}</Text>
+                  )}
+                  {transitText && (
+                    <Text style={styles.dailyScoreTransit} numberOfLines={2}>{transitText}</Text>
+                  )}
+                </View>
+              </View>
+            </AnimatedMount>
+          )
+        })()}
 
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
@@ -1094,6 +1164,45 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+  },
+  dailyScoreCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dailyScoreCircle: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginRight: 14,
+  },
+  dailyScoreNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  dailyScoreMax: {
+    fontSize: 12,
+    color: '#888',
+    marginLeft: 2,
+  },
+  dailyScoreInfo: {
+    flex: 1,
+  },
+  dailyScoreLevel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  dailyScoreTransit: {
+    fontSize: 12,
+    color: '#B0B0C0',
+    lineHeight: 17,
   },
   sectionHeader: {
     flexDirection: 'row',
