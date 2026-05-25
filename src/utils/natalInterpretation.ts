@@ -9,6 +9,8 @@ import { CHIRON_IN_HOUSE_PTBR_OVERRIDES } from '../data/chironInHouseOverridesPt
 import { CHIRON_IN_HOUSE_I18N_OVERRIDES } from '../data/chironInHouseOverridesI18n'
 import { CHIRON_ASPECT_PTBR_OVERRIDES } from '../data/chironAspectOverridesPtBR'
 import { CHIRON_ASPECT_I18N_OVERRIDES } from '../data/chironAspectOverridesI18n'
+import { SIGN_IN_HOUSE_PTBR_OVERRIDES } from '../data/signInHouseOverridesPtBR'
+import { SIGN_IN_HOUSE_I18N_OVERRIDES } from '../data/signInHouseOverridesI18n'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -321,6 +323,55 @@ export function resolveChironAspectText(
   const ptText =
     CHIRON_ASPECT_PTBR_NORMALIZED[key] ||
     CHIRON_ASPECT_PTBR_OVERRIDES[keyRaw]
+  if (ptText && ptText.trim().length >= 50) return ptText.trim()
+  return null
+}
+
+// ─── Sign in House Catalog ────────────────────────────────────────────────────
+
+const KNOWN_SIGNS = new Set([
+  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
+])
+
+const SIGN_IN_HOUSE_PTBR_NORMALIZED = buildNormalizedMap(SIGN_IN_HOUSE_PTBR_OVERRIDES)
+
+const SIGN_IN_HOUSE_I18N_NORMALIZED: Partial<Record<AppLanguage, Record<string, string>>> = (() => {
+  const out: Partial<Record<AppLanguage, Record<string, string>>> = {}
+  ;(Object.keys(SIGN_IN_HOUSE_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = SIGN_IN_HOUSE_I18N_OVERRIDES[lang]
+    if (map) out[lang] = buildNormalizedMap(map)
+  })
+  return out
+})()
+
+/**
+ * Retorna o texto de interpretação para um signo em uma casa natal.
+ * Retorna null se a chave não existir no catálogo.
+ */
+export function resolveSignInHouseText(
+  sign: string,
+  house: number,
+  language?: string | null,
+): string | null {
+  const s = normalizePlanet(sign) // same normalization: trim + lowercase + NFD strip
+  if (!KNOWN_SIGNS.has(s)) return null
+  if (!Number.isFinite(house) || house < 1 || house > 12) return null
+  const keyRaw = `natal:sign_${s}|house|${house}`
+  const key = normalizeCatalogKey(keyRaw)
+  const lang = normalizeLanguage(language)
+
+  if (lang !== 'pt-BR') {
+    const i18nText =
+      SIGN_IN_HOUSE_I18N_NORMALIZED[lang]?.[key] ||
+      SIGN_IN_HOUSE_I18N_OVERRIDES[lang]?.[keyRaw]
+    if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
+    return null
+  }
+
+  const ptText =
+    SIGN_IN_HOUSE_PTBR_NORMALIZED[key] ||
+    SIGN_IN_HOUSE_PTBR_OVERRIDES[keyRaw]
   if (ptText && ptText.trim().length >= 50) return ptText.trim()
   return null
 }
