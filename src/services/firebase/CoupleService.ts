@@ -10,6 +10,7 @@ import {
   orderBy,
   onSnapshot,
   arrayUnion,
+  limit,
   Timestamp,
 } from "firebase/firestore"
 import { db } from "../../config/firebase"
@@ -255,12 +256,14 @@ class CoupleService {
     try {
       const q = query(
         collection(db, "couples"),
-        where("partner1.userId", "==", userId)
+        where("partner1.userId", "==", userId),
+        limit(1)
       )
-      
+
       const q2 = query(
         collection(db, "couples"),
-        where("partner2.userId", "==", userId)
+        where("partner2.userId", "==", userId),
+        limit(1)
       )
       
       const [querySnapshot1, querySnapshot2] = await Promise.all([
