@@ -30,6 +30,9 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Unit tests
+        run: npx vitest run src/utils/__tests__/
+
       - name: RC smoke
         run: npm run smoke:rc
 
