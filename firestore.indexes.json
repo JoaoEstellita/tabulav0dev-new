@@ -125,5 +125,21 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "readings",
+      "fieldPath": "readAt",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
 }
