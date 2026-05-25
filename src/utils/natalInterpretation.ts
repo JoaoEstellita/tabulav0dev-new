@@ -5,6 +5,10 @@ import { NATAL_PLANET_ASPECT_PTBR_OVERRIDES } from '../data/natalPlanetAspectOve
 import { NATAL_PLANET_ASPECT_I18N_OVERRIDES } from '../data/natalPlanetAspectOverridesI18n'
 import { NATAL_RULER_IN_HOUSE_PTBR_OVERRIDES } from '../data/natalRulerInHouseOverridesPtBR'
 import { NATAL_RULER_IN_HOUSE_I18N_OVERRIDES } from '../data/natalRulerInHouseOverridesI18n'
+import { CHIRON_IN_HOUSE_PTBR_OVERRIDES } from '../data/chironInHouseOverridesPtBR'
+import { CHIRON_IN_HOUSE_I18N_OVERRIDES } from '../data/chironInHouseOverridesI18n'
+import { CHIRON_ASPECT_PTBR_OVERRIDES } from '../data/chironAspectOverridesPtBR'
+import { CHIRON_ASPECT_I18N_OVERRIDES } from '../data/chironAspectOverridesI18n'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -227,6 +231,96 @@ export function resolveNatalRulerInHouseText(
   const ptText =
     RULER_PTBR_NORMALIZED[key] ||
     NATAL_RULER_IN_HOUSE_PTBR_OVERRIDES[keyRaw]
+  if (ptText && ptText.trim().length >= 50) return ptText.trim()
+  return null
+}
+
+// ─── Chiron in House Catalog ─────────────────────────────────────────────────
+
+const CHIRON_HOUSE_PTBR_NORMALIZED = buildNormalizedMap(CHIRON_IN_HOUSE_PTBR_OVERRIDES)
+
+const CHIRON_HOUSE_I18N_NORMALIZED: Partial<Record<AppLanguage, Record<string, string>>> = (() => {
+  const out: Partial<Record<AppLanguage, Record<string, string>>> = {}
+  ;(Object.keys(CHIRON_IN_HOUSE_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = CHIRON_IN_HOUSE_I18N_OVERRIDES[lang]
+    if (map) out[lang] = buildNormalizedMap(map)
+  })
+  return out
+})()
+
+/**
+ * Retorna o texto de interpretação de Quíron em uma casa natal.
+ * Retorna null se a chave não existir no catálogo.
+ */
+export function resolveChironInHouseText(
+  house: number,
+  language?: string | null,
+): string | null {
+  if (!Number.isFinite(house) || house < 1 || house > 12) return null
+  const keyRaw = `chiron:house|${house}`
+  const key = normalizeCatalogKey(keyRaw)
+  const lang = normalizeLanguage(language)
+
+  if (lang !== 'pt-BR') {
+    const i18nText =
+      CHIRON_HOUSE_I18N_NORMALIZED[lang]?.[key] ||
+      CHIRON_IN_HOUSE_I18N_OVERRIDES[lang]?.[keyRaw]
+    if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
+    return null
+  }
+
+  const ptText =
+    CHIRON_HOUSE_PTBR_NORMALIZED[key] ||
+    CHIRON_IN_HOUSE_PTBR_OVERRIDES[keyRaw]
+  if (ptText && ptText.trim().length >= 50) return ptText.trim()
+  return null
+}
+
+// ─── Chiron Aspect Catalog ────────────────────────────────────────────────────
+
+const KNOWN_CHIRON_ASPECT_PARTNERS = new Set([
+  'sun', 'moon', 'mercury', 'venus', 'mars',
+  'jupiter', 'saturn', 'uranus', 'neptune', 'pluto',
+  'ascendant', 'mc',
+])
+
+const CHIRON_ASPECT_PTBR_NORMALIZED = buildNormalizedMap(CHIRON_ASPECT_PTBR_OVERRIDES)
+
+const CHIRON_ASPECT_I18N_NORMALIZED: Partial<Record<AppLanguage, Record<string, string>>> = (() => {
+  const out: Partial<Record<AppLanguage, Record<string, string>>> = {}
+  ;(Object.keys(CHIRON_ASPECT_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = CHIRON_ASPECT_I18N_OVERRIDES[lang]
+    if (map) out[lang] = buildNormalizedMap(map)
+  })
+  return out
+})()
+
+/**
+ * Retorna o texto genérico de interpretação para Quíron em aspecto com um planeta.
+ * O texto cobre qualquer tipo de aspecto (conjunção, quadratura, etc.) — a chave é por planet apenas.
+ * Retorna null se o parceiro não for reconhecido ou não existir no catálogo.
+ */
+export function resolveChironAspectText(
+  planet: string,
+  language?: string | null,
+): string | null {
+  const p = normalizePlanet(planet)
+  if (!KNOWN_CHIRON_ASPECT_PARTNERS.has(p)) return null
+  const keyRaw = `chiron:${p}`
+  const key = normalizeCatalogKey(keyRaw)
+  const lang = normalizeLanguage(language)
+
+  if (lang !== 'pt-BR') {
+    const i18nText =
+      CHIRON_ASPECT_I18N_NORMALIZED[lang]?.[key] ||
+      CHIRON_ASPECT_I18N_OVERRIDES[lang]?.[keyRaw]
+    if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
+    return null
+  }
+
+  const ptText =
+    CHIRON_ASPECT_PTBR_NORMALIZED[key] ||
+    CHIRON_ASPECT_PTBR_OVERRIDES[keyRaw]
   if (ptText && ptText.trim().length >= 50) return ptText.trim()
   return null
 }
