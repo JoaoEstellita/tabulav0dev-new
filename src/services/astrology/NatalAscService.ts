@@ -22,8 +22,8 @@ export class NatalAscService {
 		let tz: { offsetSec: number; timeZoneId?: string } | null = null
 		try {
 			const tzData = await TimezoneService.resolveOffsetSeconds(latitude, longitude, ts)
-			// Só usa se offset for não-zero (0 = fallback UTC = provável falha do TZ service)
-			if (tzData && typeof tzData.offsetSec === 'number' && tzData.offsetSec !== 0) {
+			// Só usa se offsetSec for um número válido (inclui 0 = UTC+0, ex: Londres)
+			if (tzData && typeof tzData.offsetSec === 'number' && tzData.offsetSec !== undefined) {
 				tz = tzData
 			}
 		} catch { /* timezone service falhou — usar natalISO com UTC calculado por longitude */ }
