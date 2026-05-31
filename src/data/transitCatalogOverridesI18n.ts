@@ -1479,6 +1479,106 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluto trine natal Uranus favors the fluid combination of deep transformation and innovation, with the ability to renew structures radically but in a well-integrated way. The cycle facilitates changes that arrive with more fluidity and constructive output. A good moment to innovate in areas calling for real renewal, leveraging the potential of creative transformation with openness and intentionality.',
     'transit:pluto|trigono|venus':
       'Pluto trine natal Venus favors constructive transformations in affective life and values that arrive with fluidity and genuine depth. The cycle facilitates the deepening of authentic bonds and the natural elimination of what was superficial. A good moment to renew the affective field and values with more depth and satisfaction, cultivating what is genuine with openness and real presence.',
+
+    // Moon — conjunction
+    'transit:moon|conjuncao|mercury':
+      'Moon conjunct natal Mercury brings emotion and reasoning closer together, supporting more honest expression of what is felt. This brief transit tends to amplify intuition in communication and receptiveness to environmental cues. A good moment for meaningful conversations, personal journaling, and decisions that call for both logic and inner perception.',
+    'transit:moon|conjuncao|venus':
+      'Moon conjunct natal Venus intensifies the need for affection, harmony, and pleasant exchanges. This brief transit tends to heighten aesthetic sensitivity and the desire to nurture and be nurtured. An opportune moment for emotional bonds, creative activity, and anything that feeds pleasure and inner well-being.',
+    'transit:moon|conjuncao|jupiter':
+      'Moon conjunct natal Jupiter expands emotional expectations and the desire for growth and meaning. This transit tends to bring optimism and openness to new possibilities, with some risk of excess enthusiasm. Channel the impulse toward something meaningful while keeping a realistic assessment of what can actually be achieved now.',
+    'transit:moon|conjuncao|saturn':
+      'Moon conjunct natal Saturn may bring temporary emotional weight, a sense of limitation, or a greater need for structure. This brief transit tends to surface pending responsibilities and the impact of past choices. A more serious moment that invites practical adjustments and honest recognition of what needs to be organized.',
+    'transit:moon|conjuncao|neptune':
+      'Moon conjunct natal Neptune intensifies sensitivity, intuition, and openness to subtle perceptions. This brief transit may bring vivid dreams, amplified empathy, and a need for creative withdrawal. A good moment for art, meditation, and inner work, while staying alert to idealization and scattered energy.',
+    'transit:moon|conjuncao|pluto':
+      'Moon conjunct natal Pluto may bring intense emotions, a need for control, or themes tied to deep transformation. This brief transit tends to surface what is latent in the emotional field. Useful for processing what is hard to name, with care not to react in an exaggerated way.',
+    'transit:moon|conjuncao|ascendente':
+      'Moon conjunct natal Ascendant intensifies emotional expression and its impact on the surrounding environment. This brief transit tends to amplify interpersonal sensitivity and the need for recognition. A moment of greater emotional visibility: what is felt tends to be perceived by others with more clarity.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'Moon conjunct natal Midheaven brings emotional and public life closer together, potentially surfacing personal themes in professional settings. This brief transit tends to heighten sensitivity around career, reputation, and how you are perceived. A good moment to consciously align emotional needs with professional direction.',
+
+    // Moon — opposition
+    'transit:moon|oposicao|sun':
+      'Moon opposing natal Sun creates tension between emotional need and conscious will, calling for balance between feeling and action. This brief transit tends to highlight conflicts between what is desired internally and what is projected outward. A moment of review: what the ego wants may not be what the emotional field truly needs.',
+    'transit:moon|oposicao|venus':
+      'Moon opposing natal Venus may create tension between emotional need and the expectation of reciprocity in relationships. This brief transit tends to surface imbalances in exchanges and personal values. A moment to assess what you truly need in relationships, without projecting neediness or yielding excessively in search of harmony.',
+    'transit:moon|oposicao|saturn':
+      'Moon opposing natal Saturn may bring emotional rigidity, a sense of external pressure, or difficulty receiving what is felt. This brief transit tends to highlight where structure and emotion are in conflict. A moment to seek balance between responsibility and inner care without suppressing what is legitimate to feel.',
+    'transit:moon|oposicao|uranus':
+      'Moon opposing natal Uranus may bring sudden emotional instability or an urgent need for change and freedom. This brief transit tends to create unpredictability in reactions and difficulty maintaining emotional routines. A good moment to observe what is calling for renewal, without making abrupt decisions on impulse.',
+    'transit:moon|oposicao|neptune':
+      'Moon opposing natal Neptune may create emotional confusion and difficulty distinguishing genuine feelings from idealization or projection. This brief transit tends to amplify sensitivity to ambiguity and diffuse perceptions. Avoid high-stakes emotional decisions: wait for clarity to return before acting.',
+    'transit:moon|oposicao|pluto':
+      'Moon opposing natal Pluto may bring intense emotions, confrontation with what is guarded, or power dynamics in the affective field. This brief transit tends to reveal what was latent in close relationships. A moment to observe excessive reactions as signals of something deeper calling for attention and processing.',
+    'transit:moon|oposicao|ascendente':
+      'Moon opposing natal Ascendant creates tension between your own emotional needs and the demands of the environment or relationships. This brief transit tends to highlight the imbalance between what you need and what others expect. A moment to review limits: giving to others cannot come at the cost of your own inner sustenance.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'Moon opposing natal Midheaven may create tension between emotional or domestic life and the demands of public and professional life. This brief transit tends to surface where personal foundation and external reputation pull in opposite directions. A moment to align what is cared for internally with what is projected to the world.',
+
+    // Moon — square
+    'transit:moon|quadratura|sun':
+      'Moon square natal Sun creates friction between emotional need and the expression of personal will. This brief transit tends to highlight where feeling and the impulse to act are in conflict. A moment to slow down before acting: adjusting the inner course may be more effective than forcing an external decision.',
+    'transit:moon|quadratura|mercury':
+      'Moon square natal Mercury may create difficulty articulating what is felt or tension between emotion and reasoning. This brief transit tends to generate misunderstandings or difficulty listening calmly. Prioritize listening before responding and review important messages before sending.',
+    'transit:moon|quadratura|venus':
+      'Moon square natal Venus may create friction between emotional need and the value or harmony sought in relationships. This brief transit tends to surface dissatisfactions in exchanges or unmet expectations. A moment to review what you truly want in bonds, without projecting frustration onto those nearby.',
+    'transit:moon|quadratura|saturn':
+      'Moon square natal Saturn may bring emotional heaviness, a sense of blockage, or conflict between feeling and fulfilling obligations. This brief transit tends to highlight where rigidity or excessive self-criticism interferes with well-being. A moment to honor what is legitimate to feel without yielding to disproportionate self-demand.',
+    'transit:moon|quadratura|uranus':
+      'Moon square natal Uranus may bring emotional agitation, impatience, or an impulse toward rupture without clear grounding. This brief transit tends to create difficulty maintaining stability in routines or reactions. Observe what is provoking instability without acting reactively: useful change comes with greater clarity.',
+    'transit:moon|quadratura|neptune':
+      'Moon square natal Neptune may bring emotional confusion, difficulty maintaining focus, or a tendency to escape reality through distractions. This brief transit tends to blur the line between what is real and what is projection. Maintain practical grounding before acting on diffuse perceptions.',
+    'transit:moon|quadratura|pluto':
+      'Moon square natal Pluto may bring intense emotions, a sense of threat, or controlling impulses in moments of tension. This brief transit tends to reveal power dynamics or disproportionate reactions to minor provocations. Process what arises with care: emotional intensity is information, not necessarily reality.',
+    'transit:moon|quadratura|ascendente':
+      'Moon square natal Ascendant creates friction between inner emotional needs and the way you present yourself to the world. This brief transit tends to highlight misalignment between what is felt and what is projected. A moment to review the social mask: authenticity tends to be more effective than image adjustment.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'Moon square natal Midheaven may create tension between emotional life and the demands of professional or public life. This brief transit tends to make it harder to separate what is felt from what is expected in a work context. A moment to set clear limits between personal space and professional delivery.',
+
+    // Moon — trine
+    'transit:moon|trigono|sun':
+      'Moon trine natal Sun supports integration between emotional life and conscious expression, creating fluidity between feeling and acting. This brief transit sustains authenticity and greater inner coherence. A good moment for decisions calling for alignment between will and need, personal initiatives, and genuine self-care.',
+    'transit:moon|trigono|mercury':
+      'Moon trine natal Mercury supports empathic communication, clear expression of feelings, and easier understanding of what others mean. This brief transit sustains fluidity between intuition and reasoning. A good moment for important conversations, creative writing, and decisions that call for both logic and sensitivity.',
+    'transit:moon|trigono|venus':
+      'Moon trine natal Venus supports emotional harmony, pleasure in exchanges, and greater ease in nurturing and being nurtured. This brief transit sustains emotional well-being and openness to what is beautiful and enjoyable. A good moment for strengthening bonds, creative activities, and anything that nourishes the affective field.',
+    'transit:moon|trigono|mars':
+      'Moon trine natal Mars supports action driven by genuine motivation, with physical and emotional energy aligned. This brief transit sustains practical initiative with less inner resistance. A good moment to start projects, exercise, and any activity that calls for both courage and sensitivity.',
+    'transit:moon|trigono|jupiter':
+      'Moon trine natal Jupiter supports emotional openness, moderate optimism, and greater ease in seeing what is possible. This brief transit sustains the willingness to learn and expand without losing balance. A good moment for sharing ideas, planning ahead, and nurturing connections that feed personal growth.',
+    'transit:moon|trigono|uranus':
+      'Moon trine natal Uranus supports openness to the new without generating emotional instability. This brief transit sustains creativity, intuition, and willingness to try different paths. A good moment for unexpected ideas, light routine changes, and connections that stimulate perspectives outside the usual pattern.',
+    'transit:moon|trigono|neptune':
+      'Moon trine natal Neptune supports heightened sensitivity, refined intuition, and contact with creative and spiritual dimensions. This brief transit sustains deep empathy and openness to subtle perceptions. A good moment for artistic activities, meditation, lucid dreams, and connections that touch something deeper than the everyday.',
+    'transit:moon|trigono|pluto':
+      'Moon trine natal Pluto supports contact with deep emotions in a fluid, less threatening way. This brief transit sustains the ability to process what is usually hard to access. A good moment for self-knowledge, meaningful intimate conversations, and any process calling for emotional courage without excess intensity.',
+    'transit:moon|trigono|ascendente':
+      'Moon trine natal Ascendant supports authentic presence and greater ease in expressing who you are to the world. This brief transit sustains empathy in interactions and receptiveness from the environment. A good moment for personal presentations, important encounters, and any situation calling for genuine presence.',
+    'transit:moon|trigono|meio_do_ceu':
+      'Moon trine natal Midheaven supports integration between emotional life and professional direction, with greater ease in acting with purpose. This brief transit sustains receptiveness from the public and leadership. A good moment to share projects, strengthen reputation, and align what you feel with what you deliver.',
+
+    // Moon — sextile
+    'transit:moon|sextil|sun':
+      'Moon sextile natal Sun opens a window of fluidity between emotional life and expression of identity. This brief transit invites small actions aligned with what is wanted and what is felt. A good moment for personal initiatives that need genuine inner motivation to get started.',
+    'transit:moon|sextil|mercury':
+      'Moon sextile natal Mercury opens space for more fluid communication and receptiveness to emotionally nuanced information. This brief transit invites conversations, study, and exchanges that combine reasoning and sensitivity. A good moment for important dialogues, creative writing, and resolving pending matters that need clarity and empathy.',
+    'transit:moon|sextil|venus':
+      'Moon sextile natal Venus opens space for pleasant emotional exchanges and moments of care around what is beautiful and meaningful. This brief transit invites cultivating harmony in relationships and pleasure in daily activities. A good moment to strengthen bonds, engage in creative activities, and small gestures of affection that make a difference.',
+    'transit:moon|sextil|mars':
+      'Moon sextile natal Mars opens space for initiatives driven by genuine motivation and practical use of available energy. This brief transit invites concrete action in something that matters emotionally. A good moment to start personal projects, exercise, and channel willingness into activities with a clear purpose.',
+    'transit:moon|sextil|jupiter':
+      'Moon sextile natal Jupiter opens a window of moderate optimism and ease in connecting with what nurtures growth. This brief transit invites expanding perspectives and exploring possibilities with curiosity. A good moment to learn something new, plan trips or studies, and cultivate connections that feed a vision of the future.',
+    'transit:moon|sextil|uranus':
+      'Moon sextile natal Uranus opens space for light renewal and receptiveness to what is unexpected or different from the usual. This brief transit invites creative flexibility and novelty without instability. A good moment for experiments, routine adjustments, and connections with people who broaden perspective.',
+    'transit:moon|sextil|neptune':
+      'Moon sextile natal Neptune opens space for refined sensitivity, intuition, and contact with creative or spiritual dimensions. This brief transit invites openness to subtle perceptions and deep empathy. A good moment for art, meditation, dreams, and any activity that nourishes the inner field with lightness.',
+    'transit:moon|sextil|pluto':
+      'Moon sextile natal Pluto opens a window of access to deeper emotions without generating excessive intensity. This brief transit invites reflection on what needs to be transformed with care and intention. A good moment for self-knowledge, depth conversations, and any gentle emotional clearing process.',
+    'transit:moon|sextil|ascendente':
+      'Moon sextile natal Ascendant opens space for greater authenticity in presence and ease of interpersonal connection. This brief transit invites spontaneous interactions and more genuine expression of who you are. A good moment for encounters, presentations, and any situation calling for receptive presence without excessive defenses.',
+    'transit:moon|sextil|meio_do_ceu':
+      'Moon sextile natal Midheaven opens a window for aligning emotional life with professional direction in a natural way. This brief transit invites visibility actions that require little effort when the timing is right. A good moment for conversations with leadership, sharing projects, and discreet positioning moves.',
 },
   'es-ES': {
     'transit:mercury|conjuncao|ascendente':
@@ -2955,6 +3055,106 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Pluton en trigono a Urano natal favorece la combinacion fluida de transformacion profunda e innovacion, con capacidad de renovar estructuras de forma radical pero bien integrada. El ciclo facilita cambios que llegan con mas fluidez y produccion constructiva. Un buen momento para innovar en areas que piden renovacion real, aprovechando el potencial de transformacion creativa con apertura e intencionalidad.',
     'transit:pluto|trigono|venus':
       'Pluton en trigono a Venus natal favorece transformaciones constructivas en la vida afectiva y los valores que llegan con fluidez y profundidad genuina. El ciclo facilita la profundizacion de los vinculos genuinos y la eliminacion natural de lo que era superficial. Un buen momento para renovar el campo afectivo y los valores con mas profundidad y satisfaccion, cultivando lo que es genuino con apertura y presencia real.',
+
+    // Luna — conjuncion
+    'transit:moon|conjuncao|mercury':
+      'Luna en conjuncion a Mercurio natal acerca emocion y razonamiento, favoreciendo expresion mas honesta de lo que se siente. El transito de pocos dias tiende a ampliar la intuicion en la comunicacion y la receptividad a mensajes del entorno. Buen momento para conversaciones relevantes, registros personales y decisiones que piden equilibrio entre logica y percepcion interior.',
+    'transit:moon|conjuncao|venus':
+      'Luna en conjuncion a Venus natal intensifica la necesidad de afecto, armonia e intercambios agradables. El transito de pocos dias suele ampliar la sensibilidad estetica y el deseo de cuidar y ser cuidado. Momento oportuno para vinculos afectivos, creatividad y actividades que alimentan el placer y el bienestar interno.',
+    'transit:moon|conjuncao|jupiter':
+      'Luna en conjuncion a Jupiter natal amplia expectativas emocionales y deseo de expansion y significado. El transito tiende a traer optimismo y apertura a nuevas posibilidades, con riesgo de exceso de entusiasmo. Aprovecha el impulso para avanzar en algo relevante, manteniendo evaluacion realista de lo que es posible concretar ahora.',
+    'transit:moon|conjuncao|saturn':
+      'Luna en conjuncion a Saturno natal puede traer peso emocional temporal, sensacion de limitacion o mayor necesidad de estructura. El transito de pocos dias tiende a evidenciar responsabilidades pendientes y el impacto de elecciones pasadas. Momento de mayor seriedad que invita a ajustes practicos y reconocimiento honesto de lo que necesita ser organizado.',
+    'transit:moon|conjuncao|neptune':
+      'Luna en conjuncion a Neptuno natal intensifica sensibilidad, intuicion y apertura a percepciones sutiles. El transito de pocos dias puede traer suenos vividos, empatia ampliada y necesidad de recogimiento creativo. Buen momento para contacto con el arte, meditacion y procesos interiores, con atencion para no idealizar situaciones ni dispersar energia.',
+    'transit:moon|conjuncao|pluto':
+      'Luna en conjuncion a Pluton natal puede traer emociones intensas, necesidad de control o temas ligados a transformacion profunda. El transito de pocos dias tiende a evidenciar lo que esta latente en el campo emocional. Util para procesar lo que es dificil de nombrar, con cuidado de no reaccionar de forma excesiva.',
+    'transit:moon|conjuncao|ascendente':
+      'Luna en conjuncion al Ascendente natal intensifica la expresion emocional y su impacto en el entorno. El transito de pocos dias tiende a ampliar la sensibilidad interpersonal y la necesidad de reconocimiento. Momento de mayor visibilidad emocional: lo que se siente tiende a ser percibido por los demas con mas claridad.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'Luna en conjuncion al Medio Cielo natal acerca vida emocional y vida publica, pudiendo traer visibilidad a temas personales. El transito de pocos dias tiende a ampliar sensibilidad en torno a carrera, reputacion y como eres percibido. Buen momento para alinear necesidades emocionales con direccion profesional de forma mas consciente.',
+
+    // Luna — oposicion
+    'transit:moon|oposicao|sun':
+      'Luna en oposicion al Sol natal crea tension entre necesidad emocional y voluntad consciente, pidiendo equilibrio entre sentir y actuar. El transito de pocos dias tiende a evidenciar conflictos entre lo que se desea internamente y lo que se proyecta al mundo. Momento de revision: lo que el ego quiere puede no ser lo que el campo emocional realmente necesita.',
+    'transit:moon|oposicao|venus':
+      'Luna en oposicion a Venus natal puede crear tension entre necesidad afectiva y expectativa de reciprocidad en las relaciones. El transito de pocos dias tiende a evidenciar desequilibrios en intercambios y valores personales. Momento de evaluar lo que realmente necesitas en las relaciones, sin proyectar carencia ni ceder en exceso por busqueda de armonia.',
+    'transit:moon|oposicao|saturn':
+      'Luna en oposicion a Saturno natal puede traer rigidez emocional, sensacion de exigencia externa o dificultad de acoger lo que se siente. El transito de pocos dias tiende a evidenciar donde estructura y emocion estan en conflicto. Momento de buscar equilibrio entre responsabilidad y cuidado interno sin suprimir lo que es legitimo sentir.',
+    'transit:moon|oposicao|uranus':
+      'Luna en oposicion a Urano natal puede traer inestabilidad emocional repentina o necesidad urgente de cambio y libertad. El transito de pocos dias tiende a crear imprevisibilidad en reacciones y dificultad de mantener rutina emocional estable. Buen momento para observar lo que pide renovacion, sin tomar decisiones abruptas por impulso.',
+    'transit:moon|oposicao|neptune':
+      'Luna en oposicion a Neptuno natal puede crear confusion emocional, dificultad de discernir sentimientos reales de idealizaciones o proyecciones. El transito de pocos dias tiende a ampliar sensibilidad a la ambiguedad y percepciones difusas. Momento de evitar decisiones con alta carga emocional: espera que la claridad vuelva antes de actuar.',
+    'transit:moon|oposicao|pluto':
+      'Luna en oposicion a Pluton natal puede traer emociones intensas, confrontacion con lo que esta guardado o dinamicas de poder en el campo afectivo. El transito de pocos dias tiende a revelar lo que estaba latente en relaciones cercanas. Momento de observar reacciones excesivas como senales de algo mas profundo que pide atencion y procesamiento.',
+    'transit:moon|oposicao|ascendente':
+      'Luna en oposicion al Ascendente natal crea tension entre necesidades emocionales propias y demandas del entorno o las relaciones. El transito de pocos dias tiende a evidenciar desequilibrio entre lo que necesitas y lo que los demas esperan. Momento de revision de limites: dar a los demas no puede costar la propia sustentacion interna.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'Luna en oposicion al Medio Cielo natal puede crear tension entre vida emocional o familiar y exigencias de la vida publica y profesional. El transito de pocos dias tiende a evidenciar donde base personal y reputacion externa jalan en direcciones opuestas. Momento de alinear lo que se cuida internamente con lo que se proyecta al mundo.',
+
+    // Luna — cuadratura
+    'transit:moon|quadratura|sun':
+      'Luna en cuadratura al Sol natal crea friccion entre necesidad emocional y expresion de la voluntad personal. El transito de pocos dias tiende a evidenciar donde sentimiento e impulso de accion estan en conflicto. Momento de desacelerar antes de actuar: ajustar el curso interno puede ser mas eficaz que forzar una decision externa.',
+    'transit:moon|quadratura|mercury':
+      'Luna en cuadratura a Mercurio natal puede crear dificultad para articular lo que se siente o tension entre emocion y razonamiento. El transito de pocos dias tiende a generar malentendidos en conversaciones o dificultad de escuchar con calma. Momento de priorizar la escucha antes de responder y revisar mensajes importantes antes de enviar.',
+    'transit:moon|quadratura|venus':
+      'Luna en cuadratura a Venus natal puede crear friccion entre necesidad afectiva y patron de valor o armonia que se busca en las relaciones. El transito de pocos dias tiende a evidenciar insatisfacciones en intercambios o expectativas no atendidas. Momento de revisar lo que realmente quieres en vinculos, sin proyectar frustracion en quienes estan cerca.',
+    'transit:moon|quadratura|saturn':
+      'Luna en cuadratura a Saturno natal puede traer peso emocional, sensacion de bloqueo o conflicto entre sentir y cumplir obligaciones. El transito de pocos dias tiende a evidenciar donde rigidez o autocritica excesiva interfieren en el bienestar. Momento de acoger lo que es legitimo sentir sin ceder a autoexigencias desproporcionadas.',
+    'transit:moon|quadratura|uranus':
+      'Luna en cuadratura a Urano natal puede traer agitacion emocional, impaciencia o impulso de ruptura sin base clara. El transito de pocos dias tiende a crear dificultad para mantener estabilidad en rutinas o reacciones. Momento de observar lo que provoca inestabilidad sin actuar de forma reactiva: el cambio util llega con mas claridad.',
+    'transit:moon|quadratura|neptune':
+      'Luna en cuadratura a Neptuno natal puede traer confusion emocional, dificultad de mantener foco o tendencia a escapar de la realidad por distracciones. El transito de pocos dias tiende a debilitar limites entre lo real y lo proyectado. Momento de mantener arraigo practico antes de actuar con base en percepciones difusas.',
+    'transit:moon|quadratura|pluto':
+      'Luna en cuadratura a Pluton natal puede traer emociones intensas, sensacion de amenaza o impulso de control en situaciones de tension. El transito de pocos dias tiende a revelar dinamicas de poder o reacciones desproporcionadas a provocaciones menores. Momento de procesar lo que surge con cuidado: la intensidad emocional es informacion, no necesariamente realidad.',
+    'transit:moon|quadratura|ascendente':
+      'Luna en cuadratura al Ascendente natal crea friccion entre necesidades emocionales internas y la forma en que te presentas al mundo. El transito de pocos dias tiende a evidenciar desalineacion entre lo que se siente y lo que se proyecta. Momento de revisar la mascara social: la autenticidad tiende a ser mas eficaz que el ajuste de imagen.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'Luna en cuadratura al Medio Cielo natal puede crear tension entre vida emocional y demandas de la vida profesional o publica. El transito de pocos dias tiende a generar dificultad de separar lo que se siente de lo que se espera en el contexto de trabajo. Momento de crear limites claros entre espacio personal y espacio de entrega profesional.',
+
+    // Luna — trigono
+    'transit:moon|trigono|sun':
+      'Luna en trigono al Sol natal favorece integracion entre vida emocional y expresion consciente, creando fluidez entre sentir y actuar. El transito de pocos dias sustenta autenticidad y mayor coherencia interna. Buen momento para decisiones que piden alineacion entre voluntad y necesidad, iniciativas personales y reconocimiento de lo que importa de verdad.',
+    'transit:moon|trigono|mercury':
+      'Luna en trigono a Mercurio natal favorece comunicacion empatica, expresion clara de los sentimientos y comprension mas facil de lo que el otro quiere decir. El transito de pocos dias sustenta fluidez entre intuicion y razonamiento. Buen momento para conversaciones importantes, escritura creativa y decisiones que piden tanto logica como sensibilidad.',
+    'transit:moon|trigono|venus':
+      'Luna en trigono a Venus natal favorece armonia afectiva, placer en los intercambios y mayor facilidad de cuidar y ser cuidado. El transito de pocos dias sustenta bienestar emocional y apertura a lo que es bello y agradable. Buen momento para fortalecer vinculos, actividades creativas y cualquier cosa que nutra el campo afectivo.',
+    'transit:moon|trigono|mars':
+      'Luna en trigono a Marte natal favorece accion movida por motivacion genuina, con energia fisica y emocional alineadas. El transito de pocos dias sustenta iniciativa practica con menos resistencia interna. Buen momento para iniciar proyectos, ejercicio fisico y cualquier actividad que necesite tanto coraje como sensibilidad.',
+    'transit:moon|trigono|jupiter':
+      'Luna en trigono a Jupiter natal favorece apertura emocional, optimismo moderado y mayor facilidad de ver lo que es posible. El transito de pocos dias sustenta disposicion para aprender y expandir sin perder equilibrio. Buen momento para compartir ideas, planear el futuro y nutrir conexiones que alimentan crecimiento personal.',
+    'transit:moon|trigono|uranus':
+      'Luna en trigono a Urano natal favorece apertura a lo nuevo sin generar inestabilidad emocional. El transito de pocos dias sustenta creatividad, intuicion y disposicion para experimentar caminos diferentes. Buen momento para ideas inesperadas, cambios leves de rutina y conexiones que estimulan perspectivas fuera del patron habitual.',
+    'transit:moon|trigono|neptune':
+      'Luna en trigono a Neptuno natal favorece sensibilidad elevada, intuicion refinada y contacto con dimensiones creativas y espirituales. El transito de pocos dias sustenta empatia profunda y apertura a percepciones sutiles. Buen momento para actividades artisticas, meditacion, suenos lucidos y conexiones que tocan algo mas profundo que lo cotidiano.',
+    'transit:moon|trigono|pluto':
+      'Luna en trigono a Pluton natal favorece contacto con emociones profundas de forma fluida y menos amenazadora. El transito de pocos dias sustenta capacidad de procesar lo que normalmente es dificil de acceder. Buen momento para autoconocimiento, conversaciones intimas relevantes y cualquier proceso que pida coraje emocional sin exceso de intensidad.',
+    'transit:moon|trigono|ascendente':
+      'Luna en trigono al Ascendente natal favorece autenticidad en la presencia y mayor facilidad de expresar quien eres ante el mundo. El transito de pocos dias sustenta empatia en las interacciones y receptividad del entorno. Buen momento para presentaciones personales, encuentros importantes y cualquier situacion que pida presencia genuina.',
+    'transit:moon|trigono|meio_do_ceu':
+      'Luna en trigono al Medio Cielo natal favorece integracion entre vida emocional y direccion profesional, con mas facilidad de actuar con proposito. El transito de pocos dias sustenta receptividad del publico y la liderazgo. Buen momento para comunicar proyectos, fortalecer reputacion y alinear lo que sientes con lo que entregas.',
+
+    // Luna — sextil
+    'transit:moon|sextil|sun':
+      'Luna en sextil al Sol natal abre una ventana de fluidez entre vida emocional y expresion de la identidad. El transito de pocos dias invita a pequeñas acciones alineadas con lo que se quiere y lo que se siente. Buen momento para iniciativas personales que necesitan motivacion interior genuina para ponerse en marcha.',
+    'transit:moon|sextil|mercury':
+      'Luna en sextil a Mercurio natal abre espacio para comunicacion mas fluida y receptividad a informacion con matiz emocional. El transito de pocos dias invita a conversaciones, estudio e intercambios que combinan razonamiento y sensibilidad. Buen momento para dialogos importantes, escritura creativa y resolucion de pendientes que necesitan claridad y empatia.',
+    'transit:moon|sextil|venus':
+      'Luna en sextil a Venus natal abre espacio para intercambios afectivos agradables y momentos de cuidado con lo que es bello y significativo. El transito de pocos dias invita a cultivar armonia en las relaciones y placer en las actividades del dia. Buen momento para fortalecer vinculos, actividades creativas y pequenas actitudes de afecto que hacen diferencia.',
+    'transit:moon|sextil|mars':
+      'Luna en sextil a Marte natal abre espacio para iniciativas movidas por motivacion genuina y uso practico de la energia disponible. El transito de pocos dias invita a accion concreta en algo que importa emocionalmente. Buen momento para iniciar proyectos personales, ejercitar el cuerpo y canalizar disposicion en actividades con proposito claro.',
+    'transit:moon|sextil|jupiter':
+      'Luna en sextil a Jupiter natal abre una ventana de optimismo moderado y facilidad de conectar con lo que nutre el crecimiento. El transito de pocos dias invita a expandir perspectivas y explorar posibilidades con curiosidad. Buen momento para aprender algo nuevo, planear viajes o estudios y cultivar conexiones que alimentan vision de futuro.',
+    'transit:moon|sextil|uranus':
+      'Luna en sextil a Urano natal abre espacio para renovacion leve y receptividad a lo inesperado o diferente del patron. El transito de pocos dias invita a flexibilidad creativa y novedad sin inestabilidad. Buen momento para experimentos, cambios de rutina y conexiones con personas que amplian perspectiva.',
+    'transit:moon|sextil|neptune':
+      'Luna en sextil a Neptuno natal abre espacio para sensibilidad refinada, intuicion y contacto con dimensiones creativas o espirituales. El transito de pocos dias invita a apertura para percepciones sutiles y empatia profunda. Buen momento para arte, meditacion, suenos y cualquier actividad que nutra el campo interior con levedad.',
+    'transit:moon|sextil|pluto':
+      'Luna en sextil a Pluton natal abre una ventana de acceso a emociones mas profundas sin que eso genere intensidad excesiva. El transito de pocos dias invita a reflexion sobre lo que necesita ser transformado con cuidado e intencion. Buen momento para autoconocimiento, conversaciones de profundidad y cualquier proceso de limpieza emocional suave.',
+    'transit:moon|sextil|ascendente':
+      'Luna en sextil al Ascendente natal abre espacio para mayor autenticidad en la presencia y facilidad de conexion interpersonal. El transito de pocos dias invita a interacciones espontaneas y expresion mas genuina de quien eres. Buen momento para encuentros, presentaciones y cualquier situacion que pida presencia receptiva y sin defensas excesivas.',
+    'transit:moon|sextil|meio_do_ceu':
+      'Luna en sextil al Medio Cielo natal abre una ventana para alinear vida emocional con direccion profesional de forma natural. El transito de pocos dias invita a acciones de visibilidad que no cuestan mucho esfuerzo cuando el momento es el adecuado. Buen momento para conversaciones con liderazgo, compartir proyectos y movimientos discretos de posicionamiento.',
 },
   'it-IT': {
     'transit:mercury|conjuncao|ascendente':
@@ -4431,5 +4631,105 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Plutone in trigono a Urano natale favorisce la combinazione fluida di trasformazione profonda e innovazione, con la capacita di rinnovare le strutture in modo radicale ma ben integrato. Il ciclo facilita cambiamenti che arrivano con piu fluidita e output costruttivo. Un buon momento per innovare in aree che richiedono un vero rinnovamento, sfruttando il potenziale di trasformazione creativa con apertura e intenzionalita.',
     'transit:pluto|trigono|venus':
       'Plutone in trigono a Venere natale favorisce trasformazioni costruttive nella vita affettiva e nei valori che arrivano con fluidita e profondita genuina. Il ciclo facilita l approfondimento dei legami autentici e l eliminazione naturale di cio che era superficiale. Un buon momento per rinnovare il campo affettivo e i valori con piu profondita e soddisfazione, coltivando cio che e genuino con apertura e presenza reale.',
+
+    // Luna — congiunzione
+    'transit:moon|conjuncao|mercury':
+      'Luna in congiunzione a Mercurio natale avvicina emozione e ragionamento, favorendo un espressione piu onesta di cio che si prova. Il transito di pochi giorni tende ad amplificare l intuizione nella comunicazione e la ricettivita ai messaggi dell ambiente. Buon momento per conversazioni rilevanti, annotazioni personali e decisioni che chiedono equilibrio tra logica e percezione interiore.',
+    'transit:moon|conjuncao|venus':
+      'Luna in congiunzione a Venere natale intensifica il bisogno di affetto, armonia e scambi piacevoli. Il transito di pochi giorni tende ad ampliare la sensibilita estetica e il desiderio di prendersi cura e essere curati. Momento opportuno per legami affettivi, creativita e attivita che alimentano piacere e benessere interno.',
+    'transit:moon|conjuncao|jupiter':
+      'Luna in congiunzione a Giove natale amplia le aspettative emotive e il desiderio di espansione e significato. Il transito tende a portare ottimismo e apertura a nuove possibilita, con rischio di eccesso di entusiasmo. Sfrutta lo slancio per avanzare in qualcosa di rilevante, mantenendo una valutazione realistica di cio che e possibile concretizzare ora.',
+    'transit:moon|conjuncao|saturn':
+      'Luna in congiunzione a Saturno natale puo portare peso emotivo temporaneo, sensazione di limitazione o maggiore bisogno di struttura. Il transito di pochi giorni tende a evidenziare responsabilita in sospeso e l impatto di scelte passate. Momento di maggiore serieta che invita ad aggiustamenti pratici e riconoscimento onesto di cio che deve essere organizzato.',
+    'transit:moon|conjuncao|neptune':
+      'Luna in congiunzione a Nettuno natale intensifica sensibilita, intuizione e apertura a percezioni sottili. Il transito di pochi giorni puo portare sogni vividi, empatia amplificata e necessita di raccoglimento creativo. Buon momento per il contatto con arte, meditazione e processi interiori, con attenzione a non idealizzare situazioni ne disperdere energia.',
+    'transit:moon|conjuncao|pluto':
+      'Luna in congiunzione a Plutone natale puo portare emozioni intense, necessita di controllo o temi legati alla trasformazione profonda. Il transito di pochi giorni tende a evidenziare cio che e latente nel campo emotivo. Utile per elaborare cio che e difficile da nominare, con cura di non reagire in modo eccessivo.',
+    'transit:moon|conjuncao|ascendente':
+      'Luna in congiunzione all Ascendente natale intensifica l espressione emotiva e il suo impatto sull ambiente circostante. Il transito di pochi giorni tende ad amplificare la sensibilita interpersonale e il bisogno di riconoscimento. Momento di maggiore visibilita emotiva: cio che si prova tende a essere percepito dagli altri con piu chiarezza.',
+    'transit:moon|conjuncao|meio_do_ceu':
+      'Luna in congiunzione al Medio Cielo natale avvicina vita emotiva e vita pubblica, potendo portare visibilita a temi personali. Il transito di pochi giorni tende ad amplificare la sensibilita attorno a carriera, reputazione e come si viene percepiti. Buon momento per allineare i bisogni emotivi con la direzione professionale in modo piu consapevole.',
+
+    // Luna — opposizione
+    'transit:moon|oposicao|sun':
+      'Luna in opposizione al Sole natale crea tensione tra bisogno emotivo e volonta consapevole, chiedendo equilibrio tra sentire e agire. Il transito di pochi giorni tende a evidenziare conflitti tra cio che si desidera internamente e cio che si proietta verso il mondo. Momento di revisione: cio che vuole l ego potrebbe non essere cio di cui il campo emotivo ha davvero bisogno.',
+    'transit:moon|oposicao|venus':
+      'Luna in opposizione a Venere natale puo creare tensione tra bisogno affettivo e aspettativa di reciprocita nelle relazioni. Il transito di pochi giorni tende a evidenziare squilibri negli scambi e nei valori personali. Momento per valutare cio di cui hai davvero bisogno nelle relazioni, senza proiettare bisogno ne cedere eccessivamente in cerca di armonia.',
+    'transit:moon|oposicao|saturn':
+      'Luna in opposizione a Saturno natale puo portare rigidita emotiva, sensazione di pressione esterna o difficolta ad accogliere cio che si prova. Il transito di pochi giorni tende a evidenziare dove struttura ed emozione sono in conflitto. Momento di cercare equilibrio tra responsabilita e cura interiore senza sopprimere cio che e legittimo sentire.',
+    'transit:moon|oposicao|uranus':
+      'Luna in opposizione a Urano natale puo portare instabilita emotiva improvvisa o un urgente bisogno di cambiamento e liberta. Il transito di pochi giorni tende a creare imprevedibilita nelle reazioni e difficolta a mantenere routine emotive stabili. Buon momento per osservare cio che chiede rinnovamento, senza prendere decisioni brusche per impulso.',
+    'transit:moon|oposicao|neptune':
+      'Luna in opposizione a Nettuno natale puo creare confusione emotiva, difficolta a discernere sentimenti reali da idealizzazioni o proiezioni. Il transito di pochi giorni tende ad amplificare la sensibilita all ambiguita e alle percezioni diffuse. Momento di evitare decisioni con alta carica emotiva: aspetta che la chiarezza torni prima di agire.',
+    'transit:moon|oposicao|pluto':
+      'Luna in opposizione a Plutone natale puo portare emozioni intense, confronto con cio che e custodito o dinamiche di potere nel campo affettivo. Il transito di pochi giorni tende a rivelare cio che era latente nelle relazioni prossime. Momento di osservare reazioni eccessive come segnali di qualcosa di piu profondo che chiede attenzione ed elaborazione.',
+    'transit:moon|oposicao|ascendente':
+      'Luna in opposizione all Ascendente natale crea tensione tra i propri bisogni emotivi e le richieste dell ambiente o delle relazioni. Il transito di pochi giorni tende a evidenziare lo squilibrio tra cio di cui hai bisogno e cio che gli altri si aspettano. Momento di revisione dei limiti: dare agli altri non puo costare il proprio sostegno interno.',
+    'transit:moon|oposicao|meio_do_ceu':
+      'Luna in opposizione al Medio Cielo natale puo creare tensione tra vita emotiva o familiare ed esigenze della vita pubblica e professionale. Il transito di pochi giorni tende a evidenziare dove base personale e reputazione esterna tirano in direzioni opposte. Momento per allineare cio che si cura internamente con cio che si proietta al mondo.',
+
+    // Luna — quadratura
+    'transit:moon|quadratura|sun':
+      'Luna in quadratura al Sole natale crea attrito tra bisogno emotivo ed espressione della volonta personale. Il transito di pochi giorni tende a evidenziare dove sentimento e impulso all azione sono in conflitto. Momento di rallentare prima di agire: aggiustare il corso interno puo essere piu efficace che forzare una decisione esterna.',
+    'transit:moon|quadratura|mercury':
+      'Luna in quadratura a Mercurio natale puo creare difficolta ad articolare cio che si prova o tensione tra emozione e ragionamento. Il transito di pochi giorni tende a generare incomprensioni nelle conversazioni o difficolta ad ascoltare con calma. Momento di privilegiare l ascolto prima di rispondere e rivedere i messaggi importanti prima di inviarli.',
+    'transit:moon|quadratura|venus':
+      'Luna in quadratura a Venere natale puo creare attrito tra bisogno affettivo e il modello di valore o armonia cercato nelle relazioni. Il transito di pochi giorni tende a evidenziare insoddisfazioni negli scambi o aspettative non soddisfatte. Momento per rivedere cio che vuoi davvero nei legami, senza proiettare frustrazione su chi ti e vicino.',
+    'transit:moon|quadratura|saturn':
+      'Luna in quadratura a Saturno natale puo portare peso emotivo, sensazione di blocco o conflitto tra sentire e adempiere agli obblighi. Il transito di pochi giorni tende a evidenziare dove rigidita o autocritica eccessiva interferiscono con il benessere. Momento per accogliere cio che e legittimo sentire senza cedere a autoesigenze sproporzionate.',
+    'transit:moon|quadratura|uranus':
+      'Luna in quadratura a Urano natale puo portare agitazione emotiva, impazienza o impulso di rottura senza base chiara. Il transito di pochi giorni tende a creare difficolta a mantenere stabilita nelle routine o nelle reazioni. Momento per osservare cio che provoca instabilita senza agire in modo reattivo: il cambiamento utile arriva con maggiore chiarezza.',
+    'transit:moon|quadratura|neptune':
+      'Luna in quadratura a Nettuno natale puo portare confusione emotiva, difficolta a mantenere il focus o tendenza a sfuggire dalla realta attraverso distrazioni. Il transito di pochi giorni tende a indebolire i confini tra cio che e reale e cio che e proiezione. Momento per mantenere radicamento pratico prima di agire sulla base di percezioni diffuse.',
+    'transit:moon|quadratura|pluto':
+      'Luna in quadratura a Plutone natale puo portare emozioni intense, sensazione di minaccia o impulso di controllo in situazioni di tensione. Il transito di pochi giorni tende a rivelare dinamiche di potere o reazioni sproporzionate a provocazioni minori. Momento per elaborare cio che emerge con cura: l intensita emotiva e informazione, non necessariamente realta.',
+    'transit:moon|quadratura|ascendente':
+      'Luna in quadratura all Ascendente natale crea attrito tra bisogni emotivi interni e il modo in cui ci si presenta al mondo. Il transito di pochi giorni tende a evidenziare il disallineamento tra cio che si prova e cio che si proietta. Momento per rivedere la maschera sociale: l autenticita tende a essere piu efficace dell aggiustamento di immagine.',
+    'transit:moon|quadratura|meio_do_ceu':
+      'Luna in quadratura al Medio Cielo natale puo creare tensione tra vita emotiva e le esigenze della vita professionale o pubblica. Il transito di pochi giorni tende a rendere difficile separare cio che si prova da cio che e atteso nel contesto lavorativo. Momento per creare limiti chiari tra spazio personale e spazio di consegna professionale.',
+
+    // Luna — trigono
+    'transit:moon|trigono|sun':
+      'Luna in trigono al Sole natale favorisce l integrazione tra vita emotiva ed espressione consapevole, creando fluidita tra sentire e agire. Il transito di pochi giorni sostiene autenticita e maggiore coerenza interna. Buon momento per decisioni che chiedono allineamento tra volonta e bisogno, iniziative personali e cura di cio che conta davvero.',
+    'transit:moon|trigono|mercury':
+      'Luna in trigono a Mercurio natale favorisce la comunicazione empatica, l espressione chiara dei sentimenti e la comprensione piu facile di cio che l altro vuol dire. Il transito di pochi giorni sostiene fluidita tra intuizione e ragionamento. Buon momento per conversazioni importanti, scrittura creativa e decisioni che chiedono sia logica sia sensibilita.',
+    'transit:moon|trigono|venus':
+      'Luna in trigono a Venere natale favorisce armonia affettiva, piacere negli scambi e maggiore facilita di prendersi cura e essere curati. Il transito di pochi giorni sostiene il benessere emotivo e l apertura a cio che e bello e piacevole. Buon momento per rafforzare legami, attivita creative e tutto cio che nutre il campo affettivo.',
+    'transit:moon|trigono|mars':
+      'Luna in trigono a Marte natale favorisce l azione mossa da motivazione genuina, con energia fisica ed emotiva allineate. Il transito di pochi giorni sostiene l iniziativa pratica con meno resistenza interna. Buon momento per iniziare progetti, fare esercizio fisico e qualsiasi attivita che richieda sia coraggio sia sensibilita.',
+    'transit:moon|trigono|jupiter':
+      'Luna in trigono a Giove natale favorisce apertura emotiva, ottimismo moderato e maggiore facilita di vedere cio che e possibile. Il transito di pochi giorni sostiene la disponibilita ad apprendere e a espandersi senza perdere equilibrio. Buon momento per condividere idee, pianificare il futuro e nutrire connessioni che alimentano la crescita personale.',
+    'transit:moon|trigono|uranus':
+      'Luna in trigono a Urano natale favorisce l apertura al nuovo senza generare instabilita emotiva. Il transito di pochi giorni sostiene creativita, intuizione e disponibilita a sperimentare percorsi diversi. Buon momento per idee inattese, leggeri cambiamenti di routine e connessioni che stimolano prospettive fuori dal solito schema.',
+    'transit:moon|trigono|neptune':
+      'Luna in trigono a Nettuno natale favorisce sensibilita elevata, intuizione raffinata e contatto con dimensioni creative e spirituali. Il transito di pochi giorni sostiene empatia profonda e apertura a percezioni sottili. Buon momento per attivita artistiche, meditazione, sogni lucidi e connessioni che toccano qualcosa di piu profondo del quotidiano.',
+    'transit:moon|trigono|pluto':
+      'Luna in trigono a Plutone natale favorisce il contatto con emozioni profonde in modo fluido e meno minaccioso. Il transito di pochi giorni sostiene la capacita di elaborare cio che normalmente e difficile da raggiungere. Buon momento per autoconoscenza, conversazioni intime rilevanti e qualsiasi processo che chieda coraggio emotivo senza eccesso di intensita.',
+    'transit:moon|trigono|ascendente':
+      'Luna in trigono all Ascendente natale favorisce autenticita nella presenza e maggiore facilita di esprimere chi si e al mondo. Il transito di pochi giorni sostiene empatia nelle interazioni e ricettivita dell ambiente. Buon momento per presentazioni personali, incontri importanti e qualsiasi situazione che chieda presenza genuina.',
+    'transit:moon|trigono|meio_do_ceu':
+      'Luna in trigono al Medio Cielo natale favorisce l integrazione tra vita emotiva e direzione professionale, con maggiore facilita di agire con scopo. Il transito di pochi giorni sostiene la ricettivita del pubblico e della leadership. Buon momento per comunicare progetti, rafforzare la reputazione e allineare cio che si prova con cio che si consegna.',
+
+    // Luna — sestile
+    'transit:moon|sextil|sun':
+      'Luna in sestile al Sole natale apre una finestra di fluidita tra vita emotiva ed espressione dell identita. Il transito di pochi giorni invita a piccole azioni allineate con cio che si vuole e cio che si prova. Buon momento per iniziative personali che necessitano di motivazione interiore genuina per partire.',
+    'transit:moon|sextil|mercury':
+      'Luna in sestile a Mercurio natale apre spazio per comunicazione piu fluida e ricettivita a informazioni con sfumatura emotiva. Il transito di pochi giorni invita a conversazioni, studio e scambi che combinano ragionamento e sensibilita. Buon momento per dialoghi importanti, scrittura creativa e risoluzione di questioni pendenti che richiedono chiarezza ed empatia.',
+    'transit:moon|sextil|venus':
+      'Luna in sestile a Venere natale apre spazio per scambi affettivi piacevoli e momenti di cura attorno a cio che e bello e significativo. Il transito di pochi giorni invita a coltivare armonia nelle relazioni e piacere nelle attivita quotidiane. Buon momento per rafforzare legami, attivita creative e piccoli gesti di affetto che fanno la differenza.',
+    'transit:moon|sextil|mars':
+      'Luna in sestile a Marte natale apre spazio per iniziative mosse da motivazione genuina e uso pratico dell energia disponibile. Il transito di pochi giorni invita all azione concreta in qualcosa che conta emotivamente. Buon momento per iniziare progetti personali, fare esercizio fisico e canalizzare la disponibilita in attivita con scopo chiaro.',
+    'transit:moon|sextil|jupiter':
+      'Luna in sestile a Giove natale apre una finestra di ottimismo moderato e facilita di connettersi con cio che nutre la crescita. Il transito di pochi giorni invita ad ampliare le prospettive e a esplorare possibilita con curiosita. Buon momento per imparare qualcosa di nuovo, pianificare viaggi o studi e coltivare connessioni che alimentano la visione del futuro.',
+    'transit:moon|sextil|uranus':
+      'Luna in sestile a Urano natale apre spazio per rinnovamento leggero e ricettivita a cio che e inatteso o diverso dal solito. Il transito di pochi giorni invita a flessibilita creativa e novita senza instabilita. Buon momento per esperimenti, cambiamenti di routine e connessioni con persone che ampliano la prospettiva.',
+    'transit:moon|sextil|neptune':
+      'Luna in sestile a Nettuno natale apre spazio per sensibilita raffinata, intuizione e contatto con dimensioni creative o spirituali. Il transito di pochi giorni invita all apertura a percezioni sottili e all empatia profonda. Buon momento per arte, meditazione, sogni e qualsiasi attivita che nutra il campo interiore con leggerezza.',
+    'transit:moon|sextil|pluto':
+      'Luna in sestile a Plutone natale apre una finestra di accesso a emozioni piu profonde senza che cio generi intensita eccessiva. Il transito di pochi giorni invita a riflessione su cio che deve essere trasformato con cura e intenzione. Buon momento per autoconoscenza, conversazioni di profondita e qualsiasi processo di pulizia emotiva leggera.',
+    'transit:moon|sextil|ascendente':
+      'Luna in sestile all Ascendente natale apre spazio per maggiore autenticita nella presenza e facilita di connessione interpersonale. Il transito di pochi giorni invita a interazioni spontanee e all espressione piu genuina di se stessi. Buon momento per incontri, presentazioni e qualsiasi situazione che chieda presenza ricettiva e senza eccessive difese.',
+    'transit:moon|sextil|meio_do_ceu':
+      'Luna in sestile al Medio Cielo natale apre una finestra per allineare vita emotiva e direzione professionale in modo naturale. Il transito di pochi giorni invita ad azioni di visibilita che non costano molto sforzo quando il momento e quello giusto. Buon momento per conversazioni con la leadership, condivisione di progetti e movimenti discreti di posizionamento.',
 },
 }

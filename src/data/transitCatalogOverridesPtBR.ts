@@ -1473,4 +1473,104 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Plutao em trigono a Urano natal favorece a combinacao fluida de transformacao profunda e inovacao, com capacidade de renovar estruturas de forma radical mas bem integrada. O ciclo facilita mudancas que chegam com mais fluidez e producao construtiva. Um bom momento para inovar em areas que pedem renovacao real, aproveitando o potencial de transformacao criativa com abertura e intencionalidade.',
   'transit:pluto|trigono|venus':
     'Plutao em trigono a Venus natal favorece transformacoes construtivas na vida afetiva e nos valores que chegam com fluidez e profundidade genuina. O ciclo facilita o aprofundamento dos vinculos genuinos e a eliminacao natural do que era superficial. Um bom momento para renovar o campo afetivo e os valores com mais profundidade e satisfacao, cultivando o que e genuino com abertura e presenca real.',
+
+  // Lua — conjuncao
+  'transit:moon|conjuncao|mercury':
+    'Lua em conjuncao a Mercurio natal aproxima emocao e raciocinio, favorecendo expressao mais honesta do que se sente. O transito de poucos dias tende a ampliar intuicao na comunicacao e receptividade a mensagens do ambiente. Bom momento para conversas relevantes, registros pessoais e decisoes que pedem equilibrio entre logica e percepcao interior.',
+  'transit:moon|conjuncao|venus':
+    'Lua em conjuncao a Venus natal intensifica necessidade de afeto, harmonia e trocas agradaveis. O transito de poucos dias costuma ampliar sensibilidade estetica e vontade de cuidar e ser cuidado. Momento oportuno para vinculos afetivos, criatividade e atividades que alimentam prazer e bem-estar interno.',
+  'transit:moon|conjuncao|jupiter':
+    'Lua em conjuncao a Jupiter natal amplia expectativas emocionais e desejo de expansao e significado. O transito tende a trazer otimismo e abertura para novas possibilidades, com risco de exagero na empolgacao. Aproveite o impulso para avancar em algo relevante, mantendo avaliacao realista do que e possivel concretizar agora.',
+  'transit:moon|conjuncao|saturn':
+    'Lua em conjuncao a Saturno natal pode trazer peso emocional temporario, sensacao de limitacao ou maior necessidade de estrutura. O transito de poucos dias tende a evidenciar responsabilidades pendentes e o impacto de escolhas passadas. Momento de maior seriedade que convida a ajustes praticos e reconhecimento honesto do que precisa ser organizado.',
+  'transit:moon|conjuncao|neptune':
+    'Lua em conjuncao a Netuno natal intensifica sensibilidade, intuicao e abertura para percepcoes sutis. O transito de poucos dias pode trazer sonhos vivos, empatia ampliada e necessidade de recolhimento criativo. Bom momento para contato com arte, meditacao e processos interiores, com atencao para nao idealizar situacoes ou dispersar energia.',
+  'transit:moon|conjuncao|pluto':
+    'Lua em conjuncao a Plutao natal pode trazer emocoes intensas, necessidade de controle ou temas ligados a transformacao profunda. O transito de poucos dias tende a evidenciar o que esta latente no campo emocional. Util para processar o que e dificil de nomear, com cuidado para nao reagir de forma excessiva.',
+  'transit:moon|conjuncao|ascendente':
+    'Lua em conjuncao ao Ascendente natal intensifica expressao emocional e impacto sobre o ambiente ao redor. O transito de poucos dias tende a ampliar sensibilidade interpessoal e necessidade de reconhecimento. Momento de maior visibilidade emocional: o que se sente tende a ser percebido pelos outros com mais clareza.',
+  'transit:moon|conjuncao|meio_do_ceu':
+    'Lua em conjuncao ao Meio do Ceu natal aproxima vida emocional e vida publica, podendo trazer visibilidade a temas pessoais. O transito de poucos dias tende a ampliar sensibilidade a questoes de carreira, reputacao e como voce e percebido. Bom momento para alinhar necessidades emocionais com direcao profissional de forma mais consciente.',
+
+  // Lua — oposicao
+  'transit:moon|oposicao|sun':
+    'Lua em oposicao ao Sol natal cria tensao entre necessidade emocional e vontade consciente, pedindo equilibrio entre sentir e agir. O transito de poucos dias tende a evidenciar conflitos entre o que se deseja internamente e o que se projeta para o mundo. Momento de revisao: o que o ego quer pode nao ser o que o campo emocional realmente precisa.',
+  'transit:moon|oposicao|venus':
+    'Lua em oposicao a Venus natal pode criar tensao entre necessidade afetiva e expectativa de reciprocidade nos relacionamentos. O transito de poucos dias tende a evidenciar desequilibrios em trocas e valores pessoais. Momento de avaliar o que voce realmente precisa nas relacoes, sem projetar carencia ou ceder em excesso por busca de harmonia.',
+  'transit:moon|oposicao|saturn':
+    'Lua em oposicao a Saturno natal pode trazer rigidez emocional, sensacao de cobranca externa ou dificuldade de acolher o que se sente. O transito de poucos dias tende a evidenciar onde estrutura e emocao estao em conflito. Momento de buscar equilibrio entre responsabilidade e cuidado interno sem supressao do que e legitimo sentir.',
+  'transit:moon|oposicao|uranus':
+    'Lua em oposicao a Urano natal pode trazer instabilidade emocional repentina ou necessidade urgente de mudanca e liberdade. O transito de poucos dias tende a criar imprevisibilidade em reacoes e dificuldade de manter rotina emocional estavel. Bom momento para observar o que pede renovacao, sem tomar decisoes abruptas por impulso.',
+  'transit:moon|oposicao|neptune':
+    'Lua em oposicao a Netuno natal pode criar confusao emocional, dificuldade de discernir sentimentos reais de idealizacoes ou projecoes. O transito de poucos dias tende a ampliar sensibilidade a ambiguidade e percepcoes difusas. Momento de evitar decisoes com carga emocional elevada: espere a clareza voltar antes de agir.',
+  'transit:moon|oposicao|pluto':
+    'Lua em oposicao a Plutao natal pode trazer emocoes intensas, confrontos com o que e guardado ou dinamicas de poder no campo afetivo. O transito de poucos dias tende a revelar o que estava latente em relacoes proximas. Momento de observar reacoes excessivas como sinais de algo mais profundo que pede atencao e processamento.',
+  'transit:moon|oposicao|ascendente':
+    'Lua em oposicao ao Ascendente natal cria tensao entre necessidades emocionais proprias e demandas do ambiente ou das relacoes. O transito de poucos dias tende a evidenciar desequilibrio entre o que voce precisa e o que os outros esperam. Momento de revisao de limites: dar aos outros nao pode custar a propria sustentacao interna.',
+  'transit:moon|oposicao|meio_do_ceu':
+    'Lua em oposicao ao Meio do Ceu natal pode criar tensao entre vida emocional ou familiar e exigencias da vida publica e profissional. O transito de poucos dias tende a evidenciar onde base pessoal e reputacao externa puxam em direcoes opostas. Momento de alinhar o que se cuida internamente com o que se projeta ao mundo.',
+
+  // Lua — quadratura
+  'transit:moon|quadratura|sun':
+    'Lua em quadratura ao Sol natal cria friccao entre necessidade emocional e expressao da vontade pessoal. O transito de poucos dias tende a evidenciar onde sentimento e impulso de acao estao em conflito. Momento de desacelerar antes de agir: ajustar o curso interno pode ser mais eficaz do que forcar uma decisao externa.',
+  'transit:moon|quadratura|mercury':
+    'Lua em quadratura a Mercurio natal pode criar dificuldade para articular o que se sente ou tensao entre emocao e raciocinio. O transito de poucos dias tende a gerar mal-entendidos em conversas ou dificuldade de ouvir com calma. Momento de priorizar escuta antes de responder e revisar mensagens importantes antes de enviar.',
+  'transit:moon|quadratura|venus':
+    'Lua em quadratura a Venus natal pode criar atrito entre necessidade afetiva e padrao de valor ou harmonia que se busca nas relacoes. O transito de poucos dias tende a evidenciar insatisfacoes em trocas ou expectativas nao atendidas. Momento de revisar o que voce realmente quer em vinculos, sem projetar frustracao em quem esta por perto.',
+  'transit:moon|quadratura|saturn':
+    'Lua em quadratura a Saturno natal pode trazer peso emocional, sensacao de bloqueio ou conflito entre sentir e cumprir obrigacoes. O transito de poucos dias tende a evidenciar onde rigidez ou autocritica excessiva interferem no bem-estar. Momento de acolher o que e legitimo sentir sem ceder a autocobranças desproporcionais.',
+  'transit:moon|quadratura|uranus':
+    'Lua em quadratura a Urano natal pode trazer agitacao emocional, impaciencia ou impulso de ruptura sem base clara. O transito de poucos dias tende a criar dificuldade para manter estabilidade em rotina ou reacoes. Momento de observar o que provoca instabilidade sem agir de forma reativa: a mudanca util vem com mais clareza.',
+  'transit:moon|quadratura|neptune':
+    'Lua em quadratura a Netuno natal pode trazer confusao emocional, dificuldade de manter foco ou tendencia a escapar da realidade por distracoes. O transito de poucos dias tende a enfraquecer limites entre o que e real e o que e projecao. Momento de manter aterramento pratico antes de agir com base em percepcoes difusas.',
+  'transit:moon|quadratura|pluto':
+    'Lua em quadratura a Plutao natal pode trazer emocoes intensas, sensacao de ameaca ou impulso de controle em situacoes de tensao. O transito de poucos dias tende a revelar dinamicas de poder ou reacoes desproporcionais a provocacoes menores. Momento de processar o que surge com cuidado: a intensidade emocional e informacao, nao necessariamente realidade.',
+  'transit:moon|quadratura|ascendente':
+    'Lua em quadratura ao Ascendente natal cria friccao entre necessidades emocionais internas e a forma como voce se apresenta ao mundo. O transito de poucos dias tende a evidenciar desalinhamento entre o que se sente e o que se projeta. Momento de revisar a mascara social: autenticidade tende a ser mais eficaz que ajuste de imagem.',
+  'transit:moon|quadratura|meio_do_ceu':
+    'Lua em quadratura ao Meio do Ceu natal pode criar tensao entre vida emocional e demandas da vida profissional ou publica. O transito de poucos dias tende a gerar dificuldade de separar o que se sente do que e esperado no contexto de trabalho. Momento de criar limites claros entre espaco pessoal e espaco de entrega profissional.',
+
+  // Lua — trigono
+  'transit:moon|trigono|sun':
+    'Lua em trigono ao Sol natal favorece integracao entre vida emocional e expressao consciente, criando fluidez entre sentir e agir. O transito de poucos dias sustenta autenticidade e maior coerencia interna. Bom momento para decisoes que pedem alinhamento entre vontade e necessidade, iniciativas pessoais e acolhimento do que importa de verdade.',
+  'transit:moon|trigono|mercury':
+    'Lua em trigono a Mercurio natal favorece comunicacao empatica, expressao clara dos sentimentos e compreensao mais facil do que o outro quer dizer. O transito de poucos dias sustenta fluidez entre intuicao e raciocinio. Bom momento para conversas importantes, escrita criativa e decisoes que pedem tanto logica quanto sensibilidade.',
+  'transit:moon|trigono|venus':
+    'Lua em trigono a Venus natal favorece harmonia afetiva, prazer nas trocas e maior facilidade de cuidar e ser cuidado. O transito de poucos dias sustenta bem-estar emocional e abertura para o que e belo e agradavel. Bom momento para fortalecer vinculos, atividades criativas e qualquer coisa que nutra o campo afetivo.',
+  'transit:moon|trigono|mars':
+    'Lua em trigono a Marte natal favorece acao movida por motivacao genuina, com energia fisica e emocional alinhadas. O transito de poucos dias sustenta iniciativa pratica com menos resistencia interna. Bom momento para comecar projetos, exercicio fisico e qualquer atividade que precise tanto de coragem quanto de sensibilidade.',
+  'transit:moon|trigono|jupiter':
+    'Lua em trigono a Jupiter natal favorece abertura emocional, otimismo moderado e maior facilidade de ver o que e possivel. O transito de poucos dias sustenta disposicao para aprender e expandir sem perder equilibrio. Bom momento para compartilhar ideias, planejar o futuro e nutrir conexoes que alimentam crescimento pessoal.',
+  'transit:moon|trigono|uranus':
+    'Lua em trigono a Urano natal favorece abertura para o novo sem gerar instabilidade emocional. O transito de poucos dias sustenta criatividade, intuicao e disposicao para experimentar caminhos diferentes. Bom momento para ideias inesperadas, mudancas leves de rotina e conexoes que estimulam perspectivas fora do padrao habitual.',
+  'transit:moon|trigono|neptune':
+    'Lua em trigono a Netuno natal favorece sensibilidade elevada, intuicao refinada e contato com dimensoes criativas e espirituais. O transito de poucos dias sustenta empatia profunda e abertura para percepcoes sutis. Bom momento para atividades artisticas, meditacao, sonhos lucidos e conexoes que tocam algo mais profundo do que o cotidiano.',
+  'transit:moon|trigono|pluto':
+    'Lua em trigono a Plutao natal favorece contato com emocoes profundas de forma fluida e menos ameacadora. O transito de poucos dias sustenta capacidade de processar o que normalmente e dificil de acessar. Bom momento para autoconhecimento, conversas intimas relevantes e qualquer processo que peca coragem emocional sem excesso de intensidade.',
+  'transit:moon|trigono|ascendente':
+    'Lua em trigono ao Ascendente natal favorece autenticidade na presenca e maior facilidade de expressar quem voce e para o mundo. O transito de poucos dias sustenta empatia nas interacoes e receptividade do ambiente. Bom momento para apresentacoes pessoais, encontros importantes e qualquer situacao que peca presenca genuina.',
+  'transit:moon|trigono|meio_do_ceu':
+    'Lua em trigono ao Meio do Ceu natal favorece integracao entre vida emocional e direcao profissional, com mais facilidade de agir com proposito. O transito de poucos dias sustenta receptividade do publico e da lideranca. Bom momento para comunicar projetos, fortalecer reputacao e alinhar o que voce sente com o que entrega.',
+
+  // Lua — sextil
+  'transit:moon|sextil|sun':
+    'Lua em sextil ao Sol natal abre uma janela de fluidez entre vida emocional e expressao da identidade. O transito de poucos dias convida a pequenas acoes alinhadas com o que se quer e o que se sente. Bom momento para iniciativas pessoais que precisam de motivacao interior genuina para sair do lugar.',
+  'transit:moon|sextil|mercury':
+    'Lua em sextil a Mercurio natal abre espaco para comunicacao mais fluida e receptividade a informacoes com nuance emocional. O transito de poucos dias convida a conversas, estudos e trocas que combinam raciocinio e sensibilidade. Bom momento para dialogos importantes, escrita criativa e resolucao de pendencias que precisam de clareza e empatia.',
+  'transit:moon|sextil|venus':
+    'Lua em sextil a Venus natal abre espaco para trocas afetivas agradaveis e momentos de cuidado com o que e belo e significativo. O transito de poucos dias convida a cultivar harmonia nas relacoes e prazer nas atividades do dia. Bom momento para fortalecer vinculos, atividades criativas e pequenas atitudes de afeto que fazem diferenca.',
+  'transit:moon|sextil|mars':
+    'Lua em sextil a Marte natal abre espaco para iniciativas movidas por motivacao genuina e uso pratico da energia disponivel. O transito de poucos dias convida a acao concreta em algo que importa emocionalmente. Bom momento para comecar projetos pessoais, exercitar o corpo e canalizar disposicao em atividades com proposito claro.',
+  'transit:moon|sextil|jupiter':
+    'Lua em sextil a Jupiter natal abre uma janela de otimismo moderado e facilidade de conectar com o que nutre crescimento. O transito de poucos dias convida a expandir perspectivas e explorar possibilidades com curiosidade. Bom momento para aprender algo novo, planejar viagens ou estudos e cultivar conexoes que alimentam visao de futuro.',
+  'transit:moon|sextil|uranus':
+    'Lua em sextil a Urano natal abre espaco para renovacao leve e receptividade ao que e inesperado ou diferente do padrao. O transito de poucos dias convida a flexibilidade criativa e novidade sem instabilidade. Bom momento para experimentos, mudancas de rotina e conexoes com pessoas que ampliam perspectiva.',
+  'transit:moon|sextil|neptune':
+    'Lua em sextil a Netuno natal abre espaco para sensibilidade refinada, intuicao e contato com dimensoes criativas ou espirituais. O transito de poucos dias convida a abertura para percepcoes sutis e empatia profunda. Bom momento para arte, meditacao, sonhos e qualquer atividade que nutra o campo interior com leveza.',
+  'transit:moon|sextil|pluto':
+    'Lua em sextil a Plutao natal abre uma janela de acesso a emocoes mais profundas sem que isso gere intensidade excessiva. O transito de poucos dias convida a reflexao sobre o que precisa ser transformado com cuidado e intencao. Bom momento para autoconhecimento, conversas de profundidade e qualquer processo de limpeza emocional suave.',
+  'transit:moon|sextil|ascendente':
+    'Lua em sextil ao Ascendente natal abre espaco para maior autenticidade na presenca e facilidade de conexao interpessoal. O transito de poucos dias convida a interacoes espontaneas e expressao mais genuina de quem voce e. Bom momento para encontros, apresentacoes e qualquer situacao que peca presenca receptiva e sem defesas excessivas.',
+  'transit:moon|sextil|meio_do_ceu':
+    'Lua em sextil ao Meio do Ceu natal abre uma janela para alinhar vida emocional com direcao profissional de forma natural. O transito de poucos dias convida a acoes de visibilidade que nao custam muito esforco quando o timing esta certo. Bom momento para conversas com lideranca, compartilhamento de projetos e movimentos discretos de posicionamento.',
 }
