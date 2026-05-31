@@ -593,6 +593,10 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Marte em sextil ao Sol favorece iniciativa com boa leitura de direcao propria e energia disponivel. O ciclo tende a facilitar acao focada quando ha integracao entre vontade e prioridade real. Use o momento para avancar em metas concretas com objetividade.',
   'transit:mars|sextil|meio_do_ceu':
     'Marte em sextil ao Meio do Ceu favorece iniciativa na carreira com bom alinhamento de ritmo e direcao. O ciclo tende a apoiar movimentos estrategicos quando ha foco em metas de visibilidade. Execute por prioridades e acompanhe progresso com criterio.',
+  'transit:mars|conjuncao|meio_do_ceu':
+    'Marte em conjuncao ao Meio do Ceu intensifica impulso de acao em carreira e visibilidade publica. A fase favorece iniciativas de posicionamento quando energia e direcionada com estrategia e sem pressa excessiva. Avance em metas profissionais concretas, priorizando consistencia de entrega sobre velocidade de execucao.',
+  'transit:mars|quadratura|meio_do_ceu':
+    'Marte em quadratura ao Meio do Ceu pode criar atrito entre impulso de acao e as exigencias da vida profissional ou da reputacao. A fase tende a evidenciar onde ritmo de execucao e expectativa externa estao descalibrados. Reduza dispersao, priorize o que tem impacto direto e evite confrontos desnecessarios no ambiente de trabalho.',
   'transit:mars|trigono|sun':
     'Marte em trigono ao Sol reforca fluidez entre iniciativa e sentido de direcao. A fase tende a favorecer avancos com menor reatividade e mais intencao consciente. Foque no essencial e consolide resultado com constancia.',
   'transit:mars|trigono|meio_do_ceu':

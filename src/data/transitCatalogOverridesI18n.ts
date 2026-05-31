@@ -599,6 +599,10 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Mars sextile Sun favors initiative with a clear read of personal direction and available energy. This cycle tends to support focused action when will and real priority are integrated. Use this moment to advance concrete goals with objectivity.',
     'transit:mars|sextil|meio_do_ceu':
       'Mars sextile Midheaven favors career initiative with good pacing and directional alignment. This cycle tends to support strategic moves when focus is placed on visibility goals. Execute by priority and track progress with clear criteria.',
+    'transit:mars|conjuncao|meio_do_ceu':
+      'Mars conjunct Midheaven intensifies the drive to act on career and public visibility. This phase supports positioning initiatives when energy is channeled with strategy and without excessive haste. Advance on concrete professional goals, prioritizing consistent delivery over execution speed.',
+    'transit:mars|quadratura|meio_do_ceu':
+      'Mars square Midheaven may create friction between the impulse to act and the demands of professional life or reputation. This phase tends to surface where execution pace and external expectations are out of sync. Reduce dispersion, prioritize what has direct impact, and avoid unnecessary confrontations in the work environment.',
     'transit:mars|trigono|sun':
       'Mars trine Sun reinforces flow between initiative and sense of direction. This phase tends to favor progress with less reactivity and more conscious intent. Focus on essentials and consolidate results with consistency.',
     'transit:mars|trigono|meio_do_ceu':
@@ -2176,6 +2180,10 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte en sextil al Sol favorece iniciativa con lectura clara de direccion personal y energia disponible. Este ciclo tiende a apoyar accion enfocada cuando voluntad y prioridad real estan integradas. Usa el momento para avanzar objetivos concretos con objetividad.',
     'transit:mars|sextil|meio_do_ceu':
       'Marte en sextil al Medio Cielo favorece iniciativa profesional con buen ritmo y alineacion de direccion. Este ciclo tiende a apoyar movimientos estrategicos cuando el foco esta en metas de visibilidad. Ejecuta por prioridad y rastrea avance con criterios claros.',
+    'transit:mars|conjuncao|meio_do_ceu':
+      'Marte en conjuncion al Medio Cielo intensifica el impulso de actuar en carrera y visibilidad publica. Esta fase favorece iniciativas de posicionamiento cuando la energia se canaliza con estrategia y sin prisa excesiva. Avanza en metas profesionales concretas priorizando consistencia de entrega sobre velocidad de ejecucion.',
+    'transit:mars|quadratura|meio_do_ceu':
+      'Marte en cuadratura al Medio Cielo puede crear friccion entre el impulso de accion y las exigencias de la vida profesional o la reputacion. Esta fase tiende a evidenciar donde el ritmo de ejecucion y la expectativa externa estan descalibrados. Reduce dispersion, prioriza lo que tiene impacto directo y evita confrontaciones innecesarias en el entorno laboral.',
     'transit:mars|trigono|sun':
       'Marte en trigono al Sol refuerza flujo entre iniciativa y sentido de direccion. Esta fase tiende a favorecer avance con menos reactividad y mas intencion consciente. Concentra en lo esencial y consolida resultados con consistencia.',
     'transit:mars|trigono|meio_do_ceu':
@@ -3752,6 +3760,10 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
       'Marte in sextile al Sole favorisce iniziativa con lettura chiara di direzione personale e energia disponibile. Questo ciclo tende a supportare azione focalizzata quando volonta e priorita reale sono integrate. Usa il momento per avanzare obiettivi concreti con obiettivita.',
     'transit:mars|sextil|meio_do_ceu':
       'Marte in sextile al Medio Cielo favorisce iniziativa professionale con buon ritmo e allineamento di direzione. Questo ciclo tende a supportare mosse strategiche quando il focus e su obiettivi di visibilita. Esegui per priorita e monitora avanzamento con criteri chiari.',
+    'transit:mars|conjuncao|meio_do_ceu':
+      'Marte in congiunzione al Medio Cielo intensifica l impulso ad agire sulla carriera e la visibilita pubblica. Questa fase favorisce iniziative di posizionamento quando l energia e canalizzata con strategia e senza eccessiva fretta. Avanza su obiettivi professionali concreti privilegiando consistenza di risultato sulla velocita di esecuzione.',
+    'transit:mars|quadratura|meio_do_ceu':
+      'Marte in quadratura al Medio Cielo puo creare attrito tra l impulso ad agire e le esigenze della vita professionale o della reputazione. Questa fase tende a evidenziare dove il ritmo di esecuzione e le aspettative esterne sono disallineati. Riduci dispersione, dai priorita a cio che ha impatto diretto ed evita confronti inutili nell ambiente di lavoro.',
     'transit:mars|trigono|sun':
       'Marte in trigono al Sole rafforza il flusso tra iniziativa e senso di direzione. Questa fase tende a favorire avanzamento con meno reattivita e piu intenzione consapevole. Concentrati sull essenziale e consolida risultati con consistenza.',
     'transit:mars|trigono|meio_do_ceu':

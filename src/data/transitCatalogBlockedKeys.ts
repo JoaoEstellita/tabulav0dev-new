@@ -125,4 +125,6 @@ export const TRANSIT_CATALOG_BLOCKED_KEYS = new Set<string>([
   'transit:moon|sextil|pluto',
   'transit:moon|sextil|ascendente',
   'transit:moon|sextil|meio_do_ceu',
+  'transit:mars|conjuncao|meio_do_ceu',
+  'transit:mars|quadratura|meio_do_ceu',
 ])
