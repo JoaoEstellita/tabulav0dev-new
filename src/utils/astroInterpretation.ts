@@ -1,9 +1,4 @@
 import { normalizeLanguage, type AppLanguage } from '../i18n/appI18n'
-import { isInterpretationV2Enabled } from './featureFlags'
-import {
-  buildTransitInterpretationV2,
-  type TransitInterpretationV2,
-} from './transitInterpretationV2'
 import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../data/transitCatalogOverridesI18n'
@@ -1383,7 +1378,6 @@ export type UnifiedTransitNarrative = {
   keywords: string[]
   actionText: string
   metaText: string
-  interpretationV2?: TransitInterpretationV2 | null
 }
 
 export function buildUnifiedTransitNarrative(
@@ -1417,23 +1411,6 @@ export function buildUnifiedTransitNarrative(
   // Additional context must stay in action/meta blocks, not by changing the core narrative body.
   const modalBody = directText
 
-  const interpretationV2 = (() => {
-    if (!isInterpretationV2Enabled()) return null
-    const houseLabel = house ? (lang === 'en-US' ? `House ${house}` : `Casa ${house}`) : null
-    return buildTransitInterpretationV2({
-      transitKey,
-      aspectKey,
-      title: `${transitPlanet} ${aspectLabel} ${targetLabel}`.trim(),
-      lifeArea: areaLabel,
-      houseLabel,
-      timingLabel: `${tx.phasePrefix}: ${phaseLabel}`,
-      shortText: directText,
-      fullText: modalBody || directText,
-      actionText,
-      metaText: metaParts.join(' '),
-    })
-  })()
-
   return {
     transitKey,
     shortText: directText,
@@ -1442,6 +1419,5 @@ export function buildUnifiedTransitNarrative(
     keywords,
     actionText,
     metaText: metaParts.join(' '),
-    interpretationV2,
   }
 }

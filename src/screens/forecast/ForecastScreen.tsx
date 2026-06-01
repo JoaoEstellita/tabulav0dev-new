@@ -22,7 +22,6 @@ import { getForecastMaxDays, getPlanById } from '../../constants/plans'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 import { buildTransitTitle as buildSharedTransitTitle, extractHouseNumber } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
-import type { TransitInterpretationV2 } from '../../utils/transitInterpretationV2'
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from '../../utils/statusAxes'
 import { backendFetch } from '../../services/backend/client'
 import StarLoader from '../../components/StarLoader'
@@ -572,7 +571,6 @@ const MemoDayEvents = React.memo(function MemoDayEvents({
     metaText: string
     impactValue01: number
     impactLabel: string
-    interpretationV2?: TransitInterpretationV2 | null
   }>
   onOpenEventDetail: (eventId: string) => void
   dayEventsLabel: string
@@ -1304,7 +1302,6 @@ export default function ForecastScreen() {
           `Impacto relativo ${Math.round(impactValue01 * 100)}%`,
           { value: Math.round(impactValue01 * 100) }
         ),
-        interpretationV2: unifiedNarrative.interpretationV2 || null,
       }
     })
   }, [buildEventDetailLines, eventPhaseMap, selectedDateKey, selectedEvents, tr, language])
@@ -1577,7 +1574,6 @@ export default function ForecastScreen() {
             actionText={detail.actionHint}
             metaText={detail.metaText}
             keywords={buildEventKeywords(detail.event, detail.phase?.label || null, language)}
-            interpretationV2={detail.interpretationV2 || null}
           />
         )
       })()}

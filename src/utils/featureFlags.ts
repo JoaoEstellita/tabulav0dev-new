@@ -6,7 +6,5 @@ export function isAstroEngineV2ShadowEnabled(): boolean {
 }
 
 export function isInterpretationV2Enabled(): boolean {
-  const opt_out = String(process.env.EXPO_PUBLIC_INTERPRETATION_V2_DISABLED || '').trim().toLowerCase()
-  if (truthy.has(opt_out)) return false
-  return true
+  return false
 }
