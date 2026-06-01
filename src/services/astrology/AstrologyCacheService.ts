@@ -21,7 +21,7 @@ export interface AstrologyCache {
   cacheSource: 'prokerala' | 'fallback' | 'local'
   userId: string
   houseSystem?: string
-  birthDataHash: string // Para detectar mudan+ºas nos dados de nascimento
+  birthDataHash: string // Para detectar mudan+ï¿½as nos dados de nascimento
 }
 
 export interface CacheStatus {
@@ -40,9 +40,9 @@ class AstrologyCacheService {
   private readonly CACHE_DURATION_HOURS = 12
   private readonly MIN_REFRESH_HOURS = 6
   private readonly MAX_DAILY_REQUESTS = 2
-  private readonly DATA_VERSION = '1.4'
+  private readonly DATA_VERSION = '1.5'
   
-  // Cache local (AsyncStorage) para acesso r+ípido
+  // Cache local (AsyncStorage) para acesso r+ï¿½pido
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'
   private toValidDate(input: any, fallback: Date = new Date()): Date {
     if (input instanceof Date && !Number.isNaN(input.getTime())) return input
@@ -62,7 +62,7 @@ class AstrologyCacheService {
   }
   
   /**
-   * Gera hash dos dados de nascimento para detectar mudan+ºas
+   * Gera hash dos dados de nascimento para detectar mudan+ï¿½as
    */
   private generateBirthDataHash(birthData: BirthData): string {
     const system = this.getCurrentHouseSystem()
@@ -70,14 +70,14 @@ class AstrologyCacheService {
   }
 
   /**
-   * Obt+®m a data atual no formato YYYY-MM-DD
+   * Obt+ï¿½m a data atual no formato YYYY-MM-DD
    */
   private getTodayString(): string {
     return new Date().toISOString().split('T')[0]
   }
 
   /**
-   * Verifica se o cache +® v+ílido e pode ser usado
+   * Verifica se o cache +ï¿½ v+ï¿½lido e pode ser usado
    */
   async getCacheStatus(userId: string, birthData: BirthData): Promise<CacheStatus> {
     try {
@@ -156,12 +156,12 @@ class AstrologyCacheService {
         requestsToday = 0
       }
       
-      // Pode fazer refresh se passou 6h E n+úo atingiu limite di+írio
+      // Pode fazer refresh se passou 6h E n+ï¿½o atingiu limite di+ï¿½rio
       const canRefreshByTime = hoursOld >= this.MIN_REFRESH_HOURS
       const canRefreshByLimit = requestsToday < this.MAX_DAILY_REQUESTS
       const canRefresh = canRefreshByTime && canRefreshByLimit
       
-      // Calcular pr+¦ximo refresh dispon+¡vel
+      // Calcular pr+ï¿½ximo refresh dispon+ï¿½vel
       let nextRefreshAvailable: Date | null = null
       if (!canRefreshByTime) {
         nextRefreshAvailable = new Date(cache.lastUpdate.getTime() + (this.MIN_REFRESH_HOURS * 60 * 60 * 1000))
@@ -184,7 +184,7 @@ class AstrologyCacheService {
         lastUpdate: cache.lastUpdate
       }
     } catch (error) {
-      console.error('ÔØî Erro ao verificar status do cache:', error)
+      console.error('ï¿½ï¿½ï¿½ Erro ao verificar status do cache:', error)
       return {
         isValid: false,
         isExpired: true,
@@ -200,11 +200,11 @@ class AstrologyCacheService {
   }
 
   /**
-   * Obt+®m dados do cache (Firestore + AsyncStorage)
+   * Obt+ï¿½m dados do cache (Firestore + AsyncStorage)
    */
   async getCache(userId: string): Promise<AstrologyCache | null> {
     try {
-      // Primeiro tenta cache local (mais r+ípido)
+      // Primeiro tenta cache local (mais r+ï¿½pido)
       const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`
       const localCache = await AsyncStorage.getItem(localCacheKey)
       
@@ -214,12 +214,12 @@ class AstrologyCacheService {
         parsedCache.lastUpdate = this.toValidDate(parsedCache.lastUpdate)
         parsedCache.expiresAt = this.toValidDate(parsedCache.expiresAt, new Date(parsedCache.lastUpdate.getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000)))
         
-        console.log('­ƒô¦ Cache local encontrado')
+        console.log('ï¿½ï¿½ï¿½ï¿½ Cache local encontrado')
         return parsedCache
       }
       
-      // Se n+úo tem cache local, busca no Firestore
-      console.log('Ôÿü´©Å Buscando cache no Firestore...')
+      // Se n+ï¿½o tem cache local, busca no Firestore
+      console.log('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Buscando cache no Firestore...')
       const cacheDoc = await getDoc(doc(db, 'users', userId, 'astrologyCache', 'data'))
       
       if (cacheDoc.exists()) {
@@ -241,21 +241,21 @@ class AstrologyCacheService {
           birthDataHash: String(data?.birthDataHash || ''),
         }
         
-        // Salva no cache local para pr+¦xima vez
+        // Salva no cache local para pr+ï¿½xima vez
         await AsyncStorage.setItem(localCacheKey, JSON.stringify({
           ...cache,
           lastUpdate: this.toValidDate(cache.lastUpdate).toISOString(),
           expiresAt: this.toValidDate(cache.expiresAt, new Date(this.toValidDate(cache.lastUpdate).getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000))).toISOString()
         }))
         
-        console.log('Ô£à Cache do Firestore carregado e salvo localmente')
+        console.log('Ô£ï¿½ Cache do Firestore carregado e salvo localmente')
         return cache
       }
       
-      console.log('ÔØî Nenhum cache encontrado')
+      console.log('ï¿½ï¿½ï¿½ Nenhum cache encontrado')
       return null
     } catch (error) {
-      console.error('ÔØî Erro ao obter cache:', error)
+      console.error('ï¿½ï¿½ï¿½ Erro ao obter cache:', error)
       return null
     }
   }
@@ -276,7 +276,7 @@ class AstrologyCacheService {
       const expiresAt = new Date(now.getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000))
       const today = this.getTodayString()
       
-      // Obter cache atual para preservar contador di+írio
+      // Obter cache atual para preservar contador di+ï¿½rio
       const currentCache = await this.getCache(userId)
       let dailyRequestCount = 1
       
@@ -299,7 +299,7 @@ class AstrologyCacheService {
         houseSystem: this.getCurrentHouseSystem()
       }
       
-      // Salvar no Firestore - com valida+º+úo de undefined
+      // Salvar no Firestore - com valida+ï¿½+ï¿½o de undefined
       const firestoreData = {
         ...cache,
         lastUpdate: Timestamp.fromDate(cache.lastUpdate),
@@ -347,12 +347,12 @@ class AstrologyCacheService {
       const undefinedFields = findUndefinedFields(firestoreDataSanitized)
       
       if (undefinedFields.length > 0) {
-        console.error('ÔØî Campos undefined detectados (recursivo):', undefinedFields)
-        console.error('­ƒöì Estrutura completa:', JSON.stringify(firestoreData, null, 2))
+        console.error('ï¿½ï¿½ï¿½ Campos undefined detectados (recursivo):', undefinedFields)
+        console.error('ï¿½ï¿½ï¿½ï¿½ Estrutura completa:', JSON.stringify(firestoreData, null, 2))
         throw new Error(`Campos undefined encontrados: ${undefinedFields.join(', ')}`)
       }
       
-      console.log('Ô£à Valida+º+úo passou - nenhum campo undefined encontrado')
+      console.log('Ô£ï¿½ Valida+ï¿½+ï¿½o passou - nenhum campo undefined encontrado')
       
       await setDoc(doc(db, 'users', userId, 'astrologyCache', 'data'), firestoreDataSanitized)
       
@@ -364,9 +364,9 @@ class AstrologyCacheService {
         expiresAt: this.toValidDate(cache.expiresAt, new Date(this.toValidDate(cache.lastUpdate).getTime() + (this.CACHE_DURATION_HOURS * 60 * 60 * 1000))).toISOString()
       }))
       
-      console.log(`­ƒÆ¥ Cache salvo - Fonte: ${source}, Requests hoje: ${dailyRequestCount}/${this.MAX_DAILY_REQUESTS}`)
+      console.log(`ï¿½ï¿½Æ¥ Cache salvo - Fonte: ${source}, Requests hoje: ${dailyRequestCount}/${this.MAX_DAILY_REQUESTS}`)
     } catch (error) {
-      console.warn('ÔÜá´©Å N+úo foi poss+¡vel salvar cache no Firestore, salvando apenas localmente:', error)
+      console.warn('ï¿½ï¿½á´©ï¿½ N+ï¿½o foi poss+ï¿½vel salvar cache no Firestore, salvando apenas localmente:', error)
       // Ainda salva no cache local
       const localCacheKey = `${this.LOCAL_CACHE_KEY}${userId}`
       await AsyncStorage.setItem(localCacheKey, JSON.stringify({
@@ -387,7 +387,7 @@ class AstrologyCacheService {
   }
 
   /**
-   * Limpa o cache (+¦til para debugging ou mudan+ºas importantes)
+   * Limpa o cache (+ï¿½til para debugging ou mudan+ï¿½as importantes)
    */
   async clearCache(userId: string): Promise<void> {
     try {
@@ -401,14 +401,14 @@ class AstrologyCacheService {
         clearedAt: Timestamp.now()
       })
       
-      console.log('­ƒùæ´©Å Cache limpo com sucesso')
+      console.log('ï¿½ï¿½ï¿½æ´©ï¿½ Cache limpo com sucesso')
     } catch (error) {
-      console.error('ÔØî Erro ao limpar cache:', error)
+      console.error('ï¿½ï¿½ï¿½ Erro ao limpar cache:', error)
     }
   }
 
   /**
-   * Obt+®m estat+¡sticas de uso para monitoramento
+   * Obt+ï¿½m estat+ï¿½sticas de uso para monitoramento
    */
   async getCacheStats(userId: string): Promise<{
     hasCache: boolean
@@ -442,7 +442,7 @@ class AstrologyCacheService {
         dataVersion: cache.dataVersion
       }
     } catch (error) {
-      console.error('ÔØî Erro ao obter estat+¡sticas:', error)
+      console.error('ï¿½ï¿½ï¿½ Erro ao obter estat+ï¿½sticas:', error)
       return {
         hasCache: false,
         cacheAge: 0,
@@ -454,10 +454,10 @@ class AstrologyCacheService {
   }
 
   /**
-   * For+ºa uma atualiza+º+úo (ignora limites - para uso administrativo)
+   * For+ï¿½a uma atualiza+ï¿½+ï¿½o (ignora limites - para uso administrativo)
    */
   async forceRefresh(userId: string): Promise<void> {
-    console.log('­ƒöº For+ºando refresh do cache (modo administrativo)')
+    console.log('ï¿½ï¿½ï¿½ï¿½ For+ï¿½ando refresh do cache (modo administrativo)')
     await this.clearCache(userId)
   }
 }
