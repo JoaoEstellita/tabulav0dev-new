@@ -40,7 +40,7 @@ class AstrologyCacheService {
   private readonly CACHE_DURATION_HOURS = 12
   private readonly MIN_REFRESH_HOURS = 6
   private readonly MAX_DAILY_REQUESTS = 2
-  static readonly CURRENT_DATA_VERSION = '1.5'
+  static readonly CURRENT_DATA_VERSION = '1.6'
   private readonly DATA_VERSION = AstrologyCacheService.CURRENT_DATA_VERSION
   
   // Cache local (AsyncStorage) para acesso r+�pido
@@ -235,7 +235,7 @@ class AstrologyCacheService {
           planetPositions: Array.isArray(data?.planetPositions) ? data.planetPositions : [],
           transitAspects: Array.isArray(data?.transitAspects) ? data.transitAspects : [],
           calculatedData: data?.calculatedData || { lifeAreas: [], currentTransits: [], dailyOverview: null },
-          dataVersion: String(data?.dataVersion || this.DATA_VERSION),
+          dataVersion: data?.dataVersion ? String(data.dataVersion) : '',
           cacheSource: (data?.cacheSource || 'prokerala') as AstrologyCache['cacheSource'],
           userId: String(data?.userId || userId),
           houseSystem: data?.houseSystem ? String(data.houseSystem) : this.getCurrentHouseSystem(),
