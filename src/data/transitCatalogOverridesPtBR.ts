@@ -164,21 +164,21 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:saturn|quadratura|saturn':
     'Saturno em quadratura com Saturno marca um periodo de revisao estrutural e maturidade. Pode haver pressao para ajustar prazos, limites e responsabilidades de forma mais objetiva. O ganho vem ao simplificar compromissos e fortalecer o que realmente sustenta seu plano.',
   'transit:saturn|sextil|sun':
-    'Saturno em sextil ao Sol favorece disciplina, estabilidade e progresso consistente. A fase ajuda a transformar intencao em resultado por meio de rotina e criterio. Avancos costumam vir com passos menores, porem mais firmes.',
+    'Saturno em sextil ao Sol abre espaco para consolidar projetos pessoais com mais rigor e clareza de proposito. A fase tende a evidenciar o que precisa de estrutura para sair do potencial e virar resultado real. Que compromissos voce vem adiando por falta de metodo, nao de vontade?',
   'transit:saturn|trigono|sun':
-    'Saturno em trigono ao Sol reforca foco, constancia e confianca pratica nas decisoes. O momento tende a apoiar consolidacao de metas com menos dispersao. Priorize o essencial e mantenha um ritmo sustentavel para colher resultado continuo.',
+    'Saturno em trigono ao Sol favorece um ciclo de trabalho consistente, com menos atrito entre o que voce quer ser e o que consegue sustentar na pratica. Metas de longo prazo se tornam mais faceis de executar quando ha alinhamento entre identidade e metodo. O que voce quer consolidar enquanto esse fluxo esta disponivel?',
   'transit:saturn|oposicao|uranus':
     'Saturno em oposicao a Urano traz tensao entre estabilidade e necessidade de mudanca. O ciclo pede equilibrio entre preservar estrutura e abrir espaco para ajustes inteligentes. Evite extremos: revise o plano e avance com experimentos controlados.',
   'transit:saturn|quadratura|uranus':
     'Saturno em quadratura a Urano sinaliza friccao entre controle e renovacao. Pode surgir desconforto com regras antigas ou com mudancas rapidas demais. O melhor uso da fase e reorganizar processos sem romper o que ainda funciona.',
   'transit:saturn|sextil|mars':
-    'Saturno em sextil a Marte favorece acao disciplinada e execucao eficiente. A energia tende a render mais quando voce organiza prioridades e evita impulsos. Bom periodo para concluir tarefas exigentes com consistencia.',
+    'Saturno em sextil a Marte favorece transformar impulso em estrategia, criando janelas para acao com tecnica e menor desgaste. O ciclo costuma render mais quando voce combina coragem de iniciar com planejamento de execucao. Que projeto exigente voce tem disponivel para estruturar em etapas agora?',
   'transit:saturn|trigono|mars':
-    'Saturno em trigono a Marte fortalece produtividade, persistencia e estrategia de longo prazo. A fase facilita transformar esforco em resultado concreto com menor desgaste. Direcione energia para metas claras e mensuraveis.',
+    'Saturno em trigono a Marte une persistencia e metodo, criando condicoes para execucao de qualidade sem o atrito comum dos aspectos de tensao. Projetos de longa duracao ou fisicamente exigentes tendem a fluir com mais regularidade e menor desgaste. Esse ciclo favorece o que pede tanto vigor quanto paciencia ao mesmo tempo.',
   'transit:saturn|sextil|saturn':
-    'Saturno em sextil a Saturno apoia consolidacao e amadurecimento de estruturas importantes. O momento favorece revisao de processos, contratos e responsabilidades com pragmatismo. Ajustes graduais tendem a gerar base mais estavel para os proximos ciclos.',
+    'Saturno em sextil ao proprio Saturno natal abre um ciclo favoravel para revisar autogestao, prazos e compromissos sem a pressao dos aspectos de tensao. O momento convida a questionar quais responsabilidades ainda fazem sentido e quais precisam ser reestruturadas com mais clareza. Que parte do seu modo de organizar a vida esta pedindo atualizacao, nao apenas otimizacao?',
   'transit:saturn|trigono|saturn':
-    'Saturno em trigono a Saturno indica fase de estabilidade funcional e boa capacidade de organizacao. Ha mais facilidade para manter disciplina e cumprir etapas com qualidade. Use o periodo para consolidar fundamentos e reduzir ruido operacional.',
+    'Saturno em trigono ao proprio Saturno natal indica fase de boa funcionalidade das estruturas internas, com maior facilidade para sustentar metodo e cumprir etapas. O fluxo convida a avancar em algo de longa duracao que antes parecia grande demais para comecar. Use o momento para iniciar o que exige consistencia, nao apenas manter o que ja funciona.',
   'transit:sun|oposicao|pluto':
     'Sol em oposicao a Plutao intensifica temas de controle, poder pessoal e prioridade real. O ciclo pode expor polaridades que pedem postura mais consciente e menos reatividade. Foque no que e essencial, com firmeza e sem confrontos desnecessarios.',
   'transit:saturn|oposicao|mars':
@@ -188,13 +188,13 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:saturn|quadratura|sun':
     'Saturno em quadratura ao Sol aumenta senso de responsabilidade e teste de consistencia. O momento pode parecer mais exigente, pedindo foco no essencial e corte de excessos. Estrutura, descanso e prioridade clara evitam desgaste improdutivo.',
   'transit:saturn|sextil|venus':
-    'Saturno em sextil a Venus favorece escolhas maduras em relacoes, acordos e valores. A fase apoia compromisso sustentavel, com menos idealizacao e mais coerencia pratica. Bom periodo para alinhar expectativas e fortalecer vinculos confiaveis.',
+    'Saturno em sextil a Venus favorece a consolidacao de vinculos com mais criterio e menos idealizacao, tornando mais facil reconhecer o que tem reciprocidade genuina. A fase convida a avaliar contratos afetivos ou financeiros com olhar mais maduro e expectativas mais calibradas. Qual acordo merece uma revisao honesta sobre o que cada parte realmente entrega?',
   'transit:saturn|trigono|venus':
-    'Saturno em trigono a Venus reforca estabilidade afetiva e financeira por meio de criterio. Ha tendencia a preferir qualidade, constancia e acordos de longo prazo. Use o ciclo para consolidar o que tem valor real na sua rotina.',
+    'Saturno em trigono a Venus facilita a construcao de bases mais solidas em relacoes e financas, com preferencia natural por qualidade e compromissos de longo prazo. O ciclo tende a alinhar investimentos afetivos e materiais com o que realmente sustenta valor. Que escolhas de longo prazo voce tem postergado por falta de certeza?',
   'transit:saturn|sextil|jupiter':
-    'Saturno em sextil a Jupiter combina expansao com realismo estrategico. O periodo favorece crescimento com planejamento, sem perder seguranca de base. Avance com metas concretas, prazos claros e revisoes periodicas.',
+    'Saturno em sextil a Jupiter abre janela para transformar visao ampla em plano executavel, temperando o otimismo com criterio pratico. O ciclo facilita crescimento em etapas, sem os excessos que costumam acompanhar Jupiter sem a ancora de Saturno. O que voce poderia iniciar agora que precisa tanto de ousadia quanto de metodo?',
   'transit:saturn|trigono|jupiter':
-    'Saturno em trigono a Jupiter sustenta crescimento consistente, com equilibrio entre visao e execucao. A fase tende a facilitar progresso solido quando ha metodo e paciencia. Estruture oportunidades em etapas para ampliar resultados duradouros.',
+    'Saturno em trigono a Jupiter cria um dos ciclos mais favoraveis para crescimento com base, onde expansao e metodo se alinham naturalmente. Projetos de medio e longo prazo tendem a avancar com mais tracao e menos desgaste do que em outros momentos. Que oportunidade real esta esperando apenas por estrutura e comprometimento de execucao?',
   'transit:pluto|ingress|house_10':
     'Plutao em ingresso na Casa 10 tende a iniciar um ciclo de reposicionamento profundo na carreira, reputacao e direcao publica. O periodo costuma pedir escolhas mais autenticas, com menos concessao ao que nao representa sua verdade atual. Avance com estrategia de medio prazo e ajuste a exposicao conforme sua capacidade real de sustentar o novo nivel.',
   'transit:pluto|ingress|house_4':
@@ -250,17 +250,17 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:sun|quadratura|moon':
     'Sol em quadratura com Lua pode gerar conflito entre vontade consciente e necessidade emocional. O periodo pede alinhamento entre o que voce quer fazer e o que seu ritmo interno suporta. Ajustes simples de rotina e comunicacao clara reduzem atrito.',
   'transit:saturn|sextil|neptune':
-    'Saturno em sextil a Netuno favorece transformar intuicao em plano pratico. A fase ajuda a dar forma concreta a ideias sensiveis com metodo e consistencia. Estruture o que inspira voce em passos pequenos e verificaveis.',
+    'Saturno em sextil a Netuno oferece forma e metodo a ideias criativas ou intuicoes que costumam escapar da execucao por falta de ancoragem. A fase facilita separar visao genuina de fantasia, tornando possivel avancar em projetos sensiveis com passos verificaveis. Qual projeto criativo voce ja sabe que e viavel, mas ainda nao traduziu em estrutura?',
   'transit:saturn|trigono|neptune':
-    'Saturno em trigono a Netuno sustenta equilibrio entre sensibilidade e realismo. O periodo favorece consolidar visoes de longo prazo com disciplina e criterio. Bom momento para organizar projetos criativos ou espirituais com base pratica.',
+    'Saturno em trigono a Netuno facilita dar estrutura ao que e sutil, intuitivo ou criativo, sem perder a essencia do que inspira. O ciclo tende a tornar projetos antes nebulosos mais executaveis, com menos confusao entre visao e fantasia. Que dimensao da sua vida que parece intangivel pode receber uma forma concreta agora?',
   'transit:sun|sextil|moon':
     'Sol em sextil com Lua facilita integracao entre vontade e emocao. A fase tende a favorecer fluidez em conversas, ajustes de rotina e decisoes do dia a dia. Use o momento para alinhar prioridades internas e externas com simplicidade.',
   'transit:sun|trigono|moon':
     'Sol em trigono com Lua reforca coerencia entre identidade e necessidades emocionais. O periodo costuma trazer maior estabilidade para organizar escolhas importantes. Aproveite para consolidar habitos que sustentem bem-estar e continuidade.',
   'transit:saturn|sextil|ascendente':
-    'Saturno em sextil ao Ascendente favorece postura mais solida, foco e autogestao. A fase tende a apoiar avancos consistentes quando ha disciplina e clareza de limites. Pequenos compromissos cumpridos com regularidade geram confianca.',
+    'Saturno em sextil ao Ascendente favorece consolidar a forma como voce conduz responsabilidades e se apresenta ao mundo, com mais solidez e intencionalidade. A fase tende a tornar mais facil construir presenca com coerencia entre quem voce e e como voce age. Onde voce deseja que sua conduta seja mais reconhecida e consistente?',
   'transit:saturn|trigono|ascendente':
-    'Saturno em trigono ao Ascendente fortalece maturidade, presenca e estabilidade de ritmo. O periodo facilita organizar responsabilidades sem sobrecarga desnecessaria. Mantenha constancia e priorize o que gera base duradoura.',
+    'Saturno em trigono ao Ascendente facilita a expressao madura de si mesmo, tornando mais natural sustentar postura consistente e responsabilidades com autoridade. A fase cria menos atrito entre intencao e comportamento, favorecendo crescimento de presenca com pouco esforco adicional. Que habito ou postura voce tem tentado consolidar mas que ainda parece artificial?',
   'transit:saturn|oposicao|saturn':
     'Saturno em oposicao a Saturno marca ponto de revisao de estruturas de longo prazo. O ciclo pode evidenciar limites reais de modelos antigos e pedir reorganizacao objetiva. Foque no essencial e recalcule compromissos para sustentar continuidade.',
   'transit:moon|sextil|saturn':
@@ -346,9 +346,9 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:neptune|quadratura|venus':
     'Netuno em quadratura com Venus pode gerar idealizacao afetiva e confusao sobre valor e reciprocidade. O ciclo pede discernimento para diferenciar intuicao de expectativa projetada. Observe sinais concretos antes de firmar acordos emocionais ou financeiros.',
   'transit:saturn|sextil|moon':
-    'Saturno em sextil com Lua ajuda a estabilizar emocoes por meio de rotina e responsabilidade afetiva. A fase favorece conversas maduras e melhor gestao do tempo interno. Pequenos habitos de cuidado trazem seguranca e continuidade.',
+    'Saturno em sextil a Lua abre espaco para traduzir necessidades emocionais em rotina afetiva mais estavel e consciente. A fase favorece distinguir o que e sentimento genuino do que e reatividade de habito, tornando cuidado mais estruturado. Que padrao emocional voce quer transformar em escolha consciente, nao em reacao automatica?',
   'transit:saturn|trigono|moon':
-    'Saturno em trigono com Lua favorece consistencia emocional, sobriedade e confianca nas escolhas do dia a dia. O ciclo tende a apoiar acordos estaveis e limites saudaveis. Use o periodo para consolidar base afetiva com simplicidade.',
+    'Saturno em trigono a Lua facilita o equilibrio entre vida emocional e responsabilidades concretas, com menor custo interno do que nos ciclos de tensao. O ciclo costuma oferecer serenidade e clareza para tomar decisoes afetivas com mais maturidade. Que decisao em relacoes ou rotina de cuidado voce tem adiado por medo de desconforto?',
   'transit:venus|conjuncao|jupiter':
     'Venus em conjuncao com Jupiter amplia prazer, generosidade e oportunidades de harmonizacao em vinculos. A fase favorece encontros, acordos e clima mais positivo nas relacoes. Aproveite o fluxo com moderacao para evitar excessos ou promessas amplas demais.',
   'transit:uranus|sextil|venus':
@@ -374,9 +374,9 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:saturn|conjuncao|jupiter':
     'Saturno em conjuncao com Jupiter combina expansao e responsabilidade em um mesmo eixo de crescimento. O ciclo favorece transformar visao ampla em plano concreto, com metas, etapas e criterio. Avance com disciplina para converter oportunidade em resultado duradouro.',
   'transit:saturn|sextil|uranus':
-    'Saturno em sextil com Urano ajuda a renovar processos sem perder estabilidade. O periodo favorece inovacao pratica, com ajustes graduais e bom senso de risco. Teste novas solucoes em escala controlada e consolide o que funcionar.',
+    'Saturno em sextil a Urano cria condicoes para renovar rotinas ou estruturas de forma incremental, sem o risco de ruptura dos aspectos de tensao. A fase facilita inovacoes praticas, onde novos metodos podem ser testados sem comprometer o que ja sustenta resultado. Qual mudanca voce tem adiado por medo de desestabilizar o que esta funcionando?',
   'transit:saturn|trigono|uranus':
-    'Saturno em trigono com Urano favorece modernizacao consistente de rotinas e estruturas. A fase tende a unir metodo e criatividade, com menos choque entre novo e antigo. Atualize ferramentas e acordos mantendo base confiavel.',
+    'Saturno em trigono a Urano facilita modernizar processos e estruturas com naturalidade, sem a friccao dos aspectos mais tensos. O ciclo tende a tornar mudancas antes arriscadas mais viaveis quando ha planejamento simples e execucao gradual. Que atualizacao voce ja sabe que e necessaria, mas vem esperando pelo momento certo?',
   'transit:uranus|sextil|mars':
     'Urano em sextil com Marte amplia iniciativa para experimentar novos caminhos de acao. O ciclo favorece respostas rapidas e inteligentes quando ha foco no que importa. Use a energia para inovar com precisao, sem romper o que ja esta sustentando resultado.',
   'transit:uranus|trigono|mars':
@@ -386,9 +386,9 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
   'transit:neptune|conjuncao|meio_do_ceu':
     'Netuno em conjuncao ao Meio do Ceu amplia sensibilidade vocacional e busca de sentido na carreira. A fase pode inspirar reposicionamento, mas pede clareza para evitar idealizacao de cenarios. Transforme intuicao em proposta concreta, com validacoes no mundo real.',
   'transit:saturn|sextil|meio_do_ceu':
-    'Saturno em sextil ao Meio do Ceu favorece consolidacao profissional por disciplina e qualidade de entrega. O ciclo tende a abrir espaco para crescimento sustentavel quando ha regularidade e foco. Priorize compromissos essenciais e refine processos com criterio.',
+    'Saturno em sextil ao Meio do Ceu abre uma janela para consolidar reputacao profissional com entregas objetivas e decisoes de longo prazo mais solidas. A fase facilita avancos de carreira que dependem de demonstracao de responsabilidade, nao apenas de visibilidade. Que passo profissional voce pode dar agora que vai construir base duradoura?',
   'transit:saturn|trigono|meio_do_ceu':
-    'Saturno em trigono ao Meio do Ceu reforca reputacao, consistencia e estabilidade de direcao profissional. A fase favorece avancos estruturais de medio e longo prazo com menos ruido. Mantenha metodo, acompanhe indicadores e consolide base de confianca.',
+    'Saturno em trigono ao Meio do Ceu facilita o avanco na trajetoria profissional com menos atrito, onde metodo e credibilidade se alinham de forma mais natural. O ciclo apoia posicionamentos de longo prazo e tende a gerar reconhecimento quando ha consistencia de entregas e clareza de direcao. Que nivel de comprometimento com sua carreira voce esta pronto para sustentar agora?',
   'transit:uranus|conjuncao|sun':
     'Urano em conjuncao ao Sol sinaliza fase de virada pessoal, com necessidade de atualizar identidade e direcao. O ciclo pode trazer impulso de liberdade e inovacao, exigindo escolhas conscientes. Renove sua forma de agir sem perder ancoragem pratica.',
   'transit:jupiter|oposicao|neptune':

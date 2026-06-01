@@ -257,21 +257,21 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|saturn':
       'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
     'transit:saturn|sextil|sun':
-      'Saturn sextile Sun supports discipline, stability, and consistent progress. This phase helps translate intention into results through routine and criteria. Advances may come in smaller but steadier steps.',
+      'Saturn sextile Sun opens room for consolidating personal goals with sharper method and clearer purpose. This phase tends to reveal what needs structure to move from potential into real results. Which commitments have you been postponing for lack of method, not lack of will?',
     'transit:saturn|trigono|sun':
-      'Saturn trine Sun reinforces focus, consistency, and practical confidence in decisions. This period tends to support consolidation of goals with less dispersion. Prioritize essentials and keep a sustainable pace.',
+      'Saturn trine Sun favors a consistent work cycle, with less friction between who you want to be and what you can sustain in practice. Long-term goals become easier to execute when identity and method are aligned. What do you want to consolidate while this flow is available?',
     'transit:saturn|oposicao|uranus':
       'Saturn opposition Uranus brings tension between stability and the need for change. This cycle asks for balance between preserving structure and opening room for smart adjustments. Avoid extremes and move with controlled experiments.',
     'transit:saturn|quadratura|uranus':
       'Saturn square Uranus signals friction between control and renewal. Discomfort may appear around old rules or changes that move too fast. Best use of this phase is to reorganize processes without breaking what still works.',
     'transit:saturn|sextil|mars':
-      'Saturn sextile Mars favors disciplined action and efficient execution. Energy tends to perform better when priorities are organized and impulsive reactions are reduced. Good period to complete demanding tasks with consistency.',
+      'Saturn sextile Mars favors channeling drive into strategy, creating windows for action with technique and less wasted energy. This cycle tends to reward pairing the courage to start with execution planning. What demanding project do you have available to structure in stages now?',
     'transit:saturn|trigono|mars':
-      'Saturn trine Mars strengthens productivity, persistence, and long-range strategy. This phase helps convert effort into concrete results with less waste. Direct energy to clear and measurable goals.',
+      'Saturn trine Mars joins persistence and method, creating conditions for quality execution without the friction typical of tense aspects. Long-duration or physically demanding projects tend to flow with more regularity and less wear. This cycle favors what calls for both vigor and patience at the same time.',
     'transit:saturn|sextil|saturn':
-      'Saturn sextile Saturn supports consolidation and maturity of important structures. The period favors reviewing processes, contracts, and responsibilities with pragmatism. Gradual adjustments can build a more stable foundation.',
+      'Saturn sextile natal Saturn opens a favorable cycle for reviewing self-management, timelines, and commitments without the pressure of tense aspects. This period invites questioning which responsibilities still make sense and which need restructuring with more clarity. Which part of how you organize your life is asking for an update, not just optimization?',
     'transit:saturn|trigono|saturn':
-      'Saturn trine Saturn indicates functional stability and good organizational capacity. It is easier to keep discipline and complete stages with quality. Use the period to consolidate fundamentals and reduce operational noise.',
+      'Saturn trine natal Saturn points to a phase of good structural functioning, where it is easier to sustain method and complete stages. The flow invites starting something long-term that previously seemed too big to begin. Use this moment to initiate what calls for consistency, not just maintain what already works.',
     'transit:sun|oposicao|pluto':
       'Sun opposition Pluto intensifies themes of control, personal power, and real priorities. This cycle may expose polarities that ask for a conscious stance with less reactivity. Focus on what is essential with firmness and no unnecessary confrontation.',
     'transit:saturn|oposicao|mars':
@@ -281,13 +281,13 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|sun':
       'Saturn square Sun raises responsibility and tests consistency. The period can feel more demanding, asking focus on essentials and reduction of excess. Structure, rest, and clear priorities prevent unproductive strain.',
     'transit:saturn|sextil|venus':
-      'Saturn sextile Venus supports mature choices in relationships, agreements, and values. This phase favors sustainable commitment with less idealization and more practical coherence. Good period to align expectations and strengthen reliable bonds.',
+      'Saturn sextile Venus supports building bonds with more discernment and less idealization, making it easier to recognize what has genuine reciprocity. This phase invites reviewing affective or financial agreements with a more mature eye and better-calibrated expectations. Which agreement deserves an honest look at what each party actually delivers?',
     'transit:saturn|trigono|venus':
-      'Saturn trine Venus reinforces affective and financial stability through criteria. There is a tendency to prefer quality, consistency, and long-term agreements. Use the cycle to consolidate what has real value in your routine.',
+      'Saturn trine Venus eases building more solid foundations in relationships and finances, with a natural preference for quality and long-term commitments. This cycle tends to align affective and material investments with what actually sustains value over time. Which long-term choices have you been postponing for lack of certainty?',
     'transit:saturn|sextil|jupiter':
-      'Saturn sextile Jupiter combines expansion with strategic realism. The period favors growth with planning while preserving structural safety. Move with concrete goals, clear deadlines, and periodic reviews.',
+      'Saturn sextile Jupiter opens a window for turning broad vision into executable plans, tempering optimism with practical criteria. This cycle supports staged growth without the excesses that typically accompany Jupiter without Saturn as anchor. What could you start now that needs both boldness and method?',
     'transit:saturn|trigono|jupiter':
-      'Saturn trine Jupiter supports consistent growth with balance between vision and execution. This phase tends to ease solid progress when method and patience are present. Structure opportunities in stages for durable results.',
+      'Saturn trine Jupiter creates one of the most favorable cycles for grounded growth, where expansion and method align naturally. Medium and long-term projects tend to advance with more traction and less wear than at other times. What real opportunity is waiting only for structure and execution commitment?',
     'transit:pluto|ingress|house_10':
       'Pluto entering House 10 tends to begin a deep repositioning cycle in career, reputation, and public direction. This phase often asks for more authentic choices and less compromise with paths that no longer fit. Move with medium-term strategy and pace your visibility to what you can sustain.',
     'transit:pluto|ingress|house_4':
@@ -343,17 +343,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|quadratura|moon':
       'Sun square Moon can create friction between conscious intention and emotional need. This phase asks for alignment between what you want to do and what your inner rhythm can sustain. Simple routine and communication adjustments reduce conflict.',
     'transit:saturn|sextil|neptune':
-      'Saturn sextile Neptune supports turning intuition into practical structure. This phase helps shape sensitive ideas through method and consistency. Build inspiration into small verifiable steps.',
+      'Saturn sextile Neptune offers form and method to creative ideas or intuitions that tend to escape execution for lack of grounding. This phase makes it easier to separate genuine vision from fantasy, allowing progress on sensitive projects in verifiable steps. Which creative project do you already know is viable, but have not yet translated into structure?',
     'transit:saturn|trigono|neptune':
-      'Saturn trine Neptune sustains balance between sensitivity and realism. This period favors consolidating long-term visions with discipline and criteria. Good timing to structure creative or spiritual projects practically.',
+      'Saturn trine Neptune makes it easier to give structure to what is subtle, intuitive, or creative, without losing the essence of what inspires. This cycle tends to make once-nebulous projects more executable, with less confusion between vision and fantasy. What dimension of your life that seems intangible could receive a concrete shape now?',
     'transit:sun|sextil|moon':
       'Sun sextile Moon supports integration between intention and emotion. This phase tends to improve flow in conversations, routine adjustments, and daily choices. Use it to align internal and external priorities.',
     'transit:sun|trigono|moon':
       'Sun trine Moon strengthens coherence between identity and emotional needs. This period often supports stable organization of important choices. Use it to consolidate habits that sustain continuity.',
     'transit:saturn|sextil|ascendente':
-      'Saturn sextile Ascendant favors grounded posture, focus, and self-management. This phase supports steady progress when discipline and boundaries are clear. Small commitments kept consistently build trust.',
+      'Saturn sextile Ascendant supports consolidating how you handle responsibilities and present yourself to the world, with more groundedness and intentionality. This phase tends to make it easier to build consistent presence where identity and conduct are aligned. Where do you want your conduct to be more recognized and reliable?',
     'transit:saturn|trigono|ascendente':
-      'Saturn trine Ascendant reinforces maturity, presence, and stable pacing. This period helps organize responsibilities without unnecessary overload. Keep consistency and prioritize durable foundations.',
+      'Saturn trine Ascendant supports expressing yourself with natural maturity, making it easier to sustain a consistent stance and hold responsibilities with authority. This phase creates less friction between intention and behavior, favoring presence growth with minimal additional effort. What habit or posture have you been trying to solidify that still feels artificial?',
     'transit:saturn|oposicao|saturn':
       'Saturn opposite Saturn marks a review point for long-term structures. This cycle may expose real limits in older models and ask for objective reorganization. Focus on essentials and recalculate commitments for continuity.',
     'transit:moon|sextil|saturn':
@@ -439,9 +439,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|quadratura|venus':
       'Neptune square Venus can bring affective idealization and confusion about value and reciprocity. This cycle asks for discernment between intuition and projection. Observe concrete signals before formalizing emotional or financial agreements.',
     'transit:saturn|sextil|moon':
-      'Saturn sextile Moon helps stabilize emotions through routine and affective responsibility. This phase favors mature conversations and better inner time management. Small care habits bring security and continuity.',
+      'Saturn sextile Moon opens room for translating emotional needs into more stable and conscious affective routines. This phase makes it easier to distinguish genuine feeling from habitual reactivity, making care more structured. What emotional pattern do you want to turn into a conscious choice rather than an automatic reaction?',
     'transit:saturn|trigono|moon':
-      'Saturn trine Moon favors emotional consistency, sobriety, and confidence in everyday choices. The cycle tends to support stable agreements and healthy boundaries. Use this period to consolidate your emotional base with simplicity.',
+      'Saturn trine Moon supports balancing emotional life and concrete responsibilities with less inner cost than tense cycles. This cycle tends to offer serenity and clarity for making affective decisions with more maturity. What decision in relationships or care routines have you been postponing out of fear of discomfort?',
     'transit:venus|conjuncao|jupiter':
       'Venus conjunct Jupiter expands pleasure, generosity, and opportunities for harmony in relationships. This phase favors encounters, agreements, and a more positive relational climate. Use the flow with moderation to avoid overextension.',
     'transit:uranus|sextil|venus':
@@ -467,9 +467,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|conjuncao|jupiter':
       'Saturn conjunct Jupiter combines expansion with structure and long-range planning. The period favors realistic growth, objective priorities, and stronger execution criteria. Build in stages to preserve sustainability.',
     'transit:saturn|sextil|uranus':
-      'Saturn sextile Uranus supports innovation with consistency and operational grounding. This phase helps update systems without breaking what still works. Test changes in controlled steps and keep clear metrics.',
+      'Saturn sextile Uranus creates conditions for renewing routines or structures incrementally, without the rupture risk of tense aspects. This phase supports practical innovations where new methods can be tested without compromising what already sustains results. Which change have you been avoiding out of fear of disrupting what is working?',
     'transit:saturn|trigono|uranus':
-      'Saturn trine Uranus facilitates stable modernization and intelligent process renewal. The cycle favors practical innovation with low disruption. Consolidate improvements through method, cadence, and review.',
+      'Saturn trine Uranus makes it easy to modernize processes and structures naturally, without the friction of tenser aspects. This cycle tends to make previously risky changes more viable with simple planning and gradual execution. Which update do you already know is necessary, but have been waiting for the right moment?',
     'transit:uranus|sextil|mars':
       'Uranus sextile Mars boosts initiative, agility, and tactical experimentation. This phase tends to favor smart adjustments and faster execution with awareness. Keep focus on useful innovation, not pure acceleration.',
     'transit:uranus|trigono|mars':
@@ -479,9 +479,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|conjuncao|meio_do_ceu':
       'Neptune conjunct Midheaven can increase sensitivity around vocation, image, and professional meaning. This phase asks for discernment between inspiration and projection. Keep direction clear and validate decisions with concrete signals.',
     'transit:saturn|sextil|meio_do_ceu':
-      'Saturn sextile Midheaven supports professional consolidation through consistency and responsibility. This cycle favors stable growth built on quality execution. Strengthen positioning with realistic commitments.',
+      'Saturn sextile Midheaven opens a window for consolidating professional reputation through objective deliveries and more grounded long-term decisions. This phase favors career progress that depends on demonstrating responsibility, not just visibility. What professional step can you take now that will build lasting foundation?',
     'transit:saturn|trigono|meio_do_ceu':
-      'Saturn trine Midheaven reinforces reputation, structure, and long-term career direction. The period tends to reward method, reliability, and disciplined delivery. Keep focus on fundamentals and sustainable progress.',
+      'Saturn trine Midheaven supports career progress with less friction, where method and credibility align more naturally. This cycle favors long-term positioning and tends to generate recognition when delivery is consistent and direction is clear. What level of commitment to your career are you ready to sustain going forward?',
     'transit:uranus|conjuncao|sun':
       'Uranus conjunct Sun tends to accelerate identity updates and personal repositioning. This phase can increase need for autonomy and experimental choices. Innovate with responsibility to avoid abrupt instability.',
     'transit:jupiter|oposicao|neptune':
@@ -1838,21 +1838,21 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|saturn':
       'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
     'transit:saturn|sextil|sun':
-      'Saturno en sextil al Sol favorece disciplina, estabilidad y progreso constante. Esta fase ayuda a convertir intencion en resultado mediante rutina y criterio. Los avances pueden venir en pasos mas pequenos, pero firmes.',
+      'Saturno en sextil al Sol abre espacio para consolidar proyectos personales con mas rigor y claridad de proposito. Esta fase tiende a revelar lo que necesita estructura para dejar de ser potencial y convertirse en resultado. Que compromisos has estado postergando por falta de metodo, no de voluntad?',
     'transit:saturn|trigono|sun':
-      'Saturno en trigono al Sol refuerza foco, constancia y confianza practica en decisiones. Este periodo suele apoyar consolidacion de metas con menos dispersion. Prioriza lo esencial y manten un ritmo sostenible.',
+      'Saturno en trigono al Sol favorece un ciclo de trabajo constante, con menos friccion entre quien quieres ser y lo que logras sostener en la practica. Las metas de largo plazo se vuelven mas faciles cuando identidad y metodo estan alineados. Que quieres consolidar mientras este flujo esta disponible?',
     'transit:saturn|oposicao|uranus':
       'Saturno en oposicion a Urano trae tension entre estabilidad y necesidad de cambio. Este ciclo pide equilibrio entre conservar estructura y abrir espacio para ajustes inteligentes. Evita extremos y avanza con experimentos controlados.',
     'transit:saturn|quadratura|uranus':
       'Saturno en cuadratura a Urano senala friccion entre control y renovacion. Puede aparecer incomodidad con reglas antiguas o con cambios demasiado rapidos. El mejor uso de la fase es reorganizar procesos sin romper lo que aun funciona.',
     'transit:saturn|sextil|mars':
-      'Saturno en sextil a Marte favorece accion disciplinada y ejecucion eficiente. La energia rinde mejor cuando se ordenan prioridades y se reducen impulsos. Buen periodo para cerrar tareas exigentes con constancia.',
+      'Saturno en sextil a Marte favorece convertir impulso en estrategia, creando ventanas para la accion con tecnica y menor desgaste. Este ciclo suele rendir mas cuando combinas valentia para iniciar con planificacion de ejecucion. Que proyecto exigente tienes disponible para estructurar en etapas ahora?',
     'transit:saturn|trigono|mars':
-      'Saturno en trigono a Marte fortalece productividad, persistencia y estrategia de largo plazo. Esta fase ayuda a transformar esfuerzo en resultado concreto con menor desgaste. Dirige energia a metas claras y medibles.',
+      'Saturno en trigono a Marte une persistencia y metodo, creando condiciones para ejecucion de calidad sin la friccion de los aspectos de tension. Proyectos de larga duracion o fisicamente exigentes tienden a fluir con mas regularidad y menor desgaste. Este ciclo favorece lo que pide tanto vigor como paciencia al mismo tiempo.',
     'transit:saturn|sextil|saturn':
-      'Saturno en sextil a Saturno apoya consolidacion y madurez de estructuras importantes. El periodo favorece revisar procesos, acuerdos y responsabilidades con pragmatismo. Ajustes graduales pueden crear una base mas estable.',
+      'Saturno en sextil al propio Saturno natal abre un ciclo favorable para revisar autogestion, plazos y compromisos sin la presion de los aspectos de tension. El momento invita a cuestionar que responsabilidades aun tienen sentido y cuales necesitan reestructuracion con mayor claridad. Que parte de tu modo de organizarte esta pidiendo actualizacion, no solo optimizacion?',
     'transit:saturn|trigono|saturn':
-      'Saturno en trigono a Saturno indica estabilidad funcional y buena capacidad organizativa. Hay mas facilidad para sostener disciplina y completar etapas con calidad. Usa el periodo para consolidar fundamentos y reducir ruido operativo.',
+      'Saturno en trigono al propio Saturno natal indica una fase de buen funcionamiento estructural, con mayor facilidad para sostener metodo y completar etapas. El flujo invita a iniciar algo de larga duracion que antes parecia demasiado grande para comenzar. Usa el momento para empezar lo que pide constancia, no solo mantener lo que ya funciona.',
     'transit:sun|oposicao|pluto':
       'Sol en oposicion a Pluto intensifica temas de control, poder personal y prioridades reales. Este ciclo puede exponer polaridades que piden una postura mas consciente y menos reactiva. Enfocate en lo esencial con firmeza y sin confrontaciones innecesarias.',
     'transit:saturn|oposicao|mars':
@@ -1862,13 +1862,13 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|sun':
       'Saturno en cuadratura al Sol aumenta sentido de responsabilidad y prueba de consistencia. El periodo puede sentirse mas exigente y pedir foco en lo esencial con recorte de excesos. Estructura, descanso y prioridades claras evitan desgaste inutil.',
     'transit:saturn|sextil|venus':
-      'Saturno en sextil a Venus favorece elecciones maduras en vinculos, acuerdos y valores. Esta fase apoya compromiso sostenible con menos idealizacion y mas coherencia practica. Buen momento para alinear expectativas y fortalecer lazos confiables.',
+      'Saturno en sextil a Venus favorece construir vinculos con mas criterio y menos idealizacion, facilitando reconocer lo que tiene reciprocidad genuina. La fase invita a revisar acuerdos afectivos o financieros con una mirada mas madura y expectativas mejor calibradas. Que acuerdo merece un examen honesto sobre lo que cada parte realmente aporta?',
     'transit:saturn|trigono|venus':
-      'Saturno en trigono a Venus refuerza estabilidad afectiva y financiera mediante criterio. Hay tendencia a preferir calidad, constancia y acuerdos de largo plazo. Usa el ciclo para consolidar lo que tiene valor real en tu rutina.',
+      'Saturno en trigono a Venus facilita construir bases mas solidas en relaciones y finanzas, con preferencia natural por calidad y compromisos de largo plazo. El ciclo tiende a alinear inversiones afectivas y materiales con lo que realmente sostiene valor en el tiempo. Que elecciones de largo plazo has estado postergando por falta de certeza?',
     'transit:saturn|sextil|jupiter':
-      'Saturno en sextil a Jupiter combina expansion con realismo estrategico. El periodo favorece crecimiento con planificacion sin perder seguridad de base. Avanza con metas concretas, plazos claros y revisiones periodicas.',
+      'Saturno en sextil a Jupiter abre una ventana para canalizar el impulso de expansion en plan ejecutable, atemperando el optimismo con criterio practico. Este ciclo apoya crecimiento en etapas, sin los excesos que suelen acompanar a Jupiter sin el anclaje de Saturno. Que podrias iniciar ahora que necesita tanto audacia como metodo?',
     'transit:saturn|trigono|jupiter':
-      'Saturno en trigono a Jupiter sostiene crecimiento constante con equilibrio entre vision y ejecucion. Esta fase suele facilitar progreso solido cuando hay metodo y paciencia. Estructura oportunidades por etapas para resultados duraderos.',
+      'Saturno en trigono a Jupiter crea uno de los ciclos mas favorables para crecer con base, donde expansion y metodo se alinean de forma natural. Los proyectos de medio y largo plazo tienden a avanzar con mas traccion y menos desgaste que en otros momentos. Que oportunidad real esta esperando solo estructura y compromiso de ejecucion?',
     'transit:pluto|ingress|house_10':
       'Pluton en ingreso a Casa 10 tiende a iniciar un ciclo de reposicionamiento profundo en carrera, reputacion y direccion publica. Esta fase suele pedir decisiones mas autenticas y menos concesion a caminos que ya no encajan. Avanza con estrategia de medio plazo y regula tu exposicion segun tu capacidad real.',
     'transit:pluto|ingress|house_4':
@@ -1924,17 +1924,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|quadratura|moon':
       'Sol en cuadratura con Luna puede generar friccion entre voluntad consciente y necesidad emocional. Esta fase pide alinear lo que quieres hacer con el ritmo interno disponible. Ajustes simples de rutina y comunicacion reducen conflicto.',
     'transit:saturn|sextil|neptune':
-      'Saturno en sextil a Neptuno favorece traducir intuicion en estructura practica. Esta fase ayuda a dar forma a ideas sensibles con metodo y constancia. Convierte inspiracion en pasos pequenos y verificables.',
+      'Saturno en sextil a Neptuno ofrece forma y metodo a ideas creativas o intuiciones que suelen escapar de la ejecucion por falta de anclaje. La fase facilita separar vision genuina de fantasia, haciendo posible avanzar en proyectos sensibles con pasos verificables. Que proyecto creativo ya sabes que es viable, pero todavia no has traducido en estructura?',
     'transit:saturn|trigono|neptune':
-      'Saturno en trigono a Neptuno sostiene equilibrio entre sensibilidad y realismo. El periodo favorece consolidar vision de largo plazo con disciplina y criterio. Buen momento para estructurar proyectos creativos o espirituales con base practica.',
+      'Saturno en trigono a Neptuno facilita dar estructura a lo que es sutil, intuitivo o creativo, sin perder la esencia de lo que inspira. El ciclo tiende a volver mas ejecutables proyectos antes nebulosos, con menos confusion entre vision y fantasia. Que dimension de tu vida que parece intangible podria recibir una forma concreta ahora?',
     'transit:sun|sextil|moon':
       'Sol en sextil con Luna facilita integracion entre voluntad y emocion. Esta fase mejora fluidez en conversaciones, ajustes de rutina y decisiones cotidianas. Aprovecha para alinear prioridades internas y externas.',
     'transit:sun|trigono|moon':
       'Sol en trigono con Luna refuerza coherencia entre identidad y necesidades emocionales. El periodo suele traer mayor estabilidad para organizar elecciones importantes. Aprovecha para consolidar habitos sostenibles.',
     'transit:saturn|sextil|ascendente':
-      'Saturno en sextil al Ascendente favorece postura solida, foco y autogestion. Esta fase apoya avances constantes cuando hay disciplina y limites claros. Pequenos compromisos sostenidos construyen confianza.',
+      'Saturno en sextil al Ascendente favorece consolidar la forma en que gestionas responsabilidades y te presentas al mundo, con mas solidez e intencionalidad. La fase tiende a facilitar construir presencia con coherencia entre quien eres y como actuas. Donde deseas que tu conducta sea mas reconocida y coherente?',
     'transit:saturn|trigono|ascendente':
-      'Saturno en trigono al Ascendente fortalece madurez, presencia y ritmo estable. El periodo facilita ordenar responsabilidades sin sobrecarga innecesaria. Mantener constancia ayuda a consolidar base duradera.',
+      'Saturno en trigono al Ascendente facilita expresar madurez de forma natural, haciendo mas sencillo sostener una postura coherente y responsabilidades con autoridad. La fase genera menos friccion entre intencion y conducta, favoreciendo un crecimiento de presencia con poco esfuerzo adicional. Que habito o postura has intentado consolidar pero que todavia parece artificial?',
     'transit:saturn|oposicao|saturn':
       'Saturno en oposicion a Saturno marca un punto de revision de estructuras de largo plazo. El ciclo puede evidenciar limites reales en modelos antiguos y pedir reorganizacion objetiva. Enfocate en lo esencial y recalibra compromisos.',
     'transit:moon|sextil|saturn':
@@ -2020,9 +2020,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|quadratura|venus':
       'Neptuno en cuadratura con Venus puede generar idealizacion afectiva y confusion sobre valor y reciprocidad. El ciclo pide discernimiento para diferenciar intuicion de proyeccion. Observa senales concretas antes de cerrar acuerdos emocionales o financieros.',
     'transit:saturn|sextil|moon':
-      'Saturno en sextil con Luna ayuda a estabilizar emociones mediante rutina y responsabilidad afectiva. La fase favorece conversaciones maduras y mejor gestion del tiempo interno. Pequenos habitos de cuidado traen seguridad y continuidad.',
+      'Saturno en sextil con Luna abre espacio para traducir necesidades emocionales en rutina afectiva mas estable y consciente. La fase facilita distinguir lo que es sentimiento genuino de lo que es reactividad de habito, haciendo el cuidado mas estructurado. Que patron emocional quieres transformar en eleccion consciente, no en reaccion automatica?',
     'transit:saturn|trigono|moon':
-      'Saturno en trigono con Luna favorece consistencia emocional, sobriedad y confianza en decisiones cotidianas. El ciclo tiende a apoyar acuerdos estables y limites saludables. Usa el periodo para consolidar base afectiva con simplicidad.',
+      'Saturno en trigono con Luna facilita el equilibrio entre vida emocional y responsabilidades concretas, con menor costo interno que en los ciclos de tension. El ciclo suele ofrecer serenidad y claridad para tomar decisiones afectivas con mas madurez. Que decision en relaciones o rutina de cuidado has estado postergando por miedo al malestar?',
     'transit:venus|conjuncao|jupiter':
       'Venus en conjuncion con Jupiter amplifica placer, generosidad y oportunidades de armonia en vinculos. La fase favorece encuentros, acuerdos y clima relacional mas positivo. Aprovecha el flujo con moderacion para evitar excesos.',
     'transit:uranus|sextil|venus':
@@ -2048,9 +2048,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|conjuncao|jupiter':
       'Saturno en conjuncion con Jupiter combina expansion y estructura con mirada de largo plazo. El periodo favorece crecimiento realista, prioridades objetivas y criterio de ejecucion. Construye por etapas para mantener sostenibilidad.',
     'transit:saturn|sextil|uranus':
-      'Saturno en sextil a Urano favorece innovacion con consistencia y base operativa. Esta fase ayuda a actualizar sistemas sin romper lo que aun funciona. Prueba cambios de forma controlada y con metricas claras.',
+      'Saturno en sextil a Urano crea condiciones para renovar rutinas o estructuras de forma incremental, sin el riesgo de ruptura de los aspectos de tension. La fase facilita innovaciones practicas, donde nuevos metodos pueden probarse sin comprometer lo que ya sostiene resultados. Que cambio has estado postergando por miedo a desestabilizar lo que funciona?',
     'transit:saturn|trigono|uranus':
-      'Saturno en trigono a Urano facilita modernizacion estable y renovacion inteligente de procesos. El ciclo favorece innovacion practica con baja disrupcion. Consolida mejoras con metodo y seguimiento.',
+      'Saturno en trigono a Urano facilita modernizar procesos y estructuras con naturalidad, sin la friccion de los aspectos mas tensos. El ciclo tiende a volver mas viables cambios antes arriesgados cuando hay planificacion sencilla y ejecucion gradual. Que actualizacion ya sabes que es necesaria, pero has estado esperando el momento adecuado?',
     'transit:uranus|sextil|mars':
       'Urano en sextil con Marte impulsa iniciativa, agilidad y experimentacion tactica. Esta fase suele favorecer ajustes inteligentes y ejecucion mas rapida con consciencia. Mantén foco en innovacion util, no en aceleracion vacia.',
     'transit:uranus|trigono|mars':
@@ -2060,9 +2060,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|conjuncao|meio_do_ceu':
       'Neptuno en conjuncion al Medio Cielo puede aumentar sensibilidad sobre vocacion, imagen y sentido profesional. Esta fase pide discernimiento entre inspiracion y proyeccion. Mantén direccion clara y valida decisiones con señales concretas.',
     'transit:saturn|sextil|meio_do_ceu':
-      'Saturno en sextil al Medio Cielo favorece consolidacion profesional por constancia y responsabilidad. Este ciclo apoya crecimiento estable basado en calidad de ejecucion. Refuerza posicionamiento con compromisos realistas.',
+      'Saturno en sextil al Medio Cielo abre una ventana para consolidar reputacion profesional con entregas objetivas y decisiones de largo plazo mas solidas. La fase facilita avances en carrera que dependen de demostrar responsabilidad, no solo visibilidad. Que paso profesional puedes dar ahora que construira una base duradera?',
     'transit:saturn|trigono|meio_do_ceu':
-      'Saturno en trigono al Medio Cielo refuerza reputacion, estructura y direccion de carrera a largo plazo. El periodo suele recompensar metodo, fiabilidad y entrega disciplinada. Sostén foco en fundamentos y progreso estable.',
+      'Saturno en trigono al Medio Cielo facilita avanzar en la trayectoria profesional con menos friccion, donde metodo y credibilidad se alinean de forma mas natural. El ciclo apoya posicionamientos de largo plazo y tiende a generar reconocimiento cuando hay consistencia en la entrega y claridad de direccion. Que nivel de compromiso con tu carrera estas listo para sostener de aqui en adelante?',
     'transit:uranus|conjuncao|sun':
       'Urano en conjuncion con Sol tiende a acelerar cambios de identidad y reposicionamiento personal. Esta fase puede aumentar necesidad de autonomia y decisiones experimentales. Innova con responsabilidad para evitar inestabilidad brusca.',
     'transit:jupiter|oposicao|neptune':
@@ -3418,21 +3418,21 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|saturn':
       'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
     'transit:saturn|sextil|sun':
-      'Saturno in sestile al Sole favorisce disciplina, stabilita e progresso costante. Questa fase aiuta a tradurre intenzione in risultato con routine e criterio. I passi possono essere piccoli, ma piu solidi.',
+      'Saturno in sestile al Sole apre spazio per consolidare obiettivi personali con piu rigore e chiarezza di proposito. Questa fase tende a rivelare cio che ha bisogno di struttura per trasformarsi da potenziale in risultato reale. Quali impegni hai rimandato per mancanza di metodo, non di volonta?',
     'transit:saturn|trigono|sun':
-      'Saturno in trigono al Sole rafforza focus, costanza e fiducia pratica nelle decisioni. Il periodo tende a sostenere consolidamento degli obiettivi con meno dispersione. Dai priorita all essenziale e mantieni un ritmo sostenibile.',
+      'Saturno in trigono al Sole favorisce un ciclo di lavoro costante, con meno attrito tra chi vuoi essere e cio che riesci a sostenere in pratica. Gli obiettivi di lungo periodo diventano piu semplici da realizzare quando identita e metodo sono allineati. Cosa vuoi consolidare mentre questo flusso e disponibile?',
     'transit:saturn|oposicao|uranus':
       'Saturno in opposizione a Urano porta tensione tra stabilita e bisogno di cambiamento. Questo ciclo chiede equilibrio tra preservare struttura e aprire spazio ad aggiustamenti intelligenti. Evita estremi e procedi con esperimenti controllati.',
     'transit:saturn|quadratura|uranus':
       'Saturno in quadratura a Urano segnala attrito tra controllo e rinnovamento. Puoi avvertire disagio verso regole vecchie o cambi troppo rapidi. Il miglior uso della fase e riorganizzare processi senza rompere cio che funziona.',
     'transit:saturn|sextil|mars':
-      'Saturno in sestile a Marte favorisce azione disciplinata ed esecuzione efficiente. L energia rende meglio quando le priorita sono ordinate e l impulso viene regolato. Buon periodo per completare compiti impegnativi con costanza.',
+      'Saturno in sestile a Marte favorisce trasformare slancio in strategia, creando finestre per l azione con tecnica e meno dispersione. Il ciclo tende a rendere di piu quando si unisce coraggio di iniziare e pianificazione dell esecuzione. Quale progetto impegnativo hai disponibile per strutturare in tappe ora?',
     'transit:saturn|trigono|mars':
-      'Saturno in trigono a Marte rafforza produttivita, perseveranza e strategia di lungo periodo. Questa fase aiuta a trasformare sforzo in risultato concreto con meno dispersione. Dirigi energia verso obiettivi chiari e misurabili.',
+      'Saturno in trigono a Marte unisce persistenza e metodo, creando condizioni per un esecuzione di qualita senza l attrito tipico degli aspetti di tensione. Progetti di lunga durata o fisicamente impegnativi tendono a fluire con piu regolarita e meno usura. Questo ciclo favorisce cio che richiede sia vigore sia pazienza allo stesso tempo.',
     'transit:saturn|sextil|saturn':
-      'Saturno in sestile a Saturno sostiene consolidamento e maturita di strutture importanti. Il periodo favorisce revisione pragmatica di processi, accordi e responsabilita. Aggiustamenti graduali possono creare basi piu stabili.',
+      'Saturno in sestile al proprio Saturno natale apre un ciclo favorevole per rivedere autogestione, scadenze e impegni senza la pressione degli aspetti di tensione. Il periodo invita a interrogarsi su quali responsabilita abbiano ancora senso e quali richiedano ristrutturazione con maggiore chiarezza. Quale parte del tuo modo di organizzarti chiede un aggiornamento, non solo ottimizzazione?',
     'transit:saturn|trigono|saturn':
-      'Saturno in trigono a Saturno indica stabilita funzionale e buona capacita organizzativa. Diventa piu semplice mantenere disciplina e completare tappe con qualita. Usa il periodo per consolidare fondamenta e ridurre rumore operativo.',
+      'Saturno in trigono al proprio Saturno natale indica una fase di buon funzionamento strutturale, con maggiore facilita nel sostenere metodo e completare tappe. Il flusso invita ad avviare qualcosa di lunga durata che prima sembrava troppo grande per cominciare. Usa il momento per iniziare cio che richiede costanza, non solo mantenere cio che gia funziona.',
     'transit:sun|oposicao|pluto':
       'Sole in opposizione a Plutone intensifica temi di controllo, potere personale e priorita reali. Questo ciclo puo mostrare polarita che chiedono una postura piu consapevole e meno reattiva. Concentrati sull essenziale con fermezza e senza scontri inutili.',
     'transit:saturn|oposicao|mars':
@@ -3442,13 +3442,13 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|quadratura|sun':
       'Saturno in quadratura al Sole aumenta senso di responsabilita e test di coerenza. Il periodo puo risultare piu esigente, chiedendo focus sull essenziale e taglio degli eccessi. Struttura, riposo e priorita chiare evitano usura improduttiva.',
     'transit:saturn|sextil|venus':
-      'Saturno in sestile a Venere favorisce scelte mature in relazioni, accordi e valori. La fase sostiene impegno sostenibile con meno idealizzazione e piu coerenza pratica. Buon periodo per allineare aspettative e rafforzare legami affidabili.',
+      'Saturno in sestile a Venere favorisce costruire legami con piu discernimento e meno idealizzazione, rendendo piu facile riconoscere cio che ha reciprocita genuina. La fase invita a rivedere accordi affettivi o finanziari con sguardo piu maturo e aspettative meglio calibrate. Quale accordo merita un esame onesto su cio che ciascuna parte porta davvero?',
     'transit:saturn|trigono|venus':
-      'Saturno in trigono a Venere rafforza stabilita affettiva e finanziaria attraverso criterio. C e tendenza a preferire qualita, costanza e accordi di lungo periodo. Usa il ciclo per consolidare cio che ha valore reale nella routine.',
+      'Saturno in trigono a Venere facilita costruire basi piu solide in relazioni e finanze, con preferenza naturale per qualita e impegni di lungo periodo. Il ciclo tende ad allineare investimenti affettivi e materiali con cio che sostiene davvero valore nel tempo. Quali scelte di lungo periodo hai rimandato per mancanza di certezza?',
     'transit:saturn|sextil|jupiter':
-      'Saturno in sestile a Giove unisce espansione e realismo strategico. Il periodo favorisce crescita con pianificazione senza perdere sicurezza di base. Avanza con obiettivi concreti, scadenze chiare e revisioni periodiche.',
+      'Saturno in sestile a Giove apre una finestra per incanalare l espansione in piano eseguibile, temperando l ottimismo con criteri pratici. Il ciclo sostiene una crescita per tappe senza gli eccessi che di solito accompagnano Giove senza l ancora di Saturno. Cosa potresti iniziare adesso che richiede sia audacia sia metodo?',
     'transit:saturn|trigono|jupiter':
-      'Saturno in trigono a Giove sostiene crescita costante con equilibrio tra visione ed esecuzione. Questa fase tende a facilitare progresso solido quando metodo e pazienza sono presenti. Struttura opportunita per fasi per risultati durevoli.',
+      'Saturno in trigono a Giove crea uno dei cicli piu favorevoli per crescere con base, dove espansione e metodo si allineano in modo naturale. I progetti di medio e lungo periodo tendono ad avanzare con piu trazione e meno usura rispetto ad altri momenti. Quale opportunita reale attende solo struttura e impegno di esecuzione?',
     'transit:pluto|ingress|house_10':
       'Plutone in ingresso in Casa 10 tende ad avviare un ciclo di riposizionamento profondo su carriera, reputazione e direzione pubblica. Questa fase chiede spesso scelte piu autentiche e meno compromessi con percorsi non piu coerenti. Procedi con strategia di medio periodo e calibra l esposizione in modo sostenibile.',
     'transit:pluto|ingress|house_4':
@@ -3504,17 +3504,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|quadratura|moon':
       'Sole in quadratura con Luna puo creare attrito tra intenzione cosciente e bisogno emotivo. La fase chiede allineamento tra cio che vuoi fare e il ritmo interno disponibile. Aggiustamenti semplici di routine e comunicazione riducono tensione.',
     'transit:saturn|sextil|neptune':
-      'Saturno in sestile a Nettuno favorisce tradurre intuizione in struttura pratica. Questa fase aiuta a dare forma concreta a idee sensibili con metodo e continuita. Trasforma ispirazione in piccoli passi verificabili.',
+      'Saturno in sestile a Nettuno offre forma e metodo a idee creative o intuizioni che tendono a sfuggire all esecuzione per mancanza di ancoraggio. La fase facilita separare visione genuina da fantasia, rendendo possibile avanzare su progetti sensibili con tappe verificabili. Quale progetto creativo sai gia che e fattibile, ma non hai ancora tradotto in struttura?',
     'transit:saturn|trigono|neptune':
-      'Saturno in trigono a Nettuno sostiene equilibrio tra sensibilita e realismo. Il periodo favorisce consolidare visioni di lungo periodo con disciplina e criterio. Buon momento per strutturare progetti creativi o spirituali in modo pratico.',
+      'Saturno in trigono a Nettuno facilita dare struttura a cio che e sottile, intuitivo o creativo, senza perdere l essenza di cio che ispira. Il ciclo tende a rendere piu eseguibili progetti prima nebulosi, con meno confusione tra visione e fantasia. Quale dimensione della tua vita che sembra intangibile potrebbe ricevere una forma concreta ora?',
     'transit:sun|sextil|moon':
       'Sole in sestile con Luna facilita integrazione tra volonta ed emozione. Questa fase tende a migliorare fluidita in dialoghi, aggiustamenti di routine e scelte quotidiane. Usala per allineare priorita interne ed esterne.',
     'transit:sun|trigono|moon':
       'Sole in trigono con Luna rafforza coerenza tra identita e bisogni emotivi. Il periodo porta spesso maggiore stabilita nell organizzare scelte importanti. Approfittane per consolidare abitudini sostenibili.',
     'transit:saturn|sextil|ascendente':
-      'Saturno in sestile all Ascendente favorisce postura solida, focus e autogestione. Questa fase sostiene progresso costante quando disciplina e confini sono chiari. Piccoli impegni mantenuti nel tempo costruiscono fiducia.',
+      'Saturno in sestile all Ascendente favorisce consolidare il modo in cui gestisci le responsabilita e ti presenti al mondo, con piu solidita e intenzionalita. La fase tende a rendere piu semplice costruire presenza con coerenza tra chi sei e come agisci. Dove desideri che la tua condotta sia piu riconosciuta e coerente?',
     'transit:saturn|trigono|ascendente':
-      'Saturno in trigono all Ascendente rafforza maturita, presenza e ritmo stabile. Il periodo aiuta a organizzare responsabilita senza sovraccarico inutile. Costanza e priorita corrette consolidano basi durevoli.',
+      'Saturno in trigono all Ascendente facilita esprimersi con maturita naturale, rendendo piu semplice sostenere postura coerente e responsabilita con autorita. La fase genera meno attrito tra intenzione e comportamento, favorendo crescita di presenza con poco sforzo aggiuntivo. Quale abitudine o postura stai cercando di consolidare ma che sembra ancora artificiale?',
     'transit:saturn|oposicao|saturn':
       'Saturno in opposizione a Saturno segna un punto di revisione delle strutture di lungo periodo. Il ciclo puo mostrare limiti reali dei modelli precedenti e richiedere riorganizzazione oggettiva. Concentrati sull essenziale e ricalibra gli impegni.',
     'transit:moon|sextil|saturn':
@@ -3600,9 +3600,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|quadratura|venus':
       'Nettuno in quadratura con Venere puo generare idealizzazione affettiva e confusione su valore e reciprocita. Il ciclo richiede discernimento per distinguere intuizione da proiezione. Osserva segnali concreti prima di accordi emotivi o finanziari.',
     'transit:saturn|sextil|moon':
-      'Saturno in sestile con Luna aiuta a stabilizzare emozioni tramite routine e responsabilita affettiva. La fase favorisce dialoghi maturi e migliore gestione del tempo interiore. Piccole abitudini di cura portano sicurezza e continuita.',
+      'Saturno in sestile con Luna apre spazio per tradurre bisogni emotivi in routine affettive piu stabili e consapevoli. La fase facilita distinguere cio che e sentimento genuino da cio che e reattivita abitudinale, rendendo la cura piu strutturata. Quale schema emotivo vuoi trasformare in scelta consapevole, non in reazione automatica?',
     'transit:saturn|trigono|moon':
-      'Saturno in trigono con Luna favorisce coerenza emotiva, sobrietaa e fiducia nelle scelte quotidiane. Il ciclo tende a sostenere accordi stabili e limiti salutari. Usa il periodo per consolidare base affettiva con semplicita.',
+      'Saturno in trigono con Luna facilita l equilibrio tra vita emotiva e responsabilita concrete, con minor costo interiore rispetto ai cicli di tensione. Il ciclo offre spesso serenita e chiarezza per prendere decisioni affettive con piu maturita. Quale decisione in relazioni o routine di cura hai rimandato per paura del disagio?',
     'transit:venus|conjuncao|jupiter':
       'Venere in congiunzione con Giove amplia piacere, generosita e opportunita di armonia nei legami. La fase favorisce incontri, accordi e clima relazionale piu positivo. Sfrutta il flusso con moderazione per evitare eccessi.',
     'transit:uranus|sextil|venus':
@@ -3628,9 +3628,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|conjuncao|jupiter':
       'Saturno in congiunzione con Giove unisce espansione e struttura con visione di lungo periodo. Il periodo favorisce crescita realistica, priorita oggettive e criteri piu forti di esecuzione. Costruisci per fasi per mantenere sostenibilita.',
     'transit:saturn|sextil|uranus':
-      'Saturno in sestile a Urano favorisce innovazione con continuita e base operativa solida. Questa fase aiuta ad aggiornare sistemi senza rompere cio che funziona ancora. Testa i cambiamenti in modo controllato e con metriche chiare.',
+      'Saturno in sestile a Urano crea condizioni per rinnovare routine o strutture in modo incrementale, senza il rischio di rottura degli aspetti di tensione. La fase facilita innovazioni pratiche, dove nuovi metodi possono essere testati senza compromettere cio che gia sostiene risultati. Quale cambiamento hai evitato per paura di destabilizzare cio che funziona?',
     'transit:saturn|trigono|uranus':
-      'Saturno in trigono a Urano facilita modernizzazione stabile e rinnovo intelligente dei processi. Il ciclo favorisce innovazione pratica con bassa discontinuita. Consolida miglioramenti con metodo e revisione costante.',
+      'Saturno in trigono a Urano rende semplice modernizzare processi e strutture con naturalezza, senza l attrito degli aspetti piu tesi. Il ciclo tende a rendere piu praticabili cambiamenti prima rischiosi con pianificazione semplice ed esecuzione graduale. Quale aggiornamento sai gia che e necessario, ma hai atteso il momento giusto?',
     'transit:uranus|sextil|mars':
       'Urano in sestile con Marte aumenta iniziativa, agilita e sperimentazione tattica. Questa fase tende a favorire aggiustamenti intelligenti e azione piu rapida con consapevolezza. Mantieni focus su innovazione utile, non su accelerazione cieca.',
     'transit:uranus|trigono|mars':
@@ -3640,9 +3640,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:neptune|conjuncao|meio_do_ceu':
       'Nettuno in congiunzione al Medio Cielo puo aumentare sensibilita su vocazione, immagine e senso professionale. Questa fase richiede discernimento tra ispirazione e proiezione. Mantieni direzione chiara e valida decisioni con segnali concreti.',
     'transit:saturn|sextil|meio_do_ceu':
-      'Saturno in sestile al Medio Cielo favorisce consolidamento professionale attraverso costanza e responsabilita. Il ciclo sostiene crescita stabile basata su qualita di esecuzione. Rafforza il posizionamento con impegni realistici.',
+      'Saturno in sestile al Medio Cielo apre una finestra per consolidare la reputazione professionale con consegne oggettive e decisioni di lungo periodo piu solide. La fase favorisce avanzamenti di carriera che dipendono dal dimostrare responsabilita, non solo visibilita. Quale passo professionale puoi compiere adesso che costruira una base duratura?',
     'transit:saturn|trigono|meio_do_ceu':
-      'Saturno in trigono al Medio Cielo rafforza reputazione, struttura e direzione professionale di lungo periodo. Il periodo tende a premiare metodo, affidabilita e consegna disciplinata. Mantieni il focus sui fondamentali.',
+      'Saturno in trigono al Medio Cielo facilita avanzare nella traiettoria professionale con meno attrito, dove metodo e credibilita si allineano in modo piu naturale. Il ciclo sostiene posizionamenti di lungo periodo e tende a generare riconoscimento quando la consegna e coerente e la direzione e chiara. Quale livello di impegno con la tua carriera sei pronto a sostenere d ora in avanti?',
     'transit:uranus|conjuncao|sun':
       'Urano in congiunzione con Sole tende ad accelerare aggiornamenti identitari e riposizionamento personale. Questa fase puo aumentare bisogno di autonomia e scelte sperimentali. Innova con responsabilita per evitare instabilita improvvisa.',
     'transit:jupiter|oposicao|neptune':
