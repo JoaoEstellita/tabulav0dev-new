@@ -454,6 +454,11 @@ export class LocalAstrologyService {
       const cache = await AstrologyCacheService.getCache(userId)
 
       if (cache && cache.calculatedData) {
+        // Verificar versão dos dados — cache antigo invalida sem exceção
+        if (cache.dataVersion !== AstrologyCacheService.CURRENT_DATA_VERSION) {
+          console.log('Cache invalidado: versão desatualizada', cache.dataVersion, '→', AstrologyCacheService.CURRENT_DATA_VERSION)
+          return null
+        }
         const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
         if (cache.houseSystem && cache.houseSystem !== currentSystem) {
           return null
