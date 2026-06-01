@@ -373,17 +373,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|quadratura|jupiter':
       'Moon square Jupiter can inflate expectations and mood oscillation around outcomes. This phase asks for moderation to avoid emotional overreach. Reassess priorities and stay with what is viable now.',
     'transit:uranus|sextil|moon':
-      'Uranus sextile Moon favors emotional renewal with more lightness and creativity. This period helps test new habits without abrupt rupture. Small conscious changes can quickly improve wellbeing.',
+      'Uranus sextile natal Moon creates an opening to renew emotional patterns and affective habits with less resistance than in other aspects, where what has grown stagnant may be tested with lightness. This cycle facilitates routine and relational experiments that increase autonomy without requiring rupture. What emotional or affective habit would you like to try differently — and have not yet found the right opening to begin?',
     'transit:uranus|trigono|moon':
-      'Uranus trine Moon supports updating emotional patterns with autonomy. This phase tends to open room for more authentic daily choices. Use flexibility to adjust routine and bonds responsibly.',
+      'Uranus trine natal Moon facilitates the update of emotional patterns with fluidity, where what once regulated inner security may be adjusted without the friction of tense aspects. This phase tends to open room for more authentic choices in routine, bonds, and affective expression. What in your emotional patterns do you know no longer serves — and what small adjustment could begin now without needing ideal conditions?',
     'transit:pluto|oposicao|venus':
       'Pluto opposite natal Venus may intensify themes of power, attachment, and reciprocity in bonds, where what once seemed stable shows tension between what is genuine and what is merely a convenience arrangement. This phase tends to surface dependency or control dynamics in affective and financial relationships, making it harder to sustain arrangements that are not mutually viable. What in an important relationship or agreement do you know is not fair, but have been avoiding confronting directly?',
     'transit:uranus|conjuncao|saturn':
-      'Uranus conjunct Saturn combines disruption and structure, asking old models to update. This phase favors innovation with responsibility rather than destructive rupture. Progressive adjustments tend to work better than abrupt turns.',
+      'Uranus conjunct natal Saturn places disruption and structure at the same point, where the impulse to renew meets the weight of what was built with responsibility. This cycle may both free from structures that have become rigid and destabilize what still had functional value. What in your current organization do you maintain more out of inertia than choice — and what would need to change for what remains to carry more purpose?',
     'transit:uranus|sextil|mercury':
-      'Uranus sextile Mercury favors fresh ideas, fast connections, and smart mental adjustments. This phase tends to support innovation in communication without losing functionality. Test new approaches, then validate impact before scaling.',
+      'Uranus sextile natal Mercury favors unusual idea connections and openness to rethinking mental processes without the cost of tense aspects. This cycle may enhance communication, learning, and decision-making with more agility and creativity. What approach to thinking or communicating are you curious to test — and haven\'t yet found the right moment to try?',
     'transit:uranus|trigono|mercury':
-      'Uranus trine Mercury improves clarity to think beyond old patterns with more flow. This period supports agile learning, intellectual creativity, and process updates. Turn insights into practical steps to secure real gains.',
+      'Uranus trine natal Mercury facilitates the renewal of thinking and communication with fluidity, where what has become habitual may be questioned and updated without friction. This cycle favors out-of-the-ordinary learning, narrative adjustment, and intellectual experimentation. What idea or way of communicating would you like to try differently — and what specifically would you want to observe by doing so?',
     'transit:sun|oposicao|neptune':
       'Sun opposition Neptune can increase confusion between objective focus and idealization. This cycle asks you to separate subtle perception from expectations without evidence. Simplify priorities and verify facts before deciding.',
     'transit:moon|oposicao|mercury':
@@ -393,19 +393,19 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|conjuncao|pluto':
       'Sun conjunct Pluto intensifies focus, control themes, and the need for authenticity. This cycle supports deep change when choices are conscious and strategic. Direct energy to essentials and avoid unproductive power disputes.',
     'transit:uranus|oposicao|mercury':
-      'Uranus opposition Mercury can bring mental disruption, unexpected information, and perspective shifts. This phase asks for flexibility without losing criteria in fact evaluation. Revise plans quickly, but keep final decisions grounded.',
+      'Uranus opposition natal Mercury may accelerate shifts in perspective and generate tension in conversations where what was thought to be established is suddenly challenged. This phase tends to reveal where intellectual certainties or communication agreements need more openness — but with a risk of blunt responses before discernment. What in a current conversation or agreement are you defending more out of familiarity than out of genuine conviction?',
     'transit:pluto|quadratura|jupiter':
       'Pluto square Jupiter can magnify ambition and pressure growth limits. This cycle asks you to calibrate expansion with strategic depth and responsibility. Avoid excess and prioritize sustainable long-term progress.',
     'transit:uranus|conjuncao|meio_do_ceu':
-      'Uranus conjunct Midheaven tends to accelerate professional repositioning and shifts in public image. This phase favors career innovation when experimentation has clear direction. Update positioning without breaking essential structure.',
+      'Uranus conjunct natal Midheaven accelerates professional repositioning and may disrupt or transform public direction quickly — where what seemed like an established path loses stability or changes in unexpected ways. This cycle may both open genuine innovation opportunities and reveal where trajectory was being sustained by others\' expectations rather than genuine vocation. What in your professional direction would you change if you didn\'t need to justify it to anyone else?',
     'transit:uranus|quadratura|moon':
-      'Uranus square Moon can increase emotional instability and immediate need for freedom. This phase asks for routine and relational adjustments to reduce reactivity. Small conscious changes usually work better than abrupt cuts.',
+      'Uranus square natal Moon may intensify emotional instability and generate an impulse for freedom that, without discernment, leads to affective ruptures before processing what actually needs to change. This phase tends to reveal where emotional security patterns are rigid or where routine has stopped nourishing — but the friction can make it hard to distinguish what needs adjusting from what needs preserving. What are you wanting to rupture now that, if you waited another month, you might address with more clarity about what is actually bothering you?',
     'transit:jupiter|sextil|sun':
       'Jupiter sextile Sun supports practical confidence, growth vision, and broader decisions. This cycle tends to help progress when enthusiasm is paired with criteria. Use opportunities with planning to sustain results.',
     'transit:jupiter|trigono|sun':
       'Jupiter trine Sun increases flow to expand goals with stronger inner confidence. This phase can ease recognition and progress when focus stays on essentials. Use the moment to consolidate gains without overpacing.',
     'transit:uranus|conjuncao|ascendente':
-      'Uranus conjunct Ascendant tends to mark personal repositioning and changes in your style of action. This period favors authenticity, autonomy, and identity updates in daily life. Renew how you present yourself with responsible freedom.',
+      'Uranus conjunct natal Ascendant marks a period of personal repositioning where public identity and the way you present yourself to the world may change more suddenly or deeply than expected. This cycle may both release more authentic expression and generate an image rupture that has not yet been internally integrated. What in how you present yourself to the world would you change if you didn\'t have to manage others\' reactions to that change?',
     'transit:pluto|sextil|mars':
       'Pluto sextile natal Mars creates an opening to act with depth and strategy, where execution force may be directed toward high-impact transformations with less friction than in tense aspects. This phase facilitates projects that demand both vigor and persistence — the type of task that calls for real commitment, not just immediate energy. What project or change available to you now would benefit from intense focus and structured execution?',
     'transit:pluto|trigono|mars':
@@ -445,9 +445,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:venus|conjuncao|jupiter':
       'Venus conjunct Jupiter expands pleasure, generosity, and opportunities for harmony in relationships. This phase favors encounters, agreements, and a more positive relational climate. Use the flow with moderation to avoid overextension.',
     'transit:uranus|sextil|venus':
-      'Uranus sextile Venus favors affective and financial renewal with more lightness and creativity. The cycle supports value updates and new relationship formats. Innovate consciously to preserve both freedom and reciprocity.',
+      'Uranus sextile natal Venus favors updating values, bonds, and affective choices with openness and less resistance than in tense aspects — where what has grown stagnant may be tested with lightness. This cycle may facilitate new relationship formats, aesthetic renewal, or shifts in financial priorities that arrive gradually and testably. What aspect of your bonds or values are you curious to try differently — and what small step could begin without compromising what still works?',
     'transit:uranus|trigono|venus':
-      'Uranus trine Venus eases update of relationships, tastes, and value choices with natural flow. This phase tends to increase authenticity without unnecessary rupture. Test new ways of exchange with balance.',
+      'Uranus trine natal Venus facilitates the renewal of relationships, tastes, and value choices with fluidity, where what has grown rigid may be adjusted without the emotional cost of tense aspects. This cycle favors authenticity in bonds and a willingness to test new forms of exchange without needing total rupture to do so. What in an important bond or value do you already know could be more genuine — and what small opening could you create now to begin?',
     'transit:jupiter|quadratura|moon':
       'Jupiter square Moon can amplify emotional oscillation and expectation of immediate response. This cycle asks for moderation to avoid overreaction in feelings and decisions. Adjust pace, prioritize essentials, and keep affective realism.',
     'transit:neptune|quadratura|moon':
@@ -471,9 +471,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|uranus':
       'Saturn trine Uranus makes it easy to modernize processes and structures naturally, without the friction of tenser aspects. This cycle tends to make previously risky changes more viable with simple planning and gradual execution. Which update do you already know is necessary, but have been waiting for the right moment?',
     'transit:uranus|sextil|mars':
-      'Uranus sextile Mars boosts initiative, agility, and tactical experimentation. This phase tends to favor smart adjustments and faster execution with awareness. Keep focus on useful innovation, not pure acceleration.',
+      'Uranus sextile natal Mars creates an opening to experiment with new paths of action with less resistance than in tense aspects — where the impulse to act may find unusual routes with real traction. This cycle favors initiatives that combine bold tactics with a willingness to test and iterate. What action have you been postponing because it seemed too far outside your usual pattern — and what opening does this phase offer to test it at a smaller scale?',
     'transit:uranus|trigono|mars':
-      'Uranus trine Mars improves decisive action with flexibility and creative problem-solving. The cycle supports productive change when priorities are explicit. Use momentum to unlock practical progress.',
+      'Uranus trine natal Mars facilitates authentic action and route changes with fluidity, where what had become rigid in execution may be renewed without the friction of tense aspects. This cycle favors initiatives that combine courage and adaptability — acting differently without needing total rupture to do so. What change in your way of acting or executing do you already know would be more effective, but have not yet found the moment to test?',
     'transit:jupiter|oposicao|saturn':
       'Jupiter opposition Saturn highlights tension between expansion and limits. This phase asks for balance between vision and feasibility in current commitments. Recalibrate goals, deadlines, and resource allocation.',
     'transit:neptune|conjuncao|meio_do_ceu':
@@ -483,7 +483,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|meio_do_ceu':
       'Saturn trine Midheaven supports career progress with less friction, where method and credibility align more naturally. This cycle favors long-term positioning and tends to generate recognition when delivery is consistent and direction is clear. What level of commitment to your career are you ready to sustain going forward?',
     'transit:uranus|conjuncao|sun':
-      'Uranus conjunct Sun tends to accelerate identity updates and personal repositioning. This phase can increase need for autonomy and experimental choices. Innovate with responsibility to avoid abrupt instability.',
+      'Uranus conjunct natal Sun signals an identity turning point, where what sustained direction and self-image may be questioned or transformed more suddenly and deeply than expected. This cycle may both free from roles and expectations that have become rigid and generate instability before the new direction becomes clear. What in your identity or path do you feel needs to be freed — and what has not yet taken enough shape to replace what is being left behind?',
     'transit:jupiter|oposicao|neptune':
       'Jupiter opposition Neptune can amplify idealization, diffuse expectations, and optimism without verification. This cycle asks for clearer criteria and fact-checking before major decisions. Keep inspiration grounded in practical reality.',
     'transit:jupiter|quadratura|neptune':
@@ -1954,17 +1954,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|quadratura|jupiter':
       'Luna en cuadratura con Jupiter puede inflar expectativas y oscilacion emocional frente a resultados. Esta fase pide moderacion para evitar exceso afectivo o decisorio. Revisa prioridades y mantente en lo viable ahora.',
     'transit:uranus|sextil|moon':
-      'Urano en sextil con Luna favorece renovacion emocional con mas ligereza y creatividad. El periodo ayuda a probar habitos nuevos sin ruptura brusca. Pequenos cambios conscientes mejoran bienestar rapidamente.',
+      'Urano en sextil con la Luna natal crea una apertura para renovar patrones emocionales y habitos afectivos con menos resistencia que en otros aspectos, donde lo que se ha estancado puede ser probado con ligereza. El ciclo facilita experimentos de rutina y vinculo que aumentan la autonomia sin exigir ruptura. Que habito emocional o afectivo te gustaria intentar de forma diferente — y aun no has encontrado la apertura adecuada para comenzar?',
     'transit:uranus|trigono|moon':
-      'Urano en trigono con Luna facilita actualizar patrones emocionales con autonomia. Esta fase abre espacio para elecciones mas autenticas en lo cotidiano. Usa la flexibilidad para ajustar rutina y vinculos con responsabilidad.',
+      'Urano en trigono con la Luna natal facilita la actualizacion de patrones emocionales con fluidez, donde lo que regulaba la seguridad interna puede ajustarse sin los atritos de los aspectos tensos. La fase tiende a abrir espacio para elecciones mas autenticas de rutina, vinculo y expresion afectiva. Que en tus patrones emocionales ya sabes que no funciona mas — y que pequeno ajuste podria comenzar ahora sin necesitar condiciones ideales?',
     'transit:pluto|oposicao|venus':
       'Pluton en oposicion a Venus natal puede intensificar temas de poder, apego y reciprocidad en los vinculos, donde lo que antes parecia estable muestra tension entre lo genuino y lo que es solo un acuerdo de conveniencia. Esta fase tiende a mostrar dinamicas de dependencia o control en relaciones afectivas y financieras, haciendo mas dificil sostener acuerdos que no son mutuamente sostenibles. Que en una relacion o acuerdo importante sabes que no es justo, pero has evitado confrontar directamente?',
     'transit:uranus|conjuncao|saturn':
-      'Urano en conjuncion a Saturno combina renovacion y estructura, y pide actualizar modelos antiguos. Esta fase favorece innovar con responsabilidad sin destruir lo que aun funciona. Ajustes progresivos suelen rendir mejor que giros bruscos.',
+      'Urano en conjuncion a Saturno natal coloca ruptura y estructura en el mismo punto, donde el impulso de renovar encuentra el peso de lo que fue construido con responsabilidad. El ciclo puede tanto liberar de estructuras que se han rigidizado como desestabilizar lo que aun tenia valor funcional. Que en tu organizacion actual mantienes mas por inercia que por eleccion — y que necesitaria cambiar para que lo que queda tenga mas proposito?',
     'transit:uranus|sextil|mercury':
-      'Urano en sextil con Mercurio favorece ideas nuevas, conexiones rapidas y ajustes mentales inteligentes. Esta fase tiende a impulsar innovacion en comunicacion sin perder funcionalidad. Prueba enfoques distintos y valida impacto antes de escalar.',
+      'Urano en sextil con Mercurio natal favorece conexiones inusuales de ideas y apertura para repensar procesos mentales sin el costo de los aspectos tensos. El ciclo puede potenciar comunicacion, aprendizaje y toma de decisiones con mas agilidad y creatividad. Que enfoque de pensar o comunicar tienes curiosidad de probar — y aun no has encontrado el momento adecuado para intentarlo?',
     'transit:uranus|trigono|mercury':
-      'Urano en trigono con Mercurio aporta claridad para pensar fuera del patron con mas fluidez. El periodo favorece aprendizaje agil, creatividad intelectual y actualizacion de procesos. Convierte insights en pasos practicos para consolidar avance real.',
+      'Urano en trigono con Mercurio natal facilita la renovacion del pensamiento y la comunicacion con fluidez, donde lo que se ha vuelto habitual puede ser cuestionado y actualizado sin friccion. El ciclo favorece el aprendizaje fuera del molde, el ajuste de narrativas y la experimentacion intelectual. Que idea o forma de comunicar te gustaria intentar de manera distinta — y que especificamente te gustaria observar al hacerlo?',
     'transit:sun|oposicao|neptune':
       'Sol en oposicion a Neptuno puede aumentar confusion entre foco objetivo e idealizacion. Este ciclo pide separar percepcion sensible de expectativas sin base concreta. Simplifica prioridades y confirma datos antes de decidir.',
     'transit:moon|oposicao|mercury':
@@ -1974,19 +1974,19 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|conjuncao|pluto':
       'Sol en conjuncion con Pluton intensifica foco, control y necesidad de autenticidad. Este ciclo favorece cambios profundos cuando actuas con consciencia y estrategia. Dirige energia a lo esencial y evita disputas de poder improductivas.',
     'transit:uranus|oposicao|mercury':
-      'Urano en oposicion a Mercurio puede traer rupturas de ideas, noticias inesperadas y cambios de perspectiva. La fase pide flexibilidad sin perder criterio al evaluar hechos. Revisa planes rapido, pero decide con base objetiva.',
+      'Urano en oposicion a Mercurio natal puede acelerar cambios de perspectiva y generar tension en conversaciones donde lo que se creia establecido es repentinamente cuestionado. La fase tiende a revelar donde certezas intelectuales o acuerdos de comunicacion necesitan mas apertura — pero con riesgo de respuestas bruscas antes del discernimiento. Que en una conversacion o acuerdo actual estas defendiendo mas por familiaridad que por conviccion genuina?',
     'transit:pluto|quadratura|jupiter':
       'Pluton en cuadratura con Jupiter puede ampliar ambicion y tensionar limites de crecimiento. Este ciclo pide calibrar expansion con profundidad estrategica y responsabilidad. Evita excesos y prioriza avances sostenibles a largo plazo.',
     'transit:uranus|conjuncao|meio_do_ceu':
-      'Urano en conjuncion al Medio Cielo tiende a acelerar reposicionamiento profesional y cambio de imagen publica. La fase favorece innovacion de carrera cuando hay experimentacion con direccion clara. Actualiza posicionamiento sin romper estructura esencial.',
+      'Urano en conjuncion al Medio Cielo natal acelera el reposicionamiento profesional y puede romper o transformar rapidamente la direccion publica — donde lo que parecia camino establecido pierde estabilidad o cambia de forma inesperada. El ciclo puede tanto abrir oportunidades de innovacion genuina como revelar donde la trayectoria era sostenida por la expectativa ajena en vez de vocacion propia. Que en tu direccion profesional cambiarias si no necesitaras justificarlo ante nadie?',
     'transit:uranus|quadratura|moon':
-      'Urano en cuadratura con Luna puede aumentar inestabilidad emocional y necesidad inmediata de libertad. La fase pide ajustar rutina afectiva para reducir reactividad en hogar y vinculos cercanos. Cambios pequenos y conscientes suelen funcionar mejor que cortes bruscos.',
+      'Urano en cuadratura con la Luna natal puede intensificar la inestabilidad emocional y generar impulso de libertad que, sin discernimiento, lleva a rupturas afectivas antes de procesar lo que realmente necesita cambiar. La fase tiende a revelar donde los patrones de seguridad emocional estan rigidos o donde la rutina dejo de nutrir — pero el atrito puede dificultar distinguir lo que necesita ajustarse de lo que necesita preservarse. Que estas queriendo romper ahora que, si esperaras un mes mas, podrias abordar con mas claridad sobre lo que realmente te molesta?',
     'transit:jupiter|sextil|sun':
       'Jupiter en sextil al Sol favorece confianza practica, vision de crecimiento y decisiones mas amplias. Este ciclo tiende a apoyar avances cuando entusiasmo y criterio van juntos. Aprovecha oportunidades con planificacion para sostener resultados.',
     'transit:jupiter|trigono|sun':
       'Jupiter en trigono al Sol aumenta fluidez para expandir metas con mayor seguridad interna. La fase puede facilitar reconocimiento y progreso cuando hay foco en lo esencial. Usa el momento para consolidar avances sin exceder el ritmo.',
     'transit:uranus|conjuncao|ascendente':
-      'Urano en conjuncion al Ascendente tiende a marcar reposicionamiento personal y cambio en el estilo de accion. Este periodo favorece autenticidad, autonomia y ajustes de identidad en lo cotidiano. Renueva tu forma de presentarte con libertad responsable.',
+      'Urano en conjuncion al Ascendente natal marca un periodo de reposicionamiento personal donde la identidad publica y la forma de presentarse al mundo pueden cambiar de forma mas repentina o profunda de lo esperado. El ciclo puede tanto liberar una expresion mas autentica como generar una ruptura de imagen que aun no ha sido integrada internamente. Que en como te presentas al mundo cambiarias si no tuvieras que gestionar la reaccion de los demas ante ese cambio?',
     'transit:pluto|sextil|mars':
       'Pluton en sextil con Marte natal crea una apertura para actuar con profundidad y estrategia, donde la fuerza de ejecucion puede dirigirse a transformaciones de alto impacto con menos friccion que en los aspectos tensos. La fase facilita proyectos que exigen tanto vigor como persistencia — el tipo de tarea que pide compromiso real, no solo energia inmediata. Que proyecto o cambio tienes disponible ahora que se beneficiaria de foco intenso y ejecucion estructurada?',
     'transit:pluto|trigono|mars':
@@ -2026,9 +2026,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:venus|conjuncao|jupiter':
       'Venus en conjuncion con Jupiter amplifica placer, generosidad y oportunidades de armonia en vinculos. La fase favorece encuentros, acuerdos y clima relacional mas positivo. Aprovecha el flujo con moderacion para evitar excesos.',
     'transit:uranus|sextil|venus':
-      'Urano en sextil con Venus favorece renovacion afectiva y financiera con mas ligereza y creatividad. El ciclo apoya ajustes de valor personal y nuevos formatos de vinculo. Innova con consciencia para sostener libertad y reciprocidad.',
+      'Urano en sextil con Venus natal favorece la actualizacion de valores, vinculos y elecciones afectivas con apertura y menos resistencia que en los aspectos tensos — donde lo que se ha estancado puede ser probado con ligereza. El ciclo puede facilitar nuevos formatos de relacion, renovacion estetica o cambios en prioridades financieras que llegan de forma gradual y comprobable. Que aspecto de tus vinculos o valores tienes curiosidad de experimentar diferente — y que paso pequeno podria comenzar sin comprometer lo que aun funciona?',
     'transit:uranus|trigono|venus':
-      'Urano en trigono con Venus facilita actualizar relaciones, gustos y elecciones de valor con naturalidad. La fase tiende a ampliar autenticidad sin ruptura innecesaria. Prueba nuevas formas de intercambio con equilibrio.',
+      'Urano en trigono con Venus natal facilita la renovacion de relaciones, gustos y elecciones de valor con fluidez, donde lo que se ha rigidizado puede ajustarse sin el costo emocional de los aspectos tensos. El ciclo favorece autenticidad en vinculos y disposicion a probar nuevas formas de intercambio sin necesitar ruptura para ello. Que en un vinculo o valor importante ya sabes que podria ser mas genuino — y que pequena apertura podrias crear ahora para comenzar?',
     'transit:jupiter|quadratura|moon':
       'Jupiter en cuadratura con Luna puede ampliar oscilacion emocional y expectativa de respuesta inmediata. El ciclo pide moderacion para evitar exageros en reacciones y decisiones. Ajusta ritmo, prioriza lo esencial y mantén realismo afectivo.',
     'transit:neptune|quadratura|moon':
@@ -2052,9 +2052,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|uranus':
       'Saturno en trigono a Urano facilita modernizar procesos y estructuras con naturalidad, sin la friccion de los aspectos mas tensos. El ciclo tiende a volver mas viables cambios antes arriesgados cuando hay planificacion sencilla y ejecucion gradual. Que actualizacion ya sabes que es necesaria, pero has estado esperando el momento adecuado?',
     'transit:uranus|sextil|mars':
-      'Urano en sextil con Marte impulsa iniciativa, agilidad y experimentacion tactica. Esta fase suele favorecer ajustes inteligentes y ejecucion mas rapida con consciencia. Mantén foco en innovacion util, no en aceleracion vacia.',
+      'Urano en sextil con Marte natal crea una apertura para experimentar nuevos caminos de accion con menos resistencia que en los aspectos tensos — donde el impulso de actuar puede encontrar rutas inusuales con traccion real. El ciclo favorece iniciativas que combinan audacia tactica con disposicion a probar e iterar. Que accion has postergado porque parecia demasiado fuera de tu patron habitual — y que apertura ofrece esta fase para probarla a menor escala?',
     'transit:uranus|trigono|mars':
-      'Urano en trigono con Marte mejora accion decidida con flexibilidad y resolucion creativa. El ciclo apoya cambios productivos cuando las prioridades estan claras. Usa el impulso para desbloquear progreso practico.',
+      'Urano en trigono con Marte natal facilita la accion autentica y el cambio de ruta con fluidez, donde lo que se habia rigidizado en la ejecucion puede renovarse sin el atrito de los aspectos tensos. El ciclo favorece iniciativas que unen valentia y adaptacion — actuar de forma diferente sin necesitar ruptura total para ello. Que cambio en tu forma de actuar o ejecutar ya sabes que seria mas efectivo, pero aun no has encontrado el momento de probar?',
     'transit:jupiter|oposicao|saturn':
       'Jupiter en oposicion a Saturno muestra tension entre expansion y limites. Esta fase pide equilibrio entre vision y viabilidad en compromisos actuales. Recalibra metas, plazos y distribucion de recursos.',
     'transit:neptune|conjuncao|meio_do_ceu':
@@ -2064,7 +2064,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|meio_do_ceu':
       'Saturno en trigono al Medio Cielo facilita avanzar en la trayectoria profesional con menos friccion, donde metodo y credibilidad se alinean de forma mas natural. El ciclo apoya posicionamientos de largo plazo y tiende a generar reconocimiento cuando hay consistencia en la entrega y claridad de direccion. Que nivel de compromiso con tu carrera estas listo para sostener de aqui en adelante?',
     'transit:uranus|conjuncao|sun':
-      'Urano en conjuncion con Sol tiende a acelerar cambios de identidad y reposicionamiento personal. Esta fase puede aumentar necesidad de autonomia y decisiones experimentales. Innova con responsabilidad para evitar inestabilidad brusca.',
+      'Urano en conjuncion con el Sol natal senala un punto de quiebre de identidad, donde lo que sostenia la direccion y la autoimagen puede ser cuestionado o transformado de forma mas repentina y profunda de lo esperado. El ciclo puede tanto liberar de roles y expectativas que se han rigidizado como generar inestabilidad antes de que la nueva direccion sea clara. Que en tu identidad o camino sientes que necesita liberarse — y que aun no tiene suficiente forma para reemplazar lo que se esta dejando atras?',
     'transit:jupiter|oposicao|neptune':
       'Jupiter en oposicion a Neptuno puede ampliar idealizacion y expectativas difusas sin verificacion. Este ciclo pide criterios claros y chequeo de hechos antes de decisiones grandes. Mantén inspiracion con base practica.',
     'transit:jupiter|quadratura|neptune':
@@ -3534,17 +3534,17 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|quadratura|jupiter':
       'Luna in quadratura con Giove puo gonfiare aspettative e oscillazioni emotive sui risultati. Questa fase richiede moderazione per evitare eccessi affettivi o decisionali. Rivedi priorita e resta su cio che e fattibile ora.',
     'transit:uranus|sextil|moon':
-      'Urano in sestile con Luna favorisce rinnovamento emotivo con piu leggerezza e creativita. Il periodo aiuta a sperimentare nuove abitudini senza rotture brusche. Piccoli cambiamenti consapevoli migliorano rapidamente il benessere.',
+      'Urano in sestile con la Luna natale crea un apertura per rinnovare schemi emotivi e abitudini affettive con meno resistenza rispetto ad altri aspetti, dove cio che si e cristallizzato puo essere testato con leggerezza. Il ciclo facilita esperimenti di routine e legame che aumentano l autonomia senza richiedere rottura. Quale abitudine emotiva o affettiva vorresti provare in modo diverso — e non hai ancora trovato l apertura giusta per iniziare?',
     'transit:uranus|trigono|moon':
-      'Urano in trigono con Luna facilita aggiornare schemi emotivi con maggiore autonomia. Questa fase apre spazio a scelte quotidiane piu autentiche. Usa la flessibilita per regolare routine e legami in modo responsabile.',
+      'Urano in trigono con la Luna natale facilita l aggiornamento degli schemi emotivi con fluidita, dove cio che regolava la sicurezza interiore puo essere modificato senza gli attriti degli aspetti tesi. La fase tende ad aprire spazio a scelte piu autentiche di routine, legame ed espressione affettiva. Cosa nei tuoi schemi emotivi sai gia che non serve piu — e quale piccolo aggiustamento potrebbe iniziare ora senza aver bisogno di condizioni ideali?',
     'transit:pluto|oposicao|venus':
       'Plutone in opposizione a Venere natale puo intensificare temi di potere, attaccamento e reciprocita nei legami, dove cio che prima sembrava stabile mostra tensione tra cio che e genuino e cio che e solo un accordo di convenienza. Questa fase tende a rivelare dinamiche di dipendenza o controllo in relazioni affettive e finanziarie, rendendo piu difficile sostenere accordi che non sono mutuamente sostenibili. Cosa in una relazione o accordo importante sai che non e giusto, ma hai evitato di affrontare direttamente?',
     'transit:uranus|conjuncao|saturn':
-      'Urano in congiunzione a Saturno combina rinnovamento e struttura, chiedendo aggiornamento dei modelli precedenti. Questa fase favorisce innovazione responsabile senza distruggere cio che ancora funziona. Aggiustamenti progressivi rendono piu dei cambi bruschi.',
+      'Urano in congiunzione a Saturno natale mette rottura e struttura nello stesso punto, dove l impulso di rinnovare incontra il peso di cio che e stato costruito con responsabilita. Il ciclo puo tanto liberare da strutture che si sono irrigidite quanto destabilizzare cio che aveva ancora valore funzionale. Cosa nella tua organizzazione attuale mantieni piu per inerzia che per scelta — e cosa dovrebbe cambiare perche cio che resta abbia piu scopo?',
     'transit:uranus|sextil|mercury':
-      'Urano in sestile con Mercurio favorisce idee nuove, connessioni rapide e aggiustamenti mentali intelligenti. Questa fase tende a sostenere innovazione nella comunicazione senza perdere funzionalita. Prova approcci diversi e valida l impatto prima di scalare.',
+      'Urano in sestile con Mercurio natale favorisce connessioni insolite di idee e apertura a ripensare processi mentali senza il costo degli aspetti tesi. Il ciclo puo potenziare comunicazione, apprendimento e processo decisionale con piu agilita e creativita. Quale approccio al pensiero o alla comunicazione hai curiosita di sperimentare — e non hai ancora trovato il momento giusto per provarlo?',
     'transit:uranus|trigono|mercury':
-      'Urano in trigono con Mercurio migliora chiarezza per pensare fuori schema con piu fluidita. Il periodo favorisce apprendimento agile, creativita intellettuale e aggiornamento dei processi. Trasforma gli insight in passi pratici per consolidare risultati reali.',
+      'Urano in trigono con Mercurio natale facilita il rinnovamento del pensiero e della comunicazione con fluidita, dove cio che e diventato abitudinale puo essere messo in discussione e aggiornato senza attrito. Il ciclo favorisce l apprendimento fuori schema, l aggiustamento delle narrative e la sperimentazione intellettuale. Quale idea o modo di comunicare vorresti provare in modo diverso — e cosa vorresti osservare specificatamente facendolo?',
     'transit:sun|oposicao|neptune':
       'Sole in opposizione a Nettuno puo aumentare confusione tra focus oggettivo e idealizzazione. Questo ciclo chiede di distinguere percezione sottile da aspettative senza base concreta. Semplifica priorita e verifica i fatti prima di decidere.',
     'transit:moon|oposicao|mercury':
@@ -3554,19 +3554,19 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|conjuncao|pluto':
       'Sole in congiunzione con Plutone intensifica focus, controllo e bisogno di autenticita. Questo ciclo favorisce cambi profondi quando agisci con consapevolezza e strategia. Dirigi energia sull essenziale ed evita conflitti di potere improduttivi.',
     'transit:uranus|oposicao|mercury':
-      'Urano in opposizione a Mercurio puo portare rotture di idee, notizie inattese e cambi di prospettiva. La fase chiede flessibilita senza perdere criterio nella valutazione dei fatti. Rivedi i piani rapidamente, ma decidi su basi oggettive.',
+      'Urano in opposizione a Mercurio natale puo accelerare cambi di prospettiva e generare tensione in conversazioni dove cio che si credeva consolidato viene improvvisamente messo in discussione. La fase tende a rivelare dove le certezze intellettuali o gli accordi comunicativi hanno bisogno di piu apertura — ma con rischio di risposte brusche prima del discernimento. Cosa in una conversazione o accordo attuale stai difendendo piu per familiarita che per vera convinzione?',
     'transit:pluto|quadratura|jupiter':
       'Plutone in quadratura con Giove puo ampliare ambizione e mettere sotto pressione i limiti di crescita. Questo ciclo chiede di calibrare espansione con profondita strategica e responsabilita. Evita eccessi e dai priorita a progressi sostenibili di lungo periodo.',
     'transit:uranus|conjuncao|meio_do_ceu':
-      'Urano in congiunzione al Medio Cielo tende ad accelerare riposizionamento professionale e cambio d immagine pubblica. La fase favorisce innovazione di carriera quando sperimentazione e direzione sono chiare. Aggiorna il posizionamento senza rompere la struttura essenziale.',
+      'Urano in congiunzione al Medio Cielo natale accelera il riposizionamento professionale e puo rompere o trasformare rapidamente la direzione pubblica — dove cio che sembrava un percorso consolidato perde stabilita o cambia in modo inaspettato. Il ciclo puo tanto aprire opportunita di innovazione genuina quanto rivelare dove la traiettoria era sostenuta dall aspettativa altrui anziche dalla propria vocazione. Cosa nella tua direzione professionale cambieresti se non dovessi giustificarlo a nessun altro?',
     'transit:uranus|quadratura|moon':
-      'Urano in quadratura con Luna puo aumentare instabilita emotiva e bisogno immediato di liberta. La fase chiede di regolare routine affettiva per ridurre reattivita in casa e nei legami vicini. Piccoli cambiamenti consapevoli funzionano meglio di tagli bruschi.',
+      'Urano in quadratura con la Luna natale puo intensificare l instabilita emotiva e generare un impulso di liberta che, senza discernimento, porta a rotture affettive prima di elaborare cio che ha realmente bisogno di cambiare. La fase tende a rivelare dove gli schemi di sicurezza emotiva sono rigidi o dove la routine ha smesso di nutrire — ma l attrito puo rendere difficile distinguere cio che va aggiustato da cio che va preservato. Cosa stai volendo rompere ora che, se aspettassi ancora un mese, potresti affrontare con piu chiarezza su cosa ti disturba davvero?',
     'transit:jupiter|sextil|sun':
       'Giove in sestile al Sole favorisce fiducia pratica, visione di crescita e decisioni piu ampie. Questo ciclo tende a sostenere avanzamenti quando entusiasmo e criterio procedono insieme. Sfrutta opportunita con pianificazione per rendere i risultati stabili.',
     'transit:jupiter|trigono|sun':
       'Giove in trigono al Sole aumenta fluidita nell espansione degli obiettivi con piu sicurezza interiore. La fase puo facilitare riconoscimento e progresso quando il focus resta sull essenziale. Usa il momento per consolidare avanzamenti senza forzare il ritmo.',
     'transit:uranus|conjuncao|ascendente':
-      'Urano in congiunzione all Ascendente tende a segnare riposizionamento personale e cambiamento nello stile d azione. Questo periodo favorisce autenticita, autonomia e aggiornamenti di identita nella routine. Rinnova il modo di presentarti con liberta responsabile.',
+      'Urano in congiunzione all Ascendente natale segna un periodo di riposizionamento personale in cui l identita pubblica e il modo di presentarsi al mondo possono cambiare piu bruscamente o profondamente del previsto. Il ciclo puo tanto liberare una espressione piu autentica quanto generare una rottura d immagine che non e ancora stata integrata internamente. Cosa nel tuo modo di presentarti al mondo cambieresti se non dovessi gestire le reazioni degli altri a quel cambiamento?',
     'transit:pluto|sextil|mars':
       'Plutone in sestile con Marte natale crea un apertura per agire con profondita e strategia, dove la forza esecutiva puo essere diretta verso trasformazioni ad alto impatto con meno attrito rispetto agli aspetti di tensione. La fase facilita progetti che richiedono sia vigore che persistenza — il tipo di compito che chiede impegno reale, non solo energia immediata. Quale progetto o cambiamento hai disponibile ora che si gioverebbe di un focus intenso e di un esecuzione strutturata?',
     'transit:pluto|trigono|mars':
@@ -3606,9 +3606,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:venus|conjuncao|jupiter':
       'Venere in congiunzione con Giove amplia piacere, generosita e opportunita di armonia nei legami. La fase favorisce incontri, accordi e clima relazionale piu positivo. Sfrutta il flusso con moderazione per evitare eccessi.',
     'transit:uranus|sextil|venus':
-      'Urano in sestile con Venere favorisce rinnovamento affettivo e finanziario con piu leggerezza e creativita. Il ciclo sostiene aggiornamenti di valore personale e nuovi formati di legame. Innova con consapevolezza per mantenere liberta e reciprocita.',
+      'Urano in sestile a Venere natale favorisce l aggiornamento di valori, legami e scelte affettive con apertura e meno resistenza rispetto agli aspetti tesi. Il ciclo puo facilitare nuovi formati di relazione, rinnovamento estetico o cambi nelle priorita finanziarie che arrivano in modo graduale. Quale aspetto dei tuoi legami o valori hai curiosita di sperimentare in modo diverso — e quale piccolo passo potrebbe iniziare senza compromettere cio che funziona ancora?',
     'transit:uranus|trigono|venus':
-      'Urano in trigono con Venere facilita aggiornare relazioni, gusti e scelte di valore con naturalezza. La fase tende ad ampliare autenticita senza rotture inutili. Sperimenta nuovi modi di scambio con equilibrio.',
+      'Urano in trigono a Venere natale facilita il rinnovamento di relazioni, gusti e scelte di valore con fluidita, dove cio che si e irrigidito puo essere aggiustato senza il costo emotivo degli aspetti tesi. Il ciclo favorisce autenticita nei legami e la disponibilita a testare nuove forme di scambio senza aver bisogno di rottura. Cosa in un legame o valore importante sai gia che potrebbe essere piu genuino — e quale piccola apertura potresti creare adesso per iniziare?',
     'transit:jupiter|quadratura|moon':
       'Giove in quadratura con Luna puo ampliare oscillazione emotiva e aspettativa di risposta immediata. Il ciclo richiede moderazione per evitare eccessi nelle reazioni e nelle decisioni. Regola ritmo, priorita essenziale e realismo affettivo.',
     'transit:neptune|quadratura|moon':
@@ -3632,9 +3632,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|uranus':
       'Saturno in trigono a Urano rende semplice modernizzare processi e strutture con naturalezza, senza l attrito degli aspetti piu tesi. Il ciclo tende a rendere piu praticabili cambiamenti prima rischiosi con pianificazione semplice ed esecuzione graduale. Quale aggiornamento sai gia che e necessario, ma hai atteso il momento giusto?',
     'transit:uranus|sextil|mars':
-      'Urano in sestile con Marte aumenta iniziativa, agilita e sperimentazione tattica. Questa fase tende a favorire aggiustamenti intelligenti e azione piu rapida con consapevolezza. Mantieni focus su innovazione utile, non su accelerazione cieca.',
+      'Urano in sestile a Marte natale crea apertura per sperimentare nuovi percorsi di azione con meno resistenza rispetto agli aspetti tesi, dove l impulso di agire puo trovare strade insolite con trazione reale. Il ciclo favorisce iniziative che combinano audacia tattica con disponibilita a testare e iterare. Quale azione hai rimandato perche sembrava troppo fuori dal tuo schema abituale — e quale apertura questa fase offre per testarla su scala minore?',
     'transit:uranus|trigono|mars':
-      'Urano in trigono con Marte migliora azione decisa con flessibilita e problem solving creativo. Il ciclo sostiene cambiamenti produttivi quando le priorita sono esplicite. Usa slancio per sbloccare progresso concreto.',
+      'Urano in trigono a Marte natale facilita l azione autentica e il cambiamento di rotta con fluidita, dove cio che si e irrigidito nell esecuzione puo essere rinnovato senza l attrito degli aspetti tesi. Il ciclo favorisce iniziative che uniscono coraggio e adattamento — agire in modo diverso senza aver bisogno di rottura totale. Quale cambiamento nel tuo modo di agire o eseguire sai gia che sarebbe piu efficace — e quale momento questa fase ti offre per testarlo?',
     'transit:jupiter|oposicao|saturn':
       'Giove in opposizione a Saturno evidenzia tensione tra espansione e limiti. Questa fase richiede equilibrio tra visione e fattibilita negli impegni correnti. Ricalibra obiettivi, scadenze e distribuzione delle risorse.',
     'transit:neptune|conjuncao|meio_do_ceu':
@@ -3644,7 +3644,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|meio_do_ceu':
       'Saturno in trigono al Medio Cielo facilita avanzare nella traiettoria professionale con meno attrito, dove metodo e credibilita si allineano in modo piu naturale. Il ciclo sostiene posizionamenti di lungo periodo e tende a generare riconoscimento quando la consegna e coerente e la direzione e chiara. Quale livello di impegno con la tua carriera sei pronto a sostenere d ora in avanti?',
     'transit:uranus|conjuncao|sun':
-      'Urano in congiunzione con Sole tende ad accelerare aggiornamenti identitari e riposizionamento personale. Questa fase puo aumentare bisogno di autonomia e scelte sperimentali. Innova con responsabilita per evitare instabilita improvvisa.',
+      'Urano in congiunzione al Sole natale segna un cambio di identita, dove cio che sosteneva direzione e immagine di se puo essere messo in discussione o trasformato in modo improvviso e piu profondo del previsto. Il ciclo puo tanto liberare da ruoli e aspettative che si sono irrigiditi quanto generare instabilita prima che la nuova direzione sia chiara. Cosa nella tua identita o nel tuo percorso senti che ha bisogno di liberarsi — e cosa non ha ancora forma sufficiente per sostituire cio che stai lasciando?',
     'transit:jupiter|oposicao|neptune':
       'Giove in opposizione a Nettuno puo ampliare idealizzazione e aspettative diffuse senza verifica concreta. Il ciclo richiede criteri piu chiari e controllo dei fatti prima di decisioni importanti. Mantieni ispirazione con base pratica.',
     'transit:jupiter|quadratura|neptune':
