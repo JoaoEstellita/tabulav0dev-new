@@ -255,15 +255,15 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:mars|quadratura|venus':
       'Mars square Venus may tension desire, affection, and reciprocity expectations. This phase asks for clearer boundaries and practical negotiation to avoid relational oscillation. Active listening and simple agreements improve bond quality.',
     'transit:saturn|quadratura|saturn':
-      'Saturn square Saturn marks a period of structural review and maturity. Pressure may arise to adjust timelines, limits, and responsibilities more objectively. Gains come from simplifying commitments and reinforcing what truly sustains your plan.',
+      'Saturn square natal Saturn exposes tension between current structure and the need for genuine maturation. This phase tends to reveal where timelines, limits, and responsibilities no longer serve what you are trying to build, making the weight of that misalignment more visible. What are you maintaining out of habit that is no longer producing real results?',
     'transit:saturn|sextil|sun':
       'Saturn sextile Sun opens room for consolidating personal goals with sharper method and clearer purpose. This phase tends to reveal what needs structure to move from potential into real results. Which commitments have you been postponing for lack of method, not lack of will?',
     'transit:saturn|trigono|sun':
       'Saturn trine Sun favors a consistent work cycle, with less friction between who you want to be and what you can sustain in practice. Long-term goals become easier to execute when identity and method are aligned. What do you want to consolidate while this flow is available?',
     'transit:saturn|oposicao|uranus':
-      'Saturn opposition Uranus brings tension between stability and the need for change. This cycle asks for balance between preserving structure and opening room for smart adjustments. Avoid extremes and move with controlled experiments.',
+      'Saturn opposition natal Uranus activates a direct conflict between what needs stability and what demands urgent renewal. The polarity may show as inner resistance: part of you wants to preserve what works, another part knows the current model is already outdated. What can you renew in stages without needing to break everything at once?',
     'transit:saturn|quadratura|uranus':
-      'Saturn square Uranus signals friction between control and renewal. Discomfort may appear around old rules or changes that move too fast. Best use of this phase is to reorganize processes without breaking what still works.',
+      'Saturn square natal Uranus creates friction between the drive to break from what is obsolete and the fear of destabilizing what still produces results. This phase tends to intensify discomfort with old routines while fast changes also feel risky — a standoff that calls for strategy. What is the smallest change you could start now to signal that renewal has already begun?',
     'transit:saturn|sextil|mars':
       'Saturn sextile Mars favors channeling drive into strategy, creating windows for action with technique and less wasted energy. This cycle tends to reward pairing the courage to start with execution planning. What demanding project do you have available to structure in stages now?',
     'transit:saturn|trigono|mars':
@@ -275,11 +275,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|oposicao|pluto':
       'Sun opposition Pluto intensifies themes of control, personal power, and real priorities. This cycle may expose polarities that ask for a conscious stance with less reactivity. Focus on what is essential with firmness and no unnecessary confrontation.',
     'transit:saturn|oposicao|mars':
-      'Saturn opposition Mars can create a sense of braking or delay in execution. This phase asks to calibrate force and timing, avoiding both impulsiveness and total blockage. Tactical planning and consistency help recover traction safely.',
+      'Saturn opposition natal Mars may create a sense of external braking on action, as if each step requires more preparation or validation than usual. The tension tends to expose where force and technique are misaligned — drive without strategy tends to struggle more in this cycle. What in your current execution is asking for more planning, not more effort?',
     'transit:saturn|quadratura|mercury':
-      'Saturn square Mercury demands precision in communication and review of assumptions. Extra mental pressure, delays, or need for details may arise. Validate information, simplify messages, and progress in stages.',
+      'Saturn square natal Mercury may slow communication, overload thinking, and expose where reasoning or mental processes need structural revision. This phase raises the demand for precision — delays in decisions and rework in messages signal that the conceptual foundation needs to be stronger. Which of your assumptions about this situation have you not yet questioned rigorously enough?',
     'transit:saturn|quadratura|sun':
-      'Saturn square Sun raises responsibility and tests consistency. The period can feel more demanding, asking focus on essentials and reduction of excess. Structure, rest, and clear priorities prevent unproductive strain.',
+      'Saturn square natal Sun may create a sense of ceiling or external limit on personal initiatives, as if the context demands more than the available energy. The friction tends to reveal where identity still depends on external validation or ideal conditions to advance. Which part of your plan can move forward without needing everything to be perfect first?',
     'transit:saturn|sextil|venus':
       'Saturn sextile Venus supports building bonds with more discernment and less idealization, making it easier to recognize what has genuine reciprocity. This phase invites reviewing affective or financial agreements with a more mature eye and better-calibrated expectations. Which agreement deserves an honest look at what each party actually delivers?',
     'transit:saturn|trigono|venus':
@@ -335,11 +335,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|ingress|house_4':
       'Saturn entering House 4 marks a phase of consolidating emotional foundations and family structure. The cycle asks for clearer domestic responsibilities, boundaries, and priorities. Consistent realistic adjustments strengthen inner and household stability.',
     'transit:saturn|oposicao|jupiter':
-      'Saturn opposite Jupiter asks you to calibrate expansion with concrete limits. This phase may expose either over-optimism or excessive rigidity, requiring balance between vision and execution. Review goals, timing, and resources to grow safely.',
+      'Saturn opposite natal Jupiter tensions expansion and limit at the same decision point, exposing where optimism and reality diverge. This phase may reveal projects that grew without enough structure — or where excess caution is holding back what already has a foundation to advance. What needs to be cut so that what truly has potential can grow with more solidity?',
     'transit:moon|oposicao|jupiter':
       'Moon opposite Jupiter can amplify emotional reactions and short-term expectations. This cycle favors moderating excess and returning to realistic choices. Brief pauses and clearer priorities help avoid dispersion.',
     'transit:saturn|oposicao|pluto':
-      'Saturn opposite Pluto intensifies tests around structure, power, and resilience. The cycle asks for maturity to sustain deep changes without impulsive rupture. Move in stages with strategy and clear boundaries.',
+      'Saturn opposite natal Pluto activates a confrontation between current structure and the need for deeper transformation. This phase may expose where personal power and control are at stake — resistance to change tends to manifest as rigidity or as collapse of what was not solid enough. What are you defending that you already know needs to be transformed?',
     'transit:sun|quadratura|moon':
       'Sun square Moon can create friction between conscious intention and emotional need. This phase asks for alignment between what you want to do and what your inner rhythm can sustain. Simple routine and communication adjustments reduce conflict.',
     'transit:saturn|sextil|neptune':
@@ -355,7 +355,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|ascendente':
       'Saturn trine Ascendant supports expressing yourself with natural maturity, making it easier to sustain a consistent stance and hold responsibilities with authority. This phase creates less friction between intention and behavior, favoring presence growth with minimal additional effort. What habit or posture have you been trying to solidify that still feels artificial?',
     'transit:saturn|oposicao|saturn':
-      'Saturn opposite Saturn marks a review point for long-term structures. This cycle may expose real limits in older models and ask for objective reorganization. Focus on essentials and recalculate commitments for continuity.',
+      'Saturn opposite natal Saturn marks a midcycle turning point — a confrontation between the structure that has been built and what it can actually sustain. This phase tends to reveal where foundations are solid and where they need objective reformulation, without romanticization. What have you built so far that deserves to be carried forward, and what needs to be rebuilt on new ground?',
     'transit:moon|sextil|saturn':
       'Moon sextile Saturn helps regulate emotions with practicality and steadiness. This phase favors mature conversations and better emotional routine management. Good period to reinforce supportive structure.',
     'transit:moon|trigono|saturn':
@@ -369,7 +369,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|conjuncao|mars':
       'Moon conjunct Mars increases affective intensity and urgency to act. This period can be productive for resolving pending matters, with risk of emotional haste. Channel energy into short actions and avoid reactive disputes.',
     'transit:saturn|quadratura|moon':
-      'Saturn square Moon may increase emotional pressure and need for containment. This cycle asks for simple discipline, emotional structure, and adequate recovery. Organize supportive routines to prevent inner overload.',
+      'Saturn square natal Moon may intensify a sense of emotional weight and daily limitation, as if affective needs and concrete responsibilities are in direct conflict. This phase tends to reveal where self-care has been neglected or where overload is compressing the inner space needed for balance. What are you carrying emotionally that could be distributed, negotiated, or released?',
     'transit:moon|quadratura|jupiter':
       'Moon square Jupiter can inflate expectations and mood oscillation around outcomes. This phase asks for moderation to avoid emotional overreach. Reassess priorities and stay with what is viable now.',
     'transit:uranus|sextil|moon':
@@ -389,7 +389,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|oposicao|mercury':
       'Moon opposition Mercury can intensify conflict between emotional reaction and rational interpretation. This phase asks for care with impulsive messages and quick conclusions. Pause, organize what you feel, then communicate clearly.',
     'transit:saturn|oposicao|mercury':
-      'Saturn opposition Mercury brings a test of mental and communicational consistency. The period may demand more review, criteria, and patience with timing or feedback. Structure arguments with data and advance in verifiable steps.',
+      'Saturn opposition natal Mercury may slow communication and intensify mental demands, making it harder to organize thoughts and transmit them clearly. This phase tends to reveal where analytical or argumentative foundations are weak — decisions that depend on conceptual clarity become slower or contested. Which point in your reasoning about this situation have you not yet reviewed with enough depth?',
     'transit:sun|conjuncao|pluto':
       'Sun conjunct Pluto intensifies focus, control themes, and the need for authenticity. This cycle supports deep change when choices are conscious and strategic. Direct energy to essentials and avoid unproductive power disputes.',
     'transit:uranus|oposicao|mercury':
@@ -419,7 +419,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|trigono|sun':
       'Pluto trine Sun increases concentration, purpose clarity, and consistency of direction. This phase tends to support grounded and sustainable transformation. Use the period to consolidate identity and direction with maturity.',
     'transit:saturn|oposicao|ascendente':
-      'Saturn opposition Ascendant can test limits in relationships, agreements, and shared responsibility. This cycle asks for mature posture, listening, and clearer boundaries. Realistic adjustments in coexistence tend to reduce friction and improve stability.',
+      'Saturn opposition natal Ascendant may intensify tension in close relationships, revealing where personal limits or shared arrangements need objective revision. This phase tends to surface what the other person expects — asking you to decide what you can sustain without compromising your own coherence. What do you need to renegotiate in relationships that has been left unspoken for too long?',
     'transit:pluto|conjuncao|mars':
       'Pluto conjunct Mars intensifies willpower, competitiveness, and the urge to act with force. This cycle asks for self-regulation to avoid impulsive conflict and energy waste. Channel intensity into structural goals and strategic choices.',
     'transit:sun|oposicao|uranus':
@@ -427,9 +427,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:uranus|quadratura|sun':
       'Uranus square Sun signals tension between current identity and need for change. The cycle can bring restlessness, impatience, and desire to flip everything quickly. Innovate in stages to preserve foundation and gain stable autonomy.',
     'transit:saturn|oposicao|sun':
-      'Saturn opposition Sun raises external pressure and tests personal consistency. The period may require more discipline, boundary adjustment, and focus on essentials. Build sustainable routines and move with criteria, without excessive self-criticism.',
+      'Saturn opposition natal Sun activates external pressure and a test of personal authenticity, creating friction between who you are and what the context demands. This phase may reveal where identity depends on validation to advance — the strain often comes from trying to please and perform at the same time. What are you doing out of obligation that could be done from genuine choice, or simply discontinued?',
     'transit:saturn|quadratura|venus':
-      'Saturn square Venus can trigger review of affective expectations and material values. This cycle asks for emotional maturity, clear boundaries, and more realistic choices. Strengthen reciprocity and reduce draining agreements.',
+      'Saturn square natal Venus may expose friction in relationships or around personal values, making it more visible what is unsustainable in affective or financial arrangements. This phase tends to reduce tolerance for what drains energy — idealization becomes harder to maintain, which can bring both clarity and discomfort. What are you still sustaining out of fear of losing something that has already lost its real value for you?',
     'transit:sun|conjuncao|mercury':
       'Sun conjunct Mercury favors mental clarity, communication focus, and objective decisions. This phase tends to support important conversations, study, and idea organization. Prioritize simple messages aligned with essentials.',
     'transit:jupiter|conjuncao|moon':
@@ -493,7 +493,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|oposicao|jupiter':
       'Pluto opposition Jupiter can intensify disputes around scale, power, and strategic direction. This phase asks for ethical expansion and realistic calibration of ambition. Prioritize durable influence over immediate magnitude.',
     'transit:saturn|quadratura|mars':
-      'Saturn square Mars may create friction between urgency and constraints in execution. This cycle asks for discipline, timing, and reduction of impulsive effort. Convert pressure into methodical action.',
+      'Saturn square natal Mars may create friction between the drive to act and obstacles of rhythm, technique, or context — action becomes more costly and more resisted than usual. This phase tends to expose where strategy and execution are misaligned: energy available, but direction or preparation insufficient. What are you trying to force that would respond better to a more tactical and gradual approach?',
     'transit:jupiter|quadratura|venus':
       'Jupiter square Venus can increase pleasure-seeking and optimism in relational or financial choices. This phase favors moderation and clear value criteria. Expand with balance to avoid excess and regret.',
     'transit:neptune|quadratura|saturn':
@@ -1836,15 +1836,15 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:mars|quadratura|venus':
       'Marte en cuadratura con Venus puede tensionar deseo, afecto y expectativa de reciprocidad. Esta fase pide alinear limites y negociacion clara para evitar oscilacion relacional. Escucha activa y acuerdos simples mejoran la calidad del vinculo.',
     'transit:saturn|quadratura|saturn':
-      'Saturno en cuadratura con Saturno marca un periodo de revision estructural y madurez. Puede surgir presion para ajustar plazos, limites y responsabilidades con mas objetividad. La ganancia llega al simplificar compromisos y reforzar lo que sostiene tu plan.',
+      'Saturno en cuadratura al propio Saturno natal expone tension entre la estructura actual y la necesidad de madurez real. Esta fase suele revelar donde los plazos, limites y responsabilidades ya no sirven a lo que quieres construir, haciendo mas evidente el peso de ese desalineamiento. Que estas manteniendo por habito que ya no esta produciendo resultados reales?',
     'transit:saturn|sextil|sun':
       'Saturno en sextil al Sol abre espacio para consolidar proyectos personales con mas rigor y claridad de proposito. Esta fase tiende a revelar lo que necesita estructura para dejar de ser potencial y convertirse en resultado. Que compromisos has estado postergando por falta de metodo, no de voluntad?',
     'transit:saturn|trigono|sun':
       'Saturno en trigono al Sol favorece un ciclo de trabajo constante, con menos friccion entre quien quieres ser y lo que logras sostener en la practica. Las metas de largo plazo se vuelven mas faciles cuando identidad y metodo estan alineados. Que quieres consolidar mientras este flujo esta disponible?',
     'transit:saturn|oposicao|uranus':
-      'Saturno en oposicion a Urano trae tension entre estabilidad y necesidad de cambio. Este ciclo pide equilibrio entre conservar estructura y abrir espacio para ajustes inteligentes. Evita extremos y avanza con experimentos controlados.',
+      'Saturno en oposicion a Urano natal activa un conflicto directo entre lo que necesita estabilidad y lo que exige renovacion urgente. La polaridad puede manifestarse como resistencia interna: una parte quiere preservar lo que funciona, otra sabe que el modelo actual ya esta obsoleto. Que puedes renovar en etapas, sin necesidad de romper todo de una vez?',
     'transit:saturn|quadratura|uranus':
-      'Saturno en cuadratura a Urano senala friccion entre control y renovacion. Puede aparecer incomodidad con reglas antiguas o con cambios demasiado rapidos. El mejor uso de la fase es reorganizar procesos sin romper lo que aun funciona.',
+      'Saturno en cuadratura a Urano natal genera friccion entre el impulso de romper con lo obsoleto y el temor de desestabilizar lo que aun produce resultados. Esta fase suele escalar la incomodidad con rutinas antiguas mientras los cambios rapidos tambien parecen arriesgados — un impasse que pide estrategia. Cual es el cambio mas pequeno que podrias iniciar ahora para indicar que la renovacion ya comenzo?',
     'transit:saturn|sextil|mars':
       'Saturno en sextil a Marte favorece convertir impulso en estrategia, creando ventanas para la accion con tecnica y menor desgaste. Este ciclo suele rendir mas cuando combinas valentia para iniciar con planificacion de ejecucion. Que proyecto exigente tienes disponible para estructurar en etapas ahora?',
     'transit:saturn|trigono|mars':
@@ -1856,11 +1856,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|oposicao|pluto':
       'Sol en oposicion a Pluto intensifica temas de control, poder personal y prioridades reales. Este ciclo puede exponer polaridades que piden una postura mas consciente y menos reactiva. Enfocate en lo esencial con firmeza y sin confrontaciones innecesarias.',
     'transit:saturn|oposicao|mars':
-      'Saturno en oposicion a Marte puede generar sensacion de freno o demora en la ejecucion. Esta fase pide calibrar fuerza y tiempo, evitando tanto impulso como bloqueo total. Planificacion tactica y constancia ayudan a recuperar traccion.',
+      'Saturno en oposicion a Marte natal puede generar sensacion de freno externo en la accion, como si cada paso pidiera mas preparacion o validacion de lo habitual. La tension suele mostrar donde fuerza y tecnica estan desalineadas — el impulso sin estrategia sufre mas en este ciclo. Que en tu ejecucion actual esta pidiendo mas planificacion, no mas esfuerzo?',
     'transit:saturn|quadratura|mercury':
-      'Saturno en cuadratura a Mercurio exige precision en comunicacion y revision de supuestos. Puede haber mayor exigencia mental, demoras o necesidad de detalle extra. Valida informacion, simplifica mensajes y avanza por etapas.',
+      'Saturno en cuadratura a Mercurio natal puede frenar la comunicacion, sobrecargar el pensamiento y mostrar donde argumentos o procesos mentales necesitan revision estructural. Esta fase aumenta la exigencia de precision — demoras en decisiones y retrabajo de mensajes son senal de que la base conceptual necesita ser mas solida. Que supuesto tuyo sobre esta situacion todavia no has cuestionado con suficiente rigor?',
     'transit:saturn|quadratura|sun':
-      'Saturno en cuadratura al Sol aumenta sentido de responsabilidad y prueba de consistencia. El periodo puede sentirse mas exigente y pedir foco en lo esencial con recorte de excesos. Estructura, descanso y prioridades claras evitan desgaste inutil.',
+      'Saturno en cuadratura al Sol natal puede crear sensacion de techo o limite externo sobre iniciativas personales, como si el contexto exigiera mas de la energia disponible. La friccion suele revelar donde la identidad aun depende de aprobacion externa o condiciones ideales para avanzar. Que parte de tu plan puede moverse sin necesitar que todo este perfecto primero?',
     'transit:saturn|sextil|venus':
       'Saturno en sextil a Venus favorece construir vinculos con mas criterio y menos idealizacion, facilitando reconocer lo que tiene reciprocidad genuina. La fase invita a revisar acuerdos afectivos o financieros con una mirada mas madura y expectativas mejor calibradas. Que acuerdo merece un examen honesto sobre lo que cada parte realmente aporta?',
     'transit:saturn|trigono|venus':
@@ -1916,11 +1916,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|ingress|house_4':
       'Saturno en ingreso a Casa 4 marca fase de consolidacion de base emocional y estructura familiar. El ciclo pide ordenar responsabilidades domesticas, limites y prioridades afectivas con mayor madurez. Ajustes constantes y realistas fortalecen seguridad interna y estabilidad cotidiana.',
     'transit:saturn|oposicao|jupiter':
-      'Saturno en oposicion a Jupiter pide calibrar expansion con limites concretos. Esta fase puede mostrar exceso de optimismo o rigidez, y requiere equilibrio entre vision y ejecucion. Revisa metas, tiempos y recursos para crecer con seguridad.',
+      'Saturno en oposicion a Jupiter natal tensiona expansion y limite en el mismo punto de decision, mostrando donde optimismo y realidad divergen. Esta fase puede revelar proyectos que crecieron sin estructura suficiente — o donde el exceso de cautela esta frenando lo que ya tiene base para avanzar. Que necesita cortarse para que lo que realmente tiene potencial pueda crecer con mas solidez?',
     'transit:moon|oposicao|jupiter':
       'Luna en oposicion a Jupiter puede amplificar reaccion emocional y expectativa inmediata. El ciclo favorece moderar excesos y volver a decisiones realistas. Pausas breves y prioridades claras ayudan a evitar dispersion.',
     'transit:saturn|oposicao|pluto':
-      'Saturno en oposicion a Pluton intensifica pruebas de estructura, poder y resistencia. Esta fase pide madurez para sostener cambios profundos sin ruptura impulsiva. Avanza por etapas con estrategia y limites definidos.',
+      'Saturno en oposicion a Pluton natal activa el enfrentamiento entre la estructura actual y la necesidad de transformacion mas profunda. Esta fase puede mostrar donde el poder personal y el control estan en juego — la resistencia al cambio suele manifestarse como rigidez o como colapso de lo que no era suficientemente solido. Que estas defendiendo que ya sabes que necesita transformarse?',
     'transit:sun|quadratura|moon':
       'Sol en cuadratura con Luna puede generar friccion entre voluntad consciente y necesidad emocional. Esta fase pide alinear lo que quieres hacer con el ritmo interno disponible. Ajustes simples de rutina y comunicacion reducen conflicto.',
     'transit:saturn|sextil|neptune':
@@ -1936,7 +1936,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|ascendente':
       'Saturno en trigono al Ascendente facilita expresar madurez de forma natural, haciendo mas sencillo sostener una postura coherente y responsabilidades con autoridad. La fase genera menos friccion entre intencion y conducta, favoreciendo un crecimiento de presencia con poco esfuerzo adicional. Que habito o postura has intentado consolidar pero que todavia parece artificial?',
     'transit:saturn|oposicao|saturn':
-      'Saturno en oposicion a Saturno marca un punto de revision de estructuras de largo plazo. El ciclo puede evidenciar limites reales en modelos antiguos y pedir reorganizacion objetiva. Enfocate en lo esencial y recalibra compromisos.',
+      'Saturno en oposicion al propio Saturno natal marca un punto de medio ciclo — un enfrentamiento entre la estructura construida y lo que realmente puede sostener. Esta fase tiende a revelar donde los fundamentos son solidos y donde necesitan reformulacion objetiva, sin romanticismos. Que has construido hasta aqui que merece seguir adelante, y que necesita reconstruirse sobre nuevas bases?',
     'transit:moon|sextil|saturn':
       'Luna en sextil a Saturno ayuda a regular emociones con practicidad y sobriedad. Esta fase favorece conversaciones maduras y mejor organizacion afectiva cotidiana. Buen momento para reforzar estructura de apoyo.',
     'transit:moon|trigono|saturn':
@@ -1950,7 +1950,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|conjuncao|mars':
       'Luna en conjuncion con Marte aumenta intensidad afectiva y urgencia por actuar. El periodo puede ser productivo para resolver pendientes, con riesgo de prisa emocional. Dirige energia a acciones cortas y evita discusiones reactivas.',
     'transit:saturn|quadratura|moon':
-      'Saturno en cuadratura con Luna puede elevar exigencia emocional y necesidad de contencion. El ciclo pide cuidar base afectiva con disciplina simple y descanso suficiente. Organiza rutinas de soporte para evitar sobrecarga interna.',
+      'Saturno en cuadratura a la Luna natal puede intensificar la sensacion de peso emocional y limitacion en lo cotidiano, como si las necesidades afectivas y las responsabilidades concretas estuvieran en conflicto directo. Esta fase tiende a mostrar donde el autocuidado fue descuidado o donde la sobrecarga comprime el espacio interno necesario. Que estas cargando emocionalmente que podria distribuirse, negociarse o soltarse?',
     'transit:moon|quadratura|jupiter':
       'Luna en cuadratura con Jupiter puede inflar expectativas y oscilacion emocional frente a resultados. Esta fase pide moderacion para evitar exceso afectivo o decisorio. Revisa prioridades y mantente en lo viable ahora.',
     'transit:uranus|sextil|moon':
@@ -1970,7 +1970,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|oposicao|mercury':
       'Luna en oposicion a Mercurio puede acentuar conflicto entre reaccion emocional y lectura racional. La fase pide cuidado con mensajes impulsivos y conclusiones inmediatas. Haz una pausa, ordena lo que sientes y comunica con claridad.',
     'transit:saturn|oposicao|mercury':
-      'Saturno en oposicion a Mercurio trae prueba de consistencia mental y comunicacional. El periodo puede exigir mas revision, criterio y paciencia con tiempos o respuestas. Estructura argumentos con datos y avanza por etapas verificables.',
+      'Saturno en oposicion a Mercurio natal puede frenar la comunicacion e intensificar la exigencia mental, dificultando organizar pensamientos y transmitirlos con fluidez. La fase suele mostrar donde la base analitica o argumentativa es debil — las decisiones que dependen de claridad conceptual se vuelven mas lentas o cuestionadas. Que punto de tu razonamiento sobre esta situacion todavia no has revisado con profundidad suficiente?',
     'transit:sun|conjuncao|pluto':
       'Sol en conjuncion con Pluton intensifica foco, control y necesidad de autenticidad. Este ciclo favorece cambios profundos cuando actuas con consciencia y estrategia. Dirige energia a lo esencial y evita disputas de poder improductivas.',
     'transit:uranus|oposicao|mercury':
@@ -2000,7 +2000,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|trigono|sun':
       'Pluton en trigono al Sol amplifica concentracion, claridad de proposito y consistencia de rumbo. La fase tiende a favorecer transformaciones bien sostenidas. Usa el periodo para consolidar identidad y direccion con madurez.',
     'transit:saturn|oposicao|ascendente':
-      'Saturno en oposicion al Ascendente puede probar limites en relaciones, acuerdos y responsabilidades compartidas. El ciclo pide postura madura, escucha y definicion clara de fronteras. Ajustes realistas de convivencia suelen reducir friccion y mejorar estabilidad.',
+      'Saturno en oposicion al Ascendente natal puede intensificar tension en relaciones cercanas, revelando donde los limites personales o los acuerdos de convivencia necesitan revision objetiva. Esta fase tiende a traer confrontaciones con lo que el otro espera — pidiendo que decidas que puedes sostener sin sacrificar tu propia coherencia. Que necesitas renegociar en relaciones que fue dejado implicito por demasiado tiempo?',
     'transit:pluto|conjuncao|mars':
       'Pluton en conjuncion con Marte intensifica voluntad, competitividad y necesidad de actuar con fuerza. El ciclo pide autocontrol para evitar conflictos impulsivos y desgaste de energia. Canaliza intensidad en metas estructurales y decisiones estrategicas.',
     'transit:sun|oposicao|uranus':
@@ -2008,9 +2008,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:uranus|quadratura|sun':
       'Urano en cuadratura al Sol senala tension entre identidad actual y necesidad de cambio. El ciclo puede generar inquietud, impaciencia y ganas de cambiar todo de golpe. Innova por etapas para preservar base y ganar autonomia estable.',
     'transit:saturn|oposicao|sun':
-      'Saturno en oposicion al Sol aumenta exigencia externa y prueba de consistencia personal. El periodo puede requerir mas disciplina, ajuste de limites y foco en lo esencial. Estructura rutinas sostenibles y avanza con criterio, sin autocritica excesiva.',
+      'Saturno en oposicion al Sol natal activa presion externa y una prueba de autenticidad personal, creando tension entre quien eres y lo que el contexto exige. Esta fase puede mostrar donde la identidad depende de validacion para avanzar — el desgaste suele venir de intentar agradar y actuar a la vez. Que estas haciendo por obligacion que podria hacerse desde eleccion genuina, o simplemente descontinuarse?',
     'transit:saturn|quadratura|venus':
-      'Saturno en cuadratura con Venus puede traer revision de expectativas afectivas y valores materiales. El ciclo pide madurez emocional, limites claros y elecciones mas realistas. Fortalece lo reciproco y reduce acuerdos que drenan energia.',
+      'Saturno en cuadratura a Venus natal puede exponer friccion en relaciones o en torno a los propios valores, haciendo mas evidente lo que es insostenible en acuerdos afectivos o financieros. Esta fase tiende a reducir la tolerancia con lo que drena energia — las idealizaciones se hacen mas dificiles de sostener, lo que puede generar tanto claridad como incomodidad. Que sigues sosteniendo por miedo a perder algo que ya perdio su valor real para ti?',
     'transit:sun|conjuncao|mercury':
       'Sol en conjuncion con Mercurio favorece claridad mental, foco comunicativo y decision objetiva. La fase tiende a apoyar conversaciones importantes, estudio y organizacion de ideas. Prioriza mensajes simples alineados con lo esencial.',
     'transit:jupiter|conjuncao|moon':
@@ -2074,7 +2074,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|oposicao|jupiter':
       'Pluton en oposicion a Jupiter puede intensificar disputas sobre escala, poder y direccion estrategica. Esta fase pide expansion etica y calibracion realista de la ambicion. Prioriza influencia sostenible sobre magnitud inmediata.',
     'transit:saturn|quadratura|mars':
-      'Saturno en cuadratura con Marte puede generar friccion entre urgencia y restriccion en la ejecucion. Este ciclo pide disciplina, timing y reduccion de esfuerzo impulsivo. Convierte presion en accion metodica.',
+      'Saturno en cuadratura a Marte natal puede generar friccion entre el impulso de actuar y los obstaculos de ritmo, tecnica o contexto — la accion se vuelve mas costosa y mas resistida de lo normal. Esta fase tiende a mostrar donde estrategia y ejecucion estan desalineadas: energia disponible, pero direccion o preparacion insuficientes. Que estas intentando forzar que responderia mejor a un enfoque mas tactico y gradual?',
     'transit:jupiter|quadratura|venus':
       'Jupiter en cuadratura con Venus puede aumentar busqueda de placer y optimismo en elecciones afectivas o financieras. Esta fase favorece moderacion y criterio de valor mas claro. Expande con equilibrio para evitar excesos.',
     'transit:neptune|quadratura|saturn':
@@ -3416,15 +3416,15 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:mars|quadratura|venus':
       'Marte in quadratura con Venere puo mettere in tensione desiderio, affetto e aspettativa di reciprocita. Questa fase chiede allineare confini e negoziazione chiara per evitare oscillazione relazionale. Ascolto attivo e accordi semplici migliorano la qualita del legame.',
     'transit:saturn|quadratura|saturn':
-      'Saturno in quadratura con Saturno indica un periodo di revisione strutturale e maturazione. Puo emergere pressione per regolare tempi, limiti e responsabilita con maggiore oggettivita. Il guadagno arriva semplificando impegni e rafforzando le basi reali.',
+      'Saturno in quadratura al proprio Saturno natale espone tensione tra la struttura attuale e il bisogno di maturazione reale. Questa fase tende a rivelare dove scadenze, limiti e responsabilita non servono piu a cio che vuoi costruire, rendendo piu evidente il peso di questo disallineamento. Cosa stai mantenendo per abitudine che non produce piu risultati reali?',
     'transit:saturn|sextil|sun':
       'Saturno in sestile al Sole apre spazio per consolidare obiettivi personali con piu rigore e chiarezza di proposito. Questa fase tende a rivelare cio che ha bisogno di struttura per trasformarsi da potenziale in risultato reale. Quali impegni hai rimandato per mancanza di metodo, non di volonta?',
     'transit:saturn|trigono|sun':
       'Saturno in trigono al Sole favorisce un ciclo di lavoro costante, con meno attrito tra chi vuoi essere e cio che riesci a sostenere in pratica. Gli obiettivi di lungo periodo diventano piu semplici da realizzare quando identita e metodo sono allineati. Cosa vuoi consolidare mentre questo flusso e disponibile?',
     'transit:saturn|oposicao|uranus':
-      'Saturno in opposizione a Urano porta tensione tra stabilita e bisogno di cambiamento. Questo ciclo chiede equilibrio tra preservare struttura e aprire spazio ad aggiustamenti intelligenti. Evita estremi e procedi con esperimenti controllati.',
+      'Saturno in opposizione a Urano natale attiva un conflitto diretto tra cio che ha bisogno di stabilita e cio che esige rinnovamento urgente. La polarita puo manifestarsi come resistenza interiore: una parte vuole preservare cio che funziona, un altra sa che il modello attuale e gia obsoleto. Cosa puoi rinnovare per fasi, senza dover rompere tutto in una volta?',
     'transit:saturn|quadratura|uranus':
-      'Saturno in quadratura a Urano segnala attrito tra controllo e rinnovamento. Puoi avvertire disagio verso regole vecchie o cambi troppo rapidi. Il miglior uso della fase e riorganizzare processi senza rompere cio che funziona.',
+      'Saturno in quadratura a Urano natale genera attrito tra l impulso di rompere con cio che e obsoleto e il timore di destabilizzare cio che ancora produce risultati. Questa fase tende a intensificare il disagio con le routine vecchie mentre i cambiamenti rapidi appaiono anche rischiosi — un impasse che chiede strategia. Qual e il cambiamento piu piccolo che potresti avviare adesso per segnalare che il rinnovamento e gia cominciato?',
     'transit:saturn|sextil|mars':
       'Saturno in sestile a Marte favorisce trasformare slancio in strategia, creando finestre per l azione con tecnica e meno dispersione. Il ciclo tende a rendere di piu quando si unisce coraggio di iniziare e pianificazione dell esecuzione. Quale progetto impegnativo hai disponibile per strutturare in tappe ora?',
     'transit:saturn|trigono|mars':
@@ -3436,11 +3436,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:sun|oposicao|pluto':
       'Sole in opposizione a Plutone intensifica temi di controllo, potere personale e priorita reali. Questo ciclo puo mostrare polarita che chiedono una postura piu consapevole e meno reattiva. Concentrati sull essenziale con fermezza e senza scontri inutili.',
     'transit:saturn|oposicao|mars':
-      'Saturno in opposizione a Marte puo dare sensazione di freno o ritardo nell esecuzione. La fase chiede di calibrare forza e tempi, evitando sia impulso sia blocco totale. Pianificazione tattica e costanza aiutano a recuperare trazione.',
+      'Saturno in opposizione a Marte natale puo creare sensazione di freno esterno nell azione, come se ogni passo richiedesse piu preparazione o validazione del solito. La tensione tende a mostrare dove forza e tecnica sono disallineate — lo slancio senza strategia soffre di piu in questo ciclo. Cosa nella tua esecuzione attuale chiede piu pianificazione, non piu sforzo?',
     'transit:saturn|quadratura|mercury':
-      'Saturno in quadratura a Mercurio richiede precisione nella comunicazione e revisione delle ipotesi. Possono emergere maggiore pressione mentale, ritardi o bisogno di dettagli extra. Verifica informazioni, semplifica messaggi e avanza per fasi.',
+      'Saturno in quadratura a Mercurio natale puo rallentare la comunicazione, sovraccaricare il pensiero e mostrare dove argomenti o processi mentali necessitano revisione strutturale. Questa fase aumenta l esigenza di precisione — ritardi nelle decisioni e rilavoro dei messaggi segnalano che la base concettuale deve essere piu solida. Quale tua ipotesi su questa situazione non hai ancora messo abbastanza in discussione?',
     'transit:saturn|quadratura|sun':
-      'Saturno in quadratura al Sole aumenta senso di responsabilita e test di coerenza. Il periodo puo risultare piu esigente, chiedendo focus sull essenziale e taglio degli eccessi. Struttura, riposo e priorita chiare evitano usura improduttiva.',
+      'Saturno in quadratura al Sole natale puo creare sensazione di soffitto o limite esterno sulle iniziative personali, come se il contesto esigesse piu dell energia disponibile. L attrito tende a rivelare dove l identita dipende ancora da approvazione esterna o condizioni ideali per avanzare. Quale parte del tuo piano puo muoversi senza aspettare che tutto sia perfetto?',
     'transit:saturn|sextil|venus':
       'Saturno in sestile a Venere favorisce costruire legami con piu discernimento e meno idealizzazione, rendendo piu facile riconoscere cio che ha reciprocita genuina. La fase invita a rivedere accordi affettivi o finanziari con sguardo piu maturo e aspettative meglio calibrate. Quale accordo merita un esame onesto su cio che ciascuna parte porta davvero?',
     'transit:saturn|trigono|venus':
@@ -3496,11 +3496,11 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|ingress|house_4':
       'Saturno in ingresso in Casa 4 indica una fase di consolidamento della base emotiva e della struttura familiare. Il ciclo chiede di ordinare responsabilita domestiche, confini e priorita affettive con maggiore maturita. Aggiustamenti costanti e realistici rafforzano sicurezza interiore e stabilita quotidiana.',
     'transit:saturn|oposicao|jupiter':
-      'Saturno in opposizione a Giove chiede di calibrare espansione e limiti concreti. Questa fase puo mostrare eccesso di ottimismo o rigidita, e richiede equilibrio tra visione ed esecuzione. Rivedi obiettivi, tempi e risorse per crescere in modo sicuro.',
+      'Saturno in opposizione a Giove natale mette in tensione espansione e limite nello stesso punto decisionale, mostrando dove ottimismo e realta divergono. Questa fase puo rivelare progetti cresciuti senza struttura sufficiente — o dove l eccesso di cautela frena cio che ha gia basi per avanzare. Cosa deve essere tagliato perche cio che ha davvero potenziale cresca con piu solidita?',
     'transit:moon|oposicao|jupiter':
       'Luna in opposizione a Giove puo amplificare reattivita emotiva e aspettative immediate. Il ciclo favorisce moderazione e ritorno a scelte realistiche. Pause brevi e priorita piu chiare aiutano a ridurre dispersione.',
     'transit:saturn|oposicao|pluto':
-      'Saturno in opposizione a Plutone intensifica test su struttura, potere e resilienza. Questa fase chiede maturita per sostenere cambiamenti profondi senza rotture impulsive. Procedi per tappe con strategia e confini definiti.',
+      'Saturno in opposizione a Plutone natale attiva il confronto tra la struttura attuale e il bisogno di trasformazione piu profonda. Questa fase puo mostrare dove potere personale e controllo sono in gioco — la resistenza al cambiamento tende a manifestarsi come rigidita o come crollo di cio che non era abbastanza solido. Cosa stai difendendo che gia sai avere bisogno di trasformazione?',
     'transit:sun|quadratura|moon':
       'Sole in quadratura con Luna puo creare attrito tra intenzione cosciente e bisogno emotivo. La fase chiede allineamento tra cio che vuoi fare e il ritmo interno disponibile. Aggiustamenti semplici di routine e comunicazione riducono tensione.',
     'transit:saturn|sextil|neptune':
@@ -3516,7 +3516,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:saturn|trigono|ascendente':
       'Saturno in trigono all Ascendente facilita esprimersi con maturita naturale, rendendo piu semplice sostenere postura coerente e responsabilita con autorita. La fase genera meno attrito tra intenzione e comportamento, favorendo crescita di presenza con poco sforzo aggiuntivo. Quale abitudine o postura stai cercando di consolidare ma che sembra ancora artificiale?',
     'transit:saturn|oposicao|saturn':
-      'Saturno in opposizione a Saturno segna un punto di revisione delle strutture di lungo periodo. Il ciclo puo mostrare limiti reali dei modelli precedenti e richiedere riorganizzazione oggettiva. Concentrati sull essenziale e ricalibra gli impegni.',
+      'Saturno in opposizione al proprio Saturno natale segna un punto di meta ciclo — un confronto tra la struttura costruita e cio che riesce davvero a sostenere. Questa fase tende a rivelare dove le fondamenta sono solide e dove necessitano riformulazione oggettiva, senza romanticismi. Cosa hai costruito finora che merita di continuare, e cosa deve essere ricostruito su nuove basi?',
     'transit:moon|sextil|saturn':
       'Luna in sestile a Saturno aiuta a regolare emozioni con praticita e sobrietaa. Questa fase favorisce dialoghi maturi e migliore organizzazione affettiva quotidiana. Buon momento per rafforzare struttura di supporto.',
     'transit:moon|trigono|saturn':
@@ -3530,7 +3530,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|conjuncao|mars':
       'Luna in congiunzione con Marte aumenta intensita affettiva e urgenza di agire. Il periodo puo essere produttivo per risolvere arretrati, con rischio di fretta emotiva. Dirigi energia in azioni brevi ed evita discussioni reattive.',
     'transit:saturn|quadratura|moon':
-      'Saturno in quadratura con Luna puo aumentare pressione emotiva e bisogno di contenimento. Il ciclo chiede cura della base affettiva con disciplina semplice e recupero adeguato. Organizza routine di supporto per evitare sovraccarico interno.',
+      'Saturno in quadratura alla Luna natale puo intensificare la sensazione di peso emotivo e limitazione nella quotidianita, come se bisogni affettivi e responsabilita concrete fossero in conflitto diretto. Questa fase tende a mostrare dove la cura di se e stata trascurata o dove il sovraccarico comprime lo spazio interiore necessario. Cosa stai portando emotivamente che potrebbe essere distribuito, negoziato o lasciato andare?',
     'transit:moon|quadratura|jupiter':
       'Luna in quadratura con Giove puo gonfiare aspettative e oscillazioni emotive sui risultati. Questa fase richiede moderazione per evitare eccessi affettivi o decisionali. Rivedi priorita e resta su cio che e fattibile ora.',
     'transit:uranus|sextil|moon':
@@ -3550,7 +3550,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:moon|oposicao|mercury':
       'Luna in opposizione a Mercurio puo accentuare conflitto tra reazione emotiva e lettura razionale. La fase richiede cura con messaggi impulsivi e conclusioni immediate. Fai una pausa, ordina cio che senti e comunica con chiarezza.',
     'transit:saturn|oposicao|mercury':
-      'Saturno in opposizione a Mercurio porta un test di coerenza mentale e comunicativa. Il periodo puo richiedere piu revisione, criterio e pazienza con tempi o risposte. Struttura argomenti con dati e avanza per fasi verificabili.',
+      'Saturno in opposizione a Mercurio natale puo rallentare la comunicazione e intensificare l esigenza mentale, rendendo piu difficile organizzare i pensieri e trasmetterli con fluidita. La fase tende a mostrare dove la base analitica o argomentativa e debole — le decisioni che dipendono da chiarezza concettuale diventano piu lente o contestate. Quale punto del tuo ragionamento su questa situazione non hai ancora esaminato con profondita sufficiente?',
     'transit:sun|conjuncao|pluto':
       'Sole in congiunzione con Plutone intensifica focus, controllo e bisogno di autenticita. Questo ciclo favorisce cambi profondi quando agisci con consapevolezza e strategia. Dirigi energia sull essenziale ed evita conflitti di potere improduttivi.',
     'transit:uranus|oposicao|mercury':
@@ -3580,7 +3580,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|trigono|sun':
       'Plutone in trigono al Sole aumenta concentrazione, chiarezza di scopo e coerenza di direzione. La fase tende a favorire trasformazioni ben ancorate e sostenibili. Usa il periodo per consolidare identita e rotta con maturita.',
     'transit:saturn|oposicao|ascendente':
-      'Saturno in opposizione all Ascendente puo testare limiti in relazioni, accordi e responsabilita condivise. Il ciclo richiede postura matura, ascolto e confini piu chiari. Aggiustamenti realistici nella convivenza tendono a ridurre attrito e migliorare stabilita.',
+      'Saturno in opposizione all Ascendente natale puo intensificare tensione nelle relazioni vicine, rivelando dove i confini personali o gli accordi di convivenza necessitano revisione oggettiva. Questa fase tende a portare confronti con cio che l altro si aspetta — chiedendo che tu decida cosa puoi sostenere senza sacrificare la tua coerenza. Cosa devi rinegoziare in relazioni che e rimasto implicito per troppo tempo?',
     'transit:pluto|conjuncao|mars':
       'Plutone in congiunzione con Marte intensifica volonta, competitivita e bisogno di agire con forza. Il ciclo richiede autocontrollo per evitare conflitti impulsivi e spreco di energia. Convoglia intensita verso obiettivi strutturali e decisioni strategiche.',
     'transit:sun|oposicao|uranus':
@@ -3588,9 +3588,9 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:uranus|quadratura|sun':
       'Urano in quadratura al Sole segnala tensione tra identita attuale e bisogno di cambiamento. Il ciclo puo generare inquietudine, impazienza e desiderio di cambiare tutto subito. Innova per fasi per preservare base e guadagnare autonomia stabile.',
     'transit:saturn|oposicao|sun':
-      'Saturno in opposizione al Sole aumenta pressione esterna e test di coerenza personale. Il periodo puo richiedere piu disciplina, regolazione dei limiti e focus sull essenziale. Struttura routine sostenibili e avanza con criterio, senza autocritica eccessiva.',
+      'Saturno in opposizione al Sole natale attiva pressione esterna e una prova di autenticita personale, creando tensione tra chi sei e cio che il contesto esige. Questa fase puo mostrare dove l identita dipende da validazione per avanzare — l usura viene spesso dal tentare di compiacere e di recitare allo stesso tempo. Cosa stai facendo per obbligo che potrebbe farsi da scelta genuina, o semplicemente interrompersi?',
     'transit:saturn|quadratura|venus':
-      'Saturno in quadratura con Venere puo portare revisione di aspettative affettive e valori materiali. Il ciclo richiede maturita emotiva, confini chiari e scelte piu realistiche. Rafforza cio che e reciproco e riduci accordi che drenano energia.',
+      'Saturno in quadratura a Venere natale puo esporre attrito in relazioni o attorno ai propri valori, rendendo piu evidente cio che e insostenibile negli accordi affettivi o finanziari. Questa fase tende a ridurre la tolleranza per cio che drena energia — le idealizzazioni diventano piu difficili da sostenere, il che puo generare sia chiarezza sia disagio. Cosa stai ancora sostenendo per paura di perdere qualcosa che ha gia perso il suo valore reale per te?',
     'transit:sun|conjuncao|mercury':
       'Sole in congiunzione con Mercurio favorisce chiarezza mentale, focus comunicativo e decisione oggettiva. La fase tende a sostenere conversazioni importanti, studio e organizzazione delle idee. Dai priorita a messaggi semplici e centrati sull essenziale.',
     'transit:jupiter|conjuncao|moon':
@@ -3654,7 +3654,7 @@ export const TRANSIT_CATALOG_I18N_OVERRIDES: Partial<Record<AppLanguage, Transit
     'transit:pluto|oposicao|jupiter':
       'Plutone in opposizione a Giove puo intensificare conflitti su scala, potere e direzione strategica. Questa fase richiede espansione etica e calibrazione realistica dell ambizione. Dai priorita a influenza sostenibile, non a grandezza immediata.',
     'transit:saturn|quadratura|mars':
-      'Saturno in quadratura con Marte puo creare attrito tra urgenza e restrizione nell esecuzione. Questo ciclo richiede disciplina, timing e riduzione dello sforzo impulsivo. Trasforma pressione in azione metodica.',
+      'Saturno in quadratura a Marte natale puo generare attrito tra l impulso di agire e gli ostacoli di ritmo, tecnica o contesto — l azione diventa piu costosa e piu resistita del normale. Questa fase tende a mostrare dove strategia ed esecuzione sono disallineate: energia disponibile, ma direzione o preparazione insufficienti. Cosa stai cercando di forzare che risponderebbe meglio a un approccio piu tattico e graduale?',
     'transit:jupiter|quadratura|venus':
       'Giove in quadratura con Venere puo aumentare ricerca di piacere e ottimismo in scelte affettive o finanziarie. Questa fase favorisce moderazione e criteri di valore piu chiari. Espandi con equilibrio per evitare eccessi.',
     'transit:neptune|quadratura|saturn':
