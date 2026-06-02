@@ -13,7 +13,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
-import { resolveSignInMidheavenText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -127,6 +127,11 @@ export default function AstroProfileScreen() {
     try { return degToSign(natalMc) } catch { return { sign: '', degInSign: 0 } }
   }, [natalMc])
 
+  const ascText = useMemo(
+    () => resolveSignInHouseText(ascSign.sign, 1, language),
+    [ascSign.sign, language],
+  )
+
   const mcText = useMemo(
     () => resolveSignInMidheavenText(mcSign.sign, language),
     [mcSign.sign, language],
@@ -178,6 +183,14 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularDeg}>{mcSign.degInSign.toFixed(1)}°</Text>
             </View>
           </View>
+          {ascText ? (
+            <View style={styles.angularInterpretation}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
+              </Text>
+              <Text style={styles.angularInterpretationText}>{ascText}</Text>
+            </View>
+          ) : null}
           {mcText ? (
             <View style={styles.angularInterpretation}>
               <Text style={styles.angularInterpretationLabel}>
