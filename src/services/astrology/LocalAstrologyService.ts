@@ -17,7 +17,7 @@ import { Platform } from 'react-native'
 import { publishAstrologyData } from '../../context/AstrologyDataProvider'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
-import AstrologyCacheService from './AstrologyCacheService'
+import AstrologyCacheService, { ASTROLOGY_CACHE_DATA_VERSION } from './AstrologyCacheService'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
@@ -455,8 +455,8 @@ export class LocalAstrologyService {
 
       if (cache && cache.calculatedData) {
         // Verificar versão dos dados — cache antigo invalida sem exceção
-        if (cache.dataVersion !== AstrologyCacheService.CURRENT_DATA_VERSION) {
-          console.log('Cache invalidado: versão desatualizada', cache.dataVersion, '→', AstrologyCacheService.CURRENT_DATA_VERSION)
+        if (cache.dataVersion !== ASTROLOGY_CACHE_DATA_VERSION) {
+          console.log('Cache invalidado: versão desatualizada', cache.dataVersion, '→', ASTROLOGY_CACHE_DATA_VERSION)
           return null
         }
         const currentSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')

@@ -4,6 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 
+// Constante de módulo — evita bug de static field undefined no Metro/Expo
+export const ASTROLOGY_CACHE_DATA_VERSION = '1.6'
+
 // Interface para os dados em cache
 export interface AstrologyCache {
   lastUpdate: Date
@@ -40,8 +43,8 @@ class AstrologyCacheService {
   private readonly CACHE_DURATION_HOURS = 12
   private readonly MIN_REFRESH_HOURS = 6
   private readonly MAX_DAILY_REQUESTS = 2
-  static readonly CURRENT_DATA_VERSION = '1.6'
-  private readonly DATA_VERSION = AstrologyCacheService.CURRENT_DATA_VERSION
+  static readonly CURRENT_DATA_VERSION = ASTROLOGY_CACHE_DATA_VERSION
+  private readonly DATA_VERSION = ASTROLOGY_CACHE_DATA_VERSION
   
   // Cache local (AsyncStorage) para acesso r+�pido
   private readonly LOCAL_CACHE_KEY = 'astrology_cache_'

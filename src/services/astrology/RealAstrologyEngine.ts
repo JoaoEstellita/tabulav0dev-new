@@ -1423,14 +1423,6 @@ export class RealAstrologyEngine {
           a.planet1 === planetName &&
           this.isTransitRelevantToArea(a.planet2, planet.house, config.houses, natalHouseByName)
         )
-        // DEBUG TEMPORÁRIO — remover após diagnóstico
-        if (['carreira','espiritualidade','comunicacao','transformacao'].includes(areaName)) {
-          const allPlanetAspects = aspects.filter(a => a.planet1 === planetName)
-          console.log(`[ÁREA DEBUG] ${areaName} | ${planetName} | casa=${planet.house} | aspectos_total=${allPlanetAspects.length} | aspectos_relevantes=${planetAspects.length}`,
-            allPlanetAspects.slice(0,3).map(a => `${a.planet1}→${a.planet2}(${a.type},orb=${a.orb.toFixed(1)})`)
-          )
-        }
-        
         let aspectScoreSum = 0
         let aspectCount = 0
         const aspectDetails: Array<{ with: string; type: string; orb: number; isApplying: boolean; baseScore: number; beneficMaleficDelta: number; finalScore: number }> = []

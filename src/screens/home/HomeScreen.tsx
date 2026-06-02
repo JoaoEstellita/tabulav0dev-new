@@ -205,7 +205,8 @@ export default function HomeScreen() {
     backendLifeAreas,
     backendCurrentTransits,
     backendStatusPersonal,
-    localOverrideActive
+    localOverrideActive,
+    isUsingLocalEngine
   } = useLifeAreas()
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
@@ -546,7 +547,9 @@ export default function HomeScreen() {
   }
 
   const lifeAreasForDisplay = React.useMemo(() => {
-    return backendLifeAreas || transitData?.lifeAreas || null
+    // transitData (engine local ou cache) tem prioridade sobre snapshot Firestore — garante dados frescos
+    if (transitData?.lifeAreas && Object.keys(transitData.lifeAreas).length > 0) return transitData.lifeAreas
+    return backendLifeAreas || null
   }, [backendLifeAreas, transitData?.lifeAreas])
 
   // Trânsito mais intenso do dia para a frase explicativa do score
