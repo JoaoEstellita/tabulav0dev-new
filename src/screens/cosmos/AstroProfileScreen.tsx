@@ -13,6 +13,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
+import { resolveSignInMidheavenText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -126,6 +127,11 @@ export default function AstroProfileScreen() {
     try { return degToSign(natalMc) } catch { return { sign: '', degInSign: 0 } }
   }, [natalMc])
 
+  const mcText = useMemo(
+    () => resolveSignInMidheavenText(mcSign.sign, language),
+    [mcSign.sign, language],
+  )
+
   const maxElement = elemental ? Math.max(elemental.fire, elemental.earth, elemental.air, elemental.water) : 1
   const maxModality = modality ? Math.max(modality.cardinal, modality.fixed, modality.mutable) : 1
 
@@ -172,6 +178,14 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularDeg}>{mcSign.degInSign.toFixed(1)}°</Text>
             </View>
           </View>
+          {mcText ? (
+            <View style={styles.angularInterpretation}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')}
+              </Text>
+              <Text style={styles.angularInterpretationText}>{mcText}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Planetas natais */}
@@ -271,6 +285,25 @@ const styles = StyleSheet.create({
   angularLabel: { fontSize: 11, color: '#8892a4', fontWeight: '700' },
   angularValue: { fontSize: 16, color: '#FFD700', fontWeight: '700' },
   angularDeg: { fontSize: 11, color: '#8892a4' },
+  angularInterpretation: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#252b38',
+  },
+  angularInterpretationLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    color: '#8892a4',
+    marginBottom: 6,
+  },
+  angularInterpretationText: {
+    fontSize: 13,
+    color: '#c8d3e0',
+    lineHeight: 19,
+  },
 
   planetRow: {
     flexDirection: 'row',
