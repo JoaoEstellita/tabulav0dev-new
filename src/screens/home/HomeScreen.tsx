@@ -7,14 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  Image,
   Platform,
   useWindowDimensions,
   ActivityIndicator,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -23,9 +21,7 @@ import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 import { LIFE_AREA_ORDER } from '../../constants/lifeAreas'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
-import { doc, getDoc } from 'firebase/firestore'
 import ReadingService from '../../services/firebase/ReadingService'
-import { db } from '../../config/firebase'
 import PWADownloadButton from '../../components/PWADownloadButton'
 import { AnimatedMount } from '../../ui/anim/adapter'
 import StarLoader from '../../components/StarLoader'
@@ -35,43 +31,13 @@ import { normalizeHouseSystem } from '../../astro/houseSystem'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
-import MoonPhaseButton from '../../components/MoonPhaseButton'
-import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
+import HomeHeader from '../../components/HomeHeader'
+import PlanetQuickNav from '../../components/PlanetQuickNav'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
-import Svg, { Circle, Line } from 'react-native-svg'
 // Web-only effects (no-op on native)
 let mountStarfield: any = null
 try { const mod = require('../../ui/motion/web/starfield'); mountStarfield = mod.mountStarfield } catch { }
-
-const getUserTimezone = (tz?: string | null) => tz || 'America/Sao_Paulo'
-
-const PLANET_ORDER: PlanetKey[] = [
-  'Sun',
-  'Moon',
-  'Mercury',
-  'Venus',
-  'Mars',
-  'Jupiter',
-  'Saturn',
-  'Uranus',
-  'Neptune',
-  'Pluto',
-]
-
-const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
-const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
-  Sun: 'â˜‰',
-  Moon: 'â˜½',
-  Mercury: 'â˜¿',
-  Venus: 'â™€',
-  Mars: 'â™‚',
-  Jupiter: 'â™ƒ',
-  Saturn: 'â™„',
-  Uranus: 'â™…',
-  Neptune: 'â™†',
-  Pluto: 'â™‡',
-}
 
 const AREA_ITEM_STYLE = { width: '50%' as const }
 
@@ -96,39 +62,6 @@ const AreaCardItem = React.memo(function AreaCardItem({
   )
 })
 
-function MiniWheelIcon({ size = 40 }: { size?: number }) {
-  const cx = size / 2
-  const cy = size / 2
-  const rOuter = size * 0.44
-  const rInner = size * 0.28
-  const DEG2RAD = Math.PI / 180
-  return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Anel externo */}
-      <Circle cx={cx} cy={cy} r={rOuter} stroke="#FFD700" strokeWidth={1.5} fill="rgba(255,215,0,0.07)" />
-      {/* Anel interno */}
-      <Circle cx={cx} cy={cy} r={rInner} stroke="#FFD700" strokeWidth={0.8} fill="none" strokeOpacity={0.45} />
-      {/* 12 divisões de casas */}
-      {Array.from({ length: 12 }).map((_, i) => {
-        const a = i * 30 * DEG2RAD
-        const cos = Math.cos(a); const sin = Math.sin(a)
-        return (
-          <Line
-            key={i}
-            x1={cx + rInner * cos} y1={cy + rInner * sin}
-            x2={cx + rOuter * cos} y2={cy + rOuter * sin}
-            stroke="#FFD700" strokeWidth={0.7} strokeOpacity={0.45}
-          />
-        )
-      })}
-      {/* Eixo ASC/DSC */}
-      <Line x1={cx - rOuter} y1={cy} x2={cx + rOuter} y2={cy} stroke="#FFD700" strokeWidth={1} strokeOpacity={0.7} />
-      {/* Eixo MC/IC */}
-      <Line x1={cx} y1={cy - rOuter} x2={cx} y2={cy + rOuter} stroke="#FFD700" strokeWidth={1} strokeOpacity={0.7} />
-    </Svg>
-  )
-}
-
 export default function HomeScreen() {
   useAutoScheduleNotifications()
   const { language, t } = useAppLanguage()
@@ -143,7 +76,6 @@ export default function HomeScreen() {
     return pt
   }, [language])
   const { user } = useAuth()
-  const navigation = useNavigation()
   const { unreadCount } = useNotificationStore()
   const {
     transitData,
@@ -176,31 +108,9 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
-  const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
 
-  const planetQuickNav = React.useMemo(() => {
-    return PLANET_ORDER.map((planet) => {
-      return {
-        planet,
-        imageUri: getPlanetImageUri(planet),
-      }
-    })
-  }, [])
-
-  const scrollToPlanetInTabula = React.useCallback((planet: PlanetKey) => {
-    try {
-      if (Platform.OS !== 'web' || typeof document === 'undefined') return
-      const element = document.getElementById(`tabula-planet-${planet}`)
-      if (!element) return
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      setTimeout(() => {
-        try { element.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { }
-      }, 180)
-    } catch { }
-  }, [])
-
-  // ?? Fun\u00E7\u00E3o para abrir modal de detalhes
+  // Função para abrir modal de detalhes
   const handleAreaPress = React.useCallback((areaName: string, areaData: any) => {
     setSelectedArea({
       name: areaName,
@@ -272,17 +182,8 @@ export default function HomeScreen() {
     return result
   }, [getLifeAreaFactors])
 
-  const [userProfile, setUserProfile] = useState<{
-    displayName: string
-    profilePhoto?: string
-    natalAscDeg?: number
-  } | null>(null)
-
   useEffect(() => {
-    if (user) {
-      loadUserProfile()
-      initializeNotifications()
-    }
+    if (user) initializeNotifications()
   }, [user])
 
   // Toast simples ao reprocessar casas natais
@@ -325,48 +226,10 @@ export default function HomeScreen() {
     }
   }
 
-  const loadUserProfile = async () => {
-    if (!user) return
-
-    try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid))
-      if (userDoc.exists()) {
-        const userData = userDoc.data()
-        setUserProfile({
-          displayName: userData.displayName || userData.fullName || 'Usu\u00E1rio',
-          profilePhoto: userData.profilePhoto,
-          natalAscDeg: typeof userData.natalAscDeg === 'number' ? userData.natalAscDeg : undefined,
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao carregar perfil do UsuÃ¡rio:', error)
-    }
-  }
-
-
-
   const onRefresh = async () => {
     setRefreshing(true)
     await refreshData()
     setRefreshing(false)
-  }
-
-  const getUserDisplayName = () => {
-    const raw =
-      userProfile?.displayName ||
-      user?.displayName ||
-      (user?.email ? user.email.split('@')[0] : '') ||
-      tl('Usuário', 'User', 'Usuario', 'Utente')
-    return decodeUnicodeEscapes(raw)
-  }
-
-  const formatDate = () => {
-    const locale = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
-    return new Date().toLocaleDateString(locale, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    })
   }
 
   const lifeAreasForDisplay = React.useMemo(() => {
@@ -532,41 +395,7 @@ export default function HomeScreen() {
         }
       >
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.userSection}>
-            <View style={styles.avatarContainer}>
-              {userProfile?.profilePhoto ? (
-                <Image
-                  source={{ uri: userProfile.profilePhoto }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={24} color="#FFD700" />
-                </View>
-              )}
-            </View>
-            <View style={styles.headerContent}>
-              <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {getUserDisplayName()}!</Text>
-              {userProfile?.natalAscDeg != null && (() => {
-                try {
-                  const { degToSign: d2s } = require('../../astro')
-                  const { sign } = d2s(userProfile.natalAscDeg)
-                  const SIGN_SYM: Record<string, string> = { Aries:'♈',Taurus:'♉',Gemini:'♊',Cancer:'♋',Leo:'♌',Virgo:'♍',Libra:'♎',Scorpio:'♏',Sagittarius:'♐',Capricorn:'♑',Aquarius:'♒',Pisces:'♓' }
-                  return (
-                    <Text style={{ fontSize: 11, color: 'rgba(255,215,0,0.7)', marginBottom: 1 }}>
-                      Asc {SIGN_SYM[sign] || ''} {sign}
-                    </Text>
-                  )
-                } catch { return null }
-              })()}
-              <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
-              <Text style={styles.date}>{formatDate()}</Text>
-            </View>
-          </View>
-
-          <MoonPhaseButton userReady={!!user} />
-        </View>
+        <HomeHeader />
 
         {/* Score diário com explicação do trânsito mais intenso */}
         {(backendStatusPersonal?.score != null || topTransit) && (() => {
@@ -656,52 +485,7 @@ export default function HomeScreen() {
           transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
-              <View style={styles.planetStripSection}>
-                <View style={styles.planetStripRow}>
-                  {planetQuickNav.map((planetItem) => (
-                    <TouchableOpacity
-                      key={`quick-planet-${planetItem.planet}`}
-                      style={styles.planetStripItem}
-                      activeOpacity={0.86}
-                      delayPressIn={0}
-                      onPress={() => scrollToPlanetInTabula(planetItem.planet)}
-                    >
-                      {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
-                        <Image
-                          source={{ uri: planetItem.imageUri }}
-                          style={[
-                            styles.planetStripImage,
-                            PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planet) && styles.planetStripImageWhiteBgFix,
-                            Platform.OS === 'web' && PLANETS_WITH_LIGHT_BG_IMAGES.has(planetItem.planet)
-                              ? ({ mixBlendMode: 'multiply' } as any)
-                              : null,
-                          ]}
-                          resizeMode="cover"
-                          onError={() =>
-                            setFailedPlanetImages((prev) => ({
-                              ...prev,
-                              [planetItem.planet]: true,
-                            }))
-                          }
-                        />
-                      ) : (
-                        <View style={styles.planetStripFallback}>
-                          <Text style={styles.planetStripFallbackText}>{PLANET_FALLBACK_GLYPHS[planetItem.planet]}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {/* Botão Cosmos — abaixo dos planetas, centralizado */}
-                <TouchableOpacity
-                  style={styles.cosmosEntry}
-                  activeOpacity={0.78}
-                  onPress={() => (navigation as any).navigate('Cosmos')}
-                >
-                  <MiniWheelIcon size={44} />
-                  <Text style={styles.cosmosEntryLabel}>Tábula Estelar</Text>
-                </TouchableOpacity>
-              </View>
+              <PlanetQuickNav />
             </AnimatedMount>
           )}
 
@@ -841,63 +625,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: '600',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 4,
-  },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    minWidth: 0,
-  },
-  avatarContainer: {
-    marginRight: 12,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2A2A3E',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerContent: {
-    flex: 1,
-    minWidth: 0,
-    paddingRight: 8,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  date: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    textTransform: 'capitalize',
-  },
-  houseSystemLabel: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    marginTop: 2,
-    lineHeight: 15,
-    flexShrink: 1,
   },
   section: {
     marginBottom: 24,
@@ -1049,63 +776,6 @@ const styles = StyleSheet.create({
   },
   lifeAreaItem: {
     width: '50%',
-  },
-  planetStripSection: {
-    marginTop: -6,
-    marginBottom: 4,
-    paddingHorizontal: 10,
-  },
-  cosmosEntry: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    marginBottom: 12,
-    gap: 6,
-  },
-  cosmosEntryLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFD700',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
-  planetStripRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  planetStripItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingVertical: 2,
-    minWidth: 0,
-  },
-  planetStripImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.45)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  planetStripImageWhiteBgFix: {
-    backgroundColor: 'rgba(8,12,30,0.92)',
-  },
-  planetStripFallback: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  planetStripFallbackText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    lineHeight: 18,
   },
   warningCard: {
     flexDirection: 'row',
