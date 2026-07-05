@@ -11,6 +11,8 @@ on:
 jobs:
   frontend-security-smoke:
     runs-on: ubuntu-latest
+    env:
+      RC_SMOKE_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
     defaults:
       run:
         working-directory: .
@@ -34,10 +36,10 @@ jobs:
         run: npx vitest run src/utils/__tests__/
 
       - name: RC smoke
-        if: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY != '' }}
+        if: ${{ env.RC_SMOKE_KEY != '' }}
         run: npm run smoke:rc
         env:
-          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ env.RC_SMOKE_KEY }}
 
       - name: Firestore rules tests
         run: npm run test:rules
