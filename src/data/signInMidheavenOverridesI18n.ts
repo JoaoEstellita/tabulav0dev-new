@@ -5,7 +5,7 @@
 //   es-ES — sem acentos (energía→energia, típico→tipico, etc.)
 //   it-IT — sem acentos e sem apóstrofos
 
-import type { AppLanguage } from '../utils/i18n/appI18n'
+import type { AppLanguage } from '../i18n/appI18n'
 
 export const SIGN_IN_MIDHEAVEN_I18N_OVERRIDES: Partial<Record<AppLanguage, Record<string, string>>> = {
 

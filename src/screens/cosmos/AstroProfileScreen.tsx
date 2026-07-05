@@ -13,7 +13,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
-import { resolveSignInMidheavenText, resolveSignInHouseText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -206,28 +206,36 @@ export default function AstroProfileScreen() {
           <Text style={styles.cardTitle}>
             {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
           </Text>
-          {orderedPlanets.map(p => (
-            <View key={p.name} style={styles.planetRow}>
-              <Text style={styles.planetSymbol}>{PLANET_SYMBOLS[p.name] || '●'}</Text>
-              <Text style={styles.planetName}>{p.name}</Text>
-              <View style={styles.planetSignWrap}>
-                <Text style={styles.planetSign}>
-                  {SIGN_SYMBOLS[p.sign] || ''} {p.sign}
-                </Text>
-                <Text style={styles.planetDeg}>{(p.degree ?? (p.longitude % 30)).toFixed(1)}°</Text>
-              </View>
-              <View style={styles.planetMeta}>
-                <Text style={styles.planetHouse}>
-                  {tl('Casa', 'House', 'Casa', 'Casa')} {p.house}
-                </Text>
-                {p.isRetrograde && (
-                  <View style={styles.retroBadge}>
-                    <Text style={styles.retroText}>℞</Text>
+          {orderedPlanets.map(p => {
+            const signText = resolvePlanetInSignText(p.name, p.sign, language)
+            return (
+              <View key={p.name} style={styles.planetBlock}>
+                <View style={styles.planetRow}>
+                  <Text style={styles.planetSymbol}>{PLANET_SYMBOLS[p.name] || '●'}</Text>
+                  <Text style={styles.planetName}>{p.name}</Text>
+                  <View style={styles.planetSignWrap}>
+                    <Text style={styles.planetSign}>
+                      {SIGN_SYMBOLS[p.sign] || ''} {p.sign}
+                    </Text>
+                    <Text style={styles.planetDeg}>{(p.degree ?? (p.longitude % 30)).toFixed(1)}°</Text>
                   </View>
-                )}
+                  <View style={styles.planetMeta}>
+                    <Text style={styles.planetHouse}>
+                      {tl('Casa', 'House', 'Casa', 'Casa')} {p.house}
+                    </Text>
+                    {p.isRetrograde && (
+                      <View style={styles.retroBadge}>
+                        <Text style={styles.retroText}>℞</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                {signText ? (
+                  <Text style={styles.planetSignText}>{signText}</Text>
+                ) : null}
               </View>
-            </View>
-          ))}
+            )
+          })}
         </View>
 
         {/* Análise elemental */}
@@ -318,12 +326,20 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
-  planetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  planetBlock: {
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#1e2430',
+  },
+  planetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  planetSignText: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#9aa7ba',
+    lineHeight: 18,
   },
   planetSymbol: {
     fontSize: 16,
