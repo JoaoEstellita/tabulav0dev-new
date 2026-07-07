@@ -89,11 +89,14 @@ export default function AstroProfileScreen() {
   const { language } = useAppLanguage()
 
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
+  const [birthInfo, setBirthInfo] = useState<{ date?: string; time?: string }>({})
   useEffect(() => {
     if (!user?.uid) return
     getDoc(doc(db, 'users', user.uid)).then(snap => {
-      const val = snap.data()?.natalAscDeg
+      const data = snap.data()
+      const val = data?.natalAscDeg
       if (typeof val === 'number') setFirestoreAscDeg(val)
+      setBirthInfo({ date: data?.birthDate, time: data?.birthTime })
     }).catch(() => {})
   }, [user?.uid])
 
@@ -136,6 +139,31 @@ export default function AstroProfileScreen() {
     () => resolveSignInMidheavenText(mcSign.sign, language),
     [mcSign.sign, language],
   )
+
+  // Nódulo Norte lunar (nó médio, Meeus) — usa o valor do engine quando disponível,
+  // senão calcula localmente a partir dos dados de nascimento
+  const natalNorthNode = useMemo(() => {
+    const fromEngine = (ct as any)?.natalNorthNode
+    if (typeof fromEngine === 'number') return fromEngine
+    if (!birthInfo.date) return null
+    const [y, m, d] = birthInfo.date.split('-').map(Number)
+    if (!y || !m || !d) return null
+    const [h, min] = (birthInfo.time || '12:00').split(':').map(Number)
+    const jd = Date.UTC(y, m - 1, d, h || 12, min || 0) / 86400000 + 2440587.5
+    const T = (jd - 2451545.0) / 36525
+    const omega = 125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000
+    return ((omega % 360) + 360) % 360
+  }, [ct, birthInfo])
+
+  const nnSign = useMemo(() => {
+    if (natalNorthNode === null) return null
+    try { return degToSign(natalNorthNode) } catch { return null }
+  }, [natalNorthNode])
+
+  const snSign = useMemo(() => {
+    if (natalNorthNode === null) return null
+    try { return degToSign((natalNorthNode + 180) % 360) } catch { return null }
+  }, [natalNorthNode])
 
   const maxElement = elemental ? Math.max(elemental.fire, elemental.earth, elemental.air, elemental.water) : 1
   const maxModality = modality ? Math.max(modality.cardinal, modality.fixed, modality.mutable) : 1
@@ -200,6 +228,49 @@ export default function AstroProfileScreen() {
             </View>
           ) : null}
         </View>
+
+        {/* Nódulos Lunares */}
+        {nnSign && snSign ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {tl('Nódulos Lunares', 'Lunar Nodes', 'Nodos Lunares', 'Nodi Lunari')}
+            </Text>
+            <View style={styles.row}>
+              <View style={styles.angularItem}>
+                <Text style={styles.angularLabel}>
+                  {tl('Nódulo Norte', 'North Node', 'Nodo Norte', 'Nodo Nord')} ☊
+                </Text>
+                <Text style={styles.angularValue}>
+                  {SIGN_SYMBOLS[nnSign.sign] || ''} {nnSign.sign}
+                </Text>
+                <Text style={styles.angularDeg}>{nnSign.degInSign.toFixed(1)}°</Text>
+              </View>
+              <View style={styles.angularDivider} />
+              <View style={styles.angularItem}>
+                <Text style={styles.angularLabel}>
+                  {tl('Nódulo Sul', 'South Node', 'Nodo Sur', 'Nodo Sud')} ☋
+                </Text>
+                <Text style={styles.angularValue}>
+                  {SIGN_SYMBOLS[snSign.sign] || ''} {snSign.sign}
+                </Text>
+                <Text style={styles.angularDeg}>{snSign.degInSign.toFixed(1)}°</Text>
+              </View>
+            </View>
+            <View style={styles.angularInterpretation}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Eixo de crescimento', 'Growth axis', 'Eje de crecimiento', 'Asse di crescita')}
+              </Text>
+              <Text style={styles.angularInterpretationText}>
+                {tl(
+                  'O Nódulo Norte aponta as qualidades que sua jornada convida a desenvolver nesta vida; o Nódulo Sul indica talentos e padrões já familiares, que tendem a ser zona de conforto. Na tradição evolutiva, esse eixo é lido como direção de crescimento — um convite, não um destino.',
+                  'The North Node points to the qualities your journey invites you to develop in this life; the South Node marks familiar talents and patterns that tend to be a comfort zone. In the evolutionary tradition, this axis reads as a direction of growth — an invitation, not a destiny.',
+                  'El Nodo Norte apunta a las cualidades que tu camino invita a desarrollar en esta vida; el Nodo Sur indica talentos y patrones ya familiares, que tienden a ser zona de confort. En la tradición evolutiva, este eje se lee como dirección de crecimiento — una invitación, no un destino.',
+                  'Il Nodo Nord indica le qualità che il tuo cammino invita a sviluppare in questa vita; il Nodo Sud segnala talenti e schemi già familiari, che tendono a essere zona di comfort. Nella tradizione evolutiva questo asse si legge come direzione di crescita — un invito, non un destino.'
+                )}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* Planetas natais */}
         <View style={styles.card}>
