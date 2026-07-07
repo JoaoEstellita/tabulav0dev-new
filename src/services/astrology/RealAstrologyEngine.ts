@@ -198,6 +198,7 @@ export interface RealAstrologyData {
   natalPlanets: RealPlanetPosition[] // PosiÃƒÂ§ÃƒÂµes natais
   natalAscendant: number // Ascendente natal
   natalMidheaven: number // Meio do CÃƒÂ©u natal
+  natalNorthNode?: number // Nódulo Norte natal (nó médio, longitude eclíptica em graus)
   natalHousesApproximate?: boolean
   natalHouses?: number[]
   planetComparisons: PlanetComparison[] // ComparaÃƒÂ§ÃƒÂ£o natal vs atual
@@ -252,6 +253,19 @@ type NormalizedHouseMeta = {
 }
 
 export class RealAstrologyEngine {
+  /**
+   * Nódulo Norte lunar (nó médio) — fórmula de Meeus, precisão de minutos de arco.
+   * Ω = 125.04452 − 1934.136261·T + 0.0020708·T² + T³/450000 (graus),
+   * T em séculos julianos desde J2000. Retorna longitude eclíptica 0–360°.
+   * O Nódulo Sul é o ponto oposto (+180°).
+   */
+  static calculateMeanLunarNode(date: Date): number {
+    const jd = date.getTime() / 86400000 + 2440587.5
+    const T = (jd - 2451545.0) / 36525
+    const omega = 125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000
+    return ((omega % 360) + 360) % 360
+  }
+
   private static readonly PLANETS = [
     'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
     'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'
@@ -693,6 +707,7 @@ export class RealAstrologyEngine {
         natalPlanets,
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
+        natalNorthNode: RealAstrologyEngine.calculateMeanLunarNode(birthDateTime),
         natalHousesApproximate: (natalHouses as any).approximate === true,
         natalHouses: natalHouses.cusps,
         planetComparisons,
