@@ -13,7 +13,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveLunarNodeSignText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -170,6 +170,25 @@ export default function AstroProfileScreen() {
     [nnSign, language],
   )
 
+  // Casa do Nódulo Norte via cúspides natais (quando disponíveis no engine)
+  const nnHouse = useMemo(() => {
+    const cusps = ct?.natalHouses
+    if (natalNorthNode === null || !Array.isArray(cusps) || cusps.length < 12) return null
+    for (let i = 0; i < 12; i++) {
+      const start = cusps[i]
+      const end = cusps[(i + 1) % 12]
+      const span = ((end - start) % 360 + 360) % 360
+      const offset = ((natalNorthNode - start) % 360 + 360) % 360
+      if (offset < span || span === 0) return i + 1
+    }
+    return null
+  }, [natalNorthNode, ct?.natalHouses])
+
+  const nnHouseText = useMemo(
+    () => (nnHouse ? resolveLunarNodeHouseText(nnHouse, language) : null),
+    [nnHouse, language],
+  )
+
   const maxElement = elemental ? Math.max(elemental.fire, elemental.earth, elemental.air, elemental.water) : 1
   const maxModality = modality ? Math.max(modality.cardinal, modality.fixed, modality.mutable) : 1
 
@@ -248,7 +267,7 @@ export default function AstroProfileScreen() {
                 <Text style={styles.angularValue}>
                   {SIGN_SYMBOLS[nnSign.sign] || ''} {nnSign.sign}
                 </Text>
-                <Text style={styles.angularDeg}>{nnSign.degInSign.toFixed(1)}°</Text>
+                <Text style={styles.angularDeg}>{nnSign.degInSign.toFixed(1)}°{nnHouse ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${nnHouse}` : ''}</Text>
               </View>
               <View style={styles.angularDivider} />
               <View style={styles.angularItem}>
@@ -274,6 +293,14 @@ export default function AstroProfileScreen() {
                 )}
               </Text>
             </View>
+            {nnHouseText ? (
+              <View style={styles.angularInterpretation}>
+                <Text style={styles.angularInterpretationLabel}>
+                  {tl('Nódulo Norte na Casa', 'North Node in House', 'Nodo Norte en la Casa', 'Nodo Nord nella Casa')} {nnHouse}
+                </Text>
+                <Text style={styles.angularInterpretationText}>{nnHouseText}</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
