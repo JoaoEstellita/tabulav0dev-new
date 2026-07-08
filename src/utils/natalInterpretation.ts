@@ -15,6 +15,8 @@ import { SIGN_IN_MIDHEAVEN_PTBR_OVERRIDES } from '../data/signInMidheavenOverrid
 import { SIGN_IN_MIDHEAVEN_I18N_OVERRIDES } from '../data/signInMidheavenOverridesI18n'
 import { PLANET_IN_SIGN_PTBR_OVERRIDES } from '../data/planetInSignOverridesPtBR'
 import { PLANET_IN_SIGN_I18N_OVERRIDES } from '../data/planetInSignOverridesI18n'
+import { LUNAR_NODE_SIGN_PTBR_OVERRIDES } from '../data/lunarNodeSignOverridesPtBR'
+import { LUNAR_NODE_SIGN_I18N_OVERRIDES } from '../data/lunarNodeSignOverridesI18n'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -463,6 +465,48 @@ export function resolvePlanetInSignText(
   const ptText =
     PLANET_IN_SIGN_PTBR_NORMALIZED[key] ||
     PLANET_IN_SIGN_PTBR_OVERRIDES[keyRaw]
+  if (ptText && ptText.trim().length >= 50) return ptText.trim()
+  return null
+}
+
+// ─── Lunar Node (NN sign axis) Catalog ────────────────────────────────────────
+
+const LUNAR_NODE_SIGN_PTBR_NORMALIZED = buildNormalizedMap(LUNAR_NODE_SIGN_PTBR_OVERRIDES)
+
+const LUNAR_NODE_SIGN_I18N_NORMALIZED: Partial<Record<AppLanguage, Record<string, string>>> = (() => {
+  const out: Partial<Record<AppLanguage, Record<string, string>>> = {}
+  ;(Object.keys(LUNAR_NODE_SIGN_I18N_OVERRIDES) as AppLanguage[]).forEach((lang) => {
+    const map = LUNAR_NODE_SIGN_I18N_OVERRIDES[lang]
+    if (map) out[lang] = buildNormalizedMap(map)
+  })
+  return out
+})()
+
+/**
+ * Retorna o texto do eixo nodal (Nódulo Norte no signo informado; o texto cobre
+ * também o Nódulo Sul, que é o signo oposto). Retorna null se não existir.
+ */
+export function resolveLunarNodeSignText(
+  northNodeSign: string,
+  language?: string | null,
+): string | null {
+  const s = normalizePlanet(northNodeSign)
+  if (!KNOWN_SIGNS.has(s)) return null
+  const keyRaw = `natal:nn_sign_${s}`
+  const key = normalizeCatalogKey(keyRaw)
+  const lang = normalizeLanguage(language)
+
+  if (lang !== 'pt-BR') {
+    const i18nText =
+      LUNAR_NODE_SIGN_I18N_NORMALIZED[lang]?.[key] ||
+      LUNAR_NODE_SIGN_I18N_OVERRIDES[lang]?.[keyRaw]
+    if (i18nText && i18nText.trim().length >= 50) return i18nText.trim()
+    return null
+  }
+
+  const ptText =
+    LUNAR_NODE_SIGN_PTBR_NORMALIZED[key] ||
+    LUNAR_NODE_SIGN_PTBR_OVERRIDES[keyRaw]
   if (ptText && ptText.trim().length >= 50) return ptText.trim()
   return null
 }

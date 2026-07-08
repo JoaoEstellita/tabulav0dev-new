@@ -11,6 +11,7 @@ import { NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../src/data/natalPlanetInH
 import { SIGN_IN_HOUSE_PTBR_OVERRIDES } from '../src/data/signInHouseOverridesPtBR.ts'
 import { SIGN_IN_MIDHEAVEN_PTBR_OVERRIDES } from '../src/data/signInMidheavenOverridesPtBR.ts'
 import { NATAL_PLANET_ASPECT_PTBR_OVERRIDES } from '../src/data/natalPlanetAspectOverridesPtBR.ts'
+import { LUNAR_NODE_SIGN_PTBR_OVERRIDES } from '../src/data/lunarNodeSignOverridesPtBR.ts'
 import { TRANSIT_CATALOG_PTBR } from '../src/data/transitCatalogPtBR.ts'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../src/data/transitCatalogOverridesPtBR.ts'
 import { TRANSIT_CATALOG_BLOCKED_KEYS } from '../src/data/transitCatalogBlockedKeys.ts'
@@ -37,6 +38,7 @@ const catalog = {
   signInHouse: SIGN_IN_HOUSE_PTBR_OVERRIDES,
   signInMidheaven: SIGN_IN_MIDHEAVEN_PTBR_OVERRIDES,
   natalAspects: NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+  lunarNodeSign: LUNAR_NODE_SIGN_PTBR_OVERRIDES,
   transits,
 }
 

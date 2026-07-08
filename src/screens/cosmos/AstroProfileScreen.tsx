@@ -13,7 +13,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveLunarNodeSignText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -165,6 +165,11 @@ export default function AstroProfileScreen() {
     try { return degToSign((natalNorthNode + 180) % 360) } catch { return null }
   }, [natalNorthNode])
 
+  const nnText = useMemo(
+    () => (nnSign ? resolveLunarNodeSignText(nnSign.sign, language) : null),
+    [nnSign, language],
+  )
+
   const maxElement = elemental ? Math.max(elemental.fire, elemental.earth, elemental.air, elemental.water) : 1
   const maxModality = modality ? Math.max(modality.cardinal, modality.fixed, modality.mutable) : 1
 
@@ -261,7 +266,7 @@ export default function AstroProfileScreen() {
                 {tl('Eixo de crescimento', 'Growth axis', 'Eje de crecimiento', 'Asse di crescita')}
               </Text>
               <Text style={styles.angularInterpretationText}>
-                {tl(
+                {nnText || tl(
                   'O Nódulo Norte aponta as qualidades que sua jornada convida a desenvolver nesta vida; o Nódulo Sul indica talentos e padrões já familiares, que tendem a ser zona de conforto. Na tradição evolutiva, esse eixo é lido como direção de crescimento — um convite, não um destino.',
                   'The North Node points to the qualities your journey invites you to develop in this life; the South Node marks familiar talents and patterns that tend to be a comfort zone. In the evolutionary tradition, this axis reads as a direction of growth — an invitation, not a destiny.',
                   'El Nodo Norte apunta a las cualidades que tu camino invita a desarrollar en esta vida; el Nodo Sur indica talentos y patrones ya familiares, que tienden a ser zona de confort. En la tradición evolutiva, este eje se lee como dirección de crecimiento — una invitación, no un destino.',
