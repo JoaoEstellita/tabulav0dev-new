@@ -117,11 +117,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ===== REGRAS PARA STATUS PUBLICO =====
+    // ===== REGRAS PARA STATUS =====
+    // Backend-authoritative: apenas o backend (Admin SDK, que ignora estas regras)
+    // escreve o snapshot. O cliente so le o proprio userStatus.
     match /userStatus/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow write, create: if false;
     }
 
     // ===== REGRAS PARA RELACIONAMENTOS DE CASAL =====

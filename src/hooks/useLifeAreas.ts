@@ -23,6 +23,7 @@ export interface UseLifeAreasReturn {
   backendLifeAreas: Record<string, any> | null
   backendCurrentTransits: any | null
   backendStatusPersonal: { score?: number; level?: string } | null
+  backendFresh: boolean
   loading: boolean
   error: string | null
   refreshData: (forceRefresh?: boolean) => Promise<void>
@@ -38,6 +39,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
   const [backendLifeAreas, setBackendLifeAreas] = useState<Record<string, any> | null>(null)
   const [backendCurrentTransits, setBackendCurrentTransits] = useState<any | null>(null)
   const [backendStatusPersonal, setBackendStatusPersonal] = useState<{ score?: number; level?: string } | null>(null)
+  const [backendFreshState, setBackendFreshState] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUsingLocalEngine, setIsUsingLocalEngine] = useState(true)
@@ -237,6 +239,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
         backendValidUntilMs > Date.now() &&
         !!backendCalcVersion &&
         backendCalcVersion.startsWith('status-backend-')
+      setBackendFreshState(backendFresh)
 
       if (houseSystemChanged) {
         localOverrideActiveRef.current = true
@@ -470,6 +473,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
     backendLifeAreas,
     backendCurrentTransits,
     backendStatusPersonal,
+    backendFresh: backendFreshState,
     loading,
     error,
     refreshData,

@@ -85,6 +85,7 @@ export default function HomeScreen() {
     backendLifeAreas,
     backendCurrentTransits,
     backendStatusPersonal,
+    backendFresh,
     localOverrideActive,
     isUsingLocalEngine
   } = useLifeAreas()
@@ -233,10 +234,15 @@ export default function HomeScreen() {
   }
 
   const lifeAreasForDisplay = React.useMemo(() => {
-    // transitData (engine local ou cache) tem prioridade sobre snapshot Firestore — garante dados frescos
+    // Fonte única da verdade: snapshot do backend (mesmo engine que alimenta push,
+    // digest e agente WhatsApp). Engine local/cache só como fallback quando o
+    // backend não está fresco — evita divergência entre app e demais canais.
+    if (backendFresh && backendLifeAreas && Object.keys(backendLifeAreas).length > 0) {
+      return backendLifeAreas
+    }
     if (transitData?.lifeAreas && Object.keys(transitData.lifeAreas).length > 0) return transitData.lifeAreas
     return backendLifeAreas || null
-  }, [backendLifeAreas, transitData?.lifeAreas])
+  }, [backendFresh, backendLifeAreas, transitData?.lifeAreas])
 
   // Trânsito mais intenso do dia para a frase explicativa do score
   const topTransit = React.useMemo(() => {

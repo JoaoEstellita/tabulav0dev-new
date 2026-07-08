@@ -409,6 +409,26 @@ class GroupService {
       const userGroups = await this.getUserGroups(userId)
       if (!userGroups.length) return
 
+      // Fonte única da verdade: preferir o snapshot do backend (userStatus/{uid}) —
+      // mesmo engine do push/digest/agente. Engine local só como fallback.
+      let sourceLifeAreas: any = transitData.lifeAreas
+      try {
+        const statusSnap = await getDoc(doc(db, "userStatus", userId))
+        const statusData = statusSnap.exists() ? statusSnap.data() : null
+        const calcVersion = typeof statusData?.calcVersion === "string" ? statusData.calcVersion : ""
+        const validUntilMs = statusData?.validUntil?.toDate
+          ? statusData.validUntil.toDate().getTime()
+          : null
+        if (
+          statusData?.lifeAreas &&
+          calcVersion.startsWith("status-backend-") &&
+          validUntilMs &&
+          validUntilMs > Date.now()
+        ) {
+          sourceLifeAreas = statusData.lifeAreas
+        }
+      } catch { /* fallback local */ }
+
       await Promise.all(
         userGroups.map(async (group) => {
           const settings = await this.getMemberSettings(group.id, userId)
@@ -427,7 +447,7 @@ class GroupService {
           }
 
           const sharedLifeAreas = settings?.sharedLifeAreas || group.sharedLifeAreas || this.LIFE_AREAS
-          const filteredLifeAreas = this.filterLifeAreas(transitData.lifeAreas as any, sharedLifeAreas)
+          const filteredLifeAreas = this.filterLifeAreas(sourceLifeAreas as any, sharedLifeAreas)
 
           await setDoc(
             doc(db, "groups", group.id, "memberStatus", userId),
