@@ -1040,6 +1040,15 @@ export default function PremiumScreen() {
         ))}
       </View>
       <View style={styles.plansContainer}>
+        <View style={styles.waCallout}>
+          <View style={styles.waCalloutHeader}>
+            <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+            <Text style={styles.waCalloutTitle}>{tr('premium.waCallout.title', 'Astrólogo Tábula no WhatsApp')}</Text>
+          </View>
+          <Text style={styles.waCalloutBody}>
+            {tr('premium.waCallout.body', 'Converse com seu astrólogo pessoal direto no WhatsApp: ele conhece seu mapa natal, seus trânsitos do dia e o status das suas áreas da vida. Todos os planos incluem — quanto maior o plano, mais conversas por dia.')}
+          </Text>
+        </View>
         <Text style={styles.sectionTitle}>{tr('premium.comparePlans.title', 'Comparar planos')}</Text>
         <View style={styles.compareTable}>
           <View style={styles.compareRow}>
@@ -1067,10 +1076,10 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>10</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.whatsapp', 'WhatsApp')}</Text>
-            <Text style={styles.compareValue}>{tr('premium.compare.whatsappNotif', 'Notif.')}</Text>
-            <Text style={styles.compareValue}>{tr('premium.compare.whatsappNotif', 'Notif.')}</Text>
-            <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappChatbot', 'Chatbot IA')}</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrólogo IA no WhatsApp')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitEssential', '10/dia')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitPro', '25/dia')}</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '40/dia')}</Text>
           </View>
         </View>
       </View>
@@ -1770,6 +1779,30 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 6,
+  },
+  waCallout: {
+    backgroundColor: '#25D3660F',
+    borderWidth: 1,
+    borderColor: '#25D36633',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    gap: 8,
+  },
+  waCalloutHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  waCalloutTitle: {
+    color: '#e2e8f0',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  waCalloutBody: {
+    color: '#b8c2d0',
+    fontSize: 13,
+    lineHeight: 19,
   },
   compareRow: {
     flexDirection: 'row',
