@@ -33,6 +33,7 @@ import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import HomeHeader from '../../components/HomeHeader'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
+import WhatsAppAgentCard from '../../components/WhatsAppAgentCard'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
 // Web-only effects (no-op on native)
@@ -402,6 +403,9 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <HomeHeader />
+
+        {/* Descoberta: Astrólogo no WhatsApp */}
+        <WhatsAppAgentCard />
 
         {/* Score diário com explicação do trânsito mais intenso */}
         {(backendStatusPersonal?.score != null || topTransit) && (() => {
