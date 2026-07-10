@@ -296,6 +296,66 @@ const HOUSE_FOCUS: Record<Locale, Record<number, string>> = {
   },
 }
 
+// Ação prática específica por casa — quebra a repetição do miolo dos ingressos
+const HOUSE_ACTION: Record<Locale, Record<number, string>> = {
+  'pt-BR': {
+    1: 'cuide da forma como voce se apresenta e comeca as coisas',
+    2: 'organize recursos e defina o que tem valor de verdade',
+    3: 'cuide das conversas e combine o essencial com clareza',
+    4: 'fortaleca a base emocional e o ambiente de casa',
+    5: 'de espaco a criatividade e ao que traz prazer genuino',
+    6: 'ajuste a rotina e o cuidado diario com a saude',
+    7: 'invista nos vinculos e escute o outro lado',
+    8: 'trate com transparencia o que e profundo e o que e partilhado',
+    9: 'amplie a visao e busque sentido no que aprende',
+    10: 'priorize entregas visiveis e a direcao da carreira',
+    11: 'cultive a rede de apoio e os projetos coletivos',
+    12: 'reserve tempo para descanso e para fechar ciclos',
+  },
+  'en-US': {
+    1: 'tend to how you present yourself and start things',
+    2: 'organize resources and define what truly has value',
+    3: 'tend to conversations and settle the essentials clearly',
+    4: 'strengthen your emotional base and home environment',
+    5: 'make room for creativity and what brings genuine joy',
+    6: 'adjust routine and daily care for your health',
+    7: 'invest in your bonds and listen to the other side',
+    8: 'handle what is deep and shared with transparency',
+    9: 'widen your view and seek meaning in what you learn',
+    10: 'prioritize visible deliverables and your career direction',
+    11: 'cultivate your support network and collective projects',
+    12: 'make time for rest and for closing cycles',
+  },
+  'es-ES': {
+    1: 'cuida como te presentas y como inicias las cosas',
+    2: 'organiza recursos y define lo que de verdad tiene valor',
+    3: 'cuida las conversaciones y acuerda lo esencial con claridad',
+    4: 'fortalece tu base emocional y el ambiente del hogar',
+    5: 'da espacio a la creatividad y a lo que da placer genuino',
+    6: 'ajusta la rutina y el cuidado diario de la salud',
+    7: 'invierte en los vinculos y escucha al otro lado',
+    8: 'trata con transparencia lo profundo y lo compartido',
+    9: 'amplia la vision y busca sentido en lo que aprendes',
+    10: 'prioriza entregas visibles y la direccion de la carrera',
+    11: 'cultiva tu red de apoyo y los proyectos colectivos',
+    12: 'reserva tiempo para el descanso y para cerrar ciclos',
+  },
+  'it-IT': {
+    1: 'cura come ti presenti e come inizi le cose',
+    2: 'organizza le risorse e definisci cio che ha davvero valore',
+    3: 'cura le conversazioni e chiarisci cio che conta',
+    4: 'rafforza la base emotiva e la casa',
+    5: 'dai spazio alla creativita e a cio che da piacere autentico',
+    6: 'regola la routine e la cura quotidiana della salute',
+    7: 'investi nei legami e ascolta chi ti sta intorno',
+    8: 'tratta con trasparenza cio che e profondo e condiviso',
+    9: 'amplia la visione e cerca senso in cio che impari',
+    10: 'dai priorita alle consegne visibili e alla direzione della carriera',
+    11: 'coltiva la rete di supporto e i progetti collettivi',
+    12: 'riserva tempo al riposo e alla chiusura dei cicli',
+  },
+}
+
 const PLANET_INGRESS_STYLE: Record<Locale, Record<string, string>> = {
   'pt-BR': {
     sun: 'dar direcao ao que precisa de visibilidade',
@@ -551,33 +611,34 @@ function buildIngressOverride(locale: Locale, key: string): string | null {
   const planet = PLANET_LABELS[locale][parsed.planet]
   const focus = HOUSE_FOCUS[locale][house]
   const style = PLANET_INGRESS_STYLE[locale][parsed.planet]
-  if (!planet || !focus || !style) return null
+  const action = HOUSE_ACTION[locale][house]
+  if (!planet || !focus || !style || !action) return null
 
   const isFast = FAST_PLANETS.has(parsed.planet)
 
   if (locale === 'pt-BR') {
     if (isFast) {
-      return `${planet} em ingresso na Casa ${house} ativa brevemente temas de ${focus}. Momento oportuno para ${style} enquanto a janela durar. Identifique uma acao concreta e execute ja.`
+      return `${planet} entra na Casa ${house} e ativa por poucos dias os temas de ${focus}. Boa janela para ${style}: ${action}. Escolha uma acao concreta e realize enquanto o transito passa.`
     }
-    return `${planet} em ingresso na Casa ${house} inaugura um ciclo em ${focus}. Este periodo favorece ${style} com paciencia e consistencia. Plante intencoes que durem — este transito constroi ao longo do tempo.`
+    return `${planet} inicia um ciclo longo na Casa ${house}, no campo de ${focus}. O periodo pede ${style}: ${action}. Construa aos poucos — o que se estrutura agora tende a durar.`
   }
   if (locale === 'en-US') {
     if (isFast) {
-      return `${planet} entering House ${house} briefly activates themes of ${focus}. Seize the window to ${style} while it lasts. Identify one concrete action and follow through now.`
+      return `${planet} enters House ${house} and briefly activates the themes of ${focus}. Good window to ${style}: ${action}. Pick one concrete action and follow through while the transit lasts.`
     }
-    return `${planet} entering House ${house} opens a long cycle in ${focus}. This period supports ${style} with patience and consistency. Set intentions that can last — this transit builds over time.`
+    return `${planet} opens a long cycle in House ${house}, in the field of ${focus}. The period asks you to ${style}: ${action}. Build gradually — what takes shape now tends to last.`
   }
   if (locale === 'es-ES') {
     if (isFast) {
-      return `${planet} en ingreso en Casa ${house} activa brevemente temas de ${focus}. Aprovecha la ventana para ${style} mientras dure. Identifica una accion concreta y ejecutala ya.`
+      return `${planet} entra en la Casa ${house} y activa por pocos dias los temas de ${focus}. Buena ventana para ${style}: ${action}. Elige una accion concreta y realizala mientras dura el transito.`
     }
-    return `${planet} en ingreso en Casa ${house} inaugura un ciclo en ${focus}. Este periodo favorece ${style} con paciencia y consistencia. Siembra intenciones que duren — este transito construye a largo plazo.`
+    return `${planet} inicia un ciclo largo en la Casa ${house}, en el campo de ${focus}. El periodo pide ${style}: ${action}. Construye poco a poco — lo que toma forma ahora tiende a durar.`
   }
   // it-IT
   if (isFast) {
-    return `${planet} in ingresso in Casa ${house} attiva brevemente temi di ${focus}. Cogli la finestra per ${style} finche dura. Individua un azione concreta e agisci subito.`
+    return `${planet} entra nella Casa ${house} e attiva per pochi giorni i temi di ${focus}. Buona finestra per ${style}: ${action}. Scegli una azione concreta e portala avanti finche dura il transito.`
   }
-  return `${planet} in ingresso in Casa ${house} apre un ciclo in ${focus}. Questo periodo favorisce ${style} con pazienza e coerenza. Pianifica intenzioni durature — questo transito costruisce nel tempo.`
+  return `${planet} apre un ciclo lungo nella Casa ${house}, nel campo di ${focus}. Il periodo chiede di ${style}: ${action}. Costruisci a poco a poco — cio che prende forma ora tende a durare.`
 }
 
 function buildAutoOverrides(locale: Locale): Record<string, string> {
