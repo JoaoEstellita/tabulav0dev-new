@@ -944,8 +944,7 @@ export default function SettingsScreen() {
         normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
       )
       // Limpar cache astrológico para forçar reprocessamento
-      const { AstrologyCacheService } = await import('../../services/astrology/AstrologyCacheService')
-      const cacheService = new AstrologyCacheService()
+      const cacheService = (await import('../../services/astrology/AstrologyCacheService')).default
       await cacheService.clearCache(user.uid)
       const { degToSign } = await import('../../astro')
       const { sign } = degToSign(result.ascendant)

@@ -5,7 +5,9 @@ import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 
 // Constante de módulo — evita bug de static field undefined no Metro/Expo
-export const ASTROLOGY_CACHE_DATA_VERSION = '1.6'
+// 1.7: fix da casa de trânsito (buildSpecialEvents usa casa natal, não a do céu atual)
+// — bump força recálculo global e descarta caches 1.6 com a casa errada.
+export const ASTROLOGY_CACHE_DATA_VERSION = '1.7'
 
 // Interface para os dados em cache
 export interface AstrologyCache {

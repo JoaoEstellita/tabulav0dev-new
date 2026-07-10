@@ -580,12 +580,15 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     flex: 1,
+    // Web/flexbox: sem minHeight:0 o filho não encolhe e o scroll interno não ativa
+    minHeight: 0,
   },
   scrollView: {
     flex: 1,
   },
   scrollViewWeb: {
     overflow: "scroll",
+    minHeight: 0,
   },
   scrollContent: {
     paddingHorizontal: 20,

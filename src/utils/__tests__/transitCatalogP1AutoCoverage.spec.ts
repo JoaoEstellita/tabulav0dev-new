@@ -78,9 +78,9 @@ describe('transit catalog P1 auto overrides coverage', () => {
     const ingressKeys = Object.keys(TRANSIT_CATALOG_PTBR).filter(isIngressKey)
     const locales: Array<'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'> = ['pt-BR', 'en-US', 'es-ES', 'it-IT']
     locales.forEach((locale) => {
-      const map = locale === 'pt-BR'
+      const map = (locale === 'pt-BR'
         ? TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR
-        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]
+        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]) || {}
       const missing = ingressKeys.filter((key) => !map[key])
       expect(missing).toEqual([])
     })
@@ -90,9 +90,9 @@ describe('transit catalog P1 auto overrides coverage', () => {
     const aspectHouseKeys = Object.keys(TRANSIT_CATALOG_PTBR).filter(isAspectHouseKey)
     const locales: Array<'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'> = ['pt-BR', 'en-US', 'es-ES', 'it-IT']
     locales.forEach((locale) => {
-      const map = locale === 'pt-BR'
+      const map = (locale === 'pt-BR'
         ? TRANSIT_CATALOG_P1_AUTO_OVERRIDES_PTBR
-        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]
+        : TRANSIT_CATALOG_P1_AUTO_OVERRIDES_I18N[locale]) || {}
       const missing = aspectHouseKeys.filter((key) => !map[key])
       expect(missing).toEqual([])
     })

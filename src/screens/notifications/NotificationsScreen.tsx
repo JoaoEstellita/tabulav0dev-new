@@ -284,7 +284,7 @@ const NotificationCard = React.memo(function NotificationCard({
   onNavigate,
 }: {
   item: NotificationItem
-  templates: NotificationTemplate[]
+  templates: Record<string, NotificationTemplate>
   language: string
   t: (key: string, vars?: Record<string, string | number>) => string
   onOpen: (item: NotificationItem) => void

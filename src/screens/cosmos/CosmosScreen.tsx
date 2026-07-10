@@ -358,8 +358,10 @@ export default function CosmosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, overflow: 'hidden' },
-  scroll: { flex: 1 },
+  // minHeight:0 permite o ScrollView encolher e rolar no web (flexbox);
+  // sem isso o conteúdo empurra o container e a tela fica estática.
+  container: { flex: 1, overflow: 'hidden', minHeight: 0 },
+  scroll: { flex: 1, minHeight: 0 },
   scrollContent: { paddingBottom: 40 },
 
   hero: {

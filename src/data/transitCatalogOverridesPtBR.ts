@@ -1005,24 +1005,8 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Sol em trigono a Urano natal favorece originalidade, liberdade de expressao e abertura para o que e singular e inovador. Mudancas nesse ciclo tendem a ser criativas e bem recebidas, sem o choque de disrupcoes forcadas. Bom momento para explorar o que e autentico e diferente, confiando no que emerge.',
   'transit:sun|trigono|venus':
     'Sol em trigono a Venus natal traz harmonia, prazer e a sensacao de que conexoes afetivas e criativas estao bem sustentadas. O ciclo favorece expressao artistica, relacionamentos e a capacidade de desfrutar o que a vida oferece. Uma boa janela para cultivar beleza, afeto e o que genuinamente satisfaz.',
-  'transit:moon|conjuncao|ascendente':
-    'Lua em conjuncao ao Ascendente natal intensifica a expressao emocional e a receptividade no contato direto com o ambiente. O periodo tende a tornar o estado interno mais visivelmente presente na interacao e na comunicacao. Uma boa janela para cuidar de como as emocoes moldam a primeira impressao.',
-  'transit:moon|conjuncao|jupiter':
-    'Lua em conjuncao a Jupiter natal amplia necessidade de sentido e pertencimento, tornando facil confundir entusiasmo genuino com exagero emocional. Suas expectativas podem crescer mais rapido do que a realidade pode confirmar — e isso pode gerar decepção proporcional. Aproveite o impulso para avancar em algo planejado, mantendo uma medida concreta do que e possivel agora.',
-  'transit:moon|conjuncao|meio_do_ceu':
-    'Lua em conjuncao ao Meio do Ceu natal torna o estado emocional mais visivelmente ligado a trajetoria profissional e a reputacao publica. O ciclo pode trazer momentos em que vida pessoal e imagem publica se cruzam de forma mais evidente. Uma boa janela para integrar necessidades emocionais com objetivos de carreira.',
-  'transit:moon|conjuncao|mercury':
-    'Lua em conjuncao a Mercurio natal cria uma ligacao entre o mundo emocional e o processamento mental, tornando sentimentos mais articulaveis. O ciclo favorece conversas profundas, escrita reflexiva e expressao do que normalmente permanece interno. Uma boa janela para nomear e compreender o que esta sendo sentido.',
   'transit:moon|conjuncao|moon':
     'Lua em conjuncao a Lua natal, o retorno lunar mensal, reinicia o ciclo emocional e instintivo do mes. O periodo convida a revisao das necessidades de cuidado, conforto e pertencimento que guiam respostas automaticas. Um bom momento para perceber o que as emocoes deste ciclo estao apontando.',
-  'transit:moon|conjuncao|neptune':
-    'Lua em conjuncao a Netuno natal amplia a permeabilidade emocional e a receptividade para o que e sutil, imaginativo ou espiritual. O ciclo favorece empatia profunda, criatividade e contato com o que transcende o ordinario, mas pode diluir limites. Mantenha discernimento sobre o que e seu e o que e do outro.',
-  'transit:moon|conjuncao|pluto':
-    'Lua em conjuncao a Plutao natal pode trazer emocoes com qualidade compulsiva — um desejo intenso de verdade, de aprofundamento ou de resolucao definitiva de algo que incomoda. O risco e reagir externamente ao que e essencialmente uma transformacao interna: a intensidade pede processamento, nao acao imediata. Permita-se sentir o peso sem precisar resolver tudo agora — a clareza tende a vir depois que a intensidade passa.',
-  'transit:moon|conjuncao|saturn':
-    'Lua em conjuncao a Saturno natal pode trazer peso emocional, sensacao de restricao afetiva ou responsabilidades que limitam o fluxo natural dos sentimentos. O ciclo convida a maturidade emocional, avaliacao honesta de necessidades reais e estruturacao de como cuidar de si. Um bom momento para fortalecer a base emocional com criterio.',
-  'transit:moon|conjuncao|venus':
-    'Lua em conjuncao a Venus natal harmoniza o mundo emocional com o prazer, a estetica e a necessidade de conexao afetiva de qualidade. O ciclo favorece satisfacao genuina em relacoes, atividades criativas e ambientes que nutrem bem-estar. Uma boa janela para cultivar o que genuinamente agrada e alimenta emocionalmente.',
   'transit:moon|ingress|house_1':
     'Lua transitando pela Casa 1 intensifica a expressao emocional e torna as reacoes internas mais visivelmente presentes no dia a dia. O periodo favorece autoconsciencia e contato direto com como o estado emocional afeta a presenca. Uma boa janela para perceber o que as emocoes revelam sobre necessidades atuais.',
   'transit:moon|ingress|house_3':
@@ -1043,88 +1027,14 @@ export const TRANSIT_CATALOG_PTBR_OVERRIDES: Record<string, string> = {
     'Lua transitando pela Casa 11 direciona o mundo emocional para grupos, redes de pertencimento e ideais coletivos. O ciclo favorece necessidade de conexao com comunidade, amigos e causas que ressoam com valores pessoais. Um bom momento para nutrir relacionamentos coletivos e perceber o que o pertencimento alimenta.',
   'transit:moon|ingress|house_12':
     'Lua transitando pela Casa 12 leva o mundo emocional para zonas de recolhimento, processamento silencioso e contato com o que normalmente nao emerge na consciencia diaria. O ciclo favorece descanso emocional, sonhos e praticas contemplativas. Um bom periodo para integrar sentimentos antes de um novo ciclo lunar comecar.',
-  'transit:moon|oposicao|ascendente':
-    'Lua em oposicao ao Ascendente natal, transitando pelo Descendente, amplia a receptividade emocional nos relacionamentos e o que o outro espelha sobre necessidades proprias. O ciclo pode tornar mais claras as projecoes afetivas e o que se espera da conexao com o outro. Uma boa janela para equilibrar autocuidado e cuidado relacional.',
-  'transit:moon|oposicao|meio_do_ceu':
-    'Lua em oposicao ao Meio do Ceu natal, transitando pelo Fundo do Ceu, intensifica a vida interior, as raizes familiares e o que sustenta emocionalmente. O ciclo pode trazer tensao entre necessidades afetivas internas e demandas da vida publica ou profissional. Uma boa janela para cuidar da base emocional sem negligenciar responsabilidades externas.',
   'transit:moon|oposicao|moon':
     'Lua em oposicao a Lua natal, o ponto medio do ciclo lunar, ilumina o que foi ativado na virada do ciclo mensal. O periodo pode trazer a tona necessidades que estavam subterraneas e confrontar o estado emocional com o ambiente externo. Uma boa janela para avaliar o quanto as emocoes deste ciclo estao sendo reconhecidas.',
-  'transit:moon|oposicao|neptune':
-    'Lua em oposicao a Netuno natal pode criar confusao entre o que voce sente de verdade e o que voce gostaria de sentir — ou o que acha que deveria sentir. O risco e projetar esperanca em situacoes ou pessoas que ainda nao mostraram clareza suficiente para sustenta-la. Use o periodo para se perguntar: o que e real aqui, e o que e minha necessidade de que as coisas sejam diferentes do que sao?',
-  'transit:moon|oposicao|pluto':
-    'Lua em oposicao a Plutao natal pode despertar impulso de controle ou necessidade de dominar situacoes quando a emocao e intensa demais para suportar. O par tende a revelar dinamicas de poder em relacoes proximas — quem tem mais influencia, quem cede, quem guarda ressentimentos. Pergunte-se: voce esta reagindo ao que esta acontecendo agora ou a um padrao antigo que essa situacao despertou?',
-  'transit:moon|oposicao|saturn':
-    'Lua em oposicao a Saturno natal tende a criar um conflito entre necessidade de acolhimento e exigencia de funcionalidade — o que voce sente pode parecer estorvo diante do que precisa cumprir. Ha risco de suprimir emocoes legitimas para parecer mais competente ou responsavel do que se sente. Momento de reconhecer que cuidar de si mesmo nao e fuga das responsabilidades — e o que sustenta a capacidade de cumpri-las.',
-  'transit:moon|oposicao|sun':
-    'Lua em oposicao ao Sol natal corresponde a lua cheia do ciclo pessoal, trazendo iluminacao sobre necessidades emocionais em relacao aos objetivos conscientes. O periodo pode tornar mais visiveis os conflitos entre o que se sente e o que se quer realizar. Uma boa janela para integrar intencao e emocao com mais consciencia.',
-  'transit:moon|oposicao|uranus':
-    'Lua em oposicao a Urano natal pode trazer instabilidade emocional, mudancas abruptas de humor ou necessidade de ruptura com o familiar. O ciclo pode revelar tensao entre necessidade de seguranca e desejo de liberdade no mundo afetivo. Uma boa janela para acolher a necessidade de novidade sem comprometer o suporte emocional necessario.',
-  'transit:moon|oposicao|venus':
-    'Lua em oposicao a Venus natal pode criar tensao entre o que voce precisa afetivamente e o que voce consegue pedir ou receber. Ha risco de dar mais do que sente ou de esperar que o outro adivinhe o que nao foi dito. Momento de nomear sua necessidade real em relacoes proximas — sem projetar carencia nem fingir que tudo esta bem quando nao esta.',
-  'transit:moon|quadratura|ascendente':
-    'Lua em quadratura ao Ascendente natal pode trazer friccao entre o mundo emocional interno e como esse estado se projeta no ambiente. O ciclo pode tornar mais desafiador manter coerencia entre o que se sente e como se aparece para o mundo. Uma boa janela para identificar onde a expressao emocional pede mais autenticidade.',
-  'transit:moon|quadratura|meio_do_ceu':
-    'Lua em quadratura ao Meio do Ceu natal pode trazer tensao entre necessidades afetivas e as demandas da carreira ou da imagem publica. O ciclo convida a avaliar o quanto o mundo emocional esta sendo integrado ou ignorado na trajetoria profissional. Uma boa janela para ajustar a relacao entre vida interior e objetivos externos.',
-  'transit:moon|quadratura|mercury':
-    'Lua em quadratura a Mercurio natal pode criar conflito entre o que voce quer exprimir e o que sua logica deixa sair — o coracao quer falar o que a mente ainda esta tentando organizar. O risco e concluir que as pessoas nao entendem voce quando, na verdade, voce mesmo ainda esta processando o que sente. Antes de comunicar algo importante, permita-se sentir primeiro — a clareza vem depois do processamento, nao antes.',
   'transit:moon|quadratura|moon':
     'Lua em quadratura a Lua natal ativa um ponto de tensao no ciclo mensal, revelando conflitos entre necessidades emocionais e o contexto atual. O periodo pode trazer instabilidade emocional ou dificuldade de manter o equilibrio afetivo. Uma boa janela para identificar o que precisa de ajuste na forma de cuidar das proprias necessidades.',
-  'transit:moon|quadratura|neptune':
-    'Lua em quadratura a Netuno natal pode tornar dificil separar o que voce sente do que imagina, do que teme ou do que gostaria que fosse verdade — fronteiras internas ficam porosas. Ha tendencia de escapar em distracao, sonho ou idealizacao como resposta a uma realidade desconfortavel que ainda nao esta pronta para ser enfrentada. Crie pequenas ancoras fisicas no cotidiano — caminhadas, rotinas simples — antes de qualquer decisao que envolva emocao elevada.',
-  'transit:moon|quadratura|pluto':
-    'Lua em quadratura a Plutao natal pode trazer impulso de controlar situacoes ou pessoas como forma inconsciente de nao perder o controle sobre o que se sente. A intensidade emocional pode gerar reacoes desproporcionais a provocacoes pequenas — o que irrita agora raramente e apenas o que parece ser. Pergunte-se: estou reagindo ao presente ou a um medo antigo que essa situacao simplesmente acordou?',
-  'transit:moon|quadratura|saturn':
-    'Lua em quadratura a Saturno natal pode trazer peso, frieza emocional ou sentimento de restricao que inibe o fluxo de sentimentos. O ciclo convida a avaliar onde a rigidez emocional ou o excesso de controle esta impedindo receptividade real. Uma boa janela para equilibrar maturidade e abertura emocional.',
-  'transit:moon|quadratura|sun':
-    'Lua em quadratura ao Sol natal cria tensao entre o mundo emocional interno e a direcao consciente de vida. O ciclo pode revelar conflitos entre o que se sente e o que se quer construir, pedindo integracao. Uma boa janela para reconhecer necessidades emocionais sem deixar que dominem as decisoes de longo prazo.',
-  'transit:moon|quadratura|uranus':
-    'Lua em quadratura a Urano natal pode trazer impaciencia emocional e vontade urgente de romper com o que parece estagnado — mesmo que a direcao da mudanca ainda nao esteja clara. Voce pode saber que algo precisa mudar sem saber exatamente o que, e isso tende a gerar irritacao com o que esta proximo. Observe o que provoca mais agitacao interna: esses pontos costumam indicar onde renovacao genuina e necessaria, nao onde acao impulsiva ajuda.',
-  'transit:moon|quadratura|venus':
-    'Lua em quadratura a Venus natal pode gerar tensao entre necessidades afetivas genuinas e o que parece agradavel ou esteticamente satisfatorio. O ciclo pode revelar conflitos em relacoes ou insatisfacao com o que se buscou por prazer superficial. Uma boa janela para distinguir o que nutre de fato do que apenas agrada momentaneamente.',
-  'transit:moon|sextil|ascendente':
-    'Lua em sextil ao Ascendente natal cria uma janela de expressao emocional mais fluida e bem recebida pelo ambiente. O ciclo favorece receptividade, autenticidade e facilidade de conexao atraves da presenca. Um bom momento para compartilhar o que se sente e para criar pontes afetivas com o entorno.',
-  'transit:moon|sextil|jupiter':
-    'Lua em sextil a Jupiter natal favorece bem-estar emocional, generosidade e a sensacao de que as necessidades afetivas podem ser supridas com mais facilidade. O ciclo apoia otimismo genuino e abertura para experiencias que ampliam o senso de satisfacao. Um bom momento para nutrir o que expande o mundo interior com criterio.',
-  'transit:moon|sextil|mars':
-    'Lua em sextil a Marte natal disponibiliza energia emocional para acao com mais fluidez e menos conflito entre sentimento e iniciativa. O ciclo favorece assertividade afetiva e a capacidade de agir a partir do que e sentido. Um bom momento para colocar em movimento o que estava represado emocionalmente.',
-  'transit:moon|sextil|meio_do_ceu':
-    'Lua em sextil ao Meio do Ceu natal favorece alinhamento entre mundo emocional e trajetoria profissional. O ciclo apoia decisoes de carreira que levam em conta necessidades pessoais genuinas e que nutrem bem-estar. Um bom momento para integrar o que se sente com o que se busca construir profissionalmente.',
-  'transit:moon|sextil|mercury':
-    'Lua em sextil a Mercurio natal favorece a articulacao do mundo emocional em palavras e pensamentos mais fluidos. O ciclo apoia conversas reflexivas, escrita expressiva e processamento cognitivo de sentimentos. Um bom momento para nomear o que esta sendo vivido e para encontrar quem saiba ouvir.',
   'transit:moon|sextil|moon':
     'Lua em sextil a Lua natal cria uma janela de fluidez emocional e de alinhamento natural entre as necessidades internas e o contexto. O ciclo favorece receptividade, cuidado consigo e com os proximos sem grandes resistencias. Um bom momento para perceber o que nutre e para cultivar o que sustenta bem-estar afetivo.',
-  'transit:moon|sextil|neptune':
-    'Lua em sextil a Netuno natal favorece sensibilidade, intuicao e abertura para o que e sutil e transcendente no mundo emocional. O ciclo apoia criatividade, empatia e praticas contemplativas que alimentam a vida interior. Um bom momento para trabalhar o mundo imaginativo e espiritual com intencionalidade.',
-  'transit:moon|sextil|pluto':
-    'Lua em sextil a Plutao natal favorece acesso a profundidade emocional com mais facilidade e menos resistencia do que em aspectos de tensao. O ciclo apoia processos de transformacao afetiva conduzidos com foco e intencao. Um bom momento para trabalhar o que esta oculto no mundo emocional com coragem e cuidado.',
-  'transit:moon|sextil|sun':
-    'Lua em sextil ao Sol natal cria uma janela favoravel para alinhamento entre o mundo emocional e a direcao consciente de vida. O ciclo favorece integracao entre o que se sente e o que se busca realizar, com menos conflito interno. Um bom momento para tomar decisoes que honrem tanto as necessidades afetivas quanto os objetivos de longo prazo.',
-  'transit:moon|sextil|uranus':
-    'Lua em sextil a Urano natal favorece abertura para novidade, criatividade emocional e disposicao para incluir o diferente no mundo afetivo. O ciclo apoia mudancas no campo emocional que sao bem recebidas e nao geram disrupcao desnecessaria. Um bom momento para explorar formas novas de cuidar de si e de se relacionar.',
-  'transit:moon|sextil|venus':
-    'Lua em sextil a Venus natal favorece harmonia emocional, prazer e conexoes afetivas com mais naturalidade e satisfacao genuina. O ciclo apoia relacionamentos nutritivos, atividades esteticas e um senso ampliado de bem-estar. Um bom momento para cultivar o que agrada e nutre genuinamente no mundo afetivo.',
-  'transit:moon|trigono|ascendente':
-    'Lua em trigono ao Ascendente natal favorece expressao emocional autentica e receptividade no ambiente de forma natural e bem recebida. O ciclo facilita conexao, presenca afetiva e alinhamento entre o que se sente e como se aparece. Um bom momento para cultivar relacoes com autenticidade e cuidado.',
-  'transit:moon|trigono|jupiter':
-    'Lua em trigono a Jupiter natal favorece bem-estar emocional, generosidade e a sensacao de que o mundo interior esta em expansao com fundamento. O ciclo facilita satisfacao genuina, otimismo afetivo e abertura para experiencias enriquecedoras. Um bom momento para nutrir o que amplia o senso de sentido e qualidade de vida.',
-  'transit:moon|trigono|mars':
-    'Lua em trigono a Marte natal favorece assertividade emocional, energia disponivel para agir a partir do que e sentido e capacidade de defender necessidades sem conflito. O ciclo facilita a integracao entre acao e mundo afetivo. Um bom momento para colocar em movimento o que havia sido represado por hesitacao.',
-  'transit:moon|trigono|meio_do_ceu':
-    'Lua em trigono ao Meio do Ceu natal favorece harmonia entre mundo emocional e trajetoria profissional, com possibilidade de que necessidades afetivas sejam sustentadas pela carreira. O ciclo facilita decisoes que integram vida interior e objetivos externos. Um bom momento para avancar profissionalmente de forma alinhada com quem voce e.',
-  'transit:moon|trigono|mercury':
-    'Lua em trigono a Mercurio natal favorece articulacao fluida do mundo emocional em pensamento e comunicacao. O ciclo facilita a expressao de sentimentos com precisao e a integracao de logica e emocao. Um bom momento para conversas significativas, escrita reflexiva e processamento emocional atraves da linguagem.',
   'transit:moon|trigono|moon':
     'Lua em trigono a Lua natal cria um momento de fluidez emocional e de alinhamento natural entre o ritmo interno e o ciclo lunar. O ciclo facilita receptividade, cuidado consigo e bem-estar afetivo com mais naturalidade. Um bom momento para perceber o que o mundo emocional esta pedindo e para atender com gentileza.',
-  'transit:moon|trigono|neptune':
-    'Lua em trigono a Netuno natal favorece sensibilidade, intuicao e conexao com o que e sutil e transcendente de forma fluida e produtiva. O ciclo facilita criatividade, empatia e praticas contemplativas que alimentam a vida interior. Um bom momento para trabalhar o mundo imaginativo com abertura e intencionalidade.',
-  'transit:moon|trigono|pluto':
-    'Lua em trigono a Plutao natal favorece transformacao emocional profunda conduzida com foco e intencao, sem os atritos dos aspectos de tensao. O ciclo facilita renovacao afetiva e acesso ao que estava oculto no mundo emocional. Um bom momento para aprofundar o que importa e liberar o que perdeu valor afetivo.',
-  'transit:moon|trigono|sun':
-    'Lua em trigono ao Sol natal favorece alinhamento entre o mundo emocional e a direcao consciente de vida, com integracao natural entre o que se sente e o que se quer realizar. O ciclo facilita bem-estar, decisoes coerentes e sensacao de que interior e exterior estao em harmonia. Um bom momento para avancar com confianca.',
-  'transit:moon|trigono|uranus':
-    'Lua em trigono a Urano natal favorece abertura para o novo no mundo emocional, com mudancas criativas que sao bem integradas. O ciclo facilita renovacao afetiva, inovacao na forma de cuidar de si e receptividade para o inesperado sem perda de estabilidade. Um bom momento para explorar o que e diferente e autentico no campo emocional.',
-  'transit:moon|trigono|venus':
-    'Lua em trigono a Venus natal favorece harmonia, prazer e conexoes afetivas sustentadas com naturalidade e satisfacao genuina. O ciclo facilita bem-estar emocional, expressao criativa e relacionamentos nutritivos. Um bom momento para cultivar o que agrada e nutre de fato, com abertura e reciprocidade.',
 
   // Saturn — entradas faltantes
   'transit:saturn|conjuncao|pluto':

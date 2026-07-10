@@ -321,9 +321,11 @@ export default function ReadingDetailModal({
               </View>
             ) : null}
 
-            <View style={styles.sectionCard}>
-              <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText}</Text>
-            </View>
+            {(localizedFullText || localizedDirectText) ? (
+              <View style={styles.sectionCard}>
+                <Text style={[styles.body, isNarrow ? styles.bodyNarrow : null]}>{localizedFullText || localizedDirectText}</Text>
+              </View>
+            ) : null}
 
             {localizedMetaText ? (
               <View style={styles.sectionCard}>

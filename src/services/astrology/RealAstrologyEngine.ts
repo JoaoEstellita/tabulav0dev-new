@@ -668,7 +668,9 @@ export class RealAstrologyEngine {
         })
       }
 
-      const specialEvents = this.buildSpecialEvents(planetsWithHouses, date)
+      // natalHouseImpacted precisa ser a casa NATAL onde o planeta transita (currentOnNatalHouses),
+      // não a casa do céu atual (planetsWithHouses) — senão "Sol na Casa 12" (céu) em vez de 3 (natal).
+      const specialEvents = this.buildSpecialEvents(currentOnNatalHouses, date)
       const generalTransits = (aspectsCurrentTT || []).map((aspect: any) => ({
         ...aspect,
         eventType: 'ASPECT_MAJOR'

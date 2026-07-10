@@ -176,8 +176,6 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
-      lazy={true}
-      detachInactiveScreens={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap

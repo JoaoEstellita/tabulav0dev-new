@@ -22,6 +22,9 @@ import ExpiryBanner from '../../components/ExpiryBanner'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
+// Serviços extras (API Astrologer: hub, créditos, presentear, resgate) desativados por hora.
+// Código mantido dormant; basta voltar para true para reativar.
+const EXTRAS_ENABLED = false
 const STRIPE_USD_PRICE_BY_PLAN: Record<string, number> = {
   essential_monthly: 9.9,
   pro_monthly: 19.9,
@@ -953,102 +956,131 @@ export default function PremiumScreen() {
   )
 
   const renderFeatures = () => (
-    <ScrollView style={styles.tabContent}>
+    <ScrollView style={styles.tabContent} contentContainerStyle={styles.featuresContent}>
+      {/* Hero */}
+      <View style={styles.heroCard}>
+        <Text style={styles.heroKicker}>✦ {tr('premium.header.title', 'Premium')}</Text>
+        <Text style={styles.heroTitle}>{tr('premium.hero.title', 'Seu astrologo pessoal, todos os dias')}</Text>
+        <Text style={styles.heroSubtitle}>{tr('premium.hero.subtitle', 'Status diario das suas 8 areas da vida, transitos interpretados e um astrologo que conversa com voce no WhatsApp.')}</Text>
+      </View>
+
+      {/* Diferenciais */}
+      <View style={styles.benefitsCard}>
+        {[
+          { icon: 'pulse', key: 'premium.benefit.status', fallback: 'Status diario das 8 areas da vida, calculado do seu mapa' },
+          { icon: 'logo-whatsapp', key: 'premium.benefit.whatsapp', fallback: 'Astrologo pessoal no WhatsApp: mapa, transitos e grupos' },
+          { icon: 'people', key: 'premium.benefit.groups', fallback: 'Grupos para acompanhar as pessoas queridas' },
+          { icon: 'trending-up', key: 'premium.benefit.forecast', fallback: 'Previsoes de transitos com leitura interpretada' },
+        ].map((b) => (
+          <View key={b.icon} style={styles.benefitRow}>
+            <View style={styles.benefitIcon}><Ionicons name={b.icon as any} size={18} color="#FFD700" /></View>
+            <Text style={styles.benefitText}>{tr(b.key, b.fallback)}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Planos */}
       <View style={styles.plansContainer}>
-          <Text style={styles.sectionTitle}>{tr('premium.subscriptionPlans.title', 'Planos de assinatura')}</Text>
-        <View style={styles.providerChoiceRow}>
-          <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
-          <TouchableOpacity
-            style={[
-              styles.providerChoiceButton,
-              subscriptionProvider === 'mercadopago' && styles.providerChoiceButtonActive,
-              !isPortuguese && styles.providerChoiceButtonDisabled,
-            ]}
-            onPress={() => {
-              if (!isPortuguese) return
-              setSubscriptionProvider('mercadopago')
-            }}
-            disabled={!isPortuguese}
-          >
-            <Text style={[styles.providerChoiceText, subscriptionProvider === 'mercadopago' && styles.providerChoiceTextActive]}>
-              {t('subscription.provider.mercado')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.providerChoiceButton, subscriptionProvider === 'stripe' && styles.providerChoiceButtonActive]}
-            onPress={() => setSubscriptionProvider('stripe')}
-          >
-            <Text style={[styles.providerChoiceText, subscriptionProvider === 'stripe' && styles.providerChoiceTextActive]}>
-              {t('subscription.provider.stripe')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {!isPortuguese ? (
+        <Text style={styles.sectionTitle}>{tr('premium.subscriptionPlans.title', 'Planos de assinatura')}</Text>
+        {isPortuguese ? (
+          <View style={styles.providerChoiceRow}>
+            <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
+            <TouchableOpacity
+              style={[styles.providerChoiceButton, subscriptionProvider === 'mercadopago' && styles.providerChoiceButtonActive]}
+              onPress={() => setSubscriptionProvider('mercadopago')}
+            >
+              <Text style={[styles.providerChoiceText, subscriptionProvider === 'mercadopago' && styles.providerChoiceTextActive]}>
+                {t('subscription.provider.mercado')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerChoiceButton, subscriptionProvider === 'stripe' && styles.providerChoiceButtonActive]}
+              onPress={() => setSubscriptionProvider('stripe')}
+            >
+              <Text style={[styles.providerChoiceText, subscriptionProvider === 'stripe' && styles.providerChoiceTextActive]}>
+                {t('subscription.provider.stripe')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
           <Text style={styles.providerHintText}>
             {tr('subscription.provider.autoStripeHint', 'Para idiomas internacionais, os pagamentos usam Stripe automaticamente.')}
           </Text>
-        ) : null}
-        {subscriptionPlans.map(plan => (
-          <TouchableOpacity
-            key={plan.id}
-            style={[
-              styles.planCard,
-              { borderColor: plan.color },
-              plan.current && styles.currentPlan
-            ]}
-            onPress={() => !plan.current && handleSubscribe(plan)}
-          >
-            <View style={styles.planHeader}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <Text style={styles.planPrice}>
-                {plan.price === 0
-                  ? tr('premium.plans.free', 'Gratis')
-                  : usesStripePricing
-                    ? `US$ ${(STRIPE_USD_PRICE_BY_PLAN[plan.id] ?? plan.price).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`
-                    : `R$ ${(plan.price || 0).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}`}
-              </Text>
+        )}
+        {subscriptionPlans.map(plan => {
+          const isRecommended = plan.id === 'pro_monthly'
+          const priceText = plan.price === 0
+            ? tr('premium.plans.free', 'Gratis')
+            : usesStripePricing
+              ? `US$ ${(STRIPE_USD_PRICE_BY_PLAN[plan.id] ?? plan.price).toFixed(2)}`
+              : `R$ ${(plan.price || 0).toFixed(2)}`
+          return (
+            <View
+              key={plan.id}
+              style={[
+                styles.planCard,
+                { borderColor: plan.color },
+                isRecommended && !plan.current && styles.planCardRecommended,
+                plan.current && styles.currentPlan,
+              ]}
+            >
+              {isRecommended && !plan.current && (
+                <View style={styles.recommendedBadge}>
+                  <Text style={styles.recommendedBadgeText}>{tr('premium.plans.recommended', 'Recomendado')}</Text>
+                </View>
+              )}
+              {plan.current && (
+                <View style={styles.currentBadge}>
+                  <Text style={styles.currentBadgeText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
+                </View>
+              )}
+              <View style={styles.planHeader}>
+                <Text style={styles.planName}>{plan.name}</Text>
+                <View style={styles.planPriceWrap}>
+                  <Text style={styles.planPrice}>{priceText}</Text>
+                  {plan.price !== 0 && (
+                    <Text style={styles.planPricePer}>/{tr('premium.plans.monthShort', 'mes')}</Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.planFeatures}>
+                {plan.features.slice(0, 4).map((feature, index) => (
+                  <View key={index} style={styles.planFeatureRow}>
+                    <Ionicons name="checkmark-circle" size={15} color={plan.color} />
+                    <Text style={styles.planFeature}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+              {plan.requiresPhone && (
+                <View style={styles.planPhoneRow}>
+                  <Text style={styles.planPhoneLabel}>{tr('premium.plans.whatsappLabel', 'WhatsApp (Premium)')}</Text>
+                  <TextInput
+                    style={styles.planPhoneInput}
+                    placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
+                    placeholderTextColor="#888"
+                    value={premiumPhone}
+                    onChangeText={setPremiumPhone}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              )}
+              <TouchableOpacity
+                style={[styles.subscribeButton, { backgroundColor: plan.color }, plan.current && styles.subscribeButtonDisabled]}
+                onPress={() => !plan.current && handleSubscribe(plan)}
+                disabled={plan.current}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.subscribeButtonText}>
+                  {plan.current ? tr('premium.plans.current', 'Plano Atual') : tr('premium.cta.subscribe', 'Assinar')}
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.planFeatures}>
-              {plan.features.map((feature, index) => (
-                <Text key={index} style={styles.planFeature}>✓ {feature}</Text>
-              ))}
-            </View>
-            {plan.requiresPhone && (
-              <View style={styles.planPhoneRow}>
-                <Text style={styles.planPhoneLabel}>{tr('premium.plans.whatsappLabel', 'WhatsApp (Premium)')}</Text>
-                <TextInput
-                  style={styles.planPhoneInput}
-                  placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
-                  placeholderTextColor="#888"
-                  value={premiumPhone}
-                  onChangeText={setPremiumPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            )}
-            {plan.current && (
-              <View style={styles.currentBadge}>
-                <Text style={styles.currentBadgeText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
-              </View>
-            )}
-            {plan.id === 'pro_monthly' && !plan.current && (
-              <View style={styles.recommendedBadge}>
-                <Text style={styles.recommendedBadgeText}>{tr('premium.plans.recommended', 'Recomendado')}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
+          )
+        })}
       </View>
+
+      {/* Comparacao enxuta (sem creditos) */}
       <View style={styles.plansContainer}>
-        <View style={styles.waCallout}>
-          <View style={styles.waCalloutHeader}>
-            <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
-            <Text style={styles.waCalloutTitle}>{tr('premium.waCallout.title', 'Astrólogo Tábula no WhatsApp')}</Text>
-          </View>
-          <Text style={styles.waCalloutBody}>
-            {tr('premium.waCallout.body', 'Converse com seu astrólogo pessoal direto no WhatsApp: ele conhece seu mapa natal, seus trânsitos do dia e o status das suas áreas da vida. Todos os planos incluem — quanto maior o plano, mais conversas por dia.')}
-          </Text>
-        </View>
         <Text style={styles.sectionTitle}>{tr('premium.comparePlans.title', 'Comparar planos')}</Text>
         <View style={styles.compareTable}>
           <View style={styles.compareRow}>
@@ -1070,19 +1102,32 @@ export default function PremiumScreen() {
             <Text style={styles.compareValue}>{tr('common.yes', 'Sim')}</Text>
           </View>
           <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.creditsPerMonth', 'Creditos/mês')}</Text>
-            <Text style={styles.compareValue}>0</Text>
-            <Text style={styles.compareValue}>1</Text>
-            <Text style={styles.compareValue}>10</Text>
-          </View>
-          <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrólogo IA no WhatsApp')}</Text>
+            <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrologo IA no WhatsApp')}</Text>
             <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitEssential', '10/dia')}</Text>
             <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitPro', '25/dia')}</Text>
             <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '40/dia')}</Text>
           </View>
         </View>
       </View>
+
+      {/* FAQ curto */}
+      <View style={styles.plansContainer}>
+        <Text style={styles.sectionTitle}>{tr('premium.faq.title', 'Perguntas frequentes')}</Text>
+        {[
+          { q: 'premium.faq.q1', qf: 'Posso cancelar quando quiser?', a: 'premium.faq.a1', af: 'Sim. Voce cancela quando quiser e mantem o acesso ate o fim do periodo ja pago.' },
+          { q: 'premium.faq.q2', qf: 'Quais as formas de pagamento?', a: 'premium.faq.a2', af: 'No Brasil, cartao e Pix via MercadoPago. Em outros idiomas, cartao via Stripe.' },
+          { q: 'premium.faq.q3', qf: 'Como funciona o astrologo no WhatsApp?', a: 'premium.faq.a3', af: 'Voce conversa direto no WhatsApp com um astrologo que conhece seu mapa, seus transitos e seus grupos. O limite diario varia por plano.' },
+          { q: 'premium.faq.q4', qf: 'O que esta incluso?', a: 'premium.faq.a4', af: 'Status diario das 8 areas da vida, previsoes de transitos, grupos e o astrologo no WhatsApp.' },
+        ].map((item) => (
+          <View key={item.q} style={styles.faqItem}>
+            <Text style={styles.faqQuestion}>{tr(item.q, item.qf)}</Text>
+            <Text style={styles.faqAnswer}>{tr(item.a, item.af)}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Serviços extras (presentear / resgate / creditos) — desativados por hora */}
+      {EXTRAS_ENABLED && (<>
       <View style={styles.plansContainer}>
         <Text style={styles.sectionTitle}>{tr('premium.gift.title', 'Assinaturas extras (presentear)')}</Text>
         {canBuyGiftSubscriptions ? (
@@ -1189,6 +1234,7 @@ export default function PremiumScreen() {
             </TouchableOpacity>
           ))}
         </View>
+      </>)}
     </ScrollView>
   )
 
@@ -1311,39 +1357,41 @@ export default function PremiumScreen() {
         </View>
       )}
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
-          onPress={() => setSelectedTab('hub')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
-            {tr('premium.tab.services', 'Serviços Premium')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'credits' && styles.activeTab]}
-          onPress={() => setSelectedTab('credits')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'credits' && styles.activeTabText]}>
-            {tr('premium.tab.credits', 'Créditos')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'history' && styles.activeTab]}
-          onPress={() => setSelectedTab('history')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'history' && styles.activeTabText]}>
-            {tr('premium.tab.history', 'Histórico')}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Tabs — serviços extras (hub/créditos/histórico) desativados por hora */}
+      {EXTRAS_ENABLED && (
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'hub' && styles.activeTab]}
+            onPress={() => setSelectedTab('hub')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'hub' && styles.activeTabText]}>
+              {tr('premium.tab.services', 'Serviços Premium')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'credits' && styles.activeTab]}
+            onPress={() => setSelectedTab('credits')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'credits' && styles.activeTabText]}>
+              {tr('premium.tab.credits', 'Créditos')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'history' && styles.activeTab]}
+            onPress={() => setSelectedTab('history')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'history' && styles.activeTabText]}>
+              {tr('premium.tab.history', 'Histórico')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Content */}
-      {selectedTab === 'features' && renderFeatures()}
-      {selectedTab === 'hub' && renderHub()}
-      {selectedTab === 'credits' && renderCredits()}
-      {selectedTab === 'history' && renderHistory()}
+      {(!EXTRAS_ENABLED || selectedTab === 'features') && renderFeatures()}
+      {EXTRAS_ENABLED && selectedTab === 'hub' && renderHub()}
+      {EXTRAS_ENABLED && selectedTab === 'credits' && renderCredits()}
+      {EXTRAS_ENABLED && selectedTab === 'history' && renderHistory()}
     </LinearGradient>
   )
 }
@@ -1459,6 +1507,121 @@ const styles = StyleSheet.create({
   },
   hubContent: {
     paddingBottom: 32,
+  },
+  featuresContent: {
+    paddingBottom: 48,
+  },
+  // Hero
+  heroCard: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  heroKicker: {
+    color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '800',
+    lineHeight: 32,
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    color: '#B8B8D0',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  // Diferenciais
+  benefitsCard: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.18)',
+    padding: 16,
+    gap: 14,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  benefitIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,215,0,0.12)',
+  },
+  benefitText: {
+    flex: 1,
+    color: '#E8E8F0',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  // Plano — extras do redesign
+  planCardRecommended: {
+    borderWidth: 2,
+    transform: [{ scale: 1.02 }],
+    backgroundColor: 'rgba(78,205,196,0.08)',
+  },
+  planPriceWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  planPricePer: {
+    color: '#9A9AB8',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 3,
+    marginLeft: 2,
+  },
+  planFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  subscribeButton: {
+    marginTop: 14,
+    height: 46,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subscribeButtonDisabled: {
+    opacity: 0.5,
+  },
+  subscribeButtonText: {
+    color: '#0F0F23',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  // FAQ
+  faqItem: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  faqQuestion: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  faqAnswer: {
+    color: '#B8B8D0',
+    fontSize: 13,
+    lineHeight: 19,
   },
   hubCard: {
     backgroundColor: '#1C1C1E',
