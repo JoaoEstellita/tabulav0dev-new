@@ -23,7 +23,34 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.estellita.tabulaestelar",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/home" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/grupos" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/previsao" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/premium" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/notificacoes" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/config" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/cosmos" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/perfil" },
+            { "scheme": "https", "host": "tabulaestelar.com.br", "pathPrefix": "/mapa" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/home" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/grupos" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/previsao" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/premium" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/notificacoes" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/config" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/cosmos" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/perfil" },
+            { "scheme": "https", "host": "www.tabulaestelar.com.br", "pathPrefix": "/mapa" }
+          ]
+        }
+      ]
     },
     "ios": {
       "supportsTablet": true,

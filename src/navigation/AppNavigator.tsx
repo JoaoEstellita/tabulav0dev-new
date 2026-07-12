@@ -8,6 +8,8 @@ import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
 import { Text, StyleSheet } from "react-native"
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import * as Linking from "expo-linking"
+import type { LinkingOptions, NavigatorScreenParams } from "@react-navigation/native"
 
 // Screens
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -48,6 +50,49 @@ const NAV_THEME = {
   colors: {
     ...DefaultTheme.colors,
     background: "#0F0F23",
+  },
+}
+
+// Deep-links: URL/scheme -> tela. PWA (https, slugs limpos), app nativo (App Links
+// Android + custom scheme tabulaestelar://). Telas de pagamento ficam de fora de
+// proposito — os return URLs do checkout usam o rewrite /payment existente.
+type DeepLinkTabsParamList = {
+  Home: undefined
+  Groups: undefined
+  Forecast: undefined
+  Premium: undefined
+  Notifications: undefined
+  Settings: undefined
+}
+type DeepLinkRootParamList = {
+  Tabs: NavigatorScreenParams<DeepLinkTabsParamList> | undefined
+  Cosmos: undefined
+  AstroProfile: undefined
+  NatalChartWheel: undefined
+}
+const linking: LinkingOptions<DeepLinkRootParamList> = {
+  prefixes: [
+    Linking.createURL("/"),
+    "https://www.tabulaestelar.com.br",
+    "https://tabulaestelar.com.br",
+    "tabulaestelar://",
+  ],
+  config: {
+    screens: {
+      Tabs: {
+        screens: {
+          Home: "home",
+          Groups: "grupos",
+          Forecast: "previsao",
+          Premium: "premium",
+          Notifications: "notificacoes",
+          Settings: "config",
+        },
+      },
+      Cosmos: "cosmos",
+      AstroProfile: "perfil",
+      NatalChartWheel: "mapa",
+    },
   },
 }
 
@@ -376,6 +421,6 @@ export default function AppNavigator() {
 
   // Se estiver logado e dados completos, mostra app principal
   if (__DEV__) console.log('🏠 Showing MainTabs (complete data)')
-  return <NavigationContainer theme={NAV_THEME}><RootNavigator /></NavigationContainer>
+  return <NavigationContainer theme={NAV_THEME} linking={linking} fallback={null}><RootNavigator /></NavigationContainer>
 }
 

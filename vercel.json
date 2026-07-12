@@ -35,6 +35,46 @@
       "destination": "/index.html"
     },
     {
+      "source": "/home",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/grupos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/previsao",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/premium",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/notificacoes",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/config",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/cosmos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/perfil",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mapa",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "destination": "/assetlinks.json"
+    },
+    {
       "source": "/monitoramento",
       "destination": "/monitoramento.html"
     },
