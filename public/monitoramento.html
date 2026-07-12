@@ -167,6 +167,16 @@
 
     /* card full-width */
     .card-full { grid-column: 1 / -1; }
+
+    /* health banner + progress bar */
+    .health-banner { grid-column: 1 / -1; padding: 12px 18px; border-radius: var(--radius); font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .health-ok { background: rgba(62,207,142,.12); color: var(--ok); border: 1px solid rgba(62,207,142,.3); }
+    .health-warn { background: rgba(232,184,75,.12); color: var(--warn); border: 1px solid rgba(232,184,75,.3); }
+    .health-err { background: rgba(248,113,113,.12); color: var(--err); border: 1px solid rgba(248,113,113,.3); }
+    .pbar { margin-top: 6px; height: 8px; background: #0d0f14; border-radius: 99px; overflow: hidden; }
+    .pbar > div { height: 100%; border-radius: 99px; transition: width .4s ease; }
+    .links a { color: var(--accent); text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -274,6 +284,15 @@
     return `<span class="badge badge-warn">${status}</span>`
   }
 
+  function pct(v, cap) { if (v == null || !cap) return 0; return Math.min(100, Math.round((v / cap) * 100)) }
+  function barColor(p) { return p >= 90 ? 'var(--err)' : p >= 70 ? 'var(--warn)' : 'var(--ok)' }
+  function progressBar(v, cap) {
+    const p = pct(v, cap)
+    return `<div class="pbar"><div style="width:${p}%;background:${barColor(p)}"></div></div>`
+  }
+  function fmtNum(n) { return n == null ? '—' : Number(n).toLocaleString('pt-BR') }
+  function fmtBRL(n) { return n == null ? '—' : 'R$ ' + Number(n).toFixed(2) }
+
   function renderDashboard(d) {
     const main = document.getElementById('main-content')
     const s = d.sistema || {}
@@ -282,12 +301,93 @@
     const crons = d.crons || []
     const leituras = d.leituras || {}
     const erros = d.erros24h || {}
+    const ag = d.agente || {}
+    const ass = d.assinantes || {}
+    const fs = d.firestore || {}
 
     const sistemaBadge = s.uptimeSec > 0
       ? `<span class="badge badge-ok">Online</span>`
       : `<span class="badge badge-err">Offline</span>`
 
+    // Saúde geral
+    const fsPct = fs.available ? pct(fs.readsToday, fs.readsCap) : 0
+    const hasErrors = (erros.total || 0) > 0 || (d.appErrors?.count24h || 0) > 0
+    let health = { cls: 'health-ok', txt: '✓ Tudo certo — sistema online, sem erros, quota saudável.' }
+    if (!(s.uptimeSec > 0)) health = { cls: 'health-err', txt: '⚠ Sistema offline.' }
+    else if (fsPct >= 90) health = { cls: 'health-err', txt: `⚠ Quota Firestore em ${fsPct}% — risco de estouro!` }
+    else if (fsPct >= 70) health = { cls: 'health-warn', txt: `Quota Firestore em ${fsPct}% — de olho.` }
+    else if (hasErrors) health = { cls: 'health-warn', txt: 'Há erros registrados nas últimas 24h — confira abaixo.' }
+
     main.innerHTML = `
+      <div class="health-banner ${health.cls}">${health.txt}</div>
+
+      <!-- Firestore quota -->
+      <div class="card">
+        <div class="card-title">Firestore — Quota Grátis (hoje UTC)</div>
+        ${fs.available ? `
+          <div class="metric-row">
+            <span class="metric-label">Leituras</span>
+            <span class="metric-value" style="color:${barColor(pct(fs.readsToday, fs.readsCap))}">${fmtNum(fs.readsToday)} / ${fmtNum(fs.readsCap)}</span>
+          </div>
+          ${progressBar(fs.readsToday, fs.readsCap)}
+          <div class="metric-row" style="margin-top:12px">
+            <span class="metric-label">Escritas</span>
+            <span class="metric-value" style="color:${barColor(pct(fs.writesToday, fs.writesCap))}">${fmtNum(fs.writesToday)} / ${fmtNum(fs.writesCap)}</span>
+          </div>
+          ${progressBar(fs.writesToday, fs.writesCap)}
+        ` : `<div style="color:var(--muted);font-size:13px;line-height:1.5">
+            Indisponível. Conceda <b style="color:var(--text)">roles/monitoring.viewer</b> ao service account no GCP IAM.
+            <br><span style="color:var(--warn);font-size:12px">${fs.reason || ''}</span>
+          </div>`}
+      </div>
+
+      <!-- Agente WhatsApp -->
+      <div class="card">
+        <div class="card-title">Agente WhatsApp (hoje)</div>
+        <div class="metric-row">
+          <span class="metric-label">Chamadas LLM</span>
+          <span class="metric-value" style="color:${barColor(pct(ag.globalCount, ag.globalCap))}">${fmtNum(ag.globalCount)} / ${fmtNum(ag.globalCap)}</span>
+        </div>
+        ${progressBar(ag.globalCount, ag.globalCap)}
+        <div class="metric-row" style="margin-top:12px">
+          <span class="metric-label">Custo estimado</span>
+          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(ag.custoEstimadoBRL)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Mensagens hoje</span>
+          <span class="metric-value">${fmtNum(ag.mensagensHoje)}</span>
+        </div>
+      </div>
+
+      <!-- Assinantes -->
+      <div class="card">
+        <div class="card-title">Assinantes</div>
+        <div class="metric-row">
+          <span class="metric-label">Usuários totais</span>
+          <span class="metric-value">${fmtNum(ass.total ?? u.total)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Ativos (pagantes)</span>
+          <span class="metric-value" style="color:var(--ok)">${fmtNum(ass.ativos)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Trial</span>
+          <span class="metric-value">${fmtNum(ass.trial)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Essential / Pro / Premium</span>
+          <span class="metric-value">${fmtNum(ass.essential)} / ${fmtNum(ass.pro)} / ${fmtNum(ass.premium)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">MRR estimado</span>
+          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(ass.mrrEstimado)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Ativos (7 dias)</span>
+          <span class="metric-value">${fmtNum(u.ativos7d)}</span>
+        </div>
+      </div>
+
       <!-- Sistema -->
       <div class="card">
         <div class="card-title">Sistema</div>
@@ -306,23 +406,6 @@
         <div class="metric-row">
           <span class="metric-label">Ambiente</span>
           <span class="metric-value">${s.env || '—'}</span>
-        </div>
-      </div>
-
-      <!-- Usuários -->
-      <div class="card">
-        <div class="card-title">Usuários</div>
-        <div class="metric-row">
-          <span class="metric-label">Total</span>
-          <span class="metric-value">${u.total ?? '—'}</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-label">Premium</span>
-          <span class="metric-value" style="color:var(--accent2)">${u.premium ?? '—'}</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-label">Ativos (7 dias)</span>
-          <span class="metric-value">${u.ativos7d ?? '—'}</span>
         </div>
       </div>
 
@@ -407,7 +490,7 @@
       <div class="card card-full">
         <div class="card-title">Crons — último run</div>
         ${crons.length === 0
-          ? '<div style="color:var(--muted)">Nenhum log de cron encontrado.</div>'
+          ? '<div style="color:var(--muted)">Crons desativados (interino — restaurar pós-Blaze). Nenhum log recente.</div>'
           : crons.map(c => `
             <div class="cron-row">
               <div style="display:flex;justify-content:space-between;align-items:center">
@@ -421,6 +504,16 @@
               </div>
             </div>`).join('')
         }
+      </div>
+
+      <!-- Links rápidos -->
+      <div class="card card-full links">
+        <div class="card-title">Links rápidos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px">
+          <a href="https://console.cloud.google.com/firestore/databases/-default-/usage?project=tabula-estelar-84fdc" target="_blank" rel="noopener">Quota Firestore (GCP)</a>
+          <a href="https://console.cloud.google.com/billing?project=tabula-estelar-84fdc" target="_blank" rel="noopener">Billing / Orçamento</a>
+          <a href="https://console.cloud.google.com/iam-admin/iam?project=tabula-estelar-84fdc" target="_blank" rel="noopener">IAM (conceder monitoring.viewer)</a>
+        </div>
       </div>
     `
   }

@@ -20,6 +20,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useAuth } from "../../hooks/useAuth"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
+import CosmicBackground from "../../components/CosmicBackground"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 
@@ -185,6 +186,7 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f0f23']} style={styles.container}>
+      <CosmicBackground />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
