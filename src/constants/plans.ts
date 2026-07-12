@@ -23,13 +23,13 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     forecastMaxDays: 7,
     creditsPerMonth: 0,
     includesGroups: true,
-    includesChatbot: false,
+    includesChatbot: true,
     requiresWhatsapp: true,
     features: [
+      'Status diário das 8 áreas da vida',
       'Acesso a grupos',
       'Forecast: 7 dias',
-      'Alertas essenciais',
-      'Notificações WhatsApp',
+      'Astrólogo IA no WhatsApp — 10/dia',
     ],
   },
   {
@@ -40,13 +40,12 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     forecastMaxDays: 90,
     creditsPerMonth: 1,
     includesGroups: true,
-    includesChatbot: false,
+    includesChatbot: true,
     requiresWhatsapp: true,
     features: [
       'Tudo do Essential +',
       'Forecast: 7/30/90 dias',
-      '1 credito Astrologer / mes',
-      'Hub premium (limitado)',
+      'Astrólogo IA no WhatsApp — 25/dia',
     ],
   },
   {
@@ -62,8 +61,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     features: [
       'Tudo do Pro +',
       'Forecast: 7/30/90/360 dias',
-      '10 creditos Astrologer / mes',
-      'Chatbot WhatsApp IA',
+      'Astrólogo IA no WhatsApp — 40/dia',
     ],
   },
 ]
