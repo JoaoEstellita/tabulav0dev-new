@@ -86,6 +86,47 @@ type ForecastResponse = {
 
 const PERIODS = [7, 30, 90, 360]
 
+interface AreaSummaryDriver {
+  transitPlanetPt?: string
+  transitPlanet?: string
+  aspectPt?: string
+  aspect?: string
+  natalTarget?: string | null
+  house?: number | null
+  valenceSign?: string
+  slow?: boolean
+}
+interface AreaSummaryItem {
+  area: string
+  areaLabel?: string
+  currentPct: number | null
+  currentBand: string
+  trend?: string
+  dominantDriver?: AreaSummaryDriver | null
+  classification?: string
+  verdict?: string
+  reading?: string
+  recovery?: { dateISO: string; band: string } | null
+}
+interface AreaSummaryResponse {
+  horizon: number
+  limited?: boolean
+  areas: AreaSummaryItem[]
+}
+
+const AREA_BAND_COLORS: Record<string, string> = {
+  'crítico': '#FF6B6B',
+  critico: '#FF6B6B',
+  desafiador: '#FF9F45',
+  'atenção': '#FFD700',
+  atencao: '#FFD700',
+  'favorável': '#4ECDC4',
+  favoravel: '#4ECDC4',
+  'muito favorável': '#6BCB77',
+  'muito favoravel': '#6BCB77',
+}
+const areaBandColor = (band?: string) => AREA_BAND_COLORS[String(band || '').toLowerCase()] || '#888'
+
 const FORECAST_SELECTED_DATE_KEY = 'forecast_selected_date'
 const FORECAST_CACHE_PREFIX = 'forecast_cache_v3'
 const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000
@@ -665,6 +706,11 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [selectedEventDetailId, setSelectedEventDetailId] = useState<string | null>(null)
+  const [areaSummary, setAreaSummary] = useState<AreaSummaryResponse | null>(null)
+  const [areaSummaryLoading, setAreaSummaryLoading] = useState(false)
+  const [areaSummaryDegraded, setAreaSummaryDegraded] = useState(false)
+  const [expandedArea, setExpandedArea] = useState<string | null>(null)
+  const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
   const inFlightDayStatusRef = useRef<Set<string>>(new Set())
@@ -684,6 +730,38 @@ export default function ForecastScreen() {
       isActive: subscription?.active === true,
     })
   }, [isAdmin, planId, subscription?.active])
+
+  // Resumo narrativo por área para o horizonte selecionado (endpoint dedicado,
+  // cache diário no backend). Degrada com graça se o backend estiver sob quota.
+  useEffect(() => {
+    if (!user?.uid) { setAreaSummary(null); return }
+    const horizon = Math.min(periodDays, maxDaysAllowed)
+    let cancelled = false
+    const load = async () => {
+      if (areaSummaryInFlightRef.current) return
+      areaSummaryInFlightRef.current = true
+      setAreaSummaryLoading(true)
+      setAreaSummaryDegraded(false)
+      try {
+        const resp = await backendFetch(
+          `/api/forecast-area-summary?userId=${encodeURIComponent(user.uid)}&horizon=${horizon}`,
+          { method: 'GET', auth: true, timeoutMs: 20000, headers: { 'Content-Type': 'application/json' } }
+        )
+        if (cancelled) return
+        if (resp.status === 503) { setAreaSummaryDegraded(true); return }
+        if (!resp.ok) { setAreaSummary(null); return }
+        const payload: AreaSummaryResponse = await resp.json()
+        if (!cancelled) setAreaSummary(payload)
+      } catch {
+        if (!cancelled) setAreaSummaryDegraded(true)
+      } finally {
+        areaSummaryInFlightRef.current = false
+        if (!cancelled) setAreaSummaryLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [user?.uid, periodDays, maxDaysAllowed])
 
   const hasExtendedForecast = maxDaysAllowed > 7
   const granularity = 'day'
@@ -1449,6 +1527,57 @@ export default function ForecastScreen() {
 
       {!loading && !error && data && (
         <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.areaSummarySection}>
+            <View style={styles.areaSummaryHeaderRow}>
+              <Ionicons name="sparkles-outline" size={16} color="#FFD700" />
+              <Text style={styles.areaSummaryTitle}>
+                {tr('forecast.areaSummary.title', `Como fica cada área nos próximos ${periodDays} dias`, { days: periodDays })}
+              </Text>
+            </View>
+            {areaSummaryLoading && !areaSummary && (
+              <Text style={styles.areaSummaryHint}>{tr('forecast.areaSummary.loading', 'Lendo seus trânsitos...')}</Text>
+            )}
+            {areaSummaryDegraded && (
+              <Text style={styles.areaSummaryHint}>
+                {tr('forecast.areaSummary.degraded', 'Resumo indisponível no momento. Tente novamente em instantes.')}
+              </Text>
+            )}
+            {areaSummary?.areas?.map((a) => {
+              const color = areaBandColor(a.currentBand)
+              const d = a.dominantDriver
+              const driverLine = d
+                ? `${d.transitPlanetPt || d.transitPlanet || ''} ${d.aspectPt || d.aspect || ''} ${d.natalTarget || ''}`.trim() + (d.house ? ` · casa ${d.house}` : '')
+                : ''
+              const expanded = expandedArea === a.area
+              return (
+                <TouchableOpacity
+                  key={a.area}
+                  activeOpacity={0.85}
+                  style={styles.areaSummaryCard}
+                  onPress={() => setExpandedArea(expanded ? null : a.area)}
+                >
+                  <View style={styles.areaSummaryCardHeader}>
+                    <View style={[styles.areaBandDot, { backgroundColor: color }]} />
+                    <Text style={styles.areaSummaryCardTitle}>{a.areaLabel || formatDomainLabel(a.area, language)}</Text>
+                    <View style={{ flex: 1 }} />
+                    <Text style={[styles.areaBandLabel, { color }]}>
+                      {a.currentBand}{a.currentPct != null ? ` · ${a.currentPct}%` : ''}
+                    </Text>
+                    <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color="#888" style={{ marginLeft: 6 }} />
+                  </View>
+                  {!!driverLine && <Text style={styles.areaSummaryDriver}>{driverLine}</Text>}
+                  <Text style={styles.areaSummaryText} numberOfLines={expanded ? undefined : 2}>
+                    {a.reading || a.verdict || ''}
+                  </Text>
+                </TouchableOpacity>
+              )
+            })}
+            {areaSummary?.limited && (
+              <Text style={styles.areaSummaryHint}>
+                {tr('forecast.areaSummary.limited', 'Horizonte maior disponível em planos superiores.')}
+              </Text>
+            )}
+          </View>
           <View style={styles.calendarWrapper}>
             <MemoCalendar
               locale={language}
@@ -2085,6 +2214,65 @@ const styles = StyleSheet.create({
   },
   domainSection: {
     marginBottom: 12,
+  },
+  areaSummarySection: {
+    marginBottom: 16,
+  },
+  areaSummaryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  areaSummaryTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 6,
+    flexShrink: 1,
+  },
+  areaSummaryHint: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  areaSummaryCard: {
+    backgroundColor: '#1A1A3A',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  areaSummaryCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  areaBandDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  areaSummaryCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  areaBandLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  areaSummaryDriver: {
+    color: '#B0B0B0',
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  areaSummaryText: {
+    color: '#D8D8E0',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
   },
   eventHeaderRow: {
     flexDirection: 'row',
