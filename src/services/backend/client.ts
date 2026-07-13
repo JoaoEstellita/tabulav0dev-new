@@ -42,6 +42,8 @@ export const getAuthHeader = async () => {
 type BackendFetchOptions = RequestInit & {
   auth?: boolean
   appCheck?: boolean
+  /** Aborta a requisição após N ms (evita travar a UI em 504/hang do backend). */
+  timeoutMs?: number
 }
 
 export const backendFetch = async (path: string, options: BackendFetchOptions = {}) => {
@@ -50,7 +52,7 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
     throw new Error('EXPO_PUBLIC_BACKEND_URL not configured')
   }
 
-  const { auth: withAuth = false, appCheck: withAppCheck = true, headers, ...rest } = options
+  const { auth: withAuth = false, appCheck: withAppCheck = true, timeoutMs, headers, ...rest } = options
   const mergedHeaders = new Headers(headers || {})
   if (withAuth) {
     const authHeaders = await getAuthHeader()
@@ -73,29 +75,41 @@ export const backendFetch = async (path: string, options: BackendFetchOptions = 
     headers: mergedHeaders,
   }
 
-  const doFetch = () => fetch(`${base}${path}`, requestInit)
-  let response = await doFetch()
-
-  // Retry once for stale auth sessions by forcing Firebase token refresh.
-  if (withAuth && response.status === 401) {
-    let shouldRetry = false
-    try {
-      const data = await response.clone().json().catch(() => null)
-      const reason = typeof data?.reason === 'string' ? data.reason : ''
-      const code = typeof data?.error === 'string' ? data.error : ''
-      shouldRetry = reason === 'stale_auth_time' || code === 'stale_session'
-    } catch { }
-
-    if (shouldRetry && auth.currentUser) {
-      try {
-        const refreshed = await auth.currentUser.getIdToken(true)
-        if (refreshed) {
-          mergedHeaders.set('Authorization', `Bearer ${refreshed}`)
-          response = await doFetch()
-        }
-      } catch { }
-    }
+  // Timeout de rede: aborta o fetch para não pendurar a UI num 504/hang do backend.
+  let timeoutTimer: ReturnType<typeof setTimeout> | null = null
+  if (timeoutMs && timeoutMs > 0 && !requestInit.signal && typeof AbortController !== 'undefined') {
+    const controller = new AbortController()
+    requestInit.signal = controller.signal
+    timeoutTimer = setTimeout(() => controller.abort(), timeoutMs)
   }
 
-  return response
+  const doFetch = () => fetch(`${base}${path}`, requestInit)
+  try {
+    let response = await doFetch()
+
+    // Retry once for stale auth sessions by forcing Firebase token refresh.
+    if (withAuth && response.status === 401) {
+      let shouldRetry = false
+      try {
+        const data = await response.clone().json().catch(() => null)
+        const reason = typeof data?.reason === 'string' ? data.reason : ''
+        const code = typeof data?.error === 'string' ? data.error : ''
+        shouldRetry = reason === 'stale_auth_time' || code === 'stale_session'
+      } catch { }
+
+      if (shouldRetry && auth.currentUser) {
+        try {
+          const refreshed = await auth.currentUser.getIdToken(true)
+          if (refreshed) {
+            mergedHeaders.set('Authorization', `Bearer ${refreshed}`)
+            response = await doFetch()
+          }
+        } catch { }
+      }
+    }
+
+    return response
+  } finally {
+    if (timeoutTimer) clearTimeout(timeoutTimer)
+  }
 }

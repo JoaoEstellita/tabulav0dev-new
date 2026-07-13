@@ -156,6 +156,10 @@ export function useLifeAreas(): UseLifeAreasReturn {
           const refreshResponse = await backendFetch(`/api/status-refresh?userId=${encodeURIComponent(user.uid)}`, {
             method: 'POST',
             auth: true,
+            // Timeout de 15s: se o backend pendurar (504/quota), aborta e cai no
+            // fallback (snapshot stale já lido acima ou motor local) — nunca trava
+            // a tela em "Mapa em processamento".
+            timeoutMs: 15000,
             headers: {
               'Content-Type': 'application/json',
             },
