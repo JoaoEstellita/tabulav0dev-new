@@ -204,22 +204,39 @@ export function useLifeAreas(): UseLifeAreasReturn {
             }
             throw new Error(`status_refresh_${refreshResponse.status}`)
           }
-          const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
-          if (statusSnap.exists()) {
-            const statusData = statusSnap.data()
-            backendLifeAreasValue = statusData?.lifeAreas || null
-            backendCurrentTransitsValue = statusData?.currentTransits || null
-            backendStatusPersonalValue = statusData?.statusPersonal || null
-            backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
-            backendComputedAtMs = statusData?.computedAt?.toDate
-              ? statusData.computedAt.toDate().getTime()
-              : (statusData?.computedAt instanceof Date ? statusData.computedAt.getTime() : null)
-            backendValidUntilMs = statusData?.validUntil?.toDate
-              ? statusData.validUntil.toDate().getTime()
-              : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
+          // O backend devolve o snapshot na resposta — usa direto e evita reler
+          // o doc userStatus (economiza 1 leitura Firestore por carga stale).
+          const refreshPayload = await refreshResponse.json().catch(() => null)
+          const refreshed = refreshPayload?.snapshot
+          if (refreshed?.lifeAreas) {
+            backendLifeAreasValue = refreshed.lifeAreas || null
+            backendCurrentTransitsValue = refreshed.currentTransits || null
+            backendStatusPersonalValue = refreshed.statusPersonal || null
+            backendCalcVersion = typeof refreshed.calcVersion === 'string' ? refreshed.calcVersion : null
+            backendComputedAtMs = refreshed.computedAt ? new Date(refreshed.computedAt).getTime() : null
+            backendValidUntilMs = refreshPayload?.validUntil ? new Date(refreshPayload.validUntil).getTime() : null
             setBackendLifeAreas(backendLifeAreasValue)
             setBackendCurrentTransits(backendCurrentTransitsValue)
             setBackendStatusPersonal(backendStatusPersonalValue)
+          } else {
+            // Fallback (backend antigo sem snapshot na resposta): relê o doc.
+            const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
+            if (statusSnap.exists()) {
+              const statusData = statusSnap.data()
+              backendLifeAreasValue = statusData?.lifeAreas || null
+              backendCurrentTransitsValue = statusData?.currentTransits || null
+              backendStatusPersonalValue = statusData?.statusPersonal || null
+              backendCalcVersion = typeof statusData?.calcVersion === 'string' ? statusData.calcVersion : null
+              backendComputedAtMs = statusData?.computedAt?.toDate
+                ? statusData.computedAt.toDate().getTime()
+                : (statusData?.computedAt instanceof Date ? statusData.computedAt.getTime() : null)
+              backendValidUntilMs = statusData?.validUntil?.toDate
+                ? statusData.validUntil.toDate().getTime()
+                : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
+              setBackendLifeAreas(backendLifeAreasValue)
+              setBackendCurrentTransits(backendCurrentTransitsValue)
+              setBackendStatusPersonal(backendStatusPersonalValue)
+            }
           }
         } catch (refreshError) {
           const refreshMessage =
