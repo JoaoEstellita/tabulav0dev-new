@@ -559,10 +559,6 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // O evento dispara UMA vez, antes do React montar. Sem expor aqui, o
-            // app perdia o prompt e o botão "Instalar App" não fazia nada.
-            window.__deferredPwaPrompt = e;
-            window.dispatchEvent(new Event('pwa-prompt-ready'));
 
             // Mostrar botão de instalação
             const pwaButton = document.querySelector('.download-option:first-child .download-btn');

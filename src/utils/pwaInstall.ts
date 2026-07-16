@@ -34,8 +34,18 @@ const computeStandalone = () => {
   )
 }
 
+/**
+ * Só roda em browser real. No React Native `window` existe, mas `matchMedia` e
+ * `document` não — sem esta checagem, importar este módulo no entry crasharia o
+ * app nativo.
+ */
+const isWebBrowser = () =>
+  typeof window !== 'undefined' &&
+  typeof document !== 'undefined' &&
+  typeof window.matchMedia === 'function'
+
 const init = () => {
-  if (initialized || typeof window === 'undefined') return
+  if (initialized || !isWebBrowser()) return
   initialized = true
 
   const ua = window.navigator.userAgent || ''
@@ -62,9 +72,7 @@ const init = () => {
     emit()
   }
 
-  // O browser dispara `beforeinstallprompt` UMA vez, antes do React montar.
-  // O index.html captura cedo e publica em window.__deferredPwaPrompt — sem
-  // adotar aqui, o app nunca teria o prompt e o botão não faria nada.
+  // Caso algum script do HTML tenha capturado o evento antes do bundle rodar.
   const adoptEarlyPrompt = () => {
     const early = (window as any).__deferredPwaPrompt
     if (early && !state.deferredPrompt && !state.isInstalled) {
@@ -108,6 +116,13 @@ const init = () => {
     ;(mediaQuery as any).addListener(onDisplayModeChange)
   }
 }
+
+// `beforeinstallprompt` dispara UMA vez e não é reemitido. Se só registrássemos
+// o listener quando o botão monta (dentro da Home), o evento já teria passado e
+// o prompt se perderia — era por isso que "Instalar App" não fazia nada.
+// Auto-inicializa no import: o entry (index.ts) importa este módulo antes do
+// React montar, então o listener existe desde o começo do bundle.
+init()
 
 export const subscribePwaInstall = (cb: (state: PwaInstallState) => void) => {
   init()

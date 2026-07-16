@@ -1,6 +1,11 @@
 import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
 
+// Importado ANTES do App: registra o listener de `beforeinstallprompt` no início
+// do bundle. O evento dispara uma única vez e não se repete — se esperássemos o
+// botão montar, ele já teria passado e a instalação do PWA nunca funcionaria.
+import './src/utils/pwaInstall';
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
