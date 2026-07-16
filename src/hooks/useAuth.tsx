@@ -15,6 +15,7 @@ import {
 import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
+import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
 
 interface AuthContextType {
   user: User | null
@@ -39,6 +40,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadingRef.current = loading
   }, [loading])
+
+  // Onboarding via WhatsApp (Fase 2): captura o token do link /vincular?t=…
+  // logo no carregamento, antes do login do Google, para não perdê-lo no redirect.
+  useEffect(() => {
+    captureClaimTokenFromUrl().catch(() => {})
+  }, [])
 
   const ensureUserDocuments = async (authUser: User) => {
     const userDoc = await getDoc(doc(db, 'users', authUser.uid))
@@ -231,27 +238,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       if (__DEV__) console.log('Iniciando verificacao para usuario:', targetUserId.substring(0, 8) + '...')
-      const userDoc = await getDoc(doc(db, 'users', targetUserId))
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data()
-
-        // Verificar tanto o flag quanto os dados especificos
-        const hasFlag = userData.birthDataComplete === true
-        const hasData = !!(userData.birthDate && userData.birthTime && userData.birthLocation && userData.displayName)
-        const isComplete = hasFlag && hasData
-
-        if (__DEV__) console.log('Verificacao dados de nascimento:', {
-          userId: targetUserId.substring(0, 8) + '...'
-        })
-
-        setBirthDataComplete(isComplete)
-        return isComplete
+      const readComplete = async (): Promise<boolean> => {
+        const snap = await getDoc(doc(db, 'users', targetUserId))
+        if (!snap.exists()) return false
+        const d = snap.data()
+        const hasFlag = d.birthDataComplete === true
+        const hasData = !!(d.birthDate && d.birthTime && d.birthLocation && d.displayName)
+        return hasFlag && hasData
       }
 
-      if (__DEV__) console.log('Documento do usuario nao existe')
-      setBirthDataComplete(false)
-      return false
+      let isComplete = await readComplete()
+
+      // Onboarding via WhatsApp (Fase 2): se o perfil ainda não está completo e
+      // há um token de vinculação guardado, funde o perfil pendente e relê uma vez.
+      if (!isComplete) {
+        const merged = await consumePendingClaim()
+        if (merged) isComplete = await readComplete()
+      }
+
+      setBirthDataComplete(isComplete)
+      return isComplete
     } catch (error) {
       console.error('Erro ao verificar dados de nascimento:', error)
       setBirthDataComplete(false)
