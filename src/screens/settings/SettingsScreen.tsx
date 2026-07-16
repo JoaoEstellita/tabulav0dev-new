@@ -38,6 +38,7 @@ import { collection, doc, getDoc, getDocs, limit, query, setDoc, updateDoc, serv
 import { db } from '../../config/firebase';
 import { backendFetch } from '../../services/backend/client';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
+import { openWhatsAppAgent } from '../../utils/whatsappAgent';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '');
@@ -126,6 +127,22 @@ export default function SettingsScreen() {
   const navigation = useNavigation();
 
   const buildSettingsSections = React.useCallback((): SettingsSection[] => ([
+    {
+      // Acesso PERMANENTE ao agente. O banner da Home some após o primeiro
+      // clique; aqui a porta fica sempre aberta.
+      id: 'astrologer',
+      title: t('settings.section.astrologer'),
+      items: [
+        {
+          id: 'whatsapp_agent',
+          title: t('home.whatsappCard.title'),
+          subtitle: t('home.whatsappCard.subtitle'),
+          icon: 'logo-whatsapp',
+          type: 'button',
+          onPress: () => openWhatsAppAgent('settings'),
+        },
+      ],
+    },
     {
       id: 'notifications',
       title: t('settings.section.notifications'),

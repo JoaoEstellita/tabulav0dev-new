@@ -62,6 +62,20 @@ const init = () => {
     emit()
   }
 
+  // O browser dispara `beforeinstallprompt` UMA vez, antes do React montar.
+  // O index.html captura cedo e publica em window.__deferredPwaPrompt — sem
+  // adotar aqui, o app nunca teria o prompt e o botão não faria nada.
+  const adoptEarlyPrompt = () => {
+    const early = (window as any).__deferredPwaPrompt
+    if (early && !state.deferredPrompt && !state.isInstalled) {
+      state.deferredPrompt = early as BeforeInstallPromptEvent
+      state.canInstall = true
+      emit()
+    }
+  }
+  adoptEarlyPrompt()
+  window.addEventListener('pwa-prompt-ready', adoptEarlyPrompt)
+
   const onAppInstalled = () => {
     state.deferredPrompt = null
     state.canInstall = false
@@ -109,10 +123,21 @@ export const getPwaState = () => ({ ...state })
 export const promptInstall = async () => {
   if (!state.deferredPrompt) return null
   const promptEvent = state.deferredPrompt
-  await promptEvent.prompt()
+  try {
+    await promptEvent.prompt()
+  } catch {
+    // prompt() só pode ser chamado uma vez por evento; se já foi consumido,
+    // limpa o estado para o botão não continuar prometendo o que não entrega.
+    state.deferredPrompt = null
+    state.canInstall = false
+    if (typeof window !== 'undefined') delete (window as any).__deferredPwaPrompt
+    emit()
+    return null
+  }
   const choice = await promptEvent.userChoice
   state.deferredPrompt = null
   state.canInstall = false
+  if (typeof window !== 'undefined') delete (window as any).__deferredPwaPrompt
   emit()
   return choice
 }

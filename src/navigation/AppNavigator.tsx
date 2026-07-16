@@ -2,7 +2,7 @@
 import { useCallback, useEffect } from "react"
 import { Dimensions, Platform, View } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import { DefaultTheme, NavigationContainer, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
+import { DefaultTheme, NavigationContainer, getStateFromPath as defaultGetStateFromPath, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
 import { Ionicons } from "@expo/vector-icons"
@@ -93,6 +93,26 @@ const linking: LinkingOptions<DeepLinkRootParamList> = {
       AstroProfile: "perfil",
       NatalChartWheel: "mapa",
     },
+  },
+  // Convite de grupo chega como /join/<CODIGO>, que não é uma rota do app.
+  // Sem isto o link abria a Home e nada acontecia — o GroupsScreen, que lê o
+  // convite, nem chegava a montar (abas são lazy). Redireciona para a aba
+  // Grupos levando o código por parâmetro.
+  getStateFromPath: (path, options) => {
+    const match = path.match(/^\/?join\/([A-Za-z0-9]{6})/i)
+    if (match) {
+      return {
+        routes: [
+          {
+            name: "Tabs",
+            state: {
+              routes: [{ name: "Groups", params: { inviteCode: match[1].toUpperCase() } }],
+            },
+          },
+        ],
+      } as ReturnType<typeof defaultGetStateFromPath>
+    }
+    return defaultGetStateFromPath(path, options)
   },
 }
 

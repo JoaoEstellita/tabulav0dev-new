@@ -442,6 +442,20 @@ export default function GroupsScreen() {
     }
   }, [user])
 
+  // Convite vindo do deep link /join/<CODIGO>: o linking do AppNavigator abre
+  // esta aba passando o código por parâmetro. Mais confiável que reler a URL,
+  // que a navegação pode ter reescrito.
+  useEffect(() => {
+    const code = route?.params?.inviteCode
+    if (!user || !code) return
+    const normalized = String(code).toUpperCase()
+    if (!InviteService.validateInviteCode(normalized)) return
+    setInviteCode(normalized)
+    setShowJoinModal(true)
+    // Limpa o parâmetro para o modal não reabrir ao voltar para a aba.
+    navigation.setParams?.({ inviteCode: undefined } as never)
+  }, [user, route?.params?.inviteCode])
+
   useEffect(() => {
     if (selectedGroup) {
       loadGroupData()

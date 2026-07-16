@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react'
-import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 // PWA install utilities are web-only; lazy-load to avoid native crashes
@@ -84,11 +84,9 @@ function PWADownloadButtonInner() {
       return
     }
 
-    Alert.alert(
-      'Instalacao indisponivel agora',
-      'Para instalar, use o Chrome e confirme que o app tem manifest valido e service worker ativo. Se acabou de fazer deploy, pode ser cache: feche e reabra o navegador.',
-      [{ text: 'OK', style: 'default' }]
-    )
+    // Sem prompt disponível: mostra instruções. Antes usava Alert.alert, que é
+    // no-op no react-native-web — o clique simplesmente não fazia nada.
+    setShowAndroidHelp(true)
   }
 
   const openInstallInBrowser = () => {
@@ -98,7 +96,14 @@ function PWADownloadButtonInner() {
     window.location.href = openUrl
   }
 
-  if (!showButton || pwaState.isInstalled || !pwaState.isMobile) {
+  // Só mostra o banner quando ele consegue fazer algo: prompt nativo disponível,
+  // iOS (instruções do Safari) ou in-app browser do Instagram (abrir no Chrome).
+  // Antes aparecia sempre em mobile e o clique virava um no-op.
+  const ua = typeof window !== 'undefined' ? window.navigator.userAgent || '' : ''
+  const isInstagram = /instagram/i.test(ua)
+  const isActionable = pwaState.canInstall || pwaState.isIos || isInstagram
+
+  if (!showButton || pwaState.isInstalled || !pwaState.isMobile || !isActionable) {
     return null
   }
 
@@ -153,20 +158,29 @@ function PWADownloadButtonInner() {
               </TouchableOpacity>
             </View>
             <Text style={styles.androidText}>
-              No Instagram, o instalador nao aparece. Abra no Chrome para instalar.
+              {isInstagram
+                ? 'No Instagram, o instalador nao aparece. Abra no Chrome para instalar.'
+                : 'Seu navegador nao ofereceu a instalacao agora. Da pra instalar pelo menu do Chrome.'}
             </Text>
             <View style={styles.androidSteps}>
               <View style={styles.androidStep}>
                 <Text style={styles.androidStepNumber}>1</Text>
-                <Text style={styles.androidStepText}>Toque em ⋯ e escolha Abrir no navegador</Text>
+                <Text style={styles.androidStepText}>
+                  {isInstagram ? 'Toque em ⋯ e escolha Abrir no navegador' : 'Toque no menu ⋮ do Chrome'}
+                </Text>
               </View>
               <View style={styles.androidStep}>
                 <Text style={styles.androidStepNumber}>2</Text>
-                <Text style={styles.androidStepText}>No Chrome, toque em Instalar app</Text>
+                <Text style={styles.androidStepText}>
+                  {isInstagram ? 'No Chrome, toque em Instalar app' : 'Escolha "Instalar app" ou "Adicionar a tela inicial"'}
+                </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.androidButton} onPress={openInstallInBrowser}>
-              <Text style={styles.androidButtonText}>Abrir no navegador</Text>
+            <TouchableOpacity
+              style={styles.androidButton}
+              onPress={isInstagram ? openInstallInBrowser : () => setShowAndroidHelp(false)}
+            >
+              <Text style={styles.androidButtonText}>{isInstagram ? 'Abrir no navegador' : 'Entendi'}</Text>
             </TouchableOpacity>
           </View>
         </View>
