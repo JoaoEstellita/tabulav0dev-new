@@ -25,6 +25,13 @@ const HUB_HISTORY_KEY = 'premium_hub_history'
 // Serviços extras (API Astrologer: hub, créditos, presentear, resgate) desativados por hora.
 // Código mantido dormant; basta voltar para true para reativar.
 const EXTRAS_ENABLED = false
+
+// Política de pagamentos do Google Play: conteúdo digital consumido no app tem
+// de usar o Google Play Billing. Como a venda acontece no site/PWA (via
+// MercadoPago/Stripe), o build ANDROID não vende nem direciona para pagamento
+// externo (regra anti-steering) — ele serve quem já assina. PWA e web seguem
+// vendendo normalmente.
+const CAN_PURCHASE_IN_APP = Platform.OS !== 'android'
 const STRIPE_USD_PRICE_BY_PLAN: Record<string, number> = {
   essential_monthly: 9.9,
   pro_monthly: 19.9,
@@ -982,7 +989,18 @@ export default function PremiumScreen() {
       {/* Planos */}
       <View style={styles.plansContainer}>
         <Text style={styles.sectionTitle}>{tr('premium.subscriptionPlans.title', 'Planos de assinatura')}</Text>
-        {isPortuguese ? (
+        {!CAN_PURCHASE_IN_APP && (
+          <View style={styles.outsidePurchaseNotice}>
+            <Ionicons name="information-circle-outline" size={16} color="#B0B0B0" />
+            <Text style={styles.outsidePurchaseNoticeText}>
+              {tr(
+                'premium.outsidePurchase.notice',
+                'Não é possível assinar pelo aplicativo. Sua assinatura é gerenciada fora dele — depois é só entrar com a mesma conta.'
+              )}
+            </Text>
+          </View>
+        )}
+        {CAN_PURCHASE_IN_APP && isPortuguese ? (
           <View style={styles.providerChoiceRow}>
             <Text style={styles.providerChoiceLabel}>{t('subscription.provider.label')}</Text>
             <TouchableOpacity
@@ -1002,11 +1020,11 @@ export default function PremiumScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : CAN_PURCHASE_IN_APP ? (
           <Text style={styles.providerHintText}>
             {tr('subscription.provider.autoStripeHint', 'Para idiomas internacionais, os pagamentos usam Stripe automaticamente.')}
           </Text>
-        )}
+        ) : null}
         {subscriptionPlans.map(plan => {
           const isRecommended = plan.id === 'pro_monthly'
           const priceText = plan.price === 0
@@ -1064,16 +1082,22 @@ export default function PremiumScreen() {
                   />
                 </View>
               )}
-              <TouchableOpacity
-                style={[styles.subscribeButton, { backgroundColor: plan.color }, plan.current && styles.subscribeButtonDisabled]}
-                onPress={() => !plan.current && handleSubscribe(plan)}
-                disabled={plan.current}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.subscribeButtonText}>
-                  {plan.current ? tr('premium.plans.current', 'Plano Atual') : tr('premium.cta.subscribe', 'Assinar')}
-                </Text>
-              </TouchableOpacity>
+              {CAN_PURCHASE_IN_APP ? (
+                <TouchableOpacity
+                  style={[styles.subscribeButton, { backgroundColor: plan.color }, plan.current && styles.subscribeButtonDisabled]}
+                  onPress={() => !plan.current && handleSubscribe(plan)}
+                  disabled={plan.current}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.subscribeButtonText}>
+                    {plan.current ? tr('premium.plans.current', 'Plano Atual') : tr('premium.cta.subscribe', 'Assinar')}
+                  </Text>
+                </TouchableOpacity>
+              ) : plan.current ? (
+                <View style={[styles.subscribeButton, styles.subscribeButtonDisabled]}>
+                  <Text style={styles.subscribeButtonText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
+                </View>
+              ) : null}
             </View>
           )
         })}
@@ -1589,6 +1613,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 6,
+  },
+  outsidePurchaseNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+    gap: 8,
+  },
+  outsidePurchaseNoticeText: {
+    color: '#B0B0B0',
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
   },
   subscribeButton: {
     marginTop: 14,
