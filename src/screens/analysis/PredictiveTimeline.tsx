@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import type { ImpactAreaNode } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import type { RealAstrologyData } from '../../services/astrology/RealAstrologyEngine'
+import { degToSign } from '../../astro'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 interface PredictiveTimelineProps {
@@ -17,6 +18,8 @@ type TimelineEntry = {
   timeframe: Timeframe
   label: string
   hint: string
+  sign?: string
+  house?: number
 }
 
 const toTimeframe = (speed?: number, isRetrograde?: boolean): Timeframe => {
@@ -32,9 +35,12 @@ export default function PredictiveTimeline({
 }: PredictiveTimelineProps) {
   const { t } = useAppLanguage()
   const planetData = useMemo(() => {
-    const map: Record<string, { speed?: number; isRetrograde?: boolean }> = {}
+    const map: Record<string, { speed?: number; isRetrograde?: boolean; sign?: string; house?: number }> = {}
     currentTransits?.planets?.forEach((planet) => {
-      map[planet.name] = { speed: planet.speed, isRetrograde: planet.isRetrograde }
+      // Signo via longitude (determinístico e em pt-BR), robusto a diferenças de
+      // formato entre o status do backend e o motor local.
+      const sign = Number.isFinite(planet.longitude) ? degToSign(planet.longitude).sign : (planet.sign || undefined)
+      map[planet.name] = { speed: planet.speed, isRetrograde: planet.isRetrograde, sign, house: planet.house }
     })
     return map
   }, [currentTransits?.planets])
@@ -71,6 +77,8 @@ export default function PredictiveTimeline({
           timeframe,
           label: t(labelKey),
           hint: t(hintKey),
+          sign: meta?.sign,
+          house: meta?.house,
         }
       })
   }, [impactNodes, planetData, t])
@@ -95,6 +103,13 @@ export default function PredictiveTimeline({
         {entries.map((entry) => (
           <View key={`timeline-${entry.planet}`} style={styles.timelineCard}>
             <Text style={styles.timelinePlanet}>{translatePlanetPT(entry.planet)}</Text>
+            {(entry.sign || entry.house) && (
+              <Text style={styles.timelinePlacement}>
+                {[entry.sign, entry.house ? `${t('analysis.house')} ${entry.house}` : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            )}
             <Text style={styles.timelineLabel}>{entry.label}</Text>
             <Text style={styles.timelineHint}>{entry.hint}</Text>
             <Text style={styles.timelineFootnote}>
@@ -133,6 +148,11 @@ const styles = StyleSheet.create({
     color: '#FDE68A',
     fontSize: 13,
     fontWeight: '700',
+  },
+  timelinePlacement: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    marginTop: 3,
   },
   timelineLabel: {
     marginTop: 8,

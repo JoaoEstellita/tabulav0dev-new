@@ -139,6 +139,15 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null)
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
 
+  // O reason vem do status (ex.: "Mars ocidental") com o nome do planeta em inglês
+  // quando a fonte é o backend. Traduz o primeiro token (o planeta) para pt-BR.
+  const translateReason = (reason?: string) => {
+    if (!reason) return reason
+    const [first, ...rest] = reason.split(' ')
+    const pt = translatePlanetPT(first)
+    return pt !== first ? [pt, ...rest].join(' ') : reason
+  }
+
   const flows = useMemo(() => buildFlowEntries(impactNodes), [impactNodes])
   const planets = useMemo(
     () => Array.from(new Set(flows.map((flow) => flow.planet))),
@@ -246,7 +255,7 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               </View>
             </View>
             <Text style={styles.flowReason}>
-              {flow.reason ? flow.reason : t('analysis.flowMap.reasonDefault')}
+              {flow.reason ? translateReason(flow.reason) : t('analysis.flowMap.reasonDefault')}
             </Text>
           </View>
         ))}
