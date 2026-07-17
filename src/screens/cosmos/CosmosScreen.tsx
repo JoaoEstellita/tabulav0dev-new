@@ -360,7 +360,10 @@ export default function CosmosScreen() {
 const styles = StyleSheet.create({
   // minHeight:0 permite o ScrollView encolher e rolar no web (flexbox);
   // sem isso o conteúdo empurra o container e a tela fica estática.
-  container: { flex: 1, overflow: 'hidden', minHeight: 0 },
+  // Sem overflow:hidden — no react-native-web ele CORTA o conteúdo (a tela fica
+  // estática, o ScrollView interno não rola). As outras telas do RootStack não
+  // usam overflow:hidden e rolam normal. minHeight:0 basta para o flex encolher.
+  container: { flex: 1, minHeight: 0 },
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { paddingBottom: 40 },
 
