@@ -1426,6 +1426,11 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     transitPlanet: t.transitPlanet,
                     type: t.type,
                     aspectName: t.type,
+                    // natalPlanet é o campo que resolveCanonicalTransitTarget lê para
+                    // achar o alvo do aspecto e consultar o catálogo planeta→planeta
+                    // (transit:sun|quadratura|venus). Sem ele, o alvo virava "unknown"
+                    // e a leitura caía no fallback genérico de casa.
+                    natalPlanet: t.natalPlanet,
                     targetPlanet: t.natalPlanet,
                     targetLabel: t.natalPlanet,
                     house: comparison.current.house,
@@ -1476,6 +1481,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
                     transitPlanet: aspect.planet1,
                     type: aspect.type,
                     aspectName: aspect.type,
+                    natalPlanet: aspect.planet2, // campo lido pelo resolver do catálogo (ver acima)
                     targetPlanet: aspect.planet2,
                     targetLabel: aspect.planet2,
                     house: comparison.current.house,

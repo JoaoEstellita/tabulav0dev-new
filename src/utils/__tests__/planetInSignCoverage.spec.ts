@@ -193,4 +193,23 @@ describe('planet in sign catalog coverage', () => {
     }
     expect(missing).toEqual([])
   })
+
+  // Regressão: a fonte real (engine/status) entrega o signo em pt-BR, não em EN.
+  // normalizePlanet só tirava acento ("Gêmeos"→"gemeos") e não batia "gemini",
+  // então 9 dos 12 signos perdiam a interpretação. normalizeSign mapeia pt→EN.
+  it('resolvePlanetInSignText aceita signos em pt-BR (com acento), não só EN', () => {
+    const PT_SIGNS: Record<string, string> = {
+      aries: 'Áries', taurus: 'Touro', gemini: 'Gêmeos', cancer: 'Câncer',
+      leo: 'Leão', virgo: 'Virgem', libra: 'Libra', scorpio: 'Escorpião',
+      sagittarius: 'Sagitário', capricorn: 'Capricórnio', aquarius: 'Aquário', pisces: 'Peixes',
+    }
+    const missing: string[] = []
+    for (const planet of PLANETS) {
+      for (const [enSign, ptSign] of Object.entries(PT_SIGNS)) {
+        const result = resolvePlanetInSignText(planet, ptSign, 'pt-BR')
+        if (!result || result.length < 50) missing.push(`${planet} em ${ptSign}`)
+      }
+    }
+    expect(missing).toEqual([])
+  })
 })

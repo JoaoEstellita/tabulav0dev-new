@@ -19,6 +19,7 @@ import { LUNAR_NODE_SIGN_PTBR_OVERRIDES } from '../data/lunarNodeSignOverridesPt
 import { LUNAR_NODE_SIGN_I18N_OVERRIDES } from '../data/lunarNodeSignOverridesI18n'
 import { LUNAR_NODE_HOUSE_PTBR_OVERRIDES } from '../data/lunarNodeHouseOverridesPtBR'
 import { LUNAR_NODE_HOUSE_I18N_OVERRIDES } from '../data/lunarNodeHouseOverridesI18n'
+import { normalizeSign } from '../astro/normalize'
 
 const KNOWN_PLANETS = new Set([
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -31,6 +32,15 @@ function normalizePlanet(value: unknown): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+}
+
+// Normaliza um SIGNO para o token do cat\u00e1logo (EN min\u00fasculo).
+// normalizePlanet sozinho s\u00f3 tira acento \u2014 "G\u00eameos" viraria "gemeos" e N\u00c3O
+// bateria "gemini". normalizeSign mapeia pt-BR\u2192EN ("G\u00eameos"\u2192"Gemini") antes,
+// ent\u00e3o signos em qualquer idioma resolvem. Sem isto, 9 dos 12 signos (todos
+// menos \u00c1ries/C\u00e2ncer/Libra, que coincidem PT/EN) perdiam a interpreta\u00e7\u00e3o.
+function normalizeSignToken(value: unknown): string {
+  return normalizePlanet(normalizeSign(String(value || '')))
 }
 
 function buildNatalPlanetInHouseKey(planet: string, house: number): string | null {
@@ -362,7 +372,7 @@ export function resolveSignInHouseText(
   house: number,
   language?: string | null,
 ): string | null {
-  const s = normalizePlanet(sign) // same normalization: trim + lowercase + NFD strip
+  const s = normalizeSignToken(sign) // mapeia pt-BR→EN antes (ver normalizeSignToken)
   if (!KNOWN_SIGNS.has(s)) return null
   if (!Number.isFinite(house) || house < 1 || house > 12) return null
   const keyRaw = `natal:sign_${s}|house|${house}`
@@ -405,7 +415,7 @@ export function resolveSignInMidheavenText(
   sign: string,
   language?: string | null,
 ): string | null {
-  const s = normalizePlanet(sign)
+  const s = normalizeSignToken(sign)
   if (!KNOWN_SIGNS.has(s)) return null
   const keyRaw = `natal:mc_${s}`
   const key = normalizeCatalogKey(keyRaw)
@@ -450,7 +460,7 @@ export function resolvePlanetInSignText(
 ): string | null {
   const p = normalizePlanet(planet)
   if (!KNOWN_PLANETS.has(p)) return null
-  const s = normalizePlanet(sign)
+  const s = normalizeSignToken(sign)
   if (!KNOWN_SIGNS.has(s)) return null
   const keyRaw = `natal:${p}_in_${s}`
   const key = normalizeCatalogKey(keyRaw)
@@ -492,7 +502,7 @@ export function resolveLunarNodeSignText(
   northNodeSign: string,
   language?: string | null,
 ): string | null {
-  const s = normalizePlanet(northNodeSign)
+  const s = normalizeSignToken(northNodeSign)
   if (!KNOWN_SIGNS.has(s)) return null
   const keyRaw = `natal:nn_sign_${s}`
   const key = normalizeCatalogKey(keyRaw)

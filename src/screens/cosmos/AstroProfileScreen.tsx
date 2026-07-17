@@ -13,7 +13,8 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
+import { translatePlanetPT } from '../../utils/astro/pt'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -311,11 +312,12 @@ export default function AstroProfileScreen() {
           </Text>
           {orderedPlanets.map(p => {
             const signText = resolvePlanetInSignText(p.name, p.sign, language)
+            const houseText = p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null
             return (
               <View key={p.name} style={styles.planetBlock}>
                 <View style={styles.planetRow}>
                   <Text style={styles.planetSymbol}>{PLANET_SYMBOLS[p.name] || '●'}</Text>
-                  <Text style={styles.planetName}>{p.name}</Text>
+                  <Text style={styles.planetName}>{translatePlanetPT(p.name)}</Text>
                   <View style={styles.planetSignWrap}>
                     <Text style={styles.planetSign}>
                       {SIGN_SYMBOLS[p.sign] || ''} {p.sign}
@@ -335,6 +337,9 @@ export default function AstroProfileScreen() {
                 </View>
                 {signText ? (
                   <Text style={styles.planetSignText}>{signText}</Text>
+                ) : null}
+                {houseText ? (
+                  <Text style={styles.planetHouseText}>{houseText}</Text>
                 ) : null}
               </View>
             )
@@ -440,6 +445,15 @@ const styles = StyleSheet.create({
   },
   planetSignText: {
     marginTop: 6,
+    fontSize: 12,
+    color: '#9aa7ba',
+    lineHeight: 18,
+  },
+  planetHouseText: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
     fontSize: 12,
     color: '#9aa7ba',
     lineHeight: 18,
