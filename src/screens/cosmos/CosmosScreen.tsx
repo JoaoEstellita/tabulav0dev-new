@@ -251,11 +251,12 @@ export default function CosmosScreen() {
   const cardDesc = (f: FeatureCard) => tl(f.descPt, f.descEn, f.descEs, f.descIt)
 
   const handleCardPress = (f: FeatureCard) => {
+    // "Em breve" tem prioridade: não leva ao paywall (a feature ainda não existe).
+    if (!f.available) return
     if (f.premium && !isPremium) {
       ;(navigation as any).navigate('Premium')
       return
     }
-    if (!f.available) return
     ;(navigation as any).navigate(f.screen)
   }
 
@@ -265,26 +266,30 @@ export default function CosmosScreen() {
     return (
       <TouchableOpacity
         key={f.key}
-        style={[styles.card, locked && styles.cardLocked]}
+        style={[styles.card, (locked || unavailable) && styles.cardLocked]}
         activeOpacity={0.78}
         onPress={() => handleCardPress(f)}
       >
         <View style={styles.cardIconWrap}>
-          <Ionicons name={f.icon} size={26} color={locked ? '#555' : '#FFD700'} />
+          <Ionicons name={f.icon} size={26} color={locked || unavailable ? '#555' : '#FFD700'} />
         </View>
         <View style={styles.cardBody}>
-          <Text style={[styles.cardTitle, locked && styles.cardTitleLocked]} numberOfLines={1}>
+          <Text style={[styles.cardTitle, (locked || unavailable) && styles.cardTitleLocked]} numberOfLines={1}>
             {cardTitle(f)}
           </Text>
-          <Text style={[styles.cardDesc, locked && styles.cardDescLocked]} numberOfLines={2}>
+          <Text style={[styles.cardDesc, (locked || unavailable) && styles.cardDescLocked]} numberOfLines={2}>
             {cardDesc(f)}
           </Text>
         </View>
-        {locked ? (
+        {unavailable ? (
+          <View style={styles.soonBadge}>
+            <Text style={styles.soonText}>{tl('Em breve', 'Coming soon', 'Proximamente', 'In arrivo')}</Text>
+          </View>
+        ) : locked ? (
           <Ionicons name="lock-closed" size={16} color="#555" style={styles.cardLockIcon} />
-        ) : !unavailable ? (
+        ) : (
           <Ionicons name="chevron-forward" size={16} color="#FFD700" style={styles.cardLockIcon} />
-        ) : null}
+        )}
       </TouchableOpacity>
     )
   }

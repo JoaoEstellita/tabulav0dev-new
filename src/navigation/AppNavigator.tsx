@@ -339,7 +339,7 @@ function MainTabs() {
 function RootNavigator() {
   const { t } = useAppLanguage()
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true }}>
+    <RootStack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, cardStyle: { flex: 1 } }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
       <RootStack.Screen
         name="ForecastPeriodEvents"

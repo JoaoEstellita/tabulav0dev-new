@@ -19,6 +19,7 @@ import type { PlanetaryStatus, PlanetaryStatusLevel } from '../../astro/planetar
 import { computeHousesUTC } from '../../astro/houses'
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
+import { translatePlanetPT } from '../../utils/astro/pt'
 import { getPlanetHouse } from '../../astro/houses.math'
 // Removido Ephemeris nÃƒÂ£o utilizado
 
@@ -1959,10 +1960,10 @@ export class RealAstrologyEngine {
     let mod = 0
     const tags: string[] = []
 
-    // RetrÃƒÂ³grado
+    // Retrógrado
     if (planet.isRetrograde) {
       mod -= 4
-      tags.push(`${planet.name} retrÃƒÂ³grado`)
+      tags.push(`${translatePlanetPT(planet.name)} retrógrado`)
     }
 
     // CombustÃƒÂ£o e Cazimi (aprox: dentro de 8Ã‚Â° do Sol para combustÃƒÂ£o; <= 0.3Ã‚Â° para cazimi) e "sob os raios" (atÃƒÂ© ~15Ã‚Â°)
@@ -1972,13 +1973,13 @@ export class RealAstrologyEngine {
       const cazimiThreshold = 0.3 // ~18'
       if (deg <= cazimiThreshold) {
         mod += 4
-        tags.push(`${planet.name} cazimi`)
+        tags.push(`${translatePlanetPT(planet.name)} cazimi`)
       } else if (deg <= 8) {
         mod -= 5
-        tags.push(`${planet.name} combusto`)
+        tags.push(`${translatePlanetPT(planet.name)} combusto`)
       } else if (deg <= 15) {
         mod -= 2
-        tags.push(`${planet.name} sob os raios`)
+        tags.push(`${translatePlanetPT(planet.name)} sob os raios`)
       }
     }
 
@@ -1990,11 +1991,11 @@ export class RealAstrologyEngine {
       const isSuperior = ['Mars','Jupiter','Saturn'].includes(planet.name)
       const isInferior = ['Mercury','Venus'].includes(planet.name)
       if (oriental) {
-        tags.push(`${planet.name} oriental`)
+        tags.push(`${translatePlanetPT(planet.name)} oriental`)
         if (isSuperior) mod += 1
         if (isInferior) mod -= 1
       } else {
-        tags.push(`${planet.name} ocidental`)
+        tags.push(`${translatePlanetPT(planet.name)} ocidental`)
         if (isSuperior) mod -= 1
         if (isInferior) mod += 1
       }
