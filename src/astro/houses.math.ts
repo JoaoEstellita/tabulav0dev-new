@@ -80,15 +80,11 @@ type GetPlanetHouseInput = {
 export function getPlanetHouse({ planetLongitude, ascLongitude, houseCusps, system }: GetPlanetHouseInput): number {
   const resolved = normalizeHouseSystem(system)
 
-  if (resolved === 'whole-sign' || resolved === 'psychological-shift') {
+  if (resolved === 'whole-sign') {
     const ascSignIndex = signIndexFromDegree(ascLongitude)
     const planetSignIndex = signIndexFromDegree(planetLongitude)
     const delta = (planetSignIndex - ascSignIndex + 12) % 12
-    const houseWS = delta + 1
-    if (resolved === 'psychological-shift') {
-      return (houseWS % 12) + 1
-    }
-    return houseWS
+    return delta + 1
   }
 
   if (!Array.isArray(houseCusps) || houseCusps.length < 12) {

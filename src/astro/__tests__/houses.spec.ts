@@ -1,6 +1,7 @@
 ﻿import { describe, it, expect } from 'vitest'
 import { getPlanetHouse } from '../../astro'
 import type { HouseSystem } from '../../astro'
+import { normalizeHouseSystem } from '../houseSystem'
 
 const ascLongitude = 80.0 // Gemini
 
@@ -45,29 +46,17 @@ describe('getPlanetHouse - house systems', () => {
     }
   })
 
-  it('psychological-shift matches expected natal mapping', () => {
-    const expected: ExpectedMap = {
-      Sun: 12,
-      Moon: 2,
-      Mercury: 12,
-      Venus: 12,
-      Mars: 2,
-      Jupiter: 2,
-      Saturn: 9,
-      Uranus: 9,
-      Neptune: 9,
-      Pluto: 7
-    }
-
-    for (const [name, longitude] of Object.entries(planetLongitudes)) {
-      const house = getPlanetHouse({
-        planetLongitude: longitude,
-        ascLongitude,
-        houseCusps: null,
-        system: 'psychological-shift'
-      })
-      expect(house).toBe(expected[name as keyof ExpectedMap])
-    }
+  // "psychological-shift" foi removido: não era um sistema de casas, apenas
+  // deslocava todo planeta uma casa à frente do whole-sign. Perfis com esse
+  // valor gravado passam a cair no padrão (Placidus).
+  it('sistema legado/desconhecido cai no padrão Placidus', () => {
+    expect(normalizeHouseSystem('psychological-shift')).toBe('placidus')
+    expect(normalizeHouseSystem('psicologico')).toBe('placidus')
+    expect(normalizeHouseSystem('xyz')).toBe('placidus')
+    expect(normalizeHouseSystem(undefined)).toBe('placidus')
+    // Os sistemas suportados seguem intactos
+    expect(normalizeHouseSystem('whole-sign')).toBe('whole-sign')
+    expect(normalizeHouseSystem('placidus')).toBe('placidus')
   })
 
   it('placidus falls back when cusps are missing', () => {

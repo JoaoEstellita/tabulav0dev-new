@@ -33,7 +33,7 @@ import { subscribeWebPush } from '../../webpush/subscribe';
 import { registerDeviceToken } from '../../services/notifications/registerDeviceToken';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
-import { HOUSE_SYSTEMS, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
+import { HOUSE_SYSTEMS, DEFAULT_HOUSE_SYSTEM, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
 import { collection, doc, getDoc, getDocs, limit, query, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { backendFetch } from '../../services/backend/client';
@@ -70,7 +70,7 @@ export default function SettingsScreen() {
   };
   const [isLoading, setIsLoading] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
-  const [houseSystem, setHouseSystem] = useState<HouseSystem>('whole-sign');
+  const [houseSystem, setHouseSystem] = useState<HouseSystem>(DEFAULT_HOUSE_SYSTEM);
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
@@ -539,7 +539,6 @@ export default function SettingsScreen() {
   const houseSystemDescriptions: Record<string, string> = {
     placidus: t('settings.houses.desc.placidus'),
     'whole-sign': t('settings.houses.desc.wholeSign'),
-    'psychological-shift': t('settings.houses.desc.psychologicalShift'),
     equal: t('settings.houses.desc.equal'),
     porphyry: t('settings.houses.desc.porphyry'),
     regiomontanus: t('settings.houses.desc.regiomontanus'),

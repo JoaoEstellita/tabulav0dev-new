@@ -192,7 +192,7 @@ const TransitComparisonCard = React.memo(function TransitComparisonCard({
   }, [language])
   const { settings } = useUserSettings()
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
-    normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
+    normalizeHouseSystem(settings?.houseSystem)
   )
   const [failedPlanetImages, setFailedPlanetImages] = React.useState<Record<string, boolean>>({})
 

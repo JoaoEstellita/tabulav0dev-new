@@ -3,7 +3,7 @@ import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import UserService from '../services/firebase/UserService'
 import AstrologyCacheService from '../services/astrology/AstrologyCacheService'
-import { normalizeHouseSystem } from '../astro/houseSystem'
+import { normalizeHouseSystem, DEFAULT_HOUSE_SYSTEM } from '../astro/houseSystem'
 import type { HouseSystem } from '../astro/houseSystem'
 import { useAuth } from './useAuth'
 
@@ -38,7 +38,7 @@ const getDefaultSettings = (): UserSettings => ({
   language: 'pt-BR',
   timezone: 'America/Sao_Paulo',
   currency: 'BRL',
-  houseSystem: 'whole-sign',
+  houseSystem: DEFAULT_HOUSE_SYSTEM,
 })
 
 export function useUserSettings() {
@@ -65,7 +65,7 @@ export function useUserSettings() {
       if (event.key !== STORAGE_KEY || !event.newValue) return
       try {
         const parsed = JSON.parse(event.newValue)
-        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
+        const normalized = normalizeHouseSystem(parsed.houseSystem)
         publishSharedSettings({ ...parsed, houseSystem: normalized })
       } catch { }
     }
@@ -95,7 +95,7 @@ export function useUserSettings() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        const normalized = normalizeHouseSystem(parsed.houseSystem || 'whole-sign')
+        const normalized = normalizeHouseSystem(parsed.houseSystem)
         publishSharedSettings({ ...parsed, houseSystem: normalized })
         try {
           ; (globalThis as any).__userHouseSystem = normalized

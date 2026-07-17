@@ -1,19 +1,26 @@
-﻿import type { AppLanguage } from '../i18n/appI18n'
+import type { AppLanguage } from '../i18n/appI18n'
 
-export const HOUSE_SYSTEMS = ['placidus', 'whole-sign', 'psychological-shift'] as const
+// Placidus é o padrão: é o sistema que a maioria dos softwares e sites usa, então
+// é o número que o usuário espera ao comparar com outras fontes. Casas Inteiras
+// fica como alternativa (tradição helenística).
+//
+// "psychological-shift" foi REMOVIDO: não era um sistema de casas — deslocava
+// todos os planetas uma casa à frente do whole-sign. Perfis que ainda tenham esse
+// valor gravado caem no padrão (Placidus) pela normalização abaixo.
+export const HOUSE_SYSTEMS = ['placidus', 'whole-sign'] as const
 export type HouseSystem = (typeof HOUSE_SYSTEMS)[number]
 
+export const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'placidus'
+
 export function normalizeHouseSystem(value: unknown): HouseSystem {
-  if (!value) return 'whole-sign'
+  if (!value) return DEFAULT_HOUSE_SYSTEM
   const raw = String(value).trim().toLowerCase()
   if (raw === 'placidus') return 'placidus'
   if (raw === 'whole-sign' || raw === 'whole' || raw === 'equal' || raw === 'casas inteiras' || raw === 'whole sign houses') {
     return 'whole-sign'
   }
-  if (raw === 'psychological-shift' || raw === 'psychological' || raw === 'shift' || raw === 'psicologico') {
-    return 'psychological-shift'
-  }
-  return 'whole-sign'
+  // Legado (psychological-shift/psicologico) e qualquer valor desconhecido → padrão.
+  return DEFAULT_HOUSE_SYSTEM
 }
 
 export function formatHouseSystemLabel(system: HouseSystem, language: AppLanguage = 'pt-BR'): string {
@@ -23,11 +30,6 @@ export function formatHouseSystemLabel(system: HouseSystem, language: AppLanguag
       if (language === 'es-ES') return 'Casas Enteras'
       if (language === 'it-IT') return 'Case Intere'
       return 'Casas Inteiras'
-    case 'psychological-shift':
-      if (language === 'en-US') return 'Psychological Shift'
-      if (language === 'es-ES') return 'Cambio Psicologico'
-      if (language === 'it-IT') return 'Spostamento Psicologico'
-      return 'Psicologico'
     case 'placidus':
     default:
       return 'Placidus'

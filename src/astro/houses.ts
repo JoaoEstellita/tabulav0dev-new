@@ -77,7 +77,7 @@ export async function computeHousesUTC(
   const { asc, mc } = calculateAscMc(date, lat, lon)
   const resolvedSystem = normalizeHouseSystem(system)
 
-  if (resolvedSystem === 'whole-sign' || resolvedSystem === 'psychological-shift') {
+  if (resolvedSystem === 'whole-sign') {
     return {
       cusps: buildWholeSignCusps(asc),
       asc,

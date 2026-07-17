@@ -15,7 +15,7 @@ export default function TransitsComparativePanel() {
   const { settings, updateSettings } = useUserSettings()
   const { user } = useAuth()
   const [houseSystem, setHouseSystem] = React.useState<HouseSystem>(
-    normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
+    normalizeHouseSystem(settings?.houseSystem)
   )
 
   React.useEffect(() => {

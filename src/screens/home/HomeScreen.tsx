@@ -91,11 +91,11 @@ export default function HomeScreen() {
     isUsingLocalEngine
   } = useLifeAreas()
   const { settings } = useUserSettings()
-  const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem || 'whole-sign'))
+  const [houseSystem, setHouseSystem] = useState<HouseSystem>(normalizeHouseSystem(settings?.houseSystem))
   const previousHouseSystemRef = useRef<HouseSystem | null>(null)
   // Garantir que o motor use o sistema salvo ao entrar na Home
   useEffect(() => {
-    const normalized = normalizeHouseSystem(settings?.houseSystem || 'whole-sign')
+    const normalized = normalizeHouseSystem(settings?.houseSystem)
     setHouseSystem(normalized)
       ; (globalThis as any).__userHouseSystem = normalized
     if (previousHouseSystemRef.current && previousHouseSystemRef.current !== normalized) {
