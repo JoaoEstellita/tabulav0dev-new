@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import Svg, { Path } from 'react-native-svg'
+import Svg, { Path, Circle } from 'react-native-svg'
 import type { ImpactAreaNode, ImpactContributor } from '../home/impact/buildImpactNodes'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { getLifeAreaLabel } from '../../constants/lifeAreas'
@@ -20,6 +20,9 @@ type FlowEntry = {
   intensity: 'leve' | 'moderada' | 'forte'
   scoreAbs: number
   reason?: string
+  // Aspecto dominante deste fluxo — dado REAL para a curva de intensidade:
+  orb?: number        // graus até o aspecto exato (menor = mais forte / mais perto do pico)
+  isApplying?: boolean // true = orbe apertando (subindo p/ o pico); false = separando (descendo)
 }
 
 const directionColor = (direction: FlowDirection) => {
@@ -34,41 +37,66 @@ const toIntensity = (ratio: number) => {
   return 'leve'
 }
 
-const FLOW_WIDTHS: Record<FlowEntry['intensity'], number> = {
-  leve: 90,
-  moderada: 130,
-  forte: 165,
+const CHART_W = 150
+const CHART_H = 34
+const MAX_ORB = 8 // órbita máxima considerada (graus); além disso o aspecto praticamente não pesa
+
+// Curva de intensidade REAL de um aspecto: um sino centrado no aspecto exato.
+// A intensidade cresce à medida que o orbe aperta (pico no orbe 0) e cai depois.
+// O eixo x é a passagem do aspecto (aproxima → exato → afasta); marcamos "hoje"
+// pela posição real: orbe pequeno = perto do pico; applying = antes do pico
+// (lado esquerdo), separating = depois (lado direito).
+const buildBellPath = () => {
+  const steps = 24
+  const pts: string[] = []
+  for (let i = 0; i <= steps; i++) {
+    const x = (i / steps) * CHART_W
+    // gaussiana centrada no meio (o aspecto exato)
+    const t = (i / steps) * 2 - 1 // -1..1
+    const y = CHART_H - 3 - (CHART_H - 6) * Math.exp(-(t * t) / 0.12)
+    pts.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`)
+  }
+  return pts.join(' ')
 }
 
-const FLOW_WAVES: Record<FlowEntry['intensity'], number> = {
-  leve: 3,
-  moderada: 5,
-  forte: 7,
-}
-
-const buildFlowPath = (width: number, wave: number) => {
-  const w1 = Math.round(width * 0.25)
-  const w2 = Math.round(width * 0.5)
-  const w3 = Math.round(width * 0.75)
-  const end = Math.max(width - 2, 2)
-  const mid = 11
-  return `M2 ${mid} C ${w1} ${mid - wave} ${w2} ${mid + wave} ${w3} ${mid - wave} S ${end - 6} ${mid + wave} ${end} ${mid}`
+// Posição de "hoje" na curva a partir do orbe real e do sentido (applying/separating).
+const todayMarker = (orb?: number, isApplying?: boolean) => {
+  const ratio = Number.isFinite(orb) ? Math.min(Math.abs(orb as number) / MAX_ORB, 1) : 0.5
+  // orbe 0 = centro (0.5); orbe grande = extremos. applying = lado esquerdo, separating = direito.
+  const x = isApplying === false
+    ? 0.5 + ratio * 0.5   // separando → direita do pico
+    : 0.5 - ratio * 0.5   // aplicando (ou desconhecido) → esquerda do pico
+  const t = x * 2 - 1
+  const y = CHART_H - 3 - (CHART_H - 6) * Math.exp(-(t * t) / 0.12)
+  return { x: x * CHART_W, y }
 }
 
 const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
-  const map: Record<string, Record<string, { pos: number; neg: number; reason?: string }>> = {}
+  const map: Record<string, Record<string, {
+    pos: number; neg: number; reason?: string
+    bestAbs: number; orb?: number; isApplying?: boolean
+  }>> = {}
 
   nodes.forEach((node) => {
     node.contributors.forEach((contributor: ImpactContributor) => {
       if (!Number.isFinite(contributor.score) || contributor.score === 0) return
       if (!map[contributor.planet]) map[contributor.planet] = {}
       if (!map[contributor.planet][node.areaKey]) {
-        map[contributor.planet][node.areaKey] = { pos: 0, neg: 0, reason: contributor.reason }
+        map[contributor.planet][node.areaKey] = { pos: 0, neg: 0, reason: contributor.reason, bestAbs: 0 }
       }
-      if (contributor.score > 0) map[contributor.planet][node.areaKey].pos += contributor.score
-      if (contributor.score < 0) map[contributor.planet][node.areaKey].neg += Math.abs(contributor.score)
-      if (!map[contributor.planet][node.areaKey].reason && contributor.reason) {
-        map[contributor.planet][node.areaKey].reason = contributor.reason
+      const cell = map[contributor.planet][node.areaKey]
+      if (contributor.score > 0) cell.pos += contributor.score
+      if (contributor.score < 0) cell.neg += Math.abs(contributor.score)
+      if (!cell.reason && contributor.reason) cell.reason = contributor.reason
+      // Guarda o aspecto dominante (maior |finalScore|) para desenhar a curva real.
+      const top = (contributor.topAspects || [])[0]
+      if (top) {
+        const absScore = Number.isFinite(top.finalScore) ? Math.abs(top.finalScore as number) : 0
+        if (absScore >= cell.bestAbs) {
+          cell.bestAbs = absScore
+          cell.orb = top.orb
+          cell.isApplying = top.isApplying
+        }
       }
     })
   })
@@ -88,6 +116,8 @@ const buildFlowEntries = (nodes: ImpactAreaNode[]): FlowEntry[] => {
         intensity: 'leve',
         scoreAbs: stats.pos + stats.neg,
         reason: stats.reason,
+        orb: stats.orb,
+        isApplying: stats.isApplying,
       })
     })
   })
@@ -135,11 +165,6 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>{t('analysis.flowMap.title')}</Text>
-      <Text style={styles.sectionSubtitle}>
-        {t('analysis.flowMap.subtitle')}
-      </Text>
-
       <View style={styles.selectorRow}>
         {planets.map((planet) => {
           const active = selectedPlanet === planet
@@ -183,22 +208,29 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
               <Text style={styles.flowArea}>{getLifeAreaLabel(flow.areaKey)}</Text>
             </View>
             <View style={styles.flowLineWrap}>
-              <Svg
-                width={FLOW_WIDTHS[flow.intensity]}
-                height={22}
-                viewBox={`0 0 ${FLOW_WIDTHS[flow.intensity]} 22`}
-              >
-                <Path
-                  d={buildFlowPath(FLOW_WIDTHS[flow.intensity], FLOW_WAVES[flow.intensity])}
-                  stroke={directionColor(flow.direction)}
-                  strokeWidth={2}
-                  strokeOpacity={0.8}
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </Svg>
-            <View style={styles.flowMetaRow}>
-                <Text style={styles.flowMeta}>{directionLabel(flow.direction)}</Text>
+              <View>
+                <Svg width={CHART_W} height={CHART_H} viewBox={`0 0 ${CHART_W} ${CHART_H}`}>
+                  <Path
+                    d={buildBellPath()}
+                    stroke={directionColor(flow.direction)}
+                    strokeWidth={2}
+                    strokeOpacity={0.85}
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  {(() => {
+                    const m = todayMarker(flow.orb, flow.isApplying)
+                    return <Circle cx={m.x} cy={m.y} r={3.5} fill={directionColor(flow.direction)} />
+                  })()}
+                </Svg>
+                <View style={styles.axisRow}>
+                  <Text style={styles.axisText}>{t('analysis.flowMap.axis.approach')}</Text>
+                  <Text style={styles.axisText}>{t('analysis.flowMap.axis.peak')}</Text>
+                  <Text style={styles.axisText}>{t('analysis.flowMap.axis.fade')}</Text>
+                </View>
+              </View>
+              <View style={styles.flowMetaRow}>
+                <Text style={[styles.flowMeta, { color: directionColor(flow.direction) }]}>{directionLabel(flow.direction)}</Text>
                 <Text style={styles.flowMeta}>
                   {flow.intensity === 'forte'
                     ? t('analysis.flowMap.intensity.strong')
@@ -206,6 +238,11 @@ export default function PlanetaryFlowMap({ impactNodes }: PlanetaryFlowMapProps)
                     ? t('analysis.flowMap.intensity.medium')
                     : t('analysis.flowMap.intensity.light')}
                 </Text>
+                {Number.isFinite(flow.orb) && (
+                  <Text style={styles.flowMetaFaint}>
+                    {flow.isApplying === false ? t('analysis.flowMap.separating') : t('analysis.flowMap.applying')}
+                  </Text>
+                )}
               </View>
             </View>
             <Text style={styles.flowReason}>
@@ -280,14 +317,30 @@ const styles = StyleSheet.create({
   flowLineWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 14,
+  },
+  axisRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: CHART_W,
+    marginTop: 2,
+  },
+  axisText: {
+    color: '#64748B',
+    fontSize: 8,
   },
   flowMetaRow: {
     gap: 4,
+    flex: 1,
   },
   flowMeta: {
     color: '#94A3B8',
     fontSize: 11,
+    fontWeight: '600',
+  },
+  flowMetaFaint: {
+    color: '#64748B',
+    fontSize: 10,
   },
   flowReason: {
     marginTop: 6,

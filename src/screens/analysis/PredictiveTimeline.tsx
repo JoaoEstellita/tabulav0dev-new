@@ -87,10 +87,6 @@ export default function PredictiveTimeline({
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>{t('analysis.timeline.title')}</Text>
-      <Text style={styles.sectionSubtitle}>
-        {t('analysis.timeline.subtitle')}
-      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
