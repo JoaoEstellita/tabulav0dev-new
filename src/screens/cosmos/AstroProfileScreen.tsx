@@ -14,7 +14,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -117,6 +117,33 @@ export default function AstroProfileScreen() {
     () => PLANET_ORDER.map(name => natalPlanets.find(p => p.name === name)).filter(Boolean) as RealPlanetPosition[],
     [natalPlanets]
   )
+
+  // Aspectos natais por planeta (os 2 mais exatos), com o texto curado de cada.
+  // Fonte: aspectsNatalToNatal já computado pelo engine. Enriquece a leitura de
+  // cada planeta com "o que ele conversa com os outros" no mapa.
+  const aspectsByPlanet = useMemo(() => {
+    const out: Record<string, { label: string; text: string }[]> = {}
+    const list = Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal : []
+    for (const planet of PLANET_ORDER) {
+      const mine = list
+        .filter(a => a.planet1 === planet || a.planet2 === planet)
+        .sort((a, b) => (a.orb ?? 99) - (b.orb ?? 99))
+        .slice(0, 2)
+      const entries: { label: string; text: string }[] = []
+      for (const a of mine) {
+        const other = a.planet1 === planet ? a.planet2 : a.planet1
+        const text = resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
+        if (text) {
+          entries.push({
+            label: `${translatePlanetPT(planet)} ${a.type} ${translatePlanetPT(other)}`,
+            text,
+          })
+        }
+      }
+      if (entries.length) out[planet] = entries
+    }
+    return out
+  }, [ct?.aspectsNatalToNatal, language])
 
   const elemental = ct?.chartSummary?.elemental?.natal
   const modality = ct?.chartSummary?.modality?.natal
@@ -341,6 +368,19 @@ export default function AstroProfileScreen() {
                 {houseText ? (
                   <Text style={styles.planetHouseText}>{houseText}</Text>
                 ) : null}
+                {aspectsByPlanet[p.name]?.length ? (
+                  <View style={styles.planetAspectsBlock}>
+                    <Text style={styles.planetAspectsTitle}>
+                      {tl('Aspectos natais', 'Natal aspects', 'Aspectos natales', 'Aspetti natali')}
+                    </Text>
+                    {aspectsByPlanet[p.name].map((a, i) => (
+                      <View key={i} style={styles.planetAspectItem}>
+                        <Text style={styles.planetAspectLabel}>{a.label}</Text>
+                        <Text style={styles.planetAspectText}>{a.text}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
               </View>
             )
           })}
@@ -457,6 +497,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9aa7ba',
     lineHeight: 18,
+  },
+  planetAspectsBlock: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  planetAspectsTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  planetAspectItem: {
+    marginTop: 4,
+  },
+  planetAspectLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#c7d2fe',
+  },
+  planetAspectText: {
+    fontSize: 12,
+    color: '#9aa7ba',
+    lineHeight: 18,
+    marginTop: 2,
   },
   planetSymbol: {
     fontSize: 16,

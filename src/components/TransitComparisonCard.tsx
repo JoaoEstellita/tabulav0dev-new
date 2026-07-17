@@ -14,7 +14,7 @@ import type { HouseSystem } from '../astro/houseSystem'
 import ReadingDetailModal from './ReadingDetailModal'
 import ReadingOpenIcon from './ReadingOpenIcon'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
-import { resolveNatalPlanetInHouseText, resolveNatalRulerInHouseText } from '../utils/natalInterpretation'
+import { resolveNatalPlanetInHouseText, resolveNatalRulerInHouseText, resolvePlanetInSignText } from '../utils/natalInterpretation'
 
 interface TransitComparisonCardProps {
   planetComparisons: PlanetComparison[]
@@ -1048,16 +1048,31 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     contextLabel: string
     signLabel?: string
   }) => {
-    // Tentar catálogo natal primeiro (planeta em casa)
-    const natalText = params.house
+    // Leitura agregada: signo + casa. Antes só a casa aparecia; o texto de signo
+    // (resolvePlanetInSignText) já existe no catálogo e é combinado aqui para uma
+    // leitura natal mais completa. Cada bloco entra com um rótulo curto.
+    const signText = params.signLabel
+      ? resolvePlanetInSignText(params.planetName, params.signLabel, language)
+      : null
+    const houseText = params.house
       ? resolveNatalPlanetInHouseText(params.planetName, params.house, language)
       : null
-    if (natalText) {
-      const sentences = natalText.match(/[^.!?]+[.!?]+/g) || []
-      const short = sentences.slice(0, 1).join(' ').trim() || natalText
+
+    if (signText || houseText) {
+      const signHeader = tl('No signo', 'In the sign', 'En el signo', 'Nel segno')
+      const houseHeader = params.house
+        ? tl(`Na Casa ${params.house}`, `In House ${params.house}`, `En la Casa ${params.house}`, `Nella Casa ${params.house}`)
+        : ''
+      const parts: string[] = []
+      if (signText) parts.push(`${signHeader}: ${signText}`)
+      if (houseText) parts.push(`${houseHeader}: ${houseText}`)
+      const long = parts.join('\n\n')
+      const firstText = signText || houseText || ''
+      const sentences = firstText.match(/[^.!?]+[.!?]+/g) || []
+      const short = sentences.slice(0, 1).join(' ').trim() || firstText
       return {
         short,
-        long: natalText,
+        long,
         keywords: [] as string[],
       }
     }

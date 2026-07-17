@@ -66,14 +66,14 @@ const PLANET_SYMBOLISM: Record<string, string> = {
 const PLANET_PT: Record<string, string> = {
   Sun: 'Sol',
   Moon: 'Lua',
-  Mercury: 'Mercurio',
-  Venus: 'Venus',
+  Mercury: 'Mercúrio',
+  Venus: 'Vênus',
   Mars: 'Marte',
-  Jupiter: 'Jupiter',
+  Jupiter: 'Júpiter',
   Saturn: 'Saturno',
   Uranus: 'Urano',
   Neptune: 'Netuno',
-  Pluto: 'Plutao',
+  Pluto: 'Plutão',
 }
 
 const PLANET_LABELS: Record<AppLanguage, Record<string, string>> = {
@@ -239,19 +239,19 @@ const HOUSE_POSITIONAL_FOCUS: Record<AppLanguage, Record<number, string>> = {
 }
 
 const ASPECT_MEANING: Record<string, string> = {
-  conjuncao: 'concentracao forte de energia no mesmo tema',
-  oposicao: 'polaridade que pede equilibrio entre extremos',
-  quadratura: 'tensao de ajuste pratico e decisao',
+  conjuncao: 'concentração forte de energia no mesmo tema',
+  oposicao: 'polaridade que pede equilíbrio entre extremos',
+  quadratura: 'tensão de ajuste prático e decisão',
   trigono: 'fluxo mais natural de recursos e talentos',
   sextil: 'abertura de oportunidade que depende de iniciativa',
   quincuncio: 'desalinhamento fino que pede ajuste consciente',
-  semissextil: 'ajuste sutil por observacao e refinamento',
-  semiquadratura: 'irritacao leve que sinaliza ponto de ajuste',
+  semissextil: 'ajuste sutil por observação e refinamento',
+  semiquadratura: 'irritação leve que sinaliza ponto de ajuste',
   sesquiquadratura: 'atrito intermitente que pede reposicionamento',
   harmonic: 'fase de apoio e fluidez relativa',
-  tense: 'fase de friccao e necessidade de ajuste',
-  neutral: 'fase de observacao, sem puxar para extremos',
-  ingress: 'mudanca de foco por troca de casa/ambiente',
+  tense: 'fase de fricção e necessidade de ajuste',
+  neutral: 'fase de observação, sem puxar para extremos',
+  ingress: 'mudança de foco por troca de casa/ambiente',
 }
 
 const ASPECT_ARCHETYPE: Record<string, string> = {
@@ -458,9 +458,9 @@ const I18N = {
     scoreLinkPrefix: 'Leitura pratica',
     phases: {
       peak: 'em pico',
-      start: 'em aproximacao',
+      start: 'em aproximação',
       end: 'afastando',
-      applying: 'em aproximacao',
+      applying: 'em aproximação',
       movingAway: 'afastando',
       active: 'em andamento',
     },
@@ -468,7 +468,7 @@ const I18N = {
       ingress: '{planet} ingressa na {houseLabel} {house}, ativando {houseMeaning}. {phaseLabel}, isso {phaseVerb} prioridades em {area}.',
       houseNeutral: '{planet} na {houseLabel} {house} ativa {houseMeaning}. {phaseLabel}, isso {flowVerb} ajuste de ritmo em {area}.',
       aspect: '{planet} em {aspectKey} com {targetLabel} indica {aspectMeaning}. {phaseLabel}, {phaseBridge}.',
-      fallback: '{planet} ativa um ciclo de ajustes praticos em {area}.',
+      fallback: '{planet} ativa um ciclo de ajustes práticos em {area}.',
     },
   },
   'en-US': {
@@ -638,16 +638,22 @@ function getHouseNumber(transit: AnyTransit): number | null {
 
 function getTargetLabel(transit: AnyTransit, language?: string | null): string {
   const lang = getLang(language)
+  // Planeta/ângulo-alvo tem prioridade sobre a casa. Antes a casa vinha primeiro,
+  // então um aspecto planeta→planeta com `house` preenchido (ex.: Lua sesquiquadratura
+  // Mercúrio, casa atual 9) virava "Casa 9" no texto — o planeta-alvo sumia. A casa
+  // só é o alvo quando não há planeta (ingress).
+  const target = transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint
+  if (target) {
+    const raw = String(target)
+    const canonicalTarget = TARGET_ALIASES_TO_CANONICAL[normalizeTransitToken(raw)] || ''
+    if (canonicalTarget && ANGLE_LABELS[lang][canonicalTarget]) {
+      return ANGLE_LABELS[lang][canonicalTarget]
+    }
+    return PLANET_LABELS[lang][raw] || PLANET_PT[raw] || raw
+  }
   const house = getHouseNumber(transit)
   if (house) return `${I18N[lang].houseWord} ${house}`
-  const target = transit?.natalPlanet || transit?.target?.natalPlanet || transit?.target?.angle || transit?.natalPoint
-  if (!target) return I18N[lang].yourNatalChart
-  const raw = String(target)
-  const canonicalTarget = TARGET_ALIASES_TO_CANONICAL[normalizeTransitToken(raw)] || ''
-  if (canonicalTarget && ANGLE_LABELS[lang][canonicalTarget]) {
-    return ANGLE_LABELS[lang][canonicalTarget]
-  }
-  return PLANET_LABELS[lang][raw] || PLANET_PT[raw] || raw
+  return I18N[lang].yourNatalChart
 }
 
 function getPlanetArchetypeWord(planetRaw: string): string {
