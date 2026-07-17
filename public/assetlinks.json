@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.estellita.tabulaestelar",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256"
+        "FE:8F:19:84:DF:57:36:A6:8E:3B:F1:F3:34:53:C7:1A:68:81:13:31:48:18:CE:87:2B:65:F4:9D:BB:A8:C0:0A",
+        "1E:C3:42:D5:FD:03:E1:1D:78:10:3A:10:53:06:2C:9F:11:1E:72:91:8E:BE:DD:92:FF:A3:CB:2A:98:FF:CE:5D"
       ]
     }
   }
