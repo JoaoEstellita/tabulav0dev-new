@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  TouchableOpacity,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { doc, getDoc } from 'firebase/firestore'
@@ -95,6 +96,46 @@ const barStyles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 3 },
+})
+
+/**
+ * Texto curado com "ver mais/ver menos". Os textos do catálogo são longos e a tela
+ * ficou densa depois de trazer as 12 casas + regentes: colapsar por padrão mantém a
+ * leitura navegável sem esconder conteúdo. Só mostra o toggle quando vale a pena.
+ */
+function ExpandableText({
+  text,
+  language,
+  style,
+  lines = 4,
+}: { text: string; language: string; style?: any; lines?: number }) {
+  const [expanded, setExpanded] = useState(false)
+  const value = String(text || '')
+  const needsToggle = value.length > 200
+  const label = expanded
+    ? (language === 'en-US' ? 'Show less' : language === 'es-ES' ? 'Ver menos' : language === 'it-IT' ? 'Mostra meno' : 'Ver menos')
+    : (language === 'en-US' ? 'Read more' : language === 'es-ES' ? 'Ver mas' : language === 'it-IT' ? 'Leggi di piu' : 'Ver mais')
+  return (
+    <View>
+      <Text style={style} numberOfLines={needsToggle && !expanded ? lines : undefined}>
+        {value}
+      </Text>
+      {needsToggle ? (
+        <TouchableOpacity onPress={() => setExpanded(v => !v)} activeOpacity={0.7} accessibilityRole="button">
+          <Text style={expandStyles.toggle}>{label}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  )
+}
+
+const expandStyles = StyleSheet.create({
+  toggle: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
 })
 
 export default function AstroProfileScreen() {
@@ -370,7 +411,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
               </Text>
-              <Text style={styles.angularInterpretationText}>{ascText}</Text>
+              <ExpandableText text={ascText} language={language} style={styles.angularInterpretationText} />
             </View>
           ) : null}
           {mcText ? (
@@ -378,7 +419,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')}
               </Text>
-              <Text style={styles.angularInterpretationText}>{mcText}</Text>
+              <ExpandableText text={mcText} language={language} style={styles.angularInterpretationText} />
             </View>
           ) : null}
           {dscText ? (
@@ -386,7 +427,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Descendente', 'Descendant', 'Descendente', 'Discendente')}
               </Text>
-              <Text style={styles.angularInterpretationText}>{dscText}</Text>
+              <ExpandableText text={dscText} language={language} style={styles.angularInterpretationText} />
             </View>
           ) : null}
           {icText ? (
@@ -394,7 +435,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Fundo do Céu', 'Imum Coeli', 'Fondo del Cielo', 'Fondo Cielo')}
               </Text>
-              <Text style={styles.angularInterpretationText}>{icText}</Text>
+              <ExpandableText text={icText} language={language} style={styles.angularInterpretationText} />
             </View>
           ) : null}
         </View>
@@ -430,21 +471,23 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Eixo de crescimento', 'Growth axis', 'Eje de crecimiento', 'Asse di crescita')}
               </Text>
-              <Text style={styles.angularInterpretationText}>
-                {nnText || tl(
+              <ExpandableText
+                language={language}
+                style={styles.angularInterpretationText}
+                text={nnText || tl(
                   'O Nódulo Norte aponta as qualidades que sua jornada convida a desenvolver nesta vida; o Nódulo Sul indica talentos e padrões já familiares, que tendem a ser zona de conforto. Na tradição evolutiva, esse eixo é lido como direção de crescimento — um convite, não um destino.',
                   'The North Node points to the qualities your journey invites you to develop in this life; the South Node marks familiar talents and patterns that tend to be a comfort zone. In the evolutionary tradition, this axis reads as a direction of growth — an invitation, not a destiny.',
                   'El Nodo Norte apunta a las cualidades que tu camino invita a desarrollar en esta vida; el Nodo Sur indica talentos y patrones ya familiares, que tienden a ser zona de confort. En la tradición evolutiva, este eje se lee como dirección de crecimiento — una invitación, no un destino.',
                   'Il Nodo Nord indica le qualità che il tuo cammino invita a sviluppare in questa vita; il Nodo Sud segnala talenti e schemi già familiari, che tendono a essere zona di comfort. Nella tradizione evolutiva questo asse si legge come direzione di crescita — un invito, non un destino.'
                 )}
-              </Text>
+              />
             </View>
             {nnHouseText ? (
               <View style={styles.angularInterpretation}>
                 <Text style={styles.angularInterpretationLabel}>
                   {tl('Nódulo Norte na Casa', 'North Node in House', 'Nodo Norte en la Casa', 'Nodo Nord nella Casa')} {nnHouse}
                 </Text>
-                <Text style={styles.angularInterpretationText}>{nnHouseText}</Text>
+                <ExpandableText text={nnHouseText} language={language} style={styles.angularInterpretationText} />
               </View>
             ) : null}
           </View>
@@ -471,7 +514,7 @@ export default function AstroProfileScreen() {
             </View>
             {chartRuler.text ? (
               <View style={styles.angularInterpretation}>
-                <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
+                <ExpandableText text={chartRuler.text} language={language} style={styles.angularInterpretationText} />
               </View>
             ) : null}
           </View>
@@ -508,10 +551,10 @@ export default function AstroProfileScreen() {
                   </View>
                 </View>
                 {signText ? (
-                  <Text style={styles.planetSignText}>{signText}</Text>
+                  <ExpandableText text={signText} language={language} style={styles.planetSignText} />
                 ) : null}
                 {houseText ? (
-                  <Text style={styles.planetHouseText}>{houseText}</Text>
+                  <ExpandableText text={houseText} language={language} style={styles.planetHouseText} />
                 ) : null}
                 {aspectsByPlanet[p.name]?.length ? (
                   <View style={styles.planetAspectsBlock}>
@@ -521,7 +564,7 @@ export default function AstroProfileScreen() {
                     {aspectsByPlanet[p.name].map((a, i) => (
                       <View key={i} style={styles.planetAspectItem}>
                         <Text style={styles.planetAspectLabel}>{a.label}</Text>
-                        <Text style={styles.planetAspectText}>{a.text}</Text>
+                        <ExpandableText text={a.text} language={language} style={styles.planetAspectText} />
                       </View>
                     ))}
                   </View>
@@ -549,7 +592,7 @@ export default function AstroProfileScreen() {
                   <Text style={styles.angularDeg}>{h.degInSign.toFixed(1)}°</Text>
                 </View>
                 {h.text ? (
-                  <Text style={styles.angularInterpretationText}>{h.text}</Text>
+                  <ExpandableText text={h.text} language={language} style={styles.angularInterpretationText} />
                 ) : null}
                 {h.ruler ? (
                   <View style={styles.angularInterpretation}>
@@ -557,7 +600,7 @@ export default function AstroProfileScreen() {
                       {tl('Regente', 'Ruler', 'Regente', 'Governatore')}: {PLANET_SYMBOLS[h.ruler.planet] || ''} {translatePlanetPT(h.ruler.planet)} · {tl('Casa', 'House', 'Casa', 'Casa')} {h.ruler.house}
                     </Text>
                     {h.ruler.text ? (
-                      <Text style={styles.angularInterpretationText}>{h.ruler.text}</Text>
+                      <ExpandableText text={h.ruler.text} language={language} style={styles.angularInterpretationText} />
                     ) : null}
                   </View>
                 ) : null}
