@@ -1590,6 +1590,27 @@ export default function GroupsScreen() {
     .filter((member) => getMemberSummaryBucket(member) === "critical")
     .slice(0, 3)
 
+  // Resumo do grupo: TODOS os membros com status visível (não só os críticos).
+  // Cada um traz a média das áreas (score geral) e a pior área. Ordenado por
+  // fragilidade (pior área asc) para o mais delicado aparecer primeiro. Antes só
+  // membros com área <35 apareciam, então quem tinha áreas "desafiador" (35–49)
+  // sumia do panorama mesmo estando frágil.
+  const memberSummaries = summaryMembers
+    .map((member) => {
+      const entries = buildMemberAreaEntries(member).filter((e) => typeof e.percentage === "number")
+      const avg = entries.length
+        ? Math.round(entries.reduce((s, e) => s + (e.percentage as number), 0) / entries.length)
+        : null
+      const worst = getMemberWorstArea(member)
+      return { member, avg, worst, worstPct: typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null }
+    })
+    .sort((a, b) => {
+      const av = a.worstPct ?? 999
+      const bv = b.worstPct ?? 999
+      if (av !== bv) return av - bv
+      return a.member.displayName.localeCompare(b.member.displayName)
+    })
+
   if (loading) {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
@@ -1711,45 +1732,39 @@ export default function GroupsScreen() {
                 <View style={styles.groupSummaryCounters}>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryCritical]}>
                     <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.critical}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalCount', 'Críticos')}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.criticalAreas', 'Áreas críticas')}</Text>
                   </View>
                   <View style={[styles.groupSummaryCounterCompact, styles.summaryPositive]}>
                     <Text style={styles.groupSummaryValueCompact}>{memberStatusCounts.positive}</Text>
-                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positiveCount', 'Positivos')}</Text>
+                    <Text style={styles.groupSummaryLabelCompact}>{tr('groups.status.positiveAreas', 'Áreas positivas')}</Text>
                   </View>
                 </View>
               </View>
-              {highlightMembers.length > 0 && (
+              {memberSummaries.length > 0 && (
                 <>
                   <View style={[styles.attentionHeader, styles.attentionHeaderCompact]}>
-                    <Text style={styles.sectionTitle}>{tr('groups.section.needsAttention', 'Precisa de atencao')}</Text>
-                    {summaryMembers.filter((member) => getMemberSummaryBucket(member) === "critical").length > 3 && (
-                      <TouchableOpacity onPress={() => setShowGroupDetail(true)}>
-                        <Text style={styles.attentionLink}>{tr('groups.action.viewAll', 'Ver todos')}</Text>
-                      </TouchableOpacity>
-                    )}
+                    <Text style={styles.sectionTitle}>{tr('groups.section.memberSummary', 'Resumo dos membros')}</Text>
                   </View>
-                  {highlightMembers.map((member) => {
-                    const worst = getMemberWorstArea(member)
-                    const percentage = typeof worst?.percentage === "number" ? Math.round(worst.percentage) : null
-                    const bucket = worst ? worst.bucket : getMemberSummaryBucket(member)
-                    const criticalEntries = buildMemberAreaEntries(member)
-                      .filter((entry) => entry.bucket === "critical")
-                    const criticalText = criticalEntries
-                      .map((entry) => `${entry.label} ${entry.percentage !== null ? `${Math.round(entry.percentage)}%` : ""}`.trim())
-                      .filter((text) => text.length > 0)
-                      .join(" · ")
+                  {memberSummaries.map(({ member, avg, worst, worstPct }) => {
+                    const worstBucket = worst ? worst.bucket : getMemberSummaryBucket(member)
                     return (
                       <View key={member.userId} style={styles.attentionRow}>
                         <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
                         <View style={styles.attentionInfo}>
                           <Text style={styles.attentionName}>{member.displayName}</Text>
                           <Text style={styles.attentionMeta}>
-                            {criticalText || (worst ? worst.label : tr('groups.label.areaUnavailable', 'Area indisponivel'))}{" "}
-                            {!criticalText && percentage !== null ? `- ${percentage}%` : ""}
+                            {worst
+                              ? `${tr('groups.label.worst', 'Mais frágil')}: ${worst.label}${worstPct !== null ? ` ${worstPct}%` : ""}`
+                              : tr('groups.label.areaUnavailable', 'Area indisponivel')}
                           </Text>
                         </View>
-                        <Text style={[styles.attentionStatus, { color: mapBucketToColor(bucket) }]}>
+                        {avg !== null && (
+                          <View style={styles.summaryScorePill}>
+                            <Text style={[styles.summaryScoreValue, { color: mapBucketToColor(mapPercentageToBucket(avg)) }]}>{avg}</Text>
+                            <Text style={styles.summaryScoreLabel}>{tr('groups.label.avg', 'média')}</Text>
+                          </View>
+                        )}
+                        <Text style={[styles.attentionStatus, { color: mapBucketToColor(worstBucket) }]}>
                           {member.lastStatusUpdate ? `${formatRelativeTime(member.lastStatusUpdate)}` : tr('groups.label.now', 'Agora')}
                         </Text>
                       </View>
@@ -1874,69 +1889,6 @@ export default function GroupsScreen() {
               })}
             </View>
 
-            <View style={styles.alertsSection}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>{tr('groups.section.groupFeed', 'Feed do grupo')}</Text>
-                <TouchableOpacity style={styles.sectionIconButton} onPress={() => setShowMessageModal(true)}>
-                  <Ionicons name="add" size={16} color="#FFD700" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.feedTabs}>
-                {[
-                  { key: "all", label: tr('groups.feed.all', 'Todos') },
-                  { key: "messages", label: tr('groups.feed.messages', 'Mensagens') },
-                  { key: "alerts", label: tr('groups.feed.alerts', 'Alertas') },
-                ].map((tab) => (
-                  <TouchableOpacity
-                    key={tab.key}
-                    style={[styles.feedTab, feedFilter === tab.key && styles.feedTabActive]}
-                    onPress={() => setFeedFilter(tab.key as typeof feedFilter)}
-                  >
-                    <Text style={[styles.feedTabText, feedFilter === tab.key && styles.feedTabTextActive]}>
-                      {tab.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {(groupAlerts || [])
-                .filter((alert) => {
-                  if (feedFilter === "all") return true
-                  const type = alert.type || "event"
-                  const isMessage = type === "custom_message"
-                  return feedFilter === "messages" ? isMessage : !isMessage
-                })
-                .slice(0, 10)
-                .map((alert) => (
-                  <View key={alert.id} style={styles.feedItem}>
-                    <View style={styles.feedIcon}>
-                      <Ionicons name={getStatusIcon(alert.status) as any} size={16} color={getStatusColor(alert.status)} />
-                    </View>
-                    <View style={styles.feedContent}>
-                      <View style={styles.feedMeta}>
-                        <View style={[styles.feedTag, styles.feedTagType]}>
-                          <Text style={[styles.feedTagText, styles.feedTagTypeText]}>
-                            {(alert.type || "event") === "custom_message" ? tr('groups.feed.messageTag', 'Mensagem') : tr('groups.feed.alertTag', 'Alerta')}
-                          </Text>
-                        </View>
-                        <View style={[styles.feedTag, { borderColor: getStatusColor(alert.status) }]}>
-                          <Text style={[styles.feedTagText, { color: getStatusColor(alert.status) }]}>
-                            {getStatusLabel(alert.status)}
-                          </Text>
-                        </View>
-                        {alert.area && (
-                          <View style={styles.feedTag}>
-                            <Text style={styles.feedTagText}>{lifeAreaLabel(alert.area)}</Text>
-                          </View>
-                        )}
-                        <Text style={styles.feedTime}>{formatRelativeTime(alert.createdAt)}</Text>
-                      </View>
-                      <Text style={styles.feedMessage}>
-                        <Text style={styles.alertUser}>{alert.userName}</Text> {alert.message}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-            </View>
           </>
         )}
 
@@ -4516,6 +4468,21 @@ const styles = StyleSheet.create({
   attentionStatus: {
     fontSize: 11,
     fontWeight: "600",
+  },
+  summaryScorePill: {
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 40,
+    marginHorizontal: 8,
+  },
+  summaryScoreValue: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  summaryScoreLabel: {
+    fontSize: 9,
+    color: "#8a94a6",
+    marginTop: -1,
   },
   groupActionsCard: {
     backgroundColor: "#14142b",
