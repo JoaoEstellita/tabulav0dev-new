@@ -11,6 +11,19 @@ export const LIFE_AREA_ORDER = [
 
 export type LifeAreaKey = (typeof LIFE_AREA_ORDER)[number]
 
+// Ordem de exibição dos cards SÓ na tela inicial (Home). Mesmas áreas de
+// LIFE_AREA_ORDER, ordem própria — não afeta Groups/Forecast/notificações.
+export const HOME_LIFE_AREA_ORDER: readonly LifeAreaKey[] = [
+  'familia',
+  'saude',
+  'carreira',
+  'financas',
+  'amor',
+  'comunicacao',
+  'espiritualidade',
+  'transformacao',
+]
+
 export const LIFE_AREA_LABELS: Record<string, string> = {
   amor: 'Amor',
   carreira: 'Carreira',

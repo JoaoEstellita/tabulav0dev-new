@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, Image } from 'react-native'
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
@@ -15,9 +15,11 @@ import MoonPhaseButton from './MoonPhaseButton'
 interface HomeHeaderProps {
   sunSign?: string
   moonSign?: string
+  unreadCount?: number
+  onPressBell?: () => void
 }
 
-export default function HomeHeader({ sunSign, moonSign }: HomeHeaderProps) {
+export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPressBell }: HomeHeaderProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -111,7 +113,25 @@ export default function HomeHeader({ sunSign, moonSign }: HomeHeaderProps) {
         </View>
       </View>
 
-      <MoonPhaseButton userReady={!!user} />
+      <View style={styles.headerActions}>
+        {onPressBell ? (
+          <TouchableOpacity
+            style={styles.bellButton}
+            onPress={onPressBell}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={tl('Notificações', 'Notifications', 'Notificaciones', 'Notifiche')}
+          >
+            <Ionicons name="notifications-outline" size={24} color="#FFD700" />
+            {unreadCount > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        ) : null}
+        <MoonPhaseButton userReady={!!user} />
+      </View>
     </View>
   )
 }
@@ -172,5 +192,35 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#A0A0A0',
     textTransform: 'capitalize',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bellButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2A2A3E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
   },
 })

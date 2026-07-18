@@ -36,12 +36,11 @@ import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer
 import { useAuth } from "../hooks/useAuth"
 import { useAppLanguage } from "../hooks/useAppLanguage"
 import { registerDeviceToken } from "../services/notifications/registerDeviceToken"
-import { useNotificationStore } from "../context/NotificationStore"
 
 const Tab = createBottomTabNavigator()
 const Stack = createStackNavigator()
 const RootStack = createStackNavigator()
-const TAB_ORDER = ["Home", "Groups", "Forecast", "Premium", "Notifications", "Settings"]
+const TAB_ORDER = ["Home", "Cosmos", "Groups", "Forecast", "Premium", "Settings"]
 const SWIPE_THRESHOLD = 0.25
 const SWIPE_ANIMATION_MS = 260
 let lastSwipeDirection: "left" | "right" | null = null
@@ -58,15 +57,15 @@ const NAV_THEME = {
 // proposito — os return URLs do checkout usam o rewrite /payment existente.
 type DeepLinkTabsParamList = {
   Home: undefined
+  Cosmos: undefined
   Groups: undefined
   Forecast: undefined
   Premium: undefined
-  Notifications: undefined
   Settings: undefined
 }
 type DeepLinkRootParamList = {
   Tabs: NavigatorScreenParams<DeepLinkTabsParamList> | undefined
-  Cosmos: undefined
+  Notifications: undefined
   AstroProfile: undefined
   NatalChartWheel: undefined
 }
@@ -82,14 +81,14 @@ const linking: LinkingOptions<DeepLinkRootParamList> = {
       Tabs: {
         screens: {
           Home: "home",
+          Cosmos: "cosmos",
           Groups: "grupos",
           Forecast: "previsao",
           Premium: "premium",
-          Notifications: "notificacoes",
           Settings: "config",
         },
       },
-      Cosmos: "cosmos",
+      Notifications: "notificacoes",
       AstroProfile: "perfil",
       NatalChartWheel: "mapa",
     },
@@ -224,20 +223,6 @@ function OnboardingStack() {
 
 function MainTabs() {
   const { t } = useAppLanguage()
-  const { unreadCount } = useNotificationStore()
-
-  const renderStarIcon = (focused: boolean, color: string, size: number) => (
-    <View style={styles.tabIconWrap}>
-      <Ionicons name={focused ? "star" : "star-outline"} size={size} color={color} />
-      {unreadCount > 0 && (
-        <View style={styles.tabBadge}>
-          <Text style={styles.tabBadgeText}>
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </Text>
-        </View>
-      )}
-    </View>
-  )
 
   return (
     <Tab.Navigator
@@ -247,14 +232,14 @@ function MainTabs() {
 
           if (route.name === "Home") {
             iconName = focused ? "person" : "person-outline"
+          } else if (route.name === "Cosmos") {
+            iconName = focused ? "star" : "star-outline"
+          } else if (route.name === "Groups") {
+            iconName = focused ? "sparkles" : "sparkles-outline"
           } else if (route.name === "Forecast") {
             iconName = focused ? "calendar" : "calendar-outline"
-          } else if (route.name === "Groups") {
-            iconName = focused ? "people" : "people-outline"
-          } else if (route.name === "Notifications") {
-            return renderStarIcon(focused, color, size)
           } else if (route.name === "Premium") {
-            iconName = focused ? "sparkles" : "sparkles-outline"
+            iconName = focused ? "planet" : "planet-outline"
           } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline"
           } else {
@@ -287,6 +272,15 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
+      <Tab.Screen name="Cosmos" options={{ title: t("nav.map"), headerShown: false }}>
+        {() => (
+          <ErrorBoundary>
+            <SwipeableTabScreen>
+              <CosmosScreen />
+            </SwipeableTabScreen>
+          </ErrorBoundary>
+        )}
+      </Tab.Screen>
       <Tab.Screen name="Groups" options={{ title: t("nav.groups"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
@@ -310,15 +304,6 @@ function MainTabs() {
           <ErrorBoundary>
             <SwipeableTabScreen>
               <PremiumScreen />
-            </SwipeableTabScreen>
-          </ErrorBoundary>
-        )}
-      </Tab.Screen>
-      <Tab.Screen name="Notifications" options={{ title: t("nav.notifications"), headerShown: false }}>
-        {() => (
-          <ErrorBoundary>
-            <SwipeableTabScreen>
-              <NotificationsScreen />
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}
@@ -365,7 +350,7 @@ function RootNavigator() {
       <RootStack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: true, title: 'Pagamento aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentPending" component={PaymentPendingScreen} options={{ headerShown: true, title: 'Pagamento pendente', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentFailure" component={PaymentFailureScreen} options={{ headerShown: true, title: 'Pagamento não aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
-      <RootStack.Screen name="Cosmos" component={CosmosScreen} options={{ headerShown: true, title: '✦ Cosmos', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFD700' }} />
+      <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: t("nav.notifications"), headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
     </RootStack.Navigator>

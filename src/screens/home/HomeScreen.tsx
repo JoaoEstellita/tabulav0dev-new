@@ -19,7 +19,7 @@ import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import LifeAreaCard from '../../components/LifeAreaCard'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
-import { LIFE_AREA_ORDER } from '../../constants/lifeAreas'
+import { LIFE_AREA_ORDER, HOME_LIFE_AREA_ORDER } from '../../constants/lifeAreas'
 import { useUserSettings } from '../../hooks/useUserSettings'
 import { LifeAreaDetailModal } from '../../components/LifeAreaDetailModal'
 import ReadingService from '../../services/firebase/ReadingService'
@@ -282,7 +282,7 @@ export default function HomeScreen() {
 
   const orderedLifeAreas = React.useMemo(() => {
     if (!lifeAreasForDisplay) return []
-    return LIFE_AREA_ORDER
+    return HOME_LIFE_AREA_ORDER
       .map((key) => [key, (lifeAreasForDisplay as any)[key]] as const)
       .filter(([_, area]) => !!area)
   }, [lifeAreasForDisplay])
@@ -422,7 +422,12 @@ export default function HomeScreen() {
         }
       >
         {/* Header */}
-        <HomeHeader sunSign={natalSunSign} moonSign={natalMoonSign} />
+        <HomeHeader
+          sunSign={natalSunSign}
+          moonSign={natalMoonSign}
+          unreadCount={unreadCount}
+          onPressBell={() => navigation.navigate('Notifications')}
+        />
 
         {/* Score diário com explicação do trânsito mais intenso */}
         {(backendStatusPersonal?.score != null || topTransit) && (() => {
