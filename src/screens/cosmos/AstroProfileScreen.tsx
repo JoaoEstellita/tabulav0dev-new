@@ -14,7 +14,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
-import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText } from '../../utils/natalInterpretation'
+import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
+import { normalizeSign } from '../../astro/normalize'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -26,11 +27,23 @@ const PLANET_SYMBOLS: Record<string, string> = {
 
 const PLANET_ORDER = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
 
+// Regentes modernos — mesma tradição (psicológica) dos catálogos do app.
+const SIGN_RULER_EN: Record<string, string> = {
+  Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury', Cancer: 'Moon',
+  Leo: 'Sun', Virgo: 'Mercury', Libra: 'Venus', Scorpio: 'Pluto',
+  Sagittarius: 'Jupiter', Capricorn: 'Saturn', Aquarius: 'Uranus', Pisces: 'Neptune',
+}
+
 const SIGN_SYMBOLS: Record<string, string> = {
   Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
   Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏',
   Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
 }
+
+// degToSign devolve o signo em pt-BR ('Áries'), mas SIGN_SYMBOLS/SIGN_RULER_EN têm
+// chave em inglês — sem normalizar, o símbolo sumia silenciosamente (|| '').
+const signSymbol = (sign: string): string => SIGN_SYMBOLS[normalizeSign(sign) || ''] || ''
+const signRuler = (sign: string): string | undefined => SIGN_RULER_EN[normalizeSign(sign) || '']
 
 const ELEMENT_COLORS: Record<string, string> = {
   fire: '#f97316',
@@ -118,9 +131,9 @@ export default function AstroProfileScreen() {
     [natalPlanets]
   )
 
-  // Aspectos natais por planeta (os 2 mais exatos), com o texto curado de cada.
-  // Fonte: aspectsNatalToNatal já computado pelo engine. Enriquece a leitura de
-  // cada planeta com "o que ele conversa com os outros" no mapa.
+  // Aspectos natais por planeta, com o texto curado de cada, ordenados do mais
+  // exato para o mais largo. Antes limitava aos 2 mais exatos — um mapa completo
+  // (como o do ZET) lista todos, e o dado já está em aspectsNatalToNatal.
   const aspectsByPlanet = useMemo(() => {
     const out: Record<string, { label: string; text: string }[]> = {}
     const list = Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal : []
@@ -128,7 +141,6 @@ export default function AstroProfileScreen() {
       const mine = list
         .filter(a => a.planet1 === planet || a.planet2 === planet)
         .sort((a, b) => (a.orb ?? 99) - (b.orb ?? 99))
-        .slice(0, 2)
       const entries: { label: string; text: string }[] = []
       for (const a of mine) {
         const other = a.planet1 === planet ? a.planet2 : a.planet1
@@ -166,6 +178,26 @@ export default function AstroProfileScreen() {
   const mcText = useMemo(
     () => resolveSignInMidheavenText(mcSign.sign, language),
     [mcSign.sign, language],
+  )
+
+  // Eixos completos: DSC (oposto ao ASC) e IC (oposto ao MC). Um mapa completo traz
+  // os quatro ângulos; o catálogo signo-na-casa já cobre as casas 7 e 4.
+  const dscSign = useMemo(() => {
+    try { return degToSign((natalAsc + 180) % 360) } catch { return null }
+  }, [natalAsc])
+
+  const icSign = useMemo(() => {
+    try { return degToSign((natalMc + 180) % 360) } catch { return null }
+  }, [natalMc])
+
+  const dscText = useMemo(
+    () => (dscSign ? resolveSignInHouseText(dscSign.sign, 7, language) : null),
+    [dscSign, language],
+  )
+
+  const icText = useMemo(
+    () => (icSign ? resolveSignInHouseText(icSign.sign, 4, language) : null),
+    [icSign, language],
   )
 
   // Nódulo Norte lunar (nó médio, Meeus) — usa o valor do engine quando disponível,
@@ -217,6 +249,53 @@ export default function AstroProfileScreen() {
     [nnHouse, language],
   )
 
+  // Signo na cúspide de CADA uma das 12 casas. O catálogo signo-na-casa tem 12×12
+  // entradas curadas, mas a tela só usava a casa 1 (via ASC) — as outras 11 nunca
+  // chegavam ao usuário.
+  const houseCusps = useMemo(() => {
+    const cusps = ct?.natalHouses
+    if (!Array.isArray(cusps) || cusps.length < 12) return []
+    return cusps.slice(0, 12).map((deg: number, i: number) => {
+      let s: { sign: string; degInSign: number } | null = null
+      try { s = degToSign(deg) } catch { s = null }
+      if (!s) return null
+      const house = i + 1
+      // Regente da casa: planeta que rege o signo da cúspide, e a casa que ele ocupa
+      // ("o regente da 4ª está na 9ª") — leitura clássica que o catálogo 12×12 cobre.
+      const rulerName = signRuler(s.sign)
+      const rulerPlanet = rulerName ? natalPlanets.find((p) => p.name === rulerName) : undefined
+      const rulerHouse = rulerPlanet?.house
+      return {
+        house,
+        sign: s.sign,
+        degInSign: s.degInSign,
+        text: resolveSignInHouseText(s.sign, house, language),
+        ruler: rulerName && rulerHouse
+          ? { planet: rulerName, house: rulerHouse, text: resolveNatalRulerInHouseText(house, rulerHouse, language) }
+          : null,
+      }
+    }).filter(Boolean) as Array<{
+      house: number; sign: string; degInSign: number; text: string | null
+      ruler: { planet: string; house: number; text: string | null } | null
+    }>
+  }, [ct?.natalHouses, natalPlanets, language])
+
+  // Regente do mapa: o planeta que rege o signo do Ascendente e a casa que ele ocupa.
+  const chartRuler = useMemo(() => {
+    if (!ascSign) return null
+    const rulerName = signRuler(ascSign.sign)
+    if (!rulerName) return null
+    const planet = natalPlanets.find((p) => p.name === rulerName)
+    if (!planet || !planet.house) return null
+    return {
+      planet: rulerName,
+      ascSign: ascSign.sign,
+      house: planet.house,
+      sign: planet.sign,
+      text: resolveNatalRulerInHouseText(1, planet.house, language),
+    }
+  }, [ascSign, natalPlanets, language])
+
   const maxElement = elemental ? Math.max(elemental.fire, elemental.earth, elemental.air, elemental.water) : 1
   const maxModality = modality ? Math.max(modality.cardinal, modality.fixed, modality.mutable) : 1
 
@@ -250,7 +329,7 @@ export default function AstroProfileScreen() {
             <View style={styles.angularItem}>
               <Text style={styles.angularLabel}>ASC</Text>
               <Text style={styles.angularValue}>
-                {SIGN_SYMBOLS[ascSign.sign] || ''} {ascSign.sign}
+                {signSymbol(ascSign.sign)} {ascSign.sign}
               </Text>
               <Text style={styles.angularDeg}>{ascSign.degInSign.toFixed(1)}°</Text>
             </View>
@@ -258,11 +337,34 @@ export default function AstroProfileScreen() {
             <View style={styles.angularItem}>
               <Text style={styles.angularLabel}>MC</Text>
               <Text style={styles.angularValue}>
-                {SIGN_SYMBOLS[mcSign.sign] || ''} {mcSign.sign}
+                {signSymbol(mcSign.sign)} {mcSign.sign}
               </Text>
               <Text style={styles.angularDeg}>{mcSign.degInSign.toFixed(1)}°</Text>
             </View>
           </View>
+          {dscSign || icSign ? (
+            <View style={styles.row}>
+              {dscSign ? (
+                <View style={styles.angularItem}>
+                  <Text style={styles.angularLabel}>DSC</Text>
+                  <Text style={styles.angularValue}>
+                    {signSymbol(dscSign.sign)} {dscSign.sign}
+                  </Text>
+                  <Text style={styles.angularDeg}>{dscSign.degInSign.toFixed(1)}°</Text>
+                </View>
+              ) : null}
+              <View style={styles.angularDivider} />
+              {icSign ? (
+                <View style={styles.angularItem}>
+                  <Text style={styles.angularLabel}>IC</Text>
+                  <Text style={styles.angularValue}>
+                    {signSymbol(icSign.sign)} {icSign.sign}
+                  </Text>
+                  <Text style={styles.angularDeg}>{icSign.degInSign.toFixed(1)}°</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
           {ascText ? (
             <View style={styles.angularInterpretation}>
               <Text style={styles.angularInterpretationLabel}>
@@ -279,6 +381,22 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationText}>{mcText}</Text>
             </View>
           ) : null}
+          {dscText ? (
+            <View style={styles.angularInterpretation}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Descendente', 'Descendant', 'Descendente', 'Discendente')}
+              </Text>
+              <Text style={styles.angularInterpretationText}>{dscText}</Text>
+            </View>
+          ) : null}
+          {icText ? (
+            <View style={styles.angularInterpretation}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Fundo do Céu', 'Imum Coeli', 'Fondo del Cielo', 'Fondo Cielo')}
+              </Text>
+              <Text style={styles.angularInterpretationText}>{icText}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Nódulos Lunares */}
@@ -293,7 +411,7 @@ export default function AstroProfileScreen() {
                   {tl('Nódulo Norte', 'North Node', 'Nodo Norte', 'Nodo Nord')} ☊
                 </Text>
                 <Text style={styles.angularValue}>
-                  {SIGN_SYMBOLS[nnSign.sign] || ''} {nnSign.sign}
+                  {signSymbol(nnSign.sign)} {nnSign.sign}
                 </Text>
                 <Text style={styles.angularDeg}>{nnSign.degInSign.toFixed(1)}°{nnHouse ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${nnHouse}` : ''}</Text>
               </View>
@@ -303,7 +421,7 @@ export default function AstroProfileScreen() {
                   {tl('Nódulo Sul', 'South Node', 'Nodo Sur', 'Nodo Sud')} ☋
                 </Text>
                 <Text style={styles.angularValue}>
-                  {SIGN_SYMBOLS[snSign.sign] || ''} {snSign.sign}
+                  {signSymbol(snSign.sign)} {snSign.sign}
                 </Text>
                 <Text style={styles.angularDeg}>{snSign.degInSign.toFixed(1)}°</Text>
               </View>
@@ -332,6 +450,33 @@ export default function AstroProfileScreen() {
           </View>
         ) : null}
 
+        {/* Regente do Mapa */}
+        {chartRuler ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {tl('Regente do Mapa', 'Chart Ruler', 'Regente de la Carta', 'Governatore del Tema')}
+            </Text>
+            <View style={styles.row}>
+              <View style={styles.angularItem}>
+                <Text style={styles.angularLabel}>
+                  {PLANET_SYMBOLS[chartRuler.planet] || ''} {translatePlanetPT(chartRuler.planet)}
+                </Text>
+                <Text style={styles.angularValue}>
+                  {tl('Casa', 'House', 'Casa', 'Casa')} {chartRuler.house}
+                </Text>
+                <Text style={styles.angularDeg}>
+                  {tl('regente de', 'ruler of', 'regente de', 'governatore di')} {chartRuler.ascSign} (ASC)
+                </Text>
+              </View>
+            </View>
+            {chartRuler.text ? (
+              <View style={styles.angularInterpretation}>
+                <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         {/* Planetas natais */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>
@@ -347,7 +492,7 @@ export default function AstroProfileScreen() {
                   <Text style={styles.planetName}>{translatePlanetPT(p.name)}</Text>
                   <View style={styles.planetSignWrap}>
                     <Text style={styles.planetSign}>
-                      {SIGN_SYMBOLS[p.sign] || ''} {p.sign}
+                      {signSymbol(p.sign)} {p.sign}
                     </Text>
                     <Text style={styles.planetDeg}>{(p.degree ?? (p.longitude % 30)).toFixed(1)}°</Text>
                   </View>
@@ -385,6 +530,41 @@ export default function AstroProfileScreen() {
             )
           })}
         </View>
+
+        {/* As 12 Casas — signo na cúspide + texto curado */}
+        {houseCusps.length > 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {tl('As 12 Casas', 'The 12 Houses', 'Las 12 Casas', 'Le 12 Case')}
+            </Text>
+            {houseCusps.map((h) => (
+              <View key={`house-${h.house}`} style={styles.planetBlock}>
+                <View style={styles.planetRow}>
+                  <Text style={styles.angularLabel}>
+                    {tl('Casa', 'House', 'Casa', 'Casa')} {h.house}
+                  </Text>
+                  <Text style={styles.angularValue}>
+                    {signSymbol(h.sign)} {h.sign}
+                  </Text>
+                  <Text style={styles.angularDeg}>{h.degInSign.toFixed(1)}°</Text>
+                </View>
+                {h.text ? (
+                  <Text style={styles.angularInterpretationText}>{h.text}</Text>
+                ) : null}
+                {h.ruler ? (
+                  <View style={styles.angularInterpretation}>
+                    <Text style={styles.angularInterpretationLabel}>
+                      {tl('Regente', 'Ruler', 'Regente', 'Governatore')}: {PLANET_SYMBOLS[h.ruler.planet] || ''} {translatePlanetPT(h.ruler.planet)} · {tl('Casa', 'House', 'Casa', 'Casa')} {h.ruler.house}
+                    </Text>
+                    {h.ruler.text ? (
+                      <Text style={styles.angularInterpretationText}>{h.ruler.text}</Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {/* Análise elemental */}
         {elemental && (
