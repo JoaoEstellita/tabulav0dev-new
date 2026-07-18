@@ -16,6 +16,7 @@ import { LUNAR_NODE_HOUSE_PTBR_OVERRIDES } from '../src/data/lunarNodeHouseOverr
 import { TRANSIT_CATALOG_PTBR } from '../src/data/transitCatalogPtBR.ts'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../src/data/transitCatalogOverridesPtBR.ts'
 import { TRANSIT_CATALOG_BLOCKED_KEYS } from '../src/data/transitCatalogBlockedKeys.ts'
+import { TRANSIT_APHORISMS_PTBR } from '../src/data/transitAphorismsPtBR.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -42,6 +43,9 @@ const catalog = {
   lunarNodeSign: LUNAR_NODE_SIGN_PTBR_OVERRIDES,
   lunarNodeHouse: LUNAR_NODE_HOUSE_PTBR_OVERRIDES,
   transits,
+  // Frases curtas para abrir a proativa do WhatsApp quando o trânsito é forte.
+  // Cobertura parcial por design — sem chave, a proativa vai sem aforismo.
+  transitAphorisms: TRANSIT_APHORISMS_PTBR,
 }
 
 const outPath = resolve(__dirname, '../../backend/lib/whatsapp/catalog-ptbr.json')
