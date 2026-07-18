@@ -1,36 +1,58 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
-import { formatTransitCompact, getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
+import { getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { buildTransitTitle } from '../../utils/transitPresentation'
+import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
+import TransitInsightCard from '../../components/TransitInsightCard'
 
 export default function PersonalTransitsScreen() {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const { transitData } = useLifeAreas()
+  // Cada tarja controla o próprio toggle — numa lista de leitura, limitar a um
+  // card aberto por vez atrapalharia comparar trânsitos.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  const tl = (pt: string, en: string, es: string, it: string) => {
+    if (language === 'en-US') return en
+    if (language === 'es-ES') return es
+    if (language === 'it-IT') return it
+    return pt
+  }
+
   const personalRaw = transitData?.dailyOverview?.personalTodayRich || []
+  const collective = useMemo(
+    () => (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a: any) => a.planet1 !== a.planet2),
+    [transitData?.dailyOverview?.collectiveKeyAspectsRich],
+  )
 
-  const seen = new Set<string>()
-  const personal = personalRaw.filter((item: any) => {
-    const key = `${item.natalPlanet}|${item.type}|${item.transitPlanet}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+  const list = useMemo(() => {
+    const seen = new Set<string>()
+    const deduped = personalRaw.filter((item: any) => {
+      const key = `${item.natalPlanet}|${item.type}|${item.transitPlanet}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    // Ordena por importância (força do trânsito) desc; desempate pela data do pico.
+    return deduped.slice().sort((a: any, b: any) => {
+      const as = typeof a?.strength === 'number' ? a.strength : 0
+      const bs = typeof b?.strength === 'number' ? b.strength : 0
+      if (bs !== as) return bs - as
+      const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
+      const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
+      return ax - bx
+    })
+  }, [personalRaw])
 
-  const collective = (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a: any) => a.planet1 !== a.planet2)
-  // Ordena por importância (força do trânsito) desc; desempate pela data do pico.
-  const list = personal.slice().sort((a: any, b: any) => {
-    const as = typeof a?.strength === 'number' ? a.strength : 0
-    const bs = typeof b?.strength === 'number' ? b.strength : 0
-    if (bs !== as) return bs - as
-    const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
-    const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
-    return ax - bx
-  })
-
-  const natureColor = (nature: string) =>
-    nature === 'harmonico' ? '#9AE6B4' : nature === 'desafiador' ? '#FCA5A5' : '#FDE68A'
+  const natureVisual = (nature: string) =>
+    nature === 'harmonico'
+      ? { color: '#16A34A', label: tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico') }
+      : nature === 'desafiador'
+        ? { color: '#DC2626', label: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo') }
+        : { color: '#D97706', label: tl('Neutro', 'Neutral', 'Neutro', 'Neutro') }
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -43,30 +65,49 @@ export default function PersonalTransitsScreen() {
           </View>
         ) : (
           list.map((item: any, i: number) => {
-            const title = formatTransitCompact(item.natalPlanet, item.type, item.transitPlanet)
-            const state = getTransitState(item.window)
-            const eta = formatPeakETA(item.window)
-            const nature = aspectNature(item.type)
+            const key = `${item.transitPlanet}|${item.type}|${item.natalPlanet}|${i}`
+
+            // transitPlanet PRIMEIRO: convenção do resto do app e da astrologia
+            // ("Saturno quadratura Sol natal"). Esta tela vinha invertida.
+            const title = buildTransitTitle(
+              { transitPlanet: item.transitPlanet, aspectLabel: item.type, targetLabel: item.natalPlanet },
+              language as any,
+            )
+
+            const narrative = buildUnifiedTransitNarrative(item, undefined, language)
+            const nature = natureVisual(aspectNature(item.type))
+            const timing = [getTransitState(item.window), formatPeakETA(item.window)].filter(Boolean).join(' · ')
+
             const hasSynergy = collective.some(
               (c: any) =>
                 (c.planet1 === item.natalPlanet ||
                   c.planet2 === item.natalPlanet ||
                   c.planet1 === item.transitPlanet ||
                   c.planet2 === item.transitPlanet) &&
-                windowsIntersect(item.window as any, c.window as any)
+                windowsIntersect(item.window as any, c.window as any),
             )
-            const meta = [state, eta].filter(Boolean).join(' · ')
+
+            const impact = typeof item.strength === 'number' ? Math.max(0, Math.min(1, item.strength / 100)) : null
 
             return (
-              <View key={i} style={[styles.card, { borderLeftColor: natureColor(nature) }]}>
-                <Text style={[styles.cardTitle, { color: natureColor(nature) }]}>
-                  {title}
-                  {hasSynergy ? <Text style={styles.synergy}>  ✦ {t('transits.personal.synergy')}</Text> : null}
-                </Text>
-                {!!meta && <Text style={styles.cardMeta}>{meta}</Text>}
-                {!!item.house && (
-                  <Text style={styles.cardHouse}>{t('analysis.house')} {item.house}</Text>
-                )}
+              <View key={key} style={styles.cardWrap}>
+                <TransitInsightCard
+                  statusLabel={nature.label}
+                  statusColor={nature.color}
+                  title={hasSynergy ? `${title}  ✦` : title}
+                  houseLabel={item.house ? String(item.house) : null}
+                  houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
+                  timingLabel={timing || null}
+                  impactValue01={impact}
+                  directText={narrative.shortText}
+                  fullText={narrative.modalBody}
+                  fullTitle={tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')}
+                  actionText={narrative.actionText || null}
+                  metaText={narrative.metaText || null}
+                  fullExpanded={!!expanded[key]}
+                  onToggleFull={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  detailMode="inline"
+                />
               </View>
             )
           })
@@ -86,33 +127,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 14,
   },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  synergy: {
-    color: '#C4B5FD',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardMeta: {
-    color: '#A0AEC0',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  cardHouse: {
-    color: '#CBD5E1',
-    fontSize: 11,
-    marginTop: 2,
-  },
+  cardWrap: { marginBottom: 12 },
   emptyCard: {
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 12,

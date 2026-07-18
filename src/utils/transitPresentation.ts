@@ -187,11 +187,24 @@ export function buildTransitTitle(params: {
         .filter((value): value is number => value !== null)
     : []
   const areaHousesLabel = areaHouses.length ? areaHouses.join('/') : ''
+  // Rótulos "(trânsito)" / "(natal)". Só entram nos ramos cujo ALVO é um ponto
+  // natal (planeta ou ângulo) — nos ramos de casa/ingresso a frase já diz "em
+  // trânsito na Casa X" e o rótulo seria redundante. Sem isso, títulos como
+  // "Lua □ Lua" ou "Plutão △ Júpiter" não dizem qual lado é qual.
+  const transitTag =
+    language === 'en-US' ? 'transit' :
+    language === 'es-ES' ? 'transito' :
+    language === 'it-IT' ? 'transito' : 'trânsito'
+  const natalTag =
+    language === 'it-IT' ? 'natale' : 'natal'
+  const withTransitTag = (name: string) => `${name} (${transitTag})`
+  const withNatalTag = (name: string) => `${name} (${natalTag})`
+
   const targetIsHouse = isHouseLikeTarget(targetLabel)
   const targetHouseNumber = targetLabel ? parseHouseNumberFromText(targetLabel) : null
 
   if (aspectText && targetLabel && !targetIsHouse) {
-    return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${targetLabel}`.trim()
+    return `${withTransitTag(transitPlanet)} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''} ${withNatalTag(targetLabel)}`.trim()
   }
   if (aspectLabel && targetIsHouse) {
     const houseLabel = targetHouseNumber
@@ -223,10 +236,12 @@ export function buildTransitTitle(params: {
     return `${transitPlanet} em transito nas Casas ${areaHousesLabel}`
   }
   if (targetLabel) {
-    if (language === 'en-US') return `${transitPlanet} with ${targetLabel}`
-    if (language === 'es-ES') return `${transitPlanet} con ${targetLabel}`
-    if (language === 'it-IT') return `${transitPlanet} con ${targetLabel}`
-    return `${transitPlanet} com ${targetLabel}`
+    const t = withTransitTag(transitPlanet)
+    const n = withNatalTag(targetLabel)
+    if (language === 'en-US') return `${t} with ${n}`
+    if (language === 'es-ES') return `${t} con ${n}`
+    if (language === 'it-IT') return `${t} con ${n}`
+    return `${t} com ${n}`
   }
   if (aspectText) return `${transitPlanet} ${aspectText}${aspectSymbol ? ` ${aspectSymbol}` : ''}`.trim()
   if (language === 'en-US') return `${transitPlanet} in active transit`
