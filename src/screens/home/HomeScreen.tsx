@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -246,18 +247,37 @@ export default function HomeScreen() {
   }, [backendFresh, backendLifeAreas, transitData?.lifeAreas])
 
   // Trânsito mais intenso do dia para a frase explicativa do score
+  const navigation = useNavigation<any>()
+
+  // Headline = trânsito pessoal (trânsito→natal) de maior força. Mesma fonte da tela
+  // PersonalTransits, então o texto do card bate com o 1º item da lista que ele abre.
   const topTransit = React.useMemo(() => {
-    const comparisons = transitData?.currentTransits?.planetComparisons
-    if (!Array.isArray(comparisons) || comparisons.length === 0) return null
+    const rich = transitData?.dailyOverview?.personalTodayRich
+    if (!Array.isArray(rich) || rich.length === 0) return null
     let best: { planet1: string; type: string; planet2: string; strength: number } | null = null
-    for (const comp of comparisons) {
-      for (const asp of (comp.planetaryAspects || [])) {
-        if (!best || asp.strength > best.strength) {
-          best = { planet1: asp.planet1, type: asp.type, planet2: asp.planet2, strength: asp.strength }
-        }
+    for (const item of rich as any[]) {
+      const strength = typeof item?.strength === 'number' ? item.strength : 0
+      if (!best || strength > best.strength) {
+        // planet1 = planeta em trânsito; planet2 = planeta natal ("com seu ...")
+        best = { planet1: item.transitPlanet, type: item.type, planet2: item.natalPlanet, strength }
       }
     }
     return best
+  }, [transitData?.dailyOverview?.personalTodayRich])
+
+  // Signos de Sol e Lua natais para o header (já vêm em pt-BR do engine).
+  const natalSunSign = React.useMemo(() => {
+    const comparisons = transitData?.currentTransits?.planetComparisons
+    return Array.isArray(comparisons)
+      ? (comparisons as any[]).find((c) => c?.name === 'Sun')?.natal?.sign
+      : undefined
+  }, [transitData?.currentTransits?.planetComparisons])
+
+  const natalMoonSign = React.useMemo(() => {
+    const comparisons = transitData?.currentTransits?.planetComparisons
+    return Array.isArray(comparisons)
+      ? (comparisons as any[]).find((c) => c?.name === 'Moon')?.natal?.sign
+      : undefined
   }, [transitData?.currentTransits?.planetComparisons])
 
   const orderedLifeAreas = React.useMemo(() => {
@@ -402,7 +422,7 @@ export default function HomeScreen() {
         }
       >
         {/* Header */}
-        <HomeHeader />
+        <HomeHeader sunSign={natalSunSign} moonSign={natalMoonSign} />
 
         {/* Score diário com explicação do trânsito mais intenso */}
         {(backendStatusPersonal?.score != null || topTransit) && (() => {
@@ -438,7 +458,13 @@ export default function HomeScreen() {
             : '#FFD700'
           return (
             <AnimatedMount>
-              <View style={styles.dailyScoreCard}>
+              <TouchableOpacity
+                style={styles.dailyScoreCard}
+                activeOpacity={0.7}
+                onPress={() => { try { navigation.navigate('PersonalTransits') } catch { } }}
+                accessibilityRole="button"
+                accessibilityLabel={tl('Ver todos os trânsitos', 'See all transits', 'Ver todos los tránsitos', 'Vedi tutti i transiti')}
+              >
                 {score != null && (
                   <View style={styles.dailyScoreCircle}>
                     <Text style={[styles.dailyScoreNumber, { color: scoreColor }]}>{score}</Text>
@@ -450,10 +476,11 @@ export default function HomeScreen() {
                     <Text style={[styles.dailyScoreLevel, { color: scoreColor }]}>{levelLabel}</Text>
                   )}
                   {transitText && (
-                    <Text style={styles.dailyScoreTransit} numberOfLines={2}>{transitText}</Text>
+                    <Text style={styles.dailyScoreTransit} numberOfLines={1}>{transitText}</Text>
                   )}
                 </View>
-              </View>
+                <Ionicons name="chevron-forward" size={18} color="#8888AA" style={styles.dailyScoreChevron} />
+              </TouchableOpacity>
             </AnimatedMount>
           )
         })()}
@@ -641,25 +668,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   dailyScoreCircle: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginRight: 14,
+    marginRight: 12,
   },
   dailyScoreNumber: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   dailyScoreMax: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#888',
     marginLeft: 2,
   },
@@ -667,14 +694,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dailyScoreLevel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   dailyScoreTransit: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#B0B0C0',
-    lineHeight: 17,
+    lineHeight: 15,
+  },
+  dailyScoreChevron: {
+    marginLeft: 8,
   },
   sectionHeader: {
     flexDirection: 'row',

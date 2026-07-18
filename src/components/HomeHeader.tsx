@@ -5,14 +5,19 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useAuth } from '../hooks/useAuth'
 import { useAppLanguage } from '../hooks/useAppLanguage'
-import { decodeUnicodeEscapes } from '../utils/astro/pt'
+import { decodeUnicodeEscapes, translateSignName } from '../utils/astro/pt'
 import MoonPhaseButton from './MoonPhaseButton'
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function HomeHeader() {
+interface HomeHeaderProps {
+  sunSign?: string
+  moonSign?: string
+}
+
+export default function HomeHeader({ sunSign, moonSign }: HomeHeaderProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -87,24 +92,22 @@ export default function HomeHeader() {
         </View>
         <View style={styles.headerContent}>
           <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {displayName}!</Text>
-          {userProfile?.natalAscDeg != null && (() => {
+          {(() => {
+            let ascSign: string | undefined
             try {
-              const { degToSign: d2s } = require('../astro')
-              const { sign } = d2s(userProfile.natalAscDeg)
-              const SIGN_SYM: Record<string, string> = {
-                Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
-                Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏',
-                Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
+              if (userProfile?.natalAscDeg != null) {
+                const { degToSign: d2s } = require('../astro')
+                ascSign = d2s(userProfile.natalAscDeg)?.sign
               }
-              return (
-                <Text style={styles.ascLabel}>
-                  Asc {SIGN_SYM[sign] || ''} {sign}
-                </Text>
-              )
-            } catch { return null }
+            } catch { ascSign = undefined }
+            const parts: string[] = []
+            if (sunSign) parts.push(`${tl('Signo', 'Sun', 'Signo', 'Segno')} ${translateSignName(sunSign, language)}`)
+            if (ascSign) parts.push(`Asc ${translateSignName(ascSign, language)}`)
+            if (moonSign) parts.push(`${tl('Lua', 'Moon', 'Luna', 'Luna')} ${translateSignName(moonSign, language)}`)
+            if (!parts.length) return null
+            return <Text style={styles.signLine}>{parts.join('  ·  ')}</Text>
           })()}
-          <Text style={styles.houseSystemLabel}>{tl('Data Gregoriana', 'Gregorian Date', 'Fecha gregoriana', 'Data gregoriana')}</Text>
-          <Text style={styles.date}>{formattedDate}</Text>
+          <Text style={styles.date}>{tl('Hoje', 'Today', 'Hoy', 'Oggi')} · {formattedDate}</Text>
         </View>
       </View>
 
@@ -159,16 +162,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 4,
   },
-  ascLabel: {
-    fontSize: 11,
-    color: 'rgba(255,215,0,0.7)',
-    marginBottom: 1,
-  },
-  houseSystemLabel: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    marginTop: 2,
-    lineHeight: 15,
+  signLine: {
+    fontSize: 12,
+    color: 'rgba(255,215,0,0.8)',
+    marginBottom: 2,
     flexShrink: 1,
   },
   date: {

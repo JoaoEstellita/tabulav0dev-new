@@ -175,6 +175,38 @@ export function translatePlanet(name: string, language: AppLanguage = 'pt-BR'): 
   return dictionary[key] || PLANET_BY_LANGUAGE['pt-BR'][key] || decoded
 }
 
+// Tradução de signos. A entrada costuma vir em pt-BR (engine astrológico), mas
+// aceitamos aliases em qualquer idioma via chave normalizada (sem acento/minúscula).
+const SIGN_ALIAS_TO_INDEX: Record<string, number> = {
+  aries: 0,
+  taurus: 1, touro: 1, tauro: 1, toro: 1,
+  gemini: 2, gemeos: 2, geminis: 2, gemelli: 2,
+  cancer: 3, cancro: 3,
+  leo: 4, leao: 4, leone: 4,
+  virgo: 5, virgem: 5, vergine: 5,
+  libra: 6, bilancia: 6,
+  scorpio: 7, escorpiao: 7, escorpio: 7, scorpione: 7,
+  sagittarius: 8, sagitario: 8, sagittario: 8,
+  capricorn: 9, capricornio: 9, capricorno: 9,
+  aquarius: 10, aquario: 10, acuario: 10, acquario: 10,
+  pisces: 11, peixes: 11, piscis: 11, pesci: 11,
+}
+
+const SIGN_NAMES_BY_LANGUAGE: Record<AppLanguage, string[]> = {
+  'pt-BR': ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
+  'en-US': ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
+  'es-ES': ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis'],
+  'it-IT': ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci'],
+}
+
+export function translateSignName(value: string, language: AppLanguage = 'pt-BR'): string {
+  const decoded = decodeUnicodeEscapes(value)
+  const idx = SIGN_ALIAS_TO_INDEX[normalizeText(decoded)]
+  if (idx == null) return decoded
+  const names = SIGN_NAMES_BY_LANGUAGE[language] || SIGN_NAMES_BY_LANGUAGE['pt-BR']
+  return names[idx] || decoded
+}
+
 export function getAspectSymbol(type: string): string {
   const key = normalizeText(type) as AspectType
   return ASPECT_SYMBOL[key] || type

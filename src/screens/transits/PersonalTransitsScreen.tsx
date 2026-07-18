@@ -19,7 +19,11 @@ export default function PersonalTransitsScreen() {
   })
 
   const collective = (transitData?.dailyOverview?.collectiveKeyAspectsRich || []).filter((a: any) => a.planet1 !== a.planet2)
+  // Ordena por importância (força do trânsito) desc; desempate pela data do pico.
   const list = personal.slice().sort((a: any, b: any) => {
+    const as = typeof a?.strength === 'number' ? a.strength : 0
+    const bs = typeof b?.strength === 'number' ? b.strength : 0
+    if (bs !== as) return bs - as
     const ax = new Date(a?.window?.exact || a?.window?.start || Date.now()).getTime()
     const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
     return ax - bx

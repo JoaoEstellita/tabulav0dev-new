@@ -56,7 +56,7 @@ export interface LocalTransitData {
     // Lista completa de trânsitos pessoais de hoje (sem porcentagem por item)
     personalToday?: string[]
     // Versões ricas com janela para navegação e exibição de datas
-    personalTodayRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
+    personalTodayRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; strength?: number; house?: number; window?: { start?: string; exact?: string; end?: string; days?: number } }>
     weeklyPersonalRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
     monthlyPersonalRich?: Array<{ transitPlanet: string; natalPlanet: string; type: string; window?: { start?: string; exact?: string; end?: string; days?: number } }>
   }
@@ -420,6 +420,8 @@ export class LocalAstrologyService {
         transitPlanet: t.transitPlanet,
         natalPlanet: t.natalPlanet,
         type: t.type,
+        // strength (0-100) usado para ordenar por importância na Home e na tela PersonalTransits
+        strength: typeof t.strength === 'number' ? t.strength : 0,
         house: t.natalHouseImpacted || undefined,
         window: t.window ? { ...t.window, days: (t.windowDays || undefined) } : undefined,
       })),
