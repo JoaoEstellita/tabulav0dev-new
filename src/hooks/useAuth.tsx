@@ -16,6 +16,7 @@ import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
 import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
+import { backendFetch } from "../services/backend/client"
 
 interface AuthContextType {
   user: User | null
@@ -396,13 +397,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (__DEV__) console.log('Iniciando exclusao de conta...')
 
-      // Deletar dados do Firestore primeiro
-      await deleteDoc(doc(db, 'users', currentUser.uid))
-      if (__DEV__) console.log('Dados do Firestore deletados')
-
-      // Deletar conta do Firebase Auth
-      await deleteUser(currentUser)
-      if (__DEV__) console.log('Conta deletada com sucesso')
+      // A exclusão roda no backend porque o Firestore NÃO apaga subcoleções em
+      // cascata: apagar users/{uid} daqui deixava para trás o histórico de
+      // conversas (users/{uid}/waMessages), caches, status, assinatura e a
+      // participação em grupos. O endpoint varre tudo e só então remove o login.
+      try {
+        await backendFetch('/api/delete-account', { method: 'POST', auth: true, timeoutMs: 30000 })
+        if (__DEV__) console.log('Dados apagados no backend (cascata)')
+        return
+      } catch (backendError) {
+        // Fallback: se o backend estiver fora, ainda assim tira o essencial do ar
+        // (doc principal + login). O resto fica para uma nova tentativa.
+        console.warn('delete-account indisponivel, aplicando fallback local:', backendError)
+        await deleteDoc(doc(db, 'users', currentUser.uid))
+        await deleteUser(currentUser)
+        if (__DEV__) console.log('Conta deletada (fallback local)')
+      }
 
     } catch (error) {
       console.error('Erro ao deletar conta:', error)
