@@ -1528,11 +1528,25 @@ export default function ForecastScreen() {
       {!loading && !error && data && (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.areaSummarySection}>
+            {/* Título encurtado para abrir espaço ao botão da Linha do Tempo (que veio
+                do Cosmos) na MESMA linha — com numberOfLines={1} a linha não cresce e
+                nada abaixo desce. */}
             <View style={styles.areaSummaryHeaderRow}>
               <Ionicons name="sparkles-outline" size={16} color="#FFD700" />
-              <Text style={styles.areaSummaryTitle}>
-                {tr('forecast.areaSummary.title', `Como fica cada área nos próximos ${periodDays} dias`, { days: periodDays })}
+              <Text style={styles.areaSummaryTitle} numberOfLines={1}>
+                {tr('forecast.areaSummary.titleShort', `Próximos ${periodDays} dias`, { days: periodDays })}
               </Text>
+              <TouchableOpacity
+                style={styles.timelineButton}
+                onPress={() => { try { (navigation as any).navigate('AstrologyAnalysis') } catch { } }}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+              >
+                <Ionicons name="time-outline" size={14} color="#0F0F23" />
+                <Text style={styles.timelineButtonText} numberOfLines={1}>
+                  {tr('forecast.timeline.button', 'Linha do tempo')}
+                </Text>
+              </TouchableOpacity>
             </View>
             {areaSummaryLoading && !areaSummary && (
               <Text style={styles.areaSummaryHint}>{tr('forecast.areaSummary.loading', 'Lendo seus trânsitos...')}</Text>
@@ -2222,6 +2236,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  timelineButton: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    flexShrink: 0,
+  },
+  timelineButtonText: {
+    color: '#0F0F23',
+    fontSize: 11,
+    fontWeight: '700',
   },
   areaSummaryTitle: {
     color: '#FFFFFF',

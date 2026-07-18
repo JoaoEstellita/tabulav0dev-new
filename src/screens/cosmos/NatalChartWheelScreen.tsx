@@ -14,6 +14,7 @@ import Svg, { Circle, Line, Path, Text as SvgText, G } from 'react-native-svg'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import type { LocalTransitData } from '../../services/astrology/LocalAstrologyService'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
@@ -58,8 +59,16 @@ function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────
-export default function NatalChartWheelScreen() {
-  const { transitData, loading } = useLifeAreas()
+type ChartContentProps = { transitData: LocalTransitData | null; loading: boolean }
+
+/**
+ * Conteúdo da roda, SEM container próprio (nem LinearGradient nem ScrollView).
+ * Recebe os dados por prop de propósito: useLifeAreas não é contexto — cada
+ * chamada cria uma instância com estado próprio. Quem monta a tela chama o hook
+ * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
+ * disparar o cálculo astrológico três vezes.
+ */
+export function NatalChartWheelContent({ transitData, loading }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -168,21 +177,18 @@ export default function NatalChartWheelScreen() {
 
   if (loading && natalPlanets.length === 0) {
     return (
-      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-        <View style={styles.center}>
-          <StarLoader size={32} color="#FFD700" />
-          <Text style={styles.loadingText}>
-            {tl('Calculando mapa natal…', 'Calculating natal chart…', 'Calculando carta natal…', 'Calcolo carta natale…')}
-          </Text>
-        </View>
-      </LinearGradient>
+      <View style={styles.center}>
+        <StarLoader size={32} color="#FFD700" />
+        <Text style={styles.loadingText}>
+          {tl('Calculando mapa natal…', 'Calculating natal chart…', 'Calculando carta natal…', 'Calcolo carta natale…')}
+        </Text>
+      </View>
     )
   }
 
   return (
-    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={Platform.OS === 'web'}>
-        {/* Roda SVG */}
+    <>
+      {/* Roda SVG */}
         <View style={styles.wheelWrap}>
           <Svg width={svgSize} height={svgSize}>
             {/* Fundo */}
@@ -318,7 +324,6 @@ export default function NatalChartWheelScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
 
       {/* Modal de detalhe do planeta */}
       <Modal
@@ -354,6 +359,18 @@ export default function NatalChartWheelScreen() {
           )}
         </TouchableOpacity>
       </Modal>
+    </>
+  )
+}
+
+/** Tela standalone (deep link /mapa) — mantém o container e o scroll próprios. */
+export default function NatalChartWheelScreen() {
+  const { transitData, loading } = useLifeAreas()
+  return (
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={Platform.OS === 'web'}>
+        <NatalChartWheelContent transitData={transitData} loading={loading} />
+      </ScrollView>
     </LinearGradient>
   )
 }

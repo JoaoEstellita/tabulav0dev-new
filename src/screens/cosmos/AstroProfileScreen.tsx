@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import type { LocalTransitData } from '../../services/astrology/LocalAstrologyService'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
@@ -191,8 +192,16 @@ const expandStyles = StyleSheet.create({
   },
 })
 
-export default function AstroProfileScreen() {
-  const { transitData, loading } = useLifeAreas()
+type ProfileContentProps = { transitData: LocalTransitData | null; loading: boolean }
+
+/**
+ * Conteúdo do Perfil, SEM container próprio (nem LinearGradient nem ScrollView).
+ * Recebe os dados por prop de propósito: useLifeAreas não é contexto — cada
+ * chamada cria uma instância com estado próprio. Quem monta a tela chama o hook
+ * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
+ * disparar o cálculo astrológico três vezes.
+ */
+export function AstroProfileContent({ transitData, loading }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -412,22 +421,15 @@ export default function AstroProfileScreen() {
 
   if (loading && natalPlanets.length === 0) {
     return (
-      <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-        <View style={styles.center}>
-          <StarLoader size={32} color="#FFD700" />
-          <Text style={styles.loadingText}>{tl('Calculando perfil…', 'Calculating profile…', 'Calculando perfil…', 'Calcolo profilo…')}</Text>
-        </View>
-      </LinearGradient>
+      <View style={styles.center}>
+        <StarLoader size={32} color="#FFD700" />
+        <Text style={styles.loadingText}>{tl('Calculando perfil…', 'Calculating profile…', 'Calculando perfil…', 'Calcolo profilo…')}</Text>
+      </View>
     )
   }
 
   return (
-    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={Platform.OS === 'web'}
-      >
+    <>
         {/* Regente do Mapa */}
         {chartRuler ? (
           <View style={styles.card}>
@@ -719,6 +721,21 @@ export default function AstroProfileScreen() {
             ))}
           </View>
         )}
+    </>
+  )
+}
+
+/** Tela standalone (deep link /perfil) — mantém o container e o scroll próprios. */
+export default function AstroProfileScreen() {
+  const { transitData, loading } = useLifeAreas()
+  return (
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
+      >
+        <AstroProfileContent transitData={transitData} loading={loading} />
       </ScrollView>
     </LinearGradient>
   )

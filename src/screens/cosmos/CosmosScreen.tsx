@@ -15,6 +15,8 @@ import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { NatalChartWheelContent } from './NatalChartWheelScreen'
+import { AstroProfileContent } from './AstroProfileScreen'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
@@ -335,28 +337,11 @@ export default function CosmosScreen() {
           </Text>
         </View>
 
-        {/* Seção gratuita */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            {tl('Explorar', 'Explore', 'Explorar', 'Esplora')}
-          </Text>
-          {FREE_FEATURES.map(renderCard)}
-        </View>
-
-        {/* Seção premium */}
-        <View style={styles.section}>
-          <View style={styles.sectionLabelRow}>
-            <Text style={styles.sectionLabel}>Premium</Text>
-            {!isPremium && (
-              <TouchableOpacity onPress={() => (navigation as any).navigate('Premium')}>
-                <Text style={styles.unlockCta}>
-                  {tl('Desbloquear ✦', 'Unlock ✦', 'Desbloquear ✦', 'Sblocca ✦')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {PREMIUM_FEATURES.map(renderCard)}
-        </View>
+        {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
+            entrega o conteúdo de cara, sem exigir dois toques. O hook roda UMA vez
+            aqui e os dados descem por prop (useLifeAreas não é contexto). */}
+        <NatalChartWheelContent transitData={transitData} loading={loading} />
+        <AstroProfileContent transitData={transitData} loading={loading} />
       </ScrollView>
     </LinearGradient>
   )
