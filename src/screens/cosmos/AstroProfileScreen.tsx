@@ -99,30 +99,43 @@ const barStyles = StyleSheet.create({
 })
 
 /**
- * Texto curado com "ver mais/ver menos". Os textos do catálogo são longos e a tela
- * ficou densa depois de trazer as 12 casas + regentes: colapsar por padrão mantém a
- * leitura navegável sem esconder conteúdo. Só mostra o toggle quando vale a pena.
+ * Lista de aspectos natais de um planeta, colapsada.
+ *
+ * Os textos curados têm 192–465 chars (cabem inteiros), então colapsar CADA texto
+ * só gerava ruído — um "ver mais" que revelava meia linha. A densidade real vem da
+ * QUANTIDADE de aspectos por planeta, então o corte é aqui: mostra os mais exatos e
+ * abre o resto sob demanda. Nenhum aspecto é escondido da contagem.
  */
-function ExpandableText({
-  text,
+function AspectList({
+  entries,
   language,
-  style,
-  lines = 4,
-}: { text: string; language: string; style?: any; lines?: number }) {
+  initial = 2,
+}: {
+  entries: { label: string; text: string | null; orb: number | null }[]
+  language: string
+  initial?: number
+}) {
   const [expanded, setExpanded] = useState(false)
-  const value = String(text || '')
-  const needsToggle = value.length > 200
-  const label = expanded
-    ? (language === 'en-US' ? 'Show less' : language === 'es-ES' ? 'Ver menos' : language === 'it-IT' ? 'Mostra meno' : 'Ver menos')
-    : (language === 'en-US' ? 'Read more' : language === 'es-ES' ? 'Ver mas' : language === 'it-IT' ? 'Leggi di piu' : 'Ver mais')
+  const hidden = entries.length - initial
+  const shown = expanded ? entries : entries.slice(0, initial)
+  const more = language === 'en-US' ? `Show ${hidden} more aspect${hidden > 1 ? 's' : ''}`
+    : language === 'es-ES' ? `Ver ${hidden} aspecto${hidden > 1 ? 's' : ''} mas`
+    : language === 'it-IT' ? `Mostra altri ${hidden} aspetti`
+    : `Ver mais ${hidden} aspecto${hidden > 1 ? 's' : ''}`
+  const less = language === 'en-US' ? 'Show less' : language === 'es-ES' ? 'Ver menos' : language === 'it-IT' ? 'Mostra meno' : 'Ver menos'
   return (
     <View>
-      <Text style={style} numberOfLines={needsToggle && !expanded ? lines : undefined}>
-        {value}
-      </Text>
-      {needsToggle ? (
+      {shown.map((a, i) => (
+        <View key={`${a.label}-${i}`} style={i > 0 ? expandStyles.aspectSpacer : undefined}>
+          <Text style={expandStyles.aspectLabel}>
+            {a.label}{a.orb !== null ? `  ·  ${a.orb.toFixed(1)}°` : ''}
+          </Text>
+          {a.text ? <Text style={expandStyles.aspectText}>{a.text}</Text> : null}
+        </View>
+      ))}
+      {hidden > 0 ? (
         <TouchableOpacity onPress={() => setExpanded(v => !v)} activeOpacity={0.7} accessibilityRole="button">
-          <Text style={expandStyles.toggle}>{label}</Text>
+          <Text style={expandStyles.toggle}>{expanded ? less : more}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -134,7 +147,19 @@ const expandStyles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 6,
+  },
+  aspectSpacer: { marginTop: 10 },
+  aspectLabel: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  aspectText: {
+    color: '#C8CDE8',
+    fontSize: 13,
+    lineHeight: 19,
   },
 })
 
@@ -176,22 +201,23 @@ export default function AstroProfileScreen() {
   // exato para o mais largo. Antes limitava aos 2 mais exatos — um mapa completo
   // (como o do ZET) lista todos, e o dado já está em aspectsNatalToNatal.
   const aspectsByPlanet = useMemo(() => {
-    const out: Record<string, { label: string; text: string }[]> = {}
+    const out: Record<string, { label: string; text: string | null; orb: number | null }[]> = {}
     const list = Array.isArray(ct?.aspectsNatalToNatal) ? ct!.aspectsNatalToNatal : []
     for (const planet of PLANET_ORDER) {
       const mine = list
         .filter(a => a.planet1 === planet || a.planet2 === planet)
         .sort((a, b) => (a.orb ?? 99) - (b.orb ?? 99))
-      const entries: { label: string; text: string }[] = []
+      const entries: { label: string; text: string | null; orb: number | null }[] = []
       for (const a of mine) {
         const other = a.planet1 === planet ? a.planet2 : a.planet1
+        // O aspecto entra SEMPRE. Antes só entrava se houvesse texto curado, então
+        // aspectos reais do mapa sumiam sem aviso e a lista parecia incompleta.
         const text = resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
-        if (text) {
-          entries.push({
-            label: `${translatePlanetPT(planet)} ${a.type} ${translatePlanetPT(other)}`,
-            text,
-          })
-        }
+        entries.push({
+          label: `${translatePlanetPT(planet)} ${a.type} ${translatePlanetPT(other)}`,
+          text: text || null,
+          orb: Number.isFinite(a.orb) ? Number(a.orb) : null,
+        })
       }
       if (entries.length) out[planet] = entries
     }
@@ -411,7 +437,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
               </Text>
-              <ExpandableText text={ascText} language={language} style={styles.angularInterpretationText} />
+              <Text style={styles.angularInterpretationText}>{ascText}</Text>
             </View>
           ) : null}
           {mcText ? (
@@ -419,7 +445,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')}
               </Text>
-              <ExpandableText text={mcText} language={language} style={styles.angularInterpretationText} />
+              <Text style={styles.angularInterpretationText}>{mcText}</Text>
             </View>
           ) : null}
           {dscText ? (
@@ -427,7 +453,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Descendente', 'Descendant', 'Descendente', 'Discendente')}
               </Text>
-              <ExpandableText text={dscText} language={language} style={styles.angularInterpretationText} />
+              <Text style={styles.angularInterpretationText}>{dscText}</Text>
             </View>
           ) : null}
           {icText ? (
@@ -435,7 +461,7 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Fundo do Céu', 'Imum Coeli', 'Fondo del Cielo', 'Fondo Cielo')}
               </Text>
-              <ExpandableText text={icText} language={language} style={styles.angularInterpretationText} />
+              <Text style={styles.angularInterpretationText}>{icText}</Text>
             </View>
           ) : null}
         </View>
@@ -471,23 +497,21 @@ export default function AstroProfileScreen() {
               <Text style={styles.angularInterpretationLabel}>
                 {tl('Eixo de crescimento', 'Growth axis', 'Eje de crecimiento', 'Asse di crescita')}
               </Text>
-              <ExpandableText
-                language={language}
-                style={styles.angularInterpretationText}
-                text={nnText || tl(
+              <Text style={styles.angularInterpretationText}>
+                {nnText || tl(
                   'O Nódulo Norte aponta as qualidades que sua jornada convida a desenvolver nesta vida; o Nódulo Sul indica talentos e padrões já familiares, que tendem a ser zona de conforto. Na tradição evolutiva, esse eixo é lido como direção de crescimento — um convite, não um destino.',
                   'The North Node points to the qualities your journey invites you to develop in this life; the South Node marks familiar talents and patterns that tend to be a comfort zone. In the evolutionary tradition, this axis reads as a direction of growth — an invitation, not a destiny.',
                   'El Nodo Norte apunta a las cualidades que tu camino invita a desarrollar en esta vida; el Nodo Sur indica talentos y patrones ya familiares, que tienden a ser zona de confort. En la tradición evolutiva, este eje se lee como dirección de crecimiento — una invitación, no un destino.',
                   'Il Nodo Nord indica le qualità che il tuo cammino invita a sviluppare in questa vita; il Nodo Sud segnala talenti e schemi già familiari, che tendono a essere zona di comfort. Nella tradizione evolutiva questo asse si legge come direzione di crescita — un invito, non un destino.'
                 )}
-              />
+              </Text>
             </View>
             {nnHouseText ? (
               <View style={styles.angularInterpretation}>
                 <Text style={styles.angularInterpretationLabel}>
                   {tl('Nódulo Norte na Casa', 'North Node in House', 'Nodo Norte en la Casa', 'Nodo Nord nella Casa')} {nnHouse}
                 </Text>
-                <ExpandableText text={nnHouseText} language={language} style={styles.angularInterpretationText} />
+                <Text style={styles.angularInterpretationText}>{nnHouseText}</Text>
               </View>
             ) : null}
           </View>
@@ -514,7 +538,7 @@ export default function AstroProfileScreen() {
             </View>
             {chartRuler.text ? (
               <View style={styles.angularInterpretation}>
-                <ExpandableText text={chartRuler.text} language={language} style={styles.angularInterpretationText} />
+                <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
               </View>
             ) : null}
           </View>
@@ -551,22 +575,17 @@ export default function AstroProfileScreen() {
                   </View>
                 </View>
                 {signText ? (
-                  <ExpandableText text={signText} language={language} style={styles.planetSignText} />
+                  <Text style={styles.planetSignText}>{signText}</Text>
                 ) : null}
                 {houseText ? (
-                  <ExpandableText text={houseText} language={language} style={styles.planetHouseText} />
+                  <Text style={styles.planetHouseText}>{houseText}</Text>
                 ) : null}
                 {aspectsByPlanet[p.name]?.length ? (
                   <View style={styles.planetAspectsBlock}>
                     <Text style={styles.planetAspectsTitle}>
                       {tl('Aspectos natais', 'Natal aspects', 'Aspectos natales', 'Aspetti natali')}
                     </Text>
-                    {aspectsByPlanet[p.name].map((a, i) => (
-                      <View key={i} style={styles.planetAspectItem}>
-                        <Text style={styles.planetAspectLabel}>{a.label}</Text>
-                        <ExpandableText text={a.text} language={language} style={styles.planetAspectText} />
-                      </View>
-                    ))}
+                    <AspectList entries={aspectsByPlanet[p.name]} language={language} />
                   </View>
                 ) : null}
               </View>
@@ -592,7 +611,7 @@ export default function AstroProfileScreen() {
                   <Text style={styles.angularDeg}>{h.degInSign.toFixed(1)}°</Text>
                 </View>
                 {h.text ? (
-                  <ExpandableText text={h.text} language={language} style={styles.angularInterpretationText} />
+                  <Text style={styles.angularInterpretationText}>{h.text}</Text>
                 ) : null}
                 {h.ruler ? (
                   <View style={styles.angularInterpretation}>
@@ -600,7 +619,7 @@ export default function AstroProfileScreen() {
                       {tl('Regente', 'Ruler', 'Regente', 'Governatore')}: {PLANET_SYMBOLS[h.ruler.planet] || ''} {translatePlanetPT(h.ruler.planet)} · {tl('Casa', 'House', 'Casa', 'Casa')} {h.ruler.house}
                     </Text>
                     {h.ruler.text ? (
-                      <ExpandableText text={h.ruler.text} language={language} style={styles.angularInterpretationText} />
+                      <Text style={styles.angularInterpretationText}>{h.ruler.text}</Text>
                     ) : null}
                   </View>
                 ) : null}
