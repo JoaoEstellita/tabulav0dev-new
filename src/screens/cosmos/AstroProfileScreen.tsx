@@ -192,7 +192,15 @@ const expandStyles = StyleSheet.create({
   },
 })
 
-type ProfileContentProps = { transitData: LocalTransitData | null; loading: boolean }
+type ProfileContentProps = {
+  transitData: LocalTransitData | null
+  loading: boolean
+  /**
+   * Registra os nós de cada seção/planeta para quem monta a tela poder rolar até
+   * eles (measureLayout). Opcional: a tela standalone /perfil não usa.
+   */
+  registerAnchor?: (key: string, node: any) => void
+}
 
 /**
  * Conteúdo do Perfil, SEM container próprio (nem LinearGradient nem ScrollView).
@@ -201,7 +209,7 @@ type ProfileContentProps = { transitData: LocalTransitData | null; loading: bool
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function AstroProfileContent({ transitData, loading }: ProfileContentProps) {
+export function AstroProfileContent({ transitData, loading, registerAnchor }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -432,7 +440,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
     <>
         {/* Regente do Mapa */}
         {chartRuler ? (
-          <View style={styles.card}>
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:ruler', n)}>
             <Text style={styles.cardTitle}>
               {tl('Regente do Mapa', 'Chart Ruler', 'Regente de la Carta', 'Governatore del Tema')}
             </Text>
@@ -459,7 +467,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
         ) : null}
 
         {/* Planetas natais */}
-        <View style={styles.card}>
+        <View style={styles.card} ref={(n) => registerAnchor?.('section:planets', n)}>
           <Text style={styles.cardTitle}>
             {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
           </Text>
@@ -467,7 +475,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
             const signText = resolvePlanetInSignText(p.name, p.sign, language)
             const houseText = p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null
             return (
-              <View key={p.name} style={styles.planetBlock}>
+              <View key={p.name} style={styles.planetBlock} ref={(n) => registerAnchor?.(`planet:${p.name}`, n)}>
                 <View style={styles.planetRow}>
                   <View style={styles.planetAvatarWrap}>
                     <PlanetAvatar name={p.name} size={34} />
@@ -525,7 +533,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
 
         {/* As 12 Casas — signo na cúspide + texto curado */}
         {houseCusps.length > 0 ? (
-          <View style={styles.card}>
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:houses', n)}>
             <Text style={styles.cardTitle}>
               {tl('As 12 Casas', 'The 12 Houses', 'Las 12 Casas', 'Le 12 Case')}
             </Text>
@@ -559,7 +567,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
         ) : null}
 
         {/* Ascendente + MC */}
-        <View style={styles.card}>
+        <View style={styles.card} ref={(n) => registerAnchor?.('section:angles', n)}>
           <Text style={styles.cardTitle}>
             {tl('Pontos Angulares', 'Angular Points', 'Puntos Angulares', 'Punti Angolari')}
           </Text>
@@ -639,7 +647,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
 
         {/* Nódulos Lunares */}
         {nnSign && snSign ? (
-          <View style={styles.card}>
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:nodes', n)}>
             <Text style={styles.cardTitle}>
               {tl('Nódulos Lunares', 'Lunar Nodes', 'Nodos Lunares', 'Nodi Lunari')}
             </Text>
@@ -690,7 +698,7 @@ export function AstroProfileContent({ transitData, loading }: ProfileContentProp
 
         {/* Análise elemental */}
         {elemental && (
-          <View style={styles.card}>
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:elements', n)}>
             <Text style={styles.cardTitle}>
               {tl('Distribuição Elemental', 'Elemental Distribution', 'Distribución Elemental', 'Distribuzione Elementale')}
             </Text>

@@ -34,6 +34,7 @@ import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import HomeHeader from '../../components/HomeHeader'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
+import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
 import { getAreaTransitCount } from '../../utils/transitsByArea'
 import { normalizeAxisScore } from '../../utils/statusAxes'
@@ -109,6 +110,7 @@ export default function HomeScreen() {
   const [selectedArea, setSelectedArea] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
+  const [showTop, setShowTop] = useState(false)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
   const uiText = React.useCallback((text: string) => decodeUnicodeEscapes(text), [])
@@ -412,6 +414,8 @@ export default function HomeScreen() {
         ref={scrollRef}
         style={styles.scrollView}
         showsVerticalScrollIndicator={showDesktopScrollbar}
+        scrollEventThrottle={16}
+        onScroll={(e) => setShowTop(e.nativeEvent.contentOffset.y > SCROLL_TOP_THRESHOLD)}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -556,6 +560,10 @@ export default function HomeScreen() {
         {/* Espa\u00E7amento final */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+      <ScrollTopButton
+        visible={showTop}
+        onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
+      />
 
       {/* ?? MODAL DE DETALHES DA \u00C1REA */}
       <LifeAreaDetailModal

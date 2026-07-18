@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
+import PlanetQuickNav from '../../components/PlanetQuickNav'
+import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
@@ -214,11 +216,45 @@ const PREMIUM_FEATURES: FeatureCard[] = [
   },
 ]
 
+const SECTION_CHIPS = [
+  { key: 'section:ruler', pt: 'Regente', en: 'Ruler', es: 'Regente', it: 'Governatore' },
+  { key: 'section:houses', pt: '12 Casas', en: '12 Houses', es: '12 Casas', it: '12 Case' },
+  { key: 'section:angles', pt: 'Angulares', en: 'Angles', es: 'Angulares', it: 'Angoli' },
+  { key: 'section:nodes', pt: 'Nódulos', en: 'Nodes', es: 'Nodos', it: 'Nodi' },
+  { key: 'section:elements', pt: 'Elementos', en: 'Elements', es: 'Elementos', it: 'Elementi' },
+]
+
 export default function CosmosScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
   const { subscription, isInTrial } = useSubscription()
   const { transitData, loading } = useLifeAreas()
+
+  // Navegação por seção: cada bloco do Perfil registra seu nó aqui e o chip usa
+  // measureLayout para achar a posição real dentro do ScrollView. Não dá para usar
+  // âncora DOM como a Home faz — é web-only e colidiria com os IDs de lá.
+  const scrollRef = useRef<ScrollView>(null)
+  const anchorsRef = useRef<Record<string, any>>({})
+  const [showTop, setShowTop] = useState(false)
+
+  const registerAnchor = useCallback((key: string, node: any) => {
+    if (node) anchorsRef.current[key] = node
+    else delete anchorsRef.current[key]
+  }, [])
+
+  const scrollToAnchor = useCallback((key: string) => {
+    const node = anchorsRef.current[key]
+    const scroll = scrollRef.current as any
+    if (!node || !scroll) return
+    try {
+      const scrollNode = scroll.getScrollableNode ? scroll.getScrollableNode() : scroll
+      node.measureLayout(
+        scrollNode,
+        (_x: number, y: number) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }),
+        () => { },
+      )
+    } catch { }
+  }, [])
   const { language } = useAppLanguage()
 
   const isPremium = subscription?.status === 'active' || isInTrial
@@ -299,11 +335,14 @@ export default function CosmosScreen() {
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
         scrollEnabled={true}
         keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        onScroll={(e) => setShowTop(e.nativeEvent.contentOffset.y > SCROLL_TOP_THRESHOLD)}
       >
         {/* Hero */}
         <View style={styles.hero}>
@@ -340,9 +379,36 @@ export default function CosmosScreen() {
         {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
             entrega o conteúdo de cara, sem exigir dois toques. O hook roda UMA vez
             aqui e os dados descem por prop (useLifeAreas não é contexto). */}
-        <NatalChartWheelContent transitData={transitData} loading={loading} />
-        <AstroProfileContent transitData={transitData} loading={loading} />
+        {/* Legenda desligada: o Perfil logo abaixo já mostra cada planeta com signo,
+            grau, casa, aspectos e regências. Na tela /mapa standalone ela continua. */}
+        <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} />
+
+        {/* Navegação: chips das seções acima, fita de planetas abaixo (mesma da Home) */}
+        <View style={styles.navBar}>
+          <View style={styles.navChips}>
+            {SECTION_CHIPS.map((c) => (
+              <TouchableOpacity
+                key={c.key}
+                style={styles.navChip}
+                activeOpacity={0.8}
+                onPress={() => scrollToAnchor(c.key)}
+              >
+                <Text style={styles.navChipText}>{tl(c.pt, c.en, c.es, c.it)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <PlanetQuickNav
+            onSelectPlanet={(planet) => scrollToAnchor(`planet:${planet}`)}
+            showCosmosEntry={false}
+          />
+        </View>
+
+        <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
       </ScrollView>
+      <ScrollTopButton
+        visible={showTop}
+        onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
+      />
     </LinearGradient>
   )
 }
@@ -354,6 +420,33 @@ const styles = StyleSheet.create({
   // estática, o ScrollView interno não rola). As outras telas do RootStack não
   // usam overflow:hidden e rolam normal. minHeight:0 basta para o flex encolher.
   container: { flex: 1, minHeight: 0 },
+  navBar: {
+    paddingTop: 4,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  navChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
+  navChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.35)',
+    backgroundColor: 'rgba(255,215,0,0.08)',
+  },
+  navChipText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { paddingBottom: 40 },
 

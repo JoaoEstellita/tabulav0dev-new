@@ -59,7 +59,16 @@ function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────
-type ChartContentProps = { transitData: LocalTransitData | null; loading: boolean }
+type ChartContentProps = {
+  transitData: LocalTransitData | null
+  loading: boolean
+  /**
+   * A legenda lista cada planeta com grau e signo. No Cosmos ela é redundante —
+   * o Perfil logo abaixo mostra o mesmo e muito mais. Mas na tela /mapa standalone
+   * não há Perfil nenhum: sem a legenda o usuário fica sem as posições.
+   */
+  showLegend?: boolean
+}
 
 /**
  * Conteúdo da roda, SEM container próprio (nem LinearGradient nem ScrollView).
@@ -68,7 +77,7 @@ type ChartContentProps = { transitData: LocalTransitData | null; loading: boolea
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -305,6 +314,7 @@ export function NatalChartWheelContent({ transitData, loading }: ChartContentPro
         </View>
 
         {/* Legenda de planetas */}
+        {showLegend ? (
         <View style={styles.legend}>
           {planetPositions.map(p => (
             <TouchableOpacity
@@ -324,6 +334,7 @@ export function NatalChartWheelContent({ transitData, loading }: ChartContentPro
             </TouchableOpacity>
           ))}
         </View>
+        ) : null}
 
       {/* Modal de detalhe do planeta */}
       <Modal

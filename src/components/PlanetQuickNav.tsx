@@ -77,7 +77,20 @@ function MiniWheelIcon({ size = 40 }: { size?: number }) {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function PlanetQuickNav() {
+type PlanetQuickNavProps = {
+  /**
+   * Quando fornecido, substitui o scroll por âncora DOM. Isso importa por dois
+   * motivos: (1) o scroll por getElementById é web-only e não faz nada no nativo;
+   * (2) as âncoras 'tabula-planet-*' são criadas na Home — como as abas ficam
+   * montadas, reusá-las noutra tela faria o getElementById devolver o nó da Home
+   * (oculto) e o scroll ia para o lugar errado.
+   */
+  onSelectPlanet?: (planet: PlanetKey) => void
+  /** O atalho "Tábula Estelar" não faz sentido dentro do próprio Cosmos. */
+  showCosmosEntry?: boolean
+}
+
+export default function PlanetQuickNav({ onSelectPlanet, showCosmosEntry = true }: PlanetQuickNavProps = {}) {
   const navigation = useNavigation()
   const [failedPlanetImages, setFailedPlanetImages] = useState<Record<string, boolean>>({})
 
@@ -107,7 +120,7 @@ export default function PlanetQuickNav() {
             style={styles.planetStripItem}
             activeOpacity={0.86}
             delayPressIn={0}
-            onPress={() => scrollToPlanetInTabula(planetItem.planet)}
+            onPress={() => (onSelectPlanet ? onSelectPlanet(planetItem.planet) : scrollToPlanetInTabula(planetItem.planet))}
           >
             {planetItem.imageUri && !failedPlanetImages[planetItem.planet] ? (
               <Image
@@ -134,14 +147,16 @@ export default function PlanetQuickNav() {
       </View>
 
       {/* Botão Cosmos — abaixo dos planetas, centralizado */}
-      <TouchableOpacity
-        style={styles.cosmosEntry}
-        activeOpacity={0.78}
-        onPress={() => (navigation as any).navigate('Cosmos')}
-      >
-        <MiniWheelIcon size={44} />
-        <Text style={styles.cosmosEntryLabel}>Tábula Estelar</Text>
-      </TouchableOpacity>
+      {showCosmosEntry ? (
+        <TouchableOpacity
+          style={styles.cosmosEntry}
+          activeOpacity={0.78}
+          onPress={() => (navigation as any).navigate('Cosmos')}
+        >
+          <MiniWheelIcon size={44} />
+          <Text style={styles.cosmosEntryLabel}>Tábula Estelar</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   )
 }
