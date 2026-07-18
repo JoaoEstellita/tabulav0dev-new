@@ -375,6 +375,19 @@ export default function AstroProfileScreen() {
     }>
   }, [ct?.natalHouses, natalPlanets, language])
 
+  // Casas que cada planeta REGE (inverso de houseCusps.ruler). Um mapa completo
+  // cruza as duas leituras: onde o planeta ESTÁ e quais setores da vida ele governa
+  // — é o "Posição dos regentes da Xª e Yª Casas" que o ZET traz em cada planeta.
+  const housesRuledByPlanet = useMemo(() => {
+    const out: Record<string, number[]> = {}
+    for (const h of houseCusps) {
+      if (!h.ruler) continue
+      if (!out[h.ruler.planet]) out[h.ruler.planet] = []
+      out[h.ruler.planet].push(h.house)
+    }
+    return out
+  }, [houseCusps])
+
   // Regente do mapa: o planeta que rege o signo do Ascendente e a casa que ele ocupa.
   const chartRuler = useMemo(() => {
     if (!ascSign) return null
@@ -475,6 +488,20 @@ export default function AstroProfileScreen() {
                     )}
                   </View>
                 </View>
+                {housesRuledByPlanet[p.name]?.length ? (
+                  <Text style={styles.planetRulesText}>
+                    {(() => {
+                      const hs = housesRuledByPlanet[p.name]
+                      const one = hs.length === 1
+                      const list = one
+                        ? String(hs[0])
+                        : hs.slice(0, -1).join(', ') + ` ${tl('e', 'and', 'y', 'e')} ` + hs[hs.length - 1]
+                      return one
+                        ? tl(`Rege a Casa ${list}`, `Rules House ${list}`, `Rige la Casa ${list}`, `Governa la Casa ${list}`)
+                        : tl(`Rege as Casas ${list}`, `Rules Houses ${list}`, `Rige las Casas ${list}`, `Governa le Case ${list}`)
+                    })()}
+                  </Text>
+                ) : null}
                 {signText ? (
                   <Text style={styles.planetSignText}>{signText}</Text>
                 ) : null}
@@ -809,6 +836,14 @@ const styles = StyleSheet.create({
   rulerInfo: {
     flex: 1,
     minWidth: 0,
+  },
+  planetRulesText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+    marginBottom: 6,
+    opacity: 0.85,
   },
   planetSymbol: {
     fontSize: 16,
