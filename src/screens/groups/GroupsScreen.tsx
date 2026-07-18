@@ -14,6 +14,7 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  ActivityIndicator,
 } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { LinearGradient } from "expo-linear-gradient"
@@ -39,6 +40,8 @@ import { db } from "../../config/firebase"
 import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
+import { translatePlanet } from "../../utils/astro/pt"
+import { computeSynastryAspects, computeNatalLongitudes, type SynastryAspect } from "../../astro/synastry"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
@@ -162,6 +165,11 @@ export default function GroupsScreen() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [groupMessage, setGroupMessage] = useState("")
   const [sendingNotification, setSendingNotification] = useState(false)
+
+  // Sinastria: aspectos entre o mapa do usuário e o de cada membro (Você × cada membro)
+  const [synastryByMember, setSynastryByMember] = useState<Record<string, SynastryAspect[]>>({})
+  const [synastryLoading, setSynastryLoading] = useState(false)
+  const [synastryMineMissing, setSynastryMineMissing] = useState(false)
 
   // Estados para modal de detalhes
   const [showGroupDetail, setShowGroupDetail] = useState(false)
@@ -480,6 +488,57 @@ export default function GroupsScreen() {
       }
     }
   }, [isPremium, selectedGroup?.id])
+
+  // Sinastria: cruza o mapa natal do usuário com o de cada outro membro que compartilha
+  // dados de nascimento. Cálculo pesado (resolve fuso pela coordenada) — roda 1× por
+  // conjunto de membros e é abortável se o grupo mudar antes de terminar.
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!selectedGroup?.id || !user?.uid || groupMembers.length === 0) {
+        setSynastryByMember({})
+        setSynastryMineMissing(false)
+        return
+      }
+      const mineMember = groupMembers.find((member) => member.userId === user.uid)
+      const mineBirth = mineMember?.birthData
+      if (!mineBirth?.datetime || !mineBirth?.coordinates) {
+        setSynastryByMember({})
+        setSynastryMineMissing(true)
+        return
+      }
+      const others = groupMembers.filter(
+        (member) => member.userId !== user.uid && member.birthData?.datetime && member.birthData?.coordinates
+      )
+      setSynastryMineMissing(false)
+      if (others.length === 0) {
+        setSynastryByMember({})
+        return
+      }
+      setSynastryLoading(true)
+      try {
+        const mine = await computeNatalLongitudes(mineBirth)
+        if (cancelled) return
+        if (!mine) {
+          setSynastryByMember({})
+          return
+        }
+        const result: Record<string, SynastryAspect[]> = {}
+        for (const member of others) {
+          const theirs = await computeNatalLongitudes(member.birthData)
+          if (cancelled) return
+          if (theirs) result[member.userId] = computeSynastryAspects(mine, theirs, 5)
+        }
+        if (!cancelled) setSynastryByMember(result)
+      } finally {
+        if (!cancelled) setSynastryLoading(false)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedGroup?.id, user?.uid, groupMembers])
 
   useEffect(() => {
     const params = route?.params || {}
@@ -1889,6 +1948,57 @@ export default function GroupsScreen() {
               })}
             </View>
 
+            {selectedGroup && !synastryMineMissing && (synastryLoading || Object.keys(synastryByMember).length > 0) ? (
+              <View style={styles.synastrySection}>
+                <View style={styles.synastryHeader}>
+                  <Ionicons name="git-compare-outline" size={18} color="#FFD700" />
+                  <Text style={styles.synastryTitle}>{tr('groups.synastry.title', 'Sinastria')}</Text>
+                </View>
+                <Text style={styles.synastrySubtitle}>
+                  {tr('groups.synastry.subtitle', 'Aspectos entre o seu mapa e o de cada membro')}
+                </Text>
+                {synastryLoading && Object.keys(synastryByMember).length === 0 ? (
+                  <ActivityIndicator color="#FFD700" style={{ marginVertical: 14 }} />
+                ) : (
+                  otherMembers
+                    .filter((member) => member.birthData?.datetime && member.birthData?.coordinates)
+                    .map((member) => {
+                      const aspects = synastryByMember[member.userId] || []
+                      return (
+                        <View key={`syn-${member.userId}`} style={styles.synastryCard}>
+                          <Text style={styles.synastryMemberName} numberOfLines={1}>
+                            {member.displayName}
+                          </Text>
+                          {aspects.length === 0 ? (
+                            <Text style={styles.synastryEmpty}>
+                              {tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}
+                            </Text>
+                          ) : (
+                            aspects.map((asp, index) => {
+                              const toneColor =
+                                asp.tone === "harmonioso" ? "#4ECDC4" : asp.tone === "tenso" ? "#FF6B6B" : "#B39DDB"
+                              const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
+                              return (
+                                <View key={`${member.userId}-syn-${index}`} style={styles.synastryRow}>
+                                  <View style={[styles.synastryToneDot, { backgroundColor: toneColor }]} />
+                                  <Text style={styles.synastryAspectText} numberOfLines={1}>
+                                    {`${translatePlanet(asp.mine, language)} ${asp.symbol} ${translatePlanet(asp.theirs, language)}`}
+                                  </Text>
+                                  <Text style={styles.synastryMeta}>{`${toneLabel} · ${asp.orb.toFixed(1)}°`}</Text>
+                                </View>
+                              )
+                            })
+                          )}
+                        </View>
+                      )
+                    })
+                )}
+                <Text style={styles.synastryFootnote}>
+                  {tr('groups.synastry.footnote', 'Leituras detalhadas em breve.')}
+                </Text>
+              </View>
+            ) : null}
+
           </>
         )}
 
@@ -2426,8 +2536,11 @@ export default function GroupsScreen() {
                         const shouldUseSuggestionText = suggestionText.length > 20
                           && !normalizedSuggestion.includes("fase de integracao e calibragem")
                           && !normalizedSuggestion.includes("momento de observacao")
-                        const fullLines = [
-                          unifiedNarrative.modalBody,
+                        const directTrimmed = String(directText || '').trim()
+                        // A interpretação (modalBody) DEVE entrar sempre — ela é o corpo da leitura no modal.
+                        // O filtro !== directText vale só para os EXTRAS (evita duplicar o texto), pois
+                        // modalBody === directText por design (buildUnifiedTransitNarrative) e não pode ser filtrado.
+                        const extraLines = [
                           shouldUseSuggestionText ? suggestionText : "",
                           suggestion?.title
                             ? tr('groups.member.focusTitle', 'Foco: {title}', { title: String(suggestion.title) })
@@ -2438,8 +2551,10 @@ export default function GroupsScreen() {
                         ].filter((line) => {
                           const value = String(line || '').trim()
                           if (!value) return false
-                          return value !== String(directText || '').trim()
+                          return value !== directTrimmed
                         })
+                        const fullLines = [String(unifiedNarrative.modalBody || '').trim(), ...extraLines]
+                          .filter((line) => String(line || '').trim().length > 0)
                         const orbText = Number.isFinite(transit?.orb)
                           ? tr('groups.member.orb', 'Orb {value}deg', { value: Number(transit.orb).toFixed(1) })
                           : ""
@@ -3137,6 +3252,73 @@ const styles = StyleSheet.create({
   memberDetailEmpty: {
     color: "#888",
     fontSize: 11,
+    marginTop: 4,
+  },
+  synastrySection: {
+    marginTop: 8,
+    marginBottom: 16,
+    backgroundColor: "#1A1A3A",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,215,0,0.15)",
+  },
+  synastryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  synastryTitle: {
+    color: "#FFD700",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  synastrySubtitle: {
+    color: "#9AA0C0",
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  synastryCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  synastryMemberName: {
+    color: "#E2E8F0",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  synastryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+    gap: 8,
+  },
+  synastryToneDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  synastryAspectText: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    flex: 1,
+  },
+  synastryMeta: {
+    color: "#8890B5",
+    fontSize: 11,
+  },
+  synastryEmpty: {
+    color: "#888",
+    fontSize: 12,
+  },
+  synastryFootnote: {
+    color: "#6B7099",
+    fontSize: 11,
+    fontStyle: "italic",
     marginTop: 4,
   },
   memberAreaBackdrop: {
