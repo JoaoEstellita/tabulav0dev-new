@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   TouchableOpacity,
+  Image,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { doc, getDoc } from 'firebase/firestore'
@@ -17,6 +18,7 @@ import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { normalizeSign } from '../../astro/normalize'
+import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 
@@ -45,6 +47,32 @@ const SIGN_SYMBOLS: Record<string, string> = {
 // chave em inglês — sem normalizar, o símbolo sumia silenciosamente (|| '').
 const signSymbol = (sign: string): string => SIGN_SYMBOLS[normalizeSign(sign) || ''] || ''
 const signRuler = (sign: string): string | undefined => SIGN_RULER_EN[normalizeSign(sign) || '']
+
+// Imagem do planeta (mesma fonte usada no PlanetQuickNav e nos modais de leitura).
+// Só os 10 planetas têm arte — ângulos (Asc/MC) caem no símbolo textual.
+const planetImage = (name: string): string | undefined => {
+  if (!PLANET_ORDER.includes(name)) return undefined
+  try { return getPlanetImageUri(name as PlanetKey) } catch { return undefined }
+}
+
+/** Avatar do planeta: usa a arte quando existe, senão o glifo. */
+function PlanetAvatar({ name, size = 34 }: { name: string; size?: number }) {
+  const uri = planetImage(name)
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        resizeMode="cover"
+      />
+    )
+  }
+  return (
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#2A2A3E', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: '#FFD700', fontSize: size * 0.5 }}>{PLANET_SYMBOLS[name] || '●'}</Text>
+    </View>
+  )
+}
 
 const ELEMENT_COLORS: Record<string, string> = {
   fire: '#f97316',
@@ -387,6 +415,120 @@ export default function AstroProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
+        {/* Regente do Mapa */}
+        {chartRuler ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {tl('Regente do Mapa', 'Chart Ruler', 'Regente de la Carta', 'Governatore del Tema')}
+            </Text>
+            <View style={styles.rulerRow}>
+              <PlanetAvatar name={chartRuler.planet} size={44} />
+              <View style={styles.rulerInfo}>
+                <Text style={styles.angularLabel}>
+                  {translatePlanetPT(chartRuler.planet)}
+                </Text>
+                <Text style={styles.angularValue}>
+                  {tl('Casa', 'House', 'Casa', 'Casa')} {chartRuler.house}
+                </Text>
+                <Text style={styles.angularDeg}>
+                  {tl('regente de', 'ruler of', 'regente de', 'governatore di')} {chartRuler.ascSign} (ASC)
+                </Text>
+              </View>
+            </View>
+            {chartRuler.text ? (
+              <View style={styles.angularInterpretation}>
+                <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Planetas natais */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
+          </Text>
+          {orderedPlanets.map(p => {
+            const signText = resolvePlanetInSignText(p.name, p.sign, language)
+            const houseText = p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null
+            return (
+              <View key={p.name} style={styles.planetBlock}>
+                <View style={styles.planetRow}>
+                  <View style={styles.planetAvatarWrap}>
+                    <PlanetAvatar name={p.name} size={34} />
+                  </View>
+                  <Text style={styles.planetName}>{translatePlanetPT(p.name)}</Text>
+                  <View style={styles.planetSignWrap}>
+                    <Text style={styles.planetSign}>
+                      {signSymbol(p.sign)} {p.sign}
+                    </Text>
+                    <Text style={styles.planetDeg}>{(p.degree ?? (p.longitude % 30)).toFixed(1)}°</Text>
+                  </View>
+                  <View style={styles.planetMeta}>
+                    <Text style={styles.planetHouse}>
+                      {tl('Casa', 'House', 'Casa', 'Casa')} {p.house}
+                    </Text>
+                    {p.isRetrograde && (
+                      <View style={styles.retroBadge}>
+                        <Text style={styles.retroText}>℞</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                {signText ? (
+                  <Text style={styles.planetSignText}>{signText}</Text>
+                ) : null}
+                {houseText ? (
+                  <Text style={styles.planetHouseText}>{houseText}</Text>
+                ) : null}
+                {aspectsByPlanet[p.name]?.length ? (
+                  <View style={styles.planetAspectsBlock}>
+                    <Text style={styles.planetAspectsTitle}>
+                      {tl('Aspectos natais', 'Natal aspects', 'Aspectos natales', 'Aspetti natali')}
+                    </Text>
+                    <AspectList entries={aspectsByPlanet[p.name]} language={language} initial={4} />
+                  </View>
+                ) : null}
+              </View>
+            )
+          })}
+        </View>
+
+        {/* As 12 Casas — signo na cúspide + texto curado */}
+        {houseCusps.length > 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {tl('As 12 Casas', 'The 12 Houses', 'Las 12 Casas', 'Le 12 Case')}
+            </Text>
+            {houseCusps.map((h) => (
+              <View key={`house-${h.house}`} style={styles.planetBlock}>
+                <View style={styles.planetRow}>
+                  <Text style={styles.angularLabel}>
+                    {tl('Casa', 'House', 'Casa', 'Casa')} {h.house}
+                  </Text>
+                  <Text style={styles.angularValue}>
+                    {signSymbol(h.sign)} {h.sign}
+                  </Text>
+                  <Text style={styles.angularDeg}>{h.degInSign.toFixed(1)}°</Text>
+                </View>
+                {h.text ? (
+                  <Text style={styles.angularInterpretationText}>{h.text}</Text>
+                ) : null}
+                {h.ruler ? (
+                  <View style={styles.angularInterpretation}>
+                    <Text style={styles.angularInterpretationLabel}>
+                      {tl('Regente', 'Ruler', 'Regente', 'Governatore')}: {PLANET_SYMBOLS[h.ruler.planet] || ''} {translatePlanetPT(h.ruler.planet)} · {tl('Casa', 'House', 'Casa', 'Casa')} {h.ruler.house}
+                    </Text>
+                    {h.ruler.text ? (
+                      <Text style={styles.angularInterpretationText}>{h.ruler.text}</Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* Ascendente + MC */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>
@@ -514,117 +656,6 @@ export default function AstroProfileScreen() {
                 <Text style={styles.angularInterpretationText}>{nnHouseText}</Text>
               </View>
             ) : null}
-          </View>
-        ) : null}
-
-        {/* Regente do Mapa */}
-        {chartRuler ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {tl('Regente do Mapa', 'Chart Ruler', 'Regente de la Carta', 'Governatore del Tema')}
-            </Text>
-            <View style={styles.row}>
-              <View style={styles.angularItem}>
-                <Text style={styles.angularLabel}>
-                  {PLANET_SYMBOLS[chartRuler.planet] || ''} {translatePlanetPT(chartRuler.planet)}
-                </Text>
-                <Text style={styles.angularValue}>
-                  {tl('Casa', 'House', 'Casa', 'Casa')} {chartRuler.house}
-                </Text>
-                <Text style={styles.angularDeg}>
-                  {tl('regente de', 'ruler of', 'regente de', 'governatore di')} {chartRuler.ascSign} (ASC)
-                </Text>
-              </View>
-            </View>
-            {chartRuler.text ? (
-              <View style={styles.angularInterpretation}>
-                <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* Planetas natais */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
-          </Text>
-          {orderedPlanets.map(p => {
-            const signText = resolvePlanetInSignText(p.name, p.sign, language)
-            const houseText = p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null
-            return (
-              <View key={p.name} style={styles.planetBlock}>
-                <View style={styles.planetRow}>
-                  <Text style={styles.planetSymbol}>{PLANET_SYMBOLS[p.name] || '●'}</Text>
-                  <Text style={styles.planetName}>{translatePlanetPT(p.name)}</Text>
-                  <View style={styles.planetSignWrap}>
-                    <Text style={styles.planetSign}>
-                      {signSymbol(p.sign)} {p.sign}
-                    </Text>
-                    <Text style={styles.planetDeg}>{(p.degree ?? (p.longitude % 30)).toFixed(1)}°</Text>
-                  </View>
-                  <View style={styles.planetMeta}>
-                    <Text style={styles.planetHouse}>
-                      {tl('Casa', 'House', 'Casa', 'Casa')} {p.house}
-                    </Text>
-                    {p.isRetrograde && (
-                      <View style={styles.retroBadge}>
-                        <Text style={styles.retroText}>℞</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                {signText ? (
-                  <Text style={styles.planetSignText}>{signText}</Text>
-                ) : null}
-                {houseText ? (
-                  <Text style={styles.planetHouseText}>{houseText}</Text>
-                ) : null}
-                {aspectsByPlanet[p.name]?.length ? (
-                  <View style={styles.planetAspectsBlock}>
-                    <Text style={styles.planetAspectsTitle}>
-                      {tl('Aspectos natais', 'Natal aspects', 'Aspectos natales', 'Aspetti natali')}
-                    </Text>
-                    <AspectList entries={aspectsByPlanet[p.name]} language={language} />
-                  </View>
-                ) : null}
-              </View>
-            )
-          })}
-        </View>
-
-        {/* As 12 Casas — signo na cúspide + texto curado */}
-        {houseCusps.length > 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {tl('As 12 Casas', 'The 12 Houses', 'Las 12 Casas', 'Le 12 Case')}
-            </Text>
-            {houseCusps.map((h) => (
-              <View key={`house-${h.house}`} style={styles.planetBlock}>
-                <View style={styles.planetRow}>
-                  <Text style={styles.angularLabel}>
-                    {tl('Casa', 'House', 'Casa', 'Casa')} {h.house}
-                  </Text>
-                  <Text style={styles.angularValue}>
-                    {signSymbol(h.sign)} {h.sign}
-                  </Text>
-                  <Text style={styles.angularDeg}>{h.degInSign.toFixed(1)}°</Text>
-                </View>
-                {h.text ? (
-                  <Text style={styles.angularInterpretationText}>{h.text}</Text>
-                ) : null}
-                {h.ruler ? (
-                  <View style={styles.angularInterpretation}>
-                    <Text style={styles.angularInterpretationLabel}>
-                      {tl('Regente', 'Ruler', 'Regente', 'Governatore')}: {PLANET_SYMBOLS[h.ruler.planet] || ''} {translatePlanetPT(h.ruler.planet)} · {tl('Casa', 'House', 'Casa', 'Casa')} {h.ruler.house}
-                    </Text>
-                    {h.ruler.text ? (
-                      <Text style={styles.angularInterpretationText}>{h.ruler.text}</Text>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
-            ))}
           </View>
         ) : null}
 
@@ -766,6 +797,18 @@ const styles = StyleSheet.create({
     color: '#9aa7ba',
     lineHeight: 18,
     marginTop: 2,
+  },
+  planetAvatarWrap: {
+    marginRight: 10,
+  },
+  rulerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  rulerInfo: {
+    flex: 1,
+    minWidth: 0,
   },
   planetSymbol: {
     fontSize: 16,
