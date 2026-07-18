@@ -110,9 +110,13 @@ export default function TransitInsightCard({
         </View>
       ) : null}
 
-      <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
-        {directText}
-      </Text>
+      {/* Condicional: quem quer a leitura só atrás do "Ver leitura" passa directText
+          vazio — sem isso sobrava um Text vazio ocupando espaço no card. */}
+      {String(directText || '').trim() ? (
+        <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
+          {directText}
+        </Text>
+      ) : null}
       {!openModalByCard ? (
         <TouchableOpacity
           style={[styles.toggleButton, isDark ? styles.toggleButtonDark : styles.toggleButtonLight]}

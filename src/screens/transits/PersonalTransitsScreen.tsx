@@ -99,7 +99,10 @@ export default function PersonalTransitsScreen() {
                   houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
                   timingLabel={timing || null}
                   impactValue01={impact}
-                  directText={narrative.shortText}
+                  // buildUnifiedTransitNarrative devolve shortText === modalBody (o
+                  // mesmo texto), então passar os dois duplicava a leitura no card.
+                  // A interpretação fica só atrás do "Ver leitura".
+                  directText=""
                   fullText={narrative.modalBody}
                   fullTitle={tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')}
                   actionText={narrative.actionText || null}
