@@ -842,7 +842,11 @@ const TRANSIT_CATALOG_I18N_AUTO_OVERRIDES_NORMALIZED: Partial<Record<AppLanguage
   return out
 })()
 
-function buildCatalogTransitKey(transit: AnyTransit): string | null {
+/**
+ * Exportado para que outros catálogos de trânsito (aforismos, títulos) usem
+ * EXATAMENTE esta chave, em vez de reimplementar a normalização e divergir.
+ */
+export function buildCatalogTransitKey(transit: AnyTransit): string | null {
   const planet = normalizeTransitToken(transit?.transitPlanet)
   const aspect = normalizeAspect(transit?.aspectName || transit?.type || transit?.aspect || transit?.aspectType)
   if (!planet || !aspect) return null

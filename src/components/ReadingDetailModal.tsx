@@ -18,6 +18,11 @@ type ReadingDetailModalProps = {
   actionText?: string | null
   metaText?: string | null
   keywords?: string[]
+  /**
+   * Frase de efeito exibida como epígrafe acima da leitura. Cobertura parcial
+   * (87 de 724 trânsitos): sem frase, nada é renderizado — nunca espaço vazio.
+   */
+  epigraph?: string | null
   closeLabel?: string
   secondaryActionLabel?: string | null
   onSecondaryAction?: (() => void) | null
@@ -150,6 +155,7 @@ export default function ReadingDetailModal({
   closeLabel,
   secondaryActionLabel,
   onSecondaryAction,
+  epigraph,
 }: ReadingDetailModalProps) {
   const { t, language } = useAppLanguage()
   const tr = (key: string, fallback: string) => {
@@ -254,6 +260,11 @@ export default function ReadingDetailModal({
   const imageUri = planetKey ? getPlanetImageUri(planetKey) : null
   const secondaryImageUri = secondaryPlanetKey ? getPlanetImageUri(secondaryPlanetKey) : null
   const aspectSymbol = React.useMemo(() => extractAspectSymbol(localizedTitle), [localizedTitle])
+  // DORMENTE: os chips de palavra-chave e o bloco "Contexto técnico" saíram do
+  // render — os chips repetiam o que o título já diz e o técnico mostrava orbe e
+  // impacto, que é dado de motor, não leitura. As props `keywords`/`metaText`
+  // seguem aceitas para nenhum dos 5 call sites precisar mudar.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keywordChips = React.useMemo(
     () => (Array.isArray(keywords) && keywords.length ? keywords.map((k) => localizeAstroText(k)) : buildDefaultKeywords(localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel)),
     [keywords, localizedTitle, localizedSubtitle, resolvedStatusLabel, localizedTimingLabel, localizeAstroText]
@@ -308,16 +319,9 @@ export default function ReadingDetailModal({
           </LinearGradient>
 
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-            {keywordChips.length ? (
-              <View style={styles.tagsRow}>
-                {keywordChips.slice(0, 4).map((keyword) => {
-                  const isHouse = /^casa\s+\d/i.test(keyword.trim())
-                  return (
-                    <View key={keyword} style={[styles.tag, isHouse && styles.tagHouse]}>
-                      <Text style={[styles.tagText, isHouse && styles.tagTextHouse]}>{keyword}</Text>
-                    </View>
-                  )
-                })}
+            {epigraph ? (
+              <View style={styles.epigraphWrap}>
+                <Text style={styles.epigraph}>{epigraph}</Text>
               </View>
             ) : null}
 
@@ -327,12 +331,6 @@ export default function ReadingDetailModal({
               </View>
             ) : null}
 
-            {localizedMetaText ? (
-              <View style={styles.sectionCard}>
-                <Text style={[styles.sectionLabel, isNarrow ? styles.sectionLabelNarrow : null]}>{tr('reading.modal.technicalContext', 'Technical context')}</Text>
-                <Text style={[styles.meta, isNarrow ? styles.metaNarrow : null]}>{localizedMetaText}</Text>
-              </View>
-            ) : null}
           </ScrollView>
 
           {secondaryActionLabel && onSecondaryAction ? (
@@ -499,6 +497,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 8,
+  },
+  // Epígrafe: entrou no lugar dos chips e do bloco técnico, que só repetiam o
+  // título e mostravam orbe/impacto — dado de motor, não leitura.
+  epigraphWrap: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#FBBF24',
+    paddingLeft: 12,
+    paddingVertical: 2,
+    marginBottom: 14,
+  },
+  epigraph: {
+    color: '#FDE047',
+    fontSize: 15,
+    lineHeight: 22,
+    fontStyle: 'italic',
+    fontWeight: '600',
   },
   tagsRow: {
     flexDirection: 'row',

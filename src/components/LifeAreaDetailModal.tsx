@@ -19,6 +19,7 @@ import type { LifeArea } from '../services/prokerala/TransitService'
 import type { RealAstrologyData } from '../services/astrology/RealAstrologyEngine'
 import TransitInsightCard from './TransitInsightCard'
 import ReadingDetailModal from './ReadingDetailModal'
+import { resolveTransitAphorism, resolveStrongestAphorism } from '../utils/transitAphorism'
 import { mergeAreaTransits } from '../utils/transitsByArea'
 import { buildTransitTitle as buildSharedTransitTitle } from '../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../utils/astroInterpretation'
@@ -639,6 +640,7 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
     statusColor: string
     timingLabel: string | null
     keywords: string[]
+    epigraph: string | null
   } | null>(null)
   const scrollOffsetYRef = React.useRef(0)
   const swipeTranslateY = React.useRef(new Animated.Value(0)).current
@@ -1387,6 +1389,18 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
   }
 
   const activeTransits = getActiveTransits()
+  // Frase de efeito da área: percorre os trânsitos por força e pega o primeiro
+  // que TEM aforismo curado. Parar no mais forte deixaria a área quase sempre
+  // muda, porque só 87 das 724 chaves têm frase.
+  const areaAphorism = React.useMemo(
+    () => resolveStrongestAphorism(
+      [...activeTransits].sort(
+        (a: any, b: any) => Number(b?.strength || 0) - Number(a?.strength || 0),
+      ),
+      language,
+    ),
+    [activeTransits, language],
+  )
   const backendActiveTransits: BackendTransit[] = Array.isArray((areaData as any)?.activeTransits)
     ? (areaData as any).activeTransits
     : []
@@ -2418,6 +2432,7 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
               statusColor,
               timingLabel: timingLabel || null,
               keywords: unifiedNarrative.keywords,
+              epigraph: resolveTransitAphorism(transit, language),
             })
           }
           detailMode="modal"
@@ -3295,6 +3310,11 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
               scrollOffsetYRef.current = event.nativeEvent.contentOffset.y
             }}
           >
+            {areaAphorism ? (
+              <View style={styles.aphorismCard}>
+                <Text style={styles.aphorismText}>{areaAphorism}</Text>
+              </View>
+            ) : null}
             {renderScoreComponentsSection()}
             {renderTransitsSection()}
             {renderMetricLevelsSection()}
@@ -3316,12 +3336,31 @@ export const LifeAreaDetailModal = React.memo(function LifeAreaDetailModal({
         actionText={detailView?.actionText || null}
         metaText={detailView?.metaText || null}
         keywords={detailView?.keywords || []}
+        epigraph={detailView?.epigraph || null}
       />
     </Modal>
   )
 })
 
 const styles = StyleSheet.create({
+  // Frase de efeito no topo da área. Sem frase curada, o card nao renderiza —
+  // nada de espaco vazio.
+  aphorismCard: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+    backgroundColor: 'rgba(245,158,11,0.08)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  aphorismText: {
+    color: '#B45309',
+    fontSize: 15,
+    lineHeight: 22,
+    fontStyle: 'italic',
+    fontWeight: '600',
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

@@ -30,6 +30,7 @@ import GroupNotificationService from "../../services/notifications/GroupNotifica
 import { useNotificationPreferences } from "../../hooks/useNotificationPreferences"
 import GroupDetailModal from "../../components/GroupDetailModal"
 import ReadingDetailModal from "../../components/ReadingDetailModal"
+import { resolveTransitAphorism } from "../../utils/transitAphorism"
 import GroupNotificationSettings from "../../components/GroupNotificationSettings"
 import TransitInsightCard from "../../components/TransitInsightCard"
 import InviteService from "../../services/InviteService"
@@ -206,6 +207,7 @@ export default function GroupsScreen() {
     actionText?: string
     metaText?: string
     keywords?: string[]
+    epigraph?: string | null
   } | null>(null)
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
@@ -2710,6 +2712,7 @@ export default function GroupsScreen() {
                               actionText: item.actionText,
                               metaText: [intensityLabel, item.metaText].filter(Boolean).join(" • "),
                               keywords: item.keywords,
+                              epigraph: resolveTransitAphorism(item.rawTransit, language),
                             })
                           }}
                           modalOpenByCard
@@ -2975,6 +2978,7 @@ export default function GroupsScreen() {
         actionText={selectedMemberTransitDetail?.actionText || null}
         metaText={selectedMemberTransitDetail?.metaText || null}
         keywords={selectedMemberTransitDetail?.keywords || []}
+        epigraph={selectedMemberTransitDetail?.epigraph || null}
       />
 
       <GroupDetailModal
