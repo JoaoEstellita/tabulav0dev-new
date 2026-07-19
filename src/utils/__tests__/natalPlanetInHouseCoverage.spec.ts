@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../../data/natalPlanetInHouseOverridesPtBR'
 import { NATAL_PLANET_IN_HOUSE_I18N_OVERRIDES } from '../../data/natalPlanetInHouseOverridesI18n'
 import { resolveNatalPlanetInHouseText } from '../natalInterpretation'
+import { deaccentLower } from '../textNormalize'
 
 const PLANETS = [
   'sun', 'moon', 'mercury', 'venus', 'mars',
@@ -32,7 +33,10 @@ const hasMojibake = (text: string): boolean =>
   MOJIBAKE_TOKENS.some((token) => String(text || '').includes(token))
 
 const hasDeterministicLanguage = (text: string): boolean => {
-  const normalized = String(text || '').toLowerCase()
+  // deaccentLower e nao toLowerCase: os tokens abaixo estao sem acento e, com o
+  // corpus acentuado, 'inevitavel' deixaria de casar com "inevitável" — o guard
+  // ficaria verde para sempre sem pegar nada.
+  const normalized = deaccentLower(text)
   return DETERMINISTIC_TOKENS.some((token) => normalized.includes(token))
 }
 

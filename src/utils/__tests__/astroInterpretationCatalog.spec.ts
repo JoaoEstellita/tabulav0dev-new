@@ -3,6 +3,7 @@ import { buildUnifiedTransitNarrative } from '../astroInterpretation'
 import { TRANSIT_CATALOG_PTBR } from '../../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../../data/transitCatalogOverridesI18n'
+import { deaccentLower } from '../textNormalize'
 
 describe('astroInterpretation catalog integration', () => {
   it('prioritizes canonical pt-BR catalog text when transit key matches', () => {
@@ -19,7 +20,7 @@ describe('astroInterpretation catalog integration', () => {
 
     expect(narrative.shortText).not.toMatch(/\{[a-zA-Z0-9_.-]+\}/)
     expect(narrative.shortText.length).toBeGreaterThan(40)
-    expect(narrative.shortText.toLowerCase()).toContain('visibilidade')
+    expect(deaccentLower(narrative.shortText)).toContain('visibilidade')
   })
 
   it('applies curated override for en-US when transit key matches', () => {
@@ -34,9 +35,9 @@ describe('astroInterpretation catalog integration', () => {
       'en-US'
     )
 
-    expect(narrative.shortText.toLowerCase()).toContain('jupiter')
-    expect(narrative.shortText.toLowerCase()).toContain('visibility')
-    expect(narrative.shortText.toLowerCase()).not.toContain('will happen for sure')
+    expect(deaccentLower(narrative.shortText)).toContain('jupiter')
+    expect(deaccentLower(narrative.shortText)).toContain('visibility')
+    expect(deaccentLower(narrative.shortText)).not.toContain('will happen for sure')
   })
 
   it('applies curated override for es-ES and it-IT with same semantic base', () => {
@@ -49,10 +50,10 @@ describe('astroInterpretation catalog integration', () => {
     const es = buildUnifiedTransitNarrative(baseTransit, 'carreira', 'es-ES')
     const it = buildUnifiedTransitNarrative(baseTransit, 'carreira', 'it-IT')
 
-    expect(es.shortText.toLowerCase()).toContain('expansion')
-    expect(it.shortText.toLowerCase()).toContain('espansione')
-    expect(es.shortText.toLowerCase()).not.toContain('inevitable')
-    expect(it.shortText.toLowerCase()).not.toContain('inevitabile')
+    expect(deaccentLower(es.shortText)).toContain('expansion')
+    expect(deaccentLower(it.shortText)).toContain('espansione')
+    expect(deaccentLower(es.shortText)).not.toContain('inevitable')
+    expect(deaccentLower(it.shortText)).not.toContain('inevitabile')
   })
 
   it('resolves catalog key for planets in houses (ingress)', () => {
@@ -83,7 +84,7 @@ describe('astroInterpretation catalog integration', () => {
       'en-US'
     )
 
-    const text = narrative.shortText.toLowerCase()
+    const text = deaccentLower(narrative.shortText)
     expect(text.length).toBeGreaterThan(20)
     expect(text).not.toContain('você')
     expect(text).not.toContain('voce')
@@ -103,7 +104,7 @@ describe('astroInterpretation catalog integration', () => {
       'pt-BR'
     )
 
-    const merged = `${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody} ${narrative.actionText} ${narrative.metaText}`.toLowerCase()
+    const merged = deaccentLower(`${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody} ${narrative.actionText} ${narrative.metaText}`)
     expect(merged).not.toContain('conexao com o status')
     expect(merged).not.toContain('status link')
     expect(merged).not.toContain('conexion con el estado')
@@ -154,7 +155,7 @@ describe('astroInterpretation catalog integration', () => {
       'en-US'
     )
 
-    const text = narrative.shortText.toLowerCase()
+    const text = deaccentLower(narrative.shortText)
     expect(text).toContain('jupiter')
     expect(text).toContain('midheaven')
     expect(text).toContain('visibility')
@@ -175,10 +176,10 @@ describe('astroInterpretation catalog integration', () => {
     expect(pt.transitKey).toBe(en.transitKey)
     expect(en.transitKey).toBe(es.transitKey)
     expect(es.transitKey).toBe(it.transitKey)
-    expect(pt.shortText.toLowerCase()).toContain('casa 10')
-    expect(en.shortText.toLowerCase()).toContain('house 10')
-    expect(es.shortText.toLowerCase()).toContain('casa 10')
-    expect(it.shortText.toLowerCase()).toContain('casa 10')
+    expect(deaccentLower(pt.shortText)).toContain('casa 10')
+    expect(deaccentLower(en.shortText)).toContain('house 10')
+    expect(deaccentLower(es.shortText)).toContain('casa 10')
+    expect(deaccentLower(it.shortText)).toContain('casa 10')
   })
 
   it('normalizes angle aliases in catalog resolver (MC/IC/DSC)', () => {
@@ -215,7 +216,7 @@ describe('astroInterpretation catalog integration', () => {
       'Status Familia',
       'pt-BR'
     )
-    const merged = `${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody}`.toLowerCase()
+    const merged = deaccentLower(`${narrative.shortText} ${narrative.modalIntro} ${narrative.modalBody}`)
     expect(merged).not.toContain('status familia')
   })
 
@@ -231,7 +232,7 @@ describe('astroInterpretation catalog integration', () => {
       'pt-BR'
     )
 
-    const text = narrative.shortText.toLowerCase()
+    const text = deaccentLower(narrative.shortText)
     expect(text).toContain('responsabilidade')
     expect(text).toContain('foco no essencial')
     expect(text).not.toContain('vai acontecer')

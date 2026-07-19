@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TRANSIT_CATALOG_BLOCKED_KEYS } from '../../data/transitCatalogBlockedKeys'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../../data/transitCatalogOverridesI18n'
+import { deaccentLower } from '../textNormalize'
 
 const LOCALES = ['en-US', 'es-ES', 'it-IT'] as const
 const MOJIBAKE_TOKENS = ['Ã', '\uFFFD', 'â€™', 'â€œ', 'â€']
@@ -18,7 +19,10 @@ const hasMojibake = (text: string): boolean =>
   MOJIBAKE_TOKENS.some((token) => String(text || '').includes(token))
 
 const hasDeterministicLanguage = (text: string): boolean => {
-  const normalized = String(text || '').toLowerCase()
+  // deaccentLower e nao toLowerCase: os tokens abaixo estao sem acento e, com o
+  // corpus acentuado, 'inevitavel' deixaria de casar com "inevitável" — o guard
+  // ficaria verde para sempre sem pegar nada.
+  const normalized = deaccentLower(text)
   return DETERMINISTIC_TOKENS.some((token) => normalized.includes(token))
 }
 

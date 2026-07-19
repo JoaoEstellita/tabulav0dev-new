@@ -1,3 +1,4 @@
+import { hasMojibake } from './textNormalize'
 import { normalizeLanguage, type AppLanguage } from '../i18n/appI18n'
 import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
@@ -863,8 +864,8 @@ function stripRedundantNarrativeBoilerplate(value: string): string {
   const rules: RegExp[] = [
     /\bfoco recai em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
     /\ba fase atual\s+(?:esta|est[aá])\s+(?:em|no|na)\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
-    /\b(?:esta|essa)\s+combinac[aã]o\s+tende a evoluir em sequ[êe]ncia pr[aá]tica[:.]?\s*(?:primeiro[^.]*\.)?(?:\s*depois[^.]*\.)?/gi,
-    /\bprimeiro\s+ler\s+o\s+padrao,\s*depois\s+ajustar\s+a\s+execu[cç][aã]o[.!?]?/gi,
+    /\b(?:esta|essa)\s+combina[cç][aã]o\s+tende a evoluir em sequ[êe]ncia pr[aá]tica[:.]?\s*(?:primeiro[^.]*\.)?(?:\s*depois[^.]*\.)?/gi,
+    /\bprimeiro\s+ler\s+o\s+padr[aã]o,\s*depois\s+ajustar\s+a\s+execu[cç][aã]o[.!?]?/gi,
     /\bneste ciclo\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
     /\bneste momento\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
     /\bem aproxima[cç][aã]o,\s*neste momento\s+o\s+foco\s+recai\s+em\s+[a-z\u00c0-\u017f\s]+[.!?]?/gi,
@@ -901,10 +902,12 @@ function sanitizeCatalogText(value: string): string {
     const text = String(input || '').trim()
     if (!text || text.length < 50) return false
     if (catalogCorruptionScore(text) > 1) return false
-    if (/(?:Ã|Â|�)/.test(text)) return false
+    if (hasMojibake(text)) return false
     if (/[A-Za-z]\"[A-Za-z]/.test(text)) return false
     if (/\\\"/.test(text)) return false
-    const alpha = (text.match(/[A-Za-z]/g) || []).length
+    // Inclui os acentuados: com [A-Za-z] puro, acentuar o corpus BAIXA a razao
+    // e pode derrubar a entrada para '' em silencio.
+    const alpha = (text.match(/[A-Za-zÀ-ÿ]/g) || []).length
     return alpha / text.length >= 0.45
   }
 
@@ -926,9 +929,12 @@ function sanitizeCatalogText(value: string): string {
   const replacements: Array<[RegExp, string]> = [
     [/\bvai acontecer\b/gi, 'tende a acontecer'],
     [/\bcom certeza\b/gi, 'com boa chance'],
-    [/\binevitavel\b/gi, 'mais provavel'],
+    // Os tokens aceitam as duas grafias e as substituicoes saem ACENTUADAS: com o
+    // corpus acentuado, /\binevitavel\b/ deixaria de casar (guard morto em
+    // silencio) e 'padrao atual' reinjetaria palavra sem acento no texto exibido.
+    [/\binevit[aá]vel\b/gi, 'mais provável'],
     [/\bgarantid[oa]\b/gi, 'favorecido'],
-    [/\bstatus quo\b/gi, 'padrao atual'],
+    [/\bstatus quo\b/gi, 'padrão atual'],
     [/\bmarca\s+de\s+alta\s+[aÃÁàÀ]gua\b/gi, 'marco relevante'],
     [/\bcurva\s+gradual\s+para\s+mais\s+interna[cç][aã]o\b/gi, 'movimento gradual de reposicionamento interno'],
     [/\be\s+assim\s+por\s+diante\b/gi, ''],
