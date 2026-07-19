@@ -15,8 +15,17 @@ describe('buildFallbackTransitTitle', () => {
     expect(buildFallbackTransitTitle('Fundo do Céu', 'sextil')).toBe('Abertura nas raízes')
   })
 
-  it('aspecto menor cai em "Ajuste" em vez de sumir', () => {
-    expect(buildFallbackTransitTitle('Mercury', 'sesquiquadratura')).toBe('Ajuste na comunicação')
+  it('cada aspecto menor tem verbo próprio — senão viram cards idênticos', () => {
+    const alvo = 'Mercury'
+    const titulos = ['quincuncio', 'semissextil', 'semiquadratura', 'sesquiquadratura'].map((a) =>
+      buildFallbackTransitTitle(alvo, a),
+    )
+    expect(new Set(titulos).size).toBe(4)
+    expect(titulos).toContain('Ajuste na comunicação')
+  })
+
+  it('aspecto desconhecido não some — cai em "Ajuste"', () => {
+    expect(buildFallbackTransitTitle('Mercury', 'quintil')).toBe('Ajuste na comunicação')
   })
 
   it('devolve null quando o alvo é casa — ali o título de casa já se explica', () => {

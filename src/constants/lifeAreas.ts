@@ -1,11 +1,11 @@
 export const LIFE_AREA_ORDER = [
   'amor',
-  'carreira',
-  'financas',
   'saude',
   'familia',
-  'espiritualidade',
   'comunicacao',
+  'carreira',
+  'financas',
+  'espiritualidade',
   'transformacao',
 ] as const
 
@@ -14,15 +14,37 @@ export type LifeAreaKey = (typeof LIFE_AREA_ORDER)[number]
 // Ordem de exibição dos cards SÓ na tela inicial (Home). Mesmas áreas de
 // LIFE_AREA_ORDER, ordem própria — não afeta Groups/Forecast/notificações.
 export const HOME_LIFE_AREA_ORDER: readonly LifeAreaKey[] = [
-  'familia',
+  'amor',
   'saude',
+  'familia',
+  'comunicacao',
   'carreira',
   'financas',
-  'amor',
-  'comunicacao',
   'espiritualidade',
   'transformacao',
 ]
+
+/**
+ * A que área cada casa e cada planeta pertence.
+ *
+ * Era `private static LIFE_AREAS` dentro do RealAstrologyEngine — o motor
+ * pontuava as áreas por aqui, mas nenhuma tela conseguia dizer ao usuário QUAL
+ * área um trânsito afeta, porque o mapa não saía de lá. Agora é fonte única: o
+ * motor importa daqui, e as telas também.
+ */
+export const LIFE_AREA_ATTRIBUTION: Record<
+  LifeAreaKey,
+  { houses: number[]; planets: string[]; weight: number }
+> = {
+  amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
+  carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'], weight: 1.0 },
+  financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'], weight: 1.0 },
+  saude: { houses: [1, 6], planets: ['Mars', 'Sun'], weight: 1.0 },
+  familia: { houses: [4, 10], planets: ['Moon', 'Saturn'], weight: 1.0 },
+  espiritualidade: { houses: [9, 12], planets: ['Neptune', 'Jupiter'], weight: 1.0 },
+  comunicacao: { houses: [3, 9], planets: ['Mercury', 'Uranus'], weight: 1.0 },
+  transformacao: { houses: [8, 12], planets: ['Pluto', 'Uranus'], weight: 1.0 },
+}
 
 export const LIFE_AREA_LABELS: Record<string, string> = {
   amor: 'Amor',

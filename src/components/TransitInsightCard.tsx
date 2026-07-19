@@ -27,6 +27,16 @@ type TransitInsightCardProps = {
   onOpenDetailModal?: () => void
   modalOpenByCard?: boolean
   showModalActionIcon?: boolean
+  /**
+   * Layout denso: o técnico vira a linha de destaque (sem o rótulo "Tipo:") e
+   * casa/timing/impacto colapsam numa única linha separada por "·". Numa lista
+   * longa isso corta ~3 linhas por card sem perder nenhum dado. As telas que não
+   * passam a prop seguem com o layout empilhado de sempre.
+   */
+  dense?: boolean
+  /** Áreas do status que o trânsito toca, já formatadas ("Amor · Carreira"). */
+  areasLabel?: string | null
+  areasLabelPrefix?: string
 }
 
 export default function TransitInsightCard({
@@ -54,6 +64,9 @@ export default function TransitInsightCard({
   onOpenDetailModal,
   modalOpenByCard = false,
   showModalActionIcon = false,
+  dense = false,
+  areasLabel,
+  areasLabelPrefix = 'Afeta',
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
@@ -64,9 +77,20 @@ export default function TransitInsightCard({
     : null
   const cardStyles = [
     styles.card,
+    dense ? styles.cardDense : null,
     isDark ? styles.cardDark : styles.cardLight,
     featured ? styles.cardFeatured : null,
   ]
+
+  // Casa · timing · impacto numa linha só. Cada um custava uma linha inteira
+  // (a barra de impacto custava duas) para dizer uma coisa curta.
+  const metaDenseLine = [
+    houseLabel ? `${houseLabelPrefix} ${houseLabel}` : null,
+    timingLabel || null,
+    normalizedImpact !== null ? `impacto ${Math.round(normalizedImpact * 100)}%` : null,
+  ]
+    .filter(Boolean)
+    .join('  ·  ')
 
   const cardContent = (
     <>
@@ -89,27 +113,46 @@ export default function TransitInsightCard({
           </View>
         </View>
       </View>
-      {houseLabel ? (
-        <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
-          {houseLabelPrefix}: {houseLabel}
-        </Text>
-      ) : null}
-      {technicalTypeLabel ? (
-        <Text style={[styles.technicalLine, isDark ? styles.technicalLineDark : styles.technicalLineLight]}>
-          Tipo: {technicalTypeLabel}
-        </Text>
-      ) : null}
-      {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
-      {normalizedImpact !== null ? (
-        <View style={styles.impactRow}>
-          <View style={[styles.impactTrack, isDark ? styles.impactTrackDark : styles.impactTrackLight]}>
-            <View style={[styles.impactFill, { width: `${Math.round(normalizedImpact * 100)}%`, backgroundColor: impactColor }]} />
-          </View>
-          <Text style={[styles.impactLabel, isDark ? styles.impactLabelDark : styles.impactLabelLight]}>
-            {impactLabel || `Impacto relativo ${Math.round(normalizedImpact * 100)}%`}
-          </Text>
-        </View>
-      ) : null}
+      {dense ? (
+        <>
+          {technicalTypeLabel ? (
+            <Text style={[styles.techDense, isDark ? styles.techDenseDark : styles.techDenseLight]}>
+              {technicalTypeLabel}
+            </Text>
+          ) : null}
+          {metaDenseLine ? <Text style={styles.metaDense}>{metaDenseLine}</Text> : null}
+          {areasLabel ? (
+            <Text style={styles.areasDense}>
+              <Text style={styles.areasDensePrefix}>{areasLabelPrefix}: </Text>
+              {areasLabel}
+            </Text>
+          ) : null}
+        </>
+      ) : (
+        <>
+          {houseLabel ? (
+            <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
+              {houseLabelPrefix}: {houseLabel}
+            </Text>
+          ) : null}
+          {technicalTypeLabel ? (
+            <Text style={[styles.technicalLine, isDark ? styles.technicalLineDark : styles.technicalLineLight]}>
+              Tipo: {technicalTypeLabel}
+            </Text>
+          ) : null}
+          {timingLabel ? <Text style={styles.timing}>{timingLabel}</Text> : null}
+          {normalizedImpact !== null ? (
+            <View style={styles.impactRow}>
+              <View style={[styles.impactTrack, isDark ? styles.impactTrackDark : styles.impactTrackLight]}>
+                <View style={[styles.impactFill, { width: `${Math.round(normalizedImpact * 100)}%`, backgroundColor: impactColor }]} />
+              </View>
+              <Text style={[styles.impactLabel, isDark ? styles.impactLabelDark : styles.impactLabelLight]}>
+                {impactLabel || `Impacto relativo ${Math.round(normalizedImpact * 100)}%`}
+              </Text>
+            </View>
+          ) : null}
+        </>
+      )}
 
       {/* Condicional: quem quer a leitura só atrás do "Ver leitura" passa directText
           vazio — sem isso sobrava um Text vazio ocupando espaço no card. */}
@@ -246,6 +289,36 @@ const styles = StyleSheet.create({
   },
   titleDark: {
     color: '#FFFFFF',
+  },
+  cardDense: {
+    padding: 10,
+    marginBottom: 6,
+  },
+  // O técnico deixa de ser nota de rodapé: é ele que diz QUAIS planetas e qual
+  // aspecto — justamente o que o título temático não carrega.
+  techDense: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  techDenseLight: { color: '#334155' },
+  techDenseDark: { color: '#C8CDE8' },
+  metaDense: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  // Cor própria: é a ponte entre o trânsito e o score que o usuário vê na Home.
+  areasDense: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#7C3AED',
+    marginBottom: 6,
+  },
+  areasDensePrefix: {
+    color: '#94A3B8',
+    fontWeight: '600',
   },
   timing: {
     fontSize: 12,

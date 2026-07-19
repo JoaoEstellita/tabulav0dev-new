@@ -152,13 +152,22 @@ const DOMINIO_DO_ALVO: Record<string, string> = {
   fundodoceu: 'nas raízes',
 }
 
-/** Aspecto → o verbo do encontro. Menores caem em "Ajuste". */
+/**
+ * Aspecto → o verbo do encontro.
+ *
+ * Os menores também têm verbo próprio: com um "Ajuste" genérico para todos,
+ * quatro quincúncios seguidos viravam quatro cards de cara idêntica.
+ */
 const VERBO_DO_ASPECTO: Record<string, string> = {
   conjuncao: 'Foco',
   sextil: 'Abertura',
   trigono: 'Fluidez',
   quadratura: 'Tensão',
   oposicao: 'Confronto',
+  quincuncio: 'Ajuste',
+  semissextil: 'Roce',
+  semiquadratura: 'Fricção',
+  sesquiquadratura: 'Atrito',
 }
 
 /**

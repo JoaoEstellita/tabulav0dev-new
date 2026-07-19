@@ -17,6 +17,7 @@ import { filterPersonalTransits, summarizePersonalTransits } from '../../astro/t
 import { calculatePlanetaryStatus } from '../../astro/planetary-status.engine'
 import type { PlanetaryStatus, PlanetaryStatusLevel } from '../../astro/planetary-status.types'
 import { computeHousesUTC } from '../../astro/houses'
+import { LIFE_AREA_ATTRIBUTION } from '../../constants/lifeAreas'
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { translatePlanetPT } from '../../utils/astro/pt'
@@ -313,16 +314,9 @@ export class RealAstrologyEngine {
     9: 'Expans\u00E3o', 10: 'Carreira', 11: 'Amizades', 12: 'Espiritual'
   } as const
 
-  private static readonly LIFE_AREAS = {
-    amor: { houses: [5, 7], planets: ['Venus', 'Mars'], weight: 1.0 },
-    carreira: { houses: [10, 6], planets: ['Saturn', 'Mars', 'Sun'], weight: 1.0 },
-    financas: { houses: [2, 8], planets: ['Venus', 'Jupiter'], weight: 1.0 },
-    saude: { houses: [1, 6], planets: ['Mars', 'Sun'], weight: 1.0 },
-    familia: { houses: [4, 10], planets: ['Moon', 'Saturn'], weight: 1.0 },
-    espiritualidade: { houses: [9, 12], planets: ['Neptune', 'Jupiter'], weight: 1.0 },
-    comunicacao: { houses: [3, 9], planets: ['Mercury', 'Uranus'], weight: 1.0 },
-    transformacao: { houses: [8, 12], planets: ['Pluto', 'Uranus'], weight: 1.0 }
-  }
+  // Fonte única em constants/lifeAreas — as telas precisam do mesmo mapa para
+  // dizer qual área um trânsito afeta. Ver LIFE_AREA_ATTRIBUTION.
+  private static readonly LIFE_AREAS = LIFE_AREA_ATTRIBUTION
 
   private static readonly HOUSE_RULERS: Record<number, string[]> = {
     1: ['Mars'],

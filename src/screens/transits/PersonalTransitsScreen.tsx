@@ -9,6 +9,7 @@ import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
 import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/transitTitlesPtBR'
+import { areaLabelsForTransit } from '../../utils/transitLifeAreas'
 import { PROGRESSION_ASPECTS_PTBR } from '../../data/progressionAspectsPtBR'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { computeProgressedPositions, computeProgressedAspects, type ProgressedAspect } from '../../astro/progressions'
@@ -134,6 +135,10 @@ export default function PersonalTransitsScreen() {
         ? TRANSIT_TITLES_PTBR[chave] || buildFallbackTransitTitle(item.natalPlanet, item.type) || undefined
         : undefined
 
+    // Mesmo mapa que o motor usa para pontuar as áreas: o que o card anuncia é
+    // o que de fato mexe no número da Home.
+    const areas = language === 'pt-BR' ? areaLabelsForTransit(item.transitPlanet, item.natalPlanet, item.house) : []
+
     const narrative = buildUnifiedTransitNarrative(item, undefined, language)
     const nature = natureVisual(aspectNature(item.type))
     const timing = [getTransitState(item.window), formatPeakETA(item.window)].filter(Boolean).join(' · ')
@@ -153,10 +158,16 @@ export default function PersonalTransitsScreen() {
           statusLabel={nature.label}
           statusColor={nature.color}
           title={tema ? (hasSynergy ? `${tema}  ✦` : tema) : (hasSynergy ? `${title}  ✦` : title)}
+          dense
           technicalTypeLabel={tema ? title : null}
           houseLabel={item.house ? String(item.house) : null}
-          houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
+          houseLabelPrefix={tl('Casa', 'House', 'Casa', 'Casa')}
           timingLabel={timing || null}
+          // O impacto volta, mas como número na linha de meta — a barra custava
+          // duas linhas para dizer o que a ordenação da lista já diz.
+          impactValue01={Number.isFinite(Number(item.strength)) ? Number(item.strength) / 100 : null}
+          areasLabel={areas.length ? areas.join(' · ') : null}
+          areasLabelPrefix={tl('Afeta', 'Affects', 'Afecta', 'Tocca')}
           // Sem barra de impacto aqui: numa lista de leitura ela ocupa duas
           // linhas para dizer o que a ordenação já diz.
           // buildUnifiedTransitNarrative devolve shortText === modalBody (o mesmo
