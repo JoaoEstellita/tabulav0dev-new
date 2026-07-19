@@ -97,7 +97,7 @@ export const TRANSIT_APHORISMS_PTBR: Record<string, string> = {
   'transit:neptune|quadratura|mercury': 'Onde falta clareza, sobra suposição.',
 
   // ─── Mercúrio: palavra, mente, ruído ──────────────────────────────────────
-  'transit:mercury|quadratura|sun': 'Se a fala é prata, o silêncio é ouro.',
+  'transit:mercury|quadratura|sun': 'Se a palavra é prata, o silêncio é ouro.',
   'transit:mercury|conjuncao|sun': 'Quem pensa alto precisa ouvir baixo.',
   'transit:mercury|oposicao|sun': 'Discussão vencida raramente convence.',
   'transit:mercury|trigono|sun': 'Palavra na hora certa vale por mil na errada.',

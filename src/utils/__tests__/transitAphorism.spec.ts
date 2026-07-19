@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveTransitAphorism, resolveStrongestAphorism } from '../transitAphorism'
+import { resolveTransitAphorism } from '../transitAphorism'
 
 const t = (transitPlanet: string, type: string, natalPlanet: string, extra: any = {}) => ({
   transitPlanet,
@@ -11,7 +11,7 @@ const t = (transitPlanet: string, type: string, natalPlanet: string, extra: any 
 describe('resolveTransitAphorism', () => {
   it('resolve pela mesma chave do texto curado', () => {
     expect(resolveTransitAphorism(t('Mercury', 'quadratura', 'Sun'), 'pt-BR')).toBe(
-      'Se a fala é prata, o silêncio é ouro.',
+      'Se a palavra é prata, o silêncio é ouro.',
     )
     expect(resolveTransitAphorism(t('Saturn', 'conjuncao', 'Sun'), 'pt-BR')).toBe(
       'O ouro se prova no fogo; a pessoa, no tempo.',
@@ -35,23 +35,5 @@ describe('resolveTransitAphorism', () => {
     expect(resolveTransitAphorism(t('Neptune', 'semissextil', 'Pluto'), 'pt-BR')).toBeNull()
     expect(resolveTransitAphorism(null, 'pt-BR')).toBeNull()
     expect(resolveTransitAphorism({}, 'pt-BR')).toBeNull()
-  })
-})
-
-describe('resolveStrongestAphorism', () => {
-  it('pula os trânsitos sem frase e pega o primeiro que tem', () => {
-    // Parar no mais forte deixaria a área quase sempre muda.
-    const lista = [
-      t('Neptune', 'semissextil', 'Pluto'), // sem frase
-      t('Uranus', 'quincuncio', 'Neptune'), // sem frase
-      t('Mercury', 'quadratura', 'Sun'), // tem
-    ]
-    expect(resolveStrongestAphorism(lista, 'pt-BR')).toBe('Se a fala é prata, o silêncio é ouro.')
-  })
-
-  it('devolve null quando nenhum tem frase', () => {
-    expect(resolveStrongestAphorism([t('Neptune', 'semissextil', 'Pluto')], 'pt-BR')).toBeNull()
-    expect(resolveStrongestAphorism([], 'pt-BR')).toBeNull()
-    expect(resolveStrongestAphorism(null, 'pt-BR')).toBeNull()
   })
 })

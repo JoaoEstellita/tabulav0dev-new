@@ -148,7 +148,7 @@ function lexicoAcentuado() {
       // "ampliá-la" o acento pertence a enclise, e aprender "amplia" -> "ampliá"
       // faria o script acentuar o verbo solto ("amplia possibilidades"), que
       // esta correto sem acento.
-      const limpo = text.replace(/[A-Za-zÀ-ÿ]+-l[oa]s?/g, ' ')
+      const limpo = text.replace(/[A-Za-zÀ-ÿ]+-l[oa]s?\b/g, ' ')
       for (const w of limpo.split(/[^A-Za-zÀ-ÿ]+/)) {
         if (!w || !ehPalavra(w)) continue
         const chave = deaccent(w).toLowerCase()
@@ -194,9 +194,27 @@ const AMBIGUAS = new Set([
  *   ("espiritualidade tambem se pratica lavando a louca"); as outras 21 sao o
  *   substantivo/adjetivo "prática".
  */
-const PROTEGIDAS = ['se pratica']
+const PROTEGIDAS = [
+  'se pratica',
+  // "esta" DEMONSTRATIVO. Li as 166 ocorrencias do corpus: 163 sao o verbo
+  // ("o que esta sendo", "o que esta oculto", "esta por baixo") e apenas estas
+  // tres sao pronome — "esta era em curso", "esta e provavelmente uma razao",
+  // "esta posicao pode gerar".
+  'esta era',
+  'esta é',
+  'esta posição',
+  'esta posicao',
+]
 
-const BLOQUEADAS = new Set(['amplia', 'canaliza', 'processa', 'suporta', 'incomoda', 'faze', 'mante', 'estaavel'])
+const BLOQUEADAS = new Set([
+  'amplia', 'canaliza', 'processa', 'suporta', 'incomoda', 'faze', 'mante', 'estaavel',
+  // 'la' aqui e SEMPRE o pronome enclitico ("realiza-la" -> "realizá-la"), que
+  // nao leva acento: quem recebe o acento e o verbo. O adverbio "lá" existe em
+  // outro catalogo e por isso o lexico o propunha — o resultado seria
+  // "realizá-lá". Peguei isso conferindo o diff, nao um teste; por isso o
+  // caso virou asserçao no spec de regressao.
+  'la',
+])
 
 const MANUAIS = {
   transito: 'trânsito', // 100% precedido de artigo: "o transito de poucos dias"
@@ -238,6 +256,8 @@ const MANUAIS = {
   referencias: 'referências',
   desperdicio: 'desperdício',
   danca: 'dança',
+  // Verbo em 163 das 166 ocorrencias; os 3 casos de pronome estao em PROTEGIDAS.
+  esta: 'está',
   autenticos: 'autênticos',
   // Proparoxitonas em -ico/-ica que nem o lexico nem a derivacao alcancaram
   // (nenhuma das 4 formas aparecia no corpus acentuado). Ficam de FORA os
@@ -373,7 +393,7 @@ function propor() {
 
 // ─── aplicação ─────────────────────────────────────────────────────────────────
 
-const MASCARA = (i) => ` P${i} `
+const MASCARA = (i) => `\uE000P${i}\uE000`
 
 function aplicarNoTexto(texto, mapa) {
   let base = texto
@@ -448,7 +468,26 @@ const valor = (n, d) => {
 if (flag('propose')) {
   const { mapa, ambiguas, desconhecidas, totalTipos, derivadas } = propor()
   fs.mkdirSync(path.dirname(MAPA), { recursive: true })
-  fs.writeFileSync(MAPA, JSON.stringify(mapa, null, 2) + '\n', 'utf8')
+  // MERGE, nunca sobrescrita.
+  //
+  // Depois do primeiro passe o corpus ja esta acentuado, entao uma proposta nova
+  // so enxerga o que ainda falta — gravar por cima reduziria o mapa a um punhado
+  // de palavras. O mapa nao e o relatorio do passe atual: e o registro de tudo
+  // que ja foi decidido, e o spec de regressao usa exatamente ele como escopo.
+  // Sobrescrever desarmaria a trava sem ninguem perceber.
+  const anterior = fs.existsSync(MAPA) ? JSON.parse(fs.readFileSync(MAPA, 'utf8')) : {}
+  const acumulado = { ...anterior, ...mapa }
+  const ordenado = Object.fromEntries(Object.keys(acumulado).sort().map((k) => [k, acumulado[k]]))
+  fs.writeFileSync(MAPA, JSON.stringify(ordenado, null, 2) + '\n', 'utf8')
+  // As frases protegidas viram artefato tambem: o spec de regressao precisa
+  // saber que "esta era" e "esta posicao" continuam sem acento DE PROPOSITO,
+  // senao acusaria 'esta' como vazamento para sempre.
+  fs.writeFileSync(
+    path.join(path.dirname(MAPA), 'ptbrAccentProtected.json'),
+    JSON.stringify(PROTEGIDAS, null, 2) + '\n',
+    'utf8',
+  )
+  console.log(`mapa acumulado: ${Object.keys(anterior).length} + ${Object.keys(mapa).length} nova(s) -> ${Object.keys(ordenado).length}`)
   console.log(`tipos sem acento no corpus: ${totalTipos}`)
   console.log(`mapa proposto: ${Object.keys(mapa).length} palavras (${derivadas} derivadas por genero/numero) -> ${MAPA}`)
   console.log(`\nAMBIGUAS (fora do mapa de proposito): ${ambiguas.length}`)

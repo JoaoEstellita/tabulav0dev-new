@@ -22,23 +22,3 @@ export function resolveTransitAphorism(
   if (!key) return null
   return TRANSIT_APHORISMS_PTBR[key] || null
 }
-
-/**
- * O aforismo do trânsito mais forte de uma lista — para o topo de uma área do
- * status, onde a frase representa o conjunto e não um item.
- *
- * Percorre em ordem e devolve o primeiro que TEM frase curada, em vez de olhar
- * só o primeiro item: com 87 de 724 chaves cobertas, parar no mais forte faria
- * a área quase sempre ficar sem frase mesmo havendo uma disponível logo abaixo.
- */
-export function resolveStrongestAphorism(
-  transits: unknown[] | null | undefined,
-  language?: string | null,
-): string | null {
-  if (!Array.isArray(transits)) return null
-  for (const t of transits) {
-    const frase = resolveTransitAphorism(t, language)
-    if (frase) return frase
-  }
-  return null
-}

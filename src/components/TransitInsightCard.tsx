@@ -37,6 +37,8 @@ type TransitInsightCardProps = {
   /** Áreas do status que o trânsito toca, já formatadas ("Amor · Carreira"). */
   areasLabel?: string | null
   areasLabelPrefix?: string
+  /** Frase de efeito do trânsito, acima da leitura. Cobertura parcial: sem frase, nada é renderizado. */
+  epigraph?: string | null
 }
 
 export default function TransitInsightCard({
@@ -67,6 +69,7 @@ export default function TransitInsightCard({
   dense = false,
   areasLabel,
   areasLabelPrefix = 'Afeta',
+  epigraph,
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
@@ -156,6 +159,12 @@ export default function TransitInsightCard({
 
       {/* Condicional: quem quer a leitura só atrás do "Ver leitura" passa directText
           vazio — sem isso sobrava um Text vazio ocupando espaço no card. */}
+      {epigraph ? (
+        <View style={styles.epigraphWrap}>
+          <Text style={styles.epigraph}>{epigraph}</Text>
+        </View>
+      ) : null}
+
       {String(directText || '').trim() ? (
         <Text style={[styles.directText, isDark ? styles.directTextDark : styles.directTextLight]}>
           {directText}
@@ -377,6 +386,21 @@ const styles = StyleSheet.create({
   },
   technicalLineDark: {
     color: '#9CA3AF',
+  },
+  // Frase de efeito por trânsito. Fica ANTES da leitura, com a mesma barra âmbar
+  // do resto do app — resume a energia numa linha antes do texto longo.
+  epigraphWrap: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+    paddingLeft: 10,
+    marginBottom: 8,
+  },
+  epigraph: {
+    color: '#B45309',
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    fontWeight: '600',
   },
   directText: {
     fontSize: 14,

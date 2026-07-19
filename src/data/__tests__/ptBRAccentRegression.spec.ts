@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import mapaAcentos from '../../../scripts/data/ptbrAccentMap.json'
+import frasesProtegidas from '../../../scripts/data/ptbrAccentProtected.json'
 
 /**
  * Trava o passe de reacentuação do corpus curado pt-BR.
@@ -52,7 +53,13 @@ describe('acentuação do corpus curado pt-BR', () => {
 
   for (const rel of ARQUIVOS) {
     it(`${rel} — nenhuma palavra do mapa aparece sem acento`, () => {
-      const valores = valoresDe(ler(rel))
+      // Tira as frases protegidas antes de varrer: "esta era", "esta é" e
+      // "esta posição" continuam sem acento DE PROPÓSITO (são pronome, não
+      // verbo), então acusariam 'esta' como vazamento para sempre.
+      let valores = valoresDe(ler(rel))
+      for (const frase of frasesProtegidas as string[]) {
+        valores = valores.split(frase).join(' ')
+      }
       const vazando: string[] = []
 
       for (const plano of Object.keys(mapaAcentos)) {
@@ -78,6 +85,15 @@ describe('acentuação do corpus curado pt-BR', () => {
       expect(texto).not.toContain('â€')
     })
   }
+
+  it('a ênclise não recebe acento no pronome — só o verbo', () => {
+    // Peguei "realizá-lá" conferindo o diff à mão, não por teste: o advérbio
+    // "lá" existe em outro catálogo e o léxico propôs 'la' -> 'lá', que casaria
+    // o pronome enclítico. Quem leva o acento é o verbo ("realizá-la").
+    for (const rel of ARQUIVOS) {
+      expect(ler(rel)).not.toMatch(/-l[áó]s?/)
+    }
+  })
 
   it('o typo que o script recusou foi corrigido à mão', () => {
     // 'estaavel' -> 'estável' viola o invariante deaccent(novo)===deaccent(antigo),

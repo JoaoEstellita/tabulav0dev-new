@@ -30,7 +30,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:sun|house|11':
     'O Sol na Casa 11 orienta a identidade para o coletivo, os projetos de longo prazo e a participação em grupos com propósito compartilhado. Há satisfação em ser parte de algo maior que o individual, e a amizade e a colaboração costumam ser fontes genuínas de energia vital. O reconhecimento tende a chegar através de contribuições a ideais e causas que ultrapassam o interesse pessoal imediato.',
   'natal:sun|house|12':
-    'O Sol na Casa 12 orienta a expressão vital para o recolhimento, o autoconhecimento profundo e o serviço discreto. Há uma tendência para uma vida interior rica, sensibilidade ao que esta nas sombras e conexão com dimensões sutis da experiência. O brilho pessoal costuma se manifestar em espaços de retiro, espiritualidade ou dedicação silenciosa a algo maior que o ego.',
+    'O Sol na Casa 12 orienta a expressão vital para o recolhimento, o autoconhecimento profundo e o serviço discreto. Há uma tendência para uma vida interior rica, sensibilidade ao que está nas sombras e conexão com dimensões sutis da experiência. O brilho pessoal costuma se manifestar em espaços de retiro, espiritualidade ou dedicação silenciosa a algo maior que o ego.',
 
   // ── Lua ────────────────────────────────────────────────────────────────────
   'natal:moon|house|1':
@@ -44,11 +44,11 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:moon|house|5':
     'A Lua na Casa 5 traz uma emotividade criativa e expressiva, com forte necessidade de afeto, reconhecimento e envolvimento lúdico com o mundo. Há uma conexão emocional intensa com crianças, artes e relacionamentos românticos, onde sentir e criar se entrancam. O prazer e a expressão genuína funcionam como nutrição emocional fundamental.',
   'natal:moon|house|6':
-    'A Lua na Casa 6 conecta o bem-estar emocional a rotina, ao trabalho e ao ato de servir e cuidar dos detalhes. Nutrição física, higiene e organização do cotidiano tem peso emocional significativo, e o estado interno se reflete com frequência na saúde e no corpo. Quando a rotina esta em ordem, as emoções tendem a se estabilizar.',
+    'A Lua na Casa 6 conecta o bem-estar emocional a rotina, ao trabalho e ao ato de servir e cuidar dos detalhes. Nutrição física, higiene e organização do cotidiano tem peso emocional significativo, e o estado interno se reflete com frequência na saúde e no corpo. Quando a rotina está em ordem, as emoções tendem a se estabilizar.',
   'natal:moon|house|7':
     'A Lua na Casa 7 orienta as necessidades emocionais para as relações íntimas e as parcerias, tornando o outro uma fonte central de nutrição afetiva. Há uma sensibilidade acentuada para o que o outro sente e precisa, o que favorece empatia mas pode gerar dependência emocional. O equilíbrio entre dar e receber nos vínculos e um aprendizado contínuo.',
   'natal:moon|house|8':
-    'A Lua na Casa 8 mergulha as emoções em profundidades intensas, ligando a vida emocional a transformação, intimidade e o que esta oculto. Há uma intuição aguçada para o que esta por baixo da superfície, com atração natural por psicologia, mistérios e as camadas mais densas da existência. O crescimento emocional vem de nomear e integrar o que estava escondido.',
+    'A Lua na Casa 8 mergulha as emoções em profundidades intensas, ligando a vida emocional a transformação, intimidade e o que está oculto. Há uma intuição aguçada para o que está por baixo da superfície, com atração natural por psicologia, mistérios e as camadas mais densas da existência. O crescimento emocional vem de nomear e integrar o que estava escondido.',
   'natal:moon|house|9':
     'A Lua na Casa 9 conecta o mundo emocional a busca de sentido, fé e expansão de horizontes. Há uma fome emocional por aprendizado, viagens e contato com culturas diferentes, que funciona como nutrição interior. Crenças religiosas ou filosóficas podem ter forte carga afetiva e influenciar decisões que emergem do campo emocional.',
   'natal:moon|house|10':
@@ -56,7 +56,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:moon|house|11':
     'A Lua na Casa 11 orienta o mundo emocional para grupos, amizades e causas coletivas, tornando o senso de pertencer a algo maior uma necessidade afetiva real. Há satisfação emocional genuína em colaborar, apoiar redes e investir em amizades com profundidade. O humor e o bem-estar interno tendem a responder ao estado das relações coletivas e ao clima dos grupos frequentados.',
   'natal:moon|house|12':
-    'A Lua na Casa 12 internaliza as emoções de forma profunda, criando uma vida interior rica, mas por vezes difícil de acessar ou comunicar. Há uma sensibilidade sutil ao sofrimento dos outros, intuição desenvolvida e conexão natural com o que esta além do visível. O trabalho de autoconhecimento e o contato com a própria vida emocional são caminhos fundamentais de nutrição interna.',
+    'A Lua na Casa 12 internaliza as emoções de forma profunda, criando uma vida interior rica, mas por vezes difícil de acessar ou comunicar. Há uma sensibilidade sutil ao sofrimento dos outros, intuição desenvolvida e conexão natural com o que está além do visível. O trabalho de autoconhecimento e o contato com a própria vida emocional são caminhos fundamentais de nutrição interna.',
 
   // ── Mercúrio ────────────────────────────────────────────────────────────────
   'natal:mercury|house|1':
@@ -74,7 +74,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:mercury|house|7':
     'Mercúrio na Casa 7 coloca a comunicação no centro das relações significativas, tornando o diálogo, a negociação e o entendimento mútuo ferramentas essenciais nos vínculos. Há uma tendência para atrair parceiros intelectualmente estimulantes e para construir relações baseadas em trocas verbais e mentais. O desafio e usar a mente para aprofundar os vínculos em vez de apenas analisar ou racionalizar o que sente.',
   'natal:mercury|house|8':
-    'Mercúrio na Casa 8 desenvolve uma mente investigativa, atraída pelo que esta oculto, pelos mecanismos psicológicos e pelas camadas mais profundas da realidade. Há um talento natural para pesquisa, reconhecimento de padrões ocultos e para lidar com informações sensíveis ou complexas. A comunicação tende a ser cuidadosa e precisa — este Mercúrio prefere dizer pouco e dizer bem.',
+    'Mercúrio na Casa 8 desenvolve uma mente investigativa, atraída pelo que está oculto, pelos mecanismos psicológicos e pelas camadas mais profundas da realidade. Há um talento natural para pesquisa, reconhecimento de padrões ocultos e para lidar com informações sensíveis ou complexas. A comunicação tende a ser cuidadosa e precisa — este Mercúrio prefere dizer pouco e dizer bem.',
   'natal:mercury|house|9':
     'Mercúrio na Casa 9 expande a mente para além do cotidiano, com interesse genuíno em filosofia, ensino, escrita de longo alcance e o contato com formas de pensar diferentes das próprias. Há uma aptidão para comunicar conceitos amplos, articular visões de mundo e aprender através de viagens, culturas e sistemas de crença. A escrita acadêmica, a docência e a públicação são canais naturais de expressão para esse posicionamento.',
   'natal:mercury|house|10':
@@ -134,7 +134,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:mars|house|11':
     'Marte na Casa 11 canaliza a energia para o trabalho em grupo, as causas coletivas e a realização de projetos de longo alcance com impacto humanitário. Há um espírito de comunidade genuíno, com motivação para unir esforços com outros em direção a objetivos compartilhados. Ideais altruístas funcionam como combustível para a ação de forma mais duradoura do que interesses puramente pessoais.',
   'natal:mars|house|12':
-    'Marte na Casa 12 direciona a energia para o interior, o serviço silencioso e o sacrifício pessoal em nome de algo maior. Há uma motivação profunda ligada a compaixão, a psicologia e ao cuidado com o que esta nos bastidores da vida social. A expressão direta de raiva ou desejo pode ser complexa — canalizar a energia de forma estruturada e um aprendizado contínuo.',
+    'Marte na Casa 12 direciona a energia para o interior, o serviço silencioso e o sacrifício pessoal em nome de algo maior. Há uma motivação profunda ligada a compaixão, a psicologia e ao cuidado com o que está nos bastidores da vida social. A expressão direta de raiva ou desejo pode ser complexa — canalizar a energia de forma estruturada e um aprendizado contínuo.',
 
   // ── Júpiter ─────────────────────────────────────────────────────────────────
   'natal:jupiter|house|1':
@@ -152,7 +152,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:jupiter|house|7':
     'Júpiter na Casa 7 expande a vida relacional, tornando as parcerias — amorosas, profissionais ou jurídicas — arenas de crescimento, oportunidade e expansão de horizonte. Há uma generosidade nas relações e uma tendência para atrair parceiros que abrem caminhos ou ampliam perspectivas. O crescimento pessoal tende a ocorrer com mais intensidade através do encontro com o outro.',
   'natal:jupiter|house|8':
-    'Júpiter na Casa 8 expande a capacidade de investigar, transformar e ir além das aparências para chegar ao essencial. Há uma facilidade para lidar com o que esta oculto — recursos compartilhados, psicologia profunda, ocultismo — com uma orientação natural para desmascarar o que e real em qualquer situação. Negócios que envolvem recursos coletivos ou transformação podem ser áreas de crescimento natural.',
+    'Júpiter na Casa 8 expande a capacidade de investigar, transformar e ir além das aparências para chegar ao essencial. Há uma facilidade para lidar com o que está oculto — recursos compartilhados, psicologia profunda, ocultismo — com uma orientação natural para desmascarar o que e real em qualquer situação. Negócios que envolvem recursos coletivos ou transformação podem ser áreas de crescimento natural.',
   'natal:jupiter|house|9':
     'Júpiter na Casa 9 e uma das posições de maior conforto para esse planeta, expandindo a devoção pela verdade, a busca de significado e o contato com o que e amplo e essencial. Há uma orientação natural para filosofia, religião, ensinamento e viagens longas como arenas de realização. A carreira pode depender da capacidade de alcançar o cerne de cada pergunta importante e de transmitir isso aos outros.',
   'natal:jupiter|house|10':
@@ -160,7 +160,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:jupiter|house|11':
     'Júpiter na Casa 11 expande o envolvimento com grupos, comunidades e ideais coletivos de longo alcance. Há uma orientação natural para o trabalho humanitário, para a construção de redes de colaboração e para manter a visão do que e melhor para todos como guia de ação. A realização tende a se ampliar quando o indivíduo contribui para algo maior do que o interesse pessoal.',
   'natal:jupiter|house|12':
-    'Júpiter na Casa 12 expande a vida interior, a compaixão e a orientação para o serviço silencioso e o auto-sacrifício. Há uma tendência para encontrar crescimento em espaços de recolhimento — psicologia, conselhamento, espiritualidade e trabalho com populações vulneráveis. O brilho pessoal tende a se manifestar nos bastidores, onde o foco esta em aliviar o sofrimento alheio.',
+    'Júpiter na Casa 12 expande a vida interior, a compaixão e a orientação para o serviço silencioso e o auto-sacrifício. Há uma tendência para encontrar crescimento em espaços de recolhimento — psicologia, conselhamento, espiritualidade e trabalho com populações vulneráveis. O brilho pessoal tende a se manifestar nos bastidores, onde o foco está em aliviar o sofrimento alheio.',
 
   // ── Saturno ─────────────────────────────────────────────────────────────────
   'natal:saturn|house|1':
@@ -210,7 +210,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:uranus|house|10':
     'Urano na Casa 10 traz originalidade e não-convencionalidade para a carreira e a reputação pública. Há uma perspicacia particular em questões práticas e de organização, com uma tendência para abordagens de trabalho que fogem da estrutura hierárquica tradicional. A reputação pode incluir a de ser diferente — o que pode funcionar como diferencial em áreas de inovação.',
   'natal:uranus|house|11':
-    'Urano na Casa 11 favorece amizades e grupos com um perfil não-convencional, humanitário ou vanguardista. Há ideias muito originais quando se trata de comunidade e de como tornar visões coletivas em realidade. O sentido de pertencimento tende a vir de grupos que valorizam a individualidade, a diversidade e a ruptura com o que esta estabelecido.',
+    'Urano na Casa 11 favorece amizades e grupos com um perfil não-convencional, humanitário ou vanguardista. Há ideias muito originais quando se trata de comunidade e de como tornar visões coletivas em realidade. O sentido de pertencimento tende a vir de grupos que valorizam a individualidade, a diversidade e a ruptura com o que está estabelecido.',
   'natal:uranus|house|12':
     'Urano na Casa 12 traz originalidade e não-convencionalidade para a vida interior, a psicologia e tudo que e místico ou espiritual. Há uma tendência para formas inusitadas de autoconhecimento e para ajudar os outros de maneiras que escapam das categorias estabelecidas. A vida subjetiva pode incluir insights repentinos, experiências incomuns e uma percepção que funciona de formas não-lineares.',
 
@@ -220,7 +220,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:neptune|house|2':
     'Netuno na Casa 2 torna a relação com o mundo material idealizante, com uma tendência para responder de forma elevada ao que a vida oferece, nem sempre de forma prática. Há idealismos marcados em relação a finanças, posses e ao modo de se sustentar, o que pode levar a decepções quando a realidade não acompanha a visão. Clareza nos limites financeiros e um aprendizado importante.',
   'natal:neptune|house|3':
-    'Netuno na Casa 3 torna a mente imaginativa e pouco preocupada com fatos e números — o território natural são as ideias, a escrita místico-poética e a pesquisa de assuntos espirituais ou religiosos. Há uma sensibilidade aguçada para as nuances da linguagem e para o que esta nas entrelinhas da comunicação. A intuição e frequentemente mais confiável do que o raciocínio exclusivamente lógico.',
+    'Netuno na Casa 3 torna a mente imaginativa e pouco preocupada com fatos e números — o território natural são as ideias, a escrita místico-poética e a pesquisa de assuntos espirituais ou religiosos. Há uma sensibilidade aguçada para as nuances da linguagem e para o que está nas entrelinhas da comunicação. A intuição e frequentemente mais confiável do que o raciocínio exclusivamente lógico.',
   'natal:neptune|house|4':
     'Netuno na Casa 4 cria um ideal de lar e família que tende ao romântico, ao espiritual ou ao comunitário. Há uma criatividade latente para o ambiente doméstico e um sentido de unidade que permeia a vida familiar. A relação com a origem pode envolver idealização ou alguma confusão — trabalhar a clareza sobre o passado familiar pode ser um processo de longa maturação.',
   'natal:neptune|house|5':
@@ -230,7 +230,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:neptune|house|7':
     'Netuno na Casa 7 torna os ideais de parceria e relacionamento elevados, com uma busca por vínculos que transcendam o ordinário. Há uma imaginação ativa em relação ao que o outro representa, o que pode enriquecer ou idealizar excessivamente as relações. A clareza sobre quem o parceiro realmente e — e não quem se projeta nele — e um trabalho contínuo.',
   'natal:neptune|house|8':
-    'Netuno na Casa 8 torna a visão do que e essencial em qualquer situação nebulosa e ao mesmo tempo espiritualizada. Há uma confiança e um idealismo pronunciados ao lidar com o que esta oculto, com o que e compartilhado e com as camadas mais profundas da existência. O misticismo, a iniciação e os processos de transformação interior tendem a se tornar gradualmente mais nitidos ao longo do tempo.',
+    'Netuno na Casa 8 torna a visão do que e essencial em qualquer situação nebulosa e ao mesmo tempo espiritualizada. Há uma confiança e um idealismo pronunciados ao lidar com o que está oculto, com o que e compartilhado e com as camadas mais profundas da existência. O misticismo, a iniciação e os processos de transformação interior tendem a se tornar gradualmente mais nitidos ao longo do tempo.',
   'natal:neptune|house|9':
     'Netuno na Casa 9 conecta os sonhos e ideais a busca pelo que e puro, verdadeiro e transcendente. Há um refúgio emocional e intelectual na filosofia, na religião e nas grandes questões existenciais, com uma imaginação quasi-mística que fornece visões de unidade e interconexão. O senso de que o mundo e uma grande comunidade permeia a abordagem ética e espiritual.',
   'natal:neptune|house|10':
@@ -238,7 +238,7 @@ export const NATAL_PLANET_IN_HOUSE_PTBR_OVERRIDES: Record<string, string> = {
   'natal:neptune|house|11':
     'Netuno na Casa 11 alimenta o sonho de um mundo de unidade, harmonia e entendimento coletivo. Há uma imaginação voltada para objetivos altruístas e uma tendência para se envolver em trabalho comunitário ou de grupo com ideais elevados. A visão interior do que e possível para a humanidade pode funcionar como motivação profunda, mesmo quando a realidade prática e mais complexa.',
   'natal:neptune|house|12':
-    'Netuno na Casa 12 traz ideais muito elevados, uma visão de unidade e uma tendência profunda para a abnegação e a compreensão compassiva. Há uma conexão natural com as dimensões subjetivas, místicas e psicológicas da experiência, com um interesse genuíno pelo que esta além do visível. O cuidado dos outros e feito com sensibilidade fina e uma consciência de que os sofrimentos alheios são parte de uma teia maior.',
+    'Netuno na Casa 12 traz ideais muito elevados, uma visão de unidade e uma tendência profunda para a abnegação e a compreensão compassiva. Há uma conexão natural com as dimensões subjetivas, místicas e psicológicas da experiência, com um interesse genuíno pelo que está além do visível. O cuidado dos outros e feito com sensibilidade fina e uma consciência de que os sofrimentos alheios são parte de uma teia maior.',
 
   // ── Plutão ──────────────────────────────────────────────────────────────────
   'natal:pluto|house|1':
