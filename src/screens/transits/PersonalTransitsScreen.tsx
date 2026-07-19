@@ -7,6 +7,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { buildTransitTitle } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
+import { groupTransits } from '../../utils/transitGrouping'
 
 export default function PersonalTransitsScreen() {
   const { t, language } = useAppLanguage()
@@ -47,12 +48,74 @@ export default function PersonalTransitsScreen() {
     })
   }, [personalRaw])
 
+  const grupos = useMemo(() => groupTransits(list), [list])
+
   const natureVisual = (nature: string) =>
     nature === 'harmonico'
       ? { color: '#16A34A', label: tl('Harmônico', 'Harmonic', 'Armónico', 'Armonico') }
       : nature === 'desafiador'
         ? { color: '#DC2626', label: tl('Desafiador', 'Challenging', 'Desafiante', 'Impegnativo') }
         : { color: '#D97706', label: tl('Neutro', 'Neutral', 'Neutro', 'Neutro') }
+
+  // Um card por trânsito. Extraído para poder ser reusado nas 4 seções.
+  const renderCard = (item: any, i: number, destaque = false) => {
+    const key = `${item.transitPlanet}|${item.type}|${item.natalPlanet}|${i}`
+
+    // transitPlanet PRIMEIRO: convenção do resto do app e da astrologia
+    // ("Saturno quadratura Sol natal"). Esta tela vinha invertida.
+    const title = buildTransitTitle(
+      { transitPlanet: item.transitPlanet, aspectLabel: item.type, targetLabel: item.natalPlanet },
+      language as any,
+    )
+
+    const narrative = buildUnifiedTransitNarrative(item, undefined, language)
+    const nature = natureVisual(aspectNature(item.type))
+    const timing = [getTransitState(item.window), formatPeakETA(item.window)].filter(Boolean).join(' · ')
+
+    const hasSynergy = collective.some(
+      (c: any) =>
+        (c.planet1 === item.natalPlanet ||
+          c.planet2 === item.natalPlanet ||
+          c.planet1 === item.transitPlanet ||
+          c.planet2 === item.transitPlanet) &&
+        windowsIntersect(item.window as any, c.window as any),
+    )
+
+    return (
+      <View key={key} style={styles.cardWrap}>
+        <TransitInsightCard
+          statusLabel={nature.label}
+          statusColor={nature.color}
+          title={hasSynergy ? `${title}  ✦` : title}
+          houseLabel={item.house ? String(item.house) : null}
+          houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
+          timingLabel={timing || null}
+          // Sem barra de impacto aqui: numa lista de leitura ela ocupa duas
+          // linhas para dizer o que a ordenação já diz.
+          // buildUnifiedTransitNarrative devolve shortText === modalBody (o mesmo
+          // texto), então passar os dois duplicava a leitura no card.
+          directText=""
+          fullText={narrative.modalBody}
+          fullTitle={tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')}
+          actionText={narrative.actionText || null}
+          metaText={narrative.metaText || null}
+          fullExpanded={!!expanded[key]}
+          onToggleFull={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
+          detailMode="inline"
+          featured={destaque}
+        />
+      </View>
+    )
+  }
+
+  const secao = (titulo: string, subtitulo: string, itens: any[], offset: number) =>
+    itens.length ? (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{titulo}</Text>
+        <Text style={styles.sectionSubtitle}>{subtitulo}</Text>
+        {itens.map((item, i) => renderCard(item, offset + i))}
+      </View>
+    ) : null
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
@@ -64,56 +127,37 @@ export default function PersonalTransitsScreen() {
             <Text style={styles.emptyText}>{t('transits.personal.empty')}</Text>
           </View>
         ) : (
-          list.map((item: any, i: number) => {
-            const key = `${item.transitPlanet}|${item.type}|${item.natalPlanet}|${i}`
-
-            // transitPlanet PRIMEIRO: convenção do resto do app e da astrologia
-            // ("Saturno quadratura Sol natal"). Esta tela vinha invertida.
-            const title = buildTransitTitle(
-              { transitPlanet: item.transitPlanet, aspectLabel: item.type, targetLabel: item.natalPlanet },
-              language as any,
-            )
-
-            const narrative = buildUnifiedTransitNarrative(item, undefined, language)
-            const nature = natureVisual(aspectNature(item.type))
-            const timing = [getTransitState(item.window), formatPeakETA(item.window)].filter(Boolean).join(' · ')
-
-            const hasSynergy = collective.some(
-              (c: any) =>
-                (c.planet1 === item.natalPlanet ||
-                  c.planet2 === item.natalPlanet ||
-                  c.planet1 === item.transitPlanet ||
-                  c.planet2 === item.transitPlanet) &&
-                windowsIntersect(item.window as any, c.window as any),
-            )
-
-            const impact = typeof item.strength === 'number' ? Math.max(0, Math.min(1, item.strength / 100)) : null
-
-            return (
-              <View key={key} style={styles.cardWrap}>
-                <TransitInsightCard
-                  statusLabel={nature.label}
-                  statusColor={nature.color}
-                  title={hasSynergy ? `${title}  ✦` : title}
-                  houseLabel={item.house ? String(item.house) : null}
-                  houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
-                  timingLabel={timing || null}
-                  impactValue01={impact}
-                  // buildUnifiedTransitNarrative devolve shortText === modalBody (o
-                  // mesmo texto), então passar os dois duplicava a leitura no card.
-                  // A interpretação fica só atrás do "Ver leitura".
-                  directText=""
-                  fullText={narrative.modalBody}
-                  fullTitle={tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')}
-                  actionText={narrative.actionText || null}
-                  metaText={narrative.metaText || null}
-                  fullExpanded={!!expanded[key]}
-                  onToggleFull={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
-                  detailMode="inline"
-                />
+          <>
+            {grupos.highlight ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  {tl('✦ O que mais pesa hoje', '✦ What weighs most today', '✦ Lo que mas pesa hoy', '✦ Cio che pesa di piu oggi')}
+                </Text>
+                <Text style={styles.sectionSubtitle}>
+                  {tl('O trânsito mais forte do seu momento.', 'The strongest transit right now.', 'El transito mas fuerte de tu momento.', 'Il transito piu forte del tuo momento.')}
+                </Text>
+                {renderCard(grupos.highlight, 0, true)}
               </View>
-            )
-          })
+            ) : null}
+
+            {secao(
+              tl('Mudanças recentes na vida', 'Recent changes', 'Cambios recientes', 'Cambiamenti recenti'),
+              tl('Trânsitos que começaram nos últimos dias.', 'Transits that started in the last few days.', 'Transitos iniciados en los ultimos dias.', 'Transiti iniziati negli ultimi giorni.'),
+              grupos.recent, 100,
+            )}
+
+            {secao(
+              tl('Tendências ainda ativas', 'Trends still active', 'Tendencias aun activas', 'Tendenze ancora attive'),
+              tl('Você ainda pode usar essas tendências a seu favor.', 'You can still use these trends in your favor.', 'Aun puedes usar estas tendencias a tu favor.', 'Puoi ancora usare queste tendenze a tuo favore.'),
+              grupos.active, 200,
+            )}
+
+            {secao(
+              tl('Tendências de longo prazo', 'Long-term trends', 'Tendencias de largo plazo', 'Tendenze di lungo periodo'),
+              tl('Mudanças que pedem mais tempo para serem vividas e assimiladas.', 'Changes that take longer to live through and absorb.', 'Cambios que piden mas tiempo para vivirse.', 'Cambiamenti che richiedono piu tempo.'),
+              grupos.longTerm, 300,
+            )}
+          </>
         )}
       </ScrollView>
     </LinearGradient>
@@ -131,6 +175,18 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   cardWrap: { marginBottom: 12 },
+  section: { marginBottom: 18 },
+  sectionTitle: {
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  sectionSubtitle: {
+    color: '#8890B5',
+    fontSize: 12,
+    marginBottom: 10,
+  },
   emptyCard: {
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 12,

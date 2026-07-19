@@ -70,8 +70,11 @@ export default function TransitInsightCard({
 
   const cardContent = (
     <>
-      <View style={styles.header}>
-        {indexLabel ? <Text style={styles.number}>{indexLabel}</Text> : <View />}
+      {/* Selo na MESMA linha do título. Antes ocupava uma linha só dele, acima —
+          o card crescia sem entregar informação nenhuma a mais. */}
+      <View style={styles.titleRow}>
+        {indexLabel ? <Text style={styles.number}>{indexLabel}</Text> : null}
+        <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
         <View style={styles.headerRight}>
           {showHeaderBookIcon ? (
             <View style={styles.readingIconWrap}>
@@ -86,8 +89,6 @@ export default function TransitInsightCard({
           </View>
         </View>
       </View>
-
-      <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>{title}</Text>
       {houseLabel ? (
         <Text style={[styles.houseLine, isDark ? styles.houseLineDark : styles.houseLineLight]}>
           {houseLabelPrefix}: {houseLabel}
@@ -221,16 +222,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
+    flexShrink: 0,
   },
   statusText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 4,
+  },
   title: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 4,
+    flex: 1,
+    minWidth: 0,
   },
   titleLight: {
     color: '#0F172A',
