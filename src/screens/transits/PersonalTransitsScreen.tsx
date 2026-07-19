@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
@@ -8,6 +8,11 @@ import { buildTransitTitle } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
+import { computeProgressedPositions, computeProgressedAspects, type ProgressedAspect } from '../../astro/progressions'
+import { translatePlanet } from '../../utils/astro/pt'
+import { useAuth } from '../../hooks/useAuth'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 
 export default function PersonalTransitsScreen() {
   const { t, language } = useAppLanguage()
@@ -49,6 +54,34 @@ export default function PersonalTransitsScreen() {
   }, [personalRaw])
 
   const grupos = useMemo(() => groupTransits(list), [list])
+
+  // Progressões secundárias ("um dia por ano"): mapa simbólico do amadurecimento
+  // interno, diferente do trânsito (que é o céu real de hoje). Precisa dos dados
+  // de nascimento, que não vêm no transitData.
+  const { user } = useAuth()
+  const [progressoes, setProgressoes] = useState<ProgressedAspect[]>([])
+  useEffect(() => {
+    let cancelado = false
+    const rodar = async () => {
+      const natais = transitData?.currentTransits?.natalPlanets
+      if (!user?.uid || !Array.isArray(natais) || natais.length === 0) return
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid))
+        const u: any = snap.data() || {}
+        const lat = u?.birthLocation?.latitude
+        const lon = u?.birthLocation?.longitude
+        if (!u.birthDate || !Number.isFinite(lat) || !Number.isFinite(lon)) return
+        const prog = await computeProgressedPositions({
+          datetime: `${u.birthDate}T${u.birthTime || '12:00'}:00`,
+          coordinates: { latitude: lat, longitude: lon },
+        })
+        if (cancelado || !prog) return
+        setProgressoes(computeProgressedAspects(prog, natais))
+      } catch { /* sem progressões, a seção some */ }
+    }
+    rodar()
+    return () => { cancelado = true }
+  }, [user?.uid, transitData?.currentTransits?.natalPlanets])
 
   const natureVisual = (nature: string) =>
     nature === 'harmonico'
@@ -157,6 +190,35 @@ export default function PersonalTransitsScreen() {
               tl('Mudanças que pedem mais tempo para serem vividas e assimiladas.', 'Changes that take longer to live through and absorb.', 'Cambios que piden mas tiempo para vivirse.', 'Cambiamenti che richiedono piu tempo.'),
               grupos.longTerm, 300,
             )}
+
+            {progressoes.length ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  {tl('Como você está vendo a vida', 'How you are seeing life', 'Como estas viendo la vida', 'Come stai vedendo la vita')}
+                </Text>
+                <Text style={styles.sectionSubtitle}>
+                  {tl(
+                    'A progressão funciona como um filtro que colore sua percepção de tudo o mais.',
+                    'Progressions work as a filter coloring how you perceive everything else.',
+                    'La progresion funciona como un filtro que colorea tu percepcion.',
+                    'La progressione funziona come un filtro che colora la tua percezione.',
+                  )}
+                </Text>
+                {progressoes.map((a, i) => (
+                  <View key={`prog-${i}`} style={styles.progRow}>
+                    <View style={[styles.progDot, {
+                      backgroundColor: a.tone === 'harmonioso' ? '#4ECDC4' : a.tone === 'tenso' ? '#FF6B6B' : '#B39DDB',
+                    }]} />
+                    <Text style={styles.progText}>
+                      {tl('Progredida', 'Progressed', 'Progresada', 'Progredita')} {translatePlanet(a.progressedPlanet, language)}
+                      {' '}{a.symbol}{' '}
+                      {translatePlanet(a.natalPlanet, language)} {tl('natal', 'natal', 'natal', 'natale')}
+                    </Text>
+                    <Text style={styles.progOrb}>{a.orb.toFixed(1)}°</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -176,6 +238,17 @@ const styles = StyleSheet.create({
   },
   cardWrap: { marginBottom: 12 },
   section: { marginBottom: 18 },
+  progRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  progDot: { width: 8, height: 8, borderRadius: 4 },
+  progText: { color: '#E2E8F0', fontSize: 13, flex: 1 },
+  progOrb: { color: '#8890B5', fontSize: 11 },
   sectionTitle: {
     color: '#FFD700',
     fontSize: 15,
