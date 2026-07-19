@@ -8,6 +8,7 @@ import { buildTransitTitle } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
+import { TRANSIT_TITLES_PTBR } from '../../data/transitTitlesPtBR'
 import { computeProgressedPositions, computeProgressedAspects, type ProgressedAspect } from '../../astro/progressions'
 import { translatePlanet } from '../../utils/astro/pt'
 import { useAuth } from '../../hooks/useAuth'
@@ -52,6 +53,10 @@ export default function PersonalTransitsScreen() {
       return ax - bx
     })
   }, [personalRaw])
+
+  // Chaves do catálogo são minúsculas e sem acento.
+  const norm = (v: any) => String(v || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
 
   const grupos = useMemo(() => groupTransits(list), [list])
 
@@ -101,6 +106,11 @@ export default function PersonalTransitsScreen() {
       language as any,
     )
 
+    // Título temático ("Momento de ousadia") quando existe no catálogo; senão o
+    // card segue mostrando o nome técnico, como antes. Cobertura parcial por design.
+    const chave = `transit:${norm(item.transitPlanet)}|${norm(item.type)}|${norm(item.natalPlanet)}`
+    const tema = language === 'pt-BR' ? TRANSIT_TITLES_PTBR[chave] : undefined
+
     const narrative = buildUnifiedTransitNarrative(item, undefined, language)
     const nature = natureVisual(aspectNature(item.type))
     const timing = [getTransitState(item.window), formatPeakETA(item.window)].filter(Boolean).join(' · ')
@@ -119,7 +129,8 @@ export default function PersonalTransitsScreen() {
         <TransitInsightCard
           statusLabel={nature.label}
           statusColor={nature.color}
-          title={hasSynergy ? `${title}  ✦` : title}
+          title={tema ? (hasSynergy ? `${tema}  ✦` : tema) : (hasSynergy ? `${title}  ✦` : title)}
+          technicalTypeLabel={tema ? title : null}
           houseLabel={item.house ? String(item.house) : null}
           houseLabelPrefix={tl('Casa impactada', 'Impacted house', 'Casa impactada', 'Casa impattata')}
           timingLabel={timing || null}
