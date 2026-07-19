@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
@@ -8,7 +8,9 @@ import { buildTransitTitle } from '../../utils/transitPresentation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
-import { TRANSIT_TITLES_PTBR } from '../../data/transitTitlesPtBR'
+import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/transitTitlesPtBR'
+import { PROGRESSION_ASPECTS_PTBR } from '../../data/progressionAspectsPtBR'
+import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { computeProgressedPositions, computeProgressedAspects, type ProgressedAspect } from '../../astro/progressions'
 import { translatePlanet } from '../../utils/astro/pt'
 import { useAuth } from '../../hooks/useAuth'
@@ -60,6 +62,21 @@ export default function PersonalTransitsScreen() {
 
   const grupos = useMemo(() => groupTransits(list), [list])
 
+  // Navegação por seção + voltar ao topo (mesma abordagem do Cosmos: measureLayout
+  // contra o ScrollView, que funciona no nativo também).
+  const scrollRef = React.useRef<ScrollView>(null)
+  const ancoras = React.useRef<Record<string, any>>({})
+  const [showTop, setShowTop] = useState(false)
+  const irPara = (chave: string) => {
+    const node = ancoras.current[chave]
+    const scroll = scrollRef.current as any
+    if (!node || !scroll) return
+    try {
+      const alvo = scroll.getScrollableNode ? scroll.getScrollableNode() : scroll
+      node.measureLayout(alvo, (_x: number, y: number) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }), () => { })
+    } catch { }
+  }
+
   // Progressões secundárias ("um dia por ano"): mapa simbólico do amadurecimento
   // interno, diferente do trânsito (que é o céu real de hoje). Precisa dos dados
   // de nascimento, que não vêm no transitData.
@@ -109,7 +126,13 @@ export default function PersonalTransitsScreen() {
     // Título temático ("Momento de ousadia") quando existe no catálogo; senão o
     // card segue mostrando o nome técnico, como antes. Cobertura parcial por design.
     const chave = `transit:${norm(item.transitPlanet)}|${norm(item.type)}|${norm(item.natalPlanet)}`
-    const tema = language === 'pt-BR' ? TRANSIT_TITLES_PTBR[chave] : undefined
+    // Curado primeiro; sem curadoria, o gerado — assim TODO card tem a mesma
+    // anatomia (tema em cima, nome técnico no "Tipo:") e a lista para de alternar
+    // entre título temático e nome cru.
+    const tema =
+      language === 'pt-BR'
+        ? TRANSIT_TITLES_PTBR[chave] || buildFallbackTransitTitle(item.natalPlanet, item.type) || undefined
+        : undefined
 
     const narrative = buildUnifiedTransitNarrative(item, undefined, language)
     const nature = natureVisual(aspectNature(item.type))
@@ -152,9 +175,9 @@ export default function PersonalTransitsScreen() {
     )
   }
 
-  const secao = (titulo: string, subtitulo: string, itens: any[], offset: number) =>
+  const secao = (titulo: string, subtitulo: string, itens: any[], offset: number, chave?: string) =>
     itens.length ? (
-      <View style={styles.section}>
+      <View style={styles.section} ref={(n) => { if (chave) ancoras.current[chave] = n }}>
         <Text style={styles.sectionTitle}>{titulo}</Text>
         <Text style={styles.sectionSubtitle}>{subtitulo}</Text>
         {itens.map((item, i) => renderCard(item, offset + i))}
@@ -163,8 +186,29 @@ export default function PersonalTransitsScreen() {
 
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        scrollEventThrottle={16}
+        onScroll={(e) => setShowTop(e.nativeEvent.contentOffset.y > SCROLL_TOP_THRESHOLD)}
+      >
         <Text style={styles.title}>{t('transits.personal.title')}</Text>
+
+        {list.length ? (
+          <View style={styles.navChips}>
+            {[
+              grupos.recent.length ? { k: 'recent', r: tl('Recentes', 'Recent', 'Recientes', 'Recenti') } : null,
+              grupos.active.length ? { k: 'active', r: tl('Ativas', 'Active', 'Activas', 'Attive') } : null,
+              grupos.longTerm.length ? { k: 'longTerm', r: tl('Longo prazo', 'Long-term', 'Largo plazo', 'Lungo periodo') } : null,
+              progressoes.length ? { k: 'prog', r: tl('Progressões', 'Progressions', 'Progresiones', 'Progressioni') } : null,
+            ].filter(Boolean).map((c: any) => (
+              <TouchableOpacity key={c.k} style={styles.navChip} activeOpacity={0.8} onPress={() => irPara(c.k)}>
+                <Text style={styles.navChipText}>{c.r}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
         {list.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -187,23 +231,23 @@ export default function PersonalTransitsScreen() {
             {secao(
               tl('Mudanças recentes na vida', 'Recent changes', 'Cambios recientes', 'Cambiamenti recenti'),
               tl('Trânsitos que começaram nos últimos dias.', 'Transits that started in the last few days.', 'Transitos iniciados en los ultimos dias.', 'Transiti iniziati negli ultimi giorni.'),
-              grupos.recent, 100,
+              grupos.recent, 100, 'recent',
             )}
 
             {secao(
               tl('Tendências ainda ativas', 'Trends still active', 'Tendencias aun activas', 'Tendenze ancora attive'),
               tl('Você ainda pode usar essas tendências a seu favor.', 'You can still use these trends in your favor.', 'Aun puedes usar estas tendencias a tu favor.', 'Puoi ancora usare queste tendenze a tuo favore.'),
-              grupos.active, 200,
+              grupos.active, 200, 'active',
             )}
 
             {secao(
               tl('Tendências de longo prazo', 'Long-term trends', 'Tendencias de largo plazo', 'Tendenze di lungo periodo'),
               tl('Mudanças que pedem mais tempo para serem vividas e assimiladas.', 'Changes that take longer to live through and absorb.', 'Cambios que piden mas tiempo para vivirse.', 'Cambiamenti che richiedono piu tempo.'),
-              grupos.longTerm, 300,
+              grupos.longTerm, 300, 'longTerm',
             )}
 
             {progressoes.length ? (
-              <View style={styles.section}>
+              <View style={styles.section} ref={(n) => { ancoras.current.prog = n }}>
                 <Text style={styles.sectionTitle}>
                   {tl('Como você está vendo a vida', 'How you are seeing life', 'Como estas viendo la vida', 'Come stai vedendo la vita')}
                 </Text>
@@ -215,8 +259,12 @@ export default function PersonalTransitsScreen() {
                     'La progressione funziona come un filtro che colora la tua percezione.',
                   )}
                 </Text>
-                {progressoes.map((a, i) => (
-                  <View key={`prog-${i}`} style={styles.progRow}>
+                {progressoes.map((a, i) => {
+                  const chaveProg = `prog:${norm(a.progressedPlanet)}|${norm(a.aspect)}|${norm(a.natalPlanet)}`
+                  const texto = language === 'pt-BR' ? PROGRESSION_ASPECTS_PTBR[chaveProg] : undefined
+                  return (
+                  <View key={`prog-${i}`} style={styles.progItem}>
+                  <View style={styles.progRow}>
                     <View style={[styles.progDot, {
                       backgroundColor: a.tone === 'harmonioso' ? '#4ECDC4' : a.tone === 'tenso' ? '#FF6B6B' : '#B39DDB',
                     }]} />
@@ -227,12 +275,19 @@ export default function PersonalTransitsScreen() {
                     </Text>
                     <Text style={styles.progOrb}>{a.orb.toFixed(1)}°</Text>
                   </View>
-                ))}
+                  {texto ? <Text style={styles.progText2}>{texto}</Text> : null}
+                  </View>
+                  )
+                })}
               </View>
             ) : null}
           </>
         )}
       </ScrollView>
+      <ScrollTopButton
+        visible={showTop}
+        onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
+      />
     </LinearGradient>
   )
 }
@@ -254,9 +309,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingVertical: 7,
+  },
+  progItem: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
+    paddingBottom: 8,
   },
+  progText2: {
+    color: '#C8CDE8',
+    fontSize: 13,
+    lineHeight: 19,
+    marginLeft: 16,
+    marginTop: 2,
+  },
+  navChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  navChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.35)',
+    backgroundColor: 'rgba(255,215,0,0.08)',
+  },
+  navChipText: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
   progDot: { width: 8, height: 8, borderRadius: 4 },
   progText: { color: '#E2E8F0', fontSize: 13, flex: 1 },
   progOrb: { color: '#8890B5', fontSize: 11 },

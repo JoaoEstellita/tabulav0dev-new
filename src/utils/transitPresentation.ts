@@ -70,12 +70,12 @@ const ASPECT_SYMBOLS: Record<string, string> = {
 
 const ASPECT_LABELS_BY_LANGUAGE: Record<AppLanguage, Record<string, string>> = {
   'pt-BR': {
-    conjuncao: 'Conjuncao',
-    oposicao: 'Oposicao',
+    conjuncao: 'Conjunção',
+    oposicao: 'Oposição',
     quadratura: 'Quadratura',
-    trigono: 'Trigono',
+    trigono: 'Trígono',
     sextil: 'Sextil',
-    quincuncio: 'Quincuncio',
+    quincuncio: 'Quincúncio',
     semissextil: 'Semissextil',
     semiquadratura: 'Semiquadratura',
     sesquiquadratura: 'Sesquiquadratura',

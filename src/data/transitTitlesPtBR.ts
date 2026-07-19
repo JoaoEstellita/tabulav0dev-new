@@ -118,3 +118,70 @@ export const TRANSIT_TITLES_PTBR: Record<string, string> = {
   'transit:venus|trigono|moon': 'Casa em paz',
   'transit:venus|quadratura|saturn': 'Afeto medido',
 }
+
+/**
+ * Alvo natal → domínio da vida, já com a preposição contraída para caber nos
+ * templates abaixo ("Foco" + "na identidade" = "Foco na identidade").
+ */
+const DOMINIO_DO_ALVO: Record<string, string> = {
+  sun: 'na identidade',
+  moon: 'no mundo emocional',
+  mercury: 'na comunicação',
+  venus: 'nos afetos',
+  mars: 'na ação',
+  jupiter: 'na expansão',
+  saturn: 'na estrutura',
+  uranus: 'na liberdade',
+  neptune: 'na imaginação',
+  pluto: 'no poder pessoal',
+  chiron: 'na ferida antiga',
+  lilith: 'no que foi reprimido',
+  northnode: 'na direção de vida',
+  southnode: 'no que já foi',
+  asc: 'na sua imagem',
+  dc: 'nas parcerias',
+  mc: 'na carreira',
+  ic: 'nas raízes',
+  ascendant: 'na sua imagem',
+  ascendente: 'na sua imagem',
+  descendant: 'nas parcerias',
+  descendente: 'nas parcerias',
+  midheaven: 'na carreira',
+  meiodoceu: 'na carreira',
+  imumcoeli: 'nas raízes',
+  fundodoceu: 'nas raízes',
+}
+
+/** Aspecto → o verbo do encontro. Menores caem em "Ajuste". */
+const VERBO_DO_ASPECTO: Record<string, string> = {
+  conjuncao: 'Foco',
+  sextil: 'Abertura',
+  trigono: 'Fluidez',
+  quadratura: 'Tensão',
+  oposicao: 'Confronto',
+}
+
+/**
+ * Título de reserva, gerado.
+ *
+ * O catálogo curado cobre 87 das 724 chaves — sem isto, uns cards apareciam com
+ * título temático e outros com o nome técnico cru, e a lista ficava visualmente
+ * quebrada. O gerado é mais pobre que o curado (por isso o curado vem primeiro),
+ * mas dá a TODO card a mesma anatomia: tema em cima, nome técnico no "Tipo:".
+ *
+ * Só pt-BR — os outros idiomas seguem mostrando o nome técnico como título.
+ */
+export function buildFallbackTransitTitle(natalTarget: string, aspect: string): string | null {
+  const alvo = DOMINIO_DO_ALVO[normalizeChave(natalTarget)]
+  if (!alvo) return null
+  const verbo = VERBO_DO_ASPECTO[normalizeChave(aspect)] || 'Ajuste'
+  return `${verbo} ${alvo}`
+}
+
+function normalizeChave(v: string): string {
+  return String(v || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // tira acento: "Fundo do Céu" e "Fundo do Ceu" sao a mesma chave
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '') // tira espaco/pontuacao: "Fundo do Ceu" -> "fundodoceu"
+}

@@ -52,3 +52,24 @@ describe('computeProgressedAspects', () => {
     expect(computeProgressedAspects([], [p('Sun', 0)])).toEqual([])
   })
 })
+
+describe('artefatos de imobilidade', () => {
+  it('descarta conjunção do planeta lento com ele mesmo', () => {
+    // Saturno progredido conjunção Saturno natal não é evento: é o planeta
+    // parado onde sempre esteve. Apareceria na tela a vida inteira.
+    const p = (name: string, longitude: number) => ({ name, longitude } as any)
+    expect(computeProgressedAspects([p('Saturn', 100)], [p('Saturn', 100)])).toEqual([])
+    expect(computeProgressedAspects([p('Neptune', 50)], [p('Neptune', 50)])).toEqual([])
+    expect(computeProgressedAspects([p('Uranus', 10)], [p('Uranus', 10)])).toEqual([])
+  })
+
+  it('MANTÉM o retorno lunar — é ciclo real de ~27 anos', () => {
+    const p = (name: string, longitude: number) => ({ name, longitude } as any)
+    expect(computeProgressedAspects([p('Moon', 100)], [p('Moon', 100)])).toHaveLength(1)
+  })
+
+  it('mantém aspecto entre planetas lentos DIFERENTES', () => {
+    const p = (name: string, longitude: number) => ({ name, longitude } as any)
+    expect(computeProgressedAspects([p('Saturn', 100)], [p('Pluto', 160)])).toHaveLength(1)
+  })
+})

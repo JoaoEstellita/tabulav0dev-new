@@ -95,8 +95,8 @@ const PLANET_LABELS: Record<AppLanguage, Record<string, string>> = {
 const ANGLE_LABELS: Record<AppLanguage, Record<string, string>> = {
   'pt-BR': {
     ascendente: 'Ascendente',
-    meio_do_ceu: 'Meio do Ceu',
-    fundo_do_ceu: 'Fundo do Ceu',
+    meio_do_ceu: 'Meio do Céu',
+    fundo_do_ceu: 'Fundo do Céu',
     descendente: 'Descendente',
   },
   'en-US': {

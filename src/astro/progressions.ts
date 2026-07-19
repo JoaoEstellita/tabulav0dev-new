@@ -47,6 +47,19 @@ const ORB_DEMAIS = 1.0
 const ORDEM = ['Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
 
 /**
+ * Planetas que praticamente não andam na progressão. Para eles, a conjunção com
+ * a PRÓPRIA posição natal não é evento nenhum — é só o planeta parado onde
+ * sempre esteve, e apareceria na tela a vida inteira ("Saturno progredido
+ * conjunção Saturno natal"). A Lua e os pessoais ficam de fora desta regra
+ * porque neles o retorno é um ciclo real (a Lua progredida fecha volta em ~27 anos).
+ */
+const LENTOS = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])
+
+function ehArtefatoDeImobilidade(progredido: string, natal: string, aspecto: string): boolean {
+  return progredido === natal && aspecto === 'conjuncao' && LENTOS.has(progredido)
+}
+
+/**
  * Data progredida: nascimento + (anos de vida) dias.
  * Usa a idade fracionária para a Lua progredida andar mês a mês, não aos saltos.
  */
@@ -98,6 +111,7 @@ export function computeProgressedAspects(
       for (const asp of MAJOR_ASPECTS) {
         const orb = Math.abs(diff - asp.angle)
         if (orb <= orbMax) {
+          if (ehArtefatoDeImobilidade(a.name, b.name, asp.name)) break
           achados.push({
             progressedPlanet: a.name,
             natalPlanet: b.name,
