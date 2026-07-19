@@ -1,0 +1,4 @@
+# Relatórios de revisão do reaccentPtBR: são saída de diagnóstico, regenerável
+# com `node scripts/reaccentPtBR.mjs --propose`. O que precisa ser versionado é
+# o mapa congelado (ptbrAccentMap.json), que o spec de regressão consome.
+_revisar-*.txt
