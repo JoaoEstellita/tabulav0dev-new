@@ -35,7 +35,15 @@ export const calculateAspect = memoizeAspect(function calculateAspect(
   orbs: Record<AspectName, number> = ASPECT_ORBS,
   aspectsConfig?: AspectsConfig
 ): { type: AspectName; orb: number; isApplying: boolean } | null {
-  const diff = Math.abs(pos1.longitude - pos2.longitude) % 360;
+  // Separação angular verdadeira: dobra acima de 180°.
+  //
+  // Estava `Math.abs(lon1 - lon2) % 360`, que nunca dobra: para 300° e 60° dava
+  // 240 em vez de 120 (um trígono exato), e o aspecto sumia. Como cada par cai
+  // do lado errado em ~metade dos casos, este arquivo perdia silenciosamente
+  // metade dos aspectos. O motor VIVO (astro/aspects.engine.ts, usado pelo
+  // RealAstrologyEngine) sempre dobrou certo — este aqui não roda em produção,
+  // mas ficar errado é convite a alguém importá-lo amanhã.
+  const diff = Math.abs(((pos1.longitude - pos2.longitude + 540) % 360) - 180);
   let aspects: { type: AspectName; angle: number; orb: number }[];
   if (aspectsConfig) {
     aspects = aspectsConfig.aspects.map(a => ({ type: a.name, angle: a.angle, orb: a.baseOrb }));
@@ -56,6 +64,9 @@ export const calculateAspect = memoizeAspect(function calculateAspect(
     const orb = Math.abs(diff - asp.angle);
     if (orb <= (asp.orb || 0)) {
       // isApplying: se pos1 está se aproximando de pos2
+      // ⚠️ Aproximação grosseira: ignora a velocidade do segundo corpo e o sinal
+      // da aproximação. O cálculo correto está em astro/aspects.engine.ts
+      // (compara a distância agora com a distância depois de um passo de tempo).
       const isApplying = (pos1.speed ?? 0) > 0 && diff < asp.angle;
       return { type: asp.type, orb, isApplying };
     }

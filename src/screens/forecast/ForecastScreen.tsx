@@ -1313,14 +1313,44 @@ export default function ForecastScreen() {
   }, [dayStatus, domainSeriesByDate, selectedEventsRaw, selectedPoint, selectedSeriesKey])
   const eventPhaseMap = useMemo(() => {
     if (!selectedDateKey) return {}
-    const phases = data?.eventPhasesByDate?.[selectedDateKey] || []
     const map: Record<string, { label: string; meta?: string }> = {}
-    phases.forEach((entry) => {
-      if (!entry?.eventId) return
-      map[entry.eventId] = { label: entry.label, meta: entry.meta }
+
+    // A fase é derivada AQUI, dos próprios eventos.
+    //
+    // Antes vinha pronta do servidor em `eventPhasesByDate`, um mapa dia -> fases
+    // que é O(dias × eventos). Depois que as janelas passaram a ter tamanho real
+    // (um trânsito de Plutão dura ~1 ano por passagem), todo evento lento cobria
+    // todo dia: 360 × 30 ≈ 10.800 entradas, perto do limite de 1 MiB do doc do
+    // Firestore — e o write falha em silêncio. Como cada evento já traz
+    // startAt/exactAt/endAt, o mapa era redundante.
+    const dia = new Date(`${selectedDateKey}T12:00:00Z`).getTime()
+    if (!Number.isFinite(dia)) return map
+
+    ;(data?.events || []).forEach((event: any) => {
+      if (!event?.id) return
+      const inicio = new Date(event.startAt).getTime()
+      const fim = new Date(event.endAt).getTime()
+      const pico = new Date(event.exactAt).getTime()
+      if (!Number.isFinite(inicio) || !Number.isFinite(fim) || !Number.isFinite(pico)) return
+      if (dia < inicio || dia > fim) return
+
+      const delta = Math.round((pico - dia) / 86400000)
+      if (delta > 0) {
+        map[event.id] = {
+          label: tr('forecast.phase.approaching', 'Em aprox'),
+          meta: tr('forecast.phase.inDays', 'faltam {days} dias', { days: delta }),
+        }
+      } else if (delta < 0) {
+        map[event.id] = {
+          label: tr('forecast.phase.separating', 'Afastando'),
+          meta: tr('forecast.phase.daysAgo', 'ha {days} dias', { days: Math.abs(delta) }),
+        }
+      } else {
+        map[event.id] = { label: tr('forecast.phase.peak', 'Pico'), meta: tr('forecast.phase.today', 'hoje') }
+      }
     })
     return map
-  }, [data?.eventPhasesByDate, selectedDateKey])
+  }, [data?.events, selectedDateKey, tr])
 
   const eventDisplayData = useMemo(() => {
     if (!selectedDateKey) return []
