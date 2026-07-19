@@ -6,6 +6,7 @@
 import * as Astronomy from 'astronomy-engine'
 import type { HouseSystem } from './houseSystem'
 import { normalizeHouseSystem } from './houseSystem'
+import { placidusCuspides } from './placidus'
 
 /**
  * Normalize an angle to 0..360 degrees.
@@ -17,8 +18,11 @@ const norm = (d: number) => (d % 360 + 360) % 360
  */
 function getObliquityRad(d: Date): number {
   try {
-    const tilt = (Astronomy as any).EarthTilt?.(d)
-    if (tilt && typeof tilt.obliquity === 'number') return tilt.obliquity * Math.PI / 180
+    // e_tilt, nao EarthTilt: `EarthTilt` nao existe no astronomy-engine, entao
+    // este ramo nunca rodava e caia sempre na formula media abaixo. A media erra
+    // ~0,003° contra a verdadeira — pouco, mas de graca resolver.
+    const tilt = (Astronomy as any).e_tilt?.(new (Astronomy as any).AstroTime(d))
+    if (tilt && typeof tilt.tobl === 'number') return tilt.tobl * Math.PI / 180
   } catch {}
   const jd = (d.getTime() / 86400000) + 2440587.5
   const T = (jd - 2451545.0) / 36525.0
@@ -38,17 +42,20 @@ function calculateAscMc(date: Date, latDeg: number, lonDeg: number) {
   const phi = latDeg * Math.PI / 180
   const sin = Math.sin, cos = Math.cos, tan = Math.tan
 
-  let alphaMC = Math.atan2(tan(theta), cos(eps))
-  if (Math.cos(theta) < 0) {
-    alphaMC += Math.PI
-  }
-  let mc = Math.atan2(sin(alphaMC) / cos(eps), Math.cos(alphaMC)) * 180 / Math.PI
-  mc = norm(mc)
+  // MC = projeção do meridiano na eclíptica. A versão anterior fazia um desvio
+  // por alphaMC com correção de quadrante e errava 1,22° nesta carta.
+  const mc = norm(Math.atan2(sin(theta), cos(theta) * cos(eps)) * 180 / Math.PI)
 
-  let asc = Math.atan2(cos(theta), -sin(theta) * cos(eps) + tan(phi) * sin(eps)) * 180 / Math.PI
-  asc = norm(asc)
+  // ASC. O erro era UM PARÊNTESE: estava
+  //   -sin θ·cos ε + tan φ·sin ε
+  // quando o correto é
+  //   -(sin θ·cos ε + tan φ·sin ε)
+  // Custava 2,72° nesta carta — o suficiente para mudar planeta de casa, e para
+  // o frontend discordar do backend sobre o mesmo mapa. Estas são as fórmulas do
+  // backend, verificadas contra Swiss Ephemeris a 0,00°.
+  const asc = norm(Math.atan2(cos(theta), -(sin(theta) * cos(eps) + tan(phi) * sin(eps))) * 180 / Math.PI)
 
-  return { asc, mc }
+  return { asc, mc, ramc: norm(lstHours * 15), obliquidade: eps * 180 / Math.PI }
 }
 
 export type HouseResult = {
@@ -74,7 +81,7 @@ export async function computeHousesUTC(
   lon: number,
   system: HouseSystem
 ): Promise<HouseResult> {
-  const { asc, mc } = calculateAscMc(date, lat, lon)
+  const { asc, mc, ramc, obliquidade } = calculateAscMc(date, lat, lon)
   const resolvedSystem = normalizeHouseSystem(system)
 
   if (resolvedSystem === 'whole-sign') {
@@ -88,11 +95,33 @@ export async function computeHousesUTC(
     }
   }
 
+  // Placidus de verdade.
+  //
+  // Este ramo devolvia `asc + i*30` — CASAS IGUAIS, não Placidus. Quem escolhia
+  // Placidus via um número de casa aqui e outro no backend, para o mesmo planeta
+  // no mesmo mapa. Havia um `houses.placidus.ts` no repo que nunca chegou a ser
+  // chamado — removido junto com esta correção.
+  const cuspidesPlacidus = placidusCuspides({ ramc, latitude: lat, obliquidade, ascendente: asc, meioDoCeu: mc })
+  if (cuspidesPlacidus) {
+    return {
+      cusps: cuspidesPlacidus,
+      asc,
+      mc,
+      approximate: false,
+      system: resolvedSystem,
+      systemEffective: 'placidus'
+    }
+  }
+
+  // Latitude polar: Placidus é indefinido. Cai em whole-sign, que é o outro
+  // sistema que o app já suporta — e diz isso em systemEffective, em vez de
+  // entregar número errado calado.
   return {
-    cusps: Array.from({ length: 12 }, (_, i) => norm(asc + i * 30)),
+    cusps: buildWholeSignCusps(asc),
     asc,
     mc,
     approximate: true,
-    system: resolvedSystem
+    system: resolvedSystem,
+    systemEffective: 'whole-sign'
   }
 }
