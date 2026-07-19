@@ -11,18 +11,10 @@ export const LIFE_AREA_ORDER = [
 
 export type LifeAreaKey = (typeof LIFE_AREA_ORDER)[number]
 
-// Ordem de exibição dos cards SÓ na tela inicial (Home). Mesmas áreas de
-// LIFE_AREA_ORDER, ordem própria — não afeta Groups/Forecast/notificações.
-export const HOME_LIFE_AREA_ORDER: readonly LifeAreaKey[] = [
-  'amor',
-  'saude',
-  'familia',
-  'comunicacao',
-  'carreira',
-  'financas',
-  'espiritualidade',
-  'transformacao',
-]
+// Ordem de exibição dos cards na tela inicial (Home). Herda a ordem global —
+// para a Home divergir de Groups/Forecast/notificações, troque por um array
+// literal de LifeAreaKey.
+export const HOME_LIFE_AREA_ORDER: readonly LifeAreaKey[] = LIFE_AREA_ORDER
 
 /**
  * A que área cada casa e cada planeta pertence.
