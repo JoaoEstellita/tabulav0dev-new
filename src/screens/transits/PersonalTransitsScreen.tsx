@@ -132,7 +132,7 @@ export default function PersonalTransitsScreen() {
     // entre título temático e nome cru.
     const tema =
       language === 'pt-BR'
-        ? TRANSIT_TITLES_PTBR[chave] || buildFallbackTransitTitle(item.natalPlanet, item.type) || undefined
+        ? TRANSIT_TITLES_PTBR[chave] || buildFallbackTransitTitle(item.transitPlanet, item.natalPlanet, item.type) || undefined
         : undefined
 
     // Mesmo mapa que o motor usa para pontuar as áreas: o que o card anuncia é

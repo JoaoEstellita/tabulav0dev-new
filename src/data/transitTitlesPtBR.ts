@@ -120,71 +120,136 @@ export const TRANSIT_TITLES_PTBR: Record<string, string> = {
 }
 
 /**
- * Alvo natal → domínio da vida, já com a preposição contraída para caber nos
- * templates abaixo ("Foco" + "na identidade" = "Foco na identidade").
+ * O que o planeta EM TRÂNSITO traz. Ele é o agente: é ele que se move e provoca.
+ *
+ * A primeira versão deste gerador ignorava o agente e só olhava alvo + aspecto —
+ * por isso Marte, Lua e Saturno quincúncio Saturno viravam três cards com o
+ * mesmíssimo "Ajuste na estrutura". Com o agente, os três se separam.
  */
-const DOMINIO_DO_ALVO: Record<string, string> = {
-  sun: 'na identidade',
-  moon: 'no mundo emocional',
-  mercury: 'na comunicação',
-  venus: 'nos afetos',
-  mars: 'na ação',
-  jupiter: 'na expansão',
-  saturn: 'na estrutura',
-  uranus: 'na liberdade',
-  neptune: 'na imaginação',
-  pluto: 'no poder pessoal',
-  chiron: 'na ferida antiga',
-  lilith: 'no que foi reprimido',
-  northnode: 'na direção de vida',
-  southnode: 'no que já foi',
-  asc: 'na sua imagem',
-  dc: 'nas parcerias',
-  mc: 'na carreira',
-  ic: 'nas raízes',
-  ascendant: 'na sua imagem',
-  ascendente: 'na sua imagem',
-  descendant: 'nas parcerias',
-  descendente: 'nas parcerias',
-  midheaven: 'na carreira',
-  meiodoceu: 'na carreira',
-  imumcoeli: 'nas raízes',
-  fundodoceu: 'nas raízes',
+const AGENTE_EM_TRANSITO: Record<string, string> = {
+  sun: 'Vitalidade',
+  moon: 'Sensibilidade',
+  mercury: 'Raciocínio',
+  venus: 'Afeto',
+  mars: 'Impulso',
+  jupiter: 'Otimismo',
+  saturn: 'Cobrança',
+  uranus: 'Inquietação',
+  neptune: 'Devaneio',
+  pluto: 'Intensidade',
+  chiron: 'Ferida',
+  lilith: 'Instinto',
+  northnode: 'Chamado',
+  southnode: 'Hábito antigo',
+}
+
+/** O ponto natal tocado, como substantivo nu — o que ali é atingido. */
+const ALVO_NATAL: Record<string, string> = {
+  sun: 'identidade',
+  moon: 'mundo emocional',
+  mercury: 'comunicação',
+  venus: 'afetos',
+  mars: 'ação',
+  jupiter: 'expansão',
+  saturn: 'estrutura',
+  uranus: 'liberdade',
+  neptune: 'imaginação',
+  pluto: 'poder pessoal',
+  chiron: 'ferida antiga',
+  lilith: 'o que foi reprimido',
+  northnode: 'direção de vida',
+  southnode: 'bagagem antiga',
+  asc: 'imagem',
+  dc: 'parcerias',
+  mc: 'carreira',
+  ic: 'raízes',
+  ascendant: 'imagem',
+  ascendente: 'imagem',
+  descendant: 'parcerias',
+  descendente: 'parcerias',
+  midheaven: 'carreira',
+  meiodoceu: 'carreira',
+  imumcoeli: 'raízes',
+  fundodoceu: 'raízes',
 }
 
 /**
- * Aspecto → o verbo do encontro.
+ * Como os dois se encontram.
  *
- * Os menores também têm verbo próprio: com um "Ajuste" genérico para todos,
- * quatro quincúncios seguidos viravam quatro cards de cara idêntica.
+ * Todos são locuções invariáveis de propósito ("em choque", não "chocados"):
+ * assim o título nunca precisa concordar em gênero com dois substantivos de
+ * gêneros diferentes ("Sensibilidade e poder pessoal ..." quebraria qualquer
+ * adjetivo). Aspecto desconhecido cai em "em contato".
  */
-const VERBO_DO_ASPECTO: Record<string, string> = {
-  conjuncao: 'Foco',
-  sextil: 'Abertura',
-  trigono: 'Fluidez',
-  quadratura: 'Tensão',
-  oposicao: 'Confronto',
-  quincuncio: 'Ajuste',
-  semissextil: 'Roce',
-  semiquadratura: 'Fricção',
-  sesquiquadratura: 'Atrito',
+const ENCONTRO_DO_ASPECTO: Record<string, string> = {
+  conjuncao: 'no mesmo ponto',
+  sextil: 'em sintonia',
+  trigono: 'em fluxo',
+  quadratura: 'em choque',
+  oposicao: 'em polos opostos',
+  quincuncio: 'sem encaixe',
+  semissextil: 'de raspão',
+  semiquadratura: 'em fricção',
+  sesquiquadratura: 'em atrito',
+}
+
+/**
+ * Planeta em cima da própria posição natal: isso tem nome próprio na tradição e
+ * é um marco de ciclo, não um encontro entre duas coisas. "Impulso e ação no
+ * mesmo ponto" descreveria mal o retorno de Marte.
+ */
+const NOME_DO_PLANETA: Record<string, string> = {
+  sun: 'Sol',
+  moon: 'Lua',
+  mercury: 'Mercúrio',
+  venus: 'Vênus',
+  mars: 'Marte',
+  jupiter: 'Júpiter',
+  saturn: 'Saturno',
+  uranus: 'Urano',
+  neptune: 'Netuno',
+  pluto: 'Plutão',
+  chiron: 'Quíron',
 }
 
 /**
  * Título de reserva, gerado.
  *
- * O catálogo curado cobre 87 das 724 chaves — sem isto, uns cards apareciam com
- * título temático e outros com o nome técnico cru, e a lista ficava visualmente
- * quebrada. O gerado é mais pobre que o curado (por isso o curado vem primeiro),
- * mas dá a TODO card a mesma anatomia: tema em cima, nome técnico no "Tipo:".
+ * O catálogo curado cobre 87 das 724 chaves. Sem isto, uns cards apareciam com
+ * título temático e outros com o nome técnico cru, e a lista alternava duas
+ * anatomias no mesmo scroll. O gerado é mais pobre que o curado (por isso o
+ * curado vem primeiro), mas dá a todo card a mesma forma.
+ *
+ * Formato: "{agente} e {alvo} {encontro}" — "Impulso e estrutura em choque".
+ * 14 agentes × 26 alvos × 9 aspectos: repetição só quando o trânsito repete
+ * mesmo. Cabe numa linha.
  *
  * Só pt-BR — os outros idiomas seguem mostrando o nome técnico como título.
  */
-export function buildFallbackTransitTitle(natalTarget: string, aspect: string): string | null {
-  const alvo = DOMINIO_DO_ALVO[normalizeChave(natalTarget)]
+export function buildFallbackTransitTitle(
+  transitPlanet: string,
+  natalTarget: string,
+  aspect: string,
+): string | null {
+  const alvo = ALVO_NATAL[normalizeChave(natalTarget)]
   if (!alvo) return null
-  const verbo = VERBO_DO_ASPECTO[normalizeChave(aspect)] || 'Ajuste'
-  return `${verbo} ${alvo}`
+
+  const agenteNorm = normalizeChave(transitPlanet)
+  if (agenteNorm === normalizeChave(natalTarget) && normalizeChave(aspect) === 'conjuncao') {
+    const nome = NOME_DO_PLANETA[agenteNorm]
+    if (nome) return `Retorno de ${nome}`
+  }
+
+  const encontro = ENCONTRO_DO_ASPECTO[normalizeChave(aspect)] || 'em contato'
+  const agente = AGENTE_EM_TRANSITO[agenteNorm]
+  // Sem agente conhecido, degrada para a forma curta em vez de sumir.
+  if (!agente) return `${capitalizar(alvo)} ${encontro}`
+
+  return `${agente} e ${alvo} ${encontro}`
+}
+
+function capitalizar(v: string): string {
+  return v.charAt(0).toUpperCase() + v.slice(1)
 }
 
 function normalizeChave(v: string): string {
