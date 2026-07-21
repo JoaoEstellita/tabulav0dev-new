@@ -1,0 +1,10 @@
+wing: frontend
+rooms:
+- name: src
+  description: Código fonte principal
+- name: docs
+  description: Documentação e guias
+- name: scripts
+  description: Scripts e ferramentas
+- name: general
+  description: Outros arquivos
