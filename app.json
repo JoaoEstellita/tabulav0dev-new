@@ -88,6 +88,12 @@
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "scheme": "tabulaestelar",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e10113f7-a65c-4374-aa0e-c849346d7ed7"
+    },
     "plugins": [
       "@react-native-google-signin/google-signin",
       [

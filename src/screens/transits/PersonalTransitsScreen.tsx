@@ -180,6 +180,7 @@ export default function PersonalTransitsScreen() {
           fullExpanded={!!expanded[key]}
           onToggleFull={() => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))}
           detailMode="inline"
+          tapWholeCard
           featured={destaque}
         />
       </View>

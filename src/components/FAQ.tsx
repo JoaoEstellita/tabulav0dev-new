@@ -61,7 +61,7 @@ A porcentagem final combina todos esses fatores usando fórmulas astronômicas t
 
 ⚠️ **30-49%:** Período que requer atenção. Não é necessariamente "ruim", mas indica que você deve ser mais cauteloso e estratégico.
 
-🚨 **Abaixo de 30%:** Status crítico. As energias planetárias sugerem desafios maiores. Momento para ter paciência, buscar apoio e evitar decisões importantes quando possível.
+🚨 **Abaixo de 30%:** Status de atenção. As energias planetárias sugerem desafios maiores. Momento para ter paciência, buscar apoio e evitar decisões importantes quando possível.
 
 Lembre-se: a astrologia mostra tendências, não destinos fixos. Você sempre tem livre arbítrio para tomar suas decisões!`
   },
@@ -71,7 +71,7 @@ Lembre-se: a astrologia mostra tendências, não destinos fixos. Você sempre te
 
 👥 **Criação de Grupos:** Você pode criar grupos com família, amigos ou pessoas próximas. Cada grupo tem um código único para convidar outros membros.
 
-🔔 **Alertas Automáticos:** Quando uma das suas áreas da vida entra em status crítico (abaixo de 30%), os outros membros do grupo recebem uma notificação automática.
+🔔 **Alertas Automáticos:** Quando uma das suas áreas da vida entra em status de atenção (abaixo de 30%), os outros membros do grupo recebem uma notificação automática.
 
 💬 **Mensagens Personalizadas:** Nas configurações, você pode personalizar as mensagens que serão enviadas para cada área da vida quando ela estiver crítica. Por exemplo: "Estou passando por um momento desafiador no amor, poderia usar um pouco de apoio ❤️"
 

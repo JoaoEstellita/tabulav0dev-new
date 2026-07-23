@@ -486,7 +486,7 @@ export default function GroupNotificationSettings({
 
             {Object.entries({
               criticalAlerts: {
-                label: 'Alertas criticos',
+                label: 'Alertas de atencao',
                 icon: 'warning',
                 desc: 'Quando membros passam por momentos dificeis',
               },
@@ -605,7 +605,7 @@ export default function GroupNotificationSettings({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mensagens para alertas criticos</Text>
+            <Text style={styles.sectionTitle}>Mensagens para alertas de atencao</Text>
             <Text style={styles.sectionDescription}>
               Personalize a mensagem enviada ao grupo quando uma área ficar crítica.
             </Text>

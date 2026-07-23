@@ -162,7 +162,7 @@ export default function GroupCard({
         <View style={styles.statItem}>
           <View style={[styles.statDot, { backgroundColor: '#FF4444' }]} />
           <Text style={styles.statText}>
-            {stats.critical} critico{stats.critical !== 1 ? 's' : ''}
+            {stats.critical} em atencao
           </Text>
         </View>
         

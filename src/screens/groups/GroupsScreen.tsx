@@ -976,6 +976,21 @@ export default function GroupsScreen() {
     }
   }
 
+  const handleRenameGroup = async (newName: string) => {
+    const alvo = selectedGroupForDetail || selectedGroup
+    if (!alvo || !user) return
+    try {
+      await GroupService.renameGroup(alvo.id, newName, user.uid)
+      setGroups((prev) => prev.map((g) => (g.id === alvo.id ? { ...g, name: newName } : g)))
+      setSelectedGroup((prev) => (prev && prev.id === alvo.id ? { ...prev, name: newName } : prev))
+      setSelectedGroupForDetail((prev) => (prev && prev.id === alvo.id ? { ...prev, name: newName } : prev))
+      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.renamed', 'Nome do grupo atualizado!'))
+    } catch (error: any) {
+      console.error("Erro ao renomear grupo:", error)
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.alert.renameFailed', 'Nao foi possivel renomear o grupo'))
+    }
+  }
+
   const handleLeaveGroup = async () => {
     if (!selectedGroup || !user) return
     try {
@@ -1044,7 +1059,7 @@ export default function GroupsScreen() {
   const getStatusLabel = (status?: string) => {
     switch (normalizeStatusKey(status)) {
       case "critical":
-        return tr('groups.status.critical', 'Critico')
+        return tr('groups.status.critical', 'Atencao')
       case "challenging":
         return tr('groups.status.challenging', 'Desafiador')
       case "neutral":
@@ -2998,6 +3013,7 @@ export default function GroupsScreen() {
         onLeaveGroup={handleLeaveGroup}
         onRemoveMember={(member) => handleRemoveMember(member.userId)}
         onUpdateInviteSettings={handleUpdateInviteSettings}
+        onRenameGroup={handleRenameGroup}
         onMemberProfile={(member) => {
           // Acao de ver perfil do membro
           Alert.alert(tr('groups.alert.profileTitle', 'Perfil'), tr('groups.alert.viewProfile', `Ver perfil de ${member.displayName}`, { name: member.displayName }))

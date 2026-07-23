@@ -214,7 +214,7 @@ export default function ForecastPeriodEventsScreen({ route }: { route: { params:
           style={[styles.filterButton, badgeFilter === 'critical' && styles.filterButtonActive]}
           onPress={() => setBadgeFilter('critical')}
         >
-          <Text style={[styles.filterText, badgeFilter === 'critical' && styles.filterTextActive]}>Criticos</Text>
+          <Text style={[styles.filterText, badgeFilter === 'critical' && styles.filterTextActive]}>Atencao</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterButton, badgeFilter === 'strong' && styles.filterButtonActive]}

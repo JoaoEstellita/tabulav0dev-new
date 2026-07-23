@@ -132,7 +132,7 @@ class FCMService {
 
   private async setupAndroidChannel(): Promise<void> {
     await Notifications.setNotificationChannelAsync("critical-alerts", {
-      name: "Alertas Críticos",
+      name: "Alertas de Atenção",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#FF4444",

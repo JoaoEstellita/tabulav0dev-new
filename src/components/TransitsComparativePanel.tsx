@@ -50,7 +50,7 @@ export default function TransitsComparativePanel() {
       bom: 'Bom',
       neutro: 'Neutro',
       desafiador: 'Desafiador',
-      critico: 'Cr\u00EDtico'
+      critico: 'Aten\u00E7\u00E3o'
     }
     return map[String(status).toLowerCase()] || decodeUnicodeEscapes(status)
   }

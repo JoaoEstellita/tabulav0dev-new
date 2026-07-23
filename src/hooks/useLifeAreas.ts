@@ -554,7 +554,7 @@ function getDefaultMessage(area: string): string {
     financas: "Minhas financas pedem cautela agora. Agradeco o suporte!",
   }
 
-  return defaultMessages[area as keyof typeof defaultMessages] || `Estou passando por um momento critico em ${area}. Pedindo energias positivas!`
+  return defaultMessages[area as keyof typeof defaultMessages] || `Estou passando por um momento delicado em ${area}. Pedindo energias positivas!`
 }
 
 

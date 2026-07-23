@@ -19,7 +19,8 @@ import {
   Alert,
   StyleSheet,
   Share,
-  Platform
+  Platform,
+  TextInput
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import Avatar from './Avatar'
@@ -41,6 +42,8 @@ export interface GroupDetailModalProps {
   onRemoveMember?: (member: GroupMember) => void
   onUpdateInviteSettings?: (updates: { inviteEnabled?: boolean; inviteExpiresAt?: Date | null; rotate?: boolean }) => void
   onMemberProfile: (member: GroupMember) => void
+  /** Renomear o grupo — só é oferecido ao administrador (createdBy). */
+  onRenameGroup?: (newName: string) => void
 }
 
 // Extender interface para incluir profilePhoto
@@ -105,11 +108,14 @@ export default function GroupDetailModal({
   onLeaveGroup,
   onRemoveMember,
   onUpdateInviteSettings,
-  onMemberProfile
+  onMemberProfile,
+  onRenameGroup
 }: GroupDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'invite'>('members')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
 
   const confirmAction = (
     title: string,
@@ -193,7 +199,47 @@ export default function GroupDetailModal({
           </TouchableOpacity>
           
           <View style={styles.headerInfo}>
-            <Text style={styles.groupName}>{group.name}</Text>
+            {editingName ? (
+              <View style={styles.nameEditRow}>
+                <TextInput
+                  style={styles.nameEditInput}
+                  value={nameDraft}
+                  onChangeText={setNameDraft}
+                  maxLength={40}
+                  autoFocus
+                  placeholder="Nome do grupo"
+                  placeholderTextColor="#666"
+                />
+                <TouchableOpacity
+                  style={styles.nameEditAction}
+                  onPress={() => {
+                    const novo = nameDraft.replace(/\s+/g, ' ').trim()
+                    if (novo.length >= 2 && novo !== group.name) onRenameGroup?.(novo)
+                    setEditingName(false)
+                  }}
+                >
+                  <Ionicons name="checkmark" size={20} color="#4ADE80" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.nameEditAction} onPress={() => setEditingName(false)}>
+                  <Ionicons name="close" size={20} color="#F87171" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.nameRow}>
+                <Text style={styles.groupName}>{group.name}</Text>
+                {isGroupOwner && onRenameGroup ? (
+                  <TouchableOpacity
+                    style={styles.nameEditAction}
+                    onPress={() => {
+                      setNameDraft(group.name)
+                      setEditingName(true)
+                    }}
+                  >
+                    <Ionicons name="pencil" size={16} color="#FFD700" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            )}
             <Text style={styles.memberCount}>
               {members.length} membro{members.length !== 1 ? 's' : ''}
             </Text>
@@ -573,6 +619,33 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  nameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  nameEditInput: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFD700',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    minWidth: 140,
+    maxWidth: 220,
+    textAlign: 'center',
+  },
+  nameEditAction: {
+    padding: 4,
   },
   memberCount: {
     color: '#888',

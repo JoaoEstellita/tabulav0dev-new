@@ -303,10 +303,10 @@ const translateModality = React.useCallback((modality: string): string => {
 const formatStatusLabel = React.useCallback((status: string | null) => {
   if (!status) return ''
   const map: Record<string, Record<string, string>> = {
-    'pt-BR': { excelente: 'Excelente', good: 'Bom', bom: 'Bom', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiador', desafiador: 'Desafiador', critical: 'Cr\u00EDtico', critico: 'Cr\u00EDtico' },
-    'en-US': { excelente: 'Excellent', good: 'Good', bom: 'Good', neutral: 'Neutral', neutro: 'Neutral', challenging: 'Challenging', desafiador: 'Challenging', critical: 'Critical', critico: 'Critical' },
-    'es-ES': { excelente: 'Excelente', good: 'Bueno', bom: 'Bueno', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiante', desafiador: 'Desafiante', critical: 'Cr\u00EDtico', critico: 'Cr\u00EDtico' },
-    'it-IT': { excelente: 'Eccellente', good: 'Buono', bom: 'Buono', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Impegnativo', desafiador: 'Impegnativo', critical: 'Critico', critico: 'Critico' },
+    'pt-BR': { excelente: 'Excelente', good: 'Bom', bom: 'Bom', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiador', desafiador: 'Desafiador', critical: 'Aten\u00E7\u00E3o', critico: 'Aten\u00E7\u00E3o' },
+    'en-US': { excelente: 'Excellent', good: 'Good', bom: 'Good', neutral: 'Neutral', neutro: 'Neutral', challenging: 'Challenging', desafiador: 'Challenging', critical: 'Attention', critico: 'Attention' },
+    'es-ES': { excelente: 'Excelente', good: 'Bueno', bom: 'Bueno', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Desafiante', desafiador: 'Desafiante', critical: 'Atencion', critico: 'Atencion' },
+    'it-IT': { excelente: 'Eccellente', good: 'Buono', bom: 'Buono', neutral: 'Neutro', neutro: 'Neutro', challenging: 'Impegnativo', desafiador: 'Impegnativo', critical: 'Attenzione', critico: 'Attenzione' },
   }
   const key = String(status).toLowerCase()
   const dictionary = map[language] || map['pt-BR']
@@ -317,7 +317,7 @@ const formatAreaStatus = React.useCallback((value: string | number | null | unde
   if (typeof value === 'number') {
     if (value >= 70) return tl('Excelente', 'Excellent', 'Excelente', 'Eccellente')
     if (value >= 40) return tl('Moderado', 'Moderate', 'Moderado', 'Moderato')
-    return tl('Crítico', 'Critical', 'Crítico', 'Critico')
+    return tl('Atenção', 'Attention', 'Atencion', 'Attenzione')
   }
   return formatStatusLabel(value || null)
 }, [formatStatusLabel, tl])

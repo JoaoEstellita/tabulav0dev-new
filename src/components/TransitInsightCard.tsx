@@ -1,5 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import ReadingOpenIcon from './ReadingOpenIcon'
 
 type TransitInsightCardProps = {
@@ -39,6 +40,11 @@ type TransitInsightCardProps = {
   areasLabelPrefix?: string
   /** Frase de efeito do trânsito, acima da leitura. Cobertura parcial: sem frase, nada é renderizado. */
   epigraph?: string | null
+  /**
+   * Modo inline (sem modal): o card inteiro vira o toggle de expandir/recolher,
+   * no lugar do botão "Ver leitura". Mostra uma seta no cabeçalho como affordance.
+   */
+  tapWholeCard?: boolean
 }
 
 export default function TransitInsightCard({
@@ -70,11 +76,15 @@ export default function TransitInsightCard({
   areasLabel,
   areasLabelPrefix = 'Afeta',
   epigraph,
+  tapWholeCard = false,
 }: TransitInsightCardProps) {
   const isDark = variant === 'dark'
   const useModalDetail = detailMode === 'modal' && typeof onOpenDetailModal === 'function'
   const openModalByCard = useModalDetail && modalOpenByCard
+  const expandWholeCard = !useModalDetail && tapWholeCard
+  const cardIsPressable = openModalByCard || expandWholeCard
   const showHeaderBookIcon = useModalDetail && showModalActionIcon
+  const showHeaderChevron = expandWholeCard
   const normalizedImpact = Number.isFinite(impactValue01 as number)
     ? Math.max(0, Math.min(1, Number(impactValue01)))
     : null
@@ -114,6 +124,13 @@ export default function TransitInsightCard({
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
             <Text style={styles.statusText}>{statusLabel}</Text>
           </View>
+          {showHeaderChevron ? (
+            <Ionicons
+              name={fullExpanded ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={isDark ? '#D2D2D7' : '#64748B'}
+            />
+          ) : null}
         </View>
       </View>
       {dense ? (
@@ -170,7 +187,7 @@ export default function TransitInsightCard({
           {directText}
         </Text>
       ) : null}
-      {!openModalByCard ? (
+      {!cardIsPressable ? (
         <TouchableOpacity
           style={[styles.toggleButton, isDark ? styles.toggleButtonDark : styles.toggleButtonLight]}
           onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
@@ -203,11 +220,11 @@ export default function TransitInsightCard({
     </>
   )
 
-  if (openModalByCard) {
+  if (cardIsPressable) {
     return (
       <TouchableOpacity
         style={cardStyles}
-        onPress={onOpenDetailModal}
+        onPress={useModalDetail ? onOpenDetailModal : onToggleFull}
         activeOpacity={0.92}
       >
         {cardContent}

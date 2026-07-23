@@ -945,6 +945,21 @@ class GroupService {
     } as Group
   }
 
+  /** Renomeia o grupo. Somente o administrador (createdBy) pode. */
+  async renameGroup(groupId: string, newName: string, requesterId: string): Promise<void> {
+    const name = String(newName || "").replace(/\s+/g, " ").trim()
+    if (!groupId || !requesterId) throw new Error("Dados invalidos")
+    if (name.length < 2 || name.length > 40) throw new Error("Nome deve ter entre 2 e 40 caracteres")
+
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+
+    await updateDoc(groupRef, { name })
+  }
+
   async removeMember(groupId: string, memberId: string, requesterId: string): Promise<void> {
     if (!groupId || !memberId || !requesterId) return
 

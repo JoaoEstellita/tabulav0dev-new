@@ -29,7 +29,7 @@ const AREA_ICONS: Record<string, string> = {
 const getStatusText = (value: number) => {
   if (value >= 70) return 'Excelente'
   if (value >= 40) return 'Moderado'
-  return 'Critico'
+  return 'Atencao'
 }
 
 const buildSummary = (node: ImpactAreaNode) => {
