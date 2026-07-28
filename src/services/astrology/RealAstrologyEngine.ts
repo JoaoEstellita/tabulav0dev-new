@@ -591,7 +591,15 @@ export class RealAstrologyEngine {
       console.log('Ã¢Å“â€¦ AnÃƒÂ¡lise de status planetÃƒÂ¡rios criada')
 
       // Preparar agrupamento para futura UI de TrÃƒÂ¢nsitos Comparativos
-      const personalTransits = aspectsTransitsToNatalTN.map(a => {
+      const personalTransits = aspectsTransitsToNatalTN
+        // Dsc e IC são os pontos OPOSTOS de Asc e MC: um aspecto ao Dsc é o MESMO
+        // evento astronômico que o aspecto (complementar) ao Asc, e ao IC = ao MC.
+        // Listar os quatro duplicava cada trânsito de eixo, e a cópia Dsc/IC caía no
+        // texto genérico (só Asc/MC têm interpretação curada). Removemos a duplicata
+        // AQUI, na lista exibida — o cálculo de áreas acima segue com os quatro,
+        // para manter paridade de score com o backend (que não deduplica).
+        .filter(a => a.planet2 !== 'Dsc' && a.planet2 !== 'IC')
+        .map(a => {
         // Lado A = trÃƒÂ¢nsito por construÃƒÂ§ÃƒÂ£o
         const transitName = a.planet1
         const natalName = a.planet2
