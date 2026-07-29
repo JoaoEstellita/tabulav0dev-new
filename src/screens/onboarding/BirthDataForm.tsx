@@ -549,16 +549,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }, [currentStep])
 
-  // Funções para manipulação de foto
-  const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') {
-      Alert.alert(t('onboarding.alert.permissionTitle'), t('onboarding.alert.galleryPermission'))
-      return false
-    }
-    return true
-  }
-
   const selectPhoto = async () => {
     // Para web, usar input file nativo
     if (Platform.OS === 'web') {
@@ -600,10 +590,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       return
     }
 
-    // Para mobile, usar ImagePicker
-    const hasPermission = await requestPermissions()
-    if (!hasPermission) return
-
+    // Para mobile: a galeria usa o SELETOR DE FOTOS do sistema (Android 13+) e a
+    // câmera pede a permissão CAMERA dentro de pickImage — nenhuma das duas exige
+    // READ_MEDIA_IMAGES/VIDEO (removidas para cumprir a política do Google Play).
     Alert.alert(t('onboarding.photo.chooseTitle'), t('onboarding.photo.chooseBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('onboarding.photo.gallery'), onPress: () => pickImage('gallery') },

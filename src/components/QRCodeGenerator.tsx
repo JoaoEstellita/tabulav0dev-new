@@ -3,8 +3,7 @@
  * 
  * Componente para gerar e exibir códigos QR
  * - Gera QR Code automaticamente
- * - Permite salvar na galeria
- * - Compartilhamento direto
+ * - Compartilhamento direto (Share nativo — sem permissão de mídia)
  * - Fallback para dispositivos sem suporte
  */
 
@@ -12,8 +11,6 @@ import React, { useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import QRCode from 'react-native-qrcode-svg'
-import * as MediaLibrary from 'expo-media-library'
-import * as FileSystem from 'expo-file-system'
 import { captureRef } from 'react-native-view-shot'
 
 export interface QRCodeGeneratorProps {
@@ -53,48 +50,8 @@ export default function QRCodeGenerator({
   onGenerated
 }: QRCodeGeneratorProps) {
   const [qrRef, setQrRef] = useState<any>(null)
-  const [saving, setSaving] = useState(false)
 
-  /**
-   * Salva QR Code na galeria
-   */
-  const saveToGallery = async () => {
-    try {
-      setSaving(true)
-      
-      // Solicitar permissão
-      const { status } = await MediaLibrary.requestPermissionsAsync()
-      if (status !== 'granted') {
-        Alert.alert('Permissão necessária', 'Precisamos de permissão para salvar na galeria')
-        return
-      }
-      
-      if (!qrRef) {
-        Alert.alert('Erro', 'QR Code não está pronto para salvar')
-        return
-      }
-      
-      // Capturar o QR Code como imagem
-      const uri = await captureRef(qrRef, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      })
-      
-      // Salvar na galeria
-      const asset = await MediaLibrary.createAssetAsync(uri)
-      await MediaLibrary.createAlbumAsync('Tábula Estelar', asset, false)
-      
-      Alert.alert('Sucesso', 'QR Code salvo na galeria!')
-      
-    } catch (error) {
-      console.error('Erro ao salvar QR Code:', error)
-      Alert.alert('Erro', 'Não foi possível salvar o QR Code')
-    } finally {
-      setSaving(false)
-    }
-  }
-  
+
   /**
    * Compartilha QR Code
    */
@@ -154,22 +111,7 @@ export default function QRCodeGenerator({
       
       {showActions && (
         <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={saveToGallery}
-            disabled={saving}
-          >
-            <Ionicons 
-              name={saving ? "hourglass" : "download"} 
-              size={20} 
-              color="#FFFFFF" 
-            />
-            <Text style={styles.actionButtonText}>
-              {saving ? 'Salvando...' : 'Salvar'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.actionButton, styles.shareButton]}
             onPress={shareQRCode}
           >
@@ -224,9 +166,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     gap: 8,
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
   },
   shareButton: {
     backgroundColor: '#2196F3',
