@@ -29,7 +29,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
       'Status diário das 8 áreas da vida',
       'Acesso a grupos',
       'Forecast: 7 dias',
-      'Astrólogo IA no WhatsApp — 10/dia',
+      'Astrólogo IA no WhatsApp — 3/dia',
     ],
   },
   {
@@ -45,7 +45,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     features: [
       'Tudo do Essential +',
       'Forecast: 7/30/90 dias',
-      'Astrólogo IA no WhatsApp — 25/dia',
+      'Astrólogo IA no WhatsApp — 6/dia',
     ],
   },
   {
@@ -61,7 +61,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     features: [
       'Tudo do Pro +',
       'Forecast: 7/30/90/360 dias',
-      'Astrólogo IA no WhatsApp — 40/dia',
+      'Astrólogo IA no WhatsApp — 10/dia',
     ],
   },
 ]

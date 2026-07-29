@@ -1127,9 +1127,9 @@ export default function PremiumScreen() {
           </View>
           <View style={styles.compareRow}>
             <Text style={styles.compareLabel}>{tr('premium.compare.whatsappAgent', 'Astrologo IA no WhatsApp')}</Text>
-            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitEssential', '10/dia')}</Text>
-            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitPro', '25/dia')}</Text>
-            <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '40/dia')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitEssential', '3/dia')}</Text>
+            <Text style={styles.compareValue}>{tr('premium.compare.whatsappLimitPro', '6/dia')}</Text>
+            <Text style={[styles.compareValue, styles.compareValueHighlight]}>{tr('premium.compare.whatsappLimitPremium', '10/dia')}</Text>
           </View>
         </View>
       </View>
