@@ -48,14 +48,26 @@ function relation(p: string, q: string): 'friend' | 'neutral' | 'enemy' {
   return 'neutral'
 }
 
-// Yoni: pares de inimigos mortais (0 pontos). Mesmo yoni = 4; resto ≈ neutro (2, approx).
+// Yoni Kuta — classificação da fonte Jyotish (findyourfate / Vedik Astrologer):
+// mesmo=4, amigo=3, inimigo-mortal=0, resto neutro=2.
+// Bitter = 6 pares canônicos (Macaco-Carneiro é NEUTRO na fonte, fora do bitter).
 const YONI_BITTER: Array<[string, string]> = [
   ['cow', 'tiger'], ['elephant', 'lion'], ['horse', 'buffalo'],
-  ['dog', 'deer'], ['serpent', 'mongoose'], ['cat', 'rat'], ['monkey', 'sheep'],
+  ['dog', 'deer'], ['serpent', 'mongoose'], ['cat', 'rat'],
 ]
-function isBitter(a: string, b: string): boolean {
-  return YONI_BITTER.some(([x, y]) => (a === x && b === y) || (a === y && b === x))
-}
+// Pares amigos (3 pts) — simétrico. 'deer' cobre o yoni Mriga (lebre/cervo).
+const YONI_FRIEND: Array<[string, string]> = [
+  ['horse', 'serpent'], ['horse', 'deer'], ['horse', 'monkey'],
+  ['elephant', 'sheep'], ['elephant', 'serpent'], ['elephant', 'buffalo'], ['elephant', 'monkey'],
+  ['sheep', 'cow'], ['sheep', 'buffalo'], ['sheep', 'mongoose'],
+  ['cat', 'deer'], ['cat', 'monkey'],
+  ['cow', 'buffalo'], ['cow', 'deer'],
+  ['monkey', 'mongoose'],
+]
+const inPairs = (pairs: Array<[string, string]>, a: string, b: string) =>
+  pairs.some(([x, y]) => (a === x && b === y) || (a === y && b === x))
+const isBitter = (a: string, b: string) => inPairs(YONI_BITTER, a, b)
+const isFriend = (a: string, b: string) => inPairs(YONI_FRIEND, a, b)
 
 // ── Kutas ────────────────────────────────────────────────────────────────
 function varnaKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
@@ -64,14 +76,14 @@ function varnaKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
   return { key: 'varna', points: va >= vb ? 1 : 0, max: 1 }
 }
 
+// Vashya (fonte Jyotish): mesmo grupo=2; Chatushpada×Vanachar (predador-presa)=0;
+// resto parcial=1. (Matriz completa varia por fonte; impacto ≤2 pts.)
 function vashyaKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
   const ga = RASHI_VASHYA[a.rashi.index]
   const gb = RASHI_VASHYA[b.rashi.index]
-  let pts: number
-  if (ga === gb) pts = 2
-  else if (ga === 'vanachar' || gb === 'vanachar' || ga === 'keeta' || gb === 'keeta') pts = 0.5
-  else pts = 1
-  return { key: 'vashya', points: pts, max: 2, approx: true }
+  const clash = (ga === 'chatushpada' && gb === 'vanachar') || (ga === 'vanachar' && gb === 'chatushpada')
+  const pts = ga === gb ? 2 : clash ? 0 : 1
+  return { key: 'vashya', points: pts, max: 2 }
 }
 
 function taraKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
@@ -87,11 +99,8 @@ function taraKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
 function yoniKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {
   const ya = a.nakshatra.yoni
   const yb = b.nakshatra.yoni
-  let pts: number
-  if (ya === yb) pts = 4
-  else if (isBitter(ya, yb)) pts = 0
-  else pts = 2 // grade-média (amigo/neutro/inimigo) — matriz completa afinada na QA
-  return { key: 'yoni', points: pts, max: 4, approx: ya !== yb && !isBitter(ya, yb) }
+  const pts = ya === yb ? 4 : isBitter(ya, yb) ? 0 : isFriend(ya, yb) ? 3 : 2
+  return { key: 'yoni', points: pts, max: 4 }
 }
 
 function grahaMaitriKuta(a: NakshatraResult, b: NakshatraResult): KutaScore {

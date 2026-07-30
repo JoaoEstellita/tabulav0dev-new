@@ -85,14 +85,18 @@ export const getMoonPhaseLabelFromAngle = (angle: number, language: AppLanguage 
   const a = clampAngle(angle)
   if (a >= 315) {
     if (language === 'en-US') return 'Balsamic Moon'
-    if (language === 'es-ES') return 'Luna Bals�mica'
+    if (language === 'es-ES') return 'Luna Bals�mica'
     if (language === 'it-IT') return 'Luna Balsamica'
-    return 'Lua Bals�mica'
+    return 'Lua Bals�mica'
   }
   return getMoonPhaseLabelFromKey(getMoonPhaseKeyFromAngle(a), language)
 }
 
 export const getMoonPhaseAngle = (date: Date): number => Astronomy.MoonPhase(date)
+
+/** Longitude eclíptica tropical da Lua (0–360) — para a nakshatra de trânsito (védico). */
+export const getMoonEclipticLongitude = (date: Date): number =>
+  ((Astronomy.EclipticGeoMoon(date).lon % 360) + 360) % 360
 
 const safeFormat = (
   date: Date,

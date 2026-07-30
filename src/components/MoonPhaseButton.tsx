@@ -19,11 +19,13 @@ import MoonPhaseIcon from './MoonPhaseIcon'
 import {
   formatLocalDateTime,
   formatLocalTime,
+  getMoonEclipticLongitude,
   getMoonPhaseAngle,
   getMoonPhaseKeyFromAngle,
   getMoonPhaseLabelFromAngle,
   getMoonPhaseLabelFromKey,
 } from '../utils/moonPhase'
+import { nakshatraFromTropical } from '../astro/vedic'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -69,6 +71,7 @@ const getUserTimezone = (tz?: string | null) => tz || 'America/Sao_Paulo'
 type MoonDetails = {
   phaseLabel: string
   phaseUntilLabel: string
+  moonNakshatra: string
   currentVoidLabel: string
   nextVoidLabel: string
   upcomingPhases: Array<{ label: string; when: string }>
@@ -113,6 +116,7 @@ export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
   const [moonDetails, setMoonDetails] = useState<MoonDetails>({
     phaseLabel: tr('profile.moon.defaultLabel', 'Lua'),
     phaseUntilLabel: tr('profile.moon.updatingPhase', 'fase em atualizacao'),
+    moonNakshatra: '',
     currentVoidLabel: tr('profile.moon.no', 'Nao'),
     nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsao'),
     upcomingPhases: [],
@@ -197,6 +201,7 @@ export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
       }
 
       const angle = getMoonPhaseAngle(now)
+      const moonNakshatra = nakshatraFromTropical(getMoonEclipticLongitude(now), now).nakshatra.name
       const angleKey = getMoonPhaseKeyFromAngle(angle)
       const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
       let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
@@ -219,6 +224,7 @@ export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
       setMoonDetails({
         phaseLabel,
         phaseUntilLabel: line2Base,
+        moonNakshatra,
         currentVoidLabel: currentVoid && voidEnd
           ? `${tl('Sim, até', 'Yes, until', 'Sí, hasta', 'Sì, fino a')} ${formatLocalTime(voidEnd, userTz, language)}`
           : tl('Não', 'No', 'No', 'No'),
@@ -288,6 +294,11 @@ export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
               <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Moon now')}</Text>
               <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
               <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
+              {moonDetails.moonNakshatra ? (
+                <Text style={styles.moonModalText}>
+                  {tl('Nakshatra da Lua (védico)', 'Moon nakshatra (Vedic)', 'Nakshatra de la Luna (vedico)', 'Nakshatra della Luna (vedico)')}: {moonDetails.moonNakshatra}
+                </Text>
+              ) : null}
 
               <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.void', 'Void Moon')}</Text>
               <Text style={styles.moonModalText}>{tr('profile.moon.modal.current', 'Current')}: {moonDetails.currentVoidLabel}</Text>
