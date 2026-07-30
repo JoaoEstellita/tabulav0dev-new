@@ -43,6 +43,8 @@ import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transi
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalLongitudes, type SynastryAspect } from "../../astro/synastry"
+import { gunaMilanBetween } from "../../astro/vedic"
+import { resolveGunaMilan, type ResolvedGunaMilan } from "../../utils/vedicInterpretation"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { LIFE_AREA_ORDER as SHARED_LIFE_AREA_ORDER, LIFE_AREA_LABELS as SHARED_LIFE_AREA_LABELS } from "../../constants/lifeAreas"
 import { getAxisShortLabel, normalizeAxisScore, STATUS_AXIS_COLORS } from "../../utils/statusAxes"
@@ -169,6 +171,7 @@ export default function GroupsScreen() {
 
   // Sinastria: aspectos entre o mapa do usuário e o de cada membro (Você × cada membro)
   const [synastryByMember, setSynastryByMember] = useState<Record<string, SynastryAspect[]>>({})
+  const [gunaMilanByMember, setGunaMilanByMember] = useState<Record<string, ResolvedGunaMilan>>({})
   const [synastryLoading, setSynastryLoading] = useState(false)
   const [synastryMineMissing, setSynastryMineMissing] = useState(false)
 
@@ -498,14 +501,14 @@ export default function GroupsScreen() {
     let cancelled = false
     const run = async () => {
       if (!selectedGroup?.id || !user?.uid || groupMembers.length === 0) {
-        setSynastryByMember({})
+        setSynastryByMember({}); setGunaMilanByMember({})
         setSynastryMineMissing(false)
         return
       }
       const mineMember = groupMembers.find((member) => member.userId === user.uid)
       const mineBirth = mineMember?.birthData
       if (!mineBirth?.datetime || !mineBirth?.coordinates) {
-        setSynastryByMember({})
+        setSynastryByMember({}); setGunaMilanByMember({})
         setSynastryMineMissing(true)
         return
       }
@@ -514,7 +517,7 @@ export default function GroupsScreen() {
       )
       setSynastryMineMissing(false)
       if (others.length === 0) {
-        setSynastryByMember({})
+        setSynastryByMember({}); setGunaMilanByMember({})
         return
       }
       setSynastryLoading(true)
@@ -522,16 +525,24 @@ export default function GroupsScreen() {
         const mine = await computeNatalLongitudes(mineBirth)
         if (cancelled) return
         if (!mine) {
-          setSynastryByMember({})
+          setSynastryByMember({}); setGunaMilanByMember({})
           return
         }
         const result: Record<string, SynastryAspect[]> = {}
+        const gm: Record<string, ResolvedGunaMilan> = {}
+        const mineDate = new Date(mineBirth.datetime)
         for (const member of others) {
           const theirs = await computeNatalLongitudes(member.birthData)
           if (cancelled) return
-          if (theirs) result[member.userId] = computeSynastryAspects(mine, theirs, 5)
+          const theirDatetime = member.birthData?.datetime
+          if (theirs && theirDatetime) {
+            result[member.userId] = computeSynastryAspects(mine, theirs, 5)
+            // Guna Milan (lente védica) — determinístico, a partir das Luas natais.
+            const g = gunaMilanBetween(mine, mineDate, theirs, new Date(theirDatetime))
+            if (g) gm[member.userId] = resolveGunaMilan(g)
+          }
         }
-        if (!cancelled) setSynastryByMember(result)
+        if (!cancelled) { setSynastryByMember(result); setGunaMilanByMember(gm) }
       } finally {
         if (!cancelled) setSynastryLoading(false)
       }
@@ -2006,6 +2017,19 @@ export default function GroupsScreen() {
                               )
                             })
                           )}
+                          {gunaMilanByMember[member.userId] ? (
+                            <View style={styles.gunaBox}>
+                              <Text style={styles.gunaTitle}>
+                                {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {gunaMilanByMember[member.userId].total}/36
+                              </Text>
+                              <Text style={styles.gunaMeta}>
+                                {gunaMilanByMember[member.userId].hasNadiDosha
+                                  ? tr('groups.vedic.nadiDosha', 'Nadi dosha — atenção')
+                                  : tr('groups.vedic.nadiOk', 'Nadi ok (fator-chave)')}
+                                {gunaMilanByMember[member.userId].hasBhakootDosha ? ` · ${tr('groups.vedic.bhakootDosha', 'Bhakoot dosha')}` : ''}
+                              </Text>
+                            </View>
+                          ) : null}
                         </View>
                       )
                     })
@@ -3340,6 +3364,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontStyle: "italic",
     marginTop: 4,
+  },
+  gunaBox: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#2A2F45",
+  },
+  gunaTitle: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  gunaMeta: {
+    color: "#8892a4",
+    fontSize: 11,
+    marginTop: 2,
   },
   memberAreaBackdrop: {
     flex: 1,
