@@ -22,8 +22,6 @@ import { normalizeSign } from '../../astro/normalize'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
-import { buildVedicProfile } from '../../astro/vedic'
-import { resolveNakshatra, resolveDasha, type VedicLang } from '../../utils/vedicInterpretation'
 
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
@@ -429,20 +427,6 @@ export function AstroProfileContent({ transitData, loading, registerAnchor }: Pr
   const elLabels = ELEMENT_LABELS[language] || ELEMENT_LABELS['pt-BR']
   const modLabels = MODALITY_LABELS[language] || MODALITY_LABELS['pt-BR']
 
-  // Perfil védico (Jyotish) — lente sideral a partir da Lua natal + data de nascimento.
-  const vedic = useMemo(() => {
-    if (!birthInfo.date || !natalPlanets.length) return null
-    const bd = new Date(`${birthInfo.date}T${birthInfo.time || '12:00'}:00`)
-    if (Number.isNaN(bd.getTime())) return null
-    const profile = buildVedicProfile(natalPlanets, bd)
-    if (!profile) return null
-    return {
-      nak: resolveNakshatra(profile.nakshatra.nakshatra, { pada: profile.nakshatra.pada, rashiName: profile.nakshatra.rashi.name, lang: language as VedicLang }),
-      dasha: resolveDasha(profile.dasha, language as VedicLang),
-      rashiName: profile.nakshatra.rashi.name,
-    }
-  }, [natalPlanets, birthInfo.date, birthInfo.time, language])
-
   if (loading && natalPlanets.length === 0) {
     return (
       <View style={styles.center}>
@@ -477,58 +461,6 @@ export function AstroProfileContent({ transitData, loading, registerAnchor }: Pr
             {chartRuler.text ? (
               <View style={styles.angularInterpretation}>
                 <Text style={styles.angularInterpretationText}>{chartRuler.text}</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* Astrologia Védica (Jyotish) */}
-        {vedic ? (
-          <View style={styles.card} ref={(n) => registerAnchor?.('section:vedic', n)}>
-            <Text style={styles.cardTitle}>
-              {tl('Astrologia Védica (Jyotish)', 'Vedic Astrology (Jyotish)', 'Astrología Védica (Jyotish)', 'Astrologia Vedica (Jyotish)')}
-            </Text>
-            <Text style={styles.vedicIntro}>
-              {tl(
-                'Leitura sideral (ayanamsa Lahiri) — complementa a ocidental, não a substitui. Baseada na Lua.',
-                'Sidereal reading (Lahiri ayanamsa) — complements the Western one, does not replace it. Moon-based.',
-                'Lectura sideral (ayanamsa Lahiri) — complementa a la occidental, no la sustituye. Basada en la Luna.',
-                'Lettura siderale (ayanamsa Lahiri) — complementa quella occidentale, non la sostituisce. Basata sulla Luna.'
-              )}
-            </Text>
-
-            <View style={styles.vedicRow}>
-              <Text style={styles.angularLabel}>
-                {tl('Nakshatra (mansão lunar)', 'Nakshatra (lunar mansion)', 'Nakshatra (mansión lunar)', 'Nakshatra (dimora lunare)')}
-              </Text>
-              <Text style={styles.angularValue}>{vedic.nak.name} · pada {vedic.nak.pada}</Text>
-              <Text style={styles.angularDeg}>
-                {tl('regida por', 'ruled by', 'regida por', 'governata da')} {vedic.nak.lordPt}
-                {vedic.nak.deity !== '—' ? ` · ${vedic.nak.deity}` : ''}
-              </Text>
-            </View>
-            {vedic.nak.hasContent && vedic.nak.essencia ? (
-              <View style={styles.angularInterpretation}>
-                <Text style={styles.angularInterpretationText}>
-                  {vedic.nak.essencia}{vedic.nak.personalidade ? `\n\n${vedic.nak.personalidade}` : ''}
-                </Text>
-              </View>
-            ) : null}
-
-            <View style={styles.vedicRow}>
-              <Text style={styles.angularLabel}>
-                {tl('Rashi (signo lunar)', 'Rashi (Moon sign)', 'Rashi (signo lunar)', 'Rashi (segno lunare)')}
-              </Text>
-              <Text style={styles.angularValue}>{vedic.rashiName}</Text>
-            </View>
-
-            {vedic.dasha ? (
-              <View style={styles.vedicRow}>
-                <Text style={styles.angularLabel}>
-                  {tl('Período de vida (Mahadasha)', 'Life period (Mahadasha)', 'Período de vida (Mahadasha)', 'Periodo di vita (Mahadasha)')}
-                </Text>
-                <Text style={styles.angularValue}>{vedic.dasha.nome}</Text>
-                <Text style={styles.angularDeg}>{vedic.dasha.tema}</Text>
               </View>
             ) : null}
           </View>
@@ -847,8 +779,6 @@ const styles = StyleSheet.create({
   angularLabel: { fontSize: 11, color: '#8892a4', fontWeight: '700' },
   angularValue: { fontSize: 16, color: '#FFD700', fontWeight: '700' },
   angularDeg: { fontSize: 11, color: '#8892a4' },
-  vedicIntro: { fontSize: 12, color: '#8892a4', lineHeight: 18, marginBottom: 14, fontStyle: 'italic' },
-  vedicRow: { marginBottom: 12 },
   angularInterpretation: {
     marginTop: 14,
     paddingTop: 12,
