@@ -3,6 +3,7 @@ import { lahiriAyanamsa, tropicalToSidereal } from '../ayanamsa'
 import { NAKSHATRAS, nakshatraFromSidereal, NAKSHATRA_ARC } from '../nakshatra'
 import { computeGunaMilan } from '../gunaMilan'
 import { buildDashaTimeline, currentDasha, VIMSHOTTARI } from '../dasha'
+import { buildVedicChart } from '../chart'
 
 describe('ayanamsa Lahiri', () => {
   it('≈ 23.85° em J2000 e ≈ 24.1-24.2° em 2024', () => {
@@ -120,5 +121,42 @@ describe('Vimshottari Dasha', () => {
     const birth = new Date('2000-01-01T00:00:00Z')
     expect(currentDasha(40, birth, new Date('2005-01-01Z'))!.lord).toBe('moon')
     expect(currentDasha(40, birth, new Date('2015-01-01Z'))!.lord).toBe('mars')
+  })
+})
+
+describe('buildVedicChart (mapa Rasi D1)', () => {
+  // ayanamsa em 2000-01-01 12:00Z ≈ 23.853°
+  const birth = new Date('2000-01-01T12:00:00Z')
+  const planets = [
+    { name: 'Sun', longitude: 24, isRetrograde: false },     // sid ~0.15 → Áries (Mesha)
+    { name: 'Moon', longitude: 60, isRetrograde: false },     // sid ~36.1 → Touro (Vrishabha)
+    { name: 'Saturn', longitude: 355, isRetrograde: true },   // sid ~331.1 → Peixes (Meena)
+  ] as any
+
+  it('Lagna sideral a partir do ASC tropical', () => {
+    const chart = buildVedicChart(planets, 50, birth)! // 50 − 23.853 = 26.1 → Áries
+    expect(chart.lagna.rashiName).toBe('Áries')
+    expect(chart.lagna.rashiIndex).toBe(0)
+  })
+  it('planetas caem no Rashi sideral certo', () => {
+    const chart = buildVedicChart(planets, 50, birth)!
+    const byName = Object.fromEntries(chart.planets.map((p) => [p.name, p]))
+    expect(byName.Sun.rashiName).toBe('Áries')
+    expect(byName.Moon.rashiName).toBe('Touro')
+    expect(byName.Saturn.rashiName).toBe('Peixes')
+    expect(byName.Saturn.retro).toBe(true)
+  })
+  it('casa whole-sign a partir da Lagna (Áries=casa 1)', () => {
+    const chart = buildVedicChart(planets, 50, birth)!
+    const byName = Object.fromEntries(chart.planets.map((p) => [p.name, p]))
+    expect(byName.Sun.house).toBe(1)      // Áries = casa 1
+    expect(byName.Moon.house).toBe(2)     // Touro = casa 2
+    expect(byName.Saturn.house).toBe(12)  // Peixes = casa 12
+  })
+  it('moonNakshatra vem junto; ASC/data inválidos → null', () => {
+    const chart = buildVedicChart(planets, 50, birth)!
+    expect(chart.moonNakshatra?.nakshatra.name).toBeTruthy()
+    expect(buildVedicChart(planets, NaN, birth)).toBeNull()
+    expect(buildVedicChart(planets, 50, new Date('invalid'))).toBeNull()
   })
 })

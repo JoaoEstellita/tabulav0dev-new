@@ -1,0 +1,133 @@
+/**
+ * Conteúdo BESPOKE védico — Planeta em Bhava (casa whole-sign). COMPLETO: 108
+ * (9 grahas × 12 bhavas). Tom Jyotish: karaka do graha × domínio da casa, com
+ * digbala/posições fortes anotadas. Chave: `${planeta}_in_bhava_${n}` (n = 1..12).
+ * pt-BR base. i18n depois (fallback do resolver cobre não-pt até lá).
+ */
+export const PLANET_IN_BHAVA_PTBR: Record<string, string> = {
+  // ── SOL ──
+  sun_in_bhava_1: 'Sol na casa 1: identidade forte e vital. Personalidade de líder, saúde robusta; a vida gira em torno de afirmar-se e brilhar.',
+  sun_in_bhava_2: 'Sol na casa 2: brilho ligado a recursos, família e fala. Autoridade na voz; renda pela própria posição; orgulho da linhagem.',
+  sun_in_bhava_3: 'Sol na casa 3: coragem e iniciativa próprias. Vontade forte nos esforços e na comunicação; relação intensa com irmãos.',
+  sun_in_bhava_4: 'Sol na casa 4: o coração e o lar como palco do eu. Autoridade em casa; laço forte (ou tenso) com a mãe; paz interior depende de reconhecimento.',
+  sun_in_bhava_5: 'Sol na casa 5: brilho criativo e intelectual. Autoridade sobre filhos, arte e romance; mérito de vidas passadas; poder de expressão.',
+  sun_in_bhava_6: 'Sol na casa 6: força para vencer obstáculos e inimigos. Autoridade no trabalho e no serviço; vitalidade testada pela rotina e pela saúde.',
+  sun_in_bhava_7: 'Sol na casa 7: identidade projetada na parceria. Cônjuge marcante ou dominante; brilha em público, mas o ego pesa na relação.',
+  sun_in_bhava_8: 'Sol na casa 8: o eu mergulha no oculto e na transformação. Autoridade sobre crises, heranças e mistério; vitalidade posta à prova.',
+  sun_in_bhava_9: 'Sol na casa 9: alma voltada à fé, ao dharma e ao pai. Autoridade moral, propósito e sorte; mestre ou guia natural. Posição nobre.',
+  sun_in_bhava_10: 'Sol na casa 10: brilho na carreira e no status. Autoridade pública, ambição de liderança; realiza-se sendo visto no mundo. Posição forte.',
+  sun_in_bhava_11: 'Sol na casa 11: brilho nos ganhos e nas redes. Autoridade entre pares; realiza desejos por posição e influência.',
+  sun_in_bhava_12: 'Sol na casa 12: o eu se recolhe, se dissolve ou se exila. Brilho no bastidor, na espiritualidade, em terras distantes; ego a ser transcendido.',
+
+  // ── LUA ──
+  moon_in_bhava_1: 'Lua na casa 1: personalidade sensível e mutável. O humor molda a identidade; empatia, cuidado, rosto acolhedor.',
+  moon_in_bhava_2: 'Lua na casa 2: emoções ligadas à segurança material e à família. Fala suave, renda variável; apego ao lar e à comida.',
+  moon_in_bhava_3: 'Lua na casa 3: mente comunicativa e curiosa. Coragem emocional; laço afetivo com irmãos; muitas ideias.',
+  moon_in_bhava_4: 'Lua na casa 4: a Lua em casa — máximo conforto emocional. Ligação profunda com a mãe, o lar e a paz interior. Posição forte (digbala).',
+  moon_in_bhava_5: 'Lua na casa 5: mente criativa e afetuosa. Amor por filhos, arte e romance; imaginação fértil; coração jovem.',
+  moon_in_bhava_6: 'Lua na casa 6: emoções postas à prova por rotina, saúde e conflitos. Cuida servindo; sensibilidade ao estresse.',
+  moon_in_bhava_7: 'Lua na casa 7: emoções projetadas no par. Precisa da relação para se sentir pleno; cônjuge nutridor; público afetivo.',
+  moon_in_bhava_8: 'Lua na casa 8: mente profunda, intuitiva e volátil. Emoções intensas e medos ocultos; interesse pelo mistério e pela transformação.',
+  moon_in_bhava_9: 'Lua na casa 9: mente devocional e otimista. Fé emocional, amor por viagens e sabedoria; mãe ligada à religião.',
+  moon_in_bhava_10: 'Lua na casa 10: emoções na vida pública. Carreira ligada ao cuidado e ao povo; reputação mutável; nutre pela profissão.',
+  moon_in_bhava_11: 'Lua na casa 11: emoções nos vínculos e nos ganhos. Muitos amigos, rede afetiva; desejos realizados pelo social.',
+  moon_in_bhava_12: 'Lua na casa 12: mente voltada ao recolhimento e ao sonho. Sensibilidade espiritual, vida interior rica; risco de melancolia ou isolamento.',
+
+  // ── MARTE ──
+  mars_in_bhava_1: 'Marte na casa 1: personalidade ativa, corajosa, combativa. Corpo forte, temperamento impulsivo; líder que age.',
+  mars_in_bhava_2: 'Marte na casa 2: energia sobre recursos e fala. Ganha lutando; palavra afiada; tensão na família.',
+  mars_in_bhava_3: 'Marte na casa 3: coragem e iniciativa fortes — posição excelente. Vontade poderosa e habilidade técnica; irmãos marcantes.',
+  mars_in_bhava_4: 'Marte na casa 4: energia no lar e na base. Tensão doméstica ou muita atividade em casa; defende a mãe/raízes; inquietação interior.',
+  mars_in_bhava_5: 'Marte na casa 5: energia criativa e competitiva. Paixão intensa, coragem intelectual; disputa em jogos e romance.',
+  mars_in_bhava_6: 'Marte na casa 6: força para derrotar inimigos, doenças e dívidas — posição forte. Guerreiro do trabalho; vence obstáculos.',
+  mars_in_bhava_7: 'Marte na casa 7: energia intensa na parceria. Paixão e conflito no casamento; cônjuge forte; sócios combativos.',
+  mars_in_bhava_8: 'Marte na casa 8: energia no oculto e na transformação. Coragem diante de crises; interesse em pesquisa, cirurgia, mistério; intensidade.',
+  mars_in_bhava_9: 'Marte na casa 9: energia pela fé e pelos princípios. Combate por convicções; ação no dharma; viagens ativas.',
+  mars_in_bhava_10: 'Marte na casa 10: energia na carreira — posição excelente (digbala). Ação, ambição e liderança; realiza pela força e pela iniciativa.',
+  mars_in_bhava_11: 'Marte na casa 11: energia nos ganhos e nas metas. Conquista objetivos com força; amigos de ação; renda pelo esforço.',
+  mars_in_bhava_12: 'Marte na casa 12: energia gasta no oculto ou no exterior. Ação nos bastidores; pode drenar a força; canaliza no espiritual ou no serviço.',
+
+  // ── MERCÚRIO ──
+  mercury_in_bhava_1: 'Mercúrio na casa 1: personalidade intelectual e comunicativa. Jovial, curioso, hábil com palavras; identidade pela mente.',
+  mercury_in_bhava_2: 'Mercúrio na casa 2: mente voltada a recursos e fala. Bom para negócios, cálculo e oratória; renda pela comunicação.',
+  mercury_in_bhava_3: 'Mercúrio na casa 3: comunicação e habilidade fortes — posição excelente. Escrita, mídia, destreza; laço mental com irmãos.',
+  mercury_in_bhava_4: 'Mercúrio na casa 4: mente ligada ao lar e ao aprendizado. Estudo em casa, negócios domésticos; educação valorizada.',
+  mercury_in_bhava_5: 'Mercúrio na casa 5: inteligência criativa e brilhante. Bom para estudos, especulação e ensino; mente jovem e ágil.',
+  mercury_in_bhava_6: 'Mercúrio na casa 6: mente analítica no trabalho e na saúde. Ótima para serviço, detalhe e litígio; resolve problemas.',
+  mercury_in_bhava_7: 'Mercúrio na casa 7: intelecto na parceria e no comércio. Bom para negócios em sociedade; cônjuge comunicativo e jovial.',
+  mercury_in_bhava_8: 'Mercúrio na casa 8: mente investigativa e profunda. Pesquisa, ocultismo, mistérios; interesse pelo que é secreto.',
+  mercury_in_bhava_9: 'Mercúrio na casa 9: intelecto filosófico e amplo. Bom para ensino superior, publicação e viagens; mente ligada à fé.',
+  mercury_in_bhava_10: 'Mercúrio na casa 10: mente na carreira e na reputação. Comunicação profissional, comércio, negócios; versátil no trabalho.',
+  mercury_in_bhava_11: 'Mercúrio na casa 11: intelecto nos ganhos e nas redes. Renda pela comunicação e pelo comércio; muitos contatos.',
+  mercury_in_bhava_12: 'Mercúrio na casa 12: mente voltada ao interior e ao distante. Pensamento introspectivo, pesquisa isolada; bom para bastidor ou exterior.',
+
+  // ── JÚPITER ──
+  jupiter_in_bhava_1: 'Júpiter na casa 1: personalidade sábia, otimista, generosa — posição excelente. Ética, respeito, boa índole; a graça acompanha.',
+  jupiter_in_bhava_2: 'Júpiter na casa 2: fortuna em recursos e família — posição forte. Riqueza, fala sábia, valores nobres; renda abençoada.',
+  jupiter_in_bhava_3: 'Júpiter na casa 3: sabedoria na comunicação e no esforço. Otimismo nas iniciativas; irmãos benéficos; expansão pela palavra.',
+  jupiter_in_bhava_4: 'Júpiter na casa 4: bênção no lar e no coração — posição forte. Paz interior, propriedades, mãe virtuosa; felicidade doméstica.',
+  jupiter_in_bhava_5: 'Júpiter na casa 5: sabedoria criativa e filhos abençoados — posição excelente. Inteligência, mérito passado, boa sorte; ótimo para ensino.',
+  jupiter_in_bhava_6: 'Júpiter na casa 6: fé aplicada aos desafios. Vence inimigos e doenças pela graça; serviço com sabedoria; menos expansivo aqui.',
+  jupiter_in_bhava_7: 'Júpiter na casa 7: bênção na parceria — posição forte. Cônjuge sábio e virtuoso; casamento próspero; boa fé nas sociedades.',
+  jupiter_in_bhava_8: 'Júpiter na casa 8: sabedoria no oculto e na longevidade. Interesse em pesquisa e espiritualidade profunda; heranças; proteção em crises.',
+  jupiter_in_bhava_9: 'Júpiter na casa 9: fé, dharma e fortuna no auge — posição excelente. Guru, mestre, sorte grande; pai virtuoso; sabedoria natural.',
+  jupiter_in_bhava_10: 'Júpiter na casa 10: sabedoria na carreira e no status. Profissão nobre (ensino, lei, aconselhamento); reputação ética.',
+  jupiter_in_bhava_11: 'Júpiter na casa 11: grandes ganhos e desejos realizados — posição forte. Renda abundante, redes benéficas; abundância.',
+  jupiter_in_bhava_12: 'Júpiter na casa 12: sabedoria voltada ao moksha e à caridade — posição elevada. Espiritualidade, generosidade, terras distantes; libertação.',
+
+  // ── VÊNUS ──
+  venus_in_bhava_1: 'Vênus na casa 1: personalidade charmosa, bela, afetuosa. Graça, magnetismo e amor pelo prazer; identidade pela beleza.',
+  venus_in_bhava_2: 'Vênus na casa 2: prazer em recursos e família — posição forte. Riqueza pela arte e pelo belo, fala doce; boa vida material.',
+  venus_in_bhava_3: 'Vênus na casa 3: afeto na comunicação e nas artes. Talento artístico, charme na palavra; vínculos doces com irmãos.',
+  venus_in_bhava_4: 'Vênus na casa 4: prazer no lar e no coração — posição forte (digbala). Casa bela, conforto, veículos; felicidade doméstica; mãe afetuosa.',
+  venus_in_bhava_5: 'Vênus na casa 5: amor, romance e criatividade brilhantes. Arte, prazer, filhos amados; coração romântico; talento estético.',
+  venus_in_bhava_6: 'Vênus na casa 6: afeto testado por rotina e conflitos. Amor no trabalho ou entre dívidas; prazer moderado; cuidado com excessos.',
+  venus_in_bhava_7: 'Vênus na casa 7: amor e parceria no auge — posição forte. Cônjuge belo e amoroso; casamento harmonioso; talento para a relação.',
+  venus_in_bhava_8: 'Vênus na casa 8: amor intenso e transformador. Paixão profunda, prazer oculto; ganhos pelo cônjuge ou herança; sensualidade misteriosa.',
+  venus_in_bhava_9: 'Vênus na casa 9: amor pela beleza da fé e do mundo. Prazer em viagens, filosofia e arte sacra; parceiro ligado ao dharma.',
+  venus_in_bhava_10: 'Vênus na casa 10: charme e arte na carreira. Profissão ligada à beleza, ao luxo, à diplomacia; reputação agradável.',
+  venus_in_bhava_11: 'Vênus na casa 11: ganhos pelo prazer e pelas redes. Renda por arte e relações; amigos afetuosos; desejos satisfeitos.',
+  venus_in_bhava_12: 'Vênus na casa 12: prazer no recolhimento e no íntimo — casa dos prazeres de leito. Luxúria ou entrega espiritual; amor por terras distantes.',
+
+  // ── SATURNO ──
+  saturn_in_bhava_1: 'Saturno na casa 1: personalidade séria, madura, contida. Responsabilidade cedo; vitalidade lenta; amadurece com o tempo.',
+  saturn_in_bhava_2: 'Saturno na casa 2: disciplina em recursos e família. Renda por esforço lento; economia; fala medida; privações no começo.',
+  saturn_in_bhava_3: 'Saturno na casa 3: esforço disciplinado e persistente — posição forte. Trabalho duro compensa; coragem construída; distância de irmãos.',
+  saturn_in_bhava_4: 'Saturno na casa 4: peso no lar e no coração. Responsabilidade doméstica, base erguida a custo; frieza ou distância da mãe; paz tardia.',
+  saturn_in_bhava_5: 'Saturno na casa 5: disciplina na criatividade e nos filhos. Filhos tardios ou poucos; mente séria; aprende com responsabilidade.',
+  saturn_in_bhava_6: 'Saturno na casa 6: vence inimigos e dívidas pelo esforço — posição forte. Trabalhador incansável; saúde exige rotina.',
+  saturn_in_bhava_7: 'Saturno na casa 7: peso e maturidade na parceria. Casamento tardio, sério ou por dever; cônjuge maduro; compromisso duradouro.',
+  saturn_in_bhava_8: 'Saturno na casa 8: longevidade e karma profundo. Vida longa, transformação lenta; interesse no oculto; provas kármicas.',
+  saturn_in_bhava_9: 'Saturno na casa 9: fé construída pela provação. Dharma sério, respeito à tradição; pai exigente; sabedoria pela disciplina.',
+  saturn_in_bhava_10: 'Saturno na casa 10: carreira pelo esforço e pela responsabilidade — posição forte (digbala). Ascensão lenta mas sólida; autoridade e legado.',
+  saturn_in_bhava_11: 'Saturno na casa 11: ganhos constantes pelo trabalho — posição forte. Renda que cresce com o tempo; redes duradouras; desejos realizados tarde.',
+  saturn_in_bhava_12: 'Saturno na casa 12: disciplina no recolhimento e na perda. Gastos, isolamento ou vida no exterior; renúncia; moksha pelo esforço.',
+
+  // ── RAHU ──
+  rahu_in_bhava_1: 'Rahu na casa 1: fome de identidade e destaque. Personalidade intensa, incomum, ambiciosa; máscara em busca de reconhecimento.',
+  rahu_in_bhava_2: 'Rahu na casa 2: fome de riqueza e status material. Ganhos incomuns; fala persuasiva; família não convencional.',
+  rahu_in_bhava_3: 'Rahu na casa 3: fome de comunicação e coragem — posição forte. Ambição em mídia e tecnologia; ousadia nos esforços.',
+  rahu_in_bhava_4: 'Rahu na casa 4: inquietação no lar e no coração. Raízes incomuns ou estrangeiras; mente agitada; busca de base.',
+  rahu_in_bhava_5: 'Rahu na casa 5: fome de criatividade, poder e reconhecimento. Especulação, romance intenso; ambição intelectual; filhos como tema.',
+  rahu_in_bhava_6: 'Rahu na casa 6: força incomum contra inimigos e dívidas — posição forte. Vence rivais; bom com estrangeiro e serviço; ambição no trabalho.',
+  rahu_in_bhava_7: 'Rahu na casa 7: desejo intenso na parceria. Atração pelo exótico ou estrangeiro; casamento não convencional; sócios ambiciosos.',
+  rahu_in_bhava_8: 'Rahu na casa 8: fome do oculto e da transformação. Interesse no proibido, no místico, em ganhos súbitos; intensidade e riscos.',
+  rahu_in_bhava_9: 'Rahu na casa 9: fome de sentido e expansão. Fé não convencional, guru estrangeiro, viagens longas; ambição filosófica.',
+  rahu_in_bhava_10: 'Rahu na casa 10: fome de status e poder — posição forte. Ambição de carreira intensa; sucesso incomum; reconhecimento público.',
+  rahu_in_bhava_11: 'Rahu na casa 11: fome de ganhos e redes — posição excelente. Renda alta, muitos contatos, desejos amplificados; realização material.',
+  rahu_in_bhava_12: 'Rahu na casa 12: fome de transcendência ou de fuga. Atração pelo exterior, pelo oculto, pelo escapismo; gastos incomuns; caminho espiritual torto.',
+
+  // ── KETU ──
+  ketu_in_bhava_1: 'Ketu na casa 1: desapego do próprio corpo e da identidade. Busca interior, sensação de não pertencer; espiritualidade natural.',
+  ketu_in_bhava_2: 'Ketu na casa 2: desapego de riqueza e família. Relação solta com o material e a fala; valores não convencionais.',
+  ketu_in_bhava_3: 'Ketu na casa 3: desapego do esforço, mas habilidade instintiva. Talento herdado; distância de irmãos.',
+  ketu_in_bhava_4: 'Ketu na casa 4: desapego do lar e da base. Inquietude interior, desconexão das raízes; a paz vem de dentro, não do lugar.',
+  ketu_in_bhava_5: 'Ketu na casa 5: desapego da criatividade e dos filhos. Inteligência intuitiva, interesse espiritual; tema de filhos delicado.',
+  ketu_in_bhava_6: 'Ketu na casa 6: vence inimigos pelo desapego — posição forte. Imune a rivais, cura pela fé; serviço desapegado.',
+  ketu_in_bhava_7: 'Ketu na casa 7: desapego na parceria. Relação com senso de incompletude ou karma; busca do divino no outro.',
+  ketu_in_bhava_8: 'Ketu na casa 8: mergulho natural no oculto — posição espiritual forte. Intuição profunda, interesse místico; transformações súbitas.',
+  ketu_in_bhava_9: 'Ketu na casa 9: fé intuitiva e desapegada. Dharma vivido por dentro, sem dogma; sabedoria de vidas passadas.',
+  ketu_in_bhava_10: 'Ketu na casa 10: desapego da carreira e do status. Trabalho sem apego a reconhecimento; pode mudar de rumo; propósito interior.',
+  ketu_in_bhava_11: 'Ketu na casa 11: desapego de ganhos e redes. Renda flui sem apego; poucos mas certos vínculos; desejos que se desfazem.',
+  ketu_in_bhava_12: 'Ketu na casa 12: moksha em casa própria — posição espiritual máxima. Libertação, isolamento, iluminação; desapego do mundo.',
+}

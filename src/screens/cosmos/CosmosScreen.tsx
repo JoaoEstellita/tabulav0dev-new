@@ -17,6 +17,7 @@ import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
+import { VedicProfileContent } from './VedicProfileContent'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -236,6 +237,7 @@ export default function CosmosScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const anchorsRef = useRef<Record<string, any>>({})
   const [showTop, setShowTop] = useState(false)
+  const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
 
   const registerAnchor = useCallback((key: string, node: any) => {
     if (node) anchorsRef.current[key] = node
@@ -381,29 +383,46 @@ export default function CosmosScreen() {
             aqui e os dados descem por prop (useLifeAreas não é contexto). */}
         {/* Legenda desligada: o Perfil logo abaixo já mostra cada planeta com signo,
             grau, casa, aspectos e regências. Na tela /mapa standalone ela continua. */}
-        <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} />
 
-        {/* Navegação: chips das seções acima, fita de planetas abaixo (mesma da Home) */}
-        <View style={styles.navBar}>
-          <View style={styles.navChips}>
-            {SECTION_CHIPS.map((c) => (
-              <TouchableOpacity
-                key={c.key}
-                style={styles.navChip}
-                activeOpacity={0.8}
-                onPress={() => scrollToAnchor(c.key)}
-              >
-                <Text style={styles.navChipText}>{tl(c.pt, c.en, c.es, c.it)}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <PlanetQuickNav
-            onSelectPlanet={(planet) => scrollToAnchor(`planet:${planet}`)}
-            showCosmosEntry={false}
-          />
+        {/* Toggle Ocidental ↔ Védico — troca a visão do Mapa (só desta aba). */}
+        <View style={styles.modeToggle}>
+          <TouchableOpacity style={[styles.modeBtn, mapMode === 'western' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('western')}>
+            <Text style={[styles.modeBtnText, mapMode === 'western' && styles.modeBtnTextActive]}>{tl('Ocidental', 'Western', 'Occidental', 'Occidentale')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.modeBtn, mapMode === 'vedic' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setMapMode('vedic')}>
+            <Text style={[styles.modeBtnText, mapMode === 'vedic' && styles.modeBtnTextActive]}>{tl('Védico', 'Vedic', 'Védico', 'Vedico')}</Text>
+          </TouchableOpacity>
         </View>
 
-        <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
+        {mapMode === 'vedic' ? (
+          <VedicProfileContent transitData={transitData} loading={loading} natalAscDeg={natalAscDeg} />
+        ) : (
+          <>
+            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} />
+
+            {/* Navegação: chips das seções acima, fita de planetas abaixo (mesma da Home) */}
+            <View style={styles.navBar}>
+              <View style={styles.navChips}>
+                {SECTION_CHIPS.map((c) => (
+                  <TouchableOpacity
+                    key={c.key}
+                    style={styles.navChip}
+                    activeOpacity={0.8}
+                    onPress={() => scrollToAnchor(c.key)}
+                  >
+                    <Text style={styles.navChipText}>{tl(c.pt, c.en, c.es, c.it)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <PlanetQuickNav
+                onSelectPlanet={(planet) => scrollToAnchor(`planet:${planet}`)}
+                showCosmosEntry={false}
+              />
+            </View>
+
+            <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
+          </>
+        )}
       </ScrollView>
       <ScrollTopButton
         visible={showTop}
@@ -425,6 +444,31 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 22,
+    padding: 3,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  modeBtn: {
+    paddingHorizontal: 22,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  modeBtnActive: {
+    backgroundColor: '#FFD700',
+  },
+  modeBtnText: {
+    color: '#8892a4',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  modeBtnTextActive: {
+    color: '#1A1A1A',
   },
   navChips: {
     flexDirection: 'row',

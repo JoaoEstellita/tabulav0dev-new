@@ -12,6 +12,13 @@ import { NAKSHATRA_I18N } from '../data/vedic/nakshatraOverridesI18n'
 import { KUTA_PTBR, GUNA_BANDS_PTBR, GUNA_DISCLAIMER_PTBR } from '../data/vedic/kutaOverridesPtBR'
 import { DASHA_PTBR } from '../data/vedic/dashaOverridesPtBR'
 import { DASHA_I18N } from '../data/vedic/dashaOverridesI18n'
+import { PLANET_IN_RASHI_PTBR } from '../data/vedic/planetInRashiOverridesPtBR'
+import { PLANET_IN_RASHI_I18N } from '../data/vedic/planetInRashiOverridesI18n'
+import { PLANET_IN_BHAVA_PTBR } from '../data/vedic/planetInBhavaOverridesPtBR'
+import { PLANET_IN_BHAVA_I18N } from '../data/vedic/planetInBhavaOverridesI18n'
+import { LAGNA_PTBR } from '../data/vedic/lagnaOverridesPtBR'
+import { LAGNA_I18N } from '../data/vedic/lagnaOverridesI18n'
+import { RASHIS } from '../astro/vedic/nakshatra'
 
 export type VedicLang = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
@@ -162,4 +169,56 @@ export function resolveDasha(period: DashaPeriod | null, lang: VedicLang = 'pt-B
 export function resolveMoonNakshatraDaily(nak: NakshatraDef): string {
   const c = NAKSHATRA_PTBR[nak.key]
   return `Lua hoje em *${nak.name}* — ${c?.moodLine || `energia de ${nak.name}`}`
+}
+
+// ── Karakas (significadores) + significação das casas — fallback do mapa Rasi ──
+const PLANET_KARAKA: Record<string, string> = {
+  sun: 'a alma, o pai, a autoridade e a vitalidade',
+  moon: 'a mente, a mãe, as emoções e o cuidado',
+  mars: 'a energia, a coragem, a ação e os irmãos',
+  mercury: 'o intelecto, a comunicação e o comércio',
+  jupiter: 'a sabedoria, a fé, a fortuna e os filhos',
+  venus: 'o amor, o prazer, a arte e o afeto',
+  saturn: 'a disciplina, o karma, o tempo e a estrutura',
+  rahu: 'o desejo, a ambição e o inédito',
+  ketu: 'o desapego, a espiritualidade e o que já foi',
+}
+const BHAVA_MEANING: Record<number, string> = {
+  1: 'o self, o corpo e o rumo da vida', 2: 'os recursos, a família e a fala',
+  3: 'a coragem, os irmãos e a iniciativa', 4: 'o lar, a mãe e o coração',
+  5: 'a criatividade, os filhos e o intelecto', 6: 'os desafios, a saúde e o serviço',
+  7: 'as parcerias e o casamento', 8: 'a transformação, as crises e o oculto',
+  9: 'a fé, a sorte e o dharma', 10: 'a carreira, a ação no mundo e o status',
+  11: 'os ganhos, as redes e as realizações', 12: 'a perda, o recolhimento e a libertação',
+}
+const rashiKeyToPt = (key: string) => RASHIS.find((r) => r.key === key)?.name || key
+const normGraha = (name: string) => String(name || '').toLowerCase()
+
+/** Planeta em Rashi (signo sideral). i18n via `lang`; fallback pt-BR → karaka. */
+export function resolvePlanetInRashi(planetName: string, rashiKey: string, lang: VedicLang = 'pt-BR'): string {
+  const g = normGraha(planetName)
+  const key = `${g}_in_${rashiKey}`
+  const i18n = lang !== 'pt-BR' ? PLANET_IN_RASHI_I18N[lang]?.[key] : undefined
+  const text = i18n || PLANET_IN_RASHI_PTBR[key]
+  if (text) return text
+  const karaka = PLANET_KARAKA[g]
+  return `${planetPt(g)} em ${rashiKeyToPt(rashiKey)}${karaka ? ` — ${karaka}, colorido pela natureza de ${rashiKeyToPt(rashiKey)}.` : '.'}`
+}
+
+/** Planeta em Bhava (casa whole-sign 1–12). i18n via `lang`; fallback pt-BR → karaka. */
+export function resolvePlanetInBhava(planetName: string, house: number, lang: VedicLang = 'pt-BR'): string {
+  const g = normGraha(planetName)
+  const key = `${g}_in_bhava_${house}`
+  const i18n = lang !== 'pt-BR' ? PLANET_IN_BHAVA_I18N[lang]?.[key] : undefined
+  const text = i18n || PLANET_IN_BHAVA_PTBR[key]
+  if (text) return text
+  const karaka = PLANET_KARAKA[g]
+  const bhava = BHAVA_MEANING[house]
+  return `${planetPt(g)} na casa ${house}${bhava ? ` (${bhava})` : ''}${karaka ? ` — ${karaka} atua nessa área.` : '.'}`
+}
+
+/** Lagna (ascendente sideral). i18n via `lang`; fallback pt-BR. */
+export function resolveLagna(rashiKey: string, lang: VedicLang = 'pt-BR'): string {
+  const i18n = lang !== 'pt-BR' ? LAGNA_I18N[lang]?.[rashiKey] : undefined
+  return i18n || LAGNA_PTBR[rashiKey] || `Lagna de ${rashiKeyToPt(rashiKey)} — a lente pela qual você encara a vida.`
 }

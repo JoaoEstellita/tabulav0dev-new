@@ -15,6 +15,7 @@ export * from './ayanamsa'
 export * from './nakshatra'
 export * from './gunaMilan'
 export * from './dasha'
+export * from './chart'
 
 /** Longitude tropical da Lua a partir de uma lista de posições natais. */
 export function moonLongitudeFrom(positions: RealPlanetPosition[] | null | undefined): number | null {
