@@ -6,8 +6,9 @@ import { PLANET_IN_BHAVA_I18N } from '../../data/vedic/planetInBhavaOverridesI18
 import { LAGNA_PTBR } from '../../data/vedic/lagnaOverridesPtBR'
 import { LAGNA_I18N } from '../../data/vedic/lagnaOverridesI18n'
 import { NAKSHATRA_DEEP_PTBR } from '../../data/vedic/nakshatraDeepPtBR'
+import { NAKSHATRA_DEEP_I18N } from '../../data/vedic/nakshatraDeepI18n'
 import { RASHIS, NAKSHATRAS } from '../../astro/vedic/nakshatra'
-import { resolvePlanetInRashi, resolvePlanetInBhava, resolveLagna, resolveNakshatraDeep } from '../vedicInterpretation'
+import { resolvePlanetInRashi, resolvePlanetInBhava, resolveLagna, resolveNakshatraDeep, deepReadingReady } from '../vedicInterpretation'
 
 const GRAHAS = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn', 'rahu', 'ketu']
 const RASHI_KEYS = RASHIS.map((r) => r.key)
@@ -100,5 +101,36 @@ describe('conteúdo bespoke védico — cobertura', () => {
     expect(d?.reading.profissao).toBeTruthy()
     // fallback: chave inexistente devolve null (nunca quebra)
     expect(resolveNakshatraDeep('inexistente', 'male', 1)).toBeNull()
+  })
+
+  it('leitura profunda i18n: en/es/it completos (27 cada) + deepReadingReady', () => {
+    for (const lang of ['en-US', 'es-ES', 'it-IT'] as const) {
+      expect(Object.keys(NAKSHATRA_DEEP_I18N[lang] || {}), lang).toHaveLength(27)
+      for (const n of NAKSHATRAS) expect(NAKSHATRA_DEEP_I18N[lang]?.[n.key], `falta ${lang} ${n.key}`).toBeTruthy()
+      expect(deepReadingReady(lang), lang).toBe(true)
+    }
+    expect(deepReadingReady('pt-BR')).toBe(true)
+    // cada idioma devolve a própria língua
+    expect(resolveNakshatraDeep('mrigashira', 'male', 1, 'en-US')?.navamsa).toBe('Leo')
+    expect(resolveNakshatraDeep('mrigashira', 'male', 1, 'es-ES')?.navamsa).toBe('Leo')
+    expect(resolveNakshatraDeep('mrigashira', 'male', 1, 'it-IT')?.navamsa).toBe('Leone')
+    expect(resolveNakshatraDeep('krittika', 'female', 1, 'en-US')?.reading.fisico).toContain('striking')
+  })
+
+  it('leitura profunda i18n: ortografia es/it (sem acentos; it sem apóstrofo)', () => {
+    const accent = /[áàâãäéèêëíìîïóòôõöúùûüçñ]/i
+    for (const lang of ['es-ES', 'it-IT']) {
+      const naks = NAKSHATRA_DEEP_I18N[lang] || {}
+      for (const d of Object.values(naks)) {
+        const texts = [
+          ...Object.values(d!.female), ...Object.values(d!.male),
+          ...Object.values(d!.padas).flatMap((p) => [p.female, p.male]),
+        ]
+        for (const t of texts) {
+          expect(accent.test(t), `${lang} acento: ${t}`).toBe(false)
+          if (lang === 'it-IT') expect(t.includes("'"), `it apostrofo: ${t}`).toBe(false)
+        }
+      }
+    }
   })
 })

@@ -15,7 +15,7 @@ import type { LocalTransitData } from '../../services/astrology/LocalAstrologySe
 import { buildVedicChart, RASHIS, currentDasha, buildDashaTimeline } from '../../astro/vedic'
 import {
   resolveLagna, resolveNakshatra, resolveDasha, resolvePlanetInRashi, resolvePlanetInBhava,
-  resolveNakshatraDeep, planetPt, type VedicLang, type VedicGender,
+  resolveNakshatraDeep, deepReadingReady, planetPt, type VedicLang, type VedicGender,
 } from '../../utils/vedicInterpretation'
 import VedicChartSouth from '../../components/VedicChartSouth'
 
@@ -113,8 +113,8 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg }: Props
         const nak = chart.moonNakshatra.nakshatra
         const pada = chart.moonNakshatra.pada
         const r = resolveNakshatra(nak, { pada, rashiName: chart.moonNakshatra.rashi.name, lang })
-        // Leitura profunda é pt-BR por ora; some para outros idiomas até o i18n.
-        const deep = lang === 'pt-BR' ? resolveNakshatraDeep(nak.key, nakGender, pada) : null
+        // Leitura profunda só aparece se o idioma tem os 27 (pt-BR sempre; en/es/it quando prontos).
+        const deep = deepReadingReady(lang) ? resolveNakshatraDeep(nak.key, nakGender, pada, lang) : null
         const SEC = [
           { key: 'fisico', pt: 'Características físicas', en: 'Physical traits', es: 'Rasgos físicos', it: 'Tratti fisici' },
           { key: 'carater', pt: 'Caráter e vida', en: 'Character and life', es: 'Carácter y vida', it: 'Carattere e vita' },

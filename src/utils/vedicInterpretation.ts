@@ -19,6 +19,7 @@ import { PLANET_IN_BHAVA_I18N } from '../data/vedic/planetInBhavaOverridesI18n'
 import { LAGNA_PTBR } from '../data/vedic/lagnaOverridesPtBR'
 import { LAGNA_I18N } from '../data/vedic/lagnaOverridesI18n'
 import { NAKSHATRA_DEEP_PTBR, type NakshatraGenderReading } from '../data/vedic/nakshatraDeepPtBR'
+import { NAKSHATRA_DEEP_I18N } from '../data/vedic/nakshatraDeepI18n'
 import { RASHIS } from '../astro/vedic/nakshatra'
 
 export type VedicLang = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
@@ -232,9 +233,10 @@ export interface ResolvedNakshatraDeep {
   navamsa: string
   padaText: string
 }
-/** Leitura profunda por gênero + pada. null se o nakshatra ainda não foi curado. */
-export function resolveNakshatraDeep(nakKey: string, gender: VedicGender, pada: number): ResolvedNakshatraDeep | null {
-  const deep = NAKSHATRA_DEEP_PTBR[nakKey]
+/** Leitura profunda por gênero + pada. i18n via `lang` (fallback pt-BR). null se não curado. */
+export function resolveNakshatraDeep(nakKey: string, gender: VedicGender, pada: number, lang: VedicLang = 'pt-BR'): ResolvedNakshatraDeep | null {
+  const i18n = lang !== 'pt-BR' ? NAKSHATRA_DEEP_I18N[lang]?.[nakKey] : undefined
+  const deep = i18n || NAKSHATRA_DEEP_PTBR[nakKey]
   if (!deep) return null
   const reading = gender === 'male' ? deep.male : deep.female
   const p = deep.padas[pada]
@@ -244,4 +246,10 @@ export function resolveNakshatraDeep(nakKey: string, gender: VedicGender, pada: 
     navamsa: p?.navamsa || '',
     padaText: p ? (gender === 'male' ? p.male : p.female) : '',
   }
+}
+
+/** Idioma tem os 27 nakshatras profundos prontos? pt-BR sempre; i18n só quando completo. */
+export function deepReadingReady(lang: VedicLang): boolean {
+  if (lang === 'pt-BR') return true
+  return Object.keys(NAKSHATRA_DEEP_I18N[lang] || {}).length === 27
 }
