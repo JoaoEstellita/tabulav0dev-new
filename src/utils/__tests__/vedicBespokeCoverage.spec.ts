@@ -5,8 +5,9 @@ import { PLANET_IN_BHAVA_PTBR } from '../../data/vedic/planetInBhavaOverridesPtB
 import { PLANET_IN_BHAVA_I18N } from '../../data/vedic/planetInBhavaOverridesI18n'
 import { LAGNA_PTBR } from '../../data/vedic/lagnaOverridesPtBR'
 import { LAGNA_I18N } from '../../data/vedic/lagnaOverridesI18n'
-import { RASHIS } from '../../astro/vedic/nakshatra'
-import { resolvePlanetInRashi, resolvePlanetInBhava, resolveLagna } from '../vedicInterpretation'
+import { NAKSHATRA_DEEP_PTBR } from '../../data/vedic/nakshatraDeepPtBR'
+import { RASHIS, NAKSHATRAS } from '../../astro/vedic/nakshatra'
+import { resolvePlanetInRashi, resolvePlanetInBhava, resolveLagna, resolveNakshatraDeep } from '../vedicInterpretation'
 
 const GRAHAS = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn', 'rahu', 'ketu']
 const RASHI_KEYS = RASHIS.map((r) => r.key)
@@ -75,5 +76,29 @@ describe('conteúdo bespoke védico — cobertura', () => {
     expect(resolvePlanetInRashi('Sun', 'meena', 'en-US')).toContain('Pisces')
     expect(resolvePlanetInBhava('Jupiter', 9, 'es-ES')).toContain('dharma')
     expect(resolveLagna('mesha', 'it-IT')).toContain('Ariete')
+  })
+
+  it('leitura profunda: TODOS os 27 nakshatras com 5 seções ×2 gêneros ×4 padas', () => {
+    const SECTIONS = ['fisico', 'carater', 'profissao', 'familia', 'saude'] as const
+    expect(Object.keys(NAKSHATRA_DEEP_PTBR)).toHaveLength(27)
+    for (const n of NAKSHATRAS) expect(NAKSHATRA_DEEP_PTBR[n.key], `falta ${n.key}`).toBeTruthy()
+    for (const key of Object.keys(NAKSHATRA_DEEP_PTBR)) {
+      const d = NAKSHATRA_DEEP_PTBR[key]
+      for (const g of ['female', 'male'] as const)
+        for (const s of SECTIONS) expect(d[g][s].length, `${key}.${g}.${s}`).toBeGreaterThan(30)
+      for (const p of [1, 2, 3, 4]) {
+        expect(d.padas[p]?.navamsa, `${key} pada ${p} navamsa`).toBeTruthy()
+        expect(d.padas[p]?.female, `${key} pada ${p} fem`).toBeTruthy()
+        expect(d.padas[p]?.male, `${key} pada ${p} masc`).toBeTruthy()
+      }
+    }
+  })
+
+  it('leitura profunda: Mrigashira pada 1 = Navamsa de Leão (bate com a fonte)', () => {
+    const d = resolveNakshatraDeep('mrigashira', 'male', 1)
+    expect(d?.navamsa).toBe('Leão')
+    expect(d?.reading.profissao).toBeTruthy()
+    // fallback: chave inexistente devolve null (nunca quebra)
+    expect(resolveNakshatraDeep('inexistente', 'male', 1)).toBeNull()
   })
 })

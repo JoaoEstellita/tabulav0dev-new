@@ -5,7 +5,7 @@
  * vem do CosmosScreen (já resolvido lá).
  */
 import React, { useState, useEffect, useMemo } from 'react'
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
@@ -15,7 +15,7 @@ import type { LocalTransitData } from '../../services/astrology/LocalAstrologySe
 import { buildVedicChart, RASHIS, currentDasha, buildDashaTimeline } from '../../astro/vedic'
 import {
   resolveLagna, resolveNakshatra, resolveDasha, resolvePlanetInRashi, resolvePlanetInBhava,
-  planetPt, type VedicLang,
+  resolveNakshatraDeep, planetPt, type VedicLang, type VedicGender,
 } from '../../utils/vedicInterpretation'
 import VedicChartSouth from '../../components/VedicChartSouth'
 
@@ -30,6 +30,8 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg }: Props
   const { language } = useAppLanguage()
   const lang = language as VedicLang
   const [birthInfo, setBirthInfo] = useState<{ date?: string; time?: string }>({})
+  const [nakGender, setNakGender] = useState<VedicGender>('female')
+  const [deepOpen, setDeepOpen] = useState(false)
 
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
@@ -108,13 +110,57 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg }: Props
 
       {/* Nakshatra da Lua */}
       {chart.moonNakshatra ? (() => {
-        const r = resolveNakshatra(chart.moonNakshatra.nakshatra, { pada: chart.moonNakshatra.pada, rashiName: chart.moonNakshatra.rashi.name, lang })
+        const nak = chart.moonNakshatra.nakshatra
+        const pada = chart.moonNakshatra.pada
+        const r = resolveNakshatra(nak, { pada, rashiName: chart.moonNakshatra.rashi.name, lang })
+        // Leitura profunda é pt-BR por ora; some para outros idiomas até o i18n.
+        const deep = lang === 'pt-BR' ? resolveNakshatraDeep(nak.key, nakGender, pada) : null
+        const SEC = [
+          { key: 'fisico', pt: 'Características físicas', en: 'Physical traits', es: 'Rasgos físicos', it: 'Tratti fisici' },
+          { key: 'carater', pt: 'Caráter e vida', en: 'Character and life', es: 'Carácter y vida', it: 'Carattere e vita' },
+          { key: 'profissao', pt: 'Profissão e renda', en: 'Profession and income', es: 'Profesión e ingresos', it: 'Professione e reddito' },
+          { key: 'familia', pt: 'Vida familiar', en: 'Family life', es: 'Vida familiar', it: 'Vita familiare' },
+          { key: 'saude', pt: 'Saúde', en: 'Health', es: 'Salud', it: 'Salute' },
+        ] as const
         return (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{tl('Nakshatra (mansão lunar)', 'Nakshatra (lunar mansion)', 'Nakshatra (mansión lunar)', 'Nakshatra (dimora lunare)')}</Text>
-            <Text style={styles.cardValue}>{r.name} · pada {chart.moonNakshatra.pada}</Text>
+            <Text style={styles.cardValue}>{r.name} · pada {pada}</Text>
             <Text style={styles.cardLabel}>{tl('regida por', 'ruled by', 'regida por', 'governata da')} {r.lordPt}{r.deity !== '—' ? ` · ${r.deity}` : ''}</Text>
             {r.essencia ? <Text style={styles.cardText}>{r.essencia}{r.personalidade ? `\n\n${r.personalidade}` : ''}</Text> : null}
+
+            {deep ? (
+              <>
+                <TouchableOpacity style={styles.deepToggleRow} activeOpacity={0.8} onPress={() => setDeepOpen((v) => !v)}>
+                  <Text style={styles.deepToggleText}>{deepOpen ? '▾ ' : '▸ '}{tl('Leitura completa', 'Full reading', 'Lectura completa', 'Lettura completa')}</Text>
+                </TouchableOpacity>
+                {deepOpen ? (
+                  <View style={styles.deepBody}>
+                    {/* Toggle Feminino / Masculino */}
+                    <View style={styles.genderToggle}>
+                      <TouchableOpacity style={[styles.genderBtn, nakGender === 'female' && styles.genderBtnActive]} activeOpacity={0.85} onPress={() => setNakGender('female')}>
+                        <Text style={[styles.genderBtnText, nakGender === 'female' && styles.genderBtnTextActive]}>{tl('Feminino', 'Female', 'Femenino', 'Femminile')}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.genderBtn, nakGender === 'male' && styles.genderBtnActive]} activeOpacity={0.85} onPress={() => setNakGender('male')}>
+                        <Text style={[styles.genderBtnText, nakGender === 'male' && styles.genderBtnTextActive]}>{tl('Masculino', 'Male', 'Masculino', 'Maschile')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                    {SEC.map((s) => (
+                      <View key={s.key} style={styles.deepSection}>
+                        <Text style={styles.deepSectionTitle}>{tl(s.pt, s.en, s.es, s.it)}</Text>
+                        <Text style={styles.cardText}>{deep.reading[s.key]}</Text>
+                      </View>
+                    ))}
+                    {deep.padaText ? (
+                      <View style={styles.deepPada}>
+                        <Text style={styles.deepSectionTitle}>{tl('Pada', 'Pada', 'Pada', 'Pada')} {pada}{deep.navamsa ? ` · Navamsa ${deep.navamsa}` : ''}</Text>
+                        <Text style={styles.cardText}>{deep.padaText}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
+              </>
+            ) : null}
           </View>
         )
       })() : null}
@@ -173,4 +219,15 @@ const styles = StyleSheet.create({
   grahaName: { color: '#FFD700', fontSize: 15, fontWeight: '700' },
   grahaMeta: { color: '#8892a4', fontSize: 12 },
   grahaBhava: { color: '#A0A4B0', fontSize: 13, lineHeight: 19, marginTop: 4, fontStyle: 'italic' },
+  deepToggleRow: { marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#2A2F45' },
+  deepToggleText: { color: '#FFD700', fontSize: 13, fontWeight: '700' },
+  deepBody: { marginTop: 12 },
+  genderToggle: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, padding: 3, marginBottom: 14 },
+  genderBtn: { paddingHorizontal: 16, paddingVertical: 5, borderRadius: 16 },
+  genderBtnActive: { backgroundColor: '#FFD700' },
+  genderBtnText: { color: '#8892a4', fontSize: 12, fontWeight: '700' },
+  genderBtnTextActive: { color: '#1A1A1A' },
+  deepSection: { marginBottom: 12 },
+  deepSectionTitle: { color: '#C9A24B', fontSize: 12, fontWeight: '700', letterSpacing: 0.3, marginBottom: 3 },
+  deepPada: { marginTop: 4, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#2A2F45' },
 })

@@ -18,6 +18,7 @@ import { PLANET_IN_BHAVA_PTBR } from '../data/vedic/planetInBhavaOverridesPtBR'
 import { PLANET_IN_BHAVA_I18N } from '../data/vedic/planetInBhavaOverridesI18n'
 import { LAGNA_PTBR } from '../data/vedic/lagnaOverridesPtBR'
 import { LAGNA_I18N } from '../data/vedic/lagnaOverridesI18n'
+import { NAKSHATRA_DEEP_PTBR, type NakshatraGenderReading } from '../data/vedic/nakshatraDeepPtBR'
 import { RASHIS } from '../astro/vedic/nakshatra'
 
 export type VedicLang = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
@@ -221,4 +222,26 @@ export function resolvePlanetInBhava(planetName: string, house: number, lang: Ve
 export function resolveLagna(rashiKey: string, lang: VedicLang = 'pt-BR'): string {
   const i18n = lang !== 'pt-BR' ? LAGNA_I18N[lang]?.[rashiKey] : undefined
   return i18n || LAGNA_PTBR[rashiKey] || `Lagna de ${rashiKeyToPt(rashiKey)} — a lente pela qual você encara a vida.`
+}
+
+// ── Leitura PROFUNDA de Nakshatra (5 seções × gênero + pada). pt-BR por ora. ──
+export type VedicGender = 'female' | 'male'
+export interface ResolvedNakshatraDeep {
+  reading: NakshatraGenderReading
+  pada: number
+  navamsa: string
+  padaText: string
+}
+/** Leitura profunda por gênero + pada. null se o nakshatra ainda não foi curado. */
+export function resolveNakshatraDeep(nakKey: string, gender: VedicGender, pada: number): ResolvedNakshatraDeep | null {
+  const deep = NAKSHATRA_DEEP_PTBR[nakKey]
+  if (!deep) return null
+  const reading = gender === 'male' ? deep.male : deep.female
+  const p = deep.padas[pada]
+  return {
+    reading,
+    pada,
+    navamsa: p?.navamsa || '',
+    padaText: p ? (gender === 'male' ? p.male : p.female) : '',
+  }
 }
