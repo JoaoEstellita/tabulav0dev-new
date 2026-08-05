@@ -37,7 +37,35 @@ const ALVOS = [
   'src/data/chironInHouseOverridesPtBR.ts',
   'src/data/chironAspectOverridesPtBR.ts',
   'src/data/natalPlanetInHouseOverridesPtBR.ts',
+  'src/i18n/appI18n.ts',
 ]
+
+/**
+ * Arquivos que guardam mais de um idioma no mesmo módulo.
+ *
+ * `appI18n.ts` tem os quatro dicionários lado a lado, e es-ES/it-IT são mantidos
+ * SEM diacrítico de propósito (regra do projeto). Acentuar o arquivo inteiro
+ * corromperia os outros idiomas, então aqui só o bloco declarado é elegível.
+ */
+const RESTRICAO_IDIOMA = {
+  'src/i18n/appI18n.ts': 'pt-BR',
+}
+
+const IDIOMAS = /^(pt-BR|en-US|es-ES|it-IT)$/
+
+/** Sobe a cadeia de pais até achar a chave de idioma que envolve o nó. */
+function idiomaEnvolvente(node) {
+  for (let n = node.parent; n; n = n.parent) {
+    if (!ts.isPropertyAssignment(n) || !n.name) continue
+    const nome = ts.isStringLiteral(n.name)
+      ? n.name.text
+      : ts.isIdentifier(n.name)
+        ? String(n.name.escapedText)
+        : null
+    if (nome && IDIOMAS.test(nome)) return nome
+  }
+  return null
+}
 
 /** Corpus JÁ acentuado do próprio repo — a fonte do dicionário. Não invento lista. */
 const FONTES_ACENTUADAS = [
@@ -124,6 +152,7 @@ function valoresDoArquivo(rel) {
   if (!fs.existsSync(abs)) return []
   const src = fs.readFileSync(abs, 'utf8')
   const sf = ts.createSourceFile(abs, src, ts.ScriptTarget.Latest, true)
+  const restricao = RESTRICAO_IDIOMA[rel]
   const out = []
   const visit = (node) => {
     if (
@@ -131,6 +160,7 @@ function valoresDoArquivo(rel) {
       && node.parent
       && ts.isPropertyAssignment(node.parent)
       && node.parent.initializer === node
+      && (!restricao || idiomaEnvolvente(node) === restricao)
     ) {
       out.push({ text: node.text, start: node.getStart(sf), end: node.getEnd() })
     }
@@ -423,6 +453,27 @@ function desmascarar(texto) {
   return out
 }
 
+/**
+ * Devolve o texto ao formato de literal de código.
+ *
+ * `node.text` do TypeScript entrega o valor JÁ desescapado: uma string escrita
+ * no fonte como 'linha\nlinha' chega aqui com a quebra de linha real. Regravar
+ * esse valor cru arrebenta o arquivo — foi o que aconteceu ao incluir
+ * `appI18n.ts`, cujas mensagens usam \n, enquanto os catálogos (sem \n) nunca
+ * expuseram a falha.
+ *
+ * A barra invertida vem primeiro; inverter a ordem escaparia as barras que as
+ * próprias substituições acabaram de introduzir.
+ */
+function escaparParaLiteral(valor, aspas) {
+  return valor
+    .split('\\').join('\\\\')
+    .split(aspas).join('\\' + aspas)
+    .split('\n').join('\\n')
+    .split('\r').join('\\r')
+    .split('\t').join('\\t')
+}
+
 function aplicarNoArquivo(rel, mapa, { write, sample }) {
   const abs = path.join(raiz, rel)
   const original = fs.readFileSync(abs, 'utf8')
@@ -446,7 +497,7 @@ function aplicarNoArquivo(rel, mapa, { write, sample }) {
 
     const literalOriginal = original.slice(start, end)
     const aspas = literalOriginal[0]
-    const literalNovo = aspas + novo.split(aspas).join('\\' + aspas) + aspas
+    const literalNovo = aspas + escaparParaLiteral(novo, aspas) + aspas
     saida = saida.slice(0, start) + literalNovo + saida.slice(end)
     alterados++
     if (amostras.length < sample) amostras.push({ antes: text, depois: novo })
