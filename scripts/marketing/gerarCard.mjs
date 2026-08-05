@@ -1,0 +1,276 @@
+#!/usr/bin/env node
+/**
+ * Gera o card diário "céu de hoje" para Instagram — feed, story e legenda.
+ *
+ *   node scripts/marketing/gerarCard.mjs
+ *   node scripts/marketing/gerarCard.mjs --data=2026-08-12
+ *   node scripts/marketing/gerarCard.mjs --dias=9          (enche a grade)
+ *   node scripts/marketing/gerarCard.mjs --saida=D:/algum/lugar
+ *
+ * Saída padrão: <monorepo>/marketing/out/AAAA-MM-DD/ — fora dos repositórios
+ * git, para não sujar o versionamento com binários.
+ *
+ * Renderiza com o Chrome já instalado (flag `--screenshot`), sem dependência
+ * nova: o design mora em HTML/CSS e o screenshot é fiel ao que o navegador
+ * mostra ao abrir o arquivo.
+ */
+import { mkdir, writeFile, readFile, rm } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+
+import { lerLiterais } from './lib/catalogo.mjs'
+import { encontroDoDia, areaDoEncontro } from './lib/ceu.mjs'
+import { montarCard } from './lib/template.mjs'
+
+const execFileAsync = promisify(execFile)
+
+const AQUI = path.dirname(fileURLToPath(import.meta.url))
+const FRONTEND = path.resolve(AQUI, '../..')
+const MONOREPO = path.resolve(FRONTEND, '..')
+
+const CANDIDATOS_CHROME = [
+  process.env.CHROME_PATH,
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
+  'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+  '/usr/bin/google-chrome',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].filter(Boolean)
+
+function acharChrome() {
+  for (const c of CANDIDATOS_CHROME) if (existsSync(c)) return c
+  throw new Error(
+    'Chrome não encontrado. Defina CHROME_PATH apontando para o executável.\n' +
+      'Procurei em:\n  ' + CANDIDATOS_CHROME.join('\n  ')
+  )
+}
+
+function lerArgs(argv) {
+  const args = { dias: 1, data: null, saida: path.join(MONOREPO, 'marketing/out') }
+  for (const a of argv.slice(2)) {
+    const m = a.match(/^--(\w+)=(.+)$/)
+    if (!m) continue
+    if (m[1] === 'dias') args.dias = Math.max(1, parseInt(m[2], 10) || 1)
+    else if (m[1] === 'data') args.data = m[2]
+    else if (m[1] === 'saida') args.saida = path.resolve(m[2])
+  }
+  return args
+}
+
+/** Meio-dia UTC representa o dia inteiro sem depender do fuso de quem roda. */
+function meioDiaUTC(iso) {
+  const [a, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(a, m - 1, d, 12, 0, 0))
+}
+
+const paraISO = (data) => data.toISOString().slice(0, 10)
+
+async function carregarCatalogos() {
+  const [titulos, aforismos, areas, orbes] = await Promise.all([
+    lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
+    lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
+    lerLiterais(path.join(FRONTEND, 'src/constants/lifeAreas.ts'), [
+      'LIFE_AREA_ATTRIBUTION', 'LIFE_AREA_COLORS', 'LIFE_AREA_LABELS',
+    ]),
+    lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
+  ])
+
+  return {
+    titulos: titulos.TRANSIT_TITLES_PTBR,
+    aforismos: aforismos.TRANSIT_APHORISMS_PTBR,
+    atribuicao: areas.LIFE_AREA_ATTRIBUTION,
+    cores: areas.LIFE_AREA_COLORS,
+    rotulos: areas.LIFE_AREA_LABELS,
+    orbes: orbes.PLANET_ASPECT_ORBS,
+  }
+}
+
+/** Semente do campo estelar: mesma data, mesmo céu. */
+function semente(iso) {
+  return Number(iso.replace(/-/g, ''))
+}
+
+/** Sol e Lua pedem artigo em português; os demais planetas, não. */
+const ARTIGO = { Sol: 'o ', Lua: 'a ' }
+const comArtigo = (nome, maiuscula = false) => {
+  const art = ARTIGO[nome] || ''
+  return (maiuscula && art ? art[0].toUpperCase() + art.slice(1) : art) + nome
+}
+
+/**
+ * Legenda do post. Segue a régua da campanha: fala do céu (verificável), admite
+ * o limite — o céu é de todos, a casa é sua — e transforma isso no CTA.
+ */
+function montarLegenda(e) {
+  const agente = comArtigo(e.agentePt)
+  const alvo = comArtigo(e.alvoPt)
+  const pos = (p) => p.replace(/° /, '° de ')
+
+  return `${e.titulo}.
+
+Hoje ${agente} está a ${pos(e.agentePos)} e ${alvo} a ${pos(e.alvoPos)}. Entre os dois, ${e.aspectoRotulo.toLowerCase()} — ${e.orbeFormatado} de orbe. Isso é astronomia: dá pra conferir em qualquer efeméride.
+
+Só que esse é o céu de todo mundo. O que muda de pessoa pra pessoa é ONDE ele cai no seu mapa — a casa. E é a casa que diz se o assunto é ${e.areaLabel.toLowerCase()} ou outra coisa inteiramente.
+
+${e.aforismo}
+
+Seu mapa calculado de verdade, grátis, no link da bio. 🌘
+
+#astrologia #mapanatal #transitos #${e.agentePt.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')} #astrologiareal #autoconhecimento #astrologiabrasil #efemerides`
+}
+
+async function renderizar(chrome, html, destinoPng, largura, altura) {
+  const temp = destinoPng.replace(/\.png$/, '.html')
+  await writeFile(temp, html, 'utf8')
+
+  await execFileAsync(chrome, [
+    '--headless=new',
+    '--disable-gpu',
+    '--hide-scrollbars',
+    '--force-device-scale-factor=1',
+    '--default-background-color=00000000',
+    `--window-size=${largura},${altura}`,
+    '--virtual-time-budget=4000',
+    `--screenshot=${destinoPng}`,
+    `file:///${temp.replace(/\\/g, '/')}`,
+  ], { timeout: 60_000 })
+
+  if (!existsSync(destinoPng)) {
+    throw new Error(`Chrome não gerou ${path.basename(destinoPng)} — HTML preservado em ${temp}`)
+  }
+  await rm(temp, { force: true })
+}
+
+/**
+ * Chaves publicadas nos últimos dias, para não repetir texto na grade.
+ *
+ * Guardado num JSON ao lado das imagens — não vale um banco, e apagar a pasta
+ * de saída zera o histórico junto, que é o comportamento esperado.
+ */
+const JANELA_SEM_REPETIR = 14
+
+async function lerHistorico(raizSaida) {
+  try {
+    const bruto = await readFile(path.join(raizSaida, '.historico.json'), 'utf8')
+    return JSON.parse(bruto)
+  } catch {
+    return {}
+  }
+}
+
+async function salvarHistorico(raizSaida, historico) {
+  // mantém a janela enxuta: entradas antigas não influenciam mais nada
+  const corte = new Date(Date.now() - JANELA_SEM_REPETIR * 3 * 86_400_000)
+  const podado = Object.fromEntries(
+    Object.entries(historico).filter(([iso]) => meioDiaUTC(iso) >= corte)
+  )
+  await writeFile(
+    path.join(raizSaida, '.historico.json'),
+    JSON.stringify(podado, null, 2),
+    'utf8'
+  )
+}
+
+/** Chaves usadas na janela que precede `iso`. */
+function chavesRecentes(historico, iso) {
+  const fim = meioDiaUTC(iso).getTime()
+  const inicio = fim - JANELA_SEM_REPETIR * 86_400_000
+  const usadas = new Set()
+  for (const [dia, chave] of Object.entries(historico)) {
+    const t = meioDiaUTC(dia).getTime()
+    if (t >= inicio && t <= fim) usadas.add(chave)
+  }
+  return usadas
+}
+
+async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
+  const data = meioDiaUTC(iso)
+  const bruto = encontroDoDia(
+    data, cat.orbes, cat.titulos, cat.aforismos, chavesRecentes(historico, iso)
+  )
+
+  if (!bruto) {
+    return { iso, pulado: 'nenhum aspecto com texto curado no catálogo' }
+  }
+
+  const area = areaDoEncontro(bruto, cat.atribuicao)
+  const encontro = {
+    ...bruto,
+    agentePos: bruto.agentePos.rotulo,
+    alvoPos: bruto.alvoPos.rotulo,
+    area,
+    areaLabel: cat.rotulos[area] || area,
+    cor: (cat.cores[area] || ['#4ECDC4'])[0],
+    dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
+    semente: semente(iso),
+  }
+
+  const pasta = path.join(raizSaida, iso)
+  await mkdir(pasta, { recursive: true })
+
+  await renderizar(chrome, montarCard(encontro, 'feed'), path.join(pasta, 'feed.png'), 1080, 1350)
+  await renderizar(chrome, montarCard(encontro, 'story'), path.join(pasta, 'story.png'), 1080, 1920)
+  await writeFile(path.join(pasta, 'legenda.txt'), montarLegenda(encontro), 'utf8')
+
+  return { iso, encontro, pasta }
+}
+
+async function principal() {
+  const args = lerArgs(process.argv)
+  const chrome = acharChrome()
+  const cat = await carregarCatalogos()
+
+  const inicio = args.data ? meioDiaUTC(args.data) : meioDiaUTC(paraISO(new Date()))
+
+  await mkdir(args.saida, { recursive: true })
+  const historico = await lerHistorico(args.saida)
+
+  console.log(`Chrome  : ${chrome}`)
+  console.log(`Catálogo: ${Object.keys(cat.titulos).length} títulos, ${Object.keys(cat.aforismos).length} aforismos`)
+  console.log(`Saída   : ${args.saida}\n`)
+
+  let gerados = 0
+  let repetidos = 0
+
+  for (let i = 0; i < args.dias; i++) {
+    const dia = new Date(inicio.getTime() + i * 86_400_000)
+    const iso = paraISO(dia)
+    const r = await gerarUmDia(chrome, cat, iso, args.saida, historico)
+
+    if (r.pulado) {
+      console.log(`${iso}  —  pulado: ${r.pulado}`)
+      continue
+    }
+
+    const e = r.encontro
+    historico[iso] = e.chave
+    if (e.repetido) repetidos++
+
+    console.log(
+      `${iso}  ${e.agentePt} ${e.aspectoRotulo} ${e.alvoPt}` +
+        `  ·  orbe ${e.orbeFormatado}  ·  ${e.areaLabel}` +
+        (e.repetido ? '  [repetido]' : '') +
+        `\n            "${e.titulo}"`
+    )
+    gerados++
+  }
+
+  await salvarHistorico(args.saida, historico)
+
+  console.log(`\n${gerados} de ${args.dias} dia(s) gerado(s).`)
+  if (gerados < args.dias) {
+    console.log('Dias pulados não têm aspecto com texto curado — o catálogo cobre 87 chaves.')
+  }
+  if (repetidos > 0) {
+    console.log(`${repetidos} dia(s) repetiram texto: o céu não ofereceu alternativa inédita na janela de ${JANELA_SEM_REPETIR} dias.`)
+  }
+}
+
+principal().catch((erro) => {
+  console.error('\nFalhou:', erro.message)
+  process.exit(1)
+})
