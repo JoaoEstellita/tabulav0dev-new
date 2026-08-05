@@ -93,10 +93,11 @@
     },
     "scheme": "tabulaestelar",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
-      "url": "https://u.expo.dev/e10113f7-a65c-4374-aa0e-c849346d7ed7"
+      "url": "https://u.expo.dev/e10113f7-a65c-4374-aa0e-c849346d7ed7",
+      "fallbackToCacheTimeout": 0
     },
     "plugins": [
       "@react-native-google-signin/google-signin",
