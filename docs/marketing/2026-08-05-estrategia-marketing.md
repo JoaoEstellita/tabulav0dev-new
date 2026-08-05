@@ -167,8 +167,51 @@ Pare de ler seu signo. Leia seu mapa.
 🔭 Efemérides Swiss · casas Placidus reais
 ↓ Seu mapa natal grátis em 1 minuto
 
-Link: tabulaestelar.com.br/?utm_source=instagram&utm_medium=bio
+Link: tabulaestelar.com.br/comecar?utm_source=instagram&utm_medium=bio
 ```
+
+⚠️ **O link da bio precisa apontar para `/comecar`, não para a raiz.** Ver abaixo.
+
+### O funil estava quebrado na porta de entrada (achado de 2026-08-05)
+
+`tabulaestelar.com.br` **não servia landing nenhuma** — servia o app React direto,
+e quem chegasse de um Reel caía numa **tela de login**: e-mail, senha, "Entrar".
+Sem contexto, sem proposta de valor, sem prova. Toda esta estratégia pressupõe
+"landing → mapa grátis → cadastro"; o que existia era uma parede de login.
+
+**Causa raiz:** o `vercel.json` já tinha `"/" → "/landing.html"`, mas no Vercel
+**arquivo estático vence rewrite** — como `dist/index.html` existe, a raiz sempre
+serviu o app e esse rewrite nunca foi aplicado.
+
+**Solução adotada:** rota nova `/comecar` → `public/comecar.html`. Não se mexeu no
+comportamento da raiz, que afetaria PWA instalado, service worker e usuários
+atuais. O service worker é network-first para HTML, então não sequestra a rota.
+
+A `landing.html` antiga continua no repositório e **não deve ser usada**: tem 23
+linhas de mojibake (o logo aparece como "TÃBULA"), vende "Horóscopo
+Personalizado" — o inimigo declarado desta campanha — promete uma "Comunidade
+Astrológica" que não existe, e diz "Google Play (Em breve)" com o app já
+publicado.
+
+### A landing nova (`/comecar`)
+
+Mesma identidade visual dos cards diários, para quem vem do Instagram
+reconhecer. Sete seções:
+
+| # | Seção | Função |
+|---|---|---|
+| 1 | Herói — "Pare de ler seu signo. Leia seu mapa." | hook + CTA acima da dobra |
+| 2 | Desmonte — "1 de 12" contra "1 de 1" | cria o inimigo comum |
+| 3 | Como funciona, em 3 passos | justifica a hora exata de nascimento |
+| 4 | O agente no WhatsApp | o diferencial que ninguém copia |
+| 5 | O que é cálculo × o que é leitura | admite o limite — é o que ganha o cético |
+| 6 | Planos | transparência de preço |
+| 7 | CTA final | conversão |
+
+**Sem prova social inventada.** Não há depoimentos, contagem de usuários nem
+selos — nada disso existe ainda, e fabricar destruiria exatamente a credibilidade
+que a página tenta construir. As provas usadas são reais e verificáveis:
+efemérides Swiss, casas Placidus, o agente, a franqueza sobre o limite.
 
 O campo **Nome** é indexado na busca do Instagram; o @ não é. "Astrologia calculada" ali gera descoberta orgânica.
 

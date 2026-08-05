@@ -95,6 +95,10 @@
       "destination": "/terms.html"
     },
     {
+      "source": "/comecar",
+      "destination": "/comecar.html"
+    },
+    {
       "source": "/",
       "destination": "/landing.html"
     }
