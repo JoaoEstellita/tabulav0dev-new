@@ -207,7 +207,7 @@ export default function LoginScreen() {
               </View>
 
               <Logo tagline={t("login.tagline")} />
-              <Text style={styles.brandTitle}>TABULA ESTELAR</Text>
+              <Text style={styles.brandTitle}>TÁBULA ESTELAR</Text>
             </View>
 
             <View style={styles.formContainer}>
