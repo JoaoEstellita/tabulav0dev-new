@@ -101,6 +101,44 @@ Detalhe de implementação: a cópia usa `textarea` + `execCommand` como caminho
 principal, não `navigator.clipboard`, porque a Clipboard API exige contexto
 seguro e o visor local roda em HTTP.
 
+## Reel animado
+
+```bash
+node scripts/marketing/gerarVideo.mjs                      # hoje, 12s a 30fps
+node scripts/marketing/gerarVideo.mjs --segundos=15 --fps=24
+node scripts/marketing/gerarVideo.mjs --upload             # e manda pro Estúdio
+node scripts/marketing/gerarVideo.mjs --manter-frames      # guarda os PNGs
+```
+
+Sai um `reel.mp4` em 1080×1920: o zodíaco se desenha, os corpos entram do mais
+lento ao mais rápido, os aspectos se traçam entre eles e a leitura do dia
+aparece. Pronto para narrar por cima.
+
+**Precisa de ffmpeg.** Sem ele o script para nos quadros e diz onde ficaram, para
+você montar no editor. O runner do GitHub já tem ffmpeg, então na automação isso
+não é problema.
+
+**Precisa de `puppeteer-core`:**
+
+```bash
+npm install puppeteer-core --no-save
+```
+
+Não baixa navegador: usa o Chrome que já existe. Sem ele, cada quadro custaria os
+2 a 3 segundos de lançar o Chrome por linha de comando, e um vídeo levaria 15
+minutos em vez de 40 segundos.
+
+### Por que não usar IA de vídeo
+
+Runway, Kling, Luma e afins alucinam sobre texto pequeno e linhas finas, que é
+exatamente o que a carta tem: `14° Leão`, `orbe 0°35'`, aspectos em posições
+calculadas. Image-to-video transformaria os graus em rabiscos e derreteria os
+planetas, destruindo a precisão que diferencia o produto.
+
+Se quiser IA em algum momento, o caminho é em camadas: IA gera só o fundo
+(nebulosa em movimento, onde alucinação não atrapalha) e a carta vetorial fica
+por cima, nítida.
+
 ## Depois de mexer no design
 
 ```bash
