@@ -86,6 +86,8 @@
   }
 
   .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  /* a carta tem muito detalhe: ocupa a linha inteira para ser legível */
+  .pecas .larga { grid-column: 1 / -1; }
   @media (max-width: 460px) { .pecas { grid-template-columns: 1fr; gap: 16px; } }
 
   figure { display: flex; flex-direction: column; gap: 7px; }
@@ -212,6 +214,7 @@
         '<div class="pecas">' +
           '<figure><img src="' + d.feed + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Card de feed de ' + d.dia + '"><figcaption>Feed · 1080×1350</figcaption></figure>' +
           (d.story ? '<figure><img src="' + d.story + '" width="1080" height="1920" loading="lazy" decoding="async" alt="Card de story de ' + d.dia + '"><figcaption>Story · 1080×1920</figcaption></figure>' : '') +
+          (d.carta ? '<figure class="larga"><img src="' + d.carta + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Carta do céu de ' + d.dia + '"><figcaption>Carta do céu · 1080×1350</figcaption></figure>' : '') +
         '</div>' +
         (d.legenda ? '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button><pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' : '') +
       '</article>'

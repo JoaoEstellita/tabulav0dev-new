@@ -178,6 +178,67 @@ export function encontroDoDia(data, orbesPorPlaneta, titulos, aforismos, evitar)
   }
 }
 
+/** Ordem do zodíaco, com elemento e o setor que cada signo ocupa na roda. */
+export const SIGNOS_INFO = [
+  { nome: 'Áries', abrev: 'ARI', elemento: 'fogo' },
+  { nome: 'Touro', abrev: 'TAU', elemento: 'terra' },
+  { nome: 'Gêmeos', abrev: 'GEM', elemento: 'ar' },
+  { nome: 'Câncer', abrev: 'CAN', elemento: 'agua' },
+  { nome: 'Leão', abrev: 'LEO', elemento: 'fogo' },
+  { nome: 'Virgem', abrev: 'VIR', elemento: 'terra' },
+  { nome: 'Libra', abrev: 'LIB', elemento: 'ar' },
+  { nome: 'Escorpião', abrev: 'ESC', elemento: 'agua' },
+  { nome: 'Sagitário', abrev: 'SAG', elemento: 'fogo' },
+  { nome: 'Capricórnio', abrev: 'CAP', elemento: 'terra' },
+  { nome: 'Aquário', abrev: 'AQU', elemento: 'ar' },
+  { nome: 'Peixes', abrev: 'PEI', elemento: 'agua' },
+]
+
+/** Do mais lento ao mais rápido: a ordem em que a carta lista os corpos. */
+const ORDEM_CARTA = [
+  'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+  'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
+]
+
+/**
+ * O céu inteiro de uma data: onde cada corpo está e todos os encontros entre
+ * eles.
+ *
+ * Diferente de `encontroDoDia`, que escolhe UM aspecto para o card diário, aqui
+ * o retorno é a carta completa — é o que a peça da roda desenha.
+ *
+ * Retrogradação sai da comparação com o dia anterior: longitude que diminui é
+ * movimento retrógrado. Sol e Lua nunca retrogradam vistos da Terra, então nem
+ * são testados.
+ */
+export function mapaDoCeu(data, orbesPorPlaneta) {
+  const ontem = new Date(data.getTime() - 86_400_000)
+
+  const corpos = ORDEM_CARTA.map((nome) => {
+    const lon = longitudeEcliptica(data, CORPOS[nome])
+    const lonOntem = longitudeEcliptica(ontem, CORPOS[nome])
+
+    // diferença normalizada para [-180, 180]: perto de 0° Áries o valor cruza
+    // a origem e uma subtração crua marcaria retrógrado sem motivo
+    let delta = lon - lonOntem
+    if (delta > 180) delta -= 360
+    if (delta < -180) delta += 360
+
+    const pos = posicaoEmSigno(lon)
+    return {
+      nome,
+      nomePt: NOMES_PT[nome],
+      longitude: lon,
+      signo: pos.signo,
+      grau: pos.grau,
+      rotulo: pos.rotulo,
+      retrogrado: nome !== 'Sun' && nome !== 'Moon' && delta < 0,
+    }
+  })
+
+  return { corpos, aspectos: aspectosDoCeu(data, orbesPorPlaneta) }
+}
+
 /**
  * Área da vida do encontro.
  *

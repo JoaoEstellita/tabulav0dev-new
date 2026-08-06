@@ -55,6 +55,7 @@ async function listarDias() {
     dias.push({
       iso: e.name,
       story: await existe(path.join(pasta, 'story.png')),
+      carta: await existe(path.join(pasta, 'carta.png')),
       legenda: await ler(path.join(pasta, 'legenda.txt')),
     })
   }
@@ -109,6 +110,12 @@ function montarPagina(dias) {
           <img src="/img/${dia.iso}/story.png" width="1080" height="1920"
                alt="Card de story de ${escapar(rotularData(dia.iso))}" loading="lazy" decoding="async">
           <figcaption>Story · 1080×1920</figcaption>
+        </figure>` : ''}
+        ${dia.carta ? `
+        <figure class="larga">
+          <img src="/img/${dia.iso}/carta.png" width="1080" height="1350"
+               alt="Carta do céu de ${escapar(rotularData(dia.iso))}" loading="lazy" decoding="async">
+          <figcaption>Carta do céu · 1080×1350</figcaption>
         </figure>` : ''}
       </div>
 
@@ -172,6 +179,7 @@ function montarPagina(dias) {
   }
 
   .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pecas .larga { grid-column: 1 / -1; }
   figure { display: flex; flex-direction: column; gap: 7px; }
   img {
     width: 100%; height: auto; display: block;
@@ -287,7 +295,7 @@ const servidor = createServer(async (req, res) => {
     return res.end(html)
   }
 
-  const img = url.pathname.match(/^\/img\/(\d{4}-\d{2}-\d{2})\/(feed|story)\.png$/)
+  const img = url.pathname.match(/^\/img\/(\d{4}-\d{2}-\d{2})\/(feed|story|carta)\.png$/)
   if (img) {
     // o padrão da rota já limita dia e arquivo; nada de caminho vindo do cliente
     const arquivo = path.join(args.saida, img[1], `${img[2]}.png`)

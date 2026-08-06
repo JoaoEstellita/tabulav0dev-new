@@ -23,8 +23,9 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 import { lerLiterais } from './lib/catalogo.mjs'
-import { encontroDoDia, areaDoEncontro } from './lib/ceu.mjs'
+import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { montarCard } from './lib/template.mjs'
+import { montarCarta } from './lib/templateCarta.mjs'
 
 const execFileAsync = promisify(execFile)
 
@@ -89,7 +90,7 @@ function lerArgs(argv) {
  * PC ligado. A senha é a mesma do painel de monitoramento.
  */
 async function enviarParaNuvem(pasta, iso, { backend, senha }) {
-  const arquivos = ['feed.png', 'story.png', 'legenda.txt']
+  const arquivos = ['feed.png', 'story.png', 'carta.png', 'legenda.txt']
   const enviados = []
 
   for (const nome of arquivos) {
@@ -274,6 +275,18 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
 
   await renderizar(chrome, montarCard(encontro, 'feed'), path.join(pasta, 'feed.png'), 1080, 1350)
   await renderizar(chrome, montarCard(encontro, 'story'), path.join(pasta, 'story.png'), 1080, 1920)
+
+  // A carta mostra o céu inteiro: doze signos, dez corpos e todos os aspectos.
+  // O card diário destaca um encontro; esta peça é a do post que quer impressionar.
+  const mapa = mapaDoCeu(data, cat.orbes)
+  await renderizar(
+    chrome,
+    montarCarta({ ...mapa, ...encontro }),
+    path.join(pasta, 'carta.png'),
+    1080,
+    1350
+  )
+
   await writeFile(path.join(pasta, 'legenda.txt'), montarLegenda(encontro), 'utf8')
 
   return { iso, encontro, pasta }
