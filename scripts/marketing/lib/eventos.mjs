@@ -46,6 +46,29 @@ function diferenca(a, b) {
 const mesmoDia = (a, b) => a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10)
 
 /**
+ * Meia-noite UTC do dia pedido.
+ *
+ * Toda busca do astronomy-engine anda para a FRENTE a partir do instante dado.
+ * Partindo do meio-dia, um evento da manhã já passou e some do próprio dia:
+ * Marte entrou em Câncer às 08h23 de 11/08/2026 e o card daquele dia não o
+ * mencionava. Ancorar no começo do dia é o que faz "hoje" significar o dia
+ * inteiro.
+ */
+function inicioDoDia(data) {
+  return new Date(Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate()))
+}
+
+/**
+ * O quarto parâmetro de `A.Search` é um objeto de opções, não um número.
+ * Passar `1` — como estava — não vira tolerância de um segundo: vira
+ * `options.dt_tolerance_seconds === undefined` e o padrão assume. Em função
+ * íngreme como um ingresso isso passa despercebido; na velocidade de um planeta
+ * lento perto da estação, onde a derivada vale 1e-5, o padrão não converge e a
+ * busca devolve `null` sem erro.
+ */
+const TOLERANCIA = { dt_tolerance_seconds: 60 }
+
+/**
  * Mudanças de signo na janela.
  *
  * A busca é pela raiz da distância até o próximo limite de 30°, que troca de
@@ -53,17 +76,23 @@ const mesmoDia = (a, b) => a.toISOString().slice(0, 10) === b.toISOString().slic
  * funcionar na virada de Peixes para Áries, onde a subtração crua daria 360.
  */
 export function ingressosProximos(data, dias = 30) {
-  const inicio = new A.AstroTime(data)
-  const fim = new A.AstroTime(new Date(data.getTime() + dias * 86_400_000))
+  const zero = inicioDoDia(data)
+  const inicio = new A.AstroTime(zero)
+  const fim = new A.AstroTime(new Date(zero.getTime() + dias * 86_400_000))
   const achados = []
 
   for (const nome of INGRESSO_RELEVANTE) {
     const corpo = CORPOS[nome]
-    const atual = longitude(corpo, data)
+    const atual = longitude(corpo, zero)
     const limite = ((Math.floor(atual / 30) + 1) * 30) % 360
 
     try {
-      const t = A.Search((quando) => diferenca(longitude(corpo, quando), limite), inicio, fim, 1)
+      const t = A.Search(
+        (quando) => diferenca(longitude(corpo, quando), limite),
+        inicio,
+        fim,
+        TOLERANCIA
+      )
       if (!t) continue
       achados.push({
         tipo: 'ingresso',
@@ -71,6 +100,9 @@ export function ingressosProximos(data, dias = 30) {
         corpoPt: NOMES_PT[nome],
         signo: SIGNOS_INFO[(limite / 30) % 12].nome,
         elemento: SIGNOS_INFO[(limite / 30) % 12].elemento,
+        // Um ingresso acontece exatamente no 0° do signo — explícito para que
+        // quem consome não dependa de um valor padrão em outro arquivo.
+        grau: 0,
         quando: t.date,
         hoje: mesmoDia(t.date, data),
       })
@@ -83,34 +115,78 @@ export function ingressosProximos(data, dias = 30) {
 }
 
 /**
+ * Velocidade em longitude, por derivada numérica de doze horas.
+ *
+ * Base larga de propósito: para Urano a derivada de uma hora perto da estação
+ * vale 2e-5 grau, na borda da precisão do próprio cálculo de posição. Doze horas
+ * multiplicam o sinal por doze sem mover a raiz, que é o que a busca precisa.
+ */
+function velocidade(corpo, t) {
+  const meia = 6 * 3_600_000
+  const antes = new Date(t.getTime() - meia)
+  const depois = new Date(t.getTime() + meia)
+  return diferenca(longitude(corpo, depois), longitude(corpo, antes))
+}
+
+/**
  * Início e fim de retrogradação na janela.
  *
- * Varre dia a dia procurando troca de sinal na velocidade. Passo diário basta:
- * uma estação leva horas para se completar e o card fala em data, não em minuto.
+ * A varredura diária só BRACKETA o evento; a data sai de uma busca de raiz na
+ * velocidade dentro do par de dias encontrado. O passo diário sozinho erra em
+ * até um dia nos planetas lentos, porque perto da estação o deslocamento de 24h
+ * é quase zero e o sinal do dia depende de onde a amostra caiu: a estação de
+ * Urano de 10/09/2026 16h30 aparecia como 11/09. Errar a data de um retrógrado
+ * é exatamente o erro que desmonta a autoridade da peça.
+ *
+ * O laço começa um dia ANTES da janela para ter amostra de comparação — sem
+ * isso, uma estação no primeiro dia não tem com o que ser comparada e some.
  */
 export function estacoesProximas(data, dias = 45) {
+  const zero = inicioDoDia(data)
   const achados = []
 
   for (const nome of PODE_RETROGRADAR) {
     const corpo = CORPOS[nome]
     let anterior = null
 
-    for (let d = 0; d <= dias; d++) {
-      const t1 = new Date(data.getTime() + d * 86_400_000)
-      const t2 = new Date(data.getTime() + (d + 1) * 86_400_000)
-      const retro = diferenca(longitude(corpo, t2), longitude(corpo, t1)) < 0
+    for (let d = -1; d <= dias; d++) {
+      const t1 = new Date(zero.getTime() + d * 86_400_000)
+      const t2 = new Date(zero.getTime() + (d + 1) * 86_400_000)
+      // Velocidade INSTANTÂNEA, não o deslocamento de 24h. Perto da estação o
+      // saldo do dia mistura os dois sentidos e ainda dá direto: no dia da
+      // estação de Urano o deslocamento líquido era positivo, o que jogava o
+      // bracket um dia para a frente e a busca de raiz não achava nada dentro
+      // dele.
+      const retro = velocidade(corpo, t1) < 0
 
       if (anterior !== null && retro !== anterior) {
-        const pos = posicaoEmSigno(longitude(corpo, t1))
+        // A virada está entre a amostra ANTERIOR e esta, não entre esta e a
+        // seguinte. Buscar em [t1, t2] procurava no intervalo errado e sempre
+        // caía no fallback.
+        const desde = new Date(t1.getTime() - 86_400_000)
+        let instante = desde
+        try {
+          const raiz = A.Search(
+            (quando) => velocidade(corpo, quando.date),
+            new A.AstroTime(desde),
+            new A.AstroTime(t1),
+            TOLERANCIA
+          )
+          if (raiz) instante = raiz.date
+        } catch {
+          // sem raiz limpa no intervalo, o começo do dia serve de aproximação
+        }
+
+        const pos = posicaoEmSigno(longitude(corpo, instante))
         achados.push({
           tipo: retro ? 'retrogrado' : 'direto',
           corpo: nome,
           corpoPt: NOMES_PT[nome],
           signo: pos.signo,
           grau: pos.grau,
-          elemento: SIGNOS_INFO[Math.floor(longitude(corpo, t1) / 30)].elemento,
-          quando: t1,
-          hoje: mesmoDia(t1, data),
+          elemento: SIGNOS_INFO[Math.floor(longitude(corpo, instante) / 30)].elemento,
+          quando: instante,
+          hoje: mesmoDia(instante, data),
         })
       }
       anterior = retro
@@ -123,7 +199,7 @@ export function estacoesProximas(data, dias = 45) {
 /** Próximas fases da lua. */
 export function fasesDaLua(data, quantas = 4) {
   const saida = []
-  let q = A.SearchMoonQuarter(data)
+  let q = A.SearchMoonQuarter(inicioDoDia(data))
 
   for (let i = 0; i < quantas; i++) {
     const pos = posicaoEmSigno(longitude(A.Body.Moon, q.time.date))
@@ -141,6 +217,107 @@ export function fasesDaLua(data, quantas = 4) {
   }
 
   return saida
+}
+
+/**
+ * Eclipses na janela, solares e lunares.
+ *
+ * Todo eclipse é uma lunação — solar é Lua Nova, lunar é Lua Cheia — então sem
+ * isto o card trata o maior evento do ano como fase comum. Em 12/08/2026 há um
+ * eclipse solar TOTAL, e a peça anunciaria "Lua Nova em Leão".
+ *
+ * A visibilidade é calculada, não presumida: o eclipse solar de 12/08 não é
+ * visível do Brasil (o próximo em São Paulo é 06/02/2027, parcial), enquanto o
+ * lunar de 28/08 tem a Lua a 68° de altitude à 01h12 de Brasília. Mandar alguém
+ * olhar para o céu no dia errado é o tipo de erro que custa a confiança inteira.
+ */
+const KIND_PT = {
+  total: 'total',
+  annular: 'anular',
+  partial: 'parcial',
+  penumbral: 'penumbral',
+  hybrid: 'híbrido',
+}
+
+/** São Paulo. Serve de referência para "dá para ver do Brasil". */
+const OBSERVADOR_BR = new A.Observer(-23.55, -46.63, 760)
+
+/** A Lua acima do horizonte no pico basta: eclipse lunar se vê a olho nu. */
+function lunarVisivelDoBrasil(pico) {
+  try {
+    const t = new A.AstroTime(pico)
+    const eq = A.Equator(A.Body.Moon, t, OBSERVADOR_BR, true, true)
+    const h = A.Horizon(t, OBSERVADOR_BR, eq.ra, eq.dec, 'normal')
+    return { visivel: h.altitude > 0, altitude: Math.round(h.altitude) }
+  } catch {
+    return { visivel: false, altitude: null }
+  }
+}
+
+/** Para o solar, a pergunta é se a sombra passa por aqui — não basta ser dia. */
+function solarVisivelDoBrasil(pico) {
+  try {
+    const local = A.SearchLocalSolarEclipse(
+      new A.AstroTime(new Date(pico.getTime() - 86_400_000)),
+      OBSERVADOR_BR
+    )
+    const mesmoEvento = Math.abs(local.peak.time.date - pico) < 12 * 3_600_000
+    return {
+      visivel: mesmoEvento,
+      obscuracao: mesmoEvento ? Math.round(local.obscuration * 100) : 0,
+    }
+  } catch {
+    return { visivel: false, obscuracao: 0 }
+  }
+}
+
+export function eclipsesProximos(data, dias = 45) {
+  const zero = inicioDoDia(data)
+  const limite = new Date(zero.getTime() + dias * 86_400_000)
+  const achados = []
+
+  let s = A.SearchGlobalSolarEclipse(new A.AstroTime(zero))
+  for (let i = 0; i < 4 && s.peak.date <= limite; i++) {
+    const pos = posicaoEmSigno(longitude(A.Body.Sun, s.peak.date))
+    const br = solarVisivelDoBrasil(s.peak.date)
+    achados.push({
+      tipo: 'eclipse',
+      luminar: 'solar',
+      especie: KIND_PT[s.kind] || s.kind,
+      total: s.kind === 'total',
+      signo: pos.signo,
+      grau: pos.grau,
+      elemento: SIGNOS_INFO[Math.floor(longitude(A.Body.Sun, s.peak.date) / 30)].elemento,
+      quando: s.peak.date,
+      hoje: mesmoDia(s.peak.date, data),
+      visivelBR: br.visivel,
+      obscuracaoBR: br.obscuracao,
+    })
+    s = A.NextGlobalSolarEclipse(s.peak)
+  }
+
+  let l = A.SearchLunarEclipse(new A.AstroTime(zero))
+  for (let i = 0; i < 4 && l.peak.date <= limite; i++) {
+    const pos = posicaoEmSigno(longitude(A.Body.Moon, l.peak.date))
+    const br = lunarVisivelDoBrasil(l.peak.date)
+    achados.push({
+      tipo: 'eclipse',
+      luminar: 'lunar',
+      especie: KIND_PT[l.kind] || l.kind,
+      total: l.kind === 'total',
+      signo: pos.signo,
+      grau: pos.grau,
+      elemento: SIGNOS_INFO[Math.floor(longitude(A.Body.Moon, l.peak.date) / 30)].elemento,
+      quando: l.peak.date,
+      hoje: mesmoDia(l.peak.date, data),
+      visivelBR: br.visivel,
+      alturaBR: br.altitude,
+      minutosParcial: Math.round(l.sd_partial * 2),
+    })
+    l = A.NextLunarEclipse(l.peak)
+  }
+
+  return achados.sort((a, b) => a.quando - b.quando)
 }
 
 /** Ângulos que contam como aspecto maior para encerrar o curso da Lua. */
@@ -177,7 +354,7 @@ export function luaForaDeCurso(data) {
       (quando) => diferenca(longitude(lua, quando), limite),
       new A.AstroTime(data),
       new A.AstroTime(new Date(data.getTime() + 3 * 86_400_000)),
-      1
+      TOLERANCIA
     )
   } catch {
     return null
@@ -238,8 +415,13 @@ export function luaForaDeCurso(data) {
     horas: Math.round(((fim - inicio) / HORA) * 10) / 10,
     ultimoAspecto: ultimo,
     signo: posLua.signo,
+    grau: posLua.grau,
     proximoSigno: SIGNOS_INFO[(limite / 30) % 12].nome,
-    elemento: SIGNOS_INFO[(limite / 30) % 12].elemento,
+    // Elemento do signo ONDE a Lua está, não do próximo. Vinha do próximo e o
+    // card imprimia "Virgem · ar" no rodapé — e ainda pintava a peça com a cor
+    // do elemento errado, porque a cor sai daqui.
+    elemento: SIGNOS_INFO[Math.floor(atual / 30)].elemento,
+    elementoProximo: SIGNOS_INFO[(limite / 30) % 12].elemento,
     // "em curso" no sentido de estar valendo agora
     emCurso: data >= inicio && data < fim,
     quando: inicio,
@@ -253,23 +435,83 @@ export function luaForaDeCurso(data) {
  * que decide o assunto da peça, e é a diferença entre falar do que mudou hoje e
  * repetir a mesma manchete por doze dias.
  */
-export function eventosDoDia(data, aspectos = []) {
+/**
+ * Peso base por classe de evento. Eclipse acima de tudo: é o único que a
+ * imprensa não astrológica também noticia.
+ */
+function pesoBase(ev) {
+  switch (ev.tipo) {
+    case 'eclipse':
+      if (ev.especie === 'penumbral') return 95
+      return ev.luminar === 'solar' && ev.total ? 130 : 118
+    case 'ingresso': return 100
+    case 'retrogrado':
+    case 'direto': return 95
+    case 'fase': return 90
+    case 'lua_fora_de_curso': return 85
+    default: return 80
+  }
+}
+
+/**
+ * Quantos dias faltam, contando por data e não por horas: um evento às 23h de
+ * amanhã falta um dia, não zero vírgula nove.
+ */
+function diasAte(quando, data) {
+  const a = Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate())
+  const b = Date.UTC(quando.getUTCFullYear(), quando.getUTCMonth(), quando.getUTCDate())
+  return Math.round((b - a) / 86_400_000)
+}
+
+/**
+ * Antecipação: o desconto por dia de distância.
+ *
+ * Oito pontos por dia é o que faz um eclipse de amanhã (130−8=122) ganhar de um
+ * ingresso de hoje (100), e um ingresso de amanhã (92) ganhar de uma fase de
+ * hoje (90) por pouco. A conta importa porque o público espera o evento grande e
+ * ignora o pequeno — @ecodosastros publica "está chegando" e é isso que gera a
+ * volta no dia.
+ */
+const DESCONTO_POR_DIA = 8
+
+export function eventosDoDia(data, aspectos = [], opcoes = {}) {
+  const antecedencia = opcoes.antecedencia ?? 3
   const eventos = []
 
-  for (const i of ingressosProximos(data, 2)) {
-    if (i.hoje) eventos.push({ ...i, peso: 100 })
+  /** Entra se é hoje ou se está dentro da janela de antecipação. */
+  const considerar = (ev) => {
+    const falta = diasAte(ev.quando, data)
+    if (falta < 0 || falta > antecedencia) return
+    eventos.push({
+      ...ev,
+      vespera: falta > 0,
+      diasFalta: falta,
+      peso: pesoBase(ev) - DESCONTO_POR_DIA * falta,
+    })
   }
-  for (const e of estacoesProximas(data, 2)) {
-    if (e.hoje) eventos.push({ ...e, peso: 95 })
-  }
-  for (const f of fasesDaLua(data, 2)) {
-    if (f.hoje) eventos.push({ ...f, peso: 90 })
+
+  for (const e of eclipsesProximos(data, antecedencia + 1)) considerar(e)
+  for (const i of ingressosProximos(data, antecedencia + 1)) considerar(i)
+  for (const e of estacoesProximas(data, antecedencia + 1)) considerar(e)
+  for (const f of fasesDaLua(data, 3)) considerar(f)
+
+  // Todo eclipse é uma lunação. Sem isto a peça anunciaria duas vezes o mesmo
+  // instante — "Eclipse solar total" e "Lua Nova em Leão" — e o segundo ainda
+  // ocuparia a linha dos eventos secundários.
+  const diasComEclipse = new Set(
+    eventos.filter((e) => e.tipo === 'eclipse').map((e) => e.quando.toISOString().slice(0, 10))
+  )
+  for (let i = eventos.length - 1; i >= 0; i--) {
+    const e = eventos[i]
+    if (e.tipo === 'fase' && diasComEclipse.has(e.quando.toISOString().slice(0, 10))) {
+      eventos.splice(i, 1)
+    }
   }
 
   // a Lua fora de curso vale como aviso do dia: dura horas e volta toda semana
   const vazia = luaForaDeCurso(data)
   if (vazia && (vazia.emCurso || mesmoDia(vazia.inicio, data))) {
-    eventos.push({ ...vazia, peso: 85 })
+    eventos.push({ ...vazia, vespera: false, diasFalta: 0, peso: 85 })
   }
 
   // aspecto que fecha hoje vale como evento; vigente há semanas, não
@@ -283,6 +525,8 @@ export function eventosDoDia(data, aspectos = []) {
         elemento: a.agentePos ? SIGNOS_INFO.find((s) => s.nome === a.agentePos.signo)?.elemento : null,
         quando: data,
         hoje: true,
+        vespera: false,
+        diasFalta: 0,
         peso: 80 - a.orbe * 10,
       })
     }

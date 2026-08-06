@@ -123,6 +123,76 @@ function rotuloCorpo(nome, posicao, lado, raio) {
     <text x="${x}" y="${y2}" text-anchor="${ancora}" fill="${SLATE}" font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" letter-spacing="1.2">${posicao}</text>`
 }
 
+/** O corpo que protagoniza cada tipo de evento. */
+function corpoDoEvento(ev) {
+  if (ev.tipo === 'eclipse') return ev.luminar === 'solar' ? 'Sun' : 'Moon'
+  if (ev.tipo === 'fase' || ev.tipo === 'lua_fora_de_curso') return 'Moon'
+  return ev.corpo || 'Sun'
+}
+
+/**
+ * Diagrama do evento: um corpo, um grau, um signo.
+ *
+ * Existe porque o card estava incoerente. O título dizia "Eclipse solar total em
+ * Leão" e a figura mostrava Plutão em trígono com Vênus — o aspecto mais exato
+ * do dia, que nada tinha a ver. O diagrama de aspecto pressupõe dois corpos e um
+ * ângulo, e ingresso, fase e eclipse não têm nem um nem outro.
+ *
+ * Aqui o desenho é o próprio fato: o corpo no grau em que está, dentro do setor
+ * do signo. No eclipse entra a Lua sobre o Sol, que é literalmente o que
+ * acontece.
+ */
+function diagramaEvento(dados, id) {
+  const ev = dados.evento
+  const corpo = corpoDoEvento(ev)
+  const r = RAIO_CORPO[corpo]
+  const grau = typeof ev.grau === 'number' ? ev.grau : 0
+
+  // O corpo vai para o topo: é o único elemento da figura, e centralizar deixa
+  // a leitura do grau sem competição.
+  const ponto = pontoNaRoda(0)
+
+  const eclipseSolar = ev.tipo === 'eclipse' && ev.luminar === 'solar'
+  const eclipseLunar = ev.tipo === 'eclipse' && ev.luminar === 'lunar'
+
+  // No eclipse solar a Lua cobre o Sol; no lunar, a sombra da Terra cobre a Lua.
+  const sombra = eclipseSolar
+    ? `<circle cx="${ponto.x}" cy="${ponto.y}" r="${RAIO_CORPO.Sun * 0.96}" fill="${VOID_2}" stroke="${SLATE}" stroke-width="1.2"/>
+       <circle cx="${ponto.x}" cy="${ponto.y}" r="${RAIO_CORPO.Sun * 1.32}" fill="none" stroke="${BRONZE}" stroke-width="1.4" opacity="0.55"/>`
+    : eclipseLunar
+      ? `<circle cx="${ponto.x}" cy="${ponto.y}" r="${RAIO_CORPO.Moon * 1.5}" fill="${VOID}" opacity="0.62"/>`
+      : ''
+
+  const rotuloGrau = `${grau}° de ${ev.signo || ''}`
+
+  return `
+<svg viewBox="0 0 440 430" role="img" aria-label="${dados.titulo}">
+  <circle cx="${CX}" cy="${CY}" r="${ARO_EXTERNO}" fill="none" stroke="#242A47" stroke-width="1.5"/>
+  <circle cx="${CX}" cy="${CY}" r="${ARO_INTERNO}" fill="none" stroke="#1B2035" stroke-width="1"/>
+  <g stroke="#242A47" stroke-width="1">
+    <line x1="${CX}" y1="${CY - ARO_EXTERNO - 13}" x2="${CX}" y2="${CY - ARO_EXTERNO - 1}"/>
+    <line x1="${CX + ARO_EXTERNO + 13}" y1="${CY}" x2="${CX + ARO_EXTERNO + 1}" y2="${CY}"/>
+    <line x1="${CX}" y1="${CY + ARO_EXTERNO + 13}" x2="${CX}" y2="${CY + ARO_EXTERNO + 1}"/>
+    <line x1="${CX - ARO_EXTERNO - 13}" y1="${CY}" x2="${CX - ARO_EXTERNO - 1}" y2="${CY}"/>
+  </g>
+
+  <line x1="${CX}" y1="${CY}" x2="${pontoNaRoda(0, RAIO_RODA - r - 3).x}" y2="${pontoNaRoda(0, RAIO_RODA - r - 3).y}"
+        stroke="${SLATE}" stroke-width="1.6"/>
+
+  <g transform="translate(${ponto.x} ${ponto.y})">
+    ${desenhoCorpo(corpo, id + 'e')}
+  </g>
+  ${sombra}
+  <g transform="translate(${ponto.x} ${ponto.y})">
+    ${/* acima, não abaixo: o corpo fica no topo e o raio sobe até ele, então um
+         rótulo embaixo cairia exatamente sobre a linha */ ''}
+    ${rotuloCorpo(dados.nomeCorpoEvento || '', rotuloGrau, 'acima', r)}
+  </g>
+
+  <circle cx="${CX}" cy="${CY}" r="3" fill="${SLATE}"/>
+</svg>`
+}
+
 /**
  * O diagrama do aspecto. O agente fica no topo; o alvo, no ângulo do aspecto.
  * Conjunção é o caso especial: 0° não tem arco, os corpos ficam lado a lado.
@@ -207,9 +277,45 @@ export function montarCard(dados, formato = 'feed') {
   const altura = formato === 'story' ? 1920 : 1350
   const id = formato
 
-  const readout = dados.exato
-    ? `${dados.aspectoRotulo} exata · orbe <b>${dados.orbeFormatado}</b>`
-    : `${dados.aspectoRotulo} · orbe <b>${dados.orbeFormatado}</b>`
+  // Quando o dia tem evento, ele manda em TUDO: figura, linha de dado, corpo e
+  // rodapé. Antes só o título trocava, e o card saía dizendo uma coisa e
+  // mostrando outra.
+  const temEvento = !!dados.evento
+
+  // A véspera PRECISA aparecer na imagem, não só na legenda. O card de 9 de
+  // agosto trazia "Eclipse solar total em Leão · 12 de agosto" e quem batesse o
+  // olho leria que o eclipse era naquele dia.
+  const readout = temEvento
+    ? `${dados.vesperaRotulo ? `${dados.vesperaRotulo} · ` : ''}<b>${dados.subtitulo}</b>`
+    : dados.exato
+      ? `${dados.aspectoRotulo} exata · orbe <b>${dados.orbeFormatado}</b>`
+      : `${dados.aspectoRotulo} · orbe <b>${dados.orbeFormatado}</b>`
+
+  const figura = temEvento ? diagramaEvento(dados, id) : diagrama(dados, id)
+
+  // O corpo do texto é a leitura do evento. A leitura curada do catálogo fala do
+  // aspecto, e num dia de eclipse ela descreveria outro céu.
+  const corpoTexto = temEvento ? dados.textoEvento : dados.leitura
+
+  // O aforismo do catálogo pertence ao aspecto: fora dele, vira frase solta.
+  const aforismo = temEvento ? '' : dados.aforismo
+
+  // O chip mostrava a área da vida, que só faz sentido com o mapa de quem vê —
+  // e em dia de evento vinha `undefined`, impresso em caixa alta no rodapé.
+  const chip = temEvento
+    ? [dados.evento.signo, dados.elemento].filter(Boolean).join(' · ')
+    : dados.areaLabel
+
+  // Os quatro signos da cruz. É o recurso que faz alguém parar para ver se é
+  // ele — e aqui é geometria, não palpite: conjunção, duas quadraturas e a
+  // oposição. Sem isso o card de evento ficava com meio quadro vazio, porque o
+  // texto do evento é curto onde a leitura curada era longa.
+  const eixo = temEvento && dados.eixo
+    ? `<div class="eixo">
+         <span class="eixo-rot">Ângulo exato · cruz ${dados.eixo.modalidade}</span>
+         <span class="eixo-signos">${dados.eixo.todos.join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</span>
+       </div>`
+    : ''
 
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
@@ -289,6 +395,21 @@ export function montarCard(dados, formato = 'feed') {
     color: #C9A227; margin-top: 2cqw; max-width: 92%; opacity: 0.9;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
   }
+  /* os quatro signos da cruz: filete acima para separar do texto sem virar caixa */
+  .eixo {
+    margin-top: 3.4cqw; padding-top: 2.4cqw;
+    border-top: 0.12cqw solid rgba(237,230,216,0.16);
+    display: flex; flex-direction: column; gap: 1.3cqw;
+  }
+  .eixo-rot {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-size: 2.1cqw; letter-spacing: 0.14em; text-transform: uppercase; color: ${SLATE};
+  }
+  .eixo-signos {
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-size: 3.7cqw; letter-spacing: 0.01em; color: ${BRONZE};
+    text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
+  }
   /* leitura curada: sem ela a peça tinha um título de quatro palavras, uma
      linha de aforismo e muito espaço vazio */
   .leitura {
@@ -324,14 +445,15 @@ export function montarCard(dados, formato = 'feed') {
     <div class="hush"></div>
     <div class="glow"></div>
     <div class="inner">
-      <div class="eyebrow"><span>Céu de hoje</span><span>${dados.dataRotulo}</span></div>
-      <div class="figure">${diagrama(dados, id)}</div>
+      <div class="eyebrow"><span>${dados.vesperaRotulo ? 'Está chegando' : 'Céu de hoje'}</span><span>${dados.dataRotulo}</span></div>
+      <div class="figure">${figura}</div>
       <div class="readout">${readout}</div>
       <h1 class="title">${dados.titulo}</h1>
-      ${dados.leitura ? `<p class="leitura">${dados.leitura}</p>` : ''}
-      <p class="aph">${dados.aforismo}</p>
+      ${corpoTexto ? `<p class="leitura">${corpoTexto}</p>` : ''}
+      ${aforismo ? `<p class="aph">${aforismo}</p>` : ''}
+      ${eixo}
       <div class="foot">
-        <span class="chip">${dados.areaLabel}</span>
+        <span class="chip">${chip}</span>
         <span class="handle">@tabula_estelar</span>
       </div>
     </div>

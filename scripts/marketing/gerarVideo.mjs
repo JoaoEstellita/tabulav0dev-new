@@ -27,7 +27,7 @@ import process from 'node:process'
 import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { eventosDoDia } from './lib/eventos.mjs'
-import { escrever } from './lib/vozes.mjs'
+import { escrever, rotuloDeVespera } from './lib/vozes.mjs'
 import { montarAnimacao } from './lib/templateAnimado.mjs'
 
 const execFileAsync = promisify(execFile)
@@ -121,6 +121,7 @@ function vozDoDia(data, aspectos) {
     subtitulo: v.dado,
     textoEvento: v.texto,
     signoEvento: principal.signo || null,
+    vesperaRotulo: rotuloDeVespera(principal),
     cor: COR_ELEMENTO[principal.elemento] || undefined,
   }
 }

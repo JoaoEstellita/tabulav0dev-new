@@ -31,20 +31,26 @@ export const TEMA_PLANETA = {
   Pluto: 'o poder e a transformação',
 }
 
-/** Como cada signo modula o que passa por ele, em predicado. */
+/**
+ * Como cada signo modula o que passa por ele, em predicado.
+ *
+ * No PLURAL: todo tema de planeta acima é sujeito composto — "a conversa e o
+ * raciocínio", "o que se valoriza e o que atrai". Com verbo no singular saía
+ * "a conversa e o raciocínio quer ser visto", errado em toda peça de ingresso.
+ */
 export const MODO_SIGNO = {
-  'Áries': 'ganha pressa e quer começar',
-  'Touro': 'desacelera e pede permanência',
-  'Gêmeos': 'se divide e quer nomear',
-  'Câncer': 'recua para dentro e busca abrigo',
-  'Leão': 'quer ser visto e assumir o centro',
-  'Virgem': 'se refina e quer ser útil',
-  'Libra': 'passa a pedir reciprocidade',
-  'Escorpião': 'aprofunda e não aceita superfície',
-  'Sagitário': 'abre horizonte e quer sentido',
-  'Capricórnio': 'endurece e cobra resultado',
-  'Aquário': 'se distancia para enxergar o todo',
-  'Peixes': 'perde contorno e se mistura',
+  'Áries': 'ganham pressa e querem começar',
+  'Touro': 'desaceleram e pedem permanência',
+  'Gêmeos': 'se dividem e querem nomear',
+  'Câncer': 'recuam para dentro e buscam abrigo',
+  'Leão': 'querem ser vistos e assumir o centro',
+  'Virgem': 'se refinam e querem ser úteis',
+  'Libra': 'passam a pedir reciprocidade',
+  'Escorpião': 'aprofundam e não aceitam superfície',
+  'Sagitário': 'abrem horizonte e querem sentido',
+  'Capricórnio': 'endurecem e cobram resultado',
+  'Aquário': 'se distanciam para enxergar o todo',
+  'Peixes': 'perdem contorno e se misturam',
 }
 
 /** O que uma retrogradação costuma pedir, por corpo. */
@@ -72,6 +78,44 @@ const NOME_ASPECTO = {
   quadratura: 'se atritam',
   trigono: 'fluem juntos',
   oposicao: 'se opõem',
+}
+
+/**
+ * Os quatro signos que recebem aspecto exato de um corpo neste signo.
+ *
+ * O recurso do "3 signos", "4 signos" é o que faz alguém parar para checar se é
+ * ele. Só que quem usa isso normalmente chuta. Aqui é geometria: um signo, os
+ * dois em quadratura e o oposto formam a cruz da modalidade, e são SEMPRE
+ * quatro. Nada de opinião no meio.
+ *
+ * Não diz o que vai acontecer com essas pessoas — diz que o ângulo existe.
+ * O que o ângulo faz depende da casa, e a casa depende do nascimento.
+ */
+/** Concordam com "cruz", que é feminino: a cruz cardinal, a cruz fixa. */
+const MODALIDADE = ['cardinal', 'fixa', 'mutável']
+
+const ORDEM_SIGNOS = [
+  'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+  'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes',
+]
+
+export function eixoDoSigno(signo) {
+  const i = ORDEM_SIGNOS.indexOf(signo)
+  if (i < 0) return null
+  const nome = (n) => ORDEM_SIGNOS[((n % 12) + 12) % 12]
+  return {
+    modalidade: MODALIDADE[i % 3],
+    conjuncao: signo,
+    // Em ordem do zodíaco: "Touro e Escorpião" lê melhor que "Escorpião e Touro".
+    quadraturas: [nome(i + 3), nome(i + 9)].sort(
+      (a, b) => ORDEM_SIGNOS.indexOf(a) - ORDEM_SIGNOS.indexOf(b)
+    ),
+    oposicao: nome(i + 6),
+    /** Os quatro, na ordem do zodíaco, para listar sem parecer arbitrário. */
+    todos: [signo, nome(i + 3), nome(i + 6), nome(i + 9)].sort(
+      (a, b) => ORDEM_SIGNOS.indexOf(a) - ORDEM_SIGNOS.indexOf(b)
+    ),
+  }
 }
 
 /** Hora local de Brasília, que é o público da conta. */
@@ -125,6 +169,32 @@ export function escrever(evento) {
         dado: `${dia(evento.quando)}, ${hora(evento.quando)} · ${evento.grau}°`,
       }
 
+    case 'eclipse': {
+      const solar = evento.luminar === 'solar'
+      const titulo = solar
+        ? `Eclipse solar ${evento.especie} em ${evento.signo}`
+        : `Eclipse lunar ${evento.especie} em ${evento.signo}`
+
+      // A visibilidade é o dado que ninguém publica porque exige cálculo de
+      // horizonte, e é o que separa "olhe para o céu" de mandar o público
+      // brasileiro procurar uma sombra que passa pela Islândia.
+      const ondeSeVe = evento.visivelBR
+        ? solar
+          ? `Visível do Brasil, ${evento.obscuracaoBR}% do disco.`
+          : `Visível do Brasil: a Lua fica a ${evento.alturaBR}° acima do horizonte, quase no alto do céu.`
+        : 'Não é visível do Brasil.'
+
+      const sentido = solar
+        ? 'Lua Nova com a Lua exatamente sobre o Sol. Começo de ciclo que costuma cobrar antes de abrir.'
+        : 'Lua Cheia dentro da sombra da Terra. O que estava em curso chega ao ponto de virada.'
+
+      return {
+        titulo,
+        texto: `${sentido} ${ondeSeVe}`,
+        dado: `${dia(evento.quando)}, ${hora(evento.quando)} · ${evento.grau}° de ${evento.signo}`,
+      }
+    }
+
     case 'lua_fora_de_curso': {
       // quando o período atravessa a meia-noite, só a hora engana
       const mesmoDia = dia(evento.inicio) === dia(evento.fim)
@@ -159,6 +229,41 @@ export function escreverCurto(evento) {
 }
 
 /**
+ * Eventos que merecem o recurso dos quatro signos.
+ *
+ * Não é para usar todo dia: se toda peça recorta signos, o recurso vira ruído e
+ * a conta vira horóscopo. Fica para eclipse, lunação e entrada dos planetas que
+ * o público reconhece — os mesmos que a imprensa nota.
+ */
+const CORPOS_DE_PESO = ['Sun', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn']
+
+export function mereceEixo(evento) {
+  if (evento.tipo === 'eclipse') return true
+  if (evento.tipo === 'fase') return evento.fase === 'Lua Nova' || evento.fase === 'Lua Cheia'
+  if (evento.tipo === 'ingresso') return CORPOS_DE_PESO.includes(evento.corpo)
+  if (evento.tipo === 'retrogrado' || evento.tipo === 'direto') return true
+  return false
+}
+
+/**
+ * A véspera: dizer que falta, e quanto.
+ *
+ * O card publicava só no dia do evento, e por isso nunca criava espera. Quem
+ * cresce nesse nicho publica antes — "está chegando", "faltam dois dias" — e o
+ * público volta no dia. É a mesma efeméride, com a data lida de outro jeito.
+ */
+export function rotuloDeVespera(evento) {
+  if (!evento?.vespera) return ''
+  if (evento.diasFalta === 1) return 'Amanhã'
+  return `Faltam ${evento.diasFalta} dias`
+}
+
+export function prefixoDeVespera(evento) {
+  const rotulo = rotuloDeVespera(evento)
+  return rotulo ? `${rotulo}: ` : ''
+}
+
+/**
  * Legenda do post.
  *
  * Abre pelo fato, explica em uma linha, separa o que é céu do que é casa e
@@ -166,11 +271,24 @@ export function escreverCurto(evento) {
  */
 export function montarLegenda(principal, secundarios = []) {
   const p = escrever(principal)
-  const linhas = [`${p.titulo}. ${p.dado}.`, '', p.texto]
+  const linhas = [`${prefixoDeVespera(principal)}${p.titulo}. ${p.dado}.`, '', p.texto]
+
+  // Os quatro signos do eixo: geometria, não palpite. Entra só nos eventos de
+  // peso para não virar cacoete.
+  const eixo = mereceEixo(principal) ? eixoDoSigno(principal.signo) : null
+  if (eixo) {
+    linhas.push(
+      '',
+      `Os quatro signos que recebem ângulo exato — a cruz ${eixo.modalidade}:`,
+      `· ${eixo.conjuncao} — conjunção`,
+      `· ${eixo.quadraturas[0]} e ${eixo.quadraturas[1]} — quadratura`,
+      `· ${eixo.oposicao} — oposição`
+    )
+  }
 
   if (secundarios.length) {
-    linhas.push('', 'Também hoje:')
-    for (const s of secundarios) linhas.push(`· ${escreverCurto(s)}`)
+    linhas.push('', 'Também no radar:')
+    for (const s of secundarios) linhas.push(`· ${prefixoDeVespera(s)}${escreverCurto(s)}`)
   }
 
   linhas.push(

@@ -240,7 +240,9 @@ export function montarAnimacao(dados) {
       <div class="posicoes">${posicoes}</div>
 
       <div class="leitura">
-        <div class="rot">${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
+        ${/* a véspera precisa aparecer aqui também: sem ela o Reel de dois dias
+              antes do eclipse mostra a data e deixa o espectador supor que é hoje */ ''}
+        <div class="rot">${dados.vesperaRotulo ? `${dados.vesperaRotulo} · ` : ''}${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
         <h1>${dados.titulo}</h1>
         ${(dados.textoEvento || dados.leitura) ? `<p class="texto">${dados.textoEvento || dados.leitura}</p>` : ''}
         ${dados.textoEvento ? '' : `<p class="aforismo">${dados.aforismo}</p>`}

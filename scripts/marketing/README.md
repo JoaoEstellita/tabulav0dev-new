@@ -31,6 +31,19 @@ marketing/out/2026-08-07/
 
 Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
+## Planejar a semana
+
+```bash
+node scripts/marketing/calendario.mjs                 # 30 dias a partir de hoje
+node scripts/marketing/calendario.mjs --dias=45
+node scripts/marketing/calendario.mjs --json          # para consumir em outro lugar
+```
+
+Lista o que acontece, em que dia publicar e com que ângulo — no dia, na véspera
+ou com antecedência. Eclipse aparece três vezes (cinco dias antes, dois dias
+antes e no dia), porque é o único evento que o público já ouviu falar em outro
+lugar.
+
 ## Automático — GitHub Actions
 
 O card do dia é gerado e enviado sozinho, todo dia às **09:00 UTC (06:00 em
@@ -193,6 +206,43 @@ para a seguinte — igualmente verdadeira, só menos exata. O histórico fica em
 **Campo estelar determinístico.** A semente vem da data, então regerar um card
 já publicado produz exatamente a mesma imagem.
 
+**Eclipse tem peso próprio.** Todo eclipse é uma lunação, então sem tratamento
+específico o eclipse solar total de 12/08/2026 sairia como "Lua Nova em Leão" —
+o maior evento astronômico do ano anunciado como fase comum. A hierarquia é
+`eclipse solar total 130 > eclipse 118 > ingresso 100 > estação 95 > fase 90 >
+Lua fora de curso 85 > aspecto 80`, e a lunação do mesmo instante é removida
+para o dia não aparecer duas vezes.
+
+**A visibilidade é calculada, não presumida.** O eclipse solar de 12/08/2026 não
+é visível do Brasil (o próximo em São Paulo é 06/02/2027, parcial); o lunar de
+28/08 tem a Lua a 68° de altitude à 01h12 de Brasília. Mandar o público olhar
+para o céu no dia errado custa a confiança inteira, então o texto só convida
+quando `visivelBR` é verdadeiro.
+
+**Antecipação.** O card publicava só no dia, e por isso nunca criava espera.
+Agora eventos dentro de três dias entram com desconto de 8 pontos por dia — o
+que faz um eclipse de amanhã (122) ganhar de um ingresso de hoje (100) — e a
+peça se declara véspera no olho ("Está chegando") e na linha de dado ("Faltam 2
+dias"). Sem isso o card de 9 de agosto traria "Eclipse solar total · 12 de
+agosto" e quem batesse o olho leria que era naquele dia.
+
+**Os quatro signos da cruz.** "3 signos", "4 signos" é o recurso que faz alguém
+parar para ver se é ele, e quem usa normalmente chuta. Aqui é geometria: o
+signo, as duas quadraturas e a oposição formam a cruz da modalidade, e são
+sempre quatro. Entra só nos eventos de peso (`mereceEixo`) — se toda peça
+recortasse signos, a conta viraria horóscopo.
+
+**Toda busca parte da meia-noite.** As funções do `astronomy-engine` andam para
+a frente a partir do instante dado. Ancoradas no meio-dia, eventos da manhã já
+tinham passado e sumiam do próprio dia — Marte entrou em Câncer às 08h23 de
+11/08/2026 e o card daquele dia não o mencionava.
+
+**O quarto argumento de `A.Search` é um objeto.** Passar `1` não vira tolerância
+de um segundo: vira `options.dt_tolerance_seconds === undefined`. Em função
+íngreme como um ingresso passa despercebido; na velocidade de um planeta lento
+perto da estação, onde a derivada vale 1e-5, a busca devolve `null` sem erro e o
+código cai num fallback de dia inteiro.
+
 **Leitura dos catálogos.** Node 20 não tem `--experimental-strip-types` e o
 projeto não expõe esbuild. `lib/catalogo.mjs` extrai o objeto literal direto do
 `.ts` (varredura balanceada, respeitando strings e comentários) em vez de
@@ -204,11 +254,16 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | | |
 |---|---|
 | `gerarCard.mjs` | orquestrador e CLI |
+| `gerarVideo.mjs` | Reel animado |
+| `calendario.mjs` | pautas dos próximos dias, com data e ângulo editorial |
 | `estudio.mjs` | visor local para postar do celular |
 | `provaGeometria.mjs` | folha de prova dos 5 aspectos |
 | `lib/ceu.mjs` | aspectos do céu, força, área da vida |
+| `lib/eventos.mjs` | ingresso, estação, fase, eclipse, Lua fora de curso |
+| `lib/vozes.mjs` | léxico e regras de escrita das peças |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |
-| `lib/template.mjs` | HTML/CSS do card e o diagrama SVG |
+| `lib/template.mjs` | HTML/CSS do card e os diagramas SVG |
+| `lib/__tests__/eventos.spec.mjs` | golden de efeméride (roda no `npx vitest run`) |
 
 O design mora em `lib/template.mjs`, em HTML/CSS — ajustar o card é ajustar CSS,
 não código de desenho.

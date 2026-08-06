@@ -25,7 +25,13 @@ import path from 'node:path'
 import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { eventosDoDia } from './lib/eventos.mjs'
-import { escrever, montarLegenda as montarLegendaDaVoz } from './lib/vozes.mjs'
+import {
+  escrever,
+  montarLegenda as montarLegendaDaVoz,
+  eixoDoSigno,
+  mereceEixo,
+  rotuloDeVespera,
+} from './lib/vozes.mjs'
 import { montarCard } from './lib/template.mjs'
 import { montarCarta } from './lib/templateCarta.mjs'
 
@@ -327,6 +333,17 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
     leitura: primeirasFrases(cat.leituras[bruto.chave], 2),
     dirPlanetas: DIR_PLANETAS,
     evento: principal,
+    // O nome que vai sob o desenho do corpo. Eclipse e fase não trazem `corpoPt`
+    // porque o protagonista é o luminar, não um planeta nomeado no evento.
+    nomeCorpoEvento: principal
+      ? principal.corpoPt ||
+        (principal.tipo === 'eclipse' && principal.luminar === 'solar' ? 'Sol' : 'Lua')
+      : '',
+    // Só nos eventos de peso — eclipse, lunação, entrada de planeta reconhecível.
+    // Se toda peça recortasse signos, o recurso viraria cacoete e a conta viraria
+    // horóscopo.
+    eixo: principal && mereceEixo(principal) ? eixoDoSigno(principal.signo) : null,
+    vesperaRotulo: principal ? rotuloDeVespera(principal) : '',
     // uma linha por evento secundário: dia cheio mostra mais de um, dia parado
     // continua com um só. O layout segue a quantidade, não o contrário.
     eventos: secundarios.map((e) => {
