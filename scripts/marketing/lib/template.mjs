@@ -119,8 +119,8 @@ function rotuloCorpo(nome, posicao, lado, raio) {
   const y2 = lateral ? 14 : lado === 'acima' ? -raio - 13 : raio + 43
 
   return `
-    <text x="${x}" y="${y1}" text-anchor="${ancora}" fill="${VELLUM}" font-family="ui-monospace, Consolas, monospace" font-size="15" letter-spacing="2.5">${nome.toUpperCase()}</text>
-    <text x="${x}" y="${y2}" text-anchor="${ancora}" fill="${SLATE}" font-family="ui-monospace, Consolas, monospace" font-size="12.5" letter-spacing="1.2">${posicao}</text>`
+    <text x="${x}" y="${y1}" text-anchor="${ancora}" fill="${VELLUM}" font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" letter-spacing="2.5">${nome.toUpperCase()}</text>
+    <text x="${x}" y="${y2}" text-anchor="${ancora}" fill="${SLATE}" font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" letter-spacing="1.2">${posicao}</text>`
 }
 
 /**
@@ -150,7 +150,7 @@ function diagrama(dados, id) {
       <path d="M ${pAgente.x} ${yBase} L ${pAgente.x} ${yBase + 10} L ${pAlvo.x} ${yBase + 10} L ${pAlvo.x} ${yBase}"
             fill="none" stroke="${BRONZE}" stroke-width="1.5" opacity="0.9"/>
       <text x="${CX}" y="${yBase + 32}" text-anchor="middle" fill="${BRONZE}"
-            font-family="ui-monospace, Consolas, monospace" font-size="19" letter-spacing="1">0°</text>`
+            font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="19" letter-spacing="1">0°</text>`
   } else {
     const a1 = pontoNaRoda(0, 56)
     const a2 = pontoNaRoda(angulo, 56)
@@ -159,7 +159,7 @@ function diagrama(dados, id) {
       <path d="M ${a1.x} ${a1.y} A 56 56 0 ${angulo > 180 ? 1 : 0} 1 ${a2.x} ${a2.y}"
             fill="none" stroke="${BRONZE}" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.9"/>
       <text x="${meio.x}" y="${meio.y + 6}" text-anchor="middle" fill="${BRONZE}"
-            font-family="ui-monospace, Consolas, monospace" font-size="19" letter-spacing="1">${angulo}°</text>`
+            font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="19" letter-spacing="1">${angulo}°</text>`
   }
 
   // o raio para na borda do disco: cruzar o planeta suja o desenho
@@ -252,7 +252,7 @@ export function montarCard(dados, formato = 'feed') {
   }
 
   .eyebrow {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
     font-size: 2.1cqw; letter-spacing: 0.22em; text-transform: uppercase;
     color: ${BRONZE};
     display: flex; justify-content: space-between;
@@ -263,21 +263,25 @@ export function montarCard(dados, formato = 'feed') {
   .figure svg { width: ${formato === 'story' ? '90%' : '80%'}; height: auto; display: block; }
 
   .readout {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
     font-size: 2.3cqw; letter-spacing: 0.13em; text-transform: uppercase;
     color: ${SLATE}; text-align: center;
   }
   .readout b { color: ${BRONZE}; font-weight: 400; }
 
   .title {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
+       no Linux do runner. Sem eles o card sai com serif generico na automacao. */
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
     font-size: 7.4cqw; line-height: 1.06; font-weight: 400;
     letter-spacing: -0.012em; margin-top: auto;
     text-wrap: balance;
     text-shadow: 0 0.3cqw 2.4cqw rgba(7,10,24,0.75);
   }
   .aph {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
+       no Linux do runner. Sem eles o card sai com serif generico na automacao. */
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
     font-style: italic; font-size: 3.7cqw; line-height: 1.42;
     color: #CFC9BD; margin-top: 3cqw; max-width: 88%;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
@@ -290,7 +294,7 @@ export function montarCard(dados, formato = 'feed') {
   }
   .chip {
     display: inline-flex; align-items: center; gap: 1.4cqw;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
     font-size: 2.1cqw; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--area);
   }
@@ -299,7 +303,7 @@ export function montarCard(dados, formato = 'feed') {
     border-radius: 50%; background: var(--area);
   }
   .handle {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
     font-size: 2.1cqw; letter-spacing: 0.1em; color: ${SLATE};
   }
 </style></head>

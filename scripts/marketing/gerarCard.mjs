@@ -38,7 +38,11 @@ const CANDIDATOS_CHROME = [
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
   process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
   'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+  // Linux: o runner do GitHub Actions traz google-chrome-stable
+  '/usr/bin/google-chrome-stable',
   '/usr/bin/google-chrome',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/chromium',
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean)
 
@@ -58,10 +62,14 @@ function lerArgs(argv) {
     data: null,
     saida: path.join(MONOREPO, 'marketing/out'),
     upload: false,
+    // Localmente uma falha de rede não deve abortar nada: o card já está no
+    // disco. Na automação, silêncio é pior — ninguém veria o Estúdio parar.
+    exigirUpload: false,
     backend: process.env.TABULA_BACKEND || BACKEND_PADRAO,
   }
   for (const a of argv.slice(2)) {
     if (a === '--upload') { args.upload = true; continue }
+    if (a === '--exigir-upload') { args.upload = true; args.exigirUpload = true; continue }
     const m = a.match(/^--(\w+)=(.+)$/)
     if (!m) continue
     if (m[1] === 'dias') args.dias = Math.max(1, parseInt(m[2], 10) || 1)
@@ -174,12 +182,17 @@ async function renderizar(chrome, html, destinoPng, largura, altura) {
   const temp = destinoPng.replace(/\.png$/, '.html')
   await writeFile(temp, html, 'utf8')
 
+  // Em CI o Chrome pode rodar sem os privilegios que o sandbox exige, e /dev/shm
+  // do container e pequeno demais para o rasterizador.
+  const flagsCI = process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []
+
   await execFileAsync(chrome, [
     '--headless=new',
     '--disable-gpu',
     '--hide-scrollbars',
     '--force-device-scale-factor=1',
     '--default-background-color=00000000',
+    ...flagsCI,
     `--window-size=${largura},${altura}`,
     '--virtual-time-budget=4000',
     `--screenshot=${destinoPng}`,
@@ -340,6 +353,11 @@ async function principal() {
   }
   if (args.upload) {
     console.log(`${enviados} de ${gerados} enviado(s) para o Estúdio.`)
+    if (args.exigirUpload && enviados < gerados) {
+      throw new Error(
+        `--exigir-upload: ${gerados - enviados} dia(s) não chegaram ao Estúdio.`
+      )
+    }
   }
 }
 

@@ -1,0 +1,125 @@
+# Gera o card "céu de hoje" e envia para o Estúdio, todo dia.
+#
+# Existe para tirar o João do meio: antes, publicar exigia ligar o PC e rodar o
+# gerador à mão. O runner do GitHub já traz Chrome e Node, então o mesmo script
+# roda aqui sem adaptação.
+#
+# Pré-requisito: o secret MONITORING_PASSWORD (a senha do painel /monitoramento).
+#   Settings > Secrets and variables > Actions > New repository secret
+
+name: Card diário
+
+on:
+  schedule:
+    # 09:00 UTC = 06:00 em Brasília. O card fica pronto antes de acordar.
+    # O agendador do GitHub costuma atrasar em horários cheios; não é relógio.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      dias:
+        description: "Quantos dias gerar a partir de hoje"
+        required: false
+        default: "1"
+      data:
+        description: "Começar em outra data (AAAA-MM-DD). Vazio = hoje."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+# Duas execuções ao mesmo tempo brigariam pelo histórico anti-repetição.
+concurrency:
+  group: card-diario
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # As fontes do card são do Windows (Palatino Linotype, Consolas). Sem elas
+      # o Chrome cai num serif genérico e o card sai diferente do aprovado.
+      # fonts-urw-base35 traz o URW Palladio L / P052, que é o Palatino livre.
+      - name: Instalar fontes equivalentes
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-urw-base35 fonts-liberation fonts-dejavu-core
+          fc-cache -f
+          echo "Palatino disponível:"; fc-match "P052" || true
+          echo "Mono disponível:"; fc-match "DejaVu Sans Mono" || true
+
+      - name: Conferir o Chrome do runner
+        run: |
+          which google-chrome-stable || which google-chrome || which chromium-browser
+          google-chrome-stable --version || google-chrome --version
+
+      # O gerador usa uma dependência só. `npm ci` instalaria o app inteiro por
+      # nada e levaria minutos.
+      - name: Instalar dependência do gerador
+        run: npm install astronomy-engine@^2.1.19 --no-save --no-audit --no-fund --loglevel=error
+
+      # A janela de 14 dias sem repetir texto vive num JSON ao lado das imagens.
+      # Sem restaurar isso, todo dia começaria do zero e o mesmo trânsito voltaria.
+      - name: Restaurar histórico anti-repetição
+        uses: actions/cache@v4
+        with:
+          path: marketing/out/.historico.json
+          key: card-historico-${{ github.run_id }}
+          restore-keys: |
+            card-historico-
+
+      - name: Gerar e enviar
+        id: gerar
+        env:
+          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
+          DIAS: ${{ github.event.inputs.dias || '1' }}
+          DATA: ${{ github.event.inputs.data || '' }}
+        run: |
+          if [ -z "$MONITORING_PASSWORD" ]; then
+            echo "::error::Falta o secret MONITORING_PASSWORD. Cadastre em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          ARGS="--dias=$DIAS --exigir-upload"
+          [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+
+          echo "Rodando: node scripts/marketing/gerarCard.mjs $ARGS"
+          node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee saida.txt
+
+      - name: Resumo do run
+        if: always()
+        run: |
+          {
+            echo "## Card diário"
+            echo ""
+            if [ -f saida.txt ]; then
+              echo '```'
+              grep -vE "^(Chrome|Catálogo|Saída|Upload)" saida.txt || cat saida.txt
+              echo '```'
+            else
+              echo "O gerador não chegou a rodar."
+            fi
+            echo ""
+            echo "Cards em <https://www.tabulaestelar.com.br/estudio>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Se algo sair torto no visual, a imagem fica aqui para inspeção sem
+      # precisar reproduzir o ambiente do runner.
+      - name: Guardar os cards para conferência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cards-${{ github.run_number }}
+          path: marketing/out/**/*.png
+          retention-days: 7
+          if-no-files-found: warn
