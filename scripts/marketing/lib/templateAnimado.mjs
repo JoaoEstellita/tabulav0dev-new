@@ -13,24 +13,29 @@
 import { SIGNOS_INFO } from './ceu.mjs'
 import {
   CX, CY, R_SIGNO_FORA, R_SIGNO_DENTRO, R_ASPECTO, R_PLANETA,
-  RAIO_CORPO, CORES_CARTA, ponto, arredonda, setorSigno, distribuir, desenhoCorpo,
+  RAIO_CORPO, CORES_CARTA, ponto, arredonda, setorSigno, distribuir, desenhoCorpo, imagemCorpo,
 } from './templateCarta.mjs'
 
 const { VOID, VELLUM, BRONZE, SLATE, TRACO, COR_HARMONICO, COR_TENSO, COR_ELEMENTO } = CORES_CARTA
 
 /**
- * Marcos da narrativa, em fração da duração total.
+ * Entrada em meio segundo, e só.
  *
- * Deixados aqui em cima porque é o que se ajusta ao rever o ritmo do vídeo, e
- * porque a ordem conta uma história: o palco antes dos atores.
+ * A primeira versão revelava a carta em etapas e o conteúdo só ficava completo
+ * perto do fim. No Reels os dois primeiros segundos decidem a retenção, e quem
+ * chegava via uma roda vazia se desenhando: a animação estava cobrando espera
+ * para entregar o que já existia.
+ *
+ * Agora tudo está legível quase no primeiro quadro e o movimento é atmosfera —
+ * brilho pulsando, estrelas cintilando, roda girando devagar.
  */
 const FASE = {
-  abertura: [0.00, 0.10],
-  zodiaco: [0.06, 0.26],
-  corpos: [0.24, 0.52],
-  aspectos: [0.50, 0.72],
-  posicoes: [0.68, 0.84],
-  leitura: [0.80, 0.96],
+  abertura: [0.00, 0.04],
+  zodiaco: [0.00, 0.05],
+  corpos: [0.01, 0.06],
+  aspectos: [0.02, 0.08],
+  posicoes: [0.03, 0.08],
+  leitura: [0.04, 0.10],
 }
 
 export function montarAnimacao(dados) {
@@ -42,7 +47,7 @@ export function montarAnimacao(dados) {
   const temRetrogrado = dados.corpos.some((c) => c.retrogrado)
 
   const setores = SIGNOS_INFO.map((s, i) =>
-    `<path class="setor" d="${setorSigno(i)}" fill="${COR_ELEMENTO[s.elemento]}" opacity="0"/>`
+    `<path class="setor" d="${setorSigno(i)}" fill="${COR_ELEMENTO[s.elemento]}" opacity="0.07"/>`
   ).join('')
 
   const divisoes = SIGNOS_INFO.map((_, i) => {
@@ -50,13 +55,13 @@ export function montarAnimacao(dados) {
     const b = ponto(i * 30, R_SIGNO_DENTRO - 14)
     return `<line class="divisao" x1="${arredonda(a.x)}" y1="${arredonda(a.y)}"
                   x2="${arredonda(b.x)}" y2="${arredonda(b.y)}"
-                  stroke="${TRACO}" stroke-width="1.4" opacity="0"/>`
+                  stroke="${TRACO}" stroke-width="1.4" opacity="1"/>`
   }).join('')
 
   const rotulosSigno = SIGNOS_INFO.map((s, i) => {
     const p = ponto(i * 30 + 15, (R_SIGNO_FORA + R_SIGNO_DENTRO) / 2)
     return `<text class="rot-signo" x="${arredonda(p.x)}" y="${arredonda(p.y + 7)}"
-                  text-anchor="middle" fill="${COR_ELEMENTO[s.elemento]}" opacity="0"
+                  text-anchor="middle" fill="${COR_ELEMENTO[s.elemento]}" opacity="1"
                   font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace"
                   font-size="21" letter-spacing="2.4">${s.abrev}</text>`
   }).join('')
@@ -76,7 +81,7 @@ export function montarAnimacao(dados) {
                     stroke="${tenso ? COR_TENSO : COR_HARMONICO}"
                     stroke-width="${arredonda(1.2 + forca * 1.8)}"
                     data-alvo-opacidade="${arredonda(0.24 + forca * 0.58)}"
-                    opacity="0"/>`
+                    opacity="${arredonda(0.24 + forca * 0.58)}"/>`
     }).join('')
 
   // ordem de entrada: do mais lento ao mais rápido, que é como a carta se lê
@@ -87,7 +92,7 @@ export function montarAnimacao(dados) {
     const t1 = ponto(c.longitude, R_SIGNO_DENTRO)
     const t2 = ponto(c.longitude, R_SIGNO_DENTRO - 22)
     const i = ordemEntrada.indexOf(c.nome)
-    return `<g class="corpo" data-ordem="${i < 0 ? 0 : i}" opacity="0">
+    return `<g class="corpo" data-ordem="${i < 0 ? 0 : i}" opacity="1">
       <line x1="${arredonda(t1.x)}" y1="${arredonda(t1.y)}" x2="${arredonda(t2.x)}" y2="${arredonda(t2.y)}"
             stroke="${VELLUM}" stroke-width="1.6" opacity="0.5"/>
       ${c.raio < R_PLANETA ? (() => {
@@ -96,13 +101,13 @@ export function montarAnimacao(dados) {
         return `<line x1="${arredonda(a.x)}" y1="${arredonda(a.y)}" x2="${arredonda(b.x)}" y2="${arredonda(b.y)}"
                       stroke="${SLATE}" stroke-width="1" opacity="0.55" stroke-dasharray="3 4"/>`
       })() : ''}
-      <g transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${desenhoCorpo(c.nome)}</g>
+      <g transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g>
     </g>`
   }).join('')
 
   const posicoes = dados.corpos.map((c, i) => `
     <div class="pos" data-ordem="${i}">
-      <svg viewBox="-26 -26 52 52" aria-hidden="true"><g transform="scale(0.94)">${desenhoCorpo(c.nome)}</g></svg>
+      <svg viewBox="-26 -26 52 52" aria-hidden="true"><g transform="scale(0.94)">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g></svg>
       <span class="pn">${c.nomePt}${c.retrogrado ? '<i>℞</i>' : ''}</span>
       <span class="pg">${c.grau}° ${c.signo}</span>
     </div>`).join('')
@@ -126,7 +131,7 @@ export function montarAnimacao(dados) {
     width: 128cqw; height: 74cqw; transform: translateX(-50%);
     background: radial-gradient(ellipse at center, var(--area) 0%,
       color-mix(in srgb, var(--area) 26%, transparent) 34%, rgba(7,10,24,0) 68%);
-    opacity: 0;
+    opacity: 0.34;
   }
 
   .conteudo {
@@ -138,7 +143,7 @@ export function montarAnimacao(dados) {
   .alto {
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 2.05cqw; letter-spacing: 0.24em; text-transform: uppercase;
-    color: ${BRONZE}; opacity: 0;
+    color: ${BRONZE};
     display: flex; justify-content: space-between; align-items: baseline;
   }
   .alto span:last-child { color: ${SLATE}; }
@@ -150,7 +155,7 @@ export function montarAnimacao(dados) {
     display: flex; gap: 3.2cqw; justify-content: center;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 1.7cqw; letter-spacing: 0.1em; text-transform: uppercase;
-    color: ${SLATE}; margin-top: 2cqw; opacity: 0;
+    color: ${SLATE}; margin-top: 2cqw;
   }
   .legenda i { display: inline-block; width: 3.2cqw; height: 0.24cqw; vertical-align: middle; margin-right: 0.8cqw; }
 
@@ -161,7 +166,7 @@ export function montarAnimacao(dados) {
   .pos {
     display: flex; align-items: center; gap: 1.4cqw;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
-    font-size: 2.05cqw; opacity: 0;
+    font-size: 2.05cqw;
   }
   .pos svg { flex-shrink: 0; width: 2.9cqw; height: 2.9cqw; }
   .pn { color: ${VELLUM}; letter-spacing: 0.04em; }
@@ -170,7 +175,7 @@ export function montarAnimacao(dados) {
 
   /* margem fixa em vez de auto: o Instagram cobre a faixa de baixo com a
      própria interface, então o respiro sobra ali e o texto fica na zona visível */
-  .leitura { margin-top: 6cqw; opacity: 0; }
+  .leitura { margin-top: 6cqw; }
   .leitura .rot {
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 1.85cqw; letter-spacing: 0.15em; text-transform: uppercase;
@@ -196,7 +201,6 @@ export function montarAnimacao(dados) {
     display: flex; align-items: center; justify-content: space-between;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
     font-size: 1.95cqw; letter-spacing: 0.13em; text-transform: uppercase;
-    opacity: 0;
   }
   .chip { color: var(--area); display: inline-flex; align-items: center; gap: 1.2cqw; }
   .chip::before { content: ""; width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--area); }
@@ -216,13 +220,13 @@ export function montarAnimacao(dados) {
       <div class="roda">
         <svg viewBox="0 0 1000 1000" role="img" aria-label="Carta do céu do dia, animada">
           <g id="giro">
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_FORA}" fill="none" stroke="${TRACO}" stroke-width="1.6" opacity="0"/>
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_DENTRO}" fill="none" stroke="${TRACO}" stroke-width="1.4" opacity="0"/>
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_ASPECTO}" fill="none" stroke="#1B2035" stroke-width="1" opacity="0"/>
+            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_FORA}" fill="none" stroke="${TRACO}" stroke-width="1.6" opacity="1"/>
+            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_DENTRO}" fill="none" stroke="${TRACO}" stroke-width="1.4" opacity="1"/>
+            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_ASPECTO}" fill="none" stroke="#1B2035" stroke-width="1" opacity="1"/>
             ${setores}${divisoes}${rotulosSigno}
             ${linhasAspecto}
             ${corposSvg}
-            <circle class="aro" cx="${CX}" cy="${CY}" r="3.5" fill="${SLATE}" opacity="0"/>
+            <circle class="aro" cx="${CX}" cy="${CY}" r="3.5" fill="${SLATE}" opacity="1"/>
           </g>
         </svg>
       </div>
@@ -236,14 +240,14 @@ export function montarAnimacao(dados) {
       <div class="posicoes">${posicoes}</div>
 
       <div class="leitura">
-        <div class="rot">${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b></div>
+        <div class="rot">${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
         <h1>${dados.titulo}</h1>
-        ${dados.leitura ? `<p class="texto">${dados.leitura}</p>` : ''}
-        <p class="aforismo">${dados.aforismo}</p>
+        ${(dados.textoEvento || dados.leitura) ? `<p class="texto">${dados.textoEvento || dados.leitura}</p>` : ''}
+        ${dados.textoEvento ? '' : `<p class="aforismo">${dados.aforismo}</p>`}
       </div>
 
       <div class="rodape">
-        <span class="chip">${dados.areaLabel}</span>
+        <span class="chip">${dados.signoEvento || 'Céu de hoje'}</span>
         <span class="arroba">@tabula_estelar</span>
       </div>
     </div>
@@ -303,64 +307,35 @@ export function montarAnimacao(dados) {
   var poss = document.querySelectorAll('.pos');
   var giro = document.getElementById('giro');
 
-  // comprimento de cada aspecto, para desenhar traço a traço
-  aspectos.forEach(function (l) {
-    var comp = l.getTotalLength();
-    l.style.strokeDasharray = comp;
-    l.style.strokeDashoffset = comp;
-    l.dataset.comp = comp;
-  });
+  // Sem dasharray: a linha nasce inteira. O desenho progressivo saiu junto com
+  // a revelacao em etapas, e deixar o offset aqui escondia tudo em silencio.
 
   window.aplicarTempo = function (t) {
-    var abertura = faixa(t, 'abertura');
-    document.querySelector('.alto').style.opacity = abertura;
-    document.querySelector('.brilho').style.opacity = abertura * 0.34;
 
-    var zod = faixa(t, 'zodiaco');
-    aros.forEach(function (el) { el.style.opacity = zod; });
-    setores.forEach(function (el, i) {
-      el.style.opacity = escalonado(t, 'zodiaco', i, setores.length) * 0.07;
-    });
-    divisoes.forEach(function (el, i) {
-      el.style.opacity = escalonado(t, 'zodiaco', i, divisoes.length);
-    });
-    rotSignos.forEach(function (el, i) {
-      el.style.opacity = escalonado(t, 'zodiaco', i, rotSignos.length);
-    });
 
-    corpos.forEach(function (el) {
-      var ordem = parseInt(el.dataset.ordem, 10) || 0;
-      var p = escalonado(t, 'corpos', ordem, corpos.length);
-      el.style.opacity = p;
-      // entra crescendo de dentro: o corpo "chega" à sua posição
-      el.style.transform = 'scale(' + (0.72 + 0.28 * p) + ')';
-      el.style.transformOrigin = '${CX}px ${CY}px';
-    });
 
-    aspectos.forEach(function (el, i) {
-      var p = escalonado(t, 'aspectos', i, aspectos.length);
-      var comp = parseFloat(el.dataset.comp);
-      el.style.strokeDashoffset = comp * (1 - p);
-      el.style.opacity = p * parseFloat(el.dataset.alvoOpacidade || '0.6');
-    });
 
-    document.querySelector('.legenda').style.opacity = faixa(t, 'aspectos');
 
-    poss.forEach(function (el, i) {
-      var p = escalonado(t, 'posicoes', i, poss.length);
-      el.style.opacity = p;
-      el.style.transform = 'translateY(' + ((1 - p) * 14).toFixed(2) + 'px)';
-    });
 
-    var leitura = faixa(t, 'leitura');
-    var elLeitura = document.querySelector('.leitura');
-    elLeitura.style.opacity = leitura;
-    elLeitura.style.transform = 'translateY(' + ((1 - leitura) * 22).toFixed(2) + 'px)';
-    document.querySelector('.rodape').style.opacity = leitura;
 
     // a roda respira: giro lento e contínuo, quase imperceptível quadro a quadro
     giro.style.transform = 'rotate(' + (t * 2.4).toFixed(3) + 'deg)';
     giro.style.transformOrigin = '${CX}px ${CY}px';
+
+    // Depois que tudo já apareceu, o movimento vira brilho: os aspectos pulsam
+    // devagar e os corpos ganham um halo que respira. É o que dá vida ao quadro
+    // sem esconder nada de quem chegou agora.
+    var pulso = 0.5 + 0.5 * Math.sin(t * Math.PI * 4);
+    aspectos.forEach(function (el, i) {
+      var base = parseFloat(el.dataset.alvoOpacidade || '0.6');
+      var fora = (i % 3) * 0.33;
+      var p = 0.5 + 0.5 * Math.sin((t * 4 + fora) * Math.PI);
+      el.style.opacity = base * (0.72 + 0.28 * p);
+    });
+    corpos.forEach(function (el, i) {
+      var p = 0.5 + 0.5 * Math.sin((t * 3 + i * 0.2) * Math.PI);
+      el.style.filter = 'drop-shadow(0 0 ' + (3 + p * 7).toFixed(1) + 'px rgba(201,162,39,' + (0.25 + p * 0.35).toFixed(2) + '))';
+    });
 
     document.documentElement.dataset.t = t;
   };

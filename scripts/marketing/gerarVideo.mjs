@@ -26,12 +26,17 @@ import process from 'node:process'
 
 import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
+import { eventosDoDia } from './lib/eventos.mjs'
+import { escrever } from './lib/vozes.mjs'
 import { montarAnimacao } from './lib/templateAnimado.mjs'
 
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const FRONTEND = path.resolve(AQUI, '../..')
 const MONOREPO = path.resolve(FRONTEND, '..')
+
+/** Imagens reais dos planetas, carregadas por file:// pelo Chrome. */
+const DIR_PLANETAS = path.join(FRONTEND, 'public/planets').split(path.sep).join('/')
 
 const CANDIDATOS_CHROME = [
   process.env.CHROME_PATH,
@@ -105,6 +110,23 @@ async function carregarPuppeteer() {
   }
 }
 
+/** Mesmo criterio do card: o que muda hoje ganha do aspecto de sempre. */
+function vozDoDia(data, aspectos) {
+  const eventos = eventosDoDia(data, aspectos)
+  const principal = eventos[0]
+  if (!principal) return {}
+  const v = escrever(principal)
+  return {
+    titulo: v.titulo,
+    subtitulo: v.dado,
+    textoEvento: v.texto,
+    signoEvento: principal.signo || null,
+    cor: COR_ELEMENTO[principal.elemento] || undefined,
+  }
+}
+
+const COR_ELEMENTO = { fogo: '#FF9F40', terra: '#96E6A1', ar: '#60A5FA', agua: '#B19CD9' }
+
 async function principal() {
   const args = lerArgs(process.argv)
   const chrome = acharChrome()
@@ -152,6 +174,8 @@ async function principal() {
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
     semente: Number(iso.replace(/-/g, '')),
     leitura: primeirasFrases(leituras.TRANSIT_CATALOG_PTBR_OVERRIDES[encontro.chave], 2),
+    dirPlanetas: DIR_PLANETAS,
+    ...vozDoDia(data, mapa.aspectos),
   })
 
   const pasta = path.join(args.saida, iso)

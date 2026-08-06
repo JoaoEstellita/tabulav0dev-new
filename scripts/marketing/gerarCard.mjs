@@ -24,6 +24,8 @@ import path from 'node:path'
 
 import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
+import { eventosDoDia } from './lib/eventos.mjs'
+import { escrever, montarLegenda as montarLegendaDaVoz } from './lib/vozes.mjs'
 import { montarCard } from './lib/template.mjs'
 import { montarCarta } from './lib/templateCarta.mjs'
 
@@ -32,6 +34,9 @@ const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const FRONTEND = path.resolve(AQUI, '../..')
 const MONOREPO = path.resolve(FRONTEND, '..')
+
+/** Imagens reais dos planetas, que o Chrome carrega por file://. */
+const DIR_PLANETAS = path.join(FRONTEND, 'public/planets').split(path.sep).join('/')
 
 const CANDIDATOS_CHROME = [
   process.env.CHROME_PATH,
@@ -158,6 +163,14 @@ async function carregarCatalogos() {
     rotulos: areas.LIFE_AREA_LABELS,
     orbes: orbes.PLANET_ASPECT_ORBS,
   }
+}
+
+/** Cor do elemento do signo do evento: fato astronômico, não suposição. */
+const COR_ELEMENTO = {
+  fogo: '#FF9F40',
+  terra: '#96E6A1',
+  ar: '#60A5FA',
+  agua: '#B19CD9',
 }
 
 /** Semente do campo estelar: mesma data, mesmo céu. */
@@ -288,18 +301,42 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
     return { iso, pulado: 'nenhum aspecto com texto curado no catálogo' }
   }
 
+  // O que MUDA hoje vem antes do que está igual há semanas: ingresso, estação
+  // retrógrada, fase da lua e Lua fora de curso ganham do aspecto vigente.
+  const mapa = mapaDoCeu(data, cat.orbes)
+  const eventos = eventosDoDia(data, mapa.aspectos)
+  const principal = eventos[0] || null
+  const secundarios = eventos.slice(1, 3)
+
+  const voz = principal ? escrever(principal) : null
+
+  // a cor vem do elemento do signo, que é fato astronômico. A área da vida saiu:
+  // sem o mapa de quem vê, dizer "Carreira" é afirmar o que não se sabe.
+  const elemento = principal?.elemento || null
   const area = areaDoEncontro(bruto, cat.atribuicao)
+
   const encontro = {
     ...bruto,
     agentePos: bruto.agentePos.rotulo,
     alvoPos: bruto.alvoPos.rotulo,
-    area,
-    areaLabel: cat.rotulos[area] || area,
-    cor: (cat.cores[area] || ['#4ECDC4'])[0],
+    cor: COR_ELEMENTO[elemento] || (cat.cores[area] || ['#4ECDC4'])[0],
+    elemento,
+    signoEvento: principal?.signo || null,
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
     semente: semente(iso),
     leitura: primeirasFrases(cat.leituras[bruto.chave], 2),
-    leituraCompleta: cat.leituras[bruto.chave] || '',
+    dirPlanetas: DIR_PLANETAS,
+    evento: principal,
+    // uma linha por evento secundário: dia cheio mostra mais de um, dia parado
+    // continua com um só. O layout segue a quantidade, não o contrário.
+    eventos: secundarios.map((e) => {
+      const v = escrever(e)
+      return { ...e, __linha: `${v.titulo} · ${v.dado}` }
+    }),
+    // quando há evento, ele manda no título; o aspecto vira pano de fundo
+    titulo: voz ? voz.titulo : bruto.titulo,
+    subtitulo: voz ? voz.dado : '',
+    textoEvento: voz ? voz.texto : '',
   }
 
   const pasta = path.join(raizSaida, iso)
@@ -309,8 +346,6 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
   await renderizar(chrome, montarCard(encontro, 'story'), path.join(pasta, 'story.png'), 1080, 1920)
 
   // A carta mostra o céu inteiro: doze signos, dez corpos e todos os aspectos.
-  // O card diário destaca um encontro; esta peça é a do post que quer impressionar.
-  const mapa = mapaDoCeu(data, cat.orbes)
   await renderizar(
     chrome,
     montarCarta({ ...mapa, ...encontro }),
@@ -319,7 +354,10 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
     1350
   )
 
-  await writeFile(path.join(pasta, 'legenda.txt'), montarLegenda(encontro), 'utf8')
+  const legenda = principal
+    ? montarLegendaDaVoz(principal, secundarios)
+    : montarLegenda(encontro)
+  await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 
   return { iso, encontro, pasta }
 }
@@ -368,11 +406,12 @@ async function principal() {
     historico[iso] = e.chave
     if (e.repetido) repetidos++
 
+    const secundarios = (e.eventos || []).length
     console.log(
-      `${iso}  ${e.agentePt} ${e.aspectoRotulo} ${e.alvoPt}` +
-        `  ·  orbe ${e.orbeFormatado}  ·  ${e.areaLabel}` +
-        (e.repetido ? '  [repetido]' : '') +
-        `\n            "${e.titulo}"`
+      `${iso}  ${e.titulo}` +
+        (e.subtitulo ? `  ·  ${e.subtitulo}` : '') +
+        (secundarios ? `  (+${secundarios})` : '') +
+        (e.textoEvento ? `\n            ${e.textoEvento}` : '')
     )
     gerados++
 

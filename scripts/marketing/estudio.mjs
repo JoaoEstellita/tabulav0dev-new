@@ -103,7 +103,7 @@ function montarPagina(dias) {
         <figure>
           <img src="/img/${dia.iso}/feed.png" width="1080" height="1350"
                alt="Card de feed de ${escapar(rotularData(dia.iso))}" loading="lazy" decoding="async">
-          <figcaption>Feed · 1080×1350</figcaption>
+          <figcaption>Alternativa simples · 1080×1350</figcaption>
         </figure>
         ${dia.story ? `
         <figure>
@@ -115,7 +115,7 @@ function montarPagina(dias) {
         <figure class="larga">
           <img src="/img/${dia.iso}/carta.png" width="1080" height="1350"
                alt="Carta do céu de ${escapar(rotularData(dia.iso))}" loading="lazy" decoding="async">
-          <figcaption>Carta do céu · 1080×1350</figcaption>
+          <figcaption>Post principal · 1080×1350</figcaption>
         </figure>` : ''}
       </div>
 

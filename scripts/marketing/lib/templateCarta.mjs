@@ -119,7 +119,24 @@ export function distribuir(corpos) {
   return saida
 }
 
-/** Desenho de cada corpo, distinguido por forma e tamanho, não por cor. */
+/**
+ * Imagem real do corpo, quando há uma pasta de planetas disponível.
+ *
+ * Os desenhos abaixo distinguem os corpos por forma e tamanho, mas ninguém
+ * reconhece Júpiter num círculo com três riscos: era por isso que cada um
+ * precisava de rótulo escrito ao lado. As imagens de `public/planets` resolvem
+ * na hora, e o Chrome as carrega por file:// sem reclamar.
+ */
+export function imagemCorpo(nome, dirPlanetas) {
+  const r = RAIO_CORPO[nome]
+  const lado = r * 2.9
+  return `<image href="file:///${dirPlanetas}/${nome}.png"
+                 x="${arredonda(-lado / 2)}" y="${arredonda(-lado / 2)}"
+                 width="${arredonda(lado)}" height="${arredonda(lado)}"
+                 preserveAspectRatio="xMidYMid meet"/>`
+}
+
+/** Desenho vetorial, usado quando não há imagem à mão. */
 export function desenhoCorpo(nome) {
   const r = RAIO_CORPO[nome]
   switch (nome) {
@@ -238,7 +255,7 @@ function linhasDeAspecto(aspectos, porNome) {
  * A marca de grau no anel preserva o que o rótulo dava: onde exatamente o corpo
  * está.
  */
-function corposNaRoda(distribuidos) {
+function corposNaRoda(distribuidos, dirPlanetas) {
   return distribuidos.map((c) => {
     const p = ponto(c.longitude, c.raio)
     const r = RAIO_CORPO[c.nome]
@@ -260,22 +277,22 @@ function corposNaRoda(distribuidos) {
       : ''
 
     return `${marca}${haste}
-      <g transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${desenhoCorpo(c.nome)}</g>`
+      <g transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dirPlanetas ? imagemCorpo(c.nome, dirPlanetas) : desenhoCorpo(c.nome)}</g>`
   }).join('')
 }
 
 /** Miniatura do corpo para a grade de posições. */
-function miniatura(nome) {
+function miniatura(nome, dirPlanetas) {
   return `<svg viewBox="-26 -26 52 52" width="26" height="26" aria-hidden="true">
-            <g transform="scale(0.94)">${desenhoCorpo(nome)}</g>
+            <g transform="scale(0.94)">${dirPlanetas ? imagemCorpo(nome, dirPlanetas) : desenhoCorpo(nome)}</g>
           </svg>`
 }
 
 /** Grade com as dez posições: é aqui que se lê grau e signo. */
-function gradeDePosicoes(corpos) {
+function gradeDePosicoes(corpos, dirPlanetas) {
   return corpos.map((c) => `
     <div class="pos">
-      ${miniatura(c.nome)}
+      ${miniatura(c.nome, dirPlanetas)}
       <span class="pn">${c.nomePt}${c.retrogrado ? '<i>℞</i>' : ''}</span>
       <span class="pg">${c.grau}° ${c.signo}</span>
     </div>`).join('')
@@ -381,6 +398,16 @@ export function montarCarta(dados) {
     font-size: 2.85cqw; line-height: 1.4; color: #CFC9BD;
     margin-top: 1.6cqw;
   }
+  /* eventos secundários: uma linha cada, quando o dia tem mais de um */
+  .destaque .tambem {
+    display: flex; flex-direction: column; gap: 0.7cqw;
+    margin-top: 1.6cqw;
+  }
+  .destaque .tambem span {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-size: 2.05cqw; color: ${BRONZE}; opacity: 0.88;
+    letter-spacing: 0.02em;
+  }
   .destaque p.aforismo {
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
     font-style: italic; font-size: 2.85cqw; line-height: 1.34;
@@ -411,7 +438,7 @@ export function montarCarta(dados) {
         <svg viewBox="0 0 1000 1000" role="img" aria-label="Carta do céu com os doze signos, os dez corpos e os aspectos do dia">
           ${anelDosSignos()}
           ${linhasDeAspecto(dados.aspectos, porNome)}
-          ${corposNaRoda(distribuidos)}
+          ${corposNaRoda(distribuidos, dados.dirPlanetas)}
           <circle cx="${CX}" cy="${CY}" r="3.5" fill="${SLATE}"/>
         </svg>
       </div>
@@ -422,17 +449,21 @@ export function montarCarta(dados) {
         ${temRetrogrado ? '<span>℞ Retrógrado</span>' : ''}
       </div>
 
-      <div class="posicoes">${gradeDePosicoes(dados.corpos)}</div>
+      <div class="posicoes">${gradeDePosicoes(dados.corpos, dados.dirPlanetas)}</div>
 
       <div class="destaque">
-        <div class="rot">${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b></div>
+        <div class="rot">${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
         <h1>${dados.titulo}</h1>
-        ${dados.leitura ? `<p class="leitura">${dados.leitura}</p>` : ''}
-        <p class="aforismo">${dados.aforismo}</p>
+        ${dados.textoEvento
+          ? `<p class="leitura">${dados.textoEvento}</p>`
+          : dados.leitura ? `<p class="leitura">${dados.leitura}</p>` : ''}
+        ${(dados.eventos || []).length
+          ? `<div class="tambem">${dados.eventos.map((e) => `<span>${e.__linha || ''}</span>`).join('')}</div>`
+          : `<p class="aforismo">${dados.aforismo}</p>`}
       </div>
 
       <div class="rodape">
-        <span class="chip">${dados.areaLabel}</span>
+        <span class="chip">${dados.signoEvento || dados.dataExtenso || 'Céu de hoje'}</span>
         <span class="arroba">@tabula_estelar</span>
       </div>
     </div>
