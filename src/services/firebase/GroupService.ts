@@ -21,6 +21,7 @@ import GroupNotificationService from "../notifications/GroupNotificationService"
 import type { LocalTransitData } from "../astrology/LocalAstrologyService"
 import type { AstrologicalStatus } from "../prokerala/ProkeralaService"
 import { backendFetch } from "../backend/client"
+import { lerComCache, chaveStatusUsuario, TTL_STATUS_MS } from "./docCache"
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "https://tabulav0dev-backend.vercel.app").replace(/\/$/, "")
 
@@ -413,12 +414,23 @@ class GroupService {
       // mesmo engine do push/digest/agente. Engine local só como fallback.
       let sourceLifeAreas: any = transitData.lifeAreas
       try {
-        const statusSnap = await getDoc(doc(db, "userStatus", userId))
-        const statusData = statusSnap.exists() ? statusSnap.data() : null
+        // Mesmo documento que o useLifeAreas acabou de ler — cache compartilhado.
+        // O cliente nao escreve userStatus (regra de producao), entao nao ha o que
+        // invalidar aqui.
+        const statusData = await lerComCache<Record<string, any> | null>(
+          chaveStatusUsuario(userId),
+          TTL_STATUS_MS,
+          async () => {
+            const statusSnap = await getDoc(doc(db, "userStatus", userId))
+            return statusSnap.exists() ? statusSnap.data() : null
+          }
+        )
         const calcVersion = typeof statusData?.calcVersion === "string" ? statusData.calcVersion : ""
+        // Timestamp quando vem do Firestore; Date quando vem do snapshot que o
+        // /api/status-refresh devolveu e ficou guardado no cache.
         const validUntilMs = statusData?.validUntil?.toDate
           ? statusData.validUntil.toDate().getTime()
-          : null
+          : (statusData?.validUntil instanceof Date ? statusData.validUntil.getTime() : null)
         if (
           statusData?.lifeAreas &&
           calcVersion.startsWith("status-backend-") &&

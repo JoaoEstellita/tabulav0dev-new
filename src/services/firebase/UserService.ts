@@ -5,6 +5,7 @@ import { backendFetch, getBackendBaseUrl } from '../backend/client'
 import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import { cleanUndefined } from '../../utils/clean'
+import { lerComCache, invalidarCache, chaveUsuario, TTL_PERFIL_MS } from './docCache'
 
 export interface UserProfile {
   displayName: string
@@ -201,6 +202,8 @@ class UserService {
         await setDoc(userRef, newUserData, { merge: true })
       }
 
+      invalidarCache(chaveUsuario(userId))
+
       await this.upsertPublicProfile(userId, {
         displayName: updateData.displayName || birthData.fullName,
         profilePhoto: updateData.profilePhoto,
@@ -238,15 +241,23 @@ class UserService {
     }
   }
 
-  async getUserProfile(userId: string): Promise<UserProfile | null> {
+  /**
+   * O perfil e lido em oito telas por meio de `useLifeAreas`, mais o
+   * LocalAstrologyService — sem cache, navegar pelo app relia o mesmo documento
+   * dezenas de vezes. Toda escrita daqui invalida a chave, entao a janela de
+   * defasagem so existe para quem escreve em `users/{uid}` por fora do service.
+   */
+  async getUserProfile(userId: string, opcoes: { forcar?: boolean } = {}): Promise<UserProfile | null> {
     try {
-      const userDoc = await getDoc(doc(db, 'users', userId))
-
-      if (userDoc.exists()) {
-        return userDoc.data() as UserProfile
-      }
-
-      return null
+      return await lerComCache<UserProfile | null>(
+        chaveUsuario(userId),
+        TTL_PERFIL_MS,
+        async () => {
+          const userDoc = await getDoc(doc(db, 'users', userId))
+          return userDoc.exists() ? (userDoc.data() as UserProfile) : null
+        },
+        { forcar: opcoes.forcar }
+      )
     } catch (error) {
       console.error('Erro ao buscar perfil do usuário:', error)
       return null
@@ -275,6 +286,7 @@ class UserService {
         'preferences.houseSystem': system,
         updatedAt: serverTimestamp(),
       })
+      invalidarCache(chaveUsuario(userId))
     } catch (error) {
       console.error('Erro ao salvar preferência houseSystem:', error)
     }
@@ -299,6 +311,7 @@ class UserService {
         natalTimeZoneId: data.natalTimeZoneId || null,
         lastBirthDataEdit: serverTimestamp(),
       })
+      invalidarCache(chaveUsuario(userId))
     } catch (error) {
       console.error('Erro ao salvar cache de ASC natal:', error)
       throw new Error('Não foi possível salvar o cache natal.')
@@ -312,6 +325,7 @@ class UserService {
       await updateDoc(userRef, {
         [`alertMessages.${area}`]: message
       })
+      invalidarCache(chaveUsuario(userId))
 
       console.log(`Mensagem de alerta para ${area} atualizada!`)
     } catch (error) {

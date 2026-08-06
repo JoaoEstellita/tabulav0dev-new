@@ -11,6 +11,13 @@ import { backendFetch } from '../services/backend/client'
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { publishAstrologyData } from '../context/AstrologyDataProvider'
+import {
+  lerComCache,
+  guardarNoCache,
+  invalidarCache,
+  chaveStatusUsuario,
+  TTL_STATUS_MS,
+} from '../services/firebase/docCache'
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tabulav0dev-backend.vercel.app').replace(/\/$/, '')
 const ENABLE_LOCAL_ENGINE_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_LOCAL_ENGINE_FALLBACK === '1'
@@ -69,6 +76,9 @@ export function useLifeAreas(): UseLifeAreasReturn {
       lastHouseSystemRef.current = null
       lastBackendComputedAtRef.current = null
       localOverrideStartedAtRef.current = null
+      // Sem usuario, nada do que esta guardado vale — e o proximo login pode ser
+      // de outra conta.
+      invalidarCache()
       return
     }
 
@@ -93,7 +103,7 @@ export function useLifeAreas(): UseLifeAreasReturn {
       setError(null)
 
       // Buscar dados de nascimento do usuario
-      const userProfile = await UserService.getUserProfile(user.uid)
+      const userProfile = await UserService.getUserProfile(user.uid, { forcar: forceRefresh })
 
       if (!userProfile?.birthDate || !userProfile?.birthTime || !userProfile?.birthLocation) {
         setError('Dados de nascimento incompletos')
@@ -118,9 +128,18 @@ export function useLifeAreas(): UseLifeAreasReturn {
       let backendValidUntilMs: number | null = null
       let backendCalcVersion: string | null = null
       try {
-        const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
-        if (statusSnap.exists()) {
-          const statusData = statusSnap.data()
+        // Cache compartilhado entre as telas: sem ele, cada montagem deste hook
+        // relia o mesmo snapshot — e ele e chamado em oito telas.
+        const statusData = await lerComCache<Record<string, any> | null>(
+          chaveStatusUsuario(user.uid),
+          TTL_STATUS_MS,
+          async () => {
+            const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
+            return statusSnap.exists() ? statusSnap.data() : null
+          },
+          { forcar: forceRefresh }
+        )
+        if (statusData) {
           backendLifeAreasValue = statusData?.lifeAreas || null
           backendCurrentTransitsValue = statusData?.currentTransits || null
           backendStatusPersonalValue = statusData?.statusPersonal || null
@@ -218,11 +237,24 @@ export function useLifeAreas(): UseLifeAreasReturn {
             setBackendLifeAreas(backendLifeAreasValue)
             setBackendCurrentTransits(backendCurrentTransitsValue)
             setBackendStatusPersonal(backendStatusPersonalValue)
+            // Guarda o snapshot recem-chegado para que a proxima tela nao releia
+            // o doc. As datas entram como Date porque o backend manda string e o
+            // leitor acima so entende Timestamp ou Date.
+            guardarNoCache(
+              chaveStatusUsuario(user.uid),
+              {
+                ...refreshed,
+                computedAt: backendComputedAtMs ? new Date(backendComputedAtMs) : null,
+                validUntil: backendValidUntilMs ? new Date(backendValidUntilMs) : null,
+              },
+              TTL_STATUS_MS
+            )
           } else {
             // Fallback (backend antigo sem snapshot na resposta): relê o doc.
             const statusSnap = await getDoc(doc(db, 'userStatus', user.uid))
             if (statusSnap.exists()) {
               const statusData = statusSnap.data()
+              guardarNoCache(chaveStatusUsuario(user.uid), statusData, TTL_STATUS_MS)
               backendLifeAreasValue = statusData?.lifeAreas || null
               backendCurrentTransitsValue = statusData?.currentTransits || null
               backendStatusPersonalValue = statusData?.statusPersonal || null
