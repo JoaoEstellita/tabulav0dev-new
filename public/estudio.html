@@ -91,11 +91,12 @@
   @media (max-width: 460px) { .pecas { grid-template-columns: 1fr; gap: 16px; } }
 
   figure { display: flex; flex-direction: column; gap: 7px; }
-  img {
+  img, video {
     width: 100%; height: auto; display: block;
     border: 1px solid var(--borda); border-radius: 10px;
     background: var(--superficie);
   }
+  video { max-height: 78vh; }
   figcaption {
     font-family: var(--mono); font-size: 11px; color: var(--tinta-2);
     letter-spacing: .08em; text-transform: uppercase;
@@ -215,6 +216,7 @@
           '<figure><img src="' + d.feed + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Card de feed de ' + d.dia + '"><figcaption>Feed · 1080×1350</figcaption></figure>' +
           (d.story ? '<figure><img src="' + d.story + '" width="1080" height="1920" loading="lazy" decoding="async" alt="Card de story de ' + d.dia + '"><figcaption>Story · 1080×1920</figcaption></figure>' : '') +
           (d.carta ? '<figure class="larga"><img src="' + d.carta + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Carta do céu de ' + d.dia + '"><figcaption>Carta do céu · 1080×1350</figcaption></figure>' : '') +
+          (d.reel ? '<figure class="larga"><video src="' + d.reel + '" controls playsinline preload="metadata"></video><figcaption>Reel · 1080×1920 · toque nos três pontos para baixar</figcaption></figure>' : '') +
         '</div>' +
         (d.legenda ? '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button><pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' : '') +
       '</article>'

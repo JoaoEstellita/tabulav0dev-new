@@ -24,6 +24,11 @@ on:
         description: "Começar em outra data (AAAA-MM-DD). Vazio = hoje."
         required: false
         default: ""
+      reel:
+        description: "Gerar também o vídeo animado do dia"
+        type: boolean
+        required: false
+        default: true
 
 permissions:
   contents: read
@@ -36,7 +41,8 @@ concurrency:
 jobs:
   gerar:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # o vídeo domina o tempo: ~360 quadros mais a montagem do MP4
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -65,8 +71,14 @@ jobs:
 
       # O gerador usa uma dependência só. `npm ci` instalaria o app inteiro por
       # nada e levaria minutos.
-      - name: Instalar dependência do gerador
-        run: npm install astronomy-engine@^2.1.19 --no-save --no-audit --no-fund --loglevel=error
+      # puppeteer-core, não puppeteer: usa o Chrome do runner e não baixa
+      # navegador. Com uma instância só, o quadro do vídeo sai em ~100ms em vez
+      # dos 2 a 3 segundos que custa lançar o Chrome por linha de comando.
+      - name: Instalar dependências do gerador
+        run: npm install astronomy-engine@^2.1.19 puppeteer-core --no-save --no-audit --no-fund --loglevel=error
+
+      - name: Conferir o ffmpeg do runner
+        run: ffmpeg -version | head -1
 
       # A janela de 14 dias sem repetir texto vive num JSON ao lado das imagens.
       # Sem restaurar isso, todo dia começaria do zero e o mesmo trânsito voltaria.
@@ -96,6 +108,16 @@ jobs:
           echo "Rodando: node scripts/marketing/gerarCard.mjs $ARGS"
           node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee saida.txt
 
+      - name: Gerar o Reel animado
+        if: ${{ github.event.inputs.reel != 'false' }}
+        env:
+          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
+          DATA: ${{ github.event.inputs.data || '' }}
+        run: |
+          ARGS="--upload"
+          [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+          node scripts/marketing/gerarVideo.mjs $ARGS 2>&1 | tee -a saida.txt
+
       - name: Resumo do run
         if: always()
         run: |
@@ -120,6 +142,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cards-${{ github.run_number }}
-          path: marketing/out/**/*.png
+          path: |
+            marketing/out/**/*.png
+            marketing/out/**/*.mp4
+            marketing/out/**/*.txt
           retention-days: 7
           if-no-files-found: warn

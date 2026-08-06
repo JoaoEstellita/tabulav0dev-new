@@ -31,15 +31,20 @@ const COR_ELEMENTO = {
   agua: '#B19CD9',
 }
 
-const CX = 500
-const CY = 500
-const R_SIGNO_FORA = 468
-const R_SIGNO_DENTRO = 396
-const R_PLANETA = 336
-const R_ASPECTO = 286
+export const CX = 500
+export const CY = 500
+export const R_SIGNO_FORA = 468
+export const R_SIGNO_DENTRO = 396
+export const R_PLANETA = 336
+export const R_ASPECTO = 286
+
+export const CORES_CARTA = {
+  VOID, VOID_2, VELLUM, BRONZE, SLATE, TRACO,
+  COR_HARMONICO, COR_TENSO, COR_ELEMENTO,
+}
 
 /** Raio do disco de cada corpo. Menores que no card diário: aqui são dez. */
-const RAIO_CORPO = {
+export const RAIO_CORPO = {
   Sun: 21, Moon: 18, Mercury: 13, Venus: 16, Mars: 15,
   Jupiter: 22, Saturn: 20, Uranus: 16, Neptune: 16, Pluto: 12,
 }
@@ -50,15 +55,15 @@ const RAIO_CORPO = {
  * 180 + L coloca 0° de Áries à esquerda e faz os signos correrem no sentido
  * anti-horário; o seno é subtraído porque em SVG o Y cresce para baixo.
  */
-function ponto(longitude, raio) {
+export function ponto(longitude, raio) {
   const t = ((180 + longitude) * Math.PI) / 180
   return { x: CX + raio * Math.cos(t), y: CY - raio * Math.sin(t) }
 }
 
-const arredonda = (n) => Math.round(n * 100) / 100
+export const arredonda = (n) => Math.round(n * 100) / 100
 
 /** Setor de 30° de um signo, como caminho de anel. */
-function setorSigno(indice) {
+export function setorSigno(indice) {
   const l0 = indice * 30
   const l1 = l0 + 30
   const a = ponto(l0, R_SIGNO_FORA)
@@ -79,7 +84,7 @@ function setorSigno(indice) {
  * mesmo raio eles viram um borrão. Agrupa quem está a menos de 9° e escalona o
  * grupo para dentro, do mais lento para o mais rápido.
  */
-function distribuir(corpos) {
+export function distribuir(corpos) {
   const ordenados = [...corpos].sort((a, b) => a.longitude - b.longitude)
   const grupos = []
 
@@ -115,7 +120,7 @@ function distribuir(corpos) {
 }
 
 /** Desenho de cada corpo, distinguido por forma e tamanho, não por cor. */
-function desenhoCorpo(nome) {
+export function desenhoCorpo(nome) {
   const r = RAIO_CORPO[nome]
   switch (nome) {
     case 'Sun':
@@ -163,7 +168,7 @@ function desenhoCorpo(nome) {
   }
 }
 
-function anelDosSignos() {
+export function anelDosSignos() {
   const setores = SIGNOS_INFO.map((s, i) => {
     const cor = COR_ELEMENTO[s.elemento]
     return `<path d="${setorSigno(i)}" fill="${cor}" opacity="0.07"/>`
