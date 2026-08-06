@@ -77,8 +77,14 @@ jobs:
       - name: Instalar dependências do gerador
         run: npm install astronomy-engine@^2.1.19 puppeteer-core --no-save --no-audit --no-fund --loglevel=error
 
-      - name: Conferir o ffmpeg do runner
-        run: ffmpeg -version | head -1
+      # O ubuntu-latest NÃO traz ffmpeg. A conferência anterior usava
+      # `ffmpeg -version | head -1`, e o `head` devolvia 0 mesmo com o comando
+      # ausente: o mesmo bug de pipeline que escondeu o resto.
+      - name: Instalar ffmpeg
+        run: |
+          set -o pipefail
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -1
 
       # A janela de 14 dias sem repetir texto vive num JSON ao lado das imagens.
       # Sem restaurar isso, todo dia começaria do zero e o mesmo trânsito voltaria.
@@ -107,7 +113,10 @@ jobs:
             exit 1
           fi
 
-          ARGS="--dias=$DIAS --exigir-upload"
+          # --saida explícito: o script deduz a pasta como "pai do frontend",
+          # o que vale no monorepo local mas no runner cai FORA do checkout, e
+          # então a conferência e o artifact procuram no lugar errado.
+          ARGS="--dias=$DIAS --exigir-upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
 
           echo "Rodando: node scripts/marketing/gerarCard.mjs $ARGS"
@@ -121,19 +130,20 @@ jobs:
         run: |
           set -o pipefail
 
-          ARGS="--upload"
+          SAIDA="$GITHUB_WORKSPACE/marketing/out"
+          ARGS="--upload --saida=$SAIDA"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
           node scripts/marketing/gerarVideo.mjs $ARGS 2>&1 | tee -a saida.txt
 
           # o script pode sair 0 sem produzir o arquivo (ffmpeg ausente, por
           # exemplo). Um job verde sem vídeo é o que trouxe a gente até aqui.
           DIA="${DATA:-$(date -u +%F)}"
-          if [ ! -s "marketing/out/$DIA/reel.mp4" ]; then
+          if [ ! -s "$SAIDA/$DIA/reel.mp4" ]; then
             echo "::error::reel.mp4 não foi produzido para $DIA"
-            ls -la "marketing/out/$DIA" || true
+            ls -la "$SAIDA/$DIA" || true
             exit 1
           fi
-          echo "reel.mp4: $(du -h "marketing/out/$DIA/reel.mp4" | cut -f1)"
+          echo "reel.mp4: $(du -h "$SAIDA/$DIA/reel.mp4" | cut -f1)"
 
       - name: Resumo do run
         if: always()
