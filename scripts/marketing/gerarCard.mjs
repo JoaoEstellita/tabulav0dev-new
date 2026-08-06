@@ -15,6 +15,7 @@
  * mostra ao abrir o arquivo.
  */
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises'
+import process from 'node:process'
 import { existsSync } from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -49,16 +50,62 @@ function acharChrome() {
   )
 }
 
+const BACKEND_PADRAO = 'https://tabulav0dev-backend.vercel.app'
+
 function lerArgs(argv) {
-  const args = { dias: 1, data: null, saida: path.join(MONOREPO, 'marketing/out') }
+  const args = {
+    dias: 1,
+    data: null,
+    saida: path.join(MONOREPO, 'marketing/out'),
+    upload: false,
+    backend: process.env.TABULA_BACKEND || BACKEND_PADRAO,
+  }
   for (const a of argv.slice(2)) {
+    if (a === '--upload') { args.upload = true; continue }
     const m = a.match(/^--(\w+)=(.+)$/)
     if (!m) continue
     if (m[1] === 'dias') args.dias = Math.max(1, parseInt(m[2], 10) || 1)
     else if (m[1] === 'data') args.data = m[2]
     else if (m[1] === 'saida') args.saida = path.resolve(m[2])
+    else if (m[1] === 'backend') args.backend = m[2].replace(/\/+$/, '')
+    else if (m[1] === 'upload') args.upload = m[2] !== 'false'
   }
   return args
+}
+
+/**
+ * Envia os arquivos do dia para o Storage, via backend.
+ *
+ * O gerador precisa do Chrome, então roda nesta máquina; o Instagram se posta
+ * do celular. Sem o upload, publicar exige estar em casa, no mesmo Wi-Fi, com o
+ * PC ligado. A senha é a mesma do painel de monitoramento.
+ */
+async function enviarParaNuvem(pasta, iso, { backend, senha }) {
+  const arquivos = ['feed.png', 'story.png', 'legenda.txt']
+  const enviados = []
+
+  for (const nome of arquivos) {
+    const alvo = path.join(pasta, nome)
+    if (!existsSync(alvo)) continue
+
+    const conteudo = await readFile(alvo)
+    const resposta = await fetch(`${backend}/api/marketing-cards`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${senha}`,
+      },
+      body: JSON.stringify({ dia: iso, arquivo: nome, conteudoBase64: conteudo.toString('base64') }),
+    })
+
+    if (!resposta.ok) {
+      const detalhe = await resposta.text().catch(() => '')
+      throw new Error(`${nome}: HTTP ${resposta.status} ${detalhe.slice(0, 120)}`)
+    }
+    enviados.push(nome)
+  }
+
+  return enviados
 }
 
 /** Meio-dia UTC representa o dia inteiro sem depender do fuso de quem roda. */
@@ -229,12 +276,24 @@ async function principal() {
   await mkdir(args.saida, { recursive: true })
   const historico = await lerHistorico(args.saida)
 
+  const senha = process.env.MONITORING_PASSWORD || process.env.CRON_SECRET_TOKEN || ''
+  if (args.upload && !senha) {
+    throw new Error(
+      'Upload pedido, mas falta a senha.\n' +
+        'Defina MONITORING_PASSWORD (a mesma do painel /monitoramento):\n' +
+        '  Windows PowerShell:  $env:MONITORING_PASSWORD="..."\n' +
+        '  Git Bash:            export MONITORING_PASSWORD="..."'
+    )
+  }
+
   console.log(`Chrome  : ${chrome}`)
   console.log(`Catálogo: ${Object.keys(cat.titulos).length} títulos, ${Object.keys(cat.aforismos).length} aforismos`)
-  console.log(`Saída   : ${args.saida}\n`)
+  console.log(`Saída   : ${args.saida}`)
+  console.log(`Upload  : ${args.upload ? args.backend : 'desligado (use --upload)'}\n`)
 
   let gerados = 0
   let repetidos = 0
+  let enviados = 0
 
   for (let i = 0; i < args.dias; i++) {
     const dia = new Date(inicio.getTime() + i * 86_400_000)
@@ -257,6 +316,17 @@ async function principal() {
         `\n            "${e.titulo}"`
     )
     gerados++
+
+    if (args.upload) {
+      try {
+        const nomes = await enviarParaNuvem(r.pasta, iso, { backend: args.backend, senha })
+        console.log(`            enviado: ${nomes.join(', ')}`)
+        enviados++
+      } catch (erro) {
+        // o card já está no disco; falha de rede não deve abortar os outros dias
+        console.log(`            upload falhou: ${erro.message}`)
+      }
+    }
   }
 
   await salvarHistorico(args.saida, historico)
@@ -267,6 +337,9 @@ async function principal() {
   }
   if (repetidos > 0) {
     console.log(`${repetidos} dia(s) repetiram texto: o céu não ofereceu alternativa inédita na janela de ${JANELA_SEM_REPETIR} dias.`)
+  }
+  if (args.upload) {
+    console.log(`${enviados} de ${gerados} enviado(s) para o Estúdio.`)
   }
 }
 

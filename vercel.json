@@ -99,6 +99,10 @@
       "destination": "/comecar.html"
     },
     {
+      "source": "/estudio",
+      "destination": "/estudio.html"
+    },
+    {
       "source": "/",
       "destination": "/landing.html"
     }

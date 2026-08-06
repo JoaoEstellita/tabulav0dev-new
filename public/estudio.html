@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estúdio · Tábula Estelar</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B0A14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B0A14'/%3E%3Ccircle cx='16' cy='16' r='11' fill='%23FFD93D'/%3E%3Ccircle cx='21' cy='12' r='10' fill='%230B0A14'/%3E%3C/svg%3E">
+
+<style>
+  :root {
+    color-scheme: dark;
+    --noite: #0B0A14;
+    --superficie: #15131F;
+    --elevado: #1E1B2B;
+    --borda: #2A2637;
+    --tinta: #F2EFF7;
+    --tinta-2: #A8A2B8;
+    --ouro: #FFD93D;
+    --zap: #25D366;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+  }
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  body {
+    background: var(--noite); color: var(--tinta);
+    font-family: var(--sans); font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 26px 18px 60px;
+    padding-bottom: max(60px, env(safe-area-inset-bottom));
+  }
+  .env { max-width: 660px; margin-inline: auto; }
+
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
+  .sub { color: var(--tinta-2); font-size: 15.5px; margin-top: 5px; }
+
+  /* ── porta ── */
+  #porta { max-width: 380px; margin: 14vh auto 0; }
+  #porta p { color: var(--tinta-2); font-size: 15.5px; margin: 8px 0 20px; }
+  input[type=password] {
+    width: 100%; min-height: 54px;
+    background: var(--superficie); color: var(--tinta);
+    border: 1.5px solid var(--borda); border-radius: 12px;
+    padding: 0 16px; font-size: 17px; font-family: var(--sans);
+  }
+  input[type=password]:focus-visible { outline: 2px solid var(--ouro); outline-offset: 2px; }
+
+  button {
+    font-family: var(--sans); font-size: 16px; font-weight: 700;
+    min-height: 54px; padding: 0 22px;
+    border: none; border-radius: 12px; cursor: pointer;
+    background: var(--ouro); color: #241E00;
+    transition: filter .2s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:focus-visible { outline: 2px solid var(--tinta); outline-offset: 3px; }
+  button[disabled] { opacity: .55; cursor: default; }
+  #porta button { width: 100%; margin-top: 12px; }
+
+  .erro { color: #FF8080; font-size: 15px; margin-top: 12px; }
+
+  /* ── lista ── */
+  .cab {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--borda);
+    margin-bottom: 26px;
+  }
+  .cab .sair {
+    margin-left: auto; background: transparent; color: var(--tinta-2);
+    border: 1px solid var(--borda); min-height: 40px; font-size: 14px; font-weight: 600;
+  }
+
+  .dia { margin-bottom: 40px; }
+  .dia h2 {
+    font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+    text-transform: capitalize;
+  }
+  .dia .iso {
+    font-family: var(--mono); font-size: 12px; color: var(--tinta-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  @media (max-width: 460px) { .pecas { grid-template-columns: 1fr; gap: 16px; } }
+
+  figure { display: flex; flex-direction: column; gap: 7px; }
+  img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid var(--borda); border-radius: 10px;
+    background: var(--superficie);
+  }
+  figcaption {
+    font-family: var(--mono); font-size: 11px; color: var(--tinta-2);
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+
+  pre {
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--superficie); border: 1px solid var(--borda);
+    border-radius: 12px; padding: 14px; margin-top: 12px; color: #C6C1D4;
+  }
+  .copiar {
+    width: 100%; margin-top: 12px;
+    background: transparent; color: var(--zap);
+    border: 1.5px solid var(--zap);
+  }
+  .copiar.feito { background: var(--zap); color: #05210F; }
+
+  .aviso {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+
+  .vazio { color: var(--tinta-2); text-align: center; margin-top: 50px; font-size: 15.5px; }
+  .vazio code { color: var(--ouro); font-family: var(--mono); font-size: 13.5px; }
+
+  .oculto { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<section id="porta" class="env">
+  <h1>Estúdio</h1>
+  <p>Os cards do dia, prontos para publicar.</p>
+  <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" enterkeyhint="go">
+  <button type="button" id="entrar">Entrar</button>
+  <p class="erro oculto" id="erro-login" role="alert"></p>
+</section>
+
+<main id="painel" class="env oculto">
+  <div class="cab">
+    <div>
+      <h1>Estúdio</h1>
+      <p class="sub">Segure a imagem para salvar. Toque para copiar a legenda.</p>
+    </div>
+    <button type="button" class="sair" id="sair">Sair</button>
+  </div>
+  <div id="lista"></div>
+</main>
+
+<span class="aviso" role="status" aria-live="polite" id="aviso"></span>
+
+<script>
+(function () {
+  var BACKEND = 'https://tabulav0dev-backend.vercel.app'
+  var CHAVE = 'tabula_estudio_senha'
+
+  var porta = document.getElementById('porta')
+  var painel = document.getElementById('painel')
+  var lista = document.getElementById('lista')
+  var aviso = document.getElementById('aviso')
+  var erroLogin = document.getElementById('erro-login')
+
+  var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+  var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+
+  function rotular(iso) {
+    var p = iso.split('-')
+    var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]))
+    var hoje = new Date().toISOString().slice(0, 10)
+    var txt = DIAS[d.getUTCDay()] + ', ' + (+p[2]) + ' de ' + MESES[+p[1] - 1]
+    return (iso === hoje ? 'Hoje · ' : '') + txt
+  }
+
+  function escapar(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+
+  // Clipboard API exige contexto seguro; o textarea funciona em qualquer um
+  function copiar(texto) {
+    var area = document.createElement('textarea')
+    area.value = texto
+    area.setAttribute('readonly', '')
+    area.style.position = 'fixed'
+    area.style.top = '-1000px'
+    document.body.appendChild(area)
+    area.select()
+    area.setSelectionRange(0, texto.length)
+    var ok = false
+    try { ok = document.execCommand('copy') } catch (e) { ok = false }
+    document.body.removeChild(area)
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(texto).catch(function () {})
+      return true
+    }
+    return ok
+  }
+
+  function desenhar(dias) {
+    if (!dias.length) {
+      lista.innerHTML = '<p class="vazio">Nenhum card enviado ainda.<br><br>' +
+        'No PC, rode:<br><code>node scripts/marketing/gerarCard.mjs --dias=9 --upload</code></p>'
+      return
+    }
+
+    lista.innerHTML = dias.map(function (d, i) {
+      return '<article class="dia">' +
+        '<h2>' + escapar(rotular(d.dia)) + '</h2>' +
+        '<span class="iso">' + d.dia + '</span>' +
+        '<div class="pecas">' +
+          '<figure><img src="' + d.feed + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Card de feed de ' + d.dia + '"><figcaption>Feed · 1080×1350</figcaption></figure>' +
+          (d.story ? '<figure><img src="' + d.story + '" width="1080" height="1920" loading="lazy" decoding="async" alt="Card de story de ' + d.dia + '"><figcaption>Story · 1080×1920</figcaption></figure>' : '') +
+        '</div>' +
+        (d.legenda ? '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button><pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' : '') +
+      '</article>'
+    }).join('')
+
+    lista.querySelectorAll('.copiar').forEach(function (botao) {
+      botao.addEventListener('click', function () {
+        var alvo = document.getElementById('leg-' + botao.dataset.i)
+        if (!alvo) return
+        var ok = copiar(alvo.textContent)
+        botao.textContent = ok ? 'Copiado' : 'Selecione e copie à mão'
+        botao.classList.toggle('feito', ok)
+        aviso.textContent = ok ? 'Legenda copiada.' : 'Não foi possível copiar automaticamente.'
+        setTimeout(function () {
+          botao.textContent = 'Copiar legenda'
+          botao.classList.remove('feito')
+          aviso.textContent = ''
+        }, 2200)
+      })
+    })
+  }
+
+  function carregar(senha) {
+    return fetch(BACKEND + '/api/marketing-cards', {
+      headers: { Authorization: 'Bearer ' + senha }
+    }).then(function (r) {
+      if (r.status === 401) throw new Error('Senha incorreta.')
+      if (!r.ok) throw new Error('Falha ao carregar (HTTP ' + r.status + ').')
+      return r.json()
+    })
+  }
+
+  function entrar(senha, salvar) {
+    return carregar(senha).then(function (dados) {
+      if (salvar) { try { localStorage.setItem(CHAVE, senha) } catch (e) {} }
+      porta.classList.add('oculto')
+      painel.classList.remove('oculto')
+      desenhar(dados.dias || [])
+    })
+  }
+
+  document.getElementById('entrar').addEventListener('click', function () {
+    var campo = document.getElementById('senha')
+    var senha = campo.value.trim()
+    if (!senha) return
+    erroLogin.classList.add('oculto')
+    this.disabled = true
+    var botao = this
+    entrar(senha, true).catch(function (e) {
+      erroLogin.textContent = e.message
+      erroLogin.classList.remove('oculto')
+    }).finally(function () { botao.disabled = false })
+  })
+
+  document.getElementById('senha').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('entrar').click()
+  })
+
+  document.getElementById('sair').addEventListener('click', function () {
+    try { localStorage.removeItem(CHAVE) } catch (e) {}
+    location.reload()
+  })
+
+  var guardada = null
+  try { guardada = localStorage.getItem(CHAVE) } catch (e) {}
+  if (guardada) {
+    entrar(guardada, false).catch(function () {
+      try { localStorage.removeItem(CHAVE) } catch (e) {}
+    })
+  }
+})()
+</script>
+
+</body>
+</html>
