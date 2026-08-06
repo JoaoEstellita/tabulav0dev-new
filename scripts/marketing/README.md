@@ -11,8 +11,13 @@ cd frontend
 node scripts/marketing/gerarCard.mjs                  # hoje
 node scripts/marketing/gerarCard.mjs --dias=9         # enche a grade 3×3
 node scripts/marketing/gerarCard.mjs --data=2026-08-12
+node scripts/marketing/gerarCard.mjs --dias=9 --upload   # e manda para o Estúdio
 node scripts/marketing/gerarCard.mjs --saida=D:/outro/lugar
 ```
+
+`--upload` exige `MONITORING_PASSWORD` no ambiente (a mesma senha do painel
+`/monitoramento`). Falha de rede não aborta os outros dias: o card já está no
+disco de qualquer forma.
 
 Saída padrão: `<monorepo>/marketing/out/AAAA-MM-DD/` — **fora dos repositórios
 git**, para não versionar binários.
@@ -28,31 +33,55 @@ Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
 ## Estúdio — postar do celular
 
+O gerador roda no PC (precisa do Chrome) e o Instagram se posta do celular.
+Transferir arquivo todo dia é atrito, e atrito diário mata a consistência, que é
+a única coisa que faz o orgânico funcionar.
+
+### No domínio (recomendado)
+
+```bash
+export MONITORING_PASSWORD="..."      # Git Bash
+# $env:MONITORING_PASSWORD="..."      # PowerShell
+
+node scripts/marketing/gerarCard.mjs --dias=9 --upload
+```
+
+Depois abra **https://www.tabulaestelar.com.br/estudio** de qualquer lugar e
+informe a mesma senha do painel `/monitoramento`.
+
+Funciona longe de casa e com o PC desligado. Os arquivos vão para o Firebase
+Storage em `marketing/AAAA-MM-DD/`, e a página os lê com URLs assinadas de 2h,
+não com links públicos: card não publicado é material inédito.
+
+Custo: fica inteiro dentro da cota gratuita. 1,4 MB por dia dá 512 MB no
+primeiro ano, contra 5 GB grátis, e o download é só seu.
+
+### Local, sem upload
+
 ```bash
 node scripts/marketing/estudio.mjs
 ```
 
-Sobe um servidor local e imprime o endereço da rede:
+Sobe um servidor na rede local e imprime os endereços:
 
 ```
   neste PC     http://localhost:4173
   no celular   http://192.168.0.103:4173
 ```
 
-Abra o endereço do celular (mesmo Wi-Fi), **segure a imagem** para salvar no rolo
-da câmera e toque em **Copiar legenda**. Ctrl+C encerra.
+Exige o celular no mesmo Wi-Fi e o PC ligado. Serve como alternativa quando não
+se quer enviar nada para a nuvem.
 
-Por que existe: o gerador roda no PC e o Instagram se posta do celular.
-Transferir arquivo todo dia é atrito, e atrito diário mata a consistência — que é
-a única coisa que faz o orgânico funcionar.
+### Nos dois casos
+
+**Segure a imagem** para salvar no rolo da câmera; toque em **Copiar legenda**.
 
 **Não é um CMS, de propósito.** Não edita, não agenda, não guarda estado, não
-publica. Só mostra o que o gerador já produziu. Sem deploy, sem auth, sem custo
-de Firestore, sem tocar no código do app.
+publica. Só mostra o que o gerador já produziu.
 
 Detalhe de implementação: a cópia usa `textarea` + `execCommand` como caminho
-principal, não `navigator.clipboard` — a Clipboard API exige contexto seguro e
-aqui o servidor é HTTP em rede local.
+principal, não `navigator.clipboard`, porque a Clipboard API exige contexto
+seguro e o visor local roda em HTTP.
 
 ## Depois de mexer no design
 
