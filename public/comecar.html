@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tábula Estelar — Pare de ler seu signo. Leia seu mapa.</title>
-<meta name="description" content="O céu de hoje calculado sobre o seu mapa natal, em 8 áreas da vida. Efemérides Swiss, casas Placidus reais. Mapa natal grátis em 1 minuto.">
-<meta name="theme-color" content="#070A18">
+<title>Tábula Estelar: seu mapa astral em uma conversa</title>
+<meta name="description" content="Manda uma mensagem no WhatsApp e recebe sua carta natal calculada em dois minutos. Sem baixar app, sem criar conta.">
+<meta name="theme-color" content="#0B0A14">
 <link rel="canonical" href="https://www.tabulaestelar.com.br/comecar">
 <link rel="icon" href="/favicon.ico">
 
-<meta property="og:title" content="Pare de ler seu signo. Leia seu mapa.">
-<meta property="og:description" content="O céu de hoje calculado sobre o SEU mapa — em 8 áreas da vida. Mapa natal grátis em 1 minuto.">
+<meta property="og:title" content="Seu mapa astral em uma conversa">
+<meta property="og:description" content="Manda uma mensagem no WhatsApp. Em dois minutos, sua carta natal calculada.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.tabulaestelar.com.br/comecar">
 <meta property="og:site_name" content="Tábula Estelar">
@@ -23,20 +23,32 @@
 <style>
   :root {
     color-scheme: dark;
-    --void: #070A18;
-    --void-2: #0D1229;
-    --void-3: #111731;
-    --vellum: #EDE6D8;
-    --vellum-dim: #C3BEB3;
-    --bronze: #C9A227;
-    --bronze-hi: #E0B93C;
-    --slate: #6A7392;
-    --linha: #1B2035;
-    --teal: #4ECDC4;
 
-    --serif: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
+    /* neutros tintados para o violeta da marca, nunca preto puro */
+    --noite:      #0B0A14;
+    --superficie: #15131F;
+    --elevado:    #1E1B2B;
+    --borda:      #2A2637;
+    --tinta:      #F2EFF7;
+    --tinta-2:    #A8A2B8;
+
+    /* paleta do proprio app: as 8 areas da vida */
+    --amor:        #FF6B9D;
+    --carreira:    #4ECDC4;
+    --financas:    #FFD93D;
+    --saude:       #96E6A1;
+    --familia:     #FF9F40;
+    --espirit:     #B19CD9;
+    --comunic:     #60A5FA;
+    --transf:      #F472B6;
+
+    --zap:    #25D366;
+    --zap-hi: #1FBF5B;
+
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
-    --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+    --curva: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   * {
@@ -45,443 +57,557 @@
     touch-action: manipulation;
   }
 
+  html { scroll-behavior: smooth; }
+
   body {
-    background: var(--void);
-    color: var(--vellum);
+    background: var(--noite);
+    color: var(--tinta);
     font-family: var(--sans);
-    line-height: 1.65;
+    font-size: 18px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
 
-  .faixa { padding: 0 20px; }
-  .faixa > * { max-width: 660px; margin-inline: auto; }
-
-  section { padding: 56px 0; border-top: 1px solid var(--linha); }
-  section:first-of-type { border-top: 0; }
-
-  .rotulo {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--bronze);
-    margin-bottom: 14px;
+  .env {
+    width: min(100% - 40px, 1120px);
+    margin-inline: auto;
   }
+
+  section { padding: clamp(64px, 13vw, 128px) 0; }
+
+  h1, h2, h3 { font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
 
   h1 {
-    font-family: var(--serif);
-    font-size: clamp(34px, 8.5vw, 56px);
-    line-height: 1.04;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    text-wrap: balance;
+    font-size: clamp(40px, 10.5vw, 82px);
+    line-height: 0.97;
   }
   h2 {
-    font-family: var(--serif);
-    font-size: clamp(25px, 5.5vw, 33px);
-    line-height: 1.14;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-    margin-bottom: 18px;
+    font-size: clamp(29px, 6.6vw, 50px);
+    line-height: 1.04;
   }
-  h3 {
-    font-family: var(--serif);
-    font-size: 20px;
-    font-weight: 400;
-    margin-bottom: 6px;
-  }
+  h3 { font-size: clamp(20px, 4.4vw, 24px); line-height: 1.2; }
 
-  p { color: var(--vellum-dim); }
-  p + p { margin-top: 14px; }
-  strong { color: var(--vellum); font-weight: 600; }
+  p { color: var(--tinta-2); }
 
-  /* ---------- topo ---------- */
+  /* ═══════════ topo ═══════════ */
   .topo {
-    padding: 22px 20px 0;
-    display: flex; align-items: center; justify-content: space-between;
-    max-width: 660px; margin-inline: auto;
+    padding-top: 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
   }
   .marca {
-    font-family: var(--serif);
-    font-size: 17px;
-    letter-spacing: 0.02em;
-    color: var(--bronze);
+    font-weight: 800; font-size: 17px; letter-spacing: -0.02em;
+    display: inline-flex; align-items: center; gap: 9px;
   }
-  .entrar {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--slate);
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
+  .marca i {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--financas), var(--amor));
+    display: block;
   }
-  .entrar:hover, .entrar:focus-visible { color: var(--vellum); border-bottom-color: var(--bronze); }
+  .link-topo {
+    color: var(--tinta-2); text-decoration: none; font-size: 16px; font-weight: 600;
+  }
+  .link-topo:hover, .link-topo:focus-visible { color: var(--tinta); }
 
-  /* ---------- herói ---------- */
-  .heroi { padding-top: 40px; padding-bottom: 52px; }
-  .heroi .sub {
-    font-size: 18.5px;
-    margin-top: 20px;
-    max-width: 33ch;
-  }
-  .prova-linha {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    color: var(--slate);
-    margin-top: 26px;
-    display: flex; flex-wrap: wrap; gap: 6px 16px;
-  }
-  .prova-linha span { white-space: nowrap; }
-
-  /* ---------- botões ---------- */
-  .acao {
-    display: inline-flex; align-items: center; justify-content: center;
-    font-family: var(--mono);
-    font-size: 14px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-decoration: none;
-    padding: 17px 26px;
-    border-radius: 2px;
-    background: var(--bronze);
-    color: var(--void);
-    border: 1px solid var(--bronze);
-    font-weight: 600;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .acao:hover, .acao:focus-visible { background: var(--bronze-hi); border-color: var(--bronze-hi); }
-  .acao:focus-visible { outline: 2px solid var(--vellum); outline-offset: 3px; }
-
-  .cta-bloco { margin-top: 30px; }
-  .cta-nota {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--slate);
-    margin-top: 12px;
-    letter-spacing: 0.03em;
-  }
-
-  @media (max-width: 460px) {
-    .acao { display: flex; width: 100%; }
-  }
-
-  /* ---------- números do desmonte ---------- */
-  .contraste {
+  /* ═══════════ herói ═══════════ */
+  .heroi {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: var(--linha);
-    border: 1px solid var(--linha);
-    margin-top: 26px;
-  }
-  .contraste div { background: var(--void); padding: 20px 18px; }
-  .contraste dt {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--slate);
-    margin-bottom: 8px;
-  }
-  .contraste dd {
-    font-family: var(--serif);
-    font-size: 27px;
-    line-height: 1.15;
-    font-variant-numeric: tabular-nums;
-  }
-  .contraste .quente dd { color: var(--bronze); }
-
-  /* ---------- passos ---------- */
-  .passos { display: flex; flex-direction: column; gap: 26px; margin-top: 30px; }
-  .passo { display: grid; grid-template-columns: 34px 1fr; gap: 16px; align-items: start; }
-  .passo .n {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--bronze);
-    border: 1px solid var(--linha);
-    width: 34px; height: 34px;
-    display: grid; place-items: center;
-    border-radius: 50%;
-    font-variant-numeric: tabular-nums;
-  }
-  .passo p { font-size: 15.5px; }
-
-  /* ---------- áreas ---------- */
-  .areas {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    margin-top: 22px;
-  }
-  .areas li {
-    list-style: none;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--vellum-dim);
-    border: 1px solid var(--linha);
-    padding: 7px 12px;
-    border-radius: 2px;
-  }
-
-  /* ---------- conversa ---------- */
-  .conversa {
-    background: var(--void-2);
-    border: 1px solid var(--linha);
-    padding: 20px 18px;
-    margin-top: 26px;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-  .balao { max-width: 88%; padding: 12px 14px; border-radius: 3px; font-size: 15px; line-height: 1.55; }
-  .balao.eu { align-self: flex-end; background: var(--void-3); color: var(--vellum); }
-  .balao.ele { align-self: flex-start; background: #14204a; color: var(--vellum-dim); }
-  .conversa-nota {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--slate);
-    letter-spacing: 0.06em;
-    margin-top: 4px;
-  }
-
-  /* ---------- honestidade ---------- */
-  .franqueza {
-    display: grid; gap: 1px;
-    background: var(--linha);
-    border: 1px solid var(--linha);
-    margin-top: 26px;
-  }
-  .franqueza div { background: var(--void); padding: 18px; }
-  .franqueza dt {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .franqueza .sim dt { color: var(--teal); }
-  .franqueza .nao dt { color: var(--slate); }
-  .franqueza dd { font-size: 15.5px; color: var(--vellum-dim); }
-
-  /* ---------- planos ---------- */
-  .planos { display: flex; flex-direction: column; gap: 12px; margin-top: 26px; }
-  .plano {
-    border: 1px solid var(--linha);
-    padding: 18px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px 16px;
-    align-items: baseline;
-  }
-  .plano .nome { font-family: var(--serif); font-size: 19px; }
-  .plano .preco {
-    font-family: var(--mono);
-    font-size: 15px;
-    color: var(--bronze);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .plano .detalhe {
-    grid-column: 1 / -1;
-    font-size: 14px;
-    color: var(--slate);
-  }
-
-  /* ---------- rodapé ---------- */
-  footer {
-    border-top: 1px solid var(--linha);
-    padding: 32px 20px 48px;
-    padding-bottom: max(48px, env(safe-area-inset-bottom));
-  }
-  .rodape-int {
-    max-width: 660px; margin-inline: auto;
-    display: flex; flex-wrap: wrap; gap: 10px 20px;
+    gap: clamp(44px, 8vw, 72px);
     align-items: center;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--slate);
-    letter-spacing: 0.05em;
+    padding-top: clamp(38px, 8vw, 76px);
+    padding-bottom: clamp(56px, 10vw, 104px);
   }
-  .rodape-int a { color: var(--slate); text-decoration: none; border-bottom: 1px solid var(--linha); }
-  .rodape-int a:hover, .rodape-int a:focus-visible { color: var(--vellum); }
-  .rodape-int .fim { width: 100%; margin-top: 8px; }
+  @media (min-width: 900px) {
+    .heroi { grid-template-columns: 1.06fr 0.94fr; }
+  }
+
+  .heroi h1 span { color: var(--financas); }
+
+  .lead {
+    font-size: clamp(19px, 4.5vw, 23px);
+    line-height: 1.5;
+    margin-top: 24px;
+    max-width: 30ch;
+  }
+
+  .acoes {
+    display: flex; flex-wrap: wrap; gap: 13px;
+    margin-top: 36px;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 58px;
+    padding: 0 26px;
+    border-radius: 14px;
+    font-family: var(--sans);
+    font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
+    text-decoration: none;
+    border: 1.5px solid transparent;
+    transition: transform 0.4s var(--curva), background-color 0.25s, border-color 0.25s;
+  }
+  .btn:active { transform: scale(0.975); }
+  .btn:focus-visible { outline: 3px solid var(--financas); outline-offset: 3px; }
+
+  .btn-zap { background: var(--zap); color: #05210F; }
+  .btn-zap:hover { background: var(--zap-hi); }
+
+  .btn-app {
+    background: transparent; color: var(--tinta); border-color: var(--borda);
+  }
+  .btn-app:hover { border-color: var(--tinta-2); }
+
+  .rodape-acoes {
+    margin-top: 18px; font-size: 15.5px; color: var(--tinta-2);
+  }
+
+  /* ═══════════ telefone ═══════════ */
+  .fone {
+    width: min(100%, 330px);
+    margin-inline: auto;
+    background: var(--superficie);
+    border: 1.5px solid var(--borda);
+    border-radius: 34px;
+    padding: 10px;
+    box-shadow: 0 34px 80px rgba(0,0,0,0.6);
+  }
+  .fone-tela {
+    background: #0E1621;
+    border-radius: 26px;
+    overflow: hidden;
+  }
+  .fone-topo {
+    background: #1E2C36;
+    padding: 13px 15px;
+    display: flex; align-items: center; gap: 11px;
+  }
+  .fone-topo .av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--espirit), var(--comunic));
+    flex-shrink: 0;
+  }
+  .fone-topo b { font-size: 15.5px; font-weight: 700; display: block; }
+  .fone-topo em {
+    font-style: normal; font-size: 12.5px; color: #8FA3B0; display: block;
+  }
+
+  .conversa {
+    padding: 16px 13px 20px;
+    display: flex; flex-direction: column; gap: 9px;
+    background:
+      radial-gradient(circle at 20% 12%, rgba(177,156,217,0.09), transparent 42%),
+      radial-gradient(circle at 82% 68%, rgba(96,165,250,0.08), transparent 46%),
+      #0E1621;
+  }
+  .bal {
+    max-width: 84%;
+    padding: 10px 13px;
+    border-radius: 13px;
+    font-size: 15.5px;
+    line-height: 1.48;
+  }
+  .bal.eu { align-self: flex-end; background: #144D37; color: #E4F5EC; border-bottom-right-radius: 4px; }
+  .bal.ele { align-self: flex-start; background: #1F2C39; color: #E7EDF3; border-bottom-left-radius: 4px; }
+  .bal .hora {
+    display: block; margin-top: 4px;
+    font-size: 11px; color: rgba(255,255,255,0.42); text-align: right;
+  }
+  .bal .destaque { color: var(--financas); font-weight: 700; }
+
+  /* ═══════════ passos ═══════════ */
+  .passos {
+    display: grid; gap: 14px;
+    margin-top: 44px;
+  }
+  @media (min-width: 760px) { .passos { grid-template-columns: repeat(3, 1fr); } }
+
+  .passo {
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: 18px;
+    padding: 24px 22px 26px;
+  }
+  .passo .num {
+    font-family: var(--mono);
+    font-size: 13px; font-weight: 700;
+    color: var(--noite);
+    background: var(--tinta);
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    margin-bottom: 16px;
+  }
+  .passo h3 { margin-bottom: 7px; }
+  .passo p { font-size: 16.5px; }
+
+  /* ═══════════ telas do app ═══════════ */
+  .telas {
+    display: grid; gap: 18px;
+    margin-top: 44px;
+  }
+  @media (min-width: 860px) { .telas { grid-template-columns: 1.15fr 1fr; align-items: start; } }
+
+  .painel {
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: 22px;
+    padding: 22px;
+  }
+  .painel-tit {
+    font-size: 16px; font-weight: 700; color: var(--tinta);
+    margin-bottom: 4px;
+  }
+  .painel-sub { font-size: 15px; color: var(--tinta-2); margin-bottom: 20px; }
+
+  /* grade das 8 areas */
+  .areas { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .area {
+    background: var(--elevado);
+    border-radius: 13px;
+    padding: 13px 14px 15px;
+    position: relative;
+    overflow: hidden;
+  }
+  .area::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 3px;
+    background: var(--cor);
+  }
+  .area .nome {
+    font-size: 13px; font-weight: 700; color: var(--cor);
+    letter-spacing: -0.01em;
+  }
+  .area .val {
+    font-family: var(--mono);
+    font-size: 25px; font-weight: 700; color: var(--tinta);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15; margin-top: 5px;
+  }
+  .area .est { font-size: 12px; color: var(--tinta-2); }
+
+  /* roda do mapa */
+  .roda { display: block; width: 100%; height: auto; }
+
+  .transito {
+    background: var(--elevado);
+    border-radius: 14px;
+    padding: 16px 17px;
+    margin-top: 16px;
+  }
+  .transito .cab {
+    font-family: var(--mono);
+    font-size: 12px; color: var(--comunic);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .transito .tit { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .transito .frase { font-size: 15.5px; color: var(--tinta-2); margin-top: 5px; }
+
+  /* ═══════════ provas ═══════════ */
+  .provas { display: grid; gap: 12px; margin-top: 40px; }
+  @media (min-width: 760px) { .provas { grid-template-columns: repeat(3, 1fr); } }
+
+  .prova {
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    padding: 22px;
+  }
+  .prova b {
+    display: block; font-size: 17.5px; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 6px;
+  }
+  .prova span { font-size: 16px; color: var(--tinta-2); }
+
+  /* ═══════════ planos ═══════════ */
+  .gratis {
+    background: linear-gradient(150deg, rgba(37,211,102,0.14), rgba(37,211,102,0.03));
+    border: 1.5px solid rgba(37,211,102,0.4);
+    border-radius: 20px;
+    padding: 26px 24px;
+    margin-top: 40px;
+  }
+  .gratis b { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; display: block; }
+  .gratis p { font-size: 16.5px; margin-top: 6px; }
+
+  .planos { display: grid; gap: 10px; margin-top: 14px; }
+  @media (min-width: 760px) { .planos { grid-template-columns: repeat(3, 1fr); } }
+
+  .plano {
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .plano .n { font-size: 17px; font-weight: 700; }
+  .plano .pr {
+    font-family: var(--mono); font-size: 15px; color: var(--financas);
+    font-variant-numeric: tabular-nums; margin: 5px 0 9px;
+  }
+  .plano .d { font-size: 15.5px; color: var(--tinta-2); }
+
+  /* ═══════════ fecho ═══════════ */
+  .fecho { text-align: center; }
+  .fecho h2 { max-width: 17ch; margin-inline: auto; }
+  .fecho .acoes { justify-content: center; }
+
+  footer {
+    border-top: 1px solid var(--borda);
+    padding: 30px 0 46px;
+    padding-bottom: max(46px, env(safe-area-inset-bottom));
+  }
+  .rod {
+    display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center;
+    font-size: 15px;
+  }
+  .rod a { color: var(--tinta-2); text-decoration: none; }
+  .rod a:hover, .rod a:focus-visible { color: var(--tinta); }
+  .rod .fim { color: #6C667C; margin-left: auto; }
+
+  /* ═══════════ entrada ═══════════ */
+  .sobe { opacity: 0; transform: translateY(18px); }
+  .pronto .sobe {
+    opacity: 1; transform: none;
+    transition: opacity 0.75s var(--curva), transform 0.75s var(--curva);
+  }
+  .pronto .sobe:nth-child(2) { transition-delay: 0.07s; }
+  .pronto .sobe:nth-child(3) { transition-delay: 0.14s; }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
+    html { scroll-behavior: auto; }
+    .sobe { opacity: 1; transform: none; }
+    .pronto .sobe { transition: none; }
+    .btn { transition: none; }
   }
 </style>
 </head>
 <body>
 
-<header class="topo">
-  <span class="marca">Tábula Estelar</span>
-  <a class="entrar" href="/">Entrar</a>
+<header class="env topo">
+  <span class="marca"><i></i>Tábula Estelar</span>
+  <a class="link-topo" href="/">Entrar</a>
 </header>
 
 <main>
 
-  <!-- ================= HERÓI ================= -->
-  <section class="faixa heroi">
+  <!-- ══════════ HERÓI ══════════ -->
+  <div class="env heroi">
     <div>
-      <h1>Pare de ler seu signo.<br>Leia seu mapa.</h1>
-      <p class="sub">O céu de hoje calculado sobre o <strong>seu</strong> mapa — organizado em 8 áreas da vida.</p>
-
-      <div class="cta-bloco">
-        <a class="acao" href="/">Ver meu mapa natal — grátis</a>
-        <p class="cta-nota">Leva 1 minuto. Sem cartão.</p>
+      <h1 class="sobe">Seu mapa astral em uma <span>conversa</span>.</h1>
+      <p class="lead sobe">Manda uma mensagem no WhatsApp. Em dois minutos você tem sua carta natal calculada, e alguém para perguntar o que ela quer dizer.</p>
+      <div class="acoes sobe">
+        <a class="btn btn-zap" href="https://wa.me/5522988237163?text=Oi!%20Quero%20meu%20mapa%20astral" target="_blank" rel="noopener">Falar no WhatsApp</a>
+        <a class="btn btn-app" href="/">Abrir o app</a>
       </div>
+      <p class="rodape-acoes sobe">Sem baixar nada. Sem criar conta. Sem cartão.</p>
+    </div>
 
-      <p class="prova-linha">
-        <span>Efemérides Swiss</span>
-        <span>Casas Placidus reais</span>
-        <span>Sem texto genérico</span>
-      </p>
+    <div class="fone sobe" role="img" aria-label="Conversa no WhatsApp: a pessoa pede o mapa, o agente pergunta a data e o local de nascimento e devolve o Ascendente calculado">
+      <div class="fone-tela">
+        <div class="fone-topo">
+          <span class="av"></span>
+          <span>
+            <b>Tábula Estelar</b>
+            <em>online</em>
+          </span>
+        </div>
+        <div class="conversa">
+          <p class="bal eu">Oi! Quero meu mapa astral<span class="hora">21:04</span></p>
+          <p class="bal ele">Claro. Me diz três coisas: a data, a hora e a cidade em que você nasceu.<span class="hora">21:04</span></p>
+          <p class="bal eu">14/03/1992, 07:20, Niterói<span class="hora">21:05</span></p>
+          <p class="bal ele">Pronto. Sol em <span class="destaque">Peixes</span>, Lua em <span class="destaque">Escorpião</span>, Ascendente em <span class="destaque">Touro</span>.<br><br>Seu Ascendente em Touro coloca dinheiro e corpo na porta de entrada da vida. Quer que eu comece por aí?<span class="hora">21:05</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ COMO É ══════════ -->
+  <section class="env">
+    <h2>Três perguntas e o céu do seu nascimento está calculado.</h2>
+
+    <div class="passos">
+      <div class="passo">
+        <span class="num">1</span>
+        <h3>Você manda um oi</h3>
+        <p>Direto no WhatsApp, do número que já está no seu bolso.</p>
+      </div>
+      <div class="passo">
+        <span class="num">2</span>
+        <h3>Diz quando e onde nasceu</h3>
+        <p>A hora exata importa: é ela que define o Ascendente e onde cada área da vida cai no mapa.</p>
+      </div>
+      <div class="passo">
+        <span class="num">3</span>
+        <h3>Recebe sua carta</h3>
+        <p>E daí em diante pode perguntar o que quiser sobre ela, quando quiser.</p>
+      </div>
     </div>
   </section>
 
-  <!-- ================= O DESMONTE ================= -->
-  <section class="faixa">
-    <div>
-      <p class="rotulo">Por que o horóscopo não funciona</p>
-      <h2>O seu signo solar é dividido com meio bilhão de pessoas</h2>
-      <p>Horóscopo de signo separa a humanidade em doze caixas e escreve um texto para cada uma. Ele não pode estar falando de você, porque não sabe nada sobre você além do mês em que nasceu.</p>
-      <p>Seu mapa natal usa a posição exata de dez corpos celestes no instante e no lugar do seu nascimento. Vinte minutos de diferença já mudam metade dele de lugar.</p>
+  <!-- ══════════ TELAS ══════════ -->
+  <section class="env">
+    <h2>No app, seu dia vira oito respostas.</h2>
 
-      <dl class="contraste">
-        <div>
-          <dt>Horóscopo de signo</dt>
-          <dd>1 de 12</dd>
-        </div>
-        <div class="quente">
-          <dt>Seu mapa natal</dt>
-          <dd>1 de 1</dd>
-        </div>
-      </dl>
-    </div>
-  </section>
-
-  <!-- ================= COMO FUNCIONA ================= -->
-  <section class="faixa">
-    <div>
-      <p class="rotulo">Como funciona</p>
-      <h2>Três passos, um minuto</h2>
-
-      <div class="passos">
-        <div class="passo">
-          <span class="n">1</span>
-          <div>
-            <h3>Data, hora e cidade</h3>
-            <p>A hora exata importa: é ela que define o Ascendente, e o Ascendente define onde cada área da vida cai no seu mapa. Está na sua certidão de nascimento.</p>
+    <div class="telas">
+      <div class="painel">
+        <div class="painel-tit">Hoje</div>
+        <div class="painel-sub">Quanto de céu está mexendo em cada área da sua vida.</div>
+        <div class="areas">
+          <div class="area" style="--cor: var(--amor)">
+            <div class="nome">Amor</div><div class="val">72</div><div class="est">3 trânsitos</div>
+          </div>
+          <div class="area" style="--cor: var(--carreira)">
+            <div class="nome">Carreira</div><div class="val">56</div><div class="est">2 trânsitos</div>
+          </div>
+          <div class="area" style="--cor: var(--financas)">
+            <div class="nome">Finanças</div><div class="val">40</div><div class="est">1 trânsito</div>
+          </div>
+          <div class="area" style="--cor: var(--saude)">
+            <div class="nome">Saúde</div><div class="val">64</div><div class="est">2 trânsitos</div>
+          </div>
+          <div class="area" style="--cor: var(--familia)">
+            <div class="nome">Família</div><div class="val">31</div><div class="est">1 trânsito</div>
+          </div>
+          <div class="area" style="--cor: var(--comunic)">
+            <div class="nome">Comunicação</div><div class="val">78</div><div class="est">4 trânsitos</div>
+          </div>
+          <div class="area" style="--cor: var(--espirit)">
+            <div class="nome">Espiritualidade</div><div class="val">45</div><div class="est">1 trânsito</div>
+          </div>
+          <div class="area" style="--cor: var(--transf)">
+            <div class="nome">Transformação</div><div class="val">60</div><div class="est">2 trânsitos</div>
           </div>
         </div>
-        <div class="passo">
-          <span class="n">2</span>
-          <div>
-            <h3>Seu mapa, calculado</h3>
-            <p>Dez planetas, doze casas, todos os aspectos. Calculado com efemérides Swiss e casas Placidus de verdade — não a aproximação que a maioria dos apps usa.</p>
-          </div>
-        </div>
-        <div class="passo">
-          <span class="n">3</span>
-          <div>
-            <h3>O que está ativo hoje</h3>
-            <p>Os trânsitos de hoje sobre o seu mapa, com o que cada um mexe — e por quanto tempo.</p>
-          </div>
-        </div>
       </div>
 
-      <ul class="areas">
-        <li>Amor</li><li>Carreira</li><li>Finanças</li><li>Saúde</li>
-        <li>Família</li><li>Comunicação</li><li>Espiritualidade</li><li>Transformação</li>
-      </ul>
-    </div>
-  </section>
+      <div class="painel">
+        <div class="painel-tit">Seu mapa</div>
+        <div class="painel-sub">Dez corpos, doze casas, todos os aspectos.</div>
 
-  <!-- ================= O AGENTE ================= -->
-  <section class="faixa">
-    <div>
-      <p class="rotulo">O que ninguém mais tem</p>
-      <h2>Um astrólogo no seu WhatsApp que já leu o seu mapa</h2>
-      <p>Não é um chatbot com respostas prontas. Ele conhece a sua carta, sabe quais trânsitos estão ativos hoje e responde à sua pergunta específica.</p>
+        <svg class="roda" viewBox="0 0 320 320" role="img" aria-label="Roda do mapa natal com as doze casas e os planetas posicionados">
+          <circle cx="160" cy="160" r="132" fill="none" stroke="#2A2637" stroke-width="1.5"/>
+          <circle cx="160" cy="160" r="104" fill="none" stroke="#241F31" stroke-width="1"/>
+          <circle cx="160" cy="160" r="62" fill="none" stroke="#241F31" stroke-width="1"/>
 
-      <div class="conversa">
-        <p class="balao eu">Devo pedir aumento essa semana?</p>
-        <p class="balao ele">Essa semana não. Saturno está fechando quadratura com o seu Meio do Céu, e o pico é dia 14 — período de teste, não de pedido. A partir do dia 20 o quadro abre. Quer que eu te lembre?</p>
-      </div>
-      <p class="conversa-nota">Exemplo do formato de resposta. O conteúdo muda conforme o seu mapa.</p>
-    </div>
-  </section>
+          <!-- 12 divisoes de casa -->
+          <g stroke="#2A2637" stroke-width="1">
+            <line x1="160" y1="28" x2="160" y2="98"/>
+            <line x1="226" y1="45.7" x2="189" y2="109"/>
+            <line x1="274.3" y1="94" x2="211" y2="131"/>
+            <line x1="292" y1="160" x2="222" y2="160"/>
+            <line x1="274.3" y1="226" x2="211" y2="189"/>
+            <line x1="226" y1="274.3" x2="189" y2="211"/>
+            <line x1="160" y1="292" x2="160" y2="222"/>
+            <line x1="94" y1="274.3" x2="131" y2="211"/>
+            <line x1="45.7" y1="226" x2="109" y2="189"/>
+            <line x1="28" y1="160" x2="98" y2="160"/>
+            <line x1="45.7" y1="94" x2="109" y2="131"/>
+            <line x1="94" y1="45.7" x2="131" y2="109"/>
+          </g>
 
-  <!-- ================= HONESTIDADE ================= -->
-  <section class="faixa">
-    <div>
-      <p class="rotulo">Antes que você pergunte</p>
-      <h2>O que a gente calcula e o que a gente interpreta</h2>
-      <p>Astrologia não prevê o futuro. Ela mede o tempo. Preferimos deixar claro onde está a matemática e onde está a leitura.</p>
+          <!-- aspectos -->
+          <g stroke-width="1.4" opacity="0.85">
+            <line x1="160" y1="78" x2="243" y2="207" stroke="#4ECDC4"/>
+            <line x1="243" y1="207" x2="77" y2="207" stroke="#FF6B9D"/>
+            <line x1="77" y1="207" x2="160" y2="78" stroke="#4ECDC4"/>
+            <line x1="103" y1="112" x2="228" y2="123" stroke="#60A5FA" stroke-dasharray="4 5"/>
+          </g>
 
-      <dl class="franqueza">
-        <div class="sim">
-          <dt>Isto é cálculo</dt>
-          <dd>Onde cada planeta estava no seu nascimento, onde estão agora, os ângulos entre eles e em que casa caem. Conferível em qualquer efeméride, ao centésimo de grau.</dd>
-        </div>
-        <div class="nao">
-          <dt>Isto é leitura</dt>
-          <dd>O que cada encontro significa. É tradição interpretativa, escrita e revisada por pessoas — não é previsão, e não promete acerto.</dd>
-        </div>
-      </dl>
-    </div>
-  </section>
+          <!-- planetas -->
+          <g>
+            <circle cx="160" cy="78" r="13" fill="#FFD93D"/><circle cx="160" cy="78" r="3.6" fill="#15131F"/>
+            <circle cx="243" cy="207" r="11" fill="#15131F" stroke="#B19CD9" stroke-width="1.8"/>
+            <circle cx="243" cy="207" r="4.5" fill="#B19CD9" opacity="0.55"/>
+            <circle cx="77" cy="207" r="10" fill="#F2EFF7"/>
+            <circle cx="82" cy="203" r="8.4" fill="#15131F"/>
+            <circle cx="103" cy="112" r="9" fill="#15131F" stroke="#60A5FA" stroke-width="1.8"/>
+            <circle cx="228" cy="123" r="12" fill="#15131F" stroke="#FF9F40" stroke-width="1.8"/>
+            <ellipse cx="228" cy="123" rx="19" ry="5" fill="none" stroke="#FF9F40" stroke-width="1.6" transform="rotate(-20 228 123)"/>
+          </g>
 
-  <!-- ================= PLANOS ================= -->
-  <section class="faixa">
-    <div>
-      <p class="rotulo">Planos</p>
-      <h2>Comece de graça. Assine se fizer sentido.</h2>
-      <p>O mapa natal completo e o status do dia são gratuitos, para sempre. Os planos abrem o horizonte de previsão e o astrólogo no WhatsApp.</p>
+          <circle cx="160" cy="160" r="2.6" fill="#4A4459"/>
+        </svg>
 
-      <div class="planos">
-        <div class="plano">
-          <span class="nome">Essential</span>
-          <span class="preco">R$ 19,90/mês</span>
-          <span class="detalhe">Previsão de 7 dias · 3 perguntas por dia no WhatsApp</span>
-        </div>
-        <div class="plano">
-          <span class="nome">Pro</span>
-          <span class="preco">R$ 47,90/mês</span>
-          <span class="detalhe">Previsão até 90 dias · 6 perguntas por dia</span>
-        </div>
-        <div class="plano">
-          <span class="nome">Premium</span>
-          <span class="preco">R$ 79,90/mês</span>
-          <span class="detalhe">Previsão até 360 dias · 10 perguntas por dia</span>
+        <div class="transito">
+          <div class="cab">Ativo agora</div>
+          <div class="tit">Clareza estruturada</div>
+          <div class="frase">Ideia bem amarrada não voa, mas chega.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= CTA FINAL ================= -->
-  <section class="faixa">
-    <div>
-      <h2>Seu mapa é diferente do de todo mundo. Sua leitura também devia ser.</h2>
-      <div class="cta-bloco">
-        <a class="acao" href="/">Ver meu mapa natal — grátis</a>
-        <p class="cta-nota">1 minuto. Sem cartão. Dá pra apagar a conta quando quiser.</p>
+  <!-- ══════════ PROVAS ══════════ -->
+  <section class="env">
+    <h2>Cálculo de verdade por trás de cada frase.</h2>
+
+    <div class="provas">
+      <div class="prova">
+        <b>Efemérides Swiss</b>
+        <span>As mesmas posições planetárias que astrólogos profissionais usam, conferidas ao centésimo de grau.</span>
       </div>
+      <div class="prova">
+        <b>Casas Placidus reais</b>
+        <span>Semi-arco iterativo, não a aproximação linear que a maioria dos apps entrega.</span>
+      </div>
+      <div class="prova">
+        <b>Responde você</b>
+        <span>O agente lê a sua carta antes de responder. Não é texto pronto trocado de nome.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ PLANOS ══════════ -->
+  <section class="env">
+    <h2>Começa de graça.</h2>
+
+    <div class="gratis">
+      <b>Mapa natal completo, sem pagar nada</b>
+      <p>A carta, o Ascendente, as casas e o status de hoje nas oito áreas. Para sempre, sem cartão.</p>
+    </div>
+
+    <div class="planos">
+      <div class="plano">
+        <div class="n">Essential</div>
+        <div class="pr">R$ 19,90/mês</div>
+        <div class="d">Previsão de 7 dias e 3 perguntas por dia no WhatsApp.</div>
+      </div>
+      <div class="plano">
+        <div class="n">Pro</div>
+        <div class="pr">R$ 47,90/mês</div>
+        <div class="d">Previsão de até 90 dias e 6 perguntas por dia.</div>
+      </div>
+      <div class="plano">
+        <div class="n">Premium</div>
+        <div class="pr">R$ 79,90/mês</div>
+        <div class="d">Previsão de até 360 dias e 10 perguntas por dia.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ FECHO ══════════ -->
+  <section class="env fecho">
+    <h2>Manda o oi. O resto é com a gente.</h2>
+    <div class="acoes">
+      <a class="btn btn-zap" href="https://wa.me/5522988237163?text=Oi!%20Quero%20meu%20mapa%20astral" target="_blank" rel="noopener">Falar no WhatsApp</a>
+      <a class="btn btn-app" href="/">Abrir o app</a>
     </div>
   </section>
 
 </main>
 
 <footer>
-  <div class="rodape-int">
+  <div class="env rod">
     <a href="/privacidade">Privacidade</a>
     <a href="/terms">Termos</a>
     <a href="/">Entrar</a>
     <span class="fim">Tábula Estelar</span>
   </div>
 </footer>
+
+<script>
+  requestAnimationFrame(function () {
+    document.body.classList.add('pronto');
+  });
+</script>
 
 </body>
 </html>
