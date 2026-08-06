@@ -259,8 +259,9 @@ export function montarCard(dados, formato = 'feed') {
   }
   .eyebrow span:last-child { color: ${SLATE}; }
 
-  .figure { display: grid; place-items: center; margin: ${formato === 'story' ? '7cqw 0 3cqw' : '3cqw 0 1cqw'}; }
-  .figure svg { width: ${formato === 'story' ? '90%' : '80%'}; height: auto; display: block; }
+  /* o diagrama encolheu para abrir espaço à leitura curada */
+  .figure { display: grid; place-items: center; margin: ${formato === 'story' ? '6cqw 0 2cqw' : '2cqw 0 0.5cqw'}; }
+  .figure svg { width: ${formato === 'story' ? '78%' : '66%'}; height: auto; display: block; }
 
   .readout {
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
@@ -273,8 +274,10 @@ export function montarCard(dados, formato = 'feed') {
     /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
        no Linux do runner. Sem eles o card sai com serif generico na automacao. */
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-size: 7.4cqw; line-height: 1.06; font-weight: 400;
-    letter-spacing: -0.012em; margin-top: auto;
+    /* margem fixa, não auto: com a leitura curada o conteúdo cresceu e o auto
+       empurrava o rodapé para fora do quadro */
+    font-size: 6.5cqw; line-height: 1.05; font-weight: 400;
+    letter-spacing: -0.012em; margin-top: 2.2cqw;
     text-wrap: balance;
     text-shadow: 0 0.3cqw 2.4cqw rgba(7,10,24,0.75);
   }
@@ -282,13 +285,21 @@ export function montarCard(dados, formato = 'feed') {
     /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
        no Linux do runner. Sem eles o card sai com serif generico na automacao. */
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-style: italic; font-size: 3.7cqw; line-height: 1.42;
-    color: #CFC9BD; margin-top: 3cqw; max-width: 88%;
+    font-style: italic; font-size: 3.1cqw; line-height: 1.36;
+    color: #C9A227; margin-top: 2cqw; max-width: 92%; opacity: 0.9;
+    text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
+  }
+  /* leitura curada: sem ela a peça tinha um título de quatro palavras, uma
+     linha de aforismo e muito espaço vazio */
+  .leitura {
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-size: 3.1cqw; line-height: 1.4; color: #CFC9BD;
+    margin-top: 2.4cqw;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
   }
 
   .foot {
-    margin-top: 5cqw; padding-top: 3.2cqw;
+    margin-top: auto; padding-top: 3cqw;
     border-top: 0.12cqw solid rgba(237,230,216,0.18);
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -317,6 +328,7 @@ export function montarCard(dados, formato = 'feed') {
       <div class="figure">${diagrama(dados, id)}</div>
       <div class="readout">${readout}</div>
       <h1 class="title">${dados.titulo}</h1>
+      ${dados.leitura ? `<p class="leitura">${dados.leitura}</p>` : ''}
       <p class="aph">${dados.aforismo}</p>
       <div class="foot">
         <span class="chip">${dados.areaLabel}</span>

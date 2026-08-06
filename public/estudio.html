@@ -75,22 +75,20 @@
     border: 1px solid var(--borda); min-height: 40px; font-size: 14px; font-weight: 600;
   }
 
-  .dia { margin-bottom: 40px; }
-  .dia h2 {
-    font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
-    text-transform: capitalize;
-  }
+  .dia { margin-bottom: 52px; }
+  /* nada de text-transform: capitalize aqui — era o que produzia "6 De Agosto" */
+  .dia h2 { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; }
   .dia .iso {
-    font-family: var(--mono); font-size: 12px; color: var(--tinta-2);
+    font-family: var(--mono); font-size: 13px; color: var(--tinta-2);
     font-variant-numeric: tabular-nums;
   }
 
-  .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
-  /* a carta tem muito detalhe: ocupa a linha inteira para ser legível */
+  .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  /* a carta e o vídeo têm muito detalhe: ocupam a linha inteira */
   .pecas .larga { grid-column: 1 / -1; }
-  @media (max-width: 460px) { .pecas { grid-template-columns: 1fr; gap: 16px; } }
+  @media (max-width: 560px) { .pecas { grid-template-columns: 1fr; gap: 20px; } }
 
-  figure { display: flex; flex-direction: column; gap: 7px; }
+  figure { display: flex; flex-direction: column; gap: 9px; }
   img, video {
     width: 100%; height: auto; display: block;
     border: 1px solid var(--borda); border-radius: 10px;
@@ -98,15 +96,27 @@
   }
   video { max-height: 78vh; }
   figcaption {
-    font-family: var(--mono); font-size: 11px; color: var(--tinta-2);
-    letter-spacing: .08em; text-transform: uppercase;
+    font-family: var(--mono); font-size: 12.5px; color: var(--tinta-2);
+    letter-spacing: .06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
   }
+  /* "segure a imagem" não existe no computador: cada peça precisa de um botão */
+  .baixar {
+    margin-left: auto;
+    min-height: 38px; padding: 0 14px;
+    font-size: 13px; font-weight: 700; letter-spacing: .04em;
+    background: transparent; color: var(--ouro);
+    border: 1px solid var(--ouro); border-radius: 8px;
+    text-transform: none;
+  }
+  .baixar:hover { background: var(--ouro); color: #241E00; }
+  .baixar[disabled] { opacity: .6; }
 
   pre {
-    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    font-family: var(--mono); font-size: 15px; line-height: 1.65;
     white-space: pre-wrap; word-break: break-word;
     background: var(--superficie); border: 1px solid var(--borda);
-    border-radius: 12px; padding: 14px; margin-top: 12px; color: #C6C1D4;
+    border-radius: 12px; padding: 16px; margin-top: 12px; color: #D2CDE0;
   }
   .copiar {
     width: 100%; margin-top: 12px;
@@ -145,7 +155,7 @@
   <div class="cab">
     <div>
       <h1>Estúdio</h1>
-      <p class="sub">Segure a imagem para salvar. Toque para copiar a legenda.</p>
+      <p class="sub">Toque em Baixar em cada peça. A legenda fica abaixo, pronta para copiar.</p>
     </div>
     <button type="button" class="sair" id="sair">Sair</button>
   </div>
@@ -165,20 +175,62 @@
   var aviso = document.getElementById('aviso')
   var erroLogin = document.getElementById('erro-login')
 
-  var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
-  var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+  // Intl em vez de tabela própria: acerta as preposições do português sozinho
+  // ("6 de agosto", não "6 De Agosto") e não exige manutenção
+  var FORMATO = new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'
+  })
 
   function rotular(iso) {
     var p = iso.split('-')
-    var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]))
+    var txt = FORMATO.format(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])))
     var hoje = new Date().toISOString().slice(0, 10)
-    var txt = DIAS[d.getUTCDay()] + ', ' + (+p[2]) + ' de ' + MESES[+p[1] - 1]
-    return (iso === hoje ? 'Hoje · ' : '') + txt
+    return (iso === hoje ? 'Hoje · ' : '') + txt.charAt(0).toUpperCase() + txt.slice(1)
   }
 
   function escapar(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+
+  /**
+   * Baixa uma peça de fato.
+   *
+   * O atributo `download` do <a> é ignorado quando o arquivo vem de outro
+   * domínio, e as URLs assinadas vêm do Storage. Por isso o caminho é buscar o
+   * conteúdo e criar um blob local. Se o CORS do bucket recusar, abre em nova
+   * aba, que ao menos deixa salvar à mão.
+   */
+  function baixar(botao, url, nome) {
+    var rotulo = botao.textContent
+    botao.disabled = true
+    botao.textContent = 'Baixando…'
+
+    fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+      return r.blob()
+    }).then(function (blob) {
+      var alvo = URL.createObjectURL(blob)
+      var a = document.createElement('a')
+      a.href = alvo
+      a.download = nome
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(function () { URL.revokeObjectURL(alvo) }, 4000)
+      botao.textContent = 'Baixado'
+      aviso.textContent = nome + ' baixado.'
+    }).catch(function () {
+      window.open(url, '_blank', 'noopener')
+      botao.textContent = 'Abriu em nova aba'
+      aviso.textContent = 'Não deu para baixar direto. Abri em nova aba para salvar à mão.'
+    }).finally(function () {
+      setTimeout(function () {
+        botao.disabled = false
+        botao.textContent = rotulo
+        aviso.textContent = ''
+      }, 2600)
+    })
   }
 
   // Clipboard API exige contexto seguro; o textarea funciona em qualquer um
@@ -209,18 +261,39 @@
     }
 
     lista.innerHTML = dias.map(function (d, i) {
+      function peca(url, rotulo, nome, larga, ehVideo) {
+        if (!url) return ''
+        var midia = ehVideo
+          ? '<video src="' + url + '" controls playsinline preload="metadata"></video>'
+          : '<img src="' + url + '" loading="lazy" decoding="async" alt="' + rotulo + ' de ' + d.dia + '">'
+        return '<figure' + (larga ? ' class="larga"' : '') + '>' + midia +
+          '<figcaption>' + rotulo +
+            '<button type="button" class="baixar" data-url="' + url + '" data-nome="' + d.dia + '-' + nome + '">Baixar</button>' +
+          '</figcaption></figure>'
+      }
+
+      // a carta abre a lista: é a peça principal do dia
       return '<article class="dia">' +
         '<h2>' + escapar(rotular(d.dia)) + '</h2>' +
         '<span class="iso">' + d.dia + '</span>' +
         '<div class="pecas">' +
-          '<figure><img src="' + d.feed + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Card de feed de ' + d.dia + '"><figcaption>Feed · 1080×1350</figcaption></figure>' +
-          (d.story ? '<figure><img src="' + d.story + '" width="1080" height="1920" loading="lazy" decoding="async" alt="Card de story de ' + d.dia + '"><figcaption>Story · 1080×1920</figcaption></figure>' : '') +
-          (d.carta ? '<figure class="larga"><img src="' + d.carta + '" width="1080" height="1350" loading="lazy" decoding="async" alt="Carta do céu de ' + d.dia + '"><figcaption>Carta do céu · 1080×1350</figcaption></figure>' : '') +
-          (d.reel ? '<figure class="larga"><video src="' + d.reel + '" controls playsinline preload="metadata"></video><figcaption>Reel · 1080×1920 · toque nos três pontos para baixar</figcaption></figure>' : '') +
+          peca(d.carta, 'Carta do céu', 'carta.png', true, false) +
+          peca(d.reel, 'Reel', 'reel.mp4', true, true) +
+          peca(d.feed, 'Feed', 'feed.png', false, false) +
+          peca(d.story, 'Story', 'story.png', false, false) +
         '</div>' +
-        (d.legenda ? '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button><pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' : '') +
+        (d.legenda
+          ? '<pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' +
+            '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button>'
+          : '') +
       '</article>'
     }).join('')
+
+    lista.querySelectorAll('.baixar').forEach(function (botao) {
+      botao.addEventListener('click', function () {
+        baixar(botao, botao.dataset.url, botao.dataset.nome)
+      })
+    })
 
     lista.querySelectorAll('.copiar').forEach(function (botao) {
       botao.addEventListener('click', function () {

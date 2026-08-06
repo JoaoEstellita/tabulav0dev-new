@@ -90,31 +90,40 @@ function lerArgs(argv) {
  * PC ligado. A senha é a mesma do painel de monitoramento.
  */
 async function enviarParaNuvem(pasta, iso, { backend, senha }) {
-  const arquivos = ['feed.png', 'story.png', 'carta.png', 'legenda.txt']
+  const arquivos = ['carta.png', 'feed.png', 'story.png', 'legenda.txt']
   const enviados = []
+  const falhas = []
 
+  // Cada arquivo é independente: abortar no primeiro erro derrubava os
+  // seguintes. Foi assim que uma recusa de carta.png levou a legenda junto e o
+  // Estúdio ficou sem texto para publicar.
   for (const nome of arquivos) {
     const alvo = path.join(pasta, nome)
     if (!existsSync(alvo)) continue
 
-    const conteudo = await readFile(alvo)
-    const resposta = await fetch(`${backend}/api/marketing-cards`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${senha}`,
-      },
-      body: JSON.stringify({ dia: iso, arquivo: nome, conteudoBase64: conteudo.toString('base64') }),
-    })
+    try {
+      const conteudo = await readFile(alvo)
+      const resposta = await fetch(`${backend}/api/marketing-cards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${senha}`,
+        },
+        body: JSON.stringify({ dia: iso, arquivo: nome, conteudoBase64: conteudo.toString('base64') }),
+      })
 
-    if (!resposta.ok) {
-      const detalhe = await resposta.text().catch(() => '')
-      throw new Error(`${nome}: HTTP ${resposta.status} ${detalhe.slice(0, 120)}`)
+      if (!resposta.ok) {
+        const detalhe = await resposta.text().catch(() => '')
+        falhas.push(`${nome}: HTTP ${resposta.status} ${detalhe.slice(0, 90)}`)
+        continue
+      }
+      enviados.push(nome)
+    } catch (erro) {
+      falhas.push(`${nome}: ${erro.message}`)
     }
-    enviados.push(nome)
   }
 
-  return enviados
+  return { enviados, falhas }
 }
 
 /** Meio-dia UTC representa o dia inteiro sem depender do fuso de quem roda. */
@@ -126,9 +135,14 @@ function meioDiaUTC(iso) {
 const paraISO = (data) => data.toISOString().slice(0, 10)
 
 async function carregarCatalogos() {
-  const [titulos, aforismos, areas, orbes] = await Promise.all([
+  const [titulos, aforismos, leituras, areas, orbes] = await Promise.all([
     lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
+    // 724 interpretações de ~315 caracteres que as peças ignoravam: é o que
+    // fazia o card parecer vazio, com um título curto e uma linha de aforismo
+    lerLiterais(path.join(FRONTEND, 'src/data/transitCatalogOverridesPtBR.ts'), [
+      'TRANSIT_CATALOG_PTBR_OVERRIDES',
+    ]),
     lerLiterais(path.join(FRONTEND, 'src/constants/lifeAreas.ts'), [
       'LIFE_AREA_ATTRIBUTION', 'LIFE_AREA_COLORS', 'LIFE_AREA_LABELS',
     ]),
@@ -138,6 +152,7 @@ async function carregarCatalogos() {
   return {
     titulos: titulos.TRANSIT_TITLES_PTBR,
     aforismos: aforismos.TRANSIT_APHORISMS_PTBR,
+    leituras: leituras.TRANSIT_CATALOG_PTBR_OVERRIDES,
     atribuicao: areas.LIFE_AREA_ATTRIBUTION,
     cores: areas.LIFE_AREA_COLORS,
     rotulos: areas.LIFE_AREA_LABELS,
@@ -148,6 +163,21 @@ async function carregarCatalogos() {
 /** Semente do campo estelar: mesma data, mesmo céu. */
 function semente(iso) {
   return Number(iso.replace(/-/g, ''))
+}
+
+/**
+ * As primeiras frases da leitura curada.
+ *
+ * Os textos do catálogo têm ~315 caracteres e foram escritos para a tela do
+ * app, onde há rolagem. No card o espaço é fixo: o texto inteiro transborda e
+ * empurra o rodapé para fora. As duas primeiras frases carregam a definição do
+ * encontro; o resto costuma ser desdobramento e a pergunta final.
+ */
+function primeirasFrases(texto, quantas = 2) {
+  if (!texto) return ''
+  const frases = texto.match(/[^.!?]+[.!?]+/g)
+  if (!frases) return texto
+  return frases.slice(0, quantas).join('').trim()
 }
 
 /** Sol e Lua pedem artigo em português; os demais planetas, não. */
@@ -268,6 +298,8 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
     cor: (cat.cores[area] || ['#4ECDC4'])[0],
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
     semente: semente(iso),
+    leitura: primeirasFrases(cat.leituras[bruto.chave], 2),
+    leituraCompleta: cat.leituras[bruto.chave] || '',
   }
 
   const pasta = path.join(raizSaida, iso)
@@ -320,6 +352,7 @@ async function principal() {
   let gerados = 0
   let repetidos = 0
   let enviados = 0
+  const problemas = []
 
   for (let i = 0; i < args.dias; i++) {
     const dia = new Date(inicio.getTime() + i * 86_400_000)
@@ -344,14 +377,13 @@ async function principal() {
     gerados++
 
     if (args.upload) {
-      try {
-        const nomes = await enviarParaNuvem(r.pasta, iso, { backend: args.backend, senha })
-        console.log(`            enviado: ${nomes.join(', ')}`)
-        enviados++
-      } catch (erro) {
-        // o card já está no disco; falha de rede não deve abortar os outros dias
-        console.log(`            upload falhou: ${erro.message}`)
-      }
+      const { enviados: nomes, falhas } = await enviarParaNuvem(
+        r.pasta, iso, { backend: args.backend, senha }
+      )
+      if (nomes.length) console.log(`            enviado: ${nomes.join(', ')}`)
+      for (const f of falhas) console.log(`            FALHOU  ${f}`)
+      if (!falhas.length) enviados++
+      else problemas.push(`${iso}: ${falhas.join(' | ')}`)
     }
   }
 
@@ -365,11 +397,13 @@ async function principal() {
     console.log(`${repetidos} dia(s) repetiram texto: o céu não ofereceu alternativa inédita na janela de ${JANELA_SEM_REPETIR} dias.`)
   }
   if (args.upload) {
-    console.log(`${enviados} de ${gerados} enviado(s) para o Estúdio.`)
-    if (args.exigirUpload && enviados < gerados) {
-      throw new Error(
-        `--exigir-upload: ${gerados - enviados} dia(s) não chegaram ao Estúdio.`
-      )
+    console.log(`${enviados} de ${gerados} dia(s) completos no Estúdio.`)
+    if (problemas.length) {
+      console.log('\nArquivos que não subiram:')
+      for (const p of problemas) console.log(`  ${p}`)
+    }
+    if (args.exigirUpload && problemas.length) {
+      throw new Error(`--exigir-upload: ${problemas.length} dia(s) com arquivo faltando.`)
     }
   }
 }

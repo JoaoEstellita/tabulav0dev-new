@@ -97,6 +97,11 @@ jobs:
           DIAS: ${{ github.event.inputs.dias || '1' }}
           DATA: ${{ github.event.inputs.data || '' }}
         run: |
+          # pipefail é obrigatório aqui: o `tee` no fim do pipeline sempre
+          # devolve 0, então sem isto uma falha do node passa VERDE. Foi o que
+          # escondeu o gerador de vídeo quebrado por dois runs seguidos.
+          set -o pipefail
+
           if [ -z "$MONITORING_PASSWORD" ]; then
             echo "::error::Falta o secret MONITORING_PASSWORD. Cadastre em Settings > Secrets and variables > Actions."
             exit 1
@@ -114,9 +119,21 @@ jobs:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
         run: |
+          set -o pipefail
+
           ARGS="--upload"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
           node scripts/marketing/gerarVideo.mjs $ARGS 2>&1 | tee -a saida.txt
+
+          # o script pode sair 0 sem produzir o arquivo (ffmpeg ausente, por
+          # exemplo). Um job verde sem vídeo é o que trouxe a gente até aqui.
+          DIA="${DATA:-$(date -u +%F)}"
+          if [ ! -s "marketing/out/$DIA/reel.mp4" ]; then
+            echo "::error::reel.mp4 não foi produzido para $DIA"
+            ls -la "marketing/out/$DIA" || true
+            exit 1
+          fi
+          echo "reel.mp4: $(du -h "marketing/out/$DIA/reel.mp4" | cut -f1)"
 
       - name: Resumo do run
         if: always()

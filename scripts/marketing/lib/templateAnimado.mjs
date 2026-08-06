@@ -181,10 +181,14 @@ export function montarAnimacao(dados) {
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
     font-size: 6.4cqw; line-height: 1.06; font-weight: 400; letter-spacing: -0.012em;
   }
-  .leitura p {
+  .leitura .texto {
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-style: italic; font-size: 3.3cqw; line-height: 1.4;
-    color: #C3BEB2; margin-top: 1.6cqw;
+    font-size: 3cqw; line-height: 1.4; color: #CFC9BD; margin-top: 1.6cqw;
+  }
+  .leitura .aforismo {
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-style: italic; font-size: 3cqw; line-height: 1.34;
+    color: ${BRONZE}; margin-top: 1.4cqw; opacity: 0.9;
   }
 
   .rodape {
@@ -234,7 +238,8 @@ export function montarAnimacao(dados) {
       <div class="leitura">
         <div class="rot">${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b></div>
         <h1>${dados.titulo}</h1>
-        <p>${dados.aforismo}</p>
+        ${dados.leitura ? `<p class="texto">${dados.leitura}</p>` : ''}
+        <p class="aforismo">${dados.aforismo}</p>
       </div>
 
       <div class="rodape">

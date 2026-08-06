@@ -329,13 +329,14 @@ export function montarCarta(dados) {
   }
   .alto span:last-child { color: ${SLATE}; }
 
-  .roda { display: grid; place-items: center; margin: 0.6cqw 0 0; }
-  .roda svg { width: 72%; height: auto; display: block; }
+  /* a roda encolheu para abrir espaço à leitura curada, que é o que faltava */
+  .roda { display: grid; place-items: center; margin: 0.2cqw 0 0; }
+  .roda svg { width: 56%; height: auto; display: block; }
 
   .legenda {
     display: flex; gap: 3.2cqw; justify-content: center; align-items: center;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
-    font-size: 1.7cqw; letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: 2cqw; letter-spacing: 0.1em; text-transform: uppercase;
     color: ${SLATE};
     margin-top: 0.4cqw;
   }
@@ -351,7 +352,7 @@ export function montarCarta(dados) {
   .pos {
     display: flex; align-items: center; gap: 1.4cqw;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
-    font-size: 2.05cqw;
+    font-size: 2.3cqw;
   }
   .pos svg { flex-shrink: 0; width: 2.9cqw; height: 2.9cqw; }
   .pn { color: ${VELLUM}; letter-spacing: 0.04em; }
@@ -365,18 +366,25 @@ export function montarCarta(dados) {
   }
   .destaque .rot {
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
-    font-size: 1.85cqw; letter-spacing: 0.15em; text-transform: uppercase;
-    color: ${SLATE}; margin-bottom: 1.2cqw;
+    font-size: 2.15cqw; letter-spacing: 0.14em; text-transform: uppercase;
+    color: ${SLATE}; margin-bottom: 1.3cqw;
   }
   .destaque .rot b { color: ${BRONZE}; font-weight: 400; }
   .destaque h1 {
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-size: 6.1cqw; line-height: 1.06; font-weight: 400; letter-spacing: -0.012em;
+    font-size: 6.4cqw; line-height: 1.05; font-weight: 400; letter-spacing: -0.012em;
   }
-  .destaque p {
+  /* a leitura curada do catálogo: é o que dá conteúdo à peça. Sem ela o card
+     ficava com um título de quatro palavras e muito espaço vazio. */
+  .destaque .leitura {
     font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-style: italic; font-size: 3.2cqw; line-height: 1.4;
-    color: #C3BEB2; margin-top: 1.5cqw;
+    font-size: 2.85cqw; line-height: 1.4; color: #CFC9BD;
+    margin-top: 1.6cqw;
+  }
+  .destaque p.aforismo {
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-style: italic; font-size: 2.85cqw; line-height: 1.34;
+    color: ${BRONZE}; margin-top: 1.4cqw; opacity: 0.9;
   }
 
   .rodape {
@@ -419,7 +427,8 @@ export function montarCarta(dados) {
       <div class="destaque">
         <div class="rot">${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b></div>
         <h1>${dados.titulo}</h1>
-        <p>${dados.aforismo}</p>
+        ${dados.leitura ? `<p class="leitura">${dados.leitura}</p>` : ''}
+        <p class="aforismo">${dados.aforismo}</p>
       </div>
 
       <div class="rodape">

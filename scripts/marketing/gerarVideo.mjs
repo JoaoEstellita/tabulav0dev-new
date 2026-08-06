@@ -113,14 +113,24 @@ async function principal() {
   const iso = args.data || paraISO(new Date())
   const data = meioDiaUTC(iso)
 
-  const [titulos, aforismos, areas, orbes] = await Promise.all([
+  const [titulos, aforismos, leituras, areas, orbes] = await Promise.all([
     lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
+    lerLiterais(path.join(FRONTEND, 'src/data/transitCatalogOverridesPtBR.ts'), [
+      'TRANSIT_CATALOG_PTBR_OVERRIDES',
+    ]),
     lerLiterais(path.join(FRONTEND, 'src/constants/lifeAreas.ts'), [
       'LIFE_AREA_ATTRIBUTION', 'LIFE_AREA_COLORS', 'LIFE_AREA_LABELS',
     ]),
     lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
   ])
+
+  /** Duas primeiras frases: o texto inteiro do catálogo transborda o quadro. */
+  const primeirasFrases = (texto, quantas = 2) => {
+    if (!texto) return ''
+    const frases = texto.match(/[^.!?]+[.!?]+/g)
+    return frases ? frases.slice(0, quantas).join('').trim() : texto
+  }
 
   const encontro = encontroDoDia(
     data,
@@ -141,6 +151,7 @@ async function principal() {
     cor: (areas.LIFE_AREA_COLORS[area] || ['#4ECDC4'])[0],
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
     semente: Number(iso.replace(/-/g, '')),
+    leitura: primeirasFrases(leituras.TRANSIT_CATALOG_PTBR_OVERRIDES[encontro.chave], 2),
   })
 
   const pasta = path.join(args.saida, iso)
