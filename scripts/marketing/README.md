@@ -31,6 +31,24 @@ marketing/out/2026-08-07/
 
 Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
+## Automático — GitHub Actions
+
+O card do dia é gerado e enviado sozinho, todo dia às **09:00 UTC (06:00 em
+Brasília)**, sem PC ligado. O runner do GitHub já traz Chrome e Node.
+
+**Pré-requisito, uma vez só:** cadastrar o secret no repositório.
+
+> Settings → Secrets and variables → Actions → New repository secret
+> Nome: `MONITORING_PASSWORD` · Valor: a senha do painel `/monitoramento`
+
+Para rodar na hora, ou gerar vários dias: aba **Actions** → *Card diário* →
+**Run workflow**, informando quantos dias e a data inicial.
+
+O workflow instala `fonts-urw-base35` porque o card usa Palatino, que não existe
+no Linux: o URW Palladio L (P052) é o equivalente livre, com as mesmas métricas.
+Sem isso o card sairia com serif genérico. Cada execução guarda os PNGs como
+artifact por 7 dias e publica um resumo com o trânsito escolhido.
+
 ## Estúdio — postar do celular
 
 O gerador roda no PC (precisa do Chrome) e o Instagram se posta do celular.
