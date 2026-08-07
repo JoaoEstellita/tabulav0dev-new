@@ -119,25 +119,32 @@ jobs:
           DATA: ${{ github.event.inputs.data || '' }}
         run: |
           DIA="${DATA:-$(date -u +%F)}"
-          ITENS=$(curl -s --max-time 20 \
+          # duas linhas: os formatos marcados e o id do assunto escolhido
+          LIDO=$(curl -s --max-time 20 \
             -H "Authorization: Bearer $MONITORING_PASSWORD" \
             "https://tabulav0dev-backend.vercel.app/api/marketing-cards" \
             | node -e "
               let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
                 try {
                   const dia = (JSON.parse(s).dias||[]).find(x => x.dia === process.argv[1]);
-                  console.log(dia && dia.pauta && Array.isArray(dia.pauta.itens)
-                    ? dia.pauta.itens.join(',') : '');
-                } catch { console.log('') }
-              })" "$DIA" || echo "")
+                  const p = dia && dia.pauta;
+                  console.log(p && Array.isArray(p.formatos) ? p.formatos.join(',') : '');
+                  console.log(p && p.opcaoId ? p.opcaoId : '');
+                } catch { console.log(''); console.log('') }
+              })" "$DIA" || printf '\n\n')
+
+          ITENS=$(echo "$LIDO" | sed -n '1p')
+          ASSUNTO=$(echo "$LIDO" | sed -n '2p')
 
           if [ -z "$ITENS" ]; then
             echo "Sem pauta para $DIA — gerando tudo, como de costume."
             echo "tem=nao" >> "$GITHUB_OUTPUT"
           else
             echo "Pauta de $DIA: $ITENS"
+            [ -n "$ASSUNTO" ] && echo "Assunto: $ASSUNTO"
             echo "tem=sim" >> "$GITHUB_OUTPUT"
             echo "itens=$ITENS" >> "$GITHUB_OUTPUT"
+            echo "assunto=$ASSUNTO" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Gerar e enviar
@@ -148,6 +155,7 @@ jobs:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DIAS: ${{ github.event.inputs.dias || '1' }}
           DATA: ${{ github.event.inputs.data || '' }}
+          ASSUNTO: ${{ steps.pauta.outputs.assunto }}
         run: |
           # pipefail é obrigatório aqui: o `tee` no fim do pipeline sempre
           # devolve 0, então sem isto uma falha do node passa VERDE. Foi o que
@@ -164,6 +172,9 @@ jobs:
           # então a conferência e o artifact procuram no lugar errado.
           ARGS="--dias=$DIAS --exigir-upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+          # o assunto escolhido no Estúdio manda; se ele nao existir mais, o
+          # gerador avisa e escolhe sozinho — dia sem peca e pior que peca errada
+          [ -n "$ASSUNTO" ] && ARGS="$ARGS --assunto=$ASSUNTO"
 
           echo "Rodando: node scripts/marketing/gerarCard.mjs $ARGS"
           node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee saida.txt

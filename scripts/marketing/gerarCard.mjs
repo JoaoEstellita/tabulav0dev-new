@@ -39,6 +39,9 @@ import {
   linhaDeHonestidade,
   paragrafoDeHonestidade,
 } from './lib/educativo.mjs'
+// mesma funcao que o calendario usa: se os ids divergirem, a pauta salva
+// ontem aponta para um assunto que o gerador nao encontra
+import { idDoAssunto as chaveDeEvento, opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
 import { montarCard } from './lib/template.mjs'
 import { montarCarta } from './lib/templateCarta.mjs'
 
@@ -81,6 +84,8 @@ function lerArgs(argv) {
     data: null,
     saida: path.join(MONOREPO, 'marketing/out'),
     upload: false,
+    // id vindo da pauta do Estudio; vazio deixa o gerador escolher
+    assunto: '',
     // Localmente uma falha de rede não deve abortar nada: o card já está no
     // disco. Na automação, silêncio é pior — ninguém veria o Estúdio parar.
     exigirUpload: false,
@@ -93,6 +98,7 @@ function lerArgs(argv) {
     if (!m) continue
     if (m[1] === 'dias') args.dias = Math.max(1, parseInt(m[2], 10) || 1)
     else if (m[1] === 'data') args.data = m[2]
+    else if (m[1] === 'assunto') args.assunto = m[2]
     else if (m[1] === 'saida') args.saida = path.resolve(m[2])
     else if (m[1] === 'backend') args.backend = m[2].replace(/\/+$/, '')
     else if (m[1] === 'upload') args.upload = m[2] !== 'false'
@@ -312,35 +318,6 @@ async function salvarHistorico(raizSaida, historico) {
   )
 }
 
-/**
- * Identidade de um evento para o histórico.
- *
- * Antes o histórico guardava só a chave do aspecto do catálogo, então dois dias
- * seguidos podiam anunciar o MESMO período de Lua fora de curso sem que nada
- * percebesse — foi o que produziu três posts idênticos em 13, 14 e 15/08. Aqui
- * cada classe de evento tem chave própria, e a da Lua vazia é o instante de
- * início do período, não o dia em que foi publicada.
- */
-function chaveDeEvento(ev) {
-  switch (ev.tipo) {
-    case 'lua_fora_de_curso':
-      return `vazia:${ev.inicio.toISOString()}`
-    case 'eclipse':
-      return `eclipse:${ev.luminar}:${ev.quando.toISOString().slice(0, 10)}`
-    case 'ingresso':
-      return `ingresso:${ev.corpo}:${ev.signo}`
-    case 'fase':
-      return `fase:${ev.fase}:${ev.signo}`
-    case 'retrogrado':
-    case 'direto':
-      return `${ev.tipo}:${ev.corpo}`
-    case 'aspecto':
-      return ev.aspecto?.chave || 'aspecto'
-    default:
-      return ev.tipo
-  }
-}
-
 /** Chaves usadas na janela que precede `iso`. */
 function chavesRecentes(historico, iso) {
   const fim = meioDiaUTC(iso).getTime()
@@ -353,7 +330,7 @@ function chavesRecentes(historico, iso) {
   return usadas
 }
 
-async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
+async function gerarUmDia(chrome, cat, iso, raizSaida, historico, assunto = '') {
   const data = meioDiaUTC(iso)
   const bruto = encontroDoDia(
     data, cat.orbes, cat.titulos, cat.aforismos, chavesRecentes(historico, iso)
@@ -384,15 +361,37 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
   // Plutão sextil Netuno fica exato por semanas e saía dois dias seguidos com o
   // mesmo texto. Sem manchete, o dia vira educativo — que é assunto novo.
   const forte = eventos.find((e) => e.peso >= 90) || null
-  const principal = forte || eventos.find((e) => e.tipo === 'lua_fora_de_curso') || null
+  const automatico = forte || eventos.find((e) => e.tipo === 'lua_fora_de_curso') || null
+
+  // O assunto que o João marcou no Estúdio manda. Quando ele não existe mais —
+  // pauta velha, efeméride que mudou — a escolha automática assume, porque um
+  // dia sem peça é pior que um dia com a peça errada.
+  const escolhido = assunto
+    ? acharOpcao(opcoesDoDia(data, { catalogos: cat.educativo, orbes: cat.orbes }), assunto)
+    : null
+  if (assunto && !escolhido) {
+    console.warn(`  aviso: assunto "${assunto}" não existe mais em ${iso}; escolhendo sozinho.`)
+  }
+
+  const principal = escolhido
+    ? escolhido.tipo === 'educativo'
+      ? null
+      : escolhido.evento
+    : automatico
+
   // Os ingressos dos próximos 40 dias dizem quanto cada posição ainda dura — é o
   // que impede o card de falar de um planeta que troca de signo depois de amanhã.
-  const tema = principal
-    ? null
-    : temaEducativo(mapa, cat.educativo, usadas, {
-        ingressos: ingressosProximos(data, 40),
-        data,
-      })
+  const tema = escolhido
+    ? escolhido.tipo === 'educativo'
+      ? escolhido.evento
+      : null
+    : principal
+      ? null
+      : temaEducativo(mapa, cat.educativo, usadas, {
+          ingressos: ingressosProximos(data, 40),
+          data,
+        })
+
   const secundarios = principal ? eventos.filter((e) => e !== principal).slice(0, 2) : []
 
   const voz = principal ? escrever(principal) : null
@@ -538,7 +537,9 @@ async function principal() {
   for (let i = 0; i < args.dias; i++) {
     const dia = new Date(inicio.getTime() + i * 86_400_000)
     const iso = paraISO(dia)
-    const r = await gerarUmDia(chrome, cat, iso, args.saida, historico)
+    // o assunto vale para o primeiro dia da rodada: pauta e por dia, e gerar
+    // varios dias de uma vez e um caso de reposicao, nao de curadoria
+    const r = await gerarUmDia(chrome, cat, iso, args.saida, historico, i === 0 ? args.assunto : '')
 
     if (r.pulado) {
       console.log(`${iso}  —  pulado: ${r.pulado}`)

@@ -1,0 +1,135 @@
+/**
+ * Os assuntos que um dia comporta.
+ *
+ * A editorial nasceu mostrando o mesmo evento repetido por ângulo — "Mercúrio
+ * entra em Leão" na véspera e no dia, "Eclipse solar total" quatro vezes — e o
+ * João disse o que era: aquilo não são opções. Eu tinha montado a lista pelo
+ * eixo errado.
+ *
+ * Os assuntos alternativos já eram calculados; nunca chegavam à tela. Num dia
+ * qualquer há de quatro a sete, entre evento do céu, Lua fora de curso e os
+ * educativos ancorados nas posições de agora.
+ *
+ * Este módulo é compartilhado de propósito: o calendário e o gerador precisam
+ * concordar no ID de cada assunto, senão a pauta salva ontem aponta para nada.
+ */
+import { eventosDoDia, ingressosProximos } from './eventos.mjs'
+import { mapaDoCeu } from './ceu.mjs'
+import { temaEducativo } from './educativo.mjs'
+import { escrever, mereceEixo, rotuloDeVespera } from './vozes.mjs'
+
+/**
+ * Identidade estável de um assunto.
+ *
+ * Estável é a palavra: a pauta guarda o id e o gerador o procura no dia
+ * seguinte. Se ele mudar entre uma chamada e outra — por depender de ordem, de
+ * relógio ou de sorteio — a escolha do João some sem aviso.
+ */
+export function idDoAssunto(ev) {
+  switch (ev.tipo) {
+    case 'lua_fora_de_curso':
+      return `vazia:${ev.inicio.toISOString()}`
+    case 'eclipse':
+      return `eclipse:${ev.luminar}:${ev.quando.toISOString().slice(0, 10)}`
+    case 'ingresso':
+      return `ingresso:${ev.corpo}:${ev.signo}`
+    case 'fase':
+      return `fase:${ev.fase}:${ev.signo}`
+    case 'retrogrado':
+    case 'direto':
+      return `${ev.tipo}:${ev.corpo}`
+    case 'educativo':
+      return `educativo:${ev.chave}`
+    case 'aspecto':
+      return ev.aspecto?.chave || 'aspecto'
+    default:
+      return ev.tipo
+  }
+}
+
+/** O ângulo editorial, conforme a distância do evento. */
+export function anguloDoAssunto(ev) {
+  if (ev.tipo === 'educativo') return 'O que significa num mapa natal'
+  if (ev.tipo === 'lua_fora_de_curso') return 'Aviso do dia — dura horas, e volta toda semana'
+  const falta = ev.diasFalta ?? 0
+  if (falta === 0) return 'É hoje — o dado exato, com hora'
+  if (falta === 1) return 'Amanhã — o que muda e o que não muda'
+  return `Faltam ${falta} dias — explica o que é, antes de todo mundo repetir`
+}
+
+/**
+ * Que peças o assunto comporta.
+ *
+ * Carrossel só onde há o que explicar (eclipse) ou eixo para recortar. O
+ * educativo e a Lua fora de curso ficam no card: não sustentam doze segundos de
+ * vídeo nem seis slides.
+ */
+export function formatosDoAssunto(ev) {
+  if (ev.tipo === 'educativo') return ['card']
+  if (ev.tipo === 'lua_fora_de_curso') return ['card']
+
+  const formatos = ['card', 'reel']
+  if (ev.tipo === 'eclipse') formatos.push('carrossel')
+  else if ((ev.diasFalta ?? 0) === 0 && mereceEixo(ev)) formatos.push('carrossel')
+  return formatos
+}
+
+/** Quantos educativos oferecer por dia, além do que o céu já dá. */
+const EDUCATIVOS_POR_DIA = 3
+
+/**
+ * As opções de um dia, em ordem de peso.
+ *
+ * O aspecto fica de fora: por regra ele nunca encabeça uma peça — fica exato por
+ * semanas e sai repetido — então oferecê-lo como assunto seria oferecer algo que
+ * o gerador recusaria.
+ *
+ * @param {Date} data
+ * @param {object} deps `{ catalogos, orbes }`
+ * @returns {{id, tipo, titulo, angulo, formatos, evento}[]}
+ */
+export function opcoesDoDia(data, { catalogos, orbes }) {
+  const mapa = mapaDoCeu(data, orbes)
+  const opcoes = []
+
+  for (const ev of eventosDoDia(data, mapa.aspectos)) {
+    if (ev.tipo === 'aspecto') continue
+    const v = escrever(ev)
+    const vespera = rotuloDeVespera(ev)
+    opcoes.push({
+      id: idDoAssunto(ev),
+      tipo: ev.tipo,
+      titulo: vespera ? `${vespera}: ${v.titulo}` : v.titulo,
+      angulo: anguloDoAssunto(ev),
+      formatos: formatosDoAssunto(ev),
+      evento: ev,
+    })
+  }
+
+  // Os educativos são pedidos em sequência, cada um marcando o anterior como
+  // usado — é assim que saem três assuntos distintos em vez do mesmo três vezes.
+  const usadas = new Set()
+  const ingressos = ingressosProximos(data, 40)
+  for (let i = 0; i < EDUCATIVOS_POR_DIA; i++) {
+    const tema = temaEducativo(mapa, catalogos, usadas, { ingressos, data })
+    if (!tema || tema.repetido) break
+    usadas.add(tema.chave)
+    const ev = { ...tema, tipo: 'educativo' }
+    opcoes.push({
+      id: idDoAssunto(ev),
+      tipo: 'educativo',
+      titulo: tema.titulo,
+      angulo: anguloDoAssunto(ev),
+      formatos: formatosDoAssunto(ev),
+      evento: ev,
+    })
+  }
+
+  return opcoes
+}
+
+/** Acha a opção que a pauta escolheu. `null` quando o id não existe mais. */
+export function acharOpcao(opcoes, id) {
+  if (!id) return null
+  return opcoes.find((o) => o.id === id) || null
+}

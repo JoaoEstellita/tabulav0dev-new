@@ -112,32 +112,85 @@
   .baixar:hover { background: var(--ouro); color: #241E00; }
   .baixar[disabled] { opacity: .6; }
 
-  /* a editorial: pautas dos próximos dias, para marcar o que sai */
-  #editorial { margin-bottom: 40px; }
-  .pautas { display: flex; flex-direction: column; gap: 10px; }
-  .pauta {
-    display: flex; gap: 14px; align-items: flex-start;
+  #editorial { margin-bottom: 32px; }
+  #editorial > summary {
+    list-style: none; cursor: pointer;
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ouro);
+    padding: 14px 16px; min-height: 44px;
     background: var(--superficie); border: 1px solid var(--borda);
-    border-radius: 12px; padding: 14px 16px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .pauta .quando {
-    font-family: var(--mono); font-size: 15px; color: var(--ouro);
-    flex-shrink: 0; padding-top: 2px; font-variant-numeric: tabular-nums;
+  #editorial > summary::-webkit-details-marker { display: none; }
+  #editorial > summary::after { content: "▾"; color: var(--tinta-2); }
+  #editorial[open] > summary::after { content: "▴"; }
+
+  .pautas { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .dia-pauta {
+    background: var(--superficie); border: 1px solid var(--borda);
+    border-radius: 12px; padding: 12px 14px;
   }
-  .pauta .corpo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .pauta strong { font-size: 16px; font-weight: 600; }
-  .pauta .angulo { font-size: 13px; color: var(--tinta-2); line-height: 1.45; }
-  .formatos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .dia-pauta > .quando {
+    font-family: var(--mono); font-size: 13px; color: var(--ouro);
+    font-variant-numeric: tabular-nums; display: block; margin-bottom: 8px;
+  }
+  /* um assunto por dia: rádio, não caixa — a escolha é exclusiva */
+  .assunto {
+    display: block; cursor: pointer; padding: 9px 10px; border-radius: 9px;
+    border: 1px solid transparent; margin-bottom: 2px;
+  }
+  .assunto:hover { background: var(--elevado); }
+  .assunto.on { border-color: var(--ouro); background: rgba(255,217,61,0.07); }
+  .assunto input { position: absolute; opacity: 0; pointer-events: none; }
+  .assunto .t { font-size: 14px; line-height: 1.35; display: block; }
+  .assunto.on .t { color: var(--ouro); }
+  .assunto .a { font-size: 12px; color: var(--tinta-2); line-height: 1.4; display: block; margin-top: 2px; }
+
+  /* os formatos só aparecem no assunto escolhido */
+  .formatos { display: none; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .assunto.on .formatos { display: flex; }
   /* alvo de toque grande: isto é usado no celular, com o polegar */
   .formato {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--mono); font-size: 13px; color: var(--tinta-2);
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 12px; color: var(--tinta-2);
     background: var(--elevado); border: 1px solid var(--borda);
-    border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    border-radius: 999px; padding: 7px 12px; cursor: pointer;
     min-height: 38px;
   }
   .formato.on { color: var(--noite); background: var(--ouro); border-color: var(--ouro); }
-  .formato input { accent-color: var(--noite); width: 16px; height: 16px; }
+  .formato input { accent-color: var(--noite); width: 15px; height: 15px; }
+
+  /**
+   * A editorial vive numa coluna lateral a partir de 1000px.
+   *
+   * Ela nasceu no topo e empurrava os cards recém-criados para baixo — que são
+   * justamente o que se abre o Estúdio para ver. Abaixo de 1000px vira um
+   * `details` recolhido de uma linha, então no celular a primeira coisa na tela
+   * continua sendo o card do dia.
+   */
+  @media (min-width: 1000px) {
+    .env { max-width: 1040px; }
+    #painel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 40px;
+      align-items: start;
+    }
+    /* cabeçalho e lista ocupam a coluna da esquerda */
+    #painel > header, #painel > #lista { grid-column: 1; }
+    #editorial {
+      grid-column: 2; grid-row: 1 / span 2;
+      position: sticky; top: 20px;
+      max-height: calc(100vh - 40px); overflow-y: auto;
+      margin: 0; padding-left: 20px;
+      border-left: 1px solid var(--borda);
+    }
+    /* aberta por padrão no desktop, onde não disputa espaço com nada */
+    #editorial > summary { display: none; }
+    #editorial[open] > .conteudo-editorial, #editorial > .conteudo-editorial { display: block; }
+  }
+
 
   /* separa o carrossel e a enquete das peças soltas do dia */
   .secao {
@@ -192,7 +245,7 @@
     </div>
     <button type="button" class="sair" id="sair">Sair</button>
   </div>
-  <section id="editorial"></section>
+  <details id="editorial"></details>
   <div id="lista"></div>
 </main>
 
@@ -298,62 +351,101 @@
    * eventos são efeméride, não opinião), mas quem decide o que vira post é o
    * João, e o Actions passa a obedecer.
    */
+  /**
+   * A editorial: os assuntos que cada dia comporta, para escolher qual vira post.
+   *
+   * A primeira versao listava o mesmo evento repetido por angulo de publicacao —
+   * "Mercurio entra em Leao" na vespera e no dia, "Eclipse solar" quatro vezes —
+   * e o Joao disse o que era: aquilo nao sao opcoes. Agora cada dia traz de
+   * quatro a sete ASSUNTOS distintos, e um deles vira a peca.
+   */
   function desenharEditorial(dias) {
     var editorial = document.getElementById('editorial')
 
-    // o calendário mais recente é o do dia mais novo que o tiver
     var comCal = dias.filter(function (d) { return d.calendario && d.calendario.length })
     if (!comCal.length) {
-      // A mensagem antiga mandava rodar um comando no PC — que é exatamente o
-      // atrito que o Estúdio existe para eliminar. As pautas chegam sozinhas
-      // com a execução diária; só a primeira vez precisa de um empurrão.
-      editorial.innerHTML = '<h2 class="secao">Editorial</h2>' +
-        '<p class="vazio">As pautas dos próximos dias chegam junto com o card, ' +
-        'todo dia às 6h.<br><br>' +
-        'Para preencher agora: <b>Actions → Card diário → Run workflow</b>, ' +
-        'marcando <b>só o calendário</b>.</p>'
+      editorial.innerHTML =
+        '<summary>Editorial</summary>' +
+        '<p class="vazio">As pautas dos proximos dias chegam junto com o card, ' +
+        'todo dia as 6h.<br><br>' +
+        'Para preencher agora: <b>Actions &rarr; Card diario &rarr; Run workflow</b>, ' +
+        'marcando <b>so o calendario</b>.</p>'
       return
     }
 
-    var pautas = comCal[0].calendario
-    // o que já foi escolhido antes volta marcado
-    var jaEscolhido = {}
+    var agenda = comCal[0].calendario
+    var escolhas = {}
     dias.forEach(function (d) {
-      if (d.pauta && d.pauta.itens) jaEscolhido[d.dia] = d.pauta.itens
+      if (d.pauta && d.pauta.opcaoId) {
+        escolhas[d.dia] = { id: d.pauta.opcaoId, formatos: d.pauta.formatos || [] }
+      }
     })
 
     var hoje = new Date().toISOString().slice(0, 10)
-    var futuras = pautas.filter(function (p) { return p.publicarEm >= hoje })
-    if (!futuras.length) futuras = pautas.slice(0, 8)
+    var futuros = agenda.filter(function (x) { return x.dia >= hoje })
+    if (!futuros.length) futuros = agenda.slice(0, 10)
+    futuros = futuros.slice(0, 14)
+
+    var corpo = futuros.map(function (d) {
+      var escolha = escolhas[d.dia] || {}
+      var linhas = d.opcoes.map(function (o) {
+        var on = escolha.id === o.id
+        var formatos = o.formatos.map(function (f) {
+          // sem escolha previa, o card vem marcado: e o formato que todo
+          // assunto comporta e o que sai por padrao
+          var fon = on ? (escolha.formatos.indexOf(f) >= 0) : (f === 'card')
+          return '<label class="formato' + (fon ? ' on' : '') + '">' +
+            '<input type="checkbox" data-dia="' + d.dia + '" data-formato="' + f + '"' +
+            (fon ? ' checked' : '') + '> ' + f + '</label>'
+        }).join('')
+        return '<label class="assunto' + (on ? ' on' : '') + '">' +
+          '<input type="radio" name="assunto-' + d.dia + '" data-dia="' + d.dia +
+            '" value="' + escapar(o.id) + '"' + (on ? ' checked' : '') + '>' +
+          '<span class="t">' + escapar(o.titulo) + '</span>' +
+          '<span class="a">' + escapar(o.angulo) + '</span>' +
+          '<span class="formatos">' + formatos + '</span>' +
+        '</label>'
+      }).join('')
+
+      return '<div class="dia-pauta">' +
+        '<span class="quando">' + d.dia.slice(8) + '/' + d.dia.slice(5, 7) + '</span>' +
+        linhas +
+      '</div>'
+    }).join('')
+
+    var total = futuros.reduce(function (n, d) { return n + d.opcoes.length }, 0)
 
     editorial.innerHTML =
-      '<h2 class="secao">Editorial · escolha o que sai</h2>' +
-      '<div class="pautas">' +
-      futuras.slice(0, 12).map(function (p, i) {
-        var marcados = jaEscolhido[p.publicarEm] || []
-        var formatos = p.formatos.map(function (f) {
-          var on = marcados.indexOf(f) >= 0
-          return '<label class="formato' + (on ? ' on' : '') + '">' +
-            '<input type="checkbox" data-dia="' + p.publicarEm + '" data-formato="' + f + '"' +
-            (on ? ' checked' : '') + '> ' + f + '</label>'
-        }).join('')
-        return '<article class="pauta">' +
-          '<span class="quando">' + p.publicarEm.slice(8) + '/' + p.publicarEm.slice(5, 7) + '</span>' +
-          '<div class="corpo">' +
-            '<strong>' + escapar(p.titulo) + '</strong>' +
-            '<span class="angulo">' + escapar(p.angulo) + '</span>' +
-            '<div class="formatos">' + formatos + '</div>' +
-          '</div>' +
-        '</article>'
-      }).join('') +
-      '</div>' +
-      '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
-      '<span id="aviso-pauta" class="aviso"></span>'
+      '<summary>Editorial <span>' + total + ' assuntos</span></summary>' +
+      '<div class="conteudo-editorial">' +
+        '<div class="pautas">' + corpo + '</div>' +
+        '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
+        '<span id="aviso-pauta" class="aviso"></span>' +
+      '</div>'
+
+    // um assunto por dia: marcar um desmarca o irmao, e so o marcado mostra
+    // os formatos
+    // Aberta no desktop, recolhida no celular. O `open` e explicito porque o
+    // `details` esconde o conteudo por regra do proprio navegador, e CSS sozinho
+    // nao vence isso de forma confiavel.
+    editorial.open = window.matchMedia('(min-width: 1000px)').matches
+
+    editorial.querySelectorAll('.assunto input[type=radio]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var dia = r.dataset.dia
+        editorial.querySelectorAll('.assunto').forEach(function (el) {
+          var meu = el.querySelector('input[type=radio]')
+          if (meu && meu.dataset.dia === dia) el.classList.toggle('on', meu.checked)
+        })
+      })
+    })
 
     editorial.querySelectorAll('.formato input').forEach(function (cx) {
       cx.addEventListener('change', function () {
         cx.parentElement.classList.toggle('on', cx.checked)
       })
+      // clicar num formato nao pode trocar o assunto marcado
+      cx.parentElement.addEventListener('click', function (ev) { ev.stopPropagation() })
     })
 
     document.getElementById('salvar-pauta').addEventListener('click', function () {
@@ -363,29 +455,36 @@
 
   function salvarPauta(botao, editorial) {
     var porDia = {}
-    editorial.querySelectorAll('.formato input:checked').forEach(function (cx) {
-      var d = cx.dataset.dia
-      if (!porDia[d]) porDia[d] = []
-      porDia[d].push(cx.dataset.formato)
+    editorial.querySelectorAll('.assunto input[type=radio]:checked').forEach(function (r) {
+      var dia = r.dataset.dia
+      var caixa = r.closest('.assunto')
+      var formatos = []
+      caixa.querySelectorAll('.formato input:checked').forEach(function (cx) {
+        formatos.push(cx.dataset.formato)
+      })
+      porDia[dia] = { opcaoId: r.value, formatos: formatos }
     })
 
-    // Dia sem nada marcado também é decisão: grava a lista vazia para o Actions
-    // saber que o silêncio foi escolhido, e não falta de pauta.
-    editorial.querySelectorAll('.pauta .quando').forEach(function (el) {
-      var cx = el.parentElement.querySelector('.formato input')
-      if (cx && !porDia[cx.dataset.dia]) porDia[cx.dataset.dia] = []
-    })
-
-    var senha = ultimaSenha
     var dias = Object.keys(porDia)
+    var aviso = document.getElementById('aviso-pauta')
+    if (!dias.length) {
+      aviso.textContent = 'Nenhum assunto marcado.'
+      setTimeout(function () { aviso.textContent = '' }, 2600)
+      return
+    }
+
     botao.disabled = true
     botao.textContent = 'Salvando…'
 
     Promise.all(dias.map(function (dia) {
-      var corpo = JSON.stringify({ itens: porDia[dia], salvoEm: new Date().toISOString() })
+      var corpo = JSON.stringify({
+        opcaoId: porDia[dia].opcaoId,
+        formatos: porDia[dia].formatos,
+        salvoEm: new Date().toISOString()
+      })
       return fetch(BACKEND + '/api/marketing-cards', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + senha },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ultimaSenha },
         body: JSON.stringify({
           dia: dia,
           arquivo: 'pauta.json',
@@ -394,9 +493,8 @@
       })
     })).then(function (rs) {
       var falhou = rs.filter(function (r) { return !r.ok }).length
-      var aviso = document.getElementById('aviso-pauta')
       aviso.textContent = falhou
-        ? falhou + ' dia(s) não salvaram.'
+        ? falhou + ' dia(s) nao salvaram.'
         : 'Pauta salva para ' + dias.length + ' dia(s).'
       botao.disabled = false
       botao.textContent = 'Salvar pauta'

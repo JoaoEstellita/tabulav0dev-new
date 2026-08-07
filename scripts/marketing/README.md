@@ -33,14 +33,30 @@ Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
 ## Editorial — escolher a pauta
 
-Antes o robô decidia sozinho e o que saía era o que saía. Agora as pautas
-calculadas dos próximos dias aparecem no Estúdio com caixas de seleção, e o
-Actions obedece ao que foi marcado.
+Antes o robô decidia sozinho e o que saía era o que saía. Agora cada dia oferece
+de quatro a sete **assuntos distintos** no Estúdio, você marca qual vira post, e
+o Actions obedece.
+
+A primeira versão listava o mesmo evento repetido por ângulo de publicação —
+"Mercúrio entra em Leão" na véspera e no dia, "Eclipse solar" quatro vezes. Não
+eram opções; era a mesma coisa várias vezes. A lista agora é por assunto:
+
+```
+12/08  Eclipse solar total em Leão      [card reel carrossel]
+       Lua fora de curso                [card]
+       Vênus em Libra                   [card]   educativo
+       Marte em Câncer                  [card]   educativo
+       Júpiter em Leão                  [card]   educativo
+```
+
+**Um assunto por dia.** Os que você não escolher não entram em fila — somem. Se
+isso incomodar (ver o mesmo educativo disponível todo dia e nunca sair), o
+caminho é uma fila, não vários posts por dia.
 
 ```
 calendario.mjs --upload  →  marketing/AAAA-MM-DD/calendario.json
         ↓
-Estúdio                  →  marca card / reel / carrossel por dia
+Estúdio                  →  escolhe o assunto e os formatos do dia
         ↓
 POST                     →  marketing/AAAA-MM-DD/pauta.json
         ↓
@@ -96,15 +112,15 @@ os slides junto se já existirem, então gere o carrossel **antes** de enviar.
 ## Planejar a semana
 
 ```bash
-node scripts/marketing/calendario.mjs                 # 30 dias a partir de hoje
+node scripts/marketing/calendario.mjs                 # 21 dias a partir de hoje
 node scripts/marketing/calendario.mjs --dias=45
-node scripts/marketing/calendario.mjs --json          # para consumir em outro lugar
+node scripts/marketing/calendario.mjs --json          # o que o Estúdio consome
+node scripts/marketing/calendario.mjs --upload        # publica para o Estúdio
 ```
 
-Lista o que acontece, em que dia publicar e com que ângulo — no dia, na véspera
-ou com antecedência. Eclipse aparece três vezes (cinco dias antes, dois dias
-antes e no dia), porque é o único evento que o público já ouviu falar em outro
-lugar.
+Imprime, por dia, todos os assuntos que ele comporta e os formatos de cada um —
+a mesma lista que aparece na editorial. Serve para planejar a semana no terminal
+sem abrir o Estúdio.
 
 ## Automático — GitHub Actions
 
@@ -171,8 +187,8 @@ se quer enviar nada para a nuvem.
 
 **Continua não sendo um CMS.** Não edita texto, não gera peça e não publica no
 Instagram — quem publica é você, do celular. O único estado que ele guarda é a
-pauta: quais formatos saem em que dia. Foi a linha que valeu a pena cruzar,
-porque sem ela o robô escolhia o assunto sozinho.
+pauta: qual assunto e quais formatos saem em que dia. Foi a linha que valeu a
+pena cruzar, porque sem ela o robô escolhia o assunto sozinho.
 
 Detalhe de implementação: a cópia usa `textarea` + `execCommand` como caminho
 principal, não `navigator.clipboard`, porque a Clipboard API exige contexto
@@ -364,6 +380,7 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | `lib/mensal.mjs` | eventos do mês por eixo e a casa pelo ascendente |
 | `lib/roteiroLegenda.mjs` | tempo dos pedaços da legenda queimada |
 | `lib/efemerideAnimada.mjs` | o céu quadro a quadro, para o Reel se mover |
+| `lib/pautas.mjs` | os assuntos que cada dia comporta, com id estável |
 | `lib/vozes.mjs` | léxico, regras de escrita, legendas e enquete |
 | `lib/templateCarrossel.mjs` | HTML/CSS dos slides |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |
