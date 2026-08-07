@@ -31,6 +31,23 @@ marketing/out/2026-08-07/
 
 Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
+## Carrossel
+
+```bash
+node scripts/marketing/gerarCarrossel.mjs                    # hoje, roteiro automático
+node scripts/marketing/gerarCarrossel.mjs --data=2026-08-12
+node scripts/marketing/gerarCarrossel.mjs --roteiro=eixo
+```
+
+Dois roteiros. **`explicador`** (5 slides) é escolhido sozinho quando o dia tem
+eclipse: o que é, por que é raro, e se dá para ver do Brasil — este último com a
+visibilidade calculada, que é o slide que ninguém mais consegue fazer sem errar.
+**`eixo`** (6 slides) entra nos outros eventos de peso: um slide por signo da
+cruz, com o ângulo que cada um recebe.
+
+Sai em `carrossel/01.png … 06.png` na pasta do dia. O `gerarCard --upload` leva
+os slides junto se já existirem, então gere o carrossel **antes** de enviar.
+
 ## Planejar a semana
 
 ```bash
@@ -206,6 +223,26 @@ para a seguinte — igualmente verdadeira, só menos exata. O histórico fica em
 **Campo estelar determinístico.** A semente vem da data, então regerar um card
 já publicado produz exatamente a mesma imagem.
 
+**Dia sem notícia vira card educativo.** Em 60 dias, treze não têm evento forte,
+e vêm em blocos de três e quatro seguidos. Antes, os três dias de um mesmo
+período de Lua fora de curso saíam com título, janela e texto IDÊNTICOS. Agora,
+quando não há nada com peso ≥ 90 nem período de Lua vazia inédito, a peça troca
+de assunto: explica o que uma posição significa num mapa natal, usando os 345
+textos curados que nunca tinham saído do app (`planetInSignOverridesPtBR` e
+`natalPlanetAspectOverridesPtBR`).
+
+O assunto **nunca é sorteado** — sai do céu daquele dia. Se o card fala de Vênus
+em Libra, é porque Vênus está em Libra. E a peça carrega obrigatoriamente a linha
+que separa trânsito de mapa natal, sem a qual viraria horóscopo.
+
+Duas exclusões deliberadas: aspecto entre dois planetas lentos (Plutão sextil
+Netuno descreve todo mundo nascido numa década — é o vício do signo solar com
+outro nome) e `signInHouseOverridesPtBR`, que fala "você".
+
+**Aspecto nunca encabeça.** Ele entra como evento secundário, mas como manchete
+reproduz o problema que o `eventos.mjs` existe para resolver: fica exato por
+semanas e sai repetido.
+
 **Eclipse tem peso próprio.** Todo eclipse é uma lunação, então sem tratamento
 específico o eclipse solar total de 12/08/2026 sairia como "Lua Nova em Leão" —
 o maior evento astronômico do ano anunciado como fase comum. A hierarquia é
@@ -255,12 +292,15 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 |---|---|
 | `gerarCard.mjs` | orquestrador e CLI |
 | `gerarVideo.mjs` | Reel animado |
+| `gerarCarrossel.mjs` | carrossel, roteiros `explicador` e `eixo` |
 | `calendario.mjs` | pautas dos próximos dias, com data e ângulo editorial |
 | `estudio.mjs` | visor local para postar do celular |
 | `provaGeometria.mjs` | folha de prova dos 5 aspectos |
 | `lib/ceu.mjs` | aspectos do céu, força, área da vida |
 | `lib/eventos.mjs` | ingresso, estação, fase, eclipse, Lua fora de curso |
-| `lib/vozes.mjs` | léxico e regras de escrita das peças |
+| `lib/educativo.mjs` | assunto dos dias sem notícia, ancorado no céu |
+| `lib/vozes.mjs` | léxico, regras de escrita, legendas e enquete |
+| `lib/templateCarrossel.mjs` | HTML/CSS dos slides |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |
 | `lib/template.mjs` | HTML/CSS do card e os diagramas SVG |
 | `lib/__tests__/eventos.spec.mjs` | golden de efeméride (roda no `npx vitest run`) |

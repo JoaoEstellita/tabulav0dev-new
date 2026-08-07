@@ -28,10 +28,17 @@ import { eventosDoDia } from './lib/eventos.mjs'
 import {
   escrever,
   montarLegenda as montarLegendaDaVoz,
+  montarLegendaEducativa,
+  perguntaDeEnquete,
   eixoDoSigno,
   mereceEixo,
   rotuloDeVespera,
 } from './lib/vozes.mjs'
+import {
+  temaEducativo,
+  linhaDeHonestidade,
+  paragrafoDeHonestidade,
+} from './lib/educativo.mjs'
 import { montarCard } from './lib/template.mjs'
 import { montarCarta } from './lib/templateCarta.mjs'
 
@@ -101,7 +108,15 @@ function lerArgs(argv) {
  * PC ligado. A senha é a mesma do painel de monitoramento.
  */
 async function enviarParaNuvem(pasta, iso, { backend, senha }) {
-  const arquivos = ['carta.png', 'feed.png', 'story.png', 'legenda.txt']
+  // Os slides do carrossel entram se existirem — quem os gera é o
+  // `gerarCarrossel.mjs`, num passo separado, e em dia sem evento forte nem
+  // chegam a existir. Dez é o teto do Instagram e o do backend.
+  const slides = Array.from(
+    { length: 10 },
+    (_, i) => `carrossel/${String(i + 1).padStart(2, '0')}.png`
+  ).filter((nome) => existsSync(path.join(pasta, nome)))
+
+  const arquivos = ['carta.png', 'feed.png', 'story.png', 'legenda.txt', 'enquete.txt', ...slides]
   const enviados = []
   const falhas = []
 
@@ -146,7 +161,7 @@ function meioDiaUTC(iso) {
 const paraISO = (data) => data.toISOString().slice(0, 10)
 
 async function carregarCatalogos() {
-  const [titulos, aforismos, leituras, areas, orbes] = await Promise.all([
+  const [titulos, aforismos, leituras, areas, orbes, planetaSigno, aspectoNatal] = await Promise.all([
     lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
     // 724 interpretações de ~315 caracteres que as peças ignoravam: é o que
@@ -158,6 +173,14 @@ async function carregarCatalogos() {
       'LIFE_AREA_ATTRIBUTION', 'LIFE_AREA_COLORS', 'LIFE_AREA_LABELS',
     ]),
     lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
+    // 345 textos curados que nunca saíram do app e são o conteúdo dos dias em
+    // que o céu não é notícia. Terceira pessoa, ~340 caracteres.
+    lerLiterais(path.join(FRONTEND, 'src/data/planetInSignOverridesPtBR.ts'), [
+      'PLANET_IN_SIGN_PTBR_OVERRIDES',
+    ]),
+    lerLiterais(path.join(FRONTEND, 'src/data/natalPlanetAspectOverridesPtBR.ts'), [
+      'NATAL_PLANET_ASPECT_PTBR_OVERRIDES',
+    ]),
   ])
 
   return {
@@ -168,6 +191,10 @@ async function carregarCatalogos() {
     cores: areas.LIFE_AREA_COLORS,
     rotulos: areas.LIFE_AREA_LABELS,
     orbes: orbes.PLANET_ASPECT_ORBS,
+    educativo: {
+      planetaNoSigno: planetaSigno.PLANET_IN_SIGN_PTBR_OVERRIDES,
+      aspectoNatal: aspectoNatal.NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+    },
   }
 }
 
@@ -285,6 +312,35 @@ async function salvarHistorico(raizSaida, historico) {
   )
 }
 
+/**
+ * Identidade de um evento para o histórico.
+ *
+ * Antes o histórico guardava só a chave do aspecto do catálogo, então dois dias
+ * seguidos podiam anunciar o MESMO período de Lua fora de curso sem que nada
+ * percebesse — foi o que produziu três posts idênticos em 13, 14 e 15/08. Aqui
+ * cada classe de evento tem chave própria, e a da Lua vazia é o instante de
+ * início do período, não o dia em que foi publicada.
+ */
+function chaveDeEvento(ev) {
+  switch (ev.tipo) {
+    case 'lua_fora_de_curso':
+      return `vazia:${ev.inicio.toISOString()}`
+    case 'eclipse':
+      return `eclipse:${ev.luminar}:${ev.quando.toISOString().slice(0, 10)}`
+    case 'ingresso':
+      return `ingresso:${ev.corpo}:${ev.signo}`
+    case 'fase':
+      return `fase:${ev.fase}:${ev.signo}`
+    case 'retrogrado':
+    case 'direto':
+      return `${ev.tipo}:${ev.corpo}`
+    case 'aspecto':
+      return ev.aspecto?.chave || 'aspecto'
+    default:
+      return ev.tipo
+  }
+}
+
 /** Chaves usadas na janela que precede `iso`. */
 function chavesRecentes(historico, iso) {
   const fim = meioDiaUTC(iso).getTime()
@@ -310,16 +366,50 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
   // O que MUDA hoje vem antes do que está igual há semanas: ingresso, estação
   // retrógrada, fase da lua e Lua fora de curso ganham do aspecto vigente.
   const mapa = mapaDoCeu(data, cat.orbes)
-  const eventos = eventosDoDia(data, mapa.aspectos)
-  const principal = eventos[0] || null
-  const secundarios = eventos.slice(1, 3)
+  const usadas = chavesRecentes(historico, iso)
+  const eventos = eventosDoDia(data, mapa.aspectos).filter((e) => {
+    // Um período de Lua fora de curso dura até 42h e atravessa três dias, e os
+    // três reportavam a MESMA janela, com título e texto idênticos. A chave é o
+    // instante de início, então o período só vira manchete uma vez.
+    if (e.tipo !== 'lua_fora_de_curso') return true
+    return !usadas.has(chaveDeEvento(e))
+  })
+
+  // Peso 90 é o piso do que conta como notícia: eclipse, ingresso, estação e
+  // fase. Abaixo disso só a Lua fora de curso ainda vira manchete, porque dura
+  // horas e é acionável.
+  //
+  // O aspecto NUNCA encabeça. Ele continua entrando como evento secundário, mas
+  // como manchete reproduz o problema que o `eventos.mjs` existe para resolver:
+  // Plutão sextil Netuno fica exato por semanas e saía dois dias seguidos com o
+  // mesmo texto. Sem manchete, o dia vira educativo — que é assunto novo.
+  const forte = eventos.find((e) => e.peso >= 90) || null
+  const principal = forte || eventos.find((e) => e.tipo === 'lua_fora_de_curso') || null
+  const tema = principal ? null : temaEducativo(mapa, cat.educativo, usadas)
+  const secundarios = principal ? eventos.filter((e) => e !== principal).slice(0, 2) : []
 
   const voz = principal ? escrever(principal) : null
 
   // a cor vem do elemento do signo, que é fato astronômico. A área da vida saiu:
   // sem o mapa de quem vê, dizer "Carreira" é afirmar o que não se sabe.
-  const elemento = principal?.elemento || null
+  const elemento = principal?.elemento || tema?.elemento || null
   const area = areaDoEncontro(bruto, cat.atribuicao)
+
+  // O card educativo passa pelo mesmo caminho do card de evento: o `evento`
+  // sintético faz o template usar o diagrama de um corpo só, e o texto vem do
+  // catálogo curado em vez da voz combinatória.
+  const eventoSintetico = tema
+    ? {
+        tipo: 'educativo',
+        corpo: tema.corpo,
+        corpoPt: tema.corpoPt,
+        signo: tema.signo,
+        grau: tema.grau,
+        elemento: tema.elemento,
+        vespera: false,
+        diasFalta: 0,
+      }
+    : null
 
   const encontro = {
     ...bruto,
@@ -327,18 +417,22 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
     alvoPos: bruto.alvoPos.rotulo,
     cor: COR_ELEMENTO[elemento] || (cat.cores[area] || ['#4ECDC4'])[0],
     elemento,
-    signoEvento: principal?.signo || null,
+    signoEvento: principal?.signo || tema?.signo || null,
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
     semente: semente(iso),
     leitura: primeirasFrases(cat.leituras[bruto.chave], 2),
     dirPlanetas: DIR_PLANETAS,
-    evento: principal,
+    evento: principal || eventoSintetico,
     // O nome que vai sob o desenho do corpo. Eclipse e fase não trazem `corpoPt`
     // porque o protagonista é o luminar, não um planeta nomeado no evento.
     nomeCorpoEvento: principal
       ? principal.corpoPt ||
         (principal.tipo === 'eclipse' && principal.luminar === 'solar' ? 'Sol' : 'Lua')
-      : '',
+      : tema?.corpoPt || '',
+    olho: tema ? 'O que significa num mapa' : '',
+    // A linha que impede a peça de virar previsão. Nunca é opcional.
+    avisoEducativo: tema ? linhaDeHonestidade(tema) : '',
+    tema,
     // Só nos eventos de peso — eclipse, lunação, entrada de planeta reconhecível.
     // Se toda peça recortasse signos, o recurso viraria cacoete e a conta viraria
     // horóscopo.
@@ -351,9 +445,15 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
       return { ...e, __linha: `${v.titulo} · ${v.dado}` }
     }),
     // quando há evento, ele manda no título; o aspecto vira pano de fundo
-    titulo: voz ? voz.titulo : bruto.titulo,
-    subtitulo: voz ? voz.dado : '',
-    textoEvento: voz ? voz.texto : '',
+    titulo: voz ? voz.titulo : tema ? tema.titulo : bruto.titulo,
+    subtitulo: voz ? voz.dado : tema ? tema.ancora : '',
+    // Duas frases no card, texto inteiro na legenda: os textos do catálogo têm
+    // ~340 caracteres e foram escritos para a tela do app, onde há rolagem.
+    // Inteiros aqui, empurram o aviso e o rodapé para fora do quadro.
+    textoEvento: voz ? voz.texto : tema ? primeirasFrases(tema.texto, 2) : '',
+    // a chave que vai para o histórico decide o que não se repete na janela
+    chave: principal ? chaveDeEvento(principal) : tema ? tema.chave : bruto.chave,
+    repetido: tema ? tema.repetido : bruto.repetido,
   }
 
   const pasta = path.join(raizSaida, iso)
@@ -373,7 +473,26 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
 
   const legenda = principal
     ? montarLegendaDaVoz(principal, secundarios)
-    : montarLegenda(encontro)
+    : tema
+      ? montarLegendaEducativa(tema, paragrafoDeHonestidade(tema), data)
+      : montarLegenda(encontro)
+
+  // O adesivo de enquete só existe dentro do app do Instagram, na hora de
+  // postar. O que dá para adiantar é o texto pronto — e a faixa reservada no
+  // rodapé do story para o adesivo não cobrir a marca.
+  const enquete = perguntaDeEnquete(principal, tema)
+  await writeFile(
+    path.join(pasta, 'enquete.txt'),
+    [
+      'Adesivo de enquete no story — cole ao postar:',
+      '',
+      enquete.pergunta,
+      ...enquete.opcoes.map((o) => `  · ${o}`),
+      '',
+      'A faixa de baixo do story está livre para o adesivo.',
+    ].join('\n'),
+    'utf8'
+  )
   await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 
   return { iso, encontro, pasta }

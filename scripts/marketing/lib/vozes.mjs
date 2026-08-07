@@ -291,14 +291,129 @@ export function montarLegenda(principal, secundarios = []) {
     for (const s of secundarios) linhas.push(`· ${prefixoDeVespera(s)}${escreverCurto(s)}`)
   }
 
-  linhas.push(
-    '',
-    'Isso é o céu, e vale para todo mundo igual. O que muda de pessoa para pessoa é a casa em que isso cai, e a casa depende da hora e do lugar do nascimento.',
-    '',
-    'Manda uma mensagem no WhatsApp e recebe seu mapa calculado, de graça: link na bio. 🌘',
-    '',
-    '#astrologia #mapanatal #transitos #astrologiareal #efemerides #astrologiabrasil'
-  )
-
+  linhas.push('', ...fecho(principal.quando || new Date()))
   return linhas.join('\n')
+}
+
+/**
+ * Legenda do card educativo.
+ *
+ * A ordem é deliberada: o texto curado primeiro, porque é o que vale a leitura,
+ * e a moldura logo em seguida, antes que alguém termine achando que aquilo era
+ * previsão do dia.
+ */
+export function montarLegendaEducativa(tema, aviso, quando = new Date()) {
+  return [
+    `${tema.titulo} — o que significa num mapa natal.`,
+    '',
+    tema.texto,
+    '',
+    aviso,
+    '',
+    tema.ancora,
+    ...['', ...fecho(quando)],
+  ].join('\n')
+}
+
+/**
+ * A pergunta do adesivo de enquete no story.
+ *
+ * O story era o card em formato alto e nada mais — o formato tem enquete e a
+ * gente não usava. O adesivo só existe na hora de postar, dentro do app, então
+ * o que sai daqui é o texto pronto para colar.
+ *
+ * Toda pergunta puxa para a mesma direção: saber o próprio mapa. Quem responde
+ * "não sei" acabou de descobrir que quer saber.
+ */
+export function perguntaDeEnquete(evento, tema = null) {
+  if (tema) {
+    return {
+      pergunta: `Você sabe onde ${tema.corpoPt} está no seu mapa?`,
+      opcoes: ['Sei', 'Não faço ideia'],
+    }
+  }
+
+  switch (evento?.tipo) {
+    case 'eclipse':
+      return {
+        pergunta: 'Sabia que todo eclipse é também uma Lua Nova ou Cheia?',
+        opcoes: ['Sabia', 'Não fazia ideia'],
+      }
+    case 'ingresso':
+      return {
+        pergunta: `Sabe em que signo estava ${evento.corpoPt} quando você nasceu?`,
+        opcoes: ['Sei', 'Não faço ideia'],
+      }
+    case 'fase':
+      return {
+        pergunta: 'Você repara nas fases da Lua no dia a dia?',
+        opcoes: ['Sempre', 'Nunca'],
+      }
+    case 'retrogrado':
+    case 'direto':
+      return {
+        pergunta: `Você sente diferença quando ${evento.corpoPt} fica retrógrado?`,
+        opcoes: ['Sinto', 'Acho que não'],
+      }
+    case 'lua_fora_de_curso':
+      return {
+        pergunta: 'Já tinha ouvido falar em Lua fora de curso?',
+        opcoes: ['Já', 'Nunca'],
+      }
+    default:
+      return {
+        pergunta: 'Você já viu seu mapa natal calculado de verdade?',
+        opcoes: ['Já vi', 'Nunca vi'],
+      }
+  }
+}
+
+/**
+ * O fecho da legenda: limite, convite e hashtags.
+ *
+ * Antes era um bloco fixo, idêntico em todo post. Para quem segue há semanas
+ * isso lê como robô — e a régua da casa é justamente não parecer conteúdo
+ * automático, mesmo sendo. A escolha é DETERMINÍSTICA pela data: regerar um dia
+ * já publicado devolve a mesma legenda, que é a mesma regra do campo estelar e
+ * do card.
+ */
+const LIMITES = [
+  'Isso é o céu, e vale para todo mundo igual. O que muda de pessoa para pessoa é a casa em que isso cai, e a casa depende da hora e do lugar do nascimento.',
+  'O céu é o mesmo para todo mundo hoje. Onde ele cai no seu mapa é que muda — e isso depende da hora e do lugar em que você nasceu.',
+  'Nenhuma dessas posições diz o que vai acontecer com você. Diz onde o céu está. O resto depende da casa, e a casa vem do seu nascimento.',
+  'Todo mundo tem esse céu hoje. O que ninguém tem igual é a casa em que ele cai — para saber a sua, precisa da hora e do lugar do nascimento.',
+  'Isto é astronomia, confere em qualquer efeméride. Astrologia começa quando se pergunta onde isso cai no mapa de alguém.',
+]
+
+const CONVITES = [
+  'Manda uma mensagem no WhatsApp e recebe seu mapa calculado, de graça: link na bio. 🌘',
+  'Teu mapa calculado de verdade, sem custo, pelo WhatsApp — link na bio. 🌘',
+  'Quer ver onde isso cai no seu mapa? É de graça e leva dois minutos: link na bio. 🌘',
+  'O mapa natal completo sai por WhatsApp, calculado na hora e sem cobrar nada. Link na bio. 🌘',
+  'Descobre a sua casa: mapa calculado de graça, link na bio. 🌘',
+]
+
+const TAGS = [
+  '#astrologia #mapanatal #transitos #astrologiareal #efemerides #astrologiabrasil',
+  '#astrologia #mapaastral #astrologiareal #transitosplanetarios #autoconhecimento #astrologiabrasil',
+]
+
+/** Índice estável a partir da data: mesmo dia, mesma escolha, sempre. */
+function indiceDoDia(quando, tamanho) {
+  const iso = new Date(quando).toISOString().slice(0, 10)
+  let soma = 0
+  for (let i = 0; i < iso.length; i++) soma = (soma * 31 + iso.charCodeAt(i)) % 100_000
+  return soma % tamanho
+}
+
+function fecho(quando) {
+  return [
+    LIMITES[indiceDoDia(quando, LIMITES.length)],
+    '',
+    // deslocado de propósito: limite e convite não devem girar em bloco, senão
+    // a combinação se repete a cada cinco dias em vez de a cada vinte e cinco
+    CONVITES[(indiceDoDia(quando, CONVITES.length) + 2) % CONVITES.length],
+    '',
+    TAGS[indiceDoDia(quando, TAGS.length)],
+  ]
 }

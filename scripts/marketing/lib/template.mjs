@@ -317,6 +317,13 @@ export function montarCard(dados, formato = 'feed') {
        </div>`
     : ''
 
+  // A linha que separa trânsito de mapa natal, no card educativo. Sem ela, um
+  // texto sobre valores relacionais debaixo de "Vênus em Libra" lê como
+  // horóscopo do dia — exatamente o que a conta existe para contradizer.
+  const aviso = dados.avisoEducativo
+    ? `<p class="aviso">${dados.avisoEducativo}</p>`
+    : ''
+
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
@@ -353,7 +360,10 @@ export function montarCard(dados, formato = 'feed') {
 
   .inner {
     position: absolute; inset: 0; z-index: 2;
-    padding: 7cqw;
+    /* No story sobra uma faixa embaixo: é onde o adesivo de enquete do Instagram
+       vai ser colado na hora de postar. Sem a reserva, o adesivo cobre o rodapé
+       com a marca — e a enquete é o único jeito de o story virar conversa. */
+    padding: 7cqw 7cqw ${formato === 'story' ? '26cqw' : '7cqw'};
     display: flex; flex-direction: column;
   }
 
@@ -394,6 +404,13 @@ export function montarCard(dados, formato = 'feed') {
     font-style: italic; font-size: 3.1cqw; line-height: 1.36;
     color: #C9A227; margin-top: 2cqw; max-width: 92%; opacity: 0.9;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
+  }
+  /* a linha que separa trânsito de mapa natal: discreta, mas nunca ausente */
+  .aviso {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-size: 2.35cqw; line-height: 1.5; letter-spacing: 0.02em;
+    color: ${SLATE}; margin-top: 3.4cqw; padding-top: 2.4cqw; max-width: 94%;
+    border-top: 0.12cqw solid rgba(237,230,216,0.16);
   }
   /* os quatro signos da cruz: filete acima para separar do texto sem virar caixa */
   .eixo {
@@ -445,13 +462,14 @@ export function montarCard(dados, formato = 'feed') {
     <div class="hush"></div>
     <div class="glow"></div>
     <div class="inner">
-      <div class="eyebrow"><span>${dados.vesperaRotulo ? 'Está chegando' : 'Céu de hoje'}</span><span>${dados.dataRotulo}</span></div>
+      <div class="eyebrow"><span>${dados.olho || (dados.vesperaRotulo ? 'Está chegando' : 'Céu de hoje')}</span><span>${dados.dataRotulo}</span></div>
       <div class="figure">${figura}</div>
       <div class="readout">${readout}</div>
       <h1 class="title">${dados.titulo}</h1>
       ${corpoTexto ? `<p class="leitura">${corpoTexto}</p>` : ''}
       ${aforismo ? `<p class="aph">${aforismo}</p>` : ''}
       ${eixo}
+      ${aviso}
       <div class="foot">
         <span class="chip">${chip}</span>
         <span class="handle">@tabula_estelar</span>

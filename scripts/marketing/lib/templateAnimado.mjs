@@ -205,11 +205,42 @@ export function montarAnimacao(dados) {
   .chip { color: var(--area); display: inline-flex; align-items: center; gap: 1.2cqw; }
   .chip::before { content: ""; width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--area); }
   .arroba { color: ${SLATE}; }
+
+  /* o primeiro tempo: a manchete sozinha, sobre o campo estelar */
+  .hook {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 3cqw; padding: 0 9cqw; text-align: center;
+    /* Sem cortina: quem some é o conteúdo, não o fundo. Cobrir a carta com um
+       véu deixava a roda e a lista de planetas atravessando o texto do hook, e
+       um véu opaco apagaria o campo estelar junto. */
+  }
+  .hook-rot, .hook-dado {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-size: 2.9cqw; letter-spacing: 0.16em; text-transform: uppercase; color: ${BRONZE};
+  }
+  .hook-dado { color: ${SLATE}; letter-spacing: 0.1em; }
+  .hook-titulo {
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-size: 10.5cqw; line-height: 1.02; font-weight: 400; color: ${VELLUM};
+    letter-spacing: -0.015em; text-wrap: balance;
+    text-shadow: 0 0.4cqw 3cqw rgba(7,10,24,0.9);
+  }
 </style></head>
 <body>
   <div class="palco">
     <canvas id="ceu" width="${largura}" height="${altura}"></canvas>
     <div class="brilho"></div>
+
+    ${/* O primeiro tempo. A carta já estava toda visível no quadro zero — o
+          problema não era espera, era hierarquia: a roda ocupa 60% da tela e a
+          manchete ficava pequena embaixo, então em miniatura o olho lia o
+          gráfico primeiro. Aqui a afirmação abre sozinha e sai em 1,4s. */ ''}
+    <div class="hook" id="hook">
+      ${dados.vesperaRotulo ? `<span class="hook-rot">${dados.vesperaRotulo}</span>` : ''}
+      <h2 class="hook-titulo">${dados.titulo}</h2>
+      ${dados.subtitulo ? `<span class="hook-dado">${dados.subtitulo}</span>` : ''}
+    </div>
 
     <div class="conteudo">
       <div class="alto">
@@ -312,10 +343,19 @@ export function montarAnimacao(dados) {
   // Sem dasharray: a linha nasce inteira. O desenho progressivo saiu junto com
   // a revelacao em etapas, e deixar o offset aqui escondia tudo em silencio.
 
+  var hook = document.getElementById('hook');
+  var conteudo = document.querySelector('.conteudo');
+
   window.aplicarTempo = function (t) {
-
-
-
+    // Segura a manchete até 7% e some até 12%: em 12 segundos são 0,84s parado
+    // e 0,6s de saída. Curto de propósito — o problema que a versão anterior
+    // resolveu era espera entregando NADA; aqui o primeiro quadro já entrega a
+    // informação mais importante, e a carta aparece antes de qualquer desistência.
+    hook.style.opacity = t <= 0.07 ? 1 : Math.max(0, 1 - (t - 0.07) / 0.03);
+    // O conteúdo só começa a entrar depois de o hook ter sumido. Com as
+    // passagens sobrepostas, o mesmo título aparecia duas vezes no mesmo quadro
+    // — o fantasma grande no meio e o definitivo embaixo.
+    conteudo.style.opacity = Math.min(1, Math.max(0, (t - 0.10) / 0.05));
 
 
 

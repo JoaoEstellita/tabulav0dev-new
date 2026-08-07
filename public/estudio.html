@@ -112,6 +112,12 @@
   .baixar:hover { background: var(--ouro); color: #241E00; }
   .baixar[disabled] { opacity: .6; }
 
+  /* separa o carrossel e a enquete das peças soltas do dia */
+  .secao {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--tinta-2);
+    margin: 26px 0 10px; font-weight: 400;
+  }
   pre {
     font-family: var(--mono); font-size: 15px; line-height: 1.65;
     white-space: pre-wrap; word-break: break-word;
@@ -272,6 +278,12 @@
           '</figcaption></figure>'
       }
 
+      // Os slides vêm na ordem do roteiro e são numerados na legenda da peça:
+      // publicar carrossel fora de ordem estraga o encadeamento.
+      var slides = (d.carrossel || []).map(function (url, n) {
+        return peca(url, 'Slide ' + (n + 1), 'carrossel-' + String(n + 1).padStart(2, '0') + '.png', false, false)
+      }).join('')
+
       // a carta abre a lista: é a peça principal do dia
       return '<article class="dia">' +
         '<h2>' + escapar(rotular(d.dia)) + '</h2>' +
@@ -282,9 +294,17 @@
           peca(d.feed, 'Alternativa simples', 'feed.png', false, false) +
           peca(d.story, 'Story', 'story.png', false, false) +
         '</div>' +
+        (slides
+          ? '<h3 class="secao">Carrossel · ' + d.carrossel.length + ' slides, nesta ordem</h3>' +
+            '<div class="pecas">' + slides + '</div>'
+          : '') +
         (d.legenda
           ? '<pre id="leg-' + i + '">' + escapar(d.legenda) + '</pre>' +
             '<button type="button" class="copiar" data-i="' + i + '">Copiar legenda</button>'
+          : '') +
+        (d.enquete
+          ? '<h3 class="secao">Enquete do story</h3>' +
+            '<pre id="enq-' + i + '">' + escapar(d.enquete) + '</pre>'
           : '') +
       '</article>'
     }).join('')
