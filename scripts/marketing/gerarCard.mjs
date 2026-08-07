@@ -24,7 +24,7 @@ import path from 'node:path'
 
 import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
-import { eventosDoDia } from './lib/eventos.mjs'
+import { eventosDoDia, ingressosProximos } from './lib/eventos.mjs'
 import {
   escrever,
   montarLegenda as montarLegendaDaVoz,
@@ -385,7 +385,14 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico) {
   // mesmo texto. Sem manchete, o dia vira educativo — que é assunto novo.
   const forte = eventos.find((e) => e.peso >= 90) || null
   const principal = forte || eventos.find((e) => e.tipo === 'lua_fora_de_curso') || null
-  const tema = principal ? null : temaEducativo(mapa, cat.educativo, usadas)
+  // Os ingressos dos próximos 40 dias dizem quanto cada posição ainda dura — é o
+  // que impede o card de falar de um planeta que troca de signo depois de amanhã.
+  const tema = principal
+    ? null
+    : temaEducativo(mapa, cat.educativo, usadas, {
+        ingressos: ingressosProximos(data, 40),
+        data,
+      })
   const secundarios = principal ? eventos.filter((e) => e !== principal).slice(0, 2) : []
 
   const voz = principal ? escrever(principal) : null

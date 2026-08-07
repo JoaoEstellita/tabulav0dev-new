@@ -89,26 +89,49 @@ export function montarAnimacao(dados) {
   // ordem de entrada: do mais lento ao mais rápido, que é como a carta se lê
   const ordemEntrada = ['Pluto', 'Neptune', 'Uranus', 'Saturn', 'Jupiter', 'Mars', 'Sun', 'Venus', 'Mercury', 'Moon']
 
+  // Índice de cada corpo na efeméride animada, para o script achar a longitude
+  // do quadro sem procurar por nome a cada frame.
+  const indiceNaEfemeride = Object.fromEntries(
+    (dados.efemeride?.nomes || []).map((n, i) => [n, i])
+  )
+
   const corposSvg = distribuidos.map((c) => {
     const p = ponto(c.longitude, c.raio)
     const t1 = ponto(c.longitude, R_SIGNO_DENTRO)
     const t2 = ponto(c.longitude, R_SIGNO_DENTRO - 22)
     const i = ordemEntrada.indexOf(c.nome)
-    return `<g class="corpo" data-ordem="${i < 0 ? 0 : i}" opacity="1">
-      <line x1="${arredonda(t1.x)}" y1="${arredonda(t1.y)}" x2="${arredonda(t2.x)}" y2="${arredonda(t2.y)}"
+    const idx = indiceNaEfemeride[c.nome]
+    // `data-corpo` e `data-raio` são o que o script usa para reposicionar o
+    // grupo a cada quadro; sem efeméride embutida nada se move e o desenho
+    // continua exatamente como antes.
+    return `<g class="corpo" data-ordem="${i < 0 ? 0 : i}"
+                data-corpo="${idx === undefined ? '' : idx}" data-raio="${c.raio}"
+                data-protagonista="${c.nome === dados.corpoProtagonista ? '1' : ''}" opacity="1">
+      <line class="tique" x1="${arredonda(t1.x)}" y1="${arredonda(t1.y)}" x2="${arredonda(t2.x)}" y2="${arredonda(t2.y)}"
             stroke="${VELLUM}" stroke-width="1.6" opacity="0.5"/>
       ${c.raio < R_PLANETA ? (() => {
         const a = ponto(c.longitude, c.raio + RAIO_CORPO[c.nome] + 3)
         const b = ponto(c.longitude, R_SIGNO_DENTRO - 24)
-        return `<line x1="${arredonda(a.x)}" y1="${arredonda(a.y)}" x2="${arredonda(b.x)}" y2="${arredonda(b.y)}"
+        return `<line class="haste" x1="${arredonda(a.x)}" y1="${arredonda(a.y)}" x2="${arredonda(b.x)}" y2="${arredonda(b.y)}"
                       stroke="${SLATE}" stroke-width="1" opacity="0.55" stroke-dasharray="3 4"/>`
       })() : ''}
-      <g transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g>
+      <g class="disco" transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g>
     </g>`
   }).join('')
 
+  // Rastro do protagonista: um arco tênue do ponto de partida até onde ele está.
+  // É o que faz o movimento ser lido em dois segundos em vez de exigir que
+  // alguém compare mentalmente o primeiro quadro com o último.
+  const rastro = dados.efemeride
+    ? `<path id="rastro" fill="none" stroke="${BRONZE}" stroke-width="7"
+             stroke-linecap="round" stroke-linejoin="round" opacity="0.8" d=""/>`
+    : ''
+
+  // `data-corpo` liga a linha da lista à efeméride: sem isso a lista ficava
+  // congelada no instante inicial enquanto a roda andava, e "Mercúrio 26° Câncer"
+  // aparecia embaixo de um desenho que já mostrava Mercúrio entrando em Leão.
   const posicoes = dados.corpos.map((c, i) => `
-    <div class="pos" data-ordem="${i}">
+    <div class="pos" data-ordem="${i}" data-corpo="${indiceNaEfemeride[c.nome] ?? ''}">
       <svg viewBox="-26 -26 52 52" aria-hidden="true"><g transform="scale(0.94)">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g></svg>
       <span class="pn">${c.nomePt}${c.retrogrado ? '<i>℞</i>' : ''}</span>
       <span class="pg">${c.grau}° ${c.signo}</span>
@@ -278,6 +301,7 @@ export function montarAnimacao(dados) {
             <ellipse class="aro" cx="${CX}" cy="${CY}" rx="${R_ASPECTO}" ry="${arredonda(R_ASPECTO * ACHATAMENTO)}" fill="none" stroke="#1B2035" stroke-width="1" opacity="1"/>
             ${setores}${divisoes}${rotulosSigno}
             ${linhasAspecto}
+            ${rastro}
             ${corposSvg}
             <circle class="aro" cx="${CX}" cy="${CY}" r="3.5" fill="${SLATE}" opacity="1"/>
           </g>
@@ -379,6 +403,81 @@ export function montarAnimacao(dados) {
   var faixa = document.getElementById('faixa');
   var roteiro = ${JSON.stringify(dados.roteiroLegenda || [])};
 
+  // Efeméride quadro a quadro, calculada em Node. O navegador não faz
+  // astronomia: só lê a longitude do quadro. É o que mantém o vídeo
+  // determinístico — o mesmo dia produz o mesmo arquivo.
+  var QUADROS = ${JSON.stringify(dados.efemeride?.quadros || [])};
+  var CX = ${CX}, CY = ${CY}, ACHATA = ${ACHATAMENTO};
+  var rastro = document.getElementById('rastro');
+  var gruposCorpo = Array.prototype.slice.call(document.querySelectorAll('.corpo'));
+  var linhasPos = Array.prototype.slice.call(document.querySelectorAll('.pos'));
+  var NOMES_SIGNO = ${JSON.stringify(SIGNOS_INFO.map((s) => s.nome))};
+
+  /** Signo e grau a partir da longitude — aritmética, não astronomia. */
+  function posicaoEmSigno(lon) {
+    var l = ((lon % 360) + 360) % 360;
+    return { signo: NOMES_SIGNO[Math.floor(l / 30)], grau: Math.floor(l % 30) };
+  }
+
+  function pontoDaRoda(lon, raio) {
+    var a = ((180 + lon) * Math.PI) / 180;
+    return { x: CX + raio * Math.cos(a), y: CY - raio * Math.sin(a) * ACHATA };
+  }
+
+  function moverCeu(t) {
+    if (!QUADROS.length) return;
+    var q = Math.min(QUADROS.length - 1, Math.max(0, Math.round(t * (QUADROS.length - 1))));
+    var linha = QUADROS[q];
+
+    for (var i = 0; i < gruposCorpo.length; i++) {
+      var g = gruposCorpo[i];
+      var idx = g.dataset.corpo;
+      if (idx === '') continue;
+      var lon = linha[Number(idx)];
+      var raio = Number(g.dataset.raio);
+
+      var p = pontoDaRoda(lon, raio);
+      var t1 = pontoDaRoda(lon, ${R_SIGNO_DENTRO});
+      var t2 = pontoDaRoda(lon, ${R_SIGNO_DENTRO - 22});
+
+      var disco = g.querySelector('.disco');
+      if (disco) disco.setAttribute('transform', 'translate(' + p.x.toFixed(2) + ' ' + p.y.toFixed(2) + ')');
+      var tique = g.querySelector('.tique');
+      if (tique) {
+        tique.setAttribute('x1', t1.x.toFixed(2)); tique.setAttribute('y1', t1.y.toFixed(2));
+        tique.setAttribute('x2', t2.x.toFixed(2)); tique.setAttribute('y2', t2.y.toFixed(2));
+      }
+      // a haste liga o corpo recuado ao seu tique; some junto quando não há
+      var haste = g.querySelector('.haste');
+      if (haste) {
+        var a = pontoDaRoda(lon, raio + 26);
+        var b = pontoDaRoda(lon, ${R_SIGNO_DENTRO - 24});
+        haste.setAttribute('x1', a.x.toFixed(2)); haste.setAttribute('y1', a.y.toFixed(2));
+        haste.setAttribute('x2', b.x.toFixed(2)); haste.setAttribute('y2', b.y.toFixed(2));
+      }
+
+      if (rastro && g.dataset.protagonista === '1' && q > 0) {
+        var d = '';
+        for (var k = 0; k <= q; k += 3) {
+          var pk = pontoDaRoda(QUADROS[k][Number(idx)], raio);
+          d += (k === 0 ? 'M ' : 'L ') + pk.x.toFixed(1) + ' ' + pk.y.toFixed(1) + ' ';
+        }
+        rastro.setAttribute('d', d);
+      }
+    }
+
+    // A lista anda junto: os graus embaixo têm que bater com os discos em cima.
+    for (var n = 0; n < linhasPos.length; n++) {
+      var el = linhasPos[n];
+      var ip = el.dataset.corpo;
+      if (ip === '') continue;
+      var pos = posicaoEmSigno(linha[Number(ip)]);
+      var alvo = el.querySelector('.pg');
+      var novo = pos.grau + '\\u00b0 ' + pos.signo;
+      if (alvo && alvo.textContent !== novo) alvo.textContent = novo;
+    }
+  }
+
   window.aplicarTempo = function (t) {
     // Legenda queimada. Um segmento por vez, com entrada e saída curtas: o
     // corte seco pisca no vídeo, e dois visíveis ao mesmo tempo viram borrão.
@@ -412,6 +511,8 @@ export function montarAnimacao(dados) {
 
 
 
+
+    moverCeu(t);
 
     // a roda respira: giro lento e contínuo, quase imperceptível quadro a quadro
     giro.style.transform = 'rotate(' + (t * 2.4).toFixed(3) + 'deg)';

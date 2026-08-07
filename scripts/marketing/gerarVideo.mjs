@@ -29,6 +29,16 @@ import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { eventosDoDia } from './lib/eventos.mjs'
 import { escrever, rotuloDeVespera } from './lib/vozes.mjs'
 import { legendaDoReel } from './lib/roteiroLegenda.mjs'
+import { efemerideAnimada } from './lib/efemerideAnimada.mjs'
+
+/** `04.08 → 09.08`, para o olho não sugerir que tudo aconteceu num dia só. */
+const rotuloDaJanela = ({ inicio, fim }) => {
+  const dm = (d) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo',
+    }).format(d).replace('/', '.')
+  return `${dm(inicio)} → ${dm(fim)}`
+}
 import { montarAnimacao } from './lib/templateAnimado.mjs'
 
 const execFileAsync = promisify(execFile)
@@ -180,10 +190,29 @@ async function principal() {
     ...vozDoDia(data, mapa.aspectos),
   }
 
+  // O céu em movimento. Sem isto o Reel mostrava a carta congelada de hoje
+  // debaixo de um título que falava de um evento dois dias à frente — a imagem
+  // contradizia a manchete.
+  const eventoDoDia = eventosDoDia(data, mapa.aspectos)[0] || null
+  const totalQuadros = Math.round(args.segundos * args.fps)
+  const efemeride = efemerideAnimada(data, eventoDoDia, orbes.PLANET_ASPECT_ORBS, totalQuadros)
+  // Quem deixa rastro é quem ANDA. Numa lunação — eclipse inclusive — é a Lua
+  // que viaja até o Sol, e o Sol anda 5° na janela: o rastro dele sumia embaixo
+  // do próprio disco, que tem raio maior que o arco percorrido.
+  const corpoProtagonista =
+    eventoDoDia?.tipo === 'eclipse' || eventoDoDia?.tipo === 'fase' || eventoDoDia?.tipo === 'lua_fora_de_curso'
+      ? 'Moon'
+      : eventoDoDia?.corpo || 'Moon'
+
   // O roteiro depende do texto já resolvido, então é montado depois — e conhece
   // a duração porque o piso de leitura é em segundos, não em fração de vídeo.
   const html = montarAnimacao({
     ...dadosDaCena,
+    // o olho passa a mostrar a janela: a carta se move, e uma data só faria
+    // parecer que tudo aconteceu num dia
+    dataRotulo: rotuloDaJanela(efemeride.janela),
+    efemeride,
+    corpoProtagonista,
     roteiroLegenda: legendaDoReel(dadosDaCena, args.segundos),
   })
 

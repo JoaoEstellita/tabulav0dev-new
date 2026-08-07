@@ -103,6 +103,11 @@ export function ingressosProximos(data, dias = 30) {
         // Um ingresso acontece exatamente no 0° do signo — explícito para que
         // quem consome não dependa de um valor padrão em outro arquivo.
         grau: 0,
+        // De onde ele sai, e desde quando está lá. É o que permite a frase
+        // condicional: sem o signo anterior não há o que a pessoa reconheça
+        // ter vivido nas últimas semanas.
+        signoAnterior: SIGNOS_INFO[((limite / 30) % 12 + 11) % 12].nome,
+        desdeQuando: entradaNoSigno(nome, zero),
         quando: t.date,
         hoje: mesmoDia(t.date, data),
       })
@@ -126,6 +131,44 @@ function velocidade(corpo, t) {
   const antes = new Date(t.getTime() - meia)
   const depois = new Date(t.getTime() + meia)
   return diferenca(longitude(corpo, depois), longitude(corpo, antes))
+}
+
+/**
+ * Quando o corpo entrou no signo em que está.
+ *
+ * A peça precisa disso para dizer "Mercúrio sai de Câncer, onde estava desde
+ * 26/07" — a frase que dá tamanho ao ciclo. Sem ela o texto fala de uma troca
+ * sem dizer de onde se está saindo, que é metade da informação.
+ *
+ * A busca é para TRÁS a partir do limite inferior do signo atual, em 120 dias.
+ *
+ * Sessenta pareciam bastar e não bastavam: retrogradação estica a permanência
+ * muito além do normal. Em 07/08/2026 Mercúrio estava em Câncer havia mais de
+ * dois meses, porque retrogradou dentro do signo — e esse é justamente o caso
+ * mais interessante de contar. Acima de 120 dias só sobram os lentos, onde a
+ * frase não faria sentido.
+ *
+ * @returns {Date|null}
+ */
+export function entradaNoSigno(nome, data) {
+  const corpo = CORPOS[nome]
+  if (!corpo) return null
+
+  const atual = longitude(corpo, data)
+  const limite = Math.floor(atual / 30) * 30
+
+  try {
+    const t = A.Search(
+      (quando) => diferenca(longitude(corpo, quando), limite),
+      new A.AstroTime(new Date(data.getTime() - 120 * 86_400_000)),
+      new A.AstroTime(data),
+      TOLERANCIA
+    )
+    return t ? t.date : null
+  } catch {
+    // corpo lento que não cruzou limite nenhum em sessenta dias: não é erro
+    return null
+  }
 }
 
 /**

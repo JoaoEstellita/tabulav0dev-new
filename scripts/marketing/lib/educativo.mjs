@@ -83,15 +83,40 @@ const comArtigo = (nome, maiuscula = false) => {
 }
 
 /**
+ * Dias mínimos que uma posição precisa ainda durar para virar assunto.
+ *
+ * O card de 07/08/2026 saiu com "Mercúrio em Câncer" — e Mercúrio entrava em
+ * Leão dia 09. Publicar sobre uma posição que expira em dois dias é o oposto do
+ * que a peça deveria fazer: quem lê guarda a informação e ela já nasce velha.
+ *
+ * O erro não foi de cálculo, foi de ausência de critério: todos os planeta-em-
+ * signo tinham peso 70 fixo, então o desempate caía na ordem do array e a
+ * posição mais efêmera podia ganhar de uma que duraria mais um mês.
+ */
+const DIAS_MINIMOS = 5
+const DIAS_CONFORTAVEIS = 15
+
+/**
  * Escolhe o assunto do dia entre os candidatos ancorados no céu de agora.
  *
  * @param {object} mapa saída de `mapaDoCeu` — corpos e aspectos vigentes
  * @param {object} catalogos `{ planetaNoSigno, aspectoNatal }`
  * @param {Set<string>} usadas chaves publicadas na janela recente
+ * @param {object} opcoes `{ ingressos, data }` — a saída de `ingressosProximos`
+ *   e o instante do mapa. Sem os dois não há como saber o que está para expirar,
+ *   e o seletor volta a poder escolher uma posição de dois dias.
  * @returns {object|null}
  */
-export function temaEducativo(mapa, catalogos, usadas = new Set()) {
+export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) {
+  const { ingressos = [], data = new Date() } = opcoes
   const candidatos = []
+
+  /** Dias que faltam para o corpo trocar de signo; Infinity se não troca tão cedo. */
+  const diasRestantes = (nomeDoCorpo) => {
+    const prox = ingressos.find((i) => i.corpo === nomeDoCorpo)
+    if (!prox) return Infinity
+    return (prox.quando - data) / 86_400_000
+  }
 
   // 1. Planeta no signo em que ele REALMENTE está hoje.
   for (const corpo of mapa.corpos) {
@@ -101,6 +126,13 @@ export function temaEducativo(mapa, catalogos, usadas = new Set()) {
     const chave = `natal:${corpo.nome.toLowerCase()}_in_${signoEn}`
     const texto = catalogos.planetaNoSigno?.[chave]
     if (!texto) continue
+
+    // Posição que está de saída não vira assunto: quem lê guarda a informação e
+    // ela já nasce velha. Foi o que produziu "Mercúrio em Câncer" na véspera de
+    // Mercúrio entrar em Leão.
+    const restam = diasRestantes(corpo.nome)
+    if (restam < DIAS_MINIMOS) continue
+
     candidatos.push({
       tipo: 'planeta_no_signo',
       chave,
@@ -113,10 +145,18 @@ export function temaEducativo(mapa, catalogos, usadas = new Set()) {
       corpo: corpo.nome,
       corpoPt: corpo.nomePt,
       grau: corpo.grau,
+      diasRestantes: restam,
       // Fonte preferida: "Vênus em Libra" é legível para qualquer pessoa,
       // enquanto "Vênus sextil Mercúrio" já pede vocabulário. O aspecto entra
       // quando os planetas em signo se esgotam na janela sem repetir.
-      peso: 70,
+      //
+      // A folga entra no peso: posição com mais de quinze dias pela frente vale
+      // o peso cheio, e entre cinco e quinze ela desce proporcionalmente. Não é
+      // desempate arbitrário — é a diferença entre uma peça que vale a semana
+      // toda e uma que vence antes de circular.
+      peso: restam >= DIAS_CONFORTAVEIS
+        ? 70
+        : 55 + ((restam - DIAS_MINIMOS) / (DIAS_CONFORTAVEIS - DIAS_MINIMOS)) * 15,
     })
   }
 

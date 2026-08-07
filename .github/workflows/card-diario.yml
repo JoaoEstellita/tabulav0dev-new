@@ -96,8 +96,41 @@ jobs:
           restore-keys: |
             card-historico-
 
+      # A pauta que o João marcou no Estúdio decide quais peças saem. Sem pauta,
+      # sem rede ou com JSON quebrado, a automação segue como sempre — ela NUNCA
+      # pode parar porque uma pauta faltou.
+      - name: Ler a pauta do dia
+        id: pauta
+        env:
+          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
+          DATA: ${{ github.event.inputs.data || '' }}
+        run: |
+          DIA="${DATA:-$(date -u +%F)}"
+          ITENS=$(curl -s --max-time 20 \
+            -H "Authorization: Bearer $MONITORING_PASSWORD" \
+            "https://tabulav0dev-backend.vercel.app/api/marketing-cards" \
+            | node -e "
+              let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
+                try {
+                  const dia = (JSON.parse(s).dias||[]).find(x => x.dia === process.argv[1]);
+                  console.log(dia && dia.pauta && Array.isArray(dia.pauta.itens)
+                    ? dia.pauta.itens.join(',') : '');
+                } catch { console.log('') }
+              })" "$DIA" || echo "")
+
+          if [ -z "$ITENS" ]; then
+            echo "Sem pauta para $DIA — gerando tudo, como de costume."
+            echo "tem=nao" >> "$GITHUB_OUTPUT"
+          else
+            echo "Pauta de $DIA: $ITENS"
+            echo "tem=sim" >> "$GITHUB_OUTPUT"
+            echo "itens=$ITENS" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Gerar e enviar
         id: gerar
+        # com pauta, o card só sai se estiver marcado
+        if: ${{ steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'card') }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DIAS: ${{ github.event.inputs.dias || '1' }}
@@ -123,7 +156,7 @@ jobs:
           node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee saida.txt
 
       - name: Gerar o Reel animado
-        if: ${{ github.event.inputs.reel != 'false' }}
+        if: ${{ github.event.inputs.reel != 'false' && (steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'reel')) }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
@@ -144,6 +177,27 @@ jobs:
             exit 1
           fi
           echo "reel.mp4: $(du -h "$SAIDA/$DIA/reel.mp4" | cut -f1)"
+
+      # O carrossel só sai marcado: é a peça mais cara de produzir e a que menos
+      # dias comportam. Sem pauta ele não sai — quem decide isto é editorial.
+      - name: Gerar o carrossel
+        if: ${{ steps.pauta.outputs.tem == 'sim' && contains(steps.pauta.outputs.itens, 'carrossel') }}
+        env:
+          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
+          DATA: ${{ github.event.inputs.data || '' }}
+        run: |
+          set -o pipefail
+          ARGS="--saida=$GITHUB_WORKSPACE/marketing/out"
+          [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+          node scripts/marketing/gerarCarrossel.mjs $ARGS 2>&1 | tee -a saida.txt
+
+      # As sugestões do dia seguinte ficam prontas no Estúdio antes de o João
+      # acordar — sem isso a editorial nasceria sempre vazia.
+      - name: Publicar as pautas dos próximos dias
+        if: always()
+        env:
+          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
+        run: node scripts/marketing/calendario.mjs --dias=21 --upload || true
 
       - name: Resumo do run
         if: always()

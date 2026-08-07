@@ -82,21 +82,59 @@ for (const ev of limpos) {
 }
 pautas.sort((a, b) => a.publicarEm - b.publicarEm)
 
+/**
+ * Que peças cada pauta comporta.
+ *
+ * Carrossel só onde há o que explicar ou eixo para recortar; Reel em tudo que é
+ * evento, porque é o formato de maior alcance. Sugestão, não regra — quem decide
+ * é o João, marcando no Estúdio.
+ */
+function formatosSugeridos(evento, falta) {
+  const formatos = ['card']
+  if (falta <= 1) formatos.push('reel')
+  if (evento.tipo === 'eclipse') formatos.push('carrossel')
+  else if (falta === 0 && mereceEixo(evento)) formatos.push('carrossel')
+  return formatos
+}
+
+const comoRegistro = (p) => ({
+  publicarEm: p.publicarEm.toISOString().slice(0, 10),
+  diasAntes: p.falta,
+  titulo: escrever(p.evento).titulo,
+  tipo: p.evento.tipo,
+  angulo: angulo(p.evento, p.falta),
+  eixo: mereceEixo(p.evento) ? eixoDoSigno(p.evento.signo)?.todos : null,
+  formatos: formatosSugeridos(p.evento, p.falta),
+})
+
 if (comoJson) {
-  console.log(
-    JSON.stringify(
-      pautas.map((p) => ({
-        publicarEm: p.publicarEm.toISOString().slice(0, 10),
-        diasAntes: p.falta,
-        titulo: escrever(p.evento).titulo,
-        tipo: p.evento.tipo,
-        angulo: angulo(p.evento, p.falta),
-        eixo: mereceEixo(p.evento) ? eixoDoSigno(p.evento.signo)?.todos : null,
-      })),
-      null,
-      2
-    )
-  )
+  console.log(JSON.stringify(pautas.map(comoRegistro), null, 2))
+  process.exit(0)
+}
+
+// `--upload` publica as sugestões junto das peças do dia, e é o que alimenta a
+// editorial do Estúdio. Sem isso a tela não teria o que oferecer para marcar.
+if (args.includes('--upload')) {
+  const senha = process.env.MONITORING_PASSWORD || process.env.CRON_SECRET_TOKEN || ''
+  if (!senha) {
+    console.error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
+    process.exit(1)
+  }
+  const backend = (process.env.TABULA_BACKEND || 'https://tabulav0dev-backend.vercel.app').replace(/\/+$/, '')
+  const hoje = new Date().toISOString().slice(0, 10)
+  const corpo = Buffer.from(JSON.stringify(pautas.map(comoRegistro)), 'utf8').toString('base64')
+
+  const resposta = await fetch(`${backend}/api/marketing-cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${senha}` },
+    body: JSON.stringify({ dia: hoje, arquivo: 'calendario.json', conteudoBase64: corpo }),
+  })
+
+  if (!resposta.ok) {
+    console.error(`Falha ao enviar: HTTP ${resposta.status} ${(await resposta.text()).slice(0, 120)}`)
+    process.exit(1)
+  }
+  console.log(`${pautas.length} pautas enviadas para o Estúdio (${hoje}).`)
   process.exit(0)
 }
 

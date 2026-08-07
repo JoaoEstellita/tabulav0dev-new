@@ -112,6 +112,33 @@
   .baixar:hover { background: var(--ouro); color: #241E00; }
   .baixar[disabled] { opacity: .6; }
 
+  /* a editorial: pautas dos próximos dias, para marcar o que sai */
+  #editorial { margin-bottom: 40px; }
+  .pautas { display: flex; flex-direction: column; gap: 10px; }
+  .pauta {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--superficie); border: 1px solid var(--borda);
+    border-radius: 12px; padding: 14px 16px;
+  }
+  .pauta .quando {
+    font-family: var(--mono); font-size: 15px; color: var(--ouro);
+    flex-shrink: 0; padding-top: 2px; font-variant-numeric: tabular-nums;
+  }
+  .pauta .corpo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .pauta strong { font-size: 16px; font-weight: 600; }
+  .pauta .angulo { font-size: 13px; color: var(--tinta-2); line-height: 1.45; }
+  .formatos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  /* alvo de toque grande: isto é usado no celular, com o polegar */
+  .formato {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 13px; color: var(--tinta-2);
+    background: var(--elevado); border: 1px solid var(--borda);
+    border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    min-height: 38px;
+  }
+  .formato.on { color: var(--noite); background: var(--ouro); border-color: var(--ouro); }
+  .formato input { accent-color: var(--noite); width: 16px; height: 16px; }
+
   /* separa o carrossel e a enquete das peças soltas do dia */
   .secao {
     font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em;
@@ -165,6 +192,7 @@
     </div>
     <button type="button" class="sair" id="sair">Sair</button>
   </div>
+  <section id="editorial"></section>
   <div id="lista"></div>
 </main>
 
@@ -178,6 +206,9 @@
   var porta = document.getElementById('porta')
   var painel = document.getElementById('painel')
   var lista = document.getElementById('lista')
+  // guardada para o POST da pauta: o GET já autenticou, e pedir de novo seria
+  // atrito no meio da tarefa
+  var ultimaSenha = ''
   var aviso = document.getElementById('aviso')
   var erroLogin = document.getElementById('erro-login')
 
@@ -259,7 +290,118 @@
     return ok
   }
 
+  /**
+   * A editorial: as pautas calculadas dos próximos dias, para marcar o que sai.
+   *
+   * Antes o robô escolhia sozinho e o que saía era o que saía — sem critério
+   * editorial nenhum. Aqui o cálculo continua sendo do robô (as datas e os
+   * eventos são efeméride, não opinião), mas quem decide o que vira post é o
+   * João, e o Actions passa a obedecer.
+   */
+  function desenharEditorial(dias) {
+    var editorial = document.getElementById('editorial')
+
+    // o calendário mais recente é o do dia mais novo que o tiver
+    var comCal = dias.filter(function (d) { return d.calendario && d.calendario.length })
+    if (!comCal.length) {
+      editorial.innerHTML = '<h2 class="secao">Editorial</h2>' +
+        '<p class="vazio">Sem pautas calculadas ainda.<br><br>No PC, rode:<br>' +
+        '<code>node scripts/marketing/calendario.mjs --upload</code></p>'
+      return
+    }
+
+    var pautas = comCal[0].calendario
+    // o que já foi escolhido antes volta marcado
+    var jaEscolhido = {}
+    dias.forEach(function (d) {
+      if (d.pauta && d.pauta.itens) jaEscolhido[d.dia] = d.pauta.itens
+    })
+
+    var hoje = new Date().toISOString().slice(0, 10)
+    var futuras = pautas.filter(function (p) { return p.publicarEm >= hoje })
+    if (!futuras.length) futuras = pautas.slice(0, 8)
+
+    editorial.innerHTML =
+      '<h2 class="secao">Editorial · escolha o que sai</h2>' +
+      '<div class="pautas">' +
+      futuras.slice(0, 12).map(function (p, i) {
+        var marcados = jaEscolhido[p.publicarEm] || []
+        var formatos = p.formatos.map(function (f) {
+          var on = marcados.indexOf(f) >= 0
+          return '<label class="formato' + (on ? ' on' : '') + '">' +
+            '<input type="checkbox" data-dia="' + p.publicarEm + '" data-formato="' + f + '"' +
+            (on ? ' checked' : '') + '> ' + f + '</label>'
+        }).join('')
+        return '<article class="pauta">' +
+          '<span class="quando">' + p.publicarEm.slice(8) + '/' + p.publicarEm.slice(5, 7) + '</span>' +
+          '<div class="corpo">' +
+            '<strong>' + escapar(p.titulo) + '</strong>' +
+            '<span class="angulo">' + escapar(p.angulo) + '</span>' +
+            '<div class="formatos">' + formatos + '</div>' +
+          '</div>' +
+        '</article>'
+      }).join('') +
+      '</div>' +
+      '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
+      '<span id="aviso-pauta" class="aviso"></span>'
+
+    editorial.querySelectorAll('.formato input').forEach(function (cx) {
+      cx.addEventListener('change', function () {
+        cx.parentElement.classList.toggle('on', cx.checked)
+      })
+    })
+
+    document.getElementById('salvar-pauta').addEventListener('click', function () {
+      salvarPauta(this, editorial)
+    })
+  }
+
+  function salvarPauta(botao, editorial) {
+    var porDia = {}
+    editorial.querySelectorAll('.formato input:checked').forEach(function (cx) {
+      var d = cx.dataset.dia
+      if (!porDia[d]) porDia[d] = []
+      porDia[d].push(cx.dataset.formato)
+    })
+
+    // Dia sem nada marcado também é decisão: grava a lista vazia para o Actions
+    // saber que o silêncio foi escolhido, e não falta de pauta.
+    editorial.querySelectorAll('.pauta .quando').forEach(function (el) {
+      var cx = el.parentElement.querySelector('.formato input')
+      if (cx && !porDia[cx.dataset.dia]) porDia[cx.dataset.dia] = []
+    })
+
+    var senha = ultimaSenha
+    var dias = Object.keys(porDia)
+    botao.disabled = true
+    botao.textContent = 'Salvando…'
+
+    Promise.all(dias.map(function (dia) {
+      var corpo = JSON.stringify({ itens: porDia[dia], salvoEm: new Date().toISOString() })
+      return fetch(BACKEND + '/api/marketing-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + senha },
+        body: JSON.stringify({
+          dia: dia,
+          arquivo: 'pauta.json',
+          conteudoBase64: btoa(unescape(encodeURIComponent(corpo)))
+        })
+      })
+    })).then(function (rs) {
+      var falhou = rs.filter(function (r) { return !r.ok }).length
+      var aviso = document.getElementById('aviso-pauta')
+      aviso.textContent = falhou
+        ? falhou + ' dia(s) não salvaram.'
+        : 'Pauta salva para ' + dias.length + ' dia(s).'
+      botao.disabled = false
+      botao.textContent = 'Salvar pauta'
+      setTimeout(function () { aviso.textContent = '' }, 3000)
+    })
+  }
+
   function desenhar(dias) {
+    desenharEditorial(dias)
+
     if (!dias.length) {
       lista.innerHTML = '<p class="vazio">Nenhum card enviado ainda.<br><br>' +
         'No PC, rode:<br><code>node scripts/marketing/gerarCard.mjs --dias=9 --upload</code></p>'
@@ -344,6 +486,7 @@
 
   function entrar(senha, salvar) {
     return carregar(senha).then(function (dados) {
+      ultimaSenha = senha
       if (salvar) { try { localStorage.setItem(CHAVE, senha) } catch (e) {} }
       porta.classList.add('oculto')
       painel.classList.remove('oculto')

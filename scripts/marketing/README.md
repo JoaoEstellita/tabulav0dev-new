@@ -31,6 +31,28 @@ marketing/out/2026-08-07/
 
 Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
+## Editorial — escolher a pauta
+
+Antes o robô decidia sozinho e o que saía era o que saía. Agora as pautas
+calculadas dos próximos dias aparecem no Estúdio com caixas de seleção, e o
+Actions obedece ao que foi marcado.
+
+```
+calendario.mjs --upload  →  marketing/AAAA-MM-DD/calendario.json
+        ↓
+Estúdio                  →  marca card / reel / carrossel por dia
+        ↓
+POST                     →  marketing/AAAA-MM-DD/pauta.json
+        ↓
+Actions às 6h            →  lê a pauta do dia
+```
+
+**Sem pauta, sem rede ou com JSON quebrado, a automação gera tudo como sempre.**
+Ela nunca para porque uma pauta faltou — é a única regra inegociável aqui.
+
+Dia marcado com nenhum formato também é decisão: grava lista vazia, e o Actions
+entende que o silêncio foi escolhido.
+
 ## Peça do mês
 
 ```bash
@@ -147,8 +169,10 @@ se quer enviar nada para a nuvem.
 
 **Segure a imagem** para salvar no rolo da câmera; toque em **Copiar legenda**.
 
-**Não é um CMS, de propósito.** Não edita, não agenda, não guarda estado, não
-publica. Só mostra o que o gerador já produziu.
+**Continua não sendo um CMS.** Não edita texto, não gera peça e não publica no
+Instagram — quem publica é você, do celular. O único estado que ele guarda é a
+pauta: quais formatos saem em que dia. Foi a linha que valeu a pena cruzar,
+porque sem ela o robô escolhia o assunto sozinho.
 
 Detalhe de implementação: a cópia usa `textarea` + `execCommand` como caminho
 principal, não `navigator.clipboard`, porque a Clipboard API exige contexto
@@ -331,7 +355,7 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | `gerarVideo.mjs` | Reel animado |
 | `gerarCarrossel.mjs` | carrossel, roteiros `explicador` e `eixo` |
 | `gerarMensal.mjs` | a peça do mês, por signo e por ascendente |
-| `calendario.mjs` | pautas dos próximos dias, com data e ângulo editorial |
+| `calendario.mjs` | pautas dos próximos dias; `--upload` alimenta a editorial |
 | `estudio.mjs` | visor local para postar do celular |
 | `provaGeometria.mjs` | folha de prova dos 5 aspectos |
 | `lib/ceu.mjs` | aspectos do céu, força, área da vida |
@@ -339,6 +363,7 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | `lib/educativo.mjs` | assunto dos dias sem notícia, ancorado no céu |
 | `lib/mensal.mjs` | eventos do mês por eixo e a casa pelo ascendente |
 | `lib/roteiroLegenda.mjs` | tempo dos pedaços da legenda queimada |
+| `lib/efemerideAnimada.mjs` | o céu quadro a quadro, para o Reel se mover |
 | `lib/vozes.mjs` | léxico, regras de escrita, legendas e enquete |
 | `lib/templateCarrossel.mjs` | HTML/CSS dos slides |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |

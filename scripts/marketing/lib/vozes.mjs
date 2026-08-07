@@ -53,6 +53,69 @@ export const MODO_SIGNO = {
   'Peixes': 'perdem contorno e se misturam',
 }
 
+/**
+ * O que a pessoa observaria em si — o sujeito da frase condicional.
+ *
+ * A régua nº 3 diz "sem segunda pessoa", e ela nasceu para impedir a peça de
+ * AFIRMAR sobre quem lê. O condicional não afirma: propõe uma observação que a
+ * pessoa confere na própria experiência e descarta se não bater. "Se as suas
+ * conversas andaram defensivas" não diz que andaram — pergunta.
+ *
+ * A alternativa era o que estava no ar, e o João nomeou certo: vago. "A conversa
+ * e o raciocínio querem ser vistos" não toca ninguém porque não fala de nada que
+ * alguém reconheça tendo vivido.
+ */
+export const SINTOMA_PLANETA = {
+  Sun: { texto: 'a sua vontade de aparecer', feminino: true, plural: false },
+  Moon: { texto: 'o seu humor', feminino: false, plural: false },
+  Mercury: { texto: 'as suas conversas', feminino: true, plural: true },
+  Venus: { texto: 'o que você tem valorizado', feminino: false, plural: false },
+  Mars: { texto: 'a sua vontade de ir atrás', feminino: true, plural: false },
+  Jupiter: { texto: 'o seu apetite por mais', feminino: false, plural: false },
+  Saturn: { texto: 'a sua paciência com o que não anda', feminino: true, plural: false },
+  Uranus: { texto: 'a sua vontade de mudar tudo', feminino: true, plural: false },
+  Neptune: { texto: 'a sua clareza sobre o que quer', feminino: true, plural: false },
+  Pluto: { texto: 'o que você já não aguenta manter', feminino: false, plural: false },
+}
+
+/**
+ * Como aquilo se manifestou no signo que está sendo deixado.
+ *
+ * Cruzado com o sintoma, dá a frase inteira sem escrever 120 textos — mesma
+ * economia de `TEMA_PLANETA` × `MODO_SIGNO`, só que voltada para o que se sente
+ * em vez do que se descreve.
+ */
+export const SINAL_SIGNO = {
+  'Áries': { ms: 'impaciente', fs: 'impaciente' },
+  'Touro': { ms: 'lento e teimoso', fs: 'lenta e teimosa' },
+  'Gêmeos': { ms: 'disperso', fs: 'dispersa' },
+  'Câncer': { ms: 'defensivo', fs: 'defensiva' },
+  'Leão': { ms: 'exigente de plateia', fs: 'exigente de plateia' },
+  'Virgem': { ms: 'crítico', fs: 'crítica' },
+  'Libra': { ms: 'dependente da aprovação alheia', fs: 'dependente da aprovação alheia' },
+  'Escorpião': { ms: 'desconfiado', fs: 'desconfiada' },
+  'Sagitário': { ms: 'perdido em promessas', fs: 'perdida em promessas' },
+  'Capricórnio': { ms: 'duro consigo', fs: 'dura consigo' },
+  'Aquário': { ms: 'distante', fs: 'distante' },
+  'Peixes': { ms: 'confuso', fs: 'confusa' },
+}
+
+/**
+ * Flexiona o sinal para concordar com o sintoma.
+ *
+ * "As suas conversas andou mais defensivo" foi a primeira saída: sujeito no
+ * plural feminino com verbo no singular e adjetivo no masculino. O plural é
+ * sempre por sufixo `s` nestes adjetivos — inclusive nos invariáveis em gênero,
+ * como "impaciente" e "distante".
+ */
+function concordar(sinal, sintoma) {
+  const base = sintoma.feminino ? sinal.fs : sinal.ms
+  if (!sintoma.plural) return base
+  // pluraliza só a primeira palavra: "duro consigo" → "duros consigo"
+  const [primeira, ...resto] = base.split(' ')
+  return [`${primeira}s`, ...resto].join(' ')
+}
+
 /** O que uma retrogradação costuma pedir, por corpo. */
 const RETRO_PLANETA = {
   Mercury: 'Revisão, releitura, conversa que volta.',
@@ -118,6 +181,9 @@ export function eixoDoSigno(signo) {
   }
 }
 
+/** Sol e Lua pedem artigo no meio da frase; os demais são nomes próprios. */
+const comArtigoNoTexto = (nome) => (nome === 'Sol' ? 'O Sol' : nome === 'Lua' ? 'A Lua' : nome)
+
 /** Hora local de Brasília, que é o público da conta. */
 function hora(data) {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -141,9 +207,25 @@ export function escrever(evento) {
     case 'ingresso': {
       const tema = TEMA_PLANETA[evento.corpo] || 'o que esse corpo rege'
       const modo = MODO_SIGNO[evento.signo] || 'muda de tom'
+
+      // O condicional só existe quando se sabe DE ONDE o planeta está saindo:
+      // sem o signo anterior não há o que a pessoa possa ter observado. Quando
+      // falta, cai na descrição de sempre, que é correta ainda que mais seca.
+      const sintoma = SINTOMA_PLANETA[evento.corpo]
+      const sinal = evento.signoAnterior && SINAL_SIGNO[evento.signoAnterior]
+
+      const texto = sintoma && sinal
+        ? `Se ${sintoma.texto} ${sintoma.plural ? 'andaram' : 'andou'} mais ` +
+          `${concordar(sinal, sintoma)} que de costume nas últimas semanas, isso muda dia ` +
+          `${dia(evento.quando)}. ` +
+          `${comArtigoNoTexto(evento.corpoPt)} sai de ${evento.signoAnterior}` +
+          `${evento.desdeQuando ? `, onde estava desde ${dia(evento.desdeQuando)},` : ''}` +
+          ` e entra em ${evento.signo}.`
+        : `${tema[0].toUpperCase()}${tema.slice(1)} ${modo}.`
+
       return {
         titulo: `${evento.corpoPt} entra em ${evento.signo}`,
-        texto: `${tema[0].toUpperCase()}${tema.slice(1)} ${modo}.`,
+        texto,
         dado: `${dia(evento.quando)}, ${hora(evento.quando)}`,
       }
     }
@@ -291,7 +373,17 @@ export function montarLegenda(principal, secundarios = []) {
     for (const s of secundarios) linhas.push(`· ${prefixoDeVespera(s)}${escreverCurto(s)}`)
   }
 
-  linhas.push('', ...fecho(principal.quando || new Date()))
+  // Nos dias em que o limite não entra, o fecho é o próximo evento — dado
+  // concreto, e nunca o mesmo dois dias seguidos.
+  //
+  // Só serve um evento FUTURO: pegar o primeiro secundário repetia a linha que
+  // acabou de sair em "Também no radar", duas vezes no mesmo texto.
+  const seguinte = secundarios.find((s) => s.vespera)
+  const proximo = seguinte
+    ? `Depois deste: ${escrever(seguinte).titulo}, ${escrever(seguinte).dado}.`
+    : null
+
+  linhas.push('', ...fecho(principal.quando || new Date(), proximo))
   return linhas.join('\n')
 }
 
@@ -406,7 +498,28 @@ function indiceDoDia(quando, tamanho) {
   return soma % tamanho
 }
 
-function fecho(quando) {
+/**
+ * O limite entra em um post a cada quatro, não em todos.
+ *
+ * "O céu é de todos. A casa é de cada um." era a frase que diferenciava a conta,
+ * e repetida todo dia virou papel de parede — o João leu e disse que estava
+ * vago, com razão. Uma frase de princípio precisa ser rara para significar.
+ *
+ * Nos outros dias o fecho é o dado seguinte, que é sempre concreto e nunca é o
+ * mesmo dois dias seguidos.
+ */
+function fecho(quando, proximo = null) {
+  const cabeLimite = indiceDoDia(quando, 4) === 0
+  if (!cabeLimite && proximo) {
+    return [
+      proximo,
+      '',
+      CONVITES[(indiceDoDia(quando, CONVITES.length) + 2) % CONVITES.length],
+      '',
+      TAGS[indiceDoDia(quando, TAGS.length)],
+    ]
+  }
+
   return [
     LIMITES[indiceDoDia(quando, LIMITES.length)],
     '',
