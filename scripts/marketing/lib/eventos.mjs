@@ -239,6 +239,133 @@ export function estacoesProximas(data, dias = 45) {
   return achados.sort((a, b) => a.quando - b.quando)
 }
 
+/**
+ * Retrogradações VIGENTES — o estado, não a virada.
+ *
+ * `estacoesProximas` só acha o instante em que o movimento inverte. Isso vira
+ * evento em dois dias do ano por planeta, e nos vinte e poucos dias entre uma
+ * estação e outra ninguém fala nada — justamente o período em que o público
+ * mais pergunta. "Mercúrio retrógrado" é o assunto mais procurado do nicho, e
+ * era o único que a gente não cobria.
+ *
+ * A busca vai 120 dias para trás e 120 para frente: Mercúrio retrograda por três
+ * semanas, mas Plutão passa quase metade do ano assim, e sem a janela larga o
+ * começo ou o fim ficaria de fora.
+ *
+ * @returns {{corpo, corpoPt, desde, ate, signo, grau, diasRestantes}[]}
+ */
+/**
+ * Só os retrógrados que são experiência vivida.
+ *
+ * Urano, Netuno e Plutão passam cerca de cinco meses por ano retrógrados: como
+ * assunto diário virariam ruído permanente, do mesmo jeito que o aspecto entre
+ * dois lentos. Mercúrio, Vênus e Marte duram semanas, todo mundo já ouviu falar,
+ * e têm data de fim — que é a informação que quem procura realmente quer.
+ */
+const RETRO_QUE_IMPORTA = ['Mercury', 'Venus', 'Mars']
+
+export function retrogradacoesVigentes(data) {
+  const zero = inicioDoDia(data)
+  const vigentes = []
+
+  for (const nome of RETRO_QUE_IMPORTA) {
+    const corpo = CORPOS[nome]
+    if (velocidade(corpo, zero) >= 0) continue
+
+    const estacoes = estacoesProximas(new Date(zero.getTime() - 120 * 86_400_000), 240)
+    const doCorpo = estacoes.filter((e) => e.corpo === nome)
+    const inicio = [...doCorpo].reverse().find((e) => e.tipo === 'retrogrado' && e.quando <= zero)
+    const fim = doCorpo.find((e) => e.tipo === 'direto' && e.quando > zero)
+
+    const pos = posicaoEmSigno(longitude(corpo, zero))
+    vigentes.push({
+      tipo: 'retrogradacao',
+      corpo: nome,
+      corpoPt: NOMES_PT[nome],
+      desde: inicio?.quando || null,
+      ate: fim?.quando || null,
+      signo: pos.signo,
+      grau: pos.grau,
+      elemento: SIGNOS_INFO[Math.floor(longitude(corpo, zero) / 30)].elemento,
+      quando: zero,
+      hoje: true,
+      diasRestantes: fim ? (fim.quando - zero) / 86_400_000 : null,
+    })
+  }
+
+  return vigentes
+}
+
+/**
+ * Planetas em grau crítico: recém-entrados (0°) ou de saída (29°).
+ *
+ * Os dois extremos do signo são assunto na tradição — o 29° é o "grau
+ * anarético", onde o planeta está gastando o que aprendeu ali, e o 0° é o
+ * começo cru. Rotaciona toda semana, ao contrário de planeta-em-signo, que fica
+ * disponível o mês inteiro e por isso repetia como opção.
+ */
+export function grausCriticos(data) {
+  const zero = inicioDoDia(data)
+  const achados = []
+
+  for (const nome of INGRESSO_RELEVANTE) {
+    const lon = longitude(CORPOS[nome], zero)
+    const pos = posicaoEmSigno(lon)
+    // A Lua ficaria em grau crítico a cada dois dias e meio: viraria ruído.
+    if (pos.grau !== 29 && pos.grau !== 0) continue
+    achados.push({
+      tipo: 'grau_critico',
+      extremo: pos.grau === 29 ? 'saida' : 'entrada',
+      corpo: nome,
+      corpoPt: NOMES_PT[nome],
+      signo: pos.signo,
+      grau: pos.grau,
+      elemento: SIGNOS_INFO[Math.floor(lon / 30)].elemento,
+      quando: zero,
+      hoje: true,
+    })
+  }
+
+  return achados
+}
+
+/**
+ * O eixo dos nódulos lunares, hoje.
+ *
+ * `SearchMoonNode` devolve o PRÓXIMO cruzamento, ascendente ou descendente — e
+ * `kind` diz qual. Sem olhar o `kind`, chamadas em datas diferentes devolvem ora
+ * um nódulo ora o outro, e o signo parece pular de Leão para Aquário sem que
+ * nada tenha se movido.
+ *
+ * O eixo anda cerca de 19° por ano, para trás: fica no mesmo par de signos por
+ * volta de dezoito meses.
+ */
+export function eixoDosNodulos(data) {
+  const zero = inicioDoDia(data)
+  try {
+    const n = A.SearchMoonNode(zero)
+    const lonDoNodulo = longitude(A.Body.Moon, n.time.date)
+    // ascendente é o Nódulo Norte; descendente é o Sul, e o Norte fica oposto
+    const ascendente = n.kind > 0
+    const norte = ascendente ? lonDoNodulo : (lonDoNodulo + 180) % 360
+    const sul = (norte + 180) % 360
+    const pn = posicaoEmSigno(norte)
+    const ps = posicaoEmSigno(sul)
+    return {
+      tipo: 'nodulos',
+      norte: pn,
+      sul: ps,
+      signo: pn.signo,
+      grau: pn.grau,
+      elemento: SIGNOS_INFO[Math.floor(norte / 30)].elemento,
+      quando: zero,
+      hoje: true,
+    }
+  } catch {
+    return null
+  }
+}
+
 /** Próximas fases da lua. */
 export function fasesDaLua(data, quantas = 4) {
   const saida = []

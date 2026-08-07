@@ -76,6 +76,22 @@ const ROTULO_ASPECTO = Object.fromEntries(ASPECTOS.map((a) => [a.chave, a.rotulo
  * "Hoje Sol apenas passa por ali" é o tipo de erro que denuncia texto gerado.
  * Marte, Vênus e os outros são nomes próprios e dispensam o artigo.
  */
+/**
+ * Texto que fala com quem lê não serve para peça pública.
+ *
+ * A regra sempre foi essa, e a verificação que a sustentava estava quebrada:
+ * `\bvocê\b` NUNCA casa em JavaScript, porque `\b` só reconhece `[A-Za-z0-9_]`
+ * como caractere de palavra e `ê` não é um deles. A auditoria dava zero e o
+ * card publicava "quando você lidera" com naturalidade.
+ *
+ * Auditado com o regex certo: 4 dos 120 textos de planeta-em-signo, 20 dos 225
+ * de aspecto natal e 6 dos 12 de nódulo têm segunda pessoa. São poucos, e não
+ * há motivo para arriscar — o candidato é simplesmente descartado.
+ */
+export const SEGUNDA_PESSOA = /(^|[^a-zA-ZÀ-ÿ])(você|voce|seu|sua|seus|suas|teu|tua)([^a-zA-ZÀ-ÿ]|$)/i
+
+export const falaComQuemLe = (texto) => SEGUNDA_PESSOA.test(String(texto || ''))
+
 const ARTIGO = { Sol: 'o ', Lua: 'a ' }
 const comArtigo = (nome, maiuscula = false) => {
   const art = ARTIGO[nome] || ''
@@ -125,7 +141,7 @@ export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) 
     if (!signoEn) continue
     const chave = `natal:${corpo.nome.toLowerCase()}_in_${signoEn}`
     const texto = catalogos.planetaNoSigno?.[chave]
-    if (!texto) continue
+    if (!texto || falaComQuemLe(texto)) continue
 
     // Posição que está de saída não vira assunto: quem lê guarda a informação e
     // ela já nasce velha. Foi o que produziu "Mercúrio em Câncer" na véspera de
@@ -165,7 +181,7 @@ export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) 
     if (!CORPOS_PESSOAIS.includes(a.agente) && !CORPOS_PESSOAIS.includes(a.alvo)) continue
     const chave = chaveAspectoNatal(a.agente, a.alvo, a.aspecto)
     const texto = catalogos.aspectoNatal?.[chave]
-    if (!texto) continue
+    if (!texto || falaComQuemLe(texto)) continue
     candidatos.push({
       tipo: 'aspecto_natal',
       chave,

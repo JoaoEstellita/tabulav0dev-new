@@ -40,7 +40,7 @@ const dias = Number(valor('dias', '21'))
 const base = valor('data', '') ? new Date(`${valor('data', '')}T12:00:00Z`) : new Date()
 const comoJson = args.includes('--json')
 
-const [ps, an, orbes] = await Promise.all([
+const [ps, an, orbes, nodulos] = await Promise.all([
   lerLiterais(path.join(FRONTEND, 'src/data/planetInSignOverridesPtBR.ts'), [
     'PLANET_IN_SIGN_PTBR_OVERRIDES',
   ]),
@@ -48,12 +48,17 @@ const [ps, an, orbes] = await Promise.all([
     'NATAL_PLANET_ASPECT_PTBR_OVERRIDES',
   ]),
   lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
+  // doze textos que estavam escritos no app e nunca tinham saido de la
+  lerLiterais(path.join(FRONTEND, 'src/data/lunarNodeSignOverridesPtBR.ts'), [
+    'LUNAR_NODE_SIGN_PTBR_OVERRIDES',
+  ]),
 ])
 
 const deps = {
   catalogos: {
     planetaNoSigno: ps.PLANET_IN_SIGN_PTBR_OVERRIDES,
     aspectoNatal: an.NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+    noduloPorSigno: nodulos.LUNAR_NODE_SIGN_PTBR_OVERRIDES,
   },
   orbes: orbes.PLANET_ASPECT_ORBS,
 }

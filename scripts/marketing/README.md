@@ -300,6 +300,30 @@ contra-rotacionar texto dentro de um plano 3D não funciona em motor nenhum. Em
 0,86 o que era legível em miniatura continua legível — os rótulos de signo
 dentro da roda já não eram, com ou sem achatamento, porque têm ~6px a 320px.
 
+**`` não funciona com acento em JavaScript.** A regra "sem segunda pessoa"
+sempre existiu, e a verificação que a sustentava era `/você/` — que **nunca
+casa**, porque `` só reconhece `[A-Za-z0-9_]` como caractere de palavra e `ê`
+não é um deles. A auditoria dava zero e o card publicava "quando você lidera"
+com naturalidade, por um dia inteiro em produção.
+
+Auditado com o regex certo: 4 dos 120 textos de planeta-em-signo, 20 dos 225 de
+aspecto natal e **6 dos 12** de nódulo falam com quem lê. Agora o candidato é
+descartado na origem (`falaComQuemLe`, em `lib/educativo.mjs`). Custou dois dias
+de encadeamento sem repetir — de 14 para 12 — e vale.
+
+**Assuntos de ritmo próprio.** Planeta-em-signo fica disponível o mês inteiro, e
+por isso "Vênus em Libra" aparecia como opção todo dia. Três fontes rodam mais
+rápido: **retrogradação em curso** (semanas, com data de fim — a pergunta mais
+feita do nicho, e o único assunto que a gente não cobria), **grau crítico**
+(0° e 29°, troca toda semana) e o **eixo dos nódulos**.
+
+Só Mercúrio, Vênus e Marte contam como retrógrado: Urano, Netuno e Plutão passam
+cinco meses por ano assim e virariam ruído permanente, igual ao aspecto entre
+dois lentos.
+
+⚠️ **`SearchMoonNode` devolve ora o ascendente ora o descendente.** Sem olhar o
+`kind`, o Nódulo Norte parecia pular de Leão para Aquário sem nada ter se movido.
+
 **Dia sem notícia vira card educativo.** Em 60 dias, treze não têm evento forte,
 e vêm em blocos de três e quatro seguidos. Antes, os três dias de um mesmo
 período de Lua fora de curso saíam com título, janela e texto IDÊNTICOS. Agora,

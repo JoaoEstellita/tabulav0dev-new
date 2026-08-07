@@ -74,10 +74,20 @@ describe('tema educativo', () => {
     }
   })
 
-  it('não repete assunto em catorze dias seguidos — o pior caso', () => {
+  /**
+   * Dez dias seguidos, e não catorze como antes.
+   *
+   * O filtro de segunda pessoa tirou 20 dos 225 textos de aspecto natal do pool,
+   * e o encadeamento sem repetir caiu de 14 para 12 dias. É um trade que vale:
+   * publicar texto que fala com quem lê quebra a regra que sustenta a conta.
+   *
+   * Dez continua com folga sobrando — medido, o bloco mais longo de dias
+   * educativos seguidos num semestre é de QUATRO.
+   */
+  it('não repete assunto em dez dias seguidos, muito além do bloco real', () => {
     const usadas = new Set()
     const vistos = []
-    for (let d = 0; d < 14; d++) {
+    for (let d = 0; d < 10; d++) {
       const data = new Date(Date.UTC(2026, 7, 13) + d * 86_400_000)
       const tema = temaEducativo(mapaDoCeu(data, ORBES), CATALOGOS, usadas)
       expect(tema, `dia ${d}`).not.toBeNull()
@@ -85,7 +95,7 @@ describe('tema educativo', () => {
       usadas.add(tema.chave)
       vistos.push(tema.chave)
     }
-    expect(new Set(vistos).size).toBe(14)
+    expect(new Set(vistos).size).toBe(10)
   })
 
   it('o pool se renova quando um planeta muda de signo', () => {

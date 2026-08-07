@@ -4,10 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 import { lerLiterais } from '../catalogo.mjs'
 import { opcoesDoDia, acharOpcao, idDoAssunto, formatosDoAssunto } from '../pautas.mjs'
+import { falaComQuemLe } from '../educativo.mjs'
 
 const FRONTEND = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 
-const [ps, an, orbes] = await Promise.all([
+const [ps, an, orbes, nn] = await Promise.all([
   lerLiterais(path.join(FRONTEND, 'src/data/planetInSignOverridesPtBR.ts'), [
     'PLANET_IN_SIGN_PTBR_OVERRIDES',
   ]),
@@ -15,12 +16,16 @@ const [ps, an, orbes] = await Promise.all([
     'NATAL_PLANET_ASPECT_PTBR_OVERRIDES',
   ]),
   lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
+  lerLiterais(path.join(FRONTEND, 'src/data/lunarNodeSignOverridesPtBR.ts'), [
+    'LUNAR_NODE_SIGN_PTBR_OVERRIDES',
+  ]),
 ])
 
 const DEPS = {
   catalogos: {
     planetaNoSigno: ps.PLANET_IN_SIGN_PTBR_OVERRIDES,
     aspectoNatal: an.NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+    noduloPorSigno: nn.LUNAR_NODE_SIGN_PTBR_OVERRIDES,
   },
   orbes: orbes.PLANET_ASPECT_ORBS,
 }
@@ -110,5 +115,88 @@ describe('opções de um dia', () => {
       .toBe('ingresso:Venus:Libra')
     expect(idDoAssunto({ tipo: 'educativo', chave: 'natal:venus_in_libra' }))
       .toBe('educativo:natal:venus_in_libra')
+  })
+})
+
+/**
+ * O defeito que passou despercebido por um dia inteiro em producao.
+ *
+ * A regra "sem segunda pessoa" sempre existiu, e a verificacao que a sustentava
+ * estava quebrada: `\bvocê\b` NUNCA casa em JavaScript, porque `\b` so reconhece
+ * `[A-Za-z0-9_]` como caractere de palavra e `ê` nao e um deles. A auditoria
+ * dava zero e o card publicava "quando você lidera" com naturalidade.
+ */
+describe('segunda pessoa', () => {
+  it('o regex pega o que o \b nao pegava', () => {
+    expect(falaComQuemLe('quando você lidera sem precisar')).toBe(true)
+    expect(falaComQuemLe('a necessidade de reconhecimento')).toBe(false)
+    expect(falaComQuemLe('Sua determinacao permite agir')).toBe(true)
+    expect(falaComQuemLe('o seu mapa')).toBe(true)
+    // nao pode pegar palavra que apenas CONTEM o pronome
+    expect(falaComQuemLe('a seiva sobe pela raiz')).toBe(false)
+    expect(falaComQuemLe('suave e constante')).toBe(false)
+  })
+
+  it('nenhum assunto oferecido fala com quem le', () => {
+    for (const dia of ['2026-08-08', '2026-08-15', '2026-11-01', '2026-11-15']) {
+      for (const o of opcoesDoDia(meioDia(dia), DEPS)) {
+        const texto = o.evento?.texto || ''
+        expect(falaComQuemLe(texto), `${dia} — ${o.titulo}`).toBe(false)
+      }
+    }
+  })
+})
+
+/**
+ * Estados e posicoes que rodam num ritmo diferente do ceu de eventos. Sem eles
+ * o pool repetia: planeta-em-signo fica disponivel o mes inteiro.
+ */
+describe('assuntos de ritmo proprio', () => {
+  it('retrogradacao em curso vira assunto, com data de fim', () => {
+    const ops = opcoesDoDia(meioDia('2026-11-01'), DEPS)
+    const retro = ops.filter((o) => o.tipo === 'retrogradacao')
+    expect(retro.length).toBeGreaterThan(0)
+    for (const r of retro) {
+      expect(r.evento.ate, r.titulo).toBeInstanceOf(Date)
+      expect(r.angulo).toMatch(/faltam \d+ dias/)
+    }
+  })
+
+  // Urano, Netuno e Plutao passam ~5 meses por ano retrogrados: como assunto
+  // diario virariam ruido permanente, igual ao aspecto entre dois lentos.
+  it('so Mercurio, Venus e Marte contam como retrogrado', () => {
+    for (const dia of ['2026-08-07', '2026-11-01']) {
+      for (const o of opcoesDoDia(meioDia(dia), DEPS)) {
+        if (o.tipo !== 'retrogradacao') continue
+        expect(['Mercury', 'Venus', 'Mars'], o.titulo).toContain(o.evento.corpo)
+      }
+    }
+  })
+
+  it('grau critico so em 0 e 29', () => {
+    for (const dia of ['2026-08-07', '2026-09-01', '2026-10-01']) {
+      for (const o of opcoesDoDia(meioDia(dia), DEPS)) {
+        if (o.tipo !== 'grau_critico') continue
+        expect([0, 29], o.titulo).toContain(o.evento.grau)
+      }
+    }
+  })
+
+  // `SearchMoonNode` devolve ora o ascendente ora o descendente, e sem olhar o
+  // `kind` o signo parecia pular de Leao para Aquario sem nada ter se movido.
+  it('o eixo dos nodulos e consistente entre datas proximas', () => {
+    const a = opcoesDoDia(meioDia('2026-11-01'), DEPS).find((o) => o.tipo === 'nodulos')
+    const b = opcoesDoDia(meioDia('2026-11-08'), DEPS).find((o) => o.tipo === 'nodulos')
+    if (!a || !b) return // signo sem texto utilizavel
+    expect(a.evento.norte.signo).toBe(b.evento.norte.signo)
+  })
+
+  it('o Norte e sempre oposto ao Sul', () => {
+    const n = opcoesDoDia(meioDia('2026-11-01'), DEPS).find((o) => o.tipo === 'nodulos')
+    if (!n) return
+    const SIG = ['Áries','Touro','Gêmeos','Câncer','Leão','Virgem','Libra','Escorpião','Sagitário','Capricórnio','Aquário','Peixes']
+    const iN = SIG.indexOf(n.evento.norte.signo)
+    const iS = SIG.indexOf(n.evento.sul.signo)
+    expect((iN + 6) % 12).toBe(iS)
   })
 })

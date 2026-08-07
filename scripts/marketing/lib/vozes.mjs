@@ -277,6 +277,68 @@ export function escrever(evento) {
       }
     }
 
+    /**
+     * O ESTADO, não a virada.
+     *
+     * A estação já era evento, mas dura um instante; o retrógrado dura semanas,
+     * e é nelas que o público pergunta. A peça abre pela data de fim porque é a
+     * única informação que quem procura "Mercúrio retrógrado" realmente quer.
+     */
+    case 'retrogradacao': {
+      const sintoma = SINTOMA_PLANETA[evento.corpo]
+      const quantos = evento.diasRestantes ? Math.round(evento.diasRestantes) : null
+
+      const abertura = sintoma
+        ? `Se ${sintoma.texto} ${sintoma.plural ? 'andaram' : 'andou'} voltando ao mesmo ponto, é isso.`
+        : RETRO_PLANETA[evento.corpo] || 'O movimento se volta para trás.'
+
+      const fim = evento.ate
+        ? ` Volta a andar direto em ${dia(evento.ate)}${quantos ? `, daqui a ${quantos} dia${quantos === 1 ? '' : 's'}` : ''}.`
+        : ''
+
+      return {
+        titulo: `${comArtigoNoTexto(evento.corpoPt)} está retrógrado`,
+        texto: `${abertura}${fim}`,
+        dado: evento.desde
+          ? `desde ${dia(evento.desde)} · ${evento.grau}° de ${evento.signo}`
+          : `${evento.grau}° de ${evento.signo}`,
+      }
+    }
+
+    /**
+     * Os dois extremos do signo, que a tradição trata como momentos distintos.
+     *
+     * Rotaciona toda semana, ao contrário de planeta-em-signo — que fica
+     * disponível o mês inteiro e por isso aparecia repetido como opção.
+     */
+    case 'grau_critico': {
+      const saindo = evento.extremo === 'saida'
+      return {
+        titulo: saindo
+          ? `${comArtigoNoTexto(evento.corpoPt)} no último grau de ${evento.signo}`
+          : `${comArtigoNoTexto(evento.corpoPt)} no primeiro grau de ${evento.signo}`,
+        texto: saindo
+          ? `Vinte e nove graus é o fim da travessia. A tradição chama de grau anarético: o que ${evento.corpoPt} tinha para aprender em ${evento.signo} já foi aprendido, e o que sobra é gastar.`
+          : `Zero grau é começo cru. ${comArtigoNoTexto(evento.corpoPt)} acabou de entrar em ${evento.signo} e ainda não sabe se mover ali — é a parte do ciclo que costuma vir desajeitada.`,
+        dado: `${evento.grau}° de ${evento.signo}`,
+      }
+    }
+
+    /**
+     * O eixo dos nódulos: o assunto que quase ninguém explica.
+     *
+     * O texto vem do catálogo curado do app (`lunarNodeSignOverridesPtBR`), que
+     * estava escrito e nunca tinha saído de lá.
+     */
+    case 'nodulos':
+      return {
+        titulo: `Nódulo Norte em ${evento.norte.signo}`,
+        texto:
+          evento.texto ||
+          `O eixo dos nódulos está em ${evento.norte.signo} e ${evento.sul.signo}. Ele anda para trás, cerca de 19° por ano, e leva um ano e meio em cada par de signos.`,
+        dado: `Norte a ${evento.norte.grau}° de ${evento.norte.signo} · Sul a ${evento.sul.grau}° de ${evento.sul.signo}`,
+      }
+
     case 'lua_fora_de_curso': {
       // quando o período atravessa a meia-noite, só a hora engana
       const mesmoDia = dia(evento.inicio) === dia(evento.fim)

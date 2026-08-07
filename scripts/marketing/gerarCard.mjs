@@ -167,7 +167,7 @@ function meioDiaUTC(iso) {
 const paraISO = (data) => data.toISOString().slice(0, 10)
 
 async function carregarCatalogos() {
-  const [titulos, aforismos, leituras, areas, orbes, planetaSigno, aspectoNatal] = await Promise.all([
+  const [titulos, aforismos, leituras, areas, orbes, planetaSigno, aspectoNatal, nodulos] = await Promise.all([
     lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
     // 724 interpretações de ~315 caracteres que as peças ignoravam: é o que
@@ -187,6 +187,9 @@ async function carregarCatalogos() {
     lerLiterais(path.join(FRONTEND, 'src/data/natalPlanetAspectOverridesPtBR.ts'), [
       'NATAL_PLANET_ASPECT_PTBR_OVERRIDES',
     ]),
+    lerLiterais(path.join(FRONTEND, 'src/data/lunarNodeSignOverridesPtBR.ts'), [
+      'LUNAR_NODE_SIGN_PTBR_OVERRIDES',
+    ]),
   ])
 
   return {
@@ -200,6 +203,7 @@ async function carregarCatalogos() {
     educativo: {
       planetaNoSigno: planetaSigno.PLANET_IN_SIGN_PTBR_OVERRIDES,
       aspectoNatal: aspectoNatal.NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+      noduloPorSigno: nodulos.LUNAR_NODE_SIGN_PTBR_OVERRIDES,
     },
   }
 }
@@ -456,7 +460,9 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico, assunto = '') 
     // Duas frases no card, texto inteiro na legenda: os textos do catálogo têm
     // ~340 caracteres e foram escritos para a tela do app, onde há rolagem.
     // Inteiros aqui, empurram o aviso e o rodapé para fora do quadro.
-    textoEvento: voz ? voz.texto : tema ? primeirasFrases(tema.texto, 2) : '',
+    // Duas frases, sempre. O texto do nodulo tem ~500 caracteres e empurrava o
+    // rodape para fora do quadro — mesmo motivo do educativo.
+    textoEvento: voz ? primeirasFrases(voz.texto, 2) : tema ? primeirasFrases(tema.texto, 2) : '',
     // a chave que vai para o histórico decide o que não se repete na janela
     chave: principal ? chaveDeEvento(principal) : tema ? tema.chave : bruto.chave,
     repetido: tema ? tema.repetido : bruto.repetido,

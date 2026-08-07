@@ -13,10 +13,24 @@
  * Este módulo é compartilhado de propósito: o calendário e o gerador precisam
  * concordar no ID de cada assunto, senão a pauta salva ontem aponta para nada.
  */
-import { eventosDoDia, ingressosProximos } from './eventos.mjs'
+import {
+  eventosDoDia,
+  ingressosProximos,
+  retrogradacoesVigentes,
+  grausCriticos,
+  eixoDosNodulos,
+} from './eventos.mjs'
 import { mapaDoCeu } from './ceu.mjs'
-import { temaEducativo } from './educativo.mjs'
+import { temaEducativo, falaComQuemLe } from './educativo.mjs'
 import { escrever, mereceEixo, rotuloDeVespera } from './vozes.mjs'
+
+/** Os catálogos usam o nome do signo em inglês, minúsculo. */
+const SIGNO_EN = {
+  'Áries': 'aries', 'Touro': 'taurus', 'Gêmeos': 'gemini', 'Câncer': 'cancer',
+  'Leão': 'leo', 'Virgem': 'virgo', 'Libra': 'libra', 'Escorpião': 'scorpio',
+  'Sagitário': 'sagittarius', 'Capricórnio': 'capricorn', 'Aquário': 'aquarius',
+  'Peixes': 'pisces',
+}
 
 /**
  * Identidade estável de um assunto.
@@ -29,6 +43,14 @@ export function idDoAssunto(ev) {
   switch (ev.tipo) {
     case 'lua_fora_de_curso':
       return `vazia:${ev.inicio.toISOString()}`
+    // o estado dura semanas: a identidade e o corpo mais a data de inicio, para
+    // dois retrogrados do mesmo planeta em anos diferentes nao colidirem
+    case 'retrogradacao':
+      return `retro:${ev.corpo}:${ev.desde ? ev.desde.toISOString().slice(0, 10) : 'atual'}`
+    case 'grau_critico':
+      return `grau:${ev.corpo}:${ev.signo}:${ev.grau}`
+    case 'nodulos':
+      return `nodulos:${ev.norte.signo}`
     case 'eclipse':
       return `eclipse:${ev.luminar}:${ev.quando.toISOString().slice(0, 10)}`
     case 'ingresso':
@@ -51,6 +73,14 @@ export function idDoAssunto(ev) {
 export function anguloDoAssunto(ev) {
   if (ev.tipo === 'educativo') return 'O que significa num mapa natal'
   if (ev.tipo === 'lua_fora_de_curso') return 'Aviso do dia — dura horas, e volta toda semana'
+  if (ev.tipo === 'retrogradacao') {
+    const d = ev.diasRestantes ? Math.round(ev.diasRestantes) : null
+    return d ? `Em curso — faltam ${d} dias para acabar` : 'Em curso — o assunto mais procurado do nicho'
+  }
+  if (ev.tipo === 'grau_critico') {
+    return ev.extremo === 'saida' ? 'Último grau — a tradição chama de anarético' : 'Primeiro grau — começo cru'
+  }
+  if (ev.tipo === 'nodulos') return 'O eixo que quase ninguém explica'
   const falta = ev.diasFalta ?? 0
   if (falta === 0) return 'É hoje — o dado exato, com hora'
   if (falta === 1) return 'Amanhã — o que muda e o que não muda'
@@ -67,6 +97,9 @@ export function anguloDoAssunto(ev) {
 export function formatosDoAssunto(ev) {
   if (ev.tipo === 'educativo') return ['card']
   if (ev.tipo === 'lua_fora_de_curso') return ['card']
+  if (ev.tipo === 'grau_critico' || ev.tipo === 'nodulos') return ['card']
+  // retrógrado sustenta vídeo: tem começo, fim e uma pergunta que todo mundo faz
+  if (ev.tipo === 'retrogradacao') return ['card', 'reel']
 
   const formatos = ['card', 'reel']
   if (ev.tipo === 'eclipse') formatos.push('carrossel')
@@ -100,6 +133,39 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
       id: idDoAssunto(ev),
       tipo: ev.tipo,
       titulo: vespera ? `${vespera}: ${v.titulo}` : v.titulo,
+      angulo: anguloDoAssunto(ev),
+      formatos: formatosDoAssunto(ev),
+      evento: ev,
+    })
+  }
+
+  // Estados e posições que não são "evento" mas são assunto. Rodam num ritmo
+  // diferente do céu de eventos: a retrogradação dura semanas e é a pergunta
+  // mais feita do nicho; o grau crítico troca toda semana; o eixo dos nódulos
+  // fica dezoito meses, mas quase ninguém explica.
+  const extras = [
+    ...retrogradacoesVigentes(data),
+    ...grausCriticos(data),
+  ]
+
+  const nodulos = eixoDosNodulos(data)
+  if (nodulos) {
+    // o texto do catálogo vem por signo do Nódulo Norte, e estava parado no app
+    const chave = `natal:nn_sign_${SIGNO_EN[nodulos.norte.signo] || ''}`
+    const texto = catalogos.noduloPorSigno?.[chave] || ''
+    // Metade dos doze textos de nódulo fala com quem lê. Sem assunto é melhor
+    // que com assunto errado: o eixo simplesmente não entra nesses signos.
+    if (texto && !falaComQuemLe(texto)) {
+      extras.push({ ...nodulos, texto, corpoPt: 'Nódulo Norte' })
+    }
+  }
+
+  for (const ev of extras) {
+    const v = escrever(ev)
+    opcoes.push({
+      id: idDoAssunto(ev),
+      tipo: ev.tipo,
+      titulo: v.titulo,
       angulo: anguloDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
       evento: ev,
