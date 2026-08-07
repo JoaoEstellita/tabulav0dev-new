@@ -29,6 +29,14 @@ on:
         type: boolean
         required: false
         default: true
+      # Sem isto, encher a editorial pela primeira vez exigia rodar um comando
+      # no PC — o atrito que o Estúdio existe para eliminar. Trinta segundos de
+      # runner, sem gastar Chrome nem ffmpeg.
+      apenas_calendario:
+        description: "Só recalcular as pautas do Estúdio (não gera peça nenhuma)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -57,6 +65,7 @@ jobs:
       # o Chrome cai num serif genérico e o card sai diferente do aprovado.
       # fonts-urw-base35 traz o URW Palladio L / P052, que é o Palatino livre.
       - name: Instalar fontes equivalentes
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-urw-base35 fonts-liberation fonts-dejavu-core
@@ -65,6 +74,7 @@ jobs:
           echo "Mono disponível:"; fc-match "DejaVu Sans Mono" || true
 
       - name: Conferir o Chrome do runner
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         run: |
           which google-chrome-stable || which google-chrome || which chromium-browser
           google-chrome-stable --version || google-chrome --version
@@ -81,6 +91,7 @@ jobs:
       # `ffmpeg -version | head -1`, e o `head` devolvia 0 mesmo com o comando
       # ausente: o mesmo bug de pipeline que escondeu o resto.
       - name: Instalar ffmpeg
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         run: |
           set -o pipefail
           sudo apt-get install -y -qq ffmpeg
@@ -89,6 +100,7 @@ jobs:
       # A janela de 14 dias sem repetir texto vive num JSON ao lado das imagens.
       # Sem restaurar isso, todo dia começaria do zero e o mesmo trânsito voltaria.
       - name: Restaurar histórico anti-repetição
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         uses: actions/cache@v4
         with:
           path: marketing/out/.historico.json
@@ -100,6 +112,7 @@ jobs:
       # sem rede ou com JSON quebrado, a automação segue como sempre — ela NUNCA
       # pode parar porque uma pauta faltou.
       - name: Ler a pauta do dia
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         id: pauta
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
@@ -130,7 +143,7 @@ jobs:
       - name: Gerar e enviar
         id: gerar
         # com pauta, o card só sai se estiver marcado
-        if: ${{ steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'card') }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && (steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'card')) }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DIAS: ${{ github.event.inputs.dias || '1' }}
@@ -156,7 +169,7 @@ jobs:
           node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee saida.txt
 
       - name: Gerar o Reel animado
-        if: ${{ github.event.inputs.reel != 'false' && (steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'reel')) }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && github.event.inputs.reel != 'false' && (steps.pauta.outputs.tem != 'sim' || contains(steps.pauta.outputs.itens, 'reel')) }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
@@ -181,7 +194,7 @@ jobs:
       # O carrossel só sai marcado: é a peça mais cara de produzir e a que menos
       # dias comportam. Sem pauta ele não sai — quem decide isto é editorial.
       - name: Gerar o carrossel
-        if: ${{ steps.pauta.outputs.tem == 'sim' && contains(steps.pauta.outputs.itens, 'carrossel') }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.tem == 'sim' && contains(steps.pauta.outputs.itens, 'carrossel') }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}

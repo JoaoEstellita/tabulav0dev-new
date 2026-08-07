@@ -304,9 +304,14 @@
     // o calendário mais recente é o do dia mais novo que o tiver
     var comCal = dias.filter(function (d) { return d.calendario && d.calendario.length })
     if (!comCal.length) {
+      // A mensagem antiga mandava rodar um comando no PC — que é exatamente o
+      // atrito que o Estúdio existe para eliminar. As pautas chegam sozinhas
+      // com a execução diária; só a primeira vez precisa de um empurrão.
       editorial.innerHTML = '<h2 class="secao">Editorial</h2>' +
-        '<p class="vazio">Sem pautas calculadas ainda.<br><br>No PC, rode:<br>' +
-        '<code>node scripts/marketing/calendario.mjs --upload</code></p>'
+        '<p class="vazio">As pautas dos próximos dias chegam junto com o card, ' +
+        'todo dia às 6h.<br><br>' +
+        'Para preencher agora: <b>Actions → Card diário → Run workflow</b>, ' +
+        'marcando <b>só o calendário</b>.</p>'
       return
     }
 
