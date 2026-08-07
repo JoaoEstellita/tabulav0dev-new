@@ -362,7 +362,14 @@
   function desenharEditorial(dias) {
     var editorial = document.getElementById('editorial')
 
-    var comCal = dias.filter(function (d) { return d.calendario && d.calendario.length })
+    // Exige o formato NOVO, agrupado por dia. Um `calendario.json` gravado antes
+    // da reestruturação é uma lista plana sem `opcoes`, e `d.opcoes.map`
+    // estourava — dentro de um `.then`, virando rejeição silenciosa que levava a
+    // página inteira junto. Formato desconhecido é tratado como ausente.
+    var comCal = dias.filter(function (d) {
+      return d.calendario && d.calendario.length && d.calendario[0] &&
+        Array.isArray(d.calendario[0].opcoes)
+    })
     if (!comCal.length) {
       editorial.innerHTML =
         '<summary>Editorial</summary>' +
@@ -503,7 +510,18 @@
   }
 
   function desenhar(dias) {
-    desenharEditorial(dias)
+    // A editorial é secundária; as peças são o motivo de a página existir. Um
+    // erro ali derrubava o render inteiro e deixava a tela em branco — foi o que
+    // aconteceu quando um calendário em formato velho encontrou o código novo.
+    try {
+      desenharEditorial(dias)
+    } catch (e) {
+      document.getElementById('editorial').innerHTML =
+        '<summary>Editorial</summary>' +
+        '<p class="vazio">Não consegui ler as pautas.<br>' +
+        'As peças abaixo continuam disponíveis.</p>'
+      if (window.console) console.error('editorial:', e)
+    }
 
     if (!dias.length) {
       lista.innerHTML = '<p class="vazio">Nenhum card enviado ainda.<br><br>' +
