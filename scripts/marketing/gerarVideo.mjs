@@ -28,6 +28,7 @@ import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { eventosDoDia } from './lib/eventos.mjs'
 import { escrever, rotuloDeVespera } from './lib/vozes.mjs'
+import { legendaDoReel } from './lib/roteiroLegenda.mjs'
 import { montarAnimacao } from './lib/templateAnimado.mjs'
 
 const execFileAsync = promisify(execFile)
@@ -166,7 +167,7 @@ async function principal() {
   const area = areaDoEncontro(encontro, areas.LIFE_AREA_ATTRIBUTION)
   const mapa = mapaDoCeu(data, orbes.PLANET_ASPECT_ORBS)
 
-  const html = montarAnimacao({
+  const dadosDaCena = {
     ...mapa,
     ...encontro,
     area,
@@ -177,6 +178,13 @@ async function principal() {
     leitura: primeirasFrases(leituras.TRANSIT_CATALOG_PTBR_OVERRIDES[encontro.chave], 2),
     dirPlanetas: DIR_PLANETAS,
     ...vozDoDia(data, mapa.aspectos),
+  }
+
+  // O roteiro depende do texto já resolvido, então é montado depois — e conhece
+  // a duração porque o piso de leitura é em segundos, não em fração de vídeo.
+  const html = montarAnimacao({
+    ...dadosDaCena,
+    roteiroLegenda: legendaDoReel(dadosDaCena, args.segundos),
   })
 
   const pasta = path.join(args.saida, iso)

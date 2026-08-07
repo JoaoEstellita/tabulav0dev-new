@@ -31,6 +31,29 @@ marketing/out/2026-08-07/
 
 Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
 
+## Peça do mês
+
+```bash
+node scripts/marketing/gerarMensal.mjs                  # mês corrente
+node scripts/marketing/gerarMensal.mjs --mes=2026-08
+node scripts/marketing/gerarMensal.mjs --separados      # 12 peças avulsas
+```
+
+Capa mais um slide por signo. Cada slide traz duas leituras da mesma efeméride:
+
+- **Por signo, no condicional** — *"Se o seu Sol, Lua ou ascendente está em
+  Peixes, é este eixo que recebe o mês."* Não afirma nada sobre a vida de quem
+  lê, e ainda dá o gancho de identificação.
+- **Por ascendente, com número exato** — *"Com ascendente em Peixes, em casas
+  inteiras: o eclipse de 28/08 cai na sua casa 1."*
+
+A segunda linha é o que nos separa das contas que fazem isto. Em casas inteiras
+a casa é aritmética, `((signo do evento − signo do ascendente + 12) mod 12) + 1`
+— a mesma conta de `src/astro/houses.math.ts:83`. Em Placidus as cúspides
+deslocam e deixaria de ser exato, **por isso o sistema é declarado na peça**.
+
+Sai em `mensal/00.png … 12.png` dentro de uma pasta `AAAA-MM`.
+
 ## Carrossel
 
 ```bash
@@ -223,6 +246,20 @@ para a seguinte — igualmente verdadeira, só menos exata. O histórico fica em
 **Campo estelar determinístico.** A semente vem da data, então regerar um card
 já publicado produz exatamente a mesma imagem.
 
+**A legenda do Reel é queimada, não estática.** A maioria assiste sem som, e o
+bloco fixo embaixo do gráfico dependia de alguém parar para ler. Agora a leitura
+entra em pedaços de ~7 palavras, com piso de 0,9 segundo por pedaço — legenda
+queimada se lê a umas três palavras por segundo, e o reparto proporcional puro
+dava 0,58s, tempo de piscar. O bloco fixo guarda só a identificação: título e
+data. Ter os dois com o mesmo texto deixava o quadro dizendo tudo duas vezes.
+
+**A roda é achatada, não rotacionada.** `ACHATAMENTO` em `lib/templateCarta.mjs`
+comprime o Y dentro de `ponto()`, e todo elemento cai sozinho na elipse. Não é
+`transform: rotateX()` porque transformar o SVG esmagaria os rótulos junto, e
+contra-rotacionar texto dentro de um plano 3D não funciona em motor nenhum. Em
+0,86 o que era legível em miniatura continua legível — os rótulos de signo
+dentro da roda já não eram, com ou sem achatamento, porque têm ~6px a 320px.
+
 **Dia sem notícia vira card educativo.** Em 60 dias, treze não têm evento forte,
 e vêm em blocos de três e quatro seguidos. Antes, os três dias de um mesmo
 período de Lua fora de curso saíam com título, janela e texto IDÊNTICOS. Agora,
@@ -293,12 +330,15 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | `gerarCard.mjs` | orquestrador e CLI |
 | `gerarVideo.mjs` | Reel animado |
 | `gerarCarrossel.mjs` | carrossel, roteiros `explicador` e `eixo` |
+| `gerarMensal.mjs` | a peça do mês, por signo e por ascendente |
 | `calendario.mjs` | pautas dos próximos dias, com data e ângulo editorial |
 | `estudio.mjs` | visor local para postar do celular |
 | `provaGeometria.mjs` | folha de prova dos 5 aspectos |
 | `lib/ceu.mjs` | aspectos do céu, força, área da vida |
 | `lib/eventos.mjs` | ingresso, estação, fase, eclipse, Lua fora de curso |
 | `lib/educativo.mjs` | assunto dos dias sem notícia, ancorado no céu |
+| `lib/mensal.mjs` | eventos do mês por eixo e a casa pelo ascendente |
+| `lib/roteiroLegenda.mjs` | tempo dos pedaços da legenda queimada |
 | `lib/vozes.mjs` | léxico, regras de escrita, legendas e enquete |
 | `lib/templateCarrossel.mjs` | HTML/CSS dos slides |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |

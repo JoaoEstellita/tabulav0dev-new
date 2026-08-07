@@ -98,6 +98,24 @@ export function montarSlide(slide, semente) {
   .texto {
     font-family: ${SERIF}; color: ${VELLUM}; opacity: 0.92;
     font-size: 4.1cqw; line-height: 1.42; margin-top: 3.4cqw; max-width: 94%;
+    /* honra o \\n do roteiro: sem isto os blocos do slide mensal — o fato, o
+       condicional e a linha do ascendente — colavam num parágrafo só */
+    white-space: pre-line;
+  }
+  /* a linha do ascendente: é o número exato, e o que nos separa da referência */
+  .destaque {
+    margin-top: 4cqw; padding: 3.2cqw 3.6cqw;
+    border-left: 0.5cqw solid ${BRONZE};
+    background: rgba(201,162,39,0.07);
+    border-radius: 0 1.6cqw 1.6cqw 0;
+  }
+  .destaque-rot {
+    display: block; font-family: ${MONO}; font-size: 2.2cqw;
+    letter-spacing: 0.16em; text-transform: uppercase; color: ${BRONZE};
+    margin-bottom: 1.4cqw;
+  }
+  .destaque-texto {
+    font-family: ${SERIF}; font-size: 4cqw; line-height: 1.36; color: ${VELLUM};
   }
   .arraste {
     margin-top: 5cqw; font-family: ${MONO}; font-size: 2.7cqw;
@@ -126,6 +144,14 @@ export function montarSlide(slide, semente) {
       <div class="meio">
         <h1 class="${classeTitulo}">${escapar(slide.titulo)}</h1>
         ${slide.texto ? `<p class="texto">${escapar(slide.texto)}</p>` : ''}
+        ${
+          slide.destaque
+            ? `<div class="destaque">
+                 <span class="destaque-rot">${escapar(slide.destaque.rotulo)}</span>
+                 <span class="destaque-texto">${escapar(slide.destaque.texto)}</span>
+               </div>`
+            : ''
+        }
         ${arraste}
       </div>
       ${slide.rodape ? `<div class="baixo">${escapar(slide.rodape)}</div>` : ''}

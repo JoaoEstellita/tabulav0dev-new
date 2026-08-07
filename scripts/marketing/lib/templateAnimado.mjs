@@ -13,7 +13,8 @@
 import { SIGNOS_INFO } from './ceu.mjs'
 import {
   CX, CY, R_SIGNO_FORA, R_SIGNO_DENTRO, R_ASPECTO, R_PLANETA,
-  RAIO_CORPO, CORES_CARTA, ponto, arredonda, setorSigno, distribuir, desenhoCorpo, imagemCorpo,
+  RAIO_CORPO, CORES_CARTA, ACHATAMENTO,
+  ponto, arredonda, setorSigno, distribuir, desenhoCorpo, imagemCorpo,
 } from './templateCarta.mjs'
 
 const { VOID, VELLUM, BRONZE, SLATE, TRACO, COR_HARMONICO, COR_TENSO, COR_ELEMENTO } = CORES_CARTA
@@ -41,6 +42,7 @@ const FASE = {
 export function montarAnimacao(dados) {
   const largura = 1080
   const altura = 1920
+  const temLegenda = Array.isArray(dados.roteiroLegenda) && dados.roteiroLegenda.length > 0
 
   const distribuidos = distribuir(dados.corpos)
   const porNome = Object.fromEntries(dados.corpos.map((c) => [c.nome, c]))
@@ -206,6 +208,22 @@ export function montarAnimacao(dados) {
   .chip::before { content: ""; width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--area); }
   .arroba { color: ${SLATE}; }
 
+  /* legenda queimada: faixa fixa, alta o bastante para caber duas linhas sem
+     empurrar nada — a posição não pode dançar entre segmentos */
+  .faixa {
+    position: absolute; left: 0; right: 0; bottom: 13cqw; z-index: 6;
+    display: flex; justify-content: center; padding: 0 7cqw;
+    pointer-events: none;
+  }
+  .faixa-caixa {
+    max-width: 88%; padding: 2.6cqw 3.6cqw; border-radius: 2.2cqw;
+    background: rgba(11,10,20,0.86);
+    border: 0.12cqw solid rgba(201,162,39,0.35);
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-size: 5.2cqw; line-height: 1.24; color: ${VELLUM}; text-align: center;
+    text-wrap: balance; opacity: 0;
+  }
+
   /* o primeiro tempo: a manchete sozinha, sobre o campo estelar */
   .hook {
     position: absolute; inset: 0; z-index: 5;
@@ -242,6 +260,10 @@ export function montarAnimacao(dados) {
       ${dados.subtitulo ? `<span class="hook-dado">${dados.subtitulo}</span>` : ''}
     </div>
 
+    ${/* A maioria assiste sem som. Sem isto o Reel depende de alguém parar para
+          ler o bloco estático embaixo do gráfico, e é aí que o dedo passa. */ ''}
+    <div class="faixa"><div class="faixa-caixa" id="faixa"></div></div>
+
     <div class="conteudo">
       <div class="alto">
         <span>Carta do céu</span>
@@ -251,9 +273,9 @@ export function montarAnimacao(dados) {
       <div class="roda">
         <svg viewBox="0 0 1000 1000" role="img" aria-label="Carta do céu do dia, animada">
           <g id="giro">
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_FORA}" fill="none" stroke="${TRACO}" stroke-width="1.6" opacity="1"/>
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_SIGNO_DENTRO}" fill="none" stroke="${TRACO}" stroke-width="1.4" opacity="1"/>
-            <circle class="aro" cx="${CX}" cy="${CY}" r="${R_ASPECTO}" fill="none" stroke="#1B2035" stroke-width="1" opacity="1"/>
+            <ellipse class="aro" cx="${CX}" cy="${CY}" rx="${R_SIGNO_FORA}" ry="${arredonda(R_SIGNO_FORA * ACHATAMENTO)}" fill="none" stroke="${TRACO}" stroke-width="1.6" opacity="1"/>
+            <ellipse class="aro" cx="${CX}" cy="${CY}" rx="${R_SIGNO_DENTRO}" ry="${arredonda(R_SIGNO_DENTRO * ACHATAMENTO)}" fill="none" stroke="${TRACO}" stroke-width="1.4" opacity="1"/>
+            <ellipse class="aro" cx="${CX}" cy="${CY}" rx="${R_ASPECTO}" ry="${arredonda(R_ASPECTO * ACHATAMENTO)}" fill="none" stroke="#1B2035" stroke-width="1" opacity="1"/>
             ${setores}${divisoes}${rotulosSigno}
             ${linhasAspecto}
             ${corposSvg}
@@ -275,8 +297,17 @@ export function montarAnimacao(dados) {
               antes do eclipse mostra a data e deixa o espectador supor que é hoje */ ''}
         <div class="rot">${dados.vesperaRotulo ? `${dados.vesperaRotulo} · ` : ''}${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
         <h1>${dados.titulo}</h1>
-        ${(dados.textoEvento || dados.leitura) ? `<p class="texto">${dados.textoEvento || dados.leitura}</p>` : ''}
-        ${dados.textoEvento ? '' : `<p class="aforismo">${dados.aforismo}</p>`}
+        ${/* Com legenda queimada, a leitura sai daqui e vai para a caixa: o
+              mesmo texto nos dois lugares deixava o quadro dizendo tudo duas
+              vezes. Fica só a identificação — título e data. */ ''}
+        ${
+          temLegenda
+            ? ''
+            : (dados.textoEvento || dados.leitura)
+              ? `<p class="texto">${dados.textoEvento || dados.leitura}</p>`
+              : ''
+        }
+        ${temLegenda || dados.textoEvento ? '' : `<p class="aforismo">${dados.aforismo}</p>`}
       </div>
 
       <div class="rodape">
@@ -345,8 +376,30 @@ export function montarAnimacao(dados) {
 
   var hook = document.getElementById('hook');
   var conteudo = document.querySelector('.conteudo');
+  var faixa = document.getElementById('faixa');
+  var roteiro = ${JSON.stringify(dados.roteiroLegenda || [])};
 
   window.aplicarTempo = function (t) {
+    // Legenda queimada. Um segmento por vez, com entrada e saída curtas: o
+    // corte seco pisca no vídeo, e dois visíveis ao mesmo tempo viram borrão.
+    var atual = null;
+    for (var k = 0; k < roteiro.length; k++) {
+      if (t >= roteiro[k].de && t < roteiro[k].ate) { atual = roteiro[k]; break; }
+    }
+    if (!atual) {
+      faixa.style.opacity = 0;
+    } else {
+      if (faixa.dataset.texto !== atual.texto) {
+        faixa.textContent = atual.texto;
+        faixa.dataset.texto = atual.texto;
+      }
+      var dur = atual.ate - atual.de;
+      var borda = Math.min(0.012, dur * 0.22);
+      var entrando = Math.min(1, (t - atual.de) / borda);
+      var saindo = Math.min(1, (atual.ate - t) / borda);
+      faixa.style.opacity = Math.max(0, Math.min(entrando, saindo)).toFixed(3);
+    }
+
     // Segura a manchete até 7% e some até 12%: em 12 segundos são 0,84s parado
     // e 0,6s de saída. Curto de propósito — o problema que a versão anterior
     // resolveu era espera entregando NADA; aqui o primeiro quadro já entrega a

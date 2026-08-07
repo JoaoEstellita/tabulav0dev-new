@@ -24,6 +24,31 @@ const RAIO_CORPO = {
   Jupiter: 27, Saturn: 25, Uranus: 21, Neptune: 20, Pluto: 13,
 }
 
+/**
+ * Uma cor por corpo.
+ *
+ * O card era monocromático e distinguia os corpos só por forma e tamanho — o que
+ * funciona para quem já conhece os símbolos e falha para todo o resto. Cor é o
+ * que faz um planeta ser reconhecido sem ler o rótulo.
+ *
+ * Dessaturadas de propósito: a paleta da casa é bronze sobre pergaminho num
+ * fundo quase preto, e cor saturada aqui brigaria com o campo estelar em vez de
+ * assentar nele. São as mesmas famílias das imagens reais usadas na carta
+ * animada, só rebaixadas.
+ */
+const COR_CORPO = {
+  Sun: '#F2C14E',
+  Moon: '#D8D3E0',
+  Mercury: '#A8B0C0',
+  Venus: '#E6C9A8',
+  Mars: '#C8705A',
+  Jupiter: '#D8A860',
+  Saturn: '#C4A47C',
+  Uranus: '#84BAC4',
+  Neptune: '#7290C4',
+  Pluto: '#9A8FA8',
+}
+
 const grausParaRad = (g) => (g * Math.PI) / 180
 
 /** Ponto na roda: 0° é o topo, sentido horário. */
@@ -33,15 +58,21 @@ function pontoNaRoda(anguloGraus, raio = RAIO_RODA) {
 }
 
 /**
- * Desenho de cada corpo. Monocromático de propósito: a paleta é bronze sobre
- * pergaminho, então os corpos se distinguem por forma e tamanho, não por cor.
+ * Desenho de cada corpo: forma, tamanho E cor.
+ *
+ * Era monocromático, e a distinção ficava só por forma e tamanho — o que
+ * funciona para quem já conhece os símbolos. A cor de `COR_CORPO` faz o resto,
+ * sem tirar as outras duas pistas: Júpiter continua o maior e com as faixas,
+ * Saturno continua com o anel.
  */
 function desenhoCorpo(nome, id) {
   const r = RAIO_CORPO[nome]
+  // a cor identifica o corpo sem depender do rótulo
+  const cor = COR_CORPO[nome] || VELLUM
 
   switch (nome) {
     case 'Sun':
-      return `<circle r="${r}" fill="${VELLUM}"/><circle r="5.5" fill="${VOID_2}"/>`
+      return `<circle r="${r}" fill="${cor}"/><circle r="5.5" fill="${VOID_2}"/>`
 
     case 'Moon':
       return `
@@ -49,55 +80,55 @@ function desenhoCorpo(nome, id) {
           <circle r="${r}" fill="#fff"/>
           <circle cx="${r * 0.62}" cy="${-r * 0.28}" r="${r * 0.92}" fill="#000"/>
         </mask>
-        <circle r="${r}" fill="${VELLUM}" mask="url(#lua-${id})"/>
+        <circle r="${r}" fill="${cor}" mask="url(#lua-${id})"/>
         <circle r="${r}" fill="none" stroke="${SLATE}" stroke-width="1"/>`
 
     case 'Mercury':
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${VELLUM}" stroke-width="1.6"/>
-              <circle r="${r * 0.38}" fill="${VELLUM}" opacity="0.45"/>`
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.6"/>
+              <circle r="${r * 0.38}" fill="${cor}" opacity="0.45"/>`
 
     case 'Venus':
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${VELLUM}" stroke-width="1.8"/>
-              <circle r="${r * 0.44}" fill="${VELLUM}" opacity="0.45"/>`
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.8"/>
+              <circle r="${r * 0.44}" fill="${cor}" opacity="0.45"/>`
 
     case 'Mars':
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${BRONZE}" stroke-width="1.8"/>
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.8"/>
               <path d="M ${-r * 0.5} ${-r * 0.42} A ${r * 0.6} ${r * 0.6} 0 0 1 ${r * 0.5} ${-r * 0.42}"
-                    fill="none" stroke="${BRONZE}" stroke-width="1.3" opacity="0.6"/>`
+                    fill="none" stroke="${cor}" stroke-width="1.3" opacity="0.6"/>`
 
     case 'Jupiter':
       return `
         <clipPath id="jup-${id}"><circle r="${r}"/></clipPath>
-        <circle r="${r}" fill="${VOID_2}" stroke="${BRONZE}" stroke-width="1.8"/>
-        <g clip-path="url(#jup-${id})" stroke="${BRONZE}" stroke-width="1.4" opacity="0.55">
+        <circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.8"/>
+        <g clip-path="url(#jup-${id})" stroke="${cor}" stroke-width="1.4" opacity="0.55">
           <line x1="${-r - 2}" y1="${-r * 0.4}" x2="${r + 2}" y2="${-r * 0.4}"/>
           <line x1="${-r - 2}" y1="0" x2="${r + 2}" y2="0"/>
           <line x1="${-r - 2}" y1="${r * 0.4}" x2="${r + 2}" y2="${r * 0.4}"/>
         </g>`
 
     case 'Saturn':
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${BRONZE}" stroke-width="1.8"/>
-              <ellipse rx="${r * 1.55}" ry="${r * 0.38}" fill="none" stroke="${BRONZE}"
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.8"/>
+              <ellipse rx="${r * 1.55}" ry="${r * 0.38}" fill="none" stroke="${cor}"
                        stroke-width="1.8" transform="rotate(-18)"/>`
 
     case 'Uranus':
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${VELLUM}" stroke-width="1.6"/>
-              <ellipse rx="${r * 1.45}" ry="${r * 0.3}" fill="none" stroke="${VELLUM}"
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.6"/>
+              <ellipse rx="${r * 1.45}" ry="${r * 0.3}" fill="none" stroke="${cor}"
                        stroke-width="1.5" opacity="0.75" transform="rotate(78)"/>`
 
     case 'Neptune':
       return `
         <clipPath id="net-${id}"><circle r="${r}"/></clipPath>
-        <circle r="${r}" fill="${VOID_2}" stroke="${VELLUM}" stroke-width="1.6"/>
-        <g clip-path="url(#net-${id})" stroke="${VELLUM}" stroke-width="1.3" opacity="0.5">
+        <circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.6"/>
+        <g clip-path="url(#net-${id})" stroke="${cor}" stroke-width="1.3" opacity="0.5">
           <line x1="${-r - 2}" y1="${-r * 0.3}" x2="${r + 2}" y2="${-r * 0.3}"/>
           <line x1="${-r - 2}" y1="${r * 0.32}" x2="${r + 2}" y2="${r * 0.32}"/>
         </g>`
 
     case 'Pluto':
     default:
-      return `<circle r="${r}" fill="${VOID_2}" stroke="${VELLUM}" stroke-width="1.5"/>
-              <circle r="${r * 0.3}" fill="${VELLUM}" opacity="0.4"/>`
+      return `<circle r="${r}" fill="${VOID_2}" stroke="${cor}" stroke-width="1.5"/>
+              <circle r="${r * 0.3}" fill="${cor}" opacity="0.4"/>`
   }
 }
 

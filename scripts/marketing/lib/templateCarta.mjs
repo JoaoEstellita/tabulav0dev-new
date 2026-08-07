@@ -50,6 +50,22 @@ export const RAIO_CORPO = {
 }
 
 /**
+ * Achatamento vertical da roda — a perspectiva.
+ *
+ * 1 é a roda de frente; abaixo disso ela deita, como um disco visto de cima.
+ * Não é `transform: rotateX()`: transformar o SVG inteiro esmagaria os rótulos
+ * junto, e contra-rotacionar texto dentro de um plano 3D não funciona direito em
+ * nenhum motor. Aqui a projeção é aritmética — todo elemento passa por `ponto()`
+ * e cai sozinho na elipse, enquanto o texto continua reto porque nada é
+ * transformado.
+ *
+ * ⚠️ É o número que decide a legibilidade em miniatura, que é onde a peça é
+ * decidida. Abaixo de 0,80 os graus na borda começam a se atropelar. Conferir os
+ * PNGs reduzidos a 320px antes de mexer.
+ */
+export const ACHATAMENTO = 0.86
+
+/**
  * Longitude eclíptica para ponto na tela.
  *
  * 180 + L coloca 0° de Áries à esquerda e faz os signos correrem no sentido
@@ -57,7 +73,7 @@ export const RAIO_CORPO = {
  */
 export function ponto(longitude, raio) {
   const t = ((180 + longitude) * Math.PI) / 180
-  return { x: CX + raio * Math.cos(t), y: CY - raio * Math.sin(t) }
+  return { x: CX + raio * Math.cos(t), y: CY - raio * Math.sin(t) * ACHATAMENTO }
 }
 
 export const arredonda = (n) => Math.round(n * 100) / 100
@@ -70,11 +86,15 @@ export function setorSigno(indice) {
   const b = ponto(l1, R_SIGNO_FORA)
   const c = ponto(l1, R_SIGNO_DENTRO)
   const d = ponto(l0, R_SIGNO_DENTRO)
-  // sweep 0: no sentido em que a longitude cresce, que na tela é anti-horário
+  // sweep 0: no sentido em que a longitude cresce, que na tela é anti-horário.
+  // Os raios do arco são elípticos para acompanhar a projeção — com raio
+  // circular o setor descolava dos cantos que `ponto()` já achatou.
+  const ryFora = arredonda(R_SIGNO_FORA * ACHATAMENTO)
+  const ryDentro = arredonda(R_SIGNO_DENTRO * ACHATAMENTO)
   return `M ${arredonda(a.x)} ${arredonda(a.y)}
-          A ${R_SIGNO_FORA} ${R_SIGNO_FORA} 0 0 0 ${arredonda(b.x)} ${arredonda(b.y)}
+          A ${R_SIGNO_FORA} ${ryFora} 0 0 0 ${arredonda(b.x)} ${arredonda(b.y)}
           L ${arredonda(c.x)} ${arredonda(c.y)}
-          A ${R_SIGNO_DENTRO} ${R_SIGNO_DENTRO} 0 0 1 ${arredonda(d.x)} ${arredonda(d.y)} Z`
+          A ${R_SIGNO_DENTRO} ${ryDentro} 0 0 1 ${arredonda(d.x)} ${arredonda(d.y)} Z`
 }
 
 /**
@@ -217,9 +237,9 @@ export function anelDosSignos() {
   }
 
   return `
-    <circle cx="${CX}" cy="${CY}" r="${R_SIGNO_FORA}" fill="none" stroke="${TRACO}" stroke-width="1.6"/>
-    <circle cx="${CX}" cy="${CY}" r="${R_SIGNO_DENTRO}" fill="none" stroke="${TRACO}" stroke-width="1.4"/>
-    <circle cx="${CX}" cy="${CY}" r="${R_ASPECTO}" fill="none" stroke="#1B2035" stroke-width="1"/>
+    <circle cx="${CX}" cy="${CY}" rx="${R_SIGNO_FORA}" ry="${arredonda(R_SIGNO_FORA * ACHATAMENTO)}" fill="none" stroke="${TRACO}" stroke-width="1.6"/>
+    <circle cx="${CX}" cy="${CY}" rx="${R_SIGNO_DENTRO}" ry="${arredonda(R_SIGNO_DENTRO * ACHATAMENTO)}" fill="none" stroke="${TRACO}" stroke-width="1.4"/>
+    <circle cx="${CX}" cy="${CY}" rx="${R_ASPECTO}" ry="${arredonda(R_ASPECTO * ACHATAMENTO)}" fill="none" stroke="#1B2035" stroke-width="1"/>
     ${setores}${divisoes}${ticks.join('')}${rotulos}`
 }
 
