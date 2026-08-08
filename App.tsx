@@ -14,6 +14,17 @@ import { useAuth } from './src/hooks/useAuth';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyService';
 import ErrorReportingService from './src/services/firebase/ErrorReportingService';
+import * as Sentry from '@sentry/react-native';
+
+// Crash reporting NATIVO — captura o FATAL EXCEPTION no boot (o alvo do
+// diagnóstico do crash em release na Play). Só ativa com DSN configurado
+// (EXPO_PUBLIC_SENTRY_DSN) e fora da web; sem isso é inerte (não afeta o PWA).
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN && Platform.OS !== 'web',
+  enableNativeCrashHandling: true,
+  tracesSampleRate: 0,
+});
 
 function AppContent() {
   const { showModal, setShowModal, loading } = useSubscriptionCheck();
@@ -40,7 +51,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function App() {
   // Captura erros JS não tratados fora do React tree (async, native bridge)
   useEffect(() => {
     // ErrorUtils não existe em web — guard para compatibilidade PWA
@@ -70,3 +81,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(App);
