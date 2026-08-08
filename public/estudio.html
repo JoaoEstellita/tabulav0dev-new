@@ -147,6 +147,21 @@
   .assunto.on .t { color: var(--ouro); }
   .assunto .a { font-size: 12px; color: var(--tinta-2); line-height: 1.4; display: block; margin-top: 2px; }
 
+  /**
+   * O mesmo assunto marcado em dois dias.
+   *
+   * Medido: o eclipse de 12/08 marcado em 09, 10, 11 e 12 sai com dado, título
+   * e corpo IDÊNTICOS — só o prefixo "Faltam 3 dias" muda, e 9 das 12 linhas da
+   * legenda se repetem. É a mesma peça quatro vezes. Não bloqueio (véspera e
+   * dia podem ser deliberados), mas não deixo passar em silêncio.
+   */
+  .repetido {
+    display: none; margin-top: 6px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.4;
+    color: #F0A93B;
+  }
+  .assunto.on .repetido { display: block; }
+
   /* os formatos só aparecem no assunto escolhido */
   .formatos { display: none; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .assunto.on .formatos { display: flex; }
@@ -171,7 +186,12 @@
    */
   @media (min-width: 1000px) {
     .env { max-width: 1040px; }
-    #painel {
+    /* `:not(.oculto)` é obrigatório: seletor de ID (1,0,0) vence `.oculto`
+       (0,1,0) por especificidade, não por ordem. Sem isto o painel aparecia
+       ATRÁS da tela de senha em qualquer monitor de 1000px para cima — vazio,
+       porque o fetch nem sai sem a senha, mas dando a impressão de que a
+       senha não separa nada. */
+    #painel:not(.oculto) {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 300px;
       gap: 40px;
@@ -232,8 +252,19 @@
 <section id="porta" class="env">
   <h1>Estúdio</h1>
   <p>Os cards do dia, prontos para publicar.</p>
-  <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" enterkeyhint="go">
-  <button type="button" id="entrar">Entrar</button>
+  <!--
+    Formulário de verdade, com submit, porque é isso que faz o navegador
+    oferecer para guardar a senha — `autocomplete` sozinho num input solto não
+    dispara nada. O campo de usuário é oculto e fixo: o gerenciador precisa de
+    um par para salvar, e aqui só existe uma conta.
+  -->
+  <form id="form-login" autocomplete="on">
+    <input type="text" name="usuario" value="estudio" autocomplete="username"
+           readonly hidden aria-hidden="true" tabindex="-1">
+    <input type="password" id="senha" name="senha" placeholder="Senha"
+           autocomplete="current-password" enterkeyhint="go">
+    <button type="submit" id="entrar">Entrar</button>
+  </form>
   <p class="erro oculto" id="erro-login" role="alert"></p>
 </section>
 
@@ -398,9 +429,10 @@
       var linhas = d.opcoes.map(function (o) {
         var on = escolha.id === o.id
         var formatos = o.formatos.map(function (f) {
-          // sem escolha previa, o card vem marcado: e o formato que todo
-          // assunto comporta e o que sai por padrao
-          var fon = on ? (escolha.formatos.indexOf(f) >= 0) : (f === 'card')
+          // Sem escolha previa, TUDO que o assunto comporta vem marcado, e
+          // desmarcar e um toque. Marcar um a um era o atrito: escolher o
+          // assunto ja e a decisao, e o normal e querer as pecas todas.
+          var fon = on ? (escolha.formatos.indexOf(f) >= 0) : true
           return '<label class="formato' + (fon ? ' on' : '') + '">' +
             '<input type="checkbox" data-dia="' + d.dia + '" data-formato="' + f + '"' +
             (fon ? ' checked' : '') + '> ' + f + '</label>'
@@ -410,6 +442,7 @@
             '" value="' + escapar(o.id) + '"' + (on ? ' checked' : '') + '>' +
           '<span class="t">' + escapar(o.titulo) + '</span>' +
           '<span class="a">' + escapar(o.angulo) + '</span>' +
+          '<span class="repetido" data-id="' + escapar(o.id) + '"></span>' +
           '<span class="formatos">' + formatos + '</span>' +
         '</label>'
       }).join('')
@@ -444,8 +477,11 @@
           var meu = el.querySelector('input[type=radio]')
           if (meu && meu.dataset.dia === dia) el.classList.toggle('on', meu.checked)
         })
+        avisarRepetidos(editorial)
       })
     })
+
+    avisarRepetidos(editorial)
 
     editorial.querySelectorAll('.formato input').forEach(function (cx) {
       cx.addEventListener('change', function () {
@@ -457,6 +493,41 @@
 
     document.getElementById('salvar-pauta').addEventListener('click', function () {
       salvarPauta(this, editorial)
+    })
+  }
+
+  /**
+   * O mesmo assunto marcado em mais de um dia.
+   *
+   * O prefixo muda ("Faltam 3 dias", "Amanhã"), o conteúdo não: título, dado e
+   * corpo saem iguais, e 9 das 12 linhas da legenda se repetem. Publicar os
+   * quatro dias de véspera de um eclipse é publicar a mesma peça quatro vezes.
+   *
+   * O aviso é do tamanho do problema: um dia de véspera mais o dia do evento é
+   * uma decisão editorial defensável; quatro não é. Quem decide continua sendo
+   * quem lê o aviso.
+   */
+  function avisarRepetidos(editorial) {
+    var porId = {}
+    editorial.querySelectorAll('.assunto input[type=radio]:checked').forEach(function (r) {
+      (porId[r.value] = porId[r.value] || []).push(r.dataset.dia)
+    })
+
+    editorial.querySelectorAll('.assunto').forEach(function (el) {
+      var alvo = el.querySelector('.repetido')
+      var radio = el.querySelector('input[type=radio]')
+      if (!alvo || !radio) return
+      // Só o assunto MARCADO avisa. O mesmo educativo é oferecido em vários
+      // dias — sem isto, toda opção não marcada carregava um aviso escondido
+      // pelo CSS, esperando a primeira mudança de regra para aparecer errado.
+      if (!radio.checked) { alvo.textContent = ''; return }
+      var dias = porId[radio.value] || []
+      var outros = dias.filter(function (d) { return d !== radio.dataset.dia })
+      alvo.textContent = outros.length
+        ? 'Mesmo assunto em ' + outros.map(function (d) {
+            return d.slice(8) + '/' + d.slice(5, 7)
+          }).join(', ') + ' — o texto sai igual'
+        : ''
     })
   }
 
@@ -631,21 +702,20 @@
     })
   }
 
-  document.getElementById('entrar').addEventListener('click', function () {
-    var campo = document.getElementById('senha')
-    var senha = campo.value.trim()
+  // No submit, não no clique: é o submit que o navegador escuta para oferecer
+  // guardar a senha, e é ele que o Enter dispara sozinho — o listener de tecla
+  // que existia aqui deixou de ser necessário.
+  document.getElementById('form-login').addEventListener('submit', function (ev) {
+    ev.preventDefault()
+    var senha = document.getElementById('senha').value.trim()
     if (!senha) return
     erroLogin.classList.add('oculto')
-    this.disabled = true
-    var botao = this
+    var botao = document.getElementById('entrar')
+    botao.disabled = true
     entrar(senha, true).catch(function (e) {
       erroLogin.textContent = e.message
       erroLogin.classList.remove('oculto')
     }).finally(function () { botao.disabled = false })
-  })
-
-  document.getElementById('senha').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') document.getElementById('entrar').click()
   })
 
   document.getElementById('sair').addEventListener('click', function () {
