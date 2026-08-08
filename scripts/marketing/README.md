@@ -53,6 +53,14 @@ eram opções; era a mesma coisa várias vezes. A lista agora é por assunto:
 isso incomodar (ver o mesmo educativo disponível todo dia e nunca sair), o
 caminho é uma fila, não vários posts por dia.
 
+**Os formatos vêm todos marcados**, e desmarcar é um toque: escolher o assunto
+já é a decisão. Pauta salva antes manda sobre esse padrão.
+
+**O mesmo assunto marcado em dois dias avisa nos dois.** Não bloqueia — véspera
+mais dia é decisão editorial defensável —, mas o texto muda por faixa de
+distância, não por dia (ver "O texto muda com a distância"), então dois dias na
+mesma faixa saem iguais.
+
 ```
 calendario.mjs --upload  →  marketing/AAAA-MM-DD/calendario.json
         ↓
@@ -362,7 +370,26 @@ Agora eventos dentro de três dias entram com desconto de 8 pontos por dia — o
 que faz um eclipse de amanhã (122) ganhar de um ingresso de hoje (100) — e a
 peça se declara véspera no olho ("Está chegando") e na linha de dado ("Faltam 2
 dias"). Sem isso o card de 9 de agosto traria "Eclipse solar total · 12 de
-agosto" e quem batesse o olho leria que era naquele dia.
+agosto" e quem batesse o olho leria que era naquele dia. O `carta.png` ficou
+fora disso por um tempo: dizia "Carta do céu" em qualquer distância, e é ele
+que vai no post.
+
+**O texto muda com a distância, senão a véspera é repetição.** A editorial
+oferece o mesmo eclipse em quatro dias, e medido eles saíam com título, dado e
+corpo idênticos — 9 das 12 linhas da legenda iguais, só o prefixo mudando.
+`corpoDeVespera` (em `lib/vozes.mjs`) dá um assunto a cada faixa:
+
+| distância | ângulo |
+|---|---|
+| 3 dias ou mais | o que o fenômeno **é** — a definição |
+| 2 dias | a **medida**: quanto dura, de quanto em quanto vem, quanto anda |
+| véspera | o que **muda** e o que não muda |
+| no dia | o **dado** exato, que é o `escreverBase` de sempre |
+
+A faixa dos 2 dias existe porque, com três, "faltam 3" e "faltam 2" caíam no
+mesmo texto. **Cada variante cabe em duas frases** — o card mostra
+`primeirasFrases(texto, 2)`, e a terceira frase sumia da imagem levando junto a
+conclusão. Há teste para isso.
 
 **Os quatro signos da cruz.** "3 signos", "4 signos" é o recurso que faz alguém
 parar para ver se é ele, e quem usa normalmente chuta. Aqui é geometria: o
