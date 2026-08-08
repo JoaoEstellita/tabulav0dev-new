@@ -30,6 +30,8 @@ import { eventosDoDia } from './lib/eventos.mjs'
 import { escrever, rotuloDeVespera } from './lib/vozes.mjs'
 import { legendaDoReel } from './lib/roteiroLegenda.mjs'
 import { efemerideAnimada } from './lib/efemerideAnimada.mjs'
+// o mesmo módulo que o gerarCard usa: os dois têm de concordar no id do assunto
+import { opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
 
 /** `04.08 → 09.08`, para o olho não sugerir que tudo aconteceu num dia só. */
 const rotuloDaJanela = ({ inicio, fim }) => {
@@ -69,7 +71,8 @@ function acharChrome() {
 function lerArgs(argv) {
   const args = {
     data: null,
-    segundos: 12,
+    assunto: '',
+    segundos: 20,
     fps: 30,
     saida: path.join(MONOREPO, 'marketing/out'),
     manterFrames: false,
@@ -83,7 +86,8 @@ function lerArgs(argv) {
     const m = a.match(/^--([\w-]+)=(.+)$/)
     if (!m) continue
     if (m[1] === 'data') args.data = m[2]
-    else if (m[1] === 'segundos') args.segundos = Math.max(3, Number(m[2]) || 12)
+    else if (m[1] === 'assunto') args.assunto = m[2]
+    else if (m[1] === 'segundos') args.segundos = Math.max(3, Number(m[2]) || 20)
     else if (m[1] === 'fps') args.fps = Math.max(12, Math.min(60, Number(m[2]) || 30))
     else if (m[1] === 'saida') args.saida = path.resolve(m[2])
     else if (m[1] === 'backend') args.backend = m[2].replace(/\/+$/, '')
@@ -122,9 +126,7 @@ async function carregarPuppeteer() {
 }
 
 /** Mesmo criterio do card: o que muda hoje ganha do aspecto de sempre. */
-function vozDoDia(data, aspectos) {
-  const eventos = eventosDoDia(data, aspectos)
-  const principal = eventos[0]
+function vozDoDia(principal) {
   if (!principal) return {}
   const v = escrever(principal)
   return {
@@ -147,7 +149,7 @@ async function principal() {
   const iso = args.data || paraISO(new Date())
   const data = meioDiaUTC(iso)
 
-  const [titulos, aforismos, leituras, areas, orbes] = await Promise.all([
+  const [titulos, aforismos, leituras, areas, orbes, planetaSigno, aspectoNatal, nodulos] = await Promise.all([
     lerLiterais(path.join(FRONTEND, 'src/data/transitTitlesPtBR.ts'), ['TRANSIT_TITLES_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitAphorismsPtBR.ts'), ['TRANSIT_APHORISMS_PTBR']),
     lerLiterais(path.join(FRONTEND, 'src/data/transitCatalogOverridesPtBR.ts'), [
@@ -157,6 +159,15 @@ async function principal() {
       'LIFE_AREA_ATTRIBUTION', 'LIFE_AREA_COLORS', 'LIFE_AREA_LABELS',
     ]),
     lerLiterais(path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS']),
+    lerLiterais(path.join(FRONTEND, 'src/data/planetInSignOverridesPtBR.ts'), [
+      'PLANET_IN_SIGN_PTBR_OVERRIDES',
+    ]),
+    lerLiterais(path.join(FRONTEND, 'src/data/natalPlanetAspectOverridesPtBR.ts'), [
+      'NATAL_PLANET_ASPECT_PTBR_OVERRIDES',
+    ]),
+    lerLiterais(path.join(FRONTEND, 'src/data/lunarNodeSignOverridesPtBR.ts'), [
+      'LUNAR_NODE_SIGN_PTBR_OVERRIDES',
+    ]),
   ])
 
   /** Duas primeiras frases: o texto inteiro do catálogo transborda o quadro. */
@@ -177,6 +188,32 @@ async function principal() {
   const area = areaDoEncontro(encontro, areas.LIFE_AREA_ATTRIBUTION)
   const mapa = mapaDoCeu(data, orbes.PLANET_ASPECT_ORBS)
 
+  /**
+   * O assunto que o João marcou no Estúdio manda aqui também.
+   *
+   * O card já obedecia à pauta e o vídeo não: `eventosDoDia(...)[0]` escolhia o
+   * de maior peso, e num dia com dois eventos fortes o post falava de um e o
+   * Reel de outro. As duas peças saem do mesmo id.
+   */
+  const opcoes = opcoesDoDia(data, {
+    catalogos: {
+      planetaNoSigno: planetaSigno.PLANET_IN_SIGN_PTBR_OVERRIDES,
+      aspectoNatal: aspectoNatal.NATAL_PLANET_ASPECT_PTBR_OVERRIDES,
+      noduloPorSigno: nodulos.LUNAR_NODE_SIGN_PTBR_OVERRIDES,
+    },
+    orbes: orbes.PLANET_ASPECT_ORBS,
+  })
+  const escolhido = args.assunto ? acharOpcao(opcoes, args.assunto) : null
+  if (args.assunto && !escolhido) {
+    console.warn(`  aviso: assunto "${args.assunto}" não existe mais em ${iso}; seguindo com o de maior peso.`)
+  }
+  // Educativo não sustenta doze segundos de céu em movimento: sem evento, o
+  // vídeo continua sendo o do dia, como antes.
+  const eventoDoDia =
+    (escolhido && escolhido.tipo !== 'educativo' ? escolhido.evento : null) ||
+    eventosDoDia(data, mapa.aspectos)[0] ||
+    null
+
   const dadosDaCena = {
     ...mapa,
     ...encontro,
@@ -187,13 +224,12 @@ async function principal() {
     semente: Number(iso.replace(/-/g, '')),
     leitura: primeirasFrases(leituras.TRANSIT_CATALOG_PTBR_OVERRIDES[encontro.chave], 2),
     dirPlanetas: DIR_PLANETAS,
-    ...vozDoDia(data, mapa.aspectos),
+    ...vozDoDia(eventoDoDia),
   }
 
   // O céu em movimento. Sem isto o Reel mostrava a carta congelada de hoje
   // debaixo de um título que falava de um evento dois dias à frente — a imagem
   // contradizia a manchete.
-  const eventoDoDia = eventosDoDia(data, mapa.aspectos)[0] || null
   const totalQuadros = Math.round(args.segundos * args.fps)
   const efemeride = efemerideAnimada(data, eventoDoDia, orbes.PLANET_ASPECT_ORBS, totalQuadros)
   // Quem deixa rastro é quem ANDA. Numa lunação — eclipse inclusive — é a Lua

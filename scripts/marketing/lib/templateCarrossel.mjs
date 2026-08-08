@@ -9,12 +9,11 @@
  * Cada slide é uma página inteira renderizada pelo Chrome, igual ao card: mesma
  * paleta, mesmo campo estelar determinístico, mesmas fontes. Só muda o arranjo.
  */
+import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
 import { CORES_CARTA } from './templateCarta.mjs'
 
 const { VOID, VELLUM, BRONZE, SLATE } = CORES_CARTA
 
-const SERIF = `'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif`
-const MONO = `ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace`
 
 /**
  * O que cada ângulo é, em uma linha e sem promessa.
@@ -62,6 +61,7 @@ export function montarSlide(slide, semente) {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
+  ${fontesEmbutidas(SANS_ESCOLHIDA)}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: ${largura}px; height: ${altura}px; overflow: hidden; background: ${VOID}; }
   .slide {
@@ -87,7 +87,7 @@ export function montarSlide(slide, semente) {
   .passo { color: ${SLATE}; letter-spacing: 0.14em; }
   .meio { margin-top: auto; margin-bottom: auto; }
   .titulo {
-    font-family: ${SERIF}; font-weight: 400; color: ${VELLUM};
+    font-family: ${SANS}; font-weight: 400; color: ${VELLUM};
     font-size: 7.6cqw; line-height: 1.06; letter-spacing: -0.012em;
     text-wrap: balance; text-shadow: 0 0.3cqw 2.4cqw rgba(7,10,24,0.75);
     /* honra o \\n do roteiro: sem isto a quebra vira espaço e o slide de fecho
@@ -96,7 +96,7 @@ export function montarSlide(slide, semente) {
   }
   .titulo.capa { font-size: 10.4cqw; }
   .texto {
-    font-family: ${SERIF}; color: ${VELLUM}; opacity: 0.92;
+    font-family: ${SANS}; color: ${VELLUM}; opacity: 0.92;
     font-size: 4.1cqw; line-height: 1.42; margin-top: 3.4cqw; max-width: 94%;
     /* honra o \\n do roteiro: sem isto os blocos do slide mensal — o fato, o
        condicional e a linha do ascendente — colavam num parágrafo só */
@@ -115,7 +115,7 @@ export function montarSlide(slide, semente) {
     margin-bottom: 1.4cqw;
   }
   .destaque-texto {
-    font-family: ${SERIF}; font-size: 4cqw; line-height: 1.36; color: ${VELLUM};
+    font-family: ${SANS}; font-size: 4cqw; line-height: 1.36; color: ${VELLUM};
   }
   .arraste {
     margin-top: 5cqw; font-family: ${MONO}; font-size: 2.7cqw;

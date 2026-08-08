@@ -54,8 +54,21 @@ export function picar(texto, maxPalavras = 7) {
  *
  * Legenda queimada se lê a umas três palavras por segundo. Sem piso, o reparto
  * proporcional dava 0,58s para "FALTAM 2 DIAS" — tempo de piscar, não de ler.
+ *
+ * Subiu de 0,9 para 1,8 depois que o João assistiu: "em 12 segundos o texto fica
+ * muito rápido". Estava — os textos de véspera são maiores, e oito pedaços numa
+ * janela de 9,7s davam 1,2s cada.
  */
-const MINIMO_S = 0.9
+const MINIMO_S = 1.8
+
+/**
+ * Quantos pedaços cabem num Reel.
+ *
+ * Não é só questão de tempo: legenda queimada compete com o que se move na
+ * imagem, e depois de quatro blocos ninguém está mais lendo. Enxugar aqui é
+ * escolher o que fica, em vez de deixar tudo passar rápido demais.
+ */
+const MAXIMO_PEDACOS = 4
 
 /**
  * Segmentos com entrada e saída em `t`.
@@ -66,15 +79,17 @@ const MINIMO_S = 0.9
  *
  * @returns {{de: number, ate: number, texto: string}[]}
  */
-export function roteiroDeLegenda(partes, { inicio = INICIO, fim = FIM, segundos = 12 } = {}) {
+export function roteiroDeLegenda(partes, { inicio = INICIO, fim = FIM, segundos = 20 } = {}) {
   let pedacos = partes.filter(Boolean)
   if (!pedacos.length) return []
 
   const janela = fim - inicio
   const minimo = MINIMO_S / segundos
 
-  // Enxuga até os pisos caberem. Tira do meio, nunca a primeira nem a última.
-  while (pedacos.length > 2 && pedacos.length * minimo > janela) {
+  // Enxuga até os pisos caberem E até caber no teto de blocos. Tira do meio,
+  // nunca a primeira nem a última: a primeira diz do que se trata e a última
+  // carrega o limite da casa.
+  while (pedacos.length > 2 && (pedacos.length > MAXIMO_PEDACOS || pedacos.length * minimo > janela)) {
     pedacos = [...pedacos.slice(0, Math.floor(pedacos.length / 2)), ...pedacos.slice(Math.floor(pedacos.length / 2) + 1)]
   }
 
@@ -115,7 +130,7 @@ export function roteiroDeLegenda(partes, { inicio = INICIO, fim = FIM, segundos 
  * O limite fecha porque é a frase que diferencia a conta, e é a última que fica
  * na tela.
  */
-export function legendaDoReel(dados, segundos = 12) {
+export function legendaDoReel(dados, segundos = 20) {
   const corpo = dados.textoEvento || dados.leitura || ''
   const partes = [...picar(corpo), 'O céu é de todos. A casa é de cada um.']
   return roteiroDeLegenda(partes, { segundos })

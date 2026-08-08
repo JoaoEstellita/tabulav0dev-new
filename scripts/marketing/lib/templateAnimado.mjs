@@ -10,6 +10,7 @@
  * corpos entrando do mais lento ao mais rápido, depois os aspectos se
  * desenhando entre eles, e por fim a leitura do dia.
  */
+import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
 import { SIGNOS_INFO } from './ceu.mjs'
 import {
   CX, CY, R_SIGNO_FORA, R_SIGNO_DENTRO, R_ASPECTO, R_PLANETA,
@@ -64,7 +65,7 @@ export function montarAnimacao(dados) {
     const p = ponto(i * 30 + 15, (R_SIGNO_FORA + R_SIGNO_DENTRO) / 2)
     return `<text class="rot-signo" x="${arredonda(p.x)}" y="${arredonda(p.y + 7)}"
                   text-anchor="middle" fill="${COR_ELEMENTO[s.elemento]}" opacity="1"
-                  font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace"
+                  font-family="${MONO}"
                   font-size="21" letter-spacing="2.4">${s.abrev}</text>`
   }).join('')
 
@@ -104,9 +105,40 @@ export function montarAnimacao(dados) {
     // `data-corpo` e `data-raio` são o que o script usa para reposicionar o
     // grupo a cada quadro; sem efeméride embutida nada se move e o desenho
     // continua exatamente como antes.
+    /**
+     * Quem não é o assunto entra apagado.
+     *
+     * O João assistiu e viu a Lua atravessando dois signos enquanto a manchete
+     * falava de Mercúrio. Medido na mesma janela: a Lua varre 74,7° e Mercúrio
+     * anda 7,3° — dez vezes mais. O olho segue o que se move, então sem
+     * hierarquia o vídeo entrega o protagonismo a quem passava por ali.
+     *
+     * Apagar, e não esconder: o céu inteiro continua ali, que é o que separa
+     * esta peça de uma ilustração.
+     */
+    const ehProtagonista = c.nome === dados.corpoProtagonista
+    const opacidade = !dados.corpoProtagonista ? 1 : ehProtagonista ? 1 : 0.25
+
+    /**
+     * O anel e o nome do protagonista.
+     *
+     * Só apagar os outros não bastou: dez discos coloridos numa roda grande, e
+     * o de Mercúrio tem 13px de raio. Sem uma marca própria, ele continua sendo
+     * mais um ponto — e o rastro, num planeta que anda 7° na janela, é curto
+     * demais para servir de indicação.
+     */
+    const raioDisco = RAIO_CORPO[c.nome]
+    const marca = ehProtagonista
+      ? `<circle class="anel" r="${arredonda(raioDisco + 11)}" fill="none"
+                 stroke="${BRONZE}" stroke-width="2.4" opacity="0.9"/>
+         <text class="nome-prot" x="0" y="${arredonda(-raioDisco - 22)}" text-anchor="middle"
+               fill="${BRONZE}" font-family="${MONO}" font-size="21" letter-spacing="2.6">${(c.nomePt || c.nome).toUpperCase()}</text>`
+      : ''
+
     return `<g class="corpo" data-ordem="${i < 0 ? 0 : i}"
                 data-corpo="${idx === undefined ? '' : idx}" data-raio="${c.raio}"
-                data-protagonista="${c.nome === dados.corpoProtagonista ? '1' : ''}" opacity="1">
+                data-protagonista="${ehProtagonista ? '1' : ''}"
+                data-alvo-opacidade="${opacidade}" opacity="${opacidade}">
       <line class="tique" x1="${arredonda(t1.x)}" y1="${arredonda(t1.y)}" x2="${arredonda(t2.x)}" y2="${arredonda(t2.y)}"
             stroke="${VELLUM}" stroke-width="1.6" opacity="0.5"/>
       ${c.raio < R_PLANETA ? (() => {
@@ -115,7 +147,7 @@ export function montarAnimacao(dados) {
         return `<line class="haste" x1="${arredonda(a.x)}" y1="${arredonda(a.y)}" x2="${arredonda(b.x)}" y2="${arredonda(b.y)}"
                       stroke="${SLATE}" stroke-width="1" opacity="0.55" stroke-dasharray="3 4"/>`
       })() : ''}
-      <g class="disco" transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}</g>
+      <g class="disco" transform="translate(${arredonda(p.x)} ${arredonda(p.y)})">${dados.dirPlanetas ? imagemCorpo(c.nome, dados.dirPlanetas) : desenhoCorpo(c.nome)}${marca}</g>
     </g>`
   }).join('')
 
@@ -140,6 +172,7 @@ export function montarAnimacao(dados) {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
+  ${fontesEmbutidas(SANS_ESCOLHIDA)}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: ${largura}px; height: ${altura}px; overflow: hidden; background: ${VOID}; }
 
@@ -166,7 +199,7 @@ export function montarAnimacao(dados) {
   }
 
   .alto {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.05cqw; letter-spacing: 0.24em; text-transform: uppercase;
     color: ${BRONZE};
     display: flex; justify-content: space-between; align-items: baseline;
@@ -178,7 +211,7 @@ export function montarAnimacao(dados) {
 
   .legenda {
     display: flex; gap: 3.2cqw; justify-content: center;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 1.7cqw; letter-spacing: 0.1em; text-transform: uppercase;
     color: ${SLATE}; margin-top: 2cqw;
   }
@@ -190,7 +223,7 @@ export function montarAnimacao(dados) {
   }
   .pos {
     display: flex; align-items: center; gap: 1.4cqw;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.05cqw;
   }
   .pos svg { flex-shrink: 0; width: 2.9cqw; height: 2.9cqw; }
@@ -202,21 +235,21 @@ export function montarAnimacao(dados) {
      própria interface, então o respiro sobra ali e o texto fica na zona visível */
   .leitura { margin-top: 6cqw; }
   .leitura .rot {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 1.85cqw; letter-spacing: 0.15em; text-transform: uppercase;
     color: ${SLATE}; margin-bottom: 1.4cqw;
   }
   .leitura .rot b { color: ${BRONZE}; font-weight: 400; }
   .leitura h1 {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 6.4cqw; line-height: 1.06; font-weight: 400; letter-spacing: -0.012em;
   }
   .leitura .texto {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 3cqw; line-height: 1.4; color: #CFC9BD; margin-top: 1.6cqw;
   }
   .leitura .aforismo {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-style: italic; font-size: 3cqw; line-height: 1.34;
     color: ${BRONZE}; margin-top: 1.4cqw; opacity: 0.9;
   }
@@ -224,7 +257,7 @@ export function montarAnimacao(dados) {
   .rodape {
     margin-top: auto; padding-top: 3.4cqw;
     display: flex; align-items: center; justify-content: space-between;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 1.95cqw; letter-spacing: 0.13em; text-transform: uppercase;
   }
   .chip { color: var(--area); display: inline-flex; align-items: center; gap: 1.2cqw; }
@@ -242,7 +275,7 @@ export function montarAnimacao(dados) {
     max-width: 88%; padding: 2.6cqw 3.6cqw; border-radius: 2.2cqw;
     background: rgba(11,10,20,0.86);
     border: 0.12cqw solid rgba(201,162,39,0.35);
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 5.2cqw; line-height: 1.24; color: ${VELLUM}; text-align: center;
     text-wrap: balance; opacity: 0;
   }
@@ -257,12 +290,12 @@ export function montarAnimacao(dados) {
        um véu opaco apagaria o campo estelar junto. */
   }
   .hook-rot, .hook-dado {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.9cqw; letter-spacing: 0.16em; text-transform: uppercase; color: ${BRONZE};
   }
   .hook-dado { color: ${SLATE}; letter-spacing: 0.1em; }
   .hook-titulo {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 10.5cqw; line-height: 1.02; font-weight: 400; color: ${VELLUM};
     letter-spacing: -0.015em; text-wrap: balance;
     text-shadow: 0 0.4cqw 3cqw rgba(7,10,24,0.9);

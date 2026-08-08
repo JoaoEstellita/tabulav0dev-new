@@ -61,17 +61,10 @@ jobs:
         with:
           node-version: 20
 
-      # As fontes do card são do Windows (Palatino Linotype, Consolas). Sem elas
-      # o Chrome cai num serif genérico e o card sai diferente do aprovado.
-      # fonts-urw-base35 traz o URW Palladio L / P052, que é o Palatino livre.
-      - name: Instalar fontes equivalentes
-        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq fonts-urw-base35 fonts-liberation fonts-dejavu-core
-          fc-cache -f
-          echo "Palatino disponível:"; fc-match "P052" || true
-          echo "Mono disponível:"; fc-match "DejaVu Sans Mono" || true
+      # As fontes agora viajam DENTRO do HTML, em `data:` URI (lib/fontes.mjs).
+      # Este passo instalava o Palatino livre para imitar o Windows, e era uma
+      # aproximação: peça aprovada no PC saía com outro desenho aqui. Sem ele o
+      # job também começa uns 20s mais cedo.
 
       - name: Conferir o Chrome do runner
         if: ${{ github.event.inputs.apenas_calendario != 'true' }}
@@ -139,6 +132,17 @@ jobs:
           if [ -z "$ITENS" ]; then
             echo "Sem pauta para $DIA — gerando tudo, como de costume."
             echo "tem=nao" >> "$GITHUB_OUTPUT"
+
+            # Card, Reel e Story saem todo dia. O carrossel depende de haver o
+            # que explicar, e antes disto ele só saía se o João marcasse à mão
+            # no Estúdio — então "um carrossel por dia" nunca acontecia sozinho,
+            # nem nos dias de eclipse.
+            AUTO=$(node scripts/marketing/pautaDoDia.mjs --data="$DIA" | sed -n '1p' || echo '')
+            echo "Assunto do dia comporta: ${AUTO:-desconhecido}"
+            case "$AUTO" in
+              *carrossel*) echo "auto_carrossel=sim" >> "$GITHUB_OUTPUT" ;;
+              *)           echo "auto_carrossel=nao" >> "$GITHUB_OUTPUT" ;;
+            esac
           else
             echo "Pauta de $DIA: $ITENS"
             [ -n "$ASSUNTO" ] && echo "Assunto: $ASSUNTO"
@@ -184,12 +188,14 @@ jobs:
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
+          ASSUNTO: ${{ steps.pauta.outputs.assunto }}
         run: |
           set -o pipefail
 
           SAIDA="$GITHUB_WORKSPACE/marketing/out"
           ARGS="--upload --saida=$SAIDA"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+          [ -n "$ASSUNTO" ] && ARGS="$ARGS --assunto=$ASSUNTO"
           node scripts/marketing/gerarVideo.mjs $ARGS 2>&1 | tee -a saida.txt
 
           # o script pode sair 0 sem produzir o arquivo (ffmpeg ausente, por
@@ -205,7 +211,7 @@ jobs:
       # O carrossel só sai marcado: é a peça mais cara de produzir e a que menos
       # dias comportam. Sem pauta ele não sai — quem decide isto é editorial.
       - name: Gerar o carrossel
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.tem == 'sim' && contains(steps.pauta.outputs.itens, 'carrossel') }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && ((steps.pauta.outputs.tem == 'sim' && contains(steps.pauta.outputs.itens, 'carrossel')) || (steps.pauta.outputs.tem != 'sim' && steps.pauta.outputs.auto_carrossel == 'sim')) }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}

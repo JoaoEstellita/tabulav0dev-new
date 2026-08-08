@@ -127,6 +127,10 @@
   #editorial[open] > summary::after { content: "▴"; }
 
   .pautas { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .dica {
+    font-size: 12px; line-height: 1.45; color: var(--tinta-2);
+    margin-top: 10px;
+  }
   .dia-pauta {
     background: var(--superficie); border: 1px solid var(--borda);
     border-radius: 12px; padding: 12px 14px;
@@ -424,15 +428,48 @@
     if (!futuros.length) futuros = agenda.slice(0, 10)
     futuros = futuros.slice(0, 14)
 
+    /**
+     * O assunto sugerido de cada dia, sem repetir o do dia anterior.
+     *
+     * Marcar simplesmente o de maior peso sugeria o MESMO eclipse em quatro
+     * dias seguidos — medido: dez avisos de repetição de uma vez. O peso manda,
+     * mas entre dois dias vizinhos ele aponta para o mesmo evento, e o que sai
+     * disso é a mesma peça várias vezes.
+     *
+     * Então a sugestão é o assunto de maior peso que ainda não foi sugerido.
+     * Continua sendo só sugestão: marcar o repetido é um toque, para quando a
+     * véspera e o dia forem escolha deliberada.
+     */
+    var jaSugeridos = {}
+    futuros.forEach(function (d) {
+      var inedito = d.opcoes.filter(function (o) { return !jaSugeridos[o.id] })[0]
+      var alvo = inedito || d.opcoes[0]
+      if (alvo) {
+        d.__sugerido = alvo.id
+        jaSugeridos[alvo.id] = true
+      }
+    })
+
     var corpo = futuros.map(function (d) {
       var escolha = escolhas[d.dia] || {}
-      var linhas = d.opcoes.map(function (o) {
-        var on = escolha.id === o.id
+      var linhas = d.opcoes.map(function (o, i) {
+        /**
+         * Sem pauta salva, o primeiro já vem marcado.
+         *
+         * A lista sai em ordem de peso — `eventos.sort((a, b) => b.peso - a.peso)`
+         * lá no cálculo —, mas nada dizia isso, e o João perguntou se tinha de
+         * escolher "de cima pra baixo". Tinha, e o topo já era a resposta certa
+         * na maioria dos dias. Agora ele vem marcado e desmarcar é um toque.
+         */
+        var on = escolha.id ? escolha.id === o.id : d.__sugerido === o.id
         var formatos = o.formatos.map(function (f) {
           // Sem escolha previa, TUDO que o assunto comporta vem marcado, e
           // desmarcar e um toque. Marcar um a um era o atrito: escolher o
           // assunto ja e a decisao, e o normal e querer as pecas todas.
-          var fon = on ? (escolha.formatos.indexOf(f) >= 0) : true
+          // `escolha.formatos` só existe quando veio pauta salva. Marcar o
+          // primeiro assunto por padrão passou a acionar este ramo sem escolha
+          // nenhuma no objeto, e o `.indexOf` de undefined derrubava a editorial.
+          var fon = on && escolha.formatos ? escolha.formatos.indexOf(f) >= 0 : true
           return '<label class="formato' + (fon ? ' on' : '') + '">' +
             '<input type="checkbox" data-dia="' + d.dia + '" data-formato="' + f + '"' +
             (fon ? ' checked' : '') + '> ' + f + '</label>'
@@ -458,6 +495,7 @@
     editorial.innerHTML =
       '<summary>Editorial <span>' + total + ' assuntos</span></summary>' +
       '<div class="conteudo-editorial">' +
+        '<p class="dica">Em ordem de peso: o primeiro de cada dia já vem marcado.</p>' +
         '<div class="pautas">' + corpo + '</div>' +
         '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
         '<span id="aviso-pauta" class="aviso"></span>' +

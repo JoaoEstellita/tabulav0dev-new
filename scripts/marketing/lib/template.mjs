@@ -5,6 +5,8 @@
  * que ajustar o card seja ajustar CSS. O screenshot do Chrome garante que o
  * publicado é exatamente o que se vê no navegador ao abrir o arquivo.
  */
+import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+
 
 const VOID = '#070A18'
 const VOID_2 = '#0D1229'
@@ -150,8 +152,8 @@ function rotuloCorpo(nome, posicao, lado, raio) {
   const y2 = lateral ? 14 : lado === 'acima' ? -raio - 13 : raio + 43
 
   return `
-    <text x="${x}" y="${y1}" text-anchor="${ancora}" fill="${VELLUM}" font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" letter-spacing="2.5">${nome.toUpperCase()}</text>
-    <text x="${x}" y="${y2}" text-anchor="${ancora}" fill="${SLATE}" font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" letter-spacing="1.2">${posicao}</text>`
+    <text x="${x}" y="${y1}" text-anchor="${ancora}" fill="${VELLUM}" font-family="${MONO}" font-size="15" letter-spacing="2.5">${nome.toUpperCase()}</text>
+    <text x="${x}" y="${y2}" text-anchor="${ancora}" fill="${SLATE}" font-family="${MONO}" font-size="12.5" letter-spacing="1.2">${posicao}</text>`
 }
 
 /** O corpo que protagoniza cada tipo de evento. */
@@ -183,6 +185,21 @@ function diagramaEvento(dados, id) {
   // a leitura do grau sem competição.
   const ponto = pontoNaRoda(0)
 
+  /**
+   * O que o desenho precisa MOSTRAR, e não só ilustrar.
+   *
+   * O João olhou o feed de um ingresso e disse: "aparece uma roda apenas com
+   * Mercúrio, isso não diz nada". Estava certo — um círculo vazio com um disco
+   * no topo não informa que um planeta está trocando de signo. Faltava o fato:
+   * a divisa entre os dois signos, de que lado ele estava e para onde vai.
+   *
+   * Cada tipo ganha o desenho do seu próprio fato:
+   *   ingresso  a divisa, com o arco já percorrido chegando nela
+   *   fase      a distância angular entre Sol e Lua, que é o que a fase É
+   *   estação   o arco andado e o ponto onde o movimento inverte
+   */
+  const cenaDoTipo = desenhoDoFato(ev, corpo, r, ponto)
+
   const eclipseSolar = ev.tipo === 'eclipse' && ev.luminar === 'solar'
   const eclipseLunar = ev.tipo === 'eclipse' && ev.luminar === 'lunar'
 
@@ -210,6 +227,8 @@ function diagramaEvento(dados, id) {
   <line x1="${CX}" y1="${CY}" x2="${pontoNaRoda(0, RAIO_RODA - r - 3).x}" y2="${pontoNaRoda(0, RAIO_RODA - r - 3).y}"
         stroke="${SLATE}" stroke-width="1.6"/>
 
+  ${cenaDoTipo.fundo}
+
   <g transform="translate(${ponto.x} ${ponto.y})">
     ${desenhoCorpo(corpo, id + 'e')}
   </g>
@@ -219,9 +238,113 @@ function diagramaEvento(dados, id) {
          rótulo embaixo cairia exatamente sobre a linha */ ''}
     ${rotuloCorpo(dados.nomeCorpoEvento || '', rotuloGrau, 'acima', r)}
   </g>
+  ${cenaDoTipo.frente}
 
   <circle cx="${CX}" cy="${CY}" r="3" fill="${SLATE}"/>
 </svg>`
+}
+
+/**
+ * Quanto o corpo anda por dia, em graus — o suficiente para desenhar de onde ele
+ * veio sem recalcular efeméride dentro de um template.
+ *
+ * São médias: o arco do desenho é ilustrativo do trajeto recente, e o dado
+ * exato (grau e hora) está escrito ao lado, calculado.
+ */
+const GRAUS_POR_DIA = {
+  Sun: 0.99, Moon: 13.2, Mercury: 1.2, Venus: 1.2, Mars: 0.52,
+  Jupiter: 0.08, Saturn: 0.03, Uranus: 0.01, Neptune: 0.006, Pluto: 0.004,
+}
+
+/**
+ * O desenho do fato, por tipo de evento.
+ *
+ * Devolve dois pedaços porque a ordem no SVG é a ordem de pintura: o que vai
+ * atrás do disco do corpo (arcos, setores) e o que vai na frente (a divisa, que
+ * precisa cortar o disco para se ler como travessia).
+ */
+function desenhoDoFato(ev, corpo, r, ponto) {
+  const vazio = { fundo: '', frente: '' }
+  const arcoAndado = (grausAtras, cor, opacidade = 0.5) => {
+    const inicio = pontoNaRoda(-grausAtras, RAIO_RODA)
+    const fim = pontoNaRoda(0, RAIO_RODA)
+    const grande = grausAtras > 180 ? 1 : 0
+    return `<path d="M ${inicio.x.toFixed(1)} ${inicio.y.toFixed(1)} A ${RAIO_RODA} ${RAIO_RODA} 0 ${grande} 1 ${fim.x.toFixed(1)} ${fim.y.toFixed(1)}"
+                  fill="none" stroke="${cor}" stroke-width="2.4" opacity="${opacidade}" stroke-linecap="round"/>`
+  }
+
+  if (ev.tipo === 'ingresso') {
+    /**
+     * Os dois territórios, e a divisa entre eles.
+     *
+     * A primeira tentativa desenhou só o arco percorrido, e Mercúrio anda 1,2°
+     * por dia: seis graus em cinco dias, um risco invisível ao lado de um
+     * círculo vazio. O que se lê de longe é área, não traço — então cada signo
+     * vira um setor espesso, o que fica apagado e o que começa aceso.
+     */
+    const setor = (de, ate, cor, opacidade, espessura) => {
+      const a = pontoNaRoda(de, RAIO_RODA)
+      const b = pontoNaRoda(ate, RAIO_RODA)
+      const grande = Math.abs(ate - de) > 180 ? 1 : 0
+      return `<path d="M ${a.x.toFixed(1)} ${a.y.toFixed(1)} A ${RAIO_RODA} ${RAIO_RODA} 0 ${grande} 1 ${b.x.toFixed(1)} ${b.y.toFixed(1)}"
+                    fill="none" stroke="${cor}" stroke-width="${espessura}" opacity="${opacidade}" stroke-linecap="butt"/>`
+    }
+
+    const meio = pontoNaRoda(0, RAIO_RODA)
+    const fora = pontoNaRoda(0, ARO_EXTERNO - 4)
+    const dentro = pontoNaRoda(0, ARO_INTERNO + 4)
+    const cor = COR_CORPO[corpo] || BRONZE
+
+    return {
+      fundo: `
+        ${/* de onde sai: apagado, à esquerda da divisa */ ''}
+        ${setor(-74, -2, SLATE, 0.5, 13)}
+        ${/* para onde entra: aceso, na cor do corpo */ ''}
+        ${setor(2, 74, cor, 0.75, 13)}
+        ${/* os últimos dias de trajeto, chegando na divisa */ ''}
+        ${arcoAndado(Math.max(16, (GRAUS_POR_DIA[corpo] || 1) * 5), VELLUM, 0.75)}
+        <line x1="${dentro.x.toFixed(1)}" y1="${dentro.y.toFixed(1)}" x2="${fora.x.toFixed(1)}" y2="${fora.y.toFixed(1)}"
+              stroke="${VELLUM}" stroke-width="2" opacity="0.9"/>`,
+      frente: `
+        <text x="${meio.x - 30}" y="${meio.y + 52}" text-anchor="end" fill="${SLATE}"
+              font-family="${MONO}" font-size="13" letter-spacing="1.6">${(ev.signoAnterior || '').toUpperCase()}</text>
+        <text x="${meio.x + 30}" y="${meio.y + 52}" text-anchor="start" fill="${cor}"
+              font-family="${MONO}" font-size="13" letter-spacing="1.6">${(ev.signo || '').toUpperCase()}</text>`,
+    }
+  }
+
+  if (ev.tipo === 'fase' || ev.tipo === 'eclipse') {
+    // A fase é a distância angular entre Sol e Lua: 0° na Nova, 180° na Cheia.
+    // Desenhar os dois e o arco entre eles é desenhar a definição.
+    const nova = ev.fase === 'Lua Nova' || ev.tipo === 'eclipse'
+    const anguloDaLua = ev.fase === 'Lua Cheia' ? 180 : ev.fase === 'Quarto Crescente' ? 90 : ev.fase === 'Quarto Minguante' ? 270 : 0
+    if (nova && ev.tipo === 'eclipse') return vazio // a sombra já conta a história
+
+    const pSol = pontoNaRoda(0, RAIO_RODA)
+    const pLua = pontoNaRoda(anguloDaLua, RAIO_RODA)
+    const grande = anguloDaLua > 180 ? 1 : 0
+    return {
+      fundo: `
+        <path d="M ${pSol.x.toFixed(1)} ${pSol.y.toFixed(1)} A ${RAIO_RODA} ${RAIO_RODA} 0 ${grande} 1 ${pLua.x.toFixed(1)} ${pLua.y.toFixed(1)}"
+              fill="none" stroke="${COR_CORPO.Moon}" stroke-width="2" opacity="0.4" stroke-dasharray="4 6"/>`,
+      frente: `
+        <g transform="translate(${pSol.x} ${pSol.y})">${desenhoCorpo('Sun', 'fsol')}</g>
+        <text x="${CX}" y="${CY + 6}" text-anchor="middle" fill="${SLATE}"
+              font-family="${MONO}" font-size="15" letter-spacing="1.4">${anguloDaLua}°</text>`,
+    }
+  }
+
+  if (ev.tipo === 'retrogrado' || ev.tipo === 'direto') {
+    const andado = Math.min(40, (GRAUS_POR_DIA[corpo] || 0.5) * 30)
+    return {
+      fundo: arcoAndado(andado, COR_CORPO[corpo] || SLATE, 0.35),
+      frente: `
+        <text x="${CX}" y="${CY + 6}" text-anchor="middle" fill="${SLATE}"
+              font-family="${MONO}" font-size="13" letter-spacing="1.6">${ev.tipo === 'retrogrado' ? 'PARA E VOLTA' : 'VOLTA A ANDAR'}</text>`,
+    }
+  }
+
+  return vazio
 }
 
 /**
@@ -251,7 +374,7 @@ function diagrama(dados, id) {
       <path d="M ${pAgente.x} ${yBase} L ${pAgente.x} ${yBase + 10} L ${pAlvo.x} ${yBase + 10} L ${pAlvo.x} ${yBase}"
             fill="none" stroke="${BRONZE}" stroke-width="1.5" opacity="0.9"/>
       <text x="${CX}" y="${yBase + 32}" text-anchor="middle" fill="${BRONZE}"
-            font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="19" letter-spacing="1">0°</text>`
+            font-family="${MONO}" font-size="19" letter-spacing="1">0°</text>`
   } else {
     const a1 = pontoNaRoda(0, 56)
     const a2 = pontoNaRoda(angulo, 56)
@@ -260,7 +383,7 @@ function diagrama(dados, id) {
       <path d="M ${a1.x} ${a1.y} A 56 56 0 ${angulo > 180 ? 1 : 0} 1 ${a2.x} ${a2.y}"
             fill="none" stroke="${BRONZE}" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.9"/>
       <text x="${meio.x}" y="${meio.y + 6}" text-anchor="middle" fill="${BRONZE}"
-            font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace" font-size="19" letter-spacing="1">${angulo}°</text>`
+            font-family="${MONO}" font-size="19" letter-spacing="1">${angulo}°</text>`
   }
 
   // o raio para na borda do disco: cruzar o planeta suja o desenho
@@ -358,6 +481,7 @@ export function montarCard(dados, formato = 'feed') {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
+  ${fontesEmbutidas(SANS_ESCOLHIDA)}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: ${largura}px; height: ${altura}px; overflow: hidden; background: ${VOID}; }
 
@@ -399,7 +523,7 @@ export function montarCard(dados, formato = 'feed') {
   }
 
   .eyebrow {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.1cqw; letter-spacing: 0.22em; text-transform: uppercase;
     color: ${BRONZE};
     display: flex; justify-content: space-between;
@@ -411,7 +535,7 @@ export function montarCard(dados, formato = 'feed') {
   .figure svg { width: ${formato === 'story' ? '78%' : '66%'}; height: auto; display: block; }
 
   .readout {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.3cqw; letter-spacing: 0.13em; text-transform: uppercase;
     color: ${SLATE}; text-align: center;
   }
@@ -420,7 +544,7 @@ export function montarCard(dados, formato = 'feed') {
   .title {
     /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
        no Linux do runner. Sem eles o card sai com serif generico na automacao. */
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     /* margem fixa, não auto: com a leitura curada o conteúdo cresceu e o auto
        empurrava o rodapé para fora do quadro */
     font-size: 6.5cqw; line-height: 1.05; font-weight: 400;
@@ -431,14 +555,14 @@ export function montarCard(dados, formato = 'feed') {
   .aph {
     /* P052 e URW Palladio L sao o Palatino livre: mesmas metricas, e o que existe
        no Linux do runner. Sem eles o card sai com serif generico na automacao. */
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-style: italic; font-size: 3.1cqw; line-height: 1.36;
     color: #C9A227; margin-top: 2cqw; max-width: 92%; opacity: 0.9;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
   }
   /* a linha que separa trânsito de mapa natal: discreta, mas nunca ausente */
   .aviso {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.35cqw; line-height: 1.5; letter-spacing: 0.02em;
     color: ${SLATE}; margin-top: 3.4cqw; padding-top: 2.4cqw; max-width: 94%;
     border-top: 0.12cqw solid rgba(237,230,216,0.16);
@@ -450,18 +574,18 @@ export function montarCard(dados, formato = 'feed') {
     display: flex; flex-direction: column; gap: 1.3cqw;
   }
   .eixo-rot {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.1cqw; letter-spacing: 0.14em; text-transform: uppercase; color: ${SLATE};
   }
   .eixo-signos {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 3.7cqw; letter-spacing: 0.01em; color: ${BRONZE};
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
   }
   /* leitura curada: sem ela a peça tinha um título de quatro palavras, uma
      linha de aforismo e muito espaço vazio */
   .leitura {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 3.1cqw; line-height: 1.4; color: #CFC9BD;
     margin-top: 2.4cqw;
     text-shadow: 0 0.2cqw 2cqw rgba(7,10,24,0.85);
@@ -474,7 +598,7 @@ export function montarCard(dados, formato = 'feed') {
   }
   .chip {
     display: inline-flex; align-items: center; gap: 1.4cqw;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.1cqw; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--area);
   }
@@ -483,7 +607,7 @@ export function montarCard(dados, formato = 'feed') {
     border-radius: 50%; background: var(--area);
   }
   .handle {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.1cqw; letter-spacing: 0.1em; color: ${SLATE};
   }
 </style></head>

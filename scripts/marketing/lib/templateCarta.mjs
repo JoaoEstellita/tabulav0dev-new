@@ -10,6 +10,7 @@
  * Convenção da roda: 0° de Áries à esquerda, signos correndo em sentido
  * anti-horário, como em carta astrológica de verdade.
  */
+import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
 import { SIGNOS_INFO } from './ceu.mjs'
 
 const VOID = '#070A18'
@@ -222,7 +223,7 @@ export function anelDosSignos() {
     const p = ponto(i * 30 + 15, (R_SIGNO_FORA + R_SIGNO_DENTRO) / 2)
     return `<text x="${arredonda(p.x)}" y="${arredonda(p.y + 7)}" text-anchor="middle"
                   fill="${COR_ELEMENTO[s.elemento]}" opacity="0.92"
-                  font-family="ui-monospace, Consolas, 'DejaVu Sans Mono', monospace"
+                  font-family="${MONO}"
                   font-size="21" letter-spacing="2.4">${s.abrev}</text>`
   }).join('')
 
@@ -330,9 +331,30 @@ export function montarCarta(dados) {
   const porNome = Object.fromEntries(dados.corpos.map((c) => [c.nome, c]))
   const temRetrogrado = dados.corpos.some((c) => c.retrogrado)
 
+  /**
+   * O corpo da leitura acompanha o tamanho do texto.
+   *
+   * Um número fixo não serve: os textos vão de 118 a 258 caracteres conforme a
+   * faixa de véspera, e o que cabia no dia do evento empurrava o rodapé para
+   * fora do quadro na antecipação de três dias — medido, 72px para fora.
+   *
+   * Grande quando dá, menor quando o texto pede. Escala em degraus e não por
+   * fórmula contínua porque duas peças de tamanhos parecidos precisam sair com
+   * o mesmo corpo: variação sutil entre posts lê como descuido.
+   */
+  const tamanhoDaLeitura = (texto) => {
+    const n = String(texto || '').length
+    if (n <= 140) return 3.6
+    if (n <= 200) return 3.3
+    if (n <= 260) return 3.0
+    return 2.8
+  }
+  const corpoLeitura = tamanhoDaLeitura(dados.textoEvento || dados.leitura)
+
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
+  ${fontesEmbutidas(SANS_ESCOLHIDA)}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: ${largura}px; height: ${altura}px; overflow: hidden; background: ${VOID}; }
 
@@ -359,7 +381,7 @@ export function montarCarta(dados) {
   }
 
   .alto {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.05cqw; letter-spacing: 0.24em; text-transform: uppercase;
     color: ${BRONZE};
     display: flex; justify-content: space-between; align-items: baseline;
@@ -368,11 +390,11 @@ export function montarCarta(dados) {
 
   /* a roda encolheu para abrir espaço à leitura curada, que é o que faltava */
   .roda { display: grid; place-items: center; margin: 0.2cqw 0 0; }
-  .roda svg { width: 56%; height: auto; display: block; }
+  .roda svg { width: 52%; height: auto; display: block; }
 
   .legenda {
     display: flex; gap: 3.2cqw; justify-content: center; align-items: center;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2cqw; letter-spacing: 0.1em; text-transform: uppercase;
     color: ${SLATE};
     margin-top: 0.4cqw;
@@ -383,15 +405,15 @@ export function montarCarta(dados) {
      um círculo invade o anel dos signos nas laterais */
   .posicoes {
     display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 0.9cqw 3.4cqw;
-    margin-top: 2.6cqw;
+    gap: 0.55cqw 3.4cqw;
+    margin-top: 1.9cqw;
   }
   .pos {
-    display: flex; align-items: center; gap: 1.4cqw;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
-    font-size: 2.3cqw;
+    display: flex; align-items: center; gap: 1.1cqw;
+    font-family: ${MONO};
+    font-size: 1.92cqw;
   }
-  .pos svg { flex-shrink: 0; width: 2.9cqw; height: 2.9cqw; }
+  .pos svg { flex-shrink: 0; width: 2.4cqw; height: 2.4cqw; }
   .pn { color: ${VELLUM}; letter-spacing: 0.04em; }
   .pn i { font-style: normal; color: ${BRONZE}; margin-left: 0.5cqw; }
   .pg { color: ${SLATE}; margin-left: auto; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
@@ -402,20 +424,20 @@ export function montarCarta(dados) {
     margin-top: auto;
   }
   .destaque .rot {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.15cqw; letter-spacing: 0.14em; text-transform: uppercase;
     color: ${SLATE}; margin-bottom: 1.3cqw;
   }
   .destaque .rot b { color: ${BRONZE}; font-weight: 400; }
   .destaque h1 {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-size: 6.4cqw; line-height: 1.05; font-weight: 400; letter-spacing: -0.012em;
   }
   /* a leitura curada do catálogo: é o que dá conteúdo à peça. Sem ela o card
      ficava com um título de quatro palavras e muito espaço vazio. */
   .destaque .leitura {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
-    font-size: 2.85cqw; line-height: 1.4; color: #CFC9BD;
+    font-family: ${SANS};
+    font-size: ${corpoLeitura}cqw; line-height: 1.42; color: #D8D2C6;
     margin-top: 1.6cqw;
   }
   /* eventos secundários: uma linha cada, quando o dia tem mais de um */
@@ -424,19 +446,19 @@ export function montarCarta(dados) {
     margin-top: 1.6cqw;
   }
   .destaque .tambem span {
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 2.05cqw; color: ${BRONZE}; opacity: 0.88;
     letter-spacing: 0.02em;
   }
   .destaque p.aforismo {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', 'P052', 'URW Palladio L', Georgia, serif;
+    font-family: ${SANS};
     font-style: italic; font-size: 2.85cqw; line-height: 1.34;
     color: ${BRONZE}; margin-top: 1.4cqw; opacity: 0.9;
   }
 
   .rodape {
     margin-top: 3cqw; display: flex; align-items: center; justify-content: space-between;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace;
+    font-family: ${MONO};
     font-size: 1.95cqw; letter-spacing: 0.13em; text-transform: uppercase;
   }
   .chip { color: var(--area); display: inline-flex; align-items: center; gap: 1.2cqw; }

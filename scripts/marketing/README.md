@@ -143,10 +143,12 @@ Brasília)**, sem PC ligado. O runner do GitHub já traz Chrome e Node.
 Para rodar na hora, ou gerar vários dias: aba **Actions** → *Card diário* →
 **Run workflow**, informando quantos dias e a data inicial.
 
-O workflow instala `fonts-urw-base35` porque o card usa Palatino, que não existe
-no Linux: o URW Palladio L (P052) é o equivalente livre, com as mesmas métricas.
-Sem isso o card sairia com serif genérico. Cada execução guarda os PNGs como
-artifact por 7 dias e publica um resumo com o trânsito escolhido.
+O workflow não instala fonte nenhuma: elas viajam embutidas no HTML (ver
+**Tipografia**). Cada execução guarda os PNGs como artifact por 7 dias e publica
+um resumo com o trânsito escolhido.
+
+Sem pauta salva, saem card, Reel e story — e o carrossel quando o assunto do dia
+comporta, o que `pautaDoDia.mjs` responde ao workflow.
 
 ## Estúdio — postar do celular
 
@@ -239,6 +241,29 @@ planetas, destruindo a precisão que diferencia o produto.
 Se quiser IA em algum momento, o caminho é em camadas: IA gera só o fundo
 (nebulosa em movimento, onde alucinação não atrapalha) e a carta vetorial fica
 por cima, nítida.
+
+## Tipografia
+
+As fontes viajam DENTRO do HTML, em `data:` URI (`lib/fontes.mjs`). Antes o card
+pedia `Palatino Linotype` (Windows) e o runner instalava `fonts-urw-base35` para
+imitar: duas fontes diferentes desenhando a mesma peça, e nenhuma garantia de que
+o aprovado era o publicado.
+
+```
+TE Sans   Inter variable, ou Space Grotesk    scripts/marketing/assets/fonts/
+TE Mono   JetBrains Mono variable             (OFL, licenças na mesma pasta)
+```
+
+Para comparar as duas famílias sem editar código:
+
+```bash
+TABULA_SANS=grotesk node scripts/marketing/gerarCard.mjs --data=2026-08-09
+```
+
+**O corpo da leitura escala com o texto** (`tamanhoDaLeitura`, em
+`templateCarta.mjs`): os textos vão de 118 a 258 caracteres conforme a faixa de
+véspera, e o tamanho que cabia no dia do evento empurrava o rodapé 72px para fora
+do quadro na antecipação de três dias.
 
 ## Depois de mexer no design
 
@@ -364,6 +389,15 @@ para o dia não aparecer duas vezes.
 28/08 tem a Lua a 68° de altitude à 01h12 de Brasília. Mandar o público olhar
 para o céu no dia errado custa a confiança inteira, então o texto só convida
 quando `visivelBR` é verdadeiro.
+
+**O protagonista precisa parecer o protagonista.** No Reel, quem não é o assunto
+entra a 25% de opacidade, e o corpo do dia ganha anel e nome. Medido na janela de
+um ingresso de Mercúrio: a Lua varre **74,7°** e Mercúrio anda **7,3°** — dez
+vezes mais. Sem hierarquia o olho segue a Lua enquanto a manchete fala de outro.
+
+**O Reel dura 20s, com no máximo quatro blocos de legenda.** Eram 12s: a janela
+útil de 9,7s dividida por até oito blocos dava 1,2s cada, e legenda queimada se lê
+a umas três palavras por segundo. O piso é 1,8s por bloco.
 
 **Antecipação.** O card publicava só no dia, e por isso nunca criava espera.
 Agora eventos dentro de três dias entram com desconto de 8 pontos por dia — o
