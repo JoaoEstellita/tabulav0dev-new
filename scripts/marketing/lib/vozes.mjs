@@ -202,7 +202,7 @@ function dia(data) {
  *
  * @returns {{titulo: string, texto: string, dado: string}}
  */
-export function escrever(evento) {
+function escreverBase(evento) {
   switch (evento.tipo) {
     case 'ingresso': {
       const tema = TEMA_PLANETA[evento.corpo] || 'o que esse corpo rege'
@@ -364,6 +364,180 @@ export function escrever(evento) {
     default:
       return { titulo: '', texto: '', dado: '' }
   }
+}
+
+/**
+ * O MESMO evento, dito de outro jeito conforme a distância.
+ *
+ * Medido antes de existir: o eclipse de 12/08 marcado em 09, 10, 11 e 12
+ * saía com título, dado e corpo idênticos — 9 das 12 linhas da legenda se
+ * repetiam, e só o prefixo "Faltam 3 dias" mudava. Quatro dias de véspera
+ * eram a mesma peça quatro vezes.
+ *
+ * Quatro ângulos, e nenhum deles é enfeite do outro:
+ *   3 dias ou mais — o que o fenômeno É, a definição;
+ *   2 dias         — a medida: quanto dura, de quanto em quanto vem, quanto anda;
+ *   véspera        — o que muda e o que não muda;
+ *   no dia         — o dado exato, que é o `escreverBase` de sempre.
+ *
+ * A faixa dos 2 dias nasceu de medir: com três ângulos, "faltam 3 dias" e
+ * "faltam 2 dias" caíam no mesmo texto e saíam dois posts idênticos.
+ *
+ * Tudo aqui é efeméride ou definição: nada que dependa de opinião, e nada que
+ * prometa. Vale a régua 5 — o céu é de todos, a casa é de cada um.
+ */
+
+/** A visibilidade do Brasil, calculada, que é o dado que quase ninguém publica. */
+function visibilidade(e) {
+  if (!e.visivelBR) return 'Do Brasil não se vê nada: a sombra passa longe daqui.'
+  return e.luminar === 'solar'
+    ? `Visível do Brasil, ${e.obscuracaoBR}% do disco coberto.`
+    : `Visível do Brasil: a Lua a ${e.alturaBR}° acima do horizonte.`
+}
+
+/**
+ * Quanto tempo cada corpo passa em um signo, arredondado como se fala.
+ *
+ * É o dado que responde à pergunta que todo ingresso levanta — "e isso dura
+ * quanto?" — e que separa Mercúrio, que troca de signo antes do fim do mês, de
+ * Plutão, que fica mais tempo do que a maioria das pessoas leva para mudar de
+ * ideia sobre astrologia.
+ */
+const TEMPO_NO_SIGNO = {
+  Sun: 'cerca de um mês',
+  Moon: 'dois dias e meio',
+  Mercury: 'cerca de três semanas, quando não retrograda',
+  Venus: 'cerca de um mês',
+  Mars: 'cerca de seis semanas',
+  Jupiter: 'cerca de um ano',
+  Saturn: 'cerca de dois anos e meio',
+  Uranus: 'cerca de sete anos',
+  Neptune: 'cerca de catorze anos',
+  Pluto: 'de doze a vinte anos, conforme o signo',
+}
+
+/** A Lua anda ~13,2° por dia: dá para dizer quanto falta em graus, não só em dias. */
+const GRAUS_POR_DIA_DA_LUA = 13.2
+
+const VESPERA = {
+  eclipse: {
+    longe: (e) => {
+      const solar = e.luminar === 'solar'
+      return solar
+        ? 'Eclipse solar é Lua Nova em cima do eixo dos nódulos — o cruzamento entre a ' +
+          'órbita da Lua e o caminho aparente do Sol. Nas outras onze Luas Novas do ano ' +
+          'ela passa acima ou abaixo do Sol e não cobre nada: por isso eclipse vem em ' +
+          'temporada, a cada seis meses.'
+        : 'Eclipse lunar é Lua Cheia dentro da sombra da Terra, e só acontece quando ela ' +
+          'cai perto do eixo dos nódulos. Nas outras a Lua passa ao largo do cone de ' +
+          'sombra: por isso eclipse vem em temporada, a cada seis meses.'
+    },
+    dois: () =>
+      'Eclipse não vem sozinho. A cada seis meses o eixo dos nódulos se alinha com o Sol e ' +
+      'abre uma temporada: dois ou três eclipses em pouco mais de um mês, em signos opostos, ' +
+      'separados por cerca de duas semanas — o intervalo entre uma Lua Nova e a Cheia seguinte.',
+    vespera: (e) => {
+      const solar = e.luminar === 'solar'
+      return `Amanhã, às ${hora(e.quando)}, ${solar ? 'a Lua passa na frente do Sol' : 'a Lua entra na sombra da Terra'} ` +
+        `a ${e.grau}° de ${e.signo} — a data marca o pico, não o começo: o eixo já está ativo há dias. ` +
+        visibilidade(e)
+    },
+  },
+
+  ingresso: {
+    longe: (e) => {
+      const tema = TEMA_PLANETA[e.corpo] || 'o que esse corpo rege'
+      const modo = MODO_SIGNO[e.signo] || 'mudam de tom'
+      const saindo = e.signoAnterior
+        ? `${comArtigoNoTexto(e.corpoPt)} termina a passagem por ${e.signoAnterior}` +
+          `${e.desdeQuando ? `, onde entrou em ${dia(e.desdeQuando)}` : ''}. `
+        : ''
+      return `${saindo}Ingresso é troca de território, não de natureza: ` +
+        `${tema} continuam sendo o assunto, e em ${e.signo} ${modo}.`
+    },
+    dois: (e) => {
+      const quanto = TEMPO_NO_SIGNO[e.corpo]
+      const fica = quanto
+        ? `${comArtigoNoTexto(e.corpoPt)} fica ${quanto} em cada signo`
+        : `${comArtigoNoTexto(e.corpoPt)} leva anos para dar a volta no zodíaco`
+      return `${fica}. É a medida que decide se a passagem se nota no mês ou só em retrospecto: ` +
+        `o que é rápido pede atenção agora, o que é lento já estava aqui antes de virar assunto.`
+    },
+    vespera: (e) => {
+      const tema = TEMA_PLANETA[e.corpo] || 'o que esse corpo rege'
+      const modo = MODO_SIGNO[e.signo] || 'mudam de tom'
+      return `Amanhã, às ${hora(e.quando)}, ${comArtigoNoTexto(e.corpoPt)} entra em ${e.signo}: ` +
+        `o que muda é o modo — ${tema} ${modo}. ` +
+        `O que não muda é o que ${e.corpoPt} rege, nem a casa onde isso cai, que é de cada mapa.`
+    },
+  },
+
+  fase: {
+    longe: (e) => {
+      if (e.fase === 'Lua Nova') {
+        return 'Lua Nova é a conjunção exata entre Sol e Lua: mesmo grau, mesmo signo, e a ' +
+          'face iluminada virada para o outro lado. É por isso que ela não aparece no céu.'
+      }
+      if (e.fase === 'Lua Cheia') {
+        return 'Lua Cheia é a oposição exata entre Sol e Lua — 180° de distância, um nascendo ' +
+          'enquanto o outro se põe. A Lua fica visível a noite inteira.'
+      }
+      return 'Quarto é o ângulo de 90° entre Sol e Lua: metade do disco acesa, e o ponto do ' +
+        'ciclo em que o que começou encontra resistência.'
+    },
+    dois: (e) => {
+      const anda = Math.round(GRAUS_POR_DIA_DA_LUA * (e.diasFalta ?? 2))
+      return `A Lua anda cerca de ${GRAUS_POR_DIA_DA_LUA.toString().replace('.', ',')}° por dia — ` +
+        `mais rápido que qualquer outro corpo do céu, e por isso troca de signo a cada dois dias e meio. ` +
+        `Daqui até a fase exata ela percorre uns ${anda}°, mais de um signo inteiro.`
+    },
+    vespera: (e) =>
+      `Amanhã, às ${hora(e.quando)}, a Lua chega a ${e.grau}° de ${e.signo} e a fase fecha no instante exato ` +
+      `— o que se vê no céu leva cerca de um dia para mudar. ${FASE_SENTIDO[e.fase] || ''}`,
+  },
+
+  retrogrado: {
+    longe: (e) =>
+      `Estação é o dia em que o movimento aparente para antes de inverter. ` +
+      `${e.corpoPt} não anda para trás de verdade: visto da Terra, a diferença de velocidade ` +
+      `entre as duas órbitas faz o desenho voltar sobre si mesmo por algumas semanas.`,
+    dois: (e) =>
+      `Nos dias em torno da estação ${e.corpoPt} quase não sai do lugar: o movimento aparente ` +
+      `cai a poucos minutos de arco por dia, e o planeta fica praticamente parado no mesmo grau. ` +
+      `A data da virada é o instante exato, mas a lentidão dura mais que ela.`,
+    vespera: (e) =>
+      `Amanhã, às ${hora(e.quando)}, ${comArtigoNoTexto(e.corpoPt)} estaciona a ${e.grau}° de ` +
+      `${e.signo} e passa a retrogradar. ${RETRO_PLANETA[e.corpo] || ''}`,
+  },
+
+  direto: {
+    longe: (e) =>
+      `A estação direta é o fim da retrogradação: o movimento aparente para e volta ao sentido ` +
+      `de sempre. ${e.corpoPt} recupera nos dias seguintes o grau que já tinha percorrido.`,
+    dois: (e) =>
+      `Depois de estacionar, ${e.corpoPt} leva semanas para recuperar o grau que já tinha ` +
+      `percorrido — o trecho andado duas vezes é a marca da retrogradação, e o terceiro ` +
+      `passo por ali é o que a tradição lê como fechamento.`,
+    vespera: (e) =>
+      `Amanhã, às ${hora(e.quando)}, ${comArtigoNoTexto(e.corpoPt)} estaciona a ${e.grau}° de ` +
+      `${e.signo} e volta a andar direto. O que estava em revisão segue adiante.`,
+  },
+}
+
+/** O corpo da véspera, ou vazio quando o evento é hoje ou não tem variante. */
+export function corpoDeVespera(evento) {
+  const regra = VESPERA[evento?.tipo]
+  if (!regra || !evento.vespera) return ''
+  const falta = evento.diasFalta ?? 0
+  if (falta === 1) return regra.vespera(evento)
+  if (falta === 2 && regra.dois) return regra.dois(evento)
+  return regra.longe(evento)
+}
+
+export function escrever(evento) {
+  const base = escreverBase(evento)
+  const daVespera = corpoDeVespera(evento)
+  return daVespera ? { ...base, texto: daVespera } : base
 }
 
 /** Uma linha só, para os eventos secundários da peça. */

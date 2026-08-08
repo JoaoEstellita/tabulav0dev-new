@@ -449,8 +449,14 @@ export function montarCarta(dados) {
     <div class="brilho"></div>
 
     <div class="conteudo">
+      <!--
+        Na véspera, o alto diz que falta. O feed.png já fazia isso ("Está
+        chegando") e a carta — que é a peça principal, a que vai no post — não:
+        quem batia o olho no card de 9 de agosto lia "Eclipse solar total" com
+        a carta do dia 9 e entendia que era naquele dia.
+      -->
       <div class="alto">
-        <span>Carta do céu</span>
+        <span>${dados.vesperaRotulo || 'Carta do céu'}</span>
         <span>${dados.dataRotulo}</span>
       </div>
 
