@@ -14,14 +14,16 @@
       "channel": "preview",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_SENTRY_DSN": "https://a27dcc793c085abc5679d2dba538e1e4@o4511872279379968.ingest.us.sentry.io/4511872282787840"
+        "EXPO_PUBLIC_SENTRY_DSN": "https://a27dcc793c085abc5679d2dba538e1e4@o4511872279379968.ingest.us.sentry.io/4511872282787840",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_SENTRY_DSN": "https://a27dcc793c085abc5679d2dba538e1e4@o4511872279379968.ingest.us.sentry.io/4511872282787840"
+        "EXPO_PUBLIC_SENTRY_DSN": "https://a27dcc793c085abc5679d2dba538e1e4@o4511872279379968.ingest.us.sentry.io/4511872282787840",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
