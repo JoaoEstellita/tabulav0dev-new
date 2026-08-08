@@ -22,7 +22,7 @@ import {
 } from './eventos.mjs'
 import { mapaDoCeu } from './ceu.mjs'
 import { temaEducativo, falaComQuemLe } from './educativo.mjs'
-import { escrever, mereceEixo, rotuloDeVespera } from './vozes.mjs'
+import { escrever, rotuloDeVespera } from './vozes.mjs'
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -94,17 +94,11 @@ export function anguloDoAssunto(ev) {
  * educativo e a Lua fora de curso ficam no card: não sustentam doze segundos de
  * vídeo nem seis slides.
  */
-export function formatosDoAssunto(ev) {
-  if (ev.tipo === 'educativo') return ['card']
-  if (ev.tipo === 'lua_fora_de_curso') return ['card']
-  if (ev.tipo === 'grau_critico' || ev.tipo === 'nodulos') return ['card']
-  // retrógrado sustenta vídeo: tem começo, fim e uma pergunta que todo mundo faz
-  if (ev.tipo === 'retrogradacao') return ['card', 'reel']
-
-  const formatos = ['card', 'reel']
-  if (ev.tipo === 'eclipse') formatos.push('carrossel')
-  else if ((ev.diasFalta ?? 0) === 0 && mereceEixo(ev)) formatos.push('carrossel')
-  return formatos
+export function formatosDoAssunto() {
+  // Uma peça por dia, e ela é o vídeo — que serve de Reel e de Story, porque
+  // 9:16 é o formato dos dois. Card estático e carrossel continuam existindo por
+  // comando, fora da produção diária.
+  return ['reel']
 }
 
 /** Quantos educativos oferecer por dia, além do que o céu já dá. */

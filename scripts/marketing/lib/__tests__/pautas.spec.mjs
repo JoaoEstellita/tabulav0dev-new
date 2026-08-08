@@ -84,23 +84,24 @@ describe('opções de um dia', () => {
     }
   })
 
-  it('todo assunto comporta ao menos o card', () => {
+  /**
+   * Uma peça por dia, e ela é o vídeo.
+   *
+   * O João decidiu depois de olhar o material: "quero realizar apenas reels e
+   * vídeos, e stories". O mesmo arquivo serve de Reel e de Story — 9:16 é o
+   * formato dos dois. Card estático e carrossel continuam existindo por
+   * comando, fora da produção diária.
+   */
+  it('todo assunto vira vídeo, e só vídeo', () => {
     for (const o of opcoesDoDia(meioDia('2026-08-12'), DEPS)) {
-      expect(o.formatos, o.titulo).toContain('card')
+      expect(o.formatos, o.titulo).toEqual(['reel'])
     }
   })
 
-  it('só eclipse e evento do dia com eixo comportam carrossel', () => {
-    const ops = opcoesDoDia(meioDia('2026-08-12'), DEPS)
-    const comCarrossel = ops.filter((o) => o.formatos.includes('carrossel'))
-    for (const o of comCarrossel) {
-      expect(['eclipse', 'ingresso', 'fase'], o.titulo).toContain(o.tipo)
-    }
-  })
-
-  it('educativo e Lua fora de curso ficam no card', () => {
-    expect(formatosDoAssunto({ tipo: 'educativo' })).toEqual(['card'])
-    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['card'])
+  it('o formato não depende do tipo do assunto', () => {
+    expect(formatosDoAssunto({ tipo: 'educativo' })).toEqual(['reel'])
+    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['reel'])
+    expect(formatosDoAssunto({ tipo: 'eclipse' })).toEqual(['reel'])
   })
 
   it('acharOpcao devolve null quando o id não existe mais', () => {

@@ -82,33 +82,43 @@ describe('céu em movimento', () => {
   const evento = eventosDoDia(d, mapa.aspectos)[0]
   const ef = efemerideAnimada(d, evento, ORBES, 360)
 
-  it('a janela termina depois do evento, não em cima dele', () => {
-    expect(evento.tipo).toBe('ingresso')
-    expect(ef.janela.fim.getTime()).toBeGreaterThan(evento.quando.getTime())
-    expect(ef.janela.comEvento).toBe(true)
+  /**
+   * A janela é o PRÓPRIO DIA, e não mais cinco dias de aproximação.
+   *
+   * O João assistiu à versão anterior e disse o que estava errado: "a lua anda
+   * 2 signos". Andava — 74,7° na janela de cinco dias, contra 7,3° do planeta
+   * que a manchete anunciava. Quem assiste segue o que se move, e o que se
+   * movia não era o assunto. A peça passou a ser o retrato de um dia.
+   */
+  it('a janela cobre exatamente 24 horas', () => {
+    expect(Math.round((ef.janela.fim - ef.janela.inicio) / 3_600_000)).toBe(24)
   })
 
-  // A prova de que a incoerência acabou: no último quadro o planeta já está do
-  // outro lado da divisa que o título anuncia.
-  it('no último quadro o planeta já cruzou para o signo do título', () => {
-    const j = ef.nomes.indexOf('Mercury')
-    const inicioDeLeao = 120
-    expect(ef.quadros[0][j]).toBeLessThan(inicioDeLeao)
-    expect(ef.quadros[ef.quadros.length - 1][j]).toBeGreaterThanOrEqual(inicioDeLeao)
+  it('começa à meia-noite de Brasília, não ao meio-dia', () => {
+    // 03:00 UTC é 00:00 em Brasília (UTC−3)
+    expect(ef.janela.inicio.getUTCHours()).toBe(3)
+    expect(ef.janela.inicio.toISOString().slice(0, 10)).toBe('2026-08-07')
   })
 
-  // Numa véspera de dois dias Mercúrio andaria 3,65° — 21px de arco, no limite
-  // do que se enxerga. Cinco dias de aproximação resolvem.
-  it('o protagonista anda o suficiente para o movimento ser visto', () => {
-    const graus = deslocamentoDoProtagonista(ef, 'Mercury')
-    const pixels = (graus * Math.PI) / 180 * 336
-    expect(pixels, `${graus.toFixed(2)}° = ${Math.round(pixels)}px`).toBeGreaterThan(30)
+  it('a Lua não atravessa um signo inteiro', () => {
+    const graus = deslocamentoDoProtagonista(ef, 'Moon')
+    expect(graus, `${graus.toFixed(1)}° num dia`).toBeGreaterThan(11)
+    expect(graus, `${graus.toFixed(1)}° num dia`).toBeLessThan(16)
   })
 
-  it('sem evento, a janela é a semana em torno de hoje', () => {
-    const j = janelaDaAnimacao(d, null)
-    expect(j.comEvento).toBe(false)
-    expect(Math.round((j.fim - j.inicio) / 86_400_000)).toBe(7)
+  // Um dia de céu é pouco movimento para os planetas, e é isso mesmo: quem
+  // anda visivelmente é a Lua. A trava anterior — "o protagonista precisa
+  // andar 30px" — não vale mais, porque a peça deixou de ser sobre a viagem.
+  it('os planetas quase não saem do lugar, como no céu de verdade', () => {
+    expect(deslocamentoDoProtagonista(ef, 'Mercury')).toBeLessThan(3)
+    expect(deslocamentoDoProtagonista(ef, 'Jupiter')).toBeLessThan(0.5)
+  })
+
+  it('a janela é a mesma com ou sem evento', () => {
+    const comEvento = janelaDaAnimacao(d, evento)
+    const semEvento = janelaDaAnimacao(d, null)
+    expect(semEvento.inicio.getTime()).toBe(comEvento.inicio.getTime())
+    expect(semEvento.fim.getTime()).toBe(comEvento.fim.getTime())
   })
 
   it('todo quadro traz uma longitude por corpo', () => {

@@ -25,39 +25,30 @@
  */
 import { mapaDoCeu } from './ceu.mjs'
 
-/** Sem evento à frente, a janela é a semana em torno de hoje. */
-const DIAS_PADRAO = 7
-
 /**
- * Dias de aproximação antes do evento.
+ * A janela que o vídeo percorre: o PRÓPRIO DIA, das 00h às 24h de Brasília.
  *
- * Cinco, e não "de hoje até lá". Numa véspera de dois dias, Mercúrio andaria
- * 3,65° — 21px de arco, no limite do que se enxerga num Reel. Com cinco dias de
- * pista ele anda uns 7,5°, que se lê. A janela é anunciada no olho da peça, e
- * mostrar a trajetória inteira é mais informativo do que começar no meio dela.
- */
-const DIAS_DE_APROXIMACAO = 5
-
-/**
- * A janela que o vídeo percorre.
+ * Antes eram cinco dias de aproximação até o evento, e o João assistiu e disse o
+ * que estava errado: "a lua anda 2 signos". Andava — 74,7° na janela de cinco
+ * dias, contra 7,3° do planeta que a manchete anunciava. Quem assiste segue o
+ * que se move, e o que se movia não era o assunto.
  *
- * Termina algumas horas DEPOIS do evento: parar no instante exato deixaria o
- * planeta em cima da divisa, e o que se quer ver é a travessia completa.
+ * Num dia a Lua anda uns 13°, quase meio signo, e os outros quase não saem do
+ * lugar. É pouco movimento — e é exatamente o que o céu faz num dia. A peça
+ * passa a ser um retrato do dia que respira, não uma viagem no tempo.
+ *
+ * 03:00 UTC é meia-noite em Brasília (UTC−3), que é o público da conta.
  *
  * @returns {{inicio: Date, fim: Date, comEvento: boolean}}
  */
 export function janelaDaAnimacao(data, evento) {
-  if (evento?.quando) {
-    const fim = new Date(evento.quando.getTime() + 6 * 3_600_000)
-    const inicio = new Date(evento.quando.getTime() - DIAS_DE_APROXIMACAO * 86_400_000)
-    return { inicio, fim, comEvento: true }
-  }
-
-  const meio = DIAS_PADRAO / 2
+  const inicio = new Date(Date.UTC(
+    data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate(), 3
+  ))
   return {
-    inicio: new Date(data.getTime() - meio * 86_400_000),
-    fim: new Date(data.getTime() + meio * 86_400_000),
-    comEvento: false,
+    inicio,
+    fim: new Date(inicio.getTime() + 86_400_000),
+    comEvento: Boolean(evento?.quando),
   }
 }
 

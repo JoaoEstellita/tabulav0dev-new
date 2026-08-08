@@ -126,11 +126,20 @@ export function ingressosProximos(data, dias = 30) {
  * vale 2e-5 grau, na borda da precisão do próprio cálculo de posição. Doze horas
  * multiplicam o sinal por doze sem mover a raiz, que é o que a busca precisa.
  */
-function velocidade(corpo, t) {
+/**
+ * Graus por dia, agora. Exportada porque a voz do Reel compara a velocidade do
+ * dia com a média do corpo — "quase o dobro do de costume, porque acabou de
+ * sair da estação" é o tipo de fato que só existe com este número.
+ */
+export function velocidade(corpo, t) {
   const meia = 6 * 3_600_000
   const antes = new Date(t.getTime() - meia)
   const depois = new Date(t.getTime() + meia)
-  return diferenca(longitude(corpo, depois), longitude(corpo, antes))
+  // O intervalo é de meio dia; sem dividir por ele o retorno era o
+  // deslocamento em 12h com nome de velocidade — metade do valor real. Só o
+  // SINAL era usado aqui dentro, então o erro passou; quando a voz do Reel
+  // começou a comparar com a média, todo corpo saía "quase parado".
+  return diferenca(longitude(corpo, depois), longitude(corpo, antes)) / 0.5
 }
 
 /**

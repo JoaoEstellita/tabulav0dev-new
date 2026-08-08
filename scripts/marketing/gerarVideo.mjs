@@ -28,7 +28,11 @@ import { lerLiterais } from './lib/catalogo.mjs'
 import { encontroDoDia, areaDoEncontro, mapaDoCeu } from './lib/ceu.mjs'
 import { eventosDoDia } from './lib/eventos.mjs'
 import { escrever, rotuloDeVespera } from './lib/vozes.mjs'
-import { legendaDoReel } from './lib/roteiroLegenda.mjs'
+import { roteiroDeLegenda } from './lib/roteiroLegenda.mjs'
+// A voz nova: conversa direta, com um fato calculado por peça. A antiga
+// descrevia o fenômeno e servia para qualquer dia — foi o que fez o João dizer
+// que estava quase desistindo do conteúdo.
+import { falaDoReel } from './lib/vozReel.mjs'
 import { efemerideAnimada } from './lib/efemerideAnimada.mjs'
 // o mesmo módulo que o gerarCard usa: os dois têm de concordar no id do assunto
 import { opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
@@ -125,14 +129,21 @@ async function carregarPuppeteer() {
   }
 }
 
-/** Mesmo criterio do card: o que muda hoje ganha do aspecto de sempre. */
-function vozDoDia(principal) {
+/**
+ * O que a peça diz.
+ *
+ * O título de abertura vem da voz nova; os dados exatos (hora, grau) continuam
+ * saindo de `escrever`, que é onde a efeméride vira texto.
+ */
+function vozDoDia(principal, data, proximo) {
   if (!principal) return {}
   const v = escrever(principal)
+  const fala = falaDoReel(principal, data, { proximo })
   return {
-    titulo: v.titulo,
+    titulo: fala.manchete,
     subtitulo: v.dado,
-    textoEvento: v.texto,
+    blocos: fala.blocos,
+    post: fala.post,
     signoEvento: principal.signo || null,
     vesperaRotulo: rotuloDeVespera(principal),
     cor: COR_ELEMENTO[principal.elemento] || undefined,
@@ -224,7 +235,16 @@ async function principal() {
     semente: Number(iso.replace(/-/g, '')),
     leitura: primeirasFrases(leituras.TRANSIT_CATALOG_PTBR_OVERRIDES[encontro.chave], 2),
     dirPlanetas: DIR_PLANETAS,
-    ...vozDoDia(eventoDoDia),
+    // o próximo evento do céu vira o gancho do fim da fala
+    // O gancho é o PRÓXIMO assunto, não o mesmo por outro ângulo: sem comparar
+    // o tipo, a peça sobre o eclipse terminava anunciando o mesmo eclipse.
+    ...vozDoDia(
+      eventoDoDia,
+      data,
+      eventosDoDia(data, mapa.aspectos).find(
+        (e) => e !== eventoDoDia && e.quando > data && e.tipo !== eventoDoDia?.tipo
+      )
+    ),
   }
 
   // O céu em movimento. Sem isto o Reel mostrava a carta congelada de hoje
@@ -249,7 +269,9 @@ async function principal() {
     dataRotulo: rotuloDaJanela(efemeride.janela),
     efemeride,
     corpoProtagonista,
-    roteiroLegenda: legendaDoReel(dadosDaCena, args.segundos),
+    // os blocos já vêm escritos pela voz — picar um parágrafo em pedaços de
+    // sete palavras cortava frases no meio e o ritmo saía torto
+    roteiroLegenda: roteiroDeLegenda(dadosDaCena.blocos || [], { segundos: args.segundos }),
   })
 
   const pasta = path.join(args.saida, iso)
@@ -258,6 +280,10 @@ async function principal() {
 
   const arquivoHtml = path.join(pastaFrames, 'cena.html')
   await writeFile(arquivoHtml, html, 'utf8')
+
+  // A legenda do post sai junto: o vídeo passou a ser a única peça do dia, e
+  // sem isto o texto para colar no Instagram simplesmente não existiria.
+  if (dadosDaCena.post) await writeFile(path.join(pasta, 'legenda.txt'), dadosDaCena.post, 'utf8')
 
   const total = Math.round(args.segundos * args.fps)
   console.log(`${iso}  ${encontro.agentePt} ${encontro.aspectoRotulo} ${encontro.alvoPt}`)
@@ -330,6 +356,27 @@ async function principal() {
   if (args.upload) {
     const enviado = await enviarVideo(destino, iso, args)
     console.log(`Estúdio: ${enviado}`)
+
+    if (dadosDaCena.post) {
+      await enviarTexto('legenda.txt', dadosDaCena.post, iso, args)
+      console.log('Estúdio: legenda.txt')
+    }
+  }
+}
+
+/** Texto cabe no POST comum — só o vídeo precisa de URL assinada. */
+async function enviarTexto(nome, conteudo, iso, { backend, senha }) {
+  const resposta = await fetch(`${backend}/api/marketing-cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${senha}` },
+    body: JSON.stringify({
+      dia: iso,
+      arquivo: nome,
+      conteudoBase64: Buffer.from(conteudo, 'utf8').toString('base64'),
+    }),
+  })
+  if (!resposta.ok) {
+    throw new Error(`${nome}: HTTP ${resposta.status} ${(await resposta.text()).slice(0, 120)}`)
   }
 }
 

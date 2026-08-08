@@ -198,76 +198,35 @@ export function montarAnimacao(dados) {
     display: flex; flex-direction: column;
   }
 
-  .alto {
-    font-family: ${MONO};
-    font-size: 2.05cqw; letter-spacing: 0.24em; text-transform: uppercase;
-    color: ${BRONZE};
-    display: flex; justify-content: space-between; align-items: baseline;
-  }
-  .alto span:last-child { color: ${SLATE}; }
+  /* A roda é a peça. Com os blocos de canto fora, ela ocupa o quadro inteiro e
+     fica centrada no espaço que sobra acima da legenda queimada. */
+  .roda { display: grid; place-items: center; margin-top: 14cqw; }
+  .roda svg { width: 100%; height: auto; display: block; }
 
-  .roda { display: grid; place-items: center; margin-top: 3cqw; }
-  .roda svg { width: 92%; height: auto; display: block; }
-
-  .legenda {
-    display: flex; gap: 3.2cqw; justify-content: center;
-    font-family: ${MONO};
-    font-size: 1.7cqw; letter-spacing: 0.1em; text-transform: uppercase;
-    color: ${SLATE}; margin-top: 2cqw;
-  }
-  .legenda i { display: inline-block; width: 3.2cqw; height: 0.24cqw; vertical-align: middle; margin-right: 0.8cqw; }
-
+  /* As dez posições, discretas, num rodapé de ordem fixa — a única informação
+     de canto que o João quis manter. Duas colunas de cinco: a ordem não muda
+     entre os dias, então quem acompanha sabe onde procurar. */
   .posicoes {
     display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 1cqw 3.4cqw; margin-top: 4cqw;
+    gap: 0.7cqw 3.4cqw;
+    /* margin-top auto empurra a lista para o rodapé: entre ela e a roda fica o
+       vão onde a legenda queimada aparece, e as três nunca se tocam. */
+    margin-top: auto; opacity: 0.72;
   }
   .pos {
-    display: flex; align-items: center; gap: 1.4cqw;
+    display: flex; align-items: center; gap: 1.1cqw;
     font-family: ${MONO};
-    font-size: 2.05cqw;
+    font-size: 1.75cqw;
   }
-  .pos svg { flex-shrink: 0; width: 2.9cqw; height: 2.9cqw; }
+  .pos svg { flex-shrink: 0; width: 2.2cqw; height: 2.2cqw; }
   .pn { color: ${VELLUM}; letter-spacing: 0.04em; }
   .pn i { font-style: normal; color: ${BRONZE}; margin-left: 0.5cqw; }
   .pg { color: ${SLATE}; margin-left: auto; font-variant-numeric: tabular-nums; }
 
-  /* margem fixa em vez de auto: o Instagram cobre a faixa de baixo com a
-     própria interface, então o respiro sobra ali e o texto fica na zona visível */
-  .leitura { margin-top: 6cqw; }
-  .leitura .rot {
-    font-family: ${MONO};
-    font-size: 1.85cqw; letter-spacing: 0.15em; text-transform: uppercase;
-    color: ${SLATE}; margin-bottom: 1.4cqw;
-  }
-  .leitura .rot b { color: ${BRONZE}; font-weight: 400; }
-  .leitura h1 {
-    font-family: ${SANS};
-    font-size: 6.4cqw; line-height: 1.06; font-weight: 400; letter-spacing: -0.012em;
-  }
-  .leitura .texto {
-    font-family: ${SANS};
-    font-size: 3cqw; line-height: 1.4; color: #CFC9BD; margin-top: 1.6cqw;
-  }
-  .leitura .aforismo {
-    font-family: ${SANS};
-    font-style: italic; font-size: 3cqw; line-height: 1.34;
-    color: ${BRONZE}; margin-top: 1.4cqw; opacity: 0.9;
-  }
-
-  .rodape {
-    margin-top: auto; padding-top: 3.4cqw;
-    display: flex; align-items: center; justify-content: space-between;
-    font-family: ${MONO};
-    font-size: 1.95cqw; letter-spacing: 0.13em; text-transform: uppercase;
-  }
-  .chip { color: var(--area); display: inline-flex; align-items: center; gap: 1.2cqw; }
-  .chip::before { content: ""; width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--area); }
-  .arroba { color: ${SLATE}; }
-
   /* legenda queimada: faixa fixa, alta o bastante para caber duas linhas sem
      empurrar nada — a posição não pode dançar entre segmentos */
   .faixa {
-    position: absolute; left: 0; right: 0; bottom: 13cqw; z-index: 6;
+    position: absolute; left: 0; right: 0; bottom: 26cqw; z-index: 6;
     display: flex; justify-content: center; padding: 0 7cqw;
     pointer-events: none;
   }
@@ -321,11 +280,11 @@ export function montarAnimacao(dados) {
     <div class="faixa"><div class="faixa-caixa" id="faixa"></div></div>
 
     <div class="conteudo">
-      <div class="alto">
-        <span>Carta do céu</span>
-        <span>${dados.dataRotulo}</span>
-      </div>
-
+      ${/* Nada nos cantos além da lista de planetas. Saíram "Carta do céu", a
+            data, a legenda de harmônico/tenso, o bloco de título e a assinatura:
+            o pedido do João foi "apenas a imagem e a legenda", e cada um desses
+            elementos disputava atenção com o mapa sem informar nada que a
+            legenda já não diga. */ ''}
       <div class="roda">
         <svg viewBox="0 0 1000 1000" role="img" aria-label="Carta do céu do dia, animada">
           <g id="giro">
@@ -341,36 +300,9 @@ export function montarAnimacao(dados) {
         </svg>
       </div>
 
-      <div class="legenda">
-        <span><i style="background:${COR_HARMONICO}"></i>Harmônico</span>
-        <span><i style="background:${COR_TENSO}"></i>Tenso</span>
-        ${temRetrogrado ? '<span>℞ Retrógrado</span>' : ''}
-      </div>
-
       <div class="posicoes">${posicoes}</div>
 
-      <div class="leitura">
-        ${/* a véspera precisa aparecer aqui também: sem ela o Reel de dois dias
-              antes do eclipse mostra a data e deixa o espectador supor que é hoje */ ''}
-        <div class="rot">${dados.vesperaRotulo ? `${dados.vesperaRotulo} · ` : ''}${dados.subtitulo || `${dados.aspectoRotulo} · ${dados.agentePt} e ${dados.alvoPt} · orbe <b>${dados.orbeFormatado}</b>`}</div>
-        <h1>${dados.titulo}</h1>
-        ${/* Com legenda queimada, a leitura sai daqui e vai para a caixa: o
-              mesmo texto nos dois lugares deixava o quadro dizendo tudo duas
-              vezes. Fica só a identificação — título e data. */ ''}
-        ${
-          temLegenda
-            ? ''
-            : (dados.textoEvento || dados.leitura)
-              ? `<p class="texto">${dados.textoEvento || dados.leitura}</p>`
-              : ''
-        }
-        ${temLegenda || dados.textoEvento ? '' : `<p class="aforismo">${dados.aforismo}</p>`}
-      </div>
 
-      <div class="rodape">
-        <span class="chip">${dados.signoEvento || 'Céu de hoje'}</span>
-        <span class="arroba">@tabula_estelar</span>
-      </div>
     </div>
   </div>
 
