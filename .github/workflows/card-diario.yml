@@ -9,11 +9,20 @@
 
 name: Card diário
 
+# ⏸️ PRODUÇÃO DIÁRIA SUSPENSA — 08/08/2026, decisão do João.
+#
+# O pipeline funciona: calcula efeméride correta, gera quatro formatos, publica
+# sozinho. O conteúdo é que não está de pé — os textos descrevem o fenômeno em
+# vez de falar com alguém, e um card que serve para qualquer eclipse não serve
+# para nenhum. Publicar todo dia enquanto isso não se resolve só gasta o perfil.
+#
+# O que fica de pé: `workflow_dispatch` (rodar à mão), a editorial e o Estúdio.
+# Para religar o diário, devolver o bloco abaixo:
+#
+#   schedule:
+#     - cron: "0 9 * * *"     # 09:00 UTC = 06:00 em Brasília
+#
 on:
-  schedule:
-    # 09:00 UTC = 06:00 em Brasília. O card fica pronto antes de acordar.
-    # O agendador do GitHub costuma atrasar em horários cheios; não é relógio.
-    - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       dias:
