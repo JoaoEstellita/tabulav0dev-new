@@ -256,15 +256,25 @@ export default function HomeScreen() {
   const topTransit = React.useMemo(() => {
     const rich = transitData?.dailyOverview?.personalTodayRich
     if (!Array.isArray(rich) || rich.length === 0) return null
-    let best: { planet1: string; type: string; planet2: string; strength: number } | null = null
+    let best: { planet1: string; type: string; planet2: string; strength: number; house: number | null } | null = null
     for (const item of rich as any[]) {
       const strength = typeof item?.strength === 'number' ? item.strength : 0
       if (!best || strength > best.strength) {
         // planet1 = planeta em trânsito; planet2 = planeta natal ("com seu ...")
-        best = { planet1: item.transitPlanet, type: item.type, planet2: item.natalPlanet, strength }
+        best = { planet1: item.transitPlanet, type: item.type, planet2: item.natalPlanet, strength, house: typeof item.house === 'number' ? item.house : null }
       }
     }
     return best
+  }, [transitData?.dailyOverview?.personalTodayRich])
+
+  // Quantos trânsitos pessoais o dia tem — deduplicado com a MESMA chave da tela
+  // PersonalTransits (natal|type|transit), para o "N hoje" bater com a lista aberta.
+  const personalTransitCount = React.useMemo(() => {
+    const rich = transitData?.dailyOverview?.personalTodayRich
+    if (!Array.isArray(rich)) return 0
+    const seen = new Set<string>()
+    for (const it of rich as any[]) seen.add(`${it.natalPlanet}|${it.type}|${it.transitPlanet}`)
+    return seen.size
   }, [transitData?.dailyOverview?.personalTodayRich])
 
   // Signos de Sol e Lua natais para o header (já vêm em pt-BR do engine).
@@ -465,6 +475,18 @@ export default function HomeScreen() {
           const scoreColor = score != null
             ? (score >= 65 ? '#4CAF50' : score >= 40 ? '#FFD700' : '#FF6B6B')
             : '#FFD700'
+          // Rótulo da seção (o card É a entrada dos Trânsitos Pessoais) + contexto:
+          // contagem do dia (canto direito) e a casa natal atingida (inline no trânsito).
+          const sectionLabel = tl('TRÂNSITOS PESSOAIS', 'PERSONAL TRANSITS', 'TRANSITOS PERSONALES', 'TRANSITI PERSONALI')
+          const countLabel = personalTransitCount > 0
+            ? tl(`${personalTransitCount} hoje`, `${personalTransitCount} today`, `${personalTransitCount} hoy`, `${personalTransitCount} oggi`)
+            : null
+          const houseSuffix = topTransit?.house != null
+            ? tl(`Casa ${topTransit.house}`, `House ${topTransit.house}`, `Casa ${topTransit.house}`, `Casa ${topTransit.house}`)
+            : null
+          const transitLine = transitText
+            ? (houseSuffix ? `${transitText} · ${houseSuffix}` : transitText)
+            : null
           return (
             <AnimatedMount>
               <TouchableOpacity
@@ -472,23 +494,36 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
                 onPress={() => { try { navigation.navigate('PersonalTransits') } catch { } }}
                 accessibilityRole="button"
-                accessibilityLabel={tl('Ver todos os trânsitos', 'See all transits', 'Ver todos los tránsitos', 'Vedi tutti i transiti')}
-              >
-                {score != null && (
-                  <View style={styles.dailyScoreCircle}>
-                    <Text style={[styles.dailyScoreNumber, { color: scoreColor }]}>{score}</Text>
-                    <Text style={styles.dailyScoreMax}>/100</Text>
-                  </View>
+                accessibilityLabel={tl(
+                  `Trânsitos pessoais${personalTransitCount > 0 ? `, ${personalTransitCount} hoje` : ''}`,
+                  `Personal transits${personalTransitCount > 0 ? `, ${personalTransitCount} today` : ''}`,
+                  `Transitos personales${personalTransitCount > 0 ? `, ${personalTransitCount} hoy` : ''}`,
+                  `Transiti personali${personalTransitCount > 0 ? `, ${personalTransitCount} oggi` : ''}`,
                 )}
-                <View style={styles.dailyScoreInfo}>
-                  {levelLabel && (
-                    <Text style={[styles.dailyScoreLevel, { color: scoreColor }]}>{levelLabel}</Text>
-                  )}
-                  {transitText && (
-                    <Text style={styles.dailyScoreTransit} numberOfLines={1}>{transitText}</Text>
-                  )}
+              >
+                <View style={styles.dailyScoreHeader}>
+                  <Text style={styles.dailyScoreLabel}>{sectionLabel}</Text>
+                  <View style={styles.dailyScoreHeaderRight}>
+                    {countLabel && <Text style={styles.dailyScoreCount}>{countLabel}</Text>}
+                    <Ionicons name="chevron-forward" size={18} color="#8888AA" />
+                  </View>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#8888AA" style={styles.dailyScoreChevron} />
+                <View style={styles.dailyScoreBody}>
+                  {score != null && (
+                    <View style={styles.dailyScoreCircle}>
+                      <Text style={[styles.dailyScoreNumber, { color: scoreColor }]}>{score}</Text>
+                      <Text style={styles.dailyScoreMax}>/100</Text>
+                    </View>
+                  )}
+                  <View style={styles.dailyScoreInfo}>
+                    {levelLabel && (
+                      <Text style={[styles.dailyScoreLevel, { color: scoreColor }]}>{levelLabel}</Text>
+                    )}
+                    {transitLine && (
+                      <Text style={styles.dailyScoreTransit} numberOfLines={1}>{transitLine}</Text>
+                    )}
+                  </View>
+                </View>
               </TouchableOpacity>
             </AnimatedMount>
           )
@@ -678,16 +713,41 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   dailyScoreCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     marginHorizontal: 16,
     marginBottom: 10,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dailyScoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  dailyScoreLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    color: '#8888AA',
+  },
+  dailyScoreHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dailyScoreCount: {
+    fontSize: 11,
+    color: '#8888AA',
+    marginRight: 6,
+  },
+  dailyScoreBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   dailyScoreCircle: {
     flexDirection: 'row',
@@ -715,9 +775,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#B0B0C0',
     lineHeight: 15,
-  },
-  dailyScoreChevron: {
-    marginLeft: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
