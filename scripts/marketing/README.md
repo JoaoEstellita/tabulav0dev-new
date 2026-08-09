@@ -95,11 +95,11 @@ A primeira versão listava o mesmo evento repetido por ângulo de publicação �
 eram opções; era a mesma coisa várias vezes. A lista agora é por assunto:
 
 ```
-12/08  Eclipse solar total em Leão      [card reel carrossel]
-       Lua fora de curso                [card]
-       Vênus em Libra                   [card]   educativo
-       Marte em Câncer                  [card]   educativo
-       Júpiter em Leão                  [card]   educativo
+12/08  Eclipse solar total em Leão      ← já vem marcado
+       Lua fora de curso
+       Vênus em Libra                   educativo
+       Marte em Câncer                  educativo
+       Júpiter em Leão                  educativo
 ```
 
 **Um assunto por dia.** Os que você não escolher não entram em fila — somem. Se
@@ -112,24 +112,21 @@ não repete a do dia anterior.
 
 **O mesmo assunto marcado em dois dias avisa nos dois.** Não bloqueia — véspera
 mais dia é decisão editorial defensável —, mas o texto muda por faixa de
-distância, não por dia (ver "O texto muda com a distância"), então dois dias na
-mesma faixa saem iguais.
+distância, não por dia, então dois dias na mesma faixa saem parecidos.
 
 ```
 calendario.mjs --upload  →  marketing/AAAA-MM-DD/calendario.json
         ↓
-Estúdio                  →  escolhe o assunto e os formatos do dia
+Estúdio                  →  escolhe o assunto do dia
         ↓
 POST                     →  marketing/AAAA-MM-DD/pauta.json
         ↓
 Actions às 6h            →  lê a pauta do dia
 ```
 
-**Sem pauta, sem rede ou com JSON quebrado, a automação gera tudo como sempre.**
-Ela nunca para porque uma pauta faltou — é a única regra inegociável aqui.
-
-Dia marcado com nenhum formato também é decisão: grava lista vazia, e o Actions
-entende que o silêncio foi escolhido.
+**Sem pauta, sem rede ou com JSON quebrado, o vídeo sai com o assunto de maior
+peso.** A automação nunca para porque uma pauta faltou — é a única regra
+inegociável aqui.
 
 ## Peça do mês
 
