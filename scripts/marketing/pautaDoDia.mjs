@@ -52,5 +52,20 @@ const opcoes = opcoesDoDia(data, {
 
 // `opcoesDoDia` já vem em ordem de peso: o primeiro é o assunto do dia.
 const escolhido = opcoes[0]
-console.log(escolhido ? escolhido.formatos.join(',') : 'card,reel')
+
+/**
+ * O dia merece um post estático além do vídeo?
+ *
+ * O card voltou à produção, mas só nos dias que sustentam: eclipse, lunação e
+ * entrada de planeta que o público reconhece. Nos outros, o vídeo dá conta —
+ * card todo dia foi o que encheu o feed de peça que servia para qualquer dia.
+ */
+const CORPOS_DE_PESO = ['Sun', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn']
+const forte =
+  escolhido?.tipo === 'eclipse' ||
+  escolhido?.tipo === 'fase' ||
+  (escolhido?.tipo === 'ingresso' && CORPOS_DE_PESO.includes(escolhido.evento?.corpo))
+
+console.log(escolhido ? escolhido.formatos.join(',') : 'reel')
 console.log(escolhido ? escolhido.id : '')
+console.log(forte ? 'forte' : 'comum')

@@ -102,6 +102,46 @@ export function eventosDoMes(ano, mes) {
 }
 
 /**
+ * Eventos fortes de uma semana, da segunda ao domingo.
+ *
+ * Mesma regra do mês, janela menor: o carrossel dos doze signos passou a ser
+ * semanal, porque um mês inteiro num slide vira lista e ninguém guarda sete
+ * datas. Numa semana costumam caber de um a três eventos, que é o que se lê.
+ *
+ * @param {Date} inicio qualquer dia da semana desejada
+ */
+export function eventosDaSemana(inicio) {
+  // Recua até a segunda-feira, ancorando em 03:00 UTC — meia-noite de Brasília.
+  // Sem o fuso, a janela começava às 21h de domingo daqui, e a capa anunciava
+  // "9 de agosto a 15" para a semana que começa no dia 10.
+  const segunda = new Date(Date.UTC(
+    inicio.getUTCFullYear(), inicio.getUTCMonth(), inicio.getUTCDate(), 3
+  ))
+  const diaDaSemana = (segunda.getUTCDay() + 6) % 7
+  segunda.setUTCDate(segunda.getUTCDate() - diaDaSemana)
+  const fim = new Date(segunda.getTime() + 7 * 86_400_000)
+
+  const brutos = [
+    ...eclipsesProximos(segunda, 8),
+    ...ingressosProximos(segunda, 8),
+    ...estacoesProximas(segunda, 8),
+    ...fasesDaLua(segunda, 3),
+  ].filter((e) => e.quando >= segunda && e.quando < fim)
+
+  const diasComEclipse = new Set(
+    brutos.filter((e) => e.tipo === 'eclipse').map((e) => e.quando.toISOString().slice(0, 10))
+  )
+
+  return {
+    inicio: segunda,
+    fim,
+    eventos: brutos
+      .filter((e) => !(e.tipo === 'fase' && diasComEclipse.has(e.quando.toISOString().slice(0, 10))))
+      .sort((a, b) => a.quando - b.quando),
+  }
+}
+
+/**
  * O que o mês faz com cada signo.
  *
  * `noSigno` são os eventos que caem no próprio signo; `noEixo`, os que caem na

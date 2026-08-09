@@ -200,33 +200,34 @@ export function montarAnimacao(dados) {
 
   /* A roda é a peça. Com os blocos de canto fora, ela ocupa o quadro inteiro e
      fica centrada no espaço que sobra acima da legenda queimada. */
-  .roda { display: grid; place-items: center; margin-top: 14cqw; }
+  .roda { display: grid; place-items: center; margin-top: 3cqw; }
   .roda svg { width: 100%; height: auto; display: block; }
 
   /* As dez posições, discretas, num rodapé de ordem fixa — a única informação
      de canto que o João quis manter. Duas colunas de cinco: a ordem não muda
      entre os dias, então quem acompanha sabe onde procurar. */
+  /* No TOPO, e legível. Estava no rodapé e a 72% de opacidade: no celular, com
+     o vídeo rodando, virava um borrão cinza. Quem lê a lista quer conferir um
+     grau — se precisa apertar os olhos, não serve para nada. */
   .posicoes {
     display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 0.7cqw 3.4cqw;
-    /* margin-top auto empurra a lista para o rodapé: entre ela e a roda fica o
-       vão onde a legenda queimada aparece, e as três nunca se tocam. */
-    margin-top: auto; opacity: 0.72;
+    gap: 0.9cqw 3.4cqw;
+    margin-bottom: 1cqw;
   }
   .pos {
-    display: flex; align-items: center; gap: 1.1cqw;
+    display: flex; align-items: center; gap: 1.2cqw;
     font-family: ${MONO};
-    font-size: 1.75cqw;
+    font-size: 2.25cqw;
   }
-  .pos svg { flex-shrink: 0; width: 2.2cqw; height: 2.2cqw; }
+  .pos svg { flex-shrink: 0; width: 2.8cqw; height: 2.8cqw; }
   .pn { color: ${VELLUM}; letter-spacing: 0.04em; }
   .pn i { font-style: normal; color: ${BRONZE}; margin-left: 0.5cqw; }
-  .pg { color: ${SLATE}; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .pg { color: #9AA3C0; margin-left: auto; font-variant-numeric: tabular-nums; }
 
   /* legenda queimada: faixa fixa, alta o bastante para caber duas linhas sem
      empurrar nada — a posição não pode dançar entre segmentos */
   .faixa {
-    position: absolute; left: 0; right: 0; bottom: 26cqw; z-index: 6;
+    position: absolute; left: 0; right: 0; bottom: 9cqw; z-index: 6;
     display: flex; justify-content: center; padding: 0 7cqw;
     pointer-events: none;
   }
@@ -285,6 +286,8 @@ export function montarAnimacao(dados) {
             o pedido do João foi "apenas a imagem e a legenda", e cada um desses
             elementos disputava atenção com o mapa sem informar nada que a
             legenda já não diga. */ ''}
+      <div class="posicoes">${posicoes}</div>
+
       <div class="roda">
         <svg viewBox="0 0 1000 1000" role="img" aria-label="Carta do céu do dia, animada">
           <g id="giro">
@@ -300,10 +303,7 @@ export function montarAnimacao(dados) {
         </svg>
       </div>
 
-      <div class="posicoes">${posicoes}</div>
-
-
-    </div>
+          </div>
   </div>
 
 <script>
