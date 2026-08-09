@@ -1,8 +1,15 @@
 # Gerador do vídeo diário — "Céu de hoje"
 
-Uma peça por dia: o **vídeo** do céu de hoje, que serve de Reel e de Story — 9:16
-é o formato dos dois. Sai do `astronomy-engine` que o app já usa e renderiza com
-o Chrome instalado; o MP4 é montado por ffmpeg.
+O que sai, e quando:
+
+| quando | peça |
+|---|---|
+| todo dia | o **vídeo** do céu de hoje — Reel e Story, mesmo arquivo (9:16) |
+| dia forte | mais o **card estático** — eclipse, lunação, ingresso de peso |
+| segunda | mais o **carrossel dos doze signos**, com a casa de cada um |
+
+Tudo sai do `astronomy-engine` que o app já usa e renderiza com o Chrome
+instalado; o MP4 é montado por ffmpeg.
 
 ```bash
 cd frontend
@@ -127,6 +134,37 @@ Actions às 6h            →  lê a pauta do dia
 **Sem pauta, sem rede ou com JSON quebrado, o vídeo sai com o assunto de maior
 peso.** A automação nunca para porque uma pauta faltou — é a única regra
 inegociável aqui.
+
+## A semana em doze signos
+
+```bash
+node scripts/marketing/gerarSemanal.mjs                 # a semana de hoje
+node scripts/marketing/gerarSemanal.mjs --data=2026-08-10
+node scripts/marketing/gerarSemanal.mjs --upload
+```
+
+Capa mais um slide por signo, publicado às **segundas** — o workflow diário
+detecta o dia e roda sozinho. É o formato que gera salvamento: a pessoa volta ao
+post para conferir o próprio ascendente.
+
+O que faz cada slide ser diferente dos outros onze é a **casa**:
+
+```
+Marte entra em Câncer na terça.
+Com ascendente em Leão, isso cai na sua casa 12 —
+o que fica nos bastidores, o descanso, o que precisa acabar.
+```
+
+Doze ascendentes, doze contas, doze textos. Sem isso seria a mesma frase doze
+vezes trocando o nome do signo, que é o que quase toda conta faz. A conta é
+`((signo do evento − ascendente + 12) mod 12) + 1`, em casas inteiras — a mesma
+de `src/astro/houses.math.ts:83`, e **o sistema é declarado na peça**.
+
+Os doze significados de casa estão em `lib/vozSemana.mjs`, escritos em linguagem
+de conversa: *"a casa, a família e o que te dá base"*, não *"o setor do lar"*.
+
+Sai em `AAAA-MM-DD/semanal/01.png … 13.png` mais a `legenda.txt`. São treze
+slides — o backend aceita até vinte, e subiu de dez por causa desta peça.
 
 ## Peça do mês
 
