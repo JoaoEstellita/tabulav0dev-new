@@ -149,7 +149,7 @@ async function principal() {
 
   for (let i = 0; i < slides.length; i++) {
     const nome = `${String(i + 1).padStart(2, '0')}.png`
-    await renderizar(chrome, montarSlide({ ...slides[i], indice: i + 1, total: slides.length }, semente), path.join(pasta, nome))
+    await renderizar(chrome, montarSlide({ ...slides[i], indice: i, total: slides.length }, semente), path.join(pasta, nome))
     console.log(`  ${i + 1}/${slides.length}  ${slides[i].titulo.replace('\n', ' ')}`)
   }
 
