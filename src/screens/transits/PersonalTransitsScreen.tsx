@@ -12,7 +12,7 @@ import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/trans
 import { areaLabelsForTransit } from '../../utils/transitLifeAreas'
 import { PROGRESSION_ASPECTS_PTBR } from '../../data/progressionAspectsPtBR'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
-import { computeProgressedPositions, computeProgressedAspects, type ProgressedAspect } from '../../astro/progressions'
+import { computeProgressedPositions, computeProgressedAspects, computeProgressedMoonWindows, type ProgressedAspect, type ProgressedWindow } from '../../astro/progressions'
 import { translatePlanet } from '../../utils/astro/pt'
 import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -31,6 +31,19 @@ export default function PersonalTransitsScreen() {
     if (language === 'it-IT') return it
     return pt
   }
+
+  // Formata a janela de uma progressão: "Ativo dd/mm → dd/mm/aaaa · ~N meses · fase".
+  const dm = (iso: string) => {
+    const d = new Date(iso)
+    return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+  }
+  const dmy = (iso: string) => `${dm(iso)}/${new Date(iso).getUTCFullYear()}`
+  const faseLabel = (ph: ProgressedWindow['phase']) =>
+    ph === 'aplicando' ? tl('aplicando', 'applying', 'aplicando', 'in avvicinamento')
+      : ph === 'exato' ? tl('exato', 'exact', 'exacto', 'esatto')
+        : tl('separando', 'separating', 'separando', 'in separazione')
+  const janelaLabel = (w: ProgressedWindow) =>
+    `${tl('Ativo', 'Active', 'Activo', 'Attivo')} ${dm(w.start)} → ${dmy(w.end)} · ~${Math.max(1, Math.round(w.months))} ${tl('meses', 'months', 'meses', 'mesi')} · ${faseLabel(w.phase)}`
 
   const personalRaw = transitData?.dailyOverview?.personalTodayRich || []
   const collective = useMemo(
@@ -83,6 +96,7 @@ export default function PersonalTransitsScreen() {
   // de nascimento, que não vêm no transitData.
   const { user } = useAuth()
   const [progressoes, setProgressoes] = useState<ProgressedAspect[]>([])
+  const [janelas, setJanelas] = useState<Record<number, ProgressedWindow>>({})
   useEffect(() => {
     let cancelado = false
     const rodar = async () => {
@@ -94,12 +108,17 @@ export default function PersonalTransitsScreen() {
         const lat = u?.birthLocation?.latitude
         const lon = u?.birthLocation?.longitude
         if (!u.birthDate || !Number.isFinite(lat) || !Number.isFinite(lon)) return
-        const prog = await computeProgressedPositions({
+        const birthData = {
           datetime: `${u.birthDate}T${u.birthTime || '12:00'}:00`,
           coordinates: { latitude: lat, longitude: lon },
-        })
+        }
+        const prog = await computeProgressedPositions(birthData)
         if (cancelado || !prog) return
-        setProgressoes(computeProgressedAspects(prog, natais))
+        const aspects = computeProgressedAspects(prog, natais)
+        setProgressoes(aspects)
+        // Janela real (início/exato/fim/fase) de cada progressão da Lua.
+        const w = await computeProgressedMoonWindows(birthData, prog, natais, aspects)
+        if (!cancelado) setJanelas(w)
       } catch { /* sem progressões, a seção some */ }
     }
     rodar()
@@ -287,6 +306,7 @@ export default function PersonalTransitsScreen() {
                     </Text>
                     <Text style={styles.progOrb}>{a.orb.toFixed(1)}°</Text>
                   </View>
+                  {janelas[i] ? <Text style={styles.progWindow}>{janelaLabel(janelas[i])}</Text> : null}
                   {texto ? <Text style={styles.progText2}>{texto}</Text> : null}
                   </View>
                   )
@@ -333,6 +353,12 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginLeft: 16,
     marginTop: 2,
+  },
+  progWindow: {
+    color: '#8890B5',
+    fontSize: 11,
+    marginLeft: 16,
+    marginTop: 3,
   },
   navChips: {
     flexDirection: 'row',

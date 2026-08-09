@@ -36,11 +36,15 @@ const MAJOR_ASPECTS: Array<{ name: string; angle: number; symbol: string; tone: 
 ]
 
 /**
- * Orbe apertada de propósito. A progressão é lentíssima — com orbe de trânsito
- * (6°) um aspecto da Lua progredida ficaria "ativo" por mais de um ano e todos
- * os outros planetas ficariam ativos a vida inteira.
+ * Orbe da Lua progredida = 3°. A Lua progride ~1°/mês, então 3° corresponde a
+ * uma janela de ~6 meses de cada lado — a mesma ordem de grandeza que efemérides
+ * de referência (ex.: Personare) usam para dar as "fases" da Lua progredida.
+ * Com 3° dois aspectos da Lua podem coexistir (ex.: oposição ao Sol separando e
+ * oposição a Vênus aplicando), como de fato acontece no céu. Os DEMAIS planetas
+ * quase não andam na progressão, então mantêm orbe apertada (1°) — senão
+ * ficariam "ativos" a vida inteira.
  */
-const ORB_LUA = 1.5
+const ORB_LUA = 3.0
 const ORB_DEMAIS = 1.0
 
 /** A Lua lidera: é a única que se move o bastante para a leitura mudar. */
@@ -77,17 +81,24 @@ export async function computeProgressedPositions(
   const coords = birthData?.coordinates
   if (!datetime || !coords) return null
 
-  const nascimento = new Date(String(datetime).replace(' ', 'T'))
+  // Trata a data/hora de nascimento como UTC-naive (sufixo Z) para a aritmética
+  // não depender do fuso da máquina. O fuso real é reaplicado por
+  // computeNatalLongitudes a partir das coordenadas.
+  const baseIso = String(datetime).replace(' ', 'T').slice(0, 19)
+  const nascimento = new Date(`${baseIso}Z`)
   if (!Number.isFinite(nascimento.getTime())) return null
 
+  // A progressão avança o instante de nascimento pela idade fracionária (1 dia
+  // por ano). É PRECISO manter a FRAÇÃO de hora do resultado — descartá-la (só a
+  // data) congelava a Lua progredida por ~1 ano e a fazia pular ~13° de vez,
+  // em vez de andar ~1°/mês.
   const prog = progressedDate(nascimento, now)
   const iso = prog.toISOString()
-  // Mantém a hora de nascimento como referência — o que avança é a data.
-  const [dataProg] = iso.split('T')
-  const horaNascimento = String(datetime).split('T')[1]?.slice(0, 5) || '12:00'
+  const dataProg = iso.slice(0, 10)
+  const horaProg = iso.slice(11, 16)
 
   return computeNatalLongitudes({
-    datetime: `${dataProg}T${horaNascimento}:00`,
+    datetime: `${dataProg}T${horaProg}:00`,
     coordinates: coords,
   })
 }
@@ -96,7 +107,7 @@ export async function computeProgressedPositions(
 export function computeProgressedAspects(
   progredidos: RealPlanetPosition[] | null | undefined,
   natais: RealPlanetPosition[] | null | undefined,
-  limit = 8,
+  limit = 12,
 ): ProgressedAspect[] {
   const A = (progredidos || []).filter((p) => Number.isFinite(Number(p?.longitude)))
   const B = (natais || []).filter((p) => Number.isFinite(Number(p?.longitude)))
@@ -131,4 +142,76 @@ export function computeProgressedAspects(
     .sort((x, y) => (x.ordem - y.ordem) || (x.orb - y.orb))
     .slice(0, limit)
     .map(({ ordem, ...resto }) => resto)
+}
+
+// ─── Janela real das progressões da Lua ──────────────────────────────────────
+
+export type ProgressedWindow = {
+  start: string   // ISO — entrada na orbe
+  exact: string   // ISO — aspecto exato (projeção linear)
+  end: string     // ISO — saída da orbe
+  phase: 'aplicando' | 'exato' | 'separando'
+  months: number  // duração aproximada da janela
+}
+
+/** Menor diferença angular assinada (quanto `from` precisa andar até `to`). */
+function deltaAssinado(from: number, to: number): number {
+  return ((to - from + 540) % 360) - 180
+}
+
+/**
+ * Janela de cada aspecto da LUA progredida: quando entra na orbe, quando fica
+ * exato e quando sai — a partir da velocidade REAL da Lua progredida (medida em
+ * dois instantes) projetada linearmente. Só a Lua ganha janela: os demais
+ * planetas progridem ~1°/ano e sua "janela" seria de anos (fora do foco).
+ *
+ * `progAtNow` é reaproveitado (a tela já calcula as posições progredidas de hoje)
+ * — só o instante +30d é recalculado aqui para obter a taxa.
+ */
+export async function computeProgressedMoonWindows(
+  birthData: { datetime?: string; coordinates?: { latitude: number; longitude: number } } | null,
+  progAtNow: RealPlanetPosition[] | null | undefined,
+  natais: RealPlanetPosition[] | null | undefined,
+  aspects: ProgressedAspect[],
+  now: Date = new Date(),
+): Promise<Record<number, ProgressedWindow>> {
+  const out: Record<number, ProgressedWindow> = {}
+  const moonNow = Number((progAtNow || []).find((p) => p?.name === 'Moon')?.longitude)
+  if (!Number.isFinite(moonNow)) return out
+
+  const prog30 = await computeProgressedPositions(birthData, new Date(now.getTime() + 30 * 86400000))
+  const moon30 = Number((prog30 || []).find((p) => p?.name === 'Moon')?.longitude)
+  if (!Number.isFinite(moon30)) return out
+
+  const taxaPorDia = deltaAssinado(moonNow, moon30) / 30 // °/dia real
+  if (Math.abs(taxaPorDia) < 1e-6) return out
+
+  aspects.forEach((a, i) => {
+    if (a.progressedPlanet !== 'Moon') return
+    const natalLon = Number((natais || []).find((p) => p?.name === a.natalPlanet)?.longitude)
+    const angle = MAJOR_ASPECTS.find((m) => m.name === a.aspect)?.angle
+    if (!Number.isFinite(natalLon) || angle == null) return
+
+    // A Lua fica exata quando sua longitude = natal ± ângulo; escolhe o alvo mais
+    // próximo da posição atual (o lado do aspecto que está de fato acontecendo).
+    const alvoA = (natalLon + angle) % 360
+    const alvoB = (natalLon - angle + 360) % 360
+    const dA = deltaAssinado(moonNow, alvoA)
+    const dB = deltaAssinado(moonNow, alvoB)
+    const d = Math.abs(dA) <= Math.abs(dB) ? dA : dB
+
+    const diasAoExato = d / taxaPorDia
+    const meiaJanelaDias = Math.abs(ORB_LUA / taxaPorDia)
+    const exact = new Date(now.getTime() + diasAoExato * 86400000)
+    const start = new Date(exact.getTime() - meiaJanelaDias * 86400000)
+    const end = new Date(exact.getTime() + meiaJanelaDias * 86400000)
+    const months = (end.getTime() - start.getTime()) / (30.4368 * 86400000)
+    const phase: ProgressedWindow['phase'] =
+      Math.abs(now.getTime() - exact.getTime()) < 15 * 86400000 ? 'exato'
+        : now.getTime() < exact.getTime() ? 'aplicando' : 'separando'
+
+    out[i] = { start: start.toISOString(), exact: exact.toISOString(), end: end.toISOString(), phase, months }
+  })
+
+  return out
 }
