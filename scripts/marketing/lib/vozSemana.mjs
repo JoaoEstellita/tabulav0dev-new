@@ -15,6 +15,7 @@
  */
 import { casaPorAscendente, ORDEM_SIGNOS } from './mensal.mjs'
 import { escrever } from './vozes.mjs'
+import { textoEmCasa, primeirasFrases, dignidade } from './interpretacao.mjs'
 
 /**
  * O que cada casa é, em uma linha que alguém entenda de primeira.
@@ -67,7 +68,7 @@ function oQueE(ev) {
  *
  * @returns {{signo, casa, texto, extras: string[]}|null}
  */
-export function semanaPorSigno(eventos, ascendente) {
+export function semanaPorSigno(eventos, ascendente, catalogos = null) {
   if (!eventos.length) return null
 
   const porPeso = [...eventos].sort((a, b) => (b.peso || 0) - (a.peso || 0))
@@ -75,9 +76,31 @@ export function semanaPorSigno(eventos, ascendente) {
   const casa = casaPorAscendente(principal.signo, ascendente)
   if (!casa) return null
 
-  const texto =
-    `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}. ` +
-    `Com ascendente em ${ascendente}, isso cai na sua casa ${casa} — ${CASA[casa]}.`
+  /**
+   * A leitura da casa vem do catálogo curado do app, não da minha linha.
+   *
+   * `CASA[n]` dizia "a casa, a família e o que te dá base" — dicionário, não
+   * leitura. O catálogo diz o que aquele CORPO faz naquela casa: "Marte na Casa
+   * 4 impulsiona a energia para a construção de raízes... o ambiente doméstico
+   * pode ser um espaço de grande atividade". São 120 textos, um por
+   * planeta × casa, e é o que dá conteúdo diferente aos doze slides.
+   */
+  const corpoDoEvento = principal.corpo ||
+    (principal.tipo === 'eclipse' || principal.tipo === 'fase'
+      ? (principal.luminar === 'solar' || principal.fase === 'Lua Nova' ? 'Sun' : 'Moon')
+      : null)
+
+  const curado = catalogos && corpoDoEvento
+    ? primeirasFrases(textoEmCasa(catalogos, corpoDoEvento, casa), 2)
+    : ''
+
+  const texto = curado
+    ? `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)} — ` +
+      `com ascendente em ${ascendente}, na sua casa ${casa}.
+
+${curado}`
+    : `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}. ` +
+      `Com ascendente em ${ascendente}, isso cai na sua casa ${casa} — ${CASA[casa]}.`
 
   // Os demais eventos viram uma linha cada: quem lê está procurando a própria
   // casa, e três parágrafos afastam do que veio ver.
@@ -88,7 +111,9 @@ export function semanaPorSigno(eventos, ascendente) {
     return linha[0].toUpperCase() + linha.slice(1)
   }).filter(Boolean)
 
-  return { signo: ascendente, casa, texto, extras }
+  const dig = corpoDoEvento ? dignidade(corpoDoEvento, principal.signo) : null
+
+  return { signo: ascendente, casa, texto, extras, dignidade: dig }
 }
 
 /**

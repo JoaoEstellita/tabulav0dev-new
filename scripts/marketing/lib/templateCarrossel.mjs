@@ -58,6 +58,27 @@ export function montarSlide(slide, semente) {
     ? `<div class="marca">@tabula_estelar</div>`
     : ''
 
+  /**
+   * O corpo do texto acompanha o tamanho do texto.
+   *
+   * Os slides passaram a trazer interpretação curada do app — 250 a 400
+   * caracteres, contra os ~120 que a peça tinha antes. Com corpo fixo, o
+   * rodapé saía do quadro e o título colava no topo, que foi o que aconteceu no
+   * primeiro carrossel semanal com leitura de verdade.
+   *
+   * Em degraus, e não por fórmula contínua: dois slides de tamanhos parecidos
+   * precisam sair com o mesmo corpo, senão a variação lê como descuido ao
+   * arrastar.
+   */
+  const tamanhoDoTexto = (texto) => {
+    const n = String(texto || '').length
+    if (n <= 160) return 4.1
+    if (n <= 260) return 3.7
+    if (n <= 360) return 3.3
+    return 3.0
+  }
+  const corpoTexto = slide.tipo === 'capa' ? 4.1 : tamanhoDoTexto(slide.texto)
+
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <style>
@@ -97,7 +118,7 @@ export function montarSlide(slide, semente) {
   .titulo.capa { font-size: 10.4cqw; }
   .texto {
     font-family: ${SANS}; color: ${VELLUM}; opacity: 0.92;
-    font-size: 4.1cqw; line-height: 1.42; margin-top: 3.4cqw; max-width: 94%;
+    font-size: ${corpoTexto}cqw; line-height: 1.42; margin-top: 3.4cqw; max-width: 94%;
     /* honra o \\n do roteiro: sem isto os blocos do slide mensal — o fato, o
        condicional e a linha do ascendente — colavam num parágrafo só */
     white-space: pre-line;

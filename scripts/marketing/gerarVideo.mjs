@@ -33,6 +33,7 @@ import { roteiroDeLegenda } from './lib/roteiroLegenda.mjs'
 // descrevia o fenômeno e servia para qualquer dia — foi o que fez o João dizer
 // que estava quase desistindo do conteúdo.
 import { falaDoReel } from './lib/vozReel.mjs'
+import { carregarCatalogos } from './lib/interpretacao.mjs'
 import { efemerideAnimada } from './lib/efemerideAnimada.mjs'
 // o mesmo módulo que o gerarCard usa: os dois têm de concordar no id do assunto
 import { opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
@@ -135,10 +136,10 @@ async function carregarPuppeteer() {
  * O título de abertura vem da voz nova; os dados exatos (hora, grau) continuam
  * saindo de `escrever`, que é onde a efeméride vira texto.
  */
-function vozDoDia(principal, data, proximo) {
+function vozDoDia(principal, data, proximo, catalogos) {
   if (!principal) return {}
   const v = escrever(principal)
-  const fala = falaDoReel(principal, data, { proximo })
+  const fala = falaDoReel(principal, data, { proximo, catalogos })
   return {
     titulo: fala.manchete,
     subtitulo: v.dado,
@@ -243,7 +244,9 @@ async function principal() {
       data,
       eventosDoDia(data, mapa.aspectos).find(
         (e) => e !== eventoDoDia && e.quando > data && e.tipo !== eventoDoDia?.tipo
-      )
+      ),
+      // os 1.189 textos curados do app: é deles que sai a leitura da peça
+      await carregarCatalogos()
     ),
   }
 

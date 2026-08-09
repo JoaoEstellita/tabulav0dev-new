@@ -33,6 +33,7 @@ import process from 'node:process'
 import { eventosDaSemana, ORDEM_SIGNOS, GLIFO } from './lib/mensal.mjs'
 import { semanaPorSigno, capaDaSemana } from './lib/vozSemana.mjs'
 import { montarSlide } from './lib/templateCarrossel.mjs'
+import { carregarCatalogos } from './lib/interpretacao.mjs'
 
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -101,6 +102,7 @@ async function principal() {
 
   const base = args.data ? new Date(`${args.data}T12:00:00Z`) : new Date()
   const semana = eventosDaSemana(base)
+  const catalogos = await carregarCatalogos()
 
   if (!semana.eventos.length) {
     console.log('Semana sem evento forte: o carrossel não teria o que dizer em doze slides.')
@@ -121,7 +123,7 @@ async function principal() {
   ]
 
   for (const signo of ORDEM_SIGNOS) {
-    const leitura = semanaPorSigno(semana.eventos, signo)
+    const leitura = semanaPorSigno(semana.eventos, signo, catalogos)
     if (!leitura) continue
 
     slides.push({
@@ -132,8 +134,13 @@ async function principal() {
       // A casa exata em bloco próprio: é o número que a pessoa veio procurar, e
       // diluído no parágrafo ele passa despercebido.
       destaque: {
-        rotulo: `Ascendente em ${signo} · casas inteiras`,
-        texto: leitura.extras.length ? leitura.extras.join('\n') : `Só este evento toca o seu mapa esta semana.`,
+        // A dignidade dá o tamanho da notícia: Marte em Câncer está em QUEDA, e
+        // isso não é a mesma coisa que Marte em Escorpião. Tradição clássica,
+        // tabela fixa, nada de opinião.
+        rotulo: leitura.dignidade
+          ? `Ascendente em ${signo} · ${leitura.dignidade.tipo}`
+          : `Ascendente em ${signo} · casas inteiras`,
+        texto: leitura.extras.length ? leitura.extras.join('\n') : 'Só este evento toca o seu mapa esta semana.',
       },
       rodape: `${capa.periodo} · casa ${leitura.casa}`,
     })
@@ -161,7 +168,7 @@ async function principal() {
     capa.texto,
     '',
     ...ORDEM_SIGNOS.map((s) => {
-      const l = semanaPorSigno(semana.eventos, s)
+      const l = semanaPorSigno(semana.eventos, s, catalogos)
       return l ? `${s}: casa ${l.casa}` : null
     }).filter(Boolean),
     '',

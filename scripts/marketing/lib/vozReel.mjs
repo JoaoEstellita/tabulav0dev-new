@@ -26,6 +26,7 @@
  */
 import { tempoNoSigno, ritmo, luaDeHoje, percursoDoDia, quemRecebe, casasPorAscendente, estacaoProxima } from './fatos.mjs'
 import { NOMES_PT } from './ceu.mjs'
+import { dignidade, textoEmSigno, primeirasFrases } from './interpretacao.mjs'
 
 /** 0.48 → "0,48". Número com ponto decimal denuncia texto gerado. */
 const num = (n, casas = 2) => Number(n).toFixed(casas).replace('.', ',').replace(/,00$/, '')
@@ -79,7 +80,42 @@ const JEITO = {
   'Peixes': 'perde o contorno',
 }
 
-/** A frase do fato marcante, escolhida pelo que o dia oferece. */
+/**
+ * A LEITURA do evento — o terceiro tempo da fala.
+ *
+ * Era aqui que morava a trivia astronômica: "a Lua anda 15° e troca de signo",
+ * "0,65° por dia contra 1,20 de costume". O João leu e respondeu o que precisava
+ * ser dito: "quem se importa quantos graus ela anda um dia — quero profundidade
+ * de interpretação astrológica".
+ *
+ * Agora vem do catálogo curado do app, que tem 1.189 textos e nunca tinha sido
+ * usado numa peça, mais a dignidade essencial — Marte entrando em Câncer está em
+ * QUEDA, e isso muda o tamanho da notícia. O número só entra quando serve de
+ * apoio à leitura, nunca sozinho.
+ */
+function leituraDoEvento(evento, catalogos) {
+  if (!catalogos) return ''
+
+  const corpo = evento.corpo || (evento.tipo === 'eclipse' || evento.tipo === 'fase'
+    ? (evento.luminar === 'solar' || evento.fase === 'Lua Nova' ? 'Sun' : 'Moon')
+    : null)
+  if (!corpo || !evento.signo) return ''
+
+  const partes = []
+
+  // A dignidade abre quando existe: é o que separa "Marte entra em Câncer" de
+  // "Marte entra em Escorpião" — mesma notícia, tamanhos diferentes.
+  const dig = dignidade(corpo, evento.signo)
+  const nomePt = evento.corpoPt || NOMES_PT[corpo] || corpo
+  if (dig) partes.push(`${Art(nomePt)} chega ${dig.texto}.`)
+
+  const texto = textoEmSigno(catalogos, corpo, evento.signo)
+  if (texto) partes.push(primeirasFrases(texto, dig ? 1 : 2))
+
+  return partes.join(' ')
+}
+
+/** O apoio de efeméride, quando a leitura precisa de um número ao lado. */
 function fatoMarcante(evento, data) {
   const corpo = evento.corpo || (evento.tipo === 'eclipse' ? (evento.luminar === 'solar' ? 'Sun' : 'Moon') : 'Moon')
   // `evento.corpoPt` falta em eclipse e fase, e sem isto saía "Sun está quase
@@ -220,11 +256,15 @@ function contraste(evento, data) {
  * @returns {{manchete, blocos: string[], post: string}}
  *   `blocos` é o que se queima no vídeo; `post` é a legenda para colar.
  */
-export function falaDoReel(evento, data, { proximo = null } = {}) {
+export function falaDoReel(evento, data, { proximo = null, catalogos = null } = {}) {
+  // A leitura curada manda; o fato de efeméride só entra quando o catálogo não
+  // tem nada a dizer sobre este evento — dia de Lua fora de curso, por exemplo.
+  const leitura = leituraDoEvento(evento, catalogos)
+
   const partes = [
     abertura(evento, data),
     contraste(evento, data),
-    fatoMarcante(evento, data),
+    leitura || fatoMarcante(evento, data),
     gancho(proximo, data),
   ].filter(Boolean)
 
