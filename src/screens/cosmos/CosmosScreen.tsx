@@ -348,7 +348,7 @@ export default function CosmosScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>✦ Cosmos</Text>
+          <Text style={styles.heroTitle}>✦ {tl('Mapa Natal', 'Natal Chart', 'Carta Natal', 'Tema Natale')}</Text>
           {loading && natalPlanets.length === 0 ? (
             <StarLoader size={20} color="#FFD700" />
           ) : (
