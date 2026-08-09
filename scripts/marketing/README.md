@@ -1,35 +1,88 @@
-# Gerador do card diário — "Céu de hoje"
+# Gerador do vídeo diário — "Céu de hoje"
 
-Gera os posts diários do Instagram a partir do catálogo de interpretações que já
-existe no app. Sem dependência nova: renderiza com o Chrome instalado.
-
-## Uso
+Uma peça por dia: o **vídeo** do céu de hoje, que serve de Reel e de Story — 9:16
+é o formato dos dois. Sai do `astronomy-engine` que o app já usa e renderiza com
+o Chrome instalado; o MP4 é montado por ffmpeg.
 
 ```bash
 cd frontend
 
-node scripts/marketing/gerarCard.mjs                  # hoje
-node scripts/marketing/gerarCard.mjs --dias=9         # enche a grade 3×3
-node scripts/marketing/gerarCard.mjs --data=2026-08-12
-node scripts/marketing/gerarCard.mjs --dias=9 --upload   # e manda para o Estúdio
-node scripts/marketing/gerarCard.mjs --saida=D:/outro/lugar
+node scripts/marketing/gerarVideo.mjs                       # hoje
+node scripts/marketing/gerarVideo.mjs --data=2026-08-12
+node scripts/marketing/gerarVideo.mjs --assunto=<id>        # obedece à pauta
+node scripts/marketing/gerarVideo.mjs --upload              # manda para o Estúdio
+node scripts/marketing/gerarVideo.mjs --segundos=20 --fps=30
+```
+
+Saída em `<monorepo>/marketing/out/AAAA-MM-DD/` — **fora dos repositórios git**:
+
+```
+reel.mp4      1080 × 1920, 20s
+legenda.txt   o texto do post, pronto para colar
 ```
 
 `--upload` exige `MONITORING_PASSWORD` no ambiente (a mesma senha do painel
-`/monitoramento`). Falha de rede não aborta os outros dias: o card já está no
-disco de qualquer forma.
+`/monitoramento`). Se o Chrome não estiver num caminho padrão, aponte com
+`CHROME_PATH`.
 
-Saída padrão: `<monorepo>/marketing/out/AAAA-MM-DD/` — **fora dos repositórios
-git**, para não versionar binários.
+## A voz
+
+Está em [`lib/vozReel.mjs`](lib/vozReel.mjs), e existe porque a anterior não
+servia. Ela descrevia o fenômeno — *"eclipse solar é Lua Nova em cima do eixo dos
+nódulos"* — e fechava com um bordão repetido em toda peça. O João olhou aquilo e
+disse que estava quase desistindo de fazer conteúdo: **"as informações são
+genéricas demais"**. Um texto que serve para qualquer eclipse não serve para
+nenhum.
+
+**As regras:**
+
+1. Frase curta. Se dá para cortar uma palavra, corta.
+2. Fala com a pessoa. "A gente", "você" — sem cerimônia e sem locução.
+3. Nenhum termo técnico sem tradução **na mesma frase**. "Retrógrado" só aparece
+   junto de "anda para trás".
+4. Um fato calculado por peça, no mínimo.
+5. Nunca prometer, nunca mandar fazer, nunca dizer o que vai acontecer com a vida
+   de alguém.
+6. Nada de bordão de encerramento. A peça acaba no fato.
+
+**Os quatro tempos:** o que acontece hoje e a que horas · o contraste concreto ·
+o fato que faz parar · o gancho do próximo evento.
 
 ```
-marketing/out/2026-08-07/
-  feed.png      1080 × 1350
-  story.png     1080 × 1920
-  legenda.txt   texto + hashtags, pronto para colar
+Daqui a 3 dias, em 12 de agosto, a Lua passa na frente do Sol.
+Acontece a 20° de Leão. Do Brasil não dá para ver nada — a sombra passa longe.
+Hoje a Lua anda 15° e troca de signo: começa em Gêmeos e termina em Câncer.
+Ainda hoje: Mercúrio muda de signo.
 ```
 
-Se o Chrome não estiver num caminho padrão, aponte com `CHROME_PATH`.
+**O repertório de fatos** ([`lib/fatos.mjs`](lib/fatos.mjs)) é todo de efeméride:
+tempo no signo contra a média, velocidade de hoje, iluminação e distância da Lua,
+percurso do dia, a faixa de grau que recebe ângulo exato, e as doze casas por
+ascendente — que vão na legenda do post, porque é o formato que faz alguém salvar
+para conferir o próprio.
+
+⚠️ **Só entra o que o código calcula.** Escrever "a faixa de totalidade passa pela
+Islândia" é a tentação, e é exatamente o erro que a conta existe para não cometer:
+as contas grandes chutam esse tipo de coisa. Há teste travando afirmação sem
+cálculo — *"é assim pouco antes de mudar de direção"* só sai se `estacaoProxima`
+confirmar.
+
+## O vídeo é do dia
+
+A janela da animação cobre **00h → 24h de Brasília**, e só. Antes eram cinco dias
+de aproximação até o evento, e o João assistiu e disse o que estava errado: *"a
+lua anda 2 signos"*. Andava — 74,7° na janela, contra 7,3° do planeta que a
+manchete anunciava. Num dia a Lua anda uns 14° e os planetas quase não saem do
+lugar, que é o que o céu faz num dia.
+
+**O protagonista aparece como protagonista:** anel, nome, e os demais corpos a
+25% de opacidade. Sem hierarquia o olho segue a Lua, que se move dez vezes mais
+que o assunto.
+
+**O quadro tem o mapa, a legenda queimada e as dez posições no rodapé.** Saíram
+"Carta do céu", a data do canto, a legenda de harmônico/tenso, o bloco de título
+e a assinatura — cada um disputava atenção com o mapa sem informar nada que a
+legenda já não diga.
 
 ## Editorial — escolher a pauta
 
@@ -53,8 +106,9 @@ eram opções; era a mesma coisa várias vezes. A lista agora é por assunto:
 isso incomodar (ver o mesmo educativo disponível todo dia e nunca sair), o
 caminho é uma fila, não vários posts por dia.
 
-**Os formatos vêm todos marcados**, e desmarcar é um toque: escolher o assunto
-já é a decisão. Pauta salva antes manda sobre esse padrão.
+**O formato é um só: o vídeo.** A editorial ficou com uma decisão apenas —
+escolher o assunto do dia. O primeiro de cada dia já vem marcado, e a sugestão
+não repete a do dia anterior.
 
 **O mesmo assunto marcado em dois dias avisa nos dois.** Não bloqueia — véspera
 mais dia é decisão editorial defensável —, mas o texto muda por faixa de
@@ -79,6 +133,8 @@ entende que o silêncio foi escolhido.
 
 ## Peça do mês
 
+> Fora da produção diária: roda por comando.
+
 ```bash
 node scripts/marketing/gerarMensal.mjs                  # mês corrente
 node scripts/marketing/gerarMensal.mjs --mes=2026-08
@@ -101,6 +157,8 @@ deslocam e deixaria de ser exato, **por isso o sistema é declarado na peça**.
 Sai em `mensal/00.png … 12.png` dentro de uma pasta `AAAA-MM`.
 
 ## Carrossel
+
+> Fora da produção diária desde 08/08/2026: roda por comando, quando fizer falta.
 
 ```bash
 node scripts/marketing/gerarCarrossel.mjs                    # hoje, roteiro automático
@@ -132,23 +190,22 @@ sem abrir o Estúdio.
 
 ## Automático — GitHub Actions
 
-O card do dia é gerado e enviado sozinho, todo dia às **09:00 UTC (06:00 em
-Brasília)**, sem PC ligado. O runner do GitHub já traz Chrome e Node.
+O vídeo do dia é gerado e enviado sozinho, todo dia às **09:00 UTC (06:00 em
+Brasília)**, sem PC ligado. O runner traz Chrome e Node, e o ffmpeg vem por apt.
 
 **Pré-requisito, uma vez só:** cadastrar o secret no repositório.
 
 > Settings → Secrets and variables → Actions → New repository secret
 > Nome: `MONITORING_PASSWORD` · Valor: a senha do painel `/monitoramento`
 
-Para rodar na hora, ou gerar vários dias: aba **Actions** → *Card diário* →
-**Run workflow**, informando quantos dias e a data inicial.
+Para rodar na hora: aba **Actions** → *Vídeo diário* → **Run workflow**,
+opcionalmente com outra data.
 
 O workflow não instala fonte nenhuma: elas viajam embutidas no HTML (ver
-**Tipografia**). Cada execução guarda os PNGs como artifact por 7 dias e publica
-um resumo com o trânsito escolhido.
+**Tipografia**). Cada execução guarda o MP4 como artifact por 7 dias.
 
-Sem pauta salva, saem card, Reel e story — e o carrossel quando o assunto do dia
-comporta, o que `pautaDoDia.mjs` responde ao workflow.
+Sem pauta salva, o assunto é o de maior peso do dia — a automação nunca para
+porque uma pauta faltou.
 
 ## Estúdio — postar do celular
 
@@ -162,7 +219,7 @@ a única coisa que faz o orgânico funcionar.
 export MONITORING_PASSWORD="..."      # Git Bash
 # $env:MONITORING_PASSWORD="..."      # PowerShell
 
-node scripts/marketing/gerarCard.mjs --dias=9 --upload
+node scripts/marketing/gerarVideo.mjs --upload
 ```
 
 Depois abra **https://www.tabulaestelar.com.br/estudio** de qualquer lugar e
@@ -204,7 +261,7 @@ Detalhe de implementação: a cópia usa `textarea` + `execCommand` como caminho
 principal, não `navigator.clipboard`, porque a Clipboard API exige contexto
 seguro e o visor local roda em HTTP.
 
-## Reel animado
+## Reel animado — detalhes do render
 
 ```bash
 node scripts/marketing/gerarVideo.mjs                      # hoje, 12s a 30fps
@@ -452,10 +509,11 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 
 | | |
 |---|---|
-| `gerarCard.mjs` | orquestrador e CLI |
-| `gerarVideo.mjs` | Reel animado |
-| `gerarCarrossel.mjs` | carrossel, roteiros `explicador` e `eixo` |
-| `gerarMensal.mjs` | a peça do mês, por signo e por ascendente |
+| `gerarVideo.mjs` | **a peça do dia** — vídeo, Reel e Story |
+| `gerarCard.mjs` | card estático; fora do diário, roda por comando |
+| `gerarCarrossel.mjs` | carrossel, roteiros `explicador` e `eixo`; fora do diário |
+| `gerarMensal.mjs` | a peça do mês, por signo e por ascendente; fora do diário |
+| `pautaDoDia.mjs` | o assunto de maior peso do dia, para o workflow |
 | `calendario.mjs` | pautas dos próximos dias; `--upload` alimenta a editorial |
 | `estudio.mjs` | visor local para postar do celular |
 | `provaGeometria.mjs` | folha de prova dos 5 aspectos |
@@ -466,7 +524,10 @@ Duplicar os textos aqui faria o card divergir do app na primeira curadoria.
 | `lib/roteiroLegenda.mjs` | tempo dos pedaços da legenda queimada |
 | `lib/efemerideAnimada.mjs` | o céu quadro a quadro, para o Reel se mover |
 | `lib/pautas.mjs` | os assuntos que cada dia comporta, com id estável |
-| `lib/vozes.mjs` | léxico, regras de escrita, legendas e enquete |
+| `lib/vozReel.mjs` | **a voz do vídeo** — conversa direta, os quatro tempos |
+| `lib/fatos.mjs` | o fato calculado de cada dia: tempo no signo, ritmo, Lua, casas |
+| `lib/vozes.mjs` | léxico e dados (título, hora, grau) das peças por comando |
+| `lib/fontes.mjs` | as fontes embutidas em `data:` URI |
 | `lib/templateCarrossel.mjs` | HTML/CSS dos slides |
 | `lib/catalogo.mjs` | leitura dos catálogos `.ts` |
 | `lib/template.mjs` | HTML/CSS do card e os diagramas SVG |
