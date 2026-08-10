@@ -51,17 +51,14 @@ const ORB_DEMAIS = 1.0
 const ORDEM = ['Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
 
 /**
- * Planetas que praticamente não andam na progressão. Para eles, a conjunção com
- * a PRÓPRIA posição natal não é evento nenhum — é só o planeta parado onde
- * sempre esteve, e apareceria na tela a vida inteira ("Saturno progredido
- * conjunção Saturno natal"). A Lua e os pessoais ficam de fora desta regra
- * porque neles o retorno é um ciclo real (a Lua progredida fecha volta em ~27 anos).
+ * Planetas que praticamente não andam na progressão (Júpiter a Plutão progridem
+ * < 0,2°/ano). Um aspecto do planeta progredido lento ≈ o MESMO aspecto natal
+ * (a posição progredida é quase a natal a vida inteira) — não é uma fase, é um
+ * traço permanente, e o app já o interpreta na tela de aspectos NATAIS. Por isso
+ * são ESCONDIDOS da progressão: só a Lua e os pessoais (Sol, Mercúrio, Vênus,
+ * Marte) andam o bastante para formar fases de verdade.
  */
 const LENTOS = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])
-
-function ehArtefatoDeImobilidade(progredido: string, natal: string, aspecto: string): boolean {
-  return progredido === natal && aspecto === 'conjuncao' && LENTOS.has(progredido)
-}
 
 /**
  * Data progredida: nascimento + (anos de vida) dias.
@@ -114,6 +111,8 @@ export function computeProgressedAspects(
   const achados: Array<ProgressedAspect & { ordem: number }> = []
 
   for (const a of A) {
+    // Planeta progredido lento (Júpiter→Plutão) não gera fase — escondido.
+    if (LENTOS.has(a.name)) continue
     const ehLua = a.name === 'Moon'
     const orbMax = ehLua ? ORB_LUA : ORB_DEMAIS
     for (const b of B) {
@@ -122,7 +121,6 @@ export function computeProgressedAspects(
       for (const asp of MAJOR_ASPECTS) {
         const orb = Math.abs(diff - asp.angle)
         if (orb <= orbMax) {
-          if (ehArtefatoDeImobilidade(a.name, b.name, asp.name)) break
           achados.push({
             progressedPlanet: a.name,
             natalPlanet: b.name,

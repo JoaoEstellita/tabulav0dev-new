@@ -64,3 +64,51 @@ export const PROGRESSION_ASPECTS_PTBR: Record<string, string> = {
   'prog:moon|conjuncao|neptune': 'Sensibilidade ampliada e contornos menos nítidos — o mundo fica mais poroso. Ótimo para o que é criativo, contemplativo ou espiritual; delicado para decisões que exigem clareza dura. Vale sonhar sem assinar embaixo do que ainda está nebuloso.',
   'prog:moon|conjuncao|pluto': 'Mergulho emocional profundo: o que estava enterrado volta à superfície pedindo olhar. É fase intensa, às vezes desconfortável, mas de recomposição real — o que se atravessa aqui costuma devolver força. Deixar o velho morrer é o que abre espaço para o novo.',
 }
+
+// ─── Composer para os pessoais progredidos (Sol, Mercúrio, Vênus, Marte) ──────
+// A Lua tem catálogo curado acima. Os outros pessoais progridem ~1°/ano — formam
+// fases de vários anos, uma de cada vez. Em vez de curar centenas de combinações
+// raras, compõe-se a leitura a partir do que cada força amadurece + a dinâmica do
+// aspecto. Mantém a lente evolutiva (fase de amadurecimento, não previsão).
+
+const PROG_SUJEITO: Record<string, string> = {
+  moon: 'seu mundo emocional e seu modo de sentir',
+  sun: 'seu senso de identidade e propósito',
+  mercury: 'seu modo de pensar e se comunicar',
+  venus: 'o que você valoriza e sua forma de se vincular',
+  mars: 'sua forma de agir e afirmar o que quer',
+}
+
+const PROG_ALVO: Record<string, string> = {
+  sun: 'sua identidade e vitalidade',
+  moon: 'sua vida emocional e suas necessidades',
+  mercury: 'sua mente e sua comunicação',
+  venus: 'seus afetos e seus valores',
+  mars: 'sua vontade e sua iniciativa',
+  jupiter: 'seu senso de expansão e sentido',
+  saturn: 'suas estruturas e responsabilidades',
+  uranus: 'seu impulso de liberdade',
+  neptune: 'sua sensibilidade e sua imaginação',
+  pluto: 'seus processos profundos de transformação',
+}
+
+const PROG_DINAMICA: Record<string, string> = {
+  conjuncao: 'se fundem e ganham um foco comum — um tema que passa a pedir integração consciente.',
+  sextil: 'cooperam, abrindo espaço para desenvolver isso com menos esforço.',
+  quadratura: 'entram em atrito, e esse desconforto costuma apontar um ajuste que já amadureceu para ser feito.',
+  trigono: 'fluem juntas, favorecendo um desenvolvimento natural desse tema ao longo da fase.',
+  oposicao: 'se contrapõem, trazendo à consciência uma tensão que pede equilíbrio entre os dois lados.',
+}
+
+/**
+ * Texto composto para uma progressão. Aceita os nomes em inglês do engine
+ * (`Sun`, `Mercury`…) e a chave de aspecto (`conjuncao`…). Retorna null se não
+ * souber compor — aí o card mostra só o aspecto, a orbe e a janela.
+ */
+export function buildProgressionText(progressedPlanet: string, aspect: string, natalPlanet: string): string | null {
+  const suj = PROG_SUJEITO[String(progressedPlanet).toLowerCase()]
+  const alvo = PROG_ALVO[String(natalPlanet).toLowerCase()]
+  const din = PROG_DINAMICA[String(aspect).toLowerCase()]
+  if (!suj || !alvo || !din) return null
+  return `Uma fase em que ${suj} amadurece em relação a ${alvo}. As duas forças ${din}`
+}

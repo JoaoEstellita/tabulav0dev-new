@@ -10,7 +10,7 @@ import TransitInsightCard from '../../components/TransitInsightCard'
 import { groupTransits } from '../../utils/transitGrouping'
 import { TRANSIT_TITLES_PTBR, buildFallbackTransitTitle } from '../../data/transitTitlesPtBR'
 import { areaLabelsForTransit } from '../../utils/transitLifeAreas'
-import { PROGRESSION_ASPECTS_PTBR } from '../../data/progressionAspectsPtBR'
+import { PROGRESSION_ASPECTS_PTBR, buildProgressionText } from '../../data/progressionAspectsPtBR'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import { computeProgressedPositions, computeProgressedAspects, computeProgressedMoonWindows, type ProgressedAspect, type ProgressedWindow } from '../../astro/progressions'
 import { translatePlanet } from '../../utils/astro/pt'
@@ -292,7 +292,10 @@ export default function PersonalTransitsScreen() {
                 </Text>
                 {progressoes.map((a, i) => {
                   const chaveProg = `prog:${norm(a.progressedPlanet)}|${norm(a.aspect)}|${norm(a.natalPlanet)}`
-                  const texto = language === 'pt-BR' ? PROGRESSION_ASPECTS_PTBR[chaveProg] : undefined
+                  // Lua = catálogo curado; pessoais (Sol/Mercúrio/Vênus/Marte) = composer.
+                  const texto = language === 'pt-BR'
+                    ? (PROGRESSION_ASPECTS_PTBR[chaveProg] || buildProgressionText(a.progressedPlanet, a.aspect, a.natalPlanet) || undefined)
+                    : undefined
                   return (
                   <View key={`prog-${i}`} style={styles.progItem}>
                   <View style={styles.progRow}>
