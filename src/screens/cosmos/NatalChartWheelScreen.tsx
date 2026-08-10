@@ -68,6 +68,11 @@ type ChartContentProps = {
    * não há Perfil nenhum: sem a legenda o usuário fica sem as posições.
    */
   showLegend?: boolean
+  /**
+   * Carta de OUTRA pessoa (ex.: amigo no grupo): pula o getDoc do usuário logado.
+   * Asc e cúspides caem no `transitData.currentTransits` (já é a carta passada).
+   */
+  chartMeta?: { skipSelfFetch?: boolean }
 }
 
 /**
@@ -77,7 +82,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -87,13 +92,14 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const [firestoreCusps, setFirestoreCusps] = useState<number[] | null>(null)
 
   useEffect(() => {
+    if (chartMeta?.skipSelfFetch) return // amigo: asc/cúspides vêm do transitData
     if (!user?.uid) return
     getDoc(doc(db, 'users', user.uid)).then(snap => {
       const data = snap.data()
       if (typeof data?.natalAscDeg === 'number') setFirestoreAscDeg(data.natalAscDeg)
       if (Array.isArray(data?.natalCusps)) setFirestoreCusps(data.natalCusps)
     }).catch(() => {})
-  }, [user?.uid])
+  }, [user?.uid, chartMeta?.skipSelfFetch])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en

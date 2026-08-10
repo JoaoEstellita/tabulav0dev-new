@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
+import { useRoute, useNavigation } from '@react-navigation/native'
+import { LocalAstrologyService, type LocalTransitData } from '../../services/astrology/LocalAstrologyService'
 import { getTransitState, formatPeakETA, aspectNature, windowsIntersect } from '../../utils/astro/pt'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { buildTransitTitle } from '../../utils/transitPresentation'
@@ -20,7 +22,32 @@ import { db } from '../../config/firebase'
 
 export default function PersonalTransitsScreen() {
   const { t, language } = useAppLanguage()
-  const { transitData } = useLifeAreas()
+  const route = useRoute()
+  const navigation = useNavigation()
+  // Trânsitos de OUTRA pessoa (amigo no grupo): vem por route.params.member. Sem
+  // isso, é o próprio usuário (useLifeAreas).
+  const member = (route.params as any)?.member as
+    | { displayName?: string; birthData?: { datetime?: string; coordinates?: { latitude: number; longitude: number } } }
+    | undefined
+  const { transitData: ownTransit } = useLifeAreas()
+  const [friendTransit, setFriendTransit] = useState<LocalTransitData | null>(null)
+  useEffect(() => {
+    if (!member?.birthData) { setFriendTransit(null); return }
+    let cancel = false
+    const bd = LocalAstrologyService.birthDataFromShared(member.birthData)
+    if (bd) LocalAstrologyService.computeChartNoCache(bd).then((d) => { if (!cancel) setFriendTransit(d) }).catch(() => {})
+    return () => { cancel = true }
+  }, [member?.birthData?.datetime])
+  const transitData = member ? friendTransit : ownTransit
+  // Título com o nome do amigo quando é a carta de outra pessoa.
+  useEffect(() => {
+    const first = member?.displayName ? String(member.displayName).split(' ')[0] : ''
+    if (!first) return
+    const byLang: Record<string, string> = {
+      'en-US': `${first}'s transits`, 'es-ES': `Tránsitos de ${first}`, 'it-IT': `Transiti di ${first}`,
+    }
+    ;(navigation as any).setOptions?.({ title: byLang[language] || `Trânsitos de ${first}` })
+  }, [member?.displayName, language])
   // Cada tarja controla o próprio toggle — numa lista de leitura, limitar a um
   // card aberto por vez atrapalharia comparar trânsitos.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -101,17 +128,24 @@ export default function PersonalTransitsScreen() {
     let cancelado = false
     const rodar = async () => {
       const natais = transitData?.currentTransits?.natalPlanets
-      if (!user?.uid || !Array.isArray(natais) || natais.length === 0) return
+      if (!Array.isArray(natais) || natais.length === 0) return
       try {
-        const snap = await getDoc(doc(db, 'users', user.uid))
-        const u: any = snap.data() || {}
-        const lat = u?.birthLocation?.latitude
-        const lon = u?.birthLocation?.longitude
-        if (!u.birthDate || !Number.isFinite(lat) || !Number.isFinite(lon)) return
-        const birthData = {
-          datetime: `${u.birthDate}T${u.birthTime || '12:00'}:00`,
-          coordinates: { latitude: lat, longitude: lon },
+        // Dados de nascimento: do amigo (route.params.member) ou do usuário logado.
+        let birthData: { datetime: string; coordinates: { latitude: number; longitude: number } } | null = null
+        if (member?.birthData?.datetime && member?.birthData?.coordinates) {
+          birthData = { datetime: member.birthData.datetime, coordinates: member.birthData.coordinates }
+        } else if (user?.uid) {
+          const snap = await getDoc(doc(db, 'users', user.uid))
+          const u: any = snap.data() || {}
+          const lat = u?.birthLocation?.latitude
+          const lon = u?.birthLocation?.longitude
+          if (!u.birthDate || !Number.isFinite(lat) || !Number.isFinite(lon)) return
+          birthData = {
+            datetime: `${u.birthDate}T${u.birthTime || '12:00'}:00`,
+            coordinates: { latitude: lat, longitude: lon },
+          }
         }
+        if (!birthData) return
         const prog = await computeProgressedPositions(birthData)
         if (cancelado || !prog) return
         const aspects = computeProgressedAspects(prog, natais)
@@ -123,7 +157,7 @@ export default function PersonalTransitsScreen() {
     }
     rodar()
     return () => { cancelado = true }
-  }, [user?.uid, transitData?.currentTransits?.natalPlanets])
+  }, [user?.uid, transitData?.currentTransits?.natalPlanets, member?.birthData?.datetime])
 
   const natureVisual = (nature: string) =>
     nature === 'harmonico'

@@ -84,6 +84,48 @@ export class LocalAstrologyService {
   }
 
   /**
+   * Converte o `birthData` compartilhado no grupo ({datetime, coordinates}) no
+   * `BirthData` do engine. city/country ficam vazios — o cálculo só usa lat/lon.
+   */
+  static birthDataFromShared(
+    shared?: { datetime?: string; coordinates?: { latitude: number; longitude: number } } | null
+  ): BirthData | null {
+    const dt = shared?.datetime
+    const coords = shared?.coordinates
+    if (!dt || !coords || !Number.isFinite(coords.latitude) || !Number.isFinite(coords.longitude)) return null
+    const [datePart, timePartRaw] = String(dt).replace(' ', 'T').split('T')
+    if (!datePart) return null
+    const birthTime = (timePartRaw || '12:00').slice(0, 5)
+    return {
+      birthDate: datePart,
+      birthTime,
+      birthLocation: { city: '', country: '', latitude: coords.latitude, longitude: coords.longitude },
+    }
+  }
+
+  /**
+   * Computa o mapa COMPLETO de uma carta arbitrária (ex.: um amigo do grupo).
+   * Read-only: SEM cache, SEM geolocalização do viewer e SEM publicar no Provider
+   * global (não sobrescreve a carta do usuário logado). Usa a localização de
+   * NASCIMENTO da pessoa para as casas do momento. Não escreve em lugar nenhum —
+   * seguro para ver a carta de outra pessoa sem tocar no doc dela.
+   */
+  static async computeChartNoCache(birthData: BirthData): Promise<LocalTransitData> {
+    const houseSystem = normalizeHouseSystem((globalThis as any).__userHouseSystem || 'whole-sign')
+    const lat = birthData.birthLocation.latitude
+    const lon = birthData.birthLocation.longitude
+    const realData = await RealAstrologyEngine.calculateRealAstrology(
+      birthData.birthDate,
+      birthData.birthTime,
+      lat,
+      lon,
+      undefined,
+      { houseSystem, natalLat: lat, natalLon: lon }
+    )
+    return this.processRealData(realData, birthData)
+  }
+
+  /**
    * Obtém dados astrológicos usando cálculos LOCAIS
    * Substitui completamente as APIs externas
    */

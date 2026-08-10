@@ -1890,6 +1890,22 @@ export default function GroupsScreen() {
                                 : tr('groups.label.noRecentUpdate', 'Sem atualizacao recente')}
                         </Text>
                       </View>
+                      {member.birthData?.datetime && member.birthData?.coordinates ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.member.viewChart', 'Ver mapa completo')}
+                          onPress={() => (navigation as any).navigate('MemberProfile', {
+                            member: { displayName: member.displayName, profilePhoto: member.profilePhoto, birthData: member.birthData },
+                          })}
+                        >
+                          <Ionicons name="planet-outline" size={14} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
+                            {tr('groups.member.viewChart', 'Ver mapa completo')}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
 
                     {hasStatus && entries.length > 0 ? (
@@ -3185,6 +3201,22 @@ const styles = StyleSheet.create({
   },
   memberHeaderInfo: {
     flex: 1,
+  },
+  memberChartBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,215,0,0.35)",
+    backgroundColor: "rgba(255,215,0,0.08)",
+  },
+  memberChartBtnText: {
+    color: "#FFD700",
+    fontSize: 11,
+    fontWeight: "700",
   },
   memberRowName: {
     color: "#FFFFFF",

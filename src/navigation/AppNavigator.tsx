@@ -353,6 +353,7 @@ function RootNavigator() {
       <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: t("nav.notifications"), headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="MemberProfile" component={require('../screens/groups/MemberProfileScreen').default} options={{ headerShown: true, title: 'Mapa do membro', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
     </RootStack.Navigator>
   )
 }

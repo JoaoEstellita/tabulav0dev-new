@@ -19,13 +19,19 @@ import {
 } from '../../utils/vedicInterpretation'
 import VedicChartSouth from '../../components/VedicChartSouth'
 
-type Props = { transitData: LocalTransitData | null; loading: boolean; natalAscDeg: number }
+type Props = {
+  transitData: LocalTransitData | null
+  loading: boolean
+  natalAscDeg: number
+  /** Carta de outra pessoa (amigo): pula o getDoc do viewer e usa este nascimento. */
+  chartMeta?: { skipSelfFetch?: boolean; birthDate?: string; birthTime?: string }
+}
 
 // Ordem de exibição dos grahas (só os védicos).
 const GRAHA_ORDER = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
 const GRAHA_SET = new Set(GRAHA_ORDER)
 
-export function VedicProfileContent({ transitData, loading, natalAscDeg }: Props) {
+export function VedicProfileContent({ transitData, loading, natalAscDeg, chartMeta }: Props) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const lang = language as VedicLang
@@ -37,12 +43,16 @@ export function VedicProfileContent({ transitData, loading, natalAscDeg }: Props
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
   useEffect(() => {
+    if (chartMeta?.skipSelfFetch) {
+      setBirthInfo({ date: chartMeta.birthDate, time: chartMeta.birthTime })
+      return
+    }
     if (!user?.uid) return
     getDoc(doc(db, 'users', user.uid)).then((snap) => {
       const data = snap.data()
       setBirthInfo({ date: data?.birthDate, time: data?.birthTime })
     }).catch(() => {})
-  }, [user?.uid])
+  }, [user?.uid, chartMeta?.skipSelfFetch, chartMeta?.birthDate, chartMeta?.birthTime])
 
   const ct = transitData?.currentTransits
   const natalPlanets: RealPlanetPosition[] = ct?.natalPlanets ?? []

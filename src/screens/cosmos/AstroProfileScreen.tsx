@@ -200,6 +200,12 @@ type ProfileContentProps = {
    * eles (measureLayout). Opcional: a tela standalone /perfil não usa.
    */
   registerAnchor?: (key: string, node: any) => void
+  /**
+   * Perfil de OUTRA pessoa (ex.: amigo no grupo): pula o getDoc do usuário logado
+   * e usa estes dados de nascimento. Sem isto = perfil próprio (busca o doc). O Asc
+   * cai no `transitData.currentTransits.natalAscendant`, que já é o da carta passada.
+   */
+  chartMeta?: { skipSelfFetch?: boolean; birthDate?: string; birthTime?: string }
 }
 
 /**
@@ -209,13 +215,19 @@ type ProfileContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function AstroProfileContent({ transitData, loading, registerAnchor }: ProfileContentProps) {
+export function AstroProfileContent({ transitData, loading, registerAnchor, chartMeta }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
   const [firestoreAscDeg, setFirestoreAscDeg] = useState<number | null>(null)
   const [birthInfo, setBirthInfo] = useState<{ date?: string; time?: string }>({})
   useEffect(() => {
+    // Carta de outra pessoa: não busca o doc do viewer; o Asc vem do transitData.
+    if (chartMeta?.skipSelfFetch) {
+      setBirthInfo({ date: chartMeta.birthDate, time: chartMeta.birthTime })
+      setFirestoreAscDeg(null)
+      return
+    }
     if (!user?.uid) return
     getDoc(doc(db, 'users', user.uid)).then(snap => {
       const data = snap.data()
@@ -223,7 +235,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor }: Pr
       if (typeof val === 'number') setFirestoreAscDeg(val)
       setBirthInfo({ date: data?.birthDate, time: data?.birthTime })
     }).catch(() => {})
-  }, [user?.uid])
+  }, [user?.uid, chartMeta?.skipSelfFetch, chartMeta?.birthDate, chartMeta?.birthTime])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en
