@@ -16,15 +16,9 @@ import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyServ
 import ErrorReportingService from './src/services/firebase/ErrorReportingService';
 import * as Sentry from '@sentry/react-native';
 
-// Crash reporting NATIVO — captura o FATAL EXCEPTION no boot (o alvo do
-// diagnóstico do crash em release na Play). Só ativa com DSN configurado
-// (EXPO_PUBLIC_SENTRY_DSN) e fora da web; sem isso é inerte (não afeta o PWA).
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN && Platform.OS !== 'web',
-  enableNativeCrashHandling: true,
-  tracesSampleRate: 0,
-});
+// Sentry.init agora vive em `src/instrument.ts`, importado na PRIMEIRA linha do
+// index.ts — arma o handler antes da avaliação dos módulos deste arquivo, para
+// capturar crashes de boot. Aqui só usamos `Sentry.wrap` (init já rodou).
 
 function AppContent() {
   const { showModal, setShowModal, loading } = useSubscriptionCheck();

@@ -96,6 +96,7 @@
       "policy": "fingerprint"
     },
     "updates": {
+      "enabled": false,
       "url": "https://u.expo.dev/e10113f7-a65c-4374-aa0e-c849346d7ed7",
       "fallbackToCacheTimeout": 0
     },

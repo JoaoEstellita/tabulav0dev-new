@@ -1,3 +1,6 @@
+// Sentry ANTES de tudo — arma o crash handler antes da avaliação dos módulos do
+// App, para capturar crashes de boot (firebase/providers) que hoje escapam.
+import './src/instrument';
 import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
 
