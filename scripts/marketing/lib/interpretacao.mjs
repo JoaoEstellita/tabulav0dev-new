@@ -72,11 +72,22 @@ const DIGNIDADES = {
  * quer dizer na mesma frase.
  */
 const SENTIDO_DA_DIGNIDADE = {
-  domicilio: 'em casa — é o signo que ele rege, onde age do jeito mais direto que sabe',
-  exaltacao: 'exaltado — é onde a tradição diz que ele funciona melhor do que em qualquer outro lugar',
-  exilio: 'em exílio, no signo oposto ao que rege — o que ele faz de olhos fechados aqui custa esforço',
-  queda: 'em queda — o signo onde a tradição diz que ele tem menos força para agir do jeito de sempre',
+  domicilio: (p) => `chega em casa: é o signo que ${p} rege, e aqui age do jeito mais direto que sabe`,
+  exaltacao: (p) => `chega ${p === 'ela' ? 'exaltada' : 'exaltado'}: a tradição diz que é aqui que ${p} funciona melhor`,
+  exilio: (p) => `chega no signo oposto ao que ${p} rege. O que faz de olhos fechados, aqui custa esforço`,
+  queda: (p) => `chega em queda: a tradição diz que é aqui que ${p} tem menos força para agir como de costume`,
 }
+
+/** Como a dignidade aparece na peça — com acento, que é como se escreve. */
+const ROTULO_DA_DIGNIDADE = {
+  domicilio: 'domicílio',
+  exaltacao: 'exaltação',
+  exilio: 'exílio',
+  queda: 'queda',
+}
+
+/** Só a Lua é feminina entre os sete tradicionais. */
+const FEMININO = new Set(['Moon'])
 
 /**
  * Em que dignidade o corpo está neste signo.
@@ -89,7 +100,15 @@ export function dignidade(corpo, signo) {
   const t = DIGNIDADES[corpo]
   if (!t) return null
   for (const [nome, signos] of Object.entries(t)) {
-    if (signos.includes(signo)) return { tipo: nome, texto: SENTIDO_DA_DIGNIDADE[nome] }
+    if (!signos.includes(signo)) continue
+    // "A Lua chega em queda — o signo onde ELE tem menos força" era o que saía:
+    // o texto era uma string fixa no masculino, e a Lua é a única feminina.
+    return {
+      tipo: nome,
+      // o nome interno vaza para a peça no rótulo do slide, e saía "DOMICILIO"
+      rotulo: ROTULO_DA_DIGNIDADE[nome],
+      texto: SENTIDO_DA_DIGNIDADE[nome](FEMININO.has(corpo) ? 'ela' : 'ele'),
+    }
   }
   return null
 }
@@ -132,7 +151,8 @@ export async function carregarCatalogos() {
  */
 export function textoEmSigno(catalogos, corpo, signo) {
   const chave = `natal:${CHAVE_CORPO[corpo]}_in_${CHAVE_SIGNO[signo]}`
-  return catalogos.emSigno[chave] || null
+  const texto = catalogos.emSigno[chave]
+  return texto ? semTravessao(texto) : null
 }
 
 /**
@@ -143,7 +163,8 @@ export function textoEmSigno(catalogos, corpo, signo) {
  */
 export function textoEmCasa(catalogos, corpo, casa) {
   const chave = `natal:${CHAVE_CORPO[corpo]}|house|${casa}`
-  return catalogos.emCasa[chave] || null
+  const texto = catalogos.emCasa[chave]
+  return texto ? semTravessao(texto) : null
 }
 
 /**
@@ -155,5 +176,22 @@ export function textoEmCasa(catalogos, corpo, casa) {
 export function primeirasFrases(texto, quantas = 2) {
   if (!texto) return ''
   const frases = String(texto).match(/[^.!?]+[.!?]+/g)
-  return frases ? frases.slice(0, quantas).join('').trim() : texto
+  return semTravessao(frases ? frases.slice(0, quantas).join('').trim() : texto)
+}
+
+/**
+ * Tira o travessão do texto curado.
+ *
+ * O João não usa travessão e pediu que as peças não usem. Os 1.189 textos do
+ * catálogo usam, e são dele, aprovados há meses e vivos dentro do app — mexer
+ * neles para atender ao formato de um post seria o rabo abanando o cachorro.
+ *
+ * Então a limpeza é na fronteira: o catálogo continua como está, e o que entra
+ * na peça sai sem travessão. Vírgula, porque no catálogo ele quase sempre marca
+ * uma pausa e não uma explicação.
+ */
+export function semTravessao(texto) {
+  return String(texto || '')
+    .replace(/\s+—\s+/g, ', ')
+    .replace(/,\s*,/g, ',')
 }

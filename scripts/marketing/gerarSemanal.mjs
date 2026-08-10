@@ -32,7 +32,8 @@ import process from 'node:process'
 
 import { eventosDaSemana, ORDEM_SIGNOS, GLIFO } from './lib/mensal.mjs'
 import { semanaPorSigno, capaDaSemana } from './lib/vozSemana.mjs'
-import { montarSlide } from './lib/templateCarrossel.mjs'
+import { montarFoto } from './lib/templateFoto.mjs'
+import { svgDoSigno } from './lib/simbolos.mjs'
 import { carregarCatalogos } from './lib/interpretacao.mjs'
 
 const execFileAsync = promisify(execFile)
@@ -112,13 +113,21 @@ async function principal() {
   const capa = capaDaSemana(semana.eventos, semana.inicio, semana.fim)
   const iso = semana.inicio.toISOString().slice(0, 10)
 
+  /** O assunto da semana, em três palavras — o mesmo nos doze slides. */
+  const evento = [...semana.eventos].sort((a, b) => (b.peso || 0) - (a.peso || 0))[0]
+  const assuntoDaSemana =
+    evento.tipo === 'eclipse' ? `Eclipse ${evento.luminar === 'solar' ? 'solar' : 'lunar'} em ${evento.signo}`
+      : evento.tipo === 'ingresso' ? `${evento.corpoPt} em ${evento.signo}`
+        : evento.tipo === 'fase' ? `${evento.fase} em ${evento.signo}`
+          : `O céu em ${evento.signo}`
+
   const slides = [
     {
       tipo: 'capa',
       olho: 'A semana no céu',
       titulo: capa.periodo.replace(' a ', '\na '),
       texto: capa.texto,
-      rodape: 'efeméride calculada · casas inteiras',
+      rodape: capa.periodo,
     },
   ]
 
@@ -127,22 +136,20 @@ async function principal() {
     if (!leitura) continue
 
     slides.push({
-      tipo: 'signo',
-      olho: `${GLIFO[signo]}  ${signo}`,
-      titulo: signo,
+      /**
+       * "Ascendente Áries", não "Áries".
+       *
+       * O João pediu: "tem que ter um pormenor para as pessoas pegarem". Com o
+       * nome do signo sozinho, quem lê entende que é o signo solar dela — e a
+       * leitura inteira é pelo ASCENDENTE, que é outra coisa e é o que dá valor
+       * à peça.
+       */
+      olho: `casa ${leitura.casa}`,
+      titulo: `Ascendente
+${signo}`,
+      simbolo: svgDoSigno(signo),
       texto: leitura.texto,
-      // A casa exata em bloco próprio: é o número que a pessoa veio procurar, e
-      // diluído no parágrafo ele passa despercebido.
-      destaque: {
-        // A dignidade dá o tamanho da notícia: Marte em Câncer está em QUEDA, e
-        // isso não é a mesma coisa que Marte em Escorpião. Tradição clássica,
-        // tabela fixa, nada de opinião.
-        rotulo: leitura.dignidade
-          ? `Ascendente em ${signo} · ${leitura.dignidade.tipo}`
-          : `Ascendente em ${signo} · casas inteiras`,
-        texto: leitura.extras.length ? leitura.extras.join('\n') : 'Só este evento toca o seu mapa esta semana.',
-      },
-      rodape: `${capa.periodo} · casa ${leitura.casa}`,
+      rodape: capa.periodo,
     })
   }
 
@@ -156,7 +163,13 @@ async function principal() {
 
   for (let i = 0; i < slides.length; i++) {
     const nome = `${String(i + 1).padStart(2, '0')}.png`
-    await renderizar(chrome, montarSlide({ ...slides[i], indice: i, total: slides.length }, semente), path.join(pasta, nome))
+    const html = montarFoto({
+      ...slides[i],
+      formato: 'feed',
+      signo: evento.signo,   // a foto é a do evento, a mesma nos treze
+      foco: i,               // e o enquadramento muda a cada slide
+    })
+    await renderizar(chrome, html, path.join(pasta, nome))
     console.log(`  ${i + 1}/${slides.length}  ${slides[i].titulo.replace('\n', ' ')}`)
   }
 
@@ -172,8 +185,10 @@ async function principal() {
       return l ? `${s}: casa ${l.casa}` : null
     }).filter(Boolean),
     '',
-    'A casa sai da conta de casas inteiras, a partir do ascendente. Se você não',
-    'sabe o seu, dá para calcular de graça pelo WhatsApp — link na bio.',
+    'Salva esse post para consultar durante a semana.',
+    '',
+    'Não sabe seu ascendente? Comenta a hora e a cidade em que você nasceu',
+    'que eu calculo, ou faz de graça no link da bio.',
   ].join('\n')
   await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 

@@ -7,12 +7,22 @@ import { mapaDoCeu } from '../ceu.mjs'
 import { eventosDoDia } from '../eventos.mjs'
 import { falaDoReel } from '../vozReel.mjs'
 import { tempoNoSigno, ritmo, percursoDoDia, estacaoProxima } from '../fatos.mjs'
+import { carregarCatalogos, dignidade } from '../interpretacao.mjs'
 
 const FRONTEND = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const { PLANET_ASPECT_ORBS: ORBES } = await lerLiterais(
   path.join(FRONTEND, 'src/astro/aspect-config.ts'), ['PLANET_ASPECT_ORBS'])
 
 const meioDia = (d) => new Date(`${d}T12:00:00Z`)
+
+/**
+ * Os catálogos entram nos testes.
+ *
+ * Sem eles `falaDoReel` cai no fato de efeméride e a leitura curada — que é onde
+ * mora a dignidade — nunca aparece. Os testes de linguagem passariam sem
+ * verificar nada, que é pior do que não existir.
+ */
+const CATALOGOS = await carregarCatalogos()
 
 /** Trinta dias seguidos de fala, que é o que a conta publicaria num mês. */
 function falasDe(iso, quantos = 30) {
@@ -25,7 +35,11 @@ function falasDe(iso, quantos = 30) {
     const principal = eventos[0]
     if (!principal) continue
     const proximo = eventos.find((e) => e !== principal && e.quando > data && e.tipo !== principal.tipo)
-    saida.push({ data, evento: principal, fala: falaDoReel(principal, data, { proximo }) })
+    saida.push({
+      data,
+      evento: principal,
+      fala: falaDoReel(principal, data, { proximo, catalogos: CATALOGOS }),
+    })
   }
   return saida
 }
@@ -75,6 +89,94 @@ describe('a voz não volta ao que era', () => {
     for (const { data, fala } of falasDe('2026-08-08')) {
       const texto = [...fala.blocos, fala.post].join(' ')
       expect(INGLES.test(texto), `${data.toISOString().slice(0, 10)}: ${texto.slice(0, 90)}`).toBe(false)
+    }
+  })
+
+  /**
+   * A varredura que faltava.
+   *
+   * O João leu "é aí que isso encosta" e disse o que era: ninguém fala assim.
+   * Frase por frase não dá para pegar — o defeito só aparece lendo o conjunto,
+   * e a lista abaixo é o que a leitura das 83 frases do gerador encontrou.
+   */
+  it('não volta a linguagem torta', () => {
+    const TORTO = [
+      /isso encosta/i,
+      /vira detalhe e utilidade/i,
+      // adjetivo depois de sujeito que muda de gênero: "a paciência criterioso"
+      /(a|A) (paciência|vontade|imaginação)[^.]{0,30}(criterioso|preciso|direto|lento)/,
+    ]
+    for (const { data, fala } of falasDe('2026-08-08', 40)) {
+      const texto = [...fala.blocos, fala.post].join(' ')
+      for (const t of TORTO) {
+        expect(t.test(texto), `${data.toISOString().slice(0, 10)} — ${t}`).toBe(false)
+      }
+    }
+  })
+
+  /**
+   * "A Lua chega em queda — o signo onde ELE tem menos força" era o que saía: o
+   * texto da dignidade era fixo no masculino, e a Lua é a única feminina.
+   *
+   * A primeira versão deste teste varria 60 dias de fala procurando a frase — e
+   * passava sem verificar nada, porque a Lua raramente é a protagonista COM
+   * dignidade numa janela dessas. Plantei o bug de volta para conferir e o teste
+   * não acusou. Agora a tabela inteira é percorrida: 7 corpos × 4 dignidades.
+   */
+  it('a dignidade concorda com o corpo, nas 28 combinações', () => {
+    const TABELA = {
+      Sun: ['Leão', 'Áries', 'Aquário', 'Libra'],
+      Moon: ['Câncer', 'Touro', 'Capricórnio', 'Escorpião'],
+      Mercury: ['Gêmeos', 'Virgem', 'Sagitário', 'Peixes'],
+      Venus: ['Touro', 'Peixes', 'Áries', 'Virgem'],
+      Mars: ['Áries', 'Capricórnio', 'Libra', 'Câncer'],
+      Jupiter: ['Sagitário', 'Câncer', 'Gêmeos', 'Capricórnio'],
+      Saturn: ['Capricórnio', 'Libra', 'Câncer', 'Áries'],
+    }
+
+    for (const [corpo, signos] of Object.entries(TABELA)) {
+      for (const signo of signos) {
+        const d = dignidade(corpo, signo)
+        expect(d, `${corpo} em ${signo}`).not.toBeNull()
+
+        const esperado = corpo === 'Moon' ? 'ela' : 'ele'
+        const errado = corpo === 'Moon' ? 'ele' : 'ela'
+        expect(d.texto.includes(errado), `${corpo} em ${signo}: "${d.texto}"`).toBe(false)
+
+        // exaltação flexiona adjetivo em vez de pronome
+        if (d.tipo === 'exaltacao') {
+          expect(d.texto).toContain(corpo === 'Moon' ? 'exaltada' : 'exaltado')
+        } else {
+          expect(d.texto, `${corpo} em ${signo}`).toContain(esperado)
+        }
+      }
+    }
+  })
+
+  // Lista de signos sem "ou" antes do último lê como enumeração de formulário.
+  it('a lista de signos termina com "ou"', () => {
+    for (const { fala } of falasDe('2026-08-08', 40)) {
+      const m = fala.post.match(/ascendente entre \d+° e \d+° de ([^,]+, [^.]+)\./)
+      if (!m) continue
+      expect(m[1], m[1]).toMatch(/ ou /)
+    }
+  })
+
+  /**
+   * Sem travessão, e sem frase sobre o método.
+   *
+   * Duas coisas que o João cortou lendo as peças. O travessão porque ele não usa
+   * e a peça é a voz dele; as frases de método ("a casa é calculada, não é
+   * chute", "efeméride calculada, não copiada") porque defendem o cálculo contra
+   * uma acusação que ninguém fez, e plantam a dúvida em quem não tinha.
+   */
+  it('nada de travessão nem de defesa do método', () => {
+    const PROIBIDO = [/—/, /não é chute/i, /não copiada/i, /casas inteiras/i]
+    for (const { data, fala } of falasDe('2026-08-08', 40)) {
+      const texto = [...fala.blocos, fala.post].join(' ')
+      for (const p of PROIBIDO) {
+        expect(p.test(texto), `${data.toISOString().slice(0, 10)} — ${p}`).toBe(false)
+      }
     }
   })
 

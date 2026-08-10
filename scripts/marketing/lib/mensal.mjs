@@ -21,6 +21,7 @@
  */
 import { SIGNOS_INFO } from './ceu.mjs'
 import {
+  pesoBase,
   eclipsesProximos,
   ingressosProximos,
   estacoesProximas,
@@ -132,12 +133,24 @@ export function eventosDaSemana(inicio) {
     brutos.filter((e) => e.tipo === 'eclipse').map((e) => e.quando.toISOString().slice(0, 10))
   )
 
+  /**
+   * O peso precisa vir junto, e por isso esta linha existe.
+   *
+   * Sem ele, `semanaPorSigno` ordenava por `(b.peso||0) - (a.peso||0)`, dava
+   * empate em zero e caía na ordem cronológica. Na semana de 10/08 isso elegeu
+   * o ingresso de Marte (dia 11) como assunto, em vez do eclipse (dia 12) — e o
+   * slide saiu falando de Marte no corpo e do eclipse no destaque, que foi o que
+   * o João viu: "fala do eclipse e o texto fala de marte, não faz sentido".
+   *
+   * `eventosDoDia` sempre aplicou `pesoBase`; a janela semanal, não.
+   */
   return {
     inicio: segunda,
     fim,
     eventos: brutos
       .filter((e) => !(e.tipo === 'fase' && diasComEclipse.has(e.quando.toISOString().slice(0, 10))))
-      .sort((a, b) => a.quando - b.quando),
+      .map((e) => ({ ...e, peso: e.peso ?? pesoBase(e) }))
+      .sort((a, b) => (b.peso - a.peso) || (a.quando - b.quando)),
   }
 }
 

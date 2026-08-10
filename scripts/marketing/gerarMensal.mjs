@@ -116,7 +116,7 @@ async function principal() {
         totalEclipses > 0
           ? `${totalEclipses === 1 ? 'Um eclipse' : 'Dois eclipses'}, ${eventos.length} eventos, doze eixos. O seu está aqui dentro.`
           : `${eventos.length} eventos no mês, doze eixos. O seu está aqui dentro.`,
-      rodape: `${rotuloMes} · efeméride calculada, não copiada`,
+      rodape: rotuloMes,
     },
   ]
 
@@ -141,7 +141,7 @@ async function principal() {
       // A casa exata sai em bloco próprio: é o número que a referência não tem,
       // e diluído no parágrafo ele passa despercebido.
       destaque: asc
-        ? { rotulo: `Ascendente em ${signo} · casas inteiras`, texto: asc.texto }
+        ? { rotulo: `Ascendente em ${signo}`, texto: asc.texto }
         : null,
       rodape: datas.length
         ? datas.map((d) => `${d.quando} ${d.titulo}`).join('  ·  ')

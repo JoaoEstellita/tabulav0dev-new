@@ -24,13 +24,13 @@ import { textoEmCasa, primeirasFrases, dignidade } from './interpretacao.mjs'
  * assim mesmo; quem não sabe consegue acompanhar, que é o ponto.
  */
 export const CASA = {
-  1: 'você mesmo — o corpo, o jeito de chegar nos lugares',
+  1: 'você mesmo: o corpo, o jeito de chegar nos lugares',
   2: 'o dinheiro e o que você valoriza o bastante para guardar',
   3: 'as conversas do dia a dia, os irmãos, o perto',
   4: 'a casa, a família e o que te dá base',
   5: 'o que você cria, o que dá prazer, os filhos, o palco',
   6: 'a rotina, o trabalho de todo dia, o corpo funcionando',
-  7: 'o outro — as relações a dois, os acordos',
+  7: 'o outro: as relações a dois, os acordos',
   8: 'o que se divide com alguém: dinheiro junto, intimidade, o que termina',
   9: 'o estudo, a viagem, o que amplia a vista',
   10: 'a carreira e o que os outros veem de você',
@@ -95,21 +95,24 @@ export function semanaPorSigno(eventos, ascendente, catalogos = null) {
     : ''
 
   const texto = curado
-    ? `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)} — ` +
-      `com ascendente em ${ascendente}, na sua casa ${casa}.
+    ? `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}, ` +
+      `na sua casa ${casa}.
 
 ${curado}`
     : `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}. ` +
-      `Com ascendente em ${ascendente}, isso cai na sua casa ${casa} — ${CASA[casa]}.`
+      `Com ascendente em ${ascendente}, isso cai na sua casa ${casa}: ${CASA[casa]}.`
 
-  // Os demais eventos viram uma linha cada: quem lê está procurando a própria
-  // casa, e três parágrafos afastam do que veio ver.
-  const extras = porPeso.slice(1, 3).map((e) => {
-    const c = casaPorAscendente(e.signo, ascendente)
-    if (!c) return null
-    const linha = `${oQueE(e)} ${quando(e.quando)} → casa ${c}`
-    return linha[0].toUpperCase() + linha.slice(1)
-  }).filter(Boolean)
+  /**
+   * UMA PEÇA, UM EVENTO.
+   *
+   * Os outros eventos da semana saíam aqui como linhas soltas, e o resultado foi
+   * o slide que o João leu: o corpo falava de Marte na casa 4 e o destaque, do
+   * eclipse na casa 5. Dois assuntos no mesmo quadro não é resumo — é confusão.
+   *
+   * O que ocupa o destaque agora é a mesma coisa que o corpo: a casa que recebe
+   * o evento, dita em uma linha, para quem só bate o olho.
+   */
+  const extras = []
 
   const dig = corpoDoEvento ? dignidade(corpoDoEvento, principal.signo) : null
 
@@ -135,9 +138,20 @@ export function capaDaSemana(eventos, inicio, fim) {
     ? `${eclipses === 1 ? 'Tem eclipse esta semana' : 'Dois eclipses esta semana'}.`
     : `${eventos.length} ${eventos.length === 1 ? 'evento' : 'eventos'} no céu esta semana.`
 
+  /**
+   * Nada sobre o método.
+   *
+   * A capa dizia "a casa é calculada, não é chute", e o João leu e disse o que
+   * era: "esse tipo de frase mais confunde do que instrui". Defesa
+   * metodológica só faz sentido para quem já desconfia de astrologia — quem
+   * abriu o post não perguntou sobre chute, e a frase planta uma dúvida que não
+   * existia. Mesmo defeito do "o céu é de todos, a casa é de cada um".
+   *
+   * O que a capa tem de fazer é dizer o que a peça entrega.
+   */
   return {
     periodo,
-    texto: `${abertura} Arrasta e acha o seu ascendente — a casa é calculada, não é chute.`,
+    texto: `${abertura} Cada ascendente recebe numa parte diferente da vida. Arrasta e acha a sua.`,
   }
 }
 

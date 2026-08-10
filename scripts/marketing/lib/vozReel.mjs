@@ -53,30 +53,30 @@ const Art = (nome) => (nome === 'Sol' ? 'O Sol' : nome === 'Lua' ? 'A Lua' : nom
  * a frase nasce do encontro — em linguagem de conversa, não de manual.
  */
 const ASSUNTO = {
-  Sun: 'o que a gente quer que apareça',
+  Sun: 'a vontade de aparecer',
   Moon: 'o humor',
   Mercury: 'o jeito de falar',
-  Venus: 'o que agrada e o que atrai',
-  Mars: 'a vontade de ir atrás',
+  Venus: 'o gosto',
+  Mars: 'a vontade de agir',
   Jupiter: 'a vontade de mais',
-  Saturn: 'a paciência com o que não anda',
+  Saturn: 'a paciência',
   Uranus: 'a vontade de mudar tudo',
-  Neptune: 'o que fica meio embaçado',
-  Pluto: 'o que a gente não aguenta mais manter',
+  Neptune: 'a imaginação',
+  Pluto: 'o que já não dá para segurar',
 }
 
 const JEITO = {
-  'Áries': 'fica com pressa',
-  'Touro': 'desacelera e quer ficar',
-  'Gêmeos': 'se espalha e quer nomear tudo',
+  'Áries': 'ganha pressa',
+  'Touro': 'desacelera e quer garantia',
+  'Gêmeos': 'se divide em várias direções',
   'Câncer': 'recua e procura abrigo',
   'Leão': 'sobe o tom e quer plateia',
-  'Virgem': 'vira detalhe e utilidade',
-  'Libra': 'passa a esperar reciprocidade',
-  'Escorpião': 'não se contenta com a superfície',
+  'Virgem': 'vai para o detalhe',
+  'Libra': 'passa a depender do acordo',
+  'Escorpião': 'não se contenta com pouco',
   'Sagitário': 'abre o horizonte',
-  'Capricórnio': 'endurece e cobra resultado',
-  'Aquário': 'se afasta para ver o todo',
+  'Capricórnio': 'cobra resultado',
+  'Aquário': 'toma distância',
   'Peixes': 'perde o contorno',
 }
 
@@ -107,7 +107,7 @@ function leituraDoEvento(evento, catalogos) {
   // "Marte entra em Escorpião" — mesma notícia, tamanhos diferentes.
   const dig = dignidade(corpo, evento.signo)
   const nomePt = evento.corpoPt || NOMES_PT[corpo] || corpo
-  if (dig) partes.push(`${Art(nomePt)} chega ${dig.texto}.`)
+  if (dig) partes.push(`${Art(nomePt)} ${dig.texto}.`)
 
   const texto = textoEmSigno(catalogos, corpo, evento.signo)
   if (texto) partes.push(primeirasFrases(texto, dig ? 1 : 2))
@@ -127,7 +127,7 @@ function fatoMarcante(evento, data) {
   const tempo = tempoNoSigno(corpo, data)
   if (tempo?.esticado) {
     return `${Art(nomePt)} ficou ${tempo.texto} no mesmo signo. ` +
-      `O normal são ${tempo.media} — ficou mais porque andou para trás no meio do caminho.`
+      `O normal são ${tempo.media}. Ficou mais porque andou para trás no meio do caminho.`
   }
 
   // 2. Está muito fora do passo de sempre?
@@ -150,18 +150,18 @@ function fatoMarcante(evento, data) {
   const caminho = percursoDoDia('Moon', data)
   if (lua.perto && lua.iluminacao > 80) {
     return `A Lua está no ponto mais perto da Terra no mês, a ${lua.km.toLocaleString('pt-BR')} km. ` +
-      `É o que costumam chamar de superlua — ela aparece maior mesmo.`
+      `É o que costumam chamar de superlua, e ela aparece maior mesmo.`
   }
   if (caminho && caminho.trocaDeSigno) {
     return `Hoje a Lua anda ${Math.round(caminho.graus)}° e troca de signo: ` +
       `começa o dia em ${caminho.de.signo} e termina em ${caminho.ate.signo}. ` +
-      `Ela é o corpo mais rápido do céu — passa dois dias e meio em cada signo.`
+      `Ela é o corpo mais rápido do céu, e passa dois dias e meio em cada signo.`
   }
   if (lua.iluminacao <= 2) {
     return `A Lua está invisível hoje: 0% iluminada, no mesmo lado do céu que o Sol. ` +
       `Ela reaparece fininha daqui a dois ou três dias, no fim da tarde.`
   }
-  return `Hoje a Lua está ${lua.iluminacao}% iluminada e anda ${Math.round(caminho?.graus || 13)}° — ` +
+  return `Hoje a Lua está ${lua.iluminacao}% iluminada e anda ${Math.round(caminho?.graus || 13)}°, ` +
     `mais que qualquer outro corpo do céu num dia.`
 }
 
@@ -174,13 +174,13 @@ function gancho(proximo, data) {
   const oQue = proximo.tipo === 'eclipse'
     ? `eclipse ${proximo.luminar === 'solar' ? 'do Sol' : 'da Lua'}`
     : proximo.tipo === 'ingresso'
-      ? `${proximo.corpoPt} muda de signo`
+      ? `${art(proximo.corpoPt)} muda de signo`
       : proximo.tipo === 'fase'
         ? proximo.fase
         : proximo.tipo === 'retrogrado'
-          ? `${proximo.corpoPt} começa a andar para trás`
+          ? `${art(proximo.corpoPt)} começa a andar para trás`
           : proximo.tipo === 'direto'
-            ? `${proximo.corpoPt} volta a andar para a frente`
+            ? `${art(proximo.corpoPt)} volta a andar para a frente`
             : null
   if (!oQue) return ''
 
@@ -219,10 +219,16 @@ function abertura(evento, data) {
 /** O segundo tempo: o contraste concreto. */
 function contraste(evento, data) {
   if (evento.tipo === 'ingresso') {
+    /**
+     * "O jeito de falar vira detalhe e utilidade. Vinha de Leão." — foi o que
+     * saía, e não é português que alguém use. Os predicados agora são verbos,
+     * não adjetivos: adjetivo teria de concordar com o sujeito, que muda de
+     * gênero conforme o planeta, e era daí que vinha a estranheza.
+     */
     const assunto = ASSUNTO[evento.corpo] || 'o assunto dele'
     const jeito = JEITO[evento.signo] || 'muda de tom'
-    const antes = evento.signoAnterior ? ` Vinha de ${evento.signoAnterior}.` : ''
-    return `${assunto[0].toUpperCase()}${assunto.slice(1)} ${jeito}.${antes}`
+    const antes = evento.signoAnterior ? `Sai de ${evento.signoAnterior}. ` : ''
+    return `${antes}Em ${evento.signo}, ${assunto} ${jeito}.`
   }
 
   if (evento.tipo === 'eclipse') {
@@ -230,7 +236,7 @@ function contraste(evento, data) {
       ? evento.luminar === 'solar'
         ? `Dá para ver do Brasil: ${evento.obscuracaoBR}% do Sol coberto.`
         : `Dá para ver do Brasil, com a Lua bem alta.`
-      : `Do Brasil não dá para ver nada — a sombra passa longe daqui.`
+      : `Do Brasil não dá para ver nada: a sombra passa longe daqui.`
     return `Acontece a ${evento.grau}° de ${evento.signo}. ${onde}`
   }
 
@@ -292,10 +298,16 @@ function montarPost(evento, partes, data) {
 
   const recebe = quemRecebe(evento.signo, evento.grau)
   if (recebe && (evento.tipo === 'eclipse' || evento.tipo === 'fase' || evento.tipo === 'ingresso')) {
+    // "é aí que isso encosta" era o que estava aqui, e o João leu e disse o que
+    // era: ninguém fala assim. A lista também precisava do "ou" antes do
+    // último — sem ele parece enumeração de formulário.
+    const lista = recebe.signos.length > 1
+      ? `${recebe.signos.slice(0, -1).join(', ')} ou ${recebe.signos[recebe.signos.length - 1]}`
+      : recebe.signos[0]
     linhas.push(
       '',
-      `Quem sente mais: se você tem Sol, Lua ou ascendente entre ${recebe.de}° e ${recebe.ate}° ` +
-      `de ${recebe.signos.join(', ')}, é aí que isso encosta. Fora dessa faixa, passa longe.`
+      `Se você tem Sol, Lua ou ascendente entre ${recebe.de}° e ${recebe.ate}° de ${lista}, ` +
+      `é aí que ele pega no seu mapa. Fora dessa faixa, passa de longe.`
     )
   }
 
@@ -305,6 +317,19 @@ function montarPost(evento, partes, data) {
     for (const c of casas) linhas.push(`${c.ascendente} → casa ${c.casa}`)
   }
 
-  linhas.push('', 'Seu mapa calculado de graça, pelo WhatsApp — link na bio.')
+  /**
+   * O fecho pede o que o algoritmo premia.
+   *
+   * Em 2026 salvamento e conversa no direct pesam muito acima de curtida, e
+   * pedir explicitamente aumenta as duas coisas de forma relevante. "Link na
+   * bio" sozinho não pedia nada — e o comentário do ascendente não é isca de
+   * engajamento: quem comenta a hora e a cidade recebe a casa calculada de volta.
+   */
+  linhas.push(
+    '',
+    'Salva esse post para voltar quando o dia chegar.',
+    'Não sabe seu ascendente? Comenta a hora e a cidade em que você nasceu que ' +
+    'eu digo em que casa isso cai, ou calcula de graça no link da bio.'
+  )
   return linhas.join('\n')
 }

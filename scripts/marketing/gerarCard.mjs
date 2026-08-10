@@ -42,6 +42,12 @@ import {
 // mesma funcao que o calendario usa: se os ids divergirem, a pauta salva
 // ontem aponta para um assunto que o gerador nao encontra
 import { idDoAssunto as chaveDeEvento, opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
+// A mesma voz do vídeo: as duas peças do dia falam do mesmo assunto, e o card
+// rodando depois sobrescrevia a legenda do vídeo com a voz antiga.
+import { falaDoReel } from './lib/vozReel.mjs'
+// alias: o gerarCard já tem uma `carregarCatalogos` própria, dos títulos e
+// aforismos — o nome sem apelido colidia e o módulo nem carregava
+import { carregarCatalogos as carregarInterpretacao } from './lib/interpretacao.mjs'
 import { montarCard } from './lib/template.mjs'
 import { montarCarta } from './lib/templateCarta.mjs'
 
@@ -483,8 +489,19 @@ async function gerarUmDia(chrome, cat, iso, raizSaida, historico, assunto = '') 
     1350
   )
 
+  /**
+   * A legenda vem da voz nova quando há evento.
+   *
+   * O card e o vídeo saem no mesmo dia, sobre o mesmo assunto, e gravam o mesmo
+   * `legenda.txt`. Como o card roda depois no workflow, a legenda que sobrava no
+   * Estúdio era a dele — na voz antiga, com "os quatro signos que recebem ângulo
+   * exato" e o bordão que saiu de todas as outras peças.
+   */
   const legenda = principal
-    ? montarLegendaDaVoz(principal, secundarios)
+    ? falaDoReel(principal, data, {
+        proximo: eventos.find((e) => e !== principal && e.quando > data && e.tipo !== principal.tipo),
+        catalogos: await carregarInterpretacao(),
+      }).post
     : tema
       ? montarLegendaEducativa(tema, paragrafoDeHonestidade(tema), data)
       : montarLegenda(encontro)

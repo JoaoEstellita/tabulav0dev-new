@@ -618,7 +618,7 @@ export function luaForaDeCurso(data) {
  * Peso base por classe de evento. Eclipse acima de tudo: é o único que a
  * imprensa não astrológica também noticia.
  */
-function pesoBase(ev) {
+export function pesoBase(ev) {
   switch (ev.tipo) {
     case 'eclipse':
       if (ev.especie === 'penumbral') return 95
