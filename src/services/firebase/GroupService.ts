@@ -554,6 +554,7 @@ class GroupService {
                   sharedLifeAreas: member.sharedLifeAreas,
                   lifeAreas,
                   areaTransits: member.areaTransits || undefined,
+                  birthData: member.birthData || undefined,
                   subscriptionActive: memberAdmin ? true : member.subscriptionActive !== false,
                   subscriptionStatus: member.subscriptionStatus || null,
                   isAdmin: memberAdmin,
