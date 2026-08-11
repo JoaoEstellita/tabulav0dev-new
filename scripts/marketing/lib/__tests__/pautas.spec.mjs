@@ -85,23 +85,32 @@ describe('opções de um dia', () => {
   })
 
   /**
-   * Uma peça por dia, e ela é o vídeo.
+   * O que o assunto comporta, e nada além.
    *
-   * O João decidiu depois de olhar o material: "quero realizar apenas reels e
-   * vídeos, e stories". O mesmo arquivo serve de Reel e de Story — 9:16 é o
-   * formato dos dois. Card estático e carrossel continuam existindo por
-   * comando, fora da produção diária.
+   * Devolvia `['reel']` para tudo, da fase do vídeo diário. Como o Estúdio monta
+   * as caixinhas a partir deste array, o João abriu a editorial e viu uma opção
+   * só — e era o formato que tinha saído da produção: "no editorial não tem mais
+   * os carrosséis?".
+   *
+   * O vídeo não aparece porque saiu do automático enquanto o template é refeito.
    */
-  it('todo assunto vira vídeo, e só vídeo', () => {
+  it('nenhum assunto oferece vídeo enquanto ele está fora do automático', () => {
     for (const o of opcoesDoDia(meioDia('2026-08-12'), DEPS)) {
-      expect(o.formatos, o.titulo).toEqual(['reel'])
+      expect(o.formatos, o.titulo).not.toContain('reel')
+      expect(o.formatos.length, o.titulo).toBeGreaterThan(0)
     }
   })
 
-  it('o formato não depende do tipo do assunto', () => {
-    expect(formatosDoAssunto({ tipo: 'educativo' })).toEqual(['reel'])
-    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['reel'])
-    expect(formatosDoAssunto({ tipo: 'eclipse' })).toEqual(['reel'])
+  it('só o eclipse comporta carrossel', () => {
+    expect(formatosDoAssunto({ tipo: 'eclipse' })).toEqual(['post', 'carrossel', 'story'])
+    expect(formatosDoAssunto({ tipo: 'fase' })).toEqual(['post', 'story'])
+    expect(formatosDoAssunto({ tipo: 'ingresso', corpo: 'Mars' })).toEqual(['post', 'story'])
+
+    // treze slides sobre a Lua fora de curso seria carrossel por carrossel
+    expect(formatosDoAssunto({ tipo: 'educativo' })).toEqual(['post'])
+    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['post'])
+    // Plutão muda de signo uma vez por geração, e ninguém reconhece o nome
+    expect(formatosDoAssunto({ tipo: 'ingresso', corpo: 'Pluto' })).toEqual(['post'])
   })
 
   it('acharOpcao devolve null quando o id não existe mais', () => {

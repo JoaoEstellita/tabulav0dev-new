@@ -145,6 +145,11 @@ jobs:
           ITENS=$(echo "$LIDO" | sed -n '1p')
           ASSUNTO=$(echo "$LIDO" | sed -n '2p')
 
+          # Os formatos marcados chegam ao gerador: desmarcar "carrossel" no
+          # Estúdio tem de significar carrossel nenhum. Vazio = o gerador decide
+          # pelo que o evento comporta.
+          echo "formatos=$ITENS" >> "$GITHUB_OUTPUT"
+
           # Sem assunto marcado, o gerador escolhe o de maior peso sozinho — a
           # automação NUNCA para porque uma pauta faltou.
           if [ -z "$ASSUNTO" ]; then
@@ -215,10 +220,12 @@ jobs:
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
+          FORMATOS: ${{ steps.pauta.outputs.formatos }}
         run: |
           set -o pipefail
           ARGS="--upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
+          [ -n "$FORMATOS" ] && ARGS="$ARGS --formatos=$FORMATOS"
           node scripts/marketing/gerarEvento.mjs $ARGS 2>&1 | tee -a saida.txt
 
       # A leitura dos doze signos, às segundas. É o formato que gera salvamento:

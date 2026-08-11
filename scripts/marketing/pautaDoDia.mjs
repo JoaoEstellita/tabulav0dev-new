@@ -94,6 +94,18 @@ const forte = !!deHoje && (
  */
 const forca = deHoje?.tipo === 'eclipse' ? 'eclipse' : forte ? 'forte' : 'comum'
 
-console.log(escolhido ? escolhido.formatos.join(',') : 'reel')
-console.log(escolhido ? escolhido.id : '')
+/**
+ * As três linhas falam do MESMO assunto.
+ *
+ * Saíam desencontradas: formatos e id vinham de `opcoes[0]` (que pode ser o
+ * eclipse de amanhã) e a força, do assunto de hoje. O workflow recebia os
+ * formatos de um evento e gerava a peça de outro.
+ *
+ * Quem manda aqui é o dia: este arquivo serve à produção. A editorial continua
+ * vendo os três dias à frente, por outro caminho (`calendario.mjs`).
+ */
+const doDia = deHoje || escolhido
+
+console.log(doDia ? doDia.formatos.join(',') : 'post')
+console.log(doDia ? doDia.id : '')
 console.log(forca)

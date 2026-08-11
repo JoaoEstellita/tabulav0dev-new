@@ -87,18 +87,29 @@ export function anguloDoAssunto(ev) {
   return `Faltam ${falta} dias — explica o que é, antes de todo mundo repetir`
 }
 
+/** Corpos cuja entrada em signo o público reconhece sem explicação. */
+const CORPOS_DE_PESO = ['Sun', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn']
+
 /**
  * Que peças o assunto comporta.
  *
- * Carrossel só onde há o que explicar (eclipse) ou eixo para recortar. O
- * educativo e a Lua fora de curso ficam no card: não sustentam doze segundos de
- * vídeo nem seis slides.
+ * Devolvia `['reel']` fixo, resíduo da fase em que saía um vídeo por dia. Como
+ * o Estúdio monta as caixinhas a partir deste array, sobrou uma opção só — e
+ * era justamente o formato que saiu da produção. O João viu: "no editorial não
+ * tem mais os carrosséis?".
+ *
+ * Carrossel só no eclipse: são treze slides com um texto por ascendente, e é a
+ * única peça que sustenta isso. Ingresso e lunação dão post e story. Educativo,
+ * grau crítico e Lua fora de curso dão post — não sustentam story próprio nem
+ * doze slides.
+ *
+ * O vídeo não aparece: saiu do automático enquanto o template é refeito.
  */
-export function formatosDoAssunto() {
-  // Uma peça por dia, e ela é o vídeo — que serve de Reel e de Story, porque
-  // 9:16 é o formato dos dois. Card estático e carrossel continuam existindo por
-  // comando, fora da produção diária.
-  return ['reel']
+export function formatosDoAssunto(ev) {
+  if (ev?.tipo === 'eclipse') return ['post', 'carrossel', 'story']
+  if (ev?.tipo === 'fase') return ['post', 'story']
+  if (ev?.tipo === 'ingresso' && CORPOS_DE_PESO.includes(ev.corpo)) return ['post', 'story']
+  return ['post']
 }
 
 /** Quantos educativos oferecer por dia, além do que o céu já dá. */

@@ -81,7 +81,17 @@
   .dia .iso {
     font-family: var(--mono); font-size: 13px; color: var(--tinta-2);
     font-variant-numeric: tabular-nums;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   }
+
+  /* apagar não tem volta: fica discreto, longe do polegar que vem baixar */
+  .apagar {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    background: none; border: 1px solid var(--tinta-2); border-radius: 6px;
+    color: var(--tinta-2); padding: 3px 8px; cursor: pointer; opacity: 0.55;
+  }
+  .apagar:hover { opacity: 1; border-color: #E0623C; color: #E0623C; }
+  .apagar:disabled { cursor: default; opacity: 0.4; }
 
   .pecas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
   /* a carta e o vídeo têm muito detalhe: ocupam a linha inteira */
@@ -618,6 +628,33 @@
     })
   }
 
+  /**
+   * Apaga o dia inteiro no Storage.
+   *
+   * Existe porque uma peça errada chegou aqui e não havia como tirá-la: o cron
+   * gerou o post do eclipse um dia antes, e ele ficou no Estúdio anunciando a
+   * data errada. Confirma antes porque não tem volta.
+   */
+  function apagarDia(botao, dia) {
+    if (!window.confirm('Apagar todas as peças de ' + dia + '? Não dá para desfazer.')) return
+
+    botao.disabled = true
+    botao.textContent = 'Apagando…'
+
+    fetch(BACKEND + '/api/marketing-cards?dia=' + encodeURIComponent(dia), {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + ultimaSenha }
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+      // recarrega do servidor: desenhar sem os dados novos mostraria o dia
+      // vazio quando o DELETE tivesse falhado pela metade
+      return carregar(ultimaSenha).then(function (dados) { desenhar(dados.dias || []) })
+    }).catch(function () {
+      botao.disabled = false
+      botao.textContent = 'Não deu'
+    })
+  }
+
   /** Tem algo para baixar? Legenda sem imagem ainda é peça: dá para copiar. */
   function temPeca(d) {
     return !!(d.carta || d.reel || d.feed || d.story || d.legenda ||
@@ -672,15 +709,22 @@
         return peca(url, 'Slide ' + (n + 1), 'carrossel-' + String(n + 1).padStart(2, '0') + '.png', false, false)
       }).join('')
 
-      // a carta abre a lista: é a peça principal do dia
+      // O post abre a lista.
+      //
+      // `feed.png` estava rotulado "Alternativa simples" e `carta.png`, "Post
+      // principal" — verdade quando a carta era a peça do dia. Desde que a peça
+      // de evento passou a sair em `feed.png`, o rótulo dizia ao João que a peça
+      // principal era a alternativa. A carta continua saindo por comando.
       return '<article class="dia">' +
         '<h2>' + escapar(rotular(d.dia)) + '</h2>' +
-        '<span class="iso">' + d.dia + '</span>' +
+        '<span class="iso">' + d.dia +
+          '<button type="button" class="apagar" data-dia="' + d.dia + '">Apagar o dia</button>' +
+        '</span>' +
         '<div class="pecas">' +
-          peca(d.carta, 'Post principal', 'carta.png', true, false) +
-          peca(d.reel, 'Reel + Story', 'reel.mp4', true, true) +
-          peca(d.feed, 'Alternativa simples', 'feed.png', false, false) +
+          peca(d.feed, 'Post', 'feed.png', true, false) +
           peca(d.story, 'Story', 'story.png', false, false) +
+          peca(d.reel, 'Reel + Story', 'reel.mp4', true, true) +
+          peca(d.carta, 'Post (formato antigo)', 'carta.png', false, false) +
         '</div>' +
         (slides
           ? '<h3 class="secao">Carrossel · ' + d.carrossel.length + ' slides, nesta ordem</h3>' +
@@ -700,6 +744,12 @@
     lista.querySelectorAll('.baixar').forEach(function (botao) {
       botao.addEventListener('click', function () {
         baixar(botao, botao.dataset.url, botao.dataset.nome)
+      })
+    })
+
+    lista.querySelectorAll('.apagar').forEach(function (botao) {
+      botao.addEventListener('click', function () {
+        apagarDia(botao, botao.dataset.dia)
       })
     })
 

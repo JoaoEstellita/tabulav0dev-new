@@ -59,6 +59,7 @@ function lerArgs(argv) {
     data: '',
     saida: path.join(MONOREPO, 'marketing/out'),
     upload: false,
+    formatos: [],
     backend: process.env.TABULA_BACKEND || 'https://tabulav0dev-backend.vercel.app',
     senha: process.env.MONITORING_PASSWORD || process.env.CRON_SECRET_TOKEN || '',
   }
@@ -66,6 +67,8 @@ function lerArgs(argv) {
     if (a === '--upload') args.upload = true
     else if (a.startsWith('--data=')) args.data = a.slice(7)
     else if (a.startsWith('--saida=')) args.saida = path.resolve(a.slice(8))
+    // o que o João marcou no Estúdio; vazio = tudo que o evento comporta
+    else if (a.startsWith('--formatos=')) args.formatos = a.slice(11).split(',').filter(Boolean)
   }
   if (args.upload && !args.senha) {
     throw new Error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
@@ -224,8 +227,11 @@ async function principal() {
    * Só no eclipse. Ingresso e lunação não sustentam treze slides, e carrossel
    * por qualquer motivo foi o que encheu o feed antes.
    */
+  // `--formatos` vazio = tudo que o evento comporta; marcado, manda a marcação
+  const querCarrossel = !args.formatos.length || args.formatos.includes('carrossel')
+
   const slides = []
-  if (evento.tipo === 'eclipse' && casas) {
+  if (evento.tipo === 'eclipse' && casas && querCarrossel) {
     slides.push({
       ...base,
       olho: diaMes(evento.quando),
