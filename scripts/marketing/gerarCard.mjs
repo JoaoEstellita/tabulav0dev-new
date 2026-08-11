@@ -42,6 +42,8 @@ import {
 // mesma funcao que o calendario usa: se os ids divergirem, a pauta salva
 // ontem aponta para um assunto que o gerador nao encontra
 import { idDoAssunto as chaveDeEvento, opcoesDoDia, acharOpcao } from './lib/pautas.mjs'
+// o histórico saiu daqui para `lib/`: a peça diária precisa da mesma janela
+import { lerHistorico, salvarHistorico, chavesRecentes } from './lib/historico.mjs'
 // A mesma voz do vídeo: as duas peças do dia falam do mesmo assunto, e o card
 // rodando depois sobrescrevia a legenda do vídeo com a voz antiga.
 import { falaDoReel } from './lib/vozReel.mjs'
@@ -296,48 +298,6 @@ async function renderizar(chrome, html, destinoPng, largura, altura) {
     throw new Error(`Chrome não gerou ${path.basename(destinoPng)} — HTML preservado em ${temp}`)
   }
   await rm(temp, { force: true })
-}
-
-/**
- * Chaves publicadas nos últimos dias, para não repetir texto na grade.
- *
- * Guardado num JSON ao lado das imagens — não vale um banco, e apagar a pasta
- * de saída zera o histórico junto, que é o comportamento esperado.
- */
-const JANELA_SEM_REPETIR = 14
-
-async function lerHistorico(raizSaida) {
-  try {
-    const bruto = await readFile(path.join(raizSaida, '.historico.json'), 'utf8')
-    return JSON.parse(bruto)
-  } catch {
-    return {}
-  }
-}
-
-async function salvarHistorico(raizSaida, historico) {
-  // mantém a janela enxuta: entradas antigas não influenciam mais nada
-  const corte = new Date(Date.now() - JANELA_SEM_REPETIR * 3 * 86_400_000)
-  const podado = Object.fromEntries(
-    Object.entries(historico).filter(([iso]) => meioDiaUTC(iso) >= corte)
-  )
-  await writeFile(
-    path.join(raizSaida, '.historico.json'),
-    JSON.stringify(podado, null, 2),
-    'utf8'
-  )
-}
-
-/** Chaves usadas na janela que precede `iso`. */
-function chavesRecentes(historico, iso) {
-  const fim = meioDiaUTC(iso).getTime()
-  const inicio = fim - JANELA_SEM_REPETIR * 86_400_000
-  const usadas = new Set()
-  for (const [dia, chave] of Object.entries(historico)) {
-    const t = meioDiaUTC(dia).getTime()
-    if (t >= inicio && t <= fim) usadas.add(chave)
-  }
-  return usadas
 }
 
 async function gerarUmDia(chrome, cat, iso, raizSaida, historico, assunto = '') {

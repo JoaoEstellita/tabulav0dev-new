@@ -208,15 +208,15 @@ jobs:
       # O carrossel só sai marcado: é a peça mais cara de produzir e a que menos
       # dias comportam. Sem pauta ele não sai — quem decide isto é editorial.
 
-      # A peça do evento, nos dias que a sustentam. Substitui `gerarCard.mjs`,
-      # que empilhava roda do céu, tabela de dez posições, legenda de aspecto e
-      # rodapé de véspera no mesmo quadro. Aqui são dois elementos: a foto e o
-      # texto.
+      # A peça do dia, todo dia. `lib/assuntoDoDia.mjs` desce a cascata até
+      # achar assunto: evento do céu, lua fora de curso, aspecto de corpo
+      # pessoal, planeta no signo e, no fim, um conceito escrito. Nunca sai
+      # vazia e nunca repete dentro de catorze dias.
       #
       # Na segunda ela cede a vez ao carrossel: duas peças no mesmo dia
       # disputam a mesma legenda no Estúdio, e uma delas sai sem ser lida.
-      - name: Gerar a peça do evento
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.forte != 'comum' && steps.pauta.outputs.semanal != 'sim' }}
+      - name: Gerar a peça do dia
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.semanal != 'sim' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}

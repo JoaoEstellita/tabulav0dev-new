@@ -43,7 +43,7 @@ const ORDEM_TRADICIONAL = [
   'jupiter', 'saturn', 'uranus', 'neptune', 'pluto',
 ]
 
-function chaveAspectoNatal(a, b, aspecto) {
+export function chaveAspectoNatal(a, b, aspecto) {
   const [p1, p2] = [a.toLowerCase(), b.toLowerCase()].sort(
     (x, y) => ORDEM_TRADICIONAL.indexOf(x) - ORDEM_TRADICIONAL.indexOf(y)
   )
@@ -68,7 +68,7 @@ const PLANETAS_DE_SIGNO = ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn
  */
 const CORPOS_PESSOAIS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
 
-const ROTULO_ASPECTO = Object.fromEntries(ASPECTOS.map((a) => [a.chave, a.rotulo]))
+export const ROTULO_ASPECTO = Object.fromEntries(ASPECTOS.map((a) => [a.chave, a.rotulo]))
 
 /**
  * Sol e Lua pedem artigo em português; os demais planetas, não.
