@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Share,
   TextInput,
   Modal,
   RefreshControl,
@@ -470,6 +471,32 @@ export default function GroupsScreen() {
     // Limpa o parâmetro para o modal não reabrir ao voltar para a aba.
     navigation.setParams?.({ inviteCode: undefined } as never)
   }, [user, route?.params?.inviteCode])
+
+  // Claim de perfil gerenciado via deep link ?claim=<grupo>~<perfil>~<token>: a
+  // pessoa que recebeu o link reivindica o perfil e vira membro real do grupo.
+  useEffect(() => {
+    const raw = (route?.params as any)?.claim
+    if (!user || !raw) return
+    navigation.setParams?.({ claim: undefined } as never)
+    const parts = String(raw).split('~')
+    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return
+    const [claimGroupId, claimProfileId, claimToken] = parts
+    ;(async () => {
+      try {
+        await GroupService.claimManagedProfile(claimGroupId, claimProfileId, claimToken, user.uid)
+        await loadUserGroups()
+        Alert.alert(
+          tr('groups.claim.successTitle', 'Perfil conectado'),
+          tr('groups.claim.successBody', 'Voce entrou no grupo e o perfil agora esta ligado a sua conta.')
+        )
+      } catch (error: any) {
+        Alert.alert(
+          tr('groups.claim.errorTitle', 'Convite invalido'),
+          error?.message || tr('groups.claim.errorBody', 'Nao foi possivel conectar o perfil (link expirado ou ja usado).')
+        )
+      }
+    })()
+  }, [user, (route?.params as any)?.claim])
 
   useEffect(() => {
     if (selectedGroup) {
@@ -1027,6 +1054,20 @@ export default function GroupsScreen() {
         },
       ]
     )
+  }
+
+  const handleInviteManaged = async (member: GroupMember) => {
+    const grp = selectedGroup
+    if (!grp || !user) return
+    const id = String(member.userId || '').replace(/^managed:/, '')
+    try {
+      const link = await GroupService.createManagedClaimLink(grp.id, user.uid, id)
+      await Share.share({
+        message: tr('groups.claim.shareMessage', 'Conecte seu perfil no nosso grupo astrologico da Tabula Estelar: {link}', { link }),
+      })
+    } catch (error: any) {
+      Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.claim.linkFailed', 'Nao foi possivel gerar o convite'))
+    }
   }
 
   const handleLeaveGroup = async () => {
@@ -1950,6 +1991,17 @@ export default function GroupsScreen() {
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
                             {tr('groups.member.viewChart', 'Ver mapa completo')}
                           </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {member.isManaged && selectedGroup?.createdBy === user?.uid ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          onPress={() => handleInviteManaged(member)}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.claim.invite', 'Convidar')}
+                        >
+                          <Ionicons name="link-outline" size={14} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText}>{tr('groups.claim.invite', 'Convidar')}</Text>
                         </TouchableOpacity>
                       ) : null}
                       {member.isManaged && selectedGroup?.createdBy === user?.uid ? (

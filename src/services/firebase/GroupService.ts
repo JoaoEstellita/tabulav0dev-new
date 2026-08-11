@@ -36,6 +36,9 @@ export interface ManagedProfile {
   birthData: { datetime: string; coordinates: { latitude: number; longitude: number } }
   createdBy: string
   createdAt?: Date | unknown
+  /** Convite p/ a pessoa reivindicar/linkar o perfil (gerado sob demanda). */
+  claimToken?: string
+  claimExpiresAt?: Date | unknown
 }
 
 export interface Group {
@@ -1071,6 +1074,45 @@ class GroupService {
     const existing = Array.isArray(groupData.managedProfiles) ? groupData.managedProfiles : []
     const remaining = existing.filter((p) => p?.id !== profileId)
     await updateDoc(groupRef, { managedProfiles: remaining })
+  }
+
+  /**
+   * Gera (ou renova) o link de convite de um perfil gerenciado — só o admin. A
+   * pessoa abre o link, loga e reivindica o perfil (vira membro real). Token de
+   * 1 uso, expira em 7 dias.
+   */
+  async createManagedClaimLink(groupId: string, requesterId: string, profileId: string): Promise<string> {
+    if (!groupId || !requesterId || !profileId) throw new Error("Parametros invalidos")
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+    const existing = Array.isArray(groupData.managedProfiles) ? groupData.managedProfiles : []
+    const idx = existing.findIndex((p) => p?.id === profileId)
+    if (idx < 0) throw new Error("Perfil nao encontrado")
+    const token = `${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`
+    const claimExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    const updated = existing.map((p, i) => (i === idx ? { ...p, claimToken: token, claimExpiresAt } : p))
+    await updateDoc(groupRef, { managedProfiles: updated })
+    // Separador ~ (não colide com o profileId "mp_x_y", que tem underscores).
+    return `https://www.tabulaestelar.com.br/grupos?claim=${groupId}~${profileId}~${token}`
+  }
+
+  /** Reivindica um perfil gerenciado (a pessoa que recebeu o link). Backend valida o token. */
+  async claimManagedProfile(groupId: string, profileId: string, token: string, userId: string): Promise<boolean> {
+    if (!BACKEND_URL) throw new Error("Backend indisponivel")
+    const response = await backendFetch('/api/group/claim-managed', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      auth: true,
+      body: JSON.stringify({ groupId, profileId, token, userId }),
+    })
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      throw new Error(payload?.error || `claim_failed_${response.status}`)
+    }
+    return true
   }
 
   async leaveGroup(groupId: string, userId: string): Promise<void> {

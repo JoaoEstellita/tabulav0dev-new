@@ -111,6 +111,20 @@ const linking: LinkingOptions<DeepLinkRootParamList> = {
         ],
       } as ReturnType<typeof defaultGetStateFromPath>
     }
+    // Claim de perfil gerenciado: /grupos?claim=<grupo>~<perfil>~<token>.
+    const claimMatch = path.match(/[?&]claim=([^&]+)/)
+    if (claimMatch) {
+      return {
+        routes: [
+          {
+            name: "Tabs",
+            state: {
+              routes: [{ name: "Groups", params: { claim: decodeURIComponent(claimMatch[1]) } }],
+            },
+          },
+        ],
+      } as ReturnType<typeof defaultGetStateFromPath>
+    }
     return defaultGetStateFromPath(path, options)
   },
 }
