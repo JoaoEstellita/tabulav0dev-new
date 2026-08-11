@@ -1,4 +1,4 @@
-# Gera o vídeo do céu de hoje e envia para o Estúdio, todo dia.
+# Gera as peças do céu e envia para o Estúdio.
 #
 # Existe para tirar o João do meio: antes, publicar exigia ligar o PC e rodar o
 # gerador à mão. O runner do GitHub já traz Chrome e Node, e o ffmpeg vem por
@@ -7,17 +7,21 @@
 # Pré-requisito: o secret MONITORING_PASSWORD (a senha do painel /monitoramento).
 #   Settings > Secrets and variables > Actions > New repository secret
 
-name: Vídeo diário
+name: Peças do céu
 
 # O que sai, e quando:
 #
-#   todo dia      o vídeo do céu de hoje (Reel e Story, mesmo arquivo)
-#   dia forte     mais o card estático — eclipse, lunação, ingresso de peso
-#   segunda       mais o carrossel dos doze signos, com a casa de cada um
+#   dia de evento   a peça do evento (feed e story), quando há evento de peso
+#   segunda         o carrossel dos doze ascendentes
 #
-# A produção ficou suspensa um dia enquanto a voz era refeita: os textos
-# descreviam o fenômeno em vez de falar com alguém. Voltou com `lib/vozReel.mjs`
-# e `lib/vozSemana.mjs` — conversa direta, um fato calculado por peça.
+# Cerca de sete peças por mês, contra as trinta e cinco de antes. A conta é do
+# João, depois de olhar um mês de material: "vamos reduzir muito o que foi
+# feito, precisamos editoriar os textos e também as imagens".
+#
+# O VÍDEO DIÁRIO SAIU DO AUTOMÁTICO. Ele continua inteiro em `gerarVideo.mjs` e
+# roda pelo botão (`video: true`), mas usa o template da roda animada, que é o
+# que ele viu e recusou. Publicar todo dia uma peça recusada é pior do que não
+# publicar. Volta quando o template for refeito na linguagem de foto.
 #
 # A peça mensal continua rodando só por comando.
 #
@@ -40,6 +44,13 @@ on:
         type: boolean
         required: false
         default: false
+      # O vídeo saiu do diário mas não do repositório: enquanto o template não
+      # for refeito, sai por decisão, não por calendário.
+      video:
+        description: "Gerar também o vídeo (template antigo, roda animada)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -52,7 +63,7 @@ concurrency:
 jobs:
   gerar:
     runs-on: ubuntu-latest
-    # o vídeo domina o tempo: ~360 quadros mais a montagem do MP4
+    # treze slides de carrossel a ~2s cada; o vídeo só entra por botão
     timeout-minutes: 25
 
     steps:
@@ -86,8 +97,10 @@ jobs:
       # O ubuntu-latest NÃO traz ffmpeg. A conferência anterior usava
       # `ffmpeg -version | head -1`, e o `head` devolvia 0 mesmo com o comando
       # ausente: o mesmo bug de pipeline que escondeu o resto.
+      # Só o vídeo precisa de ffmpeg, e o vídeo virou opcional: instalar sempre
+      # é ~40s de runner por dia para nada.
       - name: Instalar ffmpeg
-        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && github.event.inputs.video == 'true' }}
         run: |
           set -o pipefail
           sudo apt-get install -y -qq ffmpeg
@@ -158,7 +171,7 @@ jobs:
 
 
       - name: Gerar o vídeo do dia
-        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && github.event.inputs.video == 'true' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
@@ -185,20 +198,23 @@ jobs:
       # O carrossel só sai marcado: é a peça mais cara de produzir e a que menos
       # dias comportam. Sem pauta ele não sai — quem decide isto é editorial.
 
-      # Só nos dias fortes. O vídeo é a peça de todo dia; o card entra quando há
-      # um fato que merece ficar parado no feed.
-      - name: Gerar o card do dia forte
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.forte == 'forte' }}
+      # A peça do evento, nos dias que a sustentam. Substitui `gerarCard.mjs`,
+      # que empilhava roda do céu, tabela de dez posições, legenda de aspecto e
+      # rodapé de véspera no mesmo quadro. Aqui são dois elementos: a foto e o
+      # texto.
+      #
+      # Na segunda ela cede a vez ao carrossel: duas peças no mesmo dia
+      # disputam a mesma legenda no Estúdio, e uma delas sai sem ser lida.
+      - name: Gerar a peça do evento
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.forte == 'forte' && steps.pauta.outputs.semanal != 'sim' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
-          ASSUNTO: ${{ steps.pauta.outputs.assunto }}
         run: |
           set -o pipefail
-          ARGS="--dias=1 --exigir-upload --saida=$GITHUB_WORKSPACE/marketing/out"
+          ARGS="--upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
-          [ -n "$ASSUNTO" ] && ARGS="$ARGS --assunto=$ASSUNTO"
-          node scripts/marketing/gerarCard.mjs $ARGS 2>&1 | tee -a saida.txt
+          node scripts/marketing/gerarEvento.mjs $ARGS 2>&1 | tee -a saida.txt
 
       # A leitura dos doze signos, às segundas. É o formato que gera salvamento:
       # a pessoa volta ao post para conferir o próprio ascendente.
@@ -223,7 +239,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Card diário"
+            echo "## Peças do céu"
             echo ""
             if [ -f saida.txt ]; then
               echo '```'

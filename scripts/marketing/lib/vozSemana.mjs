@@ -15,28 +15,8 @@
  */
 import { casaPorAscendente, ORDEM_SIGNOS } from './mensal.mjs'
 import { escrever } from './vozes.mjs'
-import { textoEmCasa, primeirasFrases, dignidade } from './interpretacao.mjs'
-
-/**
- * O que cada casa é, em uma linha que alguém entenda de primeira.
- *
- * Sem "regência", sem "domicílio", sem "setor". Quem já sabe o jargão reconhece
- * assim mesmo; quem não sabe consegue acompanhar, que é o ponto.
- */
-export const CASA = {
-  1: 'você mesmo: o corpo, o jeito de chegar nos lugares',
-  2: 'o dinheiro e o que você valoriza o bastante para guardar',
-  3: 'as conversas do dia a dia, os irmãos, o perto',
-  4: 'a casa, a família e o que te dá base',
-  5: 'o que você cria, o que dá prazer, os filhos, o palco',
-  6: 'a rotina, o trabalho de todo dia, o corpo funcionando',
-  7: 'o outro: as relações a dois, os acordos',
-  8: 'o que se divide com alguém: dinheiro junto, intimidade, o que termina',
-  9: 'o estudo, a viagem, o que amplia a vista',
-  10: 'a carreira e o que os outros veem de você',
-  11: 'os grupos, as amizades, o projeto que é de mais gente',
-  12: 'o que fica nos bastidores, o descanso, o que precisa acabar',
-}
+import { dignidade } from './interpretacao.mjs'
+import { textoDaCasa } from './textosCasa.mjs'
 
 const DIA_DA_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado']
 
@@ -47,12 +27,23 @@ function quando(data) {
   return nome === 'domingo' || nome === 'sábado' ? `no ${nome}` : `na ${nome}`
 }
 
+/**
+ * O artigo de cada fase.
+ *
+ * "A quarto minguante" saiu numa peça pronta: `a ${fase}` funcionava para Lua
+ * Nova e Lua Cheia e errava nos dois quartos, que são masculinos.
+ */
+const ARTIGO_DA_FASE = {
+  'Lua Nova': 'a', 'Lua Cheia': 'a',
+  'Quarto Crescente': 'o', 'Quarto Minguante': 'o',
+}
+
 /** O que o evento é, em duas ou três palavras de conversa. */
 function oQueE(ev) {
   switch (ev.tipo) {
     case 'ingresso': return `${ev.corpoPt} entra em ${ev.signo}`
     case 'eclipse': return `o eclipse ${ev.luminar === 'solar' ? 'do Sol' : 'da Lua'} em ${ev.signo}`
-    case 'fase': return `a ${ev.fase.toLowerCase()} em ${ev.signo}`
+    case 'fase': return `${ARTIGO_DA_FASE[ev.fase] || 'a'} ${ev.fase.toLowerCase()} em ${ev.signo}`
     case 'retrogrado': return `${ev.corpoPt} começa a andar para trás`
     case 'direto': return `${ev.corpoPt} volta a andar para a frente`
     default: return escrever(ev).titulo
@@ -76,31 +67,26 @@ export function semanaPorSigno(eventos, ascendente, catalogos = null) {
   const casa = casaPorAscendente(principal.signo, ascendente)
   if (!casa) return null
 
-  /**
-   * A leitura da casa vem do catálogo curado do app, não da minha linha.
-   *
-   * `CASA[n]` dizia "a casa, a família e o que te dá base" — dicionário, não
-   * leitura. O catálogo diz o que aquele CORPO faz naquela casa: "Marte na Casa
-   * 4 impulsiona a energia para a construção de raízes... o ambiente doméstico
-   * pode ser um espaço de grande atividade". São 120 textos, um por
-   * planeta × casa, e é o que dá conteúdo diferente aos doze slides.
-   */
   const corpoDoEvento = principal.corpo ||
     (principal.tipo === 'eclipse' || principal.tipo === 'fase'
       ? (principal.luminar === 'solar' || principal.fase === 'Lua Nova' ? 'Sun' : 'Moon')
       : null)
 
-  const curado = catalogos && corpoDoEvento
-    ? primeirasFrases(textoEmCasa(catalogos, corpoDoEvento, casa), 2)
-    : ''
+  /**
+   * O texto é do TRÂNSITO na casa, não do planeta natal na casa.
+   *
+   * Aqui vinha o catálogo curado do app, e o slide saiu assim: "O quarto
+   * minguante em Gêmeos na sexta, na sua casa 12. A Lua na Casa 12 internaliza
+   * as emoções de forma profunda, criando uma vida interior rica". A segunda
+   * frase descreve quem nasceu com a Lua ali, para a vida toda. A primeira fala
+   * de uma sexta-feira. É o mesmo defeito que o João apontou na peça de evento,
+   * e o catálogo continua ótimo no lugar dele, que é o app.
+   */
+  const dizer = oQueE(principal)
+  const texto = `${dizer[0].toUpperCase()}${dizer.slice(1)} ${quando(principal.quando)}, ` +
+    `na sua casa ${casa}.
 
-  const texto = curado
-    ? `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}, ` +
-      `na sua casa ${casa}.
-
-${curado}`
-    : `${oQueE(principal)[0].toUpperCase()}${oQueE(principal).slice(1)} ${quando(principal.quando)}. ` +
-      `Com ascendente em ${ascendente}, isso cai na sua casa ${casa}: ${CASA[casa]}.`
+${textoDaCasa(casa)}`
 
   /**
    * UMA PEÇA, UM EVENTO.
@@ -133,10 +119,16 @@ export function capaDaSemana(eventos, inicio, fim) {
   const ultimo = new Date(fim.getTime() - 86_400_000)
   const periodo = `${dm(inicio)} a ${dm(ultimo)}`
 
-  const eclipses = eventos.filter((e) => e.tipo === 'eclipse').length
-  const abertura = eclipses
-    ? `${eclipses === 1 ? 'Tem eclipse esta semana' : 'Dois eclipses esta semana'}.`
-    : `${eventos.length} ${eventos.length === 1 ? 'evento' : 'eventos'} no céu esta semana.`
+  /**
+   * A capa diz O QUE acontece, não quantos eventos há.
+   *
+   * "1 evento no céu esta semana" foi o que saiu, e contagem não é assunto:
+   * ninguém abre um post para saber que houve um. O nome do evento é a única
+   * coisa da capa que faz alguém arrastar.
+   */
+  const principal = [...eventos].sort((a, b) => (b.peso || 0) - (a.peso || 0))[0]
+  const dizer = oQueE(principal)
+  const abertura = `${dizer[0].toUpperCase()}${dizer.slice(1)} ${quando(principal.quando)}.`
 
   /**
    * Nada sobre o método.

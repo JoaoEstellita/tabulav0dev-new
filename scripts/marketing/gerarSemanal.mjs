@@ -127,7 +127,8 @@ async function principal() {
       olho: 'A semana no céu',
       titulo: capa.periodo.replace(' a ', '\na '),
       texto: capa.texto,
-      rodape: capa.periodo,
+      // o título já é o período: repeti-lo no rodapé é dizer duas vezes
+      rodape: '',
     },
   ]
 
