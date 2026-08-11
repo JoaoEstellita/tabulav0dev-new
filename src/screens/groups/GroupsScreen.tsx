@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import * as Linking from "expo-linking"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
+import AddManagedProfileModal from "./AddManagedProfileModal"
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { useAuth } from "../../hooks/useAuth"
 import { useSubscriptionCheck } from "../../hooks/useSubscriptionCheck"
@@ -146,6 +147,7 @@ export default function GroupsScreen() {
   const [groupActivities, setGroupActivities] = useState<GroupActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showAddManaged, setShowAddManaged] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [newGroupName, setNewGroupName] = useState("")
   const [newGroupDescription, setNewGroupDescription] = useState("")
@@ -1000,6 +1002,31 @@ export default function GroupsScreen() {
       console.error("Erro ao renomear grupo:", error)
       Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.alert.renameFailed', 'Nao foi possivel renomear o grupo'))
     }
+  }
+
+  const handleRemoveManaged = (member: GroupMember) => {
+    const grp = selectedGroup
+    if (!grp || !user) return
+    const id = String(member.userId || '').replace(/^managed:/, '')
+    Alert.alert(
+      tr('groups.managed.removeTitle', 'Remover perfil'),
+      tr('groups.managed.removeBody', 'Remover {name} do grupo?', { name: member.displayName }),
+      [
+        { text: tr('groups.action.cancel', 'Cancelar'), style: 'cancel' },
+        {
+          text: tr('groups.action.remove', 'Remover'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await GroupService.removeManagedProfile(grp.id, user.uid, id)
+              await loadGroupData()
+            } catch (error: any) {
+              Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.managed.removeFailed', 'Nao foi possivel remover o perfil'))
+            }
+          },
+        },
+      ]
+    )
   }
 
   const handleLeaveGroup = async () => {
@@ -1864,9 +1891,21 @@ export default function GroupsScreen() {
             <View style={styles.membersSection}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>{tr('groups.section.members', 'Membros')}</Text>
-                <TouchableOpacity style={styles.sectionIconButton} onPress={openMemberSort}>
-                  <Ionicons name="swap-vertical" size={16} color="#FFD700" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {selectedGroup?.createdBy === user?.uid ? (
+                    <TouchableOpacity
+                      style={styles.sectionIconButton}
+                      onPress={() => setShowAddManaged(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
+                    >
+                      <Ionicons name="person-add-outline" size={16} color="#FFD700" />
+                    </TouchableOpacity>
+                  ) : null}
+                  <TouchableOpacity style={styles.sectionIconButton} onPress={openMemberSort}>
+                    <Ionicons name="swap-vertical" size={16} color="#FFD700" />
+                  </TouchableOpacity>
+                </View>
               </View>
               {otherMembers.map((member) => {
                 const hasStatus = hasVisibleStatus(member)
@@ -1876,9 +1915,16 @@ export default function GroupsScreen() {
                     <View style={styles.memberHeaderCompact}>
                       <Avatar photoUrl={member.profilePhoto} name={member.displayName} size="small" />
                       <View style={styles.memberHeaderInfo}>
-                        <Text style={styles.memberRowName} numberOfLines={1}>
-                          {member.displayName}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={[styles.memberRowName, { flexShrink: 1 }]} numberOfLines={1}>
+                            {member.displayName}
+                          </Text>
+                          {member.isManaged ? (
+                            <View style={styles.managedBadge}>
+                              <Text style={styles.managedBadgeText}>{tr('groups.managed.badge', 'gerenciado')}</Text>
+                            </View>
+                          ) : null}
+                        </View>
                         <Text style={styles.memberRowUpdate} numberOfLines={1}>
                           {member.subscriptionActive === false
                             && !member.isAdmin
@@ -1904,6 +1950,16 @@ export default function GroupsScreen() {
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
                             {tr('groups.member.viewChart', 'Ver mapa completo')}
                           </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {member.isManaged && selectedGroup?.createdBy === user?.uid ? (
+                        <TouchableOpacity
+                          style={styles.managedRemoveBtn}
+                          onPress={() => handleRemoveManaged(member)}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('groups.managed.remove', 'Remover perfil')}
+                        >
+                          <Ionicons name="trash-outline" size={14} color="#FF6B6B" />
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -3066,6 +3122,13 @@ export default function GroupsScreen() {
         currentUserId={user?.uid || ""}
         onClose={() => setShowGroupSettings(false)}
       />
+
+      <AddManagedProfileModal
+        visible={showAddManaged}
+        onClose={() => setShowAddManaged(false)}
+        groupId={selectedGroup?.id || null}
+        onCreated={() => { loadGroupData() }}
+      />
     </LinearGradient>
   )
 }
@@ -3217,6 +3280,26 @@ const styles = StyleSheet.create({
     color: "#FFD700",
     fontSize: 11,
     fontWeight: "700",
+  },
+  managedBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "rgba(179,157,219,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(179,157,219,0.4)",
+  },
+  managedBadgeText: {
+    color: "#B39DDB",
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  managedRemoveBtn: {
+    padding: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,107,107,0.1)",
   },
   memberRowName: {
     color: "#FFFFFF",

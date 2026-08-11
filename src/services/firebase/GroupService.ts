@@ -25,6 +25,19 @@ import { lerComCache, chaveStatusUsuario, TTL_STATUS_MS } from "./docCache"
 
 const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "https://tabulav0dev-backend.vercel.app").replace(/\/$/, "")
 
+/**
+ * Perfil GERENCIADO: pessoa sem conta no app, criada pelo admin do grupo só para
+ * acompanhar (parente etc.). Vive no doc do grupo, não é uma conta. O backend
+ * computa o status dela (do birthData) igual a um membro real.
+ */
+export interface ManagedProfile {
+  id: string
+  name: string
+  birthData: { datetime: string; coordinates: { latitude: number; longitude: number } }
+  createdBy: string
+  createdAt?: Date | unknown
+}
+
 export interface Group {
   id: string
   name: string
@@ -38,6 +51,7 @@ export interface Group {
   inviteExpiresAt?: Date | null
   sharedLifeAreas?: string[]
   notifiedLifeAreas?: string[]
+  managedProfiles?: ManagedProfile[]
 }
 
 export interface GroupMember {
@@ -71,6 +85,8 @@ export interface GroupMember {
   subscriptionActive?: boolean
   subscriptionStatus?: string | null
   isAdmin?: boolean
+  /** Perfil gerenciado (criado pelo admin, sem conta). userId = "managed:<id>". */
+  isManaged?: boolean
 }
 
 export interface GroupAlert {
@@ -1005,6 +1021,56 @@ class GroupService {
 
     await updateDoc(groupRef, { members: arrayRemove(memberId) })
     await deleteDoc(doc(db, "groupMemberSettings", `${groupId}_${memberId}`))
+  }
+
+  /**
+   * Cria um perfil gerenciado no grupo (só o admin). Grava no doc do grupo; o
+   * status é computado pelo backend a partir do birthData. Retorna o id.
+   */
+  async addManagedProfile(
+    groupId: string,
+    requesterId: string,
+    profile: { name: string; birthData: { datetime: string; coordinates: { latitude: number; longitude: number } } }
+  ): Promise<string> {
+    const name = String(profile?.name || '').trim()
+    const bd = profile?.birthData
+    if (!groupId || !requesterId) throw new Error("Parametros invalidos")
+    if (!name) throw new Error("Nome obrigatorio")
+    if (!bd?.datetime || !Number.isFinite(bd?.coordinates?.latitude) || !Number.isFinite(bd?.coordinates?.longitude)) {
+      throw new Error("Dados de nascimento invalidos")
+    }
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+    const existing = Array.isArray(groupData.managedProfiles) ? groupData.managedProfiles : []
+    const id = `mp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+    const entry: ManagedProfile = {
+      id,
+      name,
+      birthData: {
+        datetime: bd.datetime,
+        coordinates: { latitude: bd.coordinates.latitude, longitude: bd.coordinates.longitude },
+      },
+      createdBy: requesterId,
+      createdAt: new Date(),
+    }
+    await updateDoc(groupRef, { managedProfiles: [...existing, entry] })
+    return id
+  }
+
+  /** Remove um perfil gerenciado (só o admin). */
+  async removeManagedProfile(groupId: string, requesterId: string, profileId: string): Promise<void> {
+    if (!groupId || !requesterId || !profileId) return
+    const groupRef = doc(db, "groups", groupId)
+    const groupDoc = await getDoc(groupRef)
+    if (!groupDoc.exists()) throw new Error("Grupo nao encontrado")
+    const groupData = groupDoc.data() as Group
+    if (groupData.createdBy !== requesterId) throw new Error("Sem permissao")
+    const existing = Array.isArray(groupData.managedProfiles) ? groupData.managedProfiles : []
+    const remaining = existing.filter((p) => p?.id !== profileId)
+    await updateDoc(groupRef, { managedProfiles: remaining })
   }
 
   async leaveGroup(groupId: string, userId: string): Promise<void> {
