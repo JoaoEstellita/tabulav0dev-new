@@ -32,6 +32,7 @@ import { svgDoSigno } from './lib/simbolos.mjs'
 import { carregarCatalogos, textoEmSigno, dignidade, primeirasFrases } from './lib/interpretacao.mjs'
 import { casasPorAscendente } from './lib/fatos.mjs'
 import { textoDoEvento, chaveDoEvento } from './lib/textosEvento.mjs'
+import { ABERTURA, POR_CASA } from './lib/textosEclipse.mjs'
 
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -113,6 +114,9 @@ const corpoDoEvento = (ev) =>
     ? (ev.luminar === 'solar' || ev.fase === 'Lua Nova' ? 'Sun' : 'Moon')
     : null)
 
+/** O sujeito da frase da dignidade, com artigo, quando o evento não traz nome. */
+const nomeDoCorpo = (corpo) => ({ Sun: 'O Sol', Moon: 'A Lua' }[corpo] || '')
+
 const diaMes = (d) =>
   new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' }).format(d)
 
@@ -128,8 +132,19 @@ async function principal() {
   const catalogos = await carregarCatalogos()
 
   const mapa = mapaDoCeu(data, PLANET_ASPECT_ORBS)
-  // só o assunto do dia: um evento, uma peça
-  const evento = eventosDoDia(data, mapa.aspectos)[0]
+
+  /**
+   * O evento é o de HOJE, não o de daqui a três dias.
+   *
+   * `eventosDoDia` antecipa em três dias por padrão, e era o certo quando a
+   * peça de véspera existia. Sem filtro, o cron do dia 11 gerou o post do
+   * eclipse do dia 12 — e no dia 12 geraria o mesmo post outra vez. O João viu
+   * as duas coisas: "foi criado pro dia 12 hoje no dia 11" e "também não quero
+   * repetir os posts".
+   *
+   * Com antecedência zero, cada evento tem um dia só e a peça sai nele.
+   */
+  const evento = eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })[0]
   if (!evento) {
     console.log(`${iso}: sem evento no céu. Nenhuma peça.`)
     process.exit(0)
@@ -160,8 +175,21 @@ async function principal() {
     console.warn('  Sai o texto do catálogo natal, que fala da posição e não do trânsito.')
   }
 
+  /**
+   * A dignidade só sai com sujeito.
+   *
+   * `evento.corpoPt` existe em ingresso e é vazio em eclipse e em fase, então a
+   * peça do eclipse saiu começando por " chega em casa: é o signo que ele rege"
+   * — frase sem quem. `nomeDoCorpo` cobre o buraco pelo corpo que protagoniza o
+   * evento; sem nome, a linha não sai.
+   *
+   * No eclipse ela não sai: "O Sol chega em casa, é o signo que ele rege" antes
+   * de "Este eclipse cai em Leão" diz duas vezes o mesmo signo, e o assunto da
+   * peça é o eclipse, não onde o Sol está bem.
+   */
+  const sujeito = evento.tipo === 'eclipse' ? '' : (evento.corpoPt || nomeDoCorpo(corpo))
   const texto = [
-    dig ? `${evento.corpoPt || ''} ${dig.texto}.` : '',
+    dig && sujeito ? `${sujeito} ${dig.texto}.` : '',
     doEvento || (corpo ? primeirasFrases(textoEmSigno(catalogos, corpo, evento.signo), 2) : ''),
   ].filter(Boolean).join('\n\n')
 
@@ -182,11 +210,57 @@ async function principal() {
   await renderizar(chrome, montarFoto({ ...base, formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
   await renderizar(chrome, montarFoto({ ...base, formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
 
-  // A legenda leva as doze casas: é o que faz a pessoa procurar a dela e voltar.
   const casas = casasPorAscendente(evento.signo)
+
+  /**
+   * O CARROSSEL DO ECLIPSE, um slide por ascendente.
+   *
+   * O pedido do João: "no texto poderíamos ter com base no ascendente como que
+   * afeta o eclipse na casa da pessoa". Os doze textos já estavam escritos em
+   * `textosEclipse.mjs` desde a semana passada e nunca tinham sido ligados a
+   * uma peça — a legenda dizia só "Áries: casa 5", que é o rótulo sem a
+   * leitura.
+   *
+   * Só no eclipse. Ingresso e lunação não sustentam treze slides, e carrossel
+   * por qualquer motivo foi o que encheu o feed antes.
+   */
+  const slides = []
+  if (evento.tipo === 'eclipse' && casas) {
+    slides.push({
+      ...base,
+      olho: diaMes(evento.quando),
+      titulo,
+      texto: ABERTURA[evento.luminar === 'solar' ? 'solar' : 'lunar'],
+      simbolo: '',
+    })
+    for (const { ascendente, casa } of casas) {
+      slides.push({
+        ...base,
+        olho: `casa ${casa}`,
+        titulo: `Ascendente\n${ascendente}`,
+        texto: POR_CASA[casa],
+        simbolo: svgDoSigno(ascendente),
+      })
+    }
+
+    for (let i = 0; i < slides.length; i++) {
+      const nome = `${String(i + 1).padStart(2, '0')}.png`
+      // a mesma foto nos treze, com o enquadramento andando: o conjunto lê como
+      // sequência em vez de treze posts colados
+      const html = montarFoto({ ...slides[i], formato: 'feed', foco: i })
+      await renderizar(chrome, html, path.join(pasta, nome), 1350)
+      console.log(`  slide ${i + 1}/${slides.length}  ${slides[i].titulo.replace('\n', ' ')}`)
+    }
+  }
+
+  // A legenda leva as doze casas: é o que faz a pessoa procurar a dela e voltar.
   const legenda = [
     titulo.replace('\n', ' ') + ` · ${diaMes(evento.quando)}`,
     '',
+    // no eclipse, a abertura explica o que é o fenômeno antes das doze casas
+    ...(evento.tipo === 'eclipse'
+      ? [ABERTURA[evento.luminar === 'solar' ? 'solar' : 'lunar'], '']
+      : []),
     texto,
     '',
     'Onde isso cai, pelo seu ascendente:',
@@ -204,6 +278,10 @@ async function principal() {
   if (args.upload) {
     for (const nome of ['feed.png', 'story.png', 'legenda.txt']) {
       await enviar(path.join(pasta, nome), iso, nome, args)
+    }
+    for (let i = 0; i < slides.length; i++) {
+      const nome = `${String(i + 1).padStart(2, '0')}.png`
+      await enviar(path.join(pasta, nome), iso, `carrossel/${nome}`, args)
     }
     console.log('Estúdio: enviado')
   }

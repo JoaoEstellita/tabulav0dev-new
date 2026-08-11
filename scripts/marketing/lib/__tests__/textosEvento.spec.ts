@@ -82,6 +82,10 @@ describe('textos de evento', () => {
 
     // silêncio é resposta legítima: a peça avisa em vez de inventar
     expect(textoDoEvento({ tipo: 'ingresso', corpo: 'Pluto', signo: 'Peixes' })).toBeNull()
-    expect(chaveDoEvento({ tipo: 'eclipse', luminar: 'solar', signo: 'Leão' })).toBeNull()
+
+    // o eclipse tem leitura própria, em textosEclipse.mjs — ver pecaDoEvento.spec
+    expect(chaveDoEvento({ tipo: 'eclipse', luminar: 'solar', signo: 'Leão' }))
+      .toBe('eclipse:solar:Leão')
+    expect(chaveDoEvento({ tipo: 'grau_critico', signo: 'Leão' })).toBeNull()
   })
 })

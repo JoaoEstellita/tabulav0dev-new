@@ -61,11 +61,39 @@ const escolhido = opcoes[0]
  * card todo dia foi o que encheu o feed de peça que servia para qualquer dia.
  */
 const CORPOS_DE_PESO = ['Sun', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn']
-const forte =
-  escolhido?.tipo === 'eclipse' ||
-  escolhido?.tipo === 'fase' ||
-  (escolhido?.tipo === 'ingresso' && CORPOS_DE_PESO.includes(escolhido.evento?.corpo))
+
+/**
+ * Dia forte é o dia DO evento, não a véspera.
+ *
+ * A editorial continua antecipando três dias — é o que deixa o João planejar a
+ * semana no Estúdio. A produção, não: o cron do dia 11 marcou o dia como forte
+ * por causa do eclipse do dia 12, e a peça saiu um dia adiantada.
+ *
+ * A conta é feita sobre o primeiro assunto DE HOJE, não sobre o de maior peso:
+ * um eclipse de amanhã, mesmo com o desconto por dia, ainda ganha de uma
+ * lunação de hoje — e ao olhar só o primeiro da lista o dia de hoje ficaria
+ * "comum" tendo evento próprio.
+ */
+// estrito: retrogradação, grau crítico e educativo não têm `diasFalta`, e
+// `?? 0` os faria passar por evento de hoje
+const deHoje = opcoes.find((o) => o.evento?.diasFalta === 0)
+const ev = deHoje?.evento
+
+const forte = !!deHoje && (
+  deHoje.tipo === 'eclipse' ||
+  deHoje.tipo === 'fase' ||
+  (deHoje.tipo === 'ingresso' && CORPOS_DE_PESO.includes(ev?.corpo))
+)
+
+/**
+ * A terceira linha distingue eclipse de dia forte comum.
+ *
+ * O eclipse é a única peça que leva carrossel, e ele precisa vencer o carrossel
+ * semanal quando os dois caírem na mesma segunda: dois carrosséis no mesmo dia
+ * disputariam a mesma legenda no Estúdio e um sairia sem ser lido.
+ */
+const forca = deHoje?.tipo === 'eclipse' ? 'eclipse' : forte ? 'forte' : 'comum'
 
 console.log(escolhido ? escolhido.formatos.join(',') : 'reel')
 console.log(escolhido ? escolhido.id : '')
-console.log(forte ? 'forte' : 'comum')
+console.log(forca)

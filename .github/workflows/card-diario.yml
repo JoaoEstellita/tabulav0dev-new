@@ -157,12 +157,17 @@ jobs:
           # O card estático voltou, mas só nos dias que o sustentam: eclipse,
           # lunação e entrada de planeta reconhecível. Card todo dia foi o que
           # encheu o feed de peça que servia para qualquer dia.
+          # `comum` é o default explícito: a condição do step do evento é
+          # "diferente de comum", e vazio passaria por dia de evento.
           FORCA=$(node scripts/marketing/pautaDoDia.mjs --data="$DIA" | sed -n '3p' || echo 'comum')
-          echo "O dia é: ${FORCA:-comum}"
+          FORCA=${FORCA:-comum}
+          echo "O dia é: $FORCA"
           echo "forte=$FORCA" >> "$GITHUB_OUTPUT"
 
-          # A leitura dos doze signos sai uma vez por semana, na segunda.
-          if [ "$(date -u -d "$DIA" +%u)" = "1" ]; then
+          # A leitura dos doze signos sai uma vez por semana, na segunda — mas
+          # não quando o dia é de eclipse: o eclipse traz o próprio carrossel
+          # dos doze ascendentes, e dois no mesmo dia disputam a mesma legenda.
+          if [ "$(date -u -d "$DIA" +%u)" = "1" ] && [ "$FORCA" != "eclipse" ]; then
             echo "Segunda-feira: sai também o carrossel da semana."
             echo "semanal=sim" >> "$GITHUB_OUTPUT"
           else
@@ -206,7 +211,7 @@ jobs:
       # Na segunda ela cede a vez ao carrossel: duas peças no mesmo dia
       # disputam a mesma legenda no Estúdio, e uma delas sai sem ser lida.
       - name: Gerar a peça do evento
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.forte == 'forte' && steps.pauta.outputs.semanal != 'sim' }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.forte != 'comum' && steps.pauta.outputs.semanal != 'sim' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}

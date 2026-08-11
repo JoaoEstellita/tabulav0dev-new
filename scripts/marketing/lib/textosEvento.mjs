@@ -23,6 +23,8 @@
  * Sem texto próprio, `gerarEvento.mjs` avisa no console e cai no catálogo natal.
  */
 
+import { POR_SIGNO } from './textosEclipse.mjs'
+
 /**
  * Chave: `{tipo}:{corpo}:{signo}`.
  *
@@ -81,6 +83,9 @@ export const TEXTO_DO_EVENTO = {
 
 /** A chave deste evento, ou `null` quando o tipo não tem texto próprio. */
 export function chaveDoEvento(evento) {
+  // O eclipse não mora aqui: os 38 textos dele estão em `textosEclipse.mjs`,
+  // escritos antes desta tabela existir. A chave serve para o aviso do console.
+  if (evento.tipo === 'eclipse') return `eclipse:${evento.luminar}:${evento.signo}`
   if (evento.tipo === 'ingresso' && evento.corpo) return `ingresso:${evento.corpo}:${evento.signo}`
   if (evento.tipo === 'fase' && evento.fase) return `fase:${evento.fase}:${evento.signo}`
   if (evento.tipo === 'retrogrado' && evento.corpo) return `retrogrado:${evento.corpo}:${evento.signo}`
@@ -95,6 +100,16 @@ export function chaveDoEvento(evento) {
  * e a peça não deveria sair sem que alguém escreva.
  */
 export function textoDoEvento(evento) {
+  /**
+   * O eclipse tem leitura própria, por signo.
+   *
+   * Sem este desvio, `chaveDoEvento` devolvia `null` e a peça caía no catálogo
+   * natal: o post do eclipse em Leão saiu dizendo "A identidade se manifesta
+   * pela expressão criativa", que é o que significa ter o Sol em Leão no mapa.
+   * O texto certo já estava escrito e nunca tinha sido ligado a uma peça.
+   */
+  if (evento.tipo === 'eclipse') return POR_SIGNO[evento.signo] || null
+
   const chave = chaveDoEvento(evento)
   return (chave && TEXTO_DO_EVENTO[chave]) || null
 }
