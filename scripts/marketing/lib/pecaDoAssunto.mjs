@@ -65,7 +65,13 @@ const somaDaChave = (chave) =>
  */
 export function pecaDoAssunto(assunto, { iso, catalogos = null } = {}) {
   // `glifo: true` é o padrão; só o conceito o desliga, e ele diz isso no ramo
-  const peca = { glifo: true, variacao: 0, ...montar(assunto, { iso, catalogos }) }
+  const peca = {
+    glifo: true,
+    variacao: 0,
+    // quem protagoniza: `templateFoto` usa para não pôr o Sol atrás da Lua
+    corpo: corpoDoAssunto(assunto) || '',
+    ...montar(assunto, { iso, catalogos }),
+  }
 
   /**
    * O travessão morre aqui, e não em cada ramo.
@@ -156,6 +162,9 @@ function montar(assunto, { iso, catalogos }) {
         titulo: 'Lua fora\nde curso',
         texto: [janela, textoDaLuaVazia(assunto.signo) || ''].filter(Boolean).join('\n\n'),
         signo: assunto.signo,
+        // a hora de início varia a foto: são dezenove luas vazias em sessenta
+        // dias, e todas com a mesma imagem seriam o mesmo post repetido
+        variacao: assunto.inicio.getUTCDate() + assunto.inicio.getUTCHours(),
         // não há casa: a Lua não entrou em lugar nenhum, ela está entre dois
         casas: false,
         legendaAbre: REGRA_DA_TRADICAO,

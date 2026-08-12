@@ -33,6 +33,8 @@ import { casasPorAscendente } from './lib/fatos.mjs'
 import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
 import { assuntoDoDia, chaveDoAssunto } from './lib/assuntoDoDia.mjs'
+import { eventosDoDia } from './lib/eventos.mjs'
+import { idDoAssunto } from './lib/pautas.mjs'
 import { conceitoDoDia, CONCEITO, CHAVES_DE_CONCEITO } from './lib/textosConceito.mjs'
 import { recursoDoDia, RECURSO, CHAVES_DE_RECURSO } from './lib/textosRecurso.mjs'
 import { montarRecurso } from './lib/templateRecurso.mjs'
@@ -87,6 +89,8 @@ function lerArgs(argv) {
     else if (a === '--listar-recursos') args.listarRecursos = true
     else if (a.startsWith('--carrossel=')) args.carrossel = a.slice(12)
     else if (a === '--listar-carrosseis') args.listarCarrosseis = true
+    // o id que o João marcou no Estúdio, no formato de `idDoAssunto`
+    else if (a.startsWith('--assunto=')) args.assunto = a.slice(10)
   }
   if (args.upload && !args.senha) {
     throw new Error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
@@ -132,6 +136,17 @@ async function renderizar(chrome, html, destino, altura) {
 // `corpoDoEvento`, `nomeDoCorpo` e `diaMes` foram para `lib/pecaDoAssunto.mjs`
 // junto com a montagem do texto: é a parte que precisa de teste, e testá-la
 // aqui exigia renderizar um PNG e olhar.
+
+/**
+ * Acha, entre os eventos de hoje, o que a pauta marcou.
+ *
+ * `idDoAssunto` é a mesma função que a editorial usa para gerar o id que vai
+ * ao `pauta.json`, então as chaves casam sem tradução no meio.
+ */
+function acharPorId(data, mapa, id) {
+  const doDia = eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })
+  return doDia.find((ev) => idDoAssunto(ev) === id) || null
+}
 
 /**
  * O signo que dá a foto de fundo a um tema.
@@ -283,11 +298,30 @@ async function principal() {
    * o dia em que o João quer publicar um educativo específico: sem isto, a
    * única forma seria esperar o céu ficar quieto.
    */
+  /**
+   * O QUE O JOÃO MARCOU NO ESTÚDIO VENCE A CASCATA.
+   *
+   * O workflow lia o assunto marcado e passava `--assunto` só para o step do
+   * vídeo; a peça do dia recebia apenas os formatos, e este arquivo nem lia a
+   * flag. No dia do eclipse ele marcou "Eclipse solar total em Leão" com post,
+   * carrossel e story, e saiu uma peça de Lua fora de curso: a marcação não
+   * tinha caminho nenhum até aqui.
+   *
+   * Id que não casa com nenhum evento do dia não derruba o run: avisa e cai na
+   * cascata, porque a automação nunca pode parar porque uma pauta ficou velha.
+   */
+  const marcado = args.assunto ? acharPorId(data, mapa, args.assunto) : null
+  if (args.assunto && !marcado) {
+    console.warn(`  aviso: a pauta pediu "${args.assunto}", que não está no céu de hoje.`)
+    console.warn('  A peça sai pelo assunto de maior peso.')
+  }
+
   const assunto = args.conceito
     ? { tipo: 'conceito', ...conceitoDoDia(iso, usadas, args.conceito) }
     : args.recurso
       ? { tipo: 'recurso', ...recursoDoDia(iso, usadas, args.recurso) }
-      : assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
+      : marcado
+        || assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
   const peca = pecaDoAssunto(assunto, { iso, catalogos })
 
   // O aviso continua: assunto do céu sem texto escrito cai no catálogo natal,
@@ -309,6 +343,8 @@ async function principal() {
     signo: peca.signo,
     simbolo: peca.glifo ? svgDoSigno(peca.signo) : '',
     variacao: peca.variacao,
+    // o protagonista viaja junto: peça da Lua não recebe foto do Sol
+    corpo: peca.corpo,
   }
 
   /**

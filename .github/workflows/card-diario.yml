@@ -221,11 +221,15 @@ jobs:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
           FORMATOS: ${{ steps.pauta.outputs.formatos }}
+          ASSUNTO: ${{ steps.pauta.outputs.assunto }}
         run: |
           set -o pipefail
           ARGS="--upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
           [ -n "$FORMATOS" ] && ARGS="$ARGS --formatos=$FORMATOS"
+          # o assunto marcado no Estúdio: chegava só ao step do vídeo, e no dia
+          # do eclipse o João marcou o eclipse e saiu uma peça de lua vazia
+          [ -n "$ASSUNTO" ] && ARGS="$ARGS --assunto=$ASSUNTO"
           node scripts/marketing/gerarEvento.mjs $ARGS 2>&1 | tee -a saida.txt
 
       # A leitura dos doze signos, às segundas. É o formato que gera salvamento:

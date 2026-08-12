@@ -91,3 +91,75 @@ describe('o carrossel do eclipse', () => {
     for (const t of textos) expect(t).not.toContain('—')
   })
 })
+
+/**
+ * O DIA EM QUE O ECLIPSE NÃO SAIU.
+ *
+ * O João abriu o Estúdio no dia do eclipse e achou uma peça de Lua fora de
+ * curso. O eclipse tinha peso 130 contra 85 e acontecia naquele dia, e mesmo
+ * assim perdeu: a chave `eclipse:solar:2026-08-12` estava no histórico, posta
+ * lá pelo card antigo, que publicava o mesmo evento como véspera nos dias 9, 10
+ * e 11 gravando sempre a chave do EVENTO. A janela de catorze dias acabou
+ * bloqueando o próprio dia do evento.
+ */
+describe('o histórico não pode queimar o dia do evento', () => {
+  const mapaDoDia = async (iso: string) => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { mapaDoCeu } = await import('../ceu.mjs')
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { lerLiterais } = await import('../catalogo.mjs')
+    const { PLANET_ASPECT_ORBS } = await lerLiterais(
+      'src/astro/aspect-config.ts', ['PLANET_ASPECT_ORBS'])
+    return mapaDoCeu(new Date(`${iso}T12:00:00Z`), PLANET_ASPECT_ORBS)
+  }
+
+  it('o eclipse sai no dia dele mesmo já tendo saído como véspera', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { assuntoDoDia, chaveDoAssunto } = await import('../assuntoDoDia.mjs')
+    const mapa = await mapaDoDia('2026-08-12')
+
+    const queimado = new Set(['eclipse:solar:2026-08-12'])
+    const escolhido = assuntoDoDia(new Date('2026-08-12T12:00:00Z'), {
+      mapa, catalogos: {}, iso: '2026-08-12', usadas: queimado,
+    })
+
+    expect(chaveDoAssunto(escolhido)).toBe('eclipse:solar:2026-08-12')
+  })
+
+  /**
+   * A correção acima não pode reabrir o defeito que o dedupe conserta: a lua
+   * fora de curso de 42h aparecia em três dias seguidos.
+   */
+  it('a lua fora de curso continua deduplicada', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { assuntoDoDia, chaveDoAssunto } = await import('../assuntoDoDia.mjs')
+    const mapa = await mapaDoDia('2026-08-14')
+
+    const queimada = new Set(['luav:2026-08-13T20:00:00.000Z'])
+    const escolhido = assuntoDoDia(new Date('2026-08-14T12:00:00Z'), {
+      mapa, catalogos: {}, iso: '2026-08-14', usadas: queimada,
+    })
+
+    expect(chaveDoAssunto(escolhido)).not.toBe('luav:2026-08-13T20:00:00.000Z')
+  })
+})
+
+/** A peça da Lua com o Sol de fundo: "não tem nada a ver". */
+describe('o fundo combina com quem protagoniza', () => {
+  it('peça da Lua nunca recebe foto do Sol', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { fundoDeCeu } = await import('../templateFoto.mjs')
+    const FOGO = ['Áries', 'Leão', 'Sagitário']
+    for (const signo of FOGO) {
+      for (let v = 0; v < 8; v++) {
+        expect(fundoDeCeu(signo, v, 'Moon').arquivo, `${signo} v${v}`).not.toMatch(/^fogo/)
+      }
+    }
+  })
+
+  it('peça do Sol continua podendo usar o Sol', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { fundoDeCeu } = await import('../templateFoto.mjs')
+    expect(fundoDeCeu('Leão', 0, 'Sun').arquivo).toMatch(/^fogo/)
+  })
+})

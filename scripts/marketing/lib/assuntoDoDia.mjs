@@ -39,6 +39,27 @@ import { recursoDoDia } from './textosRecurso.mjs'
 const CORPOS_PESSOAIS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
 
 /**
+ * Eventos que acontecem UMA VEZ, num instante.
+ *
+ * ── O DIA EM QUE O ECLIPSE NÃO SAIU ────────────────────────────────────────
+ *
+ * O João abriu o Estúdio no dia do eclipse e achou uma peça de Lua fora de
+ * curso. O eclipse tinha peso 130 contra 85 e `diasFalta: 0`, e mesmo assim
+ * perdeu, porque a chave `eclipse:solar:2026-08-12` já estava no histórico: o
+ * card antigo publicava o evento como VÉSPERA, e `gerarCard` grava a chave do
+ * EVENTO, que é a mesma nos dias 9, 10, 11 e 12. A janela de catorze dias
+ * acabou bloqueando o próprio dia do evento.
+ *
+ * A regra anti-repetição existe para assunto que se arrasta: a lua fora de curso
+ * de 42h aparecia em três dias seguidos, e Plutão sextil Netuno sairia seis
+ * vezes no mês. Um eclipse acontece uma vez, e no dia dele nada mais importa.
+ */
+function aconteceUmaVez(ev) {
+  return ['eclipse', 'fase', 'ingresso', 'retrogrado', 'direto'].includes(ev.tipo)
+    && ev.diasFalta === 0
+}
+
+/**
  * A identidade de um assunto, para o histórico.
  *
  * O que precisa ser estável entre dias diferentes: a lua vazia é a MESMA
@@ -88,7 +109,7 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
   // 1 e 2: evento do céu e lua fora de curso, na ordem de peso que já existe
   for (const ev of doCeu) {
     if (ev.tipo === 'aspecto') continue
-    if (naJanela(ev)) return ev
+    if (aconteceUmaVez(ev) || naJanela(ev)) return ev
   }
 
   /**
