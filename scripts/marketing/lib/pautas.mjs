@@ -69,22 +69,89 @@ export function idDoAssunto(ev) {
   }
 }
 
-/** O ângulo editorial, conforme a distância do evento. */
+/**
+ * ACONTECE hoje, ou é explicação de uma posição que já vale?
+ *
+ * O João olhou a editorial de um dia e viu "Vênus em Libra", "Marte em Câncer"
+ * e "Júpiter em Leão", os três com o mesmo subtítulo, e perguntou o óbvio:
+ * "preciso saber se nesse dia o planeta vai entrar no signo, ou se é só um post
+ * explicativo". Os três eram explicativos. Nada na tela dizia isso.
+ *
+ * O selo vem antes do texto porque é a primeira coisa que decide se vale a pena
+ * publicar naquele dia: evento tem data e passa; explicação vale o mês inteiro.
+ */
+export function naturezaDoAssunto(ev) {
+  const DO_CEU = ['eclipse', 'fase', 'ingresso', 'retrogrado', 'direto', 'lua_fora_de_curso']
+  return DO_CEU.includes(ev?.tipo) ? 'evento' : 'explicativo'
+}
+
+const HORA = (d) => new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
+}).format(d).replace(':', 'h')
+
+const DIA_CURTO = (d) => new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo',
+}).format(d)
+
+/**
+ * A linha que diz o que aquilo é, com o dado concreto.
+ *
+ * Dizia "O que significa num mapa natal" para todo educativo e "É hoje" para
+ * todo evento. Agora traz a hora do ingresso, a janela da lua vazia e até
+ * quando a posição do educativo ainda vale: é com isso que se escolhe.
+ */
 export function anguloDoAssunto(ev) {
-  if (ev.tipo === 'educativo') return 'O que significa num mapa natal'
-  if (ev.tipo === 'lua_fora_de_curso') return 'Aviso do dia — dura horas, e volta toda semana'
+  if (ev.tipo === 'educativo') {
+    const d = ev.diasRestantes
+    if (Number.isFinite(d) && d > 0 && d < 400) {
+      const dias = Math.round(d)
+      // "por mais N dias", e não uma data: `diasRestantes` é contado a partir
+      // do dia daquela opção, e virar data absoluta erraria nos dias futuros
+      return `Explicativo — a posição ainda vale por ${dias} dia${dias > 1 ? 's' : ''}`
+    }
+    /**
+     * "Sem data para acabar" seria mentira.
+     *
+     * `diasRestantes` é `Infinity` quando a saída do signo cai fora da janela
+     * de quarenta dias que `ingressosProximos` varre. Marte sai de Câncer, sim;
+     * só não sai tão cedo. A frase diz o que se sabe.
+     */
+    return 'Explicativo — a posição vale por mais de um mês'
+  }
+
+  if (ev.tipo === 'lua_fora_de_curso') {
+    return ev.inicio && ev.fim
+      ? `Acontece hoje — das ${HORA(ev.inicio)} às ${HORA(ev.fim)}`
+      : 'Acontece hoje — dura horas'
+  }
+
   if (ev.tipo === 'retrogradacao') {
     const d = ev.diasRestantes ? Math.round(ev.diasRestantes) : null
-    return d ? `Em curso — faltam ${d} dias para acabar` : 'Em curso — o assunto mais procurado do nicho'
+    return d ? `Em curso — faltam ${d} dias para acabar` : 'Em curso — sem data para acabar'
   }
+
   if (ev.tipo === 'grau_critico') {
-    return ev.extremo === 'saida' ? 'Último grau — a tradição chama de anarético' : 'Primeiro grau — começo cru'
+    return ev.extremo === 'saida'
+      ? 'Explicativo — último grau, a tradição chama de anarético'
+      : 'Explicativo — primeiro grau, começo cru'
   }
-  if (ev.tipo === 'nodulos') return 'O eixo que quase ninguém explica'
+
+  if (ev.tipo === 'nodulos') return 'Explicativo — o eixo que quase ninguém explica'
+
   const falta = ev.diasFalta ?? 0
-  if (falta === 0) return 'É hoje — o dado exato, com hora'
-  if (falta === 1) return 'Amanhã — o que muda e o que não muda'
-  return `Faltam ${falta} dias — explica o que é, antes de todo mundo repetir`
+  const quando = ev.quando ? ` às ${HORA(ev.quando)}` : ''
+
+  if (falta === 0) {
+    if (ev.tipo === 'ingresso') return `Acontece hoje${quando} — entra no signo`
+    if (ev.tipo === 'eclipse') return `Acontece hoje${quando} — e leva carrossel dos doze`
+    if (ev.tipo === 'fase') return `Acontece hoje${quando}`
+    if (ev.tipo === 'retrogrado') return `Acontece hoje${quando} — começa a andar para trás`
+    if (ev.tipo === 'direto') return `Acontece hoje${quando} — volta a andar para a frente`
+    return `Acontece hoje${quando}`
+  }
+
+  if (falta === 1) return `Acontece amanhã${quando}`
+  return `Acontece em ${falta} dias — ${DIA_CURTO(ev.quando || new Date())}`
 }
 
 /** Corpos cuja entrada em signo o público reconhece sem explicação. */
@@ -139,6 +206,7 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
       tipo: ev.tipo,
       titulo: vespera ? `${vespera}: ${v.titulo}` : v.titulo,
       angulo: anguloDoAssunto(ev),
+      natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
       evento: ev,
     })
@@ -172,6 +240,7 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
       tipo: ev.tipo,
       titulo: v.titulo,
       angulo: anguloDoAssunto(ev),
+      natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
       evento: ev,
     })
@@ -191,6 +260,7 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
       tipo: 'educativo',
       titulo: tema.titulo,
       angulo: anguloDoAssunto(ev),
+      natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
       evento: ev,
     })

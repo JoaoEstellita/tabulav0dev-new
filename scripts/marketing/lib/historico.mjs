@@ -19,8 +19,20 @@ export const JANELA_SEM_REPETIR = 14
 
 const ARQUIVO = '.historico.json'
 
+/**
+ * A chave do histórico é `AAAA-MM-DD` ou `AAAA-MM-DD#2`.
+ *
+ * O sufixo é o slot da peça. Passou a existir quando o dia deixou de ter uma
+ * peça só: sem ele, a segunda peça do dia sobrescrevia a entrada da primeira, e
+ * as duas acabavam podendo falar do mesmo assunto.
+ */
+const soAData = (chave) => String(chave).split('#')[0]
+
 /** `AAAA-MM-DD` → meio-dia UTC, longe das bordas de fuso. */
-const meioDiaUTC = (iso) => new Date(`${iso}T12:00:00Z`)
+const meioDiaUTC = (iso) => new Date(`${soAData(iso)}T12:00:00Z`)
+
+/** A entrada de um dia e slot: `2026-08-13` ou `2026-08-13#3`. */
+export const entradaDoDia = (iso, slot = 1) => (slot > 1 ? `${iso}#${slot}` : iso)
 
 /** O histórico gravado, ou `{}` na primeira vez. */
 export async function lerHistorico(raizSaida) {
@@ -43,17 +55,24 @@ export async function salvarHistorico(raizSaida, historico) {
 /**
  * Chaves usadas na janela que precede `iso`.
  *
- * O PRÓPRIO `iso` fica de fora, e isso importa: sem a exclusão, regerar um dia
- * já publicado encontraria a própria chave no histórico, escolheria outro
- * assunto, e a peça no Estúdio deixaria de bater com a que o João baixou.
+ * A entrada DESTA peça fica de fora, e isso importa: sem a exclusão, regerar
+ * uma peça já publicada encontraria a própria chave no histórico, escolheria
+ * outro assunto, e a peça no Estúdio deixaria de bater com a que o João baixou.
+ *
+ * As OUTRAS peças do mesmo dia continuam contando, e é o que impede a peça 2 de
+ * falar do mesmo assunto que a peça 1 acabou de publicar.
+ *
+ * @param {number} slot  qual peça do dia está sendo gerada
  */
-export function chavesRecentes(historico, iso) {
+export function chavesRecentes(historico, iso, slot = 1) {
   const fim = meioDiaUTC(iso).getTime()
   const inicio = fim - JANELA_SEM_REPETIR * 86_400_000
+  const propria = entradaDoDia(iso, slot)
+
   const usadas = new Set()
-  for (const [dia, chave] of Object.entries(historico)) {
-    if (dia === iso) continue
-    const t = meioDiaUTC(dia).getTime()
+  for (const [entrada, chave] of Object.entries(historico)) {
+    if (entrada === propria) continue
+    const t = meioDiaUTC(entrada).getTime()
     if (t >= inicio && t <= fim) usadas.add(chave)
   }
   return usadas

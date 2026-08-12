@@ -215,22 +215,20 @@ jobs:
       #
       # Na segunda ela cede a vez ao carrossel: duas peças no mesmo dia
       # disputam a mesma legenda no Estúdio, e uma delas sai sem ser lida.
-      - name: Gerar a peça do dia
+      - name: Gerar as peças do dia
         if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.semanal != 'sim' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
-          FORMATOS: ${{ steps.pauta.outputs.formatos }}
-          ASSUNTO: ${{ steps.pauta.outputs.assunto }}
         run: |
           set -o pipefail
           ARGS="--upload --saida=$GITHUB_WORKSPACE/marketing/out"
           [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
-          [ -n "$FORMATOS" ] && ARGS="$ARGS --formatos=$FORMATOS"
-          # o assunto marcado no Estúdio: chegava só ao step do vídeo, e no dia
-          # do eclipse o João marcou o eclipse e saiu uma peça de lua vazia
-          [ -n "$ASSUNTO" ] && ARGS="$ARGS --assunto=$ASSUNTO"
-          node scripts/marketing/gerarEvento.mjs $ARGS 2>&1 | tee -a saida.txt
+          # `gerarDia` lê a pauta do Estúdio e chama o gerador uma vez por
+          # assunto marcado, cada um no seu slot. Sem pauta, sai uma peça pela
+          # cascata. O assunto e os formatos deixam de ser lidos aqui: quem faz
+          # isso agora é o próprio script, que também sabe quantos são.
+          node scripts/marketing/gerarDia.mjs $ARGS 2>&1 | tee -a saida.txt
 
       # A leitura dos doze signos, às segundas. É o formato que gera salvamento:
       # a pessoa volta ao post para conferir o próprio ascendente.

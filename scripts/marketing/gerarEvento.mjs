@@ -42,7 +42,7 @@ import { dadosDaTela } from './lib/dadosDaTela.mjs'
 import { temaPorChave, CHAVES_DE_TEMA, TEMA } from './lib/temasDeCarrossel.mjs'
 import { STATUS_THRESHOLDS } from './lib/areasDoApp.mjs'
 import { pecaDoAssunto } from './lib/pecaDoAssunto.mjs'
-import { lerHistorico, salvarHistorico, chavesRecentes } from './lib/historico.mjs'
+import { lerHistorico, salvarHistorico, chavesRecentes, entradaDoDia } from './lib/historico.mjs'
 
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -91,6 +91,13 @@ function lerArgs(argv) {
     else if (a === '--listar-carrosseis') args.listarCarrosseis = true
     // o id que o João marcou no Estúdio, no formato de `idDoAssunto`
     else if (a.startsWith('--assunto=')) args.assunto = a.slice(10)
+    /**
+     * A qual peça do dia isto pertence: 1 é a da raiz, 2 a 5 vão para `pN/`.
+     *
+     * O dia tinha um slot só. Com vários assuntos marcados na editorial, a
+     * segunda peça sobrescreveria a primeira, porque os nomes são fixos.
+     */
+    else if (a.startsWith('--slot=')) args.slot = Math.max(1, Math.min(5, Number(a.slice(7)) || 1))
   }
   if (args.upload && !args.senha) {
     throw new Error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
@@ -227,7 +234,8 @@ async function principal() {
    * seguidos e Plutão sextil Netuno, seis vezes no mês.
    */
   const historico = await lerHistorico(args.saida)
-  const usadas = chavesRecentes(historico, iso)
+  // as outras peças de hoje contam: é o que impede a peça 2 de repetir a 1
+  const usadas = chavesRecentes(historico, iso, args.slot || 1)
 
   /**
    * O carrossel de tema não passa pela cascata nem pelo histórico.
@@ -331,7 +339,9 @@ async function principal() {
     console.warn('  Sai o texto do catálogo natal, que fala da posição e não do trânsito.')
   }
 
-  const pasta = path.join(args.saida, iso, 'evento')
+  // a peça 1 continua na raiz do dia; as outras ganham prefixo no Storage
+  const prefixo = (args.slot || 1) > 1 ? `p${args.slot}/` : ''
+  const pasta = path.join(args.saida, iso, prefixo ? `evento-${args.slot}` : 'evento')
   await mkdir(pasta, { recursive: true })
 
   const base = {
@@ -455,7 +465,7 @@ ${ascendente}`,
   await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 
   // o assunto entra no histórico para não voltar dentro de catorze dias
-  historico[iso] = chaveDoAssunto(assunto)
+  historico[entradaDoDia(iso, args.slot || 1)] = chaveDoAssunto(assunto)
   await salvarHistorico(args.saida, historico)
 
   console.log(`${iso}  ${tituloDeUmaLinha}  [${chaveDoAssunto(assunto)}]`)
@@ -463,13 +473,13 @@ ${ascendente}`,
 
   if (args.upload) {
     for (const nome of ['feed.png', 'story.png', 'legenda.txt']) {
-      await enviar(path.join(pasta, nome), iso, nome, args)
+      await enviar(path.join(pasta, nome), iso, `${prefixo}${nome}`, args)
     }
     for (let i = 0; i < slides.length; i++) {
       const nome = `${String(i + 1).padStart(2, '0')}.png`
-      await enviar(path.join(pasta, nome), iso, `carrossel/${nome}`, args)
+      await enviar(path.join(pasta, nome), iso, `${prefixo}carrossel/${nome}`, args)
     }
-    console.log('Estúdio: enviado')
+    console.log(`Estúdio: enviado${prefixo ? ` (peça ${args.slot})` : ''}`)
   }
 }
 

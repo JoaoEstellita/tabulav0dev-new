@@ -149,7 +149,7 @@
     font-family: var(--mono); font-size: 13px; color: var(--ouro);
     font-variant-numeric: tabular-nums; display: block; margin-bottom: 8px;
   }
-  /* um assunto por dia: rádio, não caixa — a escolha é exclusiva */
+  /* quantos assuntos o dia comportar: caixa, não rádio — cada um vira uma peça */
   .assunto {
     display: block; cursor: pointer; padding: 9px 10px; border-radius: 9px;
     border: 1px solid transparent; margin-bottom: 2px;
@@ -160,6 +160,21 @@
   .assunto .t { font-size: 14px; line-height: 1.35; display: block; }
   .assunto.on .t { color: var(--ouro); }
   .assunto .a { font-size: 12px; color: var(--tinta-2); line-height: 1.4; display: block; margin-top: 2px; }
+
+  /**
+   * Acontece no dia, ou explica uma posição que já vale?
+   *
+   * O João viu "Vênus em Libra", "Marte em Câncer" e "Júpiter em Leão" no mesmo
+   * dia, todos com o mesmo subtítulo, e perguntou se o planeta entrava no signo
+   * ou se era post explicativo. Eram os três explicativos, e a tela não dizia.
+   */
+  .selo {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
+    margin-left: 8px; vertical-align: 1px; white-space: nowrap;
+  }
+  .selo.evento { background: rgba(255,209,102,0.16); color: var(--ouro); }
+  .selo.explicativo { background: rgba(255,255,255,0.07); color: var(--tinta-2); }
 
   /**
    * O mesmo assunto marcado em dois dias.
@@ -471,7 +486,19 @@
          * escolher "de cima pra baixo". Tinha, e o topo já era a resposta certa
          * na maioria dos dias. Agora ele vem marcado e desmarcar é um toque.
          */
-        var on = escolha.id ? escolha.id === o.id : d.__sugerido === o.id
+        /**
+         * VÁRIOS ASSUNTOS POR DIA.
+         *
+         * Era radio: marcar um desmarcava o outro, e saía uma peça por dia. O
+         * João pediu escolher quantos quiser, "podendo ser mais de um e mais de
+         * um carrossel ou post mesmo".
+         *
+         * `escolha.ids` é o formato novo, uma lista. `escolha.id` é a pauta
+         * antiga, de quando havia um só: continua sendo lida para as pautas já
+         * salvas não sumirem da tela.
+         */
+        var marcados = escolha.ids || (escolha.id ? [escolha.id] : null)
+        var on = marcados ? marcados.indexOf(o.id) >= 0 : d.__sugerido === o.id
         var formatos = o.formatos.map(function (f) {
           // Sem escolha previa, TUDO que o assunto comporta vem marcado, e
           // desmarcar e um toque. Marcar um a um era o atrito: escolher o
@@ -479,15 +506,22 @@
           // `escolha.formatos` só existe quando veio pauta salva. Marcar o
           // primeiro assunto por padrão passou a acionar este ramo sem escolha
           // nenhuma no objeto, e o `.indexOf` de undefined derrubava a editorial.
-          var fon = on && escolha.formatos ? escolha.formatos.indexOf(f) >= 0 : true
+          // por assunto, e não mais um mapa único do dia: cada peça tem os
+          // seus formatos
+          var doAssunto = (escolha.formatosPorId || {})[o.id] || (on ? escolha.formatos : null)
+          var fon = doAssunto ? doAssunto.indexOf(f) >= 0 : true
           return '<label class="formato' + (fon ? ' on' : '') + '">' +
             '<input type="checkbox" data-dia="' + d.dia + '" data-formato="' + f + '"' +
             (fon ? ' checked' : '') + '> ' + f + '</label>'
         }).join('')
+        // o selo diz de cara se aquilo ACONTECE no dia ou se e explicacao de
+        // uma posicao que ja vale: era a informacao que faltava para escolher
+        var natureza = o.natureza || 'explicativo'
         return '<label class="assunto' + (on ? ' on' : '') + '">' +
-          '<input type="radio" name="assunto-' + d.dia + '" data-dia="' + d.dia +
+          '<input type="checkbox" data-assunto="1" data-dia="' + d.dia +
             '" value="' + escapar(o.id) + '"' + (on ? ' checked' : '') + '>' +
-          '<span class="t">' + escapar(o.titulo) + '</span>' +
+          '<span class="t">' + escapar(o.titulo) +
+            '<span class="selo ' + natureza + '">' + natureza + '</span></span>' +
           '<span class="a">' + escapar(o.angulo) + '</span>' +
           '<span class="repetido" data-id="' + escapar(o.id) + '"></span>' +
           '<span class="formatos">' + formatos + '</span>' +
@@ -511,20 +545,16 @@
         '<span id="aviso-pauta" class="aviso"></span>' +
       '</div>'
 
-    // um assunto por dia: marcar um desmarca o irmao, e so o marcado mostra
-    // os formatos
+    // Quantos assuntos o dia comportar: cada um acende os proprios formatos.
     // Aberta no desktop, recolhida no celular. O `open` e explicito porque o
     // `details` esconde o conteudo por regra do proprio navegador, e CSS sozinho
     // nao vence isso de forma confiavel.
     editorial.open = window.matchMedia('(min-width: 1000px)').matches
 
-    editorial.querySelectorAll('.assunto input[type=radio]').forEach(function (r) {
+    editorial.querySelectorAll('.assunto input[data-assunto]').forEach(function (r) {
       r.addEventListener('change', function () {
-        var dia = r.dataset.dia
-        editorial.querySelectorAll('.assunto').forEach(function (el) {
-          var meu = el.querySelector('input[type=radio]')
-          if (meu && meu.dataset.dia === dia) el.classList.toggle('on', meu.checked)
-        })
+        // so a propria caixa acende: com checkbox, o irmao nao muda de estado
+        r.closest('.assunto').classList.toggle('on', r.checked)
         avisarRepetidos(editorial)
       })
     })
@@ -557,13 +587,13 @@
    */
   function avisarRepetidos(editorial) {
     var porId = {}
-    editorial.querySelectorAll('.assunto input[type=radio]:checked').forEach(function (r) {
+    editorial.querySelectorAll('.assunto input[data-assunto]:checked').forEach(function (r) {
       (porId[r.value] = porId[r.value] || []).push(r.dataset.dia)
     })
 
     editorial.querySelectorAll('.assunto').forEach(function (el) {
       var alvo = el.querySelector('.repetido')
-      var radio = el.querySelector('input[type=radio]')
+      var radio = el.querySelector('input[data-assunto]')
       if (!alvo || !radio) return
       // Só o assunto MARCADO avisa. O mesmo educativo é oferecido em vários
       // dias — sem isto, toda opção não marcada carregava um aviso escondido
@@ -580,15 +610,30 @@
   }
 
   function salvarPauta(botao, editorial) {
+    /**
+     * A pauta passa a guardar uma LISTA de assuntos por dia.
+     *
+     * `opcoes` e o formato novo: cada item traz o id e os formatos daquele
+     * assunto. `opcaoId` e `formatos` continuam sendo escritos, apontando para o
+     * primeiro, porque ha pautas antigas no Storage e codigo que ainda le o
+     * campo singular. Some quando nao houver mais nenhuma.
+     */
     var porDia = {}
-    editorial.querySelectorAll('.assunto input[type=radio]:checked').forEach(function (r) {
+    editorial.querySelectorAll('.assunto input[data-assunto]:checked').forEach(function (r) {
       var dia = r.dataset.dia
       var caixa = r.closest('.assunto')
       var formatos = []
       caixa.querySelectorAll('.formato input:checked').forEach(function (cx) {
         formatos.push(cx.dataset.formato)
       })
-      porDia[dia] = { opcaoId: r.value, formatos: formatos }
+      porDia[dia] = porDia[dia] || { opcoes: [] }
+      porDia[dia].opcoes.push({ id: r.value, formatos: formatos })
+    })
+
+    Object.keys(porDia).forEach(function (dia) {
+      var primeira = porDia[dia].opcoes[0]
+      porDia[dia].opcaoId = primeira.id
+      porDia[dia].formatos = primeira.formatos
     })
 
     var dias = Object.keys(porDia)
@@ -658,7 +703,7 @@
   /** Tem algo para baixar? Legenda sem imagem ainda é peça: dá para copiar. */
   function temPeca(d) {
     return !!(d.carta || d.reel || d.feed || d.story || d.legenda ||
-      (d.carrossel && d.carrossel.length))
+      (d.carrossel && d.carrossel.length) || (d.extras && d.extras.length))
   }
 
   function desenhar(dias) {
@@ -738,6 +783,34 @@
           ? '<h3 class="secao">Enquete do story</h3>' +
             '<pre id="enq-' + i + '">' + escapar(d.enquete) + '</pre>'
           : '') +
+        /**
+         * As peças extras do dia.
+         *
+         * O dia tinha um slot só e a segunda peça sobrescrevia a primeira. Com
+         * vários assuntos marcados na editorial, cada um vira uma peça com post,
+         * story e carrossel proprios, guardada em `p2/` a `p5/`.
+         */
+        (d.extras || []).map(function (ex, n) {
+          var slidesEx = (ex.carrossel || []).map(function (url, k) {
+            return peca(url, 'Slide ' + (k + 1),
+              ex.slot + '-carrossel-' + String(k + 1).padStart(2, '0') + '.png', false, false)
+          }).join('')
+          return '<h3 class="secao">Peça ' + (n + 2) + ' do dia</h3>' +
+            '<div class="pecas">' +
+              peca(ex.feed, 'Post', ex.slot + '-feed.png', true, false) +
+              peca(ex.story, 'Story', ex.slot + '-story.png', false, false) +
+            '</div>' +
+            (slidesEx
+              ? '<h3 class="secao">Carrossel da peça ' + (n + 2) + ' · ' +
+                  ex.carrossel.length + ' slides</h3>' +
+                '<div class="pecas">' + slidesEx + '</div>'
+              : '') +
+            (ex.legenda
+              ? '<pre id="leg-' + i + '-' + (n + 2) + '">' + escapar(ex.legenda) + '</pre>' +
+                '<button type="button" class="copiar" data-i="' + i + '-' + (n + 2) + '">' +
+                  'Copiar legenda</button>'
+              : '')
+        }).join('') +
       '</article>'
     }).join('')
 

@@ -210,3 +210,53 @@ describe('assuntos de ritmo proprio', () => {
     expect((iN + 6) % 12).toBe(iS)
   })
 })
+
+/**
+ * "Preciso saber se nesse dia o planeta vai entrar no signo, ou se é só um post
+ * explicativo, com pormenores para eu saber qual escolher."
+ *
+ * O João viu três linhas iguais — "Vênus em Libra", "Marte em Câncer", "Júpiter
+ * em Leão", todas com "O que significa num mapa natal" — e não tinha como
+ * escolher. Eram as três explicativas.
+ */
+describe('a editorial diz o que cada assunto é', () => {
+  const doDia = (dia) => opcoesDoDia(meioDia(dia), DEPS)
+
+  it('separa o que acontece no dia do que é explicação', () => {
+    for (const o of doDia('2026-08-23')) {
+      expect(['evento', 'explicativo'], o.titulo).toContain(o.natureza)
+    }
+    const ingresso = doDia('2026-08-23').find((o) => o.tipo === 'ingresso')
+    expect(ingresso.natureza).toBe('evento')
+
+    const educativo = doDia('2026-08-23').find((o) => o.tipo === 'educativo')
+    expect(educativo.natureza).toBe('explicativo')
+  })
+
+  it('o ingresso de hoje traz a hora', () => {
+    const hoje = doDia('2026-08-23').find((o) => o.tipo === 'ingresso' && o.evento.diasFalta === 0)
+    expect(hoje.angulo).toMatch(/Acontece hoje às \d{2}h\d{2}/)
+    expect(hoje.angulo).toContain('entra no signo')
+  })
+
+  it('a lua fora de curso traz a janela', () => {
+    const lua = doDia('2026-08-13').find((o) => o.tipo === 'lua_fora_de_curso')
+    expect(lua.angulo).toMatch(/das \d{2}h\d{2} às \d{2}h\d{2}/)
+  })
+
+  /** Dizer "sem data para acabar" de Marte em Câncer seria mentira. */
+  it('o explicativo não promete posição eterna', () => {
+    for (const o of doDia('2026-08-13').filter((x) => x.tipo === 'educativo')) {
+      expect(o.angulo).toMatch(/^Explicativo/)
+      expect(o.angulo).not.toMatch(/sem data para acabar/)
+    }
+  })
+
+  it('nenhum assunto sai com o subtítulo genérico de antes', () => {
+    for (const dia of ['2026-08-13', '2026-08-23']) {
+      for (const o of doDia(dia)) {
+        expect(o.angulo, `${dia} ${o.titulo}`).not.toBe('O que significa num mapa natal')
+      }
+    }
+  })
+})

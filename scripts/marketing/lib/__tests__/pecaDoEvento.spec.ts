@@ -163,3 +163,55 @@ describe('o fundo combina com quem protagoniza', () => {
     expect(fundoDeCeu('Leão', 0, 'Sun').arquivo).toMatch(/^fogo/)
   })
 })
+
+/**
+ * VÁRIAS PEÇAS NO MESMO DIA.
+ *
+ * "Quero que eu consiga selecionar quais eu quero criar independente de
+ * quantidade", "podendo ser mais de um e mais de um carrossel ou post mesmo".
+ *
+ * O histórico guardava uma chave por dia, então a segunda peça sobrescrevia a
+ * entrada da primeira e as duas podiam falar do mesmo assunto.
+ */
+describe('o histórico separa as peças do mesmo dia', () => {
+  it('cada peça tem sua entrada', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { entradaDoDia } = await import('../historico.mjs')
+    expect(entradaDoDia('2026-08-13', 1)).toBe('2026-08-13')
+    expect(entradaDoDia('2026-08-13', 3)).toBe('2026-08-13#3')
+  })
+
+  /** A peça 2 precisa ver o que a peça 1 acabou de publicar. */
+  it('a peça 2 enxerga o assunto que a peça 1 usou', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { chavesRecentes } = await import('../historico.mjs')
+    const historico = { '2026-08-13': 'luav:x', '2026-08-13#2': 'asp:y' }
+
+    const paraAPeca2 = chavesRecentes(historico, '2026-08-13', 2)
+    expect(paraAPeca2.has('luav:x'), 'a peça 1 tem de contar').toBe(true)
+    expect(paraAPeca2.has('asp:y'), 'a própria entrada não conta').toBe(false)
+  })
+
+  /** Regerar a peça 1 não pode trocar o assunto dela. */
+  it('regerar uma peça devolve o mesmo assunto', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { chavesRecentes } = await import('../historico.mjs')
+    const historico = { '2026-08-13': 'luav:x', '2026-08-13#2': 'asp:y' }
+
+    const paraAPeca1 = chavesRecentes(historico, '2026-08-13', 1)
+    expect(paraAPeca1.has('luav:x')).toBe(false)
+    expect(paraAPeca1.has('asp:y')).toBe(true)
+  })
+
+  it('a janela de catorze dias continua valendo com sufixo', async () => {
+    // @ts-expect-error - módulos .mjs sem tipos
+    const { chavesRecentes } = await import('../historico.mjs')
+    const historico = {
+      '2026-08-01#2': 'antigo',   // 12 dias antes: dentro
+      '2026-07-20#3': 'muitoAntigo', // 24 dias antes: fora
+    }
+    const usadas = chavesRecentes(historico, '2026-08-13', 1)
+    expect(usadas.has('antigo')).toBe(true)
+    expect(usadas.has('muitoAntigo')).toBe(false)
+  })
+})
