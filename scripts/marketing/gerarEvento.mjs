@@ -34,6 +34,11 @@ import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
 import { assuntoDoDia, chaveDoAssunto } from './lib/assuntoDoDia.mjs'
 import { conceitoDoDia, CONCEITO, CHAVES_DE_CONCEITO } from './lib/textosConceito.mjs'
+import { recursoDoDia, RECURSO, CHAVES_DE_RECURSO } from './lib/textosRecurso.mjs'
+import { montarRecurso } from './lib/templateRecurso.mjs'
+import { dadosDaTela } from './lib/dadosDaTela.mjs'
+import { temaPorChave, CHAVES_DE_TEMA, TEMA } from './lib/temasDeCarrossel.mjs'
+import { STATUS_THRESHOLDS } from './lib/areasDoApp.mjs'
 import { pecaDoAssunto } from './lib/pecaDoAssunto.mjs'
 import { lerHistorico, salvarHistorico, chavesRecentes } from './lib/historico.mjs'
 
@@ -77,6 +82,11 @@ function lerArgs(argv) {
     else if (a === '--conceito') args.conceito = '*'
     else if (a.startsWith('--conceito=')) args.conceito = a.slice(11)
     else if (a === '--listar-conceitos') args.listarConceitos = true
+    else if (a === '--recurso') args.recurso = '*'
+    else if (a.startsWith('--recurso=')) args.recurso = a.slice(10)
+    else if (a === '--listar-recursos') args.listarRecursos = true
+    else if (a.startsWith('--carrossel=')) args.carrossel = a.slice(12)
+    else if (a === '--listar-carrosseis') args.listarCarrosseis = true
   }
   if (args.upload && !args.senha) {
     throw new Error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
@@ -123,12 +133,39 @@ async function renderizar(chrome, html, destino, altura) {
 // junto com a montagem do texto: é a parte que precisa de teste, e testá-la
 // aqui exigia renderizar um PNG e olhar.
 
+/**
+ * O signo que dá a foto de fundo a um tema.
+ *
+ * O tema não acontece num signo, mas a foto é escolhida pelo elemento de um.
+ * Fixo por tema, para os slides do mesmo carrossel combinarem entre si e o
+ * carrossel ser reconhecível quando for republicado.
+ */
+const peloTema = (chave) => ({
+  mapa: 'Aquário',
+  dia: 'Leão',
+  transitos: 'Escorpião',
+}[chave] || 'Aquário')
+
 async function principal() {
   const args = lerArgs(process.argv)
 
   if (args.listarConceitos) {
     for (const chave of CHAVES_DE_CONCEITO) {
       console.log(`  ${chave.padEnd(18)} ${CONCEITO[chave].titulo.replace('\n', ' ')}`)
+    }
+    return
+  }
+
+  if (args.listarCarrosseis) {
+    for (const chave of CHAVES_DE_TEMA) {
+      console.log(`  ${chave.padEnd(12)} ${TEMA[chave].titulo.replace('\n', ' ')}  (${TEMA[chave].slides.length} slides)`)
+    }
+    return
+  }
+
+  if (args.listarRecursos) {
+    for (const chave of CHAVES_DE_RECURSO) {
+      console.log(`  ${chave.padEnd(20)} ${RECURSO[chave].titulo.replace('\n', ' ')}`)
     }
     return
   }
@@ -178,6 +215,68 @@ async function principal() {
   const usadas = chavesRecentes(historico, iso)
 
   /**
+   * O carrossel de tema não passa pela cascata nem pelo histórico.
+   *
+   * É peça de decisão editorial, e sai inteira: quatro a seis slides que
+   * ensinam uma coisa do começo ao fim. Sai daqui e o resto da função nem roda.
+   */
+  if (args.carrossel) {
+    const tema = temaPorChave(args.carrossel)
+    const pasta = path.join(args.saida, iso, 'carrossel')
+    await mkdir(pasta, { recursive: true })
+
+    for (let i = 0; i < tema.slides.length; i++) {
+      const s = tema.slides[i]
+      const base = {
+        olho: i === 0 ? 'no aplicativo' : `${i + 1} de ${tema.slides.length}`,
+        titulo: s.titulo,
+        texto: s.texto,
+        rodape: '',
+        signo: peloTema(tema.chave),
+        // a foto é a mesma nos slides, com o enquadramento andando
+        variacao: i,
+        simbolo: '',
+      }
+
+      const html = s.tela
+        ? montarRecurso({
+          ...base,
+          onde: '',
+          tela: s.tela,
+          dadosDaTela: dadosDaTela(s.tela, { mapa, limiares: STATUS_THRESHOLDS, data }),
+          formato: 'feed',
+        })
+        : montarFoto({ ...base, formato: 'feed', foco: i })
+
+      const nome = `${String(i + 1).padStart(2, '0')}.png`
+      await renderizar(chrome, html, path.join(pasta, nome), 1350)
+      console.log(`  ${i + 1}/${tema.slides.length}  ${s.titulo.replace('\n', ' ')}${s.tela ? '  [tela]' : ''}`)
+    }
+
+    const legenda = [
+      tema.titulo.replace('\n', ' '),
+      '',
+      tema.slides.map((s) => s.texto).join('\n\n'),
+      '',
+      tema.ponte,
+    ].join('\n')
+    await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
+
+    console.log(`${iso}  carrossel "${tema.chave}"`)
+    console.log(`  ${pasta}`)
+
+    if (args.upload) {
+      for (let i = 0; i < tema.slides.length; i++) {
+        const nome = `${String(i + 1).padStart(2, '0')}.png`
+        await enviar(path.join(pasta, nome), iso, `carrossel/${nome}`, args)
+      }
+      await enviar(path.join(pasta, 'legenda.txt'), iso, 'legenda.txt', args)
+      console.log('Estúdio: enviado')
+    }
+    return
+  }
+
+  /**
    * O conceito pedido à mão vence a cascata.
    *
    * A cascata é boa para o cron, que roda sozinho às seis da manhã, e ruim para
@@ -186,7 +285,9 @@ async function principal() {
    */
   const assunto = args.conceito
     ? { tipo: 'conceito', ...conceitoDoDia(iso, usadas, args.conceito) }
-    : assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
+    : args.recurso
+      ? { tipo: 'recurso', ...recursoDoDia(iso, usadas, args.recurso) }
+      : assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
   const peca = pecaDoAssunto(assunto, { iso, catalogos })
 
   // O aviso continua: assunto do céu sem texto escrito cai no catálogo natal,
@@ -210,8 +311,25 @@ async function principal() {
     variacao: peca.variacao,
   }
 
-  await renderizar(chrome, montarFoto({ ...base, formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
-  await renderizar(chrome, montarFoto({ ...base, formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
+  /**
+   * A peça de recurso usa outro template: ela tem uma tela dentro.
+   *
+   * Os dados da tela saem do MESMO mapa que a peça de céu usa, e o exemplo de
+   * score vem declarado de `areasDoApp.mjs`, porque calcular o score de
+   * verdade exigiria o motor do app.
+   */
+  const montar = assunto.tipo === 'recurso'
+    ? (extra) => montarRecurso({
+      ...base,
+      onde: peca.onde,
+      tela: peca.tela,
+      dadosDaTela: dadosDaTela(peca.tela, { mapa, limiares: STATUS_THRESHOLDS }),
+      ...extra,
+    })
+    : (extra) => montarFoto({ ...base, ...extra })
+
+  await renderizar(chrome, montar({ formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
+  await renderizar(chrome, montar({ formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
 
   // as casas só quando o assunto acontece num signo: a Lua fora de curso está
   // entre dois, e conceito não acontece em lugar nenhum do zodíaco
@@ -284,9 +402,19 @@ ${ascendente}`,
       ? ['Onde isso cai, pelo seu ascendente:',
          ...casas.map((c) => `${c.ascendente}: casa ${c.casa}`), '']
       : []),
-    'Salva para consultar quando precisar.',
-    'Não sabe seu ascendente? Comenta a hora e a cidade em que você nasceu',
-    'que eu calculo, ou faz de graça no link da bio.',
+    /**
+     * A PONTE, quando a peça é sobre um recurso.
+     *
+     * As outras peças fecham no convite genérico, que serve para qualquer uma e
+     * por isso não convida para nenhuma. Na peça de recurso o download É o
+     * assunto, então o fecho diz o que aquela tela resolve: "seu mapa sai em
+     * três perguntas, de graça, no link da bio".
+     */
+    ...(peca.ponte
+      ? [peca.ponte, '', 'Onde: ' + peca.onde]
+      : ['Salva para consultar quando precisar.',
+         'Não sabe seu ascendente? Comenta a hora e a cidade em que você nasceu',
+         'que eu calculo, ou faz de graça no link da bio.']),
   ].join('\n')
   await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 

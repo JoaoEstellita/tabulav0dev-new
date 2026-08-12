@@ -28,6 +28,7 @@
 import { eventosDoDia, ingressosProximos } from './eventos.mjs'
 import { temaEducativo, chaveAspectoNatal, ROTULO_ASPECTO, falaComQuemLe } from './educativo.mjs'
 import { conceitoDoDia } from './textosConceito.mjs'
+import { recursoDoDia } from './textosRecurso.mjs'
 
 /**
  * Corpos cujo aspecto vira assunto.
@@ -64,6 +65,8 @@ export function chaveDoAssunto(assunto) {
       return `educativo:${assunto.chave}`
     case 'conceito':
       return `conceito:${assunto.chave}`
+    case 'recurso':
+      return `recurso:${assunto.chave}`
     default:
       return `${assunto.tipo}:${assunto.signo || ''}`
   }
@@ -118,19 +121,22 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
   }
 
   /**
-   * 4 e 5: educativo e conceito, alternados.
+   * 4, 5 e 6: conceito, recurso e educativo, por quem apareceu menos.
    *
-   * A primeira versão punha o educativo na frente, e o resultado da simulação
-   * foi que em sessenta dias NENHUM conceito saiu: o catálogo sempre tem um
-   * planeta em signo disponível, então os quinze textos escritos nunca veriam
-   * uma peça. O João pediu os dois.
+   * Duas tentativas antes desta, e as duas medidas em sessenta dias:
    *
-   * A alternância é pelo dia do mês, o que a mantém determinística: regerar o
-   * mesmo dia devolve a mesma escolha. Se o preferido do dia estiver repetido
-   * na janela, o outro assume.
+   *   · educativo na frente dos outros → NENHUM conceito saiu, porque o
+   *     catálogo sempre tem um planeta em signo disponível;
+   *   · rodízio pelo dia do mês → conceito 5, recurso 1. Os dias sem evento no
+   *     céu são poucos e não caem espalhados pelo mês, então o dia do mês não
+   *     distribui coisa nenhuma.
+   *
+   * Aqui a vez é de quem menos apareceu na janela de catorze dias. Continua
+   * determinístico, porque a janela é a mesma para o mesmo dia, e se autocorrige
+   * quando o céu passa uma semana sem dar assunto.
    */
-  const diaDoMes = Number(String(iso).slice(8, 10)) || 1
-  const educativoPrimeiro = diaDoMes % 2 === 0
+  const quantosNaJanela = (prefixo) =>
+    [...usadas].filter((c) => c.startsWith(prefixo)).length
 
   const pegarEducativo = () => {
     if (!catalogos.planetaNoSigno && !catalogos.aspectoNatal) return null
@@ -149,11 +155,21 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
     return usadas.has(chaveDoAssunto(c)) ? null : c
   }
 
-  const primeiro = educativoPrimeiro ? pegarEducativo() : pegarConceito()
-  if (primeiro) return primeiro
+  const pegarRecurso = () => {
+    const r = { tipo: 'recurso', ...recursoDoDia(iso, usadas) }
+    return usadas.has(chaveDoAssunto(r)) ? null : r
+  }
 
-  const segundo = educativoPrimeiro ? pegarConceito() : pegarEducativo()
-  if (segundo) return segundo
+  const candidatos = [
+    { prefixo: 'conceito:', pegar: pegarConceito },
+    { prefixo: 'recurso:', pegar: pegarRecurso },
+    { prefixo: 'educativo:', pegar: pegarEducativo },
+  ].sort((a, b) => quantosNaJanela(a.prefixo) - quantosNaJanela(b.prefixo))
+
+  for (const { pegar } of candidatos) {
+    const escolhido = pegar()
+    if (escolhido) return escolhido
+  }
 
   // nunca devolver vazio: um dia sem peça é pior que um conceito repetido
   return { tipo: 'conceito', ...conceitoDoDia(iso, new Set()) }

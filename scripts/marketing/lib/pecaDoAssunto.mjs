@@ -214,6 +214,29 @@ function montar(assunto, { iso, catalogos }) {
         legendaAbre: '',
       }
 
+    /**
+     * O recurso do app é a única peça que mostra uma TELA.
+     *
+     * `tela` diz qual desenho entra na moldura e `onde` vai ao rodapé com o
+     * nome real da aba. `ponte` fecha a legenda dizendo o que aquele recurso
+     * resolve, em vez do genérico "faz de graça no link da bio" que serve para
+     * qualquer peça e por isso não convida para nenhuma.
+     */
+    case 'recurso':
+      return {
+        olho: 'no aplicativo',
+        titulo: assunto.titulo,
+        texto: assunto.texto,
+        tela: assunto.tela,
+        onde: assunto.onde,
+        ponte: assunto.ponte,
+        signo: ORDEM[somaDaChave(assunto.chave) % 12],
+        variacao: somaDaChave(assunto.chave),
+        glifo: false,
+        casas: false,
+        legendaAbre: '',
+      }
+
     default:
       throw new Error(`pecaDoAssunto: tipo sem tratamento: ${assunto.tipo}`)
   }
