@@ -21,14 +21,22 @@ import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+import { SANS, MONO, SERIF, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+import { NOITE, OURO, CREME, assinatura, CSS_ASSINATURA } from './marca.mjs'
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const PASTA_CEU = path.resolve(AQUI, '../assets/ceu')
 
-const VOID = '#070A18'
-const VELLUM = '#EDE6D8'
-const BRONZE = '#C9A227'
+/**
+ * A paleta vem da logo, e não mais de escolhas soltas.
+ *
+ * `marca.mjs` guarda o azul da noite, o dourado da estrela e o creme de
+ * "TÁBULA". Os nomes antigos continuam aqui como apelidos para o CSS abaixo não
+ * ter que mudar linha por linha.
+ */
+const VOID = NOITE
+const VELLUM = CREME
+const BRONZE = OURO
 
 /** Elemento de cada signo — decide a família visual do fundo. */
 const ELEMENTO = {
@@ -57,14 +65,29 @@ function lerAcervo() {
  * quebrava silenciosamente — a peça saía com fundo preto e ninguém notava até
  * olhar o PNG.
  *
+ * ── A PEÇA DA LUA NÃO USA FOTO DO SOL ──────────────────────────────────────
+ *
+ * As quatro imagens da família `fogo` são solar flares, e o João viu o
+ * resultado: uma peça de Lua fora de curso, em Leão, com o Sol ocupando o
+ * quadro inteiro. "Não tem nada a ver", e não tem mesmo.
+ *
+ * A escolha do elemento pelo signo continua valendo; o que muda é que, quando
+ * quem protagoniza é a Lua, a família do Sol sai da lista.
+ *
  * @param {string} signo   de onde sai o elemento
  * @param {number} variacao  para dois slides do mesmo elemento não repetirem
+ * @param {string} corpo  o protagonista, quando há um: `'Moon'` evita o Sol
  */
-export function fundoDeCeu(signo, variacao = 0) {
+export function fundoDeCeu(signo, variacao = 0, corpo = '') {
   const familia = ELEMENTO[signo] || 'ar'
   const todas = lerAcervo()
-  const doElemento = todas.filter((f) => f.startsWith(familia))
-  const lista = doElemento.length ? doElemento : todas
+
+  const permitidas = corpo === 'Moon'
+    ? todas.filter((f) => !f.startsWith('fogo'))
+    : todas
+
+  const doElemento = permitidas.filter((f) => f.startsWith(familia))
+  const lista = doElemento.length ? doElemento : permitidas
   const escolhida = lista[Math.abs(variacao) % lista.length]
 
   const bytes = readFileSync(path.join(PASTA_CEU, escolhida))
@@ -86,7 +109,8 @@ export function montarFoto(peca) {
   const largura = 1080
   const altura = story ? 1920 : 1350
 
-  const fundo = fundoDeCeu(peca.signo, peca.variacao || 0)
+  // `corpo` vem da peça: quando é a Lua, o fundo não pode ser uma foto do Sol
+  const fundo = fundoDeCeu(peca.signo, peca.variacao || 0, peca.corpo || '')
 
   /**
    * O corpo do texto acompanha o tamanho.
@@ -188,9 +212,11 @@ export function montarFoto(peca) {
     margin-bottom: 2.4cqw;
   }
 
+  /* O título na serif do logotipo. O corpo do texto continua na sans:
+     Cinzel tem altura de x pequena e vira decoração ilegível em parágrafo. */
   .titulo {
-    font-family: ${SANS}; font-weight: 400; color: ${VELLUM};
-    font-size: 8.4cqw; line-height: 1.04; letter-spacing: -0.015em;
+    font-family: ${SERIF}; font-weight: 600; color: ${VELLUM};
+    font-size: 7.2cqw; line-height: 1.12; letter-spacing: 0.005em;
     text-wrap: balance; white-space: pre-line;
     text-shadow: 0 0.4cqw 3cqw rgba(7,10,24,0.9);
   }
@@ -207,8 +233,9 @@ export function montarFoto(peca) {
     border-top: 0.12cqw solid rgba(237,230,216,0.22);
     font-family: ${MONO}; font-size: 2.2cqw; letter-spacing: 0.12em;
     color: rgba(237,230,216,0.55);
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; justify-content: space-between; align-items: center;
   }
+  ${CSS_ASSINATURA}
 </style></head>
 <body>
   <div class="peca">
@@ -221,7 +248,7 @@ export function montarFoto(peca) {
       ${peca.texto ? `<p class="texto">${escapar(peca.texto)}</p>` : ''}
       <div class="rodape">
         <span>${escapar(peca.rodape || '')}</span>
-        <span>@tabula_estelar</span>
+        ${assinatura(26)}
       </div>
     </div>
   </div>

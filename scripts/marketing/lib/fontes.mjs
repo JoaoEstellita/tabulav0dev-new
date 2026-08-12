@@ -59,6 +59,11 @@ export function fontesEmbutidas(sans = 'inter') {
     font-family: 'TE Mono';
     src: url(data:font/woff2;base64,${base64('mono.woff2')}) format('woff2');
     font-weight: 100 800; font-style: normal; font-display: block;
+  }
+  @font-face {
+    font-family: 'TE Serif';
+    src: url(data:font/woff2;base64,${base64('serif.woff2')}) format('woff2');
+    font-weight: 400 900; font-style: normal; font-display: block;
   }`
 }
 
@@ -70,6 +75,16 @@ export function fontesEmbutidas(sans = 'inter') {
  */
 export const SANS = "'TE Sans', system-ui, -apple-system, 'Segoe UI', sans-serif"
 export const MONO = "'TE Mono', ui-monospace, Consolas, 'DejaVu Sans Mono', monospace"
+
+/**
+ * A serif do TÍTULO, e só dele.
+ *
+ * É Cinzel, romana de caixa alta, a mais próxima do desenho do logotipo, que é
+ * do mesmo gênero de letra. O corpo do texto continua na sans: Cinzel tem
+ * altura de x pequena e não é feita para parágrafo, e usá-la no texto longo
+ * deixaria a peça bonita e ilegível a 380px.
+ */
+export const SERIF = "'TE Serif', 'Cinzel', Georgia, 'Times New Roman', serif"
 
 /**
  * Qual sans usar, com um respiro para experimentar sem editar código.

@@ -10,12 +10,14 @@
  * para a peça de recurso pertencer visivelmente à mesma conta.
  */
 import { fundoDeCeu } from './templateFoto.mjs'
-import { SANS, MONO, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+import { SANS, MONO, SERIF, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+import { NOITE, OURO, CREME, assinatura, CSS_ASSINATURA } from './marca.mjs'
 import { molduraDeCelular, estiloDoApp } from './telaDoApp.mjs'
 
-const VOID = '#070A18'
-const VELLUM = '#EDE6D8'
-const BRONZE = '#C9A227'
+// mesma paleta da logo que `templateFoto` usa, pelos mesmos nomes
+const VOID = NOITE
+const VELLUM = CREME
+const BRONZE = OURO
 
 const escapar = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -93,8 +95,8 @@ export function montarRecurso(peca) {
   }
 
   .titulo {
-    font-family: ${SANS}; font-weight: 400; color: ${VELLUM};
-    font-size: 6.4cqw; line-height: 1.04; letter-spacing: -0.015em;
+    font-family: ${SERIF}; font-weight: 600; color: ${VELLUM};
+    font-size: 5.6cqw; line-height: 1.14; letter-spacing: 0.005em;
     white-space: pre-line;
     text-shadow: 0 0.4cqw 3cqw rgba(7,10,24,0.9);
   }
@@ -110,8 +112,9 @@ export function montarRecurso(peca) {
     border-top: 0.12cqw solid rgba(237,230,216,0.22);
     font-family: ${MONO}; font-size: 2.2cqw; letter-spacing: 0.12em;
     color: rgba(237,230,216,0.55);
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; justify-content: space-between; align-items: center;
   }
+  ${CSS_ASSINATURA}
 </style></head>
 <body>
   <div class="peca">
@@ -125,7 +128,7 @@ export function montarRecurso(peca) {
         ${peca.texto ? `<p class="texto">${escapar(peca.texto)}</p>` : ''}
         <div class="rodape">
           <span>${escapar(peca.onde || '')}</span>
-          <span>@tabula_estelar</span>
+          ${assinatura(24)}
         </div>
       </div>
     </div>
