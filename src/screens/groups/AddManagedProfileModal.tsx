@@ -111,7 +111,14 @@ export default function AddManagedProfileModal({ visible, onClose, groupId, onCr
 
             <Text style={styles.label}>{tl('Cidade de nascimento', 'Birth city', 'Ciudad de nacimiento', 'Città di nascita')}</Text>
             <TextInput style={styles.input} value={picked ? picked.displayName : cityQuery} onChangeText={onCityChange}
-              placeholder={tl('Buscar cidade…', 'Search city…', 'Buscar ciudad…', 'Cerca città…')} placeholderTextColor="#667" />
+              placeholder={tl('Digite e toque na cidade', 'Type and tap the city', 'Escribe y toca la ciudad', 'Scrivi e tocca la città')} placeholderTextColor="#667" />
+            {picked ? (
+              <Text style={styles.cityOk}>✓ {picked.displayName}</Text>
+            ) : cityQuery.trim().length >= 2 ? (
+              <Text style={styles.cityHint}>{tl('Toque na cidade certa na lista abaixo.', 'Tap the right city in the list below.', 'Toca la ciudad correcta en la lista.', 'Tocca la città giusta nella lista.')}</Text>
+            ) : (
+              <Text style={styles.hint}>{tl('Digite e escolha na lista (precisa das coordenadas exatas).', 'Type and pick from the list (exact coordinates needed).', 'Escribe y elige de la lista (coordenadas exactas).', 'Scrivi e scegli dalla lista (coordinate esatte).')}</Text>
+            )}
             {!picked && suggestions.length > 0 ? (
               <View style={styles.suggestBox}>
                 {suggestions.slice(0, 6).map((s, i) => (
@@ -147,6 +154,8 @@ const styles = StyleSheet.create({
   input: { backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#F8FAFC', fontSize: 15 },
   row: { flexDirection: 'row', gap: 10 },
   hint: { color: '#777', fontSize: 11, marginTop: 4 },
+  cityHint: { color: '#FFD700', fontSize: 11, marginTop: 4, fontWeight: '600' },
+  cityOk: { color: '#4ECDC4', fontSize: 12, marginTop: 4, fontWeight: '700' },
   suggestBox: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, marginTop: 4, overflow: 'hidden' },
   suggestItem: { paddingHorizontal: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
   suggestText: { color: '#E2E8F0', fontSize: 14 },
