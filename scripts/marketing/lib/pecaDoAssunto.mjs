@@ -52,6 +52,10 @@ export function corpoDoAssunto(a) {
 const ORDEM = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
   'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
 
+/** Um número estável a partir de um texto, para escolher fundo sem sortear. */
+const somaDaChave = (chave) =>
+  String(chave || '').split('').reduce((soma, c) => soma + c.charCodeAt(0), 0)
+
 /**
  * A peça de um assunto.
  *
@@ -61,7 +65,7 @@ const ORDEM = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
  */
 export function pecaDoAssunto(assunto, { iso, catalogos = null } = {}) {
   // `glifo: true` é o padrão; só o conceito o desliga, e ele diz isso no ramo
-  const peca = { glifo: true, ...montar(assunto, { iso, catalogos }) }
+  const peca = { glifo: true, variacao: 0, ...montar(assunto, { iso, catalogos }) }
 
   /**
    * O travessão morre aqui, e não em cada ramo.
@@ -191,8 +195,18 @@ function montar(assunto, { iso, catalogos }) {
         olho: 'astrologia por dentro',
         titulo: assunto.titulo,
         texto: assunto.texto,
-        // sem signo próprio: a foto roda pelo dia para não repetir
-        signo: ORDEM[(Number(String(iso || '').slice(8, 10)) || 1) % 12],
+        /**
+         * A foto sai da CHAVE, não da data.
+         *
+         * Vinha do dia do mês, e três conceitos gerados no mesmo dia saíram
+         * com a mesma imagem. Pela chave, cada conceito tem sempre o mesmo
+         * fundo: "a casa 12" é reconhecível de longe no feed, e é isso que
+         * um conteúdo de série precisa.
+         */
+        signo: ORDEM[somaDaChave(assunto.chave) % 12],
+        // e a foto varia DENTRO do elemento: são 2 a 4 por família, e sem isto
+        // todo conceito de água sairia com a mesma nebulosa
+        variacao: somaDaChave(assunto.chave),
         // e sem glifo: o desenho de Câncer num post sobre o ascendente faz a
         // peça parecer sobre Câncer, que é o oposto do que ela diz
         glifo: false,

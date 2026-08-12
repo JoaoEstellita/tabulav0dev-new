@@ -33,6 +33,7 @@ import { casasPorAscendente } from './lib/fatos.mjs'
 import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
 import { assuntoDoDia, chaveDoAssunto } from './lib/assuntoDoDia.mjs'
+import { conceitoDoDia, CONCEITO, CHAVES_DE_CONCEITO } from './lib/textosConceito.mjs'
 import { pecaDoAssunto } from './lib/pecaDoAssunto.mjs'
 import { lerHistorico, salvarHistorico, chavesRecentes } from './lib/historico.mjs'
 
@@ -71,6 +72,11 @@ function lerArgs(argv) {
     else if (a.startsWith('--saida=')) args.saida = path.resolve(a.slice(8))
     // o que o João marcou no Estúdio; vazio = tudo que o evento comporta
     else if (a.startsWith('--formatos=')) args.formatos = a.slice(11).split(',').filter(Boolean)
+    // trocar o assunto do dia à mão: `--conceito` pega o da vez,
+    // `--conceito=orbe` pega aquele
+    else if (a === '--conceito') args.conceito = '*'
+    else if (a.startsWith('--conceito=')) args.conceito = a.slice(11)
+    else if (a === '--listar-conceitos') args.listarConceitos = true
   }
   if (args.upload && !args.senha) {
     throw new Error('Upload pedido, mas falta MONITORING_PASSWORD no ambiente.')
@@ -119,6 +125,14 @@ async function renderizar(chrome, html, destino, altura) {
 
 async function principal() {
   const args = lerArgs(process.argv)
+
+  if (args.listarConceitos) {
+    for (const chave of CHAVES_DE_CONCEITO) {
+      console.log(`  ${chave.padEnd(18)} ${CONCEITO[chave].titulo.replace('\n', ' ')}`)
+    }
+    return
+  }
+
   const chrome = acharChrome()
 
   const iso = args.data || new Date().toISOString().slice(0, 10)
@@ -163,7 +177,16 @@ async function principal() {
   const historico = await lerHistorico(args.saida)
   const usadas = chavesRecentes(historico, iso)
 
-  const assunto = assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
+  /**
+   * O conceito pedido à mão vence a cascata.
+   *
+   * A cascata é boa para o cron, que roda sozinho às seis da manhã, e ruim para
+   * o dia em que o João quer publicar um educativo específico: sem isto, a
+   * única forma seria esperar o céu ficar quieto.
+   */
+  const assunto = args.conceito
+    ? { tipo: 'conceito', ...conceitoDoDia(iso, usadas, args.conceito) }
+    : assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
   const peca = pecaDoAssunto(assunto, { iso, catalogos })
 
   // O aviso continua: assunto do céu sem texto escrito cai no catálogo natal,
@@ -184,7 +207,7 @@ async function principal() {
     rodape: '',
     signo: peca.signo,
     simbolo: peca.glifo ? svgDoSigno(peca.signo) : '',
-    variacao: 0,
+    variacao: peca.variacao,
   }
 
   await renderizar(chrome, montarFoto({ ...base, formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
@@ -234,8 +257,21 @@ ${ascendente}`,
 
   const tituloDeUmaLinha = peca.titulo.replace(/\n/g, ' ')
 
+  /**
+   * A primeira linha leva a DATA, quando existe uma.
+   *
+   * Levava o olho, e no conceito o olho é uma etiqueta de seção: a legenda saía
+   * "A casa 12, a mais temida · astrologia por dentro", como se a seção fosse a
+   * data do evento.
+   */
+  const dataDoAssunto = assunto.quando
+    ? new Intl.DateTimeFormat('pt-BR', {
+      day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo',
+    }).format(assunto.quando)
+    : ''
+
   const legenda = [
-    peca.olho ? `${tituloDeUmaLinha} · ${peca.olho}` : tituloDeUmaLinha,
+    dataDoAssunto ? `${tituloDeUmaLinha} · ${dataDoAssunto}` : tituloDeUmaLinha,
     '',
     // o que explica o fenômeno antes da leitura: a abertura do eclipse, a regra
     // da tradição na lua fora de curso

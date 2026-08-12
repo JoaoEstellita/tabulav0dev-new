@@ -174,7 +174,17 @@ export const CHAVES_DE_CONCEITO = Object.keys(CONCEITO)
  * janela, volta ao começo em vez de devolver nada, porque um dia sem peça é
  * pior que um conceito repetido.
  */
-export function conceitoDoDia(iso, usadas = new Set()) {
+export function conceitoDoDia(iso, usadas = new Set(), pedido = '') {
+  // pedido à mão pela linha de comando: `--conceito=orbe`
+  if (pedido && pedido !== '*') {
+    if (!CONCEITO[pedido]) {
+      throw new Error(
+        `conceito "${pedido}" não existe. Há: ${CHAVES_DE_CONCEITO.join(', ')}`
+      )
+    }
+    return { chave: pedido, ...CONCEITO[pedido] }
+  }
+
   const semente = Number(String(iso).replace(/-/g, '')) || 0
   const total = CHAVES_DE_CONCEITO.length
 
