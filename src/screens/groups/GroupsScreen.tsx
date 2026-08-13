@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   View,
   Text,
@@ -45,6 +45,7 @@ import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transi
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalLongitudes, type SynastryAspect } from "../../astro/synastry"
+import { synastryScore, synastryAspectLine } from "../../astro/synastryReading"
 import type { RealPlanetPosition } from "../../services/astrology/RealAstrologyEngine"
 import { gunaMilanBetween } from "../../astro/vedic"
 import { resolveGunaMilan, type ResolvedGunaMilan } from "../../utils/vedicInterpretation"
@@ -188,6 +189,15 @@ export default function GroupsScreen() {
   const [pairSynastry, setPairSynastry] = useState<PairSynastry[]>([])
   const [synastryLoading, setSynastryLoading] = useState(false)
   const [synastryMineMissing, setSynastryMineMissing] = useState(false)
+  // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
+  const [expandedSyn, setExpandedSyn] = useState<Set<string>>(new Set())
+  const toggleSyn = useCallback((key: string) => {
+    setExpandedSyn((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }, [])
 
   // Estados para modal de detalhes
   const [showGroupDetail, setShowGroupDetail] = useState(false)
@@ -580,7 +590,7 @@ export default function GroupsScreen() {
           const theirDatetime = member.birthData?.datetime
           if (theirs && theirDatetime) {
             chartByOther[member.userId] = theirs
-            result[member.userId] = computeSynastryAspects(mine, theirs, 5)
+            result[member.userId] = computeSynastryAspects(mine, theirs, 20)
             // Guna Milan (lente védica) — determinístico, a partir das Luas natais.
             const g = gunaMilanBetween(mine, mineDate, theirs, new Date(theirDatetime))
             if (g) gm[member.userId] = resolveGunaMilan(g)
@@ -594,7 +604,7 @@ export default function GroupsScreen() {
           for (let j = i + 1; j < withChart.length; j++) {
             const A = withChart[i]
             const B = withChart[j]
-            const aspects = computeSynastryAspects(chartByOther[A.userId], chartByOther[B.userId], 5)
+            const aspects = computeSynastryAspects(chartByOther[A.userId], chartByOther[B.userId], 20)
             let guna: ResolvedGunaMilan | undefined
             const da = A.birthData?.datetime
             const db = B.birthData?.datetime
@@ -1742,6 +1752,83 @@ export default function GroupsScreen() {
     return getBucketPriority(bucket)
   }
 
+  // Corpo da sinastria (compartilhado pelo Você×membro e pela matriz membro×membro):
+  // índice de compatibilidade + aspectos (top-5, ou todos quando expandido, com texto
+  // legível) + Guna Milan (total, ou 8 kutas detalhados quando expandido).
+  const renderSynastryBody = (key: string, aspects: SynastryAspect[], guna?: ResolvedGunaMilan) => {
+    const expanded = expandedSyn.has(key)
+    const score = synastryScore(aspects)
+    const shown = expanded ? aspects : aspects.slice(0, 5)
+    const isPt = language === 'pt-BR'
+    return (
+      <>
+        {aspects.length > 0 ? (
+          <View style={styles.synastryCompatRow}>
+            <Text style={styles.synastryCompatText}>
+              {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
+            </Text>
+            <Text style={styles.synastryCompatMeta}>
+              {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}`}
+            </Text>
+          </View>
+        ) : null}
+        {aspects.length === 0 ? (
+          <Text style={styles.synastryEmpty}>{tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}</Text>
+        ) : (
+          shown.map((asp, index) => {
+            const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
+            const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
+            const line = expanded ? synastryAspectLine(asp, language) : ''
+            return (
+              <View key={`${key}-syn-${index}`} style={styles.synastryAspectItem}>
+                <View style={styles.synastryRow}>
+                  <View style={[styles.synastryToneDot, { backgroundColor: toneColor }]} />
+                  <Text style={styles.synastryAspectText} numberOfLines={1}>
+                    {`${translatePlanet(asp.mine, language)} ${asp.symbol} ${translatePlanet(asp.theirs, language)}`}
+                  </Text>
+                  <Text style={styles.synastryMeta}>{`${toneLabel} · ${asp.orb.toFixed(1)}°`}</Text>
+                </View>
+                {line ? <Text style={styles.synastryAspectLineText}>{line}</Text> : null}
+              </View>
+            )
+          })
+        )}
+        {aspects.length > 0 ? (
+          <TouchableOpacity style={styles.synastryToggle} onPress={() => toggleSyn(key)} activeOpacity={0.7}>
+            <Text style={styles.synastryToggleText}>
+              {expanded ? tr('groups.synastry.hideFull', 'Recolher ▴') : tr('groups.synastry.viewFull', 'Ver leitura completa ▾')}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+        {guna ? (
+          <View style={styles.gunaBox}>
+            <Text style={styles.gunaTitle}>
+              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36{isPt && guna.bandFaixa ? ` · ${guna.bandFaixa}` : ''}
+            </Text>
+            {!expanded ? (
+              <Text style={styles.gunaMeta}>
+                {guna.hasNadiDosha
+                  ? tr('groups.vedic.nadiDosha', 'Nadi dosha — atenção')
+                  : tr('groups.vedic.nadiOk', 'Nadi ok (fator-chave)')}
+                {guna.hasBhakootDosha ? ` · ${tr('groups.vedic.bhakootDosha', 'Bhakoot dosha')}` : ''}
+              </Text>
+            ) : (
+              <>
+                {guna.kutas.map((k) => (
+                  <View key={`${key}-kuta-${k.key}`} style={styles.gunaKutaRow}>
+                    <Text style={styles.gunaKutaName}>{k.nome}{k.dosha ? ' ⚠' : ''}</Text>
+                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.leitura ? ` · ${k.leitura}` : ''}</Text>
+                  </View>
+                ))}
+                {isPt && guna.bandTexto ? <Text style={styles.gunaBandText}>{guna.bandTexto}</Text> : null}
+              </>
+            )}
+          </View>
+        ) : null}
+      </>
+    )
+  }
+
   const sortedMembers = [...groupMembers].sort((a, b) => {
     if (memberSort === "name") {
       return a.displayName.localeCompare(b.displayName)
@@ -2155,39 +2242,7 @@ export default function GroupsScreen() {
                           <Text style={styles.synastryMemberName} numberOfLines={1}>
                             {member.displayName}
                           </Text>
-                          {aspects.length === 0 ? (
-                            <Text style={styles.synastryEmpty}>
-                              {tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}
-                            </Text>
-                          ) : (
-                            aspects.map((asp, index) => {
-                              const toneColor =
-                                asp.tone === "harmonioso" ? "#4ECDC4" : asp.tone === "tenso" ? "#FF6B6B" : "#B39DDB"
-                              const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
-                              return (
-                                <View key={`${member.userId}-syn-${index}`} style={styles.synastryRow}>
-                                  <View style={[styles.synastryToneDot, { backgroundColor: toneColor }]} />
-                                  <Text style={styles.synastryAspectText} numberOfLines={1}>
-                                    {`${translatePlanet(asp.mine, language)} ${asp.symbol} ${translatePlanet(asp.theirs, language)}`}
-                                  </Text>
-                                  <Text style={styles.synastryMeta}>{`${toneLabel} · ${asp.orb.toFixed(1)}°`}</Text>
-                                </View>
-                              )
-                            })
-                          )}
-                          {gunaMilanByMember[member.userId] ? (
-                            <View style={styles.gunaBox}>
-                              <Text style={styles.gunaTitle}>
-                                {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {gunaMilanByMember[member.userId].total}/36
-                              </Text>
-                              <Text style={styles.gunaMeta}>
-                                {gunaMilanByMember[member.userId].hasNadiDosha
-                                  ? tr('groups.vedic.nadiDosha', 'Nadi dosha — atenção')
-                                  : tr('groups.vedic.nadiOk', 'Nadi ok (fator-chave)')}
-                                {gunaMilanByMember[member.userId].hasBhakootDosha ? ` · ${tr('groups.vedic.bhakootDosha', 'Bhakoot dosha')}` : ''}
-                              </Text>
-                            </View>
-                          ) : null}
+                          {renderSynastryBody(member.userId, aspects, gunaMilanByMember[member.userId])}
                         </View>
                       )
                     })
@@ -2215,39 +2270,7 @@ export default function GroupsScreen() {
                     <Text style={styles.synastryMemberName} numberOfLines={1}>
                       {`${pair.aName}  ×  ${pair.bName}`}
                     </Text>
-                    {pair.aspects.length === 0 ? (
-                      <Text style={styles.synastryEmpty}>
-                        {tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}
-                      </Text>
-                    ) : (
-                      pair.aspects.map((asp, index) => {
-                        const toneColor =
-                          asp.tone === "harmonioso" ? "#4ECDC4" : asp.tone === "tenso" ? "#FF6B6B" : "#B39DDB"
-                        const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
-                        return (
-                          <View key={`${pair.id}-syn-${index}`} style={styles.synastryRow}>
-                            <View style={[styles.synastryToneDot, { backgroundColor: toneColor }]} />
-                            <Text style={styles.synastryAspectText} numberOfLines={1}>
-                              {`${translatePlanet(asp.mine, language)} ${asp.symbol} ${translatePlanet(asp.theirs, language)}`}
-                            </Text>
-                            <Text style={styles.synastryMeta}>{`${toneLabel} · ${asp.orb.toFixed(1)}°`}</Text>
-                          </View>
-                        )
-                      })
-                    )}
-                    {pair.guna ? (
-                      <View style={styles.gunaBox}>
-                        <Text style={styles.gunaTitle}>
-                          {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {pair.guna.total}/36
-                        </Text>
-                        <Text style={styles.gunaMeta}>
-                          {pair.guna.hasNadiDosha
-                            ? tr('groups.vedic.nadiDosha', 'Nadi dosha — atenção')
-                            : tr('groups.vedic.nadiOk', 'Nadi ok (fator-chave)')}
-                          {pair.guna.hasBhakootDosha ? ` · ${tr('groups.vedic.bhakootDosha', 'Bhakoot dosha')}` : ''}
-                        </Text>
-                      </View>
-                    ) : null}
+                    {renderSynastryBody(pair.id, pair.aspects, pair.guna)}
                   </View>
                 ))}
                 <Text style={styles.synastryFootnote}>
@@ -3639,6 +3662,63 @@ const styles = StyleSheet.create({
     color: "#8892a4",
     fontSize: 11,
     marginTop: 2,
+  },
+  synastryCompatRow: {
+    marginBottom: 8,
+  },
+  synastryCompatText: {
+    color: "#FFD700",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  synastryCompatMeta: {
+    color: "#8890B5",
+    fontSize: 11,
+    marginTop: 1,
+  },
+  synastryAspectItem: {
+    marginBottom: 2,
+  },
+  synastryAspectLineText: {
+    color: "#B8C0DC",
+    fontSize: 12,
+    lineHeight: 16,
+    marginLeft: 16,
+    marginTop: 1,
+    marginBottom: 4,
+  },
+  synastryToggle: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  synastryToggleText: {
+    color: "#8FB0FF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  gunaKutaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 3,
+    gap: 8,
+  },
+  gunaKutaName: {
+    color: "#C8CEE6",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  gunaKutaMeta: {
+    color: "#8892a4",
+    fontSize: 11,
+    flex: 1,
+    textAlign: "right",
+  },
+  gunaBandText: {
+    color: "#B8C0DC",
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 6,
+    fontStyle: "italic",
   },
   memberAreaBackdrop: {
     flex: 1,
