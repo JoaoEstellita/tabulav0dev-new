@@ -268,6 +268,51 @@ export class RealAstrologyEngine {
     return ((omega % 360) + 360) % 360
   }
 
+  /**
+   * Lilith média (Lua Negra = apogeu lunar médio), fórmula de Meeus.
+   * Apogeu = perigeu + 180°; perigeu = L' − M' (long. média − anomalia média da Lua).
+   * T em séculos julianos desde J2000. Retorna longitude eclíptica 0–360°.
+   */
+  static calculateMeanLilith(date: Date): number {
+    const jd = date.getTime() / 86400000 + 2440587.5
+    const T = (jd - 2451545.0) / 36525
+    const Lp = 218.3164477 + 481267.88123421 * T - 0.0015786 * T * T + (T * T * T) / 538841 - (T * T * T * T) / 65194000
+    const Mp = 134.9633964 + 477198.8675055 * T + 0.0087414 * T * T + (T * T * T) / 69699 - (T * T * T * T) / 14712000
+    const lilith = Lp - Mp + 180
+    return ((lilith % 360) + 360) % 360
+  }
+
+  /**
+   * Acrescenta a Lilith (Lua Negra média) à lista de planetas natais, com signo e
+   * casa. Só entra no `natalPlanets` EXPOSTO — fica fora dos cálculos de dignidades,
+   * lifeAreas e comparações (que já rodaram sobre a lista sem Lilith).
+   */
+  private static withLilith(natalPlanets: RealPlanetPosition[], birthDate: Date, natalHouses: HouseMeta): RealPlanetPosition[] {
+    if (!Array.isArray(natalPlanets) || natalPlanets.some(p => p.name === 'Lilith')) return natalPlanets
+    const lon = this.calculateMeanLilith(birthDate)
+    const signIndex = Math.floor(lon / 30)
+    const asc = Number.isFinite(natalHouses?.ascendant) ? natalHouses.ascendant : natalHouses?.cusps?.[0]
+    let house = 1
+    try {
+      if (Array.isArray(natalHouses?.cusps) && natalHouses.cusps.length >= 12 && Number.isFinite(asc)) {
+        const system = normalizeHouseSystem(natalHouses.system || natalHouses.systemEffective || (globalThis as any).__userHouseSystem || 'whole-sign')
+        house = getPlanetHouse({ planetLongitude: lon, ascLongitude: asc as number, houseCusps: natalHouses.cusps, system })
+      }
+    } catch { /* mantém casa 1 no erro */ }
+    const lilith: RealPlanetPosition = {
+      name: 'Lilith',
+      longitude: lon,
+      latitude: 0,
+      distance: 0,
+      speed: 0.111, // apogeu médio avança ~40,7°/ano ≈ 0,111°/dia
+      sign: this.SIGNS[signIndex] || 'Áries',
+      degree: lon % 30,
+      house,
+      isRetrograde: false,
+    }
+    return [...natalPlanets, lilith]
+  }
+
   private static readonly PLANETS = [
     'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
     'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'
@@ -709,7 +754,8 @@ export class RealAstrologyEngine {
         statusPersonal,
         lifeAreas,
         // Ã°Å¸Å’Å¸ NOVAS FUNCIONALIDADES GRATUITAS
-        natalPlanets,
+        // Lilith entra só aqui (na lista exposta), depois de dignidades/lifeAreas
+        natalPlanets: RealAstrologyEngine.withLilith(natalPlanets, birthDateTime, natalHouses),
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
         natalNorthNode: RealAstrologyEngine.calculateMeanLunarNode(birthDateTime),

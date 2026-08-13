@@ -25,12 +25,12 @@ import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyE
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
   Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅',
-  Neptune: '♆', Pluto: '♇',
+  Neptune: '♆', Pluto: '♇', Lilith: '⚸',
 }
 const PLANET_COLORS: Record<string, string> = {
   Sun: '#FFD700', Moon: '#C0C0FF', Mercury: '#A0C8FF', Venus: '#FFB0C8',
   Mars: '#FF7070', Jupiter: '#FFB060', Saturn: '#D0D070', Uranus: '#70D0D0',
-  Neptune: '#8080FF', Pluto: '#C080C0',
+  Neptune: '#8080FF', Pluto: '#C080C0', Lilith: '#B080D0',
 }
 const ZODIAC_SYMBOLS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
 const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']

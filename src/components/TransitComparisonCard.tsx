@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { PlanetComparison, ChartSummary } from '../services/astrology/RealAstrologyEngine'
 import { decodeUnicodeEscapes, translatePlanet } from '../utils/astro/pt'
 import { normalizeKey } from '../utils/astro/normalizeKey'
+import { getPlanetMeaning } from '../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../config/planetImageSource'
 import useTransits from '../hooks/useTransits'
 import { useUserSettings } from '../hooks/useUserSettings'
@@ -827,21 +828,24 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
     if (!planetMeaningPlanet) return null
     const comparison = comparisonByPlanet[planetMeaningPlanet]
     if (!comparison) return null
+    // Texto real e acessível por planeta (catálogo planetMeaning). Cai nos genéricos
+    // antigos só se a chave faltar.
+    const meaning = getPlanetMeaning(planetMeaningPlanet, language)
     const content = {
       title: translatePlanetName(planetMeaningPlanet),
-      essence: tl(
+      essence: meaning?.essence ?? tl(
         'Força arquetípica em leitura aplicada.',
         'Archetypal force in applied reading.',
         'Fuerza arquetípica en lectura aplicada.',
         'Forza archetipica in lettura applicata.'
       ),
-      inAspect: tl(
+      inAspect: meaning?.inAspect ?? tl(
         'Nos aspectos, mostra como a energia encontra apoio, tensão e ajuste.',
         'In aspects, it shows how energy meets support, tension, and adjustment.',
         'En los aspectos, muestra cómo la energía encuentra apoyo, tensión y ajuste.',
         'Negli aspetti, mostra come l energia incontra supporto, tensione e regolazione.'
       ),
-      inHouse: tl(
+      inHouse: meaning?.inHouse ?? tl(
         'Na casa, indica o campo da vida mais ativado no momento.',
         'In the house, it indicates the life field most activated right now.',
         'En la casa, indica el campo de vida más activado en este momento.',
@@ -931,7 +935,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         `Nel tema natale, ${translatePlanetName(planetMeaningPlanet)} è in Casa ${natalHouse || '-'}: ${natalFocus}.`
       ),
     }
-  }, [planetMeaningPlanet, comparisonByPlanet, getHouseFocus, getPlanetKeyword, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName, tl])
+  }, [planetMeaningPlanet, comparisonByPlanet, getHouseFocus, getPlanetKeyword, natalHousesCusps, personalByTransitPlanet, resolvePlanetImageUri, translatePlanetName, tl, language])
 
   const renderAttributeChips = React.useCallback((
     element?: string | null,

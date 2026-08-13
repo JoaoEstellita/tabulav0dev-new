@@ -19,6 +19,7 @@ import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { normalizeSign } from '../../astro/normalize'
+import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
@@ -26,10 +27,10 @@ import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyE
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
   Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅',
-  Neptune: '♆', Pluto: '♇',
+  Neptune: '♆', Pluto: '♇', Lilith: '⚸',
 }
 
-const PLANET_ORDER = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+const PLANET_ORDER = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Lilith']
 
 // Regentes modernos — mesma tradição (psicológica) dos catálogos do app.
 const SIGN_RULER_EN: Record<string, string> = {
@@ -52,7 +53,8 @@ const signRuler = (sign: string): string | undefined => SIGN_RULER_EN[normalizeS
 // Imagem do planeta (mesma fonte usada no PlanetQuickNav e nos modais de leitura).
 // Só os 10 planetas têm arte — ângulos (Asc/MC) caem no símbolo textual.
 const planetImage = (name: string): string | undefined => {
-  if (!PLANET_ORDER.includes(name)) return undefined
+  // Lilith não tem arte própria → cai no glifo ⚸ do PlanetAvatar.
+  if (!PLANET_ORDER.includes(name) || name === 'Lilith') return undefined
   try { return getPlanetImageUri(name as PlanetKey) } catch { return undefined }
 }
 
@@ -373,6 +375,58 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     [nnHouse, language],
   )
 
+  // Casa do Nódulo Sul (oposto ao Norte) via cúspides natais.
+  const snHouse = useMemo(() => {
+    const cusps = ct?.natalHouses
+    if (natalNorthNode === null || !Array.isArray(cusps) || cusps.length < 12) return null
+    const sn = (natalNorthNode + 180) % 360
+    for (let i = 0; i < 12; i++) {
+      const start = cusps[i]
+      const end = cusps[(i + 1) % 12]
+      const span = ((end - start) % 360 + 360) % 360
+      const offset = ((sn - start) % 360 + 360) % 360
+      if (offset < span || span === 0) return i + 1
+    }
+    return null
+  }, [natalNorthNode, ct?.natalHouses])
+
+  const snEssence = useMemo(
+    () => getPlanetMeaning('southnode', language)?.essence ?? null,
+    [language],
+  )
+
+  // Parte da Fortuna: ponto de fluidez (Sol/Lua/ASC + secta diurna/noturna).
+  const partOfFortune = useMemo(() => {
+    const asc = ct?.natalAscendant
+    const sun = natalPlanets.find(p => p.name === 'Sun')
+    const moon = natalPlanets.find(p => p.name === 'Moon')
+    if (typeof asc !== 'number' || !sun || !moon) return null
+    const isDay = sun.house >= 7 && sun.house <= 12 // Sol acima do horizonte → carta diurna
+    const raw = isDay
+      ? asc + moon.longitude - sun.longitude
+      : asc + sun.longitude - moon.longitude
+    const lon = ((raw % 360) + 360) % 360
+    let sign: { sign: string; degInSign: number } | null = null
+    try { sign = degToSign(lon) } catch { sign = null }
+    let house: number | null = null
+    const cusps = ct?.natalHouses
+    if (Array.isArray(cusps) && cusps.length >= 12) {
+      for (let i = 0; i < 12; i++) {
+        const start = cusps[i]
+        const end = cusps[(i + 1) % 12]
+        const span = ((end - start) % 360 + 360) % 360
+        const offset = ((lon - start) % 360 + 360) % 360
+        if (offset < span || span === 0) { house = i + 1; break }
+      }
+    }
+    return { lon, sign, house, isDay }
+  }, [ct?.natalAscendant, ct?.natalHouses, natalPlanets])
+
+  const fortuneEssence = useMemo(
+    () => getPlanetMeaning('fortune', language)?.essence ?? null,
+    [language],
+  )
+
   // Signo na cúspide de CADA uma das 12 casas. O catálogo signo-na-casa tem 12×12
   // entradas curadas, mas a tela só usava a casa 1 (via ASC) — as outras 11 nunca
   // chegavam ao usuário.
@@ -484,8 +538,14 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
             {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
           </Text>
           {orderedPlanets.map(p => {
-            const signText = resolvePlanetInSignText(p.name, p.sign, language)
-            const houseText = p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null
+            // Lilith não tem catálogo signo/casa curado → mostra a essência acessível.
+            const isLilith = p.name === 'Lilith'
+            const signText = isLilith
+              ? (getPlanetMeaning('lilith', language)?.essence ?? null)
+              : resolvePlanetInSignText(p.name, p.sign, language)
+            const houseText = isLilith
+              ? null
+              : (p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null)
             return (
               <View key={p.name} style={styles.planetBlock} ref={(n) => registerAnchor?.(`planet:${p.name}`, n)}>
                 <View style={styles.planetRow}>
@@ -681,7 +741,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
                 <Text style={styles.angularValue}>
                   {signSymbol(snSign.sign)} {snSign.sign}
                 </Text>
-                <Text style={styles.angularDeg}>{snSign.degInSign.toFixed(1)}°</Text>
+                <Text style={styles.angularDeg}>{snSign.degInSign.toFixed(1)}°{snHouse ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${snHouse}` : ''}</Text>
               </View>
             </View>
             <View style={styles.angularInterpretation}>
@@ -703,6 +763,44 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
                   {tl('Nódulo Norte na Casa', 'North Node in House', 'Nodo Norte en la Casa', 'Nodo Nord nella Casa')} {nnHouse}
                 </Text>
                 <Text style={styles.angularInterpretationText}>{nnHouseText}</Text>
+              </View>
+            ) : null}
+            {snEssence ? (
+              <View style={styles.angularInterpretation}>
+                <Text style={styles.angularInterpretationLabel}>
+                  {tl('Nódulo Sul', 'South Node', 'Nodo Sur', 'Nodo Sud')} ☋{snHouse ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${snHouse}` : ''}
+                </Text>
+                <Text style={styles.angularInterpretationText}>{snEssence}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Parte da Fortuna */}
+        {partOfFortune && partOfFortune.sign ? (
+          <View style={styles.card} ref={(n) => registerAnchor?.('section:fortune', n)}>
+            <Text style={styles.cardTitle}>
+              {tl('Parte da Fortuna', 'Part of Fortune', 'Parte de la Fortuna', 'Parte della Fortuna')}
+            </Text>
+            <View style={styles.row}>
+              <View style={styles.angularItem}>
+                <Text style={styles.angularLabel}>
+                  {tl('Parte da Fortuna', 'Part of Fortune', 'Parte de la Fortuna', 'Parte della Fortuna')} ⊗
+                </Text>
+                <Text style={styles.angularValue}>
+                  {signSymbol(partOfFortune.sign.sign)} {partOfFortune.sign.sign}
+                </Text>
+                <Text style={styles.angularDeg}>
+                  {partOfFortune.sign.degInSign.toFixed(1)}°{partOfFortune.house ? ` · ${tl('Casa', 'House', 'Casa', 'Casa')} ${partOfFortune.house}` : ''}
+                </Text>
+              </View>
+            </View>
+            {fortuneEssence ? (
+              <View style={styles.angularInterpretation}>
+                <Text style={styles.angularInterpretationLabel}>
+                  {tl('Onde a vida flui', 'Where life flows', 'Donde la vida fluye', 'Dove la vita scorre')}
+                </Text>
+                <Text style={styles.angularInterpretationText}>{fortuneEssence}</Text>
               </View>
             ) : null}
           </View>
