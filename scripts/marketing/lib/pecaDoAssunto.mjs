@@ -18,6 +18,7 @@ import { textoDoEvento } from './textosEvento.mjs'
 import { POR_SIGNO as ECLIPSE_POR_SIGNO, ABERTURA } from './textosEclipse.mjs'
 import { textoDaLuaVazia, REGRA_DA_TRADICAO } from './textosLuaVazia.mjs'
 import { dignidade, textoEmSigno, primeirasFrases, semTravessao } from './interpretacao.mjs'
+import { perguntaDeEnquete } from './vozes.mjs'
 
 const TZ = 'America/Sao_Paulo'
 
@@ -63,6 +64,41 @@ const somaDaChave = (chave) =>
  * @param {object} deps `{ iso, catalogos }`
  * @returns {{olho, titulo, texto, signo, casas: boolean, legendaAbre: string}}
  */
+/**
+ * A pergunta do adesivo de enquete no story.
+ *
+ * `perguntaDeEnquete` já existe e é testada, com pergunta por tipo de evento.
+ * Quem a usava era `gerarCard.mjs`, que saiu do fluxo — e a enquete saiu junto,
+ * sem ninguém notar. O story virou peça sem nada para responder.
+ *
+ * Conceito e recurso não passam por lá porque não são evento do céu: a pergunta
+ * deles é escrita aqui, no mesmo formato de duas opções.
+ */
+export function enqueteDaPeca(assunto) {
+  if (assunto?.tipo === 'conceito') {
+    return {
+      pergunta: 'Você já sabia disso?',
+      opcoes: ['Já sabia', 'Não fazia ideia'],
+    }
+  }
+
+  if (assunto?.tipo === 'recurso') {
+    return {
+      pergunta: 'Você já usou esse recurso no app?',
+      opcoes: ['Já usei', 'Nem sabia que tinha'],
+    }
+  }
+
+  if (assunto?.tipo === 'planeta_no_signo' || assunto?.tipo === 'aspecto_natal') {
+    return {
+      pergunta: 'Sabe onde isso cai no seu mapa?',
+      opcoes: ['Sei', 'Não faço ideia'],
+    }
+  }
+
+  return perguntaDeEnquete(assunto)
+}
+
 export function pecaDoAssunto(assunto, { iso, catalogos = null } = {}) {
   // `glifo: true` é o padrão; só o conceito o desliga, e ele diz isso no ramo
   const peca = {

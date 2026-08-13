@@ -286,6 +286,22 @@ export function bancoDeAssuntos(data, { catalogos, orbes }) {
   })
 
   /**
+   * A leitura dos doze ascendentes, que era um step à parte no workflow.
+   *
+   * Rodava toda segunda por calendário, sem passar pela agenda nem pela fila, e
+   * fazia a segunda ser o único dia sem peça própria. Como item do banco, ela
+   * sai quando estiver no topo da fila, em qualquer dia.
+   */
+  itens.push({
+    id: 'semanal',
+    tipo: 'semanal',
+    titulo: 'Os doze ascendentes, com a casa de cada um',
+    angulo: 'Carrossel de 13 slides, com os eventos da semana em que sair',
+    natureza: 'educativo',
+    formatos: ['carrossel'],
+  })
+
+  /**
    * Os carrosséis de tema entram no banco.
    *
    * São peças de sequência, escritas à mão, e nunca apareciam na editorial:

@@ -12,7 +12,8 @@ import { RECURSO, CHAVES_DE_RECURSO, recursoDoDia } from '../textosRecurso.mjs'
 import { dadosDaTela } from '../dadosDaTela.mjs'
 import { TEMA, CHAVES_DE_TEMA, temaPorChave } from '../temasDeCarrossel.mjs'
 import { mapaDoCeu } from '../ceu.mjs'
-import { pecaDoAssunto } from '../pecaDoAssunto.mjs'
+import { pecaDoAssunto, enqueteDaPeca } from '../pecaDoAssunto.mjs'
+import { montarFoto, fundoDeCeu } from '../templateFoto.mjs'
 
 const FRONTEND = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 
@@ -203,5 +204,114 @@ describe('os carrosséis de tema', () => {
 
   it('recusa tema que não existe', () => {
     expect(() => temaPorChave('inventado')).toThrow(/não existe/)
+  })
+})
+
+/**
+ * O STORY NÃO É O POST ESTICADO.
+ *
+ * Era: a única diferença entre os formatos era a altura, 1920 contra 1350.
+ * Mesmo texto, mesmo corpo, mesmo bloco. Um story se lê em cinco segundos,
+ * passando o dedo, e o adesivo de enquete é colado por cima na hora de postar.
+ */
+describe('o story tem forma própria', () => {
+  const peca = {
+    olho: '13 de agosto',
+    titulo: 'Lua fora\nde curso',
+    texto: 'Primeira frase, que é a que importa. Segunda frase, que ainda cabe. '
+      + 'Terceira frase, que num story ninguém lê. Quarta frase, idem. '
+      + 'Quinta frase, só para o texto passar de trezentos caracteres com folga.',
+    signo: 'Virgem',
+  }
+
+  const semEstilo = (html) => html.replace(/<style>[\s\S]*?<\/style>/g, '')
+
+  it('o story corta o texto e o post não', () => {
+    const noStory = semEstilo(montarFoto({ ...peca, formato: 'story' }))
+    const noPost = semEstilo(montarFoto({ ...peca, formato: 'feed' }))
+
+    expect(noPost).toContain('Terceira frase')
+    expect(noStory, 'story tem de ficar nas duas primeiras frases').not.toContain('Terceira frase')
+    expect(noStory).toContain('Primeira frase')
+  })
+
+  /** Sem a faixa, o adesivo de enquete cobre rodapé e assinatura. */
+  it('o story reserva a faixa de baixo para o adesivo', () => {
+    const html = montarFoto({ ...peca, formato: 'story' })
+    expect(html).toMatch(/padding:\s*8cqw 7\.5cqw 26cqw/)
+
+    const post = montarFoto({ ...peca, formato: 'feed' })
+    expect(post).toMatch(/padding:\s*8cqw 7\.5cqw 7cqw/)
+  })
+
+  it('e o título é maior no story, onde sobra altura', () => {
+    expect(montarFoto({ ...peca, formato: 'story' })).toContain('font-size: 8.6cqw')
+    expect(montarFoto({ ...peca, formato: 'feed' })).toContain('font-size: 7.2cqw')
+  })
+})
+
+/**
+ * A ENQUETE, que existia e estava desligada.
+ *
+ * `perguntaDeEnquete` é testada desde sempre; quem a usava era `gerarCard.mjs`,
+ * que saiu do fluxo, e a enquete saiu junto sem ninguém notar.
+ */
+describe('a enquete acompanha a peça', () => {
+  it('cada tipo de assunto tem pergunta e duas opções', () => {
+    const casos = [
+      { tipo: 'eclipse', luminar: 'solar', signo: 'Leão' },
+      { tipo: 'ingresso', corpoPt: 'Sol', signo: 'Virgem' },
+      { tipo: 'lua_fora_de_curso', signo: 'Virgem' },
+      { tipo: 'conceito', chave: 'orbe' },
+      { tipo: 'recurso', chave: 'grupos' },
+      { tipo: 'planeta_no_signo', chave: 'x' },
+    ]
+    for (const assunto of casos) {
+      const e = enqueteDaPeca(assunto)
+      expect(e.pergunta, assunto.tipo).toMatch(/\?$/)
+      expect(e.opcoes, assunto.tipo).toHaveLength(2)
+    }
+  })
+
+  it('a pergunta do eclipse fala de eclipse', () => {
+    expect(enqueteDaPeca({ tipo: 'eclipse', luminar: 'solar' }).pergunta).toMatch(/eclipse/i)
+  })
+})
+
+/** A peça da Lua com o Sol atrás: "não tem nada a ver". */
+describe('o fundo por família', () => {
+  const SIGNOS = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+
+  it('peça da Lua recebe foto de Lua', () => {
+    for (const signo of SIGNOS) {
+      for (let v = 0; v < 6; v++) {
+        expect(fundoDeCeu(signo, v, 'Moon').arquivo, `${signo} v${v}`).toMatch(/^lua/)
+      }
+    }
+  })
+
+  /** A família da Lua é reservada: não pode vazar para peça de outro corpo. */
+  it('quem não é a Lua nunca recebe foto de Lua', () => {
+    for (const signo of SIGNOS) {
+      for (let v = 0; v < 12; v++) {
+        expect(fundoDeCeu(signo, v, 'Sun').arquivo).not.toMatch(/^lua/)
+        expect(fundoDeCeu(signo, v, '').arquivo).not.toMatch(/^lua/)
+      }
+    }
+  })
+
+  it('nenhuma família fica pequena a ponto de repetir toda semana', () => {
+    const porFamilia = {}
+    for (const signo of SIGNOS) {
+      for (let v = 0; v < 40; v++) {
+        const a = fundoDeCeu(signo, v, '').arquivo
+        const f = a.split('-')[0]
+        ;(porFamilia[f] = porFamilia[f] || new Set()).add(a)
+      }
+    }
+    for (const [f, arquivos] of Object.entries(porFamilia)) {
+      expect(arquivos.size, `família ${f} com ${arquivos.size} fotos`).toBeGreaterThanOrEqual(4)
+    }
   })
 })

@@ -11,12 +11,15 @@ name: Peças do céu
 
 # O que sai, e quando:
 #
-#   dia de evento   a peça do evento (feed e story), quando há evento de peso
-#   segunda         o carrossel dos doze ascendentes
+#   todo dia   uma peça, e o assunto vem em cascata:
+#              1. a AGENDA, se o dia tem evento marcado (eclipse, lunação,
+#                 ingresso, virada de retrógrado)
+#              2. a FILA do banco, na ordem que o João montou no Estúdio
+#              3. a cascata automática, se não houver nem agenda nem fila
 #
-# Cerca de sete peças por mês, contra as trinta e cinco de antes. A conta é do
-# João, depois de olhar um mês de material: "vamos reduzir muito o que foi
-# feito, precisamos editoriar os textos e também as imagens".
+# Em trinta dias, sete têm evento datado e vinte e três vêm da fila. O carrossel
+# dos doze ascendentes deixou de ser um step de segunda-feira e virou item do
+# banco: sai quando estiver no topo da fila.
 #
 # O VÍDEO DIÁRIO SAIU DO AUTOMÁTICO. Ele continua inteiro em `gerarVideo.mjs` e
 # roda pelo botão (`video: true`), mas usa o template da roda animada, que é o
@@ -169,15 +172,6 @@ jobs:
           echo "O dia é: $FORCA"
           echo "forte=$FORCA" >> "$GITHUB_OUTPUT"
 
-          # A leitura dos doze signos sai uma vez por semana, na segunda — mas
-          # não quando o dia é de eclipse: o eclipse traz o próprio carrossel
-          # dos doze ascendentes, e dois no mesmo dia disputam a mesma legenda.
-          if [ "$(date -u -d "$DIA" +%u)" = "1" ] && [ "$FORCA" != "eclipse" ]; then
-            echo "Segunda-feira: sai também o carrossel da semana."
-            echo "semanal=sim" >> "$GITHUB_OUTPUT"
-          else
-            echo "semanal=nao" >> "$GITHUB_OUTPUT"
-          fi
 
 
       - name: Gerar o vídeo do dia
@@ -216,7 +210,7 @@ jobs:
       # Na segunda ela cede a vez ao carrossel: duas peças no mesmo dia
       # disputam a mesma legenda no Estúdio, e uma delas sai sem ser lida.
       - name: Gerar as peças do dia
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.semanal != 'sim' }}
+        if: ${{ github.event.inputs.apenas_calendario != 'true' }}
         env:
           MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
           DATA: ${{ github.event.inputs.data || '' }}
@@ -230,18 +224,12 @@ jobs:
           # isso agora é o próprio script, que também sabe quantos são.
           node scripts/marketing/gerarDia.mjs $ARGS 2>&1 | tee -a saida.txt
 
-      # A leitura dos doze signos, às segundas. É o formato que gera salvamento:
-      # a pessoa volta ao post para conferir o próprio ascendente.
-      - name: Gerar o carrossel da semana
-        if: ${{ github.event.inputs.apenas_calendario != 'true' && steps.pauta.outputs.semanal == 'sim' }}
-        env:
-          MONITORING_PASSWORD: ${{ secrets.MONITORING_PASSWORD }}
-          DATA: ${{ github.event.inputs.data || '' }}
-        run: |
-          set -o pipefail
-          ARGS="--upload --saida=$GITHUB_WORKSPACE/marketing/out"
-          [ -n "$DATA" ] && ARGS="$ARGS --data=$DATA"
-          node scripts/marketing/gerarSemanal.mjs $ARGS 2>&1 | tee -a saida.txt
+      # A leitura dos doze ascendentes saiu daqui e virou item do banco.
+      #
+      # Rodava toda segunda por calendário, sem passar pela agenda nem pela
+      # fila, e fazia a segunda ser o único dia sem peça própria. Agora ela sai
+      # quando o João a puser no topo da fila, em qualquer dia. `gerarDia`
+      # reconhece o id `semanal` e chama `gerarSemanal.mjs`.
 
       - name: Publicar as pautas dos próximos dias
         if: always()

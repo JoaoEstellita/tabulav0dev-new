@@ -28,7 +28,7 @@ import { lerLiterais } from './lib/catalogo.mjs'
 import { mapaDoCeu } from './lib/ceu.mjs'
 import { montarFoto } from './lib/templateFoto.mjs'
 import { svgDoSigno } from './lib/simbolos.mjs'
-import { carregarCatalogos } from './lib/interpretacao.mjs'
+import { carregarCatalogos, primeirasFrases } from './lib/interpretacao.mjs'
 import { casasPorAscendente } from './lib/fatos.mjs'
 import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
@@ -42,7 +42,7 @@ import { montarRecurso } from './lib/templateRecurso.mjs'
 import { dadosDaTela } from './lib/dadosDaTela.mjs'
 import { temaPorChave, CHAVES_DE_TEMA, TEMA } from './lib/temasDeCarrossel.mjs'
 import { STATUS_THRESHOLDS } from './lib/areasDoApp.mjs'
-import { pecaDoAssunto } from './lib/pecaDoAssunto.mjs'
+import { pecaDoAssunto, enqueteDaPeca } from './lib/pecaDoAssunto.mjs'
 import { lerHistorico, salvarHistorico, chavesRecentes, entradaDoDia } from './lib/historico.mjs'
 
 const execFileAsync = promisify(execFile)
@@ -495,7 +495,22 @@ ${ascendente}`,
     }).format(assunto.quando)
     : ''
 
+  /**
+   * A PRIMEIRA LINHA É O GANCHO, não o título.
+   *
+   * O Instagram corta a legenda em ~125 caracteres, e essa fatia decide se
+   * alguém toca em "mais". A legenda abria com "Eclipse solar em Leão · 12 de
+   * agosto", que é exatamente o que já está escrito na imagem: o espaço mais
+   * caro da legenda gasto repetindo o que a pessoa acabou de ler.
+   *
+   * O gancho é a primeira frase do texto, que já foi escrita para puxar. O
+   * título e a data descem uma linha.
+   */
+  const gancho = primeirasFrases(peca.texto, 1)
+
   const legenda = [
+    gancho,
+    '',
     dataDoAssunto ? `${tituloDeUmaLinha} · ${dataDoAssunto}` : tituloDeUmaLinha,
     '',
     // o que explica o fenômeno antes da leitura: a abertura do eclipse, a regra
@@ -525,6 +540,28 @@ ${ascendente}`,
   ].join('\n')
   await writeFile(path.join(pasta, 'legenda.txt'), legenda, 'utf8')
 
+  /**
+   * O adesivo de enquete, para colar no story.
+   *
+   * Ele só existe dentro do app do Instagram, na hora de postar, então o que
+   * sai daqui é o texto pronto para copiar. O story reserva a faixa de baixo
+   * para o adesivo não cobrir o rodapé.
+   *
+   * A função já existia e era testada; quem a usava era o `gerarCard.mjs`, que
+   * saiu do fluxo, e a enquete saiu junto sem ninguém notar.
+   */
+  const enquete = enqueteDaPeca(assunto)
+  await writeFile(
+    path.join(pasta, 'enquete.txt'),
+    [
+      'Adesivo de enquete no story, cole ao postar:',
+      '',
+      enquete.pergunta,
+      ...enquete.opcoes.map((o) => `  · ${o}`),
+    ].join('\n'),
+    'utf8'
+  )
+
   // o assunto entra no histórico para não voltar dentro de catorze dias
   historico[entradaDoDia(iso, args.slot || 1)] = chaveDoAssunto(assunto)
   await salvarHistorico(args.saida, historico)
@@ -533,7 +570,7 @@ ${ascendente}`,
   console.log(`  ${pasta}`)
 
   if (args.upload) {
-    for (const nome of ['feed.png', 'story.png', 'legenda.txt']) {
+    for (const nome of ['feed.png', 'story.png', 'legenda.txt', 'enquete.txt']) {
       await enviar(path.join(pasta, nome), iso, `${prefixo}${nome}`, args)
     }
     for (let i = 0; i < slides.length; i++) {

@@ -22,6 +22,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { SANS, MONO, SERIF, fontesEmbutidas, SANS_ESCOLHIDA } from './fontes.mjs'
+import { primeirasFrases } from './interpretacao.mjs'
 import { NOITE, OURO, CREME, assinatura, CSS_ASSINATURA } from './marca.mjs'
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -79,20 +80,39 @@ function lerAcervo() {
  * @param {string} corpo  o protagonista, quando há um: `'Moon'` evita o Sol
  */
 export function fundoDeCeu(signo, variacao = 0, corpo = '') {
-  const familia = ELEMENTO[signo] || 'ar'
   const todas = lerAcervo()
 
-  const permitidas = corpo === 'Moon'
-    ? todas.filter((f) => !f.startsWith('fogo'))
-    : todas
+  /**
+   * A Lua tem família própria.
+   *
+   * A primeira correção só EXCLUÍA a família do Sol, e a peça da Lua acabava
+   * com uma nebulosa emprestada, porque não havia foto de Lua no acervo. Agora
+   * há quatro, e elas vêm primeiro: uma peça sobre a Lua com a Lua atrás
+   * dispensa qualquer explicação.
+   */
+  if (corpo === 'Moon') {
+    const daLua = todas.filter((f) => f.startsWith('lua'))
+    if (daLua.length) {
+      const escolhidaLua = daLua[Math.abs(variacao) % daLua.length]
+      return comoDataUri(escolhidaLua)
+    }
+  }
+
+  const familia = ELEMENTO[signo] || 'ar'
+
+  // a família `lua` é reservada: só entra quando a Lua protagoniza
+  const permitidas = todas.filter((f) => !f.startsWith('lua'))
 
   const doElemento = permitidas.filter((f) => f.startsWith(familia))
   const lista = doElemento.length ? doElemento : permitidas
-  const escolhida = lista[Math.abs(variacao) % lista.length]
+  return comoDataUri(lista[Math.abs(variacao) % lista.length])
+}
 
-  const bytes = readFileSync(path.join(PASTA_CEU, escolhida))
+/** O arquivo embutido, do jeito que o Chrome consegue ler de qualquer lugar. */
+function comoDataUri(arquivo) {
+  const bytes = readFileSync(path.join(PASTA_CEU, arquivo))
   return {
-    arquivo: escolhida,
+    arquivo,
     dataUri: `data:image/jpeg;base64,${bytes.toString('base64')}`,
   }
 }
@@ -113,13 +133,29 @@ export function montarFoto(peca) {
   const fundo = fundoDeCeu(peca.signo, peca.variacao || 0, peca.corpo || '')
 
   /**
+   * O STORY NÃO É O POST ESTICADO.
+   *
+   * Era: a única diferença entre os dois formatos era a altura, 1920 em vez de
+   * 1350. Mesmo texto, mesmo corpo, mesmo bloco. Um story se lê em cinco
+   * segundos, passando o dedo; um post se lê parado. Texto de 400 caracteres em
+   * corpo pequeno é o que faz alguém pular.
+   *
+   * No story entram as duas primeiras frases, em corpo grande. O texto inteiro
+   * continua no post e na legenda, que é onde há tempo para ele.
+   */
+  const textoInteiro = String(peca.texto || '')
+  const texto = story ? primeirasFrases(textoInteiro, 2) : textoInteiro
+
+  /**
    * O corpo do texto acompanha o tamanho.
    *
    * Mesmo problema da carta e do slide: os textos vão de 120 a 400 caracteres, e
    * corpo fixo empurra o rodapé para fora em uns e deixa buraco em outros.
    */
-  const n = String(peca.texto || '').length
-  const corpo = n <= 160 ? 4.6 : n <= 260 ? 4.0 : n <= 360 ? 3.5 : 3.1
+  const n = texto.length
+  const corpo = story
+    ? (n <= 150 ? 5.6 : n <= 240 ? 5.0 : 4.4)
+    : (n <= 160 ? 4.6 : n <= 260 ? 4.0 : n <= 360 ? 3.5 : 3.1)
 
   /**
    * Onde a foto é cortada, conforme o número do slide.
@@ -182,9 +218,16 @@ export function montarFoto(peca) {
       rgba(7,10,24,0.96) 100%);
   }
 
+  /**
+   * No story sobra uma faixa embaixo.
+   *
+   * O adesivo de enquete é colado por cima, dentro do app do Instagram, na hora
+   * de postar. Sem essa faixa ele cobre o rodapé e a assinatura. O template
+   * antigo já reservava o espaço, e a linguagem de foto tinha perdido isso.
+   */
   .conteudo {
     position: absolute; inset: 0; z-index: 2;
-    padding: 8cqw 7.5cqw 7cqw;
+    padding: ${story ? '8cqw 7.5cqw 26cqw' : '8cqw 7.5cqw 7cqw'};
     display: flex; flex-direction: column; justify-content: flex-end;
   }
 
@@ -216,7 +259,7 @@ export function montarFoto(peca) {
      Cinzel tem altura de x pequena e vira decoração ilegível em parágrafo. */
   .titulo {
     font-family: ${SERIF}; font-weight: 600; color: ${VELLUM};
-    font-size: 7.2cqw; line-height: 1.12; letter-spacing: 0.005em;
+    font-size: ${story ? 8.6 : 7.2}cqw; line-height: 1.12; letter-spacing: 0.005em;
     text-wrap: balance; white-space: pre-line;
     text-shadow: 0 0.4cqw 3cqw rgba(7,10,24,0.9);
   }
@@ -245,7 +288,7 @@ export function montarFoto(peca) {
     <div class="conteudo">
       ${peca.olho ? `<div class="olho">${escapar(peca.olho)}</div>` : ''}
       <h1 class="titulo">${escapar(peca.titulo)}</h1>
-      ${peca.texto ? `<p class="texto">${escapar(peca.texto)}</p>` : ''}
+      ${texto ? `<p class="texto">${escapar(texto)}</p>` : ''}
       <div class="rodape">
         <span>${escapar(peca.rodape || '')}</span>
         ${assinatura(26)}

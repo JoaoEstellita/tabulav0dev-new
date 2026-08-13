@@ -22,3 +22,30 @@ obrigatório. Itens com criador externo foram excluídos na coleta.
 | `agua-14.jpg` | Hubble Sees a Star ‘Inflating’ a Giant Bubble | GSFC | [GSFC_20171208_Archive_e000382](https://images.nasa.gov/details/GSFC_20171208_Archive_e000382) |
 | `agua-15.jpg` | Hubble Sees a Star ‘Inflating’ a Giant Bubble | GSFC | [GSFC_20171208_Archive_e000383](https://images.nasa.gov/details/GSFC_20171208_Archive_e000383) |
 | `agua-16.jpg` | Hubble’s Spirograph | GSFC | [GSFC_20171208_Archive_e000034](https://images.nasa.gov/details/GSFC_20171208_Archive_e000034) |
+
+## Segunda coleta
+
+O acervo tinha doze imagens para peça diária: duas de água, duas de terra,
+quatro de ar e quatro de fogo. Dentro de um elemento, a mesma foto voltava a
+cada duas ou três semanas.
+
+E não havia nenhuma de **Lua** — por isso a peça da Lua fora de curso pegava
+emprestada uma nebulosa, depois de a família `fogo` ter sido barrada por ser
+toda de erupção solar.
+
+| arquivo | título | centro | origem |
+|---|---|---|---|
+| `lua-17.jpg` | Full Moon | GSFC | [GSFC_20171208_Archive_e000868](https://images.nasa.gov/details/GSFC_20171208_Archive_e000868) |
+| `lua-18.jpg` | Full Moon | GSFC | [GSFC_20171208_Archive_e001861](https://images.nasa.gov/details/GSFC_20171208_Archive_e001861) |
+| `lua-19.jpg` | "Pink" Full Moon and Partial Lunar Eclipse | GSFC | [GSFC_20171208_Archive_e001515](https://images.nasa.gov/details/GSFC_20171208_Archive_e001515) |
+| `lua-20.jpg` | High-oblique view of Moon's surface (Apollo 8) | JSC | [as8-14-2392](https://images.nasa.gov/details/as8-14-2392) |
+| `agua-21.jpg` | View of the Earth's limb with an aurora | JSC | [iss058e005282](https://images.nasa.gov/details/iss058e005282) |
+| `agua-22.jpg` | Aurora Australis, Spiked and Sinuous Red | JSC | [S39-342-026](https://images.nasa.gov/details/S39-342-026) |
+| `terra-23.jpg` | Hubble peeks at a spiral galaxy | GSFC | [GSFC_20171208_Archive_e000687](https://images.nasa.gov/details/GSFC_20171208_Archive_e000687) |
+| `terra-24.jpg` | Hubble Admires a Youthful Globular Star Cluster | GSFC | [GSFC_20171208_Archive_e000191](https://images.nasa.gov/details/GSFC_20171208_Archive_e000191) |
+| `ar-25.jpg` | Hubble Spies Spiral Galaxy | GSFC | [GSFC_20171208_Archive_e000158](https://images.nasa.gov/details/GSFC_20171208_Archive_e000158) |
+| `fogo-26.jpg` | Carina Nebula (JWST NIRCam) | STScI | [carina_nebula](https://images.nasa.gov/details/carina_nebula) |
+
+Mesmo filtro da primeira coleta: nada com `secondary_creator`, nada de APOD
+(publica foto de amador com copyright próprio) e nada de ESO (a licença CC BY
+exige crédito visível na peça).

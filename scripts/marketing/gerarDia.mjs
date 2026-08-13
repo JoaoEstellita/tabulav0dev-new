@@ -35,6 +35,8 @@ import { lerHistorico, chavesRecentes } from './lib/historico.mjs'
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const GERADOR = path.join(AQUI, 'gerarEvento.mjs')
+/** A leitura dos doze ascendentes tem gerador próprio, com treze slides. */
+const GERADOR_SEMANAL = path.join(AQUI, 'gerarSemanal.mjs')
 
 /** Teto de peças por dia, o mesmo do backend (`p2` a `p5` mais a raiz). */
 const MAXIMO = 5
@@ -209,11 +211,22 @@ async function principal() {
     const slot = i + 1
     const a = aGerar[i]
 
-    const argumentos = [GERADOR, `--data=${iso}`, `--slot=${slot}`]
+    /**
+     * O carrossel dos doze ascendentes tem script próprio.
+     *
+     * Ele era um step à parte no workflow, rodando toda segunda por calendário.
+     * Como item do banco, chega aqui como qualquer outro id, e o que muda é só
+     * qual gerador atende.
+     */
+    const ehSemanal = a?.id === 'semanal'
+    const script = ehSemanal ? GERADOR_SEMANAL : GERADOR
+
+    const argumentos = [script, `--data=${iso}`]
+    if (!ehSemanal) argumentos.push(`--slot=${slot}`)
     if (args.saida) argumentos.push(`--saida=${args.saida}`)
     if (args.upload) argumentos.push('--upload')
-    if (a?.id) argumentos.push(`--assunto=${a.id}`)
-    if (a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
+    if (!ehSemanal && a?.id) argumentos.push(`--assunto=${a.id}`)
+    if (!ehSemanal && a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
 
     try {
       const { stdout } = await execFileAsync(process.execPath, argumentos, {
