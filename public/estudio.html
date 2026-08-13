@@ -174,7 +174,50 @@
     margin-left: 8px; vertical-align: 1px; white-space: nowrap;
   }
   .selo.evento { background: rgba(255,209,102,0.16); color: var(--ouro); }
-  .selo.explicativo { background: rgba(255,255,255,0.07); color: var(--tinta-2); }
+  .selo.explicativo,
+  .selo.educativo { background: rgba(255,255,255,0.07); color: var(--tinta-2); }
+  .selo.produto { background: rgba(96,165,250,0.16); color: #93C5FD; }
+
+  /**
+   * O BANCO: o que não tem dia.
+   *
+   * A agenda repetia "Marte em Câncer" 21 vezes em 21 dias, porque a posição
+   * vale seis semanas e a tela era uma agenda. O que não tem data vive aqui,
+   * numa fila que ele ordena uma vez e alimenta os dias sem evento — que são a
+   * maioria: sete de trinta têm evento datado.
+   */
+  .titulo-secao {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ouro);
+    margin: 26px 0 4px; font-weight: 600;
+  }
+  .barra-salvar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 14px; border-bottom: 1px solid var(--borda);
+  }
+  .barra-salvar .copiar { margin: 0; }
+
+  .banco { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  .item-banco {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 9px;
+    border: 1px solid transparent; background: var(--superficie);
+  }
+  .item-banco.on { border-color: var(--ouro); background: rgba(255,217,61,0.07); }
+  .item-banco .pega { flex: 1; cursor: pointer; min-width: 0; }
+  .item-banco input { position: absolute; opacity: 0; pointer-events: none; }
+  .item-banco .t { font-size: 14px; line-height: 1.3; display: block; }
+  .item-banco.on .t { color: var(--ouro); }
+  .item-banco .a { font-size: 11.5px; color: var(--tinta-2); display: block; margin-top: 1px; }
+
+  /* setas em vez de arrastar: no celular, arrastar disputa com a rolagem */
+  .setas { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+  .seta {
+    min-height: 22px; padding: 0 9px; font-size: 12px; line-height: 1;
+    background: transparent; color: var(--tinta-2);
+    border: 1px solid var(--borda); border-radius: 6px;
+  }
+  .seta:hover { color: var(--ouro); border-color: var(--ouro); }
 
   /**
    * O mesmo assunto marcado em dois dias.
@@ -443,9 +486,35 @@
     var agenda = comCal[0].calendario
     var escolhas = {}
     dias.forEach(function (d) {
-      if (d.pauta && d.pauta.opcaoId) {
+      if (!d.pauta) return
+      // formato novo: lista de assuntos, cada um com seus formatos
+      if (Array.isArray(d.pauta.opcoes) && d.pauta.opcoes.length) {
+        var porId = {}
+        d.pauta.opcoes.forEach(function (o) { porId[o.id] = o.formatos || [] })
+        escolhas[d.dia] = {
+          ids: d.pauta.opcoes.map(function (o) { return o.id }),
+          formatosPorId: porId,
+        }
+      } else if (d.pauta.opcaoId) {
         escolhas[d.dia] = { id: d.pauta.opcaoId, formatos: d.pauta.formatos || [] }
       }
+    })
+
+    /**
+     * O BANCO e a FILA.
+     *
+     * A agenda passou a ter só o que acontece no dia. O resto — planeta em
+     * signo, retrogradação, conceitos, recursos do app e a lua fora de curso —
+     * não tem dia certo e vive aqui, numa fila que o João ordena uma vez.
+     *
+     * Medido antes da separação: 96 linhas na agenda para 27 assuntos, com
+     * "Marte em Câncer" repetido 21 vezes em 21 dias.
+     */
+    var banco = []
+    var fila = []
+    dias.forEach(function (d) {
+      if (!banco.length && Array.isArray(d.banco) && d.banco.length) banco = d.banco
+      if (!fila.length && Array.isArray(d.fila) && d.fila.length) fila = d.fila
     })
 
     var hoje = new Date().toISOString().slice(0, 10)
@@ -536,13 +605,59 @@
 
     var total = futuros.reduce(function (n, d) { return n + d.opcoes.length }, 0)
 
+    /**
+     * A FILA DO BANCO.
+     *
+     * Ordenada: o que está em cima sai primeiro, nos dias que não têm evento no
+     * céu. São a maioria — medido em trinta dias, só sete têm evento datado.
+     *
+     * A ordem salva vem de `fila.json`; o que não está nela aparece embaixo,
+     * desmarcado, para entrar quando ele quiser.
+     */
+    var naFila = {}
+    fila.forEach(function (id, n) { naFila[id] = n })
+
+    var ordenado = banco.slice().sort(function (a, b) {
+      var pa = naFila[a.id], pb = naFila[b.id]
+      if (pa === undefined && pb === undefined) return 0
+      if (pa === undefined) return 1
+      if (pb === undefined) return -1
+      return pa - pb
+    })
+
+    var linhasBanco = ordenado.map(function (b) {
+      var on = naFila[b.id] !== undefined
+      var nat = b.natureza || 'educativo'
+      return '<div class="item-banco' + (on ? ' on' : '') + '" data-id="' + escapar(b.id) + '">' +
+        '<label class="pega">' +
+          '<input type="checkbox" data-banco="1" value="' + escapar(b.id) + '"' +
+            (on ? ' checked' : '') + '>' +
+          '<span class="t">' + escapar(b.titulo) +
+            '<span class="selo ' + nat + '">' + nat + '</span></span>' +
+          '<span class="a">' + escapar(b.angulo || '') + '</span>' +
+        '</label>' +
+        '<span class="setas">' +
+          '<button type="button" class="seta" data-sobe="1" title="subir">↑</button>' +
+          '<button type="button" class="seta" data-desce="1" title="descer">↓</button>' +
+        '</span>' +
+      '</div>'
+    }).join('')
+
     editorial.innerHTML =
-      '<summary>Editorial <span>' + total + ' assuntos</span></summary>' +
+      '<summary>Editorial <span>' + total + ' eventos · ' + banco.length + ' no banco</span></summary>' +
       '<div class="conteudo-editorial">' +
-        '<p class="dica">Em ordem de peso: o primeiro de cada dia já vem marcado.</p>' +
+        // o botão no alto: ele pedia rolar 21 dias para chegar nele
+        '<div class="barra-salvar">' +
+          '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
+          '<span id="aviso-pauta" class="aviso"></span>' +
+        '</div>' +
+        '<h4 class="titulo-secao">Agenda · o que acontece no dia</h4>' +
+        '<p class="dica">Só eventos com data. O primeiro de cada dia já vem marcado.</p>' +
         '<div class="pautas">' + corpo + '</div>' +
-        '<button type="button" id="salvar-pauta" class="copiar">Salvar pauta</button>' +
-        '<span id="aviso-pauta" class="aviso"></span>' +
+        '<h4 class="titulo-secao">Banco · sem data, sai na ordem da fila</h4>' +
+        '<p class="dica">Marque o que quer publicar e ordene com as setas. ' +
+          'Os dias sem evento puxam o primeiro da fila que ainda não saiu.</p>' +
+        '<div class="banco">' + linhasBanco + '</div>' +
       '</div>'
 
     // Quantos assuntos o dia comportar: cada um acende os proprios formatos.
@@ -555,7 +670,32 @@
       r.addEventListener('change', function () {
         // so a propria caixa acende: com checkbox, o irmao nao muda de estado
         r.closest('.assunto').classList.toggle('on', r.checked)
-        avisarRepetidos(editorial)
+        /**
+     * As setas movem o item na fila.
+     *
+     * Reordenar por arrastar seria mais elegante e é onde o toque no celular
+     * falha: a lista é longa e rolar a página compete com arrastar o item. Duas
+     * setas resolvem sem ambiguidade.
+     */
+    editorial.querySelectorAll('.seta').forEach(function (botao) {
+      botao.addEventListener('click', function () {
+        var item = botao.closest('.item-banco')
+        var vizinho = botao.dataset.sobe
+          ? item.previousElementSibling
+          : item.nextElementSibling
+        if (!vizinho) return
+        if (botao.dataset.sobe) item.parentNode.insertBefore(item, vizinho)
+        else item.parentNode.insertBefore(vizinho, item)
+      })
+    })
+
+    editorial.querySelectorAll('input[data-banco]').forEach(function (cx) {
+      cx.addEventListener('change', function () {
+        cx.closest('.item-banco').classList.toggle('on', cx.checked)
+      })
+    })
+
+    avisarRepetidos(editorial)
       })
     })
 
@@ -636,9 +776,24 @@
       porDia[dia].formatos = primeira.formatos
     })
 
+    /**
+     * A fila do banco, na ordem em que está na tela.
+     *
+     * Só os marcados entram. A ordem é a do DOM, que é o que ele acabou de
+     * arrumar com as setas — ler daqui evita manter um estado paralelo que
+     * discorde do que está à vista.
+     */
+    var fila = []
+    editorial.querySelectorAll('.item-banco').forEach(function (el) {
+      var cx = el.querySelector('input[data-banco]')
+      if (cx && cx.checked) fila.push(cx.value)
+    })
+
     var dias = Object.keys(porDia)
     var aviso = document.getElementById('aviso-pauta')
-    if (!dias.length) {
+    // fila sem nada marcado na agenda continua sendo trabalho a salvar: o
+    // banco é a fonte da maioria dos dias
+    if (!dias.length && !fila.length) {
       aviso.textContent = 'Nenhum assunto marcado.'
       setTimeout(function () { aviso.textContent = '' }, 2600)
       return
@@ -647,29 +802,40 @@
     botao.disabled = true
     botao.textContent = 'Salvando…'
 
-    Promise.all(dias.map(function (dia) {
-      var corpo = JSON.stringify({
-        opcaoId: porDia[dia].opcaoId,
-        formatos: porDia[dia].formatos,
-        salvoEm: new Date().toISOString()
-      })
+    var enviar = function (dia, arquivo, conteudo) {
       return fetch(BACKEND + '/api/marketing-cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ultimaSenha },
         body: JSON.stringify({
           dia: dia,
-          arquivo: 'pauta.json',
-          conteudoBase64: btoa(unescape(encodeURIComponent(corpo)))
+          arquivo: arquivo,
+          conteudoBase64: btoa(unescape(encodeURIComponent(JSON.stringify(conteudo))))
         })
       })
-    })).then(function (rs) {
+    }
+
+    var envios = dias.map(function (dia) {
+      return enviar(dia, 'pauta.json', {
+        opcoes: porDia[dia].opcoes,
+        opcaoId: porDia[dia].opcaoId,
+        formatos: porDia[dia].formatos,
+        salvoEm: new Date().toISOString()
+      })
+    })
+
+    // A fila fica no dia de HOJE, um arquivo só: ela não pertence a data
+    // nenhuma, e é isso que a distingue da agenda.
+    var hojeISO = new Date().toISOString().slice(0, 10)
+    envios.push(enviar(hojeISO, 'fila.json', fila))
+
+    Promise.all(envios).then(function (rs) {
       var falhou = rs.filter(function (r) { return !r.ok }).length
       aviso.textContent = falhou
-        ? falhou + ' dia(s) nao salvaram.'
-        : 'Pauta salva para ' + dias.length + ' dia(s).'
+        ? falhou + ' envio(s) nao salvaram.'
+        : 'Salvo: ' + dias.length + ' dia(s) e ' + fila.length + ' na fila.'
       botao.disabled = false
       botao.textContent = 'Salvar pauta'
-      setTimeout(function () { aviso.textContent = '' }, 3000)
+      setTimeout(function () { aviso.textContent = '' }, 4000)
     })
   }
 

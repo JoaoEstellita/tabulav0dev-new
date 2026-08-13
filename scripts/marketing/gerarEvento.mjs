@@ -33,7 +33,8 @@ import { casasPorAscendente } from './lib/fatos.mjs'
 import { chaveDoEvento, textoDoEvento } from './lib/textosEvento.mjs'
 import { POR_CASA } from './lib/textosEclipse.mjs'
 import { assuntoDoDia, chaveDoAssunto } from './lib/assuntoDoDia.mjs'
-import { eventosDoDia } from './lib/eventos.mjs'
+import { eventosDoDia, ingressosProximos } from './lib/eventos.mjs'
+import { temaEducativo } from './lib/educativo.mjs'
 import { idDoAssunto } from './lib/pautas.mjs'
 import { conceitoDoDia, CONCEITO, CHAVES_DE_CONCEITO } from './lib/textosConceito.mjs'
 import { recursoDoDia, RECURSO, CHAVES_DE_RECURSO } from './lib/textosRecurso.mjs'
@@ -145,13 +146,59 @@ async function renderizar(chrome, html, destino, altura) {
 // aqui exigia renderizar um PNG e olhar.
 
 /**
- * Acha, entre os eventos de hoje, o que a pauta marcou.
+ * Resolve o id que a editorial marcou, seja da agenda ou do banco.
  *
- * `idDoAssunto` é a mesma função que a editorial usa para gerar o id que vai
- * ao `pauta.json`, então as chaves casam sem tradução no meio.
+ * `idDoAssunto` é a mesma função que a editorial usa para gerar o id, então as
+ * chaves da agenda casam sem tradução. Os do banco têm prefixo próprio:
+ *
+ *   `conceito:orbe`      um dos quinze textos escritos
+ *   `recurso:mapaNatal`  um dos dez sobre o app
+ *   `luaVazia`           a lua fora de curso DAQUELE dia, se houver
+ *   `educativo:...`      planeta no signo ou aspecto natal
+ *
+ * `null` quando o id não resolve. Acontece de propósito com `luaVazia` num dia
+ * sem lua fora de curso: aí a fila cede a vez, em vez de a peça sair anunciando
+ * uma janela que não existe.
  */
-function acharPorId(data, mapa, id) {
+function acharPorId(data, mapa, id, { catalogos, iso, usadas }) {
+  if (!id) return null
+
+  if (id.startsWith('conceito:')) {
+    return { tipo: 'conceito', ...conceitoDoDia(iso, usadas, id.slice(9)) }
+  }
+
+  if (id.startsWith('recurso:')) {
+    return { tipo: 'recurso', ...recursoDoDia(iso, usadas, id.slice(8)) }
+  }
+
   const doDia = eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })
+
+  if (id === 'luaVazia') {
+    return doDia.find((ev) => ev.tipo === 'lua_fora_de_curso') || null
+  }
+
+  /**
+   * O educativo é recalculado a partir do céu de hoje.
+   *
+   * A chave do catálogo (`natal:venus_in_libra`) é estável, mas o objeto tem
+   * âncora com o grau de agora. Procurar entre os do dia dá o texto certo com o
+   * dado do dia certo.
+   */
+  if (id.startsWith('educativo:')) {
+    const chaveAlvo = id.slice(10)
+    const jaVistas = new Set()
+    for (let i = 0; i < 12; i++) {
+      const tema = temaEducativo(mapa, catalogos, jaVistas, {
+        ingressos: ingressosProximos(data, 40),
+        data,
+      })
+      if (!tema) break
+      if (tema.chave === chaveAlvo) return { ...tema, tipo: tema.tipo }
+      jaVistas.add(tema.chave)
+    }
+    return null
+  }
+
   return doDia.find((ev) => idDoAssunto(ev) === id) || null
 }
 
@@ -318,7 +365,9 @@ async function principal() {
    * Id que não casa com nenhum evento do dia não derruba o run: avisa e cai na
    * cascata, porque a automação nunca pode parar porque uma pauta ficou velha.
    */
-  const marcado = args.assunto ? acharPorId(data, mapa, args.assunto) : null
+  const marcado = args.assunto
+    ? acharPorId(data, mapa, args.assunto, { catalogos: catalogosEducativos, iso, usadas })
+    : null
   if (args.assunto && !marcado) {
     console.warn(`  aviso: a pauta pediu "${args.assunto}", que não está no céu de hoje.`)
     console.warn('  A peça sai pelo assunto de maior peso.')

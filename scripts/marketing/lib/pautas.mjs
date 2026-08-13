@@ -22,7 +22,9 @@ import {
 } from './eventos.mjs'
 import { mapaDoCeu } from './ceu.mjs'
 import { temaEducativo, falaComQuemLe } from './educativo.mjs'
-import { escrever, rotuloDeVespera } from './vozes.mjs'
+import { escrever } from './vozes.mjs'
+import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
+import { RECURSO, CHAVES_DE_RECURSO } from './textosRecurso.mjs'
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -176,6 +178,15 @@ export function formatosDoAssunto(ev) {
   if (ev?.tipo === 'eclipse') return ['post', 'carrossel', 'story']
   if (ev?.tipo === 'fase') return ['post', 'story']
   if (ev?.tipo === 'ingresso' && CORPOS_DE_PESO.includes(ev.corpo)) return ['post', 'story']
+  /**
+   * A lua fora de curso sai em story.
+   *
+   * "Quando for lua fora de curso tem que ser educativo, mas pode ser em
+   * formato de Storie." O fenômeno dura algumas horas e o story dura vinte e
+   * quatro: o formato acompanha o assunto, e o feed não fica com um post que
+   * envelhece na mesma tarde.
+   */
+  if (ev?.tipo === 'lua_fora_de_curso') return ['story']
   return ['post']
 }
 
@@ -189,28 +200,85 @@ const EDUCATIVOS_POR_DIA = 3
  * semanas e sai repetido — então oferecê-lo como assunto seria oferecer algo que
  * o gerador recusaria.
  *
+ * ── SÓ O QUE ACONTECE NO DIA ───────────────────────────────────────────────
+ *
+ * Antes esta função devolvia tudo: o evento do céu E as posições vigentes. Como
+ * "Marte em Câncer" vale seis semanas, ele aparecia em todos os dias da agenda.
+ * Medido em 21 dias: 96 linhas para 27 assuntos distintos, com Marte em Câncer
+ * 21 vezes, Júpiter em Leão 18 e Vênus em Libra 13.
+ *
+ * O João leu a agenda e disse o que ela devia ser: "poderia ter apenas para
+ * quando tiver no dia". O resto foi para `bancoDeAssuntos`.
+ *
  * @param {Date} data
  * @param {object} deps `{ catalogos, orbes }`
- * @returns {{id, tipo, titulo, angulo, formatos, evento}[]}
+ * @returns {{id, tipo, titulo, angulo, natureza, formatos, evento}[]}
  */
 export function opcoesDoDia(data, { catalogos, orbes }) {
   const mapa = mapaDoCeu(data, orbes)
   const opcoes = []
 
-  for (const ev of eventosDoDia(data, mapa.aspectos)) {
+  /**
+   * `antecedencia: 0` — o evento aparece no dia dele, e só.
+   *
+   * A editorial antecipava três dias, então o mesmo Quarto Crescente ocupava
+   * quatro linhas: "Faltam 3 dias", "Faltam 2 dias", "Amanhã" e o dia. Medido
+   * numa simulação de trinta dias: 12 assuntos distintos em 30 publicações.
+   *
+   * O João foi direto: "poderia ter apenas para quando tiver no dia".
+   */
+  for (const ev of eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })) {
     if (ev.tipo === 'aspecto') continue
+    // a lua fora de curso foi para o banco: acontece toda semana, e o João a
+    // classificou como educativa, em story
+    if (ev.tipo === 'lua_fora_de_curso') continue
     const v = escrever(ev)
-    const vespera = rotuloDeVespera(ev)
     opcoes.push({
       id: idDoAssunto(ev),
       tipo: ev.tipo,
-      titulo: vespera ? `${vespera}: ${v.titulo}` : v.titulo,
+      titulo: v.titulo,
       angulo: anguloDoAssunto(ev),
       natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
       evento: ev,
     })
   }
+
+  return opcoes
+}
+
+/**
+ * O BANCO: o que é assunto sem ser de um dia.
+ *
+ * Posição de planeta, aspecto natal, retrogradação em curso, grau crítico, o
+ * eixo dos nódulos, os conceitos escritos, os recursos do app e a lua fora de
+ * curso. Nenhum deles tem dia certo: valem semanas, ou não dependem do céu.
+ *
+ * O João marca a ordem uma vez e a fila alimenta os dias sem evento. E são
+ * muitos: em trinta dias, só sete têm evento datado.
+ *
+ * @returns {{id, tipo, titulo, angulo, natureza, formatos, validade}[]}
+ */
+export function bancoDeAssuntos(data, { catalogos, orbes }) {
+  const mapa = mapaDoCeu(data, orbes)
+  const itens = []
+
+  /**
+   * A lua fora de curso é condicional.
+   *
+   * Tem hora de começo e de fim, então publicá-la num dia qualquer anunciaria
+   * uma janela que não existe. Entra no banco como "quando houver": o gerador
+   * usa a do dia em que ela for sorteada, e pula se aquele dia não tiver.
+   */
+  itens.push({
+    id: 'luaVazia',
+    tipo: 'lua_fora_de_curso',
+    titulo: 'Lua fora de curso',
+    angulo: 'Quando houver no dia — usa a janela real, em story',
+    natureza: 'educativo',
+    formatos: ['story'],
+    condicional: true,
+  })
 
   // Estados e posições que não são "evento" mas são assunto. Rodam num ritmo
   // diferente do céu de eventos: a retrogradação dura semanas e é a pergunta
@@ -235,14 +303,13 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
 
   for (const ev of extras) {
     const v = escrever(ev)
-    opcoes.push({
+    itens.push({
       id: idDoAssunto(ev),
       tipo: ev.tipo,
       titulo: v.titulo,
       angulo: anguloDoAssunto(ev),
       natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
-      evento: ev,
     })
   }
 
@@ -250,23 +317,58 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
   // usado — é assim que saem três assuntos distintos em vez do mesmo três vezes.
   const usadas = new Set()
   const ingressos = ingressosProximos(data, 40)
-  for (let i = 0; i < EDUCATIVOS_POR_DIA; i++) {
+  /**
+   * TODOS os educativos disponíveis, não só três.
+   *
+   * O limite de três existia porque eles disputavam espaço na agenda de cada
+   * dia. No banco isso deixa de fazer sentido: é uma lista para escolher, e
+   * cortar opções à toa esconde assunto bom.
+   */
+  for (let i = 0; i < 12; i++) {
     const tema = temaEducativo(mapa, catalogos, usadas, { ingressos, data })
     if (!tema || tema.repetido) break
     usadas.add(tema.chave)
     const ev = { ...tema, tipo: 'educativo' }
-    opcoes.push({
+    itens.push({
       id: idDoAssunto(ev),
       tipo: 'educativo',
       titulo: tema.titulo,
       angulo: anguloDoAssunto(ev),
       natureza: naturezaDoAssunto(ev),
       formatos: formatosDoAssunto(ev),
-      evento: ev,
     })
   }
 
-  return opcoes
+  /**
+   * Os conceitos e os recursos do app.
+   *
+   * Nunca apareceram na editorial: não dependem de efeméride nenhuma, então não
+   * tinham dia para cair. O gerador os escolhia sozinho e o João descobria
+   * depois de publicado. No banco, ele escolhe.
+   */
+  for (const chave of CHAVES_DE_CONCEITO) {
+    itens.push({
+      id: `conceito:${chave}`,
+      tipo: 'conceito',
+      titulo: CONCEITO[chave].titulo.replace(/\n/g, ' '),
+      angulo: 'Explicativo — vale em qualquer dia',
+      natureza: 'educativo',
+      formatos: ['post'],
+    })
+  }
+
+  for (const chave of CHAVES_DE_RECURSO) {
+    itens.push({
+      id: `recurso:${chave}`,
+      tipo: 'recurso',
+      titulo: RECURSO[chave].titulo.replace(/\n/g, ' '),
+      angulo: `Sobre o app — ${RECURSO[chave].onde}`,
+      natureza: 'produto',
+      formatos: ['post'],
+    })
+  }
+
+  return itens
 }
 
 /** Acha a opção que a pauta escolheu. `null` quando o id não existe mais. */

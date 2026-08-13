@@ -40,33 +40,35 @@ const meioDia = (d) => new Date(`${d}T12:00:00Z`)
  * e CORPO idênticos: 9 das 12 linhas da legenda se repetiam e só o prefixo
  * mudava. Marcar os quatro era publicar a mesma peça quatro vezes.
  */
-describe('o mesmo evento em dias diferentes', () => {
+/**
+ * A VÉSPERA SAIU DA AGENDA.
+ *
+ * Este bloco garantia o contrário: que o eclipse de 12/08 aparecesse nos quatro
+ * dias com corpos distintos. Era a resposta certa para a pergunta anterior — se
+ * a editorial vai oferecer a véspera, que ela ao menos não repita o texto.
+ *
+ * O João mudou a pergunta: "poderia ter apenas para quando tiver no dia". A
+ * agenda passou a usar `antecedencia: 0`, e um evento ocupa uma linha, no dia
+ * dele. Medido: a agenda caiu de 96 linhas em 21 dias para 9 em 30.
+ *
+ * Os textos de véspera continuam existindo em `corpoDeVespera`, testados
+ * abaixo: servem a quem quiser publicar uma véspera à mão, e voltam de graça se
+ * a antecipação for reativada.
+ */
+describe('a agenda não oferece véspera', () => {
   const DIAS = ['2026-08-09', '2026-08-10', '2026-08-11', '2026-08-12']
 
-  const eclipseDe = (dia) => {
-    const o = opcoesDoDia(meioDia(dia), DEPS).find((x) => x.tipo === 'eclipse')
-    return o ? escrever(o.evento) : null
-  }
+  const eclipseDe = (dia) =>
+    opcoesDoDia(meioDia(dia), DEPS).find((x) => x.tipo === 'eclipse') || null
 
-  it('os quatro dias de véspera de um eclipse trazem corpos distintos', () => {
-    const textos = DIAS.map(eclipseDe).filter(Boolean).map((v) => v.texto)
-    expect(textos.length, 'o eclipse precisa aparecer nos quatro dias').toBe(4)
-    expect(new Set(textos).size, textos.join('\n---\n')).toBe(4)
+  it('o eclipse aparece uma vez, no dia dele', () => {
+    expect(DIAS.filter((d) => eclipseDe(d))).toEqual(['2026-08-12'])
   })
 
-  // O dado é o mesmo de propósito: é o mesmo evento, e mentir sobre a hora para
-  // parecer novidade seria o oposto do que a conta defende.
-  it('o dado NÃO muda — é o mesmo eclipse', () => {
-    const dados = DIAS.map(eclipseDe).filter(Boolean).map((v) => v.dado)
-    expect(new Set(dados).size).toBe(1)
-  })
-
-  it('só a véspera fala em "amanhã", e só ela traz a hora', () => {
-    const amanha = eclipseDe('2026-08-11').texto
-    expect(amanha).toMatch(/^Amanhã, às \d{2}:\d{2}/)
-    for (const dia of ['2026-08-09', '2026-08-10']) {
-      expect(eclipseDe(dia).texto, dia).not.toContain('Amanhã')
-    }
+  it('e o título não traz mais o prefixo de contagem', () => {
+    const o = eclipseDe('2026-08-12')
+    expect(o.titulo).not.toMatch(/Faltam|Amanhã/)
+    expect(o.angulo).toMatch(/^Acontece hoje/)
   })
 })
 

@@ -3,7 +3,9 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { lerLiterais } from '../catalogo.mjs'
-import { opcoesDoDia, acharOpcao, idDoAssunto, formatosDoAssunto } from '../pautas.mjs'
+import {
+  opcoesDoDia, bancoDeAssuntos, acharOpcao, idDoAssunto, formatosDoAssunto,
+} from '../pautas.mjs'
 import { falaComQuemLe } from '../educativo.mjs'
 
 const FRONTEND = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
@@ -38,10 +40,35 @@ const meioDia = (d) => new Date(`${d}T12:00:00Z`)
  * o João disse o que era: aquilo não são opções, é a mesma coisa várias vezes.
  */
 describe('opções de um dia', () => {
-  it('cada dia oferece ao menos três assuntos', () => {
+  /**
+   * A agenda passou a ter SÓ o que acontece no dia.
+   *
+   * Antes trazia tudo, e "Marte em Câncer" — que vale seis semanas — aparecia
+   * em 21 dias seguidos: 96 linhas para 27 assuntos distintos. O resto foi para
+   * `bancoDeAssuntos`, e a agenda ficou legitimamente curta ou vazia.
+   */
+  it('a agenda só traz evento com data', () => {
     for (const dia of ['2026-08-08', '2026-08-12', '2026-08-15', '2026-08-30']) {
-      const ops = opcoesDoDia(meioDia(dia), DEPS)
-      expect(ops.length, dia).toBeGreaterThanOrEqual(3)
+      for (const o of opcoesDoDia(meioDia(dia), DEPS)) {
+        expect(o.natureza, `${dia} ${o.titulo}`).toBe('evento')
+        expect(['educativo', 'conceito', 'recurso', 'lua_fora_de_curso'], o.titulo)
+          .not.toContain(o.tipo)
+      }
+    }
+  })
+
+  it('a mesma posição não aparece em dias seguidos', () => {
+    const vistos = {}
+    for (let i = 0; i < 21; i++) {
+      const d = new Date(Date.UTC(2026, 7, 13 + i, 12))
+      for (const o of opcoesDoDia(d, DEPS)) {
+        // véspera e dia do mesmo evento são o mesmo id, e isso é deliberado;
+        // o que não pode é a posição vigente voltando todo dia
+        vistos[o.id] = (vistos[o.id] || 0) + 1
+      }
+    }
+    for (const [id, n] of Object.entries(vistos)) {
+      expect(n, `${id} apareceu ${n} vezes em 21 dias`).toBeLessThanOrEqual(4)
     }
   })
 
@@ -69,10 +96,26 @@ describe('opções de um dia', () => {
     expect(a).toEqual(b)
   })
 
-  it('oferece mais de um educativo, e distintos', () => {
-    const educativos = opcoesDoDia(meioDia('2026-08-15'), DEPS).filter((o) => o.tipo === 'educativo')
+  it('o banco oferece educativos distintos, e mais que a agenda oferecia', () => {
+    const banco = bancoDeAssuntos(meioDia('2026-08-15'), DEPS)
+    const educativos = banco.filter((o) => o.tipo === 'educativo')
     expect(educativos.length).toBeGreaterThanOrEqual(2)
     expect(new Set(educativos.map((o) => o.titulo)).size).toBe(educativos.length)
+  })
+
+  it('o banco traz conceitos e recursos, que nunca chegavam à editorial', () => {
+    const banco = bancoDeAssuntos(meioDia('2026-08-15'), DEPS)
+    expect(banco.some((o) => o.tipo === 'conceito')).toBe(true)
+    expect(banco.some((o) => o.tipo === 'recurso')).toBe(true)
+    // a lua fora de curso entra como condicional: usa a do dia em que sair
+    const lua = banco.find((o) => o.id === 'luaVazia')
+    expect(lua.condicional).toBe(true)
+    expect(lua.formatos).toEqual(['story'])
+  })
+
+  it('nenhum id se repete dentro do banco', () => {
+    const ids = bancoDeAssuntos(meioDia('2026-08-15'), DEPS).map((o) => o.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   // O aspecto nunca encabeça uma peça — fica exato por semanas e sai repetido.
@@ -108,7 +151,9 @@ describe('opções de um dia', () => {
 
     // treze slides sobre a Lua fora de curso seria carrossel por carrossel
     expect(formatosDoAssunto({ tipo: 'educativo' })).toEqual(['post'])
-    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['post'])
+    // "quando for lua fora de curso tem que ser educativo, mas pode ser em
+    // formato de Storie": dura horas, e o story dura vinte e quatro
+    expect(formatosDoAssunto({ tipo: 'lua_fora_de_curso' })).toEqual(['story'])
     // Plutão muda de signo uma vez por geração, e ninguém reconhece o nome
     expect(formatosDoAssunto({ tipo: 'ingresso', corpo: 'Pluto' })).toEqual(['post'])
   })
@@ -163,12 +208,13 @@ describe('segunda pessoa', () => {
  */
 describe('assuntos de ritmo proprio', () => {
   it('retrogradacao em curso vira assunto, com data de fim', () => {
-    const ops = opcoesDoDia(meioDia('2026-11-01'), DEPS)
+    const ops = bancoDeAssuntos(meioDia('2026-11-01'), DEPS)
     const retro = ops.filter((o) => o.tipo === 'retrogradacao')
     expect(retro.length).toBeGreaterThan(0)
     for (const r of retro) {
-      expect(r.evento.ate, r.titulo).toBeInstanceOf(Date)
-      expect(r.angulo).toMatch(/faltam \d+ dias/)
+      // o banco não carrega o objeto do evento: ele vai para o Storage como
+      // JSON, e o que importa na tela é a linha com o prazo
+      expect(r.angulo, r.titulo).toMatch(/faltam \d+ dias/)
     }
   })
 
@@ -224,13 +270,16 @@ describe('a editorial diz o que cada assunto é', () => {
 
   it('separa o que acontece no dia do que é explicação', () => {
     for (const o of doDia('2026-08-23')) {
-      expect(['evento', 'explicativo'], o.titulo).toContain(o.natureza)
+      expect(o.natureza, o.titulo).toBe('evento')
     }
     const ingresso = doDia('2026-08-23').find((o) => o.tipo === 'ingresso')
     expect(ingresso.natureza).toBe('evento')
 
-    const educativo = doDia('2026-08-23').find((o) => o.tipo === 'educativo')
-    expect(educativo.natureza).toBe('explicativo')
+    // o educativo saiu da agenda e vive no banco
+    expect(doDia('2026-08-23').some((o) => o.tipo === 'educativo')).toBe(false)
+    const noBanco = bancoDeAssuntos(meioDia('2026-08-23'), DEPS)
+      .find((o) => o.tipo === 'educativo')
+    expect(noBanco.natureza).toBe('explicativo')
   })
 
   it('o ingresso de hoje traz a hora', () => {
@@ -239,9 +288,18 @@ describe('a editorial diz o que cada assunto é', () => {
     expect(hoje.angulo).toContain('entra no signo')
   })
 
-  it('a lua fora de curso traz a janela', () => {
-    const lua = doDia('2026-08-13').find((o) => o.tipo === 'lua_fora_de_curso')
-    expect(lua.angulo).toMatch(/das \d{2}h\d{2} às \d{2}h\d{2}/)
+  /**
+   * A lua fora de curso foi para o banco como CONDICIONAL.
+   *
+   * Ela tem hora de começo e fim, então publicá-la num dia qualquer anunciaria
+   * uma janela que não existe. No banco ela diz "quando houver"; a janela real
+   * entra na peça, com a lua daquele dia.
+   */
+  it('a lua fora de curso é condicional no banco', () => {
+    expect(doDia('2026-08-13').some((o) => o.tipo === 'lua_fora_de_curso')).toBe(false)
+    const lua = bancoDeAssuntos(meioDia('2026-08-13'), DEPS).find((o) => o.id === 'luaVazia')
+    expect(lua.angulo).toContain('Quando houver no dia')
+    expect(lua.formatos).toEqual(['story'])
   })
 
   /** Dizer "sem data para acabar" de Marte em Câncer seria mentira. */

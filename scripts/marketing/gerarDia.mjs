@@ -30,6 +30,8 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import process from 'node:process'
 
+import { lerHistorico, chavesRecentes } from './lib/historico.mjs'
+
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const GERADOR = path.join(AQUI, 'gerarEvento.mjs')
@@ -50,7 +52,45 @@ function lerArgs(argv) {
     else if (a.startsWith('--data=')) args.data = a.slice(7)
     else if (a.startsWith('--saida=')) args.saida = a.slice(8)
   }
+  // o mesmo default de `gerarEvento`, para os dois lerem o mesmo histórico
+  if (!args.saida) {
+    args.saida = path.resolve(AQUI, '../../..', 'marketing/out')
+  }
   return args
+}
+
+/**
+ * O PRÓXIMO DA FILA: por POSIÇÃO, não por disponibilidade.
+ *
+ * A primeira versão pegava o primeiro item que não estivesse na janela de
+ * catorze dias. Medido em trinta dias: a fila oscilava nos catorze primeiros e
+ * nunca chegava ao décimo quinto, porque assim que o item 1 saía da janela ele
+ * voltava a ser o primeiro disponível. Dez repetições em trinta dias, com 38
+ * itens parados no banco.
+ *
+ * Agora a fila anda: acha onde parou (o último item dela que foi publicado) e
+ * segue do seguinte. Dá a volta quando chega ao fim, pulando o que ainda está
+ * na janela.
+ */
+export function proximoDaFila(fila, historico, iso) {
+  if (!fila.length) return null
+
+  const usadas = chavesRecentes(historico, iso, 1)
+
+  // onde a fila parou: a entrada mais recente do histórico que está nela
+  const entradas = Object.entries(historico)
+    .filter(([, chave]) => fila.includes(chave))
+    .sort(([a], [b]) => String(b).localeCompare(String(a)))
+
+  const ultimo = entradas.length ? fila.indexOf(entradas[0][1]) : -1
+
+  for (let salto = 1; salto <= fila.length; salto++) {
+    const candidato = fila[(ultimo + salto) % fila.length]
+    if (!usadas.has(candidato)) return candidato
+  }
+
+  // fila inteira publicada dentro da janela: recicla do topo em vez de parar
+  return fila[(ultimo + 1) % fila.length]
 }
 
 /**
@@ -60,17 +100,26 @@ function lerArgs(argv) {
  * o dia sai com uma peça pela cascata. A editorial é conveniência, não
  * dependência.
  */
-async function pautaDoDia(iso, { backend, senha }) {
-  if (!senha) return null
+async function doEstudio(iso, { backend, senha }) {
+  if (!senha) return { pauta: null, fila: [] }
   try {
     const r = await fetch(`${backend}/api/marketing-cards`, {
       headers: { Authorization: `Bearer ${senha}` },
     })
-    if (!r.ok) return null
+    if (!r.ok) return { pauta: null, fila: [] }
     const { dias } = await r.json()
-    return (dias || []).find((d) => d.dia === iso)?.pauta || null
+    const lista = dias || []
+
+    // a fila não pertence a data nenhuma: fica no dia em que foi salva, e vale
+    // a mais recente
+    const comFila = lista.find((d) => Array.isArray(d.fila) && d.fila.length)
+
+    return {
+      pauta: lista.find((d) => d.dia === iso)?.pauta || null,
+      fila: comFila ? comFila.fila : [],
+    }
   } catch {
-    return null
+    return { pauta: null, fila: [] }
   }
 }
 
@@ -93,17 +142,41 @@ async function principal() {
   const args = lerArgs(process.argv)
   const iso = args.data || new Date().toISOString().slice(0, 10)
 
-  const pauta = await pautaDoDia(iso, args)
+  const { pauta, fila } = await doEstudio(iso, args)
   const assuntos = assuntosDaPauta(pauta)
 
-  if (!assuntos.length) {
-    console.log(`${iso}: sem pauta marcada. Uma peça, pela cascata.`)
+  /**
+   * A AGENDA MANDA; QUANDO ELA NÃO TEM NADA, A FILA ASSUME.
+   *
+   * A agenda só traz o que acontece no dia, e em trinta dias só sete têm
+   * evento. Nos outros vinte e três, o assunto vem da fila do banco, na ordem
+   * que o João montou. O gerador pula quem já saiu na janela de catorze dias,
+   * então a fila anda sozinha sem precisar de estado extra.
+   */
+  let origem = 'editorial'
+  let aGerar = assuntos
+
+  if (!aGerar.length && fila.length) {
+    const historico = await lerHistorico(args.saida)
+    const proximo = proximoDaFila(fila, historico, iso)
+    origem = 'fila'
+    // um por dia: a fila é para os dias vazios, não para encher o feed
+    aGerar = [{ id: proximo, daFila: true, formatos: [] }]
+    console.log(`${iso}: sem evento marcado. Da fila: ${proximo} (${fila.length} na fila).`)
+  } else if (!aGerar.length) {
+    origem = 'cascata'
+    // sem agenda e sem fila: o gerador escolhe sozinho, para a automação nunca
+    // parar porque ninguém abriu a editorial
+    aGerar = [null]
+    console.log(`${iso}: sem pauta e sem fila. Uma peça, pela cascata.`)
   } else {
-    console.log(`${iso}: ${assuntos.length} assunto(s) marcado(s) na editorial.`)
+    console.log(`${iso}: ${aGerar.length} assunto(s) marcado(s) na agenda.`)
   }
 
-  // sem pauta, uma peça só: a lista de um item vazio faz o laço rodar uma vez
-  const aGerar = assuntos.length ? assuntos : [null]
+  if (origem === 'editorial' && fila.length) {
+    // nada a fazer, mas o log ajuda a entender o dia quando algo sair estranho
+    console.log(`  (a fila tem ${fila.length} itens esperando dia vago)`)
+  }
   const falhas = []
 
   for (let i = 0; i < aGerar.length; i++) {

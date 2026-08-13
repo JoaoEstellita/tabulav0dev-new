@@ -25,7 +25,7 @@ import path from 'node:path'
 import process from 'node:process'
 
 import { lerLiterais } from './lib/catalogo.mjs'
-import { opcoesDoDia } from './lib/pautas.mjs'
+import { opcoesDoDia, bancoDeAssuntos } from './lib/pautas.mjs'
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const FRONTEND = path.resolve(AQUI, '../..')
@@ -79,8 +79,18 @@ for (let i = 0; i < dias; i++) {
   })
 }
 
+/**
+ * O BANCO: o que é assunto sem ser de um dia.
+ *
+ * Calculado uma vez, a partir de hoje, porque nada dele muda de um dia para o
+ * outro: posição de planeta vale semanas, conceito e recurso não dependem do
+ * céu. Era isso que enchia a agenda de repetição — "Marte em Câncer" apareceu
+ * 21 vezes em 21 dias.
+ */
+const banco = bancoDeAssuntos(meioDiaUTC(base), deps)
+
 if (comoJson) {
-  console.log(JSON.stringify(agenda, null, 2))
+  console.log(JSON.stringify({ agenda, banco }, null, 2))
   process.exit(0)
 }
 
@@ -94,20 +104,30 @@ if (args.includes('--upload')) {
   }
   const backend = (process.env.TABULA_BACKEND || 'https://tabulav0dev-backend.vercel.app').replace(/\/+$/, '')
   const hoje = new Date().toISOString().slice(0, 10)
-  const corpo = Buffer.from(JSON.stringify(agenda), 'utf8').toString('base64')
 
-  const resposta = await fetch(`${backend}/api/marketing-cards`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${senha}` },
-    body: JSON.stringify({ dia: hoje, arquivo: 'calendario.json', conteudoBase64: corpo }),
-  })
-
-  if (!resposta.ok) {
-    console.error(`Falha ao enviar: HTTP ${resposta.status} ${(await resposta.text()).slice(0, 120)}`)
-    process.exit(1)
+  const enviar = async (arquivo, conteudo) => {
+    const resposta = await fetch(`${backend}/api/marketing-cards`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${senha}` },
+      body: JSON.stringify({
+        dia: hoje,
+        arquivo,
+        conteudoBase64: Buffer.from(JSON.stringify(conteudo), 'utf8').toString('base64'),
+      }),
+    })
+    if (!resposta.ok) {
+      console.error(`Falha ao enviar ${arquivo}: HTTP ${resposta.status} ${(await resposta.text()).slice(0, 120)}`)
+      process.exit(1)
+    }
   }
+
+  await enviar('calendario.json', agenda)
+  await enviar('banco.json', banco)
+
   const total = agenda.reduce((n, d) => n + d.opcoes.length, 0)
-  console.log(`${total} assuntos em ${agenda.length} dias, enviados para o Estúdio (${hoje}).`)
+  console.log(`Agenda: ${total} eventos em ${agenda.length} dias.`)
+  console.log(`Banco: ${banco.length} assuntos sem data.`)
+  console.log(`Enviados para o Estúdio (${hoje}).`)
   process.exit(0)
 }
 
