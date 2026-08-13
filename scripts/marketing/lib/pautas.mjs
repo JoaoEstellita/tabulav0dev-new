@@ -25,6 +25,7 @@ import { temaEducativo, falaComQuemLe } from './educativo.mjs'
 import { escrever } from './vozes.mjs'
 import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
 import { RECURSO, CHAVES_DE_RECURSO } from './textosRecurso.mjs'
+import { TEMA, CHAVES_DE_TEMA } from './temasDeCarrossel.mjs'
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -264,21 +265,42 @@ export function bancoDeAssuntos(data, { catalogos, orbes }) {
   const itens = []
 
   /**
-   * A lua fora de curso é condicional.
+   * A lua fora de curso tem DUAS entradas, e são conteúdos diferentes.
    *
-   * Tem hora de começo e de fim, então publicá-la num dia qualquer anunciaria
-   * uma janela que não existe. Entra no banco como "quando houver": o gerador
-   * usa a do dia em que ela for sorteada, e pula se aquele dia não tiver.
+   * O AVISO é condicional: tem hora de começo e de fim, então publicá-lo num dia
+   * qualquer anunciaria uma janela que não existe. O gerador usa a do dia em que
+   * ele for sorteado, e pula se aquele dia não tiver. Sai em story, porque dura
+   * horas como o próprio fenômeno.
+   *
+   * O EXPLICATIVO não tem data nenhuma: é o carrossel que o João escreveu, com
+   * o que é, o que não engata e o que rende. Sai quando a fila chegar nele.
    */
   itens.push({
     id: 'luaVazia',
     tipo: 'lua_fora_de_curso',
-    titulo: 'Lua fora de curso',
-    angulo: 'Quando houver no dia — usa a janela real, em story',
+    titulo: 'Lua fora de curso (aviso do dia)',
+    angulo: 'Quando houver no dia, com a janela real, em story',
     natureza: 'educativo',
     formatos: ['story'],
     condicional: true,
   })
+
+  /**
+   * Os carrosséis de tema entram no banco.
+   *
+   * São peças de sequência, escritas à mão, e nunca apareciam na editorial:
+   * saíam só por comando. No banco, o João marca e a fila publica.
+   */
+  for (const chave of CHAVES_DE_TEMA) {
+    itens.push({
+      id: `carrossel:${chave}`,
+      tipo: 'carrossel',
+      titulo: TEMA[chave].titulo.replace(/\n/g, ' '),
+      angulo: `Carrossel de ${TEMA[chave].slides.length} slides, sem data`,
+      natureza: 'educativo',
+      formatos: ['carrossel'],
+    })
+  }
 
   // Estados e posições que não são "evento" mas são assunto. Rodam num ritmo
   // diferente do céu de eventos: a retrogradação dura semanas e é a pergunta

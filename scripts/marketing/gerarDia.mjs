@@ -101,25 +101,35 @@ export function proximoDaFila(fila, historico, iso) {
  * dependência.
  */
 async function doEstudio(iso, { backend, senha }) {
-  if (!senha) return { pauta: null, fila: [] }
+  if (!senha) return { pauta: null, fila: [], porDia: 1 }
   try {
     const r = await fetch(`${backend}/api/marketing-cards`, {
       headers: { Authorization: `Bearer ${senha}` },
     })
-    if (!r.ok) return { pauta: null, fila: [] }
+    if (!r.ok) return { pauta: null, fila: [], porDia: 1 }
     const { dias } = await r.json()
     const lista = dias || []
 
-    // a fila não pertence a data nenhuma: fica no dia em que foi salva, e vale
-    // a mais recente
-    const comFila = lista.find((d) => Array.isArray(d.fila) && d.fila.length)
+    /**
+     * A fila não pertence a data nenhuma: fica no dia em que foi salva.
+     *
+     * Dois formatos: array puro (a primeira versão) e `{itens, porDia}`. O
+     * antigo continua sendo lido como um por dia, porque já há fila salva no
+     * Storage.
+     */
+    const comFila = lista.find((d) => d.fila && (Array.isArray(d.fila) ? d.fila.length : d.fila.itens?.length))
+    const bruta = comFila?.fila
+
+    const itens = Array.isArray(bruta) ? bruta : (bruta?.itens || [])
+    const porDia = Array.isArray(bruta) ? 1 : Math.max(1, Math.min(MAXIMO, bruta?.porDia || 1))
 
     return {
       pauta: lista.find((d) => d.dia === iso)?.pauta || null,
-      fila: comFila ? comFila.fila : [],
+      fila: itens,
+      porDia,
     }
   } catch {
-    return { pauta: null, fila: [] }
+    return { pauta: null, fila: [], porDia: 1 }
   }
 }
 
@@ -142,7 +152,7 @@ async function principal() {
   const args = lerArgs(process.argv)
   const iso = args.data || new Date().toISOString().slice(0, 10)
 
-  const { pauta, fila } = await doEstudio(iso, args)
+  const { pauta, fila, porDia } = await doEstudio(iso, args)
   const assuntos = assuntosDaPauta(pauta)
 
   /**
@@ -157,12 +167,28 @@ async function principal() {
   let aGerar = assuntos
 
   if (!aGerar.length && fila.length) {
+    /**
+     * Quantas o João escolheu, e não mais uma fixa.
+     *
+     * Cada uma consome o próximo item da fila. O histórico só é gravado quando
+     * a peça sai, então dentro do mesmo dia eu preciso lembrar aqui o que já
+     * foi escolhido, senão as três peças sairiam com o mesmo assunto.
+     */
     const historico = await lerHistorico(args.saida)
-    const proximo = proximoDaFila(fila, historico, iso)
+    const escolhidos = []
+
+    for (let n = 0; n < porDia; n++) {
+      const jaEscolhidos = Object.fromEntries(
+        escolhidos.map((id, i) => [`${iso}#pendente${i}`, id])
+      )
+      const proximo = proximoDaFila(fila, { ...historico, ...jaEscolhidos }, iso)
+      if (!proximo || escolhidos.includes(proximo)) break
+      escolhidos.push(proximo)
+    }
+
     origem = 'fila'
-    // um por dia: a fila é para os dias vazios, não para encher o feed
-    aGerar = [{ id: proximo, daFila: true, formatos: [] }]
-    console.log(`${iso}: sem evento marcado. Da fila: ${proximo} (${fila.length} na fila).`)
+    aGerar = escolhidos.map((id) => ({ id, daFila: true, formatos: [] }))
+    console.log(`${iso}: sem evento marcado. Da fila (${fila.length} itens): ${escolhidos.join(', ')}`)
   } else if (!aGerar.length) {
     origem = 'cascata'
     // sem agenda e sem fila: o gerador escolhe sozinho, para a automação nunca

@@ -290,9 +290,21 @@ async function principal() {
    * É peça de decisão editorial, e sai inteira: quatro a seis slides que
    * ensinam uma coisa do começo ao fim. Sai daqui e o resto da função nem roda.
    */
+  /**
+   * `carrossel:mapa` vindo da fila é o mesmo que `--carrossel=mapa`.
+   *
+   * O banco guarda os temas com prefixo, para o id não colidir com conceito nem
+   * recurso. Aqui os dois caminhos se encontram.
+   */
+  if (!args.carrossel && String(args.assunto || '').startsWith('carrossel:')) {
+    args.carrossel = args.assunto.slice(10)
+  }
+
   if (args.carrossel) {
     const tema = temaPorChave(args.carrossel)
-    const pasta = path.join(args.saida, iso, 'carrossel')
+    // o slot vale aqui também: dois carrosséis no mesmo dia se sobrescreveriam
+    const prefixoTema = (args.slot || 1) > 1 ? `p${args.slot}/` : ''
+    const pasta = path.join(args.saida, iso, prefixoTema ? `carrossel-${args.slot}` : 'carrossel')
     await mkdir(pasta, { recursive: true })
 
     for (let i = 0; i < tema.slides.length; i++) {
@@ -338,10 +350,10 @@ async function principal() {
     if (args.upload) {
       for (let i = 0; i < tema.slides.length; i++) {
         const nome = `${String(i + 1).padStart(2, '0')}.png`
-        await enviar(path.join(pasta, nome), iso, `carrossel/${nome}`, args)
+        await enviar(path.join(pasta, nome), iso, `${prefixoTema}carrossel/${nome}`, args)
       }
-      await enviar(path.join(pasta, 'legenda.txt'), iso, 'legenda.txt', args)
-      console.log('Estúdio: enviado')
+      await enviar(path.join(pasta, 'legenda.txt'), iso, `${prefixoTema}legenda.txt`, args)
+      console.log(`Estúdio: enviado${prefixoTema ? ` (peça ${args.slot})` : ''}`)
     }
     return
   }

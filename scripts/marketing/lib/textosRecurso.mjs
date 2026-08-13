@@ -71,10 +71,12 @@ export const RECURSO = {
   transitosPessoais: {
     titulo: 'O que o céu\nfaz no seu mapa',
     tela: 'transitos',
+    // "com que orbe" saiu: numa peça de produto, quem lê não sabe o que é orbe,
+    // e a informação que importa ali é o quanto falta, não o nome da medida
     texto: 'Trânsito é onde os planetas estão agora. O que importa é onde eles ' +
       'caem no SEU mapa, e é isso que esta tela mostra: qual planeta toca qual ' +
-      'ponto seu, em que casa, com que orbe, e por quanto tempo aquilo ainda ' +
-      'vale. É a diferença entre previsão para todo mundo e leitura sua.',
+      'ponto seu, em que parte da vida isso cai, e por quantos dias ainda vale. ' +
+      'É a diferença entre previsão para todo mundo e leitura sua.',
     onde: 'Aba Perfil, em Trânsitos Pessoais',
     ponte: 'Veja os trânsitos sobre o seu mapa, no link da bio.',
   },

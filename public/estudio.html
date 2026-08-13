@@ -219,6 +219,20 @@
   }
   .seta:hover { color: var(--ouro); border-color: var(--ouro); }
 
+  .por-dia {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 10px; font-size: 12px; color: var(--tinta-2);
+  }
+  .qtd {
+    min-width: 30px; text-align: center; cursor: pointer;
+    padding: 4px 8px; border-radius: 7px;
+    border: 1px solid var(--borda); background: var(--superficie);
+    font-family: var(--mono); font-size: 12px;
+  }
+  .qtd input { position: absolute; opacity: 0; pointer-events: none; }
+  .qtd.on { border-color: var(--ouro); color: var(--ouro); background: rgba(255,217,61,0.1); }
+  .dura { margin-left: 6px; font-style: italic; opacity: 0.85; }
+
   /**
    * O mesmo assunto marcado em dois dias.
    *
@@ -512,9 +526,13 @@
      */
     var banco = []
     var fila = []
+    var porDia = 1
     dias.forEach(function (d) {
       if (!banco.length && Array.isArray(d.banco) && d.banco.length) banco = d.banco
-      if (!fila.length && Array.isArray(d.fila) && d.fila.length) fila = d.fila
+      if (fila.length || !d.fila) return
+      // dois formatos: array puro (a primeira versão) e {itens, porDia}
+      if (Array.isArray(d.fila)) { fila = d.fila }
+      else if (Array.isArray(d.fila.itens)) { fila = d.fila.itens; porDia = d.fila.porDia || 1 }
     })
 
     var hoje = new Date().toISOString().slice(0, 10)
@@ -656,7 +674,23 @@
         '<div class="pautas">' + corpo + '</div>' +
         '<h4 class="titulo-secao">Banco · sem data, sai na ordem da fila</h4>' +
         '<p class="dica">Marque o que quer publicar e ordene com as setas. ' +
-          'Os dias sem evento puxam o primeiro da fila que ainda não saiu.</p>' +
+          'Os dias sem evento puxam da fila, de cima para baixo.</p>' +
+        /**
+         * Quantas peças por dia, e quanto tempo a fila dura com essa escolha.
+         *
+         * A conta aparece porque a decisão não é óbvia: com 38 itens e uns 23
+         * dias de fila por mês, uma por dia dá quase dois meses até repetir, e
+         * três por dia dá menos de três semanas.
+         */
+        '<div class="por-dia">' +
+          '<span>Peças por dia, nos dias sem evento:</span>' +
+          [1, 2, 3, 4, 5].map(function (n) {
+            return '<label class="qtd' + (n === porDia ? ' on' : '') + '">' +
+              '<input type="radio" name="por-dia" value="' + n + '"' +
+              (n === porDia ? ' checked' : '') + '>' + n + '</label>'
+          }).join('') +
+          '<span class="dura" id="dura-fila"></span>' +
+        '</div>' +
         '<div class="banco">' + linhasBanco + '</div>' +
       '</div>'
 
@@ -689,11 +723,43 @@
       })
     })
 
+    /**
+     * Quanto tempo a fila dura com a escolha atual.
+     *
+     * Sete dos trinta dias têm evento, então uns 23 puxam da fila. Com N por
+     * dia, o banco marcado dura `marcados / N` dias de fila. A conta aparece na
+     * tela porque a diferença é grande: um por dia dá quase dois meses, três
+     * por dia dá menos de três semanas.
+     */
+    var atualizarDuracao = function () {
+      var alvo = document.getElementById('dura-fila')
+      if (!alvo) return
+      var marcados = editorial.querySelectorAll('input[data-banco]:checked').length
+      var n = Number((editorial.querySelector('input[name=por-dia]:checked') || {}).value || 1)
+      if (!marcados) { alvo.textContent = 'nada marcado ainda' ; return }
+      // ~23 dias de fila por mês: o resto do mês tem evento na agenda
+      var dias = Math.round(marcados / n)
+      alvo.textContent = marcados + ' marcado(s), dá para ' + dias +
+        ' dia(s) de fila antes de repetir'
+    }
+
     editorial.querySelectorAll('input[data-banco]').forEach(function (cx) {
       cx.addEventListener('change', function () {
         cx.closest('.item-banco').classList.toggle('on', cx.checked)
+        atualizarDuracao()
       })
     })
+
+    editorial.querySelectorAll('input[name=por-dia]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        editorial.querySelectorAll('.qtd').forEach(function (l) {
+          l.classList.toggle('on', l.querySelector('input').checked)
+        })
+        atualizarDuracao()
+      })
+    })
+
+    atualizarDuracao()
 
     avisarRepetidos(editorial)
       })
@@ -826,7 +892,8 @@
     // A fila fica no dia de HOJE, um arquivo só: ela não pertence a data
     // nenhuma, e é isso que a distingue da agenda.
     var hojeISO = new Date().toISOString().slice(0, 10)
-    envios.push(enviar(hojeISO, 'fila.json', fila))
+    var qtd = Number((editorial.querySelector('input[name=por-dia]:checked') || {}).value || 1)
+    envios.push(enviar(hojeISO, 'fila.json', { itens: fila, porDia: qtd }))
 
     Promise.all(envios).then(function (rs) {
       var falhou = rs.filter(function (r) { return !r.ok }).length

@@ -15,7 +15,71 @@
  */
 
 export const TEMA = {
+  /**
+   * A lua fora de curso, explicada.
+   *
+   * O João mandou o conteúdo e pediu, na mesma mensagem, "linguagem clara e
+   * acessível". O texto que ele mandou é justamente onde o jargão se esconde:
+   * "último aspecto maior", "incomunicável", "vazia de curso". Quem não estuda
+   * astrologia não sabe o que é um aspecto maior, e a palavra sai sem prejuízo:
+   * "terminou de conversar com os planetas" diz o mesmo e não pede nota de
+   * rodapé.
+   *
+   * A comparação do barco sem leme é dele, e fica: é exatamente o tipo de
+   * imagem que dispensa explicação.
+   *
+   * Este carrossel é o EXPLICATIVO, sem data. O aviso de cada janela continua
+   * saindo em story, com a hora real do dia.
+   */
+  luaVazia: {
+    titulo: 'Lua fora\nde curso',
+    ponte: 'O app calcula a janela de cada dia. Link da bio.',
+    slides: [
+      {
+        titulo: 'Lua fora\nde curso',
+        texto: 'Você já teve um dia em que nada engata? Combina e desmarca, ' +
+          'decide e volta atrás, trabalha e não sai do lugar. A astrologia tem ' +
+          'nome para uma parte disso, e ele aparece no calendário. Arrasta.',
+      },
+      {
+        titulo: 'O que\nestá acontecendo',
+        texto: 'A Lua passa dois dias e meio em cada signo, conversando com os ' +
+          'planetas pelo caminho. Quando ela termina a última dessas conversas ' +
+          'e ainda não entrou no signo seguinte, fica um intervalo solta. É ' +
+          'esse intervalo que se chama fora de curso.',
+      },
+      {
+        titulo: 'Um barco\nsem leme',
+        texto: 'A imagem é antiga e continua boa: o barco segue na água, mas ' +
+          'ninguém está no comando. O que já estava andando continua andando. ' +
+          'O que precisa de direção nova é que não pega.',
+      },
+      {
+        titulo: 'O que\nnão engata',
+        texto: 'Abrir empresa, assinar contrato, inaugurar. Compra grande, ' +
+          'acordo fechado, primeiro encontro. Cirurgia marcada e exame que você ' +
+          'nunca fez. Nada disso vira desastre: é que costuma precisar ser ' +
+          'refeito, remarcado ou renegociado depois.',
+      },
+      {
+        titulo: 'O que\nrende',
+        texto: 'A rotina que já anda sozinha. Terminar o que está pela metade: ' +
+          'papel acumulado, armário bagunçado, aquela pendência de três ' +
+          'semanas. E descansar sem culpa, que é o melhor uso do período e o ' +
+          'que quase ninguém faz.',
+      },
+      {
+        titulo: 'Acontece\ntoda semana',
+        texto: 'A cada dois ou três dias, por algumas horas. Às vezes vinte ' +
+          'minutos, às vezes um dia inteiro. Saber a janela muda o dia: dá para ' +
+          'empurrar a reunião importante em duas horas e resolver o resto ' +
+          'primeiro.',
+      },
+    ],
+  },
+
   mapa: {
+    sobreOApp: true,
     titulo: 'Como ler\nseu mapa',
     ponte: 'Seu mapa sai em três perguntas, de graça, no link da bio.',
     slides: [
@@ -58,6 +122,7 @@ export const TEMA = {
   },
 
   dia: {
+    sobreOApp: true,
     titulo: 'Seu dia\nem oito áreas',
     ponte: 'Seu dia calculado todo dia, no link da bio.',
     slides: [
@@ -93,6 +158,7 @@ export const TEMA = {
   },
 
   transitos: {
+    sobreOApp: true,
     titulo: 'O que é\num trânsito',
     ponte: 'Veja os trânsitos sobre o seu mapa, no link da bio.',
     slides: [

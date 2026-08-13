@@ -169,10 +169,20 @@ describe('os carrosséis de tema', () => {
     }
   })
 
-  /** Seis telas seguidas cansam; texto puro não mostra o produto. */
-  it('mistura slide de texto com slide de tela', () => {
+  /**
+   * Seis telas seguidas cansam; texto puro não mostra o produto.
+   *
+   * Vale para os temas SOBRE O APP. O carrossel da lua fora de curso é conteúdo
+   * astrológico: não existe tela do aplicativo sobre o assunto, e enfiar uma só
+   * para cumprir o formato seria propaganda no meio da aula.
+   */
+  it('tema sobre o app mistura slide de texto com slide de tela', () => {
     for (const chave of CHAVES_DE_TEMA) {
       const slides = TEMA[chave].slides
+      if (!TEMA[chave].sobreOApp) {
+        expect(slides.every((s) => !s.tela), `${chave} não devia ter tela`).toBe(true)
+        continue
+      }
       expect(slides.some((s) => s.tela), `${chave} sem nenhuma tela`).toBe(true)
       expect(slides.some((s) => !s.tela), `${chave} só com telas`).toBe(true)
       for (const s of slides.filter((x) => x.tela)) {
