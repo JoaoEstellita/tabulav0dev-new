@@ -70,12 +70,18 @@ export function computeSynastryAspects(
     .map(({ personals, ...rest }) => rest)
 }
 
-// Calcula as longitudes natais de um membro a partir do birthData compartilhado.
-// Reusa calculateRealAstrology (que resolve o fuso histórico pela coordenada) e
-// extrai só as posições natais — o datetime é hora-de-parede local (sem TZ embutido).
-export async function computeNatalLongitudes(
+export interface NatalChart {
+  planets: RealPlanetPosition[]
+  cusps: number[] | null // 12 cúspides das casas (para sobreposição de casas)
+  ascendant: number | null
+}
+
+// Carta natal (posições + cúspides) de um membro a partir do birthData compartilhado.
+// Reusa calculateRealAstrology (que resolve o fuso histórico pela coordenada); o
+// datetime é hora-de-parede local (sem TZ embutido).
+export async function computeNatalChart(
   birthData?: { datetime?: string; coordinates?: { latitude: number; longitude: number } } | null
-): Promise<RealPlanetPosition[] | null> {
+): Promise<NatalChart | null> {
   const datetime = birthData?.datetime
   const coords = birthData?.coordinates
   if (!datetime || !coords || !Number.isFinite(coords.latitude) || !Number.isFinite(coords.longitude)) {
@@ -93,8 +99,19 @@ export async function computeNatalLongitudes(
       undefined,
       { natalLat: coords.latitude, natalLon: coords.longitude }
     )
-    return data?.natalPlanets || null
+    if (!data?.natalPlanets) return null
+    const cusps = Array.isArray(data.natalHouses) && data.natalHouses.length >= 12 ? data.natalHouses : null
+    const ascendant = Number.isFinite(data.natalAscendant) ? data.natalAscendant : null
+    return { planets: data.natalPlanets, cusps, ascendant }
   } catch {
     return null
   }
+}
+
+// Só as longitudes natais (retrocompat — usado pela sinastria e por progressions.ts).
+export async function computeNatalLongitudes(
+  birthData?: { datetime?: string; coordinates?: { latitude: number; longitude: number } } | null
+): Promise<RealPlanetPosition[] | null> {
+  const chart = await computeNatalChart(birthData)
+  return chart?.planets || null
 }

@@ -44,15 +44,16 @@ import { getExpiryBannerInfo } from "../../utils/expiry"
 import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transitPresentation"
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
-import { computeSynastryAspects, computeNatalLongitudes, type SynastryAspect } from "../../astro/synastry"
-import { synastryScore, synastryAspectLine } from "../../astro/synastryReading"
-import type { RealPlanetPosition } from "../../services/astrology/RealAstrologyEngine"
+import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
+import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { gunaMilanBetween } from "../../astro/vedic"
 import { resolveGunaMilan, type ResolvedGunaMilan } from "../../utils/vedicInterpretation"
 
 // Sinastria entre dois participantes do grupo (matriz de todas as duplas, fora o viewer).
 type PairSynastry = {
   id: string
+  aId: string
+  bId: string
   aName: string
   bName: string
   aspects: SynastryAspect[]
@@ -187,6 +188,8 @@ export default function GroupsScreen() {
   const [synastryByMember, setSynastryByMember] = useState<Record<string, SynastryAspect[]>>({})
   const [gunaMilanByMember, setGunaMilanByMember] = useState<Record<string, ResolvedGunaMilan>>({})
   const [pairSynastry, setPairSynastry] = useState<PairSynastry[]>([])
+  // Cartas natais em cache (viewer + cada membro) — alimentam a sobreposição de casas.
+  const [chartByMember, setChartByMember] = useState<Record<string, NatalChart>>({})
   const [synastryLoading, setSynastryLoading] = useState(false)
   const [synastryMineMissing, setSynastryMineMissing] = useState(false)
   // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
@@ -551,14 +554,14 @@ export default function GroupsScreen() {
     let cancelled = false
     const run = async () => {
       if (!selectedGroup?.id || !user?.uid || groupMembers.length === 0) {
-        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([])
+        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([]); setChartByMember({})
         setSynastryMineMissing(false)
         return
       }
       const mineMember = groupMembers.find((member) => member.userId === user.uid)
       const mineBirth = mineMember?.birthData
       if (!mineBirth?.datetime || !mineBirth?.coordinates) {
-        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([])
+        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([]); setChartByMember({})
         setSynastryMineMissing(true)
         return
       }
@@ -567,55 +570,56 @@ export default function GroupsScreen() {
       )
       setSynastryMineMissing(false)
       if (others.length === 0) {
-        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([])
+        setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([]); setChartByMember({})
         return
       }
       setSynastryLoading(true)
       try {
-        const mine = await computeNatalLongitudes(mineBirth)
+        const mineChart = await computeNatalChart(mineBirth)
         if (cancelled) return
-        if (!mine) {
-          setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([])
+        if (!mineChart) {
+          setSynastryByMember({}); setGunaMilanByMember({}); setPairSynastry([]); setChartByMember({})
           return
         }
+        const mine = mineChart.planets
         const result: Record<string, SynastryAspect[]> = {}
         const gm: Record<string, ResolvedGunaMilan> = {}
         const mineDate = new Date(mineBirth.datetime)
-        // Cache da carta de cada outro membro — calcula cada uma 1× só e reusa
-        // tanto no Você×membro quanto na matriz membro×membro.
-        const chartByOther: Record<string, RealPlanetPosition[]> = {}
+        // Cache da carta COMPLETA (posições + cúspides) de cada membro — calcula 1× e
+        // reusa nos aspectos, no Guna e na sobreposição de casas.
+        const charts: Record<string, NatalChart> = { [user.uid]: mineChart }
         for (const member of others) {
-          const theirs = await computeNatalLongitudes(member.birthData)
+          const theirsChart = await computeNatalChart(member.birthData)
           if (cancelled) return
           const theirDatetime = member.birthData?.datetime
-          if (theirs && theirDatetime) {
-            chartByOther[member.userId] = theirs
-            result[member.userId] = computeSynastryAspects(mine, theirs, 20)
+          if (theirsChart && theirDatetime) {
+            charts[member.userId] = theirsChart
+            result[member.userId] = computeSynastryAspects(mine, theirsChart.planets, 20)
             // Guna Milan (lente védica) — determinístico, a partir das Luas natais.
-            const g = gunaMilanBetween(mine, mineDate, theirs, new Date(theirDatetime))
+            const g = gunaMilanBetween(mine, mineDate, theirsChart.planets, new Date(theirDatetime))
             if (g) gm[member.userId] = resolveGunaMilan(g)
           }
         }
         // Matriz: todas as duplas ENTRE os outros membros (fora o viewer, que já
         // tem sua própria seção). Cartas já em cache → só cruzamento, sem async.
-        const withChart = others.filter((m) => chartByOther[m.userId])
+        const withChart = others.filter((m) => charts[m.userId])
         const pairs: PairSynastry[] = []
         for (let i = 0; i < withChart.length; i++) {
           for (let j = i + 1; j < withChart.length; j++) {
             const A = withChart[i]
             const B = withChart[j]
-            const aspects = computeSynastryAspects(chartByOther[A.userId], chartByOther[B.userId], 20)
+            const aspects = computeSynastryAspects(charts[A.userId].planets, charts[B.userId].planets, 20)
             let guna: ResolvedGunaMilan | undefined
             const da = A.birthData?.datetime
             const db = B.birthData?.datetime
             if (da && db) {
-              const g = gunaMilanBetween(chartByOther[A.userId], new Date(da), chartByOther[B.userId], new Date(db))
+              const g = gunaMilanBetween(charts[A.userId].planets, new Date(da), charts[B.userId].planets, new Date(db))
               if (g) guna = resolveGunaMilan(g)
             }
-            pairs.push({ id: `${A.userId}__${B.userId}`, aName: A.displayName, bName: B.displayName, aspects, guna })
+            pairs.push({ id: `${A.userId}__${B.userId}`, aId: A.userId, bId: B.userId, aName: A.displayName, bName: B.displayName, aspects, guna })
           }
         }
-        if (!cancelled) { setSynastryByMember(result); setGunaMilanByMember(gm); setPairSynastry(pairs) }
+        if (!cancelled) { setSynastryByMember(result); setGunaMilanByMember(gm); setPairSynastry(pairs); setChartByMember(charts) }
       } finally {
         if (!cancelled) setSynastryLoading(false)
       }
@@ -1755,11 +1759,22 @@ export default function GroupsScreen() {
   // Corpo da sinastria (compartilhado pelo Você×membro e pela matriz membro×membro):
   // índice de compatibilidade + aspectos (top-5, ou todos quando expandido, com texto
   // legível) + Guna Milan (total, ou 8 kutas detalhados quando expandido).
-  const renderSynastryBody = (key: string, aspects: SynastryAspect[], guna?: ResolvedGunaMilan) => {
+  const renderSynastryBody = (
+    key: string,
+    aspects: SynastryAspect[],
+    guna?: ResolvedGunaMilan,
+    chartA?: NatalChart,
+    chartB?: NatalChart,
+    aName?: string,
+    bName?: string,
+  ) => {
     const expanded = expandedSyn.has(key)
     const score = synastryScore(aspects)
     const shown = expanded ? aspects : aspects.slice(0, 5)
     const isPt = language === 'pt-BR'
+    const overlays = expanded && chartA && chartB
+      ? synastryHouseOverlays(chartA, chartB, aName || '', bName || '', language)
+      : []
     return (
       <>
         {aspects.length > 0 ? (
@@ -1802,27 +1817,32 @@ export default function GroupsScreen() {
         ) : null}
         {guna ? (
           <View style={styles.gunaBox}>
+            {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}
             <Text style={styles.gunaTitle}>
-              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36{isPt && guna.bandFaixa ? ` · ${guna.bandFaixa}` : ''}
+              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36
             </Text>
-            {!expanded ? (
-              <Text style={styles.gunaMeta}>
-                {guna.hasNadiDosha
-                  ? tr('groups.vedic.nadiDosha', 'Nadi dosha — atenção')
-                  : tr('groups.vedic.nadiOk', 'Nadi ok (fator-chave)')}
-                {guna.hasBhakootDosha ? ` · ${tr('groups.vedic.bhakootDosha', 'Bhakoot dosha')}` : ''}
-              </Text>
-            ) : (
+            {expanded ? (
               <>
                 {guna.kutas.map((k) => (
                   <View key={`${key}-kuta-${k.key}`} style={styles.gunaKutaRow}>
-                    <Text style={styles.gunaKutaName}>{k.nome}{k.dosha ? ' ⚠' : ''}</Text>
-                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.leitura ? ` · ${k.leitura}` : ''}</Text>
+                    <Text style={styles.gunaKutaName}>{k.nome}</Text>
+                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.oQueMede ? ` · ${k.oQueMede}` : ''}</Text>
                   </View>
                 ))}
-                {isPt && guna.bandTexto ? <Text style={styles.gunaBandText}>{guna.bandTexto}</Text> : null}
               </>
-            )}
+            ) : null}
+          </View>
+        ) : null}
+        {overlays.length > 0 ? (
+          <View style={styles.gunaBox}>
+            <Text style={styles.gunaTitle}>
+              {tr('groups.synastry.housesTitle', 'Casas — o que um ativa no outro')}
+            </Text>
+            {overlays.map((o, i) => (
+              <Text key={`${key}-ov-${i}`} style={styles.synastryAspectLineText}>
+                {`${translatePlanet(o.planet, language)} (${o.fromName}) → ${tr('groups.synastry.houseWord', 'Casa')} ${o.house}${o.toName ? ` (${o.toName})` : ''}${o.focus ? `: ${o.focus}` : ''}`}
+              </Text>
+            ))}
           </View>
         ) : null}
       </>
@@ -2242,7 +2262,7 @@ export default function GroupsScreen() {
                           <Text style={styles.synastryMemberName} numberOfLines={1}>
                             {member.displayName}
                           </Text>
-                          {renderSynastryBody(member.userId, aspects, gunaMilanByMember[member.userId])}
+                          {renderSynastryBody(member.userId, aspects, gunaMilanByMember[member.userId], chartByMember[user?.uid || ''], chartByMember[member.userId], tr('groups.synastry.you', 'Você'), member.displayName)}
                         </View>
                       )
                     })
@@ -2270,7 +2290,7 @@ export default function GroupsScreen() {
                     <Text style={styles.synastryMemberName} numberOfLines={1}>
                       {`${pair.aName}  ×  ${pair.bName}`}
                     </Text>
-                    {renderSynastryBody(pair.id, pair.aspects, pair.guna)}
+                    {renderSynastryBody(pair.id, pair.aspects, pair.guna, chartByMember[pair.aId], chartByMember[pair.bId], pair.aName, pair.bName)}
                   </View>
                 ))}
                 <Text style={styles.synastryFootnote}>

@@ -4,7 +4,9 @@
 //    (domínio do planeta × frase do aspecto) nos 4 idiomas.
 // Consome os SynastryAspect de ./synastry (aspect.mine/theirs = chave en minúscula).
 
-import type { SynastryAspect } from './synastry'
+import type { SynastryAspect, NatalChart } from './synastry'
+import type { RealPlanetPosition } from '../services/astrology/RealAstrologyEngine'
+import { getHousePositionalFocus } from '../utils/astroInterpretation'
 
 type Lang = 'pt-BR' | 'en-US' | 'es-ES' | 'it-IT'
 
@@ -93,4 +95,64 @@ export function synastryAspectLine(aspect: SynastryAspect, language: string): st
   const outcome = ASPECT_REL[aspect.aspect]?.[lang]
   if (!domA || !domB || !outcome) return ''
   return `${cap(domA)} ${CONNECTOR[lang]} ${domB} ${outcome}.`
+}
+
+// ─── Sobreposição de casas (a "outra metade" da sinastria ocidental) ─────────
+// Onde os planetas de uma pessoa caem NAS CASAS da outra: mostra qual área da
+// vida cada um mais ativa no outro. Só planetas pessoais (Sol..Marte) para ficar
+// legível; direcional (A→B e B→A).
+
+const OVERLAY_PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
+
+export interface HouseOverlay {
+  fromName: string
+  toName: string
+  planet: string // chave en minúscula (para translatePlanet)
+  house: number
+  focus: string
+}
+
+/** Casa (1–12) de uma longitude nas cúspides dadas, ou null. */
+function houseFromCusps(longitude: number, cusps: number[] | null | undefined): number | null {
+  if (!Array.isArray(cusps) || cusps.length < 12) return null
+  for (let i = 0; i < 12; i++) {
+    const start = cusps[i]
+    const end = cusps[(i + 1) % 12]
+    const span = ((end - start) % 360 + 360) % 360
+    const offset = ((longitude - start) % 360 + 360) % 360
+    if (offset < span || span === 0) return i + 1
+  }
+  return null
+}
+
+function overlaysOneWay(from: NatalChart, to: NatalChart, fromName: string, toName: string, lang: Lang): HouseOverlay[] {
+  if (!to.cusps) return []
+  const out: HouseOverlay[] = []
+  const byName = new Map<string, RealPlanetPosition>((from.planets || []).map((p) => [p.name, p]))
+  for (const name of OVERLAY_PLANETS) {
+    const p = byName.get(name)
+    if (!p || !Number.isFinite(p.longitude)) continue
+    const house = houseFromCusps(p.longitude, to.cusps)
+    if (!house) continue
+    out.push({ fromName, toName, planet: name.toLowerCase(), house, focus: getHousePositionalFocus(lang, house) })
+  }
+  return out
+}
+
+/**
+ * Sobreposição de casas nos DOIS sentidos (A→B e B→A). Vazio se faltarem cúspides.
+ */
+export function synastryHouseOverlays(
+  chartA: NatalChart | null | undefined,
+  chartB: NatalChart | null | undefined,
+  aName: string,
+  bName: string,
+  language: string,
+): HouseOverlay[] {
+  if (!chartA || !chartB) return []
+  const lang: Lang = (['pt-BR', 'en-US', 'es-ES', 'it-IT'].includes(language) ? language : 'pt-BR') as Lang
+  return [
+    ...overlaysOneWay(chartA, chartB, aName, bName, lang),
+    ...overlaysOneWay(chartB, chartA, bName, aName, lang),
+  ]
 }

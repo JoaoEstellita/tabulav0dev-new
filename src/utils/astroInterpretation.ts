@@ -588,7 +588,7 @@ function getHouseSymbolism(language: AppLanguage, house: number): string {
   return HOUSE_SYMBOLISM[house] || ''
 }
 
-function getHousePositionalFocus(language: AppLanguage, house: number): string {
+export function getHousePositionalFocus(language: AppLanguage, house: number): string {
   return HOUSE_POSITIONAL_FOCUS[language]?.[house]
     || HOUSE_POSITIONAL_FOCUS['pt-BR']?.[house]
     || ''

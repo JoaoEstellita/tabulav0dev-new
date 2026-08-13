@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { synastryScore, synastryAspectLine } from '../synastryReading'
-import type { SynastryAspect } from '../synastry'
+import { synastryScore, synastryAspectLine, synastryHouseOverlays } from '../synastryReading'
+import type { SynastryAspect, NatalChart } from '../synastry'
 
 const asp = (mine: string, theirs: string, aspect: string, tone: string, orb: number): SynastryAspect =>
   ({ mine, theirs, aspect, tone, orb, symbol: '·' } as any)
@@ -51,5 +51,37 @@ describe('synastryAspectLine', () => {
   it('planeta/aspecto desconhecido → string vazia (cai no fallback do chamador)', () => {
     expect(synastryAspectLine(asp('chiron', 'moon', 'trigono', 'harmonioso', 1), 'pt-BR')).toBe('')
     expect(synastryAspectLine(asp('sun', 'moon', 'quintil', 'neutro', 1), 'pt-BR')).toBe('')
+  })
+})
+
+describe('synastryHouseOverlays', () => {
+  const wholeSignCusps = Array.from({ length: 12 }, (_, i) => i * 30)
+  const pl = (name: string, longitude: number) => ({ name, longitude } as any)
+  const chart = (planets: any[]): NatalChart => ({ planets, cusps: wholeSignCusps, ascendant: 0 })
+
+  it('coloca o planeta de A na casa de B nos dois sentidos', () => {
+    const A = chart([pl('Sun', 65)]) // 65° → casa 3 nas cúspides whole-sign
+    const B = chart([pl('Venus', 195)]) // 195° → casa 7
+    const ov = synastryHouseOverlays(A, B, 'Ana', 'Bruno', 'pt-BR')
+    const sun = ov.find((o) => o.planet === 'sun')
+    const venus = ov.find((o) => o.planet === 'venus')
+    expect(sun?.house).toBe(3)
+    expect(sun?.toName).toBe('Bruno')
+    expect(venus?.house).toBe(7)
+    expect(venus?.toName).toBe('Ana')
+    expect(sun?.focus.length).toBeGreaterThan(0)
+  })
+
+  it('sem cúspides → vazio', () => {
+    const A: NatalChart = { planets: [pl('Sun', 10)], cusps: null, ascendant: null }
+    expect(synastryHouseOverlays(A, A, 'A', 'B', 'pt-BR')).toEqual([])
+  })
+
+  it('ignora planetas não-pessoais', () => {
+    const A = chart([pl('Pluto', 65)])
+    const B = chart([pl('Moon', 100)])
+    const ov = synastryHouseOverlays(A, B, 'A', 'B', 'pt-BR')
+    expect(ov.some((o) => o.planet === 'pluto')).toBe(false)
+    expect(ov.some((o) => o.planet === 'moon')).toBe(true)
   })
 })
