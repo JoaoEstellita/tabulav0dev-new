@@ -211,6 +211,7 @@ export default function GroupsScreen() {
   const [groupOrderDraft, setGroupOrderDraft] = useState<string[]>([])
   const [showGroupOrderModal, setShowGroupOrderModal] = useState(false)
   const [showGroupActionsModal, setShowGroupActionsModal] = useState(false)
+  const [showAddChooser, setShowAddChooser] = useState(false)
   const [memberSort, setMemberSort] = useState<"status" | "name" | "recent">("status")
   const [showMemberSortModal, setShowMemberSortModal] = useState(false)
   const [selectedMemberArea, setSelectedMemberArea] = useState<{
@@ -1996,7 +1997,7 @@ export default function GroupsScreen() {
                     {selectedGroup?.createdBy === user?.uid ? (
                       <TouchableOpacity
                         style={styles.groupHeaderActionButton}
-                        onPress={() => setShowAddManaged(true)}
+                        onPress={() => setShowAddChooser(true)}
                         accessibilityRole="button"
                         accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
                       >
@@ -2389,7 +2390,7 @@ export default function GroupsScreen() {
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              style={[styles.modalButtonConfirm, styles.modalButtonFullWidth]}
+              style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn]}
               onPress={() => {
                 setShowGroupActionsModal(false)
                 setShowJoinModal(true)
@@ -2399,7 +2400,7 @@ export default function GroupsScreen() {
             </TouchableOpacity>
             {selectedGroup ? (
               <TouchableOpacity
-                style={[styles.modalButtonConfirm, styles.modalButtonFullWidth]}
+                style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn]}
                 onPress={() => {
                   setShowGroupActionsModal(false)
                   setSelectedGroupForDetail(selectedGroup)
@@ -2411,6 +2412,52 @@ export default function GroupsScreen() {
                 </Text>
               </TouchableOpacity>
             ) : null}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Chooser do botão "adicionar": convidar OU criar perfil de monitoramento */}
+      <Modal
+        visible={showAddChooser}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddChooser(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{tr('groups.addChooser.title', 'Adicionar ao grupo')}</Text>
+            <Text style={styles.modalSubtitle}>{tr('groups.addChooser.subtitle', 'O que você quer fazer?')}</Text>
+
+            <TouchableOpacity
+              style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn]}
+              onPress={() => {
+                setShowAddChooser(false)
+                if (selectedGroup) { setSelectedGroupForDetail(selectedGroup); setShowGroupDetail(true) }
+              }}
+            >
+              <Ionicons name="share-social-outline" size={16} color="#0F0F23" />
+              <Text style={styles.modalButtonConfirmText}>{tr('groups.addChooser.invite', 'Convidar para o grupo')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.addChooserHint}>{tr('groups.addChooser.inviteHint', 'Para quem tem o app — entra como membro.')}</Text>
+
+            <TouchableOpacity
+              style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn, { marginTop: 12 }]}
+              onPress={() => {
+                setShowAddChooser(false)
+                setShowAddManaged(true)
+              }}
+            >
+              <Ionicons name="eye-outline" size={16} color="#0F0F23" />
+              <Text style={styles.modalButtonConfirmText}>{tr('groups.addChooser.monitor', 'Criar perfil de monitoramento')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.addChooserHint}>{tr('groups.addChooser.monitorHint', 'Para acompanhar alguém que não tem o app (parente etc.).')}</Text>
+
+            <TouchableOpacity
+              style={[styles.modalButtonCancel, styles.modalButtonFullWidth, { marginTop: 14 }]}
+              onPress={() => setShowAddChooser(false)}
+            >
+              <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -4400,6 +4447,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginLeft: 0,
     marginRight: 0,
+  },
+  addChooserBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  addChooserHint: {
+    color: "#8890B5",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 6,
   },
   modalOptionButton: {
     backgroundColor: "#2C2C2E",
