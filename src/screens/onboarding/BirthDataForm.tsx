@@ -904,39 +904,28 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep1 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons name="person-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-
-      <Text style={styles.stepTitle}>{t('onboarding.step.profile.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.profile.description')}</Text>
-
-      <View style={styles.filterRow}>
-        <Text style={styles.filterTitle}>{t('onboarding.field.country')}</Text>
-        <TouchableOpacity
-          style={styles.countrySelectorButton}
-          onPress={() => {
-            setCountryModalVisible(true)
-            setShowCountrySuggestions(true)
-          }}
-        >
-          <View style={styles.countrySelectorLeft}>
-            <Ionicons name="globe-outline" size={20} color="#FFD700" />
-            <Text style={styles.countrySelectorText}>
-              {selectedCountry
-                ? `${selectedCountry.flag} ${selectedCountry.name}`
-                : t('onboarding.field.country')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#FFD700" />
-        </TouchableOpacity>
-        {selectedCountry && (
-          <Text style={styles.helperInlineText}>
-            {t('onboarding.country.selected', { country: selectedCountry.name })}
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{t('onboarding.field.country')}</Text>
+      <TouchableOpacity
+        style={styles.countrySelectorButton}
+        onPress={() => {
+          setCountryModalVisible(true)
+          setShowCountrySuggestions(true)
+        }}
+      >
+        <View style={styles.countrySelectorLeft}>
+          <Ionicons name="globe-outline" size={18} color="#FFD700" />
+          <Text style={styles.countrySelectorText}>
+            {selectedCountry
+              ? `${selectedCountry.flag} ${selectedCountry.name}`
+              : t('onboarding.field.country')}
           </Text>
-        )}
-      </View>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color="#FFD700" />
+      </TouchableOpacity>
 
-      {/* Nome Completo */}
+      {/* Nome */}
+      <Text style={styles.fieldLabel}>{t('onboarding.field.name')}</Text>
       <View style={styles.inputContainer}>
         <Ionicons name="person" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
@@ -1038,12 +1027,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep2 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons name="calendar-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-
-      <Text style={styles.stepTitle}>{t('onboarding.step.date.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.date.description')}</Text>
-
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{t('onboarding.step.date.title')}</Text>
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
           <Ionicons name="calendar" size={20} color="#FFD700" />
@@ -1100,11 +1085,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep3 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons name="time-outline" size={isDesktop() ? 80 : 64} color="#FFD700" style={styles.stepIcon} />
-
-      <Text style={styles.stepTitle}>{t('onboarding.step.time.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.time.description')}</Text>
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{t('onboarding.step.time.title')}</Text>
 
       {!birthTimeUnknown && (
         <View style={styles.inputContainer}>
@@ -1167,10 +1149,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   )
 
   const renderStep4 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Text style={styles.stepTitle}>{t('onboarding.step.location.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.location.description')}</Text>
-
+    <View style={styles.fieldGroup}>
+      <Text style={styles.fieldLabel}>{t('onboarding.step.location.title')}</Text>
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowLocationSuggestions(true)}>
           <Ionicons name="search" size={20} color="#FFD700" />
@@ -1302,6 +1282,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       >
         <ScrollView
           ref={scrollRef}
+          style={styles.container}
           contentContainerStyle={[styles.scrollContainer, isCompactMobile && styles.scrollContainerCompact]}
           showsVerticalScrollIndicator={true}
           keyboardShouldPersistTaps="handled"
@@ -1310,42 +1291,35 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           <ResponsiveContainer style={styles.responsiveContent}>
             {renderCountryModal()}
 
-            {/* Cabeçalho + seletor de idioma */}
-            <View style={styles.formHeader}>
-              <Ionicons name="planet-outline" size={40} color="#FFD700" />
-              <Text style={styles.formTitle}>{t('onboarding.step.intro.title')}</Text>
-              <Text style={styles.formSubtitle}>{t('onboarding.step.intro.description')}</Text>
-            </View>
+            {/* Idioma — sutil, no topo */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langPills}>
+              {languages.map((option) => {
+                const active = formData.language === option.code
+                return (
+                  <TouchableOpacity
+                    key={option.code}
+                    style={[styles.langPill, active && styles.langPillActive]}
+                    onPress={async () => {
+                      setFormData(prev => ({
+                        ...prev,
+                        language: option.code,
+                        ...(option.code !== 'pt-BR'
+                          ? { birthCountryCode: '', country: '', city: '', latitude: 0, longitude: 0 }
+                          : {}),
+                      }))
+                      if (option.code !== 'pt-BR') { setSelectedCountry(null); setCountryQuery('') }
+                      await setLanguage(option.code)
+                    }}
+                  >
+                    <Text style={[styles.langPillText, active && styles.langPillTextActive]}>{option.nativeLabel}</Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </ScrollView>
 
-            <View style={styles.filterRow}>
-              <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
-                {languages.map((option) => {
-                  const active = formData.language === option.code
-                  return (
-                    <TouchableOpacity
-                      key={option.code}
-                      style={[styles.filterPill, active && styles.filterPillActive]}
-                      onPress={async () => {
-                        setFormData(prev => ({
-                          ...prev,
-                          language: option.code,
-                          ...(option.code !== 'pt-BR'
-                            ? { birthCountryCode: '', country: '', city: '', latitude: 0, longitude: 0 }
-                            : {}),
-                        }))
-                        if (option.code !== 'pt-BR') { setSelectedCountry(null); setCountryQuery('') }
-                        await setLanguage(option.code)
-                      }}
-                    >
-                      <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>{option.nativeLabel}</Text>
-                    </TouchableOpacity>
-                  )
-                })}
-              </ScrollView>
-            </View>
+            <Text style={styles.formTitle}>{t('onboarding.step.intro.title')}</Text>
 
-            {/* Formulário único — todos os campos numa tela, entrada suave */}
+            {/* Formulário compacto — todos os campos numa tela */}
             <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
               <AnimatedMount delay={40}>{renderStep1()}</AnimatedMount>
               <AnimatedMount delay={90}>{renderStep2()}</AnimatedMount>
@@ -1396,22 +1370,50 @@ const styles = StyleSheet.create({
     flex: 0,
     width: '100%',
   },
-  formHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 8,
-  },
   formTitle: {
     color: '#FFFFFF',
     fontSize: FONT_SIZES.xl,
     fontWeight: '800',
-    textAlign: 'center',
+    marginTop: 14,
+    marginBottom: 14,
   },
-  formSubtitle: {
+  // Idioma sutil no topo
+  langPills: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  langPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  langPillActive: {
+    backgroundColor: 'rgba(255,215,0,0.14)',
+    borderColor: '#FFD700',
+  },
+  langPillText: {
     color: '#9AA0C0',
     fontSize: FONT_SIZES.sm,
-    textAlign: 'center',
-    lineHeight: 20,
+    fontWeight: '600',
+  },
+  langPillTextActive: {
+    color: '#FFD700',
+  },
+  // Campo compacto (label + input)
+  fieldGroup: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  fieldLabel: {
+    color: '#FFD700',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   submitButton: {
     flex: 1,
@@ -1431,13 +1433,13 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: 60,
-    paddingBottom: Platform.OS === 'android' ? 180 : 120,
+    paddingTop: 24,
+    paddingBottom: Platform.OS === 'android' ? 120 : 80,
   },
   scrollContainerCompact: {
-    paddingTop: 32,
+    paddingTop: 16,
     paddingHorizontal: SPACING.md,
-    paddingBottom: Platform.OS === 'android' ? 160 : 100,
+    paddingBottom: Platform.OS === 'android' ? 100 : 72,
   },
   progressContainer: {
     marginBottom: 40,
@@ -1614,7 +1616,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#444',
-    marginBottom: 16,
+    marginBottom: 0,
     paddingHorizontal: 16,
   },
   inputIcon: {
@@ -1650,8 +1652,8 @@ const styles = StyleSheet.create({
   helpText: {
     color: '#A0A0A0',
     fontSize: FONT_SIZES.sm,
-    textAlign: 'center',
-    marginTop: 16,
+    textAlign: 'left',
+    marginTop: 6,
     fontStyle: 'italic',
   },
   photoContainer: {
