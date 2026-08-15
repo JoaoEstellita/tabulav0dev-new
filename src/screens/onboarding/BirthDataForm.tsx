@@ -23,6 +23,8 @@ import LocationService, { type LocationSuggestion, type CountryOption } from '..
 import { useAuth } from '../../hooks/useAuth'
 import { hardSignOut } from '../../services/auth/logout'
 import ResponsiveContainer from '../../components/ResponsiveContainer'
+import StarLoader from '../../components/StarLoader'
+import { AnimatedMount } from '../../ui/anim/adapter'
 import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
 import { useOrientation } from '../../hooks/useOrientation'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -40,6 +42,7 @@ export interface BirthData {
   profilePhoto?: string
   birthDate: string
   birthTime: string
+  birthTimeUnknown?: boolean
   birthLocation: {
     city: string
     country: string
@@ -74,6 +77,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
   const [birthDateError, setBirthDateError] = useState('')
   const [birthTimeError, setBirthTimeError] = useState('')
+  const [birthTimeUnknown, setBirthTimeUnknown] = useState(false)
 
   // Estados para DateTimePicker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -774,28 +778,38 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }
 
+  // Valida tudo (curto-circuito: só um alerta por vez) e conclui.
+  const handleSubmit = () => {
+    if (!validateStep2()) return
+    if (!validateStep3()) return
+    if (!birthTimeUnknown && !validateStep4()) return
+    if (!validateStep5()) return
+    handleComplete()
+  }
+
   const handleComplete = () => {
-    let profilePhoto = formData.profilePhoto
-    if (!profilePhoto && Platform.OS === 'web') {
-      try {
-        const savedPhoto = localStorage.getItem('tempProfilePhoto')
-        if (savedPhoto) {
-          profilePhoto = savedPhoto
-        }
-      } catch { }
-    }
+    // Localização vem direto do selectedLocation (preciso) — sem depender de
+    // setFormData assíncrono. Sem seleção, cai no texto livre + centro do BR.
+    const birthLocation = selectedLocation
+      ? {
+        city: selectedLocation.city,
+        country: selectedLocation.country,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+      }
+      : {
+        city: locationQuery.trim() || formData.city,
+        country: selectedCountry?.name || formData.country,
+        latitude: -15.7942,
+        longitude: -47.8825,
+      }
 
     const birthData: BirthData = {
       fullName: formData.fullName.trim(),
-      profilePhoto,
       birthDate: formData.birthDate,
-      birthTime: formData.birthTime,
-      birthLocation: {
-        city: formData.city,
-        country: formData.country,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-      },
+      birthTime: birthTimeUnknown ? '12:00' : formData.birthTime,
+      birthTimeUnknown,
+      birthLocation,
       language: formData.language,
       birthCountryCode: formData.birthCountryCode,
     }
@@ -919,30 +933,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           <Text style={styles.helperInlineText}>
             {t('onboarding.country.selected', { country: selectedCountry.name })}
           </Text>
-        )}
-      </View>
-
-      {/* Foto de Perfil */}
-      <View style={styles.photoContainer}>
-        {formData.profilePhoto ? (
-          <View style={styles.photoSelected}>
-            <Image source={{ uri: formData.profilePhoto }} style={styles.profilePhoto} />
-            <TouchableOpacity
-              style={styles.removePhotoButton}
-              onPress={() => removePhoto()}
-              onPressIn={undefined}
-              hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="close-circle" size={24} color="#EF4444" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.photoPlaceholder} onPress={selectPhoto}>
-            <Ionicons name="camera-outline" size={isDesktop() ? 50 : 40} color="#666" />
-            <Text style={styles.photoPlaceholderText}>{t('onboarding.field.photo.add')}</Text>
-            <Text style={styles.photoOptionalText}>{t('onboarding.field.photo.optional')}</Text>
-          </TouchableOpacity>
         )}
       </View>
 
@@ -1116,28 +1106,39 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       <Text style={styles.stepTitle}>{t('onboarding.step.time.title')}</Text>
       <Text style={styles.stepDescription}>{t('onboarding.step.time.description')}</Text>
 
-      <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
-          <Ionicons name="time" size={20} color="#FFD700" />
-        </TouchableOpacity>
-        <TextInput
-          ref={birthTimeInputRef}
-          style={styles.dateInput}
-          placeholder={t('onboarding.time.placeholder')}
-          placeholderTextColor="#8E8E93"
-          value={birthTimeDisplay}
-          onChangeText={handleBirthTimeInput}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          returnKeyType="done"
-          maxLength={5}
-          onSubmitEditing={() => {
-            handleNext()
-            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80)
-          }}
-          onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
-        />
-      </View>
+      {!birthTimeUnknown && (
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
+            <Ionicons name="time" size={20} color="#FFD700" />
+          </TouchableOpacity>
+          <TextInput
+            ref={birthTimeInputRef}
+            style={styles.dateInput}
+            placeholder={t('onboarding.time.placeholder')}
+            placeholderTextColor="#8E8E93"
+            value={birthTimeDisplay}
+            onChangeText={handleBirthTimeInput}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            returnKeyType="done"
+            maxLength={5}
+            onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          />
+        </View>
+      )}
+
+      {/* "Não sei a hora" → usa 12:00, mapa aproximado (sem Ascendente preciso) */}
+      <TouchableOpacity
+        style={styles.unknownToggle}
+        onPress={() => { setBirthTimeUnknown(v => !v); setBirthTimeError('') }}
+        activeOpacity={0.7}
+      >
+        <Ionicons name={birthTimeUnknown ? 'checkbox' : 'square-outline'} size={22} color="#FFD700" />
+        <Text style={styles.unknownToggleText}>{t('onboarding.timeUnknown')}</Text>
+      </TouchableOpacity>
+      {birthTimeUnknown && (
+        <Text style={styles.helpText}>{t('onboarding.timeUnknownHint')}</Text>
+      )}
 
       {showTimePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
@@ -1307,62 +1308,79 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           keyboardDismissMode="on-drag"
         >
           <ResponsiveContainer style={styles.responsiveContent}>
-            {renderProgressBar()}
             {renderCountryModal()}
 
-            <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
-              {currentStep === 1 && renderIntroStep()}
-              {currentStep === 2 && renderStep1()}
-              {currentStep === 3 && renderStep2()}
-              {currentStep === 4 && renderStep3()}
-              {currentStep === 5 && renderStep4()}
-              {currentStep === 6 && renderStep5()}
+            {/* Cabeçalho + seletor de idioma */}
+            <View style={styles.formHeader}>
+              <Ionicons name="planet-outline" size={40} color="#FFD700" />
+              <Text style={styles.formTitle}>{t('onboarding.step.intro.title')}</Text>
+              <Text style={styles.formSubtitle}>{t('onboarding.step.intro.description')}</Text>
             </View>
 
-            {currentStep < TOTAL_STEPS && (
-              <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
-                {currentStep > 1 && (
-                  <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => setCurrentStep(currentStep - 1)}
-                  >
-                    <Ionicons name="arrow-back" size={20} color="#FFD700" />
-                    <Text style={styles.backButtonText}>{t('common.back')}</Text>
-                  </TouchableOpacity>
-                )}
+            <View style={styles.filterRow}>
+              <Text style={styles.filterTitle}>{t('onboarding.field.language')}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
+                {languages.map((option) => {
+                  const active = formData.language === option.code
+                  return (
+                    <TouchableOpacity
+                      key={option.code}
+                      style={[styles.filterPill, active && styles.filterPillActive]}
+                      onPress={async () => {
+                        setFormData(prev => ({
+                          ...prev,
+                          language: option.code,
+                          ...(option.code !== 'pt-BR'
+                            ? { birthCountryCode: '', country: '', city: '', latitude: 0, longitude: 0 }
+                            : {}),
+                        }))
+                        if (option.code !== 'pt-BR') { setSelectedCountry(null); setCountryQuery('') }
+                        await setLanguage(option.code)
+                      }}
+                    >
+                      <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>{option.nativeLabel}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </ScrollView>
+            </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.nextButton,
-                    (loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())) && styles.disabledButton
-                  ]}
-                  onPress={handleNext}
-                  disabled={loading || (currentStep === 5 && !selectedLocation && !locationQuery.trim())}
-                >
-                  {loading ? (
-                    <Text style={styles.nextButtonText}>{t('common.saving')}</Text>
-                  ) : (
-                    <>
-                      <Text style={styles.nextButtonText}>
-                        {t('common.next')}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={20} color="#000" />
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
+            {/* Formulário único — todos os campos numa tela, entrada suave */}
+            <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
+              <AnimatedMount delay={40}>{renderStep1()}</AnimatedMount>
+              <AnimatedMount delay={90}>{renderStep2()}</AnimatedMount>
+              <AnimatedMount delay={140}>{renderStep3()}</AnimatedMount>
+              <AnimatedMount delay={190}>{renderStep4()}</AnimatedMount>
+            </View>
 
-            {/* Botão para voltar ao login — oculto no passo final (notificações) */}
-            {currentStep < TOTAL_STEPS && (
+            <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
               <TouchableOpacity
-                style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
-                onPress={async () => { await hardSignOut(); logout(); }}
+                style={[styles.nextButton, styles.submitButton, loading && styles.disabledButton]}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
               >
-                <Ionicons name="log-out-outline" size={16} color="#FFD700" />
-                <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
+                {loading ? (
+                  <>
+                    <StarLoader size={18} color="#0F0F23" />
+                    <Text style={styles.nextButtonText}>{t('common.saving')}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="sparkles" size={20} color="#0F0F23" />
+                    <Text style={styles.nextButtonText}>{t('onboarding.submit')}</Text>
+                  </>
+                )}
               </TouchableOpacity>
-            )}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
+              onPress={async () => { await hardSignOut(); logout(); }}
+            >
+              <Ionicons name="log-out-outline" size={16} color="#FFD700" />
+              <Text style={styles.backToLoginText}>{t('onboarding.backToLogin')}</Text>
+            </TouchableOpacity>
           </ResponsiveContainer>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1377,6 +1395,38 @@ const styles = StyleSheet.create({
   responsiveContent: {
     flex: 0,
     width: '100%',
+  },
+  formHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 8,
+  },
+  formTitle: {
+    color: '#FFFFFF',
+    fontSize: FONT_SIZES.xl,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  formSubtitle: {
+    color: '#9AA0C0',
+    fontSize: FONT_SIZES.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  submitButton: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  unknownToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  unknownToggleText: {
+    color: '#E5E7EB',
+    fontSize: FONT_SIZES.md,
   },
   scrollContainer: {
     flexGrow: 1,

@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { decodeUnicodeEscapes, translateSignName } from '../utils/astro/pt'
 import MoonPhaseButton from './MoonPhaseButton'
+import ProfileAvatarButton from './ProfileAvatarButton'
 
 // ---------------------------------------------------------------------------
 // Component
@@ -84,13 +85,7 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
     <View style={styles.header}>
       <View style={styles.userSection}>
         <View style={styles.avatarContainer}>
-          {userProfile?.profilePhoto ? (
-            <Image source={{ uri: userProfile.profilePhoto }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={24} color="#FFD700" />
-            </View>
-          )}
+          <ProfileAvatarButton size={48} />
         </View>
         <View style={styles.headerContent}>
           <Text style={styles.greeting}>{tl('Olá', 'Hello', 'Hola', 'Ciao')}, {displayName}!</Text>

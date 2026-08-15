@@ -109,6 +109,34 @@ class UserService {
     return await getDownloadURL(storageRef)
   }
 
+  /**
+   * Define/atualiza a foto de perfil a partir de um dataURL/URI (ou http já pronto).
+   * Sobe para o Storage (backend no web p/ evitar CORS; Storage direto no native),
+   * grava a URL em users/{uid}.profilePhoto e no perfil público. Devolve a URL final.
+   */
+  async setProfilePhoto(userId: string, photo: string): Promise<string> {
+    let url = photo
+    if (!photo.startsWith('http')) {
+      const isWeb = Platform.OS === 'web'
+      if (isWeb && getBackendBaseUrl()) {
+        const resp = await backendFetch('/api/upload/profile-photo', {
+          method: 'POST',
+          auth: true,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, dataUrl: photo }),
+        })
+        if (!resp.ok) throw new Error(`upload_failed_${resp.status}`)
+        url = (await resp.json()).url
+      } else {
+        url = await this.uploadProfilePhoto(userId, photo)
+      }
+    }
+    await updateDoc(doc(db, 'users', userId), { profilePhoto: url, updatedAt: serverTimestamp() })
+    await this.upsertPublicProfile(userId, { profilePhoto: url })
+    try { invalidarCache(chaveUsuario(userId)) } catch { /* cache é otimização */ }
+    return url
+  }
+
   async saveBirthData(userId: string, birthData: BirthData): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)
@@ -120,6 +148,7 @@ class UserService {
         displayName: birthData.fullName,
         birthDate: birthData.birthDate,
         birthTime: birthData.birthTime,
+        birthTimeUnknown: birthData.birthTimeUnknown === true,
         birthLocation: birthData.birthLocation,
         language: birthData.language || 'pt-BR',
         birthCountryCode: birthData.birthCountryCode || 'BR',
