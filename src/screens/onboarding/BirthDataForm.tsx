@@ -77,7 +77,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
   const [birthDateError, setBirthDateError] = useState('')
   const [birthTimeError, setBirthTimeError] = useState('')
-  const [birthTimeUnknown, setBirthTimeUnknown] = useState(false)
 
   // Estados para DateTimePicker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -782,7 +781,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const handleSubmit = () => {
     if (!validateStep2()) return
     if (!validateStep3()) return
-    if (!birthTimeUnknown && !validateStep4()) return
+    if (!validateStep4()) return
     if (!validateStep5()) return
     handleComplete()
   }
@@ -807,8 +806,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const birthData: BirthData = {
       fullName: formData.fullName.trim(),
       birthDate: formData.birthDate,
-      birthTime: birthTimeUnknown ? '12:00' : formData.birthTime,
-      birthTimeUnknown,
+      birthTime: formData.birthTime,
       birthLocation,
       language: formData.language,
       birthCountryCode: formData.birthCountryCode,
@@ -1088,39 +1086,24 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{t('onboarding.step.time.title')}</Text>
 
-      {!birthTimeUnknown && (
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
-            <Ionicons name="time" size={20} color="#FFD700" />
-          </TouchableOpacity>
-          <TextInput
-            ref={birthTimeInputRef}
-            style={styles.dateInput}
-            placeholder={t('onboarding.time.placeholder')}
-            placeholderTextColor="#8E8E93"
-            value={birthTimeDisplay}
-            onChangeText={handleBirthTimeInput}
-            keyboardType="number-pad"
-            inputMode="numeric"
-            returnKeyType="done"
-            maxLength={5}
-            onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
-          />
-        </View>
-      )}
-
-      {/* "Não sei a hora" → usa 12:00, mapa aproximado (sem Ascendente preciso) */}
-      <TouchableOpacity
-        style={styles.unknownToggle}
-        onPress={() => { setBirthTimeUnknown(v => !v); setBirthTimeError('') }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name={birthTimeUnknown ? 'checkbox' : 'square-outline'} size={22} color="#FFD700" />
-        <Text style={styles.unknownToggleText}>{t('onboarding.timeUnknown')}</Text>
-      </TouchableOpacity>
-      {birthTimeUnknown && (
-        <Text style={styles.helpText}>{t('onboarding.timeUnknownHint')}</Text>
-      )}
+      <View style={styles.inputContainer}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
+          <Ionicons name="time" size={20} color="#FFD700" />
+        </TouchableOpacity>
+        <TextInput
+          ref={birthTimeInputRef}
+          style={styles.dateInput}
+          placeholder={t('onboarding.time.placeholder')}
+          placeholderTextColor="#8E8E93"
+          value={birthTimeDisplay}
+          onChangeText={handleBirthTimeInput}
+          keyboardType="number-pad"
+          inputMode="numeric"
+          returnKeyType="done"
+          maxLength={5}
+          onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        />
+      </View>
 
       {showTimePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
