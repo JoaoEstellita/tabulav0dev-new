@@ -1963,6 +1963,16 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
+              {selectedGroup?.createdBy === user?.uid ? (
+                <TouchableOpacity
+                  style={styles.groupHeaderActionButton}
+                  onPress={() => setShowAddManaged(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
+                >
+                  <Ionicons name="person-add-outline" size={18} color="#FFD700" />
+                </TouchableOpacity>
+              ) : null}
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
                   <Ionicons name="swap-vertical" size={18} color="#FFD700" />
@@ -2074,16 +2084,6 @@ export default function GroupsScreen() {
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>{tr('groups.section.members', 'Membros')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  {selectedGroup?.createdBy === user?.uid ? (
-                    <TouchableOpacity
-                      style={styles.sectionIconButton}
-                      onPress={() => setShowAddManaged(true)}
-                      accessibilityRole="button"
-                      accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
-                    >
-                      <Ionicons name="person-add-outline" size={16} color="#FFD700" />
-                    </TouchableOpacity>
-                  ) : null}
                   <TouchableOpacity style={styles.sectionIconButton} onPress={openMemberSort}>
                     <Ionicons name="swap-vertical" size={16} color="#FFD700" />
                   </TouchableOpacity>

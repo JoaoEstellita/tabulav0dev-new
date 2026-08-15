@@ -52,6 +52,19 @@ export default function AddManagedProfileModal({ visible, onClose, groupId, onCr
     return `${String(hh).padStart(2, '0')}:${String(mi).padStart(2, '0')}`
   }
 
+  // Máscaras: só números, insere "/" e ":" sozinho.
+  const maskDate = (v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 8)
+    if (d.length <= 2) return d
+    if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`
+    return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`
+  }
+  const maskTime = (v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 4)
+    if (d.length <= 2) return d
+    return `${d.slice(0, 2)}:${d.slice(2)}`
+  }
+
   const reset = () => { setName(''); setDateStr(''); setTimeStr(''); setCityQuery(''); setSuggestions([]); setPicked(null) }
 
   const submit = async () => {
@@ -98,13 +111,13 @@ export default function AddManagedProfileModal({ visible, onClose, groupId, onCr
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>{tl('Nascimento', 'Birth date', 'Nacimiento', 'Nascita')}</Text>
-                <TextInput style={styles.input} value={dateStr} onChangeText={setDateStr}
-                  placeholder="DD/MM/AAAA" placeholderTextColor="#667" keyboardType="numbers-and-punctuation" />
+                <TextInput style={styles.input} value={dateStr} onChangeText={(t) => setDateStr(maskDate(t))}
+                  placeholder="DD/MM/AAAA" placeholderTextColor="#667" keyboardType="number-pad" inputMode="numeric" maxLength={10} />
               </View>
               <View style={{ width: 108 }}>
                 <Text style={styles.label}>{tl('Hora', 'Time', 'Hora', 'Ora')}</Text>
-                <TextInput style={styles.input} value={timeStr} onChangeText={setTimeStr}
-                  placeholder="HH:MM" placeholderTextColor="#667" keyboardType="numbers-and-punctuation" />
+                <TextInput style={styles.input} value={timeStr} onChangeText={(t) => setTimeStr(maskTime(t))}
+                  placeholder="HH:MM" placeholderTextColor="#667" keyboardType="number-pad" inputMode="numeric" maxLength={5} />
               </View>
             </View>
             <Text style={styles.hint}>{tl('Sem a hora exata? Use 12:00.', 'No exact time? Use 12:00.', '¿Sin hora exacta? Usa 12:00.', 'Senza ora esatta? Usa 12:00.')}</Text>
