@@ -1963,16 +1963,6 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
-              {selectedGroup?.createdBy === user?.uid ? (
-                <TouchableOpacity
-                  style={styles.groupHeaderActionButton}
-                  onPress={() => setShowAddManaged(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
-                >
-                  <Ionicons name="person-add-outline" size={18} color="#FFD700" />
-                </TouchableOpacity>
-              ) : null}
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
                   <Ionicons name="swap-vertical" size={18} color="#FFD700" />
@@ -2003,6 +1993,16 @@ export default function GroupsScreen() {
                 </View>
                 <View style={styles.groupHeaderActionsColumn}>
                   <View style={styles.groupHeaderActionsRow}>
+                    {selectedGroup?.createdBy === user?.uid ? (
+                      <TouchableOpacity
+                        style={styles.groupHeaderActionButton}
+                        onPress={() => setShowAddManaged(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel={tr('groups.managed.add', 'Adicionar pessoa')}
+                      >
+                        <Ionicons name="person-add-outline" size={18} color="#FFD700" />
+                      </TouchableOpacity>
+                    ) : null}
                     <TouchableOpacity
                       style={styles.groupHeaderActionButton}
                       onPress={() => {
