@@ -77,6 +77,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [birthTimeDisplay, setBirthTimeDisplay] = useState('')
   const [birthDateError, setBirthDateError] = useState('')
   const [birthTimeError, setBirthTimeError] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [countryError, setCountryError] = useState('')
+  const [locationError, setLocationError] = useState('')
 
   // Estados para DateTimePicker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -98,8 +101,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
   const [notificationsGranted, setNotificationsGranted] = useState(false)
   const scrollRef = useRef<ScrollView | null>(null)
+  const nameInputRef = useRef<TextInput | null>(null)
   const birthDateInputRef = useRef<TextInput | null>(null)
   const birthTimeInputRef = useRef<TextInput | null>(null)
+  const locationInputRef = useRef<TextInput | null>(null)
+  const detectedRef = useRef(false)
 
   const formatDateDisplay = (isoDate: string) => {
     if (!isoDate) return ''
@@ -371,8 +377,44 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }, [locationQuery, formData.birthCountryCode, formData.language])
 
+  // Detecta país + idioma do aparelho (1×) e já preenche por padrão. A pessoa pode trocar.
+  useEffect(() => {
+    if (detectedRef.current) return
+    detectedRef.current = true
+    ;(async () => {
+      try {
+        let locale = ''
+        try { locale = Intl.DateTimeFormat().resolvedOptions().locale || '' } catch { /* sem Intl */ }
+        if (!locale && typeof navigator !== 'undefined') locale = (navigator as any).language || ''
+        if (!locale) return
+        const [langPart, regionRaw] = locale.split('-')
+        const region = (regionRaw || '').toUpperCase()
+        // País (só se ainda não escolhido)
+        if (!selectedCountry && region.length === 2) {
+          try {
+            const countries = await LocationService.getCountries('', formData.language)
+            const match = countries.find((c) => c.code === region)
+            if (match) {
+              setSelectedCountry(match)
+              setFormData(prev => ({ ...prev, birthCountryCode: match.code, country: match.name }))
+            }
+          } catch { /* mantém sem país */ }
+        }
+        // Idioma → mapeia para um dos 4 suportados
+        const supported: Record<string, AppLanguage> = { pt: 'pt-BR', en: 'en-US', es: 'es-ES', it: 'it-IT' }
+        const detectedLang = supported[(langPart || '').toLowerCase()]
+        if (detectedLang && detectedLang !== formData.language) {
+          setFormData(prev => ({ ...prev, language: detectedLang }))
+          await setLanguage(detectedLang)
+        }
+      } catch { /* silencioso */ }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleLocationSelect = (location: LocationSuggestion) => {
     setSelectedLocation(location)
+    setLocationError('')
     setLocationQuery(location.displayName)
     setFormData(prev => ({
       ...prev,
@@ -494,6 +536,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const iso = toIsoDateFromDisplay(formatted)
     if (iso) {
       setFormData(prev => ({ ...prev, birthDate: iso }))
+      // Data completa e válida → pula para a hora automaticamente.
+      setTimeout(() => birthTimeInputRef.current?.focus(), 60)
       return
     }
 
@@ -517,6 +561,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     const timeValue = toTimeFromDisplay(formatted)
     if (timeValue) {
       setFormData(prev => ({ ...prev, birthTime: timeValue }))
+      // Hora completa e válida → pula para o local (abre as sugestões).
+      setTimeout(() => {
+        locationInputRef.current?.focus()
+        scrollRef.current?.scrollToEnd({ animated: true })
+      }, 60)
       return
     }
 
@@ -679,31 +728,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     ])
   }
 
+  // Validadores com erro INLINE (sem pop-up). Cada um seta/limpa o erro do campo.
   const validateStep2 = () => {
+    let ok = true
     if (language !== 'pt-BR' && !formData.birthCountryCode) {
-      Alert.alert(t('common.attention'), t('onboarding.validation.countryRequired'))
-      return false
-    }
+      setCountryError(t('onboarding.validation.countryRequired')); ok = false
+    } else setCountryError('')
     if (!formData.fullName.trim()) {
-      Alert.alert(t('common.attention'), t('onboarding.validation.nameRequired'))
-      return false
-    }
-    if (formData.fullName.trim().length < 3) {
-      Alert.alert(t('common.attention'), t('onboarding.validation.nameMin'))
-      return false
-    }
-    return true
+      setNameError(t('onboarding.validation.nameRequired')); ok = false
+    } else if (formData.fullName.trim().length < 3) {
+      setNameError(t('onboarding.validation.nameMin')); ok = false
+    } else setNameError('')
+    return ok
   }
 
   const validateStep3 = () => {
     if (!formData.birthDate) {
-      if (birthDateDisplay.trim().length > 0) {
-        setBirthDateError(t('onboarding.validation.birthDateInvalid'))
-        Alert.alert(t('common.attention'), t('onboarding.validation.birthDateInvalid'))
-        return false
-      }
-      setBirthDateError(t('onboarding.validation.birthDateRequired'))
-      Alert.alert(t('common.attention'), t('onboarding.validation.birthDateRequired'))
+      setBirthDateError(birthDateDisplay.trim().length > 0
+        ? t('onboarding.validation.birthDateInvalid')
+        : t('onboarding.validation.birthDateRequired'))
       return false
     }
     setBirthDateError('')
@@ -712,37 +755,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   const validateStep4 = () => {
     if (!formData.birthTime) {
-      if (birthTimeDisplay.trim().length > 0) {
-        setBirthTimeError(t('onboarding.validation.birthTimeInvalid'))
-        Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeInvalid'))
-        return false
-      }
-      setBirthTimeError(t('onboarding.validation.birthTimeRequired'))
-      Alert.alert(t('common.attention'), t('onboarding.validation.birthTimeRequired'))
+      setBirthTimeError(birthTimeDisplay.trim().length > 0
+        ? t('onboarding.validation.birthTimeInvalid')
+        : t('onboarding.validation.birthTimeRequired'))
       return false
     }
     setBirthTimeError('')
     return true
   }
 
+  // Local EXIGE escolher uma cidade da lista (coordenadas exatas) — nada de
+  // fallback pro centro do Brasil, que gerava mapa errado.
   const validateStep5 = () => {
-    // Aceita tanto localização selecionada quanto texto livre
-    if (!selectedLocation && !locationQuery.trim()) {
-      Alert.alert(t('common.attention'), t('onboarding.validation.locationRequired'))
+    if (!selectedLocation) {
+      setLocationError(locationQuery.trim().length > 0
+        ? t('onboarding.validation.locationPick')
+        : t('onboarding.validation.locationRequired'))
       return false
     }
-
-    // Se tem texto mas não selecionou nenhuma cidade, usa os dados do texto
-    if (!selectedLocation && locationQuery.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        city: locationQuery.trim(),
-        country: selectedCountry?.name || prev.country,
-        latitude: -15.7942, // Coordenadas do centro do Brasil
-        longitude: -47.8825,
-      }))
-    }
-
+    setLocationError('')
     return true
   }
 
@@ -779,11 +810,21 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
   // Valida tudo (curto-circuito: só um alerta por vez) e conclui.
   const handleSubmit = () => {
-    if (!validateStep2()) return
-    if (!validateStep3()) return
-    if (!validateStep4()) return
-    if (!validateStep5()) return
-    handleComplete()
+    // Roda TODOS (marca todos os erros inline de uma vez) e foca/rola até o 1º inválido.
+    const okName = validateStep2()
+    const okDate = validateStep3()
+    const okTime = validateStep4()
+    const okLoc = validateStep5()
+    if (okName && okDate && okTime && okLoc) {
+      handleComplete()
+      return
+    }
+    // Focar o input do 1º campo inválido faz o ScrollView rolar até ele.
+    const focusRef = !okName ? nameInputRef
+      : !okDate ? birthDateInputRef
+      : !okTime ? birthTimeInputRef
+      : locationInputRef
+    setTimeout(() => focusRef.current?.focus?.(), 40)
   }
 
   const handleComplete = () => {
@@ -905,8 +946,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{t('onboarding.field.country')}</Text>
       <TouchableOpacity
-        style={styles.countrySelectorButton}
+        style={[styles.countrySelectorButton, !!countryError && styles.inputContainerError]}
         onPress={() => {
+          setCountryError('')
           setCountryModalVisible(true)
           setShowCountrySuggestions(true)
         }}
@@ -921,23 +963,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </View>
         <Ionicons name="chevron-forward" size={18} color="#FFD700" />
       </TouchableOpacity>
+      {!!countryError && <Text style={styles.fieldErrorText}>{countryError}</Text>}
 
       {/* Nome */}
-      <Text style={styles.fieldLabel}>{t('onboarding.field.name')}</Text>
-      <View style={styles.inputContainer}>
+      <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>{t('onboarding.field.name')}</Text>
+      <View style={[styles.inputContainer, !!nameError && styles.inputContainerError]}>
         <Ionicons name="person" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
+          ref={nameInputRef}
           style={styles.nameInput}
           placeholder={t('onboarding.field.name')}
           placeholderTextColor="#666"
           value={formData.fullName}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, fullName: text }))}
+          onChangeText={(text) => { setFormData(prev => ({ ...prev, fullName: text })); if (nameError) setNameError('') }}
           autoCapitalize="words"
           returnKeyType="next"
+          onSubmitEditing={() => birthDateInputRef.current?.focus()}
         />
       </View>
-
-      <Text style={styles.helpText}>{t('onboarding.profile.help')}</Text>
+      {!!nameError && <Text style={styles.fieldErrorText}>{nameError}</Text>}
     </View>
   )
 
@@ -1027,8 +1071,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderStep2 = () => (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{t('onboarding.step.date.title')}</Text>
-      <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthDateInputRef.current?.focus()}>
+      <View style={[styles.inputContainer, !!birthDateError && styles.inputContainerError]}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => Platform.OS === 'web' ? birthDateInputRef.current?.focus() : openDatePicker()}>
           <Ionicons name="calendar" size={20} color="#FFD700" />
         </TouchableOpacity>
         <TextInput
@@ -1050,7 +1094,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
       </View>
-      {!!birthTimeError && <Text style={styles.fieldErrorText}>{birthTimeError}</Text>}
+      {!!birthDateError && <Text style={styles.fieldErrorText}>{birthDateError}</Text>}
 
       {showDatePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
@@ -1086,8 +1130,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{t('onboarding.step.time.title')}</Text>
 
-      <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.inputIconButton} onPress={() => birthTimeInputRef.current?.focus()}>
+      <View style={[styles.inputContainer, !!birthTimeError && styles.inputContainerError]}>
+        <TouchableOpacity style={styles.inputIconButton} onPress={() => Platform.OS === 'web' ? birthTimeInputRef.current?.focus() : openTimePicker()}>
           <Ionicons name="time" size={20} color="#FFD700" />
         </TouchableOpacity>
         <TextInput
@@ -1104,6 +1148,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
         />
       </View>
+      {!!birthTimeError && <Text style={styles.fieldErrorText}>{birthTimeError}</Text>}
 
       {showTimePicker && Platform.OS !== 'web' && (
         <View style={styles.pickerContainer}>
@@ -1134,11 +1179,12 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const renderStep4 = () => (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{t('onboarding.step.location.title')}</Text>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, !!locationError && styles.inputContainerError]}>
         <TouchableOpacity style={styles.inputIconButton} onPress={() => setShowLocationSuggestions(true)}>
           <Ionicons name="search" size={20} color="#FFD700" />
         </TouchableOpacity>
         <TextInput
+          ref={locationInputRef}
           style={styles.locationInput}
           placeholder={t('onboarding.location.placeholder')}
           placeholderTextColor="#8E8E93"
@@ -1217,12 +1263,10 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         </View>
       )}
 
-      <Text style={styles.helpText}>
-        {selectedLocation
-          ? t('onboarding.location.ready')
-          : t('onboarding.location.help')
-        }
-      </Text>
+      {!!locationError
+        ? <Text style={styles.fieldErrorText}>{locationError}</Text>
+        : <Text style={styles.helpText}>{selectedLocation ? t('onboarding.location.ready') : t('onboarding.location.help')}</Text>
+      }
     </View>
   )
   const renderStep5 = () => (
@@ -1397,6 +1441,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 6,
     letterSpacing: 0.3,
+  },
+  fieldLabelSpaced: {
+    marginTop: 12,
+  },
+  inputContainerError: {
+    borderColor: '#EF4444',
   },
   submitButton: {
     flex: 1,
@@ -1689,8 +1739,8 @@ const styles = StyleSheet.create({
     width: '100%',
     color: '#FF6B6B',
     fontSize: FONT_SIZES.sm,
-    marginTop: -8,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 2,
     textAlign: 'left',
   },
   nameInput: {
