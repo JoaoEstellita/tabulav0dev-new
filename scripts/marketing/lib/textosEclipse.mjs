@@ -265,5 +265,18 @@ export const FECHO = {
   comentar:
     'Não sabe seu ascendente? Comenta a hora e a cidade em que você nasceu ' +
     'que eu digo em que casa isso cai no seu mapa.',
-  link: 'Ou calcula de graça, em dois minutos, no link da bio.',
+  /**
+   * O fecho diz O QUE SAI, e não só que é grátis.
+   *
+   * Era "Ou calcula de graça, em dois minutos, no link da bio". A gratuidade e o
+   * tempo já estavam certos; faltava o conteúdo da entrega. O concorrente que o
+   * João apontou vende exatamente isso na bio — "mapa astral completo e
+   * gratuito, planetas, casas, aspectos e dignidades" — e a diferença entre as
+   * duas frases é saber se vale gastar os dois minutos.
+   *
+   * "Sem cadastro pago" em vez de "sem cartão": o app tem assinatura, e dizer
+   * que não há cartão em lugar nenhum seria falso.
+   */
+  link: 'Ou calcula de graça no link da bio, em dois minutos e sem cadastro ' +
+    'pago: planetas, casas, aspectos e dignidades.',
 }

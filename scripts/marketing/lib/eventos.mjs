@@ -74,6 +74,10 @@ const TOLERANCIA = { dt_tolerance_seconds: 60 }
  * A busca é pela raiz da distância até o próximo limite de 30°, que troca de
  * sinal exatamente no ingresso. Normalizar a diferença é o que faz isso
  * funcionar na virada de Peixes para Áries, onde a subtração crua daria 360.
+ *
+ * Devolve o PRÓXIMO ingresso de cada corpo, um por corpo. Para a Lua, que
+ * troca de signo a cada dois dias e meio, isso não serve: veja
+ * `ingressosDaLua`.
  */
 export function ingressosProximos(data, dias = 30) {
   const zero = inicioDoDia(data)
@@ -117,6 +121,68 @@ export function ingressosProximos(data, dias = 30) {
   }
 
   return achados.sort((a, b) => a.quando - b.quando)
+}
+
+/**
+ * TODAS as entradas da Lua em signo dentro da janela.
+ *
+ * ── POR QUE NÃO CABE EM `ingressosProximos` ────────────────────────────────
+ *
+ * Aquela função devolve UM ingresso por corpo: calcula o próximo limite de 30°
+ * e busca a raiz uma vez. Para Saturno é o suficiente, porque não há um segundo
+ * na janela. A Lua troca de signo a cada dois dias e meio, então o que interessa
+ * dela é a série inteira, e isso é um laço, não uma busca.
+ *
+ * ── PARA QUE SERVE ─────────────────────────────────────────────────────────
+ *
+ * A agenda do Estúdio mostrava sete dias com evento em trinta, e o João
+ * perguntou por que tão pouco. A Lua sozinha traz doze por mês, todos datados e
+ * todos verdadeiros: é o que enche o calendário sem inventar acontecimento.
+ *
+ * A busca avança meio dia depois de cada achado. A Lua anda ~13°/dia, então em
+ * doze horas ela nunca cruza dois limites, e sem esse avanço a mesma raiz seria
+ * encontrada de novo em laço infinito.
+ */
+export function ingressosDaLua(data, dias = 30) {
+  const zero = inicioDoDia(data)
+  const limiteFinal = new Date(zero.getTime() + dias * 86_400_000)
+  const achados = []
+
+  let cursor = zero
+  while (cursor < limiteFinal) {
+    const atual = longitude(A.Body.Moon, cursor)
+    const alvo = ((Math.floor(atual / 30) + 1) * 30) % 360
+
+    let t
+    try {
+      t = A.Search(
+        (quando) => diferenca(longitude(A.Body.Moon, quando), alvo),
+        new A.AstroTime(cursor),
+        new A.AstroTime(limiteFinal),
+        TOLERANCIA
+      )
+    } catch {
+      break
+    }
+    if (!t) break
+
+    const indice = (alvo / 30) % 12
+    achados.push({
+      tipo: 'ingresso',
+      corpo: 'Moon',
+      corpoPt: NOMES_PT.Moon,
+      signo: SIGNOS_INFO[indice].nome,
+      elemento: SIGNOS_INFO[indice].elemento,
+      grau: 0,
+      signoAnterior: SIGNOS_INFO[(indice + 11) % 12].nome,
+      quando: t.date,
+      hoje: mesmoDia(t.date, data),
+    })
+
+    cursor = new Date(t.date.getTime() + 12 * 3_600_000)
+  }
+
+  return achados
 }
 
 /**

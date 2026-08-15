@@ -6,6 +6,8 @@ import { LUA_VAZIA_POR_SIGNO, REGRA_DA_TRADICAO } from '../textosLuaVazia.mjs'
 import { TEXTO_DO_EVENTO } from '../textosEvento.mjs'
 import { POR_SIGNO, POR_CASA, ABERTURA } from '../textosEclipse.mjs'
 import { CASA_EM_TRANSITO } from '../textosCasa.mjs'
+import { POSICAO } from '../textosPosicao.mjs'
+import { ASPECTO_NATAL } from '../textosAspecto.mjs'
 import { TEMA } from '../temasDeCarrossel.mjs'
 
 /**
@@ -78,6 +80,8 @@ function todosOsTextos() {
   juntar('eclipseCasa', Object.entries(POR_CASA))
   juntar('eclipseAbertura', Object.entries(ABERTURA))
   juntar('casa', Object.entries(CASA_EM_TRANSITO))
+  juntar('posicao', Object.entries(POSICAO))
+  juntar('aspecto', Object.entries(ASPECTO_NATAL))
   juntar('tradicao', [['regra', REGRA_DA_TRADICAO]])
 
   for (const [tema, t] of Object.entries(TEMA)) {

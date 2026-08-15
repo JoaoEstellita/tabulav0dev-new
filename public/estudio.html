@@ -232,6 +232,8 @@
   .qtd input { position: absolute; opacity: 0; pointer-events: none; }
   .qtd.on { border-color: var(--ouro); color: var(--ouro); background: rgba(255,217,61,0.1); }
   .dura { margin-left: 6px; font-style: italic; opacity: 0.85; }
+  /* fila vazia não é erro, é um estado que muda o resultado sem avisar */
+  .dura.atencao { color: var(--ouro, #e8b33c); opacity: 1; font-style: normal; }
 
   /**
    * O mesmo assunto marcado em dois dias.
@@ -736,7 +738,26 @@
       if (!alvo) return
       var marcados = editorial.querySelectorAll('input[data-banco]:checked').length
       var n = Number((editorial.querySelector('input[name=por-dia]:checked') || {}).value || 1)
-      if (!marcados) { alvo.textContent = 'nada marcado ainda' ; return }
+      /**
+       * FILA VAZIA PRECISA DIZER O QUE VAI ACONTECER.
+       *
+       * Dizia só "nada marcado ainda", e no dia 15/08 o João escolheu 2 peças
+       * por dia, não marcou nenhum item, e recebeu uma peça só. Não havia como
+       * ele saber: a quantidade só valia para a fila, e sem fila o gerador caía
+       * na cascata com uma peça fixa.
+       *
+       * O gerador foi corrigido e agora respeita a quantidade em qualquer
+       * origem. A tela continua precisando dizer DE ONDE o assunto vem, porque
+       * a cascata escolhe por peso e ignora a ordem que ele arrumou com as
+       * setas — foi assim que "Marte em Câncer" saiu estando no fim da lista.
+       */
+      if (!marcados) {
+        alvo.textContent = 'nada marcado: os dias sem evento saem com ' + n +
+          ' peça(s) escolhida(s) pelo gerador, e não pela ordem abaixo'
+        alvo.classList.add('atencao')
+        return
+      }
+      alvo.classList.remove('atencao')
       // ~23 dias de fila por mês: o resto do mês tem evento na agenda
       var dias = Math.round(marcados / n)
       alvo.textContent = marcados + ' marcado(s), dá para ' + dias +

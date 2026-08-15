@@ -168,6 +168,47 @@ export const CONCEITO = {
       'flui tão fácil que passa despercebido. E o sextil é oportunidade que só ' +
       'rende se alguém fizer alguma coisa.',
   },
+
+  /**
+   * ── OS TRÊS DA ASTROLOGIA TRADICIONAL ────────────────────────────────────
+   *
+   * O João apontou um concorrente que vende exatamente isto: dignidades, secta,
+   * partes árabes, temperamento. É conteúdo que o app já calcula e que quase
+   * ninguém posta em português, então é onde a conta tem vantagem real.
+   *
+   * `dignidades` já cobria domicílio e exílio. Faltavam a outra metade da
+   * dignidade, a secta e a Parte da Fortuna, e as três estão nas telas.
+   *
+   * TEMPERAMENTO E BALANÇO DE ELEMENTOS FICARAM DE FORA de propósito: o
+   * concorrente os vende, o app NÃO os calcula, e peça que promete tela que não
+   * existe é pior que peça nenhuma.
+   */
+  exaltacaoQueda: {
+    titulo: 'Onde o planeta\nse dá melhor',
+    texto: 'Além da casa própria, cada planeta tem um signo onde é recebido ' +
+      'bem sem morar. A tradição chama de exaltação, e diz que é ali que ele ' +
+      'funciona melhor. No signo oposto a esse, está em queda, com menos força ' +
+      'para agir como de costume. Vênus em Peixes ama sem cobrar. Vênus em ' +
+      'Virgem ama conferindo. Nenhuma das duas é defeito.',
+  },
+
+  secta: {
+    titulo: 'Nasceu de dia\nou de noite',
+    texto: 'A astrologia antiga separa os mapas em dois times pela posição do ' +
+      'Sol. Sol acima do horizonte na hora do nascimento faz um mapa diurno, e ' +
+      'abaixo, noturno. No time diurno, Sol, Júpiter e Saturno trabalham mais à ' +
+      'vontade. No noturno, Lua, Vênus e Marte. É a primeira coisa que um ' +
+      'astrólogo tradicional olha, e some por completo do horóscopo de jornal.',
+  },
+
+  parteDaFortuna: {
+    titulo: 'A Parte\nda Fortuna',
+    texto: 'Não é planeta nem estrela. É um ponto calculado com a distância ' +
+      'entre o Sol e a Lua, projetada a partir do ascendente, e a conta muda ' +
+      'conforme o nascimento tenha sido de dia ou de noite. Marca onde as ' +
+      'coisas costumam fluir sem esforço proporcional. É o mais conhecido de ' +
+      'uma família de pontos que os árabes catalogaram às centenas.',
+  },
 }
 
 /** As chaves, em ordem estável. */

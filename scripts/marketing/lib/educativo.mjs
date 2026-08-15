@@ -24,6 +24,23 @@
  * diferentes, e essa é a tese da campanha inteira.
  */
 import { SIGNOS_INFO, NOMES_PT, ASPECTOS } from './ceu.mjs'
+import { nomeDoMes } from './mensal.mjs'
+
+/**
+ * "22 de setembro" — a data em que a posição expira.
+ *
+ * Fuso de São Paulo explícito: um ingresso às 21h do dia 22 em UTC é dia 22 à
+ * tarde aqui, e o formatador padrão do Node roda em UTC no runner do GitHub.
+ * Sem isso a peça anunciaria o dia errado em metade dos casos.
+ */
+function diaEMes(data) {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    day: 'numeric', month: 'numeric', timeZone: 'America/Sao_Paulo',
+  }).formatToParts(data)
+  const dia = partes.find((p) => p.type === 'day')?.value
+  const mes = Number(partes.find((p) => p.type === 'month')?.value) - 1
+  return `${dia} de ${nomeDoMes(mes)}`
+}
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -134,6 +151,9 @@ export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) 
     return (prox.quando - data) / 86_400_000
   }
 
+  /** A data em que o corpo sai deste signo, ou `null` quando ela não está na janela. */
+  const saiEm = (nomeDoCorpo) => ingressos.find((i) => i.corpo === nomeDoCorpo)?.quando || null
+
   // 1. Planeta no signo em que ele REALMENTE está hoje.
   for (const corpo of mapa.corpos) {
     if (!PLANETAS_DE_SIGNO.includes(corpo.nome)) continue
@@ -149,13 +169,29 @@ export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) 
     const restam = diasRestantes(corpo.nome)
     if (restam < DIAS_MINIMOS) continue
 
+    /**
+     * A ÂNCORA DIZ ATÉ QUANDO, NÃO EM QUE GRAU.
+     *
+     * Era "Marte está em Câncer hoje, a 2°". O João já tinha reprovado essa
+     * classe de informação uma vez, sobre a velocidade da Lua: "quem se importa
+     * quantos graus ela anda". O grau é verdadeiro e não serve para nada de
+     * quem lê — não muda o que fazer, não dá para conferir e não é motivo para
+     * salvar o post.
+     *
+     * A data em que a posição expira é o contrário: quem lê guarda a peça
+     * sabendo por quanto tempo ela vale. O dado já estava calculado aqui para
+     * decidir o peso, e não estava sendo dito.
+     */
+    const sai = saiEm(corpo.nome)
     candidatos.push({
       tipo: 'planeta_no_signo',
       chave,
       texto,
       titulo: `${corpo.nomePt} em ${corpo.signo}`,
       // a âncora é o que torna a peça honesta: não foi sorteada
-      ancora: `${comArtigo(corpo.nomePt, true)} está em ${corpo.signo} hoje, a ${corpo.grau}°.`,
+      ancora: sai
+        ? `${comArtigo(corpo.nomePt, true)} fica em ${corpo.signo} até ${diaEMes(sai)}.`
+        : `${comArtigo(corpo.nomePt, true)} está em ${corpo.signo} e segue por meses.`,
       signo: corpo.signo,
       elemento: SIGNOS_INFO.find((s) => s.nome === corpo.signo)?.elemento || null,
       corpo: corpo.nome,
@@ -187,7 +223,11 @@ export function temaEducativo(mapa, catalogos, usadas = new Set(), opcoes = {}) 
       chave,
       texto,
       titulo: `${a.agentePt} ${ROTULO_ASPECTO[a.aspecto] || a.aspecto} ${a.alvoPt}`,
-      ancora: `${comArtigo(a.agentePt, true)} e ${comArtigo(a.alvoPt)} estão nesse ângulo hoje, com ${a.orbeFormatado} de orbe.`,
+      // "com 2°30' de orbe" saiu pelo mesmo motivo que o grau saiu acima, e
+      // ainda por outro: `orbe` está na lista de jargão de `linguagem.spec`,
+      // barrada em todo texto escrito. Não fazia sentido a âncora, que é
+      // montada em tempo de execução, ser o único lugar onde a palavra passa.
+      ancora: `${comArtigo(a.agentePt, true)} e ${comArtigo(a.alvoPt)} estão nesse ângulo hoje.`,
       signo: a.agentePos?.signo || null,
       elemento: SIGNOS_INFO.find((s) => s.nome === a.agentePos?.signo)?.elemento || null,
       corpo: a.agente,

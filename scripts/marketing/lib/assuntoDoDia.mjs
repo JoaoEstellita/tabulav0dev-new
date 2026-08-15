@@ -26,7 +26,8 @@
  *   5  conceito             quando o céu não deu assunto
  */
 import { eventosDoDia, ingressosProximos } from './eventos.mjs'
-import { temaEducativo, chaveAspectoNatal, ROTULO_ASPECTO, falaComQuemLe } from './educativo.mjs'
+import { temaEducativo, chaveAspectoNatal, falaComQuemLe } from './educativo.mjs'
+import { escrever } from './vozes.mjs'
 import { conceitoDoDia } from './textosConceito.mjs'
 import { recursoDoDia } from './textosRecurso.mjs'
 
@@ -37,6 +38,23 @@ import { recursoDoDia } from './textosRecurso.mjs'
  * planetas lentos não é notícia de um dia, é paisagem do semestre.
  */
 const CORPOS_PESSOAIS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
+
+/**
+ * A LUA NÃO ENCABEÇA ASPECTO.
+ *
+ * `PLANETAS_DE_SIGNO` já a exclui de planeta-em-signo, e o comentário lá diz o
+ * porquê: ela troca de signo a cada dois dias e meio, então "Lua em Gêmeos num
+ * mapa" seria assunto de terça e de sexta. No aspecto o argumento é mais forte
+ * ainda — a Lua fecha e desfaz ângulo com tudo em algumas horas.
+ *
+ * Medido: em 180 dias a cascata podia escolher 120 aspectos distintos, e 44
+ * deles eram da Lua. A âncora "Lua e Saturno estão nesse ângulo hoje" vale por
+ * uma tarde, e é a mais fraca de todo o sistema.
+ *
+ * Sem a Lua, o conjunto que a peça precisa cobrir com texto próprio fica
+ * finito, e é essa a diferença entre escrever os textos e nunca alcançá-los.
+ */
+const NAO_ENCABECA_ASPECTO = ['Moon']
 
 /**
  * Eventos que acontecem UMA VEZ, num instante.
@@ -124,6 +142,7 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
     if (ev.tipo !== 'aspecto') continue
     const a = ev.aspecto
     if (!CORPOS_PESSOAIS.includes(a.agente) && !CORPOS_PESSOAIS.includes(a.alvo)) continue
+    if (NAO_ENCABECA_ASPECTO.includes(a.agente) || NAO_ENCABECA_ASPECTO.includes(a.alvo)) continue
 
     const texto = catalogos.aspectoNatal?.[chaveAspectoNatal(a.agente, a.alvo, a.aspecto)]
     if (!texto || falaComQuemLe(texto)) continue
@@ -132,12 +151,23 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
     return {
       ...ev,
       texto,
-      // o rótulo do catálogo vem capitalizado ("Sextil"), e no meio da frase
-      // isso sai como erro de digitação: "Vênus Sextil Mercúrio"
-      titulo: `${a.agentePt} ${(ROTULO_ASPECTO[a.aspecto] || a.aspecto).toLowerCase()} ${a.alvoPt}`,
+      /**
+       * O TÍTULO EM PORTUGUÊS, NÃO EM NOME DE ÂNGULO.
+       *
+       * Era `${agentePt} ${rotulo} ${alvoPt}`, e a peça saía "Mercúrio sextil
+       * Lua". `sextil`, `trígono` e `quadratura` estão na lista de jargão que
+       * `linguagem.spec` barra em todo texto escrito — o título escapava porque
+       * o teste lê textos, não títulos. Pior: a agenda do Estúdio já mostrava
+       * "Saturno e Mercúrio fluem juntos", então o João escolhia uma coisa e a
+       * peça saía com outra.
+       *
+       * `escrever()` conhece a forma legível desde sempre. Bastava usá-la.
+       */
+      titulo: escrever(ev).titulo,
       // a âncora é o que separa "isto é o que essa configuração significa" de
-      // "hoje vai acontecer com você"
-      ancora: `${a.agentePt} e ${a.alvoPt} estão nesse ângulo hoje, com ${a.orbeFormatado} de orbe.`,
+      // "hoje vai acontecer com você". Sem o orbe: é jargão barrado em todo
+      // texto escrito, e não havia motivo para a âncora ser a exceção.
+      ancora: `${a.agentePt} e ${a.alvoPt} estão nesse ângulo hoje.`,
     }
   }
 

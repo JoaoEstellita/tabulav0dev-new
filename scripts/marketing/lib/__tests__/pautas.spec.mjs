@@ -47,12 +47,24 @@ describe('opções de um dia', () => {
    * em 21 dias seguidos: 96 linhas para 27 assuntos distintos. O resto foi para
    * `bancoDeAssuntos`, e a agenda ficou legitimamente curta ou vazia.
    */
-  it('a agenda só traz evento com data', () => {
+  /**
+   * A regra é DATA, não natureza.
+   *
+   * O teste exigia `natureza === 'evento'` para tudo na agenda, e isso confundia
+   * duas coisas. A agenda existe para separar o que acontece num dia do que vale
+   * semanas — o critério é ter data. A natureza é outra coisa: diz se a peça
+   * anuncia um acontecimento ou explica um conceito, e o João foi explícito de
+   * que a lua fora de curso é EDUCATIVA mesmo tendo hora marcada.
+   *
+   * O que continua proibido é o que não tem data nenhuma: educativo de posição,
+   * conceito e recurso vivem no banco.
+   */
+  it('a agenda só traz o que tem data', () => {
     for (const dia of ['2026-08-08', '2026-08-12', '2026-08-15', '2026-08-30']) {
       for (const o of opcoesDoDia(meioDia(dia), DEPS)) {
-        expect(o.natureza, `${dia} ${o.titulo}`).toBe('evento')
-        expect(['educativo', 'conceito', 'recurso', 'lua_fora_de_curso'], o.titulo)
+        expect(['educativo', 'conceito', 'recurso'], `${dia} ${o.titulo}`)
           .not.toContain(o.tipo)
+        expect(o.angulo, `${dia} ${o.titulo}`).toMatch(/Acontece hoje/)
       }
     }
   })
@@ -118,12 +130,43 @@ describe('opções de um dia', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  // O aspecto nunca encabeça uma peça — fica exato por semanas e sai repetido.
-  // Oferecê-lo como assunto seria oferecer algo que o gerador recusaria.
-  it('não oferece aspecto como assunto', () => {
-    for (const dia of ['2026-08-08', '2026-08-12', '2026-08-15']) {
-      const ops = opcoesDoDia(meioDia(dia), DEPS)
-      expect(ops.some((o) => o.tipo === 'aspecto'), dia).toBe(false)
+  /**
+   * O ASPECTO VOLTOU, E SÓ NO DIA EM QUE FECHA.
+   *
+   * Ele era excluído em bloco, e o motivo estava certo: dentro do orbe ele fica
+   * por semanas, então Plutão sextil Netuno sairia seis vezes num mês. O que
+   * resolve não é excluir, é exigir o instante — o aspecto perfaz uma vez.
+   *
+   * Este teste guarda a propriedade que importa: o mesmo par não aparece em dois
+   * dias. Se a regra voltar a ser "está dentro do orbe", ele quebra.
+   */
+  it('o aspecto só aparece no dia em que fecha exato', () => {
+    const diasDoPar = {}
+    for (let i = 0; i < 21; i++) {
+      const d = new Date(Date.UTC(2026, 7, 13 + i, 12))
+      for (const o of opcoesDoDia(d, DEPS)) {
+        if (o.tipo !== 'aspecto') continue
+        diasDoPar[o.id] = (diasDoPar[o.id] || 0) + 1
+      }
+    }
+    for (const [par, vezes] of Object.entries(diasDoPar)) {
+      expect(vezes, `${par} apareceu ${vezes}x em 21 dias`).toBe(1)
+    }
+  })
+
+  /** Aspecto entre dois lentos descreve uma geração, não um dia. */
+  it('e sempre com um corpo pessoal no par', () => {
+    const PESSOAIS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
+    for (let i = 0; i < 21; i++) {
+      const d = new Date(Date.UTC(2026, 7, 13 + i, 12))
+      for (const o of opcoesDoDia(d, DEPS)) {
+        if (o.tipo !== 'aspecto') continue
+        const a = o.evento.aspecto
+        expect(
+          PESSOAIS.includes(a.agente) || PESSOAIS.includes(a.alvo),
+          `${a.agente} ${a.aspecto} ${a.alvo}`
+        ).toBe(true)
+      }
     }
   })
 
@@ -289,17 +332,26 @@ describe('a editorial diz o que cada assunto é', () => {
   })
 
   /**
-   * A lua fora de curso foi para o banco como CONDICIONAL.
+   * A lua fora de curso está nos DOIS lugares, e são conteúdos diferentes.
    *
-   * Ela tem hora de começo e fim, então publicá-la num dia qualquer anunciaria
-   * uma janela que não existe. No banco ela diz "quando houver"; a janela real
-   * entra na peça, com a lua daquele dia.
+   * No banco ela é o aviso condicional, que diz "quando houver" e usa a janela
+   * do dia em que for sorteado. Na agenda ela é a linha do dia, com a janela
+   * real, porque ela tem hora de começo e de fim como qualquer evento.
+   *
+   * O que ela NÃO é: natureza 'evento'. "Quando for lua fora de curso tem que
+   * ser educativo, mas pode ser em formato de Storie."
    */
-  it('a lua fora de curso é condicional no banco', () => {
-    expect(doDia('2026-08-13').some((o) => o.tipo === 'lua_fora_de_curso')).toBe(false)
+  it('a lua fora de curso é condicional no banco e datada na agenda', () => {
     const lua = bancoDeAssuntos(meioDia('2026-08-13'), DEPS).find((o) => o.id === 'luaVazia')
     expect(lua.angulo).toContain('Quando houver no dia')
     expect(lua.formatos).toEqual(['story'])
+
+    const naAgenda = doDia('2026-08-13').find((o) => o.tipo === 'lua_fora_de_curso')
+    expect(naAgenda, '13/08 tem lua fora de curso').toBeTruthy()
+    expect(naAgenda.natureza).toBe('explicativo')
+    expect(naAgenda.formatos).toEqual(['story'])
+    // a janela real, com hora, e não a frase condicional do banco
+    expect(naAgenda.angulo).toMatch(/das \d+h\d+.* às \d+h\d+/)
   })
 
   /** Dizer "sem data para acabar" de Marte em Câncer seria mentira. */

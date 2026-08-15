@@ -135,6 +135,16 @@ export function aspectosDoCeu(data, orbesPorPlaneta) {
           orbe,
           orbeFormatado: formatarOrbe(orbe),
           orbeMax,
+          /**
+           * A distância COM SINAL até o ângulo exato.
+           *
+           * `orbe` é o valor absoluto, e por isso não diz de que lado o aspecto
+           * está: 1° antes de fechar e 1° depois de fechar são o mesmo número.
+           * Quem precisa saber se o aspecto perfaz DENTRO de um dia compara o
+           * sinal deste valor no começo e no fim do dia — se ele virou, o
+           * instante exato caiu no meio.
+           */
+          desvio: sep - aspecto.angulo,
           exato: orbe < 0.5,
           forca,
         })

@@ -16,11 +16,12 @@
 import {
   eventosDoDia,
   ingressosProximos,
+  ingressosDaLua,
   retrogradacoesVigentes,
   grausCriticos,
   eixoDosNodulos,
 } from './eventos.mjs'
-import { mapaDoCeu } from './ceu.mjs'
+import { mapaDoCeu, aspectosDoCeu } from './ceu.mjs'
 import { temaEducativo, falaComQuemLe } from './educativo.mjs'
 import { escrever } from './vozes.mjs'
 import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
@@ -84,7 +85,16 @@ export function idDoAssunto(ev) {
  * publicar naquele dia: evento tem data e passa; explicação vale o mês inteiro.
  */
 export function naturezaDoAssunto(ev) {
-  const DO_CEU = ['eclipse', 'fase', 'ingresso', 'retrogrado', 'direto', 'lua_fora_de_curso']
+  /**
+   * A lua fora de curso saiu daqui.
+   *
+   * Ela acontece no céu e tem hora marcada, então por muito tempo ficou nesta
+   * lista. O João foi explícito ao contrário: "quando for lua fora de curso tem
+   * que ser educativo, mas pode ser em formato de Storie". A peça não anuncia
+   * um acontecimento, ela explica um intervalo — e o selo na agenda precisa
+   * dizer isso, porque é por ele que ele escolhe o que publicar.
+   */
+  const DO_CEU = ['eclipse', 'fase', 'ingresso', 'retrogrado', 'direto']
   return DO_CEU.includes(ev?.tipo) ? 'evento' : 'explicativo'
 }
 
@@ -123,9 +133,18 @@ export function anguloDoAssunto(ev) {
   }
 
   if (ev.tipo === 'lua_fora_de_curso') {
-    return ev.inicio && ev.fim
-      ? `Acontece hoje — das ${HORA(ev.inicio)} às ${HORA(ev.fim)}`
-      : 'Acontece hoje — dura horas'
+    if (!ev.inicio || !ev.fim) return 'Acontece hoje — dura horas'
+    /**
+     * A janela atravessa a meia-noite com frequência.
+     *
+     * Um período dura de poucos minutos a mais de quarenta horas, então a linha
+     * "das 17h00 às 11h19" lia como se começasse e terminasse no mesmo dia, e às
+     * vezes ao contrário do que acontece. Dizer de que dia é cada ponta custa
+     * duas palavras e evita o João marcar a peça para o dia errado.
+     */
+    const abreOntem = !mesmoDiaLocal(ev.inicio, ev.fim)
+    const de = abreOntem ? `${HORA(ev.inicio)} de ontem` : HORA(ev.inicio)
+    return `Acontece hoje — das ${de} às ${HORA(ev.fim)}`
   }
 
   if (ev.tipo === 'retrogradacao') {
@@ -195,6 +214,61 @@ export function formatosDoAssunto(ev) {
 const EDUCATIVOS_POR_DIA = 3
 
 /**
+ * Aspecto sem nenhum destes é paisagem de geração, não assunto de um dia.
+ *
+ * A mesma lista de `educativo.mjs` e `assuntoDoDia.mjs`, e pelo mesmo motivo.
+ */
+const CORPOS_PESSOAIS_NO_ASPECTO = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']
+
+/** O dia civil em São Paulo, que é onde o calendário do Estúdio vive. */
+const diaLocal = (d) => new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Sao_Paulo',
+}).format(d)
+
+const mesmoDiaLocal = (a, b) => diaLocal(a) === diaLocal(b)
+
+/**
+ * O instante em que o aspecto fecha exato hoje, ou `null`.
+ *
+ * `orbe` é absoluto e não distingue 1° antes de fechar de 1° depois. `desvio`
+ * traz o sinal, e o instante exato é onde ele cruza zero: se o sinal no começo
+ * do dia é diferente do sinal no fim, o cruzamento caiu no meio.
+ *
+ * É por isso que o aspecto pode voltar à agenda sem repetir. Antes ele era
+ * excluído em bloco porque ficava dentro do orbe por semanas; o instante em que
+ * fecha acontece uma vez só.
+ *
+ * A hora sai por interpolação entre as duas pontas, e não por busca. Em um dia
+ * o desvio de um corpo pessoal é praticamente uma reta, e a agenda precisa da
+ * hora para o João escolher, não para calcular efeméride — bissecionar custaria
+ * vinte cálculos de céu por aspecto por dia e mudaria a resposta em minutos.
+ *
+ * O aspecto que fecha exatamente à meia-noite fica de fora, e não vale o código:
+ * `desvio` seria zero numa das pontas e o sinal não viraria.
+ */
+function instanteDoAspecto(data, aspecto, orbes) {
+  const dia = diaLocal(data)
+  // 03:00 UTC é 00:00 em São Paulo; o fim do dia é 24h depois, menos um minuto
+  const abre = new Date(`${dia}T03:00:00.000Z`)
+  const duracao = 86_400_000 - 60_000
+  const fecha = new Date(abre.getTime() + duracao)
+
+  const acharDesvio = (quando) =>
+    aspectosDoCeu(quando, orbes).find((a) => a.chave === aspecto.chave)?.desvio
+
+  const antes = acharDesvio(abre)
+  const depois = acharDesvio(fecha)
+
+  // fora do orbe numa das pontas: o aspecto entrou ou saiu hoje, e entrar no
+  // orbe não é o mesmo que fechar exato
+  if (antes == null || depois == null) return null
+  if (Math.sign(antes) === Math.sign(depois)) return null
+
+  const fracao = Math.abs(antes) / (Math.abs(antes) + Math.abs(depois))
+  return new Date(abre.getTime() + fracao * duracao)
+}
+
+/**
  * As opções de um dia, em ordem de peso.
  *
  * O aspecto fica de fora: por regra ele nunca encabeça uma peça — fica exato por
@@ -228,11 +302,7 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
    *
    * O João foi direto: "poderia ter apenas para quando tiver no dia".
    */
-  for (const ev of eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })) {
-    if (ev.tipo === 'aspecto') continue
-    // a lua fora de curso foi para o banco: acontece toda semana, e o João a
-    // classificou como educativa, em story
-    if (ev.tipo === 'lua_fora_de_curso') continue
+  const juntar = (ev) => {
     const v = escrever(ev)
     opcoes.push({
       id: idDoAssunto(ev),
@@ -243,6 +313,51 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
       formatos: formatosDoAssunto(ev),
       evento: ev,
     })
+  }
+
+  for (const ev of eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })) {
+    /**
+     * O ASPECTO ENTRA, MAS SÓ NO DIA EM QUE FECHA EXATO.
+     *
+     * Ele era excluído em bloco, e o motivo era bom: Plutão sextil Netuno fica
+     * dentro do orbe por semanas e sairia seis vezes num mês. O que resolve não
+     * é excluir, é exigir o instante — o aspecto perfaz uma vez, e nesse dia ele
+     * é notícia como qualquer ingresso.
+     *
+     * `aspectoFechaHoje` confere o sinal do desvio no começo e no fim do dia; o
+     * corpo pessoal continua obrigatório, porque um par de lentos fecha exato
+     * uma vez por década e ainda assim descreve uma geração, não um dia.
+     */
+    if (ev.tipo === 'aspecto') {
+      const a = ev.aspecto
+      if (!a) continue
+      if (!CORPOS_PESSOAIS_NO_ASPECTO.includes(a.agente) && !CORPOS_PESSOAIS_NO_ASPECTO.includes(a.alvo)) continue
+      const instante = instanteDoAspecto(data, a, orbes)
+      if (!instante) continue
+      // o `quando` que vinha de `eventosDoDia` é o início da janela de busca, e
+      // a agenda o exibia como se fosse a hora do aspecto: três aspectos
+      // distintos saíam todos "às 09h00"
+      juntar({ ...ev, quando: instante })
+      continue
+    }
+    juntar(ev)
+  }
+
+  /**
+   * A LUA ENTRANDO EM SIGNO.
+   *
+   * A agenda tinha sete dias com evento em trinta, e o João perguntou por quê.
+   * A Lua sozinha traz treze por mês, todos datados e todos verdadeiros.
+   *
+   * Vem de `ingressosDaLua` e não de `eventosDoDia` porque aquela função devolve
+   * o próximo ingresso de cada corpo, um por corpo, e da Lua o que interessa é a
+   * série inteira. `INGRESSO_RELEVANTE` continua sem a Lua de propósito: ele
+   * alimenta o cálculo de validade do educativo, e a Lua trocando a cada dois
+   * dias e meio faria toda posição parecer expirar amanhã.
+   */
+  for (const ev of ingressosDaLua(data, 1)) {
+    if (!mesmoDiaLocal(ev.quando, data)) continue
+    juntar(ev)
   }
 
   return opcoes

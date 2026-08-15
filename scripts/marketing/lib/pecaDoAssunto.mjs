@@ -15,6 +15,9 @@
  * Aqui cada tipo tem seu ramo, e o que sobra é um erro explícito.
  */
 import { textoDoEvento } from './textosEvento.mjs'
+import { textoDaPosicao } from './textosPosicao.mjs'
+import { textoDoAspecto } from './textosAspecto.mjs'
+import { chaveAspectoNatal } from './educativo.mjs'
 import { POR_SIGNO as ECLIPSE_POR_SIGNO, ABERTURA } from './textosEclipse.mjs'
 import { textoDaLuaVazia, REGRA_DA_TRADICAO } from './textosLuaVazia.mjs'
 import { dignidade, textoEmSigno, primeirasFrases, semTravessao } from './interpretacao.mjs'
@@ -214,26 +217,67 @@ function montar(assunto, { iso, catalogos }) {
      * que a configuração significa e prova que ela existe hoje, em vez de
      * prometer o que vai acontecer com quem lê.
      */
-    case 'aspecto':
+    case 'aspecto': {
+      const a = assunto.aspecto
+      const proprio = a && textoDoAspecto(chaveAspectoNatal(a.agente, a.alvo, a.aspecto))
+      if (!proprio && a) {
+        console.warn(`  aviso: sem texto próprio para ${a.agente} ${a.aspecto} ${a.alvo}; usando o catálogo do app.`)
+      }
       return {
         olho: 'o céu de hoje',
         titulo: quebrarTitulo(assunto.titulo),
-        texto: [assunto.texto, assunto.ancora].filter(Boolean).join('\n\n'),
+        texto: [proprio || assunto.texto, assunto.ancora].filter(Boolean).join('\n\n'),
         signo: assunto.aspecto?.agentePos?.signo || assunto.signo || ORDEM[0],
         casas: false,
         legendaAbre: '',
       }
+    }
 
-    case 'planeta_no_signo':
-    case 'aspecto_natal':
+    /**
+     * O planeta no signo prefere o texto escrito aqui.
+     *
+     * Este ramo era a fonte do "ainda parece feito por IA": ele entregava
+     * `assunto.texto`, que vem do catálogo natal do app, e a reescrita dos 99
+     * passou ao largo. `textosPosicao.mjs` cobre as dezessete posições que o
+     * céu traz em 120 dias; fora delas o catálogo continua atendendo, com
+     * aviso no console.
+     *
+     * O texto próprio já sai no tamanho da peça, então não passa por
+     * `primeirasFrases` — cortar em três frases um texto escrito para caber
+     * decepava o fecho, que é justamente onde a leitura vira específica.
+     */
+    case 'planeta_no_signo': {
+      const proprio = textoDaPosicao(assunto.corpo, assunto.signo)
+      if (!proprio) {
+        console.warn(`  aviso: sem texto próprio para ${assunto.corpo} em ${assunto.signo}; usando o catálogo do app.`)
+      }
       return {
         olho: 'o céu de hoje',
         titulo: quebrarTitulo(assunto.titulo),
-        texto: [primeirasFrases(assunto.texto, 3), assunto.ancora].filter(Boolean).join('\n\n'),
+        texto: [proprio || primeirasFrases(assunto.texto, 3), assunto.ancora]
+          .filter(Boolean).join('\n\n'),
         signo: assunto.signo || ORDEM[0],
         casas: false,
         legendaAbre: '',
       }
+    }
+
+    case 'aspecto_natal': {
+      // `temaEducativo` já monta a chave na ordem tradicional e a guarda aqui
+      const proprio = textoDoAspecto(assunto.chave)
+      if (!proprio) {
+        console.warn(`  aviso: sem texto próprio para ${assunto.chave}; usando o catálogo do app.`)
+      }
+      return {
+        olho: 'o céu de hoje',
+        titulo: quebrarTitulo(assunto.titulo),
+        texto: [proprio || primeirasFrases(assunto.texto, 3), assunto.ancora]
+          .filter(Boolean).join('\n\n'),
+        signo: assunto.signo || ORDEM[0],
+        casas: false,
+        legendaAbre: '',
+      }
+    }
 
     case 'conceito':
       return {

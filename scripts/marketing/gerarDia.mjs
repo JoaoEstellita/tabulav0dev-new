@@ -53,6 +53,9 @@ function lerArgs(argv) {
     if (a === '--upload') args.upload = true
     else if (a.startsWith('--data=')) args.data = a.slice(7)
     else if (a.startsWith('--saida=')) args.saida = a.slice(8)
+    // quantas peças, sem passar pelo Estúdio: é o único jeito de conferir o
+    // laço da cascata numa máquina sem a senha do painel
+    else if (a.startsWith('--pecas=')) args.pecas = Number(a.slice(8)) || 0
   }
   // o mesmo default de `gerarEvento`, para os dois lerem o mesmo histórico
   if (!args.saida) {
@@ -118,8 +121,19 @@ async function doEstudio(iso, { backend, senha }) {
      * Dois formatos: array puro (a primeira versão) e `{itens, porDia}`. O
      * antigo continua sendo lido como um por dia, porque já há fila salva no
      * Storage.
+     *
+     * ── POR QUE NÃO SE EXIGE `itens.length` ────────────────────────────────
+     *
+     * Exigia, e foi assim que o dia 15/08 saiu com uma peça só. O João marcou
+     * "2 por dia" e não marcou nenhum item do banco; a fila salva ficou
+     * `{itens: [], porDia: 2}`, esta busca a descartou por estar vazia, e o
+     * `porDia` foi junto. Fila vazia e escolha de quantidade são duas
+     * informações diferentes, e só uma delas depende de haver itens.
+     *
+     * A lista vem do backend em ordem decrescente de dia
+     * (`marketing-cards.js:332`), então a primeira encontrada é a mais recente.
      */
-    const comFila = lista.find((d) => d.fila && (Array.isArray(d.fila) ? d.fila.length : d.fila.itens?.length))
+    const comFila = lista.find((d) => d.fila)
     const bruta = comFila?.fila
 
     const itens = Array.isArray(bruta) ? bruta : (bruta?.itens || [])
@@ -154,7 +168,12 @@ async function principal() {
   const args = lerArgs(process.argv)
   const iso = args.data || new Date().toISOString().slice(0, 10)
 
-  const { pauta, fila, porDia } = await doEstudio(iso, args)
+  const doPainel = await doEstudio(iso, args)
+  const { pauta, fila } = doPainel
+  // `--pecas` vence o Estúdio: existe para teste manual, e quem o digitou sabe
+  const porDia = args.pecas
+    ? Math.max(1, Math.min(MAXIMO, args.pecas))
+    : doPainel.porDia
   const assuntos = assuntosDaPauta(pauta)
 
   /**
@@ -192,11 +211,24 @@ async function principal() {
     aGerar = escolhidos.map((id) => ({ id, daFila: true, formatos: [] }))
     console.log(`${iso}: sem evento marcado. Da fila (${fila.length} itens): ${escolhidos.join(', ')}`)
   } else if (!aGerar.length) {
+    /**
+     * SEM AGENDA E SEM FILA: A CASCATA, TAMBÉM NA QUANTIDADE ESCOLHIDA.
+     *
+     * Era uma peça fixa (`aGerar = [null]`), e o João marcou 2 no Estúdio e
+     * recebeu 1 sem nenhum aviso: `porDia` só era lido no ramo da fila. A
+     * quantidade é escolha dele e não tem relação nenhuma com a origem do
+     * assunto.
+     *
+     * Cada `null` faz `gerarEvento` descer a cascata sozinho. O que impede as
+     * duas de saírem iguais é o histórico em disco: o processo da peça 1
+     * grava a chave antes de a peça 2 começar, e `assuntoDoDia` pula o que
+     * está na janela de catorze dias. É o mesmo mecanismo que separa duas
+     * peças da fila, só que ali eu preciso antecipá-lo à mão porque a escolha
+     * acontece antes de qualquer processo rodar.
+     */
     origem = 'cascata'
-    // sem agenda e sem fila: o gerador escolhe sozinho, para a automação nunca
-    // parar porque ninguém abriu a editorial
-    aGerar = [null]
-    console.log(`${iso}: sem pauta e sem fila. Uma peça, pela cascata.`)
+    aGerar = Array.from({ length: porDia }, () => null)
+    console.log(`${iso}: sem pauta e sem fila. ${porDia} peça(s), pela cascata.`)
   } else {
     console.log(`${iso}: ${aGerar.length} assunto(s) marcado(s) na agenda.`)
   }
