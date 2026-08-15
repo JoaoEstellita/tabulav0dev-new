@@ -23,54 +23,68 @@
  */
 
 export const CASA_EM_TRANSITO = {
-  1: 'É a parte da vida em que você aparece: o corpo, o humor, o jeito de ' +
-     'entrar num lugar. Movimento aqui é sentido na pele antes de ser ' +
-     'entendido. Muda primeiro a disposição, depois o que você faz com ela.',
+  1:
+     'É a parte da vida em que a pessoa aparece. O corpo, o humor, o jeito ' +
+     'de entrar num lugar. Movimento aqui se sente na pele antes de ser ' +
+     'entendido. Muda primeiro a disposição, depois o que se faz com ela.',
 
-  2: 'Aqui está o que entra e o que você decide manter. Movimento nesta parte ' +
-     'mexe com dinheiro, mas não só: mexe com o que vale o esforço. Às vezes a ' +
-     'conta só fecha quando alguma coisa é largada.',
+  2:
+     'Aqui está o que entra e o que se decide manter. Movimento nesta parte ' +
+     'mexe com dinheiro, mas não só. Mexe com o que vale o esforço. Às vezes ' +
+     'a conta só fecha quando alguma coisa é largada.',
 
-  3: 'O território das conversas curtas, dos irmãos, do trajeto de todo dia. ' +
-     'Movimento aqui chega como mensagem que muda o rumo, papo que precisava ' +
-     'acontecer, e cabeça acelerada de quem tem coisa demais aberta ao mesmo tempo.',
+  3:
+     'O território das conversas curtas, dos irmãos, do trajeto de todo dia. ' +
+     'Movimento aqui chega como mensagem que muda o rumo. Como papo que ' +
+     'precisava acontecer. E como cabeça acelerada de quem tem coisa demais ' +
+     'aberta ao mesmo tempo.',
 
-  4: 'A casa, a família, o chão. Movimento nesta parte raramente é público: ' +
-     'mexe com quem mora com você, com o que a infância deixou, e com a ' +
-     'vontade de arrumar a casa justamente quando o resto está bagunçado.',
+  4:
+     'A casa, a família, o chão. Movimento nesta parte raramente é público. ' +
+     'Mexe com quem mora junto, com o que a infância deixou, e com a vontade ' +
+     'de arrumar a casa justamente quando o resto está bagunçado.',
 
-  5: 'O que você faz porque quer, não porque deve: criar, namorar, jogar, os ' +
-     'filhos. Movimento aqui devolve apetite e coragem, e cobra que você ' +
-     'apareça em vez de assistir.',
+  5:
+     'O que se faz por querer, não por dever. Criar, namorar, jogar, os ' +
+     'filhos. Movimento aqui devolve apetite e coragem. E cobra presença, em ' +
+     'vez de plateia.',
 
-  6: 'A rotina e o corpo funcionando: o trabalho de todo dia, a saúde, os ' +
-     'ajustes pequenos. Movimento nesta parte não é dramático, é insistente. ' +
-     'Costuma cobrar pelo cansaço o que não foi resolvido pelo método.',
+  6:
+     'A rotina e o corpo funcionando. O trabalho de todo dia, a saúde, os ' +
+     'ajustes pequenos. Movimento nesta parte não é dramático. É insistente. ' +
+     'Cobra pelo cansaço o que não foi resolvido pelo método.',
 
-  7: 'O outro. Sociedade, casamento, contrato, e também quem se opõe a você. ' +
-     'Movimento aqui chega pelas pessoas: alguém procura, alguém cobra, alguém ' +
-     'propõe, e a decisão deixa de ser só sua.',
+  7:
+     'O outro. Sociedade, casamento, contrato, e também quem se opõe. ' +
+     'Movimento aqui chega pelas pessoas. Alguém procura, alguém cobra, ' +
+     'alguém propõe. E a decisão deixa de ser de uma pessoa só.',
 
-  8: 'O que se divide com alguém: dinheiro junto, intimidade, dívida, e o que ' +
-     'termina. Movimento nesta parte mexe com o que estava guardado. Raramente ' +
-     'é confortável, e quase sempre é o que destrava o resto.',
+  8:
+     'O que se divide com alguém. Dinheiro junto, intimidade, dívida, e o ' +
+     'que termina. Movimento nesta parte mexe com o que estava guardado. ' +
+     'Raramente é confortável. Quase sempre é o que destrava o resto.',
 
-  9: 'O que amplia a vista: estudo, viagem, fé, gente de fora. Movimento aqui ' +
-     'vem como convite ou como inquietação, a sensação de que o mundo é maior ' +
-     'do que a rotina vinha deixando ver.',
+  9:
+     'O que amplia a vista. Estudo, viagem, fé, gente de fora. Movimento ' +
+     'aqui vem como convite ou como inquietação. A sensação de que o mundo é ' +
+     'maior do que a rotina vinha deixando ver.',
 
-  10: 'A carreira e o que os outros veem de você. Movimento nesta parte é ' +
-      'público: cobrança de quem manda, mudança de posição, seu nome circulando. ' +
-      'O que você faz aqui é visto mesmo quando você preferia que não fosse.',
+  10:
+     'A carreira e o que os outros enxergam. Movimento nesta parte é ' +
+     'público. Cobrança de quem manda, mudança de posição, o nome ' +
+     'circulando. O que se faz aqui é visto mesmo quando se preferia que não ' +
+     'fosse.',
 
-  11: 'Os grupos, as amizades, o que é de mais gente. Movimento aqui aparece ' +
-      'como convite, como projeto coletivo, e às vezes como a percepção de que ' +
-      'um grupo já não cabe mais em você.',
+  11:
+     'Os grupos, as amizades, o que é de mais gente. Movimento aqui aparece ' +
+     'como convite e como projeto coletivo. Às vezes aparece como a ' +
+     'percepção de que um grupo já não cabe mais.',
 
-  12: 'O que acontece longe dos olhos: o descanso, o que você adia, o que ' +
-      'precisa acabar. Movimento nesta parte é sentido antes de ser visto, ' +
-      'costuma chegar como cansaço ou sono estranho, e o que se resolve aqui ' +
-      'se resolve em silêncio.',
+  12:
+     'O que acontece longe dos olhos. O descanso, o que se adia, o que ' +
+     'precisa acabar. Movimento nesta parte se sente antes de ser visto. ' +
+     'Chega como cansaço ou sono estranho. E o que se resolve aqui se ' +
+     'resolve em silêncio.',
 }
 
 /** O texto da casa, ou string vazia se o número não for de 1 a 12. */

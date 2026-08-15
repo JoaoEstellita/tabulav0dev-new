@@ -131,6 +131,86 @@ describe('linguagem clara', () => {
 })
 
 /**
+ * O RITMO.
+ *
+ * O João publicou as primeiras peças e voltou com o retorno que nenhum teste
+ * anterior pegava: "o texto ainda está muito quadrado, parece algo feito por
+ * IA". O jargão já estava barrado, o misticismo também, e mesmo assim soava a
+ * máquina. Medi os 99 antes de reescrever, e o defeito não era vocabulário:
+ *
+ *   dois-pontos explicativo   76% dos textos
+ *   "costuma" / "tende a"     38%
+ *   frases curtas (< 40 car.)  9%
+ *   média de 84 caracteres por frase, mediana 80
+ *
+ * É a UNIFORMIDADE que denuncia. Toda frase com o mesmo peso, nunca uma curta
+ * para respirar, e o dois-pontos em três de cada quatro textos fazendo a
+ * transição que a escrita humana faz com ponto final. Somado ao hedge
+ * impessoal, sai laudo.
+ *
+ * ── POR QUE MEDIDO NO CONJUNTO ─────────────────────────────────────────────
+ *
+ * Texto a texto isto viraria camisa de força: há assunto que pede período
+ * longo, e obrigar frase curta em cada um produz staccato artificial, que é
+ * outro sotaque de máquina. O que precisa existir é a VARIAÇÃO, e variação só
+ * se mede no agregado. Os limites abaixo têm folga proposital em relação ao
+ * medido depois da reescrita, porque o alvo é impedir a recaída ao padrão
+ * antigo, não congelar os números de hoje.
+ */
+describe('o ritmo não recai no sotaque de máquina', () => {
+  const textos = todosOsTextos()
+  const frasesDe = (texto) =>
+    texto.split(/(?<=[.!?])\s+/).map((f) => f.trim()).filter((f) => f.length > 1)
+
+  const todasAsFrases = textos.flatMap(({ texto }) => frasesDe(texto))
+  const proporcao = (quantos) => quantos / textos.length
+
+  it('tem frase curta o bastante para respirar', () => {
+    const curtas = todasAsFrases.filter((f) => f.length < 40).length
+    const parte = curtas / todasAsFrases.length
+    expect(parte, `${(parte * 100).toFixed(0)}% de frases curtas`).toBeGreaterThan(0.22)
+  })
+
+  it('não usa dois-pontos como muleta de transição', () => {
+    const comDoisPontos = textos.filter(({ texto }) => texto.includes(':')).length
+    expect(proporcao(comDoisPontos)).toBeLessThan(0.3)
+  })
+
+  /**
+   * Um por texto ainda é legítimo: definição e lista pedem dois-pontos. Dois no
+   * mesmo texto já é cadência, não pontuação.
+   */
+  it('e nunca mais de um no mesmo texto', () => {
+    for (const { fonte, chave, texto } of textos) {
+      const quantos = (texto.match(/:/g) || []).length
+      expect(quantos, `${fonte}/${chave}: ${texto.slice(0, 90)}`).toBeLessThanOrEqual(1)
+    }
+  })
+
+  /** "Costuma" e "tende a" existem para não prometer. Viraram tique. */
+  it('não se esconde atrás de "costuma" e "tende a"', () => {
+    const comHedge = textos.filter(({ texto }) => /costuma|tende a/i.test(texto)).length
+    expect(proporcao(comHedge)).toBeLessThan(0.15)
+  })
+
+  it('e no máximo uma vez em cada texto', () => {
+    for (const { fonte, chave, texto } of textos) {
+      const quantos = (texto.match(/costuma|tende a/gi) || []).length
+      expect(quantos, `${fonte}/${chave}: ${texto.slice(0, 90)}`).toBeLessThanOrEqual(1)
+    }
+  })
+
+  /**
+   * A média é o resumo mais honesto: 84 caracteres era o número do material que
+   * ele leu e chamou de quadrado.
+   */
+  it('a frase média cabe na leitura em voz alta', () => {
+    const media = todasAsFrases.reduce((s, f) => s + f.length, 0) / todasAsFrases.length
+    expect(Math.round(media), `média de ${media.toFixed(0)} caracteres`).toBeLessThan(70)
+  })
+})
+
+/**
  * O carrossel que o João escreveu, com o texto dele.
  *
  * Ele mandou o conteúdo pronto e pediu linguagem clara na mesma mensagem. O

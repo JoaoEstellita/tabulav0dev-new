@@ -97,15 +97,15 @@ export const PROVOCACAO = {
 /** O que cada tipo de eclipse faz. Abre a peça. */
 export const ABERTURA = {
   solar:
-    'Todo eclipse solar é uma Lua Nova que apaga o Sol. O que rege a identidade ' +
-    'some por alguns minutos, e o que sobra é o que existe sem plateia. ' +
-    'Começos que nascem aqui costumam vir depois de um susto. Algo termina ' +
-    'antes, sem pedir licença, e é do vazio que o novo aparece.',
+    'Todo eclipse solar é uma Lua Nova que apaga o Sol. O que rege a ' +
+    'identidade some por alguns minutos, e o que sobra é o que existe sem ' +
+    'plateia. Começo que nasce aqui costuma vir depois de um susto. Algo ' +
+    'termina antes, sem pedir licença, e é do vazio que o novo aparece.',
   lunar:
-    'Todo eclipse lunar é uma Lua Cheia dentro da sombra da Terra. O que estava ' +
-    'guardado no escuro vem à superfície de uma vez, e é tarde demais para ' +
-    'fingir que não se viu. Eclipse lunar não começa nada: ele encerra, e o que ' +
-    'ele encerra raramente volta.',
+    'Todo eclipse lunar é uma Lua Cheia dentro da sombra da Terra. O que ' +
+    'estava guardado no escuro vem à superfície de uma vez. Fica tarde ' +
+    'demais para fingir que não se viu. Eclipse lunar não começa nada. Ele ' +
+    'encerra, e o que ele encerra raramente volta.',
 }
 
 /**
@@ -116,67 +116,67 @@ export const ABERTURA = {
  */
 export const POR_SIGNO = {
   'Áries':
-    'Este eclipse cai em Áries, o signo de quem começa. O que vem sendo adiado ' +
-    'por medo de errar chega ao ponto em que adiar já custa mais caro que ' +
-    'tentar. Decisões tomadas sozinho, sem pedir permissão a ninguém, tendem a ' +
-    'aparecer agora, e o que se perde nelas é justamente o que exigia ' +
-    'aprovação para existir.',
+    'Este eclipse cai em Áries, o signo de quem começa. O que vinha sendo ' +
+    'adiado por medo de errar chega no ponto em que adiar custa mais caro ' +
+    'que tentar. Decisões tomadas sozinho, sem pedir permissão a ninguém, ' +
+    'aparecem agora. E o que se perde nelas costuma ser justamente o que ' +
+    'precisava de aprovação para existir.',
   'Touro':
-    'Este eclipse cai em Touro, o signo do que se segura com as duas mãos. ' +
-    'Aquilo que dava segurança e já não dá tende a se revelar frágil de vez: ' +
-    'um valor, um acordo, um bem. Não é perda gratuita: é o corpo cobrando ' +
-    'que a estabilidade venha de dentro, não do que se acumulou.',
+    'Este eclipse cai em Touro, o signo do que se constrói para durar. Mexe ' +
+    'com dinheiro, com corpo, com o que se tem nas mãos. Alguma segurança ' +
+    'sai de cena. O susto é grande na hora, e a pergunta que fica é melhor ' +
+    'do que a resposta antiga: o que ainda vale, agora que a garantia ' +
+    'acabou.',
   'Gêmeos':
-    'Este eclipse cai em Gêmeos, o signo da palavra. O que foi dito pela metade ' +
-    'ou o que se calou por conveniência tende a vir à tona sem aviso. ' +
-    'Conversas adiadas há meses acontecem em minutos, e o que se descobre ' +
-    'nelas muda o desenho de vínculos que pareciam resolvidos.',
+    'Este eclipse cai em Gêmeos, o signo da palavra. Conversa adiada ' +
+    'acontece sem planejamento nenhum. O que se diz nela não tem volta. É ' +
+    'período de descobrir o que se pensava de verdade sobre alguém. E, com ' +
+    'frequência, sobre si.',
   'Câncer':
-    'Este eclipse cai em Câncer, o signo do que é raiz. A casa, a família e o ' +
-    'que se chama de origem entram em revisão. O que sustentava por hábito, ' +
-    'não por verdade, tende a ceder. Sai daqui um pertencimento mais estreito ' +
-    'e mais honesto do que o que havia antes.',
+    'Este eclipse cai em Câncer, o signo da raiz. Mexe com casa, com ' +
+    'família, com o chão que sustenta. Endereço muda. Verdade antiga ' +
+    'aparece. Arranjo doméstico que já não servia se desfaz. O chão treme ' +
+    'para que fique claro o que segurava de verdade.',
   'Leão':
-    'Este eclipse cai em Leão, o signo do que a alma quer expressar sem pedir ' +
-    'licença. O que estava sendo vivido pela metade, por medo de ocupar ' +
-    'espaço, chega ao limite. Projetos guardados na gaveta tendem a sair dela, ' +
-    'e relações que dependiam do seu encolhimento tendem a ruir. Não é castigo. ' +
-    'É o ciclo cobrando verdade.',
+    'Este eclipse cai em Leão, o signo do que a alma quer expressar sem ' +
+    'pedir licença. O que vinha sendo vivido pela metade, por medo de ' +
+    'ocupar espaço, chega ao limite. Projeto guardado na gaveta sai dela. ' +
+    'Relação que dependia do seu encolhimento rui. Não é castigo. É o ciclo ' +
+    'cobrando verdade.',
   'Virgem':
-    'Este eclipse cai em Virgem, o signo do que se faz todo dia. A rotina que ' +
-    'consumia mais do que devolvia chega ao fim do que aguenta: corpo, ' +
-    'trabalho, método. O que se organiza depois costuma ser mais simples, e ' +
-    'mais seu, do que o sistema que ruiu.',
+    'Este eclipse cai em Virgem, o signo da rotina e do corpo. O ritmo que ' +
+    'vinha sendo sustentado na base do café e da teimosia cobra a conta. ' +
+    'Emprego troca. Hábito troca. Cuidado que se adiava vira urgência. E ' +
+    'quase sempre depois de um sinal que já vinha sendo ignorado.',
   'Libra':
-    'Este eclipse cai em Libra, o signo do outro. Acordos que só se sustentavam ' +
-    'porque um dos lados cedia sempre tendem a se desfazer, e vínculos que ' +
-    'estavam mornos definem se são ou não são. A justiça que se busca aqui é ' +
-    'menos sobre o outro do que sobre o que se aceitou em nome da paz.',
+    'Este eclipse cai em Libra, o signo do outro. Relação que se sustentava ' +
+    'pela inércia se define, para dentro ou para fora. O que aparece não é ' +
+    'novidade para ninguém. É o que já se sabia e não se queria nomear.',
   'Escorpião':
-    'Este eclipse cai em Escorpião, o signo do que não se diz em voz alta. ' +
-    'Dinheiro dividido, intimidade, dívida, herança: o que estava encoberto ' +
-    'tende a aparecer inteiro. Não há como desver. O que morre aqui costuma ' +
-    'ser o que já estava morto e continuava sendo carregado.',
+    'Este eclipse cai em Escorpião, o signo do que se divide e do que ' +
+    'termina. Dinheiro junto, intimidade, dívida, herança. Assunto guardado ' +
+    'por anos vem à tona de uma vez. Não dá para fingir que não se viu. É ' +
+    'onde o eclipse trabalha mais fundo, e onde menos pergunta se pode.',
   'Sagitário':
-    'Este eclipse cai em Sagitário, o signo do sentido. Uma crença que orientava ' +
-    'escolhas há anos entra em xeque, e o horizonte que parecia certo se abre ' +
-    'ou se fecha de uma vez. Viagens, estudos e a fé, em qualquer coisa, ' +
-    'tendem a ser postos à prova pelo que a realidade mostra.',
+    'Este eclipse cai em Sagitário, o signo do sentido. O que se tinha como ' +
+    'certo entra em revisão. A distância deixa de ser fuga e vira ' +
+    'necessidade, seja ela geográfica ou não. Decisão de voltar a estudar ' +
+    'ou de mudar de país se acelera.',
   'Capricórnio':
-    'Este eclipse cai em Capricórnio, o signo do que se constrói para durar. ' +
-    'A estrutura que exigia mais do que retribuía chega ao ponto de ruptura: ' +
-    'carreira, autoridade, o lugar ocupado aos olhos dos outros. O que se ergue ' +
-    'depois costuma ser menor e mais firme.',
+    'Este eclipse cai em Capricórnio, o signo do lugar que se ocupa no ' +
+    'mundo. Mexe com carreira e com reputação. Promoção, saída, exposição. ' +
+    'É a parte mais alta do mapa, e o que acontece nela dificilmente passa ' +
+    'despercebido de quem está em volta.',
   'Aquário':
-    'Este eclipse cai em Aquário, o signo do que é coletivo. O grupo, a causa e ' +
-    'o projeto de muitos passam por uma prova de pertencimento, e quem estava ' +
-    'ali por hábito tende a sair. O futuro que se imaginava se reescreve, e ' +
-    'quase sempre para longe de onde se estava mirando.',
+    'Este eclipse cai em Aquário, o signo do coletivo. Pertencimento antigo ' +
+    'se desfaz sem briga nenhuma. Só deixa de fazer sentido. O que se quer ' +
+    'para o futuro se reescreve, e quase nunca no rumo que vinha sendo ' +
+    'seguido.',
   'Peixes':
-    'Este eclipse cai em Peixes, o signo do que não tem contorno. O que se ' +
-    'evitava olhar, seja cansaço, ilusão ou um apego antigo, tende a subir sem ' +
-    'convite. É um eclipse de dissolução: o que ele leva não volta, e o alívio ' +
-    'costuma chegar depois do susto, não antes.',
+    'Este eclipse cai em Peixes, o signo do que não tem contorno. Trabalha ' +
+    'antes de aparecer. O corpo pede recolhimento, o sono fica mais vívido, ' +
+    'e o que se descobre aqui só faz sentido meses depois. É o eclipse mais ' +
+    'silencioso dos doze.',
 }
 
 /**
@@ -187,55 +187,67 @@ export const POR_SIGNO = {
  * psicológico, e diz o que tende a acontecer sem prometer fato.
  */
 export const POR_CASA = {
-  1: 'O eclipse cai sobre você mesmo: corpo, nome, o jeito de chegar nos ' +
-     'lugares. A imagem que vinha sendo sustentada por esforço tende a rachar, ' +
-     'e o que aparece embaixo assusta antes de aliviar. Cortes de cabelo, ' +
-     'mudanças de estilo e decisões sobre o próprio corpo costumam acontecer ' +
-     'aqui. São o sintoma, não a causa.',
-  2: 'O eclipse cai sobre o que sustenta: dinheiro, bens, o que se valoriza o ' +
-     'bastante para guardar. Uma fonte de renda ou um bem material tende a ' +
-     'mudar de figura, e a pergunta que fica é mais dura que a conta bancária: ' +
-     'o que ainda vale, quando o que se tinha como garantia sai de cena.',
-  3: 'O eclipse cai sobre a palavra e o perto: irmãos, vizinhança, o dia a dia. ' +
-     'Uma conversa adiada tende a acontecer sem planejamento, e o que se diz ' +
-     'nela não tem volta. É período de descobrir o que se pensava de verdade ' +
-     'sobre alguém, inclusive sobre si.',
-  4: 'O eclipse cai sobre a raiz: casa, família, o que dá base. Mudanças de ' +
-     'endereço, revelações sobre a origem e o fim de arranjos domésticos que ' +
-     'já não serviam tendem a se concentrar neste período. O chão treme para ' +
-     'que se descubra o que sustentava de verdade.',
-  5: 'O eclipse cai sobre o que se cria e o que dá prazer: filhos, arte, ' +
-     'romance, palco. O que estava sendo feito para agradar tende a perder a ' +
-     'graça de vez, e o que era só seu pede espaço. Namoros mornos e projetos ' +
-     'de gaveta costumam se definir aqui, para um lado ou para o outro.',
-  6: 'O eclipse cai sobre a rotina e o corpo: trabalho de todo dia, saúde, ' +
-     'método. O ritmo que vinha sendo sustentado por cafeína e teimosia tende ' +
-     'a cobrar a conta. Trocas de emprego, de hábito e de cuidado se concentram ' +
-     'aqui, e quase sempre depois de um sinal que já vinha sendo ignorado.',
-  7: 'O eclipse cai sobre o outro: casamento, sociedade, os acordos a dois. ' +
-     'Relações que se sustentavam pela inércia tendem a se definir, para dentro ' +
-     'ou para fora. O que aparece não é novidade: é o que já se sabia e não se ' +
+  1:
+     'O eclipse cai sobre a própria pessoa. Corpo, nome, o jeito de chegar ' +
+     'nos lugares. A imagem que vinha sendo sustentada por esforço racha, e ' +
+     'o que aparece embaixo assusta antes de aliviar. Corte de cabelo, ' +
+     'mudança de estilo, decisão sobre o próprio corpo. Tudo isso é sintoma, ' +
+     'não causa.',
+  2:
+     'O eclipse cai sobre o que sustenta. Dinheiro, bens, o que se guarda ' +
+     'por valer a pena. Uma fonte de renda muda de figura. A pergunta que ' +
+     'sobra é mais dura que a conta bancária: o que ainda vale quando a ' +
+     'garantia sai de cena.',
+  3:
+     'O eclipse cai sobre a palavra e o que está perto. Irmãos, vizinhança, ' +
+     'o dia a dia. Uma conversa adiada acontece sem planejamento. O que se ' +
+     'diz nela não tem volta. É período de descobrir o que se pensava de ' +
+     'verdade sobre alguém, e às vezes sobre si.',
+  4:
+     'O eclipse cai sobre a raiz. Casa, família, o que dá base. Mudança de ' +
+     'endereço, verdade sobre a origem, fim de um arranjo doméstico que já ' +
+     'não servia. O chão treme para que fique claro o que sustentava de ' +
+     'verdade.',
+  5:
+     'O eclipse cai sobre o que se cria e o que dá prazer. Filhos, arte, ' +
+     'romance, palco. O que vinha sendo feito para agradar perde a graça de ' +
+     'vez. O que era só seu pede espaço. Namoro morno e projeto de gaveta se ' +
+     'definem aqui, para um lado ou para o outro.',
+  6:
+     'O eclipse cai sobre a rotina e o corpo. Trabalho de todo dia, saúde, ' +
+     'método. O ritmo sustentado por cafeína e teimosia cobra a conta. Troca ' +
+     'de emprego, de hábito, de cuidado. Quase sempre depois de um sinal que ' +
+     'já vinha sendo ignorado.',
+  7:
+     'O eclipse cai sobre o outro. Casamento, sociedade, acordo a dois. ' +
+     'Relação que se sustentava pela inércia se define, para dentro ou para ' +
+     'fora. O que aparece não é novidade. É o que já se sabia e não se ' +
      'queria nomear.',
-  8: 'O eclipse cai sobre o que se divide e o que termina: dinheiro do outro, ' +
-     'intimidade, dívida, herança. Assuntos guardados por anos tendem a vir à ' +
-     'tona de uma vez, e não há como fingir que não se viu. É a casa onde o ' +
-     'eclipse trabalha mais fundo, e onde ele menos pergunta se pode.',
-  9: 'O eclipse cai sobre o sentido: estudo, viagem, a crença que orienta. ' +
-     'O que se tinha como certo entra em revisão, e a distância, geográfica ou ' +
-     'simbólica, deixa de ser fuga e vira necessidade. Decisões sobre voltar a ' +
-     'estudar ou mudar de país tendem a se acelerar aqui.',
-  10: 'O eclipse cai sobre a carreira e o nome público. O lugar que se ocupa aos ' +
-      'olhos dos outros tende a mudar de forma visível: promoção, saída, ' +
-      'exposição. É a casa mais alta do mapa, e o que acontece nela dificilmente ' +
-      'passa despercebido de quem está em volta.',
-  11: 'O eclipse cai sobre o coletivo: amizades, grupos, o projeto que é de mais ' +
-      'gente. Pertencimentos antigos tendem a se desfazer sem briga: apenas ' +
-      'deixam de fazer sentido. O que se quer para o futuro se reescreve, e ' +
-      'quase nunca no rumo que se vinha seguindo.',
-  12: 'O eclipse cai sobre os bastidores: o que não se mostra, o que cansa em ' +
-      'silêncio, o que precisa acabar. Este é o eclipse que trabalha antes de ' +
-      'aparecer. O corpo pede recolhimento, sonhos ficam mais vívidos, e o que ' +
-      'se descobre aqui costuma só fazer sentido meses depois.',
+  8:
+     'O eclipse cai sobre o que se divide e o que termina. Dinheiro do ' +
+     'outro, intimidade, dívida, herança. Assunto guardado por anos vem à ' +
+     'tona de uma vez, e não dá para fingir que não se viu. É a casa onde ' +
+     'ele trabalha mais fundo, e onde menos pergunta se pode.',
+  9:
+     'O eclipse cai sobre o sentido. Estudo, viagem, a crença que orienta. O ' +
+     'que se tinha como certo entra em revisão. A distância deixa de ser ' +
+     'fuga e vira necessidade. Decisão de voltar a estudar ou de mudar de ' +
+     'país se acelera aqui.',
+  10:
+     'O eclipse cai sobre a carreira e o nome público. O lugar que se ocupa ' +
+     'aos olhos dos outros muda de forma visível. Promoção, saída, ' +
+     'exposição. É a casa mais alta do mapa, e o que acontece nela ' +
+     'dificilmente passa despercebido de quem está em volta.',
+  11:
+     'O eclipse cai sobre o coletivo. Amizade, grupo, o projeto que é de ' +
+     'mais gente. Pertencimento antigo se desfaz sem briga. Só deixa de ' +
+     'fazer sentido. O que se quer para o futuro se reescreve, e quase nunca ' +
+     'no rumo que vinha sendo seguido.',
+  12:
+     'O eclipse cai sobre os bastidores. O que não se mostra, o que cansa em ' +
+     'silêncio, o que precisa acabar. Este é o eclipse que trabalha antes de ' +
+     'aparecer. O corpo pede recolhimento, os sonhos ficam mais vívidos, e o ' +
+     'que se descobre aqui só faz sentido meses depois.',
 }
 
 /**
