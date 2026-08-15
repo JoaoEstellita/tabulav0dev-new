@@ -3341,7 +3341,23 @@ export default function GroupsScreen() {
           Alert.alert(tr('groups.alert.comingSoonTitle', 'Em breve'), tr('groups.alert.comingSoonInvites', 'Sistema de convites em desenvolvimento!'))
         }}
         onLeaveGroup={handleLeaveGroup}
-        onRemoveMember={(member) => handleRemoveMember(member.userId)}
+        onRemoveMember={async (member) => {
+          const mid = String(member.userId || '')
+          // Perfil GERENCIADO mora em managedProfiles[], não em members[] → remoção própria.
+          if (mid.startsWith('managed:')) {
+            const grp = selectedGroupForDetail || selectedGroup
+            if (!grp || !user) return
+            try {
+              await GroupService.removeManagedProfile(grp.id, user.uid, mid.replace(/^managed:/, ''))
+              await loadGroupData()
+              await loadUserGroups()
+            } catch (error: any) {
+              Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.managed.removeFailed', 'Nao foi possivel remover o perfil'))
+            }
+          } else {
+            handleRemoveMember(mid)
+          }
+        }}
         onUpdateInviteSettings={handleUpdateInviteSettings}
         onRenameGroup={handleRenameGroup}
         onMemberProfile={(member) => {
