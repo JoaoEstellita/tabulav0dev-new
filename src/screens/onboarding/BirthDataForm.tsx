@@ -1171,8 +1171,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
           )}
         </View>
       )}
-
-      <Text style={styles.helpText}>{t('onboarding.time.help')}</Text>
     </View>
   )
 
@@ -1265,7 +1263,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
       {!!locationError
         ? <Text style={styles.fieldErrorText}>{locationError}</Text>
-        : <Text style={styles.helpText}>{selectedLocation ? t('onboarding.location.ready') : t('onboarding.location.help')}</Text>
+        : selectedLocation ? <Text style={styles.helpText}>{t('onboarding.location.ready')}</Text> : null
       }
     </View>
   )
