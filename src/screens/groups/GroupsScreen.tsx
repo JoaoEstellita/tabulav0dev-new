@@ -243,6 +243,9 @@ export default function GroupsScreen() {
   const focusHandledRef = useRef(false)
   const lastFocusKeyRef = useRef<string | null>(null)
   const lastSelfStatusRefreshAtRef = useRef<number>(0)
+  // Cache do status do grupo por id (TTL curto) — evita re-buscar ao trocar de grupo
+  // repetidamente (cada busca lê 5 docs/membro + recomputa status no backend).
+  const groupDataCacheRef = useRef<Record<string, { members: GroupMember[]; alerts: GroupAlert[]; activities: GroupActivity[]; at: number }>>({})
   const memberAreaScrollOffsetYRef = useRef(0)
   const memberAreaSwipeY = useRef(new Animated.Value(0)).current
   const memberAreaSwipeClosingRef = useRef(false)
@@ -764,8 +767,20 @@ export default function GroupsScreen() {
     }
   }
 
-  const loadGroupData = async () => {
+  const GROUP_DATA_TTL_MS = 3 * 60_000
+
+  const loadGroupData = async (opts?: { force?: boolean }) => {
     if (!selectedGroup) return
+
+    // Cache hit: serve do cache sem tocar o backend (nem status-refresh nem status).
+    const gid = selectedGroup.id
+    const cached = groupDataCacheRef.current[gid]
+    if (!opts?.force && cached && (Date.now() - cached.at) < GROUP_DATA_TTL_MS) {
+      setGroupMembers(cached.members)
+      setGroupAlerts(cached.alerts)
+      setGroupActivities(cached.activities)
+      return
+    }
 
     try {
       if (user?.uid && BACKEND_URL) {
@@ -797,6 +812,7 @@ export default function GroupsScreen() {
       setGroupMembers(members)
       setGroupAlerts(alerts)
       setGroupActivities(activities)
+      groupDataCacheRef.current[selectedGroup.id] = { members, alerts, activities, at: Date.now() }
     } catch (error) {
       console.error("Erro ao carregar dados do grupo:", error)
     }
@@ -1016,7 +1032,7 @@ export default function GroupsScreen() {
 
       setShowMessageModal(false)
       setGroupMessage("")
-      await loadGroupData()
+      await loadGroupData({ force: true })
       Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.messageSent', 'Mensagem enviada para o grupo!'))
 
     } catch (error: any) {
@@ -1056,7 +1072,7 @@ export default function GroupsScreen() {
     if (!selectedGroup || !user) return
     try {
       await GroupService.removeMember(selectedGroup.id, memberId, user.uid)
-      await loadGroupData()
+      await loadGroupData({ force: true })
       await loadUserGroups()
       Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.memberRemoved', 'Membro removido do grupo'))
     } catch (error: any) {
@@ -1095,7 +1111,7 @@ export default function GroupsScreen() {
           onPress: async () => {
             try {
               await GroupService.removeManagedProfile(grp.id, user.uid, id)
-              await loadGroupData()
+              await loadGroupData({ force: true })
             } catch (error: any) {
               Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.managed.removeFailed', 'Nao foi possivel remover o perfil'))
             }
@@ -3349,7 +3365,7 @@ export default function GroupsScreen() {
             if (!grp || !user) return
             try {
               await GroupService.removeManagedProfile(grp.id, user.uid, mid.replace(/^managed:/, ''))
-              await loadGroupData()
+              await loadGroupData({ force: true })
               await loadUserGroups()
             } catch (error: any) {
               Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error?.message || tr('groups.managed.removeFailed', 'Nao foi possivel remover o perfil'))
@@ -3377,7 +3393,7 @@ export default function GroupsScreen() {
         visible={showAddManaged}
         onClose={() => setShowAddManaged(false)}
         groupId={selectedGroup?.id || null}
-        onCreated={() => { loadGroupData() }}
+        onCreated={() => { loadGroupData({ force: true }) }}
       />
     </LinearGradient>
   )
