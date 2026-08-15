@@ -118,11 +118,12 @@ export default function ProfileAvatarButton({ size = 72 }: Props) {
         <View style={[styles.badge, styles.badgeBusy]}>
           <ActivityIndicator size="small" color="#0F0F23" />
         </View>
-      ) : (
+      ) : !photo ? (
+        // Só o "+" quando NÃO há foto. Com foto, toca no avatar pra trocar (sem badge).
         <View style={styles.badge}>
-          <Ionicons name={photo ? 'pencil' : 'add'} size={14} color="#0F0F23" />
+          <Ionicons name="add" size={14} color="#0F0F23" />
         </View>
-      )}
+      ) : null}
     </TouchableOpacity>
   )
 }
