@@ -215,6 +215,36 @@ export default function LoginScreen() {
                 {isLogin ? t("login.signIn") : t("login.createAccount")}
               </Text>
 
+              {/* Google no topo — caminho principal de acesso */}
+              <TouchableOpacity
+                style={[styles.googleButton, styles.googleButtonTop, googleLoading && styles.disabledButton]}
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading}
+              >
+                <Ionicons name="logo-google" size={20} color="#000" />
+                <Text style={styles.googleButtonText}>
+                  {googleLoading ? t("common.loading") : t("login.continueWithGoogle")}
+                </Text>
+              </TouchableOpacity>
+
+              {isEmbeddedBrowser && (
+                <TouchableOpacity
+                  style={[styles.googleButton, styles.externalGoogleButton]}
+                  onPress={openExternalLogin}
+                >
+                  <Ionicons name="open-outline" size={20} color="#000" />
+                  <Text style={styles.googleButtonText}>
+                    {t("login.continueWithGoogleInBrowser")}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{tl("ou", "or", "o", "o")}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
               {authError ? (
                 <View style={styles.errorBanner}>
                   <Ionicons name="alert-circle" size={16} color="#FF8A80" />
@@ -292,29 +322,6 @@ export default function LoginScreen() {
                   </Text>
                 )}
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.googleButton, googleLoading && styles.disabledButton]}
-                onPress={handleGoogleSignIn}
-                disabled={googleLoading}
-              >
-                <Ionicons name="logo-google" size={20} color="#000" />
-                <Text style={styles.googleButtonText}>
-                  {googleLoading ? t("common.loading") : t("login.continueWithGoogle")}
-                </Text>
-              </TouchableOpacity>
-
-              {isEmbeddedBrowser && (
-                <TouchableOpacity
-                  style={[styles.googleButton, styles.externalGoogleButton]}
-                  onPress={openExternalLogin}
-                >
-                  <Ionicons name="open-outline" size={20} color="#000" />
-                  <Text style={styles.googleButtonText}>
-                    {t("login.continueWithGoogleInBrowser")}
-                  </Text>
-                </TouchableOpacity>
-              )}
 
               <TouchableOpacity
                 style={styles.switchButton}
@@ -545,8 +552,27 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     height: 50,
   },
+  googleButtonTop: {
+    marginTop: 4,
+    marginBottom: 12,
+  },
   externalGoogleButton: {
     backgroundColor: '#F0F0F0',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  dividerText: {
+    color: '#8890B5',
+    fontSize: 12,
   },
   googleButtonText: {
     color: '#000',
