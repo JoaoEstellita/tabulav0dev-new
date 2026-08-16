@@ -32,6 +32,8 @@ import CosmosScreen from "../screens/cosmos/CosmosScreen"
 import AstroProfileScreen from "../screens/cosmos/AstroProfileScreen"
 import NatalChartWheelScreen from "../screens/cosmos/NatalChartWheelScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
+import AccessGuard from "../components/AccessGuard"
+import TrialBanner from "../components/TrialBanner"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 import { useAppLanguage } from "../hooks/useAppLanguage"
@@ -219,6 +221,22 @@ function SwipeableTabScreen({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * Transitos pessoais atras do portao.
+ *
+ * Declarado aqui e nao inline no `component={}`: funcao criada no render vira
+ * um tipo novo a cada passagem, o React desmonta e remonta a tela, e o
+ * `useSubscriptionCheck` refaria a leitura do Firestore toda vez.
+ */
+function PersonalTransitsGuarded() {
+  const Tela = require('../screens/transits/PersonalTransitsScreen').default
+  return (
+    <AccessGuard>
+      <Tela />
+    </AccessGuard>
+  )
+}
+
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -281,7 +299,14 @@ function MainTabs() {
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
-              <HomeScreen />
+              {/* O status do dia e as oito areas sao o valor que se repete, e
+                  eram o unico que nunca travava. O mapa continua livre. */}
+              <AccessGuard>
+                <>
+                  <TrialBanner />
+                  <HomeScreen />
+                </>
+              </AccessGuard>
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}
@@ -357,7 +382,7 @@ function RootNavigator() {
         options={{ headerShown: true, title: 'Diagnóstico Admin', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
       />
       <RootStack.Screen name="TransitDetail" component={require('../screens/transits/TransitDetailScreen').default} options={{ headerShown: true, title: 'Detalhe do Trânsito', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
-      <RootStack.Screen name="PersonalTransits" component={require('../screens/transits/PersonalTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Pessoais', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="PersonalTransits" component={PersonalTransitsGuarded} options={{ headerShown: true, title: 'Trânsitos Pessoais', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="CollectiveTransits" component={require('../screens/transits/CollectiveTransitsScreen').default} options={{ headerShown: true, title: 'Trânsitos Coletivos', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="AstrologyAnalysis" component={AstrologyAnalysisScreen} options={{ headerShown: true, title: 'Análise Astrológica', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PlanetTimeline" component={PlanetTimelineScreen} options={{ headerShown: true, title: 'Linha do Tempo Planetária', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />

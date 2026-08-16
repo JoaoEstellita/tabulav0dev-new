@@ -16,6 +16,7 @@ import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
 import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
+import { lerPerfilPendente, fundirNaConta } from "../services/vincularConta"
 import { backendFetch } from "../services/backend/client"
 
 interface AuthContextType {
@@ -25,6 +26,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
+  /** Entrada sem cadastro, para o quiz rodar antes do login. */
+  entrarAnonimo: () => Promise<boolean>
   logout: () => Promise<void>
   deleteAccount: () => Promise<void>
   checkBirthDataComplete: () => Promise<boolean>
@@ -307,10 +310,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (__DEV__) console.log('Tentando login com Google')
       if (Platform.OS === 'web') {
-        const { signInWithPopup, signInWithRedirect } = await import('firebase/auth')
+        const { signInWithPopup, linkWithPopup } = await import('firebase/auth')
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
-        const result = await signInWithPopup(auth, provider)
+
+        /**
+         * Conta anonima do quiz: PROMOVER, nunca trocar.
+         *
+         * `linkWithPopup` transforma a conta anonima em conta Google mantendo o
+         * MESMO uid. Como o identificador nao muda, o mapa que o quiz gravou
+         * continua onde esta e nao ha nada para fundir. Usar `signInWithPopup`
+         * aqui criaria uma segunda conta e abandonaria a primeira com o mapa
+         * dentro.
+         */
+        const anonimo = auth.currentUser?.isAnonymous ? auth.currentUser : null
+        const result = anonimo
+          ? await linkWithPopup(anonimo, provider)
+          : await signInWithPopup(auth, provider)
+
         await ensureUserDocuments(result.user)
         if (__DEV__) console.log('Login Google bem-sucedido:', result.user.uid)
       } else {
@@ -332,12 +349,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const credential = GoogleAuthProvider.credential(idToken)
-        const firebaseResult = await signInWithCredential(auth, credential)
+        const { linkWithCredential } = await import('firebase/auth')
+
+        // mesma promocao do caminho web: uid preservado, mapa preservado
+        const anonimo = auth.currentUser?.isAnonymous ? auth.currentUser : null
+        const firebaseResult = anonimo
+          ? await linkWithCredential(anonimo, credential)
+          : await signInWithCredential(auth, credential)
+
         await ensureUserDocuments(firebaseResult.user)
         if (__DEV__) console.log('Login Google nativo bem-sucedido:', firebaseResult.user.uid)
       }
     } catch (error: any) {
       console.error('Erro no login Google:', error.message)
+
+      /**
+       * O GOOGLE JA TEM CONTA — o caso que perde dados em silencio.
+       *
+       * Cenario: a pessoa fez o quiz no celular (conta anonima com o mapa) e
+       * depois entra com um Google que ja existe. `linkWithCredential` recusa
+       * com `auth/credential-already-in-use`, e sem tratamento o login
+       * simplesmente falha: ela fica com duas contas e o mapa na que nao
+       * consegue mais alcancar.
+       *
+       * O que fazemos: ler o mapa da anonima ANTES de sair dela, entrar na
+       * conta que ja existe, e so entao gravar o mapa la — e apenas se aquela
+       * conta ainda nao tiver um. `deveFundir` guarda essa regra, a mesma do
+       * backend: mapa completo nunca e sobrescrito.
+       */
+      if (error.code === 'auth/credential-already-in-use') {
+        const { signInWithCredential } = await import('firebase/auth')
+        const credencial = GoogleAuthProvider.credentialFromError(error)
+        if (!credencial) throw error
+
+        // ler antes de trocar de sessao: depois do signIn o uid anonimo some e
+        // as regras do Firestore ja nao deixam ler o doc dele
+        const uidAnonimo = auth.currentUser?.isAnonymous ? auth.currentUser.uid : null
+        const pendente = uidAnonimo ? await lerPerfilPendente(uidAnonimo) : null
+
+        const entrou = await signInWithCredential(auth, credencial)
+        await ensureUserDocuments(entrou.user)
+
+        const fundiu = await fundirNaConta(entrou.user.uid, pendente)
+        if (__DEV__) {
+          console.log(
+            fundiu
+              ? 'Conta ja existia: mapa do quiz foi transferido.'
+              : 'Conta ja existia e ja tinha mapa: o mapa antigo foi mantido.'
+          )
+        }
+        return
+      }
+
       if (
         Platform.OS === 'web' &&
         (error.code === 'auth/popup-blocked' ||
@@ -357,6 +420,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       throw error
+    }
+  }
+
+  /**
+   * Entra sem cadastro, para o quiz rodar ANTES do login.
+   *
+   * ── POR QUE ANONIMO, E NAO "sem conta nenhuma" ─────────────────────────
+   *
+   * O quiz precisa gravar em algum lugar, e um `uid` de verdade e o que permite
+   * que o `linkWithPopup` depois PROMOVA essa conta a Google mantendo o mesmo
+   * identificador. Sem uid, o mapa teria de viajar entre contas, e viagem e
+   * onde se perde coisa.
+   *
+   * Nunca troca uma sessao existente: se ja ha alguem logado, essa pessoa
+   * continua logada. Chamar isto por engano nao pode derrubar ninguem.
+   *
+   * @returns `false` quando nao deu — e o chamador cai no login normal.
+   */
+  const entrarAnonimo = async (): Promise<boolean> => {
+    if (auth.currentUser) return auth.currentUser.isAnonymous
+    try {
+      const { signInAnonymously } = await import('firebase/auth')
+      const r = await signInAnonymously(auth)
+      if (__DEV__) console.log('Sessao anonima criada:', r.user.uid)
+      return true
+    } catch (error: any) {
+      /**
+       * `auth/operation-not-allowed` = o metodo Anonimo esta DESLIGADO no
+       * console do Firebase (Authentication > Sign-in method). Nao e erro de
+       * codigo, e sem ligar la o quiz nao roda antes do login.
+       */
+      if (error?.code === 'auth/operation-not-allowed') {
+        console.warn(
+          'Login anonimo desligado no Firebase. Ative em Authentication > Sign-in method.'
+        )
+      } else {
+        console.warn('Falha ao criar sessao anonima:', error?.message)
+      }
+      return false
     }
   }
 
@@ -427,6 +529,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signInWithGoogle,
+    entrarAnonimo,
     logout,
     deleteAccount,
     checkBirthDataComplete,
