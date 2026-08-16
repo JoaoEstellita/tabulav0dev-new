@@ -28,10 +28,9 @@ import { AnimatedMount } from '../../ui/anim/adapter'
 import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
 import { useOrientation } from '../../hooks/useOrientation'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { subscribeWebPush } from '../../webpush/subscribe'
-import { registerDeviceToken } from '../../services/notifications/registerDeviceToken'
 import type { AppLanguage } from '../../i18n/appI18n'
 import { registrar } from '../../services/eventos'
+import { signoSolarDaData } from '../../utils/signoSolar'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -54,14 +53,29 @@ export interface BirthData {
   birthCountryCode?: string
 }
 
-const TOTAL_STEPS = 6
 
 export default function BirthDataForm({ onComplete, loading = false }: BirthDataFormProps) {
   const { logout, user } = useAuth()
   const { language, languages, setLanguage, t } = useAppLanguage()
   const { isLandscape } = useOrientation()
   const isCompactMobile = !isDesktop() && !isTablet()
-  const [currentStep, setCurrentStep] = useState(1)
+
+  /**
+   * O QUIZ: tres passos, com recompensa em cada um.
+   *
+   * ── A REGRA QUE NAO SE NEGOCIA ────────────────────────────────────────
+   *
+   * Isto ja foi um wizard de seis passos, e o Joao pediu para virar UMA tela
+   * porque ficou preso nele. O defeito nao era ter passos: era que so o passo
+   * 6 chamava `handleComplete`, entao quando o pedido de permissao de
+   * notificacao enroscava nao havia saida.
+   *
+   * Aqui `handleSubmit` fica alcancavel de QUALQUER passo assim que os quatro
+   * campos estiverem validos. Nenhum passo tem saida unica, e as notificacoes
+   * nao voltaram para dentro do fluxo.
+   */
+  const [passo, setPasso] = useState(1)
+  const TOTAL_PASSOS = 3
   const [formData, setFormData] = useState({
     fullName: '',
     profilePhoto: '',
@@ -100,7 +114,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [countryModalVisible, setCountryModalVisible] = useState(false)
   const [searchingCountry, setSearchingCountry] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null)
-  const [notificationsGranted, setNotificationsGranted] = useState(false)
   const scrollRef = useRef<ScrollView | null>(null)
   const nameInputRef = useRef<TextInput | null>(null)
   const birthDateInputRef = useRef<TextInput | null>(null)
@@ -465,65 +478,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     }
   }
 
-  const requestNotificationPermission = async () => {
-    try {
-      if (Platform.OS === 'web') {
-        const webNotification = (globalThis as any).Notification
-        if (!webNotification) return false
-        let permission = webNotification.permission
-        if (permission !== 'granted') permission = await webNotification.requestPermission()
-        if (permission !== 'granted') return false
-        if (user?.uid) await subscribeWebPush(user.uid)
-        setNotificationsGranted(true)
-        return true
-      }
-
-      if (!user?.uid) return false
-      const result = await registerDeviceToken(user.uid)
-      const ok = !result?.error
-      setNotificationsGranted(ok)
-      return ok
-    } catch (error) {
-      console.warn('Falha ao ativar notificacoes no onboarding', error)
-      return false
-    }
-  }
-
-  const handleNotificationSkip = async () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const wantsEnable = window.confirm(t('onboarding.notifications.why.body'))
-      if (wantsEnable) {
-        const enabled = await requestNotificationPermission()
-        if (enabled) {
-          handleComplete()
-          return
-        }
-        return
-      }
-      handleComplete()
-      return
-    }
-
-    Alert.alert(t('onboarding.notifications.why.title'), t('onboarding.notifications.why.body'), [
-      {
-        text: t('onboarding.notifications.why.cta'),
-        onPress: async () => {
-          const enabled = await requestNotificationPermission()
-          if (enabled) {
-            handleComplete()
-            return
-          }
-          handleComplete()
-        },
-      },
-      {
-        text: t('onboarding.notifications.why.skip'),
-        style: 'cancel',
-        onPress: handleComplete,
-      },
-    ])
-  }
-
   const handleBirthDateInput = (text: string) => {
     const formatted = formatDateInput(text)
     setBirthDateDisplay(formatted)
@@ -587,20 +541,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setShowTimePicker(true)
   }
 
+  /**
+   * Foco no primeiro campo do passo novo.
+   *
+   * Era dirigido por `currentStep`, do wizard de seis passos, e ficou orfao
+   * quando o formulario virou uma tela so: `currentStep` nunca mais mudou, e o
+   * efeito nunca mais rodou. Agora quem manda e `passo`.
+   *
+   * Sem isto a pessoa troca de passo e precisa tocar no campo para digitar, o
+   * que no celular custa um toque a mais em cada etapa.
+   *
+   * O passo 1 fica de fora de proposito: focar sozinho ao abrir a tela sobe o
+   * teclado antes de a pessoa ler o que esta sendo pedido.
+   */
   useEffect(() => {
-    if (currentStep === 3) {
-      setTimeout(() => {
-        birthDateInputRef.current?.focus()
-        scrollRef.current?.scrollToEnd({ animated: true })
-      }, 80)
-    }
-    if (currentStep === 4) {
-      setTimeout(() => {
-        birthTimeInputRef.current?.focus()
-        scrollRef.current?.scrollToEnd({ animated: true })
-      }, 80)
-    }
-  }, [currentStep])
+    if (passo === 1) return
+    const alvo = passo === 2 ? birthTimeInputRef : locationInputRef
+    const id = setTimeout(() => alvo.current?.focus?.(), 120)
+    return () => clearTimeout(id)
+  }, [passo])
 
   const selectPhoto = async () => {
     // Para web, usar input file nativo
@@ -778,37 +737,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     return true
   }
 
-  const handleNext = () => {
-    let isValid = false
-
-    switch (currentStep) {
-      case 1:
-        isValid = true
-        break
-      case 2:
-        isValid = validateStep2()
-        break
-      case 3:
-        isValid = validateStep3()
-        break
-      case 4:
-        isValid = validateStep4()
-        break
-      case 5:
-        isValid = validateStep5()
-        break
-      case 6:
-        isValid = true
-        break
-    }
-
-    if (isValid && currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1)
-    } else if (isValid && currentStep === TOTAL_STEPS) {
-      handleComplete()
-    }
-  }
-
   // Valida tudo (curto-circuito: só um alerta por vez) e conclui.
   const handleSubmit = () => {
     // Roda TODOS (marca todos os erros inline de uma vez) e foca/rola até o 1º inválido.
@@ -858,30 +786,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     // telemetria, e falha aqui não pode impedir alguém de ver o mapa.
     registrar('conta_criada')
     onComplete(birthData)
-  }
-
-  const handleEnableNotifications = async () => {
-    const enabled = await requestNotificationPermission()
-    if (enabled) {
-      handleComplete()
-      return
-    }
-
-    Alert.alert(
-      t('onboarding.notifications.why.title'),
-      t('onboarding.notifications.enableFailed'),
-      [
-        {
-          text: t('onboarding.notifications.why.skip'),
-          style: 'cancel',
-          onPress: handleComplete,
-        },
-        {
-          text: t('onboarding.notifications.retry'),
-          onPress: handleEnableNotifications,
-        },
-      ]
-    )
   }
 
   const renderIntroStep = () => (
@@ -1271,34 +1175,77 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       }
     </View>
   )
-  const renderStep5 = () => (
-    <View style={[styles.stepContainer, isLandscape && styles.stepContainerLandscape]}>
-      <Ionicons
-        name={notificationsGranted ? 'notifications' : 'notifications-outline'}
-        size={isDesktop() ? 80 : 64}
-        color={notificationsGranted ? '#10B981' : '#FFD700'}
-        style={styles.stepIcon}
-      />
-      <Text style={styles.stepTitle}>{t('onboarding.step.notification.title')}</Text>
-      <Text style={styles.stepDescription}>{t('onboarding.step.notification.description')}</Text>
-      <TouchableOpacity
-        style={[styles.nextButton, { marginLeft: 0 }]}
-        onPress={handleEnableNotifications}
-      >
-        <Text style={styles.nextButtonText}>{t('onboarding.notifications.enable')}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.secondaryActionButton} onPress={handleNotificationSkip}>
-        <Text style={styles.secondaryActionText}>{t('onboarding.notifications.notnow')}</Text>
-      </TouchableOpacity>
-    </View>
-  )
+  /**
+   * O que cada passo pede, e o que ele devolve.
+   *
+   * O nome vai junto da data no passo 1 de proposito: sozinho ele nao devolve
+   * nada, e um passo sem recompensa e so um formulario cortado em pedacos.
+   */
+  const validaDoPasso = (n: number) => {
+    if (n === 1) {
+      const ok1 = validateStep2()
+      const ok2 = validateStep3()
+      return ok1 && ok2
+    }
+    if (n === 2) return validateStep4()
+    return validateStep5()
+  }
+
+  /** Tudo valido? E o que libera concluir de qualquer passo. */
+  const tudoPronto = () =>
+    !!formData.fullName.trim() && !!formData.birthDate && !!formData.birthTime && !!selectedLocation
+
+  const avancar = () => {
+    if (!validaDoPasso(passo)) return
+    registrar(passo === 1 ? 'quiz_passo_1' : passo === 2 ? 'quiz_passo_2' : 'quiz_passo_3')
+    if (passo < TOTAL_PASSOS) setPasso(passo + 1)
+    else handleSubmit()
+  }
+
+  /**
+   * A recompensa do passo 1: o signo solar, CALCULADO.
+   *
+   * Nao e tabela de datas. "Libra comeca em 23/09" erra com frequencia, porque
+   * o instante em que o Sol cruza 180 graus muda de ano para ano — e quem
+   * nasceu na virada e exatamente quem confere. A landing promete "calculo de
+   * verdade por tras de cada frase", e o primeiro passo do produto nao pode
+   * desmentir isso.
+   *
+   * `naVirada` existe porque aqui ainda nao ha hora: a menos de um grau da
+   * fronteira o texto diz que a hora pode mudar o resultado, em vez de afirmar.
+   */
+  const recompensa = () => {
+    if (passo === 2) {
+      const sol = signoSolarDaData(formData.birthDate)
+      if (!sol) return null
+      return (
+        <View style={styles.recompensa}>
+          <Ionicons name="sunny" size={18} color="#FFD700" />
+          <Text style={styles.recompensaTexto}>
+            {sol.naVirada
+              ? t('quiz.premio.solNaVirada').replace('{signo}', sol.signo)
+              : t('quiz.premio.sol').replace('{signo}', sol.signo)}
+          </Text>
+        </View>
+      )
+    }
+    if (passo === 3) {
+      return (
+        <View style={styles.recompensa}>
+          <Ionicons name="compass" size={18} color="#FFD700" />
+          <Text style={styles.recompensaTexto}>{t('quiz.premio.hora')}</Text>
+        </View>
+      )
+    }
+    return null
+  }
 
   const renderProgressBar = () => (
     <View style={[styles.progressContainer, isCompactMobile && styles.progressContainerCompact]}>
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${(currentStep / TOTAL_STEPS) * 100}%` }]} />
+        <View style={[styles.progressFill, { width: `${(passo / TOTAL_PASSOS) * 100}%` }]} />
       </View>
-      <Text style={styles.progressText}>{t('onboarding.progress', { current: currentStep, total: TOTAL_STEPS })}</Text>
+      <Text style={styles.progressText}>{t('onboarding.progress', { current: passo, total: TOTAL_PASSOS })}</Text>
     </View>
   )
 
@@ -1348,18 +1295,29 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 
             <Text style={styles.formTitle}>{t('onboarding.step.intro.title')}</Text>
 
-            {/* Formulário compacto — todos os campos numa tela */}
+            {renderProgressBar()}
+            {recompensa()}
+
+            {/* Um passo por vez. `key` força o AnimatedMount a reanimar na
+                troca — sem ela o React reusa o nó e o passo novo aparece
+                estático, o que lê como travamento. */}
             <View style={[styles.content, isCompactMobile && styles.contentCompact]}>
-              <AnimatedMount delay={40}>{renderStep1()}</AnimatedMount>
-              <AnimatedMount delay={90}>{renderStep2()}</AnimatedMount>
-              <AnimatedMount delay={140}>{renderStep3()}</AnimatedMount>
-              <AnimatedMount delay={190}>{renderStep4()}</AnimatedMount>
+              {passo === 1 && (
+                <AnimatedMount key="p1" delay={40}>
+                  <>
+                    {renderStep1()}
+                    {renderStep2()}
+                  </>
+                </AnimatedMount>
+              )}
+              {passo === 2 && <AnimatedMount key="p2" delay={40}>{renderStep3()}</AnimatedMount>}
+              {passo === 3 && <AnimatedMount key="p3" delay={40}>{renderStep4()}</AnimatedMount>}
             </View>
 
             <View style={[styles.buttonContainer, isCompactMobile && styles.buttonContainerCompact]}>
               <TouchableOpacity
                 style={[styles.nextButton, styles.submitButton, loading && styles.disabledButton]}
-                onPress={handleSubmit}
+                onPress={avancar}
                 disabled={loading}
                 activeOpacity={0.85}
               >
@@ -1370,12 +1328,34 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
                   </>
                 ) : (
                   <>
-                    <Ionicons name="sparkles" size={20} color="#0F0F23" />
-                    <Text style={styles.nextButtonText}>{t('onboarding.submit')}</Text>
+                    <Ionicons name={passo === TOTAL_PASSOS ? 'sparkles' : 'arrow-forward'} size={20} color="#0F0F23" />
+                    <Text style={styles.nextButtonText}>
+                      {passo === TOTAL_PASSOS ? t('onboarding.submit') : t('quiz.continuar')}
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
             </View>
+
+            {/**
+              * A SAIDA QUE NUNCA PODE FALTAR.
+              *
+              * O wizard antigo prendeu o Joao porque so o ultimo passo concluia.
+              * Assim que os quatro campos estao validos, concluir fica
+              * disponivel de qualquer passo — nenhum passo tem saida unica.
+              */}
+            {passo < TOTAL_PASSOS && tudoPronto() && !loading && (
+              <TouchableOpacity style={styles.atalhoConcluir} onPress={handleSubmit} activeOpacity={0.8}>
+                <Text style={styles.atalhoConcluirTexto}>{t('quiz.concluirAgora')}</Text>
+              </TouchableOpacity>
+            )}
+
+            {passo > 1 && !loading && (
+              <TouchableOpacity style={styles.voltarPasso} onPress={() => setPasso(passo - 1)} activeOpacity={0.8}>
+                <Ionicons name="arrow-back" size={15} color="#B0B0B0" />
+                <Text style={styles.voltarPassoTexto}>{t('quiz.voltar')}</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[styles.backToLoginButton, isCompactMobile && styles.backToLoginButtonCompact]}
@@ -1392,6 +1372,25 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
 }
 
 const styles = StyleSheet.create({
+  recompensa: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,215,0,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.30)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 14,
+    maxWidth: 460,
+  },
+  recompensaTexto: { flex: 1, color: '#F2E7CE', fontSize: 13, lineHeight: 18 },
+  atalhoConcluir: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 14 },
+  atalhoConcluirTexto: { color: '#FFD700', fontSize: 13, textDecorationLine: 'underline' },
+  voltarPasso: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingVertical: 8 },
+  voltarPassoTexto: { color: '#B0B0B0', fontSize: 13 },
   container: {
     flex: 1,
   },
