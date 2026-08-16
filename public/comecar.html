@@ -614,5 +614,67 @@
   });
 </script>
 
+<script>
+  /**
+   * O funil, medido.
+   *
+   * Nunca se soube quantas pessoas chegam aqui nem qual das duas portas elas
+   * escolhem. "Fluxo mais limpo" e impossivel num funil que ninguem enxerga, e
+   * era o buraco por tras da pergunta "o que preciso para fazer o melhor
+   * conteudo possivel".
+   *
+   * `sendBeacon` de proposito: ele entrega mesmo com a pagina ja saindo, que e
+   * exatamente o instante em que o clique acontece. `fetch` normal seria
+   * cancelado pela navegacao, e o clique — o dado que mais importa — seria o
+   * unico que nunca chegaria.
+   *
+   * Falhar aqui nao pode atrapalhar ninguem: tudo dentro de try, e a navegacao
+   * segue independente do resultado.
+   */
+  (function () {
+    var API = 'https://tabulav0dev-backend.vercel.app/api/evento';
+
+    // identificador de visita, para ligar "abriu" a "clicou". Nao diz quem e a
+    // pessoa: e aleatorio e morre quando ela limpa o navegador.
+    var sessao;
+    try {
+      sessao = localStorage.getItem('te_sessao');
+      if (!sessao) {
+        sessao = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('te_sessao', sessao);
+      }
+    } catch (e) { sessao = 'sem-sessao'; }
+
+    function marcar(evento, dados) {
+      try {
+        var corpo = JSON.stringify({ evento: evento, sessao: sessao, dados: dados || {} });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(API, new Blob([corpo], { type: 'application/json' }));
+        } else {
+          fetch(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: corpo,
+            keepalive: true
+          }).catch(function () {});
+        }
+      } catch (e) { /* medir nunca atrapalha */ }
+    }
+
+    marcar('landing_abriu', {
+      // de onde veio, quando o link traz utm. Serve para saber qual peca trouxe
+      // gente, que e a ponte entre o conteudo e o resultado.
+      origem: new URLSearchParams(location.search).get('utm_source') || null
+    });
+
+    document.querySelectorAll('a.btn-zap').forEach(function (a) {
+      a.addEventListener('click', function () { marcar('landing_whatsapp'); });
+    });
+    document.querySelectorAll('a.btn-app').forEach(function (a) {
+      a.addEventListener('click', function () { marcar('landing_app'); });
+    });
+  })();
+</script>
+
 </body>
 </html>

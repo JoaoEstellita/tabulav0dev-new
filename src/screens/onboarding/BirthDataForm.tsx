@@ -31,6 +31,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { subscribeWebPush } from '../../webpush/subscribe'
 import { registerDeviceToken } from '../../services/notifications/registerDeviceToken'
 import type { AppLanguage } from '../../i18n/appI18n'
+import { registrar } from '../../services/eventos'
 
 interface BirthDataFormProps {
   onComplete: (data: BirthData) => void
@@ -853,6 +854,9 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       birthCountryCode: formData.birthCountryCode,
     }
 
+    // O fim do funil de cadastro. Sem `await`: a navegação não espera a
+    // telemetria, e falha aqui não pode impedir alguém de ver o mapa.
+    registrar('conta_criada')
     onComplete(birthData)
   }
 

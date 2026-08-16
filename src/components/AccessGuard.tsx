@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { useSubscriptionCheck } from "../hooks/useSubscriptionCheck"
 import { useAppLanguage } from "../hooks/useAppLanguage"
+import { registrar } from "../services/eventos"
 
 /**
  * O portão de assinatura, em um lugar só.
@@ -49,6 +50,19 @@ export default function AccessGuard({
 
   // admin passa por tudo; o trial vale enquanto durar; depois, só assinatura
   const hasAccess = !!(isAdmin || trialActive || subscription?.active)
+
+  /**
+   * Quantas pessoas batem no portão, e quantas assinam depois.
+   *
+   * É a taxa que decide se o paywall está no lugar certo. Sem ela, mexer no
+   * que trava seria chute — e foi exatamente o buraco que apareceu quando o
+   * João perguntou como fazer o melhor conteúdo possível.
+   *
+   * Depois de `loading` para não contar quem só passou pela tela de carregando.
+   */
+  React.useEffect(() => {
+    if (!loading && !hasAccess) registrar("paywall_visto", { tela: tituloKey })
+  }, [loading, hasAccess, tituloKey])
 
   if (loading) {
     return (
