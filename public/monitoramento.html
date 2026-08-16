@@ -196,7 +196,7 @@
     <h1>✦ TabulaEstelar — Monitoramento</h1>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="last-update">—</span>
-      <button class="refresh-btn" onclick="loadData()">↻ Atualizar</button>
+      <button class="refresh-btn" onclick="loadData(true)">↻ Atualizar</button>
     </div>
   </header>
   <main id="main-content">
@@ -225,15 +225,18 @@
   function showDashboard() {
     document.getElementById('login-screen').style.display = 'none'
     document.getElementById('dashboard').style.display = 'block'
-    loadData()
+    loadData(true)
   }
 
-  async function loadData() {
+  // withUsers=true busca a lista completa de usuários (~1 read/usuário); o
+  // auto-refresh de 60s chama sem isso (só contagens baratas), mantendo a
+  // tabela já carregada. Assim o painel aberto não sangra leituras.
+  async function loadData(withUsers) {
     const main = document.getElementById('main-content')
-    main.innerHTML = '<div class="loading">Carregando…</div>'
+    if (!window.__usuarios) main.innerHTML = '<div class="loading">Carregando…</div>'
 
     try {
-      const res = await fetch(`${BACKEND}/api/monitoring`, {
+      const res = await fetch(`${BACKEND}/api/monitoring${withUsers ? '?users=1' : ''}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getPassword()}`,
@@ -298,7 +301,9 @@
     const main = document.getElementById('main-content')
     const s = d.sistema || {}
     const u = d.usuarios || {}
-    window.__usuarios = u.lista || []
+    // Só atualiza a lista quando ela veio (load/manual/ação); auto-refresh mantém a atual.
+    if (Array.isArray(u.lista)) window.__usuarios = u.lista
+    window.__usuarios = window.__usuarios || []
     const n = d.notificacoes || {}
     const crons = d.crons || []
     const leituras = d.leituras || {}
@@ -314,10 +319,13 @@
     // Saúde geral
     const fsPct = fs.available ? pct(fs.readsToday, fs.readsCap) : 0
     const hasErrors = (erros.total || 0) > 0 || (d.appErrors?.count24h || 0) > 0
-    let health = { cls: 'health-ok', txt: '✓ Tudo certo — sistema online, sem erros, quota saudável.' }
+    // Blaze NÃO trava — passar do tier grátis só cobra o excedente (US$0,06/100k leituras).
+    const overReads = fs.available ? Math.max(0, (fs.readsToday || 0) - (fs.readsCap || 0)) : 0
+    const custoUsd = (overReads / 100000 * 0.06)
+    let health = { cls: 'health-ok', txt: '✓ Tudo certo — sistema online, sem erros, leituras dentro do tier grátis.' }
     if (!(s.uptimeSec > 0)) health = { cls: 'health-err', txt: '⚠ Sistema offline.' }
-    else if (fsPct >= 90) health = { cls: 'health-err', txt: `⚠ Quota Firestore em ${fsPct}% — risco de estouro!` }
-    else if (fsPct >= 70) health = { cls: 'health-warn', txt: `Quota Firestore em ${fsPct}% — de olho.` }
+    else if (fsPct >= 90) health = { cls: 'health-warn', txt: `Firestore em ${fsPct}% do tier grátis — excedente de hoje ~US$${custoUsd.toFixed(2)} (Blaze cobra, não trava).` }
+    else if (fsPct >= 70) health = { cls: 'health-warn', txt: `Firestore em ${fsPct}% do tier grátis — de olho no custo.` }
     else if (hasErrors) health = { cls: 'health-warn', txt: 'Há erros registrados nas últimas 24h — confira abaixo.' }
 
     main.innerHTML = `
@@ -477,7 +485,7 @@
 
       <!-- Usuários — lista completa + ações admin -->
       <div class="card card-full">
-        <div class="card-title">Usuários${u.online != null ? ` · <span style="color:var(--ok)">${fmtNum(u.online)} online</span>` : ''} · <span style="color:var(--muted)">${fmtNum((u.lista || []).length)} no total</span></div>
+        <div class="card-title">Usuários${u.online != null ? ` · <span style="color:var(--ok)">${fmtNum(u.online)} online</span>` : ''} · <span style="color:var(--muted)">${fmtNum((window.__usuarios || []).length)} no total</span></div>
         <input id="user-search" type="text" placeholder="Buscar por nome ou e-mail…" oninput="renderUsersTable()"
           style="width:100%;max-width:360px;margin:2px 0 12px;padding:8px 10px;background:#141428;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px" />
         <div id="users-table" style="overflow-x:auto"></div>
@@ -596,17 +604,18 @@
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) { alert('Falha: ' + (data.error || res.status)); return }
-      loadData()
+      loadData(true)
     } catch (e) { alert('Erro: ' + e.message) }
   }
 
   // Auto-login se senha já salva
   if (getPassword()) showDashboard()
 
-  // Auto-refresh a cada 60s
+  // Auto-refresh a cada 60s — SEM a lista de usuários (só contagens baratas),
+  // pra não sangrar leituras com o painel aberto.
   setInterval(() => {
     if (document.getElementById('dashboard').style.display !== 'none') {
-      loadData()
+      loadData(false)
     }
   }, 60000)
 </script>
