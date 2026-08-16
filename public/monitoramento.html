@@ -291,6 +291,7 @@
     return `<div class="pbar"><div style="width:${p}%;background:${barColor(p)}"></div></div>`
   }
   function fmtNum(n) { return n == null ? '—' : Number(n).toLocaleString('pt-BR') }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
   function fmtBRL(n) { return n == null ? '—' : 'R$ ' + Number(n).toFixed(2) }
 
   function renderDashboard(d) {
@@ -386,6 +387,10 @@
           <span class="metric-label">Ativos (7 dias)</span>
           <span class="metric-value">${fmtNum(u.ativos7d)}</span>
         </div>
+        <div class="metric-row">
+          <span class="metric-label">Online agora (&lt;10min)</span>
+          <span class="metric-value" style="color:var(--ok)">${fmtNum(u.online)}</span>
+        </div>
       </div>
 
       <!-- Sistema -->
@@ -462,6 +467,38 @@
                     <td style="padding:5px 8px;color:${trendColor}">${r.areaTrend || '—'}</td>
                     <td style="padding:5px 8px">${srcBadge}</td>
                     <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.readAt)}</td>
+                  </tr>`
+                }).join('')}
+              </tbody>
+            </table>`
+        }
+      </div>
+
+      <!-- Usuários — últimos acessos / logins -->
+      <div class="card card-full">
+        <div class="card-title">Usuários — Últimos Acessos${u.online != null ? ` · <span style="color:var(--ok)">${fmtNum(u.online)} online agora</span>` : ''}</div>
+        ${!(u.recentes?.length)
+          ? '<div style="color:var(--muted)">Sem registro de acesso ainda.</div>'
+          : `<table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
+                  <th style="padding:4px 8px"></th>
+                  <th style="padding:4px 8px">Usuário</th>
+                  <th style="padding:4px 8px">E-mail</th>
+                  <th style="padding:4px 8px">Logins hoje</th>
+                  <th style="padding:4px 8px">Último acesso</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(u.recentes || []).map(r => {
+                  const dot = r.online ? '<span style="color:var(--ok)" title="online">●</span>' : '<span style="color:var(--muted)" title="offline">○</span>'
+                  const prem = r.premium ? ' <span class="badge badge-warn">PRO</span>' : ''
+                  return `<tr style="border-bottom:1px solid var(--border)">
+                    <td style="padding:5px 8px">${dot}</td>
+                    <td style="padding:5px 8px">${esc(r.nome) || '—'}${prem}</td>
+                    <td style="padding:5px 8px;color:var(--muted)">${esc(r.email) || '—'}</td>
+                    <td style="padding:5px 8px">${r.loginsHoje != null ? r.loginsHoje : '—'}</td>
+                    <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.ultimoAcesso)}</td>
                   </tr>`
                 }).join('')}
               </tbody>
