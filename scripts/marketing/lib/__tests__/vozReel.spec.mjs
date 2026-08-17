@@ -24,8 +24,29 @@ const meioDia = (d) => new Date(`${d}T12:00:00Z`)
  */
 const CATALOGOS = await carregarCatalogos()
 
+/**
+ * O céu é caro, e é o MESMO em toda chamada.
+ *
+ * Onze testes chamavam `falasDe` com os mesmos argumentos, e cada chamada
+ * recalculava trinta a sessenta dias de efeméride do zero. O arquivo levava
+ * vinte e cinco segundos, e sob carga um dos testes estourava o limite de cinco
+ * — falha que aparece e some conforme a máquina, que é a pior espécie: some
+ * quando se investiga e volta no CI.
+ *
+ * A efeméride de uma data é determinística, então guardar a resposta é seguro.
+ */
+const cacheDeFalas = new Map()
+
 /** Trinta dias seguidos de fala, que é o que a conta publicaria num mês. */
 function falasDe(iso, quantos = 30) {
+  const chave = `${iso}|${quantos}`
+  if (cacheDeFalas.has(chave)) return cacheDeFalas.get(chave)
+  const resultado = calcularFalas(iso, quantos)
+  cacheDeFalas.set(chave, resultado)
+  return resultado
+}
+
+function calcularFalas(iso, quantos) {
   const base = new Date(`${iso}T12:00:00Z`)
   const saida = []
   for (let i = 0; i < quantos; i++) {
