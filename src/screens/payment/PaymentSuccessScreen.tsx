@@ -23,9 +23,10 @@ export default function PaymentSuccessScreen() {
         return
       }
       try {
+        let provider: string | null = null
         if (Platform.OS === 'web') {
           const params = new URLSearchParams(window.location.search || '')
-          const provider = params.get('provider')
+          provider = params.get('provider')
           const sessionId = params.get('session_id')
           if (provider === 'stripe' && sessionId) {
             try {
@@ -33,6 +34,17 @@ export default function PaymentSuccessScreen() {
             } catch (syncError) {
               console.warn('Stripe sync checkout failed:', syncError)
             }
+          }
+        }
+
+        // MercadoPago não tem webhook garantido na hora → sincroniza na volta.
+        // Ativa a assinatura buscando o pagamento aprovado deste usuário no MP.
+        // Retry curto: o MP pode levar alguns segundos para registrar o aprovado.
+        if (provider !== 'stripe') {
+          for (let tentativa = 0; tentativa < 3; tentativa++) {
+            const r = await MercadoPagoService.syncMercadoPago(user.uid)
+            if (r.activated || r.status === 'active') break
+            if (tentativa < 2) await new Promise((resolve) => setTimeout(resolve, 2500))
           }
         }
 

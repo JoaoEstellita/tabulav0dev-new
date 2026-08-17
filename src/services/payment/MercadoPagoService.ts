@@ -150,6 +150,27 @@ export class MercadoPagoService {
     }
   }
 
+  /**
+   * Na VOLTA do checkout MP: pede ao backend pra buscar o pagamento aprovado
+   * deste usuário e ativar na hora, sem depender do webhook. Idempotente.
+   * Nunca lança — a tela segue lendo o status normalmente se falhar.
+   */
+  static async syncMercadoPago(userId: string): Promise<{ activated: boolean; status?: string }> {
+    try {
+      const response = await backendFetch('/api/mercado-pago/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        auth: true,
+        body: JSON.stringify({ userId })
+      })
+      if (!response.ok) return { activated: false }
+      const data = await response.json().catch(() => ({}))
+      return { activated: !!data?.activated, status: data?.status }
+    } catch {
+      return { activated: false }
+    }
+  }
+
   static async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
       const response = await backendFetch('/api/subscription', {
