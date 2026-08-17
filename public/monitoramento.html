@@ -394,8 +394,12 @@
           <span class="metric-value">${fmtNum(subs.byPlan.essential_monthly)} / ${fmtNum(subs.byPlan.pro_monthly)} / ${fmtNum(subs.byPlan.premium_monthly)}</span>
         </div>
         <div class="metric-row">
-          <span class="metric-label">Receita mensal (só pagantes)</span>
+          <span class="metric-label">Recorrente / mês (MRR)</span>
           <span class="metric-value" style="color:var(--accent2)">${fmtBRL(subs.mrr)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Único recebido (mês)</span>
+          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(subs.oneTime)}</span>
         </div>
         <div class="metric-row">
           <span class="metric-label">Ativos (7 dias)</span>
@@ -568,14 +572,18 @@
     return false // null/desconhecido → não conta receita
   }
   function computeSubs(list) {
-    const r = { pagantes: 0, cortesias: 0, trial: 0, mrr: 0, byPlan: { essential_monthly: 0, pro_monthly: 0, premium_monthly: 0 } }
+    // mrr = só assinatura recorrente (recorre todo mês). oneTime = pagamento único
+    // do mês (PIX de 1 mês NÃO recorre). Pago legado sem kind = tratado como único.
+    const r = { pagantes: 0, cortesias: 0, trial: 0, mrr: 0, oneTime: 0, byPlan: { essential_monthly: 0, pro_monthly: 0, premium_monthly: 0 } }
     for (const u of (list || [])) {
       if (u.subStatus === 'trial') { r.trial++; continue }
       if (u.subStatus !== 'active') continue
       if (!isPagante(u)) { r.cortesias++; continue }
       r.pagantes++
       if (r.byPlan[u.subPlan] != null) r.byPlan[u.subPlan]++
-      r.mrr += SUB_PRICES[u.subPlan] || 0
+      const price = SUB_PRICES[u.subPlan] || 0
+      if (u.subKind === 'recurring') r.mrr += price
+      else r.oneTime += price
     }
     return r
   }
