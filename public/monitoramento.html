@@ -346,6 +346,24 @@
             <span class="metric-value" style="color:${barColor(pct(fs.writesToday, fs.writesCap))}">${fmtNum(fs.writesToday)} / ${fmtNum(fs.writesCap)}</span>
           </div>
           ${progressBar(fs.writesToday, fs.writesCap)}
+          ${(() => {
+            const rp = d.readsPorFonte
+            if (!rp || !(rp.fontes && rp.fontes.length)) return ''
+            const rows = rp.fontes.slice(0, 8).map(f => `
+              <div class="metric-row" style="padding:2px 0">
+                <span class="metric-label" style="font-size:12px">${esc(f.fonte)}</span>
+                <span class="metric-value" style="font-size:12px">${fmtNum(f.leituras)}</span>
+              </div>`).join('')
+            const outros = rp.clienteOutros != null ? `
+              <div class="metric-row" style="padding:2px 0">
+                <span class="metric-label" style="font-size:12px;color:var(--muted)">cliente / outros (SDK do app)</span>
+                <span class="metric-value" style="font-size:12px;color:var(--muted)">${fmtNum(rp.clienteOutros)}</span>
+              </div>` : ''
+            return `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">
+              <div class="metric-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Leituras por fonte (hoje) — atribuído: ${fmtNum(rp.atribuidoBackend)}</div>
+              ${rows}${outros}
+            </div>`
+          })()}
         ` : `<div style="color:var(--muted);font-size:13px;line-height:1.5">
             Indisponível. Conceda <b style="color:var(--text)">roles/monitoring.viewer</b> ao service account no GCP IAM.
             <br><span style="color:var(--warn);font-size:12px">${fs.reason || ''}</span>
