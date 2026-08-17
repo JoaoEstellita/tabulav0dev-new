@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -92,14 +92,6 @@
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "scheme": "tabulaestelar",
-    "runtimeVersion": {
-      "policy": "fingerprint"
-    },
-    "updates": {
-      "enabled": false,
-      "url": "https://u.expo.dev/e10113f7-a65c-4374-aa0e-c849346d7ed7",
-      "fallbackToCacheTimeout": 0
-    },
     "plugins": [
       "@react-native-google-signin/google-signin",
       [
@@ -110,7 +102,10 @@
           "defaultChannel": "default"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      "expo-build-properties"
     ],
     "web": {
       "favicon": "./assets/favicon.png",
