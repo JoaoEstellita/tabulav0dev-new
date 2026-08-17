@@ -878,13 +878,25 @@
 
     var dias = Object.keys(porDia)
     var aviso = document.getElementById('aviso-pauta')
-    // fila sem nada marcado na agenda continua sendo trabalho a salvar: o
-    // banco é a fonte da maioria dos dias
-    if (!dias.length && !fila.length) {
-      aviso.textContent = 'Nenhum assunto marcado.'
-      setTimeout(function () { aviso.textContent = '' }, 2600)
-      return
-    }
+
+    /**
+     * QUANTAS PEÇAS POR DIA É ESCOLHA, E ESCOLHA SE SALVA SOZINHA.
+     *
+     * Aqui havia uma recusa: sem nada marcado na agenda e sem nada no banco, o
+     * salvamento abortava antes de gravar o `fila.json` — e é o `fila.json` que
+     * carrega o `porDia`.
+     *
+     * Foi o que aconteceu com o João duas vezes. Ele escolhia "2 peças por
+     * dia", não marcava item nenhum, clicava em Salvar, e recebia uma peça no
+     * dia seguinte. A tela dizia "Nenhum assunto marcado" e ele lia como aviso;
+     * era recusa.
+     *
+     * O mesmo defeito já tinha sido corrigido do outro lado, em
+     * `gerarDia.mjs`: lá a fila com `itens` vazio era descartada e levava o
+     * `porDia` junto. Consertei o leitor e deixei o escritor.
+     *
+     * Agora sempre grava. O aviso continua, dizendo o que vai acontecer.
+     */
 
     botao.disabled = true
     botao.textContent = 'Salvando…'
@@ -920,7 +932,9 @@
       var falhou = rs.filter(function (r) { return !r.ok }).length
       aviso.textContent = falhou
         ? falhou + ' envio(s) nao salvaram.'
-        : 'Salvo: ' + dias.length + ' dia(s) e ' + fila.length + ' na fila.'
+        : fila.length
+          ? 'Salvo: ' + dias.length + ' dia(s) e ' + fila.length + ' na fila.'
+          : 'Salvo: ' + qtd + ' peca(s) por dia. Sem fila, o gerador escolhe o assunto.'
       botao.disabled = false
       botao.textContent = 'Salvar pauta'
       setTimeout(function () { aviso.textContent = '' }, 4000)
