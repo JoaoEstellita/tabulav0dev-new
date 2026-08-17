@@ -16,6 +16,7 @@ import { auth, db } from "../config/firebase"
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, Timestamp } from "firebase/firestore"
 import LoadingScreen from "../components/LoadingScreen"
 import { captureClaimTokenFromUrl, consumePendingClaim } from "../services/claimOnboarding"
+import { capturarTokenDoQuiz, consumirTokenDoQuiz } from "../services/claimQuiz"
 import { lerPerfilPendente, fundirNaConta } from "../services/vincularConta"
 import { backendFetch } from "../services/backend/client"
 
@@ -49,6 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // logo no carregamento, antes do login do Google, para não perdê-lo no redirect.
   useEffect(() => {
     captureClaimTokenFromUrl().catch(() => {})
+    // Mesma captura, para quem chegou pelo quiz num outro aparelho.
+    capturarTokenDoQuiz().catch(() => {})
   }, [])
 
   const ensureUserDocuments = async (authUser: User) => {
@@ -258,6 +261,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isComplete) {
         const merged = await consumePendingClaim()
         if (merged) isComplete = await readComplete()
+      }
+
+      /**
+       * Quiz feito em OUTRO aparelho.
+       *
+       * Mesma ideia do bloco acima, e a ordem importa: o do WhatsApp vem antes
+       * porque é o fluxo mais antigo e o que tem caminho de recuperação por
+       * código. Se os dois existirem, o primeiro a completar o perfil vence, e
+       * o segundo vira no-op — o backend recusa sobrescrever mapa completo.
+       */
+      if (!isComplete) {
+        const fundiu = await consumirTokenDoQuiz()
+        if (fundiu) isComplete = await readComplete()
       }
 
       setBirthDataComplete(isComplete)
