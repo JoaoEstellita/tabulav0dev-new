@@ -304,6 +304,7 @@
     // Só atualiza a lista quando ela veio (load/manual/ação); auto-refresh mantém a atual.
     if (Array.isArray(u.lista)) window.__usuarios = u.lista
     window.__usuarios = window.__usuarios || []
+    const subs = computeSubs(window.__usuarios)
     const n = d.notificacoes || {}
     const crons = d.crons || []
     const leituras = d.leituras || {}
@@ -377,20 +378,24 @@
           <span class="metric-value">${fmtNum(ass.total ?? u.total)}</span>
         </div>
         <div class="metric-row">
-          <span class="metric-label">Ativos (pagantes)</span>
-          <span class="metric-value" style="color:var(--ok)">${fmtNum(ass.ativos)}</span>
+          <span class="metric-label">Pagantes reais</span>
+          <span class="metric-value" style="color:var(--ok)">${fmtNum(subs.pagantes)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Cortesias (admin)</span>
+          <span class="metric-value" style="color:var(--muted)">${fmtNum(subs.cortesias)}</span>
         </div>
         <div class="metric-row">
           <span class="metric-label">Trial</span>
-          <span class="metric-value">${fmtNum(ass.trial)}</span>
+          <span class="metric-value">${fmtNum(subs.trial ?? ass.trial)}</span>
         </div>
         <div class="metric-row">
-          <span class="metric-label">Essential / Pro / Premium</span>
-          <span class="metric-value">${fmtNum(ass.essential)} / ${fmtNum(ass.pro)} / ${fmtNum(ass.premium)}</span>
+          <span class="metric-label">Essential / Pro / Premium (pagantes)</span>
+          <span class="metric-value">${fmtNum(subs.byPlan.essential_monthly)} / ${fmtNum(subs.byPlan.pro_monthly)} / ${fmtNum(subs.byPlan.premium_monthly)}</span>
         </div>
         <div class="metric-row">
-          <span class="metric-label">MRR estimado</span>
-          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(ass.mrrEstimado)}</span>
+          <span class="metric-label">Receita mensal (só pagantes)</span>
+          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(subs.mrr)}</span>
         </div>
         <div class="metric-row">
           <span class="metric-label">Ativos (7 dias)</span>
@@ -544,11 +549,40 @@
   // ── Tabela de usuários (filtro client-side + ações admin) ──────────────────
   const PLAN_OPTS = [['premium_monthly', 'Premium'], ['pro_monthly', 'Pro'], ['essential_monthly', 'Essential']]
 
-  function subBadge(status, plan) {
-    const p = plan ? ` ${plan.replace('_monthly', '')}` : ''
-    if (status === 'active') return `<span class="badge badge-ok">ativo${p}</span>`
-    if (status === 'trial') return `<span class="badge badge-warn">trial${p}</span>`
-    if (status === 'canceled') return `<span class="badge" style="background:#3a2020;color:#ff8a80">cancelado</span>`
+  // Distingue PAGANTE real de cortesia (ativação manual pelo admin: source admin/monitoring).
+  const SUB_PRICES = { essential_monthly: 19.90, pro_monthly: 47.90, premium_monthly: 79.90 }
+  const ADMIN_SOURCES = new Set(['admin', 'monitoring'])
+  function computeSubs(list) {
+    const r = { pagantes: 0, cortesias: 0, trial: 0, mrr: 0, byPlan: { essential_monthly: 0, pro_monthly: 0, premium_monthly: 0 } }
+    for (const u of (list || [])) {
+      if (u.subStatus === 'trial') { r.trial++; continue }
+      if (u.subStatus !== 'active') continue
+      if (ADMIN_SOURCES.has(u.subSource)) { r.cortesias++; continue }
+      r.pagantes++
+      if (r.byPlan[u.subPlan] != null) r.byPlan[u.subPlan]++
+      r.mrr += SUB_PRICES[u.subPlan] || 0
+    }
+    return r
+  }
+
+  function remaining(iso) {
+    if (!iso) return 'sem prazo'
+    const end = new Date(iso).getTime()
+    if (!Number.isFinite(end)) return ''
+    const ms = end - Date.now()
+    if (ms <= 0) return 'expirado'
+    const days = Math.ceil(ms / 86400000)
+    if (days >= 45) return `~${Math.round(days / 30)} meses`
+    if (days >= 1) return `${days} dia${days > 1 ? 's' : ''}`
+    return 'hoje'
+  }
+
+  function subBadge(r) {
+    const p = r.subPlan ? ` ${r.subPlan.replace('_monthly', '')}` : ''
+    const sub = (badge, remIso) => `${badge}<div style="color:var(--muted);font-size:11px;margin-top:2px">${remaining(remIso)}</div>`
+    if (r.subStatus === 'active') return sub(`<span class="badge badge-ok">ativo${p}</span>`, r.subExpiresAt)
+    if (r.subStatus === 'trial') return sub(`<span class="badge badge-warn">trial${p}</span>`, r.subTrialEnds)
+    if (r.subStatus === 'canceled') return `<span class="badge" style="background:#3a2020;color:#ff8a80">cancelado</span>`
     return `<span class="badge" style="background:#2a3a55;color:var(--muted)">—</span>`
   }
 
@@ -579,9 +613,11 @@
             <td style="padding:5px 8px;color:var(--muted)">${esc(r.email) || '—'}</td>
             <td style="padding:5px 8px">${r.loginsHoje != null ? r.loginsHoje : '—'}</td>
             <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.ultimoAcesso)}</td>
-            <td style="padding:5px 8px">${subBadge(r.subStatus, r.subPlan)}</td>
+            <td style="padding:5px 8px">${subBadge(r)}</td>
             <td style="padding:5px 8px;white-space:nowrap">
               ${sel}
+              <input id="months-${r.uid}" type="number" min="0" max="24" value="1" title="meses (0 = sem prazo)" style="width:44px;margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px" />
+              <select id="src-${r.uid}" title="cortesia não conta receita; pago conta" style="margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px"><option value="cortesia">Cortesia</option><option value="pago">Pago</option></select>
               <button onclick="userAction('${r.uid}','activate')" style="margin-left:4px;padding:3px 8px;background:var(--ok);color:#04120a;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Ativar</button>
               <button onclick="userAction('${r.uid}','trial')" style="margin-left:4px;padding:3px 8px;background:var(--warn);color:#1a1400;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Trial</button>
               <button onclick="userAction('${r.uid}','deactivate')" style="margin-left:4px;padding:3px 8px;background:#3a2020;color:#ff8a80;border:1px solid #5a2a2a;border-radius:6px;font-size:12px;cursor:pointer">Desativar</button>
@@ -596,11 +632,17 @@
     if (action === 'deactivate' && !confirm('Desativar a assinatura deste usuário?')) return
     const planId = document.getElementById('plan-' + uid)?.value || 'premium_monthly'
     const trialDays = action === 'trial' ? (parseInt(prompt('Dias de trial:', '7'), 10) || 7) : undefined
+    let months, comp
+    if (action === 'activate') {
+      const m = parseInt(document.getElementById('months-' + uid)?.value, 10)
+      months = Number.isFinite(m) ? m : 1
+      comp = (document.getElementById('src-' + uid)?.value || 'cortesia') === 'cortesia'
+    }
     try {
       const res = await fetch(`${BACKEND}/api/monitoring-action`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getPassword()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, action, planId, trialDays }),
+        body: JSON.stringify({ uid, action, planId, trialDays, months, comp }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) { alert('Falha: ' + (data.error || res.status)); return }
