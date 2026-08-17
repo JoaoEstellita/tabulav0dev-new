@@ -549,20 +549,43 @@
   // ── Tabela de usuários (filtro client-side + ações admin) ──────────────────
   const PLAN_OPTS = [['premium_monthly', 'Premium'], ['pro_monthly', 'Pro'], ['essential_monthly', 'Essential']]
 
-  // Distingue PAGANTE real de cortesia (ativação manual pelo admin: source admin/monitoring).
+  // Distingue PAGANTE real de cortesia. Uma venda do webhook NÃO grava source
+  // (fica null), então só conta receita quem tem prova de pagamento:
+  //  - kind 'one_time'/'recurring' (ativação manual marcada como paga), OU
+  //  - source 'manual_paid'/provider de venda, OU
+  //  - subHasPayment (paymentId/paymentMethod do webhook real).
+  // Tudo o mais (source admin/monitoring, ou null/não classificado) = cortesia,
+  // pra NUNCA inflar faturamento com ativação manual.
   const SUB_PRICES = { essential_monthly: 19.90, pro_monthly: 47.90, premium_monthly: 79.90 }
   const ADMIN_SOURCES = new Set(['admin', 'monitoring'])
+  const PAID_SOURCES = new Set(['manual_paid', 'mercadopago', 'mercado-pago', 'mercado-pago-webhook', 'stripe', 'pix'])
+  function isPagante(u) {
+    if (u.subKind === 'one_time' || u.subKind === 'recurring') return true
+    if (u.subKind === 'cortesia') return false
+    if (ADMIN_SOURCES.has(u.subSource)) return false
+    if (u.subHasPayment) return true
+    if (PAID_SOURCES.has(u.subSource)) return true
+    return false // null/desconhecido → não conta receita
+  }
   function computeSubs(list) {
     const r = { pagantes: 0, cortesias: 0, trial: 0, mrr: 0, byPlan: { essential_monthly: 0, pro_monthly: 0, premium_monthly: 0 } }
     for (const u of (list || [])) {
       if (u.subStatus === 'trial') { r.trial++; continue }
       if (u.subStatus !== 'active') continue
-      if (ADMIN_SOURCES.has(u.subSource)) { r.cortesias++; continue }
+      if (!isPagante(u)) { r.cortesias++; continue }
       r.pagantes++
       if (r.byPlan[u.subPlan] != null) r.byPlan[u.subPlan]++
       r.mrr += SUB_PRICES[u.subPlan] || 0
     }
     return r
+  }
+  // Rótulo do tipo mostrado na lista.
+  function subTipo(u) {
+    if (u.subStatus !== 'active') return null
+    if (u.subKind === 'recurring') return { txt: 'assinatura', bg: '#173a2a', fg: '#8ff0c0' }
+    if (u.subKind === 'one_time') return { txt: 'pago (único)', bg: '#173a2a', fg: '#8ff0c0' }
+    if (isPagante(u)) return { txt: 'pago', bg: '#173a2a', fg: '#8ff0c0' }
+    return { txt: 'cortesia', bg: '#3a3417', fg: '#f0e08f' }
   }
 
   function remaining(iso) {
@@ -579,7 +602,9 @@
 
   function subBadge(r) {
     const p = r.subPlan ? ` ${r.subPlan.replace('_monthly', '')}` : ''
-    const sub = (badge, remIso) => `${badge}<div style="color:var(--muted);font-size:11px;margin-top:2px">${remaining(remIso)}</div>`
+    const t = subTipo(r)
+    const tipoTag = t ? ` <span class="badge" style="background:${t.bg};color:${t.fg};font-size:10px">${t.txt}</span>` : ''
+    const sub = (badge, remIso) => `${badge}${tipoTag}<div style="color:var(--muted);font-size:11px;margin-top:2px">${remaining(remIso)}</div>`
     if (r.subStatus === 'active') return sub(`<span class="badge badge-ok">ativo${p}</span>`, r.subExpiresAt)
     if (r.subStatus === 'trial') return sub(`<span class="badge badge-warn">trial${p}</span>`, r.subTrialEnds)
     if (r.subStatus === 'canceled') return `<span class="badge" style="background:#3a2020;color:#ff8a80">cancelado</span>`
@@ -617,7 +642,7 @@
             <td style="padding:5px 8px;white-space:nowrap">
               ${sel}
               <input id="months-${r.uid}" type="number" min="0" max="24" value="1" title="meses (0 = sem prazo)" style="width:44px;margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px" />
-              <select id="src-${r.uid}" title="cortesia não conta receita; pago conta" style="margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px"><option value="cortesia">Cortesia</option><option value="pago">Pago</option></select>
+              <select id="kind-${r.uid}" title="cortesia não conta receita; único = 1 mês pago; assinatura = pago recorrente" style="margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px"><option value="cortesia">Cortesia</option><option value="one_time">Pagamento único</option><option value="recurring">Assinatura</option></select>
               <button onclick="userAction('${r.uid}','activate')" style="margin-left:4px;padding:3px 8px;background:var(--ok);color:#04120a;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Ativar</button>
               <button onclick="userAction('${r.uid}','trial')" style="margin-left:4px;padding:3px 8px;background:var(--warn);color:#1a1400;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Trial</button>
               <button onclick="userAction('${r.uid}','deactivate')" style="margin-left:4px;padding:3px 8px;background:#3a2020;color:#ff8a80;border:1px solid #5a2a2a;border-radius:6px;font-size:12px;cursor:pointer">Desativar</button>
@@ -632,17 +657,17 @@
     if (action === 'deactivate' && !confirm('Desativar a assinatura deste usuário?')) return
     const planId = document.getElementById('plan-' + uid)?.value || 'premium_monthly'
     const trialDays = action === 'trial' ? (parseInt(prompt('Dias de trial:', '7'), 10) || 7) : undefined
-    let months, comp
+    let months, kind
     if (action === 'activate') {
       const m = parseInt(document.getElementById('months-' + uid)?.value, 10)
       months = Number.isFinite(m) ? m : 1
-      comp = (document.getElementById('src-' + uid)?.value || 'cortesia') === 'cortesia'
+      kind = document.getElementById('kind-' + uid)?.value || 'cortesia'
     }
     try {
       const res = await fetch(`${BACKEND}/api/monitoring-action`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getPassword()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, action, planId, trialDays, months, comp }),
+        body: JSON.stringify({ uid, action, planId, trialDays, months, kind }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) { alert('Falha: ' + (data.error || res.status)); return }
