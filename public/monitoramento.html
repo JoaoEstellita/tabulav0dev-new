@@ -587,6 +587,21 @@
     }
     return r
   }
+  // Prazo do modo gratuito: 7 dias a partir de users.trialStart (espelha
+  // useSubscriptionCheck). Assinante ativo não está no gratuito → '—'.
+  const TRIAL_DAYS = 7
+  function trialInfo(u) {
+    if (u.subStatus === 'active' && (isPagante(u) || ADMIN_SOURCES.has(u.subSource))) return { txt: '—', bg: 'transparent', fg: 'var(--muted)' }
+    if (u.subStatus === 'trial') return { txt: '—', bg: 'transparent', fg: 'var(--muted)' }
+    if (!u.trialStart) return { txt: 'não iniciado', bg: '#2a3a55', fg: 'var(--muted)' }
+    const start = new Date(u.trialStart).getTime()
+    if (!Number.isFinite(start)) return { txt: '—', bg: 'transparent', fg: 'var(--muted)' }
+    const restam = Math.ceil(TRIAL_DAYS - (Date.now() - start) / 86400000)
+    if (restam <= 0) return { txt: 'expirado', bg: '#3a2020', fg: '#ff8a80' }
+    if (restam <= 2) return { txt: `${restam}d grátis`, bg: '#3a3417', fg: '#f0e08f' }
+    return { txt: `${restam}d grátis`, bg: '#173a2a', fg: '#8ff0c0' }
+  }
+
   // Rótulo do tipo mostrado na lista.
   function subTipo(u) {
     if (u.subStatus !== 'active') return null
@@ -632,8 +647,8 @@
       <thead>
         <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
           <th style="padding:4px 8px"></th><th style="padding:4px 8px">Usuário</th><th style="padding:4px 8px">E-mail</th>
-          <th style="padding:4px 8px">Logins hoje</th><th style="padding:4px 8px">Último acesso</th>
-          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px">Ações</th>
+          <th style="padding:4px 8px">Aberturas hoje</th><th style="padding:4px 8px">Último acesso</th>
+          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px">Gratuito</th><th style="padding:4px 8px">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -647,6 +662,7 @@
             <td style="padding:5px 8px">${r.loginsHoje != null ? r.loginsHoje : '—'}</td>
             <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.ultimoAcesso)}</td>
             <td style="padding:5px 8px">${subBadge(r)}</td>
+            <td style="padding:5px 8px">${(() => { const g = trialInfo(r); return g.bg === 'transparent' ? `<span style="color:${g.fg}">${g.txt}</span>` : `<span class="badge" style="background:${g.bg};color:${g.fg};font-size:11px">${g.txt}</span>` })()}</td>
             <td style="padding:5px 8px;white-space:nowrap">
               ${sel}
               <input id="months-${r.uid}" type="number" min="0" max="24" value="1" title="meses (0 = sem prazo)" style="width:44px;margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px" />
