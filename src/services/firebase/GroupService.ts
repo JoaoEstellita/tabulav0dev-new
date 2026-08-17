@@ -10,6 +10,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   arrayUnion,
   arrayRemove,
@@ -657,7 +658,7 @@ class GroupService {
   // Buscar alertas do grupo
   async getGroupAlerts(groupId: string): Promise<GroupAlert[]> {
     try {
-      const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
+      const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"), limit(50))
 
       const querySnapshot = await getDocs(q)
       const alerts = querySnapshot.docs.map((doc) => {
@@ -695,7 +696,7 @@ class GroupService {
   }
   // Escutar mudanas em tempo real
   subscribeToGroupAlerts(groupId: string, callback: (alerts: GroupAlert[]) => void) {
-    const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"))
+    const q = query(collection(db, "groupAlerts"), where("groupId", "==", groupId), orderBy("createdAt", "desc"), limit(50))
 
     return onSnapshot(q, (querySnapshot) => {
       const alerts = querySnapshot.docs.map((doc) => {
