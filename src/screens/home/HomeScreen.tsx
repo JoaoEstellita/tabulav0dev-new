@@ -33,6 +33,7 @@ import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import { useNotificationStore } from '../../context/NotificationStore'
 import HomeHeader from '../../components/HomeHeader'
+import NotificationOptInBanner from '../../components/NotificationOptInBanner'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
@@ -442,6 +443,9 @@ export default function HomeScreen() {
           unreadCount={unreadCount}
           onPressBell={() => navigation.navigate('Notifications')}
         />
+
+        {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
+        <NotificationOptInBanner />
 
         {/* Score diário com explicação do trânsito mais intenso */}
         {(backendStatusPersonal?.score != null || topTransit) && (() => {
