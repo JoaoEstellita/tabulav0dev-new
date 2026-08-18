@@ -30,7 +30,8 @@
  *    de ficar registrada por arquivo, não numa nota de rodapé.
  *
  * 3. O FORMATO. O template embute a foto em `data:` URI, então arquivo grande
- *    incha o HTML e o PNG final. O acervo atual vai de 137 KB a 274 KB.
+ *    incha o HTML e o PNG final. Com o render em 2x o acervo vai de 60 KB a
+ *    3,3 MB, e o teto está em `LIMITE_BYTES`.
  *
  * Uso:
  *   node scripts/marketing/receberFundo.mjs \
@@ -70,11 +71,22 @@ export const ORIGENS = {
 /**
  * Teto do arquivo.
  *
- * A foto vira `data:` URI dentro do HTML, e o Chrome renderiza a partir de um
- * arquivo temporário. O maior do acervo hoje tem 274 KB; 400 KB dá folga sem
- * deixar o HTML da peça virar um megabyte.
+ * ── POR QUE SUBIU DE 400 KB PARA 3,5 MB ────────────────────────────────────
+ *
+ * O teto antigo foi definido quando a peça saía em 1080x1350 e o acervo inteiro
+ * cabia em 274 KB. Com o render em 2x o quadro virou 2160x2700, e uma foto que
+ * cubra isso sem esticar tem de ser grande de verdade: a nebulosa do Hubble em
+ * 3000x2850 pesa 3,3 MB no nível de qualidade que não deixa artefato em
+ * gradiente.
+ *
+ * O custo é real e conhecido: a foto vira `data:` URI dentro do HTML, e base64
+ * infla um terço. Uma peça com a maior foto do acervo gera um HTML de uns 4,4
+ * MB, que o Chrome renderiza sem reclamar e que é apagado logo depois.
+ *
+ * Vale a troca porque o defeito que isto corrige é visível e o custo não é: o
+ * João pediu nitidez máxima depois de ver crateras borradas.
  */
-const LIMITE_BYTES = 400 * 1024
+const LIMITE_BYTES = 3.5 * 1024 * 1024
 
 export function lerManifesto() {
   return existsSync(MANIFESTO) ? JSON.parse(readFileSync(MANIFESTO, 'utf8')) : {}
@@ -142,14 +154,29 @@ export function auditar() {
   return problemas
 }
 
+/**
+ * O lado maior e a qualidade, iguais aos de `rebaixarCeu.mjs`.
+ *
+ * 1400 e qualidade 4 eram o padrão de quando a peça saía em 1080x1350. Com o
+ * render em 2x isso vira upscale visível, e 4 deixa artefato em gradiente —
+ * que é do que um fundo de nebulosa é quase todo feito.
+ *
+ * Os dois scripts precisam concordar: se um abastecer o acervo com foto pequena
+ * enquanto o outro busca 3000, o resultado fica desigual de peça para peça, e
+ * isso lê como descuido no feed.
+ */
+const LADO_MAIOR = 3000
+const QUALIDADE = 2
+
 async function converter(entrada, saida) {
-  // ffmpeg está instalado aqui (scoop). Redimensiona o lado maior para 1400,
-  // que é o tamanho do acervo, e comprime até caber no limite.
+  // ffmpeg está instalado aqui (scoop). `min(...)` para nunca AMPLIAR: uma
+  // imagem que já chega pequena passa intacta em vez de ser esticada aqui.
   await execFileAsync('ffmpeg', [
     '-y', '-loglevel', 'error',
     '-i', entrada,
-    '-vf', "scale='if(gt(iw,ih),1400,-2)':'if(gt(iw,ih),-2,1400)'",
-    '-q:v', '4',
+    '-vf', `scale='if(gt(iw,ih),min(iw,${LADO_MAIOR}),-2)':'if(gt(iw,ih),-2,min(ih,${LADO_MAIOR}))'`,
+    '-q:v', String(QUALIDADE),
+    '-update', '1',
     saida,
   ])
 }

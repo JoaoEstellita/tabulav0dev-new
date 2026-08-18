@@ -298,6 +298,10 @@ async function principal() {
     headless: 'new',
     args: [
       '--hide-scrollbars',
+      // 1 de proposito: quem manda no video e o `deviceScaleFactor` do
+      // `setViewport` logo abaixo, e subir aqui nao teria efeito nenhum.
+      // Qualidade de video e outro assunto: mexe em tamanho de arquivo,
+      // tempo de ffmpeg e limite de upload.
       '--force-device-scale-factor=1',
       ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     ],

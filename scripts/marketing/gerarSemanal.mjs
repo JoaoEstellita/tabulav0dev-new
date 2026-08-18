@@ -85,7 +85,7 @@ async function renderizar(chrome, html, destino) {
     '--headless=new',
     '--disable-gpu',
     '--hide-scrollbars',
-    '--force-device-scale-factor=1',
+    '--force-device-scale-factor=2',
     '--default-background-color=00000000',
     ...flagsCI,
     '--window-size=1080,1350',

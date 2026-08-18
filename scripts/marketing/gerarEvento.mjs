@@ -131,7 +131,7 @@ async function renderizar(chrome, html, destino, altura) {
   await writeFile(temp, html, 'utf8')
   await execFileAsync(chrome, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    '--force-device-scale-factor=1',
+    '--force-device-scale-factor=2',
     ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     `--window-size=1080,${altura}`,
     `--screenshot=${destino}`,

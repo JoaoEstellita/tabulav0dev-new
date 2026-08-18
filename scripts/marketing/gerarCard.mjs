@@ -285,7 +285,7 @@ async function renderizar(chrome, html, destinoPng, largura, altura) {
     '--headless=new',
     '--disable-gpu',
     '--hide-scrollbars',
-    '--force-device-scale-factor=1',
+    '--force-device-scale-factor=2',
     '--default-background-color=00000000',
     ...flagsCI,
     `--window-size=${largura},${altura}`,
