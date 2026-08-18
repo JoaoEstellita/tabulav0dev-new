@@ -3,6 +3,7 @@ import { MercadoPagoService } from '../services/payment/MercadoPagoService'
 import { useAuth } from './useAuth'
 import { db } from '../config/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { lerComCache, guardarNoCache, chaveUsuario, TTL_PERFIL_MS } from '../services/firebase/docCache'
 
 const TRIAL_DAYS = 7
 
@@ -34,8 +35,12 @@ export function useSubscriptionCheck() {
       }
 
       const userRef = doc(db, 'users', user.uid)
-      const userDoc = await getDoc(userRef)
-      const userData = userDoc.exists() ? userDoc.data() : {}
+      // Cache + dedupe: AccessGuard, TrialBanner, PremiumScreen etc. montam juntos
+      // e cada um lia users/{uid} do zero. Uma leitura serve todos (TTL 60s).
+      const userData: any = await lerComCache(chaveUsuario(user.uid), TTL_PERFIL_MS, async () => {
+        const snap = await getDoc(userRef)
+        return snap.exists() ? snap.data() : {}
+      })
 
       const adminFlag = userData?.isAdmin === true || userData?.role === 'admin' || userData?.roles?.admin === true
       setIsAdmin(!!adminFlag)
@@ -44,6 +49,8 @@ export function useSubscriptionCheck() {
       if (!trialStart) {
         trialStart = new Date().toISOString()
         await setDoc(userRef, { trialStart }, { merge: true })
+        // Atualiza o cache p/ os próximos mounts no TTL não reescreverem trialStart.
+        guardarNoCache(chaveUsuario(user.uid), { ...userData, trialStart }, TTL_PERFIL_MS)
       }
 
       const diff = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24)
