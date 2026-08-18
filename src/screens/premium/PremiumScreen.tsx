@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { useRoute } from '@react-navigation/native'
+import { useRoute, useNavigation } from '@react-navigation/native'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
@@ -69,6 +69,7 @@ export default function PremiumScreen() {
   const { user } = useAuth()
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()
+  const navigation = useNavigation<any>()
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const hasActivePlan = !!subscription?.active
@@ -1333,6 +1334,16 @@ export default function PremiumScreen() {
           ))}
         </View>
       </>)}
+
+      {/* Nota honesta + saída pro mapa grátis (não mata o funil). */}
+      <View style={styles.paywallFooter}>
+        <Text style={styles.paywallNote}>
+          {tr('premium.note.pixOnce', 'Pagamento avulso via PIX vale 1 mês e NÃO renova automaticamente. A assinatura mensal renova sozinha (cancele quando quiser).')}
+        </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('AstroProfile')} activeOpacity={0.8}>
+          <Text style={styles.paywallFreeLink}>{tr('premium.note.freeMap', 'Continuar só com o mapa natal grátis →')}</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
     )
   }
@@ -1729,6 +1740,24 @@ const styles = StyleSheet.create({
     color: '#B0B0B0',
     fontSize: 13,
     fontWeight: '600',
+  },
+  paywallFooter: {
+    marginTop: 20,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    gap: 12,
+  },
+  paywallNote: {
+    color: '#8A8A9A',
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  paywallFreeLink: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   subscribeButtonText: {
     color: '#0F0F23',
