@@ -126,12 +126,32 @@ async function enviar(arquivo, iso, nome, { backend, senha }) {
   }
 }
 
+/**
+ * ESCALA 1x, E NÃO 2x — POR LIMITE DE UPLOAD, NÃO POR QUALIDADE.
+ *
+ * Subi para 2x quando o João pediu nitidez máxima, e o resultado era ótimo:
+ * 2160x2700, texto vetorial genuinamente duas vezes mais nítido. Mas o PNG vai
+ * a 3,8 MB, e o upload manda em base64 dentro do corpo do POST — 5,1 MB, acima
+ * do teto do Vercel. Testei contra produção e voltou
+ * `413 FUNCTION_PAYLOAD_TOO_LARGE`.
+ *
+ * Peguei antes do próximo cron; se tivesse ficado, a geração diária quebraria
+ * em silêncio a partir de amanhã.
+ *
+ * O caminho certo para voltar ao 2x é JPEG: a 2160x2700 em qualidade 2 dá
+ * 684 KB, sem franja visível em texto, e o Instagram reconverte tudo para JPEG
+ * de qualquer forma — mandar PNG de 3,8 MB não ganha nada. Falta migrar os
+ * nomes em `ARQUIVOS_ACEITOS`, o `tipoDe()` e o que o Estúdio exibe.
+ *
+ * O ganho das fotos permanece: o acervo agora vem das originais da NASA, e
+ * fonte maior melhora o resultado mesmo reduzindo para 1x.
+ */
 async function renderizar(chrome, html, destino, altura) {
   const temp = destino.replace(/\.png$/, '.html')
   await writeFile(temp, html, 'utf8')
   await execFileAsync(chrome, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    '--force-device-scale-factor=2',
+    '--force-device-scale-factor=1',
     ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     `--window-size=1080,${altura}`,
     `--screenshot=${destino}`,

@@ -116,7 +116,7 @@ async function principal() {
 
   await execFileAsync(CHROME, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    '--force-device-scale-factor=2', '--window-size=1500,1150',
+    '--force-device-scale-factor=1', '--window-size=1500,1150',
     '--virtual-time-budget=3000', `--screenshot=${png}`,
     `file:///${temp.replace(/\\/g, '/')}`,
   ], { timeout: 60_000 })
