@@ -39,12 +39,25 @@ type Props = {
   textoKey?: string
 }
 
+// One-shot por sessão: ao detectar o 1º bloqueio (app abre na Home travada),
+// leva direto ao paywall. Depois o próprio cadeado (rico) é o fallback nas abas —
+// o usuário pode voltar e ver o bloqueio sem ser reempurrado.
+let jaLevouAoPaywall = false
+
+// Recursos que a assinatura desbloqueia — 4 idiomas inline (es/it sem acento).
+const UNLOCKS: Record<string, string[]> = {
+  "pt-BR": ["Status diário das 8 áreas da vida", "Previsões e trânsitos interpretados", "Grupos e sinastria", "Astrólogo pessoal no WhatsApp"],
+  "en-US": ["Daily status of your 8 life areas", "Forecasts and interpreted transits", "Groups and synastry", "Personal astrologer on WhatsApp"],
+  "es-ES": ["Estado diario de tus 8 areas de vida", "Pronosticos y transitos interpretados", "Grupos y sinastria", "Astrologo personal en WhatsApp"],
+  "it-IT": ["Stato giornaliero delle 8 aree della vita", "Previsioni e transiti interpretati", "Gruppi e sinastria", "Astrologo personale su WhatsApp"],
+}
+
 export default function AccessGuard({
   children,
   tituloKey = "accessGuard.title",
   textoKey = "accessGuard.subtitle",
 }: Props) {
-  const { t } = useAppLanguage()
+  const { t, language } = useAppLanguage()
   const navigation = useNavigation<any>()
   const { loading, subscription, trialActive, isAdmin } = useSubscriptionCheck()
 
@@ -64,6 +77,15 @@ export default function AccessGuard({
     if (!loading && !hasAccess) registrar("paywall_visto", { tela: tituloKey })
   }, [loading, hasAccess, tituloKey])
 
+  // Ao abrir o app já travado, cai DIRETO no paywall (uma vez por sessão). O
+  // cadeado abaixo segue como fallback quando a pessoa volta pra aba.
+  React.useEffect(() => {
+    if (!loading && !hasAccess && !jaLevouAoPaywall) {
+      jaLevouAoPaywall = true
+      try { navigation.navigate("Premium", { openTab: "features" }) } catch { /* rota indisponível */ }
+    }
+  }, [loading, hasAccess])
+
   if (loading) {
     return (
       <LinearGradient colors={["#0F0F23", "#1A1A3A"]} style={styles.container}>
@@ -82,6 +104,15 @@ export default function AccessGuard({
         <Ionicons name="lock-closed" size={48} color="#FFD700" />
         <Text style={styles.title}>{t(tituloKey)}</Text>
         <Text style={styles.subtitle}>{t(textoKey)}</Text>
+        {/* Recursos que a assinatura desbloqueia — o cadeado vira pitch. */}
+        <View style={styles.unlockList}>
+          {(UNLOCKS[language] || UNLOCKS["pt-BR"]).map((txt, i) => (
+            <View key={i} style={styles.unlockRow}>
+              <Ionicons name="checkmark-circle" size={16} color="#FFD700" />
+              <Text style={styles.unlockText}>{txt}</Text>
+            </View>
+          ))}
+        </View>
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={() => navigation.navigate("Premium", { openTab: "features" })}
@@ -126,8 +157,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#B0B0B0",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 20,
     lineHeight: 20,
+  },
+  unlockList: {
+    alignSelf: "stretch",
+    gap: 8,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  unlockRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  unlockText: {
+    flex: 1,
+    color: "#E0E0E0",
+    fontSize: 13,
+    lineHeight: 18,
   },
   ctaButton: {
     backgroundColor: "#FFD700",

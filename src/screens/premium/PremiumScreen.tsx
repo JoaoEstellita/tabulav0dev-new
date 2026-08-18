@@ -962,13 +962,25 @@ export default function PremiumScreen() {
     </ScrollView>
   )
 
-  const renderFeatures = () => (
+  const renderFeatures = () => {
+    // Teste acabou = não assinante, não admin e trial expirado. Muda o hero para
+    // "desbloqueie", em vez do pitch genérico.
+    const trialEnded = !isAdmin && !subscription?.active && trialActive === false
+    return (
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.featuresContent}>
       {/* Hero */}
       <View style={styles.heroCard}>
         <Text style={styles.heroKicker}>✦ {tr('premium.header.title', 'Premium')}</Text>
-        <Text style={styles.heroTitle}>{tr('premium.hero.title', 'Seu astrologo pessoal, todos os dias')}</Text>
-        <Text style={styles.heroSubtitle}>{tr('premium.hero.subtitle', 'Status diario das suas 8 areas da vida, transitos interpretados e um astrologo que conversa com voce no WhatsApp.')}</Text>
+        <Text style={styles.heroTitle}>
+          {trialEnded
+            ? tr('premium.hero.trialEndedTitle', 'Seu teste de 7 dias acabou')
+            : tr('premium.hero.title', 'Seu astrologo pessoal, todos os dias')}
+        </Text>
+        <Text style={styles.heroSubtitle}>
+          {trialEnded
+            ? tr('premium.hero.trialEndedSubtitle', 'Desbloqueie a Tabula completa: status diario das 8 areas, previsoes, transitos e o astrologo no WhatsApp. Seu mapa natal continua gratis, sempre.')
+            : tr('premium.hero.subtitle', 'Status diario das suas 8 areas da vida, transitos interpretados e um astrologo que conversa com voce no WhatsApp.')}
+        </Text>
       </View>
 
       {/* Diferenciais */}
@@ -1062,7 +1074,7 @@ export default function PremiumScreen() {
                 </View>
               </View>
               <View style={styles.planFeatures}>
-                {plan.features.slice(0, 4).map((feature, index) => (
+                {plan.features.map((feature, index) => (
                   <View key={index} style={styles.planFeatureRow}>
                     <Ionicons name="checkmark-circle" size={15} color={plan.color} />
                     <Text style={styles.planFeature}>{feature}</Text>
@@ -1260,7 +1272,8 @@ export default function PremiumScreen() {
         </View>
       </>)}
     </ScrollView>
-  )
+    )
+  }
 
   const renderCredits = () => (
     <ScrollView style={styles.tabContent}>
