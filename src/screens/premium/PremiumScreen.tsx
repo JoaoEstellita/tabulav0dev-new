@@ -477,6 +477,49 @@ export default function PremiumScreen() {
     }
   }
 
+  // Assinatura RECORRENTE (renova todo mês). PT → MP PreApproval; internacional
+  // cai no fluxo Stripe existente (handleSubscribe).
+  const handleSubscribeRecurring = async (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number }) => {
+    if (!user) {
+      Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.subscribe', 'Faça login para assinar.'))
+      return
+    }
+    const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
+    if (effectiveProvider !== 'mercadopago') {
+      return handleSubscribe(plan) // internacional: Stripe
+    }
+    if (plan.requiresPhone && !premiumPhone.trim()) {
+      Alert.alert(tr('premium.alert.phoneRequired.title', 'Número necessário'), tr('premium.alert.phoneRequired.body', 'Informe o número do WhatsApp para assinar o Premium.'))
+      return
+    }
+    if (plan.requiresPhone && user) {
+      user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
+    }
+    try {
+      const planConfig = MercadoPagoService.getPlanById(plan.id)
+      if (!planConfig) {
+        Alert.alert(tr('premium.alert.invalidPlan.title', 'Plano inválido'), tr('premium.alert.invalidPlan.body', 'Não foi possível localizar o plano selecionado.'))
+        return
+      }
+      const pre = await MercadoPagoService.createPreapproval({
+        userId: user.uid,
+        planId: planConfig.id,
+        amount: planConfig.price,
+        email: user.email || '',
+        name: user.displayName || user.email || tr('common.user', 'Usuario'),
+        description: planConfig.name,
+      })
+      if (!pre?.init_point) {
+        Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.recurringLinkFailed', 'Não foi possível gerar o link da assinatura recorrente.'))
+        return
+      }
+      await openExternalCheckout(pre.init_point)
+    } catch (error: any) {
+      const raw = String(error?.message || '').trim()
+      Alert.alert(tr('common.error', 'Erro'), raw.length > 3 ? raw : tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.'))
+    }
+  }
+
   const handlePurchaseGiftSubscription = async (option: GiftSubscriptionOption) => {
     if (!user?.uid) {
       Alert.alert(tr('premium.alert.login.title', 'Login'), tr('premium.alert.login.subscribe', 'Faça login para assinar.'))
@@ -1095,16 +1138,35 @@ export default function PremiumScreen() {
                 </View>
               )}
               {CAN_PURCHASE_IN_APP ? (
-                <TouchableOpacity
-                  style={[styles.subscribeButton, { backgroundColor: plan.color }, plan.current && styles.subscribeButtonDisabled]}
-                  onPress={() => !plan.current && handleSubscribe(plan)}
-                  disabled={plan.current}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.subscribeButtonText}>
-                    {plan.current ? tr('premium.plans.current', 'Plano Atual') : tr('premium.cta.subscribe', 'Assinar')}
-                  </Text>
-                </TouchableOpacity>
+                plan.current ? (
+                  <View style={[styles.subscribeButton, styles.subscribeButtonDisabled]}>
+                    <Text style={styles.subscribeButtonText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
+                  </View>
+                ) : (
+                  <>
+                    {/* Recorrente: renova todo mês (cartão). CTA principal. */}
+                    <TouchableOpacity
+                      style={[styles.subscribeButton, { backgroundColor: plan.color }]}
+                      onPress={() => handleSubscribeRecurring(plan)}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.subscribeButtonText}>
+                        {tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
+                        {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}` : ''}
+                      </Text>
+                    </TouchableOpacity>
+                    {/* Avulso: paga 1 mês, sem renovar (PIX/único). Secundário. */}
+                    <TouchableOpacity
+                      style={styles.subscribeAvulsoButton}
+                      onPress={() => handleSubscribe(plan)}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.subscribeAvulsoText}>
+                        {tr('premium.cta.subscribeOnce', 'Pagar 1 mês (avulso, sem renovar)')}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )
               ) : plan.current ? (
                 <View style={[styles.subscribeButton, styles.subscribeButtonDisabled]}>
                   <Text style={styles.subscribeButtonText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
@@ -1648,9 +1710,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
   },
   subscribeButtonDisabled: {
     opacity: 0.5,
+  },
+  subscribeAvulsoButton: {
+    marginTop: 8,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+  },
+  subscribeAvulsoText: {
+    color: '#B0B0B0',
+    fontSize: 13,
+    fontWeight: '600',
   },
   subscribeButtonText: {
     color: '#0F0F23',

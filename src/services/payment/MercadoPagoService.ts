@@ -171,6 +171,21 @@ export class MercadoPagoService {
     }
   }
 
+  /**
+   * Assinatura RECORRENTE (MP PreApproval) — cobra o cartão todo mês. Devolve o
+   * init_point pra abrir o checkout onde a pessoa autoriza o cartão.
+   */
+  static async createPreapproval(data: { userId: string; planId: string; amount: number; email: string; name?: string; description?: string }): Promise<{ init_point?: string; id?: string }> {
+    const response = await backendFetch('/api/mercado-pago/create-preapproval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      auth: true,
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`)
+    return response.json()
+  }
+
   static async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
     try {
       const response = await backendFetch('/api/subscription', {
