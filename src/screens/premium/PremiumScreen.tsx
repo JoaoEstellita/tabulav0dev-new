@@ -19,6 +19,7 @@ import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from
 import StripeService from '../../services/payment/StripeService'
 import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
 import ExpiryBanner from '../../components/ExpiryBanner'
+import PixCheckoutModal from '../../components/PixCheckoutModal'
 import { getExpiryBannerInfo } from '../../utils/expiry'
 
 const HUB_HISTORY_KEY = 'premium_hub_history'
@@ -70,6 +71,7 @@ export default function PremiumScreen() {
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()
   const navigation = useNavigation<any>()
+  const [pixPlan, setPixPlan] = useState<{ id: string; name: string; price: number } | null>(null)
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const hasActivePlan = !!subscription?.active
@@ -519,6 +521,21 @@ export default function PremiumScreen() {
       const raw = String(error?.message || '').trim()
       Alert.alert(tr('common.error', 'Erro'), raw.length > 3 ? raw : tr('premium.alert.paymentStartFailed', 'Falha ao iniciar pagamento. Tente novamente.'))
     }
+  }
+
+  // Avulso (1 mês). PT+MP → PIX DENTRO do app (menos toques, sem sair). Senão →
+  // fluxo existente (redirect Stripe/preferência).
+  const handleAvulso = (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number }) => {
+    const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
+    if (effectiveProvider === 'mercadopago' && user) {
+      if (plan.requiresPhone && premiumPhone.trim()) {
+        user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
+      }
+      const cfg = MercadoPagoService.getPlanById(plan.id)
+      setPixPlan({ id: plan.id, name: plan.name || cfg?.name || plan.id, price: Number(plan.price ?? cfg?.price ?? 0) })
+      return
+    }
+    return handleSubscribe(plan)
   }
 
   const handlePurchaseGiftSubscription = async (option: GiftSubscriptionOption) => {
@@ -1159,11 +1176,11 @@ export default function PremiumScreen() {
                     {/* Avulso: paga 1 mês, sem renovar (PIX/único). Secundário. */}
                     <TouchableOpacity
                       style={styles.subscribeAvulsoButton}
-                      onPress={() => handleSubscribe(plan)}
+                      onPress={() => handleAvulso(plan)}
                       activeOpacity={0.85}
                     >
                       <Text style={styles.subscribeAvulsoText}>
-                        {tr('premium.cta.subscribeOnce', 'Pagar 1 mês (avulso, sem renovar)')}
+                        {tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
                       </Text>
                     </TouchableOpacity>
                   </>
@@ -1502,6 +1519,16 @@ export default function PremiumScreen() {
       {EXTRAS_ENABLED && selectedTab === 'hub' && renderHub()}
       {EXTRAS_ENABLED && selectedTab === 'credits' && renderCredits()}
       {EXTRAS_ENABLED && selectedTab === 'history' && renderHistory()}
+
+      {/* PIX dentro do app (avulso) — menos toques */}
+      <PixCheckoutModal
+        visible={!!pixPlan}
+        plan={pixPlan}
+        userId={user?.uid || ''}
+        email={user?.email || ''}
+        name={user?.displayName || undefined}
+        onClose={() => setPixPlan(null)}
+      />
     </LinearGradient>
   )
 }
