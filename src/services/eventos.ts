@@ -1,6 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { auth } from '../config/firebase'
 import { backendFetch } from './backend/client'
+import { metaPixelTrack } from './metaPixel'
+
+// Passo do funil → evento PADRÃO do Meta Pixel (rastreio de conversão nos anúncios).
+const META_STANDARD: Record<string, string> = {
+  quiz_passo_1: 'ViewContent',
+  conta_criada: 'CompleteRegistration',
+  paywall_visto: 'InitiateCheckout',
+  assinou: 'Purchase',
+}
 
 /**
  * Os eventos do funil, do lado do app.
@@ -52,6 +61,16 @@ export type NomeDeEvento =
  * telemetria.
  */
 export function registrar(evento: NomeDeEvento, dados: Record<string, unknown> = {}): void {
+  // Meta Pixel (web/PWA, se configurado): evento padrão + custom granular.
+  const std = META_STANDARD[evento]
+  if (std) {
+    const params = evento === 'assinou'
+      ? { currency: 'BRL', value: typeof dados?.value === 'number' ? dados.value : undefined }
+      : undefined
+    metaPixelTrack(std, params)
+  }
+  metaPixelTrack(`te_${evento}`, undefined, false)
+
   void (async () => {
     try {
       await backendFetch('/api/evento', {

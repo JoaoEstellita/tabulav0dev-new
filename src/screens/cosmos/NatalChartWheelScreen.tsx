@@ -20,6 +20,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
+import AspectGrid from '../../components/AspectGrid'
 
 // ─── Símbolos ──────────────────────────────────────────────────────────────
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -63,45 +64,35 @@ function angShort(a: number, b: number) {
   return Math.abs(((a - b) % 360 + 540) % 360 - 180)
 }
 
-type PlacedPlanet<T> = T & { trueAngle: number; svgAngle: number; sx: number; sy: number; tickX: number; tickY: number; displaced: boolean }
+type PlacedPlanet<T> = T & { trueAngle: number; sx: number; sy: number; radius: number }
 
 /**
- * Anti-colisão de glifos num anel: quando dois planetas ficam mais próximos que
- * `glyphDeg`, espalha o cluster angularmente (simétrico ao redor do centro),
- * mantendo `trueAngle` (longitude real) para desenhar um tick/leader do glifo
- * deslocado até sua posição verdadeira. Assim os posicionamentos ficam legíveis
- * sem mentir sobre onde o planeta está. Puro (sem estado).
+ * Anti-colisão RADIAL: quando planetas ficam próximos em longitude (< glyphDeg),
+ * eles NÃO saem do lugar — o ângulo (longitude real) é mantido e só o RAIO varia,
+ * empilhando o cluster (uns mais perto do centro, outros mais longe). Clampado à
+ * banda [minR, maxR] para nunca invadir o zodíaco/centro. Puro (sem estado).
  */
 function declutterRing<T extends { longitude: number }>(
-  items: T[], ascDeg: number, cx: number, cy: number, R: number, tickR: number, glyphDeg: number,
+  items: T[], ascDeg: number, cx: number, cy: number, R: number, minR: number, maxR: number, step: number, glyphDeg: number,
 ): PlacedPlanet<T>[] {
   const withAngle = items
     .map((p) => ({ item: p, trueAngle: lonToSvgAngle(p.longitude, ascDeg) }))
     .sort((a, b) => a.trueAngle - b.trueAngle)
-  const display = new Array<number>(withAngle.length)
+  const radius = new Array<number>(withAngle.length).fill(R)
   let i = 0
   while (i < withAngle.length) {
     let j = i
     while (j + 1 < withAngle.length && angShort(withAngle[j + 1].trueAngle, withAngle[j].trueAngle) < glyphDeg) j++
     const n = j - i + 1
-    if (n === 1) {
-      display[i] = withAngle[i].trueAngle
-    } else {
-      const first = withAngle[i].trueAngle
-      const center = first + (withAngle[j].trueAngle - first) / 2
-      for (let k = 0; k < n; k++) display[i + k] = center + (k - (n - 1) / 2) * glyphDeg
+    for (let k = 0; k < n; k++) {
+      const r = R + (k - (n - 1) / 2) * step
+      radius[i + k] = Math.max(minR, Math.min(maxR, r))
     }
     i = j + 1
   }
   return withAngle.map((w, idx) => {
-    const a = display[idx]
-    const pos = polarToXY(cx, cy, R, a)
-    const t = polarToXY(cx, cy, tickR, w.trueAngle)
-    return {
-      ...(w.item as T),
-      trueAngle: w.trueAngle, svgAngle: a, sx: pos.x, sy: pos.y, tickX: t.x, tickY: t.y,
-      displaced: Math.abs(a - w.trueAngle) > 0.4,
-    }
+    const pos = polarToXY(cx, cy, radius[idx], w.trueAngle)
+    return { ...(w.item as T), trueAngle: w.trueAngle, sx: pos.x, sy: pos.y, radius: radius[idx] }
   })
 }
 
@@ -185,18 +176,22 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const R_PLANET = svgSize * 0.21 * scale    // posição dos planetas natais
   const R_INNER = svgSize * 0.14 * scale     // círculo central (aspectos)
 
-  // Separação angular mínima entre glifos (derivada do tamanho do glifo no anel).
-  const glyphDegNatal = Math.min(26, (2 * svgSize * 0.040 / R_PLANET) * (180 / Math.PI) * 0.85)
-  const glyphDegTransit = Math.min(22, (2 * svgSize * 0.034 / R_TRANSIT) * (180 / Math.PI) * 0.85)
+  // Glifos MENORES (pedido do João) + empilhamento radial dentro da banda.
+  const discNatal = svgSize * (showTransits ? 0.030 : 0.034)
+  const discTransit = svgSize * 0.028
+  const stepNatal = discNatal * 2.1
+  const stepTransit = discTransit * 2.1
+  const glyphDegNatal = Math.min(20, (2 * discNatal / R_PLANET) * (180 / Math.PI))
+  const glyphDegTransit = Math.min(18, (2 * discTransit / R_TRANSIT) * (180 / Math.PI))
 
   const planetPositions = useMemo(
-    () => declutterRing(natalPlanets, ascDeg, cx, cy, R_PLANET, R_HOUSE_IN, glyphDegNatal),
-    [natalPlanets, ascDeg, cx, cy, R_PLANET, R_HOUSE_IN, glyphDegNatal],
+    () => declutterRing(natalPlanets, ascDeg, cx, cy, R_PLANET, R_INNER + discNatal + 2, R_HOUSE_IN - discNatal - 1, stepNatal, glyphDegNatal),
+    [natalPlanets, ascDeg, cx, cy, R_PLANET, R_INNER, R_HOUSE_IN, discNatal, stepNatal, glyphDegNatal],
   )
 
   const transitPositions = useMemo(
-    () => (showTransits ? declutterRing(transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER, glyphDegTransit) : []),
-    [showTransits, transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER, glyphDegTransit],
+    () => (showTransits ? declutterRing(transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER + discTransit + 2, svgSize * 0.485 - discTransit, stepTransit, glyphDegTransit) : []),
+    [showTransits, transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER, discTransit, stepTransit, glyphDegTransit, svgSize],
   )
 
   // Linhas de aspecto trânsito→natal: do planeta em trânsito (anel externo) ao
@@ -369,21 +364,14 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               </>
             )}
 
-            {/* Leader ticks: liga o glifo natal deslocado à longitude verdadeira */}
-            {planetPositions.map(p => p.displaced ? (
-              <Line key={`ntick-${p.name}`} x1={p.tickX} y1={p.tickY} x2={p.sx} y2={p.sy}
-                stroke="rgba(255,255,255,0.22)" strokeWidth={0.6} />
-            ) : null)}
-
-            {/* Planetas natais */}
+            {/* Planetas natais (radial: mesmo ângulo, raios variados quando juntos) */}
             {planetPositions.map(p => {
               const color = PLANET_COLORS[p.name] || '#fff'
-              const discR = svgSize * (showTransits ? 0.036 : 0.042)
               return (
                 <G key={p.name} onPress={() => setSelectedPlanet(p)}>
-                  <Circle cx={p.sx} cy={p.sy} r={discR} fill="#161a22" stroke={color} strokeWidth={1.2} />
+                  <Circle cx={p.sx} cy={p.sy} r={discNatal} fill="#161a22" stroke={color} strokeWidth={1.1} />
                   <SvgText x={p.sx} y={p.sy}
-                    fontSize={svgSize * (showTransits ? 0.032 : 0.038)}
+                    fontSize={discNatal * 1.5}
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     fill={color}
@@ -392,9 +380,9 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                   </SvgText>
                   {p.isRetrograde && (
                     <SvgText
-                      x={p.sx + svgSize * 0.028}
-                      y={p.sy - svgSize * 0.028}
-                      fontSize={svgSize * 0.022}
+                      x={p.sx + discNatal * 0.85}
+                      y={p.sy - discNatal * 0.85}
+                      fontSize={discNatal * 0.9}
                       fill="#f87171"
                     >
                       ℞
@@ -409,12 +397,9 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               const color = PLANET_COLORS[p.name] || '#6EE7E7'
               return (
                 <G key={`t-${p.name}`} onPress={() => setSelectedPlanet(p)}>
-                  {p.displaced ? (
-                    <Line x1={p.tickX} y1={p.tickY} x2={p.sx} y2={p.sy} stroke="rgba(110,231,231,0.3)" strokeWidth={0.6} />
-                  ) : null}
-                  <Circle cx={p.sx} cy={p.sy} r={svgSize * 0.034} fill="#0e2222" stroke={color} strokeWidth={1} />
+                  <Circle cx={p.sx} cy={p.sy} r={discTransit} fill="#0e2222" stroke={color} strokeWidth={1} />
                   <SvgText x={p.sx} y={p.sy}
-                    fontSize={svgSize * 0.03}
+                    fontSize={discTransit * 1.5}
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     fill={color}
@@ -422,7 +407,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                     {PLANET_SYMBOLS[p.name] || '●'}
                   </SvgText>
                   {p.isRetrograde ? (
-                    <SvgText x={p.sx + svgSize * 0.024} y={p.sy - svgSize * 0.024} fontSize={svgSize * 0.018} fill="#f87171">℞</SvgText>
+                    <SvgText x={p.sx + discTransit * 0.85} y={p.sy - discTransit * 0.85} fontSize={discTransit * 0.9} fill="#f87171">℞</SvgText>
                   ) : null}
                 </G>
               )
@@ -440,6 +425,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             })()}
           </Svg>
         </View>
+
+        {/* Grade de aspectos (aspectarian) — matriz planeta×planeta abaixo da roda */}
+        {natalPlanets.length >= 2 && aspects.length > 0 ? (
+          <View style={styles.aspectGridWrap}>
+            <Text style={styles.aspectGridTitle}>
+              {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
+            </Text>
+            <AspectGrid planets={natalPlanets} aspects={aspects} />
+          </View>
+        ) : null}
 
         {/* Legenda de planetas */}
         {showLegend ? (
@@ -523,6 +518,23 @@ const styles = StyleSheet.create({
   wheelWrap: {
     alignItems: 'center',
     marginBottom: 16,
+  },
+  aspectGridWrap: {
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: '#12141c',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#222836',
+    paddingVertical: 10,
+  },
+  aspectGridTitle: {
+    color: '#8892a4',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
 
   legend: {

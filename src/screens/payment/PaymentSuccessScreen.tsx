@@ -52,6 +52,7 @@ export default function PaymentSuccessScreen() {
         if (!active) return
         if (status?.isActive) {
           setStatusMessage(t('payment.success.active'))
+          try { require('../../services/eventos').registrar('assinou') } catch { /* telemetria */ }
         } else if (status?.status === 'pending') {
           setStatusMessage(t('payment.success.pending'))
         } else {

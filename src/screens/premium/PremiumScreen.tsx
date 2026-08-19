@@ -1528,6 +1528,7 @@ export default function PremiumScreen() {
         email={user?.email || ''}
         name={user?.displayName || undefined}
         onClose={() => setPixPlan(null)}
+        onActivated={() => { try { require('../../services/eventos').registrar('assinou', { value: pixPlan?.price }) } catch { /* telemetria */ } }}
       />
     </LinearGradient>
   )

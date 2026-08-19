@@ -13,6 +13,7 @@ import { registerAndroidDeviceToken } from './src/services/notifications/registe
 import { useAuth } from './src/hooks/useAuth';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ensureStatusPolicyLoaded } from './src/services/status/StatusPolicyService';
+import { initMetaPixel } from './src/services/metaPixel';
 import ErrorReportingService from './src/services/firebase/ErrorReportingService';
 import * as Sentry from '@sentry/react-native';
 
@@ -32,6 +33,7 @@ function AppContent() {
 
   useEffect(() => {
     ensureStatusPolicyLoaded().catch(() => {})
+    initMetaPixel() // Meta Pixel (web/PWA, se EXPO_PUBLIC_META_PIXEL_ID setado)
   }, [])
 
   if (loading) return null; // Pode exibir um splash ou loader
