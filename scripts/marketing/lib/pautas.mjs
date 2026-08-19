@@ -23,6 +23,7 @@ import {
 } from './eventos.mjs'
 import { mapaDoCeu, aspectosDoCeu } from './ceu.mjs'
 import { temaEducativo, falaComQuemLe } from './educativo.mjs'
+import { ehEducativo } from './slidesEducativo.mjs'
 import { escrever } from './vozes.mjs'
 import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
 import { RECURSO, CHAVES_DE_RECURSO } from './textosRecurso.mjs'
@@ -187,15 +188,17 @@ const CORPOS_DE_PESO = ['Sun', 'Venus', 'Mars', 'Mercury', 'Jupiter', 'Saturn']
  * era justamente o formato que saiu da produção. O João viu: "no editorial não
  * tem mais os carrosséis?".
  *
- * Carrossel só no eclipse: são treze slides com um texto por ascendente, e é a
- * única peça que sustenta isso. Ingresso e lunação dão post e story. Educativo,
- * grau crítico e Lua fora de curso dão post — não sustentam story próprio nem
- * doze slides.
+ * Eclipse leva os treze slides por ascendente. Ingresso e lunação dão post e
+ * story. EDUCATIVO agora é CARROSSEL: o João reviu — "educativo são os
+ * carrosséis, com mais conteúdo; post é para anunciar eventos". O texto curado
+ * é fatiado em capa + frases + fecho (`slidesEducativo.mjs`), então qualquer
+ * educativo sustenta o carrossel sem precisar de doze slides escritos à mão.
  *
  * O vídeo não aparece: saiu do automático enquanto o template é refeito.
  */
 export function formatosDoAssunto(ev) {
   if (ev?.tipo === 'eclipse') return ['post', 'carrossel', 'story']
+  if (ehEducativo(ev?.tipo) || ev?.natureza === 'educativo') return ['carrossel']
   if (ev?.tipo === 'fase') return ['post', 'story']
   if (ev?.tipo === 'ingresso' && CORPOS_DE_PESO.includes(ev.corpo)) return ['post', 'story']
   /**

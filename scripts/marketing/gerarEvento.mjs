@@ -16,7 +16,7 @@
  *   node scripts/marketing/gerarEvento.mjs --data=2026-08-23
  *   node scripts/marketing/gerarEvento.mjs --data=2026-08-23 --upload
  */
-import { mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdir, writeFile, rm, copyFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -27,6 +27,8 @@ import process from 'node:process'
 import { lerLiterais } from './lib/catalogo.mjs'
 import { mapaDoCeu } from './lib/ceu.mjs'
 import { montarFoto } from './lib/templateFoto.mjs'
+import { montarPeca, montarSlide } from './lib/templatePeca.mjs'
+import { ehEducativo, slidesDoEducativo } from './lib/slidesEducativo.mjs'
 import { svgDoSigno } from './lib/simbolos.mjs'
 import { carregarCatalogos, primeirasFrases } from './lib/interpretacao.mjs'
 import { casasPorAscendente } from './lib/fatos.mjs'
@@ -151,11 +153,14 @@ async function renderizar(chrome, html, destino, altura) {
   await writeFile(temp, html, 'utf8')
   await execFileAsync(chrome, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    '--force-device-scale-factor=1',
+    // 2× = 2160px de largura. O Instagram reduz para 1080, e o downscale de 2×
+    // dá anti-aliasing melhor que renderizar nativo em 1080 — texto e a roda
+    // saem mais nítidos. É a nitidez que o João pediu, sem tocar no layout.
+    '--force-device-scale-factor=2',
     ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     `--window-size=1080,${altura}`,
     `--screenshot=${destino}`,
-    '--virtual-time-budget=2500',
+    '--virtual-time-budget=4000',
     `file:///${temp.replace(/\\/g, '/')}`,
   ])
   await rm(temp, { force: true })
@@ -436,6 +441,13 @@ async function principal() {
     variacao: peca.variacao,
     // o protagonista viaja junto: peça da Lua não recebe foto do Sol
     corpo: peca.corpo,
+    // a roda real do dia + a direção visual: Nebulosa (dourada) no dia forte,
+    // Efeméride (quase lisa) no comum. O corpo do assunto é o realçado na roda.
+    data,
+    corpos: mapa.corpos,
+    forte: assunto.tipo === 'eclipse' || assunto.tipo === 'fase' || assunto.tipo === 'ingresso',
+    destaque: peca.corpo || null,
+    dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
   }
 
   /**
@@ -453,14 +465,41 @@ async function principal() {
       dadosDaTela: dadosDaTela(peca.tela, { mapa, limiares: STATUS_THRESHOLDS }),
       ...extra,
     })
-    : (extra) => montarFoto({ ...base, ...extra })
+    : (extra) => montarPeca({ ...base, ...extra })
 
-  await renderizar(chrome, montar({ formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
+  // `--formatos` vazio = tudo que o assunto comporta; marcado, manda a marcação
+  const querCarrossel = !args.formatos.length || args.formatos.includes('carrossel')
+  const eduCarrossel = ehEducativo(assunto.tipo) && querCarrossel
+
+  // O story sai sempre (com a roda; a tela dentro, no recurso).
   await renderizar(chrome, montar({ formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
 
   // as casas só quando o assunto acontece num signo: a Lua fora de curso está
   // entre dois, e conceito não acontece em lugar nenhum do zodíaco
   const casas = peca.casas ? casasPorAscendente(peca.signo) : null
+
+  const slides = []
+
+  /**
+   * O CARROSSEL EDUCATIVO: educativo vira carrossel, não post.
+   *
+   * O João: "educativo são os carrosséis, com mais conteúdo; post é para
+   * anunciar eventos". O texto curado é fatiado em capa + frases + fecho. A
+   * capa (a roda do dia) também vira o feed.png, para o Estúdio ter a imagem de
+   * capa e o fallback do post.
+   */
+  if (eduCarrossel) {
+    const eduSlides = slidesDoEducativo(base, peca)
+    for (let i = 0; i < eduSlides.length; i++) {
+      const nome = `${String(i + 1).padStart(2, '0')}.png`
+      await renderizar(chrome, montarSlide(eduSlides[i]), path.join(pasta, nome), 1350)
+      slides.push(eduSlides[i])
+      console.log(`  slide ${i + 1}/${eduSlides.length}  ${eduSlides[i].tipo}`)
+    }
+    await copyFile(path.join(pasta, '01.png'), path.join(pasta, 'feed.png'))
+  } else {
+    await renderizar(chrome, montar({ formato: 'feed' }), path.join(pasta, 'feed.png'), 1350)
+  }
 
   /**
    * O CARROSSEL DO ECLIPSE, um slide por ascendente.
@@ -473,10 +512,6 @@ async function principal() {
    * Só no eclipse. Ingresso e lunação não sustentam treze slides, e carrossel
    * por qualquer motivo foi o que encheu o feed antes.
    */
-  // `--formatos` vazio = tudo que o assunto comporta; marcado, manda a marcação
-  const querCarrossel = !args.formatos.length || args.formatos.includes('carrossel')
-
-  const slides = []
   if (assunto.tipo === 'eclipse' && casas && querCarrossel) {
     slides.push({ ...base, texto: peca.legendaAbre, simbolo: '' })
     for (const { ascendente, casa } of casas) {
