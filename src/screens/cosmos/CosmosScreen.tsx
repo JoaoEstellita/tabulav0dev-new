@@ -242,6 +242,22 @@ export default function CosmosScreen() {
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
   const [westMode, setWestMode] = useState<'natal' | 'transitos'>('natal')
 
+  // Grade de aspectos (modo Trânsitos): tocar numa célula rola até a leitura do
+  // trânsito na lista embutida abaixo e destaca o card por instantes. O scroll é
+  // web-only (DOM); o destaque funciona nos dois.
+  const [txHighlight, setTxHighlight] = useState<string | null>(null)
+  const txHighlightTimer = useRef<any>(null)
+  const handleSelectTransitAspect = useCallback((cellId: string) => {
+    if (!cellId) return
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const el = document.getElementById(cellId)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    setTxHighlight(cellId)
+    if (txHighlightTimer.current) clearTimeout(txHighlightTimer.current)
+    txHighlightTimer.current = setTimeout(() => setTxHighlight(null), 2400)
+  }, [])
+
   const registerAnchor = useCallback((key: string, node: any) => {
     if (node) anchorsRef.current[key] = node
     else delete anchorsRef.current[key]
@@ -411,12 +427,12 @@ export default function CosmosScreen() {
               </TouchableOpacity>
             </View>
 
-            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} />
+            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} />
 
             {westMode === 'transitos' ? (
               <>
                 {/* Leitura dos trânsitos na MESMA página (embutida, sem navegar). */}
-                <PersonalTransitsScreen embedded />
+                <PersonalTransitsScreen embedded highlightId={txHighlight} />
               </>
             ) : (
               <>

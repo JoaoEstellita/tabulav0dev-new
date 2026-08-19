@@ -117,6 +117,12 @@ type ChartContentProps = {
    * abrir espaço. Usado pela aba Trânsitos (toggle Natal | Trânsitos no Cosmos).
    */
   showTransits?: boolean
+  /**
+   * No modo Trânsitos, torna as células da grade de aspectos tocáveis: ao tocar,
+   * chama com o id do trânsito (casa com o nativeID do card na leitura embutida
+   * abaixo) para rolar até a interpretação. Web-only (scroll por DOM).
+   */
+  onSelectTransitAspect?: (cellId: string) => void
 }
 
 /**
@@ -126,7 +132,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -433,7 +439,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               <Text style={styles.aspectGridTitle}>
                 {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
               </Text>
-              <AspectGrid cross rowPlanets={transitPlanets} colPlanets={natalPlanets} aspects={tnAspects} />
+              <AspectGrid cross rowPlanets={transitPlanets} colPlanets={natalPlanets} aspects={tnAspects} onSelectCell={onSelectTransitAspect} />
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && aspects.length > 0 ? (

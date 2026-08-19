@@ -157,7 +157,12 @@ function TriGrid({ planets, aspects }: { planets: PlanetLike[]; aspects: AspectL
 const ROW_TONE = "#67E8F9" // trânsito (ciano)
 const COL_TONE = "#FFD700" // natal (dourado)
 
-function CrossGrid({ rowPlanets, colPlanets, aspects }: { rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[] }) {
+// id estável de um trânsito→natal (casa com o nativeID do card na lista abaixo).
+// transit e natal em EN (Sun…), type em PT ("trígono") — norm iguala os dois lados.
+export const transitCellId = (transit: string, type: string, natal: string) =>
+  `txr-${norm(transit)}-${norm(type)}-${norm(natal)}`
+
+function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; onSelectCell?: (cellId: string) => void }) {
   const list = aspects || []
   const byCell = new Map<string, AspectLike>() // chave `${transito}>${natal}`
   const rowInv = new Set<string>()
@@ -204,10 +209,16 @@ function CrossGrid({ rowPlanets, colPlanets, aspects }: { rowPlanets: PlanetLike
                 {cols.map((c, j) => {
                   const left = pad + hdr + j * CELL
                   const asp = byCell.get(`${r}>${c}`)
+                  const tappable = !!(asp && onSelectCell)
                   return (
                     <React.Fragment key={`x-${i}-${j}`}>
-                      <Rect x={left} y={top} width={CELL} height={CELL} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
+                      <Rect x={left} y={top} width={CELL} height={CELL} fill={tappable ? "rgba(103,232,249,0.05)" : "rgba(255,255,255,0.02)"} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
                       <AspectCell left={left} top={top} asp={asp} />
+                      {tappable ? (
+                        // Rect transparente por cima captura o toque → abre a leitura abaixo.
+                        <Rect x={left} y={top} width={CELL} height={CELL} fill="rgba(0,0,0,0)"
+                          onPress={() => onSelectCell!(transitCellId(r, asp!.type, c))} />
+                      ) : null}
                     </React.Fragment>
                   )
                 })}
@@ -237,12 +248,12 @@ function CrossGrid({ rowPlanets, colPlanets, aspects }: { rowPlanets: PlanetLike
 
 // -------------------------------------------------------------------------
 type AspectGridProps =
-  | { cross?: false; planets: PlanetLike[]; aspects: AspectLike[]; rowPlanets?: undefined; colPlanets?: undefined }
-  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined }
+  | { cross?: false; planets: PlanetLike[]; aspects: AspectLike[]; rowPlanets?: undefined; colPlanets?: undefined; onSelectCell?: undefined }
+  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined; onSelectCell?: (cellId: string) => void }
 
 export default function AspectGrid(props: AspectGridProps) {
   if (props.cross) {
-    return <CrossGrid rowPlanets={props.rowPlanets} colPlanets={props.colPlanets} aspects={props.aspects} />
+    return <CrossGrid rowPlanets={props.rowPlanets} colPlanets={props.colPlanets} aspects={props.aspects} onSelectCell={props.onSelectCell} />
   }
   return <TriGrid planets={props.planets} aspects={props.aspects} />
 }

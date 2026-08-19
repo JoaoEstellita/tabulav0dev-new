@@ -20,7 +20,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 
-export default function PersonalTransitsScreen({ embedded = false }: { embedded?: boolean } = {}) {
+export default function PersonalTransitsScreen({ embedded = false, highlightId = null }: { embedded?: boolean; highlightId?: string | null } = {}) {
   const { t, language } = useAppLanguage()
   const route = useRoute()
   const navigation = useNavigation()
@@ -205,8 +205,13 @@ export default function PersonalTransitsScreen({ embedded = false }: { embedded?
         windowsIntersect(item.window as any, c.window as any),
     )
 
+    // id estável (casa com o transitCellId da grade de aspectos) → âncora de scroll
+    // e alvo do destaque quando o usuário toca a célula lá em cima.
+    const cardId = `txr-${norm(item.transitPlanet)}-${norm(item.type)}-${norm(item.natalPlanet)}`
+    const destacado = !!highlightId && highlightId === cardId
+
     return (
-      <View key={key} style={styles.cardWrap}>
+      <View key={key} nativeID={embedded ? cardId : undefined} style={[styles.cardWrap, destacado && styles.cardWrapHighlight]}>
         <TransitInsightCard
           statusLabel={nature.label}
           statusColor={nature.color}
@@ -381,6 +386,15 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   cardWrap: { marginBottom: 12 },
+  cardWrapHighlight: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#67E8F9',
+    shadowColor: '#67E8F9',
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
   section: { marginBottom: 18 },
   progRow: {
     flexDirection: 'row',
