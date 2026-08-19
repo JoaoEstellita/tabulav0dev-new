@@ -1787,30 +1787,33 @@ export default function GroupsScreen() {
   ) => {
     const expanded = expandedSyn.has(key)
     const score = synastryScore(aspects)
-    const shown = expanded ? aspects : aspects.slice(0, 5)
+    const shown = expanded ? aspects : [] // compacto não mostra aspecto nenhum
     const isPt = language === 'pt-BR'
     const overlays = expanded && chartA && chartB
       ? synastryHouseOverlays(chartA, chartB, aName || '', bName || '', language)
       : []
+    if (aspects.length === 0) {
+      return <Text style={styles.synastryEmpty}>{tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}</Text>
+    }
+    // Box INTEIRO clicável (sem toggle separado). Compacto = só o resumo; expandido
+    // = aspectos com frase interpretativa + Guna + casas.
     return (
-      <>
-        {aspects.length > 0 ? (
-          <View style={styles.synastryCompatRow}>
-            <Text style={styles.synastryCompatText}>
-              {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
-            </Text>
-            <Text style={styles.synastryCompatMeta}>
-              {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}`}
-            </Text>
-          </View>
-        ) : null}
-        {aspects.length === 0 ? (
-          <Text style={styles.synastryEmpty}>{tr('groups.synastry.none', 'Sem aspectos maiores relevantes.')}</Text>
+      <TouchableOpacity activeOpacity={0.9} onPress={() => toggleSyn(key)} style={styles.synastryBox}>
+        <View style={styles.synastryCompatRow}>
+          <Text style={styles.synastryCompatText}>
+            {`${tr('groups.synastry.compat.title', 'Compatibilidade')}: ${tr(`groups.synastry.compat.${score.bandKey}`, score.bandKey)} · ${score.pct}%`}
+          </Text>
+          <Text style={styles.synastryCompatMeta}>
+            {`${score.harmonics} ${tr('groups.synastry.harmonics', 'harmônicos')} · ${score.tensions} ${tr('groups.synastry.tensions', 'tensos')}  ${expanded ? '▴' : '▾'}`}
+          </Text>
+        </View>
+        {!expanded ? (
+          <Text style={styles.synastryHint}>{tr('groups.synastry.tapToExpand', 'Toque para ver a leitura completa')}</Text>
         ) : (
           shown.map((asp, index) => {
             const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
             const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
-            // Frase interpretativa em TODO aspecto (compacto e expandido), não só expandido.
+            // Frase interpretativa coerente com o aspecto (só no expandido).
             const line = synastryAspectLine(asp, language)
             return (
               <View key={`${key}-syn-${index}`} style={styles.synastryAspectItem}>
@@ -1826,14 +1829,7 @@ export default function GroupsScreen() {
             )
           })
         )}
-        {aspects.length > 0 ? (
-          <TouchableOpacity style={styles.synastryToggle} onPress={() => toggleSyn(key)} activeOpacity={0.7}>
-            <Text style={styles.synastryToggleText}>
-              {expanded ? tr('groups.synastry.hideFull', 'Recolher ▴') : tr('groups.synastry.viewFull', 'Ver leitura completa ▾')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-        {guna ? (
+        {expanded && guna ? (
           <View style={styles.gunaBox}>
             {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}
             <Text style={styles.gunaTitle}>
@@ -1863,7 +1859,7 @@ export default function GroupsScreen() {
             ))}
           </View>
         ) : null}
-      </>
+      </TouchableOpacity>
     )
   }
 
@@ -3762,6 +3758,19 @@ const styles = StyleSheet.create({
     color: "#8892a4",
     fontSize: 11,
     marginTop: 2,
+  },
+  synastryBox: {
+    borderWidth: 1,
+    borderColor: "rgba(255,215,0,0.14)",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 6,
+    backgroundColor: "rgba(255,215,0,0.04)",
+  },
+  synastryHint: {
+    color: "#8890B5",
+    fontSize: 12,
+    fontStyle: "italic",
   },
   synastryCompatRow: {
     marginBottom: 8,
