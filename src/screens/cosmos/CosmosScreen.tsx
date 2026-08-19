@@ -238,6 +238,8 @@ export default function CosmosScreen() {
   const anchorsRef = useRef<Record<string, any>>({})
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
+  // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
+  const [westMode, setWestMode] = useState<'natal' | 'transitos'>('natal')
 
   const registerAnchor = useCallback((key: string, node: any) => {
     if (node) anchorsRef.current[key] = node
@@ -398,29 +400,55 @@ export default function CosmosScreen() {
           <VedicProfileContent transitData={transitData} loading={loading} natalAscDeg={natalAscDeg} />
         ) : (
           <>
-            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} />
-
-            {/* Navegação: chips das seções acima, fita de planetas abaixo (mesma da Home) */}
-            <View style={styles.navBar}>
-              <View style={styles.navChips}>
-                {SECTION_CHIPS.map((c) => (
-                  <TouchableOpacity
-                    key={c.key}
-                    style={styles.navChip}
-                    activeOpacity={0.8}
-                    onPress={() => scrollToAnchor(c.key)}
-                  >
-                    <Text style={styles.navChipText}>{tl(c.pt, c.en, c.es, c.it)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <PlanetQuickNav
-                onSelectPlanet={(planet) => scrollToAnchor(`planet:${planet}`)}
-                showCosmosEntry={false}
-              />
+            {/* Sub-toggle: roda natal pura vs bi-roda (trânsitos de agora sobre o natal). */}
+            <View style={styles.modeToggle}>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
+                <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
+                <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
+              </TouchableOpacity>
             </View>
 
-            <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
+            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} />
+
+            {westMode === 'transitos' ? (
+              <>
+                <Text style={styles.transitHint}>
+                  {tl('Anel externo = planetas em trânsito agora. Interno = seu mapa natal.',
+                    'Outer ring = planets transiting now. Inner = your natal chart.',
+                    'Anillo externo = planetas en transito ahora. Interno = tu carta natal.',
+                    'Anello esterno = pianeti in transito ora. Interno = la tua carta natale.')}
+                </Text>
+                <TouchableOpacity style={styles.transitCta} activeOpacity={0.85} onPress={() => (navigation as any).navigate('PersonalTransits')}>
+                  <Text style={styles.transitCtaText}>{tl('Ver leitura completa dos trânsitos →', 'See full transits reading →', 'Ver lectura completa de transitos →', 'Vedi lettura completa dei transiti →')}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {/* Navegação: chips das seções acima, fita de planetas abaixo (mesma da Home) */}
+                <View style={styles.navBar}>
+                  <View style={styles.navChips}>
+                    {SECTION_CHIPS.map((c) => (
+                      <TouchableOpacity
+                        key={c.key}
+                        style={styles.navChip}
+                        activeOpacity={0.8}
+                        onPress={() => scrollToAnchor(c.key)}
+                      >
+                        <Text style={styles.navChipText}>{tl(c.pt, c.en, c.es, c.it)}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <PlanetQuickNav
+                    onSelectPlanet={(planet) => scrollToAnchor(`planet:${planet}`)}
+                    showCosmosEntry={false}
+                  />
+                </View>
+
+                <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -469,6 +497,30 @@ const styles = StyleSheet.create({
   },
   modeBtnTextActive: {
     color: '#1A1A1A',
+  },
+  transitHint: {
+    color: '#8892a4',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+    paddingHorizontal: 24,
+    marginTop: 6,
+  },
+  transitCta: {
+    alignSelf: 'center',
+    marginTop: 14,
+    marginBottom: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(110,231,231,0.4)',
+    backgroundColor: 'rgba(110,231,231,0.08)',
+  },
+  transitCtaText: {
+    color: '#6EE7E7',
+    fontSize: 14,
+    fontWeight: '700',
   },
   navChips: {
     flexDirection: 'row',

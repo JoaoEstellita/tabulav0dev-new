@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useNavigation } from '@react-navigation/native'
 import { Calendar, LocaleConfig } from 'react-native-calendars'
+import ForecastEphemerisChart from '../../components/ForecastEphemerisChart'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import TransitInsightCard from '../../components/TransitInsightCard'
@@ -710,6 +711,7 @@ export default function ForecastScreen() {
   const [areaSummaryLoading, setAreaSummaryLoading] = useState(false)
   const [areaSummaryDegraded, setAreaSummaryDegraded] = useState(false)
   const [expandedArea, setExpandedArea] = useState<string | null>(null)
+  const [forecastView, setForecastView] = useState<'calendario' | 'grafico'>('calendario')
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -1623,6 +1625,24 @@ export default function ForecastScreen() {
             )}
           </View>
           <View style={styles.calendarWrapper}>
+            {/* Toggle Calendário | Gráfico (efeméride gráfica) */}
+            <View style={styles.forecastViewToggle}>
+              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'calendario' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('calendario')}>
+                <Text style={[styles.forecastViewText, forecastView === 'calendario' && styles.forecastViewTextActive]}>{tr('forecast.view.calendar', 'Calendário')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'grafico' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('grafico')}>
+                <Text style={[styles.forecastViewText, forecastView === 'grafico' && styles.forecastViewTextActive]}>{tr('forecast.view.graph', 'Gráfico')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {forecastView === 'grafico' ? (
+              <ForecastEphemerisChart
+                events={(data?.events as any) || []}
+                rangeFrom={data?.range?.from || rangeFromStr}
+                rangeTo={data?.range?.to || rangeToStr}
+                language={language}
+              />
+            ) : (
             <MemoCalendar
               locale={language}
               markingType="multi-dot"
@@ -1646,6 +1666,7 @@ export default function ForecastScreen() {
                 selectedDayTextColor: '#0F0F23',
               }}
             />
+            )}
             {dayRangeError && (
               <View style={styles.dayRangeWarning}>
                 <Text style={styles.dayRangeWarningText}>
@@ -2019,6 +2040,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
     padding: 8,
+  },
+  forecastViewToggle: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    padding: 3,
+    marginBottom: 10,
+  },
+  forecastViewBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+  forecastViewBtnActive: {
+    backgroundColor: '#FFD700',
+  },
+  forecastViewText: {
+    color: '#8892a4',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  forecastViewTextActive: {
+    color: '#1A1A1A',
   },
   dayRangeWarning: {
     marginTop: 8,

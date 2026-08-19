@@ -58,6 +58,53 @@ function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
 }
 
+/** Distância angular mais curta (0-180) entre dois ângulos. */
+function angShort(a: number, b: number) {
+  return Math.abs(((a - b) % 360 + 540) % 360 - 180)
+}
+
+type PlacedPlanet<T> = T & { trueAngle: number; svgAngle: number; sx: number; sy: number; tickX: number; tickY: number; displaced: boolean }
+
+/**
+ * Anti-colisão de glifos num anel: quando dois planetas ficam mais próximos que
+ * `glyphDeg`, espalha o cluster angularmente (simétrico ao redor do centro),
+ * mantendo `trueAngle` (longitude real) para desenhar um tick/leader do glifo
+ * deslocado até sua posição verdadeira. Assim os posicionamentos ficam legíveis
+ * sem mentir sobre onde o planeta está. Puro (sem estado).
+ */
+function declutterRing<T extends { longitude: number }>(
+  items: T[], ascDeg: number, cx: number, cy: number, R: number, tickR: number, glyphDeg: number,
+): PlacedPlanet<T>[] {
+  const withAngle = items
+    .map((p) => ({ item: p, trueAngle: lonToSvgAngle(p.longitude, ascDeg) }))
+    .sort((a, b) => a.trueAngle - b.trueAngle)
+  const display = new Array<number>(withAngle.length)
+  let i = 0
+  while (i < withAngle.length) {
+    let j = i
+    while (j + 1 < withAngle.length && angShort(withAngle[j + 1].trueAngle, withAngle[j].trueAngle) < glyphDeg) j++
+    const n = j - i + 1
+    if (n === 1) {
+      display[i] = withAngle[i].trueAngle
+    } else {
+      const first = withAngle[i].trueAngle
+      const center = first + (withAngle[j].trueAngle - first) / 2
+      for (let k = 0; k < n; k++) display[i + k] = center + (k - (n - 1) / 2) * glyphDeg
+    }
+    i = j + 1
+  }
+  return withAngle.map((w, idx) => {
+    const a = display[idx]
+    const pos = polarToXY(cx, cy, R, a)
+    const t = polarToXY(cx, cy, tickR, w.trueAngle)
+    return {
+      ...(w.item as T),
+      trueAngle: w.trueAngle, svgAngle: a, sx: pos.x, sy: pos.y, tickX: t.x, tickY: t.y,
+      displaced: Math.abs(a - w.trueAngle) > 0.4,
+    }
+  })
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────
 type ChartContentProps = {
   transitData: LocalTransitData | null
@@ -73,6 +120,12 @@ type ChartContentProps = {
    * Asc e cúspides caem no `transitData.currentTransits` (já é a carta passada).
    */
   chartMeta?: { skipSelfFetch?: boolean }
+  /**
+   * Bi-roda: sobrepõe os planetas EM TRÂNSITO (céu de agora) num anel externo ao
+   * mapa natal, com as linhas de aspecto trânsito→natal. Encolhe o natal para
+   * abrir espaço. Usado pela aba Trânsitos (toggle Natal | Trânsitos no Cosmos).
+   */
+  showTransits?: boolean
 }
 
 /**
@@ -82,7 +135,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -114,26 +167,54 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const mcDeg = ct?.natalMidheaven ?? 0
   const houseCusps: number[] = firestoreCusps ?? ct?.natalHouses ?? []
   const aspects = ct?.aspectsNatalToNatal ?? []
+  // Bi-roda: planetas em trânsito (céu agora) + aspectos trânsito→natal.
+  const transitPlanets: RealPlanetPosition[] = showTransits ? ((ct as any)?.planets ?? []) : []
+  const tnAspects: any[] = showTransits ? ((ct as any)?.aspectsTransitsToNatalTN ?? []) : []
 
-  // Dimensões do SVG
+  // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
   const svgSize = Math.min(width - 32, 380)
   const cx = svgSize / 2
   const cy = svgSize / 2
+  const scale = showTransits ? 0.80 : 1
 
-  const R_OUTER = svgSize * 0.46   // borda externa (zodíaco)
-  const R_ZODIAC_IN = svgSize * 0.38 // borda interna do zodíaco
-  const R_HOUSE_OUT = svgSize * 0.36 // borda externa das casas
-  const R_HOUSE_IN = svgSize * 0.28  // borda interna das casas
-  const R_PLANET = svgSize * 0.21    // posição dos planetas
-  const R_INNER = svgSize * 0.14     // círculo central (aspectos)
+  const R_TRANSIT = svgSize * 0.45   // anel externo dos planetas em trânsito (só bi-roda)
+  const R_OUTER = svgSize * 0.46 * scale   // borda externa (zodíaco)
+  const R_ZODIAC_IN = svgSize * 0.38 * scale // borda interna do zodíaco
+  const R_HOUSE_OUT = svgSize * 0.36 * scale // borda externa das casas
+  const R_HOUSE_IN = svgSize * 0.28 * scale  // borda interna das casas
+  const R_PLANET = svgSize * 0.21 * scale    // posição dos planetas natais
+  const R_INNER = svgSize * 0.14 * scale     // círculo central (aspectos)
 
-  const planetPositions = useMemo(() => {
-    return natalPlanets.map(p => {
-      const angle = lonToSvgAngle(p.longitude, ascDeg)
-      const { x, y } = polarToXY(cx, cy, R_PLANET, angle)
-      return { ...p, svgAngle: angle, sx: x, sy: y }
-    })
-  }, [natalPlanets, ascDeg, cx, cy, R_PLANET])
+  // Separação angular mínima entre glifos (derivada do tamanho do glifo no anel).
+  const glyphDegNatal = Math.min(26, (2 * svgSize * 0.040 / R_PLANET) * (180 / Math.PI) * 0.85)
+  const glyphDegTransit = Math.min(22, (2 * svgSize * 0.034 / R_TRANSIT) * (180 / Math.PI) * 0.85)
+
+  const planetPositions = useMemo(
+    () => declutterRing(natalPlanets, ascDeg, cx, cy, R_PLANET, R_HOUSE_IN, glyphDegNatal),
+    [natalPlanets, ascDeg, cx, cy, R_PLANET, R_HOUSE_IN, glyphDegNatal],
+  )
+
+  const transitPositions = useMemo(
+    () => (showTransits ? declutterRing(transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER, glyphDegTransit) : []),
+    [showTransits, transitPlanets, ascDeg, cx, cy, R_TRANSIT, R_OUTER, glyphDegTransit],
+  )
+
+  // Linhas de aspecto trânsito→natal: do planeta em trânsito (anel externo) ao
+  // planeta natal (anel natal). Reusa o mesmo ASPECT_COLORS.
+  const tnAspectLines = useMemo(() => {
+    if (!showTransits) return []
+    return tnAspects.slice(0, 24).map((asp: any, idx: number) => {
+      const tName = asp.transitPlanet || asp.planet1 || asp.from
+      const nName = asp.natalPlanet || asp.planet2 || asp.to
+      const tp = transitPlanets.find((p) => p.name === tName)
+      const np = natalPlanets.find((p) => p.name === nName)
+      if (!tp || !np) return null
+      const pt1 = polarToXY(cx, cy, R_TRANSIT - svgSize * 0.05, lonToSvgAngle(tp.longitude, ascDeg))
+      const pt2 = polarToXY(cx, cy, R_PLANET, lonToSvgAngle(np.longitude, ascDeg))
+      const color = ASPECT_COLORS[String(asp.type || asp.aspect || '').toLowerCase()] || 'rgba(120,200,200,0.4)'
+      return { key: `tn-${idx}-${tName}-${nName}`, pt1, pt2, color }
+    }).filter(Boolean)
+  }, [showTransits, tnAspects, transitPlanets, natalPlanets, ascDeg, cx, cy, R_TRANSIT, R_PLANET, svgSize])
 
   const houseLines = useMemo(() => {
     if (houseCusps.length === 12) {
@@ -278,14 +359,31 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {/* Círculo interno (fundo aspectos) */}
             <Circle cx={cx} cy={cy} r={R_INNER} fill="#0d1018" stroke="#252b38" strokeWidth={1} />
 
-            {/* Planetas */}
+            {/* Bi-roda: anel de trânsito + linhas de aspecto trânsito→natal (atrás) */}
+            {showTransits && (
+              <>
+                <Circle cx={cx} cy={cy} r={R_TRANSIT + svgSize * 0.028} fill="none" stroke="#1c3a3a" strokeWidth={1} />
+                {tnAspectLines.map((l: any) => l && (
+                  <Line key={l.key} x1={l.pt1.x} y1={l.pt1.y} x2={l.pt2.x} y2={l.pt2.y} stroke={l.color} strokeWidth={0.7} />
+                ))}
+              </>
+            )}
+
+            {/* Leader ticks: liga o glifo natal deslocado à longitude verdadeira */}
+            {planetPositions.map(p => p.displaced ? (
+              <Line key={`ntick-${p.name}`} x1={p.tickX} y1={p.tickY} x2={p.sx} y2={p.sy}
+                stroke="rgba(255,255,255,0.22)" strokeWidth={0.6} />
+            ) : null)}
+
+            {/* Planetas natais */}
             {planetPositions.map(p => {
               const color = PLANET_COLORS[p.name] || '#fff'
+              const discR = svgSize * (showTransits ? 0.036 : 0.042)
               return (
                 <G key={p.name} onPress={() => setSelectedPlanet(p)}>
-                  <Circle cx={p.sx} cy={p.sy} r={svgSize * 0.042} fill="#161a22" stroke={color} strokeWidth={1.2} />
+                  <Circle cx={p.sx} cy={p.sy} r={discR} fill="#161a22" stroke={color} strokeWidth={1.2} />
                   <SvgText x={p.sx} y={p.sy}
-                    fontSize={svgSize * 0.038}
+                    fontSize={svgSize * (showTransits ? 0.032 : 0.038)}
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     fill={color}
@@ -302,6 +400,30 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
                       ℞
                     </SvgText>
                   )}
+                </G>
+              )
+            })}
+
+            {/* Planetas em TRÂNSITO (anel externo) — só na bi-roda */}
+            {showTransits && transitPositions.map(p => {
+              const color = PLANET_COLORS[p.name] || '#6EE7E7'
+              return (
+                <G key={`t-${p.name}`} onPress={() => setSelectedPlanet(p)}>
+                  {p.displaced ? (
+                    <Line x1={p.tickX} y1={p.tickY} x2={p.sx} y2={p.sy} stroke="rgba(110,231,231,0.3)" strokeWidth={0.6} />
+                  ) : null}
+                  <Circle cx={p.sx} cy={p.sy} r={svgSize * 0.034} fill="#0e2222" stroke={color} strokeWidth={1} />
+                  <SvgText x={p.sx} y={p.sy}
+                    fontSize={svgSize * 0.03}
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                    fill={color}
+                  >
+                    {PLANET_SYMBOLS[p.name] || '●'}
+                  </SvgText>
+                  {p.isRetrograde ? (
+                    <SvgText x={p.sx + svgSize * 0.024} y={p.sy - svgSize * 0.024} fontSize={svgSize * 0.018} fill="#f87171">℞</SvgText>
+                  ) : null}
                 </G>
               )
             })}
