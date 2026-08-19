@@ -1810,7 +1810,8 @@ export default function GroupsScreen() {
           shown.map((asp, index) => {
             const toneColor = asp.tone === 'harmonioso' ? '#4ECDC4' : asp.tone === 'tenso' ? '#FF6B6B' : '#B39DDB'
             const toneLabel = tr(`groups.synastry.tone.${asp.tone}`, asp.tone)
-            const line = expanded ? synastryAspectLine(asp, language) : ''
+            // Frase interpretativa em TODO aspecto (compacto e expandido), não só expandido.
+            const line = synastryAspectLine(asp, language)
             return (
               <View key={`${key}-syn-${index}`} style={styles.synastryAspectItem}>
                 <View style={styles.synastryRow}>
@@ -1832,8 +1833,24 @@ export default function GroupsScreen() {
             </Text>
           </TouchableOpacity>
         ) : null}
-        {/* Guna Milan / sinastria védica REMOVIDA da tela de grupos (2026-08-18);
-            acessível só pelo agente do WhatsApp por ora. Cálculo mantido inerte. */}
+        {guna ? (
+          <View style={styles.gunaBox}>
+            {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}
+            <Text style={styles.gunaTitle}>
+              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36
+            </Text>
+            {expanded ? (
+              <>
+                {guna.kutas.map((k) => (
+                  <View key={`${key}-kuta-${k.key}`} style={styles.gunaKutaRow}>
+                    <Text style={styles.gunaKutaName}>{k.nome}</Text>
+                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.oQueMede ? ` · ${k.oQueMede}` : ''}</Text>
+                  </View>
+                ))}
+              </>
+            ) : null}
+          </View>
+        ) : null}
         {overlays.length > 0 ? (
           <View style={styles.gunaBox}>
             <Text style={styles.gunaTitle}>
