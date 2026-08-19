@@ -39,9 +39,19 @@ const VS = String.fromCharCode(0xFE0E)
  * @param {string|null} [opts.destaque] nome do corpo a realçar (o do evento)
  * @returns {string} SVG
  */
-export function svgRodaReal({ data, corpos, obs = OBSERVADOR_PADRAO, lado = 440, destaque = null }) {
+export function svgRodaReal({ data, corpos, obs = OBSERVADOR_PADRAO, lado = 440, destaque = null, ascFixo = null }) {
   const cs = corpos || mapaDoCeu(data, {}).corpos
-  const { asc, mc, cuspides } = ascMcCasas(data, obs)
+  // `ascFixo` (longitude) força uma roda WHOLE-SIGN com esse Ascendente à
+  // esquerda — é o que o carrossel do eclipse usa, um ascendente por slide, para
+  // mostrar em que casa o eclipse cai. Sem ele, casas de Placidus do observador.
+  let asc, mc, cuspides
+  if (ascFixo != null) {
+    asc = norm360(ascFixo)
+    cuspides = Array.from({ length: 12 }, (_, i) => norm360(asc + i * 30))
+    mc = null
+  } else {
+    ({ asc, mc, cuspides } = ascMcCasas(data, obs))
+  }
 
   const S = lado
   const cx = S / 2
@@ -93,8 +103,10 @@ export function svgRodaReal({ data, corpos, obs = OBSERVADOR_PADRAO, lado = 440,
   }
   s += eixo(asc, 'ASC', BRONZE, 700)
   s += eixo(norm360(asc + 180), 'DSC', SLATE, 400)
-  s += eixo(mc, 'MC', BRONZE, 700)
-  s += eixo(norm360(mc + 180), 'IC', SLATE, 400)
+  if (mc != null) {
+    s += eixo(mc, 'MC', BRONZE, 700)
+    s += eixo(norm360(mc + 180), 'IC', SLATE, 400)
+  }
 
   // planetas — anti-colisão radial quando < 7° de longitude
   const ordenados = [...cs].filter((c) => COR_CORPO[c.nome]).sort((a, b) => a.longitude - b.longitude)

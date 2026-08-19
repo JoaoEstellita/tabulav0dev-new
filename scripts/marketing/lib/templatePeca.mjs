@@ -193,7 +193,7 @@ export function montarPeca(peca) {
   const altura = story ? 1920 : 1350
 
   const roda = peca.data
-    ? svgRodaReal({ data: peca.data, corpos: peca.corpos, destaque: peca.destaque || null, lado: 440 })
+    ? svgRodaReal({ data: peca.data, corpos: peca.corpos, destaque: peca.destaque || null, lado: 440, ascFixo: peca.ascFixo ?? null })
     : ''
 
   // A roda ocupa a metade de cima, então o texto na imagem é curto — o inteiro

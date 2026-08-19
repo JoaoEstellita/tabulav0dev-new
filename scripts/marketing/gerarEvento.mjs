@@ -513,25 +513,32 @@ async function principal() {
    * por qualquer motivo foi o que encheu o feed antes.
    */
   if (assunto.tipo === 'eclipse' && casas && querCarrossel) {
-    slides.push({ ...base, texto: peca.legendaAbre, simbolo: '' })
-    for (const { ascendente, casa } of casas) {
-      slides.push({
-        ...base,
-        olho: `casa ${casa}`,
-        titulo: `Ascendente
-${ascendente}`,
-        texto: POR_CASA[casa],
-        simbolo: svgDoSigno(ascendente),
-      })
-    }
+    // A roda entra também aqui: cada slide é a MESMA roda do eclipse, mas em
+    // whole-sign com um ascendente diferente à esquerda — a pessoa vê o eclipse
+    // (o luminar realçado) cair na casa que o texto do slide descreve.
+    const ORDEM_SIGNOS = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+      'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
 
-    for (let i = 0; i < slides.length; i++) {
-      const nome = `${String(i + 1).padStart(2, '0')}.png`
-      // a mesma foto nos treze, com o enquadramento andando: o conjunto lê como
-      // sequência em vez de treze posts colados
-      const html = montarFoto({ ...slides[i], formato: 'feed', foco: i })
+    // 01 = a capa: a roda real do dia (a mesma do feed do eclipse)
+    await copyFile(path.join(pasta, 'feed.png'), path.join(pasta, '01.png'))
+    slides.push({ ...base, __capa: true })
+
+    let n = 2
+    for (const { ascendente, casa } of casas) {
+      const nome = `${String(n).padStart(2, '0')}.png`
+      const html = montarPeca({
+        ...base,
+        formato: 'feed',
+        dataRotulo: '',
+        olho: `casa ${casa}`,
+        titulo: `Ascendente\n${ascendente}`,
+        texto: POR_CASA[casa],
+        ascFixo: ORDEM_SIGNOS.indexOf(ascendente) * 30,
+      })
       await renderizar(chrome, html, path.join(pasta, nome), 1350)
-      console.log(`  slide ${i + 1}/${slides.length}  ${slides[i].titulo.replace('\n', ' ')}`)
+      slides.push({ ascendente })
+      console.log(`  slide ${n}/${casas.length + 1}  Ascendente ${ascendente} · casa ${casa}`)
+      n += 1
     }
   }
 
