@@ -28,16 +28,16 @@ const PLANET_NAMES_PT: Record<PlanetKey, string> = {
 }
 
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
-  Sun: 'â˜‰',
-  Moon: 'â˜½',
-  Mercury: 'â˜¿',
-  Venus: 'â™€',
-  Mars: 'â™‚',
-  Jupiter: 'â™ƒ',
-  Saturn: 'â™„',
-  Uranus: 'â™…',
-  Neptune: 'â™†',
-  Pluto: 'â™‡',
+  Sun: '☉',
+  Moon: '☽',
+  Mercury: '☿',
+  Venus: '♀',
+  Mars: '♂',
+  Jupiter: '♃',
+  Saturn: '♄',
+  Uranus: '♅',
+  Neptune: '♆',
+  Pluto: '♇',
 }
 
 // ---------------------------------------------------------------------------
