@@ -1638,8 +1638,8 @@ export default function ForecastScreen() {
             {forecastView === 'grafico' ? (
               <ForecastEphemerisChart
                 events={(data?.events as any) || []}
-                rangeFrom={data?.range?.from || rangeFromStr}
-                rangeTo={data?.range?.to || rangeToStr}
+                rangeFrom={data?.range?.from || rangeFromStr || ''}
+                rangeTo={data?.range?.to || rangeToStr || ''}
                 language={language}
               />
             ) : (
