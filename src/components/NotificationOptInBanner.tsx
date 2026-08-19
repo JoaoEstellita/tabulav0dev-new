@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "../hooks/useAuth"
 import { useAppLanguage } from "../hooks/useAppLanguage"
 import { registerDeviceToken } from "../services/notifications/registerDeviceToken"
+import { subscribeWebPush } from "../webpush/subscribe"
 
 /**
  * Banner para ligar as notificações.
@@ -39,13 +40,24 @@ export default function NotificationOptInBanner() {
     let active = true
     ;(async () => {
       if (!user?.uid) return
-      // Native only — no web o registro de push é via web-push (outro fluxo).
-      if (Platform.OS !== "android" && Platform.OS !== "ios") return
+      const dismissed = async () => {
+        const raw = await AsyncStorage.getItem(DISMISS_KEY)
+        return !!(raw && Date.now() < Number(raw))
+      }
       try {
+        if (Platform.OS === "web") {
+          // Web-push: precisa de SW + PushManager + permissão ainda não concedida.
+          const w: any = typeof window !== "undefined" ? window : null
+          if (!w || !("Notification" in w) || !("serviceWorker" in navigator) || !("PushManager" in w)) return
+          if (w.Notification.permission !== "default") return // granted ou denied → não insiste
+          if (await dismissed()) return
+          if (active) setVisible(true)
+          return
+        }
+        if (Platform.OS !== "android" && Platform.OS !== "ios") return
         const perm = await Notifications.getPermissionsAsync()
         if (perm.status === "granted") return
-        const raw = await AsyncStorage.getItem(DISMISS_KEY)
-        if (raw && Date.now() < Number(raw)) return
+        if (await dismissed()) return
         if (active) setVisible(true)
       } catch { /* silencioso */ }
     })()
@@ -63,9 +75,17 @@ export default function NotificationOptInBanner() {
     if (!user?.uid || loading) return
     setLoading(true)
     try {
-      const r = await registerDeviceToken(user.uid)
-      if (r?.token) setVisible(false)
-      else await dismiss() // negou ou falhou → não insiste agora
+      if (Platform.OS === "web") {
+        // subscribeWebPush pede a permissão (PushManager) e registra no backend.
+        await subscribeWebPush(user.uid)
+        setVisible(false)
+      } else {
+        const r = await registerDeviceToken(user.uid)
+        if (r?.token) setVisible(false)
+        else await dismiss()
+      }
+    } catch {
+      await dismiss() // negou/falhou (ou VAPID ausente) → não insiste agora
     } finally {
       setLoading(false)
     }
