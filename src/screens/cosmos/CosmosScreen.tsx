@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
+import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import { AstroProfileContent } from './AstroProfileScreen'
 import { VedicProfileContent } from './VedicProfileContent'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
@@ -420,9 +421,8 @@ export default function CosmosScreen() {
                     'Anillo externo = planetas en transito ahora. Interno = tu carta natal.',
                     'Anello esterno = pianeti in transito ora. Interno = la tua carta natale.')}
                 </Text>
-                <TouchableOpacity style={styles.transitCta} activeOpacity={0.85} onPress={() => (navigation as any).navigate('PersonalTransits')}>
-                  <Text style={styles.transitCtaText}>{tl('Ver leitura completa dos trânsitos →', 'See full transits reading →', 'Ver lectura completa de transitos →', 'Vedi lettura completa dei transiti →')}</Text>
-                </TouchableOpacity>
+                {/* Leitura dos trânsitos na MESMA página (embutida, sem navegar). */}
+                <PersonalTransitsScreen embedded />
               </>
             ) : (
               <>

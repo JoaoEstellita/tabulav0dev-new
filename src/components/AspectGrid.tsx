@@ -15,11 +15,23 @@ const PLANET_SYMBOLS: Record<string, string> = {
   Jupiter: "♃", Saturn: "♄", Uranus: "♅", Neptune: "♆", Pluto: "♇", Lilith: "⚸",
 }
 const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Lilith"]
+// type vem em PT ("conjunção", "trígono"…) OU EN — normaliza e cobre ambos.
+const norm = (s: string) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
 const ASPECT_SYM: Record<string, string> = {
-  conjunction: "☌", sextile: "⚹", square: "□", trine: "△", opposition: "☍", quincunx: "⚻",
+  conjuncao: "☌", conjunction: "☌",
+  sextil: "⚹", sextile: "⚹",
+  quadratura: "□", square: "□",
+  trigono: "△", trine: "△",
+  oposicao: "☍", opposition: "☍",
+  quincuncio: "⚻", quincunx: "⚻",
 }
 const ASPECT_TONE: Record<string, string> = {
-  conjunction: "#FFD700", sextile: "#22C55E", trine: "#4A90E2", square: "#EF4444", opposition: "#F59E0B", quincunx: "#B39DDB",
+  conjuncao: "#FFD700", conjunction: "#FFD700",
+  sextil: "#22C55E", sextile: "#22C55E",
+  trigono: "#4A90E2", trine: "#4A90E2",
+  quadratura: "#EF4444", square: "#EF4444",
+  oposicao: "#F59E0B", opposition: "#F59E0B",
+  quincuncio: "#B39DDB", quincunx: "#B39DDB",
 }
 
 export default function AspectGrid({ planets, aspects }: { planets: PlanetLike[]; aspects: AspectLike[] }) {
@@ -61,7 +73,7 @@ export default function AspectGrid({ planets, aspects }: { planets: PlanetLike[]
               {names.slice(0, i).map((colName, j) => {
                 const x = pad + cell + j * cell
                 const asp = byPair.get(key(rowName, colName))
-                const t = asp ? String(asp.type || "").toLowerCase() : ""
+                const t = asp ? norm(asp.type) : ""
                 return (
                   <React.Fragment key={`c${i}-${j}`}>
                     <Rect x={x} y={y} width={cell} height={cell} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} />

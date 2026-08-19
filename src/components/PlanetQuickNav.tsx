@@ -22,6 +22,11 @@ const PLANET_ORDER: PlanetKey[] = [
 
 const PLANETS_WITH_LIGHT_BG_IMAGES = new Set(['Mars', 'Jupiter', 'Saturn', 'Pluto'])
 
+const PLANET_NAMES_PT: Record<PlanetKey, string> = {
+  Sun: 'Sol', Moon: 'Lua', Mercury: 'Mercúrio', Venus: 'Vênus', Mars: 'Marte',
+  Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Netuno', Pluto: 'Plutão',
+}
+
 const PLANET_FALLBACK_GLYPHS: Record<PlanetKey, string> = {
   Sun: 'â˜‰',
   Moon: 'â˜½',
@@ -142,6 +147,10 @@ export default function PlanetQuickNav({ onSelectPlanet, showCosmosEntry = true 
                 <Text style={styles.planetStripFallbackText}>{PLANET_FALLBACK_GLYPHS[planetItem.planet]}</Text>
               </View>
             )}
+            {/* Legenda: símbolo + nome do planeta abaixo da imagem. */}
+            <Text style={styles.planetStripLabel} numberOfLines={1}>
+              {PLANET_FALLBACK_GLYPHS[planetItem.planet]} {PLANET_NAMES_PT[planetItem.planet]}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -178,6 +187,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingVertical: 2,
     minWidth: 0,
+  },
+  planetStripLabel: {
+    color: '#9aa2b8',
+    fontSize: 9,
+    marginTop: 3,
+    textAlign: 'center',
   },
   planetStripImage: {
     width: 32,

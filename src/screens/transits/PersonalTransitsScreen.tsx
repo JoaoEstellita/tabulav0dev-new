@@ -20,7 +20,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 
-export default function PersonalTransitsScreen() {
+export default function PersonalTransitsScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, language } = useAppLanguage()
   const route = useRoute()
   const navigation = useNavigation()
@@ -249,18 +249,11 @@ export default function PersonalTransitsScreen() {
       </View>
     ) : null
 
-  return (
-    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        scrollEventThrottle={16}
-        onScroll={(e) => setShowTop(e.nativeEvent.contentOffset.y > SCROLL_TOP_THRESHOLD)}
-      >
-        <Text style={styles.title}>{t('transits.personal.title')}</Text>
+  const conteudo = (
+    <>
+        {!embedded ? <Text style={styles.title}>{t('transits.personal.title')}</Text> : null}
 
-        {list.length ? (
+        {!embedded && list.length ? (
           <View style={styles.navChips}>
             {[
               grupos.recent.length ? { k: 'recent', r: tl('Recentes', 'Recent', 'Recientes', 'Recenti') } : null,
@@ -352,6 +345,21 @@ export default function PersonalTransitsScreen() {
             ) : null}
           </>
         )}
+    </>
+  )
+
+  if (embedded) return <View style={styles.embeddedWrap}>{conteudo}</View>
+
+  return (
+    <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        scrollEventThrottle={16}
+        onScroll={(e) => setShowTop(e.nativeEvent.contentOffset.y > SCROLL_TOP_THRESHOLD)}
+      >
+        {conteudo}
       </ScrollView>
       <ScrollTopButton
         visible={showTop}
@@ -363,6 +371,7 @@ export default function PersonalTransitsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, minHeight: 0 },
+  embeddedWrap: { width: '100%' },
   scroll: { flex: 1, minHeight: 0 },
   content: { padding: 16, paddingBottom: 40 },
   title: {
