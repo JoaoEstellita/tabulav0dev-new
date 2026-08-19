@@ -426,8 +426,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           </Svg>
         </View>
 
-        {/* Grade de aspectos (aspectarian) — matriz planeta×planeta abaixo da roda */}
-        {natalPlanets.length >= 2 && aspects.length > 0 ? (
+        {/* Grade de aspectos — natal↔natal no modo Natal; trânsito→natal no modo Trânsitos */}
+        {showTransits ? (
+          transitPlanets.length >= 1 && natalPlanets.length >= 1 && tnAspects.length > 0 ? (
+            <View style={styles.aspectGridWrap}>
+              <Text style={styles.aspectGridTitle}>
+                {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
+              </Text>
+              <AspectGrid cross rowPlanets={transitPlanets} colPlanets={natalPlanets} aspects={tnAspects} />
+            </View>
+          ) : null
+        ) : natalPlanets.length >= 2 && aspects.length > 0 ? (
           <View style={styles.aspectGridWrap}>
             <Text style={styles.aspectGridTitle}>
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}

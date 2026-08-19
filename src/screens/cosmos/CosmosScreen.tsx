@@ -415,12 +415,6 @@ export default function CosmosScreen() {
 
             {westMode === 'transitos' ? (
               <>
-                <Text style={styles.transitHint}>
-                  {tl('Anel externo = planetas em trânsito agora. Interno = seu mapa natal.',
-                    'Outer ring = planets transiting now. Inner = your natal chart.',
-                    'Anillo externo = planetas en transito ahora. Interno = tu carta natal.',
-                    'Anello esterno = pianeti in transito ora. Interno = la tua carta natale.')}
-                </Text>
                 {/* Leitura dos trânsitos na MESMA página (embutida, sem navegar). */}
                 <PersonalTransitsScreen embedded />
               </>
