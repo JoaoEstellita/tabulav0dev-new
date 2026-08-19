@@ -469,7 +469,10 @@ async function principal() {
 
   // `--formatos` vazio = tudo que o assunto comporta; marcado, manda a marcação
   const querCarrossel = !args.formatos.length || args.formatos.includes('carrossel')
-  const eduCarrossel = ehEducativo(assunto.tipo) && querCarrossel
+  // Educativo é SEMPRE carrossel, mesmo que a pauta salva traga `formatos:['post']`
+  // de antes desta regra: `formatosDoAssunto` já só oferece carrossel pra ele, e
+  // uma marcação antiga no Storage não deve forçar o post de volta.
+  const eduCarrossel = ehEducativo(assunto.tipo)
 
   // O story sai sempre (com a roda; a tela dentro, no recurso).
   await renderizar(chrome, montar({ formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
