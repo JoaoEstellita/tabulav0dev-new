@@ -1832,24 +1832,8 @@ export default function GroupsScreen() {
             </Text>
           </TouchableOpacity>
         ) : null}
-        {guna ? (
-          <View style={styles.gunaBox}>
-            {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}
-            <Text style={styles.gunaTitle}>
-              {tr('groups.vedic.gunaMilan', 'Guna Milan (védico)')}: {guna.total}/36
-            </Text>
-            {expanded ? (
-              <>
-                {guna.kutas.map((k) => (
-                  <View key={`${key}-kuta-${k.key}`} style={styles.gunaKutaRow}>
-                    <Text style={styles.gunaKutaName}>{k.nome}</Text>
-                    <Text style={styles.gunaKutaMeta}>{k.points}/{k.max}{isPt && k.oQueMede ? ` · ${k.oQueMede}` : ''}</Text>
-                  </View>
-                ))}
-              </>
-            ) : null}
-          </View>
-        ) : null}
+        {/* Guna Milan / sinastria védica REMOVIDA da tela de grupos (2026-08-18);
+            acessível só pelo agente do WhatsApp por ora. Cálculo mantido inerte. */}
         {overlays.length > 0 ? (
           <View style={styles.gunaBox}>
             <Text style={styles.gunaTitle}>
