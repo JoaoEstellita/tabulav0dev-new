@@ -153,10 +153,11 @@ async function renderizar(chrome, html, destino, altura) {
   await writeFile(temp, html, 'utf8')
   await execFileAsync(chrome, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    // 2× = 2160px de largura. O Instagram reduz para 1080, e o downscale de 2×
-    // dá anti-aliasing melhor que renderizar nativo em 1080 — texto e a roda
-    // saem mais nítidos. É a nitidez que o João pediu, sem tocar no layout.
-    '--force-device-scale-factor=2',
+    // 1.5× = 1620px de largura. O Instagram reduz para 1080, e o downscale dá
+    // anti-aliasing melhor que renderizar nativo em 1080 — mais nítido, sem tocar
+    // no layout. 2× estourava o limite de upload do Vercel no story (~4,7MB em
+    // base64); 1,5× entrega a nitidez cabendo no envio.
+    '--force-device-scale-factor=1.5',
     ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
     `--window-size=1080,${altura}`,
     `--screenshot=${destino}`,

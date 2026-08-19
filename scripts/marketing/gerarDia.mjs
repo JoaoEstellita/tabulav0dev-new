@@ -231,6 +231,38 @@ async function principal() {
     console.log(`${iso}: sem pauta e sem fila. ${porDia} peça(s), pela cascata.`)
   } else {
     console.log(`${iso}: ${aGerar.length} assunto(s) marcado(s) na agenda.`)
+
+    /**
+     * COMPLETA COM A FILA ATÉ `porDia`.
+     *
+     * O João marca um assunto na agenda e escolhe "2 por dia", e esperava duas
+     * peças — mas a agenda mandava sozinha e o `porDia` só valia em dia vago. Um
+     * assunto marcado é uma escolha do dia, não o teto dele: se ainda faltam
+     * peças para o número escolhido, a fila entra no restante, pulando o que já
+     * foi marcado e o que saiu na janela.
+     */
+    if (aGerar.length < porDia && fila.length) {
+      const historico = await lerHistorico(args.saida)
+      const jaMarcados = new Set(aGerar.map((a) => a.id).filter(Boolean))
+      const extras = []
+      const faltam = porDia - aGerar.length
+
+      for (let n = 0; n < faltam; n++) {
+        // o histórico fake faz a fila andar sem repetir o marcado nem os extras
+        const pendentes = Object.fromEntries([
+          ...[...jaMarcados].map((id, i) => [`${iso}#marcado${i}`, id]),
+          ...extras.map((id, i) => [`${iso}#extra${i}`, id]),
+        ])
+        const proximo = proximoDaFila(fila, { ...historico, ...pendentes }, iso)
+        if (!proximo || jaMarcados.has(proximo) || extras.includes(proximo)) break
+        extras.push(proximo)
+      }
+
+      if (extras.length) {
+        aGerar = [...aGerar, ...extras.map((id) => ({ id, daFila: true, formatos: [] }))]
+        console.log(`  completando com a fila até ${porDia}: +${extras.join(', ')}`)
+      }
+    }
   }
 
   if (origem === 'editorial' && fila.length) {
