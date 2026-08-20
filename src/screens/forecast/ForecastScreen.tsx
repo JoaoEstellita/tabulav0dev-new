@@ -711,7 +711,7 @@ export default function ForecastScreen() {
   const [areaSummaryLoading, setAreaSummaryLoading] = useState(false)
   const [areaSummaryDegraded, setAreaSummaryDegraded] = useState(false)
   const [expandedArea, setExpandedArea] = useState<string | null>(null)
-  const [forecastView, setForecastView] = useState<'calendario' | 'grafico'>('calendario')
+  const [forecastView, setForecastView] = useState<'calendario' | 'grafico'>('grafico')
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
   const pendingPrefetchRef = useRef<NodeJS.Timeout | null>(null)
@@ -1625,13 +1625,13 @@ export default function ForecastScreen() {
             )}
           </View>
           <View style={styles.calendarWrapper}>
-            {/* Toggle Calendário | Gráfico (efeméride gráfica) */}
+            {/* Toggle Gráfico | Calendário (gráfico é a visão principal) */}
             <View style={styles.forecastViewToggle}>
-              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'calendario' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('calendario')}>
-                <Text style={[styles.forecastViewText, forecastView === 'calendario' && styles.forecastViewTextActive]}>{tr('forecast.view.calendar', 'Calendário')}</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'grafico' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('grafico')}>
                 <Text style={[styles.forecastViewText, forecastView === 'grafico' && styles.forecastViewTextActive]}>{tr('forecast.view.graph', 'Gráfico')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.forecastViewBtn, forecastView === 'calendario' && styles.forecastViewBtnActive]} activeOpacity={0.85} onPress={() => setForecastView('calendario')}>
+                <Text style={[styles.forecastViewText, forecastView === 'calendario' && styles.forecastViewTextActive]}>{tr('forecast.view.calendar', 'Calendário')}</Text>
               </TouchableOpacity>
             </View>
 
