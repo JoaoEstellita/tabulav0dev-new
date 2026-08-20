@@ -25,8 +25,8 @@ const PLANET_SYMBOLS: Record<string, string> = {
   Sun: "☉", Moon: "☽", Mercury: "☿", Venus: "♀", Mars: "♂",
   Jupiter: "♃", Saturn: "♄", Uranus: "♅", Neptune: "♆", Pluto: "♇",
 }
-// Da mais rápida à mais lenta (ordem visual, como na efeméride clássica).
-const PLANET_ORDER = ["Moon", "Mercury", "Venus", "Sun", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+// Ordem clássica (regentes): Sol primeiro, depois Lua e os demais até Plutão.
+const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 const ASPECT_SYMBOLS: Record<string, string> = {
   CONJUNCTION: "☌", SEXTILE: "✶", SQUARE: "□", TRINE: "△", OPPOSITION: "☍", QUINCUNX: "⚻",
 }
@@ -64,12 +64,14 @@ export default function ForecastEphemerisChart({
   const totalDays = Math.max(1, Math.round((toEndMs - fromMs) / DAY_MS) + 1)
 
   const list = Array.isArray(events) ? events : []
+  // Sempre TODAS as linhas na ordem clássica (Sol→Plutão), mesmo planeta sem
+  // aspecto no período (linha vazia = sem trânsito) — o usuário quer o quadro
+  // completo. Pontos fora da ordem conhecida (raro) vão pro fim.
   const present = new Set(list.map((e) => e.transitPlanet))
-  const rows = PLANET_ORDER.filter((p) => present.has(p))
-  // planetas fora da ordem conhecida (raro) vão pro fim
-  for (const p of present) if (!PLANET_ORDER.includes(p)) rows.push(p)
+  const extras = Array.from(present).filter((p) => !PLANET_ORDER.includes(p))
+  const rows = [...PLANET_ORDER, ...extras]
 
-  if (!list.length || !rows.length || !Number.isFinite(fromMs) || !Number.isFinite(toEndMs)) {
+  if (!list.length || !Number.isFinite(fromMs) || !Number.isFinite(toEndMs)) {
     return <Text style={styles.empty}>{t.empty}</Text>
   }
 
