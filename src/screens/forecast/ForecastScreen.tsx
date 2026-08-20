@@ -1641,6 +1641,12 @@ export default function ForecastScreen() {
                 rangeFrom={data?.range?.from || rangeFromStr || ''}
                 rangeTo={data?.range?.to || rangeToStr || ''}
                 language={language}
+                onSelectEvent={(id, dateKey) => {
+                  // Tocar numa barra: foca o dia do pico (para o modal resolver o
+                  // evento pela lista do dia) e abre a leitura do aspecto.
+                  if (dateKey) setSelectedDate(dateKey)
+                  openEventDetail(id)
+                }}
               />
             ) : (
             <MemoCalendar

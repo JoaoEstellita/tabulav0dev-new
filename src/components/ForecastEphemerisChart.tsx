@@ -3,11 +3,13 @@ import { View, Text, ScrollView, StyleSheet } from "react-native"
 import Svg, { Rect, Line, Text as SvgText } from "react-native-svg"
 
 /**
- * Efeméride gráfica das Previsões: linhas por planeta em trânsito × dias do
- * período; cada aspecto trânsito→natal vira uma BARRA (janela startAt→endAt)
- * colorida por impacto (harmônico/tenso/misto), com o glifo do aspecto+ponto
- * natal no pico (exactAt). Estilo do print que o João pediu. Só VIEW — consome
- * `data.events`/`range` que a ForecastScreen já busca (sem tocar no backend).
+ * Efeméride gráfica das Previsões, no formato "calendário de trânsitos" clássico
+ * (o 2º print que o João pediu): agrupado por PLANETA EM TRÂNSITO na ordem dos
+ * regentes (Sol→Plutão); dentro de cada grupo, UMA SUB-LINHA por ponto natal
+ * aspectado, rotulada à esquerda com `trânsito+aspecto+natal` (ex.: ☉⚹♄). Cada
+ * aspecto ganha a própria linha → some a sobreposição de glifos, mostra tudo, e
+ * dá pra distinguir qual trânsito com qual planeta. Cada barra é TOCÁVEL: abre a
+ * leitura do aspecto (onSelectEvent). Só VIEW — consome `events`/`range`.
  */
 export type EphemEvent = {
   id: string
@@ -25,15 +27,26 @@ const PLANET_SYMBOLS: Record<string, string> = {
   Sun: "☉", Moon: "☽", Mercury: "☿", Venus: "♀", Mars: "♂",
   Jupiter: "♃", Saturn: "♄", Uranus: "♅", Neptune: "♆", Pluto: "♇",
 }
-// Ordem clássica (regentes): Sol primeiro, depois Lua e os demais até Plutão.
+// Ordem clássica (regentes): Sol primeiro, Lua, e os demais até Plutão.
 const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 const ASPECT_SYMBOLS: Record<string, string> = {
   CONJUNCTION: "☌", SEXTILE: "✶", SQUARE: "□", TRINE: "△", OPPOSITION: "☍", QUINCUNX: "⚻",
 }
 const POINT_SYMBOLS: Record<string, string> = {
   ...PLANET_SYMBOLS,
-  Ascendant: "Asc", ASC: "Asc", Midheaven: "MC", MC: "MC", NorthNode: "☊", SouthNode: "☋",
+  Ascendant: "Asc", ASC: "Asc", Midheaven: "MC", MC: "MC", IC: "IC",
+  Descendant: "Dsc", Dsc: "Dsc", NorthNode: "☊", SouthNode: "☋",
 }
+// Ordem dos alvos natais dentro de um grupo (planetas, depois ângulos/nódulos).
+const NATAL_ORDER = [
+  ...PLANET_ORDER,
+  "Ascendant", "ASC", "Descendant", "Dsc", "Midheaven", "MC", "IC", "NorthNode", "SouthNode",
+]
+const natalRank = (p: string) => {
+  const i = NATAL_ORDER.indexOf(p)
+  return i < 0 ? 999 : i
+}
+
 const impactColor = (impact?: string) =>
   impact === "UP" ? "#22C55E" : impact === "DOWN" ? "#EF4444" : "#D9A406" // MIXED = âmbar
 
@@ -50,13 +63,24 @@ const L: Record<string, { harm: string; tense: string; mixed: string; empty: str
   "it-IT": { harm: "armonico", tense: "teso", mixed: "misto", empty: "Nessun transito nel periodo." },
 }
 
+type SubRow = {
+  key: string
+  transitPlanet: string
+  natalPoint: string
+  aspect: string
+  events: EphemEvent[]
+  groupIdx: number
+}
+
 export default function ForecastEphemerisChart({
-  events, rangeFrom, rangeTo, language = "pt-BR",
+  events, rangeFrom, rangeTo, language = "pt-BR", onSelectEvent,
 }: {
   events: EphemEvent[]
   rangeFrom: string // 'YYYY-MM-DD'
   rangeTo: string
   language?: string
+  /** Toca numa barra → abre a leitura do aspecto (id do evento + dia do pico). */
+  onSelectEvent?: (eventId: string, dateKey: string) => void
 }) {
   const t = L[language] || L["pt-BR"]
   const fromMs = toMs(`${rangeFrom}T00:00:00Z`)
@@ -64,68 +88,73 @@ export default function ForecastEphemerisChart({
   const totalDays = Math.max(1, Math.round((toEndMs - fromMs) / DAY_MS) + 1)
 
   const list = Array.isArray(events) ? events : []
-  // Sempre TODAS as linhas na ordem clássica (Sol→Plutão), mesmo planeta sem
-  // aspecto no período (linha vazia = sem trânsito) — o usuário quer o quadro
-  // completo. Pontos fora da ordem conhecida (raro) vão pro fim.
-  const present = new Set(list.map((e) => e.transitPlanet))
-  const extras = Array.from(present).filter((p) => !PLANET_ORDER.includes(p))
-  const rows = [...PLANET_ORDER, ...extras]
 
-  if (!list.length || !Number.isFinite(fromMs) || !Number.isFinite(toEndMs)) {
+  // Sub-linhas: agrupa por planeta em trânsito (ordem clássica); dentro, uma
+  // linha por (ponto natal + aspecto). Grupos alternam sombra para leitura.
+  const rows: SubRow[] = []
+  let groupIdx = 0
+  const transitOrder = [
+    ...PLANET_ORDER.filter((p) => list.some((e) => e.transitPlanet === p)),
+    ...Array.from(new Set(list.map((e) => e.transitPlanet))).filter((p) => !PLANET_ORDER.includes(p)),
+  ]
+  for (const P of transitOrder) {
+    const evP = list.filter((e) => e.transitPlanet === P)
+    if (!evP.length) continue
+    const byPair = new Map<string, EphemEvent[]>()
+    for (const e of evP) {
+      const k = `${e.natalPoint}|${e.aspect}`
+      const arr = byPair.get(k) || []
+      arr.push(e)
+      byPair.set(k, arr)
+    }
+    const sub = Array.from(byPair.values()).map((evs) => ({
+      key: `${P}|${evs[0].natalPoint}|${evs[0].aspect}`,
+      transitPlanet: P,
+      natalPoint: evs[0].natalPoint,
+      aspect: evs[0].aspect,
+      events: evs,
+      groupIdx,
+    }))
+    sub.sort((a, b) => natalRank(a.natalPoint) - natalRank(b.natalPoint) || a.aspect.localeCompare(b.aspect))
+    rows.push(...sub)
+    groupIdx += 1
+  }
+
+  if (!list.length || !rows.length || !Number.isFinite(fromMs) || !Number.isFinite(toEndMs)) {
     return <Text style={styles.empty}>{t.empty}</Text>
   }
 
-  const dayW = totalDays > 60 ? 9 : totalDays > 40 ? 14 : totalDays > 20 ? 24 : 40
-  const gutter = 30
-  const topAxis = 22
-  const rowH = 34
-  const height = topAxis + rows.length * rowH + 10
+  const dayW = totalDays > 90 ? 8 : totalDays > 45 ? 12 : totalDays > 20 ? 20 : 34
+  const gutter = 48 // rótulo trânsito+aspecto+natal à esquerda
+  const topAxis = 20
+  const rowH = 16
+  const height = topAxis + rows.length * rowH + 8
   const width = gutter + totalDays * dayW + 10
 
   const xOf = (iso: string) => gutter + ((toMs(iso) - fromMs) / DAY_MS) * dayW
-  const rowY = (planet: string) => {
-    const i = rows.indexOf(planet)
-    return i < 0 ? -100 : topAxis + i * rowH + rowH / 2
-  }
-  const labelEvery = totalDays > 60 ? 7 : totalDays > 40 ? 5 : totalDays > 20 ? 2 : 1
+  const labelEvery = totalDays > 90 ? 7 : totalDays > 45 ? 5 : totalDays > 20 ? 2 : 1
   const now = Date.now()
-
-  // De-overlap dos rótulos por linha: a Lua é rápida e enche a linha de aspectos,
-  // e os glifos viravam um amontoado ilegível ("travado"). Por linha, ordena por
-  // pico e só mostra rótulos com folga horizontal — as BARRAS continuam todas.
-  const MIN_LABEL_GAP = 20
-  const labelShown = new Set<string>()
-  {
-    const byRow = new Map<string, EphemEvent[]>()
-    for (const e of list) {
-      if (rowY(e.transitPlanet) < 0) continue
-      const arr = byRow.get(e.transitPlanet) || []
-      arr.push(e)
-      byRow.set(e.transitPlanet, arr)
-    }
-    for (const arr of byRow.values()) {
-      arr.sort((a, b) => xOf(a.exactAt) - xOf(b.exactAt))
-      let lastX = -Infinity
-      for (const e of arr) {
-        const x = xOf(e.exactAt)
-        if (x - lastX >= MIN_LABEL_GAP) { labelShown.add(e.id); lastX = x }
-      }
-    }
-  }
 
   return (
     <View style={styles.wrap}>
       <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }}>
         <Svg width={width} height={height}>
+          {/* sombra alternada por grupo de planeta em trânsito */}
+          {rows.map((r, i) =>
+            r.groupIdx % 2 === 1 ? (
+              <Rect key={`bg${i}`} x={0} y={topAxis + i * rowH} width={width} height={rowH} fill="rgba(255,255,255,0.025)" />
+            ) : null,
+          )}
+
           {/* grade de dias + números */}
           {Array.from({ length: totalDays }, (_, i) => {
             const x = gutter + i * dayW
             const showLabel = i % labelEvery === 0
             return (
               <React.Fragment key={`d${i}`}>
-                <Line x1={x} y1={topAxis} x2={x} y2={height - 10} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
+                <Line x1={x} y1={topAxis} x2={x} y2={height - 8} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
                 {showLabel ? (
-                  <SvgText x={x + dayW / 2} y={13} fontSize={9} fill="#6a7288" textAnchor="middle">
+                  <SvgText x={x + dayW / 2} y={12} fontSize={9} fill="#6a7288" textAnchor="middle">
                     {new Date(fromMs + i * DAY_MS).getUTCDate()}
                   </SvgText>
                 ) : null}
@@ -133,32 +162,35 @@ export default function ForecastEphemerisChart({
             )
           })}
 
-          {/* separadores + glifo de cada linha (planeta em trânsito) */}
-          {rows.map((p, i) => (
-            <React.Fragment key={`row${p}`}>
-              <Line x1={gutter} y1={topAxis + i * rowH} x2={width - 10} y2={topAxis + i * rowH} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />
-              <SvgText x={gutter - 6} y={rowY(p) + 4} fontSize={14} fill="#c9cfe0" textAnchor="end">
-                {PLANET_SYMBOLS[p] || p.slice(0, 2)}
-              </SvgText>
-            </React.Fragment>
-          ))}
-
-          {/* barras (janelas de aspecto) + glifo no pico */}
-          {list.map((e) => {
-            const y = rowY(e.transitPlanet)
-            if (y < 0) return null
-            const x1 = Math.max(gutter, xOf(e.startAt))
-            const x2 = Math.min(width - 10, xOf(e.endAt))
-            const w = Math.max(3, x2 - x1)
-            const xe = xOf(e.exactAt)
+          {/* linhas de aspecto: rótulo à esquerda + barra(s) no período */}
+          {rows.map((r, i) => {
+            const y = topAxis + i * rowH + rowH / 2
+            const label =
+              (PLANET_SYMBOLS[r.transitPlanet] || r.transitPlanet.slice(0, 2)) +
+              (ASPECT_SYMBOLS[r.aspect] || "") +
+              (POINT_SYMBOLS[r.natalPoint] || r.natalPoint.slice(0, 2))
             return (
-              <React.Fragment key={e.id}>
-                <Rect x={x1} y={y - 5} width={w} height={10} rx={5} fill={impactColor(e.impact)} opacity={0.82} />
-                {labelShown.has(e.id) ? (
-                  <SvgText x={xe} y={y - 9} fontSize={10} fill="#e6e6ee" textAnchor="middle">
-                    {(ASPECT_SYMBOLS[e.aspect] || "") + (POINT_SYMBOLS[e.natalPoint] || "")}
-                  </SvgText>
-                ) : null}
+              <React.Fragment key={r.key}>
+                <SvgText x={gutter - 5} y={y + 3.5} fontSize={11} fill="#c9cfe0" textAnchor="end">
+                  {label}
+                </SvgText>
+                {r.events.map((e, j) => {
+                  const x1 = Math.max(gutter, xOf(e.startAt))
+                  const x2 = Math.min(width - 10, xOf(e.endAt))
+                  const w = Math.max(4, x2 - x1)
+                  const dateKey = (e.exactAt || "").slice(0, 10)
+                  return (
+                    <React.Fragment key={e.id + j}>
+                      <Rect
+                        x={x1} y={y - 4} width={w} height={8} rx={4}
+                        fill={impactColor(e.impact)} opacity={0.85}
+                        onPress={onSelectEvent ? () => onSelectEvent(e.id, dateKey) : undefined}
+                      />
+                      {/* tick no pico (exactAt) para marcar o momento exato */}
+                      <Line x1={xOf(e.exactAt)} y1={y - 5} x2={xOf(e.exactAt)} y2={y + 5} stroke="#0b0a14" strokeWidth={1} opacity={0.5} />
+                    </React.Fragment>
+                  )
+                })}
               </React.Fragment>
             )
           })}
@@ -167,7 +199,7 @@ export default function ForecastEphemerisChart({
           {now >= fromMs && now <= toEndMs + DAY_MS ? (
             <Line
               x1={gutter + ((now - fromMs) / DAY_MS) * dayW} y1={topAxis - 2}
-              x2={gutter + ((now - fromMs) / DAY_MS) * dayW} y2={height - 10}
+              x2={gutter + ((now - fromMs) / DAY_MS) * dayW} y2={height - 8}
               stroke="#FFD700" strokeWidth={1} strokeDasharray="3,3"
             />
           ) : null}
@@ -179,6 +211,14 @@ export default function ForecastEphemerisChart({
         <Dot c="#EF4444" label={t.tense} />
         <Dot c="#D9A406" label={t.mixed} />
       </View>
+      {onSelectEvent ? (
+        <Text style={styles.hint}>
+          {language === "en-US" ? "Tap a bar to open the transit reading."
+            : language === "es-ES" ? "Toca una barra para abrir la lectura del transito."
+            : language === "it-IT" ? "Tocca una barra per aprire la lettura del transito."
+            : "Toque numa barra para abrir a leitura do trânsito."}
+        </Text>
+      ) : null}
     </View>
   )
 }
@@ -199,4 +239,5 @@ const styles = StyleSheet.create({
   dotRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   dot: { width: 10, height: 10, borderRadius: 3 },
   dotLabel: { color: "#8892a4", fontSize: 11 },
+  hint: { color: "#6a7288", fontSize: 11, textAlign: "center", marginTop: 6 },
 })
