@@ -119,14 +119,19 @@ export function chaveDoAssunto(assunto) {
  *   `usadas` é o conjunto de `chavesRecentes`, da janela de catorze dias.
  * @returns {object} sempre devolve algo: no pior caso, um conceito
  */
-export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set() }) {
+export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set(), usadasHoje = new Set() }) {
   const naJanela = (a) => a && !usadas.has(chaveDoAssunto(a))
 
   const doCeu = eventosDoDia(data, mapa.aspectos, { antecedencia: 0 })
 
-  // 1 e 2: evento do céu e lua fora de curso, na ordem de peso que já existe
+  // 1 e 2: evento do céu e lua fora de curso, na ordem de peso que já existe.
+  // `aconteceUmaVez` fura a janela de catorze dias para o eclipse não ser
+  // bloqueado pela própria véspera — mas NÃO deve repetir o que já saiu HOJE:
+  // com duas peças no mesmo dia, a fase saía nas duas. `usadasHoje` bloqueia só
+  // o que outra peça de hoje já usou, sem tocar no caso da véspera.
   for (const ev of doCeu) {
     if (ev.tipo === 'aspecto') continue
+    if (usadasHoje.has(chaveDoAssunto(ev))) continue
     if (aconteceUmaVez(ev) || naJanela(ev)) return ev
   }
 

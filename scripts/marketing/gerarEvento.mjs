@@ -309,6 +309,15 @@ async function principal() {
   const historico = await lerHistorico(args.saida)
   // as outras peças de hoje contam: é o que impede a peça 2 de repetir a 1
   const usadas = chavesRecentes(historico, iso, args.slot || 1)
+  // só as peças de HOJE (outros slots do mesmo dia): um evento forte (fase,
+  // eclipse) fura a janela de catorze dias, mas não pode sair duas vezes no
+  // mesmo dia. `usadasHoje` bloqueia o que outra peça de hoje já usou.
+  const propriaEntrada = entradaDoDia(iso, args.slot || 1)
+  const usadasHoje = new Set(
+    Object.entries(historico)
+      .filter(([e]) => (e === iso || e.startsWith(`${iso}#`)) && e !== propriaEntrada)
+      .map(([, chave]) => chave)
+  )
 
   /**
    * O carrossel de tema não passa pela cascata nem pelo histórico.
@@ -416,7 +425,7 @@ async function principal() {
     : args.recurso
       ? { tipo: 'recurso', ...recursoDoDia(iso, usadas, args.recurso) }
       : marcado
-        || assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas })
+        || assuntoDoDia(data, { mapa, catalogos: catalogosEducativos, iso, usadas, usadasHoje })
   const peca = pecaDoAssunto(assunto, { iso, catalogos })
 
   // O aviso continua: assunto do céu sem texto escrito cai no catálogo natal,
