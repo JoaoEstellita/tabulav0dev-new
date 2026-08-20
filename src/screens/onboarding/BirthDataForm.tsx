@@ -51,6 +51,8 @@ export interface BirthData {
   }
   language?: AppLanguage
   birthCountryCode?: string
+  /** WhatsApp normalizado (só dígitos, com código do país). Vazio = não informado. */
+  whatsappPhone?: string
 }
 
 
@@ -79,6 +81,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const [formData, setFormData] = useState({
     fullName: '',
     profilePhoto: '',
+    whatsapp: '',
     birthDate: '',
     birthTime: '',
     city: '',
@@ -756,6 +759,17 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setTimeout(() => focusRef.current?.focus?.(), 40)
   }
 
+  // Normaliza o WhatsApp para casar com o que o webhook procura (whatsappPhone):
+  // só dígitos + código do país. Se BR e vier só com DDD (10-11 díg), prefixa 55.
+  // Não-BR: guarda como digitado (a pessoa inclui o código do país).
+  const normalizeWhatsapp = (raw: string, isBR: boolean): string => {
+    let d = String(raw || '').replace(/\D/g, '')
+    if (!d) return ''
+    if (d.startsWith('00')) d = d.slice(2) // prefixo internacional 00 → remove
+    if (isBR && (d.length === 10 || d.length === 11) && !d.startsWith('55')) return '55' + d
+    return d
+  }
+
   const handleComplete = () => {
     // Localização vem direto do selectedLocation (preciso) — sem depender de
     // setFormData assíncrono. Sem seleção, cai no texto livre + centro do BR.
@@ -773,6 +787,11 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         longitude: -47.8825,
       }
 
+    const whatsappPhone = normalizeWhatsapp(
+      formData.whatsapp,
+      formData.language === 'pt-BR' || formData.birthCountryCode === 'BR',
+    )
+
     const birthData: BirthData = {
       fullName: formData.fullName.trim(),
       birthDate: formData.birthDate,
@@ -780,6 +799,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       birthLocation,
       language: formData.language,
       birthCountryCode: formData.birthCountryCode,
+      ...(whatsappPhone ? { whatsappPhone } : {}),
     }
 
     // O fim do funil de cadastro. Sem `await`: a navegação não espera a
@@ -890,6 +910,23 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         />
       </View>
       {!!nameError && <Text style={styles.fieldErrorText}>{nameError}</Text>}
+
+      {/* WhatsApp (opcional) — vincula ao agente já no cadastro e evita conta duplicada */}
+      <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>{t('onboarding.field.whatsapp')}</Text>
+      <View style={styles.inputContainer}>
+        <Ionicons name="logo-whatsapp" size={20} color="#666" style={styles.inputIcon} />
+        <TextInput
+          style={styles.nameInput}
+          placeholder={t('onboarding.field.whatsappPlaceholder')}
+          placeholderTextColor="#666"
+          value={formData.whatsapp}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, whatsapp: text }))}
+          keyboardType="phone-pad"
+          returnKeyType="next"
+          onSubmitEditing={() => birthDateInputRef.current?.focus()}
+        />
+      </View>
+      <Text style={styles.fieldHintText}>{t('onboarding.field.whatsappHint')}</Text>
     </View>
   )
 
@@ -1445,6 +1482,12 @@ const styles = StyleSheet.create({
   },
   fieldLabelSpaced: {
     marginTop: 12,
+  },
+  fieldHintText: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 6,
+    lineHeight: 16,
   },
   inputContainerError: {
     borderColor: '#EF4444',

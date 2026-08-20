@@ -734,7 +734,14 @@ export default function SettingsScreen() {
         profilePhoto: updatedPhoto || null,
       };
       if (whatsappPhone) {
-        payload.whatsappPhone = whatsappPhone;
+        // Normaliza para o formato que o webhook/envio esperam (só dígitos + 55
+        // no BR). Salvar RAW (sem 55) funcionava por heurística, mas padronizar
+        // evita casos de borda. BR celular/fixo (10-11 díg) ganha o 55.
+        const waDigits = String(whatsappPhone).replace(/\D/g, "");
+        const waNorm = (waDigits.length === 10 || waDigits.length === 11) && !waDigits.startsWith("55")
+          ? "55" + waDigits
+          : waDigits;
+        payload.whatsappPhone = waNorm;
         payload.whatsappOptIn = whatsappOptIn;
         if (whatsappOptIn) {
           payload.whatsappOptInAt = serverTimestamp();

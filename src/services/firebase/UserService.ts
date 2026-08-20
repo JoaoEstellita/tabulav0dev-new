@@ -155,6 +155,11 @@ class UserService {
         'preferences.language': birthData.language || 'pt-BR',
         birthDataComplete: true,
         lastBirthDataEdit: serverTimestamp(),
+        // WhatsApp informado no cadastro: liga o vínculo com o agente já de cara
+        // (evita conta duplicada quando a pessoa manda mensagem depois). opt-in
+        // implícito. cleanUndefined descarta se não veio.
+        whatsappPhone: birthData.whatsappPhone || undefined,
+        whatsappOptIn: birthData.whatsappPhone ? true : undefined,
       })
 
       // Só adiciona foto se foi fornecida. Se base64/local URI, envia para Storage e salva URL.
