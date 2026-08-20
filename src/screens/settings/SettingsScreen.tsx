@@ -88,8 +88,11 @@ export default function SettingsScreen() {
   const [profilePhotoDirty, setProfilePhotoDirty] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
-  const { subscription, isAdmin: isSubscriptionAdmin, trialActive } = useSubscriptionCheck();
+  const { subscription, isAdmin: isSubscriptionAdmin, trialActive, trialEndsAt } = useSubscriptionCheck();
   const canUseWhatsApp = isAdminUser || isSubscriptionAdmin || trialActive || subscription?.status === 'active';
+  // Contador de teste grátis: só quando está no trial (não assinante, não admin).
+  const trialRestam = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - Date.now()) / 86_400_000) : null;
+  const showTrialItem = !isSubscriptionAdmin && !isAdminUser && subscription?.status !== 'active' && trialActive && trialRestam != null && trialRestam >= 0;
   type PushPermission = 'granted' | 'denied' | 'default' | 'undetermined' | 'unknown' | 'unsupported';
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
   const webPushScale = React.useRef(new Animated.Value(1)).current;
@@ -169,6 +172,16 @@ export default function SettingsScreen() {
       id: 'subscription',
       title: t('settings.section.subscription'),
       items: [
+        ...(showTrialItem ? [{
+          id: 'trial_status',
+          title: t('settings.item.trialStatus.title'),
+          subtitle: (trialRestam as number) <= 1
+            ? t('trialBanner.hoje')
+            : t('trialBanner.gratis').replace('{n}', String(trialRestam)),
+          icon: 'time',
+          type: 'button',
+          onPress: () => (navigation as any).navigate('Premium', { openTab: 'features' }),
+        }] : []),
         {
           id: 'subscription_status',
           title: t('settings.item.subscriptionStatus.title'),

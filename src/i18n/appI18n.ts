@@ -1998,6 +1998,11 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.dias': 'Faltam {n} dias de teste.',
     'trialBanner.gratis': 'Grátis · {n} dias restantes.',
     'trialBanner.cta': 'Assinar',
+    'settings.item.trialStatus.title': 'Período de teste',
+    'trialWelcome.title': '7 dias grátis de tudo ✨',
+    'trialWelcome.body': 'Seu mapa está pronto! Por 7 dias você tem acesso a TUDO — previsões de até 360 dias, trânsitos e leituras completas. Sem cartão.',
+    'trialWelcome.cta': 'Explorar agora',
+    'trialWelcome.plans': 'Ver planos',
 
     // O quiz: três passos, com recompensa em cada um. "naVirada" diz que a
     // hora ainda pode mudar o signo — a menos de um grau da fronteira,
@@ -2454,6 +2459,11 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.dias': '{n} days of trial left.',
     'trialBanner.gratis': 'Free · {n} days left.',
     'trialBanner.cta': 'Subscribe',
+    'settings.item.trialStatus.title': 'Trial period',
+    'trialWelcome.title': '7 days of everything, free',
+    'trialWelcome.body': 'Your chart is ready! For 7 days you get access to EVERYTHING — forecasts up to 360 days, transits and full readings. No card needed.',
+    'trialWelcome.cta': 'Explore now',
+    'trialWelcome.plans': 'See plans',
 
     'quiz.continuar': 'Continue',
     'quiz.voltar': 'Back',
@@ -2907,6 +2917,11 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.dias': 'Quedan {n} dias de prueba.',
     'trialBanner.gratis': 'Gratis · {n} dias restantes.',
     'trialBanner.cta': 'Suscribirse',
+    'settings.item.trialStatus.title': 'Periodo de prueba',
+    'trialWelcome.title': '7 dias de todo, gratis',
+    'trialWelcome.body': 'Tu carta esta lista! Por 7 dias tienes acceso a TODO — previsiones de hasta 360 dias, transitos y lecturas completas. Sin tarjeta.',
+    'trialWelcome.cta': 'Explorar ahora',
+    'trialWelcome.plans': 'Ver planes',
 
     'quiz.continuar': 'Continuar',
     'quiz.voltar': 'Volver',
@@ -3360,6 +3375,11 @@ const postPatch: Record<AppLanguage, Dict> = {
     'trialBanner.dias': 'Restano {n} giorni di prova.',
     'trialBanner.gratis': 'Gratis · {n} giorni rimasti.',
     'trialBanner.cta': 'Abbonati',
+    'settings.item.trialStatus.title': 'Periodo di prova',
+    'trialWelcome.title': '7 giorni di tutto, gratis',
+    'trialWelcome.body': 'La tua carta e pronta! Per 7 giorni hai accesso a TUTTO — previsioni fino a 360 giorni, transiti e letture complete. Senza carta.',
+    'trialWelcome.cta': 'Esplora ora',
+    'trialWelcome.plans': 'Vedi piani',
 
     'quiz.continuar': 'Continua',
     'quiz.voltar': 'Indietro',

@@ -34,6 +34,7 @@ import NatalChartWheelScreen from "../screens/cosmos/NatalChartWheelScreen"
 import ErrorBoundary from "../components/ErrorBoundary"
 import AccessGuard from "../components/AccessGuard"
 import TrialBanner from "../components/TrialBanner"
+import TrialWelcomeModal from "../components/TrialWelcomeModal"
 import BirthDataFormContainer from "../screens/onboarding/BirthDataFormContainer"
 import { useAuth } from "../hooks/useAuth"
 import { useAppLanguage } from "../hooks/useAppLanguage"
@@ -305,6 +306,7 @@ function MainTabs() {
                 <>
                   <TrialBanner />
                   <HomeScreen />
+                  <TrialWelcomeModal />
                 </>
               </AccessGuard>
             </SwipeableTabScreen>
