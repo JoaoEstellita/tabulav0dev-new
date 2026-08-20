@@ -191,7 +191,14 @@ export default function ForecastEphemerisChart({
                   const x2 = Math.min(width - 10, xOf(e.endAt))
                   const w = Math.max(5, x2 - x1)
                   const xe = xOf(e.exactAt)
-                  const dateKey = (e.exactAt || "").slice(0, 10)
+                  // dateKey do toque tem de estar DENTRO do range e coberto pela
+                  // barra — senão o modal (que resolve pela lista do dia) não acha.
+                  // Aspecto de planeta lento pica FORA da janela (exactAt fora do
+                  // range): cai no início visível ou no 1º dia do range.
+                  const inRange = (d: string) => !!d && d >= rangeFrom && d <= rangeTo
+                  const peakDay = (e.exactAt || "").slice(0, 10)
+                  const startDay = (e.startAt || "").slice(0, 10)
+                  const dateKey = inRange(peakDay) ? peakDay : inRange(startDay) ? startDay : rangeFrom
                   const hitW = Math.max(w, 18) // alvo de toque mínimo (barras curtas)
                   const hitX = x1 - Math.max(0, (hitW - w) / 2)
                   return (
