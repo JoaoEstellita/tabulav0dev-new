@@ -711,6 +711,9 @@ export default function ForecastScreen() {
   const [areaSummaryLoading, setAreaSummaryLoading] = useState(false)
   const [areaSummaryDegraded, setAreaSummaryDegraded] = useState(false)
   const [expandedArea, setExpandedArea] = useState<string | null>(null)
+  // Seção "Resumo por área" no topo é colapsável (padrão fechada) para não empurrar
+  // o gráfico pra baixo — abre ao tocar no cabeçalho.
+  const [areaSummaryOpen, setAreaSummaryOpen] = useState(false)
   const [forecastView, setForecastView] = useState<'calendario' | 'grafico'>('grafico')
   const areaSummaryInFlightRef = useRef(false)
   const skipNextFetchRef = useRef(false)
@@ -1340,12 +1343,14 @@ export default function ForecastScreen() {
       if (delta > 0) {
         map[event.id] = {
           label: tr('forecast.phase.approaching', 'Em aprox'),
-          meta: tr('forecast.phase.inDays', 'faltam {days} dias', { days: delta }),
+          // Fallback com valor embutido: quando a chave i18n falta, tr devolve o
+          // fallback CRU (não interpola {days}) — por isso usar template literal.
+          meta: tr('forecast.phase.inDays', `faltam ${delta} dias`, { days: delta }),
         }
       } else if (delta < 0) {
         map[event.id] = {
           label: tr('forecast.phase.separating', 'Afastando'),
-          meta: tr('forecast.phase.daysAgo', 'ha {days} dias', { days: Math.abs(delta) }),
+          meta: tr('forecast.phase.daysAgo', `ha ${Math.abs(delta)} dias`, { days: Math.abs(delta) }),
         }
       } else {
         map[event.id] = { label: tr('forecast.phase.peak', 'Pico'), meta: tr('forecast.phase.today', 'hoje') }
@@ -1559,6 +1564,82 @@ export default function ForecastScreen() {
 
       {!loading && !error && data && (
         <ScrollView contentContainerStyle={styles.content}>
+          {/* Resumo por área (Amor/Saúde/...) — de volta ao topo, mas COLAPSÁVEL:
+              fechado por padrão pra não empurrar o gráfico; abre ao tocar. */}
+          <View style={styles.areaSummarySection}>
+            <View style={styles.areaSummaryHeaderRow}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}
+                activeOpacity={0.8}
+                onPress={() => setAreaSummaryOpen((o) => !o)}
+                accessibilityRole="button"
+              >
+                <Ionicons name="sparkles-outline" size={16} color="#FFD700" />
+                <Text style={styles.areaSummaryTitle} numberOfLines={1}>
+                  {tr('forecast.areaSummary.titleShort', `Próximos ${periodDays} dias`, { days: periodDays })}
+                </Text>
+                <Ionicons name={areaSummaryOpen ? 'chevron-up' : 'chevron-down'} size={16} color="#888" style={{ marginLeft: 6 }} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.timelineButton}
+                onPress={() => { try { (navigation as any).navigate('AstrologyAnalysis') } catch { } }}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+              >
+                <Ionicons name="time-outline" size={14} color="#0F0F23" />
+                <Text style={styles.timelineButtonText} numberOfLines={1}>
+                  {tr('forecast.timeline.button', 'Linha do tempo')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {areaSummaryOpen && (
+              <>
+                {areaSummaryLoading && !areaSummary && (
+                  <Text style={styles.areaSummaryHint}>{tr('forecast.areaSummary.loading', 'Lendo seus trânsitos...')}</Text>
+                )}
+                {areaSummaryDegraded && (
+                  <Text style={styles.areaSummaryHint}>
+                    {tr('forecast.areaSummary.degraded', 'Resumo indisponível no momento. Tente novamente em instantes.')}
+                  </Text>
+                )}
+                {areaSummary?.areas?.map((a) => {
+                  const color = areaBandColor(a.currentBand)
+                  const d = a.dominantDriver
+                  const driverLine = d
+                    ? `${d.transitPlanetPt || d.transitPlanet || ''} ${d.aspectPt || d.aspect || ''} ${d.natalTarget || ''}`.trim() + (d.house ? ` · casa ${d.house}` : '')
+                    : ''
+                  const expanded = expandedArea === a.area
+                  return (
+                    <TouchableOpacity
+                      key={a.area}
+                      activeOpacity={0.85}
+                      style={styles.areaSummaryCard}
+                      onPress={() => setExpandedArea(expanded ? null : a.area)}
+                    >
+                      <View style={styles.areaSummaryCardHeader}>
+                        <View style={[styles.areaBandDot, { backgroundColor: color }]} />
+                        <Text style={styles.areaSummaryCardTitle}>{a.areaLabel || formatDomainLabel(a.area, language)}</Text>
+                        <View style={{ flex: 1 }} />
+                        <Text style={[styles.areaBandLabel, { color }]}>
+                          {a.currentBand}{a.currentPct != null ? ` · ${a.currentPct}%` : ''}
+                        </Text>
+                        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color="#888" style={{ marginLeft: 6 }} />
+                      </View>
+                      {!!driverLine && <Text style={styles.areaSummaryDriver}>{driverLine}</Text>}
+                      <Text style={styles.areaSummaryText} numberOfLines={expanded ? undefined : 2}>
+                        {a.reading || a.verdict || ''}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
+                {areaSummary?.limited && (
+                  <Text style={styles.areaSummaryHint}>
+                    {tr('forecast.areaSummary.limited', 'Horizonte maior disponível em planos superiores.')}
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
           <View style={styles.calendarWrapper}>
             {/* Toggle Gráfico | Calendário (gráfico é a visão principal) */}
             <View style={styles.forecastViewToggle}>
@@ -1677,71 +1758,6 @@ export default function ForecastScreen() {
                 'Sem eventos. Dia mais calmo para organizar suas prioridades.'
               )}
             />
-          </View>
-
-          {/* Resumo por área (Amor/Saúde/...) — movido para o FINAL, depois do
-              gráfico/calendário e do Status do Dia (pedido do João). */}
-          <View style={styles.areaSummarySection}>
-            <View style={styles.areaSummaryHeaderRow}>
-              <Ionicons name="sparkles-outline" size={16} color="#FFD700" />
-              <Text style={styles.areaSummaryTitle} numberOfLines={1}>
-                {tr('forecast.areaSummary.titleShort', `Próximos ${periodDays} dias`, { days: periodDays })}
-              </Text>
-              <TouchableOpacity
-                style={styles.timelineButton}
-                onPress={() => { try { (navigation as any).navigate('AstrologyAnalysis') } catch { } }}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-              >
-                <Ionicons name="time-outline" size={14} color="#0F0F23" />
-                <Text style={styles.timelineButtonText} numberOfLines={1}>
-                  {tr('forecast.timeline.button', 'Linha do tempo')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {areaSummaryLoading && !areaSummary && (
-              <Text style={styles.areaSummaryHint}>{tr('forecast.areaSummary.loading', 'Lendo seus trânsitos...')}</Text>
-            )}
-            {areaSummaryDegraded && (
-              <Text style={styles.areaSummaryHint}>
-                {tr('forecast.areaSummary.degraded', 'Resumo indisponível no momento. Tente novamente em instantes.')}
-              </Text>
-            )}
-            {areaSummary?.areas?.map((a) => {
-              const color = areaBandColor(a.currentBand)
-              const d = a.dominantDriver
-              const driverLine = d
-                ? `${d.transitPlanetPt || d.transitPlanet || ''} ${d.aspectPt || d.aspect || ''} ${d.natalTarget || ''}`.trim() + (d.house ? ` · casa ${d.house}` : '')
-                : ''
-              const expanded = expandedArea === a.area
-              return (
-                <TouchableOpacity
-                  key={a.area}
-                  activeOpacity={0.85}
-                  style={styles.areaSummaryCard}
-                  onPress={() => setExpandedArea(expanded ? null : a.area)}
-                >
-                  <View style={styles.areaSummaryCardHeader}>
-                    <View style={[styles.areaBandDot, { backgroundColor: color }]} />
-                    <Text style={styles.areaSummaryCardTitle}>{a.areaLabel || formatDomainLabel(a.area, language)}</Text>
-                    <View style={{ flex: 1 }} />
-                    <Text style={[styles.areaBandLabel, { color }]}>
-                      {a.currentBand}{a.currentPct != null ? ` · ${a.currentPct}%` : ''}
-                    </Text>
-                    <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color="#888" style={{ marginLeft: 6 }} />
-                  </View>
-                  {!!driverLine && <Text style={styles.areaSummaryDriver}>{driverLine}</Text>}
-                  <Text style={styles.areaSummaryText} numberOfLines={expanded ? undefined : 2}>
-                    {a.reading || a.verdict || ''}
-                  </Text>
-                </TouchableOpacity>
-              )
-            })}
-            {areaSummary?.limited && (
-              <Text style={styles.areaSummaryHint}>
-                {tr('forecast.areaSummary.limited', 'Horizonte maior disponível em planos superiores.')}
-              </Text>
-            )}
           </View>
 
           {maxDaysAllowed < 360 && (
