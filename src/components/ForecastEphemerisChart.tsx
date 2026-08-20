@@ -73,10 +73,10 @@ export default function ForecastEphemerisChart({
     return <Text style={styles.empty}>{t.empty}</Text>
   }
 
-  const dayW = totalDays > 60 ? 9 : totalDays > 40 ? 13 : totalDays > 20 ? 22 : 30
+  const dayW = totalDays > 60 ? 9 : totalDays > 40 ? 14 : totalDays > 20 ? 24 : 40
   const gutter = 30
   const topAxis = 22
-  const rowH = 30
+  const rowH = 34
   const height = topAxis + rows.length * rowH + 10
   const width = gutter + totalDays * dayW + 10
 
@@ -87,6 +87,29 @@ export default function ForecastEphemerisChart({
   }
   const labelEvery = totalDays > 60 ? 7 : totalDays > 40 ? 5 : totalDays > 20 ? 2 : 1
   const now = Date.now()
+
+  // De-overlap dos rótulos por linha: a Lua é rápida e enche a linha de aspectos,
+  // e os glifos viravam um amontoado ilegível ("travado"). Por linha, ordena por
+  // pico e só mostra rótulos com folga horizontal — as BARRAS continuam todas.
+  const MIN_LABEL_GAP = 20
+  const labelShown = new Set<string>()
+  {
+    const byRow = new Map<string, EphemEvent[]>()
+    for (const e of list) {
+      if (rowY(e.transitPlanet) < 0) continue
+      const arr = byRow.get(e.transitPlanet) || []
+      arr.push(e)
+      byRow.set(e.transitPlanet, arr)
+    }
+    for (const arr of byRow.values()) {
+      arr.sort((a, b) => xOf(a.exactAt) - xOf(b.exactAt))
+      let lastX = -Infinity
+      for (const e of arr) {
+        const x = xOf(e.exactAt)
+        if (x - lastX >= MIN_LABEL_GAP) { labelShown.add(e.id); lastX = x }
+      }
+    }
+  }
 
   return (
     <View style={styles.wrap}>
@@ -129,9 +152,11 @@ export default function ForecastEphemerisChart({
             return (
               <React.Fragment key={e.id}>
                 <Rect x={x1} y={y - 5} width={w} height={10} rx={5} fill={impactColor(e.impact)} opacity={0.82} />
-                <SvgText x={xe} y={y - 8} fontSize={10} fill="#e6e6ee" textAnchor="middle">
-                  {(ASPECT_SYMBOLS[e.aspect] || "") + (POINT_SYMBOLS[e.natalPoint] || "")}
-                </SvgText>
+                {labelShown.has(e.id) ? (
+                  <SvgText x={xe} y={y - 9} fontSize={10} fill="#e6e6ee" textAnchor="middle">
+                    {(ASPECT_SYMBOLS[e.aspect] || "") + (POINT_SYMBOLS[e.natalPoint] || "")}
+                  </SvgText>
+                ) : null}
               </React.Fragment>
             )
           })}
