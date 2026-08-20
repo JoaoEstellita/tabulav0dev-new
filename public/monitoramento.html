@@ -661,12 +661,12 @@
       ? all.filter(r => (r.nome || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q))
       : all
     if (!list.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum usuário.</div>'; return }
-    box.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:820px">
+    box.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:960px">
       <thead>
         <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
           <th style="padding:4px 8px"></th><th style="padding:4px 8px">Usuário</th><th style="padding:4px 8px">E-mail</th>
           <th style="padding:4px 8px">Aberturas hoje</th><th style="padding:4px 8px">Último acesso</th>
-          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px">Gratuito</th><th style="padding:4px 8px">Ações</th>
+          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px">Gratuito</th><th style="padding:4px 8px" title="🌅 matinal · 🔔 alertas e demais">Notificações</th><th style="padding:4px 8px">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -681,6 +681,12 @@
             <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.ultimoAcesso)}</td>
             <td style="padding:5px 8px">${subBadge(r)}</td>
             <td style="padding:5px 8px">${(() => { const g = trialInfo(r); return g.bg === 'transparent' ? `<span style="color:${g.fg}">${g.txt}</span>` : `<span class="badge" style="background:${g.bg};color:${g.fg};font-size:11px">${g.txt}</span>` })()}</td>
+            <td style="padding:5px 8px;white-space:nowrap">${(() => {
+              const n = r.notif || {}
+              if (!n.ok) return `<span class="badge" style="background:#3a2020;color:#ff8a80;font-size:11px" title="não recebe notificações">off · ${esc(n.motivo || '')}</span>`
+              const mk = (emoji, on, label) => `<span title="${label}" style="margin-right:8px">${emoji}<span style="color:${on ? 'var(--ok)' : 'var(--muted)'};font-weight:700">${on ? '✓' : '✗'}</span></span>`
+              return mk('🌅', n.matinal, 'matinal') + mk('🔔', n.alertas, 'alertas e demais')
+            })()}</td>
             <td style="padding:5px 8px;white-space:nowrap">
               ${sel}
               <input id="months-${r.uid}" type="number" min="0" max="24" value="1" title="meses (0 = sem prazo)" style="width:44px;margin-left:4px;background:#141428;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 4px;font-size:12px" />
