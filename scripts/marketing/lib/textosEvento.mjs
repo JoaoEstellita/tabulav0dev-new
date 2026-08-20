@@ -67,11 +67,12 @@ export const TEXTO_DO_EVENTO = {
     'para contar a alguém. É justamente isso que faz durar.',
 
   'fase:Quarto Crescente:Escorpião':
-    'O quarto crescente é o ponto do ciclo em que o que começou encontra ' +
-    'resistência. Em Escorpião, ela não vem de fora. Vem do que se evitou ' +
-    'olhar quando a decisão foi tomada. São dias de desconforto útil, em ' +
-    'que o custo real do que se quer aparece, e em que desistir e insistir ' +
-    'pesam quase o mesmo.',
+    'O quarto crescente chega cerca de uma semana depois da Lua Nova, quando ' +
+    'a Lua forma um ângulo de 90° com o Sol. É o momento do ciclo em que o ' +
+    'que você começou pede esforço para continuar: costumam aparecer os ' +
+    'primeiros obstáculos. Em Escorpião, eles tendem a ser mais internos do ' +
+    'que externos, ligados ao que a gente evita olhar. Serve para ajustar o ' +
+    'rumo com calma, não para desistir.',
 
   'retrogrado:Uranus:Gêmeos':
     'Urano começa a andar para trás e fica assim por cinco meses. A vontade ' +

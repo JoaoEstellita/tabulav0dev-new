@@ -152,7 +152,11 @@ function montar(assunto, { iso, catalogos }) {
       return {
         olho: dia,
         titulo: `${assunto.fase}\nem ${assunto.signo}`,
-        texto: comDignidade(assunto, corpo, textoDoEvento(assunto), catalogos),
+        // sem a dignidade na frente: numa peça de FASE o tema é o momento do
+        // ciclo, não a dignidade da Lua no signo. "A Lua chega em queda: menos
+        // força" abrindo soava fatalista e empurrava a explicação da fase para
+        // fora do quadro. O texto da fase já se basta; a dignidade é o fallback.
+        texto: textoDoEvento(assunto) || comDignidade(assunto, corpo, '', catalogos),
         signo: assunto.signo,
         casas: true,
         legendaAbre: '',
