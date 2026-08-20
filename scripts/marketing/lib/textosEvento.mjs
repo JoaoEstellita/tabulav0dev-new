@@ -98,6 +98,13 @@ export function chaveDoEvento(evento) {
   if (evento.tipo === 'fase' && evento.fase) return `fase:${evento.fase}:${evento.signo}`
   if (evento.tipo === 'retrogrado' && evento.corpo) return `retrogrado:${evento.corpo}:${evento.signo}`
   if (evento.tipo === 'direto' && evento.corpo) return `direto:${evento.corpo}:${evento.signo}`
+  // O aspecto de trânsito segue a mesma regra dos outros: só vira peça se
+  // alguém escreveu o texto de TRÂNSITO aqui. Sem isso, `textoDoEvento` devolve
+  // null e o assunto cai no educativo — em vez de usar o texto NATAL do app,
+  // que descreve o mapa de quem nasce, não o céu de hoje.
+  if (evento.tipo === 'aspecto' && evento.aspecto) {
+    return `aspecto:${evento.aspecto.agente}:${evento.aspecto.aspecto}:${evento.aspecto.alvo}`
+  }
   return null
 }
 

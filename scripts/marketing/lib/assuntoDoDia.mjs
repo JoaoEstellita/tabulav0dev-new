@@ -26,7 +26,8 @@
  *   5  conceito             quando o céu não deu assunto
  */
 import { eventosDoDia, ingressosProximos } from './eventos.mjs'
-import { temaEducativo, chaveAspectoNatal, falaComQuemLe } from './educativo.mjs'
+import { temaEducativo } from './educativo.mjs'
+import { textoDoEvento } from './textosEvento.mjs'
 import { escrever } from './vozes.mjs'
 import { conceitoDoDia } from './textosConceito.mjs'
 import { recursoDoDia } from './textosRecurso.mjs'
@@ -136,12 +137,14 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
   }
 
   /**
-   * 3: aspecto, com corpo pessoal e COM TEXTO.
+   * 3: aspecto, com corpo pessoal e COM TEXTO DE TRÂNSITO.
    *
    * O aspecto vem de `eventosDoDia` sem leitura nenhuma: só o par, o ângulo e o
-   * orbe. Quem tem a leitura é o catálogo de aspectos natais do app. Sem texto
-   * no catálogo, o aspecto não vira peça, senão a peça sai com o dado e nenhuma
-   * interpretação, que é o defeito de origem de tudo isto.
+   * orbe. Antes a leitura vinha do catálogo de aspectos NATAIS do app, e a peça
+   * saía dizendo "quem nasce assim…" — descrição do mapa, não do céu de hoje, e
+   * no tom fatalista que o João barrou. Agora o aspecto segue a mesma regra de
+   * ingresso e fase: só vira peça se há texto de TRÂNSITO escrito em
+   * `textosEvento.mjs`. Sem ele, cai no educativo, que é conteúdo próprio e bom.
    */
   for (const ev of doCeu) {
     if (ev.tipo !== 'aspecto') continue
@@ -149,8 +152,8 @@ export function assuntoDoDia(data, { mapa, catalogos = {}, iso, usadas = new Set
     if (!CORPOS_PESSOAIS.includes(a.agente) && !CORPOS_PESSOAIS.includes(a.alvo)) continue
     if (NAO_ENCABECA_ASPECTO.includes(a.agente) || NAO_ENCABECA_ASPECTO.includes(a.alvo)) continue
 
-    const texto = catalogos.aspectoNatal?.[chaveAspectoNatal(a.agente, a.alvo, a.aspecto)]
-    if (!texto || falaComQuemLe(texto)) continue
+    const texto = textoDoEvento(ev)
+    if (!texto) continue
     if (!naJanela(ev)) continue
 
     return {

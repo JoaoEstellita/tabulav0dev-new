@@ -104,7 +104,18 @@ describe('o assunto do dia', () => {
     const chaves = correr('2026-08-12', 60).map((d) => d.chave)
     expect(chaves.filter((c) => c.startsWith('conceito:')).length).toBeGreaterThan(0)
     expect(chaves.filter((c) => c.startsWith('luav:')).length).toBeGreaterThan(0)
-    expect(chaves.filter((c) => c.startsWith('asp:')).length).toBeGreaterThan(0)
+  })
+
+  /**
+   * Aspecto de trânsito só vira peça com texto de TRÂNSITO próprio.
+   *
+   * Antes puxava o texto NATAL do app ("quem nasce assim…"), descrição do mapa
+   * e não do céu de hoje. Sem nenhum texto de trânsito de aspecto escrito ainda,
+   * nenhum aspecto deve encabeçar — cai no educativo.
+   */
+  it('aspecto não vira peça sem texto de trânsito', () => {
+    const chaves = correr('2026-08-12', 60).map((d) => d.chave)
+    expect(chaves.filter((c) => c.startsWith('asp:')).length).toBe(0)
   })
 
   it('a chave de um assunto é estável entre duas chamadas', () => {
