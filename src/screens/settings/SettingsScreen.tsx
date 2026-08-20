@@ -28,6 +28,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage';
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck';
 import { MercadoPagoService } from '../../services/payment/MercadoPagoService';
 import FAQ from '../../components/FAQ';
+import WhatsAppInput from '../../components/WhatsAppInput';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
 import { registerDeviceToken } from '../../services/notifications/registerDeviceToken';
@@ -747,14 +748,9 @@ export default function SettingsScreen() {
         profilePhoto: updatedPhoto || null,
       };
       if (whatsappPhone) {
-        // Normaliza para o formato que o webhook/envio esperam (só dígitos + 55
-        // no BR). Salvar RAW (sem 55) funcionava por heurística, mas padronizar
-        // evita casos de borda. BR celular/fixo (10-11 díg) ganha o 55.
-        const waDigits = String(whatsappPhone).replace(/\D/g, "");
-        const waNorm = (waDigits.length === 10 || waDigits.length === 11) && !waDigits.startsWith("55")
-          ? "55" + waDigits
-          : waDigits;
-        payload.whatsappPhone = waNorm;
+        // Guarda em E.164 (+<ddi><número>) como o WhatsAppInput emite — preserva o
+        // código do país (BR ou estrangeiro). O backend confia no "+" (não força 55).
+        payload.whatsappPhone = String(whatsappPhone).trim();
         payload.whatsappOptIn = whatsappOptIn;
         if (whatsappOptIn) {
           payload.whatsappOptInAt = serverTimestamp();
@@ -1423,16 +1419,25 @@ export default function SettingsScreen() {
                       );
                     }}
                   >
-                    <TextInput
-                      style={[styles.input, !canUseWhatsApp && { opacity: 0.4 }]}
-                      placeholder={t('settings.profile.whatsappPlaceholder')}
-                      placeholderTextColor="#888"
-                      value={whatsappPhone}
-                      onChangeText={canUseWhatsApp ? setWhatsappPhone : undefined}
-                      keyboardType="phone-pad"
-                      editable={canUseWhatsApp}
-                      pointerEvents={canUseWhatsApp ? 'auto' : 'none'}
-                    />
+                    {canUseWhatsApp ? (
+                      // DDI editável (+55 padrão) → aceita número estrangeiro; guarda E.164.
+                      <WhatsAppInput
+                        value={whatsappPhone}
+                        onChange={setWhatsappPhone}
+                        placeholder={t('settings.profile.whatsappPlaceholder')}
+                        placeholderTextColor="#888"
+                      />
+                    ) : (
+                      <TextInput
+                        style={[styles.input, { opacity: 0.4 }]}
+                        placeholder={t('settings.profile.whatsappPlaceholder')}
+                        placeholderTextColor="#888"
+                        value={whatsappPhone}
+                        keyboardType="phone-pad"
+                        editable={false}
+                        pointerEvents="none"
+                      />
+                    )}
                   </TouchableOpacity>
                   {whatsappPhone.trim().length > 0 && canUseWhatsApp && (
                     <View style={styles.optInRow}>

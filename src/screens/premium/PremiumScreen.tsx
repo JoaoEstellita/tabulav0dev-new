@@ -16,6 +16,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
+import WhatsAppInput from '../../components/WhatsAppInput'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
@@ -102,12 +103,6 @@ export default function PremiumScreen() {
   // Campo de WhatsApp: quando já temos o número salvo (do cadastro), mostra
   // compacto ("•••• 7163 · alterar") em vez de pedir digitar de novo.
   const [editingPhone, setEditingPhone] = useState(false)
-  // Normaliza WhatsApp (BR: garante o 55) — casa com o que o webhook procura.
-  const normalizeWa = (raw: string) => {
-    const d = String(raw || '').replace(/\D/g, '')
-    if (!d) return ''
-    return (d.length === 10 || d.length === 11) && !d.startsWith('55') ? '55' + d : d
-  }
   const maskWa = (raw: string) => {
     const d = String(raw || '').replace(/\D/g, '')
     return d.length >= 4 ? `•••• ${d.slice(-4)}` : d
@@ -454,7 +449,7 @@ export default function PremiumScreen() {
     }
     if (plan.requiresPhone && user) {
       user.getIdToken(true)
-        .then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone)))
+        .then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim()))
         .catch(() => null)
     }
     if (!user) {
@@ -524,7 +519,7 @@ export default function PremiumScreen() {
       return
     }
     if (plan.requiresPhone && user) {
-      user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone))).catch(() => null)
+      user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
     }
     try {
       const planConfig = MercadoPagoService.getPlanById(plan.id)
@@ -557,7 +552,7 @@ export default function PremiumScreen() {
     const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
     if (effectiveProvider === 'mercadopago' && user) {
       if (plan.requiresPhone && premiumPhone.trim()) {
-        user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone))).catch(() => null)
+        user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
       }
       const cfg = MercadoPagoService.getPlanById(plan.id)
       setPixPlan({ id: plan.id, name: plan.name || cfg?.name || plan.id, price: Number(plan.price ?? cfg?.price ?? 0) })
@@ -1183,13 +1178,11 @@ export default function PremiumScreen() {
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <TextInput
-                      style={styles.planPhoneInput}
-                      placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
-                      placeholderTextColor="#888"
+                    <WhatsAppInput
                       value={premiumPhone}
-                      onChangeText={setPremiumPhone}
-                      keyboardType="phone-pad"
+                      onChange={setPremiumPhone}
+                      placeholder={tr('premium.plans.whatsappPlaceholder', '9xxxx-xxxx')}
+                      placeholderTextColor="#888"
                       autoFocus={editingPhone}
                     />
                   )}

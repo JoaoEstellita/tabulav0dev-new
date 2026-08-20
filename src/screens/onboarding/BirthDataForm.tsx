@@ -24,6 +24,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { hardSignOut } from '../../services/auth/logout'
 import ResponsiveContainer from '../../components/ResponsiveContainer'
 import StarLoader from '../../components/StarLoader'
+import WhatsAppInput from '../../components/WhatsAppInput'
 import { AnimatedMount } from '../../ui/anim/adapter'
 import { FONT_SIZES, SPACING, isDesktop, isTablet } from '../../styles/responsive'
 import { useOrientation } from '../../hooks/useOrientation'
@@ -759,17 +760,6 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     setTimeout(() => focusRef.current?.focus?.(), 40)
   }
 
-  // Normaliza o WhatsApp para casar com o que o webhook procura (whatsappPhone):
-  // só dígitos + código do país. Se BR e vier só com DDD (10-11 díg), prefixa 55.
-  // Não-BR: guarda como digitado (a pessoa inclui o código do país).
-  const normalizeWhatsapp = (raw: string, isBR: boolean): string => {
-    let d = String(raw || '').replace(/\D/g, '')
-    if (!d) return ''
-    if (d.startsWith('00')) d = d.slice(2) // prefixo internacional 00 → remove
-    if (isBR && (d.length === 10 || d.length === 11) && !d.startsWith('55')) return '55' + d
-    return d
-  }
-
   const handleComplete = () => {
     // Localização vem direto do selectedLocation (preciso) — sem depender de
     // setFormData assíncrono. Sem seleção, cai no texto livre + centro do BR.
@@ -787,10 +777,8 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         longitude: -47.8825,
       }
 
-    const whatsappPhone = normalizeWhatsapp(
-      formData.whatsapp,
-      formData.language === 'pt-BR' || formData.birthCountryCode === 'BR',
-    )
+    // formData.whatsapp já vem em E.164 (+<ddi><número>) do WhatsAppInput.
+    const whatsappPhone = String(formData.whatsapp || '').trim()
 
     const birthData: BirthData = {
       fullName: formData.fullName.trim(),
@@ -911,21 +899,16 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
       </View>
       {!!nameError && <Text style={styles.fieldErrorText}>{nameError}</Text>}
 
-      {/* WhatsApp (opcional) — vincula ao agente já no cadastro e evita conta duplicada */}
+      {/* WhatsApp (opcional) — vincula ao agente já no cadastro e evita conta duplicada.
+          DDI editável (+55 padrão) → aceita número estrangeiro. Guarda em E.164. */}
       <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>{t('onboarding.field.whatsapp')}</Text>
-      <View style={styles.inputContainer}>
-        <Ionicons name="logo-whatsapp" size={20} color="#666" style={styles.inputIcon} />
-        <TextInput
-          style={styles.nameInput}
-          placeholder={t('onboarding.field.whatsappPlaceholder')}
-          placeholderTextColor="#666"
-          value={formData.whatsapp}
-          onChangeText={(text) => setFormData(prev => ({ ...prev, whatsapp: text }))}
-          keyboardType="phone-pad"
-          returnKeyType="next"
-          onSubmitEditing={() => birthDateInputRef.current?.focus()}
-        />
-      </View>
+      <WhatsAppInput
+        value={formData.whatsapp}
+        onChange={(e164) => setFormData(prev => ({ ...prev, whatsapp: e164 }))}
+        defaultDdi={formData.birthCountryCode === 'BR' || formData.language === 'pt-BR' ? '55' : '55'}
+        placeholder={t('onboarding.field.whatsappPlaceholder')}
+        placeholderTextColor="#666"
+      />
       <Text style={styles.fieldHintText}>{t('onboarding.field.whatsappHint')}</Text>
     </View>
   )
