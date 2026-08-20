@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { View, Text, ScrollView, StyleSheet } from "react-native"
 import Svg, { Rect, Line, Text as SvgText } from "react-native-svg"
 
@@ -82,6 +82,7 @@ export default function ForecastEphemerisChart({
   /** Toca numa barra → abre a leitura do aspecto (id do evento + dia do pico). */
   onSelectEvent?: (eventId: string, dateKey: string) => void
 }) {
+  const [containerW, setContainerW] = useState(0)
   const t = L[language] || L["pt-BR"]
   const fromMs = toMs(`${rangeFrom}T00:00:00Z`)
   const toEndMs = toMs(`${rangeTo}T00:00:00Z`)
@@ -124,11 +125,16 @@ export default function ForecastEphemerisChart({
     return <Text style={styles.empty}>{t.empty}</Text>
   }
 
-  const dayW = totalDays > 90 ? 8 : totalDays > 45 ? 12 : totalDays > 20 ? 20 : 34
-  const gutter = 48 // rótulo trânsito+aspecto+natal à esquerda
-  const topAxis = 20
-  const rowH = 16
-  const height = topAxis + rows.length * rowH + 8
+  const gutter = 56 // rótulo trânsito+aspecto+natal à esquerda
+  const topAxis = 22
+  const rowH = 24
+  const barH = 13
+  const minDayW = totalDays > 90 ? 11 : totalDays > 45 ? 16 : totalDays > 20 ? 26 : 40
+  // Preenche a largura do card em períodos curtos (mede via onLayout); nos longos
+  // usa o mínimo e rola na horizontal.
+  const avail = containerW > 0 ? containerW - gutter - 12 : 0
+  const dayW = Math.max(minDayW, avail > 0 ? avail / totalDays : minDayW)
+  const height = topAxis + rows.length * rowH + 10
   const width = gutter + totalDays * dayW + 10
 
   const xOf = (iso: string) => gutter + ((toMs(iso) - fromMs) / DAY_MS) * dayW
@@ -136,7 +142,13 @@ export default function ForecastEphemerisChart({
   const now = Date.now()
 
   return (
-    <View style={styles.wrap}>
+    <View
+      style={styles.wrap}
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width
+        if (w && Math.abs(w - containerW) > 1) setContainerW(w)
+      }}
+    >
       <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }}>
         <Svg width={width} height={height}>
           {/* sombra alternada por grupo de planeta em trânsito */}
@@ -154,7 +166,7 @@ export default function ForecastEphemerisChart({
               <React.Fragment key={`d${i}`}>
                 <Line x1={x} y1={topAxis} x2={x} y2={height - 8} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
                 {showLabel ? (
-                  <SvgText x={x + dayW / 2} y={12} fontSize={9} fill="#6a7288" textAnchor="middle">
+                  <SvgText x={x + dayW / 2} y={14} fontSize={11} fill="#8892a4" textAnchor="middle">
                     {new Date(fromMs + i * DAY_MS).getUTCDate()}
                   </SvgText>
                 ) : null}
@@ -171,23 +183,27 @@ export default function ForecastEphemerisChart({
               (POINT_SYMBOLS[r.natalPoint] || r.natalPoint.slice(0, 2))
             return (
               <React.Fragment key={r.key}>
-                <SvgText x={gutter - 5} y={y + 3.5} fontSize={11} fill="#c9cfe0" textAnchor="end">
+                <SvgText x={gutter - 5} y={y + 4.5} fontSize={13} fill="#c9cfe0" textAnchor="end">
                   {label}
                 </SvgText>
                 {r.events.map((e, j) => {
                   const x1 = Math.max(gutter, xOf(e.startAt))
                   const x2 = Math.min(width - 10, xOf(e.endAt))
-                  const w = Math.max(4, x2 - x1)
+                  const w = Math.max(5, x2 - x1)
+                  const xe = xOf(e.exactAt)
                   const dateKey = (e.exactAt || "").slice(0, 10)
+                  const hitW = Math.max(w, 18) // alvo de toque mínimo (barras curtas)
+                  const hitX = x1 - Math.max(0, (hitW - w) / 2)
                   return (
                     <React.Fragment key={e.id + j}>
-                      <Rect
-                        x={x1} y={y - 4} width={w} height={8} rx={4}
-                        fill={impactColor(e.impact)} opacity={0.85}
-                        onPress={onSelectEvent ? () => onSelectEvent(e.id, dateKey) : undefined}
-                      />
-                      {/* tick no pico (exactAt) para marcar o momento exato */}
-                      <Line x1={xOf(e.exactAt)} y1={y - 5} x2={xOf(e.exactAt)} y2={y + 5} stroke="#0b0a14" strokeWidth={1} opacity={0.5} />
+                      <Rect x={x1} y={y - barH / 2} width={w} height={barH} rx={barH / 2} fill={impactColor(e.impact)} opacity={0.85} />
+                      {/* tick no pico (exactAt) marca o momento exato */}
+                      <Line x1={xe} y1={y - barH / 2 - 1} x2={xe} y2={y + barH / 2 + 1} stroke="#0b0a14" strokeWidth={1.5} opacity={0.45} />
+                      {onSelectEvent ? (
+                        // Área de toque transparente POR CIMA: cobre a barra inteira +
+                        // o tick e alarga barras curtas → todos os aspectos clicáveis.
+                        <Rect x={hitX} y={topAxis + i * rowH} width={hitW} height={rowH} fill="rgba(0,0,0,0)" onPress={() => onSelectEvent(e.id, dateKey)} />
+                      ) : null}
                     </React.Fragment>
                   )
                 })}
