@@ -179,7 +179,7 @@ export default function SettingsScreen() {
             ? t('trialBanner.hoje')
             : t('trialBanner.gratis').replace('{n}', String(trialRestam)),
           icon: 'time',
-          type: 'button',
+          type: 'button' as const,
           onPress: () => (navigation as any).navigate('Premium', { openTab: 'features' }),
         }] : []),
         {
@@ -187,7 +187,7 @@ export default function SettingsScreen() {
           title: t('settings.item.subscriptionStatus.title'),
           subtitle: t('settings.item.subscriptionStatus.subtitle'),
           icon: 'diamond',
-          type: 'button',
+          type: 'button' as const,
           onPress: () => checkSubscriptionStatus(),
         },
         {
@@ -195,7 +195,7 @@ export default function SettingsScreen() {
           title: t('settings.item.billingInfo.title'),
           subtitle: t('settings.item.billingInfo.subtitle'),
           icon: 'card',
-          type: 'button',
+          type: 'button' as const,
           onPress: () => openBillingInfo(),
         },
       ],
