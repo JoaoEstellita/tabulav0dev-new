@@ -429,6 +429,9 @@ async function principal() {
   // a peça 1 continua na raiz do dia; as outras ganham prefixo no Storage
   const prefixo = (args.slot || 1) > 1 ? `p${args.slot}/` : ''
   const pasta = path.join(args.saida, iso, prefixo ? `evento-${args.slot}` : 'evento')
+  // limpa a pasta antes: um mesmo dia regerado com outro assunto (post que vira
+  // carrossel, ou o contrário) deixava slides órfãos de uma run anterior
+  await rm(pasta, { recursive: true, force: true })
   await mkdir(pasta, { recursive: true })
 
   const base = {
