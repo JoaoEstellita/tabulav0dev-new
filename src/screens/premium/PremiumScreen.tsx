@@ -14,6 +14,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useRoute, useNavigation } from '@react-navigation/native'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../config/firebase'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
@@ -97,6 +99,32 @@ export default function PremiumScreen() {
   const [creditsHistoryError, setCreditsHistoryError] = useState<string | null>(null)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [premiumPhone, setPremiumPhone] = useState('')
+  // Campo de WhatsApp: quando já temos o número salvo (do cadastro), mostra
+  // compacto ("•••• 7163 · alterar") em vez de pedir digitar de novo.
+  const [editingPhone, setEditingPhone] = useState(false)
+  // Normaliza WhatsApp (BR: garante o 55) — casa com o que o webhook procura.
+  const normalizeWa = (raw: string) => {
+    const d = String(raw || '').replace(/\D/g, '')
+    if (!d) return ''
+    return (d.length === 10 || d.length === 11) && !d.startsWith('55') ? '55' + d : d
+  }
+  const maskWa = (raw: string) => {
+    const d = String(raw || '').replace(/\D/g, '')
+    return d.length >= 4 ? `•••• ${d.slice(-4)}` : d
+  }
+  // Pré-preenche o WhatsApp com o número já salvo no cadastro → a pessoa não
+  // digita de novo, só confirma e assina.
+  useEffect(() => {
+    if (!user?.uid) return
+    let vivo = true
+    getDoc(doc(db, 'users', user.uid))
+      .then((snap) => {
+        const wp = snap.exists() ? (snap.data() as any)?.whatsappPhone : null
+        if (vivo && wp) setPremiumPhone((prev) => prev || String(wp))
+      })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [user?.uid])
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
   const [creditsLoading, setCreditsLoading] = useState(false)
   const [creditsCycleEnd, setCreditsCycleEnd] = useState<string | null>(null)
@@ -426,7 +454,7 @@ export default function PremiumScreen() {
     }
     if (plan.requiresPhone && user) {
       user.getIdToken(true)
-        .then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim()))
+        .then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone)))
         .catch(() => null)
     }
     if (!user) {
@@ -496,7 +524,7 @@ export default function PremiumScreen() {
       return
     }
     if (plan.requiresPhone && user) {
-      user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
+      user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone))).catch(() => null)
     }
     try {
       const planConfig = MercadoPagoService.getPlanById(plan.id)
@@ -529,7 +557,7 @@ export default function PremiumScreen() {
     const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
     if (effectiveProvider === 'mercadopago' && user) {
       if (plan.requiresPhone && premiumPhone.trim()) {
-        user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
+        user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, normalizeWa(premiumPhone))).catch(() => null)
       }
       const cfg = MercadoPagoService.getPlanById(plan.id)
       setPixPlan({ id: plan.id, name: plan.name || cfg?.name || plan.id, price: Number(plan.price ?? cfg?.price ?? 0) })
@@ -1144,15 +1172,27 @@ export default function PremiumScreen() {
               </View>
               {plan.requiresPhone && (
                 <View style={styles.planPhoneRow}>
-                  <Text style={styles.planPhoneLabel}>{tr('premium.plans.whatsappLabel', 'WhatsApp (Premium)')}</Text>
-                  <TextInput
-                    style={styles.planPhoneInput}
-                    placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
-                    placeholderTextColor="#888"
-                    value={premiumPhone}
-                    onChangeText={setPremiumPhone}
-                    keyboardType="phone-pad"
-                  />
+                  <Text style={styles.planPhoneLabel}>{tr('premium.plans.whatsappLabel', 'WhatsApp para o astrólogo')}</Text>
+                  {premiumPhone && !editingPhone ? (
+                    // Já temos o número do cadastro — mostra compacto, sem re-digitar.
+                    <View style={styles.planPhoneConfirm}>
+                      <Ionicons name="logo-whatsapp" size={16} color="#25D366" />
+                      <Text style={styles.planPhoneConfirmText}>{maskWa(premiumPhone)}</Text>
+                      <TouchableOpacity onPress={() => setEditingPhone(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Text style={styles.planPhoneChange}>{tr('premium.plans.whatsappChange', 'alterar')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TextInput
+                      style={styles.planPhoneInput}
+                      placeholder={tr('premium.plans.whatsappPlaceholder', '(DD) 9xxxx-xxxx')}
+                      placeholderTextColor="#888"
+                      value={premiumPhone}
+                      onChangeText={setPremiumPhone}
+                      keyboardType="phone-pad"
+                      autoFocus={editingPhone}
+                    />
+                  )}
                 </View>
               )}
               {CAN_PURCHASE_IN_APP ? (
@@ -2186,6 +2226,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 13,
+  },
+  planPhoneConfirm: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  planPhoneConfirmText: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  planPhoneChange: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '700',
   },
   planFeature: {
     fontSize: 14,
