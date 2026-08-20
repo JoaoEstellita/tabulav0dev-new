@@ -1996,6 +1996,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'accessGuard.free': 'Seu mapa natal continua liberado',
     'trialBanner.hoje': 'Seu período de teste termina hoje.',
     'trialBanner.dias': 'Faltam {n} dias de teste.',
+    'trialBanner.gratis': 'Grátis · {n} dias restantes.',
     'trialBanner.cta': 'Assinar',
 
     // O quiz: três passos, com recompensa em cada um. "naVirada" diz que a
@@ -2451,6 +2452,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'accessGuard.free': 'Your natal chart stays open',
     'trialBanner.hoje': 'Your trial ends today.',
     'trialBanner.dias': '{n} days of trial left.',
+    'trialBanner.gratis': 'Free · {n} days left.',
     'trialBanner.cta': 'Subscribe',
 
     'quiz.continuar': 'Continue',
@@ -2903,6 +2905,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'accessGuard.free': 'Tu carta natal sigue abierta',
     'trialBanner.hoje': 'Tu periodo de prueba termina hoy.',
     'trialBanner.dias': 'Quedan {n} dias de prueba.',
+    'trialBanner.gratis': 'Gratis · {n} dias restantes.',
     'trialBanner.cta': 'Suscribirse',
 
     'quiz.continuar': 'Continuar',
@@ -3355,6 +3358,7 @@ const postPatch: Record<AppLanguage, Dict> = {
     'accessGuard.free': 'La tua carta natale resta aperta',
     'trialBanner.hoje': 'Il tuo periodo di prova finisce oggi.',
     'trialBanner.dias': 'Restano {n} giorni di prova.',
+    'trialBanner.gratis': 'Gratis · {n} giorni rimasti.',
     'trialBanner.cta': 'Abbonati',
 
     'quiz.continuar': 'Continua',

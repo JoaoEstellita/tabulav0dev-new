@@ -19,10 +19,11 @@ import { useAppLanguage } from "../hooks/useAppLanguage"
  * `trialEndsAt` já era calculado em `useSubscriptionCheck` e devolvido pelo
  * hook, e nenhuma tela usava. Só faltava mostrar.
  *
- * Aparece nos dois últimos dias. Antes disso seria cobrança cedo demais, e a
- * pessoa ainda está descobrindo o produto.
+ * Aparece os 7 dias TODOS: desde o cadastro a pessoa sabe que está no período
+ * grátis e tem sempre o botão para assinar. Nos primeiros dias é uma pílula
+ * sutil (indigo, informativa); nos 2 últimos vira aviso urgente (dourado).
  */
-const DIAS_PARA_AVISAR = 2
+const DIAS_URGENTE = 2 // últimos 2 dias = aviso urgente (dourado); antes = pílula sutil "grátis"
 
 export default function TrialBanner() {
   const { t } = useAppLanguage()
@@ -33,27 +34,27 @@ export default function TrialBanner() {
   if (loading || isAdmin || subscription?.active || !trialActive || !trialEndsAt) return null
 
   const restam = Math.ceil((trialEndsAt.getTime() - Date.now()) / 86_400_000)
-  if (restam > DIAS_PARA_AVISAR || restam < 0) return null
+  if (restam < 0) return null // trial acabou → quem manda é o AccessGuard/paywall
 
-  /**
-   * "Termina hoje" quando falta menos de um dia.
-   *
-   * `Math.ceil` devolve 1 tanto para vinte horas quanto para uma, e "falta 1
-   * dia" às onze da noite é falso. Zero e um viram a mesma frase.
-   */
+  // Aparece os 7 dias TODOS (não só no fim): assim a pessoa sabe desde o cadastro
+  // que está no período grátis e tem sempre o botão para assinar. Sutil (indigo)
+  // nos primeiros dias; urgente (dourado) nos 2 últimos.
+  const urgente = restam <= DIAS_URGENTE
   const texto = restam <= 1
-    ? t("trialBanner.hoje")
-    : t("trialBanner.dias").replace("{n}", String(restam))
+    ? t("trialBanner.hoje") // "Termina hoje" — Math.ceil dá 1 tanto p/ 20h quanto p/ 1h
+    : urgente
+      ? t("trialBanner.dias").replace("{n}", String(restam))
+      : t("trialBanner.gratis").replace("{n}", String(restam))
 
   return (
     <TouchableOpacity
-      style={styles.faixa}
+      style={[styles.faixa, !urgente && styles.faixaChill]}
       onPress={() => navigation.navigate("Premium", { openTab: "features" })}
       activeOpacity={0.85}
     >
-      <Ionicons name="time-outline" size={16} color="#0F0F23" />
-      <Text style={styles.texto}>{texto}</Text>
-      <Text style={styles.cta}>{t("trialBanner.cta")}</Text>
+      <Ionicons name={urgente ? "time-outline" : "sparkles-outline"} size={16} color={urgente ? "#0F0F23" : "#C7BCFF"} />
+      <Text style={[styles.texto, !urgente && styles.textoChill]}>{texto}</Text>
+      <Text style={[styles.cta, !urgente && styles.ctaChill]}>{t("trialBanner.cta")}</Text>
     </TouchableOpacity>
   )
 }
@@ -74,4 +75,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
+  // Variante sutil (dias 7→3): indigo translúcido em vez do dourado urgente.
+  faixaChill: {
+    backgroundColor: "rgba(99,102,241,0.16)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(139,124,255,0.30)",
+  },
+  textoChill: { color: "#E8E4FF" },
+  ctaChill: { color: "#C7BCFF" },
 })
