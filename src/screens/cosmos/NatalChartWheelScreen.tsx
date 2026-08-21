@@ -21,6 +21,7 @@ import { degToSign } from '../../astro'
 import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
+import { aspectBetween } from '../../utils/nodeAspects'
 
 // ─── Símbolos ──────────────────────────────────────────────────────────────
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -38,17 +39,6 @@ const PLANET_COLORS: Record<string, string> = {
 const ZODIAC_SYMBOLS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
 
 // Aspecto (em PT) entre duas longitudes, dentro do orbe — usado p/ os nódulos.
-const NODE_ASPECT_DEFS: { type: string; angle: number }[] = [
-  { type: 'conjunção', angle: 0 }, { type: 'sextil', angle: 60 }, { type: 'quadratura', angle: 90 },
-  { type: 'trígono', angle: 120 }, { type: 'oposição', angle: 180 },
-]
-function aspectBetween(lon1: number, lon2: number, orb = 5): { type: string; orb: number } | null {
-  const norm = (d: number) => ((d % 360) + 360) % 360
-  const x = Math.abs(norm(lon1) - norm(lon2))
-  const s = x > 180 ? 360 - x : x
-  for (const def of NODE_ASPECT_DEFS) { const o = Math.abs(s - def.angle); if (o <= orb) return { type: def.type, orb: o } }
-  return null
-}
 const SIGNS_PT = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
 const signOfLon = (lon: number) => SIGNS_PT[Math.floor((((lon % 360) + 360) % 360) / 30) % 12]
 const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -215,11 +205,17 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
       : [...transitPlanets, mkNode('NorthNode', currentNorthNode, false), mkNode('SouthNode', currentNorthNode + 180, false)]
   ), [showTransits, transitPlanets, currentNorthNode])
 
+  // A roda desenha o eixo ☊/☋ inteiro, mas na GRADE o Nó Sul é sempre o espelho
+  // do Norte (Norte ☌ = Sul ☍, Norte △ = Sul ✶…) → dobrava as linhas. Grade só Norte.
+  const natalGridPoints = useMemo(() => natalWheelPoints.filter(p => p.name !== 'SouthNode'), [natalWheelPoints])
+  const transitGridPoints = useMemo(() => transitWheelPoints.filter(p => p.name !== 'SouthNode'), [transitWheelPoints])
+
   // Aspectos dos nódulos NATAIS → planetas natais (grade natal; orbe 5°).
   const natalAspectsWithNodes = useMemo(() => {
     if (natalNorthNode == null) return aspects
     const extra: any[] = []
-    const nodes: [string, number][] = [['NorthNode', natalNorthNode], ['SouthNode', natalNorthNode + 180]]
+    // Só o Nó Norte: o Sul é o eixo oposto e geraria os aspectos-espelho (redundantes).
+    const nodes: [string, number][] = [['NorthNode', natalNorthNode]]
     for (const [nn, nl] of nodes) for (const p of natalPlanets) {
       if (typeof p.longitude !== 'number') continue
       const a = aspectBetween(nl, p.longitude); if (a) extra.push({ planet1: nn, planet2: p.name, type: a.type, orb: a.orb })
@@ -232,14 +228,16 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     if (!showTransits) return tnAspects
     const extra: any[] = []
     if (natalNorthNode != null) {
-      const nn: [string, number][] = [['NorthNode', natalNorthNode], ['SouthNode', natalNorthNode + 180]]
+      // Só o Nó Norte natal (o Sul é o espelho — evita as linhas dobradas na grade).
+      const nn: [string, number][] = [['NorthNode', natalNorthNode]]
       for (const tp of transitPlanets) for (const [name, lon] of nn) {
         if (typeof tp.longitude !== 'number') continue
         const a = aspectBetween(tp.longitude, lon); if (a) extra.push({ planet1: tp.name, planet2: name, type: a.type, orb: a.orb })
       }
     }
     if (currentNorthNode != null) {
-      const tn: [string, number][] = [['NorthNode', currentNorthNode], ['SouthNode', currentNorthNode + 180]]
+      // Só o Nó Norte em trânsito (idem).
+      const tn: [string, number][] = [['NorthNode', currentNorthNode]]
       for (const [name, lon] of tn) for (const np of natalPlanets) {
         if (typeof np.longitude !== 'number') continue
         const a = aspectBetween(lon, np.longitude); if (a) extra.push({ planet1: name, planet2: np.name, type: a.type, orb: a.orb })
@@ -523,7 +521,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               <Text style={styles.aspectGridTitle}>
                 {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
               </Text>
-              <AspectGrid cross rowPlanets={transitWheelPoints} colPlanets={natalWheelPoints} aspects={tnAspectsWithNodes} onSelectCell={onSelectTransitAspect} />
+              <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={onSelectTransitAspect} />
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
@@ -531,8 +529,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             <Text style={styles.aspectGridTitle}>
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
             </Text>
-            {/* natalWheelPoints inclui ☊/☋ → a grade mostra os aspectos dos nódulos */}
-            <AspectGrid planets={natalWheelPoints} aspects={natalAspectsWithNodes} />
+            {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
+            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} />
           </View>
         ) : null}
 
