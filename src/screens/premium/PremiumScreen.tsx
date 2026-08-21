@@ -397,7 +397,7 @@ export default function PremiumScreen() {
     if (Number.isNaN(date.getTime())) return null
     const daysLeft = Math.max(0, Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     const formatted = date.toLocaleDateString(language, { day: '2-digit', month: 'short' })
-    return { label: formatted, daysLeft, message: tr('premium.billing.renewsAt', 'Renova em {days} dias ({date}).', { days: daysLeft, date: formatted }) }
+    return { label: formatted, daysLeft, message: `Renova em ${daysLeft} dias (${formatted}).` }
   }
 
   const handlePurchaseCredits = (pack: { id: string; label: string; price: number }) => {
@@ -579,10 +579,7 @@ export default function PremiumScreen() {
     const displayPrice = effectiveProvider === 'stripe' ? `US$ ${(option.priceUSD || STRIPE_USD_PRICE_BY_GIFT_PLAN[option.id] || 0).toFixed(2)}` : `R$ ${(option.priceBRL || 0).toFixed(2)}`
     const confirmed = await confirmForCheckout(
       tr('premium.gift.confirm.title', 'Confirmar assinatura extra'),
-      tr('premium.gift.confirm.body', 'Comprar 1 código para o plano {plan} por {price}?', {
-        plan: option.label || option.targetPlanId,
-        price: displayPrice,
-      }),
+      `Comprar 1 código para o plano ${option.label || option.targetPlanId} por ${displayPrice}?`,
       tr('premium.gift.confirm.cta', 'Comprar'),
     )
     if (!confirmed) return
@@ -720,7 +717,7 @@ export default function PremiumScreen() {
       .slice(0, 4)
       .map((item) => ({
         label: item.label,
-        value: Array.isArray(data[item.key]) ? tr('premium.highlights.itemsCount', '{count} itens', { count: data[item.key].length }) : tr('premium.highlights.ok', 'ok'),
+        value: Array.isArray(data[item.key]) ? `${data[item.key].length} itens` : tr('premium.highlights.ok', 'ok'),
       }))
   }
 
@@ -1293,7 +1290,7 @@ export default function PremiumScreen() {
                     disabled={giftPurchaseLoading === option.id}
                   >
                     <View style={styles.giftOptionHeader}>
-                      <Text style={styles.giftOptionTitle}>{tr('premium.gift.planLabel', '{plan} • 1 código', { plan: option.label || option.targetPlanId })}</Text>
+                      <Text style={styles.giftOptionTitle}>{`${option.label || option.targetPlanId} • 1 código`}</Text>
                       {giftPurchaseLoading === option.id ? (
                         <ActivityIndicator color="#FFD700" />
                       ) : (
@@ -1321,10 +1318,7 @@ export default function PremiumScreen() {
                       <View key={item.id} style={styles.giftCodeItem}>
                         <Text style={styles.giftCodeValue}>{item.code}</Text>
                         <Text style={styles.giftCodeMeta}>
-                          {tr('premium.gift.codes.meta', '{plan} • {status}', {
-                            plan: item.targetPlanLabel || item.targetPlanId || '-',
-                            status: item.status || 'unknown',
-                          })}
+                          {`${item.targetPlanLabel || item.targetPlanId || '-'} • ${item.status || 'unknown'}`}
                         </Text>
                       </View>
                     ))

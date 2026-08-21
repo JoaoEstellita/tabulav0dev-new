@@ -2873,9 +2873,7 @@ export default function GroupsScreen() {
                             })
                           )
                           technicalParts.push(
-                            tr('groups.member.currentTransitHouseValue', 'Casa de transito atual: {house}', {
-                              house: transitHouseLabel.replace("Casa ", ""),
-                            })
+                            `Casa de trânsito atual: ${transitHouseLabel.replace("Casa ", "")}`
                           )
                         }
                         if (areaHousesText) {
