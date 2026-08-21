@@ -29,6 +29,7 @@ import { mapaDoCeu } from './lib/ceu.mjs'
 import { montarFoto } from './lib/templateFoto.mjs'
 import { montarPeca, montarSlide } from './lib/templatePeca.mjs'
 import { ehEducativo, slidesDoEducativo } from './lib/slidesEducativo.mjs'
+import { diagramaDoAssunto } from './lib/diagramaFato.mjs'
 import { svgDoSigno } from './lib/simbolos.mjs'
 import { carregarCatalogos, primeirasFrases } from './lib/interpretacao.mjs'
 import { casasPorAscendente } from './lib/fatos.mjs'
@@ -461,6 +462,9 @@ async function principal() {
     forte: assunto.tipo === 'eclipse' || assunto.tipo === 'fase' || assunto.tipo === 'ingresso',
     destaque: peca.corpo || null,
     dataRotulo: iso.slice(8) + '.' + iso.slice(5, 7),
+    // a imagem ilustra o FATO: fase = Sol/Lua no ângulo, ingresso = a divisa,
+    // conceito de casas = as doze casas. `null` cai na roda do céu.
+    figura: diagramaDoAssunto(assunto, peca),
   }
 
   /**

@@ -32,61 +32,46 @@ import { POR_SIGNO } from './textosEclipse.mjs'
  */
 export const TEXTO_DO_EVENTO = {
   'ingresso:Sun:Virgem':
-    'Durante cerca de um mês o Sol passa por Virgem, o signo ligado à ' +
-    'organização, à saúde e ao trabalho bem-feito. É uma boa temporada para ' +
-    'arrumar rotinas, cuidar do corpo e ajustar os detalhes que ficaram para ' +
-    'trás. A ideia não é buscar perfeição, e sim fazer as coisas ' +
-    'funcionarem. Vale ficar atento para o cuidado não virar excesso de ' +
-    'autocrítica.',
+    'Depois de um verão de holofote, o céu baixa o tom. Por um mês o Sol ' +
+    'atravessa Virgem, o signo do que funciona sem aparecer: rotina, saúde, ' +
+    'o detalhe bem-feito. Boa hora de arrumar a casa por dentro, sem se ' +
+    'cobrar a perfeição.',
 
   'ingresso:Mars:Câncer':
-    'Por cerca de seis semanas Marte, o planeta da ação e da iniciativa, ' +
-    'fica em Câncer. Aqui a energia para agir passa mais pelo lado emocional ' +
-    'do que pela força direta: em vez de partir para cima, a gente age ' +
-    'protegendo, cuidando e indo pelo caminho mais indireto. Marte não se ' +
-    'sente muito à vontade em Câncer, então o período costuma render mais ' +
-    'nas questões de casa e família do que nos embates de fora.',
+    'Nem toda força se mostra empurrando. Por seis semanas Marte, o planeta ' +
+    'da ação, atravessa Câncer, onde agir é proteger, cuidar, ir pelo lado. ' +
+    'A vontade não some, muda de rota, e costuma render mais dentro de casa ' +
+    'do que na rua.',
 
   'ingresso:Venus:Escorpião':
-    'Por cerca de quatro semanas Vênus, o planeta dos afetos e do prazer, ' +
-    'fica em Escorpião. É uma fase em que os vínculos pedem mais ' +
-    'profundidade: relações mais superficiais tendem a perder a graça, e ' +
-    'cresce a vontade de intensidade e verdade no que se sente. Bom momento ' +
-    'para se aproximar de quem importa de verdade. Vale lembrar que ' +
-    'intensidade nem sempre é o mesmo que compatibilidade.',
+    'O morno começa a incomodar sem motivo aparente. Por quatro semanas ' +
+    'Vênus, o planeta dos afetos, passa por Escorpião, onde o gosto pede ' +
+    'profundidade. Vínculo de superfície perde a graça, e a vontade vira de ' +
+    'intensidade, de verdade, de tudo ou nada.',
 
   'ingresso:Mercury:Libra':
-    'Por cerca de três semanas Mercúrio, o planeta da comunicação e do ' +
-    'raciocínio, fica em Libra. As conversas tendem a ficar mais ' +
-    'diplomáticas e ponderadas: a gente pesa os dois lados antes de decidir ' +
-    'e escolhe melhor as palavras. É uma boa fase para negociar, fechar ' +
-    'acordos e desfazer mal-entendidos. O cuidado é não adiar as decisões só ' +
-    'para agradar todo mundo.',
+    'Às vezes a resposta certa é esperar antes de responder. Por três ' +
+    'semanas Mercúrio, o planeta da conversa, fica em Libra, onde pensar é ' +
+    'pesar os dois lados. Boa fase para negociar e desfazer mal-entendido, ' +
+    'desde que decidir não vire adiar.',
 
   'fase:Lua Nova:Virgem':
-    'A Lua Nova é o início do ciclo lunar, quando a Lua e o Sol se alinham ' +
-    'no mesmo signo e o céu fica escuro. É o momento tradicional para plantar ' +
-    'intenções e recomeçar. Esta cai em Virgem, então combina com começos ' +
-    'práticos: uma rotina nova, um ajuste na saúde, um método que você quer ' +
-    'testar de novo. São mudanças pequenas e concretas, e é justamente isso ' +
-    'que costuma fazê-las durar.',
+    'Recomeçar é mais fácil quando ninguém está vendo, e o céu concorda. Na ' +
+    'Lua Nova a Lua e o Sol se alinham e o céu fica escuro: é o zero do ' +
+    'ciclo, a hora de plantar. Em Virgem o que se planta é miúdo e prático, ' +
+    'uma rotina, um hábito, um ajuste, e é o miúdo que costuma pegar raiz.',
 
   'fase:Quarto Crescente:Escorpião':
-    'O quarto crescente chega cerca de uma semana depois da Lua Nova, quando ' +
-    'a Lua forma um ângulo de 90° com o Sol. É o momento do ciclo em que o ' +
-    'que você começou pede esforço para continuar: costumam aparecer os ' +
-    'primeiros obstáculos. Em Escorpião, eles tendem a ser mais internos do ' +
-    'que externos, ligados ao que a gente evita olhar. Serve para ajustar o ' +
-    'rumo com calma, não para desistir.',
+    'Toda meta perde força por volta do sétimo dia, e isso é astronomia, não ' +
+    'preguiça. Hoje a Lua faz 90° com o Sol, o quarto crescente: o ponto do ' +
+    'ciclo em que o começo encontra a primeira resistência. Em Escorpião, ela ' +
+    'vem de dentro, do que a gente evitou olhar na hora de decidir.',
 
   'retrogrado:Uranus:Gêmeos':
-    'Urano entra em movimento retrógrado e fica assim por cerca de cinco ' +
-    'meses. Retrógrado é uma ilusão de perspectiva: visto da Terra, o ' +
-    'planeta parece andar para trás por um tempo. Urano tem a ver com ' +
-    'mudanças e rupturas, então este é um período mais de rever do que de ' +
-    'romper. Em vez de mudar tudo de uma vez, vale reavaliar o que foi feito ' +
-    'por impulso. O que tem fundamento segue; o que foi só arroubo perde a ' +
-    'força.',
+    'Nem todo planeta que parece voltar está voltando de verdade. Urano fica ' +
+    'retrógrado por cinco meses: visto da Terra ele parece andar para trás, ' +
+    'mas é ilusão de perspectiva. Como Urano mexe com mudança, é hora de ' +
+    'rever o que se rompeu por impulso, não de romper mais.',
 }
 
 /** A chave deste evento, ou `null` quando o tipo não tem texto próprio. */

@@ -192,9 +192,13 @@ export function montarPeca(peca) {
   const largura = 1080
   const altura = story ? 1920 : 1350
 
-  const roda = peca.data
-    ? svgRodaReal({ data: peca.data, corpos: peca.corpos, destaque: peca.destaque || null, lado: 440, ascFixo: peca.ascFixo ?? null })
-    : ''
+  // A figura é o diagrama do FATO quando há um (fase, aspecto, ingresso,
+  // conceito com desenho próprio); senão, a roda do céu do dia.
+  const roda = peca.figura
+    ? peca.figura
+    : peca.data
+      ? svgRodaReal({ data: peca.data, corpos: peca.corpos, destaque: peca.destaque || null, lado: 440, ascFixo: peca.ascFixo ?? null })
+      : ''
 
   // A roda ocupa a metade de cima, então o texto na imagem é curto — o inteiro
   // vai na legenda. Story: 2 frases. Feed: 3.
@@ -235,9 +239,11 @@ export function montarSlide(slide) {
 
   let dentro
   if (slide.tipo === 'capa') {
-    const roda = slide.data
-      ? svgRodaReal({ data: slide.data, corpos: slide.corpos, destaque: slide.destaque || null, lado: 440 })
-      : ''
+    const roda = slide.figura
+      ? slide.figura
+      : slide.data
+        ? svgRodaReal({ data: slide.data, corpos: slide.corpos, destaque: slide.destaque || null, lado: 440 })
+        : ''
     const gancho = primeirasFrases(String(slide.texto || ''), 1)
     dentro = `<div class="conteudo">
       <div class="olho"><span>${escapar(slide.olho || 'Astrologia por dentro')}</span><span>${escapar(slide.dataRotulo || '')}</span></div>

@@ -55,7 +55,7 @@ describe('textos de evento', () => {
    * que a separa do natal não é o prazo, é o momento a que se refere.
    */
   it('marca o período do trânsito', () => {
-    const tempo = /(por um mês|semanas?|meses|dias|período|enquanto|começa|fica |passa |agora|neste|nesta)/i
+    const tempo = /(por um mês|semanas?|meses|dias|período|enquanto|começa|fica |passa |agora|hoje|neste|nesta)/i
     for (const [chave, texto] of TEXTOS) {
       expect(tempo.test(texto), `sem marca de tempo em ${chave}`).toBe(true)
     }
