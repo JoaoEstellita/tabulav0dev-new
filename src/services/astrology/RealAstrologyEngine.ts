@@ -201,6 +201,7 @@ export interface RealAstrologyData {
   natalAscendant: number // Ascendente natal
   natalMidheaven: number // Meio do CÃƒÂ©u natal
   natalNorthNode?: number // Nódulo Norte natal (nó médio, longitude eclíptica em graus)
+  currentNorthNode?: number // Nódulo Norte em trânsito (nó médio na data atual)
   natalHousesApproximate?: boolean
   natalHouses?: number[]
   planetComparisons: PlanetComparison[] // ComparaÃƒÂ§ÃƒÂ£o natal vs atual
@@ -759,6 +760,7 @@ export class RealAstrologyEngine {
         natalAscendant: natalHouses.ascendant,
         natalMidheaven: natalHouses.midheaven,
         natalNorthNode: RealAstrologyEngine.calculateMeanLunarNode(birthDateTime),
+        currentNorthNode: RealAstrologyEngine.calculateMeanLunarNode(date),
         natalHousesApproximate: (natalHouses as any).approximate === true,
         natalHouses: natalHouses.cusps,
         planetComparisons,
