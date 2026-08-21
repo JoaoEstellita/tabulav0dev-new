@@ -27,11 +27,13 @@ const PLANET_SYMBOLS: Record<string, string> = {
   Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀',
   Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅',
   Neptune: '♆', Pluto: '♇', Lilith: '⚸',
+  NorthNode: '☊', SouthNode: '☋',
 }
 const PLANET_COLORS: Record<string, string> = {
   Sun: '#FFD700', Moon: '#C0C0FF', Mercury: '#A0C8FF', Venus: '#FFB0C8',
   Mars: '#FF7070', Jupiter: '#FFB060', Saturn: '#D0D070', Uranus: '#70D0D0',
   Neptune: '#8080FF', Pluto: '#C080C0', Lilith: '#B080D0',
+  NorthNode: '#67E8F9', SouthNode: '#94A3B8',
 }
 const ZODIAC_SYMBOLS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
 const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -168,6 +170,31 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const transitPlanets: RealPlanetPosition[] = showTransits ? ((ct as any)?.planets ?? []) : []
   const tnAspects: any[] = showTransits ? ((ct as any)?.aspectsTransitsToNatalTN ?? []) : []
 
+  // Nódulos lunares (☊ Norte / ☋ Sul) só para o PLOT da roda — não entram nos
+  // aspectos nem na grade. natalNorthNode vem do engine (nó médio); o Sul é +180.
+  const natalNorthNode = typeof (ct as any)?.natalNorthNode === 'number' ? (ct as any).natalNorthNode : null
+  const natalWheelPoints = useMemo<RealPlanetPosition[]>(() => {
+    if (natalNorthNode == null) return natalPlanets
+    const norm = (d: number) => ((d % 360) + 360) % 360
+    const SIGNS_PT = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+    const signOf = (lon: number) => SIGNS_PT[Math.floor(norm(lon) / 30) % 12]
+    const houseOf = (lon: number) => {
+      if (!Array.isArray(houseCusps) || houseCusps.length < 12) return 0
+      const L = norm(lon)
+      for (let i = 0; i < 12; i++) {
+        const a = norm(houseCusps[i])
+        const span = norm(norm(houseCusps[(i + 1) % 12]) - a)
+        if (norm(L - a) < span) return i + 1
+      }
+      return 0
+    }
+    const mk = (name: string, lon: number): RealPlanetPosition => ({
+      name, longitude: norm(lon), sign: signOf(lon), house: houseOf(lon),
+      degree: norm(lon) % 30, isRetrograde: false, speed: 0,
+    } as RealPlanetPosition)
+    return [...natalPlanets, mk('NorthNode', natalNorthNode), mk('SouthNode', natalNorthNode + 180)]
+  }, [natalPlanets, natalNorthNode, houseCusps])
+
   // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
   const svgSize = Math.min(width - 32, 380)
   const cx = svgSize / 2
@@ -191,8 +218,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
   const glyphDegTransit = Math.min(18, (2 * discTransit / R_TRANSIT) * (180 / Math.PI))
 
   const planetPositions = useMemo(
-    () => declutterRing(natalPlanets, ascDeg, cx, cy, R_PLANET, R_INNER + discNatal + 2, R_HOUSE_IN - discNatal - 1, stepNatal, glyphDegNatal),
-    [natalPlanets, ascDeg, cx, cy, R_PLANET, R_INNER, R_HOUSE_IN, discNatal, stepNatal, glyphDegNatal],
+    () => declutterRing(natalWheelPoints, ascDeg, cx, cy, R_PLANET, R_INNER + discNatal + 2, R_HOUSE_IN - discNatal - 1, stepNatal, glyphDegNatal),
+    [natalWheelPoints, ascDeg, cx, cy, R_PLANET, R_INNER, R_HOUSE_IN, discNatal, stepNatal, glyphDegNatal],
   )
 
   const transitPositions = useMemo(
