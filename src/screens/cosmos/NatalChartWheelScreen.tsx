@@ -195,6 +195,30 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     return [...natalPlanets, mk('NorthNode', natalNorthNode), mk('SouthNode', natalNorthNode + 180)]
   }, [natalPlanets, natalNorthNode, houseCusps])
 
+  // Aspectos dos nódulos → planetas natais (só para a grade natal; orbe 5°).
+  const natalAspectsWithNodes = useMemo(() => {
+    if (natalNorthNode == null) return aspects
+    const norm = (d: number) => ((d % 360) + 360) % 360
+    const sep = (a: number, b: number) => { const x = Math.abs(norm(a) - norm(b)); return x > 180 ? 360 - x : x }
+    const DEFS: { type: string; angle: number }[] = [
+      { type: 'conjunção', angle: 0 }, { type: 'sextil', angle: 60 }, { type: 'quadratura', angle: 90 },
+      { type: 'trígono', angle: 120 }, { type: 'oposição', angle: 180 },
+    ]
+    const ORB = 5
+    const extra: any[] = []
+    const nodes: [string, number][] = [['NorthNode', norm(natalNorthNode)], ['SouthNode', norm(natalNorthNode + 180)]]
+    for (const [nodeName, nodeLon] of nodes) {
+      for (const p of natalPlanets) {
+        if (typeof p.longitude !== 'number') continue
+        const s = sep(nodeLon, p.longitude)
+        for (const def of DEFS) {
+          if (Math.abs(s - def.angle) <= ORB) { extra.push({ planet1: nodeName, planet2: p.name, type: def.type, orb: Math.abs(s - def.angle) }); break }
+        }
+      }
+    }
+    return [...aspects, ...extra]
+  }, [aspects, natalPlanets, natalNorthNode])
+
   // Dimensões do SVG. Na bi-roda o natal encolhe (scale) p/ abrir o anel externo.
   const svgSize = Math.min(width - 32, 380)
   const cx = svgSize / 2
@@ -387,15 +411,19 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
             {/* Círculo interno (fundo aspectos) */}
             <Circle cx={cx} cy={cy} r={R_INNER} fill="#0d1018" stroke="#252b38" strokeWidth={1} />
 
-            {/* Bi-roda: anel de trânsito + linhas de aspecto trânsito→natal (atrás) */}
+            {/* Bi-roda: só o anel de trânsito. As linhas de aspecto trânsito→natal
+                foram removidas (poluíam) — a leitura vive na grade/lista abaixo. */}
             {showTransits && (
-              <>
-                <Circle cx={cx} cy={cy} r={R_TRANSIT + svgSize * 0.028} fill="none" stroke="#1c3a3a" strokeWidth={1} />
-                {tnAspectLines.map((l: any) => l && (
-                  <Line key={l.key} x1={l.pt1.x} y1={l.pt1.y} x2={l.pt2.x} y2={l.pt2.y} stroke={l.color} strokeWidth={0.7} />
-                ))}
-              </>
+              <Circle cx={cx} cy={cy} r={R_TRANSIT + svgSize * 0.028} fill="none" stroke="#1c3a3a" strokeWidth={1} />
             )}
+
+            {/* Eixo dos nódulos ☊↔☋ (só no modo Natal, sutil — no trânsito polui) */}
+            {!showTransits && natalNorthNode != null && (() => {
+              const a = lonToSvgAngle(natalNorthNode, ascDeg)
+              const p1 = polarToXY(cx, cy, R_PLANET + discNatal, a)
+              const p2 = polarToXY(cx, cy, R_PLANET + discNatal, a + 180)
+              return <Line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#67E8F9" strokeWidth={1} strokeDasharray="4,4" strokeOpacity={0.45} />
+            })()}
 
             {/* Planetas natais (radial: mesmo ângulo, raios variados quando juntos) */}
             {planetPositions.map(p => {
@@ -469,12 +497,13 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               <AspectGrid cross rowPlanets={transitPlanets} colPlanets={natalPlanets} aspects={tnAspects} onSelectCell={onSelectTransitAspect} />
             </View>
           ) : null
-        ) : natalPlanets.length >= 2 && aspects.length > 0 ? (
+        ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
           <View style={styles.aspectGridWrap}>
             <Text style={styles.aspectGridTitle}>
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
             </Text>
-            <AspectGrid planets={natalPlanets} aspects={aspects} />
+            {/* natalWheelPoints inclui ☊/☋ → a grade mostra os aspectos dos nódulos */}
+            <AspectGrid planets={natalWheelPoints} aspects={natalAspectsWithNodes} />
           </View>
         ) : null}
 

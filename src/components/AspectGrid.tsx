@@ -21,8 +21,9 @@ type AspectLike = { planet1: string; planet2: string; type: string; orb?: number
 const PLANET_SYMBOLS: Record<string, string> = {
   Sun: "☉", Moon: "☽", Mercury: "☿", Venus: "♀", Mars: "♂",
   Jupiter: "♃", Saturn: "♄", Uranus: "♅", Neptune: "♆", Pluto: "♇", Lilith: "⚸",
+  NorthNode: "☊", SouthNode: "☋",
 }
-const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Lilith"]
+const PLANET_ORDER = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Lilith", "NorthNode", "SouthNode"]
 
 // type vem em PT ("conjunção", "trígono"…) OU EN — normaliza e cobre ambos.
 const norm = (s: string) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
