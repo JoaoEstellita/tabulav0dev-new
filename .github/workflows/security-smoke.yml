@@ -43,6 +43,9 @@ jobs:
       - name: Unit tests
         run: npx vitest run src/utils/__tests__/
 
+      - name: Marketing tests
+        run: npx vitest run scripts/marketing/lib/__tests__/ --pool=forks
+
       - name: RC smoke
         if: ${{ env.RC_SMOKE_KEY != '' }}
         run: npm run smoke:rc
