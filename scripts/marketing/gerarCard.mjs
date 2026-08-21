@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 /**
+ * ⚠️ LEGADO — o cron das 6h NÃO usa este gerador. A produção é
+ * `card-diario.yml` → `gerarDia.mjs` → `gerarEvento.mjs` → `lib/templatePeca.mjs`.
+ * Este `gerarCard.mjs` (e o `montarCard` de `lib/template.mjs`) ficam só para
+ * consulta manual e para a folha de prova `provaGeometria.mjs`. Ao mexer numa
+ * peça de verdade, o arquivo é `gerarEvento.mjs`, não este.
+ *
  * Gera o card diário "céu de hoje" para Instagram — feed, story e legenda.
  *
  *   node scripts/marketing/gerarCard.mjs

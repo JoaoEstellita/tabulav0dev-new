@@ -1,4 +1,9 @@
 /**
+ * ⚠️ LEGADO (`montarCard`) — o cron NÃO usa. A peça de produção sai de
+ * `lib/templatePeca.mjs` (`montarPeca`/`montarSlide`), via `gerarEvento.mjs`.
+ * Este `montarCard` só é chamado por `gerarCard.mjs` (consulta manual) e por
+ * `provaGeometria.mjs` (prova do diagrama). Ao ajustar a peça real, é lá.
+ *
  * Template do card diário — HTML autocontido, renderizado pelo Chrome headless.
  *
  * O design vive aqui em HTML/CSS, e não em código de desenho em canvas, para
