@@ -97,6 +97,21 @@ jobs:
       - name: Instalar dependências do gerador
         run: npm install astronomy-engine@^2.1.19 puppeteer-core --no-save --no-audit --no-fund --loglevel=error
 
+      # A capa dos carrosséis v4 é gerada pelo Higgsfield (Soul). Recria as
+      # credenciais a partir dos secrets; o CLI renova o access token sozinho
+      # pelo refresh_token. Sem os secrets, o gerador cai no fundo procedural
+      # (a peça sai mesmo assim). O CLI expõe `higgsfield` no PATH do runner.
+      - name: Autenticar Higgsfield (capa IA)
+        env:
+          HF_CREDS: ${{ secrets.HIGGSFIELD_CREDENTIALS }}
+          HF_CONFIG: ${{ secrets.HIGGSFIELD_CONFIG }}
+        run: |
+          if [ -z "$HF_CREDS" ]; then echo "Sem HIGGSFIELD_CREDENTIALS — a capa cai no fundo procedural."; exit 0; fi
+          npm install -g @higgsfield/cli --no-audit --no-fund --loglevel=error
+          mkdir -p "$HOME/.config/higgsfield"
+          printf '%s' "$HF_CREDS" > "$HOME/.config/higgsfield/credentials.json"
+          printf '%s' "$HF_CONFIG" > "$HOME/.config/higgsfield/config.json"
+
       # O ubuntu-latest NÃO traz ffmpeg. A conferência anterior usava
       # `ffmpeg -version | head -1`, e o `head` devolvia 0 mesmo com o comando
       # ausente: o mesmo bug de pipeline que escondeu o resto.
