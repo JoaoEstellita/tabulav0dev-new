@@ -29,6 +29,7 @@ import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
 import { RECURSO, CHAVES_DE_RECURSO } from './textosRecurso.mjs'
 import { TEMA, CHAVES_DE_TEMA } from './temasDeCarrossel.mjs'
 import { TEMAS_V4 } from './temasCarrosselV4.mjs'
+import { eventoAncoravel } from './ancoragem.mjs'
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -362,6 +363,27 @@ export function opcoesDoDia(data, { catalogos, orbes }) {
   for (const ev of ingressosDaLua(data, 1)) {
     if (!mesmoDiaLocal(ev.quando, data)) continue
     juntar(ev)
+  }
+
+  /**
+   * O CÉU DE HOJE, ANCORADO, NO TOPO.
+   *
+   * Se hoje há um evento com texto ancorado curado, o carrossel ancorado é a
+   * peça mais forte do dia — é o que está acontecendo AGORA, calculado. Entra no
+   * topo da lista (id `ancorado`), separado dos temas evergreen do banco. É a
+   * mesma peça que o cron escolhe sozinho em dia vago; aqui o João também pode
+   * marcá-la de propósito.
+   */
+  const achado = eventoAncoravel(data)
+  if (achado) {
+    opcoes.unshift({
+      id: 'ancorado',
+      tipo: 'carrossel_v4',
+      titulo: `Céu de hoje — ${achado.ev.corpoPt || achado.ev.corpo} em ${achado.ev.signo || achado.ev.fase}`,
+      angulo: 'Acontece hoje — carrossel ancorado, capa por IA',
+      natureza: 'evento',
+      formatos: ['carrossel'],
+    })
   }
 
   return opcoes

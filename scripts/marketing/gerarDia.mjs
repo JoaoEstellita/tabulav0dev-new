@@ -31,6 +31,7 @@ import path from 'node:path'
 import process from 'node:process'
 
 import { lerHistorico, chavesRecentes } from './lib/historico.mjs'
+import { eventoAncoravel } from './lib/ancoragem.mjs'
 
 const execFileAsync = promisify(execFile)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -179,6 +180,27 @@ async function principal() {
   const assuntos = assuntosDaPauta(pauta)
 
   /**
+   * O CÉU MANDA EM DIA VAGO.
+   *
+   * Se hoje há um evento real com texto ancorado no banco (Sol entra em Virgem,
+   * lua cheia em tal signo…), ele é o assunto mais forte que existe: é o que
+   * está acontecendo AGORA, calculado, o nosso diferencial. Vira a primeira
+   * peça e empurra a fila/cascata para trás.
+   *
+   * Só dispara em dia sem pauta marcada (a escolha do João vence sempre) e só
+   * quando o TEXTO já está curado — `eventoAncoravel` só devolve o que existe
+   * no banco. Sem texto aprovado, nada muda: o dia segue pela fila/cascata.
+   */
+  let ancora = null
+  if (!assuntos.length) {
+    try {
+      ancora = eventoAncoravel(new Date(`${iso}T12:00:00Z`))
+        ? { id: 'ancorado', daAncora: true, formatos: [] }
+        : null
+    } catch { ancora = null }
+  }
+
+  /**
    * A AGENDA MANDA; QUANDO ELA NÃO TEM NADA, A FILA ASSUME.
    *
    * A agenda só traz o que acontece no dia, e em trinta dias só sete têm
@@ -267,6 +289,13 @@ async function principal() {
     }
   }
 
+  // o céu de hoje vira a peça 1 e empurra o resto; o teto `porDia` se mantém
+  if (ancora && (origem === 'fila' || origem === 'cascata')) {
+    aGerar = [ancora, ...aGerar].slice(0, porDia)
+    origem = 'ancora'
+    console.log(`  céu de hoje ancorado: entra como peça 1 (empurra fila/cascata)`)
+  }
+
   if (origem === 'editorial' && fila.length) {
     // nada a fazer, mas o log ajuda a entender o dia quando algo sair estranho
     console.log(`  (a fila tem ${fila.length} itens esperando dia vago)`)
@@ -288,15 +317,20 @@ async function principal() {
     // um tema v4 marcado no Estúdio chega como `v4:<chave>` e tem gerador próprio
     // (capa IA + card denso). O que muda é só qual script atende.
     const ehV4 = typeof a?.id === 'string' && a.id.startsWith('v4:')
-    const script = ehV4 ? GERADOR_V4 : ehSemanal ? GERADOR_SEMANAL : GERADOR
+    // o carrossel ancorado no céu de hoje: mesmo gerador v4, mas o assunto vem
+    // do evento real do dia (não de um tema fixo). Chega como id `ancorado`.
+    const ehAncorado = a?.id === 'ancorado'
+    const usaV4 = ehV4 || ehAncorado
+    const script = usaV4 ? GERADOR_V4 : ehSemanal ? GERADOR_SEMANAL : GERADOR
 
     const argumentos = [script, `--data=${iso}`]
     if (ehV4) argumentos.push(`--tema=${a.id.slice(3)}`)
-    if (!ehSemanal && !ehV4) argumentos.push(`--slot=${slot}`)
+    if (ehAncorado) argumentos.push('--ancorado')
+    if (!ehSemanal && !usaV4) argumentos.push(`--slot=${slot}`)
     if (args.saida) argumentos.push(`--saida=${args.saida}`)
     if (args.upload) argumentos.push('--upload')
-    if (!ehSemanal && !ehV4 && a?.id) argumentos.push(`--assunto=${a.id}`)
-    if (!ehSemanal && !ehV4 && a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
+    if (!ehSemanal && !usaV4 && a?.id) argumentos.push(`--assunto=${a.id}`)
+    if (!ehSemanal && !usaV4 && a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
 
     try {
       const { stdout } = await execFileAsync(process.execPath, argumentos, {

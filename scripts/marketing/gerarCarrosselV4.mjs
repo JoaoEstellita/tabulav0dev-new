@@ -20,6 +20,8 @@ import process from 'node:process'
 import { slidesDoTema, TEMAS_V4 } from './lib/temasCarrosselV4.mjs'
 import { montarSlideCard } from './lib/cardCarrossel.mjs'
 import { promptDaCapa, gerarCapaIA } from './lib/imagemIA.mjs'
+import { eventoAncoravel, slidesAncorados } from './lib/ancoragem.mjs'
+import { lerHistorico, salvarHistorico, entradaDoDia } from './lib/historico.mjs'
 
 const execAsync = promisify(exec)
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
@@ -40,9 +42,10 @@ function acharChrome() {
 }
 
 function lerArgs(argv) {
-  const a = { tema: '', data: '', upload: false, saida: '', backend: process.env.TABULA_BACKEND || BACKEND_PADRAO, senha: process.env.MONITORING_PASSWORD || '' }
+  const a = { tema: '', data: '', ancorado: false, upload: false, saida: '', backend: process.env.TABULA_BACKEND || BACKEND_PADRAO, senha: process.env.MONITORING_PASSWORD || '' }
   for (const x of argv.slice(2)) {
     if (x === '--upload') a.upload = true
+    else if (x === '--ancorado') a.ancorado = true
     else if (x.startsWith('--tema=')) a.tema = x.slice(7)
     else if (x.startsWith('--data=')) a.data = x.slice(7)
     else if (x.startsWith('--saida=')) a.saida = path.resolve(x.slice(8))
@@ -77,21 +80,36 @@ const semente = (iso) => [...iso].reduce((s, c) => s + c.charCodeAt(0), 0)
 async function principal() {
   const args = lerArgs(process.argv)
   const iso = args.data || new Date().toISOString().slice(0, 10)
-  if (!args.tema || !TEMAS_V4[args.tema]) {
-    console.error(`tema inválido. Disponíveis: ${Object.keys(TEMAS_V4).join(', ')}`)
-    process.exit(1)
+
+  // fonte dos slides: o céu de hoje (--ancorado) ou um tema evergreen (--tema)
+  let t, rotulo, chaveAncora = null
+  if (args.ancorado) {
+    const achado = eventoAncoravel(new Date(`${iso}T12:00:00Z`))
+    if (!achado) {
+      console.log(`${iso}  sem evento ancorável hoje (nada no banco de textos ancorados). Nada gerado.`)
+      return
+    }
+    t = slidesAncorados(achado.ev, achado.chave, iso)
+    rotulo = `ancorado ${achado.chave}`
+    chaveAncora = achado.chave
+  } else {
+    if (!args.tema || !TEMAS_V4[args.tema]) {
+      console.error(`tema inválido. Disponíveis: ${Object.keys(TEMAS_V4).join(', ')}`)
+      process.exit(1)
+    }
+    t = slidesDoTema(args.tema)
+    rotulo = `tema "${args.tema}"`
   }
 
   const chrome = acharChrome()
-  const t = slidesDoTema(args.tema)
   const pasta = path.join(args.saida, iso, 'carrossel-v4')
   await rm(pasta, { recursive: true, force: true })
   await mkdir(pasta, { recursive: true })
 
-  // capa IA fresca — prompt do tema + semente do dia; null cai no procedural
+  // capa IA fresca — prompt da cena + semente do dia; null cai no procedural
   const capaPng = await gerarCapaIA(promptDaCapa({ tipo: t.cena }, semente(iso)), path.join(pasta, 'capa-ia.png'))
   const capaUri = capaPng ? `data:image/png;base64,${(await readFile(capaPng)).toString('base64')}` : null
-  console.log(`${iso}  tema "${args.tema}"  capa IA: ${capaPng ? 'gerada' : 'procedural (fallback)'}`)
+  console.log(`${iso}  ${rotulo}  capa IA: ${capaPng ? 'gerada' : 'procedural (fallback)'}`)
 
   for (const s of t.slides) {
     const slide = s.tipo === 'capa' ? { ...s, fundoImg: capaUri } : s
@@ -111,6 +129,25 @@ async function principal() {
     // a capa também vira o feed.png (imagem de capa no Estúdio)
     await enviar(path.join(pasta, '01.png'), iso, 'feed.png', args)
     console.log('Estúdio: enviado')
+  }
+
+  /**
+   * A ÂNCORA REGISTRA O EVENTO DO DIA NO HISTÓRICO.
+   *
+   * A âncora sai como peça 1 e consome o evento forte do dia (Sol entra em
+   * Virgem). Sem registrar isso, a cascata da peça 2 reescolhe o mesmo evento e
+   * o dia sai com carrossel e post repetindo o mesmo assunto — o erro que já
+   * mordeu três vezes. Gravar a chave no slot 1 faz o `usadasHoje` de
+   * `gerarEvento` pular o evento na peça seguinte (os filhos rodam em série, um
+   * de cada vez, então a peça 2 já lê o que a âncora gravou).
+   *
+   * Só o caminho ancorado grava: os temas evergreen (`--tema`) não disputam o
+   * evento do dia, e o dedup deles já vem da fila.
+   */
+  if (chaveAncora) {
+    const historico = await lerHistorico(args.saida)
+    historico[entradaDoDia(iso, 1)] = chaveAncora
+    await salvarHistorico(args.saida, historico)
   }
   console.log(`  ${pasta}`)
 }
