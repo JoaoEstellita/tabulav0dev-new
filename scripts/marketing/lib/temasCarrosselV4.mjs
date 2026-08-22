@@ -9,7 +9,7 @@
  * Cada tema declara `cena` (o tipo que vira o prompt da imagem IA da capa) e a
  * lista de slides. Os slides de texto trazem a figura (roda/diagrama real).
  */
-import { diagramaAspecto, diagramaAngulos } from './diagramaFato.mjs'
+import { diagramaAspecto, diagramaAngulos, diagramaCasas } from './diagramaFato.mjs'
 
 export const TEMAS_V4 = {
   aspectos_movimento: {
@@ -51,6 +51,48 @@ export const TEMAS_V4 = {
       'Separando: depois do grau exato, o planeta se afasta. Já aconteceu, agora só libera o que ficou. A tradição lê como passado.\n\n' +
       'Como saber qual é? Olhe o planeta veloz do par. Se ainda caminha em direção ao grau exato, aplica; se já passou, separa. Retrogradação inverte o sentido.\n\n' +
       'No seu mapa, um aspecto aplicando é central, em desenvolvimento; um separando é herança que se solta. Veja os seus no link da bio.',
+  },
+
+  casas_onde: {
+    cena: 'conceito',
+    slides: [
+      {
+        tipo: 'capa', olho: 'Astrologia · Casas',
+        titulo: 'As casas dizem *onde*. Os signos dizem *como*.',
+        corpo: 'Todo mundo aprende o signo. Quase ninguém aprende as casas — e é a casa que diz em que área da vida a coisa acontece.',
+        figura: diagramaCasas(),
+      },
+      {
+        tipo: 'texto', olho: 'As doze',
+        titulo: 'Doze fatias de *vida*.',
+        corpo: 'O mapa se divide em doze casas, e cada uma cuida de um pedaço da vida: corpo, dinheiro, família, trabalho, amor, saúde. O planeta no signo dá o tom; na casa, dá o palco onde ele age.',
+        figura: diagramaCasas(),
+      },
+      {
+        tipo: 'texto', olho: 'Mesmo céu, casas diferentes',
+        titulo: 'Por que te afeta *diferente*.',
+        corpo: 'É por isso que o mesmo eclipse mexe com a carreira de uma pessoa e com o casamento de outra. O céu é o mesmo para todos; as casas dependem da sua hora e do seu lugar de nascimento.',
+        figura: diagramaCasas(),
+      },
+      {
+        tipo: 'texto', olho: 'Onde começa',
+        titulo: 'A hora *importa*.',
+        corpo: 'A primeira casa começa no seu Ascendente, o grau que subia no horizonte quando você nasceu. Erra a hora e as doze casas giram: o mapa inteiro muda de endereço.',
+        figura: diagramaCasas(),
+      },
+      {
+        tipo: 'cta', olho: 'Tábula Estelar',
+        titulo: 'Em que casa cada planeta seu *caiu*?',
+        corpo: 'No Perfil, cada planeta vem com o signo e a casa, calculados da sua hora e do seu lugar.',
+        cta: 'Veja seu mapa · link na bio',
+      },
+    ],
+    legenda:
+      'As casas dizem onde. Os signos dizem como. Todo mundo aprende o signo, quase ninguém aprende as casas — e é a casa que diz em qual área da vida a coisa acontece.\n\n' +
+      'O mapa se divide em doze casas, cada uma cuidando de um pedaço da vida: corpo, dinheiro, família, trabalho, amor, saúde. O planeta no signo dá o tom; na casa, dá o palco.\n\n' +
+      'É por isso que o mesmo eclipse mexe com a carreira de uma pessoa e com o casamento de outra. O céu é o mesmo para todos, mas as casas dependem da sua hora e do seu lugar de nascimento.\n\n' +
+      'A primeira casa começa no seu Ascendente, o grau que subia no horizonte quando você nasceu. Por isso a hora importa: erra a hora e as doze casas giram.\n\n' +
+      'No seu mapa, cada planeta vem com o signo e a casa. Veja o seu no link da bio.',
   },
 }
 
