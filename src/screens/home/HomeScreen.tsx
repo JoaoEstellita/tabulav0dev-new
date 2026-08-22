@@ -31,7 +31,6 @@ import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
 import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
-import { useNotificationStore } from '../../context/NotificationStore'
 import HomeHeader from '../../components/HomeHeader'
 import NotificationOptInBanner from '../../components/NotificationOptInBanner'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
@@ -80,7 +79,6 @@ export default function HomeScreen() {
     return pt
   }, [language])
   const { user } = useAuth()
-  const { unreadCount } = useNotificationStore()
   const {
     transitData,
     loading,
@@ -440,8 +438,6 @@ export default function HomeScreen() {
         <HomeHeader
           sunSign={natalSunSign}
           moonSign={natalMoonSign}
-          unreadCount={unreadCount}
-          onPressBell={() => navigation.navigate('Notifications')}
         />
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
