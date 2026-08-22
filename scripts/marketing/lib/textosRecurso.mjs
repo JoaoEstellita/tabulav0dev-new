@@ -38,10 +38,10 @@ export const RECURSO = {
   perfilAstrologico: {
     titulo: 'O que o mapa\ndiz de você',
     tela: 'perfil',
-    texto: 'A roda mostra onde os planetas estão. O Perfil Astrológico diz o que ' +
-      'isso significa. Cada planeta no seu signo e na sua casa, os aspectos ' +
-      'entre eles, o regente do mapa, os pontos angulares. São textos ' +
-      'escritos e revisados um a um, não frases geradas na hora.',
+    texto: 'Saber o signo do Sol é o começo. Seu mapa tem dez planetas, cada um ' +
+      'num signo e numa casa, e é o cruzamento deles que desenha quem você é. ' +
+      'No Perfil, cada leitura foi escrita e revisada à mão, uma a uma, não ' +
+      'gerada na hora.',
     onde: 'Aba Perfil',
     ponte: 'O perfil completo abre junto com o mapa, no link da bio.',
   },

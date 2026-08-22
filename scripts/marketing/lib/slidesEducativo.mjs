@@ -26,6 +26,24 @@ export function ehEducativo(tipo) {
 }
 
 /**
+ * O texto SUSTENTA um carrossel?
+ *
+ * O João: "o carrossel da casa 12 ficou fraco, pouco texto entre os posts, não
+ * precisa de carrossel quando for assim". Um conceito curto (frases curtas,
+ * ~300 caracteres) vira quatro slides quase vazios — pior que um post único e
+ * denso. Só vira carrossel o que dá para encher os slides: texto longo o
+ * bastante para render ao menos três fatias com corpo. O resto sai como post.
+ */
+export function sustentaCarrossel(texto) {
+  const t = String(texto || '')
+  const fatias = fatiarTexto(t)
+  if (fatias.length < 3) return false
+  // cada fatia precisa de corpo: a menor não pode ser um toco
+  const menor = Math.min(...fatias.map((f) => f.length))
+  return t.length >= 420 && menor >= 60
+}
+
+/**
  * O texto em fatias, uma ou duas frases por slide.
  *
  * Alvo de no máximo `maxSlides` fatias: para um texto de seis frases dá três

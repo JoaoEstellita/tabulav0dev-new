@@ -28,7 +28,7 @@ import { lerLiterais } from './lib/catalogo.mjs'
 import { mapaDoCeu } from './lib/ceu.mjs'
 import { montarFoto } from './lib/templateFoto.mjs'
 import { montarPeca, montarSlide } from './lib/templatePeca.mjs'
-import { ehEducativo, slidesDoEducativo } from './lib/slidesEducativo.mjs'
+import { ehEducativo, slidesDoEducativo, sustentaCarrossel } from './lib/slidesEducativo.mjs'
 import { diagramaDoAssunto } from './lib/diagramaFato.mjs'
 import { svgDoSigno } from './lib/simbolos.mjs'
 import { carregarCatalogos, primeirasFrases } from './lib/interpretacao.mjs'
@@ -486,10 +486,10 @@ async function principal() {
 
   // `--formatos` vazio = tudo que o assunto comporta; marcado, manda a marcação
   const querCarrossel = !args.formatos.length || args.formatos.includes('carrossel')
-  // Educativo é SEMPRE carrossel, mesmo que a pauta salva traga `formatos:['post']`
-  // de antes desta regra: `formatosDoAssunto` já só oferece carrossel pra ele, e
-  // uma marcação antiga no Storage não deve forçar o post de volta.
-  const eduCarrossel = ehEducativo(assunto.tipo)
+  // Educativo vira carrossel só quando o texto SUSTENTA os slides. Conceito
+  // curto (casa 12, ~300 chars de frases curtas) daria slides vazios — o João
+  // pediu post único e denso nesse caso. Texto longo o bastante = carrossel.
+  const eduCarrossel = ehEducativo(assunto.tipo) && sustentaCarrossel(peca.texto)
 
   // O story sai sempre (com a roda; a tela dentro, no recurso).
   await renderizar(chrome, montar({ formato: 'story', foco: 3 }), path.join(pasta, 'story.png'), 1920)
