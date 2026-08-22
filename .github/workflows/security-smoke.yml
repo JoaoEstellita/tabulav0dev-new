@@ -29,7 +29,7 @@ jobs:
       # firebase-tools (emulator de test:rules) passou a exigir Java 21+.
       # Sem este step o runner usa um JDK < 21 e o test:rules falha em segundos.
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
