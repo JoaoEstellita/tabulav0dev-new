@@ -37,6 +37,8 @@ const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const GERADOR = path.join(AQUI, 'gerarEvento.mjs')
 /** A leitura dos doze ascendentes tem gerador próprio, com treze slides. */
 const GERADOR_SEMANAL = path.join(AQUI, 'gerarSemanal.mjs')
+/** Os temas curados do carrossel v4 (capa IA + card denso) têm gerador próprio. */
+const GERADOR_V4 = path.join(AQUI, 'gerarCarrosselV4.mjs')
 
 /** Teto de peças por dia, o mesmo do backend (`p2` a `p5` mais a raiz). */
 const MAXIMO = 5
@@ -283,14 +285,18 @@ async function principal() {
      * qual gerador atende.
      */
     const ehSemanal = a?.id === 'semanal'
-    const script = ehSemanal ? GERADOR_SEMANAL : GERADOR
+    // um tema v4 marcado no Estúdio chega como `v4:<chave>` e tem gerador próprio
+    // (capa IA + card denso). O que muda é só qual script atende.
+    const ehV4 = typeof a?.id === 'string' && a.id.startsWith('v4:')
+    const script = ehV4 ? GERADOR_V4 : ehSemanal ? GERADOR_SEMANAL : GERADOR
 
     const argumentos = [script, `--data=${iso}`]
-    if (!ehSemanal) argumentos.push(`--slot=${slot}`)
+    if (ehV4) argumentos.push(`--tema=${a.id.slice(3)}`)
+    if (!ehSemanal && !ehV4) argumentos.push(`--slot=${slot}`)
     if (args.saida) argumentos.push(`--saida=${args.saida}`)
     if (args.upload) argumentos.push('--upload')
-    if (!ehSemanal && a?.id) argumentos.push(`--assunto=${a.id}`)
-    if (!ehSemanal && a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
+    if (!ehSemanal && !ehV4 && a?.id) argumentos.push(`--assunto=${a.id}`)
+    if (!ehSemanal && !ehV4 && a?.formatos?.length) argumentos.push(`--formatos=${a.formatos.join(',')}`)
 
     try {
       const { stdout } = await execFileAsync(process.execPath, argumentos, {
