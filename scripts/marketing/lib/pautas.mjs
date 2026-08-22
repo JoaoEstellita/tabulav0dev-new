@@ -28,6 +28,7 @@ import { escrever } from './vozes.mjs'
 import { CONCEITO, CHAVES_DE_CONCEITO } from './textosConceito.mjs'
 import { RECURSO, CHAVES_DE_RECURSO } from './textosRecurso.mjs'
 import { TEMA, CHAVES_DE_TEMA } from './temasDeCarrossel.mjs'
+import { TEMAS_V4 } from './temasCarrosselV4.mjs'
 
 /** Os catálogos usam o nome do signo em inglês, minúsculo. */
 const SIGNO_EN = {
@@ -431,6 +432,25 @@ export function bancoDeAssuntos(data, { catalogos, orbes }) {
       tipo: 'carrossel',
       titulo: TEMA[chave].titulo.replace(/\n/g, ' '),
       angulo: `Carrossel de ${TEMA[chave].slides.length} slides, sem data`,
+      natureza: 'educativo',
+      formatos: ['carrossel'],
+    })
+  }
+
+  /**
+   * Os temas do carrossel v4 entram no banco.
+   *
+   * Peças curadas no padrão novo (capa IA gerada na hora + card denso). O João
+   * marca no banco e a fila publica; o id `v4:<chave>` faz o `gerarDia` chamar
+   * o `gerarCarrosselV4`.
+   */
+  for (const chave of Object.keys(TEMAS_V4)) {
+    const capa = TEMAS_V4[chave].slides[0]
+    itens.push({
+      id: `v4:${chave}`,
+      tipo: 'carrossel_v4',
+      titulo: String(capa?.titulo || chave).replace(/\*/g, '').replace(/\n/g, ' '),
+      angulo: `Carrossel v4, ${TEMAS_V4[chave].slides.length} slides, capa por IA`,
       natureza: 'educativo',
       formatos: ['carrossel'],
     })
