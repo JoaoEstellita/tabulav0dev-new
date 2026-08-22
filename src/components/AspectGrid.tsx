@@ -99,7 +99,7 @@ function AspectCell({ left, top, asp }: { left: number; top: number; asp: Aspect
 // -------------------------------------------------------------------------
 // NATAL — triangular (glifo na diagonal)
 // -------------------------------------------------------------------------
-function TriGrid({ planets, aspects }: { planets: PlanetLike[]; aspects: AspectLike[] }) {
+function TriGrid({ planets, aspects, onSelectAspect }: { planets: PlanetLike[]; aspects: AspectLike[]; onSelectAspect?: (a: AspectLike) => void }) {
   const list = aspects || []
   const key = (a: string, b: string) => [a, b].sort().join("|")
   const byPair = new Map<string, AspectLike>()
@@ -130,10 +130,15 @@ function TriGrid({ planets, aspects }: { planets: PlanetLike[]; aspects: AspectL
                 {names.slice(0, i).map((colName, j) => {
                   const left = pad + j * CELL
                   const asp = byPair.get(key(rowName, colName))
+                  const tappable = !!(asp && onSelectAspect)
                   return (
                     <React.Fragment key={`c-${i}-${j}`}>
-                      <Rect x={left} y={top} width={CELL} height={CELL} fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
+                      <Rect x={left} y={top} width={CELL} height={CELL} fill={tappable ? "rgba(255,215,0,0.05)" : "rgba(255,255,255,0.02)"} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
                       <AspectCell left={left} top={top} asp={asp} />
+                      {tappable ? (
+                        // Rect transparente por cima captura o toque → rola até a leitura do aspecto abaixo.
+                        <Rect x={left} y={top} width={CELL} height={CELL} fill="rgba(0,0,0,0)" onPress={() => onSelectAspect!(asp!)} />
+                      ) : null}
                     </React.Fragment>
                   )
                 })}
@@ -249,12 +254,12 @@ function CrossGrid({ rowPlanets, colPlanets, aspects, onSelectCell }: { rowPlane
 
 // -------------------------------------------------------------------------
 type AspectGridProps =
-  | { cross?: false; planets: PlanetLike[]; aspects: AspectLike[]; rowPlanets?: undefined; colPlanets?: undefined; onSelectCell?: undefined }
-  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined; onSelectCell?: (cellId: string) => void }
+  | { cross?: false; planets: PlanetLike[]; aspects: AspectLike[]; rowPlanets?: undefined; colPlanets?: undefined; onSelectCell?: undefined; onSelectAspect?: (a: AspectLike) => void }
+  | { cross: true; rowPlanets: PlanetLike[]; colPlanets: PlanetLike[]; aspects: AspectLike[]; planets?: undefined; onSelectCell?: (cellId: string) => void; onSelectAspect?: undefined }
 
 export default function AspectGrid(props: AspectGridProps) {
   if (props.cross) {
     return <CrossGrid rowPlanets={props.rowPlanets} colPlanets={props.colPlanets} aspects={props.aspects} onSelectCell={props.onSelectCell} />
   }
-  return <TriGrid planets={props.planets} aspects={props.aspects} />
+  return <TriGrid planets={props.planets} aspects={props.aspects} onSelectAspect={props.onSelectAspect} />
 }

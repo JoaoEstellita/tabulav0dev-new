@@ -130,6 +130,7 @@ type ChartContentProps = {
    * abaixo) para rolar até a interpretação. Web-only (scroll por DOM).
    */
   onSelectTransitAspect?: (cellId: string) => void
+  onSelectNatalAspect?: (a: { planet1: string; planet2: string; type: string }) => void
 }
 
 /**
@@ -139,7 +140,7 @@ type ChartContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect }: ChartContentProps) {
+export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const { width } = useWindowDimensions()
@@ -530,7 +531,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
             </Text>
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
-            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} />
+            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={onSelectNatalAspect} />
           </View>
         ) : null}
 

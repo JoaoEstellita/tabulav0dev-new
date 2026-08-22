@@ -276,6 +276,18 @@ export default function CosmosScreen() {
       )
     } catch { }
   }, [])
+
+  // Grade natal clicável: toca numa célula (aspecto A×B) → rola até o bloco do
+  // planeta (onde a leitura desse aspecto já está renderizada). Ângulos/nós não têm
+  // bloco próprio → cai no outro ponto do par que for planeta real.
+  const NATAL_ANCHOR_PLANETS = React.useRef(new Set(['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])).current
+  const handleSelectNatalAspect = useCallback((a: { planet1: string; planet2: string; type: string }) => {
+    if (!a) return
+    const target = NATAL_ANCHOR_PLANETS.has(a.planet1) ? a.planet1
+      : NATAL_ANCHOR_PLANETS.has(a.planet2) ? a.planet2 : a.planet1
+    scrollToAnchor(`planet:${target}`)
+  }, [scrollToAnchor, NATAL_ANCHOR_PLANETS])
+
   const { language } = useAppLanguage()
 
   const isPremium = subscription?.status === 'active' || isInTrial
@@ -427,7 +439,7 @@ export default function CosmosScreen() {
               </TouchableOpacity>
             </View>
 
-            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} />
+            <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
 
             {westMode === 'transitos' ? (
               <>
