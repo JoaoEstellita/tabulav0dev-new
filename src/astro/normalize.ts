@@ -47,16 +47,28 @@ const HOUSE_MAP: Record<string, string> = {
 };
 
 export function normalizePlanet(name: string): string {
-  const k = name.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+  // ̀-ͯ = combining diacritical marks (o que o NFD gera). NÃO usar
+  // /\p{Diacritic}/gu: Unicode property escapes não funcionam no Hermes (RN
+  // nativo) — o acento não era removido e a chave não casava (grade/
+  // interpretações vazias no APK, ok no PWA/V8).
+  const k = name.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   return PLANET_MAP[k] || name;
 }
 
 export function normalizeSign(name: string): string {
-  const k = name.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+  // ̀-ͯ = combining diacritical marks (o que o NFD gera). NÃO usar
+  // /\p{Diacritic}/gu: Unicode property escapes não funcionam no Hermes (RN
+  // nativo) — o acento não era removido e a chave não casava (grade/
+  // interpretações vazias no APK, ok no PWA/V8).
+  const k = name.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   return SIGN_MAP[k] || name;
 }
 
 export function normalizeHouse(name: string): string {
-  const k = name.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+  // ̀-ͯ = combining diacritical marks (o que o NFD gera). NÃO usar
+  // /\p{Diacritic}/gu: Unicode property escapes não funcionam no Hermes (RN
+  // nativo) — o acento não era removido e a chave não casava (grade/
+  // interpretações vazias no APK, ok no PWA/V8).
+  const k = name.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   return HOUSE_MAP[k] || name;
 }
