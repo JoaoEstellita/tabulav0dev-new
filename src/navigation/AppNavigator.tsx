@@ -16,6 +16,7 @@ import LoginScreen from "../screens/auth/LoginScreen"
 import HomeScreen from "../screens/home/HomeScreen"
 import HomeScreenMinimal from "../screens/home/HomeScreenMinimal"
 import GroupsAccessGuard from "../screens/groups/GroupsAccessGuard"
+import NetworkScreen from "../screens/connections/NetworkScreen"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import NotificationPreferencesScreen from "../screens/settings/NotificationPreferencesScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
@@ -268,6 +269,8 @@ function MainTabs() {
             iconName = focused ? "star" : "star-outline"
           } else if (route.name === "Groups") {
             iconName = focused ? "sparkles" : "sparkles-outline"
+          } else if (route.name === "Network") {
+            iconName = focused ? "people" : "people-outline"
           } else if (route.name === "Forecast") {
             iconName = focused ? "calendar" : "calendar-outline"
           } else if (route.name === "Premium") {
@@ -326,6 +329,15 @@ function MainTabs() {
           <ErrorBoundary>
             <SwipeableTabScreen>
               <GroupsAccessGuard />
+            </SwipeableTabScreen>
+          </ErrorBoundary>
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Network" options={{ title: t("nav.people"), headerShown: false }}>
+        {() => (
+          <ErrorBoundary>
+            <SwipeableTabScreen>
+              <NetworkScreen />
             </SwipeableTabScreen>
           </ErrorBoundary>
         )}

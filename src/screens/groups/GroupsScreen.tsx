@@ -1994,13 +1994,6 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
-              <TouchableOpacity
-                style={styles.groupHeaderActionButton}
-                onPress={() => (navigation as any).navigate('Connections')}
-                accessibilityLabel={tr('connections.myConnections', 'Minhas conexões')}
-              >
-                <Ionicons name="people-outline" size={18} color="#FFD700" />
-              </TouchableOpacity>
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
                   <Ionicons name="swap-vertical" size={18} color="#FFD700" />
