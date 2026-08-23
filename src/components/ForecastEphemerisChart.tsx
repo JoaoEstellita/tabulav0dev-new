@@ -150,8 +150,11 @@ export default function ForecastEphemerisChart({
         if (w && Math.abs(w - containerW) > 1) setContainerW(w)
       }}
     >
-      <View style={{ flexDirection: "row" }}>
-        {/* COLUNA FIXA: rótulos trânsito+aspecto+natal — não rola na horizontal */}
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        {/* COLUNA FIXA: rótulos trânsito+aspecto+natal — não rola na horizontal.
+            Envolta em View com width fixo: no RN o <Svg> solto numa row não reserva
+            o espaço de layout e a coluna colapsava (labels sumiam no mobile). */}
+        <View style={{ width: gutter }}>
         <Svg width={gutter} height={height}>
           {rows.map((r, i) =>
             r.groupIdx % 2 === 1 ? (
@@ -173,9 +176,10 @@ export default function ForecastEphemerisChart({
           {/* borda direita sutil separando a coluna fixa da área rolável */}
           <Line x1={gutter - 0.5} y1={topAxis} x2={gutter - 0.5} y2={height - 8} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
         </Svg>
+        </View>
 
         {/* ÁREA ROLÁVEL: grade de dias + barras (x começa em 0, sem o gutter) */}
-        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }} style={{ flex: 1 }}>
           <Svg width={plotW} height={height}>
             {/* sombra alternada por grupo (continua a faixa da coluna fixa) */}
             {rows.map((r, i) =>
