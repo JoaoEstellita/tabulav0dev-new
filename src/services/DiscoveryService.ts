@@ -54,16 +54,18 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
 export type MatchProfile = PublicProfile & { score: number }
 export type MatchResult = {
   premium: boolean
-  results?: MatchProfile[]   // só premium
+  results?: MatchProfile[]   // só premium: ranking completo
+  preview?: MatchProfile[]   // top 3 com %, isca — grátis e pago
   teaser?: number            // não-premium: quantos matches fortes
   total?: number
 }
-/** Ranking "quem mais combina" (Pro/Premium). Grátis recebe só o teaser. */
+/** Ranking "quem mais combina" (Pro/Premium). Grátis recebe preview (top 3) + teaser. */
 export async function getMatches(): Promise<MatchResult> {
   const r = await post('match', {})
   return {
     premium: !!r?.premium,
     results: Array.isArray(r?.results) ? r.results : undefined,
+    preview: Array.isArray(r?.preview) ? r.preview : undefined,
     teaser: typeof r?.teaser === 'number' ? r.teaser : undefined,
     total: typeof r?.total === 'number' ? r.total : undefined,
   }

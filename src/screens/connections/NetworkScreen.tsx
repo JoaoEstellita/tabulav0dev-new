@@ -1,12 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert, Switch, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert, Switch, ActivityIndicator, TextInput } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
-import { listPeople, ensureSelfDiscoverable, setDiscoverable, type PublicProfile } from '../../services/DiscoveryService'
+import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, getMatches, type PublicProfile, type MatchProfile, type MatchResult } from '../../services/DiscoveryService'
+
+// Paleta da Rede (mockup aprovado): índigo profundo + dourado (identidade) + magenta (match/sinastria)
+const C = {
+  void: '#0B0A18', surface: '#17182B', surface2: '#1E2038',
+  line: 'rgba(255,255,255,0.07)', line2: 'rgba(255,255,255,0.12)',
+  ink: '#EDEBF7', dim: '#9A9CB8', faint: '#6E6F8C',
+  gold: '#FFD700', goldDeep: '#C9A227', magenta: '#FF4D8D', good: '#22C55E',
+}
+type Page = 'connections' | 'discover'
 
 export default function NetworkScreen() {
   const { user } = useAuth()
@@ -16,33 +25,42 @@ export default function NetworkScreen() {
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
 
+  const [page, setPage] = useState<Page>('discover')
   const [items, setItems] = useState<Connection[]>([])
   const [people, setPeople] = useState<PublicProfile[]>([])
+  const [match, setMatch] = useState<MatchResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [shareOnAccept, setShareOnAccept] = useState<Set<string>>(new Set())
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [visible, setVisible] = useState(true)
   const [togglingVisible, setTogglingVisible] = useState(false)
+  // busca
+  const [term, setTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<PublicProfile[] | null>(null)
+  const [searching, setSearching] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [conns, self, ppl] = await Promise.all([
+    const [conns, self, ppl, m] = await Promise.all([
       listConnections().catch(() => ({ connections: [] as Connection[] })),
       ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })),
       listPeople().catch(() => [] as PublicProfile[]),
+      getMatches().catch(() => null),
     ])
     setItems(conns.connections)
     setVisible(self.discoverable)
     setPeople(ppl)
+    setMatch(m)
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
 
   const received = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy !== user?.uid), [items, user?.uid])
+  const sent = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy === user?.uid), [items, user?.uid])
   const accepted = useMemo(() => items.filter((c) => c.status === 'accepted'), [items])
-  // uids que já têm qualquer conexão (pra marcar no diretório)
   const connectedUids = useMemo(() => new Set(items.map((c) => c.other)), [items])
+  const topMatches: MatchProfile[] = useMemo(() => match?.results || match?.preview || [], [match])
 
   const run = async (key: string, fn: () => Promise<any>) => {
     if (busy) return
@@ -61,22 +79,27 @@ export default function NetworkScreen() {
   )
   const openWhatsapp = (phone: string) => Linking.openURL(`https://wa.me/${phone.replace(/\D/g, '')}`).catch(() => {})
 
-  const connectPerson = async (p: PublicProfile) => {
+  const connectPerson = async (uid: string) => {
     if (busy) return
-    setBusy(`c:${p.uid}`)
-    try {
-      await requestConnection(p.uid, null, false)
-      setSentIds((prev) => new Set(prev).add(p.uid))
-    } catch { /* silencioso */ }
+    setBusy(`c:${uid}`)
+    try { await requestConnection(uid, null, false); setSentIds((prev) => new Set(prev).add(uid)) } catch { /* */ }
     setBusy(null)
   }
 
   const toggleVisible = async (next: boolean) => {
-    setTogglingVisible(true)
-    setVisible(next)
+    setTogglingVisible(true); setVisible(next)
     try { await setDiscoverable(next) } catch { setVisible(!next) }
     setTogglingVisible(false)
   }
+
+  const doSearch = async () => {
+    const t = term.trim()
+    if (t.length < 2) { setSearchResults(null); return }
+    setSearching(true)
+    try { setSearchResults(await searchProfiles(t)) } catch { setSearchResults([]) }
+    setSearching(false)
+  }
+  const clearSearch = () => { setTerm(''); setSearchResults(null) }
 
   const trioLine = (p: { sunSign: string | null; moonSign: string | null; ascSign: string | null }) => {
     const parts: string[] = []
@@ -85,165 +108,270 @@ export default function NetworkScreen() {
     if (p.ascSign) parts.push(`ASC ${p.ascSign}`)
     return parts.join('  ·  ')
   }
+  const initial = (n?: string | null) => (n || '?').trim().slice(0, 1).toUpperCase()
 
-  const Avatar = ({ name, photo, size = 44 }: { name?: string | null; photo?: string | null; size?: number }) => (
+  const Avatar = ({ name, photo, size = 54, ring }: { name?: string | null; photo?: string | null; size?: number; ring?: boolean }) => (
     photo
-      ? <Image source={{ uri: photo }} style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]} />
-      : <View style={[styles.avatar, styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}><Text style={styles.avatarInitial}>{(name || '?').slice(0, 1).toUpperCase()}</Text></View>
+      ? <Image source={{ uri: photo }} style={[st.avatar, { width: size, height: size, borderRadius: size / 2 }, ring && st.avatarRing]} />
+      : <View style={[st.avatar, st.avatarFb, { width: size, height: size, borderRadius: size / 2 }, ring && st.avatarRing]}><Text style={[st.avatarInit, { fontSize: size * 0.4 }]}>{initial(name)}</Text></View>
+  )
+
+  const PersonCard = ({ uid, name, photo, sun, moon, asc, city }: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) => {
+    const already = connectedUids.has(uid) || sentIds.has(uid)
+    return (
+      <View style={st.person}>
+        <Avatar name={name} photo={photo} size={54} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={st.personName} numberOfLines={1}>{name || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text>
+          {trioLine({ sunSign: sun, moonSign: moon, ascSign: asc }) ? <Text style={st.trio} numberOfLines={1}>{trioLine({ sunSign: sun, moonSign: moon, ascSign: asc })}</Text> : null}
+          {city ? <Text style={st.city} numberOfLines={1}>{city}</Text> : null}
+        </View>
+        {already ? (
+          <View style={st.doneTag}><Ionicons name="checkmark" size={14} color={C.good} /><Text style={st.doneTagTx}>{tl('Enviado', 'Sent', 'Enviado', 'Inviato')}</Text></View>
+        ) : (
+          <TouchableOpacity style={st.connectBtn} disabled={busy === `c:${uid}`} onPress={() => connectPerson(uid)}>
+            {busy === `c:${uid}` ? <ActivityIndicator size="small" color="#1a1405" /> : <Text style={st.connectTx}>{tl('Conectar', 'Connect', 'Conectar', 'Connetti')}</Text>}
+          </TouchableOpacity>
+        )}
+      </View>
+    )
+  }
+
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <View style={st.sectRow}><Text style={st.sectLabel}>{children}</Text><View style={st.sectLine} /></View>
   )
 
   return (
     <ScrollView
-      style={styles.screen}
-      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#FFD700" />}
+      style={st.screen}
+      contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={C.gold} />}
     >
-      <Text style={styles.title}>{tl('Rede', 'Network', 'Red', 'Rete')}</Text>
-      <Text style={styles.subtitle}>{tl('Descubra com quem você combina e conecte-se.', 'Discover who matches you and connect.', 'Descubre con quien combinas y conecta.', 'Scopri con chi corrispondi e connettiti.')}</Text>
-
-      <TouchableOpacity style={styles.heroMatch} activeOpacity={0.9} onPress={() => navigation.navigate('Matches')}>
-        <Ionicons name="sparkles" size={26} color="#0B0A18" />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.heroMatchTitle}>{tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}</Text>
-          <Text style={styles.heroMatchSub}>{tl('Seu ranking de compatibilidade astrológica', 'Your astrological compatibility ranking', 'Tu ranking de compatibilidad', 'La tua classifica di compatibilita')}</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#0B0A18" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.heroFind} activeOpacity={0.9} onPress={() => navigation.navigate('Discover')}>
-        <Ionicons name="search" size={22} color="#FFD700" />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.heroFindTitle}>{tl('Encontrar pessoas', 'Find people', 'Encontrar personas', 'Trova persone')}</Text>
-          <Text style={styles.heroFindSub}>{tl('Busque por nome e conecte-se', 'Search by name and connect', 'Busca por nombre y conecta', 'Cerca per nome e connettiti')}</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#8892a4" />
-      </TouchableOpacity>
-
-      {received.length ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{tl('Pedidos recebidos', 'Requests received', 'Solicitudes recibidas', 'Richieste ricevute')}</Text>
-          {received.map((c) => (
-            <View key={c.id} style={styles.card}>
-              <View style={styles.row}><Avatar name={c.otherName} photo={c.otherPhoto} /><Text style={styles.name} numberOfLines={1}>{c.otherName || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text></View>
-              <TouchableOpacity style={styles.checkRow} onPress={() => setShareOnAccept((p) => { const n = new Set(p); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n })}>
-                <Ionicons name={shareOnAccept.has(c.id) ? 'checkbox' : 'square-outline'} size={18} color="#FFD700" />
-                <Text style={styles.checkLabel}>{tl('Compartilhar meu WhatsApp', 'Share my WhatsApp', 'Compartir mi WhatsApp', 'Condividi il mio WhatsApp')}</Text>
-              </TouchableOpacity>
-              <View style={styles.actions}>
-                <TouchableOpacity style={[styles.btn, styles.btnGhost]} disabled={!!busy} onPress={() => decline(c)}><Text style={styles.btnGhostText}>{tl('Recusar', 'Decline', 'Rechazar', 'Rifiuta')}</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, styles.btnPrimary]} disabled={!!busy} onPress={() => accept(c)}><Text style={styles.btnPrimaryText}>{tl('Aceitar', 'Accept', 'Aceptar', 'Accetta')}</Text></TouchableOpacity>
-              </View>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {/* Diretório — todas as pessoas visíveis na Rede */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{tl('Pessoas', 'People', 'Personas', 'Persone')}</Text>
-        {loading && !people.length ? (
-          <ActivityIndicator color="#FFD700" style={{ marginVertical: 20 }} />
-        ) : !people.length ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="planet-outline" size={34} color="#8892a4" />
-            <Text style={styles.empty}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona visibile.')}</Text>
-          </View>
-        ) : people.map((p) => {
-          const already = connectedUids.has(p.uid) || sentIds.has(p.uid)
-          return (
-            <View key={p.uid} style={styles.personCard}>
-              <Avatar name={p.displayName} photo={p.photoURL} size={48} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.name} numberOfLines={1}>{p.displayName || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text>
-                {trioLine(p) ? <Text style={styles.trio} numberOfLines={1}>{trioLine(p)}</Text> : null}
-                {p.city ? <Text style={styles.city} numberOfLines={1}>{p.city}</Text> : null}
-              </View>
-              {already ? (
-                <View style={styles.connectedTag}><Ionicons name="checkmark" size={14} color="#22C55E" /><Text style={styles.connectedTagText}>{tl('Enviado', 'Sent', 'Enviado', 'Inviato')}</Text></View>
-              ) : (
-                <TouchableOpacity style={styles.connectBtn} disabled={busy === `c:${p.uid}`} onPress={() => connectPerson(p)}>
-                  {busy === `c:${p.uid}` ? <ActivityIndicator size="small" color="#0B0A18" /> : <Text style={styles.connectBtnText}>{tl('Conectar', 'Connect', 'Conectar', 'Connetti')}</Text>}
-                </TouchableOpacity>
-              )}
-            </View>
-          )
-        })}
+      {/* Header */}
+      <View style={st.head}>
+        <Text style={st.title}>Re<Text style={{ color: C.magenta }}>de</Text></Text>
+        <View style={st.meRing}><Avatar name={user?.displayName} photo={(user as any)?.photoURL} size={38} /></View>
       </View>
 
-      {accepted.length ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{tl('Minhas conexões', 'My connections', 'Mis conexiones', 'Le mie connessioni')}</Text>
-          {accepted.map((c) => (
-            <View key={c.id} style={styles.card}>
-              <View style={styles.row}>
-                <Avatar name={c.otherName} photo={c.otherPhoto} />
-                <Text style={styles.name} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
-                <TouchableOpacity onPress={() => doBlock(c)} style={styles.blockBtn}><Ionicons name="ban-outline" size={16} color="#8892a4" /></TouchableOpacity>
+      {/* Segmented */}
+      <View style={st.seg}>
+        <TouchableOpacity style={[st.segBtn, page === 'connections' && st.segOn]} onPress={() => setPage('connections')}>
+          <Text style={[st.segTx, page === 'connections' && st.segTxOn]}>{tl('Conexões', 'Connections', 'Conexiones', 'Connessioni')}</Text>
+          {received.length ? <View style={st.segBadge}><Text style={st.segBadgeTx}>{received.length}</Text></View> : null}
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.segBtn, page === 'discover' && st.segOn]} onPress={() => setPage('discover')}>
+          <Text style={[st.segTx, page === 'discover' && st.segTxOn]}>{tl('Descobrir', 'Discover', 'Descubrir', 'Scopri')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {loading && !items.length && !people.length ? (
+        <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
+      ) : page === 'discover' ? (
+        <View style={st.pad}>
+          {/* Carrossel — quem mais combina */}
+          {topMatches.length ? (
+            <>
+              <SectionLabel>{tl('✦ Quem mais combina', '✦ Who matches you most', '✦ Quien combina mas', '✦ Chi corrisponde di piu')}</SectionLabel>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.rail} contentContainerStyle={{ paddingRight: 16 }}>
+                {topMatches.map((m) => (
+                  <View key={m.uid} style={st.mCard}>
+                    <Text style={st.pct}>{m.score}%</Text>
+                    <Avatar name={m.displayName} photo={m.photoURL} size={58} ring />
+                    <Text style={st.mName} numberOfLines={1}>{m.displayName || '—'}</Text>
+                    <Text style={st.mTrio} numberOfLines={2}>{trioLine(m)}</Text>
+                    {connectedUids.has(m.uid) || sentIds.has(m.uid)
+                      ? <View style={st.mDone}><Ionicons name="checkmark" size={13} color={C.good} /><Text style={st.mDoneTx}>{tl('Enviado', 'Sent', 'Enviado', 'Inviato')}</Text></View>
+                      : <TouchableOpacity style={st.mConnect} disabled={busy === `c:${m.uid}`} onPress={() => connectPerson(m.uid)}><Text style={st.mConnectTx}>{tl('Conectar', 'Connect', 'Conectar', 'Connetti')}</Text></TouchableOpacity>}
+                  </View>
+                ))}
+                <TouchableOpacity style={st.mSeeAll} onPress={() => navigation.navigate('Matches')}>
+                  <Ionicons name="sparkles" size={22} color={C.gold} />
+                  <Text style={st.mSeeAllTx}>{match?.premium ? tl('Ver ranking completo', 'See full ranking', 'Ver ranking completo', 'Vedi classifica') : tl('Ver todos os matches', 'See all matches', 'Ver todos', 'Vedi tutti')}</Text>
+                  {!match?.premium && match?.teaser ? <Text style={st.mSeeAllSub}>{tl(`${match.teaser} combinam forte com você`, `${match.teaser} strongly match you`, `${match.teaser} combinan fuerte`, `${match.teaser} forte con te`)}</Text> : null}
+                </TouchableOpacity>
+              </ScrollView>
+            </>
+          ) : null}
+
+          {/* Busca */}
+          <View style={st.search}>
+            <Ionicons name="search" size={18} color={C.faint} />
+            <TextInput
+              style={st.searchInput}
+              placeholder={tl('Buscar pessoas por nome', 'Search people by name', 'Buscar personas por nombre', 'Cerca persone per nome')}
+              placeholderTextColor={C.faint}
+              value={term}
+              onChangeText={setTerm}
+              onSubmitEditing={doSearch}
+              returnKeyType="search"
+              autoCapitalize="none"
+            />
+            {term ? <TouchableOpacity onPress={clearSearch}><Ionicons name="close-circle" size={18} color={C.faint} /></TouchableOpacity> : null}
+          </View>
+
+          {/* Resultados da busca OU feed */}
+          {searchResults !== null ? (
+            <>
+              <SectionLabel>{tl('Resultados', 'Results', 'Resultados', 'Risultati')}</SectionLabel>
+              {searching ? <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} /> :
+                searchResults.length ? searchResults.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
+                  : <Text style={st.emptyTx}>{tl('Ninguém encontrado. Tente outro nome.', 'No one found. Try another name.', 'Nadie encontrado. Prueba otro nombre.', 'Nessuno trovato. Prova un altro nome.')}</Text>}
+            </>
+          ) : (
+            <>
+              <SectionLabel>{tl('Pessoas na sua órbita', 'People in your orbit', 'Personas en tu órbita', 'Persone nella tua orbita')}</SectionLabel>
+              {people.length ? people.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
+                : <View style={st.emptyCard}><Ionicons name="planet-outline" size={34} color={C.dim} /><Text style={st.emptyTx}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona.')}</Text></View>}
+            </>
+          )}
+
+          {/* Visibilidade */}
+          <View style={st.visRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={st.visTitle}>{tl('Apareço na Rede', 'I appear in the Network', 'Aparezco en la Red', 'Compaio nella Rete')}</Text>
+              <Text style={st.visSub}>{tl('Outras pessoas podem me encontrar (foto, nome e signos). Nunca sua data ou local de nascimento.', 'Others can find me (photo, name and signs). Never your birth date or place.', 'Otros pueden encontrarme (foto, nombre y signos). Nunca tu nacimiento.', 'Altri possono trovarmi (foto, nome e segni). Mai la nascita.')}</Text>
+            </View>
+            <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
+          </View>
+        </View>
+      ) : (
+        /* ===== CONEXÕES ===== */
+        <View style={st.pad}>
+          {received.length ? (
+            <>
+              <SectionLabel>{tl(`✦ ${received.length} ${received.length === 1 ? 'pedido esperando' : 'pedidos esperando'}`, `✦ ${received.length} waiting`, `✦ ${received.length} esperando`, `✦ ${received.length} in attesa`)}</SectionLabel>
+              {received.map((c) => (
+                <View key={c.id} style={st.req}>
+                  <View style={st.reqTop}><Avatar name={c.otherName} photo={c.otherPhoto} size={46} /><Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text></View>
+                  <TouchableOpacity style={st.checkRow} onPress={() => setShareOnAccept((p) => { const n = new Set(p); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n })}>
+                    <Ionicons name={shareOnAccept.has(c.id) ? 'checkbox' : 'square-outline'} size={18} color={C.gold} />
+                    <Text style={st.checkTx}>{tl('Compartilhar meu WhatsApp', 'Share my WhatsApp', 'Compartir mi WhatsApp', 'Condividi WhatsApp')}</Text>
+                  </TouchableOpacity>
+                  <View style={st.reqActs}>
+                    <TouchableOpacity style={[st.actBtn, st.decline]} disabled={!!busy} onPress={() => decline(c)}><Text style={st.declineTx}>{tl('Recusar', 'Decline', 'Rechazar', 'Rifiuta')}</Text></TouchableOpacity>
+                    <TouchableOpacity style={[st.actBtn, st.accept]} disabled={!!busy} onPress={() => accept(c)}><Text style={st.acceptTx}>{tl('Aceitar', 'Accept', 'Aceptar', 'Accetta')}</Text></TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : null}
+
+          <SectionLabel>{tl(`Minhas conexões${accepted.length ? ' · ' + accepted.length : ''}`, `My connections${accepted.length ? ' · ' + accepted.length : ''}`, `Mis conexiones${accepted.length ? ' · ' + accepted.length : ''}`, `Connessioni${accepted.length ? ' · ' + accepted.length : ''}`)}</SectionLabel>
+          {!accepted.length ? (
+            <View style={st.emptyCard}>
+              <Ionicons name="people-outline" size={34} color={C.dim} />
+              <Text style={st.emptyTx}>{tl('Você ainda não tem conexões.', 'No connections yet.', 'Aun no tienes conexiones.', 'Nessuna connessione.')}</Text>
+              <TouchableOpacity style={st.goDiscover} onPress={() => setPage('discover')}><Text style={st.goDiscoverTx}>{tl('Encontrar pessoas', 'Find people', 'Encontrar personas', 'Trova persone')}</Text></TouchableOpacity>
+            </View>
+          ) : accepted.map((c) => (
+            <View key={c.id} style={st.conn}>
+              <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
+                {c.otherWhatsapp
+                  ? <Text style={st.city}>{tl('WhatsApp liberado', 'WhatsApp shared', 'WhatsApp disponible', 'WhatsApp disponibile')}</Text>
+                  : c.iShared ? <Text style={st.city} numberOfLines={1}>{tl('Aguardando o WhatsApp da outra pessoa', 'Waiting their WhatsApp', 'Esperando su WhatsApp', 'In attesa del WhatsApp')}</Text>
+                    : null}
               </View>
               {c.otherWhatsapp ? (
-                <TouchableOpacity style={[styles.btn, styles.btnWa]} onPress={() => openWhatsapp(c.otherWhatsapp!)}><Ionicons name="logo-whatsapp" size={16} color="#0B0A18" /><Text style={styles.btnWaText}>{tl('Abrir WhatsApp', 'Open WhatsApp', 'Abrir WhatsApp', 'Apri WhatsApp')}</Text></TouchableOpacity>
+                <TouchableOpacity style={st.wa} onPress={() => openWhatsapp(c.otherWhatsapp!)}><Ionicons name="logo-whatsapp" size={15} color="#04220f" /><Text style={st.waTx}>WhatsApp</Text></TouchableOpacity>
               ) : !c.iShared ? (
-                <TouchableOpacity style={[styles.btn, styles.btnGhost]} disabled={!!busy} onPress={() => doShare(c)}><Text style={styles.btnGhostText}>{tl('Compartilhar meu WhatsApp', 'Share my WhatsApp', 'Compartir mi WhatsApp', 'Condividi il mio WhatsApp')}</Text></TouchableOpacity>
-              ) : (
-                <Text style={styles.waiting}>{tl('Aguardando a outra pessoa compartilhar o WhatsApp.', 'Waiting for the other person to share WhatsApp.', 'Esperando que la otra persona comparta WhatsApp.', 'In attesa che l\'altra persona condivida WhatsApp.')}</Text>
-              )}
+                <TouchableOpacity style={st.shareBtn} disabled={!!busy} onPress={() => doShare(c)}><Text style={st.shareTx}>{tl('Meu WhatsApp', 'My WhatsApp', 'Mi WhatsApp', 'Mio WhatsApp')}</Text></TouchableOpacity>
+              ) : null}
+              <TouchableOpacity onPress={() => doBlock(c)} style={st.blockBtn}><Ionicons name="ellipsis-vertical" size={16} color={C.faint} /></TouchableOpacity>
             </View>
           ))}
-        </View>
-      ) : null}
 
-      {/* Visibilidade */}
-      <View style={styles.visibleRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.visibleTitle}>{tl('Apareço na Rede', 'I appear in the Network', 'Aparezco en la Red', 'Compaio nella Rete')}</Text>
-          <Text style={styles.visibleSub}>{tl('Outras pessoas podem me encontrar (foto, nome e signos). Nunca sua data ou local de nascimento.', 'Others can find me (photo, name and signs). Never your birth date or place.', 'Otros pueden encontrarme (foto, nombre y signos). Nunca tu fecha o lugar de nacimiento.', 'Altri possono trovarmi (foto, nome e segni). Mai la tua data o luogo di nascita.')}</Text>
+          {sent.length ? (
+            <>
+              <SectionLabel>{tl('Pedidos enviados', 'Sent requests', 'Enviadas', 'Inviate')}</SectionLabel>
+              {sent.map((c) => (
+                <View key={c.id} style={st.conn}>
+                  <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
+                  <View style={{ flex: 1, minWidth: 0 }}><Text style={st.personName} numberOfLines={1}>{c.otherName || '—'}</Text><Text style={st.city}>{tl('Aguardando aceite', 'Awaiting acceptance', 'Esperando', 'In attesa')}</Text></View>
+                  <Ionicons name="time-outline" size={18} color={C.faint} />
+                </View>
+              ))}
+            </>
+          ) : null}
         </View>
-        <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: '#FFD700', false: '#3a3a4a' }} thumbColor="#fff" />
-      </View>
+      )}
     </ScrollView>
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0F0F23' },
-  title: { color: '#FFFFFF', fontSize: 26, fontWeight: '800' },
-  subtitle: { color: '#8892a4', fontSize: 14, marginTop: 4, marginBottom: 18 },
-  heroMatch: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFD700', borderRadius: 16, padding: 16, marginBottom: 12 },
-  heroMatchTitle: { color: '#0B0A18', fontSize: 16, fontWeight: '800' },
-  heroMatchSub: { color: '#3a2f00', fontSize: 12, marginTop: 2 },
-  heroFind: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#161728', borderRadius: 16, padding: 16, marginBottom: 22, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)' },
-  heroFindTitle: { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
-  heroFindSub: { color: '#8892a4', fontSize: 12, marginTop: 2 },
-  section: { marginBottom: 20 },
-  sectionTitle: { color: '#FFD700', fontSize: 13, fontWeight: '700', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
-  card: { backgroundColor: '#161728', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  personCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#161728', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  emptyCard: { backgroundColor: '#161728', borderRadius: 14, padding: 24, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatar: { backgroundColor: '#12101f' },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { color: '#FFD700', fontSize: 18, fontWeight: '700' },
-  name: { color: '#e2e8f0', fontSize: 16, fontWeight: '600', flex: 1 },
-  trio: { color: '#c9cfe0', fontSize: 12.5, marginTop: 3 },
-  city: { color: '#8892a4', fontSize: 12, marginTop: 2 },
-  blockBtn: { padding: 6 },
-  empty: { color: '#e2e8f0', fontSize: 15, fontWeight: '600', textAlign: 'center', marginTop: 4 },
-  connectBtn: { backgroundColor: '#FFD700', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10, minWidth: 88, alignItems: 'center' },
-  connectBtnText: { color: '#0B0A18', fontWeight: '700', fontSize: 13 },
-  connectedTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10 },
-  connectedTagText: { color: '#22C55E', fontSize: 12, fontWeight: '600' },
+const st = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.void },
+  pad: { paddingHorizontal: 16 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 14 },
+  title: { color: C.ink, fontSize: 30, fontWeight: '900', letterSpacing: -0.5 },
+  meRing: { width: 42, height: 42, borderRadius: 21, padding: 2, backgroundColor: C.magenta },
+  seg: { flexDirection: 'row', gap: 6, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 5, marginHorizontal: 16, marginBottom: 18 },
+  segBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: 10 },
+  segOn: { backgroundColor: C.surface2 },
+  segTx: { color: C.dim, fontWeight: '700', fontSize: 13.5 },
+  segTxOn: { color: C.ink },
+  segBadge: { minWidth: 18, paddingHorizontal: 5, borderRadius: 9, backgroundColor: C.magenta },
+  segBadgeTx: { color: '#1a0410', fontSize: 10, fontWeight: '800', textAlign: 'center', lineHeight: 16 },
+
+  sectRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, marginBottom: 12 },
+  sectLabel: { color: C.goldDeep, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
+  sectLine: { flex: 1, height: 1, backgroundColor: C.line2 },
+
+  rail: { marginHorizontal: -16, paddingHorizontal: 16, marginBottom: 18 },
+  mCard: { width: 150, marginRight: 12, borderRadius: 20, padding: 14, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line2 },
+  pct: { position: 'absolute', top: 12, right: 12, color: C.magenta, fontSize: 15, fontWeight: '800' },
+  mName: { color: C.ink, fontSize: 14, fontWeight: '700', marginTop: 10 },
+  mTrio: { color: C.dim, fontSize: 11, marginTop: 3, lineHeight: 15 },
+  mConnect: { marginTop: 11, backgroundColor: C.gold, borderRadius: 10, paddingVertical: 8, alignItems: 'center' },
+  mConnectTx: { color: '#1a1405', fontWeight: '800', fontSize: 12.5 },
+  mDone: { marginTop: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8 },
+  mDoneTx: { color: C.good, fontWeight: '700', fontSize: 12 },
+  mSeeAll: { width: 150, borderRadius: 20, padding: 14, backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', justifyContent: 'center' },
+  mSeeAllTx: { color: C.gold, fontWeight: '800', fontSize: 13.5, marginTop: 8 },
+  mSeeAllSub: { color: C.dim, fontSize: 11, marginTop: 4, lineHeight: 15 },
+
+  search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 18 },
+  searchInput: { flex: 1, color: C.ink, fontSize: 14, paddingVertical: 10 },
+
+  person: { flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 13, marginBottom: 11 },
+  personName: { color: C.ink, fontSize: 15.5, fontWeight: '700', flex: 1 },
+  trio: { color: '#cfc3ee', fontSize: 12, marginTop: 3 },
+  city: { color: C.faint, fontSize: 11.5, marginTop: 2 },
+  connectBtn: { backgroundColor: C.gold, borderRadius: 11, paddingHorizontal: 15, paddingVertical: 9, minWidth: 84, alignItems: 'center' },
+  connectTx: { color: '#1a1405', fontWeight: '800', fontSize: 12.5 },
+  doneTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8 },
+  doneTagTx: { color: C.good, fontSize: 12, fontWeight: '600' },
+
+  avatar: { backgroundColor: '#241f3a' },
+  avatarFb: { alignItems: 'center', justifyContent: 'center' },
+  avatarRing: { borderWidth: 2, borderColor: 'rgba(255,215,0,0.5)' },
+  avatarInit: { color: C.gold, fontWeight: '800' },
+
+  req: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 14, marginBottom: 12 },
+  reqTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  checkLabel: { color: '#c9cfe0', fontSize: 13, flexShrink: 1 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10, flex: 1 },
-  btnPrimary: { backgroundColor: '#FFD700' },
-  btnPrimaryText: { color: '#0B0A18', fontWeight: '700', fontSize: 14 },
-  btnGhost: { backgroundColor: 'rgba(255,255,255,0.06)' },
-  btnGhostText: { color: '#e2e8f0', fontWeight: '600', fontSize: 14 },
-  btnWa: { backgroundColor: '#22C55E', marginTop: 12 },
-  btnWaText: { color: '#0B0A18', fontWeight: '700', fontSize: 14 },
-  waiting: { color: '#8892a4', fontSize: 12, marginTop: 12, fontStyle: 'italic' },
-  visibleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#12101f', borderRadius: 14, padding: 16, marginTop: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  visibleTitle: { color: '#e2e8f0', fontSize: 15, fontWeight: '700' },
-  visibleSub: { color: '#8892a4', fontSize: 12, marginTop: 3, lineHeight: 17 },
+  checkTx: { color: '#c9cfe0', fontSize: 13, flexShrink: 1 },
+  reqActs: { flexDirection: 'row', gap: 9, marginTop: 14 },
+  actBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11 },
+  decline: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  declineTx: { color: C.ink, fontWeight: '700', fontSize: 13 },
+  accept: { backgroundColor: C.gold },
+  acceptTx: { color: '#1a1405', fontWeight: '800', fontSize: 13 },
+
+  conn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 12, marginBottom: 10 },
+  wa: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.good, borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
+  waTx: { color: '#04220f', fontWeight: '800', fontSize: 12.5 },
+  shareBtn: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
+  shareTx: { color: C.ink, fontWeight: '700', fontSize: 12.5 },
+  blockBtn: { padding: 4 },
+
+  emptyCard: { backgroundColor: C.surface, borderRadius: 18, padding: 24, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
+  emptyTx: { color: C.dim, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  goDiscover: { backgroundColor: C.gold, borderRadius: 11, paddingHorizontal: 18, paddingVertical: 10, marginTop: 4 },
+  goDiscoverTx: { color: '#1a1405', fontWeight: '800', fontSize: 13 },
+
+  visRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#12101f', borderRadius: 14, padding: 16, marginTop: 10, marginBottom: 8, borderWidth: 1, borderColor: C.line },
+  visTitle: { color: C.ink, fontSize: 15, fontWeight: '700' },
+  visSub: { color: C.dim, fontSize: 12, marginTop: 3, lineHeight: 17 },
 })
