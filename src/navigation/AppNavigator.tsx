@@ -270,7 +270,7 @@ function MainTabs() {
           } else if (route.name === "Groups") {
             iconName = focused ? "sparkles" : "sparkles-outline"
           } else if (route.name === "Network") {
-            iconName = focused ? "people" : "people-outline"
+            iconName = focused ? "share-social" : "share-social-outline"
           } else if (route.name === "Forecast") {
             iconName = focused ? "calendar" : "calendar-outline"
           } else if (route.name === "Settings") {
