@@ -297,8 +297,9 @@ const normalizeAspectKey = (value: string): string => {
   if (normalized.includes('semiquadr')) return 'semiquadratura'
   if (normalized.includes('semissext') || normalized.includes('semisext')) return 'semissextil'
   if (normalized.includes('sext')) return 'sextil'
-  if (normalized.includes('quadr')) return 'quadratura'
-  if (normalized.includes('opos')) return 'oposicao'
+  // 'square'/'opposition' (EN do forecast) não contêm 'quadr'/'opos'.
+  if (normalized.includes('quadr') || normalized.includes('square')) return 'quadratura'
+  if (normalized.includes('opos') || normalized.includes('oppos')) return 'oposicao'
   if (normalized.includes('quinc')) return 'quincuncio'
   if (normalized.includes('conj')) return 'conjuncao'
   if (normalized.includes('harmon')) return 'harmonic'
