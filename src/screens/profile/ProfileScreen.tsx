@@ -12,7 +12,7 @@ import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit, orderBy } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import { backendFetch } from "../../services/backend/client"
-import { setDiscoverable } from "../../services/DiscoveryService"
+import { setDiscoverable, ensureSelfDiscoverable } from "../../services/DiscoveryService"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
@@ -41,6 +41,7 @@ interface UserProfile {
     latitude: number
     longitude: number
   }
+  currentCity?: string
   zodiacSign: string
   preferences: {
     notifications: {
@@ -547,6 +548,7 @@ export default function ProfileScreen() {
         birthDate: normalizedBirthDate || '',
         birthTime: profile.birthTime,
         birthLocation: profile.birthLocation,
+        currentCity: (profile.currentCity || '').trim(),
         zodiacSign: profile.zodiacSign,
         profilePhoto: updatedPhoto,
       }
@@ -561,6 +563,8 @@ export default function ProfileScreen() {
         { merge: true }
       )
       await forceBackendStatusRefresh(user!.uid, 'profile_screen_save')
+      // Republica na Rede com a cidade de residência atualizada (não bloqueia o save).
+      ensureSelfDiscoverable().catch(() => {})
       setEditing(false)
       Alert.alert(tr('profile.alert.successTitle', 'Sucesso'), tr('profile.alert.saveSuccess', 'Perfil atualizado com sucesso!'))
     } catch (error) {
@@ -925,6 +929,13 @@ export default function ProfileScreen() {
                 </Text>
                 <Ionicons name="location" size={20} color="#FFD700" />
               </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder={tr('profile.input.currentCity', 'Cidade onde moro (aparece na Rede)')}
+                placeholderTextColor="#888"
+                value={profile.currentCity || ''}
+                onChangeText={(text) => setProfile({ ...profile, currentCity: text })}
+              />
               <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
                 <Text style={styles.saveButtonText}>{tr('profile.saveChanges', 'Salvar Alterações')}</Text>
               </TouchableOpacity>
