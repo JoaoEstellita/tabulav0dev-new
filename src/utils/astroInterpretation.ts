@@ -606,8 +606,10 @@ function normalizeAspect(value: unknown): string {
   if (raw.includes('semiquadr')) return 'semiquadratura'
   if (raw.includes('semissext') || raw.includes('semisext')) return 'semissextil'
   if (raw.includes('sext')) return 'sextil'
-  if (raw.includes('quadr')) return 'quadratura'
-  if (raw.includes('opos')) return 'oposicao'
+  // "square"/"opposition" (EN, do forecast em UPPERCASE) não contêm 'quadr'/'opos'
+  // → sem estes aliases o aspecto ficava cru em inglês + significado genérico.
+  if (raw.includes('quadr') || raw.includes('square')) return 'quadratura'
+  if (raw.includes('opos') || raw.includes('oppos')) return 'oposicao'
   if (raw.includes('quinc')) return 'quincuncio'
   if (raw.includes('conj')) return 'conjuncao'
   if (raw.includes('harmon')) return 'harmonic'

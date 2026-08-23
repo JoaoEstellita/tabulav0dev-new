@@ -1777,6 +1777,17 @@ export default function ForecastScreen() {
           buildEventDetailLines(detail.event, selectedDateKey || detail.event.exactAt.slice(0, 10)),
           language
         )
+        // Topo do modal: a JANELA do evento (período) + o pico — antes só mostrava
+        // "Pico - hoje", que escondia quando o trânsito começa e termina.
+        const winStart = parseUTCDateString((detail.event.startAt || '').slice(0, 10))
+        const winEnd = parseUTCDateString((detail.event.endAt || '').slice(0, 10))
+        const windowLabel = winStart && winEnd
+          ? `${formatDateShortNoYear(winStart, language)} – ${formatDateShortNoYear(winEnd, language)}`
+          : ''
+        const peakLabel = detail.phase
+          ? `${detail.phase.label}${detail.phase.meta ? ` ${detail.phase.meta}` : ''}`
+          : ''
+        const timingLabel = [windowLabel, peakLabel].filter(Boolean).join(' · ') || null
         return (
           <ReadingDetailModal
             visible={!!selectedEventDetailId}
@@ -1784,7 +1795,7 @@ export default function ForecastScreen() {
             statusLabel={detail.statusLabel}
             statusColor={detail.statusColor}
             title={detail.title}
-            timingLabel={detail.phase ? `${detail.phase.label}${detail.phase.meta ? ` - ${detail.phase.meta}` : ''}` : null}
+            timingLabel={timingLabel}
             directText={detail.directText}
             fullText={fullText}
             actionText={detail.actionHint}

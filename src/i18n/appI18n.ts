@@ -323,7 +323,7 @@ const dictionaries: Record<AppLanguage, Dict> = {
     'forecast.noEventsForDay': 'Sem eventos. Dia mais calmo para organizar suas prioridades.',
     'forecast.unlockFull': 'Desbloquear previsões completas',
     'forecast.detail.window': 'Janela {start} - {end}',
-    'forecast.detail.affects': 'Afeta: {áreas}',
+    'forecast.detail.affects': 'Afeta: {areas}',
     'forecast.detail.intensity': 'Intensidade {value}%',
     'forecast.detail.orb': 'Orb {value} deg',
     'forecast.detail.relativeImpact': 'Impacto relativo {value}%',
