@@ -393,6 +393,7 @@ function RootNavigator() {
       <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="Connections" component={require('../screens/connections/ConnectionsScreen').default} options={{ headerShown: true, title: 'Minhas conexões', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="Discover" component={require('../screens/connections/DiscoverScreen').default} options={{ headerShown: true, title: 'Descobrir pessoas', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="Matches" component={require('../screens/connections/MatchesScreen').default} options={{ headerShown: true, title: 'Quem mais combina', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="MemberProfile" component={require('../screens/groups/MemberProfileScreen').default} options={{ headerShown: true, title: 'Mapa do membro', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
     </RootStack.Navigator>

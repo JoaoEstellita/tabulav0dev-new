@@ -76,6 +76,12 @@ export default function ConnectionsScreen() {
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#FFD700" />}
     >
+      <TouchableOpacity style={styles.matchBtn} onPress={() => navigation.navigate('Matches')}>
+        <Ionicons name="sparkles" size={16} color="#0B0A18" />
+        <Text style={styles.matchBtnText}>
+          {tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}
+        </Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.discoverBtn} onPress={() => navigation.navigate('Discover')}>
         <Ionicons name="search" size={16} color="#0B0A18" />
         <Text style={styles.discoverBtnText}>
@@ -167,8 +173,10 @@ export default function ConnectionsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#0F0F23' },
-  discoverBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFD700', borderRadius: 12, paddingVertical: 12, marginBottom: 18 },
-  discoverBtnText: { color: '#0B0A18', fontWeight: '700', fontSize: 15 },
+  matchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFD700', borderRadius: 12, paddingVertical: 13, marginBottom: 10 },
+  matchBtnText: { color: '#0B0A18', fontWeight: '800', fontSize: 15 },
+  discoverBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(255,215,0,0.12)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', borderRadius: 12, paddingVertical: 11, marginBottom: 18 },
+  discoverBtnText: { color: '#FFD700', fontWeight: '700', fontSize: 15 },
   empty: { color: '#8892a4', fontSize: 14, textAlign: 'center', paddingVertical: 40, lineHeight: 20 },
   section: { marginBottom: 22 },
   sectionTitle: { color: '#FFD700', fontSize: 13, fontWeight: '700', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
