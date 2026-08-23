@@ -20,9 +20,24 @@ async function post(action: string, payload: Record<string, unknown>): Promise<a
   try { return await res.json() } catch { return { ok: false, error: 'parse' } }
 }
 
-/** Liga/desliga o "quero ser encontrado" (publica/despublica o perfil público). */
+/** Liga/desliga a visibilidade na Rede (publica/despublica o perfil público). */
 export function setDiscoverable(enabled: boolean) {
   return post('set-discoverable', { enabled })
+}
+
+/**
+ * Garante que o meu perfil está na vitrine (opt-out: entra visível na 1ª vez,
+ * respeitando quem já se ocultou). Devolve o estado atual de visibilidade.
+ */
+export async function ensureSelfDiscoverable(): Promise<{ discoverable: boolean; published: boolean }> {
+  const r = await post('ensure-self', {})
+  return { discoverable: !!r?.discoverable, published: !!r?.published }
+}
+
+/** Diretório da Rede: todas as pessoas visíveis (menos eu). */
+export async function listPeople(): Promise<PublicProfile[]> {
+  const r = await post('list', {})
+  return Array.isArray(r?.results) ? r.results : []
 }
 
 /** Busca perfis por prefixo do nome + filtros opcionais. */
