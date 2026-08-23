@@ -5,12 +5,15 @@ import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { listConnections, respondConnection, shareWhatsapp, blockConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
 import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, getMatches, type PublicProfile, type MatchProfile, type MatchResult } from '../../services/DiscoveryService'
+
+const WELCOME_KEY = 'network_welcome_seen_v1'
 
 // Paleta da Rede (mockup aprovado): índigo profundo + dourado (identidade) + magenta (match/sinastria)
 const C = {
-  void: '#0B0A18', surface: '#17182B', surface2: '#1E2038',
+  void: '#0F0F23', surface: '#161728', surface2: '#1E2038',
   line: 'rgba(255,255,255,0.07)', line2: 'rgba(255,255,255,0.12)',
   ink: '#EDEBF7', dim: '#9A9CB8', faint: '#6E6F8C',
   gold: '#FFD700', goldDeep: '#C9A227', magenta: '#FF4D8D', good: '#22C55E',
@@ -35,6 +38,7 @@ export default function NetworkScreen() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [visible, setVisible] = useState(true)
   const [togglingVisible, setTogglingVisible] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
   // busca
   const [term, setTerm] = useState('')
   const [searchResults, setSearchResults] = useState<PublicProfile[] | null>(null)
@@ -55,6 +59,23 @@ export default function NetworkScreen() {
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    AsyncStorage.getItem(WELCOME_KEY).then((v) => { if (!v) setShowWelcome(true) }).catch(() => {})
+  }, [])
+  const dismissWelcome = () => { setShowWelcome(false); AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {}) }
+  const doRemove = (c: Connection) => Alert.alert(
+    tl('Desfazer conexão', 'Remove connection', 'Deshacer conexión', 'Rimuovi connessione'),
+    tl('Remover esta conexão? Vocês deixam de estar conectados.', 'Remove this connection? You will no longer be connected.', '¿Quitar esta conexión?', 'Rimuovere questa connessione?'),
+    [{ text: tl('Cancelar', 'Cancel', 'Cancelar', 'Annulla'), style: 'cancel' },
+     { text: tl('Desfazer', 'Remove', 'Quitar', 'Rimuovi'), style: 'destructive', onPress: () => run(`r:${c.id}`, () => removeConnection(c.other)) }],
+  )
+  const connMenu = (c: Connection) => Alert.alert(
+    c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione'),
+    undefined,
+    [{ text: tl('Desfazer conexão', 'Remove connection', 'Deshacer conexión', 'Rimuovi connessione'), onPress: () => doRemove(c) },
+     { text: tl('Bloquear', 'Block', 'Bloquear', 'Blocca'), style: 'destructive', onPress: () => doBlock(c) },
+     { text: tl('Cancelar', 'Cancel', 'Cancelar', 'Annulla'), style: 'cancel' }],
+  )
 
   const received = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy !== user?.uid), [items, user?.uid])
   const sent = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy === user?.uid), [items, user?.uid])
@@ -157,6 +178,29 @@ export default function NetworkScreen() {
         <Text style={st.title}>Re<Text style={{ color: C.magenta }}>de</Text></Text>
       </View>
 
+      {/* Boas-vindas / opt-out — só na 1ª visita */}
+      {showWelcome ? (
+        <View style={st.welcome}>
+          <View style={st.welcomeTop}>
+            <Ionicons name="planet" size={22} color={C.magenta} />
+            <Text style={st.welcomeTitle}>{tl('Bem-vindo à Rede', 'Welcome to the Network', 'Bienvenido a la Red', 'Benvenuto nella Rete')}</Text>
+          </View>
+          <Text style={st.welcomeBody}>
+            {tl('Aqui você encontra pessoas, vê com quem combina e se conecta. Ao conectar, a outra pessoa recebe um pedido — aceito, vocês podem trocar WhatsApp ou entrar num grupo juntos.',
+              'Here you find people, see who you match with and connect. When you connect, the other person gets a request — once accepted, you can share WhatsApp or join a group together.',
+              'Aqui encuentras personas, ves con quien combinas y conectas. Al conectar, la otra persona recibe una solicitud; aceptada, pueden compartir WhatsApp o entrar en un grupo.',
+              'Qui trovi persone, vedi con chi corrispondi e ti connetti. Alla connessione l\'altra persona riceve una richiesta; accettata, potete condividere WhatsApp o entrare in un gruppo.')}
+          </Text>
+          <Text style={st.welcomeNote}>
+            {tl('Você também aparece na Rede (foto, nome e signos — nunca seu nascimento). Pode se ocultar quando quiser no fim desta aba.',
+              'You also appear in the Network (photo, name and signs — never your birth data). You can hide anytime at the bottom of this tab.',
+              'Tambien apareces en la Red (foto, nombre y signos — nunca tu nacimiento). Puedes ocultarte al final de esta pestana.',
+              'Compari anche tu nella Rete (foto, nome e segni — mai la nascita). Puoi nasconderti in fondo a questa scheda.')}
+          </Text>
+          <TouchableOpacity style={st.welcomeBtn} onPress={dismissWelcome}><Text style={st.welcomeBtnTx}>{tl('Entendi', 'Got it', 'Entendido', 'Ho capito')}</Text></TouchableOpacity>
+        </View>
+      ) : null}
+
       {/* Segmented */}
       <View style={st.seg}>
         <TouchableOpacity style={[st.segBtn, page === 'connections' && st.segOn]} onPress={() => setPage('connections')}>
@@ -212,7 +256,7 @@ export default function NetworkScreen() {
             </>
           ) : (
             <>
-              <SectionLabel>{tl('Pessoas na sua órbita', 'People in your orbit', 'Personas en tu órbita', 'Persone nella tua orbita')}</SectionLabel>
+              <SectionLabel>{tl('Pessoas na Rede', 'People in the Network', 'Personas en la Red', 'Persone nella Rete')}</SectionLabel>
               {people.length ? people.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
                 : <View style={st.emptyCard}><Ionicons name="planet-outline" size={34} color={C.dim} /><Text style={st.emptyTx}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona.')}</Text></View>}
             </>
@@ -226,6 +270,9 @@ export default function NetworkScreen() {
             </View>
             <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
           </View>
+          {visible ? (
+            <Text style={st.nudge}>{tl('Dica: perfis com foto e cidade recebem mais conexões — edite na aba Perfil.', 'Tip: profiles with photo and city get more connections — edit them in the Profile tab.', 'Tip: perfiles con foto y ciudad reciben mas conexiones — editalos en Perfil.', 'Suggerimento: profili con foto e citta ricevono piu connessioni — modificali in Profilo.')}</Text>
+          ) : null}
         </View>
       ) : (
         /* ===== CONEXÕES ===== */
@@ -271,7 +318,7 @@ export default function NetworkScreen() {
               ) : !c.iShared ? (
                 <TouchableOpacity style={st.shareBtn} disabled={!!busy} onPress={() => doShare(c)}><Text style={st.shareTx}>{tl('Meu WhatsApp', 'My WhatsApp', 'Mi WhatsApp', 'Mio WhatsApp')}</Text></TouchableOpacity>
               ) : null}
-              <TouchableOpacity onPress={() => doBlock(c)} style={st.blockBtn}><Ionicons name="ellipsis-vertical" size={16} color={C.faint} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => connMenu(c)} style={st.blockBtn}><Ionicons name="ellipsis-vertical" size={16} color={C.faint} /></TouchableOpacity>
             </View>
           ))}
 
@@ -365,6 +412,14 @@ const st = StyleSheet.create({
   shareBtn: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
   shareTx: { color: C.ink, fontWeight: '700', fontSize: 12.5 },
   blockBtn: { padding: 4 },
+  welcome: { marginHorizontal: 16, marginBottom: 16, borderRadius: 18, padding: 18, backgroundColor: 'rgba(255,77,141,0.07)', borderWidth: 1, borderColor: 'rgba(255,77,141,0.3)' },
+  welcomeTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  welcomeTitle: { color: C.ink, fontSize: 18, fontWeight: '800' },
+  welcomeBody: { color: '#c9cfe0', fontSize: 13.5, lineHeight: 20 },
+  welcomeNote: { color: C.dim, fontSize: 12.5, lineHeight: 18, marginTop: 10 },
+  welcomeBtn: { alignSelf: 'flex-start', marginTop: 14, backgroundColor: C.gold, borderRadius: 11, paddingHorizontal: 20, paddingVertical: 10 },
+  welcomeBtnTx: { color: '#1a1405', fontWeight: '800', fontSize: 14 },
+  nudge: { color: C.faint, fontSize: 12, lineHeight: 17, marginTop: 10, paddingHorizontal: 4 },
 
   emptyCard: { backgroundColor: C.surface, borderRadius: 18, padding: 24, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
   emptyTx: { color: C.dim, fontSize: 14, textAlign: 'center', lineHeight: 20 },

@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Modal } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Modal, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { useAuth } from '../../hooks/useAuth'
 import { getSynastry, type PublicProfile, type SynastryAspect } from '../../services/DiscoveryService'
-import { listConnections, requestConnection, type Connection } from '../../services/ConnectionsService'
+import { listConnections, requestConnection, removeConnection, type Connection } from '../../services/ConnectionsService'
 import GroupService, { type Group } from '../../services/firebase/GroupService'
 import InviteService from '../../services/InviteService'
 
 const C = {
-  void: '#0B0A18', surface: '#17182B', surface2: '#1E2038',
+  void: '#0F0F23', surface: '#161728', surface2: '#1E2038',
   line: 'rgba(255,255,255,0.07)', line2: 'rgba(255,255,255,0.12)',
   ink: '#EDEBF7', dim: '#9A9CB8', faint: '#6E6F8C',
   gold: '#FFD700', goldDeep: '#C9A227', magenta: '#FF4D8D', good: '#22C55E',
@@ -80,6 +80,12 @@ export default function PersonProfileScreen() {
     if (!g.inviteCode) return
     try { await InviteService.shareInvite(g.inviteCode, g.name) } catch { /* */ }
   }
+  const doRemove = () => Alert.alert(
+    tl('Desfazer conexão', 'Remove connection', 'Deshacer conexión', 'Rimuovi connessione'),
+    tl('Vocês deixam de estar conectados.', 'You will no longer be connected.', 'Dejaran de estar conectados.', 'Non sarete piu connessi.'),
+    [{ text: tl('Cancelar', 'Cancel', 'Cancelar', 'Annulla'), style: 'cancel' },
+     { text: tl('Desfazer', 'Remove', 'Quitar', 'Rimuovi'), style: 'destructive', onPress: async () => { try { await removeConnection(uid) } catch { /* */ } ; load() } }],
+  )
 
   const aspectLabel = (labelPt: string) => {
     const m = labelPt.toLowerCase()
@@ -165,6 +171,10 @@ export default function PersonProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={C.faint} />
           </TouchableOpacity>
           <Text style={s.dimTx}>{tl('Para ver o mapa completo, adicione a pessoa a um grupo em comum.', 'To see the full chart, add the person to a shared group.', 'Para ver el mapa completo, agrega a la persona a un grupo en comun.', 'Per vedere la carta completa, aggiungi la persona a un gruppo comune.')}</Text>
+          <TouchableOpacity style={s.removeRow} onPress={doRemove}>
+            <Ionicons name="close-circle-outline" size={17} color={C.faint} />
+            <Text style={s.removeTx}>{tl('Desfazer conexão', 'Remove connection', 'Deshacer conexión', 'Rimuovi connessione')}</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -233,4 +243,6 @@ const s = StyleSheet.create({
   modalTitle: { color: C.ink, fontSize: 17, fontWeight: '800', marginBottom: 16 },
   groupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.surface2, borderRadius: 12, padding: 14, marginBottom: 8 },
   groupName: { flex: 1, color: C.ink, fontSize: 15, fontWeight: '600' },
+  removeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, alignSelf: 'flex-start' },
+  removeTx: { color: C.faint, fontSize: 13, fontWeight: '600' },
 })

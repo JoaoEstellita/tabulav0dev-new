@@ -25,6 +25,10 @@ export function shareWhatsapp(withUid: string) {
 export function blockConnection(withUid: string, report?: string) {
   return post(report ? 'report' : 'block', { withUid, reason: report || null })
 }
+/** Desfaz a conexão (neutro, sem bloquear) — apaga o vínculo dos dois lados. */
+export function removeConnection(withUid: string) {
+  return post('remove', { withUid })
+}
 export async function listConnections(): Promise<{ ok: boolean; connections: Connection[] }> {
   const r = await post('list', {})
   return { ok: !!r?.ok, connections: Array.isArray(r?.connections) ? r.connections : [] }
