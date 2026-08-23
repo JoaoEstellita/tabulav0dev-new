@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { ErrorUtils, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/hooks/useAuth';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -48,19 +48,25 @@ function AppContent() {
 }
 
 function App() {
-  // Captura erros JS não tratados fora do React tree (async, native bridge)
+  // Captura erros JS não tratados fora do React tree (async, native bridge).
   useEffect(() => {
-    // ErrorUtils não existe em web — guard para compatibilidade PWA
     if (Platform.OS === 'web') return
-    const previousHandler = ErrorUtils.getGlobalHandler()
-    ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
+    // ErrorUtils é um GLOBAL do RN — NÃO um export de 'react-native'. Na New
+    // Architecture (RN 0.79) `import { ErrorUtils } from 'react-native'` vinha
+    // `undefined`, e `undefined.getGlobalHandler()` derrubava o app no boot
+    // (crash da Play: "Cannot read property 'getGlobalHandler' of undefined").
+    // Acessa o global com guard — some de vez o crash de lançamento.
+    const EU: any = (globalThis as any).ErrorUtils
+    if (!EU || typeof EU.getGlobalHandler !== 'function') return
+    const previousHandler = EU.getGlobalHandler()
+    EU.setGlobalHandler((error: Error, isFatal?: boolean) => {
       ErrorReportingService.logError(error, {
         action: isFatal ? 'fatal_js_error' : 'unhandled_js_error',
         source: 'global-handler',
       })
-      previousHandler(error, isFatal)
+      if (typeof previousHandler === 'function') previousHandler(error, isFatal)
     })
-    return () => ErrorUtils.setGlobalHandler(previousHandler)
+    return () => EU.setGlobalHandler(previousHandler)
   }, [])
 
   return (
