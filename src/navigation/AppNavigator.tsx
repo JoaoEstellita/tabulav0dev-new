@@ -273,8 +273,6 @@ function MainTabs() {
             iconName = focused ? "people" : "people-outline"
           } else if (route.name === "Forecast") {
             iconName = focused ? "calendar" : "calendar-outline"
-          } else if (route.name === "Premium") {
-            iconName = focused ? "planet" : "planet-outline"
           } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline"
           } else {
@@ -351,15 +349,6 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Premium" options={{ title: t("nav.premium"), headerShown: false }}>
-        {() => (
-          <ErrorBoundary>
-            <SwipeableTabScreen>
-              <PremiumScreen />
-            </SwipeableTabScreen>
-          </ErrorBoundary>
-        )}
-      </Tab.Screen>
       <Tab.Screen name="Settings" options={{ title: t("nav.settings"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
@@ -378,6 +367,7 @@ function RootNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, gestureEnabled: true, cardStyle: { flex: 1 } }}>
       <RootStack.Screen name="Tabs" component={MainTabs} />
+      <RootStack.Screen name="Premium" component={PremiumScreen} options={{ headerShown: true, title: 'Assinatura', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen
         name="ForecastPeriodEvents"
         options={{ headerShown: true, title: "Eventos do período", headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }}
