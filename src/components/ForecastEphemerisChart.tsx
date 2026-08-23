@@ -135,9 +135,10 @@ export default function ForecastEphemerisChart({
   const avail = containerW > 0 ? containerW - gutter - 12 : 0
   const dayW = Math.max(minDayW, avail > 0 ? avail / totalDays : minDayW)
   const height = topAxis + rows.length * rowH + 10
-  const width = gutter + totalDays * dayW + 10
+  // A coluna de rótulos (gutter) fica FIXA; só a área de plotagem rola na horizontal.
+  const plotW = totalDays * dayW + 10
 
-  const xOf = (iso: string) => gutter + ((toMs(iso) - fromMs) / DAY_MS) * dayW
+  const xOf = (iso: string) => ((toMs(iso) - fromMs) / DAY_MS) * dayW
   const labelEvery = totalDays > 90 ? 7 : totalDays > 45 ? 5 : totalDays > 20 ? 2 : 1
   const now = Date.now()
 
@@ -149,32 +150,14 @@ export default function ForecastEphemerisChart({
         if (w && Math.abs(w - containerW) > 1) setContainerW(w)
       }}
     >
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }}>
-        <Svg width={width} height={height}>
-          {/* sombra alternada por grupo de planeta em trânsito */}
+      <View style={{ flexDirection: "row" }}>
+        {/* COLUNA FIXA: rótulos trânsito+aspecto+natal — não rola na horizontal */}
+        <Svg width={gutter} height={height}>
           {rows.map((r, i) =>
             r.groupIdx % 2 === 1 ? (
-              <Rect key={`bg${i}`} x={0} y={topAxis + i * rowH} width={width} height={rowH} fill="rgba(255,255,255,0.025)" />
+              <Rect key={`lbg${i}`} x={0} y={topAxis + i * rowH} width={gutter} height={rowH} fill="rgba(255,255,255,0.025)" />
             ) : null,
           )}
-
-          {/* grade de dias + números */}
-          {Array.from({ length: totalDays }, (_, i) => {
-            const x = gutter + i * dayW
-            const showLabel = i % labelEvery === 0
-            return (
-              <React.Fragment key={`d${i}`}>
-                <Line x1={x} y1={topAxis} x2={x} y2={height - 8} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
-                {showLabel ? (
-                  <SvgText x={x + dayW / 2} y={14} fontSize={11} fill="#8892a4" textAnchor="middle">
-                    {new Date(fromMs + i * DAY_MS).getUTCDate()}
-                  </SvgText>
-                ) : null}
-              </React.Fragment>
-            )
-          })}
-
-          {/* linhas de aspecto: rótulo à esquerda + barra(s) no período */}
           {rows.map((r, i) => {
             const y = topAxis + i * rowH + rowH / 2
             const label =
@@ -182,52 +165,82 @@ export default function ForecastEphemerisChart({
               (ASPECT_SYMBOLS[r.aspect] || "") +
               (POINT_SYMBOLS[r.natalPoint] || r.natalPoint.slice(0, 2))
             return (
-              <React.Fragment key={r.key}>
-                <SvgText x={gutter - 5} y={y + 4.5} fontSize={13} fill="#c9cfe0" textAnchor="end">
-                  {label}
-                </SvgText>
-                {r.events.map((e, j) => {
-                  const x1 = Math.max(gutter, xOf(e.startAt))
-                  const x2 = Math.min(width - 10, xOf(e.endAt))
-                  const w = Math.max(5, x2 - x1)
-                  const xe = xOf(e.exactAt)
-                  // dateKey do toque tem de estar DENTRO do range e coberto pela
-                  // barra — senão o modal (que resolve pela lista do dia) não acha.
-                  // Aspecto de planeta lento pica FORA da janela (exactAt fora do
-                  // range): cai no início visível ou no 1º dia do range.
-                  const inRange = (d: string) => !!d && d >= rangeFrom && d <= rangeTo
-                  const peakDay = (e.exactAt || "").slice(0, 10)
-                  const startDay = (e.startAt || "").slice(0, 10)
-                  const dateKey = inRange(peakDay) ? peakDay : inRange(startDay) ? startDay : rangeFrom
-                  const hitW = Math.max(w, 18) // alvo de toque mínimo (barras curtas)
-                  const hitX = x1 - Math.max(0, (hitW - w) / 2)
-                  return (
-                    <React.Fragment key={e.id + j}>
-                      <Rect x={x1} y={y - barH / 2} width={w} height={barH} rx={barH / 2} fill={impactColor(e.impact)} opacity={0.85} />
-                      {/* tick no pico (exactAt) marca o momento exato */}
-                      <Line x1={xe} y1={y - barH / 2 - 1} x2={xe} y2={y + barH / 2 + 1} stroke="#0b0a14" strokeWidth={1.5} opacity={0.45} />
-                      {onSelectEvent ? (
-                        // Área de toque transparente POR CIMA: cobre a barra inteira +
-                        // o tick e alarga barras curtas → todos os aspectos clicáveis.
-                        <Rect x={hitX} y={topAxis + i * rowH} width={hitW} height={rowH} fill="rgba(0,0,0,0)" onPress={() => onSelectEvent(e.id, dateKey)} />
-                      ) : null}
-                    </React.Fragment>
-                  )
-                })}
-              </React.Fragment>
+              <SvgText key={r.key} x={gutter - 5} y={y + 4.5} fontSize={13} fill="#c9cfe0" textAnchor="end">
+                {label}
+              </SvgText>
             )
           })}
-
-          {/* linha de HOJE */}
-          {now >= fromMs && now <= toEndMs + DAY_MS ? (
-            <Line
-              x1={gutter + ((now - fromMs) / DAY_MS) * dayW} y1={topAxis - 2}
-              x2={gutter + ((now - fromMs) / DAY_MS) * dayW} y2={height - 8}
-              stroke="#FFD700" strokeWidth={1} strokeDasharray="3,3"
-            />
-          ) : null}
+          {/* borda direita sutil separando a coluna fixa da área rolável */}
+          <Line x1={gutter - 0.5} y1={topAxis} x2={gutter - 0.5} y2={height - 8} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
         </Svg>
-      </ScrollView>
+
+        {/* ÁREA ROLÁVEL: grade de dias + barras (x começa em 0, sem o gutter) */}
+        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ paddingRight: 8 }}>
+          <Svg width={plotW} height={height}>
+            {/* sombra alternada por grupo (continua a faixa da coluna fixa) */}
+            {rows.map((r, i) =>
+              r.groupIdx % 2 === 1 ? (
+                <Rect key={`bg${i}`} x={0} y={topAxis + i * rowH} width={plotW} height={rowH} fill="rgba(255,255,255,0.025)" />
+              ) : null,
+            )}
+
+            {/* grade de dias + números */}
+            {Array.from({ length: totalDays }, (_, i) => {
+              const x = i * dayW
+              const showLabel = i % labelEvery === 0
+              return (
+                <React.Fragment key={`d${i}`}>
+                  <Line x1={x} y1={topAxis} x2={x} y2={height - 8} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
+                  {showLabel ? (
+                    <SvgText x={x + dayW / 2} y={14} fontSize={11} fill="#8892a4" textAnchor="middle">
+                      {new Date(fromMs + i * DAY_MS).getUTCDate()}
+                    </SvgText>
+                  ) : null}
+                </React.Fragment>
+              )
+            })}
+
+            {/* barra(s) por linha de aspecto */}
+            {rows.map((r, i) => {
+              const y = topAxis + i * rowH + rowH / 2
+              return (
+                <React.Fragment key={r.key}>
+                  {r.events.map((e, j) => {
+                    const x1 = Math.max(0, xOf(e.startAt))
+                    const x2 = Math.min(plotW - 10, xOf(e.endAt))
+                    const w = Math.max(5, x2 - x1)
+                    const xe = xOf(e.exactAt)
+                    const inRange = (d: string) => !!d && d >= rangeFrom && d <= rangeTo
+                    const peakDay = (e.exactAt || "").slice(0, 10)
+                    const startDay = (e.startAt || "").slice(0, 10)
+                    const dateKey = inRange(peakDay) ? peakDay : inRange(startDay) ? startDay : rangeFrom
+                    const hitW = Math.max(w, 18)
+                    const hitX = x1 - Math.max(0, (hitW - w) / 2)
+                    return (
+                      <React.Fragment key={e.id + j}>
+                        <Rect x={x1} y={y - barH / 2} width={w} height={barH} rx={barH / 2} fill={impactColor(e.impact)} opacity={0.85} />
+                        <Line x1={xe} y1={y - barH / 2 - 1} x2={xe} y2={y + barH / 2 + 1} stroke="#0b0a14" strokeWidth={1.5} opacity={0.45} />
+                        {onSelectEvent ? (
+                          <Rect x={hitX} y={topAxis + i * rowH} width={hitW} height={rowH} fill="rgba(0,0,0,0)" onPress={() => onSelectEvent(e.id, dateKey)} />
+                        ) : null}
+                      </React.Fragment>
+                    )
+                  })}
+                </React.Fragment>
+              )
+            })}
+
+            {/* linha de HOJE */}
+            {now >= fromMs && now <= toEndMs + DAY_MS ? (
+              <Line
+                x1={((now - fromMs) / DAY_MS) * dayW} y1={topAxis - 2}
+                x2={((now - fromMs) / DAY_MS) * dayW} y2={height - 8}
+                stroke="#FFD700" strokeWidth={1} strokeDasharray="3,3"
+              />
+            ) : null}
+          </Svg>
+        </ScrollView>
+      </View>
 
       <View style={styles.legend}>
         <Dot c="#22C55E" label={t.harm} />
