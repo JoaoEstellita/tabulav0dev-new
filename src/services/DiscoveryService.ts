@@ -29,15 +29,21 @@ export function setDiscoverable(enabled: boolean) {
  * Garante que o meu perfil está na vitrine (opt-out: entra visível na 1ª vez,
  * respeitando quem já se ocultou). Devolve o estado atual de visibilidade.
  */
-export async function ensureSelfDiscoverable(): Promise<{ discoverable: boolean; published: boolean }> {
-  const r = await post('ensure-self', {})
+export async function ensureSelfDiscoverable(force = false): Promise<{ discoverable: boolean; published: boolean }> {
+  const r = await post('ensure-self', force ? { force: true } : {})
   return { discoverable: !!r?.discoverable, published: !!r?.published }
 }
 
-/** Diretório da Rede: todas as pessoas visíveis (menos eu). */
-export async function listPeople(): Promise<PublicProfile[]> {
+/** Diretório da Rede: todas as pessoas visíveis (menos eu). Cache TTL de 2min
+ * para não reler ~200 docs a cada remontagem; `force` (pull-refresh) ignora. */
+let _peopleCache: { at: number; data: PublicProfile[] } | null = null
+const PEOPLE_TTL = 120000
+export async function listPeople(force = false): Promise<PublicProfile[]> {
+  if (!force && _peopleCache && Date.now() - _peopleCache.at < PEOPLE_TTL) return _peopleCache.data
   const r = await post('list', {})
-  return Array.isArray(r?.results) ? r.results : []
+  const data = Array.isArray(r?.results) ? r.results : []
+  _peopleCache = { at: Date.now(), data }
+  return data
 }
 
 /** Busca perfis por prefixo do nome + filtros opcionais. */

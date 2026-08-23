@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
-import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, getMatches, type PublicProfile, type MatchProfile, type MatchResult } from '../../services/DiscoveryService'
+import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 
 const WELCOME_KEY = 'network_welcome_seen_v1'
 
@@ -31,7 +31,6 @@ export default function NetworkScreen() {
   const [page, setPage] = useState<Page>('discover')
   const [items, setItems] = useState<Connection[]>([])
   const [people, setPeople] = useState<PublicProfile[]>([])
-  const [match, setMatch] = useState<MatchResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [shareOnAccept, setShareOnAccept] = useState<Set<string>>(new Set())
@@ -44,18 +43,19 @@ export default function NetworkScreen() {
   const [searchResults, setSearchResults] = useState<PublicProfile[] | null>(null)
   const [searching, setSearching] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     setLoading(true)
-    const [conns, self, ppl, m] = await Promise.all([
+    // getMatches NÃO entra aqui de propósito: custa ~300 leituras + o cálculo de
+    // sinastria de todo o pool. Só é preciso na tela Matches (Pro), não a cada
+    // abertura da Rede — o card abaixo é só um acesso.
+    const [conns, self, ppl] = await Promise.all([
       listConnections().catch(() => ({ connections: [] as Connection[] })),
       ensureSelfDiscoverable().catch(() => ({ discoverable: true, published: false })),
-      listPeople().catch(() => [] as PublicProfile[]),
-      getMatches().catch(() => null),
+      listPeople(force).catch(() => [] as PublicProfile[]),
     ])
     setItems(conns.connections)
     setVisible(self.discoverable)
     setPeople(ppl)
-    setMatch(m)
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
@@ -81,7 +81,6 @@ export default function NetworkScreen() {
   const sent = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy === user?.uid), [items, user?.uid])
   const accepted = useMemo(() => items.filter((c) => c.status === 'accepted'), [items])
   const connectedUids = useMemo(() => new Set(items.map((c) => c.other)), [items])
-  const topMatches: MatchProfile[] = useMemo(() => match?.results || match?.preview || [], [match])
 
   const run = async (key: string, fn: () => Promise<any>) => {
     if (busy) return
@@ -171,7 +170,7 @@ export default function NetworkScreen() {
     <ScrollView
       style={st.screen}
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={C.gold} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => load(true)} tintColor={C.gold} />}
     >
       {/* Header */}
       <View style={st.head}>
@@ -221,13 +220,9 @@ export default function NetworkScreen() {
             <View style={st.matchHeroIcon}><Ionicons name="sparkles" size={22} color={C.magenta} /></View>
             <View style={{ flex: 1 }}>
               <Text style={st.matchHeroTitle}>{tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}</Text>
-              <Text style={st.matchHeroSub}>
-                {match && !match.premium && match.teaser
-                  ? tl(`${match.teaser} pessoas combinam forte com você`, `${match.teaser} people strongly match you`, `${match.teaser} personas combinan fuerte contigo`, `${match.teaser} persone forte con te`)
-                  : tl('Ranking de compatibilidade entre todos', 'Compatibility ranking across everyone', 'Ranking de compatibilidad con todos', 'Classifica di compatibilita con tutti')}
-              </Text>
+              <Text style={st.matchHeroSub}>{tl('Ranking de compatibilidade entre todos', 'Compatibility ranking across everyone', 'Ranking de compatibilidad con todos', 'Classifica di compatibilita con tutti')}</Text>
             </View>
-            {match && !match.premium ? <View style={st.proTag}><Text style={st.proTagTx}>PRO</Text></View> : <Ionicons name="chevron-forward" size={20} color={C.dim} />}
+            <View style={st.proTag}><Text style={st.proTagTx}>PRO</Text></View>
           </TouchableOpacity>
 
           {/* Busca */}

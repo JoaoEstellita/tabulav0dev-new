@@ -563,8 +563,8 @@ export default function ProfileScreen() {
         { merge: true }
       )
       await forceBackendStatusRefresh(user!.uid, 'profile_screen_save')
-      // Republica na Rede com a cidade de residência atualizada (não bloqueia o save).
-      ensureSelfDiscoverable().catch(() => {})
+      // Republica na Rede com a cidade/foto atualizadas (force ignora o fast-path).
+      ensureSelfDiscoverable(true).catch(() => {})
       setEditing(false)
       Alert.alert(tr('profile.alert.successTitle', 'Sucesso'), tr('profile.alert.saveSuccess', 'Perfil atualizado com sucesso!'))
     } catch (error) {
