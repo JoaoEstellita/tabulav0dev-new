@@ -150,7 +150,6 @@ export default function NetworkScreen() {
       {/* Header */}
       <View style={st.head}>
         <Text style={st.title}>Re<Text style={{ color: C.magenta }}>de</Text></Text>
-        <View style={st.meRing}><Avatar name={user?.displayName} photo={(user as any)?.photoURL} size={38} /></View>
       </View>
 
       {/* Segmented */}
@@ -168,30 +167,19 @@ export default function NetworkScreen() {
         <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
       ) : page === 'discover' ? (
         <View style={st.pad}>
-          {/* Carrossel — quem mais combina */}
-          {topMatches.length ? (
-            <>
-              <SectionLabel>{tl('✦ Quem mais combina', '✦ Who matches you most', '✦ Quien combina mas', '✦ Chi corrisponde di piu')}</SectionLabel>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.rail} contentContainerStyle={{ paddingRight: 16 }}>
-                {topMatches.map((m) => (
-                  <View key={m.uid} style={st.mCard}>
-                    <Text style={st.pct}>{m.score}%</Text>
-                    <Avatar name={m.displayName} photo={m.photoURL} size={58} ring />
-                    <Text style={st.mName} numberOfLines={1}>{m.displayName || '—'}</Text>
-                    <Text style={st.mTrio} numberOfLines={2}>{trioLine(m)}</Text>
-                    {connectedUids.has(m.uid) || sentIds.has(m.uid)
-                      ? <View style={st.mDone}><Ionicons name="checkmark" size={13} color={C.good} /><Text style={st.mDoneTx}>{tl('Enviado', 'Sent', 'Enviado', 'Inviato')}</Text></View>
-                      : <TouchableOpacity style={st.mConnect} disabled={busy === `c:${m.uid}`} onPress={() => connectPerson(m.uid)}><Text style={st.mConnectTx}>{tl('Conectar', 'Connect', 'Conectar', 'Connetti')}</Text></TouchableOpacity>}
-                  </View>
-                ))}
-                <TouchableOpacity style={st.mSeeAll} onPress={() => navigation.navigate('Matches')}>
-                  <Ionicons name="sparkles" size={22} color={C.gold} />
-                  <Text style={st.mSeeAllTx}>{match?.premium ? tl('Ver ranking completo', 'See full ranking', 'Ver ranking completo', 'Vedi classifica') : tl('Ver todos os matches', 'See all matches', 'Ver todos', 'Vedi tutti')}</Text>
-                  {!match?.premium && match?.teaser ? <Text style={st.mSeeAllSub}>{tl(`${match.teaser} combinam forte com você`, `${match.teaser} strongly match you`, `${match.teaser} combinan fuerte`, `${match.teaser} forte con te`)}</Text> : null}
-                </TouchableOpacity>
-              </ScrollView>
-            </>
-          ) : null}
+          {/* Acesso ao Match premium — recurso à parte, varre todos os usuários */}
+          <TouchableOpacity style={st.matchHero} activeOpacity={0.9} onPress={() => navigation.navigate('Matches')}>
+            <View style={st.matchHeroIcon}><Ionicons name="sparkles" size={22} color={C.magenta} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={st.matchHeroTitle}>{tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}</Text>
+              <Text style={st.matchHeroSub}>
+                {match && !match.premium && match.teaser
+                  ? tl(`${match.teaser} pessoas combinam forte com você`, `${match.teaser} people strongly match you`, `${match.teaser} personas combinan fuerte contigo`, `${match.teaser} persone forte con te`)
+                  : tl('Ranking de compatibilidade entre todos', 'Compatibility ranking across everyone', 'Ranking de compatibilidad con todos', 'Classifica di compatibilita con tutti')}
+              </Text>
+            </View>
+            {match && !match.premium ? <View style={st.proTag}><Text style={st.proTagTx}>PRO</Text></View> : <Ionicons name="chevron-forward" size={20} color={C.dim} />}
+          </TouchableOpacity>
 
           {/* Busca */}
           <View style={st.search}>
@@ -331,6 +319,12 @@ const st = StyleSheet.create({
   mSeeAllTx: { color: C.gold, fontWeight: '800', fontSize: 13.5, marginTop: 8 },
   mSeeAllSub: { color: C.dim, fontSize: 11, marginTop: 4, lineHeight: 15 },
 
+  matchHero: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, padding: 15, marginBottom: 18, backgroundColor: 'rgba(255,77,141,0.08)', borderWidth: 1, borderColor: 'rgba(255,77,141,0.35)' },
+  matchHeroIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,77,141,0.14)', alignItems: 'center', justifyContent: 'center' },
+  matchHeroTitle: { color: C.ink, fontSize: 16, fontWeight: '800' },
+  matchHeroSub: { color: C.dim, fontSize: 12.5, marginTop: 2, lineHeight: 16 },
+  proTag: { backgroundColor: C.gold, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  proTagTx: { color: '#1a1405', fontWeight: '900', fontSize: 11, letterSpacing: 0.5 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 18 },
   searchInput: { flex: 1, color: C.ink, fontSize: 14, paddingVertical: 10 },
 
