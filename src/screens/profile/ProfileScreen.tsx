@@ -9,7 +9,6 @@ import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { useAuth } from "../../hooks/useAuth"
 import { useAppLanguage } from "../../hooks/useAppLanguage"
-import { useNotificationStore } from "../../context/NotificationStore"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit, orderBy } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import { backendFetch } from "../../services/backend/client"
@@ -204,7 +203,6 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions()
   const isDesktopWeb = Platform.OS === 'web' && width >= 1024
   const { user, logout } = useAuth()
-  const { unreadCount } = useNotificationStore()
   const { subscription, isInTrial, trialDaysRemaining } = useSubscription()
   const { settings } = useUserSettings()
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -512,8 +510,6 @@ export default function ProfileScreen() {
       setLoading(false)
     }
   }
-
-  const notificationBadgeCount = unreadCount
 
   const subscriptionStatusLabel = (() => {
     if (isInTrial) return tr('profile.subscription.trial', 'Teste ({days} dias)', { days: trialDaysRemaining })

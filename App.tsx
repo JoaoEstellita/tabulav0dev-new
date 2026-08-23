@@ -5,7 +5,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/hooks/useAuth';
 import AppNavigator from './src/navigation/AppNavigator';
 import { AstrologyDataProvider } from './src/context/AstrologyDataProvider';
-import { NotificationProvider } from './src/context/NotificationStore';
 import SubscriptionModal from './src/screens/auth/SubscriptionModal';
 import { useSubscriptionCheck } from './src/hooks/useSubscriptionCheck';
 import { useEffect } from 'react';
@@ -74,9 +73,7 @@ function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthProvider>
           <AstrologyDataProvider>
-            <NotificationProvider>
-              <AppContent />
-            </NotificationProvider>
+            <AppContent />
           </AstrologyDataProvider>
         </AuthProvider>
       </GestureHandlerRootView>

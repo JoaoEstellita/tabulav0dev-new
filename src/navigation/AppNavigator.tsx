@@ -19,7 +19,6 @@ import GroupsAccessGuard from "../screens/groups/GroupsAccessGuard"
 import SettingsScreen from "../screens/settings/SettingsScreen"
 import NotificationPreferencesScreen from "../screens/settings/NotificationPreferencesScreen"
 import PremiumScreen from "../screens/premium/PremiumScreen"
-import NotificationsScreen from "../screens/notifications/NotificationsScreen"
 import ForecastScreen from "../screens/forecast/ForecastScreen"
 import ForecastPeriodEventsScreen from "../screens/forecast/ForecastPeriodEventsScreen"
 import AstrologyAnalysisScreen from "../screens/analysis/AstrologyAnalysisScreen"
@@ -391,7 +390,6 @@ function RootNavigator() {
       <RootStack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: true, title: 'Pagamento aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentPending" component={PaymentPendingScreen} options={{ headerShown: true, title: 'Pagamento pendente', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentFailure" component={PaymentFailureScreen} options={{ headerShown: true, title: 'Pagamento não aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
-      <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: t("nav.notifications"), headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="MemberProfile" component={require('../screens/groups/MemberProfileScreen').default} options={{ headerShown: true, title: 'Mapa do membro', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
