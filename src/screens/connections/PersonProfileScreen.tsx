@@ -164,7 +164,7 @@ export default function PersonProfileScreen() {
             <Text style={s.actionTx}>{tl('Convidar para um grupo', 'Invite to a group', 'Invitar a un grupo', 'Invita a un gruppo')}</Text>
             <Ionicons name="chevron-forward" size={18} color={C.faint} />
           </TouchableOpacity>
-          <Text style={s.dimTx}>{tl('Ver o mapa completo da pessoa chega em breve.', 'Viewing the full chart is coming soon.', 'Ver el mapa completo llega pronto.', 'Vedere la carta completa arriva presto.')}</Text>
+          <Text style={s.dimTx}>{tl('Para ver o mapa completo, adicione a pessoa a um grupo em comum.', 'To see the full chart, add the person to a shared group.', 'Para ver el mapa completo, agrega a la persona a un grupo en comun.', 'Per vedere la carta completa, aggiungi la persona a un gruppo comune.')}</Text>
         </View>
       ) : null}
 
