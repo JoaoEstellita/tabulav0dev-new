@@ -9,6 +9,8 @@ export type Connection = {
   status: ConnectionStatus
   requestedBy: string
   originGroupId: string | null
+  otherName: string | null
+  otherPhoto: string | null
   iShared: boolean
   otherWhatsapp: string | null
 }

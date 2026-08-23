@@ -46,6 +46,7 @@ import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
+import { requestConnection } from "../../services/ConnectionsService"
 import { gunaMilanBetween } from "../../astro/vedic"
 import { resolveGunaMilan, type ResolvedGunaMilan } from "../../utils/vedicInterpretation"
 
@@ -194,6 +195,22 @@ export default function GroupsScreen() {
   const [synastryMineMissing, setSynastryMineMissing] = useState(false)
   // Sinastria: quais leituras estão expandidas (chave = memberId ou pair.id).
   const [expandedSyn, setExpandedSyn] = useState<Set<string>>(new Set())
+  // Conexões (Fase 1): pedido de conexão a partir da matriz de membros.
+  const [connectTarget, setConnectTarget] = useState<{ userId: string; name: string } | null>(null)
+  const [connectShareWa, setConnectShareWa] = useState(false)
+  const [connectSentIds, setConnectSentIds] = useState<Set<string>>(new Set())
+  const [connectBusy, setConnectBusy] = useState(false)
+  const submitConnect = async () => {
+    if (!connectTarget || connectBusy) return
+    setConnectBusy(true)
+    try {
+      await requestConnection(connectTarget.userId, selectedGroup?.id ?? null, connectShareWa)
+      setConnectSentIds((prev) => new Set(prev).add(connectTarget.userId))
+    } catch { /* erro silencioso; o botão volta ao normal */ }
+    setConnectBusy(false)
+    setConnectTarget(null)
+    setConnectShareWa(false)
+  }
   const toggleSyn = useCallback((key: string) => {
     setExpandedSyn((prev) => {
       const next = new Set(prev)
@@ -1977,6 +1994,13 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
+              <TouchableOpacity
+                style={styles.groupHeaderActionButton}
+                onPress={() => (navigation as any).navigate('Connections')}
+                accessibilityLabel={tr('connections.myConnections', 'Minhas conexões')}
+              >
+                <Ionicons name="people-outline" size={18} color="#FFD700" />
+              </TouchableOpacity>
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
                   <Ionicons name="swap-vertical" size={18} color="#FFD700" />
@@ -2145,6 +2169,21 @@ export default function GroupsScreen() {
                           <Ionicons name="planet-outline" size={14} color="#FFD700" />
                           <Text style={styles.memberChartBtnText} numberOfLines={1}>
                             {tr('groups.member.viewChart', 'Ver mapa completo')}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {!member.isManaged && member.userId !== user?.uid ? (
+                        <TouchableOpacity
+                          style={styles.memberChartBtn}
+                          activeOpacity={0.8}
+                          disabled={connectSentIds.has(member.userId)}
+                          onPress={() => setConnectTarget({ userId: member.userId, name: member.displayName || tr('connections.thisPerson', 'esta pessoa') })}
+                          accessibilityRole="button"
+                          accessibilityLabel={tr('connections.connect', 'Conectar')}
+                        >
+                          <Ionicons name={connectSentIds.has(member.userId) ? 'checkmark' : 'person-add-outline'} size={14} color="#FFD700" />
+                          <Text style={styles.memberChartBtnText} numberOfLines={1}>
+                            {connectSentIds.has(member.userId) ? tr('connections.sent', 'Pedido enviado') : tr('connections.connect', 'Conectar')}
                           </Text>
                         </TouchableOpacity>
                       ) : null}
@@ -2370,6 +2409,34 @@ export default function GroupsScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={applyGroupOrder}>
                 <Text style={styles.modalButtonConfirmText}>{tr('groups.action.save', 'Salvar')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={!!connectTarget} transparent animationType="fade" onRequestClose={() => setConnectTarget(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.orderModalContent}>
+            <Text style={styles.modalTitle}>
+              {tr('connections.connectWith', 'Conectar com')} {connectTarget?.name}?
+            </Text>
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14 }}
+              onPress={() => setConnectShareWa((v) => !v)}
+              accessibilityRole="checkbox"
+            >
+              <Ionicons name={connectShareWa ? 'checkbox' : 'square-outline'} size={20} color="#FFD700" />
+              <Text style={{ color: '#e2e8f0', flexShrink: 1 }}>
+                {tr('connections.shareMyWhatsapp', 'Compartilhar meu WhatsApp')}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.orderModalFooter}>
+              <TouchableOpacity style={styles.modalButtonCancel} onPress={() => setConnectTarget(null)}>
+                <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButtonConfirm} onPress={submitConnect} disabled={connectBusy}>
+                <Text style={styles.modalButtonConfirmText}>{tr('connections.sendRequest', 'Enviar pedido')}</Text>
               </TouchableOpacity>
             </View>
           </View>

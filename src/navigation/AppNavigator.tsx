@@ -391,6 +391,7 @@ function RootNavigator() {
       <RootStack.Screen name="PaymentPending" component={PaymentPendingScreen} options={{ headerShown: true, title: 'Pagamento pendente', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="PaymentFailure" component={PaymentFailureScreen} options={{ headerShown: true, title: 'Pagamento não aprovado', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="AstroProfile" component={AstroProfileScreen} options={{ headerShown: true, title: 'Perfil Astrológico', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
+      <RootStack.Screen name="Connections" component={require('../screens/connections/ConnectionsScreen').default} options={{ headerShown: true, title: 'Minhas conexões', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="NatalChartWheel" component={NatalChartWheelScreen} options={{ headerShown: true, title: 'Mapa Natal', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
       <RootStack.Screen name="MemberProfile" component={require('../screens/groups/MemberProfileScreen').default} options={{ headerShown: true, title: 'Mapa do membro', headerStyle:{ backgroundColor:'#0F0F23' }, headerTintColor:'#FFFFFF' }} />
     </RootStack.Navigator>
