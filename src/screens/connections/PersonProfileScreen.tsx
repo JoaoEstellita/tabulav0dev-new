@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
+import { useAuth } from '../../hooks/useAuth'
 import { getSynastry, type PublicProfile, type SynastryAspect } from '../../services/DiscoveryService'
 import { listConnections, requestConnection, type Connection } from '../../services/ConnectionsService'
+import GroupService, { type Group } from '../../services/firebase/GroupService'
+import InviteService from '../../services/InviteService'
 
 const C = {
   void: '#0B0A18', surface: '#17182B', surface2: '#1E2038',
@@ -36,6 +39,10 @@ export default function PersonProfileScreen() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [sentLocal, setSentLocal] = useState(false)
+  // convidar para grupo
+  const { user } = useAuth()
+  const [groupPicker, setGroupPicker] = useState(false)
+  const [myGroups, setMyGroups] = useState<Group[] | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -60,6 +67,18 @@ export default function PersonProfileScreen() {
     setSending(true)
     try { await requestConnection(uid, null, false); setSentLocal(true) } catch { /* */ }
     setSending(false)
+  }
+
+  const openGroupPicker = async () => {
+    setGroupPicker(true)
+    if (myGroups === null && user?.uid) {
+      try { setMyGroups(await GroupService.getUserGroups(user.uid)) } catch { setMyGroups([]) }
+    }
+  }
+  const inviteToGroup = async (g: Group) => {
+    setGroupPicker(false)
+    if (!g.inviteCode) return
+    try { await InviteService.shareInvite(g.inviteCode, g.name) } catch { /* */ }
   }
 
   const aspectLabel = (labelPt: string) => {
@@ -136,13 +155,38 @@ export default function PersonProfileScreen() {
         )}
       </View>
 
-      {/* Ações — próximas fases */}
+      {/* Ações — quando conectados */}
       {status === 'accepted' ? (
         <View style={s.block}>
           <Text style={s.blockTitle}>{tl('Ações', 'Actions', 'Acciones', 'Azioni')}</Text>
-          <Text style={s.dimTx}>{tl('Convidar para um grupo e ver o mapa completo chegam em breve.', 'Inviting to a group and viewing the full chart are coming soon.', 'Invitar a un grupo y ver el mapa completo llegan pronto.', 'Invitare a un gruppo e vedere la carta completa arrivano presto.')}</Text>
+          <TouchableOpacity style={s.actionRow} onPress={openGroupPicker}>
+            <View style={s.actionIcon}><Ionicons name="people" size={18} color={C.gold} /></View>
+            <Text style={s.actionTx}>{tl('Convidar para um grupo', 'Invite to a group', 'Invitar a un grupo', 'Invita a un gruppo')}</Text>
+            <Ionicons name="chevron-forward" size={18} color={C.faint} />
+          </TouchableOpacity>
+          <Text style={s.dimTx}>{tl('Ver o mapa completo da pessoa chega em breve.', 'Viewing the full chart is coming soon.', 'Ver el mapa completo llega pronto.', 'Vedere la carta completa arriva presto.')}</Text>
         </View>
       ) : null}
+
+      {/* Modal escolher grupo */}
+      <Modal visible={groupPicker} transparent animationType="fade" onRequestClose={() => setGroupPicker(false)}>
+        <TouchableOpacity style={s.modalBg} activeOpacity={1} onPress={() => setGroupPicker(false)}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{tl('Convidar para qual grupo?', 'Invite to which group?', '¿A qué grupo?', 'In quale gruppo?')}</Text>
+            {myGroups === null ? (
+              <ActivityIndicator color={C.gold} style={{ marginVertical: 20 }} />
+            ) : !myGroups.length ? (
+              <Text style={s.dimTx}>{tl('Você ainda não tem grupos. Crie um na aba Grupos.', 'You have no groups yet. Create one in the Groups tab.', 'Aun no tienes grupos. Crea uno en Grupos.', 'Non hai gruppi. Creane uno in Gruppi.')}</Text>
+            ) : myGroups.map((g) => (
+              <TouchableOpacity key={g.id} style={s.groupRow} onPress={() => inviteToGroup(g)}>
+                <Ionicons name="people-circle-outline" size={22} color={C.gold} />
+                <Text style={s.groupName} numberOfLines={1}>{g.name}</Text>
+                <Ionicons name="share-outline" size={18} color={C.dim} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   )
 }
@@ -181,4 +225,12 @@ const s = StyleSheet.create({
   aspMid: { color: C.dim, fontSize: 13, fontWeight: '400' },
   aspOrb: { color: C.faint, fontSize: 12 },
   dimTx: { color: C.dim, fontSize: 13, lineHeight: 19 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.surface2, borderRadius: 12, padding: 13, marginBottom: 12 },
+  actionIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: 'rgba(255,215,0,0.12)', alignItems: 'center', justifyContent: 'center' },
+  actionTx: { flex: 1, color: C.ink, fontSize: 15, fontWeight: '700' },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 24 },
+  modalCard: { backgroundColor: C.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: C.line2 },
+  modalTitle: { color: C.ink, fontSize: 17, fontWeight: '800', marginBottom: 16 },
+  groupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.surface2, borderRadius: 12, padding: 14, marginBottom: 8 },
+  groupName: { flex: 1, color: C.ink, fontSize: 15, fontWeight: '600' },
 })
