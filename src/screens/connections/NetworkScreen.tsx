@@ -116,16 +116,21 @@ export default function NetworkScreen() {
       : <View style={[st.avatar, st.avatarFb, { width: size, height: size, borderRadius: size / 2 }, ring && st.avatarRing]}><Text style={[st.avatarInit, { fontSize: size * 0.4 }]}>{initial(name)}</Text></View>
   )
 
+  const openPerson = (p: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) =>
+    navigation.navigate('PersonProfile', { uid: p.uid, displayName: p.name, photoURL: p.photo, sunSign: p.sun, moonSign: p.moon, ascSign: p.asc, city: p.city })
+
   const PersonCard = ({ uid, name, photo, sun, moon, asc, city }: { uid: string; name: string | null; photo: string | null; sun: string | null; moon: string | null; asc: string | null; city: string | null }) => {
     const already = connectedUids.has(uid) || sentIds.has(uid)
     return (
       <View style={st.person}>
-        <Avatar name={name} photo={photo} size={54} />
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={st.personName} numberOfLines={1}>{name || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text>
-          {trioLine({ sunSign: sun, moonSign: moon, ascSign: asc }) ? <Text style={st.trio} numberOfLines={1}>{trioLine({ sunSign: sun, moonSign: moon, ascSign: asc })}</Text> : null}
-          {city ? <Text style={st.city} numberOfLines={1}>{city}</Text> : null}
-        </View>
+        <TouchableOpacity style={st.personTap} activeOpacity={0.7} onPress={() => openPerson({ uid, name, photo, sun, moon, asc, city })}>
+          <Avatar name={name} photo={photo} size={54} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={st.personName} numberOfLines={1}>{name || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text>
+            {trioLine({ sunSign: sun, moonSign: moon, ascSign: asc }) ? <Text style={st.trio} numberOfLines={1}>{trioLine({ sunSign: sun, moonSign: moon, ascSign: asc })}</Text> : null}
+            {city ? <Text style={st.city} numberOfLines={1}>{city}</Text> : null}
+          </View>
+        </TouchableOpacity>
         {already ? (
           <View style={st.doneTag}><Ionicons name="checkmark" size={14} color={C.good} /><Text style={st.doneTagTx}>{tl('Enviado', 'Sent', 'Enviado', 'Inviato')}</Text></View>
         ) : (
@@ -328,7 +333,8 @@ const st = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 18 },
   searchInput: { flex: 1, color: C.ink, fontSize: 14, paddingVertical: 10 },
 
-  person: { flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 13, marginBottom: 11 },
+  person: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 13, marginBottom: 11 },
+  personTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 13, minWidth: 0 },
   personName: { color: C.ink, fontSize: 15.5, fontWeight: '700', flex: 1 },
   trio: { color: '#cfc3ee', fontSize: 12, marginTop: 3 },
   city: { color: C.faint, fontSize: 11.5, marginTop: 2 },

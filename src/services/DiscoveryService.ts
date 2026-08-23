@@ -51,6 +51,24 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
   return r?.ok ? r.profile : null
 }
 
+export type SynastryAspect = { mine: string; theirs: string; aspect: string; orb: number }
+export type SynastryResult = {
+  premium: boolean
+  target?: PublicProfile
+  score?: number | null
+  aspects?: SynastryAspect[]
+}
+/** Sinastria par-a-par (PAGA). Grátis recebe só o alvo + premium:false. */
+export async function getSynastry(uid: string): Promise<SynastryResult> {
+  const r = await post('synastry', { uid })
+  return {
+    premium: !!r?.premium,
+    target: r?.target,
+    score: r?.score ?? null,
+    aspects: Array.isArray(r?.aspects) ? r.aspects : undefined,
+  }
+}
+
 export type MatchProfile = PublicProfile & { score: number }
 export type MatchResult = {
   premium: boolean
