@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import {
@@ -9,6 +10,7 @@ import {
 
 export default function ConnectionsScreen() {
   const { user } = useAuth()
+  const navigation = useNavigation<any>()
   const { language } = useAppLanguage()
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
@@ -74,6 +76,13 @@ export default function ConnectionsScreen() {
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#FFD700" />}
     >
+      <TouchableOpacity style={styles.discoverBtn} onPress={() => navigation.navigate('Discover')}>
+        <Ionicons name="search" size={16} color="#0B0A18" />
+        <Text style={styles.discoverBtnText}>
+          {tl('Descobrir pessoas', 'Discover people', 'Descubrir personas', 'Scopri persone')}
+        </Text>
+      </TouchableOpacity>
+
       {empty ? (
         <Text style={styles.empty}>
           {tl('Você ainda não tem conexões. Conecte-se com pessoas dos seus grupos.',
@@ -158,6 +167,8 @@ export default function ConnectionsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#0F0F23' },
+  discoverBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFD700', borderRadius: 12, paddingVertical: 12, marginBottom: 18 },
+  discoverBtnText: { color: '#0B0A18', fontWeight: '700', fontSize: 15 },
   empty: { color: '#8892a4', fontSize: 14, textAlign: 'center', paddingVertical: 40, lineHeight: 20 },
   section: { marginBottom: 22 },
   sectionTitle: { color: '#FFD700', fontSize: 13, fontWeight: '700', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },

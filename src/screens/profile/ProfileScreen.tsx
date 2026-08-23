@@ -12,6 +12,7 @@ import { useAppLanguage } from "../../hooks/useAppLanguage"
 import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, getDocs, query, where, limit, orderBy } from "firebase/firestore"
 import { db } from "../../config/firebase"
 import { backendFetch } from "../../services/backend/client"
+import { setDiscoverable } from "../../services/DiscoveryService"
 import FCMService from "../../services/firebase/FCMService"
 import FAQ from "../../components/FAQ"
 import { useSubscription } from "../../hooks/useSubscription"
@@ -79,6 +80,7 @@ interface UserProfile {
       allowGroupInvites: boolean
       shareTransitDurations: boolean
       shareLocation: boolean
+      discoverable?: boolean
     }
     theme: "dark" | "light" | "auto"
   }
@@ -730,6 +732,13 @@ export default function ProfileScreen() {
     }
   }
 
+  // "Quero ser encontrado": além da preferência, chama o backend que PUBLICA o
+  // perfil público (calcula o trio, popula userPublicProfiles) ou o despublica.
+  const handleDiscoverable = async (value: boolean) => {
+    updatePrivacyPreference("discoverable", value)
+    try { await setDiscoverable(value) } catch (e) { console.warn("setDiscoverable falhou:", (e as any)?.message) }
+  }
+
 
   if (loading) {
     return (
@@ -945,6 +954,21 @@ export default function ProfileScreen() {
         {/* Preferências de Privacidade */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{tr('profile.section.privacy', 'Privacidade')}</Text>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>{tr('profile.privacy.discoverable.title', 'Quero ser encontrado')}</Text>
+              <Text style={styles.preferenceDescription}>
+                {tr('profile.privacy.discoverable.desc', 'Aparecer na busca de pessoas com nome, foto, signos e cidade. Sua data de nascimento nunca fica pública.')}
+              </Text>
+            </View>
+            <Switch
+              value={profile.preferences?.privacy?.discoverable || false}
+              onValueChange={handleDiscoverable}
+              trackColor={{ false: "#2C2C2E", true: "#FFD700" }}
+              thumbColor={profile.preferences?.privacy?.discoverable ? "#000" : "#888"}
+            />
+          </View>
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
