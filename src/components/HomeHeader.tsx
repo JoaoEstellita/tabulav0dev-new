@@ -98,13 +98,13 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
               }
             } catch { ascSign = undefined }
             const parts: string[] = []
-            if (sunSign) parts.push(`${tl('Signo', 'Sun', 'Signo', 'Segno')} ${translateSignName(sunSign, language)}`)
-            if (ascSign) parts.push(`Asc ${translateSignName(ascSign, language)}`)
-            if (moonSign) parts.push(`${tl('Lua', 'Moon', 'Luna', 'Luna')} ${translateSignName(moonSign, language)}`)
+            if (sunSign) parts.push(`☉ ${translateSignName(sunSign, language)}`)
+            if (ascSign) parts.push(`ASC ${translateSignName(ascSign, language)}`)
+            if (moonSign) parts.push(`☽ ${translateSignName(moonSign, language)}`)
             if (!parts.length) return null
-            return <Text style={styles.signLine}>{parts.join('  ·  ')}</Text>
+            return <Text style={styles.signLine} numberOfLines={1}>{parts.join('  ·  ')}</Text>
           })()}
-          <Text style={styles.date}>{tl('Hoje', 'Today', 'Hoy', 'Oggi')} · {formattedDate}</Text>
+          <Text style={styles.date} numberOfLines={1} adjustsFontSizeToFit>{tl('Hoje', 'Today', 'Hoy', 'Oggi')} · {formattedDate}</Text>
         </View>
       </View>
 
