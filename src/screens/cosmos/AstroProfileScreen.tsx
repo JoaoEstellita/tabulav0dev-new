@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
-import { resolveSolarReturnPlanetInHouseText } from '../../utils/solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText } from '../../utils/solarReturnInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -303,8 +303,10 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
   }, [natalMc])
 
   const ascText = useMemo(
-    () => resolveSignInHouseText(ascSign.sign, 1, language),
-    [ascSign.sign, language],
+    () => (interpMode === 'solar'
+      ? resolveSolarReturnAscendantText(ascSign.sign, language)
+      : resolveSignInHouseText(ascSign.sign, 1, language)),
+    [ascSign.sign, language, interpMode],
   )
 
   const mcText = useMemo(
@@ -698,7 +700,9 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
           {ascText ? (
             <View style={styles.angularInterpretation}>
               <Text style={styles.angularInterpretationLabel}>
-                {tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
+                {interpMode === 'solar'
+                  ? tl('Ascendente do Ano', 'Ascendant of the Year', 'Ascendente del Ano', "Ascendente dell'Anno")
+                  : tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
               </Text>
               <Text style={styles.angularInterpretationText}>{ascText}</Text>
             </View>

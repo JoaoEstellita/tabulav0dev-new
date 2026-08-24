@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveSolarReturnPlanetInHouseText } from '../solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText } from '../solarReturnInterpretation'
 
 describe('resolveSolarReturnPlanetInHouseText', () => {
   it('retorna texto de RS curado em pt-BR (Sol casa 10)', () => {
@@ -20,6 +20,20 @@ describe('resolveSolarReturnPlanetInHouseText', () => {
         }
       }
     }
+  })
+
+  it('Ascendente do RS cobre os 12 signos nos 4 idiomas', () => {
+    const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+    for (const lang of ['pt-BR', 'en-US', 'es-ES', 'it-IT']) {
+      for (const s of signs) {
+        const t = resolveSolarReturnAscendantText(s, lang)
+        expect(t, `${lang} ${s}`).toBeTruthy()
+        expect(t!.length, `${lang} ${s}`).toBeGreaterThan(60)
+      }
+    }
+    // acentos proibidos
+    expect(resolveSolarReturnAscendantText('Leão', 'es-ES')!).not.toMatch(/[áéíóúñ]/i)
+    expect(resolveSolarReturnAscendantText('Leão', 'it-IT')!).not.toMatch(/[àèìòùáéíóú]/i)
   })
 
   it('es-ES sem tildes e it-IT sem acentos', () => {
