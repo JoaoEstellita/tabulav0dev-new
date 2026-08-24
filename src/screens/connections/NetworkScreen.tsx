@@ -195,12 +195,6 @@ export default function NetworkScreen() {
               'Aqui encuentras personas, ves con quien combinas y conectas. Al conectar, la otra persona recibe una solicitud; aceptada, pueden compartir WhatsApp o entrar en un grupo.',
               'Qui trovi persone, vedi con chi corrispondi e ti connetti. Alla connessione l\'altra persona riceve una richiesta; accettata, potete condividere WhatsApp o entrare in un gruppo.')}
           </Text>
-          <Text style={st.welcomeNote}>
-            {tl('Você também aparece na Rede (foto, nome e signos — nunca seu nascimento). Pode se ocultar quando quiser no fim desta aba.',
-              'You also appear in the Network (photo, name and signs — never your birth data). You can hide anytime at the bottom of this tab.',
-              'Tambien apareces en la Red (foto, nombre y signos — nunca tu nacimiento). Puedes ocultarte al final de esta pestana.',
-              'Compari anche tu nella Rete (foto, nome e segni — mai la nascita). Puoi nasconderti in fondo a questa scheda.')}
-          </Text>
           <TouchableOpacity style={st.welcomeBtn} onPress={dismissWelcome}><Text style={st.welcomeBtnTx}>{tl('Entendi', 'Got it', 'Entendido', 'Ho capito')}</Text></TouchableOpacity>
         </View>
       ) : null}

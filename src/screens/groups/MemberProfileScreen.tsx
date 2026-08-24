@@ -35,7 +35,7 @@ export default function MemberProfileScreen() {
   const birth = member?.birthData
   const [data, setData] = useState<LocalTransitData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar'>('natal')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar do membro (no local de NASCIMENTO dele — não temos onde ele mora).
   const [srData, setSrData] = useState<any>(null)
   const [srLoading, setSrLoading] = useState(false)
@@ -71,6 +71,39 @@ export default function MemberProfileScreen() {
     })()
     return () => { cancelled = true }
   }, [westMode, srSunLon, srLat, srLon])
+
+  // Retorno Lunar do membro (mesma mecânica, Lua natal).
+  const [lrData, setLrData] = useState<any>(null)
+  const [lrLoading, setLrLoading] = useState(false)
+  const [lrMoment, setLrMoment] = useState<Date | null>(null)
+  const [lrError, setLrError] = useState(false)
+  const lrMoonLon = useMemo(() => {
+    const m = ((data as any)?.currentTransits?.natalPlanets || []).find((p: any) => p?.name === 'Moon')
+    return typeof m?.longitude === 'number' ? m.longitude : null
+  }, [data])
+  const lrRunRef = useRef(false)
+  useEffect(() => {
+    if (westMode !== 'lunar') return
+    if (lrMoonLon == null || !Number.isFinite(srLat) || !Number.isFinite(srLon)) return
+    if (lrRunRef.current) return
+    lrRunRef.current = true
+    let cancelled = false
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
+    ;(async () => {
+      setLrLoading(true); setLrError(false)
+      try {
+        const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
+        const { data: lr, moment } = await withTimeout(
+          LocalAstrologyService.computeLunarReturn(lrMoonLon, { latitude: srLat as number, longitude: srLon as number }),
+          20000,
+        )
+        if (!cancelled) { setLrData(lr); setLrMoment(moment) }
+      } catch (e) { console.warn('[LR-member] erro:', e); if (!cancelled) { setLrError(true); lrRunRef.current = false } }
+      finally { if (!cancelled) setLrLoading(false) }
+    })()
+    return () => { cancelled = true }
+  }, [westMode, lrMoonLon, srLat, srLon])
 
   // Grade clicável → rola até a leitura do planeta no perfil abaixo (measureLayout,
   // robusto web+APK). Mesmo mecanismo da aba Mapa e da Home.
@@ -170,6 +203,9 @@ export default function MemberProfileScreen() {
               <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
                 <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'lunar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('lunar')}>
+                <Text style={[styles.modeBtnText, westMode === 'lunar' && styles.modeBtnTextActive]}>{tl('Lunar', 'Lunar', 'Lunar', 'Lunare')}</Text>
+              </TouchableOpacity>
             </View>
 
             {westMode === 'solar' ? (
@@ -182,6 +218,18 @@ export default function MemberProfileScreen() {
                   {srMoment ? <Text style={styles.srMemberCaption}>{tl(`Retorno Solar de ${srMoment.getUTCFullYear()}`, `Solar Return ${srMoment.getUTCFullYear()}`, `Retorno Solar ${srMoment.getUTCFullYear()}`, `Ritorno Solare ${srMoment.getUTCFullYear()}`)}</Text> : null}
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
                   <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
+                </>
+              )
+            ) : westMode === 'lunar' ? (
+              lrLoading || (!lrData && !lrError) ? (
+                <View style={styles.center}><StarLoader /></View>
+              ) : lrError || !lrData ? (
+                <Text style={styles.srMemberError}>{tl('Não consegui calcular o Retorno Lunar agora.', 'Could not calculate the Lunar Return now.', 'No pude calcular el Retorno Lunar ahora.', 'Non sono riuscito a calcolare il Ritorno Lunare.')}</Text>
+              ) : (
+                <>
+                  {lrMoment ? <Text style={styles.srMemberCaption}>{tl(`Retorno Lunar · ${lrMoment.toLocaleDateString('pt-BR')}`, `Lunar Return · ${lrMoment.toLocaleDateString('en-US')}`, `Retorno Lunar · ${lrMoment.toLocaleDateString('es-ES')}`, `Ritorno Lunare · ${lrMoment.toLocaleDateString('it-IT')}`)}</Text> : null}
+                  <NatalChartWheelContent transitData={lrData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={lrData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="lunar" />
                 </>
               )
             ) : (
