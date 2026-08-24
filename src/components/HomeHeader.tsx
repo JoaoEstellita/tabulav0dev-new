@@ -8,6 +8,16 @@ import { useAppLanguage } from '../hooks/useAppLanguage'
 import { decodeUnicodeEscapes, translateSignName } from '../utils/astro/pt'
 import MoonPhaseButton from './MoonPhaseButton'
 import ProfileAvatarButton from './ProfileAvatarButton'
+import { getMoonEclipticLongitude } from '../utils/moonPhase'
+
+// Glifos dos 12 signos (ordem do zodíaco a partir de 0° = Áries).
+const SIGN_GLYPHS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
+const currentMoonSignGlyph = () => {
+  try {
+    const lon = ((getMoonEclipticLongitude(new Date()) % 360) + 360) % 360
+    return SIGN_GLYPHS[Math.floor(lon / 30)] || null
+  } catch { return null }
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -125,6 +135,9 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
             ) : null}
           </TouchableOpacity>
         ) : null}
+        {currentMoonSignGlyph() ? (
+          <Text style={styles.moonSignGlyph}>{currentMoonSignGlyph()}</Text>
+        ) : null}
         <MoonPhaseButton userReady={!!user} />
       </View>
     </View>
@@ -192,6 +205,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  moonSignGlyph: {
+    fontSize: 20,
+    color: '#FFD700',
   },
   bellButton: {
     width: 40,
