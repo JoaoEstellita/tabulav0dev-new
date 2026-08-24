@@ -247,6 +247,7 @@ export default function CosmosScreen() {
   const [srMoment, setSrMoment] = useState<Date | null>(null)
   const [srNeedsCity, setSrNeedsCity] = useState(false)
   const [srError, setSrError] = useState(false)
+  const [srAtBirth, setSrAtBirth] = useState(false) // RS caiu no local de nascimento (sem cidade atual)
 
   // Grade de aspectos (modo Trânsitos): tocar numa célula rola até a leitura do
   // trânsito na lista embutida abaixo e destaca o card por instantes. O scroll é
@@ -342,6 +343,7 @@ export default function CosmosScreen() {
           : null
 
         let coords: { latitude: number; longitude: number } | null = null
+        let relocated = false // true = calculado na cidade atual; false = no nascimento
         if (currentCity) {
           try {
             const LocationService = (await import('../../services/LocationService')).default
@@ -349,6 +351,7 @@ export default function CosmosScreen() {
             const loc: any = results?.[0]
             if (loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
               coords = { latitude: loc.latitude, longitude: loc.longitude }
+              relocated = true
             }
           } catch (e) { console.warn('[SR] geocode falhou, usando fallback natal:', e) }
         }
@@ -362,7 +365,7 @@ export default function CosmosScreen() {
           LocalAstrologyService.computeSolarReturn(natalSunLon, coords),
           20000,
         )
-        if (!cancelled) { setSrData(data); setSrMoment(moment) }
+        if (!cancelled) { setSrData(data); setSrMoment(moment); setSrAtBirth(!relocated) }
       } catch (e) {
         console.warn('[SR] erro ao calcular Retorno Solar:', e)
         if (!cancelled) setSrError(true)
@@ -529,6 +532,16 @@ export default function CosmosScreen() {
                       `Ritorno Solare ${srMoment.getUTCFullYear()} · esatto il ${srMoment.toLocaleDateString('it-IT')}`,
                     )}</Text>
                   ) : null}
+                  {srAtBirth ? (
+                    <TouchableOpacity style={styles.srBirthBanner} activeOpacity={0.85} onPress={() => (navigation as any).navigate('Tabs', { screen: 'Settings' })}>
+                      <Text style={styles.srBirthBannerText}>{tl(
+                        'Calculado no seu local de nascimento. Preencha a cidade onde mora hoje nas Configurações para o Retorno Solar relocado.',
+                        'Cast at your birthplace. Set the city where you live now in Settings for the relocated Solar Return.',
+                        'Calculado en tu lugar de nacimiento. Completa la ciudad donde vives hoy en Configuración para el Retorno Solar relocalizado.',
+                        'Calcolato nel tuo luogo di nascita. Inserisci la citta dove vivi oggi nelle Impostazioni per il Ritorno Solare rilocato.',
+                      )}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
                   <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
                 </>
@@ -619,6 +632,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   srCaption: { color: '#FFD700', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginBottom: 10, marginTop: 2 },
+  srBirthBanner: { backgroundColor: 'rgba(255,215,0,0.10)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 12 },
+  srBirthBannerText: { color: '#E9D9A0', fontSize: 12.5, lineHeight: 18, textAlign: 'center' },
   srCenter: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 12 },
   srLoadingText: { color: '#9A9CB8', fontSize: 14, textAlign: 'center' },
   srLocked: { backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', borderRadius: 18, padding: 22, marginTop: 8, alignItems: 'center' },
