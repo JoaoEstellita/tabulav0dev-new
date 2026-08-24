@@ -1684,62 +1684,6 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
         </View>
       </Modal>
 
-      {/* Resumo da carta (após planetas) */}
-      <View style={styles.summarySection}>
-        <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="analytics" size={20} color="#FFD700" />
-            <Text style={styles.sectionTitle}>{tl('Resumo da Carta', 'Chart Summary', 'Resumen de la Carta', 'Riepilogo del Tema')}</Text>
-            {showApprox ? <Text style={{ color: '#FFD700', marginLeft: 8, fontSize: 12 }}>{tl('aprox', 'approx', 'aprox', 'appross')}</Text> : null}
-          </View>
-        </View>
-
-        <View style={styles.analysisRow}>
-          <View style={styles.weightMethodCard}>
-            <Text style={styles.weightMethodTitle}>{tl('Método de peso do balanço', 'Balance weighting method', 'Metodo de peso del balance', 'Metodo di peso del bilancio')}</Text>
-            <Text style={styles.weightMethodText}>
-              {tl('Balanço', 'Balance', 'Balance', 'Bilancio')} = ({tl('Signos', 'Signs', 'Signos', 'Segni')} x {Math.round(SIGN_WEIGHT * 100)}%) + ({tl('Casas', 'Houses', 'Casas', 'Case')} x {Math.round(HOUSE_WEIGHT * 100)}%)
-            </Text>
-            <Text style={styles.weightMethodText}>
-              {tl(
-                'Signos mostram o estilo de expressão; casas mostram a área ativada no mapa.',
-                'Signs show expression style; houses show the area activated in the chart.',
-                'Los signos muestran el estilo de expresión; las casas muestran el área activada en la carta.',
-                'I segni mostrano lo stile di espressione; le case mostrano l area attivata nel tema.'
-              )}
-            </Text>
-          </View>
-          <Text style={styles.analysisLabel}>{tl('Elementos (Signos | Casas | Balanço):', 'Elements (Signs | Houses | Balance):', 'Elementos (Signos | Casas | Balance):', 'Elementi (Segni | Case | Bilancio):')}</Text>
-          <View style={styles.balanceGrid}>
-            {renderBalanceColumns({
-              periodLabel: tl('Natal', 'Natal', 'Natal', 'Natale'),
-              signRows: weightedElementRows.natal,
-              kind: 'element'
-            })}
-            {renderBalanceColumns({
-              periodLabel: tl('Atual', 'Current', 'Actual', 'Attuale'),
-              signRows: weightedElementRows.current,
-              kind: 'element'
-            })}
-          </View>
-        </View>
-
-        <View style={styles.analysisRow}>
-          <Text style={styles.analysisLabel}>{tl('Modalidades (Signos | Casas | Balanço):', 'Modalities (Signs | Houses | Balance):', 'Modalidades (Signos | Casas | Balance):', 'Modalita (Segni | Case | Bilancio):')}</Text>
-          <View style={styles.balanceGrid}>
-            {renderBalanceColumns({
-              periodLabel: tl('Natal', 'Natal', 'Natal', 'Natale'),
-              signRows: weightedModalityRows.natal,
-              kind: 'modality'
-            })}
-            {renderBalanceColumns({
-              periodLabel: tl('Atual', 'Current', 'Actual', 'Attuale'),
-              signRows: weightedModalityRows.current,
-              kind: 'modality'
-            })}
-          </View>
-        </View>
-      </View>
     </LinearGradient>
   )
 })

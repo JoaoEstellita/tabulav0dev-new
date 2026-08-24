@@ -175,6 +175,11 @@ export default function NetworkScreen() {
       {/* Header */}
       <View style={st.head}>
         <Text style={st.title}>Re<Text style={{ color: C.magenta }}>de</Text></Text>
+        <View style={st.visChip}>
+          <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
+          <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Na Rede', 'In Network', 'En la Red', 'Nella Rete')}</Text>
+          <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+        </View>
       </View>
 
       {/* Boas-vindas / opt-out — só na 1ª visita */}
@@ -257,14 +262,6 @@ export default function NetworkScreen() {
             </>
           )}
 
-          {/* Visibilidade */}
-          <View style={st.visRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={st.visTitle}>{tl('Apareço na Rede', 'I appear in the Network', 'Aparezco en la Red', 'Compaio nella Rete')}</Text>
-              <Text style={st.visSub}>{tl('Outras pessoas podem me encontrar (foto, nome e signos). Nunca sua data ou local de nascimento.', 'Others can find me (photo, name and signs). Never your birth date or place.', 'Otros pueden encontrarme (foto, nombre y signos). Nunca tu nacimiento.', 'Altri possono trovarmi (foto, nome e segni). Mai la nascita.')}</Text>
-            </View>
-            <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
-          </View>
           {visible ? (
             <Text style={st.nudge}>{tl('Dica: perfis com foto e cidade recebem mais conexões — edite na aba Perfil.', 'Tip: profiles with photo and city get more connections — edit them in the Profile tab.', 'Tip: perfiles con foto y ciudad reciben mas conexiones — editalos en Perfil.', 'Suggerimento: profili con foto e citta ricevono piu connessioni — modificali in Profilo.')}</Text>
           ) : null}
@@ -421,6 +418,8 @@ const st = StyleSheet.create({
   goDiscover: { backgroundColor: C.gold, borderRadius: 11, paddingHorizontal: 18, paddingVertical: 10, marginTop: 4 },
   goDiscoverTx: { color: '#1a1405', fontWeight: '800', fontSize: 13 },
 
+  visChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#161728', borderRadius: 20, paddingLeft: 10, paddingRight: 2, borderWidth: 1, borderColor: C.line },
+  visChipTx: { fontSize: 12, fontWeight: '600' },
   visRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#12101f', borderRadius: 14, padding: 16, marginTop: 10, marginBottom: 8, borderWidth: 1, borderColor: C.line },
   visTitle: { color: C.ink, fontSize: 15, fontWeight: '700' },
   visSub: { color: C.dim, fontSize: 12, marginTop: 3, lineHeight: 17 },

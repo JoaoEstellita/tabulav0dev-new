@@ -32,6 +32,7 @@ import WhatsAppInput from '../../components/WhatsAppInput';
 // Removidos itens de preview e comparativos da Configuracao (foram para Home)
 import { subscribeWebPush } from '../../webpush/subscribe';
 import { registerDeviceToken } from '../../services/notifications/registerDeviceToken';
+import { setDiscoverable, ensureSelfDiscoverable } from '../../services/DiscoveryService';
 import UserService from '../../services/firebase/UserService';
 import type { HouseSystem } from '../../astro/houseSystem';
 import { HOUSE_SYSTEMS, DEFAULT_HOUSE_SYSTEM, normalizeHouseSystem, formatHouseSystemLabel } from '../../astro/houseSystem';
@@ -96,6 +97,14 @@ export default function SettingsScreen() {
   const showTrialItem = !isSubscriptionAdmin && !isAdminUser && subscription?.status !== 'active' && trialActive && trialRestam != null && trialRestam >= 0;
   type PushPermission = 'granted' | 'denied' | 'default' | 'undetermined' | 'unknown' | 'unsupported';
   const [notificationPermission, setNotificationPermission] = useState<Notifications.PermissionStatus | 'unknown'>('unknown');
+  const [networkVisible, setNetworkVisible] = useState(true);
+  useEffect(() => {
+    ensureSelfDiscoverable().then((r) => setNetworkVisible(r.discoverable)).catch(() => {});
+  }, []);
+  const handleNetworkVisible = async (value: boolean) => {
+    setNetworkVisible(value);
+    try { await setDiscoverable(value); } catch (e) { setNetworkVisible(!value); }
+  };
   const webPushScale = React.useRef(new Animated.Value(1)).current;
   const [pushStatus, setPushStatus] = useState({
     hasWebPush: false,
@@ -144,6 +153,21 @@ export default function SettingsScreen() {
           icon: 'logo-whatsapp',
           type: 'button',
           onPress: () => openWhatsAppAgent('settings'),
+        },
+      ],
+    },
+    {
+      id: 'network',
+      title: t('settings.section.network'),
+      items: [
+        {
+          id: 'network_discoverable',
+          title: t('settings.item.discoverable.title'),
+          subtitle: t('settings.item.discoverable.subtitle'),
+          icon: 'share-social-outline',
+          type: 'toggle' as const,
+          value: networkVisible,
+          onToggle: handleNetworkVisible,
         },
       ],
     },
