@@ -30,6 +30,7 @@ import useAutoScheduleNotifications from '../../hooks/useAutoScheduleNotificatio
 import type { HouseSystem } from '../../astro/houseSystem'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import TransitComparisonCard from '../../components/TransitComparisonCard'
+import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import HomeHeader from '../../components/HomeHeader'
 import NotificationOptInBanner from '../../components/NotificationOptInBanner'
@@ -400,6 +401,9 @@ export default function HomeScreen() {
     )
   }
 
+  // Preenchido pelo bloco de score (que roda antes, no JSX) e lido pela legenda da roda.
+  let skyLegendData: { score: number | null; scoreColor: string; levelLabel: string | null; transitLine: string | null; countLabel: string | null } | null = null
+
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Starfield apenas no PWA/web */}
@@ -487,46 +491,12 @@ export default function HomeScreen() {
           const transitLine = transitText
             ? (houseSuffix ? `${transitText} · ${houseSuffix}` : transitText)
             : null
-          return (
-            <AnimatedMount>
-              <TouchableOpacity
-                style={styles.dailyScoreCard}
-                activeOpacity={0.7}
-                onPress={() => { try { navigation.navigate('PersonalTransits') } catch { } }}
-                accessibilityRole="button"
-                accessibilityLabel={tl(
-                  `Trânsitos pessoais${personalTransitCount > 0 ? `, ${personalTransitCount} hoje` : ''}`,
-                  `Personal transits${personalTransitCount > 0 ? `, ${personalTransitCount} today` : ''}`,
-                  `Transitos personales${personalTransitCount > 0 ? `, ${personalTransitCount} hoy` : ''}`,
-                  `Transiti personali${personalTransitCount > 0 ? `, ${personalTransitCount} oggi` : ''}`,
-                )}
-              >
-                <View style={styles.dailyScoreHeader}>
-                  <Text style={styles.dailyScoreLabel}>{sectionLabel}</Text>
-                  <View style={styles.dailyScoreHeaderRight}>
-                    {countLabel && <Text style={styles.dailyScoreCount}>{countLabel}</Text>}
-                    <Ionicons name="chevron-forward" size={18} color="#8888AA" />
-                  </View>
-                </View>
-                <View style={styles.dailyScoreBody}>
-                  {score != null && (
-                    <View style={styles.dailyScoreCircle}>
-                      <Text style={[styles.dailyScoreNumber, { color: scoreColor }]}>{score}</Text>
-                      <Text style={styles.dailyScoreMax}>/100</Text>
-                    </View>
-                  )}
-                  <View style={styles.dailyScoreInfo}>
-                    {levelLabel && (
-                      <Text style={[styles.dailyScoreLevel, { color: scoreColor }]}>{levelLabel}</Text>
-                    )}
-                    {transitLine && (
-                      <Text style={styles.dailyScoreTransit} numberOfLines={1}>{transitLine}</Text>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </AnimatedMount>
-          )
+          void sectionLabel
+          // A antiga barra "Trânsitos Pessoais" saiu daqui; estes valores (score,
+          // levelLabel, transitLine, countLabel) alimentam a legenda da RODA, logo
+          // abaixo dos status. Guardo-os num objeto para reusar lá.
+          skyLegendData = { score, scoreColor, levelLabel, transitLine, countLabel }
+          return null
         })()}
 
         {/* Status das Areas de Vida */}
@@ -559,11 +529,34 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* Céu de hoje: roda natal + trânsitos (toque abre a aba Mapa) + o trânsito forte do dia */}
+        {transitData && (
+          <AnimatedMount>
+            <View style={styles.section}>
+              <TouchableOpacity activeOpacity={0.9} onPress={() => { try { navigation.navigate('Cosmos') } catch { } }} accessibilityRole="button" accessibilityLabel={tl('Abrir mapa natal', 'Open natal chart', 'Abrir mapa natal', 'Apri il tema natale')}>
+                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits />
+              </TouchableOpacity>
+              {skyLegendData && (skyLegendData.score != null || skyLegendData.transitLine) && (
+                <TouchableOpacity style={styles.skyLegend} activeOpacity={0.7} onPress={() => { try { navigation.navigate('PersonalTransits') } catch { } }}>
+                  {skyLegendData.score != null && (
+                    <Text style={[styles.skyLegendScore, { color: skyLegendData.scoreColor }]}>{skyLegendData.score}<Text style={styles.skyLegendMax}>/100</Text></Text>
+                  )}
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    {skyLegendData.levelLabel && <Text style={[styles.skyLegendLevel, { color: skyLegendData.scoreColor }]}>{skyLegendData.levelLabel}</Text>}
+                    {skyLegendData.transitLine && <Text style={styles.skyLegendTransit} numberOfLines={1}>{skyLegendData.transitLine}</Text>}
+                  </View>
+                  {skyLegendData.countLabel && <Text style={styles.skyLegendMore}>{skyLegendData.countLabel} ›</Text>}
+                </TouchableOpacity>
+              )}
+            </View>
+          </AnimatedMount>
+        )}
+
         {Array.isArray(transitData?.currentTransits?.planetComparisons) &&
           transitData!.currentTransits!.planetComparisons.length > 0 &&
           transitData?.currentTransits?.chartSummary && (
             <AnimatedMount>
-              <PlanetQuickNav />
+              <PlanetQuickNav showCosmosEntry={false} />
             </AnimatedMount>
           )}
 
@@ -712,6 +705,23 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  skyLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#161728',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  skyLegendScore: { fontSize: 22, fontWeight: '800' },
+  skyLegendMax: { fontSize: 12, color: '#6E6F8C', fontWeight: '600' },
+  skyLegendLevel: { fontSize: 13, fontWeight: '700' },
+  skyLegendTransit: { fontSize: 12, color: '#9A9CB8', marginTop: 2 },
+  skyLegendMore: { fontSize: 12, color: '#FFD700', fontWeight: '700' },
   dailyScoreCard: {
     flexDirection: 'column',
     alignItems: 'stretch',
