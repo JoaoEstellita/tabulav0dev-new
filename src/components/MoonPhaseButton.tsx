@@ -14,6 +14,9 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useAppLanguage } from '../hooks/useAppLanguage'
 import { useUserSettings } from '../hooks/useUserSettings'
+import { useAuth } from '../hooks/useAuth'
+import Svg, { Circle } from 'react-native-svg'
+import { LUNAR_HOUSE_AREA } from '../data/lunarReturnHouseArea'
 import { usePressScale } from '../ui/motion/native/micro'
 import MoonPhaseIcon from './MoonPhaseIcon'
 import {
@@ -78,6 +81,7 @@ type MoonDetails = {
   upcomingPhases: Array<{ label: string; when: string }>
   moonSignName: string
   moonSignGlyph: string
+  moonSignIdx: number
   moonDeg: number
   illumPct: number
   moonMood: string
@@ -130,10 +134,20 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
     upcomingPhases: [],
     moonSignName: '',
     moonSignGlyph: '☾',
+    moonSignIdx: -1,
     moonDeg: 0,
     illumPct: 0,
     moonMood: '',
   })
+  const [natalAscDeg, setNatalAscDeg] = useState<number | null>(null)
+  const { user } = useAuth() as any
+  useEffect(() => {
+    if (!user?.uid) return
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      const v = snap.data()?.natalAscDeg
+      if (typeof v === 'number') setNatalAscDeg(v)
+    }).catch(() => {})
+  }, [user?.uid])
 
   const moonTranslateY = useRef(new Animated.Value(0)).current
   const moonPanResponder = useMemo(
@@ -258,6 +272,7 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
         upcomingPhases,
         moonSignName,
         moonSignGlyph,
+        moonSignIdx: signIdx,
         moonDeg,
         illumPct,
         moonMood,
@@ -270,6 +285,16 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
   useEffect(() => {
     if (userReady) loadLunarCalendar()
   }, [userReady, language, settings?.timezone])
+
+  // Casa natal por onde a Lua passa agora (whole-sign a partir do Ascendente).
+  const langKeyR = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
+  const moonNatalHouse = (moonDetails.moonSignIdx >= 0 && natalAscDeg != null)
+    ? ((moonDetails.moonSignIdx - Math.floor(natalAscDeg / 30) + 12) % 12) + 1
+    : null
+  const moonHouseArea = moonNatalHouse ? (LUNAR_HOUSE_AREA[langKeyR] || LUNAR_HOUSE_AREA['pt-BR'])[moonNatalHouse]?.area : null
+  // Geometria do anel de iluminação (SVG).
+  const RING = 34, RSTROKE = 5, RRAD = RING - RSTROKE, RCIRC = 2 * Math.PI * RRAD
+  const illumDash = RCIRC * Math.max(0, Math.min(1, moonDetails.illumPct / 100))
 
   return (
     <>
@@ -343,13 +368,33 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
                 </View>
               </View>
 
-              {/* Barra de iluminação */}
-              <View style={styles.illumRow}>
-                <Text style={styles.illumLabel}>{tl('Iluminação', 'Illumination', 'Iluminación', 'Illuminazione')}</Text>
-                <View style={styles.illumTrack}>
-                  <View style={[styles.illumFill, { width: `${Math.max(2, Math.min(100, moonDetails.illumPct))}%` }]} />
+              {/* Anel de iluminação + casa natal da Lua */}
+              <View style={styles.illumRing}>
+                <View style={styles.ringWrap}>
+                  <Svg width={RING * 2} height={RING * 2}>
+                    <Circle cx={RING} cy={RING} r={RRAD} stroke="rgba(255,255,255,0.10)" strokeWidth={RSTROKE} fill="none" />
+                    <Circle
+                      cx={RING} cy={RING} r={RRAD} stroke="#FFD700" strokeWidth={RSTROKE} fill="none"
+                      strokeLinecap="round" strokeDasharray={`${illumDash} ${RCIRC}`}
+                      transform={`rotate(-90 ${RING} ${RING})`}
+                    />
+                  </Svg>
+                  <View style={styles.ringCenter}>
+                    <Text style={styles.ringPct}>{moonDetails.illumPct}%</Text>
+                  </View>
                 </View>
-                <Text style={styles.illumPct}>{moonDetails.illumPct}%</Text>
+                <View style={styles.illumInfo}>
+                  <Text style={styles.illumTitle}>{tl('Iluminação', 'Illumination', 'Iluminación', 'Illuminazione')}</Text>
+                  {moonNatalHouse ? (
+                    <Text style={styles.moonHouseText}>
+                      {tl('A Lua passa pela sua', 'The Moon is passing through your', 'La Luna pasa por tu', 'La Luna passa per la tua')}{' '}
+                      <Text style={styles.moonHouseStrong}>{tl('Casa', 'House', 'Casa', 'Casa')} {moonNatalHouse}</Text>
+                      {moonHouseArea ? ` · ${moonHouseArea}` : ''}
+                    </Text>
+                  ) : (
+                    <Text style={styles.illumSub}>{tl('do disco lunar visível agora', 'of the lunar disc visible now', 'del disco lunar visible ahora', 'del disco lunare visibile ora')}</Text>
+                  )}
+                </View>
               </View>
 
               {/* Clima emocional da Lua no signo */}
@@ -468,11 +513,15 @@ const styles = StyleSheet.create({
   moonSignName: { color: '#E9D9A0', fontSize: 14, fontWeight: '700' },
   moonSignDeg: { color: '#9A9CB8', fontSize: 12, fontVariant: ['tabular-nums'] },
   moonHeroUntil: { color: '#9A9CB8', fontSize: 12, marginTop: 4 },
-  illumRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  illumLabel: { color: '#9A9CB8', fontSize: 12, width: 78 },
-  illumTrack: { flex: 1, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' },
-  illumFill: { height: 7, borderRadius: 4, backgroundColor: '#FFD700' },
-  illumPct: { color: '#E6E6E6', fontSize: 12.5, fontWeight: '700', width: 40, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  illumRing: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
+  ringWrap: { width: 68, height: 68, alignItems: 'center', justifyContent: 'center' },
+  ringCenter: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  ringPct: { color: '#FFD700', fontSize: 15, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  illumInfo: { flex: 1, minWidth: 0 },
+  illumTitle: { color: '#9A9CB8', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: '700', marginBottom: 4 },
+  illumSub: { color: '#9A9CB8', fontSize: 12.5, lineHeight: 17 },
+  moonHouseText: { color: '#E6E6E6', fontSize: 13.5, lineHeight: 19 },
+  moonHouseStrong: { color: '#FFD700', fontWeight: '800' },
   moodCard: {
     backgroundColor: 'rgba(124,138,192,0.10)', borderWidth: 1, borderColor: 'rgba(124,138,192,0.26)',
     borderRadius: 14, padding: 13, marginBottom: 12,
