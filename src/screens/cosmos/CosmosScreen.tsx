@@ -318,13 +318,23 @@ export default function CosmosScreen() {
     try { return degToSign(natalAscDeg).sign } catch { return '' }
   }, [natalAscDeg])
 
-  // Carga do Retorno Solar: só no modo 'solar', só assinante, uma vez. Geocoda a
-  // cidade atual (currentCity) → coords → computeSolarReturn. Sem cidade → aviso.
+  // Sol natal como PRIMITIVO estável: natalPlanets muda de referência a cada render;
+  // se entrasse direto nas deps do effect, o cleanup cancelava o cálculo e reiniciava
+  // em loop (loader eterno). Extraindo o número, a dep fica estável.
+  const srSunLon = useMemo(() => {
+    const s = (natalPlanets as any[]).find((p) => p?.name === 'Sun')
+    return typeof s?.longitude === 'number' ? s.longitude : null
+  }, [natalPlanets])
+  const srRunRef = useRef(false)
+
+  // Carga do Retorno Solar: só no modo 'solar', só assinante, uma vez (ref-guard).
+  // Lê currentLocation/currentCity → coords → computeSolarReturn (fallback nascimento).
   useEffect(() => {
-    if (westMode !== 'solar' || srData || srLoading || !isPremium) return
-    const sun = (natalPlanets as any[]).find((p) => p?.name === 'Sun')
-    const natalSunLon = typeof sun?.longitude === 'number' ? sun.longitude : null
-    if (natalSunLon == null || !user?.uid) return
+    if (westMode !== 'solar') { return }
+    if (!isPremium || srSunLon == null || !user?.uid) return
+    if (srRunRef.current) return // já calculou/está calculando nesta sessão de Solar
+    srRunRef.current = true
+    const natalSunLon = srSunLon
     let cancelled = false
     // Corrida com timeout: rede lenta (geocode) não pode travar o cálculo p/ sempre.
     const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
@@ -374,11 +384,11 @@ export default function CosmosScreen() {
         if (!cancelled) { setSrData(data); setSrMoment(moment); setSrAtBirth(!relocated) }
       } catch (e) {
         console.warn('[SR] erro ao calcular Retorno Solar:', e)
-        if (!cancelled) setSrError(true)
+        if (!cancelled) { setSrError(true); srRunRef.current = false } // permite retry
       } finally { if (!cancelled) setSrLoading(false) }
     })()
     return () => { cancelled = true }
-  }, [westMode, isPremium, natalPlanets, user?.uid, srData, srLoading])
+  }, [westMode, isPremium, srSunLon, user?.uid])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en

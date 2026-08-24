@@ -41,25 +41,36 @@ export default function MemberProfileScreen() {
   const [srLoading, setSrLoading] = useState(false)
   const [srMoment, setSrMoment] = useState<Date | null>(null)
   const [srError, setSrError] = useState(false)
+  // Sol natal como primitivo estável (evita loop de cancel/restart do effect).
+  const srSunLon = useMemo(() => {
+    const s = ((data as any)?.currentTransits?.natalPlanets || []).find((p: any) => p?.name === 'Sun')
+    return typeof s?.longitude === 'number' ? s.longitude : null
+  }, [data])
+  const srLat = birth?.coordinates?.latitude
+  const srLon = birth?.coordinates?.longitude
+  const srRunRef = useRef(false)
   useEffect(() => {
-    if (westMode !== 'solar' || srData || srLoading || !data || !birth?.coordinates) return
-    const sun = ((data as any)?.currentTransits?.natalPlanets || []).find((p: any) => p?.name === 'Sun')
-    const natalSunLon = typeof sun?.longitude === 'number' ? sun.longitude : null
-    const lat = birth.coordinates.latitude
-    const lon = birth.coordinates.longitude
-    if (natalSunLon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return
+    if (westMode !== 'solar') return
+    if (srSunLon == null || !Number.isFinite(srLat) || !Number.isFinite(srLon)) return
+    if (srRunRef.current) return
+    srRunRef.current = true
     let cancelled = false
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
     ;(async () => {
       setSrLoading(true); setSrError(false)
       try {
         const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
-        const { data: sr, moment } = await LocalAstrologyService.computeSolarReturn(natalSunLon, { latitude: lat, longitude: lon })
+        const { data: sr, moment } = await withTimeout(
+          LocalAstrologyService.computeSolarReturn(srSunLon, { latitude: srLat as number, longitude: srLon as number }),
+          20000,
+        )
         if (!cancelled) { setSrData(sr); setSrMoment(moment) }
-      } catch { if (!cancelled) setSrError(true) }
+      } catch (e) { console.warn('[SR-member] erro:', e); if (!cancelled) { setSrError(true); srRunRef.current = false } }
       finally { if (!cancelled) setSrLoading(false) }
     })()
     return () => { cancelled = true }
-  }, [westMode, data, birth?.coordinates, srData, srLoading])
+  }, [westMode, srSunLon, srLat, srLon])
 
   // Grade clicável → rola até a leitura do planeta no perfil abaixo (measureLayout,
   // robusto web+APK). Mesmo mecanismo da aba Mapa e da Home.
