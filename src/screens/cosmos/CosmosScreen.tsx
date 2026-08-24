@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
+import ShareCardModal, { type ShareCardData } from '../../components/ShareCardModal'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { NatalChartWheelContent } from './NatalChartWheelScreen'
@@ -230,7 +231,9 @@ export default function CosmosScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
   const { subscription, isInTrial } = useSubscription()
-  const { transitData, loading } = useLifeAreas()
+  const { transitData, loading, backendStatusPersonal } = useLifeAreas()
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareName, setShareName] = useState('')
 
   // Navegação por seção: cada bloco do Perfil registra seu nó aqui e o chip usa
   // measureLayout para achar a posição real dentro do ScrollView. Não dá para usar
@@ -312,8 +315,11 @@ export default function CosmosScreen() {
   useEffect(() => {
     if (!user?.uid) return
     getDoc(doc(db, 'users', user.uid)).then(snap => {
-      const val = snap.data()?.natalAscDeg
+      const d = snap.data()
+      const val = d?.natalAscDeg
       if (typeof val === 'number') setFirestoreAscDeg(val)
+      const nm = d?.displayName || d?.fullName
+      if (nm) setShareName(String(nm))
     }).catch(() => {})
   }, [user?.uid])
 
@@ -324,6 +330,42 @@ export default function CosmosScreen() {
   const ascSign = useMemo(() => {
     try { return degToSign(natalAscDeg).sign } catch { return '' }
   }, [natalAscDeg])
+
+  // Dados do card compartilhável (natal + status do dia).
+  const shareData: ShareCardData = useMemo(() => {
+    const areaLabelsPt: Record<string, string> = {
+      amor: 'Amor', saude: 'Saúde', familia: 'Família', comunicacao: 'Comunicação',
+      carreira: 'Carreira', financas: 'Finanças', espiritualidade: 'Espiritualidade', transformacao: 'Transformação',
+    }
+    const levelLabelsPt: Record<string, string> = {
+      positive: 'Positivo', positivo: 'Positivo', moderate: 'Moderado', moderado: 'Moderado',
+      attention: 'Atenção', atencao: 'Atenção', critical: 'Crítico', critico: 'Crítico',
+    }
+    let focusArea: string | null = null
+    const areas = transitData?.lifeAreas
+    if (areas) {
+      let bestKey = ''; let bestVal = -Infinity
+      for (const [k, v] of Object.entries(areas as Record<string, any>)) {
+        const s = typeof v?.overall === 'number' ? v.overall : (typeof v?.score === 'number' ? v.score : null)
+        if (s != null && s > bestVal) { bestVal = s; bestKey = k }
+      }
+      const norm = bestKey.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      focusArea = areaLabelsPt[norm] || (bestKey ? bestKey.charAt(0).toUpperCase() + bestKey.slice(1) : null)
+    }
+    const lvl = String(backendStatusPersonal?.level || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    const dateLabel = new Date().toLocaleDateString(
+      language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR',
+      { weekday: 'long', day: 'numeric', month: 'long' },
+    )
+    return {
+      name: shareName,
+      sunSign, ascSign, moonSign,
+      score: typeof backendStatusPersonal?.score === 'number' ? backendStatusPersonal.score : null,
+      levelLabel: lvl ? (levelLabelsPt[lvl] || null) : null,
+      focusArea,
+      dateLabel,
+    }
+  }, [shareName, sunSign, ascSign, moonSign, backendStatusPersonal, transitData?.lifeAreas, language])
 
   // Sol natal como PRIMITIVO estável: natalPlanets muda de referência a cada render;
   // se entrasse direto nas deps do effect, o cleanup cancelava o cálculo e reiniciava
@@ -545,6 +587,10 @@ export default function CosmosScreen() {
           <Text style={styles.heroSub}>
             {tl('Seu espaço astrológico', 'Your astrological space', 'Tu espacio astrológico', 'Il tuo spazio astrologico')}
           </Text>
+          <TouchableOpacity style={styles.shareCta} activeOpacity={0.85} onPress={() => setShareOpen(true)}>
+            <Ionicons name="share-social-outline" size={15} color="#FFD700" />
+            <Text style={styles.shareCtaText}>{tl('Compartilhar', 'Share', 'Compartir', 'Condividi')}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
@@ -708,6 +754,7 @@ export default function CosmosScreen() {
         visible={showTop}
         onPress={() => (scrollRef.current as any)?.scrollTo({ y: 0, animated: true })}
       />
+      <ShareCardModal visible={shareOpen} onClose={() => setShareOpen(false)} data={shareData} tl={tl} />
     </LinearGradient>
   )
 }
@@ -751,6 +798,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   srCaption: { color: '#FFD700', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginBottom: 10, marginTop: 2 },
+  shareCta: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 10, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,215,0,0.4)', backgroundColor: 'rgba(255,215,0,0.08)' },
+  shareCtaText: { color: '#FFD700', fontSize: 12.5, fontWeight: '700' },
   srBirthBanner: { backgroundColor: 'rgba(255,215,0,0.10)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.35)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 12 },
   srBirthBannerText: { color: '#E9D9A0', fontSize: 12.5, lineHeight: 18, textAlign: 'center' },
   srCenter: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 12 },
