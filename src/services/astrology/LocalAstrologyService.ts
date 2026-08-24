@@ -19,6 +19,7 @@ import { useUserSettings } from '../../hooks/useUserSettings'
 import type { BirthData } from '../../screens/onboarding/BirthDataForm'
 import AstrologyCacheService, { ASTROLOGY_CACHE_DATA_VERSION } from './AstrologyCacheService'
 import { findSolarReturnMoment } from '../../astro/solarReturn'
+import { findLunarReturnMoment } from '../../astro/lunarReturn'
 import { normalizeHouseSystem } from '../../astro/houseSystem'
 import { STATUS_THRESHOLDS } from '../../constants/statusThresholds'
 
@@ -139,6 +140,43 @@ export class LocalAstrologyService {
     now: Date = new Date()
   ): Promise<{ data: LocalTransitData; moment: Date }> {
     const moment = findSolarReturnMoment(natalSunLon, now)
+    let offsetSec = 0
+    try {
+      const { getTimezoneData } = await import('../timezone/TimezoneService')
+      const tz = await getTimezoneData(coords.latitude, coords.longitude, Math.floor(moment.getTime() / 1000))
+      if (tz && typeof (tz as any).offsetSec === 'number' && (tz as any).offsetSec !== 0) {
+        offsetSec = (tz as any).offsetSec
+      } else {
+        const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
+        offsetSec = Math.round(approximateTimezoneOffsetHours(moment, coords.longitude, coords.latitude) * 3600)
+      }
+    } catch {
+      const { approximateTimezoneOffsetHours } = require('../../utils/timezone')
+      offsetSec = Math.round(approximateTimezoneOffsetHours(moment, coords.longitude, coords.latitude) * 3600)
+    }
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const local = new Date(moment.getTime() + offsetSec * 1000)
+    const birthDate = `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`
+    const birthTime = `${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`
+    const birthData: BirthData = {
+      birthDate,
+      birthTime,
+      birthLocation: { city: '', country: '', latitude: coords.latitude, longitude: coords.longitude },
+    }
+    const data = await this.computeChartNoCache(birthData)
+    return { data, moment }
+  }
+
+  /**
+   * Mapa do RETORNO LUNAR vigente: o instante em que a Lua volta ao grau natal
+   * (ciclo ~mensal), com as casas no LOCAL ATUAL. Mesma reconstrução de fuso do RS.
+   */
+  static async computeLunarReturn(
+    natalMoonLon: number,
+    coords: { latitude: number; longitude: number },
+    now: Date = new Date()
+  ): Promise<{ data: LocalTransitData; moment: Date }> {
+    const moment = findLunarReturnMoment(natalMoonLon, now)
     let offsetSec = 0
     try {
       const { getTimezoneData } = await import('../timezone/TimezoneService')

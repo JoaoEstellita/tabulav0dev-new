@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
-import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -213,7 +213,7 @@ type ProfileContentProps = {
    * Tom da interpretação de planeta-em-casa: 'natal' (padrão) usa o catálogo natal;
    * 'solar' usa o catálogo próprio do Retorno Solar (com fallback para o natal).
    */
-  interpMode?: 'natal' | 'solar'
+  interpMode?: 'natal' | 'solar' | 'lunar'
 }
 
 /**
@@ -279,6 +279,8 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
         // aspectos reais do mapa sumiam sem aviso e a lista parecia incompleta.
         const text = interpMode === 'solar'
           ? resolveSolarReturnAspectText(a.planet1, a.type, a.planet2, language)
+          : interpMode === 'lunar'
+          ? resolveLunarReturnAspectText(a.planet1, a.type, a.planet2, language)
           : resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
         entries.push({
           label: `${translatePlanetPT(planet)} ${a.type} ${translatePlanetPT(other)}`,
@@ -307,6 +309,8 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
   const ascText = useMemo(
     () => (interpMode === 'solar'
       ? resolveSolarReturnAscendantText(ascSign.sign, language)
+      : interpMode === 'lunar'
+      ? resolveLunarReturnAscendantText(ascSign.sign, language)
       : resolveSignInHouseText(ascSign.sign, 1, language)),
     [ascSign.sign, language, interpMode],
   )
@@ -547,6 +551,8 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
           <Text style={styles.cardTitle}>
             {interpMode === 'solar'
               ? tl('Planetas do Retorno Solar', 'Solar Return Planets', 'Planetas del Retorno Solar', 'Pianeti del Ritorno Solare')
+              : interpMode === 'lunar'
+              ? tl('Planetas do Retorno Lunar', 'Lunar Return Planets', 'Planetas del Retorno Lunar', 'Pianeti del Ritorno Lunare')
               : tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
           </Text>
           {orderedPlanets.map(p => {
@@ -556,12 +562,16 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
               ? (getPlanetMeaning('lilith', language)?.essence ?? null)
               : (interpMode === 'solar'
                   ? resolveSolarReturnPlanetInSignText(p.name, p.sign, language)
+                  : interpMode === 'lunar'
+                  ? resolveLunarReturnPlanetInSignText(p.name, p.sign, language)
                   : resolvePlanetInSignText(p.name, p.sign, language))
             const houseText = isLilith
               ? null
               : (p.house
                   ? (interpMode === 'solar'
                       ? resolveSolarReturnPlanetInHouseText(p.name, p.house, language)
+                      : interpMode === 'lunar'
+                      ? resolveLunarReturnPlanetInHouseText(p.name, p.house, language)
                       : resolveNatalPlanetInHouseText(p.name, p.house, language))
                   : null)
             return (
@@ -706,6 +716,8 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
               <Text style={styles.angularInterpretationLabel}>
                 {interpMode === 'solar'
                   ? tl('Ascendente do Ano', 'Ascendant of the Year', 'Ascendente del Ano', "Ascendente dell'Anno")
+                  : interpMode === 'lunar'
+                  ? tl('Ascendente do Mês', 'Ascendant of the Month', 'Ascendente del Mes', "Ascendente del Mese")
                   : tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')}
               </Text>
               <Text style={styles.angularInterpretationText}>{ascText}</Text>

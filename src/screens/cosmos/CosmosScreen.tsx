@@ -240,7 +240,7 @@ export default function CosmosScreen() {
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
-  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar'>('natal')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar' | 'lunar'>('natal')
   // Retorno Solar (carga sob demanda ao entrar no modo 'solar').
   const [srData, setSrData] = useState<any>(null)
   const [srLoading, setSrLoading] = useState(false)
@@ -248,6 +248,13 @@ export default function CosmosScreen() {
   const [srNeedsCity, setSrNeedsCity] = useState(false)
   const [srError, setSrError] = useState(false)
   const [srAtBirth, setSrAtBirth] = useState(false) // RS caiu no local de nascimento (sem cidade atual)
+  // Retorno Lunar (mês) — mesma mecânica do RS, Sol→Lua.
+  const [lrData, setLrData] = useState<any>(null)
+  const [lrLoading, setLrLoading] = useState(false)
+  const [lrMoment, setLrMoment] = useState<Date | null>(null)
+  const [lrError, setLrError] = useState(false)
+  const [lrNeedsCity, setLrNeedsCity] = useState(false)
+  const [lrAtBirth, setLrAtBirth] = useState(false)
 
   // Grade de aspectos (modo Trânsitos): tocar numa célula rola até a leitura do
   // trânsito na lista embutida abaixo e destaca o card por instantes. O scroll é
@@ -390,6 +397,58 @@ export default function CosmosScreen() {
     return () => { cancelled = true }
   }, [westMode, isPremium, srSunLon, user?.uid])
 
+  // Retorno Lunar — mesma lógica do RS (Lua natal + coords atuais/nascimento).
+  const lrMoonLon = useMemo(() => {
+    const m = (natalPlanets as any[]).find((p) => p?.name === 'Moon')
+    return typeof m?.longitude === 'number' ? m.longitude : null
+  }, [natalPlanets])
+  const lrRunRef = useRef(false)
+  useEffect(() => {
+    if (westMode !== 'lunar') return
+    if (!isPremium || lrMoonLon == null || !user?.uid) return
+    if (lrRunRef.current) return
+    lrRunRef.current = true
+    const natalMoonLon = lrMoonLon
+    let cancelled = false
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
+    ;(async () => {
+      setLrLoading(true); setLrError(false); setLrNeedsCity(false)
+      try {
+        const uSnap = await getDoc(doc(db, 'users', user.uid))
+        const ud: any = uSnap.data() || {}
+        const currentCity = String(ud?.currentCity || '').trim()
+        const natalLoc = ud?.birthLocation || ud?.birthData?.birthLocation
+        const natalCoords = (natalLoc && Number.isFinite(natalLoc.latitude) && Number.isFinite(natalLoc.longitude))
+          ? { latitude: natalLoc.latitude, longitude: natalLoc.longitude } : null
+        let coords: { latitude: number; longitude: number } | null = null
+        let relocated = false
+        const cl = ud?.currentLocation
+        if (cl && Number.isFinite(cl.latitude) && Number.isFinite(cl.longitude)) {
+          coords = { latitude: cl.latitude, longitude: cl.longitude }; relocated = true
+        } else if (currentCity) {
+          try {
+            const LocationService = (await import('../../services/LocationService')).default
+            const results = await withTimeout(LocationService.searchLocations(currentCity), 8000)
+            const loc: any = results?.[0]
+            if (loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
+              coords = { latitude: loc.latitude, longitude: loc.longitude }; relocated = true
+            }
+          } catch (e) { console.warn('[LR] geocode falhou:', e) }
+        }
+        if (!coords) coords = natalCoords
+        if (!coords) { if (!cancelled) setLrNeedsCity(true); return }
+        const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
+        const { data, moment } = await withTimeout(LocalAstrologyService.computeLunarReturn(natalMoonLon, coords), 20000)
+        if (!cancelled) { setLrData(data); setLrMoment(moment); setLrAtBirth(!relocated) }
+      } catch (e) {
+        console.warn('[LR] erro ao calcular Retorno Lunar:', e)
+        if (!cancelled) { setLrError(true); lrRunRef.current = false }
+      } finally { if (!cancelled) setLrLoading(false) }
+    })()
+    return () => { cancelled = true }
+  }, [westMode, isPremium, lrMoonLon, user?.uid])
+
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en
     if (language === 'es-ES') return es
@@ -519,6 +578,9 @@ export default function CosmosScreen() {
               <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
                 <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'lunar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('lunar')}>
+                <Text style={[styles.modeBtnText, westMode === 'lunar' && styles.modeBtnTextActive]}>{tl('Lunar', 'Lunar', 'Lunar', 'Lunare')}</Text>
+              </TouchableOpacity>
             </View>
 
             {westMode === 'solar' ? (
@@ -560,6 +622,47 @@ export default function CosmosScreen() {
                   ) : null}
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
                   <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
+                </>
+              )
+            ) : westMode === 'lunar' ? (
+              !isPremium ? (
+                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+                  <Text style={styles.srLockedTitle}>{tl('Retorno Lunar', 'Lunar Return', 'Retorno Lunar', 'Ritorno Lunare')}</Text>
+                  <Text style={styles.srLockedBody}>{tl('O mapa do seu mês astrológico — roda, grade e interpretações. Disponível para assinantes.', 'Your astrological month chart — wheel, grid and readings. For subscribers.', 'El mapa de tu mes astrológico — rueda, rejilla e interpretaciones. Para suscriptores.', 'La mappa del tuo mese astrologico — ruota, griglia e letture. Per abbonati.')}</Text>
+                  <View style={styles.srLockedCta}><Text style={styles.srLockedCtaText}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
+                </TouchableOpacity>
+              ) : lrNeedsCity ? (
+                <View style={styles.srNotice}>
+                  <Text style={styles.srNoticeTitle}>{tl('Onde você mora?', 'Where do you live?', '¿Dónde vives?', 'Dove vivi?')}</Text>
+                  <Text style={styles.srNoticeBody}>{tl('O Retorno Lunar é calculado no lugar onde você está. Preencha sua cidade atual no perfil.', 'The Lunar Return is cast where you are. Set your current city in the profile.', 'El Retorno Lunar se calcula donde estás. Completa tu ciudad actual en el perfil.', 'Il Ritorno Lunare si calcola dove sei. Inserisci la tua città attuale nel profilo.')}</Text>
+                  <TouchableOpacity style={styles.srNoticeCta} onPress={() => (navigation as any).navigate('Tabs', { screen: 'Settings' })}><Text style={styles.srNoticeCtaText}>{tl('Editar perfil', 'Edit profile', 'Editar perfil', 'Modifica profilo')}</Text></TouchableOpacity>
+                </View>
+              ) : lrError ? (
+                <View style={styles.srCenter}><Text style={styles.srLoadingText}>{tl('Não consegui calcular agora. Tente de novo.', 'Could not calculate now. Try again.', 'No pude calcular ahora. Intenta de nuevo.', 'Non sono riuscito a calcolare. Riprova.')}</Text></View>
+              ) : lrLoading || !lrData ? (
+                <View style={styles.srCenter}><StarLoader /><Text style={styles.srLoadingText}>{tl('Calculando seu Retorno Lunar…', 'Calculating your Lunar Return…', 'Calculando tu Retorno Lunar…', 'Calcolo del tuo Ritorno Lunare…')}</Text></View>
+              ) : (
+                <>
+                  {lrMoment ? (
+                    <Text style={styles.srCaption}>{tl(
+                      `Retorno Lunar · exato em ${lrMoment.toLocaleDateString('pt-BR')}`,
+                      `Lunar Return · exact on ${lrMoment.toLocaleDateString('en-US')}`,
+                      `Retorno Lunar · exacto el ${lrMoment.toLocaleDateString('es-ES')}`,
+                      `Ritorno Lunare · esatto il ${lrMoment.toLocaleDateString('it-IT')}`,
+                    )}</Text>
+                  ) : null}
+                  {lrAtBirth ? (
+                    <TouchableOpacity style={styles.srBirthBanner} activeOpacity={0.85} onPress={() => (navigation as any).navigate('Tabs', { screen: 'Settings' })}>
+                      <Text style={styles.srBirthBannerText}>{tl(
+                        'Calculado no seu local de nascimento. Preencha a cidade onde mora hoje nas Configurações para o Retorno Lunar relocado.',
+                        'Cast at your birthplace. Set the city where you live now in Settings for the relocated Lunar Return.',
+                        'Calculado en tu lugar de nacimiento. Completa la ciudad donde vives hoy en Configuración para el Retorno Lunar relocalizado.',
+                        'Calcolato nel tuo luogo di nascita. Inserisci la citta dove vivi oggi nelle Impostazioni per il Ritorno Lunare rilocato.',
+                      )}</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  <NatalChartWheelContent transitData={lrData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={lrData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="lunar" />
                 </>
               )
             ) : (

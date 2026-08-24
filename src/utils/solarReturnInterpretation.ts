@@ -15,6 +15,7 @@ import { SOLAR_RETURN_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../data/solarReturn
 import { SOLAR_RETURN_PLANET_IN_HOUSE_I18N_OVERRIDES } from '../data/solarReturnPlanetInHouseOverridesI18n'
 import { SOLAR_RETURN_ASCENDANT_PTBR_OVERRIDES, SOLAR_RETURN_ASCENDANT_I18N_OVERRIDES } from '../data/solarReturnAscendantOverrides'
 import { SR_PLANET_YEAR_DOMAIN, SR_ASPECT_DYNAMIC, SR_ASPECT_LEAD } from '../data/solarReturnAspectComposer'
+import { LUNAR_HOUSE_AREA, LUNAR_LEAD } from '../data/lunarReturnHouseArea'
 
 function normalizeLanguage(language?: string | null): string {
   const l = String(language || 'pt-BR').trim()
@@ -164,4 +165,74 @@ export function resolveSolarReturnPlanetInSignText(
 
   // Fallback: catálogo natal de planeta-no-signo.
   return resolvePlanetInSignText(planet, sign, language)
+}
+
+// ─── Retorno Lunar (mês) — composers (reutilizam domínios/sign-flavor/aspectos) ──
+
+/** Planeta na casa do Retorno Lunar: foco emocional do mês por área da casa. */
+export function resolveLunarReturnPlanetInHouseText(
+  planet: string,
+  house: number,
+  language?: string | null,
+): string | null {
+  const lang = normalizeLanguage(language)
+  const p = normalizePlanet(planet)
+  const domain = (SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR'])[p]
+  const area = (LUNAR_HOUSE_AREA[lang] || LUNAR_HOUSE_AREA['pt-BR'])[house]
+  const lead = LUNAR_LEAD[lang] || LUNAR_LEAD['pt-BR']
+  if (domain && area) {
+    const toMap: Record<string, string> = { 'pt-BR': 'se volta para', 'en-US': 'turns toward', 'es-ES': 'se vuelca hacia', 'it-IT': 'si volge verso' }
+    const forMap: Record<string, string> = { 'pt-BR': 'Um mês para', 'en-US': 'A month to', 'es-ES': 'Un mes para', 'it-IT': 'Un mese per' }
+    const to = toMap[lang] || toMap['pt-BR']
+    const forWord = forMap[lang] || forMap['pt-BR']
+    return `${lead} ${domain} ${to} ${area.area}. ${forWord} ${area.focus}.`
+  }
+  return resolveNatalPlanetInHouseText(planet, house, language)
+}
+
+/** Ascendente do Retorno Lunar: o clima emocional do mês. */
+export function resolveLunarReturnAscendantText(sign: string, language?: string | null): string | null {
+  const lang = normalizeLanguage(language)
+  const flavor = (SR_SIGN_FLAVOR[lang] || SR_SIGN_FLAVOR['pt-BR'])[normalizeSign(sign)]
+  const lead = LUNAR_LEAD[lang] || LUNAR_LEAD['pt-BR']
+  if (flavor) {
+    const climaMap: Record<string, string> = {
+      'pt-BR': 'o clima emocional é de', 'en-US': 'the emotional mood is one of',
+      'es-ES': 'el clima emocional es de', 'it-IT': "il clima emotivo e di",
+    }
+    const clima = climaMap[lang] || climaMap['pt-BR']
+    return `${lead} ${clima} ${flavor.tone}. ${flavor.how}.`
+  }
+  return resolveSignInHouseText(sign, 1, language)
+}
+
+/** Planeta no signo do Retorno Lunar (tom mensal). */
+export function resolveLunarReturnPlanetInSignText(planet: string, sign: string, language?: string | null): string | null {
+  const lang = normalizeLanguage(language)
+  const domain = (SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR'])[normalizePlanet(planet)]
+  const flavor = (SR_SIGN_FLAVOR[lang] || SR_SIGN_FLAVOR['pt-BR'])[normalizeSign(sign)]
+  const lead = LUNAR_LEAD[lang] || LUNAR_LEAD['pt-BR']
+  const link = SR_SIGN_LINK[lang] || SR_SIGN_LINK['pt-BR']
+  if (domain && flavor) {
+    return `${lead} ${domain} ${link} ${flavor.name}: ${flavor.tone}.`
+  }
+  return resolvePlanetInSignText(planet, sign, language)
+}
+
+/** Aspecto do Retorno Lunar (tom mensal). */
+export function resolveLunarReturnAspectText(
+  planet1: string, aspect: string, planet2: string, language?: string | null,
+): string | null {
+  const lang = normalizeLanguage(language)
+  const domains = SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR']
+  const dynamics = SR_ASPECT_DYNAMIC[lang] || SR_ASPECT_DYNAMIC['pt-BR']
+  const lead = LUNAR_LEAD[lang] || LUNAR_LEAD['pt-BR']
+  const d1 = domains[normalizePlanet(planet1)]
+  const d2 = domains[normalizePlanet(planet2)]
+  const dyn = dynamics[normalizeAspect(aspect)]
+  const and = lang === 'en-US' ? 'and' : lang === 'es-ES' ? 'y' : 'e'
+  if (d1 && d2 && dyn) {
+    return `${lead} ${d1} ${and} ${d2} ${dyn.verb}. ${dyn.interaction} ${dyn.advice}`
+  }
+  return resolveNatalPlanetAspectText(planet1, aspect, planet2, language)
 }
