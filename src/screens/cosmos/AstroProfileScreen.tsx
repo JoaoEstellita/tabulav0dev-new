@@ -147,17 +147,10 @@ function AspectList({
   language: string
   initial?: number
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const hidden = entries.length - initial
-  const shown = expanded ? entries : entries.slice(0, initial)
-  const more = language === 'en-US' ? `Show ${hidden} more aspect${hidden > 1 ? 's' : ''}`
-    : language === 'es-ES' ? `Ver ${hidden} aspecto${hidden > 1 ? 's' : ''} mas`
-    : language === 'it-IT' ? `Mostra altri ${hidden} aspetti`
-    : `Ver mais ${hidden} aspecto${hidden > 1 ? 's' : ''}`
-  const less = language === 'en-US' ? 'Show less' : language === 'es-ES' ? 'Ver menos' : language === 'it-IT' ? 'Mostra meno' : 'Ver menos'
+  // Todos os aspectos aparentes de uma vez — sem toggle "ver mais" (João, 08-24).
   return (
     <View>
-      {shown.map((a, i) => (
+      {entries.map((a, i) => (
         <View key={`${a.label}-${i}`} style={i > 0 ? expandStyles.aspectSpacer : undefined}>
           <Text style={expandStyles.aspectLabel}>
             {a.label}{a.orb !== null ? `  ·  ${a.orb.toFixed(1)}°` : ''}
@@ -165,11 +158,6 @@ function AspectList({
           {a.text ? <Text style={expandStyles.aspectText}>{a.text}</Text> : null}
         </View>
       ))}
-      {hidden > 0 ? (
-        <TouchableOpacity onPress={() => setExpanded(v => !v)} activeOpacity={0.7} accessibilityRole="button">
-          <Text style={expandStyles.toggle}>{expanded ? less : more}</Text>
-        </TouchableOpacity>
-      ) : null}
     </View>
   )
 }
