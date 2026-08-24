@@ -26,6 +26,7 @@ import {
   getMoonPhaseLabelFromKey,
 } from '../utils/moonPhase'
 import { nakshatraFromTropical } from '../astro/vedic'
+import { MOON_SIGN_MOOD, MOON_SIGN_GLYPH, SIGN_NAMES_I18N, SIGN_KEYS } from '../data/moonSignMood'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,6 +76,11 @@ type MoonDetails = {
   currentVoidLabel: string
   nextVoidLabel: string
   upcomingPhases: Array<{ label: string; when: string }>
+  moonSignName: string
+  moonSignGlyph: string
+  moonDeg: number
+  illumPct: number
+  moonMood: string
 }
 
 interface MoonPhaseButtonProps {
@@ -122,6 +128,11 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
     currentVoidLabel: tr('profile.moon.no', 'Nao'),
     nextVoidLabel: tr('profile.moon.noForecast', 'Sem previsao'),
     upcomingPhases: [],
+    moonSignName: '',
+    moonSignGlyph: '☾',
+    moonDeg: 0,
+    illumPct: 0,
+    moonMood: '',
   })
 
   const moonTranslateY = useRef(new Animated.Value(0)).current
@@ -203,7 +214,18 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
       }
 
       const angle = getMoonPhaseAngle(now)
-      const moonNakshatra = nakshatraFromTropical(getMoonEclipticLongitude(now), now).nakshatra.name
+      const moonLon = getMoonEclipticLongitude(now)
+      const moonNakshatra = nakshatraFromTropical(moonLon, now).nakshatra.name
+      // Signo atual da Lua + grau + iluminação (%) + clima emocional.
+      const normLon = ((moonLon % 360) + 360) % 360
+      const signIdx = Math.floor(normLon / 30) % 12
+      const langKey = language === 'en-US' ? 'en-US' : language === 'es-ES' ? 'es-ES' : language === 'it-IT' ? 'it-IT' : 'pt-BR'
+      const moonSignName = (SIGN_NAMES_I18N[langKey] || SIGN_NAMES_I18N['pt-BR'])[signIdx]
+      const signKey = SIGN_KEYS[signIdx]
+      const moonSignGlyph = MOON_SIGN_GLYPH[signKey] || '☾'
+      const moonDeg = normLon % 30
+      const illumPct = Math.round((1 - Math.cos((angle * Math.PI) / 180)) / 2 * 100)
+      const moonMood = (MOON_SIGN_MOOD[langKey] || MOON_SIGN_MOOD['pt-BR'])[signKey] || ''
       const angleKey = getMoonPhaseKeyFromAngle(angle)
       const phaseKey = angle >= 315 ? 'waningCrescent' : angleKey
       let phaseLabel = getMoonPhaseLabelFromAngle(angle, language)
@@ -234,6 +256,11 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
           ? `${formatLocalDateTime(nextVoidStart, userTz, language)}${nextVoidEnd ? ` ${tl('até', 'until', 'hasta', 'fino a')} ${formatLocalTime(nextVoidEnd, userTz, language)}` : ''}`
           : tr('profile.moon.noForecast', 'No forecast'),
         upcomingPhases,
+        moonSignName,
+        moonSignGlyph,
+        moonDeg,
+        illumPct,
+        moonMood,
       })
     } catch (error) {
       console.error('Erro ao carregar fases da lua:', error)
@@ -296,12 +323,46 @@ export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButto
           >
             <Text style={styles.moonModalTitle}>{tr('profile.moon.modal.title', 'Lunar Calendar')}</Text>
             <ScrollView style={styles.moonModalScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.moonModalSectionTitle}>{tr('profile.moon.modal.now', 'Moon now')}</Text>
-              <Text style={styles.moonModalText}>{moonDetails.phaseLabel}</Text>
-              <Text style={styles.moonModalText}>{moonDetails.phaseUntilLabel}</Text>
+              {/* Hero: fase + signo atual da Lua + iluminação */}
+              <View style={styles.moonHero}>
+                <View style={styles.moonHeroIcon}>
+                  <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={58} />
+                </View>
+                <View style={styles.moonHeroText}>
+                  <Text style={styles.moonHeroPhase} numberOfLines={1}>{moonDetails.phaseLabel}</Text>
+                  {moonDetails.moonSignName ? (
+                    <View style={styles.moonSignRow}>
+                      <Text style={styles.moonSignGlyphBig}>{moonDetails.moonSignGlyph}</Text>
+                      <Text style={styles.moonSignName}>
+                        {tl('Lua em', 'Moon in', 'Luna en', 'Luna in')} {moonDetails.moonSignName}
+                      </Text>
+                      <Text style={styles.moonSignDeg}>{moonDetails.moonDeg.toFixed(0)}°</Text>
+                    </View>
+                  ) : null}
+                  <Text style={styles.moonHeroUntil} numberOfLines={1}>{moonDetails.phaseUntilLabel}</Text>
+                </View>
+              </View>
+
+              {/* Barra de iluminação */}
+              <View style={styles.illumRow}>
+                <Text style={styles.illumLabel}>{tl('Iluminação', 'Illumination', 'Iluminación', 'Illuminazione')}</Text>
+                <View style={styles.illumTrack}>
+                  <View style={[styles.illumFill, { width: `${Math.max(2, Math.min(100, moonDetails.illumPct))}%` }]} />
+                </View>
+                <Text style={styles.illumPct}>{moonDetails.illumPct}%</Text>
+              </View>
+
+              {/* Clima emocional da Lua no signo */}
+              {moonDetails.moonMood ? (
+                <View style={styles.moodCard}>
+                  <Text style={styles.moodTitle}>{tl('Clima emocional', 'Emotional climate', 'Clima emocional', 'Clima emotivo')}</Text>
+                  <Text style={styles.moodText}>{moonDetails.moonMood}</Text>
+                </View>
+              ) : null}
+
               {moonDetails.moonNakshatra ? (
-                <Text style={styles.moonModalText}>
-                  {tl('Nakshatra da Lua (védico)', 'Moon nakshatra (Vedic)', 'Nakshatra de la Luna (vedico)', 'Nakshatra della Luna (vedico)')}: {moonDetails.moonNakshatra}
+                <Text style={styles.moonNakshatra}>
+                  {tl('Nakshatra (védico)', 'Nakshatra (Vedic)', 'Nakshatra (védico)', 'Nakshatra (vedico)')}: {moonDetails.moonNakshatra}
                 </Text>
               ) : null}
 
@@ -394,6 +455,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 12,
   },
+  moonHero: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.22)',
+    borderRadius: 16, padding: 14, marginBottom: 12,
+  },
+  moonHeroIcon: { width: 62, height: 62, alignItems: 'center', justifyContent: 'center' },
+  moonHeroText: { flex: 1, minWidth: 0 },
+  moonHeroPhase: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  moonSignRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },
+  moonSignGlyphBig: { color: '#FFD700', fontSize: 18, fontWeight: '700' },
+  moonSignName: { color: '#E9D9A0', fontSize: 14, fontWeight: '700' },
+  moonSignDeg: { color: '#9A9CB8', fontSize: 12, fontVariant: ['tabular-nums'] },
+  moonHeroUntil: { color: '#9A9CB8', fontSize: 12, marginTop: 4 },
+  illumRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  illumLabel: { color: '#9A9CB8', fontSize: 12, width: 78 },
+  illumTrack: { flex: 1, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' },
+  illumFill: { height: 7, borderRadius: 4, backgroundColor: '#FFD700' },
+  illumPct: { color: '#E6E6E6', fontSize: 12.5, fontWeight: '700', width: 40, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  moodCard: {
+    backgroundColor: 'rgba(124,138,192,0.10)', borderWidth: 1, borderColor: 'rgba(124,138,192,0.26)',
+    borderRadius: 14, padding: 13, marginBottom: 12,
+  },
+  moodTitle: { color: '#B9C0E6', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: '700', marginBottom: 5 },
+  moodText: { color: '#E6E6E6', fontSize: 13.5, lineHeight: 19 },
+  moonNakshatra: { color: '#8A8AA0', fontSize: 12, marginBottom: 6 },
   moonModalScroll: {
     marginBottom: 12,
   },
