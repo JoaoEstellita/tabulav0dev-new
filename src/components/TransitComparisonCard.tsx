@@ -36,7 +36,12 @@ interface TransitComparisonCardProps {
   }>
   showOverviewHeader?: boolean
   housesApproximate?: boolean
+  // Registra o node de cada card de planeta (chave 'planet:<nome-normalizado>')
+  // para a Home rolar até a leitura ao clicar num aspecto da grade (measureLayout).
+  registerAnchor?: (key: string, node: any) => void
 }
+// Chave de âncora igual em quem registra e em quem rola: lowercase, sem acento.
+const anchorNorm = (s: string) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 const ELEMENT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   fire: 'flame',
   earth: 'leaf',
@@ -176,6 +181,7 @@ const TransitComparisonCard = React.memo(function TransitComparisonCard({
   personalWindows,
   showOverviewHeader = true,
   housesApproximate,
+  registerAnchor,
 }: TransitComparisonCardProps) {
   const { width } = useWindowDimensions()
   const isNarrow = width < 900
@@ -1248,7 +1254,7 @@ const normalizeAspectKey = (aspect: string): keyof typeof ASPECT_COLORS => {
       {/* Compara\u00E7\u00F5es Planet\u00E1rias */}
       <View style={styles.planetsSection}>
         {planetComparisons.map((comparison) => (
-          <View key={comparison.name} nativeID={`tabula-planet-${comparison.name}`} style={styles.planetCard}>
+          <View key={comparison.name} nativeID={`tabula-planet-${comparison.name}`} ref={registerAnchor ? (n) => registerAnchor(`planet:${anchorNorm(comparison.name)}`, n) : undefined} style={styles.planetCard}>
             {(() => {
               const needsLightBgFix = PLANETS_WITH_LIGHT_BG_IMAGES.has(comparison.name)
               return resolvePlanetImageUri(comparison.name) && !failedPlanetImages[comparison.name] ? (

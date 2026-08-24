@@ -122,6 +122,34 @@ export default function HomeScreen() {
     return () => { done = true; task.cancel(); clearTimeout(timer) }
   }, [])
   const scrollRef = useRef<ScrollView>(null)
+  // Grade da roda clicável → rola até a leitura do planeta no card de comparação
+  // abaixo. measureLayout funciona no PWA e no APK (não usa getElementById).
+  const wheelAnchorsRef = useRef<Record<string, any>>({})
+  const registerWheelAnchor = React.useCallback((key: string, node: any) => {
+    if (node) wheelAnchorsRef.current[key] = node
+    else delete wheelAnchorsRef.current[key]
+  }, [])
+  const scrollToWheelAnchor = React.useCallback((key: string) => {
+    const node = wheelAnchorsRef.current[key]
+    const scroll = scrollRef.current as any
+    if (!node || !scroll) return
+    try {
+      const scrollNode = scroll.getScrollableNode ? scroll.getScrollableNode() : scroll
+      node.measureLayout(scrollNode, (_x: number, y: number) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }), () => { })
+    } catch { }
+  }, [])
+  const anchorNorm = (s: string) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const PERSONAL_PLANETS_SET = React.useRef(new Set(['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])).current
+  const handleSelectNatalAspect = React.useCallback((a: { planet1: string; planet2: string; type: string }) => {
+    if (!a) return
+    const target = PERSONAL_PLANETS_SET.has(a.planet1) ? a.planet1 : PERSONAL_PLANETS_SET.has(a.planet2) ? a.planet2 : a.planet1
+    scrollToWheelAnchor(`planet:${anchorNorm(target)}`)
+  }, [scrollToWheelAnchor, PERSONAL_PLANETS_SET])
+  const handleSelectTransitAspect = React.useCallback((cellId: string) => {
+    // txr-<transito>-<tipo>-<natal>: rola até o planeta NATAL do par (última parte)
+    const natal = (cellId || '').split('-').pop() || ''
+    if (natal) scrollToWheelAnchor(`planet:${natal}`)
+  }, [scrollToWheelAnchor])
   const [showTop, setShowTop] = useState(false)
   const { width } = useWindowDimensions()
   const showDesktopScrollbar = Platform.OS === 'web' && width >= 1024
@@ -491,7 +519,7 @@ export default function HomeScreen() {
           <AnimatedMount>
             <View style={styles.section}>
               {wheelReady ? (
-                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits />
+                <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
               ) : (
                 // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
                 // interações, pra não travar a abertura da Home. Não pula o layout.
@@ -529,6 +557,7 @@ export default function HomeScreen() {
                   personalWindows={transitData.dailyOverview?.personalTodayRich || []}
                   showOverviewHeader={false}
                   housesApproximate={transitData.currentTransits.natalHousesApproximate ?? false}
+                  registerAnchor={registerWheelAnchor}
                 />
               </View>
             </AnimatedMount>
