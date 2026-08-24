@@ -27,6 +27,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Status diário das 8 áreas da vida',
+      'Mapa natal Ocidental e Védico (Jyotish)',
       'Acesso a grupos',
       'Rede: match "quem mais combina com você"',
       'Sinastria detalhada com qualquer pessoa',
@@ -46,6 +47,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Essential +',
+      '1 leitura premium/mês com IA (mapa, trânsitos, sinastria…)',
       'Forecast: 7/30/90 dias',
       'Astrólogo IA no WhatsApp — 6/dia',
     ],
@@ -62,6 +64,7 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     requiresWhatsapp: true,
     features: [
       'Tudo do Pro +',
+      '10 leituras premium/mês com IA (e compre mais quando quiser)',
       'Forecast: 7/30/90/360 dias',
       'Astrólogo IA no WhatsApp — 10/dia',
     ],
