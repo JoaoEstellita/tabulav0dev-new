@@ -35,7 +35,31 @@ export default function MemberProfileScreen() {
   const birth = member?.birthData
   const [data, setData] = useState<LocalTransitData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [westMode, setWestMode] = useState<'natal' | 'transitos'>('natal')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar'>('natal')
+  // Retorno Solar do membro (no local de NASCIMENTO dele — não temos onde ele mora).
+  const [srData, setSrData] = useState<any>(null)
+  const [srLoading, setSrLoading] = useState(false)
+  const [srMoment, setSrMoment] = useState<Date | null>(null)
+  const [srError, setSrError] = useState(false)
+  useEffect(() => {
+    if (westMode !== 'solar' || srData || srLoading || !data || !birth?.coordinates) return
+    const sun = ((data as any)?.currentTransits?.natalPlanets || []).find((p: any) => p?.name === 'Sun')
+    const natalSunLon = typeof sun?.longitude === 'number' ? sun.longitude : null
+    const lat = birth.coordinates.latitude
+    const lon = birth.coordinates.longitude
+    if (natalSunLon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return
+    let cancelled = false
+    ;(async () => {
+      setSrLoading(true); setSrError(false)
+      try {
+        const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
+        const { data: sr, moment } = await LocalAstrologyService.computeSolarReturn(natalSunLon, { latitude: lat, longitude: lon })
+        if (!cancelled) { setSrData(sr); setSrMoment(moment) }
+      } catch { if (!cancelled) setSrError(true) }
+      finally { if (!cancelled) setSrLoading(false) }
+    })()
+    return () => { cancelled = true }
+  }, [westMode, data, birth?.coordinates, srData, srLoading])
 
   // Grade clicável → rola até a leitura do planeta no perfil abaixo (measureLayout,
   // robusto web+APK). Mesmo mecanismo da aba Mapa e da Home.
@@ -132,11 +156,30 @@ export default function MemberProfileScreen() {
               <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
                 <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
+                <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
+              </TouchableOpacity>
             </View>
 
-            <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
-            <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
-            <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
+            {westMode === 'solar' ? (
+              srLoading || (!srData && !srError) ? (
+                <View style={styles.center}><StarLoader /></View>
+              ) : srError || !srData ? (
+                <Text style={styles.srMemberError}>{tl('Não consegui calcular o Retorno Solar agora.', 'Could not calculate the Solar Return now.', 'No pude calcular el Retorno Solar ahora.', 'Non sono riuscito a calcolare il Ritorno Solare.')}</Text>
+              ) : (
+                <>
+                  {srMoment ? <Text style={styles.srMemberCaption}>{tl(`Retorno Solar de ${srMoment.getUTCFullYear()}`, `Solar Return ${srMoment.getUTCFullYear()}`, `Retorno Solar ${srMoment.getUTCFullYear()}`, `Ritorno Solare ${srMoment.getUTCFullYear()}`)}</Text> : null}
+                  <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} />
+                </>
+              )
+            ) : (
+              <>
+                <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+                <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
+                <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -162,4 +205,6 @@ const styles = StyleSheet.create({
   modeBtnActive: { backgroundColor: '#FFD700' },
   modeBtnText: { color: '#8892a4', fontSize: 13, fontWeight: '700' },
   modeBtnTextActive: { color: '#1A1A1A' },
+  srMemberCaption: { color: '#FFD700', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginBottom: 10 },
+  srMemberError: { color: '#9A9CB8', fontSize: 14, textAlign: 'center', paddingVertical: 30 },
 })
