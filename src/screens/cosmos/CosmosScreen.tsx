@@ -325,21 +325,47 @@ export default function CosmosScreen() {
     const natalSunLon = typeof sun?.longitude === 'number' ? sun.longitude : null
     if (natalSunLon == null || !user?.uid) return
     let cancelled = false
+    // Corrida com timeout: rede lenta (geocode) não pode travar o cálculo p/ sempre.
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
     ;(async () => {
       setSrLoading(true); setSrError(false); setSrNeedsCity(false)
       try {
         const uSnap = await getDoc(doc(db, 'users', user.uid))
-        const currentCity = String(uSnap.data()?.currentCity || '').trim()
-        if (!currentCity) { if (!cancelled) setSrNeedsCity(true); return }
-        const LocationService = (await import('../../services/LocationService')).default
-        const results = await LocationService.searchLocations(currentCity)
-        const loc: any = results?.[0]
-        if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) { if (!cancelled) setSrNeedsCity(true); return }
+        const ud: any = uSnap.data() || {}
+        const currentCity = String(ud?.currentCity || '').trim()
+        // Coords natais (fallback quando não há cidade atual ou o geocode falha).
+        const natalLoc = ud?.birthData?.birthLocation
+        const natalCoords = (natalLoc && Number.isFinite(natalLoc.latitude) && Number.isFinite(natalLoc.longitude))
+          ? { latitude: natalLoc.latitude, longitude: natalLoc.longitude }
+          : null
+
+        let coords: { latitude: number; longitude: number } | null = null
+        if (currentCity) {
+          try {
+            const LocationService = (await import('../../services/LocationService')).default
+            const results = await withTimeout(LocationService.searchLocations(currentCity), 8000)
+            const loc: any = results?.[0]
+            if (loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
+              coords = { latitude: loc.latitude, longitude: loc.longitude }
+            }
+          } catch (e) { console.warn('[SR] geocode falhou, usando fallback natal:', e) }
+        }
+        // Sem cidade preenchida E sem coords natais → pede a cidade. Senão, calcula
+        // (relocado na cidade, ou no local de nascimento como fallback seguro).
+        if (!coords) coords = natalCoords
+        if (!coords) { if (!cancelled) setSrNeedsCity(true); return }
+
         const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
-        const { data, moment } = await LocalAstrologyService.computeSolarReturn(natalSunLon, { latitude: loc.latitude, longitude: loc.longitude })
+        const { data, moment } = await withTimeout(
+          LocalAstrologyService.computeSolarReturn(natalSunLon, coords),
+          20000,
+        )
         if (!cancelled) { setSrData(data); setSrMoment(moment) }
-      } catch { if (!cancelled) setSrError(true) }
-      finally { if (!cancelled) setSrLoading(false) }
+      } catch (e) {
+        console.warn('[SR] erro ao calcular Retorno Solar:', e)
+        if (!cancelled) setSrError(true)
+      } finally { if (!cancelled) setSrLoading(false) }
     })()
     return () => { cancelled = true }
   }, [westMode, isPremium, natalPlanets, user?.uid, srData, srLoading])
@@ -488,10 +514,10 @@ export default function CosmosScreen() {
                   <Text style={styles.srNoticeBody}>{tl('O Retorno Solar é calculado no lugar onde você está no aniversário. Preencha sua cidade atual no perfil.', 'The Solar Return is cast where you are on your birthday. Set your current city in the profile.', 'El Retorno Solar se calcula donde estás en tu cumpleaños. Completa tu ciudad actual en el perfil.', 'Il Ritorno Solare si calcola dove sei al compleanno. Inserisci la tua città attuale nel profilo.')}</Text>
                   <TouchableOpacity style={styles.srNoticeCta} onPress={() => (navigation as any).navigate('Tabs', { screen: 'Home' })}><Text style={styles.srNoticeCtaText}>{tl('Editar perfil', 'Edit profile', 'Editar perfil', 'Modifica profilo')}</Text></TouchableOpacity>
                 </View>
-              ) : srLoading || !srData ? (
-                <View style={styles.srCenter}><StarLoader /><Text style={styles.srLoadingText}>{tl('Calculando seu Retorno Solar…', 'Calculating your Solar Return…', 'Calculando tu Retorno Solar…', 'Calcolo del tuo Ritorno Solare…')}</Text></View>
               ) : srError ? (
                 <View style={styles.srCenter}><Text style={styles.srLoadingText}>{tl('Não consegui calcular agora. Tente de novo.', 'Could not calculate now. Try again.', 'No pude calcular ahora. Intenta de nuevo.', 'Non sono riuscito a calcolare. Riprova.')}</Text></View>
+              ) : srLoading || !srData ? (
+                <View style={styles.srCenter}><StarLoader /><Text style={styles.srLoadingText}>{tl('Calculando seu Retorno Solar…', 'Calculating your Solar Return…', 'Calculando tu Retorno Solar…', 'Calcolo del tuo Ritorno Solare…')}</Text></View>
               ) : (
                 <>
                   {srMoment ? (
