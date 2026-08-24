@@ -9,10 +9,11 @@
 //
 // Fallback: quando não há texto de RS curado para a combinação, cai no catálogo
 // natal (resolveNatalPlanetInHouseText) para que a mecânica nunca fique vazia.
-import { resolveNatalPlanetInHouseText, resolveSignInHouseText } from './natalInterpretation'
+import { resolveNatalPlanetInHouseText, resolveSignInHouseText, resolveNatalPlanetAspectText } from './natalInterpretation'
 import { SOLAR_RETURN_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../data/solarReturnPlanetInHouseOverridesPtBR'
 import { SOLAR_RETURN_PLANET_IN_HOUSE_I18N_OVERRIDES } from '../data/solarReturnPlanetInHouseOverridesI18n'
 import { SOLAR_RETURN_ASCENDANT_PTBR_OVERRIDES, SOLAR_RETURN_ASCENDANT_I18N_OVERRIDES } from '../data/solarReturnAscendantOverrides'
+import { SR_PLANET_YEAR_DOMAIN, SR_ASPECT_DYNAMIC, SR_ASPECT_LEAD } from '../data/solarReturnAspectComposer'
 
 function normalizeLanguage(language?: string | null): string {
   const l = String(language || 'pt-BR').trim()
@@ -86,4 +87,51 @@ export function resolveSolarReturnAscendantText(
   if (srText && srText.trim().length >= 50) return srText.trim()
 
   return resolveSignInHouseText(sign, 1, language)
+}
+
+function normalizeAspect(value: string): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '')
+    .replace(/conjunction|conjuncao|conjuncion|congiunzione/g, 'conjuncao')
+    .replace(/sextile|sextil|sestile/g, 'sextil')
+    .replace(/square|quadrature|cuadratura|quadratura/g, 'quadratura')
+    .replace(/trine|trigono|trino/g, 'trigono')
+    .replace(/opposition|oposicao|oposicion|opposizione/g, 'oposicao')
+}
+
+/**
+ * Texto de aspecto do Retorno Solar, COMPOSTO a partir do domínio-do-ano de cada
+ * planeta + a dinâmica do aspecto (cobre todos os pares em tom de RS). Se algum dos
+ * pontos não tiver domínio (nódulo, Quíron, ângulo), cai no aspecto natal curado.
+ */
+export function resolveSolarReturnAspectText(
+  planet1: string,
+  aspect: string,
+  planet2: string,
+  language?: string | null,
+): string | null {
+  const lang = normalizeLanguage(language)
+  const p1 = normalizePlanet(planet1)
+  const p2 = normalizePlanet(planet2)
+  const asp = normalizeAspect(aspect)
+
+  const domains = SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR']
+  const dynamics = SR_ASPECT_DYNAMIC[lang] || SR_ASPECT_DYNAMIC['pt-BR']
+  const lead = SR_ASPECT_LEAD[lang] || SR_ASPECT_LEAD['pt-BR']
+
+  const d1 = domains[p1]
+  const d2 = domains[p2]
+  const dyn = dynamics[asp]
+  const and = lang === 'en-US' ? 'and' : lang === 'es-ES' ? 'y' : lang === 'it-IT' ? 'e' : 'e'
+
+  if (d1 && d2 && dyn) {
+    return `${lead} ${d1} ${and} ${d2} ${dyn.verb}. ${dyn.interaction} ${dyn.advice}`
+  }
+
+  // Fallback: aspecto natal curado (pontos sem domínio de ano).
+  return resolveNatalPlanetAspectText(planet1, aspect, planet2, language)
 }

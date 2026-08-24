@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText } from '../solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText } from '../solarReturnInterpretation'
 
 describe('resolveSolarReturnPlanetInHouseText', () => {
   it('retorna texto de RS curado em pt-BR (Sol casa 10)', () => {
@@ -34,6 +34,29 @@ describe('resolveSolarReturnPlanetInHouseText', () => {
     // acentos proibidos
     expect(resolveSolarReturnAscendantText('Leão', 'es-ES')!).not.toMatch(/[áéíóúñ]/i)
     expect(resolveSolarReturnAscendantText('Leão', 'it-IT')!).not.toMatch(/[àèìòùáéíóú]/i)
+  })
+
+  it('Aspecto do RS compõe texto para todos os pares × aspectos × idiomas', () => {
+    const planets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    const aspects = ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição']
+    for (const lang of ['pt-BR', 'en-US', 'es-ES', 'it-IT']) {
+      for (let i = 0; i < planets.length; i++) {
+        for (let j = i + 1; j < planets.length; j++) {
+          for (const asp of aspects) {
+            const t = resolveSolarReturnAspectText(planets[i], asp, planets[j], lang)
+            expect(t, `${lang} ${planets[i]} ${asp} ${planets[j]}`).toBeTruthy()
+            expect(t!.length).toBeGreaterThan(60)
+          }
+        }
+      }
+    }
+    // aspecto em EN também normaliza
+    expect(resolveSolarReturnAspectText('Sun', 'trine', 'Venus', 'en-US')).toBeTruthy()
+    // acentos proibidos
+    expect(resolveSolarReturnAspectText('Sun', 'trígono', 'Venus', 'es-ES')!).not.toMatch(/[áéíóúñ]/i)
+    expect(resolveSolarReturnAspectText('Sun', 'trígono', 'Venus', 'it-IT')!).not.toMatch(/[àèìòùáéíóú]/i)
+    // ponto sem domínio (Chiron) cai no fallback natal (pode ser null, não deve quebrar)
+    expect(() => resolveSolarReturnAspectText('Chiron', 'trígono', 'Venus', 'pt-BR')).not.toThrow()
   })
 
   it('es-ES sem tildes e it-IT sem acentos', () => {

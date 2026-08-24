@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
-import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText } from '../../utils/solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText } from '../../utils/solarReturnInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -277,7 +277,9 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
         const other = a.planet1 === planet ? a.planet2 : a.planet1
         // O aspecto entra SEMPRE. Antes só entrava se houvesse texto curado, então
         // aspectos reais do mapa sumiam sem aviso e a lista parecia incompleta.
-        const text = resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
+        const text = interpMode === 'solar'
+          ? resolveSolarReturnAspectText(a.planet1, a.type, a.planet2, language)
+          : resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
         entries.push({
           label: `${translatePlanetPT(planet)} ${a.type} ${translatePlanetPT(other)}`,
           text: text || null,
@@ -287,7 +289,7 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
       if (entries.length) out[planet] = entries
     }
     return out
-  }, [ct?.aspectsNatalToNatal, language])
+  }, [ct?.aspectsNatalToNatal, language, interpMode])
 
   const elemental = ct?.chartSummary?.elemental?.natal
   const modality = ct?.chartSummary?.modality?.natal
