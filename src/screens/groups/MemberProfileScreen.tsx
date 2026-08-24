@@ -170,7 +170,7 @@ export default function MemberProfileScreen() {
                 <>
                   {srMoment ? <Text style={styles.srMemberCaption}>{tl(`Retorno Solar de ${srMoment.getUTCFullYear()}`, `Solar Return ${srMoment.getUTCFullYear()}`, `Retorno Solar ${srMoment.getUTCFullYear()}`, `Ritorno Solare ${srMoment.getUTCFullYear()}`)}</Text> : null}
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
-                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
                 </>
               )
             ) : (

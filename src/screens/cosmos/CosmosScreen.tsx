@@ -503,7 +503,7 @@ export default function CosmosScreen() {
                     )}</Text>
                   ) : null}
                   <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
-                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} interpMode="solar" />
                 </>
               )
             ) : (

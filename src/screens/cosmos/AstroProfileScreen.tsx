@@ -18,6 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
+import { resolveSolarReturnPlanetInHouseText } from '../../utils/solarReturnInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -208,6 +209,11 @@ type ProfileContentProps = {
    * cai no `transitData.currentTransits.natalAscendant`, que já é o da carta passada.
    */
   chartMeta?: { skipSelfFetch?: boolean; birthDate?: string; birthTime?: string }
+  /**
+   * Tom da interpretação de planeta-em-casa: 'natal' (padrão) usa o catálogo natal;
+   * 'solar' usa o catálogo próprio do Retorno Solar (com fallback para o natal).
+   */
+  interpMode?: 'natal' | 'solar'
 }
 
 /**
@@ -217,7 +223,7 @@ type ProfileContentProps = {
  * uma vez e passa para cá, para o Cosmos poder embutir roda + perfil sem
  * disparar o cálculo astrológico três vezes.
  */
-export function AstroProfileContent({ transitData, loading, registerAnchor, chartMeta }: ProfileContentProps) {
+export function AstroProfileContent({ transitData, loading, registerAnchor, chartMeta, interpMode = 'natal' }: ProfileContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
 
@@ -535,7 +541,9 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
         {/* Planetas natais */}
         <View style={styles.card} ref={(n) => registerAnchor?.('section:planets', n)}>
           <Text style={styles.cardTitle}>
-            {tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
+            {interpMode === 'solar'
+              ? tl('Planetas do Retorno Solar', 'Solar Return Planets', 'Planetas del Retorno Solar', 'Pianeti del Ritorno Solare')
+              : tl('Planetas Natais', 'Natal Planets', 'Planetas Natales', 'Pianeti Natali')}
           </Text>
           {orderedPlanets.map(p => {
             // Lilith não tem catálogo signo/casa curado → mostra a essência acessível.
@@ -545,7 +553,11 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
               : resolvePlanetInSignText(p.name, p.sign, language)
             const houseText = isLilith
               ? null
-              : (p.house ? resolveNatalPlanetInHouseText(p.name, p.house, language) : null)
+              : (p.house
+                  ? (interpMode === 'solar'
+                      ? resolveSolarReturnPlanetInHouseText(p.name, p.house, language)
+                      : resolveNatalPlanetInHouseText(p.name, p.house, language))
+                  : null)
             return (
               <View key={p.name} style={styles.planetBlock} ref={(n) => registerAnchor?.(`planet:${p.name}`, n)}>
                 <View style={styles.planetRow}>
