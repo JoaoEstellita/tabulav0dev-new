@@ -135,9 +135,9 @@ export default function PersonProfileScreen() {
             <View style={s.lockIcon}><Ionicons name="lock-closed" size={20} color={C.magenta} /></View>
             <View style={{ flex: 1 }}>
               <Text style={s.lockTitle}>{tl('Descubra o quanto vocês combinam', 'Discover how much you match', 'Descubre cuanto combinan', 'Scopri quanto corrispondete')}</Text>
-              <Text style={s.lockSub}>{tl('Índice de compatibilidade e aspectos entre seus mapas — no plano Pro.', 'Compatibility index and aspects between your charts — on the Pro plan.', 'Indice de compatibilidad y aspectos — en el plan Pro.', 'Indice di compatibilita e aspetti — nel piano Pro.')}</Text>
+              <Text style={s.lockSub}>{tl('Índice de compatibilidade e aspectos entre seus mapas — para assinantes.', 'Compatibility index and aspects between your charts — for subscribers.', 'Indice de compatibilidad y aspectos — para suscriptores.', 'Indice di compatibilita e aspetti — per abbonati.')}</Text>
             </View>
-            <View style={s.proTag}><Text style={s.proTagTx}>PRO</Text></View>
+            <Ionicons name="lock-closed" size={18} color={C.gold} />
           </TouchableOpacity>
         ) : (
           <>

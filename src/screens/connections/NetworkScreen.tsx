@@ -222,7 +222,7 @@ export default function NetworkScreen() {
               <Text style={st.matchHeroTitle}>{tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}</Text>
               <Text style={st.matchHeroSub}>{tl('Ranking de compatibilidade entre todos', 'Compatibility ranking across everyone', 'Ranking de compatibilidad con todos', 'Classifica di compatibilita con tutti')}</Text>
             </View>
-            <View style={st.proTag}><Text style={st.proTagTx}>PRO</Text></View>
+            <Ionicons name="lock-closed" size={17} color={C.gold} />
           </TouchableOpacity>
 
           {/* Busca */}

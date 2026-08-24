@@ -28,6 +28,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
     features: [
       'Status diário das 8 áreas da vida',
       'Acesso a grupos',
+      'Rede: match "quem mais combina com você"',
+      'Sinastria detalhada com qualquer pessoa',
       'Forecast: 7 dias',
       'Astrólogo IA no WhatsApp — 3/dia',
     ],

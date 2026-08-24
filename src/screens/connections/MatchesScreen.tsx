@@ -51,7 +51,7 @@ export default function MatchesScreen() {
             : tl('Descubra quem mais combina com você', 'Discover who matches you most', 'Descubre quien combina mas contigo', 'Scopri chi ti corrisponde di piu')}
         </Text>
         <Text style={styles.teaserSub}>
-          {tl('Assine Pro ou Premium para ver quem são e se conectar.', 'Subscribe to Pro or Premium to see who they are and connect.', 'Suscribete a Pro o Premium para ver quienes son y conectar.', 'Abbonati a Pro o Premium per vedere chi sono e connetterti.')}
+          {tl('Assine qualquer plano para ver quem são e se conectar.', 'Subscribe to any plan to see who they are and connect.', 'Suscribete a cualquier plan para ver quienes son y conectar.', 'Abbonati a un piano per vedere chi sono e connetterti.')}
         </Text>
         <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('Premium', { openTab: 'features' })}>
           <Text style={styles.ctaText}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text>
