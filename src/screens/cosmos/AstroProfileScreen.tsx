@@ -18,7 +18,7 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
-import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText } from '../../utils/solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -554,7 +554,9 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
             const isLilith = p.name === 'Lilith'
             const signText = isLilith
               ? (getPlanetMeaning('lilith', language)?.essence ?? null)
-              : resolvePlanetInSignText(p.name, p.sign, language)
+              : (interpMode === 'solar'
+                  ? resolveSolarReturnPlanetInSignText(p.name, p.sign, language)
+                  : resolvePlanetInSignText(p.name, p.sign, language))
             const houseText = isLilith
               ? null
               : (p.house

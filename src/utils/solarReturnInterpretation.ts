@@ -9,7 +9,8 @@
 //
 // Fallback: quando não há texto de RS curado para a combinação, cai no catálogo
 // natal (resolveNatalPlanetInHouseText) para que a mecânica nunca fique vazia.
-import { resolveNatalPlanetInHouseText, resolveSignInHouseText, resolveNatalPlanetAspectText } from './natalInterpretation'
+import { resolveNatalPlanetInHouseText, resolveSignInHouseText, resolveNatalPlanetAspectText, resolvePlanetInSignText } from './natalInterpretation'
+import { SR_SIGN_FLAVOR, SR_SIGN_LINK } from '../data/solarReturnSignFlavor'
 import { SOLAR_RETURN_PLANET_IN_HOUSE_PTBR_OVERRIDES } from '../data/solarReturnPlanetInHouseOverridesPtBR'
 import { SOLAR_RETURN_PLANET_IN_HOUSE_I18N_OVERRIDES } from '../data/solarReturnPlanetInHouseOverridesI18n'
 import { SOLAR_RETURN_ASCENDANT_PTBR_OVERRIDES, SOLAR_RETURN_ASCENDANT_I18N_OVERRIDES } from '../data/solarReturnAscendantOverrides'
@@ -134,4 +135,33 @@ export function resolveSolarReturnAspectText(
 
   // Fallback: aspecto natal curado (pontos sem domínio de ano).
   return resolveNatalPlanetAspectText(planet1, aspect, planet2, language)
+}
+
+/**
+ * Texto de planeta no signo do RS, COMPOSTO a partir do domínio-do-ano do planeta
+ * + a qualidade do signo (colore COMO o domínio se expressa no ano). Fallback ao
+ * planeta-no-signo natal para pontos sem domínio (Lilith, nódulos, Quíron).
+ */
+export function resolveSolarReturnPlanetInSignText(
+  planet: string,
+  sign: string,
+  language?: string | null,
+): string | null {
+  const lang = normalizeLanguage(language)
+  const p = normalizePlanet(planet)
+  const s = normalizeSign(sign)
+
+  const domains = SR_PLANET_YEAR_DOMAIN[lang] || SR_PLANET_YEAR_DOMAIN['pt-BR']
+  const flavors = SR_SIGN_FLAVOR[lang] || SR_SIGN_FLAVOR['pt-BR']
+  const lead = SR_ASPECT_LEAD[lang] || SR_ASPECT_LEAD['pt-BR']
+  const link = SR_SIGN_LINK[lang] || SR_SIGN_LINK['pt-BR']
+
+  const domain = domains[p]
+  const flavor = flavors[s]
+  if (domain && flavor) {
+    return `${lead} ${domain} ${link} ${flavor.name}: ${flavor.tone}. ${flavor.how}.`
+  }
+
+  // Fallback: catálogo natal de planeta-no-signo.
+  return resolvePlanetInSignText(planet, sign, language)
 }

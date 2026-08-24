@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText } from '../solarReturnInterpretation'
+import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText } from '../solarReturnInterpretation'
 
 describe('resolveSolarReturnPlanetInHouseText', () => {
   it('retorna texto de RS curado em pt-BR (Sol casa 10)', () => {
@@ -57,6 +57,24 @@ describe('resolveSolarReturnPlanetInHouseText', () => {
     expect(resolveSolarReturnAspectText('Sun', 'trígono', 'Venus', 'it-IT')!).not.toMatch(/[àèìòùáéíóú]/i)
     // ponto sem domínio (Chiron) cai no fallback natal (pode ser null, não deve quebrar)
     expect(() => resolveSolarReturnAspectText('Chiron', 'trígono', 'Venus', 'pt-BR')).not.toThrow()
+  })
+
+  it('Planeta no signo do RS compõe para 10 planetas × 12 signos × 4 idiomas', () => {
+    const planets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes']
+    for (const lang of ['pt-BR', 'en-US', 'es-ES', 'it-IT']) {
+      for (const p of planets) {
+        for (const s of signs) {
+          const t = resolveSolarReturnPlanetInSignText(p, s, lang)
+          expect(t, `${lang} ${p} ${s}`).toBeTruthy()
+          expect(t!.length, `${lang} ${p} ${s}`).toBeGreaterThan(60)
+        }
+      }
+    }
+    expect(resolveSolarReturnPlanetInSignText('Sun', 'Leão', 'es-ES')!).not.toMatch(/[áéíóúñ]/i)
+    expect(resolveSolarReturnPlanetInSignText('Sun', 'Leão', 'it-IT')!).not.toMatch(/[àèìòùáéíóú]/i)
+    // Lilith cai no fallback natal sem quebrar
+    expect(() => resolveSolarReturnPlanetInSignText('Lilith', 'Áries', 'pt-BR')).not.toThrow()
   })
 
   it('es-ES sem tildes e it-IT sem acentos', () => {
