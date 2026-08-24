@@ -335,7 +335,8 @@ export default function CosmosScreen() {
         const ud: any = uSnap.data() || {}
         const currentCity = String(ud?.currentCity || '').trim()
         // Coords natais (fallback quando não há cidade atual ou o geocode falha).
-        const natalLoc = ud?.birthData?.birthLocation
+        // No doc de users o birthLocation fica no TOPO (não sob birthData).
+        const natalLoc = ud?.birthLocation || ud?.birthData?.birthLocation
         const natalCoords = (natalLoc && Number.isFinite(natalLoc.latitude) && Number.isFinite(natalLoc.longitude))
           ? { latitude: natalLoc.latitude, longitude: natalLoc.longitude }
           : null

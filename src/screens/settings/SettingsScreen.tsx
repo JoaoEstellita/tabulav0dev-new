@@ -76,6 +76,7 @@ export default function SettingsScreen() {
   const [profileName, setProfileName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
+  const [currentCity, setCurrentCity] = useState('');
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [whatsappOptIn, setWhatsappOptIn] = useState(false);
   const [birthLocation, setBirthLocation] = useState<{
@@ -134,6 +135,7 @@ export default function SettingsScreen() {
     whatsappPhone: string;
     birthLocation: typeof birthLocation;
     locationQuery: string;
+    currentCity: string;
     photo: string | null;
   } | null>(null);
 
@@ -610,6 +612,7 @@ export default function SettingsScreen() {
       setProfileName(data.displayName || data.fullName || user.email?.split("@")[0] || "");
       setBirthDate(data.birthDate || "");
       setBirthTime(data.birthTime || "");
+      setCurrentCity(data.currentCity || "");
       setWhatsappPhone(data.whatsappPhone || "");
       setWhatsappOptIn(data.whatsappOptIn === true);
       setBirthLocation(data.birthLocation || null);
@@ -789,6 +792,8 @@ export default function SettingsScreen() {
       if (birthLocation) {
         payload.birthLocation = birthLocation;
       }
+      // Cidade de moradia atual (Retorno Solar relocado + aparece na Rede).
+      payload.currentCity = currentCity.trim();
       if (normalizedBirthDate && birthTime && birthLocation?.latitude && birthLocation?.longitude) {
         payload.birthDataComplete = true;
         payload.lastBirthDataEdit = serverTimestamp();
@@ -916,6 +921,7 @@ export default function SettingsScreen() {
         setBirthTime(profileSnapshot.birthTime);
         setBirthLocation(profileSnapshot.birthLocation);
         setLocationQuery(profileSnapshot.locationQuery);
+        setCurrentCity(profileSnapshot.currentCity);
         setProfilePhoto(profileSnapshot.photo);
         setSelectedLocation(null);
       }
@@ -931,6 +937,7 @@ export default function SettingsScreen() {
       whatsappPhone,
       birthLocation,
       locationQuery,
+      currentCity,
       photo: profilePhoto,
     });
     setIsEditingProfile(true);
@@ -1498,6 +1505,13 @@ export default function SettingsScreen() {
                       ))}
                     </View>
                   )}
+                  <TextInput
+                    style={styles.input}
+                    placeholder={tr('settings.profile.currentCityPlaceholder', 'Cidade onde moro hoje (Retorno Solar e Rede)')}
+                    placeholderTextColor="#888"
+                    value={currentCity}
+                    onChangeText={setCurrentCity}
+                  />
                 </>
               ) : (
                 <>
@@ -1529,6 +1543,10 @@ export default function SettingsScreen() {
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>{t('settings.profile.labelLocation')}</Text>
                     <Text style={styles.infoValue}>{formatBirthLocation(birthLocation)}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>{tr('settings.profile.labelCurrentCity', 'Cidade atual')}</Text>
+                    <Text style={styles.infoValue}>{currentCity || t('settings.profile.notInformed')}</Text>
                   </View>
                 </>
               )}
