@@ -135,10 +135,7 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
             ) : null}
           </TouchableOpacity>
         ) : null}
-        {currentMoonSignGlyph() ? (
-          <Text style={styles.moonSignGlyph}>{currentMoonSignGlyph()}</Text>
-        ) : null}
-        <MoonPhaseButton userReady={!!user} />
+        <MoonPhaseButton userReady={!!user} signGlyph={currentMoonSignGlyph()} />
       </View>
     </View>
   )

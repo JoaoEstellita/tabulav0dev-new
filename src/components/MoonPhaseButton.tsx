@@ -79,13 +79,15 @@ type MoonDetails = {
 
 interface MoonPhaseButtonProps {
   userReady: boolean
+  /** Glyph do signo em que a Lua está agora — exibido ao lado da figura da lua. */
+  signGlyph?: string | null
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
+export default function MoonPhaseButton({ userReady, signGlyph }: MoonPhaseButtonProps) {
   const { language, t } = useAppLanguage()
   const { settings } = useUserSettings()
 
@@ -252,8 +254,11 @@ export default function MoonPhaseButton({ userReady }: MoonPhaseButtonProps) {
           onPressOut={moonPress.onPressOut}
           onPress={() => setMoonModalVisible(true)}
         >
-          <View style={styles.moonIconWrap}>
-            <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+          <View style={styles.moonIconRow}>
+            {signGlyph ? <Text style={styles.moonSignGlyph}>{signGlyph}</Text> : null}
+            <View style={styles.moonIconWrap}>
+              <MoonPhaseIcon phaseKey={moonPhaseKey as any} size={36} />
+            </View>
           </View>
           <View style={styles.moonLegend}>
             <Text style={styles.moonLegendLine1} numberOfLines={1}>
@@ -334,6 +339,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     padding: 8,
     alignItems: 'flex-end',
+  },
+  moonIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  moonSignGlyph: {
+    fontSize: 20,
+    color: '#FFD700',
   },
   moonIconWrap: {
     position: 'relative',
