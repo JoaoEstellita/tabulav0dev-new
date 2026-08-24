@@ -22,6 +22,22 @@ import StarLoader from '../../components/StarLoader'
 import type { RealPlanetPosition } from '../../services/astrology/RealAstrologyEngine'
 import AspectGrid from '../../components/AspectGrid'
 import { aspectBetween } from '../../utils/nodeAspects'
+import { translatePlanet } from '../../utils/astro/pt'
+import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
+import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
+
+// Nome de planeta a partir da chave normalizada do cellId (sun→Sun).
+const CAP_PLANET: Record<string, string> = {
+  sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars',
+  jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto',
+  northnode: 'NorthNode', southnode: 'SouthNode', ascendant: 'Ascendant', midheaven: 'Midheaven',
+}
+const ASPECT_PT: Record<string, string> = {
+  conjuncao: 'conjunção', conjunction: 'conjunção', sextil: 'sextil', sextile: 'sextil',
+  quadratura: 'quadratura', square: 'quadratura', trigono: 'trígono', trine: 'trígono',
+  oposicao: 'oposição', opposition: 'oposição', quincuncio: 'quincúncio', quincunx: 'quincúncio',
+}
+const aspectLabelPt = (t: string) => ASPECT_PT[String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')] || t
 
 // ─── Símbolos ──────────────────────────────────────────────────────────────
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -143,6 +159,35 @@ type ChartContentProps = {
 export function NatalChartWheelContent({ transitData, loading, showLegend = true, chartMeta, showTransits = false, onSelectTransitAspect, onSelectNatalAspect }: ChartContentProps) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
+  // Modal de interpretação do aspecto clicado na grade — abre no lugar, sem rolar.
+  const [aspectModal, setAspectModal] = useState<{ title: string; subtitle: string; body: string } | null>(null)
+  const openNatalAspectModal = React.useCallback((a: { planet1: string; planet2: string; type: string }) => {
+    if (!a) return
+    const body = resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
+      || resolveNatalPlanetAspectText(a.planet2, a.type, a.planet1, language)
+    if (!body) return
+    setAspectModal({
+      title: `${translatePlanet(a.planet1, language)} ${aspectLabelPt(a.type)} ${translatePlanet(a.planet2, language)}`,
+      subtitle: language === 'en-US' ? 'Natal aspect' : language === 'es-ES' ? 'Aspecto natal' : language === 'it-IT' ? 'Aspetto natale' : 'Aspecto natal',
+      body,
+    })
+  }, [language])
+  const openTransitAspectModal = React.useCallback((cellId: string) => {
+    // cellId = txr-<transito>-<tipo>-<natal>
+    const parts = String(cellId || '').split('-')
+    if (parts.length < 4) return
+    const [, tRaw, aRaw, nRaw] = parts
+    const transitPlanet = CAP_PLANET[tRaw] || tRaw
+    const natalPlanet = CAP_PLANET[nRaw] || nRaw
+    const narrative = buildUnifiedTransitNarrative({ transitPlanet, natalPlanet, type: aRaw, aspectName: aRaw } as any, null, language)
+    const body = (narrative?.modalBody || narrative?.shortText || '').trim()
+    if (!body) return
+    setAspectModal({
+      title: `${translatePlanet(transitPlanet, language)} ${aspectLabelPt(aRaw)} ${translatePlanet(natalPlanet, language)}`,
+      subtitle: language === 'en-US' ? 'Personal transit' : language === 'es-ES' ? 'Tránsito personal' : language === 'it-IT' ? 'Transito personale' : 'Trânsito pessoal',
+      body,
+    })
+  }, [language])
   const { width } = useWindowDimensions()
 
   const [selectedPlanet, setSelectedPlanet] = useState<RealPlanetPosition | null>(null)
@@ -522,7 +567,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               <Text style={styles.aspectGridTitle}>
                 {tl('Trânsitos sobre o natal', 'Transits to natal', 'Tránsitos sobre el natal', 'Transiti sul natale')}
               </Text>
-              <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={onSelectTransitAspect} />
+              <AspectGrid cross rowPlanets={transitGridPoints} colPlanets={natalGridPoints} aspects={tnAspectsWithNodes} onSelectCell={openTransitAspectModal} />
             </View>
           ) : null
         ) : natalPlanets.length >= 2 && natalAspectsWithNodes.length > 0 ? (
@@ -531,7 +576,7 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
               {tl('Grade de aspectos', 'Aspect grid', 'Rejilla de aspectos', 'Griglia degli aspetti')}
             </Text>
             {/* natalGridPoints inclui só ☊ (o eixo) → a grade mostra os aspectos do nódulo sem duplicar */}
-            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={onSelectNatalAspect} />
+            <AspectGrid planets={natalGridPoints} aspects={natalAspectsWithNodes} onSelectAspect={openNatalAspectModal} />
           </View>
         ) : null}
 
@@ -557,6 +602,22 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
           ))}
         </View>
         ) : null}
+
+      {/* Modal de interpretação do aspecto clicado na grade */}
+      <Modal visible={aspectModal != null} transparent animationType="fade" onRequestClose={() => setAspectModal(null)}>
+        <View style={styles.aspectModalOverlay}>
+          <View style={styles.aspectModalCard}>
+            <Text style={styles.aspectModalTitle}>{aspectModal?.title}</Text>
+            <Text style={styles.aspectModalSubtitle}>{aspectModal?.subtitle}</Text>
+            <ScrollView style={{ maxHeight: 320 }}>
+              <Text style={styles.aspectModalBody}>{aspectModal?.body}</Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.aspectModalClose} onPress={() => setAspectModal(null)}>
+              <Text style={styles.aspectModalCloseText}>{language === 'en-US' ? 'Close' : language === 'es-ES' ? 'Cerrar' : language === 'it-IT' ? 'Chiudi' : 'Fechar'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal de detalhe do planeta */}
       <Modal
@@ -609,6 +670,13 @@ export default function NatalChartWheelScreen() {
 }
 
 const styles = StyleSheet.create({
+  aspectModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 22 },
+  aspectModalCard: { backgroundColor: '#161728', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  aspectModalTitle: { color: '#EDEBF7', fontSize: 19, fontWeight: '800' },
+  aspectModalSubtitle: { color: '#9A9CB8', fontSize: 12.5, marginTop: 3, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 },
+  aspectModalBody: { color: '#cfc3ee', fontSize: 14.5, lineHeight: 22 },
+  aspectModalClose: { backgroundColor: '#FFD700', borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 16 },
+  aspectModalCloseText: { color: '#1a1405', fontWeight: '800', fontSize: 15 },
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#8892a4', fontSize: 14 },
