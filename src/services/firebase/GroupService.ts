@@ -70,6 +70,7 @@ export interface GroupMember {
   notifiedLifeAreas?: string[]
   shareEnabled?: boolean
   shareStatus?: boolean
+  shareChart?: boolean
   lifeAreas?: Record<string, { percentage: number; status: string; influences?: string[]; mainPlanets?: string[] }>
   areaTransits?: Record<string, Array<{
     transitPlanet: string
@@ -113,6 +114,7 @@ export interface GroupMemberSettings {
   sharedLifeAreas: string[]
   notifiedLifeAreas: string[]
   shareStatus?: boolean
+  shareChart?: boolean
   cooldownMinutes?: number
   lastAlertByArea?: Record<string, any>
   enabled?: boolean
@@ -891,6 +893,7 @@ class GroupService {
       sharedLifeAreas: string[]
       notifiedLifeAreas: string[]
       shareStatus?: boolean
+      shareChart?: boolean
       cooldownMinutes?: number
       enabled?: boolean
       types?: GroupMemberSettings['types']
@@ -905,6 +908,7 @@ class GroupService {
       sharedLifeAreas: settings.sharedLifeAreas || this.LIFE_AREAS,
       notifiedLifeAreas: settings.notifiedLifeAreas || this.LIFE_AREAS,
       shareStatus: settings.shareStatus ?? true,
+      shareChart: settings.shareChart ?? true,
       cooldownMinutes: settings.cooldownMinutes ?? 0,
       enabled: settings.enabled ?? true,
       types: settings.types || null,

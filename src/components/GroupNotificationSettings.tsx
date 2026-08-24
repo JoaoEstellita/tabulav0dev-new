@@ -73,6 +73,7 @@ export interface GroupNotificationSettings {
     endTime: string
   }
   shareStatus: boolean
+  shareChart: boolean
   cooldownMinutes: number
   priority: 'all' | 'critical_only' | 'none'
 }
@@ -116,6 +117,7 @@ const defaultSettings: GroupNotificationSettings = {
     endTime: '07:00',
   },
   shareStatus: true,
+  shareChart: true,
   cooldownMinutes: 0,
   priority: 'all',
 }
@@ -197,6 +199,7 @@ export default function GroupNotificationSettings({
         schedule: { ...defaultSettings.schedule, ...(memberSettings?.schedule || {}) },
         priority: memberSettings?.priority || defaultSettings.priority,
         shareStatus: memberSettings?.shareStatus ?? defaultSettings.shareStatus,
+        shareChart: memberSettings?.shareChart ?? defaultSettings.shareChart,
         cooldownMinutes: memberSettings?.cooldownMinutes ?? defaultSettings.cooldownMinutes,
         customAlertMessages: buildMessageState(memberSettings?.customAlertMessages),
         sharedLifeAreas: buildLifeAreasState(sharedLifeAreas),
@@ -271,6 +274,7 @@ export default function GroupNotificationSettings({
         schedule: settings.schedule,
         priority: settings.priority,
         shareStatus: settings.shareStatus,
+        shareChart: settings.shareChart,
         cooldownMinutes: settings.cooldownMinutes,
         customAlertMessages: settings.customAlertMessages,
       })
@@ -398,6 +402,21 @@ export default function GroupNotificationSettings({
                 onValueChange={(value) => updateSettings({ shareStatus: value })}
                 trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
                 thumbColor={settings.shareStatus ? '#000' : '#f4f3f4'}
+              />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Compartilhar mapa completo</Text>
+                <Text style={styles.settingDescription}>
+                  Permitir que membros abram seu mapa natal, trânsitos e sinastria neste grupo
+                </Text>
+              </View>
+              <Switch
+                value={settings.shareChart}
+                onValueChange={(value) => updateSettings({ shareChart: value })}
+                trackColor={{ false: '#3e3e3e', true: '#FFD700' }}
+                thumbColor={settings.shareChart ? '#000' : '#f4f3f4'}
               />
             </View>
 
