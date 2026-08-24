@@ -6,7 +6,7 @@
  * escrever nada no doc dele). Privacidade: só chega aqui quem já compartilhou o
  * nascimento no grupo (o botão de entrada é gated por birthData presente).
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -35,6 +35,38 @@ export default function MemberProfileScreen() {
   const birth = member?.birthData
   const [data, setData] = useState<LocalTransitData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [westMode, setWestMode] = useState<'natal' | 'transitos'>('natal')
+
+  // Grade clicável → rola até a leitura do planeta no perfil abaixo (measureLayout,
+  // robusto web+APK). Mesmo mecanismo da aba Mapa e da Home.
+  const scrollRef = useRef<ScrollView>(null)
+  const anchorsRef = useRef<Record<string, any>>({})
+  const registerAnchor = useCallback((key: string, node: any) => {
+    if (node) anchorsRef.current[key] = node
+    else delete anchorsRef.current[key]
+  }, [])
+  const scrollToAnchor = useCallback((key: string) => {
+    const node = anchorsRef.current[key]
+    const scroll = scrollRef.current as any
+    if (!node || !scroll) return
+    try {
+      const scrollNode = scroll.getScrollableNode ? scroll.getScrollableNode() : scroll
+      node.measureLayout(scrollNode, (_x: number, y: number) => scroll.scrollTo({ y: Math.max(0, y - 12), animated: true }), () => { })
+    } catch { }
+  }, [])
+  // O AstroProfileContent registra as âncoras como 'planet:Sun' (EN capitalizado).
+  const PERSONAL_SET = useRef(new Set(['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'])).current
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
+  const handleSelectNatalAspect = useCallback((a: { planet1: string; planet2: string; type: string }) => {
+    if (!a) return
+    const target = PERSONAL_SET.has(a.planet1) ? a.planet1 : PERSONAL_SET.has(a.planet2) ? a.planet2 : a.planet1
+    scrollToAnchor(`planet:${target}`)
+  }, [scrollToAnchor, PERSONAL_SET])
+  const handleSelectTransitAspect = useCallback((cellId: string) => {
+    // cellId = txr-<transito>-<tipo>-<natal> (lowercase); a âncora é 'planet:Sun'.
+    const natal = (cellId || '').split('-').pop() || ''
+    if (natal) scrollToAnchor(`planet:${cap(natal)}`)
+  }, [scrollToAnchor])
 
   const chartMeta = useMemo(() => {
     const bd = LocalAstrologyService.birthDataFromShared(birth)
@@ -80,7 +112,7 @@ export default function MemberProfileScreen() {
 
   return (
     <LinearGradient colors={['#0F0F23', '#1a1a2e']} style={styles.fill}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           {member?.profilePhoto
             ? <Image source={{ uri: member.profilePhoto }} style={styles.avatar} />
@@ -92,14 +124,18 @@ export default function MemberProfileScreen() {
           <View style={styles.center}><StarLoader /></View>
         ) : (
           <>
-            <TouchableOpacity style={styles.transitBtn} activeOpacity={0.85} onPress={() => navigation.navigate('PersonalTransits', { member })}>
-              <Ionicons name="planet-outline" size={18} color="#0F0F23" />
-              <Text style={styles.transitBtnText}>{tl(`Trânsitos de ${firstName}`, `${firstName}'s transits`, `Tránsitos de ${firstName}`, `Transiti di ${firstName}`)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#0F0F23" />
-            </TouchableOpacity>
+            {/* Toggle Natal ↔ Trânsitos — mesma experiência do mapa do usuário. */}
+            <View style={styles.modeToggle}>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'natal' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('natal')}>
+                <Text style={[styles.modeBtnText, westMode === 'natal' && styles.modeBtnTextActive]}>{tl('Natal', 'Natal', 'Natal', 'Natale')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
+                <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
+              </TouchableOpacity>
+            </View>
 
-            <NatalChartWheelContent transitData={data} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
-            <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} />
+            <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+            <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
             <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
           </>
         )}
@@ -118,9 +154,12 @@ const styles = StyleSheet.create({
   avatarFallback: { alignItems: 'center', justifyContent: 'center' },
   avatarInitial: { color: '#FFD700', fontSize: 20, fontWeight: '700' },
   name: { color: '#F8FAFC', fontSize: 20, fontWeight: '700', flex: 1 },
-  transitBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-    backgroundColor: '#FFD700', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16,
+  modeToggle: {
+    flexDirection: 'row', alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 22, padding: 3, marginTop: 4, marginBottom: 12,
   },
-  transitBtnText: { color: '#0F0F23', fontSize: 14, fontWeight: '700' },
+  modeBtn: { paddingHorizontal: 22, paddingVertical: 7, borderRadius: 20 },
+  modeBtnActive: { backgroundColor: '#FFD700' },
+  modeBtnText: { color: '#8892a4', fontSize: 13, fontWeight: '700' },
+  modeBtnTextActive: { color: '#1A1A1A' },
 })
