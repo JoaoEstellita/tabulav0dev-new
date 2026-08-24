@@ -110,11 +110,16 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [selectedArea, setSelectedArea] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
-  // A roda (SVG pesado) só monta após as interações, pra não atrasar a abertura da Home.
+  // A roda (SVG pesado) monta logo após a Home abrir, pra não atrasar a 1ª pintura.
+  // InteractionManager pode nunca resolver se algo fica animando na tela, então há
+  // um fallback por tempo — garante que a roda aparece de qualquer forma.
   const [wheelReady, setWheelReady] = useState(false)
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setWheelReady(true))
-    return () => task.cancel()
+    let done = false
+    const mark = () => { if (!done) { done = true; setWheelReady(true) } }
+    const task = InteractionManager.runAfterInteractions(mark)
+    const timer = setTimeout(mark, 600)
+    return () => { done = true; task.cancel(); clearTimeout(timer) }
   }, [])
   const scrollRef = useRef<ScrollView>(null)
   const [showTop, setShowTop] = useState(false)
