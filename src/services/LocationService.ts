@@ -21,8 +21,31 @@ const COMMON_COUNTRY_CODES = [
   'PH', 'MY', 'SG', 'AE', 'SA', 'ZA', 'EG', 'NG', 'MA', 'IL',
 ] as const
 
+// Países suportados no app: todas as Américas (Norte/Central/Sul/Caribe) + Itália,
+// Espanha e Portugal. Usado nos seletores de país (onboarding + Configurações).
+export const SUPPORTED_COUNTRY_CODES = [
+  // América do Norte
+  'CA', 'US', 'MX',
+  // América Central
+  'BZ', 'CR', 'SV', 'GT', 'HN', 'NI', 'PA',
+  // Caribe
+  'AG', 'BS', 'BB', 'CU', 'DM', 'DO', 'GD', 'HT', 'JM', 'KN', 'LC', 'VC', 'TT', 'PR',
+  // América do Sul
+  'AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'GY', 'PY', 'PE', 'SR', 'UY', 'VE',
+  // Europa (mercado do app)
+  'IT', 'ES', 'PT',
+] as const
+
 const CAPITAL_HINT_BY_COUNTRY: Record<string, string> = {
   BR: 'Sao Paulo',
+  // Américas/Caribe (capitais/maiores cidades p/ busca com query vazia)
+  BZ: 'Belmopan', CR: 'San Jose',
+  SV: 'San Salvador', GT: 'Guatemala City', HN: 'Tegucigalpa', NI: 'Managua',
+  PA: 'Panama City', AG: "Saint John's", BS: 'Nassau', BB: 'Bridgetown',
+  CU: 'La Habana', DM: 'Roseau', DO: 'Santo Domingo', GD: "Saint George's",
+  HT: 'Port-au-Prince', JM: 'Kingston', KN: 'Basseterre', LC: 'Castries',
+  VC: 'Kingstown', TT: 'Port of Spain', PR: 'San Juan', BO: 'La Paz',
+  EC: 'Quito', GY: 'Georgetown', PY: 'Asuncion', SR: 'Paramaribo', VE: 'Caracas',
   US: 'New York',
   ES: 'Madrid',
   IT: 'Rome',
@@ -159,6 +182,25 @@ class LocationService {
         return name.includes(normalizedQuery) || option.code.toLowerCase().includes(normalizedQuery)
       })
       .slice(0, 80)
+  }
+
+  /**
+   * Países suportados pelo app (Américas + IT/ES/PT), com bandeira e nome traduzido.
+   * Filtra por `query` (nome ou código). Ordenado por nome no idioma.
+   */
+  async getSupportedCountries(query = '', language = 'pt-BR'): Promise<CountryOption[]> {
+    const base = SUPPORTED_COUNTRY_CODES.map((code) => ({
+      code,
+      name: this.getCountryDisplayName(code, language),
+      flag: this.codeToFlag(code),
+    })).sort((a, b) => a.name.localeCompare(b.name, language))
+
+    const normalizedQuery = this.normalizeText(query || '')
+    if (!normalizedQuery) return base
+    return base.filter((option) => {
+      const name = this.normalizeText(option.name)
+      return name.includes(normalizedQuery) || option.code.toLowerCase().includes(normalizedQuery)
+    })
   }
 
   async searchLocations(query: string, countryCode = 'BR', language = 'pt-BR'): Promise<LocationSuggestion[]> {

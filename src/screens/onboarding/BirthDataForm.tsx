@@ -250,7 +250,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
   const loadCountryOptions = async (query = '') => {
     setSearchingCountry(true)
     try {
-      const options = await LocationService.getCountries(query, formData.language)
+      const options = await LocationService.getSupportedCountries(query, formData.language)
       setCountryOptions(options)
       if (!selectedCountry) {
         let initial: CountryOption | undefined
@@ -331,7 +331,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
     if (!selectedCountry?.code) return
     const syncSelectedCountryName = async () => {
       try {
-        const options = await LocationService.getCountries('', formData.language)
+        const options = await LocationService.getSupportedCountries('', formData.language)
         const translated = options.find((item) => item.code === selectedCountry.code)
         if (!translated) return
         setSelectedCountry(translated)
@@ -410,7 +410,7 @@ export default function BirthDataForm({ onComplete, loading = false }: BirthData
         // País (só se ainda não escolhido)
         if (!selectedCountry && region.length === 2) {
           try {
-            const countries = await LocationService.getCountries('', formData.language)
+            const countries = await LocationService.getSupportedCountries('', formData.language)
             const match = countries.find((c) => c.code === region)
             if (match) {
               setSelectedCountry(match)

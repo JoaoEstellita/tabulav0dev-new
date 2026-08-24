@@ -344,7 +344,13 @@ export default function CosmosScreen() {
 
         let coords: { latitude: number; longitude: number } | null = null
         let relocated = false // true = calculado na cidade atual; false = no nascimento
-        if (currentCity) {
+        // Preferência: currentLocation já tem coords geocodadas (seleção no perfil) →
+        // sem geocode em runtime, não trava. Legado (só string currentCity) → geocoda.
+        const cl = ud?.currentLocation
+        if (cl && Number.isFinite(cl.latitude) && Number.isFinite(cl.longitude)) {
+          coords = { latitude: cl.latitude, longitude: cl.longitude }
+          relocated = true
+        } else if (currentCity) {
           try {
             const LocationService = (await import('../../services/LocationService')).default
             const results = await withTimeout(LocationService.searchLocations(currentCity), 8000)

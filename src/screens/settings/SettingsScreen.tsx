@@ -40,6 +40,7 @@ import { collection, doc, getDoc, getDocs, limit, query, setDoc, updateDoc, serv
 import { db } from '../../config/firebase';
 import { backendFetch } from '../../services/backend/client';
 import LocationService, { type LocationSuggestion } from '../../services/LocationService';
+import LocationField, { type PickedLocation } from '../../components/LocationField';
 import { openWhatsAppAgent } from '../../utils/whatsappAgent';
 
 const { width } = Dimensions.get('window');
@@ -77,6 +78,7 @@ export default function SettingsScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('');
   const [currentCity, setCurrentCity] = useState('');
+  const [currentLocation, setCurrentLocation] = useState<PickedLocation | null>(null);
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [whatsappOptIn, setWhatsappOptIn] = useState(false);
   const [birthLocation, setBirthLocation] = useState<{
@@ -136,6 +138,7 @@ export default function SettingsScreen() {
     birthLocation: typeof birthLocation;
     locationQuery: string;
     currentCity: string;
+    currentLocation: PickedLocation | null;
     photo: string | null;
   } | null>(null);
 
@@ -613,6 +616,7 @@ export default function SettingsScreen() {
       setBirthDate(data.birthDate || "");
       setBirthTime(data.birthTime || "");
       setCurrentCity(data.currentCity || "");
+      setCurrentLocation(data.currentLocation || null);
       setWhatsappPhone(data.whatsappPhone || "");
       setWhatsappOptIn(data.whatsappOptIn === true);
       setBirthLocation(data.birthLocation || null);
@@ -793,7 +797,9 @@ export default function SettingsScreen() {
         payload.birthLocation = birthLocation;
       }
       // Cidade de moradia atual (Retorno Solar relocado + aparece na Rede).
+      // currentLocation = coords já geocodadas (SR sem geocode em runtime).
       payload.currentCity = currentCity.trim();
+      if (currentLocation) payload.currentLocation = currentLocation;
       if (normalizedBirthDate && birthTime && birthLocation?.latitude && birthLocation?.longitude) {
         payload.birthDataComplete = true;
         payload.lastBirthDataEdit = serverTimestamp();
@@ -922,6 +928,7 @@ export default function SettingsScreen() {
         setBirthLocation(profileSnapshot.birthLocation);
         setLocationQuery(profileSnapshot.locationQuery);
         setCurrentCity(profileSnapshot.currentCity);
+        setCurrentLocation(profileSnapshot.currentLocation);
         setProfilePhoto(profileSnapshot.photo);
         setSelectedLocation(null);
       }
@@ -938,6 +945,7 @@ export default function SettingsScreen() {
       birthLocation,
       locationQuery,
       currentCity,
+      currentLocation,
       photo: profilePhoto,
     });
     setIsEditingProfile(true);
@@ -1483,34 +1491,38 @@ export default function SettingsScreen() {
                       />
                     </View>
                   )}
-                  <TextInput
-                    style={styles.input}
+                  <Text style={styles.helperText}>{tr('settings.profile.birthLocationLabel', 'Local de nascimento')}</Text>
+                  <LocationField
+                    value={birthLocation ? {
+                      city: birthLocation.city || '',
+                      country: birthLocation.country || '',
+                      countryCode: (birthLocation as any).countryCode || '',
+                      latitude: birthLocation.latitude as number,
+                      longitude: birthLocation.longitude as number,
+                      displayName: (birthLocation as any).displayName || locationQuery,
+                    } : null}
+                    language={language}
                     placeholder={t('settings.profile.birthLocationPlaceholder')}
-                    placeholderTextColor="#888"
-                    value={locationQuery}
-                    onChangeText={handleLocationQueryChange}
-                    onFocus={() => setShowLocationSuggestions(true)}
+                    onChange={(loc) => {
+                      setBirthLocation({
+                        city: loc.city,
+                        country: loc.country,
+                        countryCode: loc.countryCode,
+                        latitude: loc.latitude,
+                        longitude: loc.longitude,
+                        displayName: loc.displayName,
+                      } as any);
+                      setLocationQuery(loc.displayName);
+                      setSelectedLocation({ city: loc.city, country: loc.country, latitude: loc.latitude, longitude: loc.longitude, displayName: loc.displayName } as any);
+                    }}
                   />
                   <Text style={styles.helperText}>{getBirthDateFormatHint()}</Text>
-                  {showLocationSuggestions && locationSuggestions.length > 0 && (
-                    <View style={styles.suggestionsContainer}>
-                      {locationSuggestions.map((item, idx) => (
-                        <TouchableOpacity
-                          key={`${item.latitude}-${item.longitude}-${idx}`}
-                          style={styles.suggestionItem}
-                          onPress={() => handleLocationSelect(item)}
-                        >
-                          <Text style={styles.suggestionText}>{item.displayName}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                  <TextInput
-                    style={styles.input}
-                    placeholder={tr('settings.profile.currentCityPlaceholder', 'Cidade onde moro hoje (Retorno Solar e Rede)')}
-                    placeholderTextColor="#888"
-                    value={currentCity}
-                    onChangeText={setCurrentCity}
+                  <Text style={styles.helperText}>{tr('settings.profile.currentCityLabel', 'Cidade onde moro hoje (Retorno Solar e Rede)')}</Text>
+                  <LocationField
+                    value={currentLocation}
+                    language={language}
+                    placeholder={tr('settings.profile.currentCityPlaceholder', 'Cidade onde moro hoje')}
+                    onChange={(loc) => { setCurrentLocation(loc); setCurrentCity(loc.displayName); }}
                   />
                 </>
               ) : (
