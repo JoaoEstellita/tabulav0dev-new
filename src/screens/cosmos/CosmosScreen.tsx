@@ -240,7 +240,13 @@ export default function CosmosScreen() {
   const [showTop, setShowTop] = useState(false)
   const [mapMode, setMapMode] = useState<'western' | 'vedic'>('western')
   // Dentro do Ocidental: roda natal pura vs bi-roda (natal + trânsitos de agora).
-  const [westMode, setWestMode] = useState<'natal' | 'transitos'>('natal')
+  const [westMode, setWestMode] = useState<'natal' | 'transitos' | 'solar'>('natal')
+  // Retorno Solar (carga sob demanda ao entrar no modo 'solar').
+  const [srData, setSrData] = useState<any>(null)
+  const [srLoading, setSrLoading] = useState(false)
+  const [srMoment, setSrMoment] = useState<Date | null>(null)
+  const [srNeedsCity, setSrNeedsCity] = useState(false)
+  const [srError, setSrError] = useState(false)
 
   // Grade de aspectos (modo Trânsitos): tocar numa célula rola até a leitura do
   // trânsito na lista embutida abaixo e destaca o card por instantes. O scroll é
@@ -310,6 +316,33 @@ export default function CosmosScreen() {
   const ascSign = useMemo(() => {
     try { return degToSign(natalAscDeg).sign } catch { return '' }
   }, [natalAscDeg])
+
+  // Carga do Retorno Solar: só no modo 'solar', só assinante, uma vez. Geocoda a
+  // cidade atual (currentCity) → coords → computeSolarReturn. Sem cidade → aviso.
+  useEffect(() => {
+    if (westMode !== 'solar' || srData || srLoading || !isPremium) return
+    const sun = (natalPlanets as any[]).find((p) => p?.name === 'Sun')
+    const natalSunLon = typeof sun?.longitude === 'number' ? sun.longitude : null
+    if (natalSunLon == null || !user?.uid) return
+    let cancelled = false
+    ;(async () => {
+      setSrLoading(true); setSrError(false); setSrNeedsCity(false)
+      try {
+        const uSnap = await getDoc(doc(db, 'users', user.uid))
+        const currentCity = String(uSnap.data()?.currentCity || '').trim()
+        if (!currentCity) { if (!cancelled) setSrNeedsCity(true); return }
+        const LocationService = (await import('../../services/LocationService')).default
+        const results = await LocationService.searchLocations(currentCity)
+        const loc: any = results?.[0]
+        if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) { if (!cancelled) setSrNeedsCity(true); return }
+        const { LocalAstrologyService } = await import('../../services/astrology/LocalAstrologyService')
+        const { data, moment } = await LocalAstrologyService.computeSolarReturn(natalSunLon, { latitude: loc.latitude, longitude: loc.longitude })
+        if (!cancelled) { setSrData(data); setSrMoment(moment) }
+      } catch { if (!cancelled) setSrError(true) }
+      finally { if (!cancelled) setSrLoading(false) }
+    })()
+    return () => { cancelled = true }
+  }, [westMode, isPremium, natalPlanets, user?.uid, srData, srLoading])
 
   const tl = (pt: string, en: string, es: string, it: string) => {
     if (language === 'en-US') return en
@@ -437,8 +470,44 @@ export default function CosmosScreen() {
               <TouchableOpacity style={[styles.modeBtn, westMode === 'transitos' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('transitos')}>
                 <Text style={[styles.modeBtnText, westMode === 'transitos' && styles.modeBtnTextActive]}>{tl('Trânsitos', 'Transits', 'Tránsitos', 'Transiti')}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeBtn, westMode === 'solar' && styles.modeBtnActive]} activeOpacity={0.85} onPress={() => setWestMode('solar')}>
+                <Text style={[styles.modeBtnText, westMode === 'solar' && styles.modeBtnTextActive]}>{tl('Solar', 'Solar', 'Solar', 'Solare')}</Text>
+              </TouchableOpacity>
             </View>
 
+            {westMode === 'solar' ? (
+              !isPremium ? (
+                <TouchableOpacity style={styles.srLocked} activeOpacity={0.9} onPress={() => (navigation as any).navigate('Premium', { openTab: 'features' })}>
+                  <Text style={styles.srLockedTitle}>{tl('Retorno Solar', 'Solar Return', 'Retorno Solar', 'Ritorno Solare')}</Text>
+                  <Text style={styles.srLockedBody}>{tl('O mapa do seu ano astrológico — roda, grade e interpretações. Disponível para assinantes.', 'Your astrological year chart — wheel, grid and readings. For subscribers.', 'El mapa de tu año astrológico — rueda, rejilla e interpretaciones. Para suscriptores.', 'La mappa del tuo anno astrologico — ruota, griglia e letture. Per abbonati.')}</Text>
+                  <View style={styles.srLockedCta}><Text style={styles.srLockedCtaText}>{tl('Ver planos', 'See plans', 'Ver planes', 'Vedi i piani')}</Text></View>
+                </TouchableOpacity>
+              ) : srNeedsCity ? (
+                <View style={styles.srNotice}>
+                  <Text style={styles.srNoticeTitle}>{tl('Onde você mora?', 'Where do you live?', '¿Dónde vives?', 'Dove vivi?')}</Text>
+                  <Text style={styles.srNoticeBody}>{tl('O Retorno Solar é calculado no lugar onde você está no aniversário. Preencha sua cidade atual no perfil.', 'The Solar Return is cast where you are on your birthday. Set your current city in the profile.', 'El Retorno Solar se calcula donde estás en tu cumpleaños. Completa tu ciudad actual en el perfil.', 'Il Ritorno Solare si calcola dove sei al compleanno. Inserisci la tua città attuale nel profilo.')}</Text>
+                  <TouchableOpacity style={styles.srNoticeCta} onPress={() => (navigation as any).navigate('Tabs', { screen: 'Home' })}><Text style={styles.srNoticeCtaText}>{tl('Editar perfil', 'Edit profile', 'Editar perfil', 'Modifica profilo')}</Text></TouchableOpacity>
+                </View>
+              ) : srLoading || !srData ? (
+                <View style={styles.srCenter}><StarLoader /><Text style={styles.srLoadingText}>{tl('Calculando seu Retorno Solar…', 'Calculating your Solar Return…', 'Calculando tu Retorno Solar…', 'Calcolo del tuo Ritorno Solare…')}</Text></View>
+              ) : srError ? (
+                <View style={styles.srCenter}><Text style={styles.srLoadingText}>{tl('Não consegui calcular agora. Tente de novo.', 'Could not calculate now. Try again.', 'No pude calcular ahora. Intenta de nuevo.', 'Non sono riuscito a calcolare. Riprova.')}</Text></View>
+              ) : (
+                <>
+                  {srMoment ? (
+                    <Text style={styles.srCaption}>{tl(
+                      `Retorno Solar de ${srMoment.getUTCFullYear()} · exato em ${srMoment.toLocaleDateString('pt-BR')}`,
+                      `Solar Return ${srMoment.getUTCFullYear()} · exact on ${srMoment.toLocaleDateString('en-US')}`,
+                      `Retorno Solar ${srMoment.getUTCFullYear()} · exacto el ${srMoment.toLocaleDateString('es-ES')}`,
+                      `Ritorno Solare ${srMoment.getUTCFullYear()} · esatto il ${srMoment.toLocaleDateString('it-IT')}`,
+                    )}</Text>
+                  ) : null}
+                  <NatalChartWheelContent transitData={srData} loading={false} showLegend={false} chartMeta={{ skipSelfFetch: true }} />
+                  <AstroProfileContent transitData={srData} loading={false} chartMeta={{ skipSelfFetch: true }} />
+                </>
+              )
+            ) : (
+            <>
             <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits={westMode === 'transitos'} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
 
             {westMode === 'transitos' ? (
@@ -470,6 +539,8 @@ export default function CosmosScreen() {
 
                 <AstroProfileContent transitData={transitData} loading={loading} registerAnchor={registerAnchor} />
               </>
+            )}
+            </>
             )}
           </>
         )}
@@ -520,6 +591,19 @@ const styles = StyleSheet.create({
   modeBtnTextActive: {
     color: '#1A1A1A',
   },
+  srCaption: { color: '#FFD700', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginBottom: 10, marginTop: 2 },
+  srCenter: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 12 },
+  srLoadingText: { color: '#9A9CB8', fontSize: 14, textAlign: 'center' },
+  srLocked: { backgroundColor: 'rgba(255,215,0,0.06)', borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', borderRadius: 18, padding: 22, marginTop: 8, alignItems: 'center' },
+  srLockedTitle: { color: '#EDEBF7', fontSize: 20, fontWeight: '800' },
+  srLockedBody: { color: '#9A9CB8', fontSize: 13.5, textAlign: 'center', lineHeight: 20, marginTop: 8 },
+  srLockedCta: { backgroundColor: '#FFD700', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 16 },
+  srLockedCtaText: { color: '#1a1405', fontWeight: '800', fontSize: 15 },
+  srNotice: { backgroundColor: '#161728', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 18, padding: 22, marginTop: 8, alignItems: 'center' },
+  srNoticeTitle: { color: '#EDEBF7', fontSize: 18, fontWeight: '800' },
+  srNoticeBody: { color: '#9A9CB8', fontSize: 13.5, textAlign: 'center', lineHeight: 20, marginTop: 8 },
+  srNoticeCta: { backgroundColor: '#FFD700', borderRadius: 12, paddingHorizontal: 22, paddingVertical: 11, marginTop: 16 },
+  srNoticeCtaText: { color: '#1a1405', fontWeight: '800', fontSize: 14 },
   transitHint: {
     color: '#8892a4',
     fontSize: 12,
