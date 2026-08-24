@@ -10,6 +10,7 @@ import {
   Platform,
   useWindowDimensions,
   ActivityIndicator,
+  InteractionManager,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -109,6 +110,12 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [selectedArea, setSelectedArea] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
+  // A roda (SVG pesado) só monta após as interações, pra não atrasar a abertura da Home.
+  const [wheelReady, setWheelReady] = useState(false)
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setWheelReady(true))
+    return () => task.cancel()
+  }, [])
   const scrollRef = useRef<ScrollView>(null)
   const [showTop, setShowTop] = useState(false)
   const { width } = useWindowDimensions()
@@ -401,9 +408,6 @@ export default function HomeScreen() {
     )
   }
 
-  // Preenchido pelo bloco de score (que roda antes, no JSX) e lido pela legenda da roda.
-  let skyLegendData: { score: number | null; scoreColor: string; levelLabel: string | null; transitLine: string | null; countLabel: string | null } | null = null
-
   return (
     <LinearGradient colors={['#0F0F23', '#1A1A3A']} style={styles.container}>
       {/* Starfield apenas no PWA/web */}
@@ -447,58 +451,6 @@ export default function HomeScreen() {
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <NotificationOptInBanner />
 
-        {/* Score diário com explicação do trânsito mais intenso */}
-        {(backendStatusPersonal?.score != null || topTransit) && (() => {
-          const score = backendStatusPersonal?.score != null ? Math.round(backendStatusPersonal.score) : null
-          const level = backendStatusPersonal?.level || null
-          const levelLabel = level
-            ? tl(
-                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Desafiador' : 'Neutro',
-                level === 'positivo' ? 'Positive' : level === 'desafiador' ? 'Challenging' : 'Neutral',
-                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Desafiador' : 'Neutro',
-                level === 'positivo' ? 'Positivo' : level === 'desafiador' ? 'Impegnativo' : 'Neutro',
-              )
-            : null
-          const ASPECT_MAP: Record<string, Record<string, string>> = {
-            'pt-BR': { conjuncao: 'conjunção', conjunction: 'conjunção', sextil: 'sextil', sextile: 'sextil', quadratura: 'quadratura', square: 'quadratura', trigono: 'trígono', trine: 'trígono', oposicao: 'oposição', opposition: 'oposição' },
-            'en-US': { conjuncao: 'conjunction', conjunction: 'conjunction', sextil: 'sextile', sextile: 'sextile', quadratura: 'square', square: 'square', trigono: 'trine', trine: 'trine', oposicao: 'opposition', opposition: 'opposition' },
-            'es-ES': { conjuncao: 'conjunción', conjunction: 'conjunción', sextil: 'sextil', sextile: 'sextil', quadratura: 'cuadratura', square: 'cuadratura', trigono: 'trígono', trine: 'trígono', oposicao: 'oposición', opposition: 'oposición' },
-            'it-IT': { conjuncao: 'congiunzione', conjunction: 'congiunzione', sextil: 'sestile', sextile: 'sestile', quadratura: 'quadratura', square: 'quadratura', trigono: 'trigono', trine: 'trigono', oposicao: 'opposizione', opposition: 'opposizione' },
-          }
-          const aspectLabel = topTransit
-            ? (ASPECT_MAP[language] || ASPECT_MAP['pt-BR'])[topTransit.type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')] || topTransit.type
-            : null
-          const transitText = topTransit && aspectLabel
-            ? tl(
-                `${translatePlanet(topTransit.planet1, 'pt-BR')} em ${aspectLabel} com seu ${translatePlanet(topTransit.planet2, 'pt-BR')}`,
-                `${translatePlanet(topTransit.planet1, 'en-US')} in ${aspectLabel} with your ${translatePlanet(topTransit.planet2, 'en-US')}`,
-                `${translatePlanet(topTransit.planet1, 'es-ES')} en ${aspectLabel} con tu ${translatePlanet(topTransit.planet2, 'es-ES')}`,
-                `${translatePlanet(topTransit.planet1, 'it-IT')} in ${aspectLabel} con il tuo ${translatePlanet(topTransit.planet2, 'it-IT')}`,
-              )
-            : null
-          const scoreColor = score != null
-            ? (score >= 65 ? '#4CAF50' : score >= 40 ? '#FFD700' : '#FF6B6B')
-            : '#FFD700'
-          // Rótulo da seção (o card É a entrada dos Trânsitos Pessoais) + contexto:
-          // contagem do dia (canto direito) e a casa natal atingida (inline no trânsito).
-          const sectionLabel = tl('TRÂNSITOS PESSOAIS', 'PERSONAL TRANSITS', 'TRANSITOS PERSONALES', 'TRANSITI PERSONALI')
-          const countLabel = personalTransitCount > 0
-            ? tl(`${personalTransitCount} hoje`, `${personalTransitCount} today`, `${personalTransitCount} hoy`, `${personalTransitCount} oggi`)
-            : null
-          const houseSuffix = topTransit?.house != null
-            ? tl(`Casa ${topTransit.house}`, `House ${topTransit.house}`, `Casa ${topTransit.house}`, `Casa ${topTransit.house}`)
-            : null
-          const transitLine = transitText
-            ? (houseSuffix ? `${transitText} · ${houseSuffix}` : transitText)
-            : null
-          void sectionLabel
-          // A antiga barra "Trânsitos Pessoais" saiu daqui; estes valores (score,
-          // levelLabel, transitLine, countLabel) alimentam a legenda da RODA, logo
-          // abaixo dos status. Guardo-os num objeto para reusar lá.
-          skyLegendData = { score, scoreColor, levelLabel, transitLine, countLabel }
-          return null
-        })()}
-
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
           <AnimatedMount>
@@ -529,24 +481,16 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Céu de hoje: roda natal + trânsitos (toque abre a aba Mapa) + o trânsito forte do dia */}
+        {/* Céu de hoje: roda natal + trânsitos */}
         {transitData && (
           <AnimatedMount>
             <View style={styles.section}>
-              <TouchableOpacity activeOpacity={0.9} onPress={() => { try { navigation.navigate('Cosmos') } catch { } }} accessibilityRole="button" accessibilityLabel={tl('Abrir mapa natal', 'Open natal chart', 'Abrir mapa natal', 'Apri il tema natale')}>
+              {wheelReady ? (
                 <NatalChartWheelContent transitData={transitData} loading={loading} showLegend={false} showTransits />
-              </TouchableOpacity>
-              {skyLegendData && (skyLegendData.score != null || skyLegendData.transitLine) && (
-                <TouchableOpacity style={styles.skyLegend} activeOpacity={0.7} onPress={() => { try { navigation.navigate('PersonalTransits') } catch { } }}>
-                  {skyLegendData.score != null && (
-                    <Text style={[styles.skyLegendScore, { color: skyLegendData.scoreColor }]}>{skyLegendData.score}<Text style={styles.skyLegendMax}>/100</Text></Text>
-                  )}
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    {skyLegendData.levelLabel && <Text style={[styles.skyLegendLevel, { color: skyLegendData.scoreColor }]}>{skyLegendData.levelLabel}</Text>}
-                    {skyLegendData.transitLine && <Text style={styles.skyLegendTransit} numberOfLines={1}>{skyLegendData.transitLine}</Text>}
-                  </View>
-                  {skyLegendData.countLabel && <Text style={styles.skyLegendMore}>{skyLegendData.countLabel} ›</Text>}
-                </TouchableOpacity>
+              ) : (
+                // Skeleton de mesma altura: a roda (SVG pesado) só monta após as
+                // interações, pra não travar a abertura da Home. Não pula o layout.
+                <View style={styles.wheelSkeleton}><ActivityIndicator color="#FFD700" /></View>
               )}
             </View>
           </AnimatedMount>
@@ -704,6 +648,11 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+  },
+  wheelSkeleton: {
+    height: 300,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skyLegend: {
     flexDirection: 'row',
