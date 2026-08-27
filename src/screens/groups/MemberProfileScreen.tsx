@@ -16,6 +16,7 @@ import { LocalAstrologyService, type LocalTransitData } from '../../services/ast
 import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { AstroProfileContent } from '../cosmos/AstroProfileScreen'
 import { VedicProfileContent } from '../cosmos/VedicProfileContent'
+import PersonalTransitsScreen from '../transits/PersonalTransitsScreen'
 import StarLoader from '../../components/StarLoader'
 
 type SlimMember = {
@@ -235,6 +236,11 @@ export default function MemberProfileScreen() {
             ) : (
               <>
                 <NatalChartWheelContent transitData={data} loading={false} showLegend={false} showTransits={westMode === 'transitos'} chartMeta={{ skipSelfFetch: true }} onSelectTransitAspect={handleSelectTransitAspect} onSelectNatalAspect={handleSelectNatalAspect} />
+                {westMode === 'transitos' ? (
+                  // Lista de trânsitos interpretados do MEMBRO — mesma da aba Mapa.
+                  // O embedded lê route.params.member (o mesmo que abriu esta tela).
+                  <PersonalTransitsScreen embedded />
+                ) : null}
                 <AstroProfileContent transitData={data} loading={false} chartMeta={chartMeta} registerAnchor={registerAnchor} />
                 <VedicProfileContent transitData={data} loading={false} natalAscDeg={natalAscDeg} chartMeta={chartMeta} />
               </>

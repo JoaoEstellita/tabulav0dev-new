@@ -41,6 +41,7 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
   const transitData = member ? friendTransit : ownTransit
   // Título com o nome do amigo quando é a carta de outra pessoa.
   useEffect(() => {
+    if (embedded) return // embutido em outra tela (ex.: Mapa do membro) — não mexe no header
     const first = member?.displayName ? String(member.displayName).split(' ')[0] : ''
     if (!first) return
     const byLang: Record<string, string> = {
