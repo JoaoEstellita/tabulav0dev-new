@@ -19,6 +19,7 @@ import { degToSign } from '../../astro'
 import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
+import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -307,6 +308,43 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     () => resolveSignInMidheavenText(mcSign.sign, language),
     [mcSign.sign, language],
   )
+
+  // Aspectos de ASC e MC aos planetas natais — o engine não os fornece, então
+  // computamos aqui (só ângulos maiores + quincúncio, orbes conservadores) e
+  // interpretamos via composer de ponto nomeado. Só no modo natal.
+  const angularAspects = useMemo(() => {
+    if (interpMode !== 'natal') return [] as { key: string; label: string; text: string }[]
+    const angDiff = (a: number, b: number) => { const d = Math.abs((a - b) % 360); return d > 180 ? 360 - d : d }
+    const ASPECTS: { name: string; angle: number; orb: number }[] = [
+      { name: 'conjuncao', angle: 0, orb: 6 }, { name: 'oposicao', angle: 180, orb: 6 },
+      { name: 'trigono', angle: 120, orb: 5 }, { name: 'quadratura', angle: 90, orb: 5 },
+      { name: 'sextil', angle: 60, orb: 4 }, { name: 'quincuncio', angle: 150, orb: 3 },
+    ]
+    const points: { key: 'Ascendant' | 'Midheaven'; deg: number }[] = []
+    if (Number.isFinite(natalAsc)) points.push({ key: 'Ascendant', deg: natalAsc })
+    if (Number.isFinite(natalMc)) points.push({ key: 'Midheaven', deg: natalMc })
+    const out: { key: string; label: string; text: string }[] = []
+    for (const pt of points) {
+      for (const p of (natalPlanets as any[])) {
+        const lon = typeof p?.longitude === 'number' ? p.longitude : null
+        if (lon == null || p?.name === 'Lilith') continue
+        const sep = angDiff(pt.deg, lon)
+        const asp = ASPECTS.find((x) => Math.abs(sep - x.angle) <= x.orb)
+        if (!asp) continue
+        const body = resolveNamedPointAspectText(pt.key, asp.name, p.name, language)
+        if (!body) continue
+        const ptLabel = pt.key === 'Ascendant' ? tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente') : tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
+        const aspLabel = tl(
+          asp.name === 'conjuncao' ? 'conjunção' : asp.name === 'oposicao' ? 'oposição' : asp.name === 'trigono' ? 'trígono' : asp.name === 'quadratura' ? 'quadratura' : asp.name === 'sextil' ? 'sextil' : 'quincúncio',
+          asp.name === 'conjuncao' ? 'conjunction' : asp.name === 'oposicao' ? 'opposition' : asp.name === 'trigono' ? 'trine' : asp.name === 'quadratura' ? 'square' : asp.name === 'sextil' ? 'sextile' : 'quincunx',
+          asp.name === 'conjuncao' ? 'conjuncion' : asp.name === 'oposicao' ? 'oposicion' : asp.name === 'trigono' ? 'trigono' : asp.name === 'quadratura' ? 'cuadratura' : asp.name === 'sextil' ? 'sextil' : 'quincuncio',
+          asp.name === 'conjuncao' ? 'congiunzione' : asp.name === 'oposicao' ? 'opposizione' : asp.name === 'trigono' ? 'trigono' : asp.name === 'quadratura' ? 'quadratura' : asp.name === 'sextil' ? 'sestile' : 'quinconce',
+        )
+        out.push({ key: `${pt.key}-${p.name}-${asp.name}`, label: `${ptLabel} ${aspLabel} ${translatePlanetPT(p.name)}`, text: body })
+      }
+    }
+    return out
+  }, [interpMode, natalAsc, natalMc, natalPlanets, language])
 
   // Eixos completos: DSC (oposto ao ASC) e IC (oposto ao MC). Um mapa completo traz
   // os quatro ângulos; o catálogo signo-na-casa já cobre as casas 7 e 4.
@@ -735,6 +773,19 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
               <Text style={styles.angularInterpretationText}>{icText}</Text>
             </View>
           ) : null}
+          {angularAspects.length ? (
+            <View style={styles.angularAspectsBlock}>
+              <Text style={styles.angularInterpretationLabel}>
+                {tl('Aspectos aos ângulos', 'Aspects to the angles', 'Aspectos a los ángulos', 'Aspetti agli angoli')}
+              </Text>
+              {angularAspects.map((a) => (
+                <View key={a.key} style={styles.angularAspectItem}>
+                  <Text style={styles.angularAspectLabel}>{a.label}</Text>
+                  <Text style={styles.angularInterpretationText}>{a.text}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         {/* Nódulos Lunares */}
@@ -927,6 +978,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#c8d3e0',
     lineHeight: 19,
+  },
+  angularAspectsBlock: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#252b38',
+  },
+  angularAspectItem: {
+    marginBottom: 10,
+  },
+  angularAspectLabel: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#FFD700',
+    marginBottom: 3,
   },
 
   planetBlock: {

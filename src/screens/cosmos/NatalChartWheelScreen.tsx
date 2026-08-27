@@ -24,6 +24,7 @@ import AspectGrid from '../../components/AspectGrid'
 import { aspectBetween } from '../../utils/nodeAspects'
 import { translatePlanet } from '../../utils/astro/pt'
 import { resolveNatalPlanetAspectText } from '../../utils/natalInterpretation'
+import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
 import { buildUnifiedTransitNarrative } from '../../utils/astroInterpretation'
 
 // Nome de planeta a partir da chave normalizada do cellId (sun→Sun).
@@ -165,6 +166,8 @@ export function NatalChartWheelContent({ transitData, loading, showLegend = true
     if (!a) return
     const body = resolveNatalPlanetAspectText(a.planet1, a.type, a.planet2, language)
       || resolveNatalPlanetAspectText(a.planet2, a.type, a.planet1, language)
+      // Nódulos (e ASC/MC, se entrarem na grade): composer de ponto nomeado.
+      || resolveNamedPointAspectText(a.planet1, a.type, a.planet2, language)
     if (!body) return
     setAspectModal({
       title: `${translatePlanet(a.planet1, language)} ${aspectLabelPt(a.type)} ${translatePlanet(a.planet2, language)}`,
