@@ -429,6 +429,18 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-title">Custo por plano — teto (pior caso)</div>
+        ${((d.custoPorPlano && d.custoPorPlano.planos) || []).map(p => `
+          <div class="metric-row">
+            <span class="metric-label">${(p.tier || '').charAt(0).toUpperCase() + (p.tier || '').slice(1)} · ${fmtBRL(p.receitaBRL)}</span>
+            <span class="metric-value">custo ${fmtBRL(p.custoTeto.totalBRL)} · margem <b style="color:${p.margemBRL > 0 ? 'var(--ok)' : 'var(--err)'}">${fmtBRL(p.margemBRL)} (${p.margemPct}%)</b></span>
+          </div>`).join('')}
+        <div class="metric-row" style="margin-top:8px">
+          <span class="metric-label" style="font-size:11px;color:var(--muted)">Teto = cliente usa todos os limites todo dia. Só custos diretos (agente, leituras, conversas Meta). Preços unitários ajustáveis por env; a média real vem na próxima fase.</span>
+        </div>
+      </div>
+
       <!-- Sistema -->
       <div class="card">
         <div class="card-title">Sistema</div>
