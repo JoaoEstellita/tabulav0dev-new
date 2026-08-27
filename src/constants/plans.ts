@@ -12,11 +12,11 @@ export type PlanId =
 // anual no Mercado Pago (ver docs/planos-anuais-guia-pagamento.md).
 export const ANNUAL_ENABLED = true
 
-// Assinatura anual RECORRENTE (cartão, renova sozinha). Mantida FALSE até uma
-// compra real confirmar que o preapproval anual do MP fecha — o autoteste só
-// provou o PIX à vista (o recorrente exige comprador com conta MP, não dá pra
-// simular por API). Enquanto FALSE, o período anual mostra SÓ o PIX de 12 meses.
-export const ANNUAL_RECURRING_ENABLED = false
+// Assinatura anual RECORRENTE (cartão, renova sozinha). Provado em 08-27: o
+// preapproval anual do MP fecha e devolve init_point com um comprador de conta
+// MP real (o autoteste com email sintético falhava por exigência do MP, não por
+// bug). Ligado → o período anual mostra o botão "Assinar anual" (cartão) + PIX.
+export const ANNUAL_RECURRING_ENABLED = true
 
 export type PlanDefinition = {
   id: PlanId
