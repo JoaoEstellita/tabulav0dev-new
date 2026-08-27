@@ -20,6 +20,8 @@ import { translatePlanetPT } from '../../utils/astro/pt'
 import { resolveSignInMidheavenText, resolveSignInHouseText, resolvePlanetInSignText, resolveNatalPlanetInHouseText, resolveNatalPlanetAspectText, resolveLunarNodeSignText, resolveLunarNodeHouseText, resolveNatalRulerInHouseText } from '../../utils/natalInterpretation'
 import { resolveSolarReturnPlanetInHouseText, resolveSolarReturnAscendantText, resolveSolarReturnAspectText, resolveSolarReturnPlanetInSignText, resolveLunarReturnPlanetInHouseText, resolveLunarReturnAscendantText, resolveLunarReturnAspectText, resolveLunarReturnPlanetInSignText } from '../../utils/solarReturnInterpretation'
 import { resolveNamedPointAspectText } from '../../utils/pointAspectInterpretation'
+import { detectAspects } from '../../astro/aspects.engine'
+import aspectsConfig from '../../astro/aspects.config'
 import { normalizeSign } from '../../astro/normalize'
 import { getPlanetMeaning } from '../../data/planetMeaning'
 import { getPlanetImageUri, type PlanetKey } from '../../config/planetImageSource'
@@ -309,39 +311,39 @@ export function AstroProfileContent({ transitData, loading, registerAnchor, char
     [mcSign.sign, language],
   )
 
-  // Aspectos de ASC e MC aos planetas natais — o engine não os fornece, então
-  // computamos aqui (só ângulos maiores + quincúncio, orbes conservadores) e
-  // interpretamos via composer de ponto nomeado. Só no modo natal.
+  // Aspectos de ASC e MC aos planetas natais — o engine natal não os inclui, então
+  // rodamos o MESMO detectAspects (orbes oficiais do app: conj/opp 9°, trígono 8°,
+  // quadratura 6°, sextil 5°, quincúncio 5°) só para os ângulos, e interpretamos via
+  // composer de ponto nomeado. Só no modo natal. Aspectos menores caem fora (o
+  // composer só cobre os 6 maiores → retorna null → filtrados).
   const angularAspects = useMemo(() => {
     if (interpMode !== 'natal') return [] as { key: string; label: string; text: string }[]
-    const angDiff = (a: number, b: number) => { const d = Math.abs((a - b) % 360); return d > 180 ? 360 - d : d }
-    const ASPECTS: { name: string; angle: number; orb: number }[] = [
-      { name: 'conjuncao', angle: 0, orb: 6 }, { name: 'oposicao', angle: 180, orb: 6 },
-      { name: 'trigono', angle: 120, orb: 5 }, { name: 'quadratura', angle: 90, orb: 5 },
-      { name: 'sextil', angle: 60, orb: 4 }, { name: 'quincuncio', angle: 150, orb: 3 },
-    ]
-    const points: { key: 'Ascendant' | 'Midheaven'; deg: number }[] = []
-    if (Number.isFinite(natalAsc)) points.push({ key: 'Ascendant', deg: natalAsc })
-    if (Number.isFinite(natalMc)) points.push({ key: 'Midheaven', deg: natalMc })
+    const angLabelMap: Record<string, [string, string, string, string]> = {
+      'conjunção': ['conjunção', 'conjunction', 'conjuncion', 'congiunzione'],
+      'oposição': ['oposição', 'opposition', 'oposicion', 'opposizione'],
+      'trígono': ['trígono', 'trine', 'trigono', 'trigono'],
+      'quadratura': ['quadratura', 'square', 'cuadratura', 'quadratura'],
+      'sextil': ['sextil', 'sextile', 'sextil', 'sestile'],
+      'quincúncio': ['quincúncio', 'quincunx', 'quincuncio', 'quinconce'],
+    }
+    const angles: { name: string; longitude: number }[] = []
+    if (Number.isFinite(natalAsc)) angles.push({ name: 'Ascendant', longitude: natalAsc })
+    if (Number.isFinite(natalMc)) angles.push({ name: 'Midheaven', longitude: natalMc })
+    if (!angles.length) return []
+    const planetsInput = (natalPlanets as any[])
+      .filter((p) => typeof p?.longitude === 'number' && p?.name !== 'Lilith')
+      .map((p) => ({ name: p.name as string, longitude: p.longitude as number }))
+    const detected = detectAspects(angles, planetsInput, aspectsConfig as any)
     const out: { key: string; label: string; text: string }[] = []
-    for (const pt of points) {
-      for (const p of (natalPlanets as any[])) {
-        const lon = typeof p?.longitude === 'number' ? p.longitude : null
-        if (lon == null || p?.name === 'Lilith') continue
-        const sep = angDiff(pt.deg, lon)
-        const asp = ASPECTS.find((x) => Math.abs(sep - x.angle) <= x.orb)
-        if (!asp) continue
-        const body = resolveNamedPointAspectText(pt.key, asp.name, p.name, language)
-        if (!body) continue
-        const ptLabel = pt.key === 'Ascendant' ? tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente') : tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
-        const aspLabel = tl(
-          asp.name === 'conjuncao' ? 'conjunção' : asp.name === 'oposicao' ? 'oposição' : asp.name === 'trigono' ? 'trígono' : asp.name === 'quadratura' ? 'quadratura' : asp.name === 'sextil' ? 'sextil' : 'quincúncio',
-          asp.name === 'conjuncao' ? 'conjunction' : asp.name === 'oposicao' ? 'opposition' : asp.name === 'trigono' ? 'trine' : asp.name === 'quadratura' ? 'square' : asp.name === 'sextil' ? 'sextile' : 'quincunx',
-          asp.name === 'conjuncao' ? 'conjuncion' : asp.name === 'oposicao' ? 'oposicion' : asp.name === 'trigono' ? 'trigono' : asp.name === 'quadratura' ? 'cuadratura' : asp.name === 'sextil' ? 'sextil' : 'quincuncio',
-          asp.name === 'conjuncao' ? 'congiunzione' : asp.name === 'oposicao' ? 'opposizione' : asp.name === 'trigono' ? 'trigono' : asp.name === 'quadratura' ? 'quadratura' : asp.name === 'sextil' ? 'sestile' : 'quinconce',
-        )
-        out.push({ key: `${pt.key}-${p.name}-${asp.name}`, label: `${ptLabel} ${aspLabel} ${translatePlanetPT(p.name)}`, text: body })
-      }
+    for (const d of detected) {
+      const body = resolveNamedPointAspectText(d.planet1, d.type, d.planet2, language)
+      if (!body) continue // aspecto menor (semissextil etc.) não tem composer → pula
+      const ptLabel = d.planet1 === 'Ascendant'
+        ? tl('Ascendente', 'Ascendant', 'Ascendente', 'Ascendente')
+        : tl('Meio do Céu', 'Midheaven', 'Medio Cielo', 'Medio Cielo')
+      const lbl = angLabelMap[d.type as string]
+      const aspLabel = lbl ? tl(lbl[0], lbl[1], lbl[2], lbl[3]) : String(d.type)
+      out.push({ key: `${d.planet1}-${d.planet2}-${d.type}`, label: `${ptLabel} ${aspLabel} ${translatePlanetPT(d.planet2)}`, text: body })
     }
     return out
   }, [interpMode, natalAsc, natalMc, natalPlanets, language])
