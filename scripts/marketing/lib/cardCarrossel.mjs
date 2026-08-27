@@ -56,7 +56,7 @@ export function montarSlideCard(slide) {
   .veu{inset:0;background:linear-gradient(180deg,rgba(11,14,34,.12) 0%,rgba(11,14,34,.34) 46%,rgba(11,14,34,.82) 74%,rgba(11,14,34,.95) 100%)}
   .glow{left:50%;top:8cqw;width:96cqw;height:70cqw;transform:translateX(-50%);
     background:radial-gradient(ellipse at center,color-mix(in srgb,${OURO} 24%,transparent) 0%,color-mix(in srgb,${OURO} 8%,transparent) 34%,rgba(11,14,34,0) 62%);opacity:.5}
-  .figura{z-index:1;top:11cqw;left:50%;transform:translateX(-50%);width:56cqw;height:56cqw;display:grid;place-items:center}
+  .figura{z-index:1;top:11cqw;left:50%;transform:translateX(-50%);width:56cqw;height:56cqw;display:grid;place-items:center;color:color-mix(in srgb,${OURO} 62%,transparent)}
   .figura svg{width:100%;height:auto;filter:drop-shadow(0 1cqw 4cqw rgba(0,0,0,.5))}
   .selo{z-index:1;top:50%;left:50%;width:74cqw;height:74cqw;transform:translate(-50%,-50%);opacity:.14}
   .selo svg{width:100%;height:100%}
