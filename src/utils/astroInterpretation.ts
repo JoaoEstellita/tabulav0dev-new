@@ -1,5 +1,6 @@
 import { hasMojibake } from './textNormalize'
 import { normalizeLanguage, type AppLanguage } from '../i18n/appI18n'
+import { LUNAR_HOUSE_AREA } from '../data/lunarReturnHouseArea'
 import { TRANSIT_CATALOG_PTBR } from '../data/transitCatalogPtBR'
 import { TRANSIT_CATALOG_PTBR_OVERRIDES } from '../data/transitCatalogOverridesPtBR'
 import { TRANSIT_CATALOG_I18N_OVERRIDES } from '../data/transitCatalogOverridesI18n'
@@ -1425,9 +1426,21 @@ export function buildUnifiedTransitNarrative(
   const modalIntro = directText
 
   const metaParts = [`${tx.phasePrefix}: ${phaseLabel}.`, scoreLink]
+  // CLAREZA + CASA: costura, no fim da interpretação, a ÁREA da vida que o trânsito
+  // acende (Casa natal do ponto ativado) — traduz o abstrato em concreto pro leigo,
+  // sem reescrever o catálogo. Aplica-se a TODOS os trânsitos que tenham casa.
+  const houseArea = (house && house >= 1 && house <= 12)
+    ? (LUNAR_HOUSE_AREA[lang]?.[house]?.area || LUNAR_HOUSE_AREA['pt-BR']?.[house]?.area || null)
+    : null
+  const houseSentence = houseArea
+    ? (lang === 'en-US' ? `In practice, this stirs the area of your House ${house} — ${houseArea}.`
+      : lang === 'es-ES' ? `En la practica, esto mueve el area de tu Casa ${house} — ${houseArea}.`
+      : lang === 'it-IT' ? `In pratica, questo muove l'area della tua Casa ${house} — ${houseArea}.`
+      : `Na prática, isso mexe na área da sua Casa ${house} — ${houseArea}.`)
+    : ''
   // Keep the opened modal semantically identical to the inline transit copy.
   // Additional context must stay in action/meta blocks, not by changing the core narrative body.
-  const modalBody = directText
+  const modalBody = houseSentence ? `${directText} ${houseSentence}` : directText
 
   return {
     transitKey,
