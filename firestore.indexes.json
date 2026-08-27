@@ -125,6 +125,14 @@
         { "fieldPath": "nameTokens", "arrayConfig": "CONTAINS" },
         { "fieldPath": "sunSign", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "credits_history",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [
