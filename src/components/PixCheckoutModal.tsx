@@ -13,7 +13,7 @@ import { useAppLanguage } from "../hooks/useAppLanguage"
  * Gera o copia-e-cola + QR, e libera o plano sozinho (poll no sync que já busca o
  * pagamento aprovado do usuário no MP).
  */
-type PlanLite = { id: string; name: string; price: number }
+type PlanLite = { id: string; name: string; price: number; months?: number }
 type Props = {
   visible: boolean
   onClose: () => void
@@ -49,7 +49,7 @@ export default function PixCheckoutModal({ visible, onClose, plan, userId, email
     ;(async () => {
       try {
         const r = await createPixPayment({
-          userId, planId: plan.id, months: 1, amount: plan.price,
+          userId, planId: plan.id, months: plan.months || 1, amount: plan.price,
           payerEmail: email, payerName: name, description: plan.name,
         })
         if (!active) return

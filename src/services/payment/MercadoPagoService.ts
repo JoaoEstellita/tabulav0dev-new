@@ -99,12 +99,12 @@ export class MercadoPagoService {
 
   static readonly PLANS: SubscriptionPlan[] = PLAN_DEFINITIONS.map((plan) => ({
     id: plan.id,
-    name: `${plan.name} Mensal`,
+    name: `${plan.name} ${plan.billingPeriod === 'yearly' ? 'Anual' : 'Mensal'}`,
     description: plan.features[0] || 'Plano premium',
     price: plan.price,
     currency: 'BRL',
-    frequency: 'monthly',
-    duration: 1,
+    frequency: plan.billingPeriod,
+    duration: plan.months,
     trialDays: 7,
     features: plan.features,
   }))
@@ -175,7 +175,7 @@ export class MercadoPagoService {
    * Assinatura RECORRENTE (MP PreApproval) — cobra o cartão todo mês. Devolve o
    * init_point pra abrir o checkout onde a pessoa autoriza o cartão.
    */
-  static async createPreapproval(data: { userId: string; planId: string; amount: number; email: string; name?: string; description?: string }): Promise<{ init_point?: string; id?: string }> {
+  static async createPreapproval(data: { userId: string; planId: string; amount: number; email: string; name?: string; description?: string; frequency?: number; frequencyType?: 'months' | 'days' }): Promise<{ init_point?: string; id?: string }> {
     const response = await backendFetch('/api/mercado-pago/create-preapproval', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

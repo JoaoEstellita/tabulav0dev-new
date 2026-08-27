@@ -20,7 +20,7 @@ import WhatsAppInput from '../../components/WhatsAppInput'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
-import { CREDIT_PACKS, PLAN_DEFINITIONS } from '../../constants/plans'
+import { CREDIT_PACKS, PLAN_DEFINITIONS, ANNUAL_ENABLED, getPlansByPeriod, getMonthlyEquivalent, type PlanBillingPeriod } from '../../constants/plans'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import PixCheckoutModal from '../../components/PixCheckoutModal'
 import { getExpiryBannerInfo } from '../../utils/expiry'
@@ -74,7 +74,7 @@ export default function PremiumScreen() {
   const { subscription, trialActive, isAdmin } = useSubscriptionCheck()
   const route = useRoute<any>()
   const navigation = useNavigation<any>()
-  const [pixPlan, setPixPlan] = useState<{ id: string; name: string; price: number } | null>(null)
+  const [pixPlan, setPixPlan] = useState<{ id: string; name: string; price: number; months?: number } | null>(null)
   const planId = (subscription?.planId || '').toLowerCase()
   const isPremium = isAdmin || subscription?.active === true
   const hasActivePlan = !!subscription?.active
@@ -136,6 +136,13 @@ export default function PremiumScreen() {
   const isPortuguese = language === 'pt-BR'
   const [subscriptionProvider, setSubscriptionProvider] = useState<'mercadopago' | 'stripe'>(isPortuguese ? 'mercadopago' : 'stripe')
   const usesStripePricing = !isPortuguese || subscriptionProvider === 'stripe'
+  const [billingPeriod, setBillingPeriod] = useState<PlanBillingPeriod>('monthly')
+  // Anual só é vendido via Mercado Pago (PT). Fora disso (Stripe/internacional) o
+  // toggle nem aparece e o período volta pra mensal.
+  const annualAvailable = ANNUAL_ENABLED && isPortuguese && subscriptionProvider === 'mercadopago' && !usesStripePricing
+  useEffect(() => {
+    if (!annualAvailable && billingPeriod === 'yearly') setBillingPeriod('monthly')
+  }, [annualAvailable, billingPeriod])
   const canBuyGiftSubscriptions = isAdmin || hasActivePlan
   const normalizedGiftCodes = useMemo(
     () => [...giftCodes].sort((a, b) => (String(b.createdAt || '').localeCompare(String(a.createdAt || '')))),
@@ -380,10 +387,16 @@ export default function PremiumScreen() {
     fetchCreditsHistory()
   }, [user?.uid])
 
-  const subscriptionPlans = PLAN_DEFINITIONS.map((plan) => ({
+  // No período anual só há Pro/Premium; no mensal, os três. getPlansByPeriod já
+  // filtra por billingPeriod.
+  const activePeriod: PlanBillingPeriod = annualAvailable ? billingPeriod : 'monthly'
+  const subscriptionPlans = getPlansByPeriod(activePeriod).map((plan) => ({
     id: plan.id,
     name: plan.name,
     price: plan.price,
+    months: plan.months,
+    billingPeriod: plan.billingPeriod,
+    monthlyEquivalent: getMonthlyEquivalent(plan),
     features: plan.features,
     color: plan.tier === 'premium' ? '#FF6B6B' : plan.tier === 'pro' ? '#4ECDC4' : '#FFD700',
     requiresPhone: plan.requiresWhatsapp,
@@ -527,6 +540,8 @@ export default function PremiumScreen() {
         Alert.alert(tr('premium.alert.invalidPlan.title', 'Plano inválido'), tr('premium.alert.invalidPlan.body', 'Não foi possível localizar o plano selecionado.'))
         return
       }
+      // Anual = cobra o ano inteiro numa parcela e renova a cada 12 meses.
+      const isYearly = planConfig.frequency === 'yearly'
       const pre = await MercadoPagoService.createPreapproval({
         userId: user.uid,
         planId: planConfig.id,
@@ -534,6 +549,8 @@ export default function PremiumScreen() {
         email: user.email || '',
         name: user.displayName || user.email || tr('common.user', 'Usuario'),
         description: planConfig.name,
+        frequency: isYearly ? 12 : 1,
+        frequencyType: 'months',
       })
       if (!pre?.init_point) {
         Alert.alert(tr('common.error', 'Erro'), tr('premium.alert.recurringLinkFailed', 'Não foi possível gerar o link da assinatura recorrente.'))
@@ -548,14 +565,16 @@ export default function PremiumScreen() {
 
   // Avulso (1 mês). PT+MP → PIX DENTRO do app (menos toques, sem sair). Senão →
   // fluxo existente (redirect Stripe/preferência).
-  const handleAvulso = (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number }) => {
+  const handleAvulso = (plan: { id: string; requiresPhone?: boolean; name?: string; price?: number; months?: number }) => {
     const effectiveProvider: 'mercadopago' | 'stripe' = isPortuguese ? subscriptionProvider : 'stripe'
     if (effectiveProvider === 'mercadopago' && user) {
       if (plan.requiresPhone && premiumPhone.trim()) {
         user.getIdToken(true).then((token) => AstrologerPremiumService.registerWhatsApp(token, premiumPhone.trim())).catch(() => null)
       }
       const cfg = MercadoPagoService.getPlanById(plan.id)
-      setPixPlan({ id: plan.id, name: plan.name || cfg?.name || plan.id, price: Number(plan.price ?? cfg?.price ?? 0) })
+      // months = 12 no anual (PIX à vista do ano); 1 no mensal.
+      const months = Number(plan.months ?? cfg?.duration ?? 1)
+      setPixPlan({ id: plan.id, name: plan.name || cfg?.name || plan.id, price: Number(plan.price ?? cfg?.price ?? 0), months })
       return
     }
     return handleSubscribe(plan)
@@ -1118,6 +1137,26 @@ export default function PremiumScreen() {
             {tr('subscription.provider.autoStripeHint', 'Para idiomas internacionais, os pagamentos usam Stripe automaticamente.')}
           </Text>
         ) : null}
+        {annualAvailable && (
+          <View style={styles.providerChoiceRow}>
+            <TouchableOpacity
+              style={[styles.providerChoiceButton, billingPeriod === 'monthly' && styles.providerChoiceButtonActive]}
+              onPress={() => setBillingPeriod('monthly')}
+            >
+              <Text style={[styles.providerChoiceText, billingPeriod === 'monthly' && styles.providerChoiceTextActive]}>
+                {tr('premium.billing.monthly', 'Mensal')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerChoiceButton, billingPeriod === 'yearly' && styles.providerChoiceButtonActive]}
+              onPress={() => setBillingPeriod('yearly')}
+            >
+              <Text style={[styles.providerChoiceText, billingPeriod === 'yearly' && styles.providerChoiceTextActive]}>
+                {tr('premium.billing.yearly', 'Anual')} · {tr('premium.billing.twoFree', '2 meses grátis')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {subscriptionPlans.map(plan => {
           const isRecommended = plan.id === 'pro_monthly'
           const priceText = plan.price === 0
@@ -1150,10 +1189,17 @@ export default function PremiumScreen() {
                 <View style={styles.planPriceWrap}>
                   <Text style={styles.planPrice}>{priceText}</Text>
                   {plan.price !== 0 && (
-                    <Text style={styles.planPricePer}>/{tr('premium.plans.monthShort', 'mes')}</Text>
+                    <Text style={styles.planPricePer}>
+                      /{plan.billingPeriod === 'yearly' ? tr('premium.plans.yearShort', 'ano') : tr('premium.plans.monthShort', 'mes')}
+                    </Text>
                   )}
                 </View>
               </View>
+              {plan.billingPeriod === 'yearly' && plan.price !== 0 && !usesStripePricing && (
+                <Text style={styles.planYearlyHint}>
+                  ≈ R$ {plan.monthlyEquivalent.toFixed(2)}/{tr('premium.plans.monthShort', 'mes')} · {tr('premium.billing.twoFree', '2 meses grátis')}
+                </Text>
+              )}
               <View style={styles.planFeatures}>
                 {plan.features.map((feature, index) => (
                   <View key={index} style={styles.planFeatureRow}>
@@ -1192,25 +1238,31 @@ export default function PremiumScreen() {
                   </View>
                 ) : (
                   <>
-                    {/* Recorrente: renova todo mês (cartão). CTA principal. */}
+                    {/* Recorrente: renova sozinho (cartão). CTA principal.
+                        Mensal = todo mês; Anual = todo ano. */}
                     <TouchableOpacity
                       style={[styles.subscribeButton, { backgroundColor: plan.color }]}
                       onPress={() => handleSubscribeRecurring(plan)}
                       activeOpacity={0.85}
                     >
                       <Text style={styles.subscribeButtonText}>
-                        {tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
-                        {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${tr('premium.plans.monthShort', 'mes')}` : ''}
+                        {plan.billingPeriod === 'yearly'
+                          ? tr('premium.cta.subscribeRecurringYearly', 'Assinar anual')
+                          : tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
+                        {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${plan.billingPeriod === 'yearly' ? tr('premium.plans.yearShort', 'ano') : tr('premium.plans.monthShort', 'mes')}` : ''}
                       </Text>
                     </TouchableOpacity>
-                    {/* Avulso: paga 1 mês, sem renovar (PIX/único). Secundário. */}
+                    {/* Avulso: paga à vista, sem renovar (PIX/único). Secundário.
+                        Mensal = 1 mês; Anual = 12 meses. */}
                     <TouchableOpacity
                       style={styles.subscribeAvulsoButton}
                       onPress={() => handleAvulso(plan)}
                       activeOpacity={0.85}
                     >
                       <Text style={styles.subscribeAvulsoText}>
-                        {tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
+                        {plan.billingPeriod === 'yearly'
+                          ? tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')
+                          : tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
                       </Text>
                     </TouchableOpacity>
                   </>
@@ -1748,6 +1800,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 3,
     marginLeft: 2,
+  },
+  planYearlyHint: {
+    color: '#4ECDC4',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -4,
+    marginBottom: 8,
   },
   planFeatureRow: {
     flexDirection: 'row',

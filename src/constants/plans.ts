@@ -1,10 +1,27 @@
 export type PlanTier = 'essential' | 'pro' | 'premium'
-export type PlanId = 'essential_monthly' | 'pro_monthly' | 'premium_monthly'
+export type PlanBillingPeriod = 'monthly' | 'yearly'
+export type PlanId =
+  | 'essential_monthly'
+  | 'pro_monthly'
+  | 'premium_monthly'
+  | 'pro_yearly'
+  | 'premium_yearly'
+
+// Feature flag dos planos anuais. Enquanto FALSE, o toggle Mensal/Anual e os
+// planos anuais NÃO aparecem na tela de assinatura — o código fica pronto e
+// testado, mas o usuário só vê o mensal. Ligar para true SÓ depois que o meio
+// de pagamento anual estiver ativo no Mercado Pago e validado (ver
+// docs/planos-anuais-guia-pagamento.md).
+export const ANNUAL_ENABLED = false
 
 export type PlanDefinition = {
   id: PlanId
   tier: PlanTier
+  billingPeriod: PlanBillingPeriod
+  /** Meses de acesso concedidos por 1 pagamento (1 no mensal, 12 no anual). */
+  months: number
   name: string
+  /** Preço do ciclo inteiro em BRL (mensal = 1 mês; anual = 12 meses à vista). */
   price: number
   forecastMaxDays: 7 | 30 | 90 | 360
   creditsPerMonth: number
@@ -18,6 +35,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     id: 'essential_monthly',
     tier: 'essential',
+    billingPeriod: 'monthly',
+    months: 1,
     name: 'Essential',
     price: 19.90,
     forecastMaxDays: 7,
@@ -38,6 +57,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     id: 'pro_monthly',
     tier: 'pro',
+    billingPeriod: 'monthly',
+    months: 1,
     name: 'Pro',
     price: 47.90,
     forecastMaxDays: 90,
@@ -55,6 +76,8 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     id: 'premium_monthly',
     tier: 'premium',
+    billingPeriod: 'monthly',
+    months: 1,
     name: 'Premium',
     price: 79.90,
     forecastMaxDays: 360,
@@ -69,6 +92,47 @@ export const PLAN_DEFINITIONS: PlanDefinition[] = [
       'Astrólogo IA no WhatsApp — 10/dia',
     ],
   },
+  // ─── Anuais (2 meses grátis: paga 10 meses, leva 12) ────────────────────────
+  {
+    id: 'pro_yearly',
+    tier: 'pro',
+    billingPeriod: 'yearly',
+    months: 12,
+    name: 'Pro',
+    price: 479.00, // 10 × 47,90
+    forecastMaxDays: 90,
+    creditsPerMonth: 1,
+    includesGroups: true,
+    includesChatbot: true,
+    requiresWhatsapp: true,
+    features: [
+      'Tudo do Essential +',
+      '1 leitura premium/mês com IA (mapa, trânsitos, sinastria…)',
+      'Forecast: 7/30/90 dias',
+      'Astrólogo IA no WhatsApp — 6/dia',
+      '2 meses grátis no plano anual',
+    ],
+  },
+  {
+    id: 'premium_yearly',
+    tier: 'premium',
+    billingPeriod: 'yearly',
+    months: 12,
+    name: 'Premium',
+    price: 799.00, // 10 × 79,90
+    forecastMaxDays: 360,
+    creditsPerMonth: 10,
+    includesGroups: true,
+    includesChatbot: true,
+    requiresWhatsapp: true,
+    features: [
+      'Tudo do Pro +',
+      '10 leituras premium/mês com IA (e compre mais quando quiser)',
+      'Forecast: 7/30/90/360 dias',
+      'Astrólogo IA no WhatsApp — 10/dia',
+      '2 meses grátis no plano anual',
+    ],
+  },
 ]
 
 export const CREDIT_PACKS = [
@@ -81,6 +145,21 @@ export const getPlanById = (planId?: string | null) => {
   if (!planId) return null
   const normalized = planId.toLowerCase() as PlanId
   return PLAN_DEFINITIONS.find((plan) => plan.id === normalized) || null
+}
+
+/** Planos de um período (monthly/yearly), na ordem de definição. */
+export const getPlansByPeriod = (period: PlanBillingPeriod) =>
+  PLAN_DEFINITIONS.filter((plan) => plan.billingPeriod === period)
+
+/** Equivalente mensal de um plano anual (preço do ano ÷ 12), para exibição. */
+export const getMonthlyEquivalent = (plan: PlanDefinition) =>
+  plan.billingPeriod === 'yearly' ? plan.price / 12 : plan.price
+
+/** Contrapartida anual de um plano mensal (mesmo tier), se existir. */
+export const getYearlyCounterpart = (planId?: string | null) => {
+  const plan = getPlanById(planId)
+  if (!plan) return null
+  return PLAN_DEFINITIONS.find((p) => p.tier === plan.tier && p.billingPeriod === 'yearly') || null
 }
 
 export const getForecastMaxDays = ({
