@@ -694,12 +694,12 @@
       ? all.filter(r => (r.nome || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q))
       : all
     if (!list.length) { box.innerHTML = '<div style="color:var(--muted)">Nenhum usuário.</div>'; return }
-    box.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:960px">
+    box.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1080px">
       <thead>
         <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
           <th style="padding:4px 8px"></th><th style="padding:4px 8px">Usuário</th><th style="padding:4px 8px">E-mail</th>
           <th style="padding:4px 8px">Aberturas hoje</th><th style="padding:4px 8px">Último acesso</th>
-          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px">Gratuito</th><th style="padding:4px 8px" title="🌅 matinal · 🔔 alertas e demais">Notificações</th><th style="padding:4px 8px">Ações</th>
+          <th style="padding:4px 8px">Assinatura</th><th style="padding:4px 8px" title="custo real do mês (agente + leituras) · margem vs preço do plano">Custo · Margem</th><th style="padding:4px 8px">Gratuito</th><th style="padding:4px 8px" title="🌅 matinal · 🔔 alertas e demais">Notificações</th><th style="padding:4px 8px">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -713,6 +713,13 @@
             <td style="padding:5px 8px">${r.loginsHoje != null ? r.loginsHoje : '—'}</td>
             <td style="padding:5px 8px;color:var(--muted)">${timeAgo(r.ultimoAcesso)}</td>
             <td style="padding:5px 8px">${subBadge(r)}</td>
+            <td style="padding:5px 8px;white-space:nowrap">${(() => {
+              if (r.custoMesBRL == null) return '<span style="color:var(--muted)">—</span>'
+              const m = r.margemMesBRL
+              const cor = m == null ? 'var(--muted)' : (m >= 0 ? 'var(--ok)' : 'var(--err)')
+              const margemTxt = m == null ? '—' : fmtBRL(m)
+              return `<span title="agente: ${r.agentMsgsMes || 0} msg · leituras: ${r.leiturasMes || 0}">${fmtBRL(r.custoMesBRL)} <span style="color:var(--muted)">·</span> <b style="color:${cor}">${margemTxt}</b></span>`
+            })()}</td>
             <td style="padding:5px 8px">${(() => { const g = trialInfo(r); return g.bg === 'transparent' ? `<span style="color:${g.fg}">${g.txt}</span>` : `<span class="badge" style="background:${g.bg};color:${g.fg};font-size:11px">${g.txt}</span>` })()}</td>
             <td style="padding:5px 8px;white-space:nowrap">${(() => {
               const n = r.notif || {}
