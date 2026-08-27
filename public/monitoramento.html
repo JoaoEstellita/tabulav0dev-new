@@ -436,8 +436,29 @@
             <span class="metric-label">${(p.tier || '').charAt(0).toUpperCase() + (p.tier || '').slice(1)} · ${fmtBRL(p.receitaBRL)}</span>
             <span class="metric-value">custo ${fmtBRL(p.custoTeto.totalBRL)} · margem <b style="color:${p.margemBRL > 0 ? 'var(--ok)' : 'var(--err)'}">${fmtBRL(p.margemBRL)} (${p.margemPct}%)</b></span>
           </div>`).join('')}
+        ${d.custoRealMes ? `
+        <div class="card-title" style="margin-top:16px;font-size:13px">Custo real — mês corrente</div>
+        <div class="metric-row">
+          <span class="metric-label">Agente (medido por token)</span>
+          <span class="metric-value">${fmtBRL(d.custoRealMes.agenteBRL)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Leituras premium (${typeof d.custoRealMes.leiturasCount === 'number' ? d.custoRealMes.leiturasCount : '?'})</span>
+          <span class="metric-value">${fmtBRL(d.custoRealMes.leiturasBRL)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Total real (agente + leituras)</span>
+          <span class="metric-value" style="color:var(--accent2)">${fmtBRL(d.custoRealMes.totalBRL)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Média por assinante ativo (${fmtNum(d.custoRealMes.assinantesAtivos)})</span>
+          <span class="metric-value">${d.custoRealMes.mediaPorAssinanteBRL != null ? fmtBRL(d.custoRealMes.mediaPorAssinanteBRL) : '—'}</span>
+        </div>` : `
+        <div class="metric-row" style="margin-top:10px">
+          <span class="metric-label" style="font-size:11px;color:var(--muted)">Custo real do mês aparece ao carregar a lista de usuários (botão abaixo).</span>
+        </div>`}
         <div class="metric-row" style="margin-top:8px">
-          <span class="metric-label" style="font-size:11px;color:var(--muted)">Teto = cliente usa todos os limites todo dia. Só custos diretos (agente, leituras, conversas Meta). Preços unitários ajustáveis por env; a média real vem na próxima fase.</span>
+          <span class="metric-label" style="font-size:11px;color:var(--muted)">Teto = cliente usa todos os limites todo dia (custos diretos). Real = agente (tokens) + leituras medidos no mês. Conversas Meta e infra ficam à parte. Preços unitários ajustáveis por env.</span>
         </div>
       </div>
 
