@@ -37,7 +37,11 @@ service cloud.firestore {
     }
 
     match /userPublicProfiles/{userId} {
-      allow read: if isSignedIn();
+      // O próprio dono sempre lê; terceiros só se o perfil está discoverable
+      // (opt-in da Rede). Respeita o opt-out: quem desativou "aparecer na Rede"
+      // não é mais legível por outros logados. Grupos degradam para `users`
+      // via GroupService (o read negado não derruba o carregamento do grupo).
+      allow read: if isSelf(userId) || resource.data.discoverable == true;
       allow create, update: if isSelf(userId);
       allow delete: if false;
     }
