@@ -596,11 +596,13 @@ class GroupService {
       const members = await Promise.all(
         (group.members || []).map(async (memberId) => {
           const [publicDoc, memberStatusDoc, userDoc] = await Promise.all([
-            getDoc(doc(db, "userPublicProfiles", memberId)),
+            // Perfil público de membro NÃO-discoverable é negado pela regra (respeita
+            // o opt-out da Rede) — o read não pode derrubar o grupo: cai no `users`.
+            getDoc(doc(db, "userPublicProfiles", memberId)).catch(() => null),
             getDoc(doc(db, "groups", groupId, "memberStatus", memberId)),
             getDoc(doc(db, "users", memberId)),
           ])
-          const publicData = publicDoc.exists() ? publicDoc.data() : {}
+          const publicData = (publicDoc && publicDoc.exists()) ? publicDoc.data() : {}
           const memberStatus = memberStatusDoc.exists() ? memberStatusDoc.data() : {}
           const userData = userDoc.exists() ? userDoc.data() : {}
           const shouldLoadStatus = memberId === viewerId
@@ -628,15 +630,16 @@ class GroupService {
                   this.isTrialWindowActive(
                     memberStatus?.trialStart || publicData?.trialStart
                   )
-          const displayName = publicData.displayName || publicData.fullName || memberId.split("@")[0] || memberId
-          const email = publicData.email || memberId
+          // Fallback para `users` quando o perfil público não veio (membro não-discoverable).
+          const displayName = publicData.displayName || publicData.fullName || userData.displayName || userData.fullName || memberId.split("@")[0] || memberId
+          const email = publicData.email || userData.email || memberId
           const lifeAreas = memberStatus?.lifeAreas || statusData?.lifeAreas
 
           return {
             userId: memberId,
             email,
             displayName,
-            profilePhoto: publicData.profilePhoto,
+            profilePhoto: publicData.profilePhoto || userData.profilePhoto || userData.photoURL || null,
             joinedAt: new Date(),
             astrologicalStatus: statusData?.astrologicalStatus,
             lastStatusUpdate: memberStatus?.lastStatusUpdate?.toDate?.() || statusData?.lastStatusUpdate?.toDate?.() || undefined,
