@@ -20,7 +20,7 @@ import WhatsAppInput from '../../components/WhatsAppInput'
 import AstrologerPremiumService from '../../services/premium/AstrologerPremiumService'
 import MercadoPagoService, { GiftSubscriptionCode, GiftSubscriptionOption } from '../../services/payment/MercadoPagoService'
 import StripeService from '../../services/payment/StripeService'
-import { CREDIT_PACKS, PLAN_DEFINITIONS, ANNUAL_ENABLED, getPlansByPeriod, getMonthlyEquivalent, type PlanBillingPeriod } from '../../constants/plans'
+import { CREDIT_PACKS, PLAN_DEFINITIONS, ANNUAL_ENABLED, ANNUAL_RECURRING_ENABLED, getPlansByPeriod, getMonthlyEquivalent, type PlanBillingPeriod } from '../../constants/plans'
 import ExpiryBanner from '../../components/ExpiryBanner'
 import PixCheckoutModal from '../../components/PixCheckoutModal'
 import { getExpiryBannerInfo } from '../../utils/expiry'
@@ -1237,35 +1237,57 @@ export default function PremiumScreen() {
                     <Text style={styles.subscribeButtonText}>{tr('premium.plans.current', 'Plano Atual')}</Text>
                   </View>
                 ) : (
-                  <>
-                    {/* Recorrente: renova sozinho (cartão). CTA principal.
-                        Mensal = todo mês; Anual = todo ano. */}
-                    <TouchableOpacity
-                      style={[styles.subscribeButton, { backgroundColor: plan.color }]}
-                      onPress={() => handleSubscribeRecurring(plan)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.subscribeButtonText}>
-                        {plan.billingPeriod === 'yearly'
-                          ? tr('premium.cta.subscribeRecurringYearly', 'Assinar anual')
-                          : tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
-                        {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${plan.billingPeriod === 'yearly' ? tr('premium.plans.yearShort', 'ano') : tr('premium.plans.monthShort', 'mes')}` : ''}
-                      </Text>
-                    </TouchableOpacity>
-                    {/* Avulso: paga à vista, sem renovar (PIX/único). Secundário.
-                        Mensal = 1 mês; Anual = 12 meses. */}
-                    <TouchableOpacity
-                      style={styles.subscribeAvulsoButton}
-                      onPress={() => handleAvulso(plan)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.subscribeAvulsoText}>
-                        {plan.billingPeriod === 'yearly'
-                          ? tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')
-                          : tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
-                      </Text>
-                    </TouchableOpacity>
-                  </>
+                  (() => {
+                    // No período anual, o recorrente (cartão) só aparece depois
+                    // de provado (ANNUAL_RECURRING_ENABLED). Até lá, o anual é
+                    // vendido só por PIX à vista de 12 meses — que já funciona.
+                    const anualSemRecorrente = plan.billingPeriod === 'yearly' && !ANNUAL_RECURRING_ENABLED
+                    if (anualSemRecorrente) {
+                      return (
+                        <TouchableOpacity
+                          style={[styles.subscribeButton, { backgroundColor: plan.color }]}
+                          onPress={() => handleAvulso(plan)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.subscribeButtonText}>
+                            {tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')}
+                            {plan.price ? ` · R$ ${(plan.price).toFixed(2)}` : ''}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    }
+                    return (
+                      <>
+                        {/* Recorrente: renova sozinho (cartão). CTA principal.
+                            Mensal = todo mês; Anual = todo ano. */}
+                        <TouchableOpacity
+                          style={[styles.subscribeButton, { backgroundColor: plan.color }]}
+                          onPress={() => handleSubscribeRecurring(plan)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.subscribeButtonText}>
+                            {plan.billingPeriod === 'yearly'
+                              ? tr('premium.cta.subscribeRecurringYearly', 'Assinar anual')
+                              : tr('premium.cta.subscribeRecurring', 'Assinar mensal')}
+                            {plan.price ? ` · R$ ${(plan.price).toFixed(2)}/${plan.billingPeriod === 'yearly' ? tr('premium.plans.yearShort', 'ano') : tr('premium.plans.monthShort', 'mes')}` : ''}
+                          </Text>
+                        </TouchableOpacity>
+                        {/* Avulso: paga à vista, sem renovar (PIX/único). Secundário.
+                            Mensal = 1 mês; Anual = 12 meses. */}
+                        <TouchableOpacity
+                          style={styles.subscribeAvulsoButton}
+                          onPress={() => handleAvulso(plan)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.subscribeAvulsoText}>
+                            {plan.billingPeriod === 'yearly'
+                              ? tr('premium.cta.subscribeOnceYearly', 'Pagar 12 meses (PIX, sem renovar)')
+                              : tr('premium.cta.subscribeOnce', 'Pagar 1 mês (PIX, sem renovar)')}
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )
+                  })()
                 )
               ) : plan.current ? (
                 <View style={[styles.subscribeButton, styles.subscribeButtonDisabled]}>

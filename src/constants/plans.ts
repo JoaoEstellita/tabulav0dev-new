@@ -7,12 +7,16 @@ export type PlanId =
   | 'pro_yearly'
   | 'premium_yearly'
 
-// Feature flag dos planos anuais. Enquanto FALSE, o toggle Mensal/Anual e os
-// planos anuais NÃO aparecem na tela de assinatura — o código fica pronto e
-// testado, mas o usuário só vê o mensal. Ligar para true SÓ depois que o meio
-// de pagamento anual estiver ativo no Mercado Pago e validado (ver
-// docs/planos-anuais-guia-pagamento.md).
-export const ANNUAL_ENABLED = false
+// Feature flag dos planos anuais. Quando TRUE, o toggle Mensal/Anual e os planos
+// anuais aparecem na tela de assinatura. Ligado após validar o meio de pagamento
+// anual no Mercado Pago (ver docs/planos-anuais-guia-pagamento.md).
+export const ANNUAL_ENABLED = true
+
+// Assinatura anual RECORRENTE (cartão, renova sozinha). Mantida FALSE até uma
+// compra real confirmar que o preapproval anual do MP fecha — o autoteste só
+// provou o PIX à vista (o recorrente exige comprador com conta MP, não dá pra
+// simular por API). Enquanto FALSE, o período anual mostra SÓ o PIX de 12 meses.
+export const ANNUAL_RECURRING_ENABLED = false
 
 export type PlanDefinition = {
   id: PlanId
