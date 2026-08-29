@@ -243,15 +243,15 @@ export default function NetworkScreen() {
             <Ionicons name="help-circle-outline" size={20} color={C.faint} />
           </TouchableOpacity>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+        <View style={{ gap: 6, alignItems: 'flex-end' }}>
           <View style={st.visChip}>
             <Ionicons name={deckVisible ? 'heart' : 'heart-dislike-outline'} size={15} color={deckVisible ? C.gold : C.faint} />
-            <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{tl('No Match', 'In Match', 'En Match', 'In Match')}</Text>
+            <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{deckVisible ? tl('Match visível', 'Match visible', 'Match visible', 'Match visibile') : tl('Match oculto', 'Match hidden', 'Match oculto', 'Match nascosto')}</Text>
             <Switch value={deckVisible} disabled={togglingDeck} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
           </View>
           <View style={st.visChip}>
             <Ionicons name={shareOpen ? 'pie-chart' : 'lock-closed-outline'} size={15} color={shareOpen ? C.gold : C.faint} />
-            <Text style={[st.visChipTx, { color: shareOpen ? C.ink : C.faint }]}>{tl('Roda aberta', 'Open wheel', 'Rueda abierta', 'Ruota aperta')}</Text>
+            <Text style={[st.visChipTx, { color: shareOpen ? C.ink : C.faint }]}>{shareOpen ? tl('Sinastria visível', 'Synastry visible', 'Sinastria visible', 'Sinastria visibile') : tl('Sinastria oculta', 'Synastry hidden', 'Sinastria oculta', 'Sinastria nascosta')}</Text>
             <Switch value={shareOpen} disabled={togglingShare} onValueChange={toggleShare} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
           </View>
         </View>
