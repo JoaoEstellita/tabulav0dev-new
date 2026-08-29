@@ -2622,12 +2622,18 @@ export default function GroupsScreen() {
                   const trio = [p.sunSign ? `☉ ${p.sunSign}` : '', p.moonSign ? `☽ ${p.moonSign}` : '', p.ascSign ? `ASC ${p.ascSign}` : ''].filter(Boolean).join('  ')
                   return (
                     <View key={p.uid} style={styles.findRow}>
-                      {p.photoURL ? <Image source={{ uri: p.photoURL }} style={styles.findAvatar} /> : <View style={[styles.findAvatar, styles.findAvatarFb]}><Ionicons name="person" size={22} color="#3a3a5a" /></View>}
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <Text style={styles.findName} numberOfLines={1}>{p.displayName || tr('groups.find.someone', 'Alguém')}</Text>
-                        {trio ? <Text style={styles.findTrio} numberOfLines={1}>{trio}</Text> : null}
-                        {p.city ? <Text style={styles.findCity} numberOfLines={1}>{p.city}</Text> : null}
-                      </View>
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}
+                        activeOpacity={0.7}
+                        onPress={() => { setShowFindUser(false); (navigation as any).navigate('PersonProfile', { uid: p.uid, displayName: p.displayName, photoURL: p.photoURL, sunSign: p.sunSign, moonSign: p.moonSign, ascSign: p.ascSign, city: p.city }) }}
+                      >
+                        {p.photoURL ? <Image source={{ uri: p.photoURL }} style={styles.findAvatar} /> : <View style={[styles.findAvatar, styles.findAvatarFb]}><Ionicons name="person" size={22} color="#3a3a5a" /></View>}
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.findName} numberOfLines={1}>{p.displayName || tr('groups.find.someone', 'Alguém')}</Text>
+                          {trio ? <Text style={styles.findTrio} numberOfLines={1}>{trio}</Text> : null}
+                          {p.city ? <Text style={styles.findCity} numberOfLines={1}>{p.city}</Text> : null}
+                        </View>
+                      </TouchableOpacity>
                       {sent ? (
                         <View style={styles.findSentTag}><Ionicons name="checkmark" size={14} color="#3ecf8e" /><Text style={styles.findSentTx}>{tr('groups.find.sent', 'Enviado')}</Text></View>
                       ) : (

@@ -6,7 +6,7 @@ import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getDeck, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters, type WheelPos } from '../../services/DiscoveryService'
+import { getDeck, getDeckDetail, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters, type WheelPos, type DeckDetail } from '../../services/DiscoveryService'
 import { requestConnection } from '../../services/ConnectionsService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 import LocationField, { type PickedLocation } from '../../components/LocationField'
@@ -33,8 +33,9 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   }[tier] || '')
 
   const [cards, setCards] = useState<DeckCard[]>([])
-  const [myPos, setMyPos] = useState<WheelPos[]>([])
   const [idx, setIdx] = useState(0)
+  const [detailByUid, setDetailByUid] = useState<Record<string, DeckDetail>>({})
+  const [detailLoading, setDetailLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [matchWith, setMatchWith] = useState<DeckCard | null>(null)
@@ -74,11 +75,27 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
   const load = (f: DeckFilters) => {
     setLoading(true)
-    getDeck(f).then((r) => { setCards(r.cards); setMyPos(r.myPositions || []); setIdx(0) }).finally(() => setLoading(false))
+    getDeck(f).then((r) => { setCards(r.cards); setIdx(0) }).finally(() => setLoading(false))
+  }
+
+  // Abre a leitura de afinidade; busca a roda/grade sob demanda (1ª vez), com cache por uid.
+  const toggleAff = async () => {
+    const next = !showAff
+    setShowAff(next)
+    if (next && current && current.chartOpen && !detailByUid[current.uid]) {
+      setDetailLoading(true)
+      try {
+        const d = await getDeckDetail(current.uid)
+        setDetailByUid((m) => ({ ...m, [current.uid]: d }))
+      } catch {
+        setDetailByUid((m) => ({ ...m, [current.uid]: { shared: false } }))
+      } finally { setDetailLoading(false) }
+    }
   }
   useEffect(() => { load(filters) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = cards[idx] || null
+  const detail = current ? detailByUid[current.uid] : undefined
 
   const act = async (action: 'like' | 'pass') => {
     if (!current || busy) return
@@ -185,7 +202,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
           </View>
           {/* Leitura de afinidade — resumo visível, aspectos sob toggle */}
           <View style={s.detail}>
-            <TouchableOpacity style={s.affToggle} onPress={() => setShowAff((v) => !v)} activeOpacity={0.8}>
+            <TouchableOpacity style={s.affToggle} onPress={toggleAff} activeOpacity={0.8}>
               <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {Math.round(current.score)}%</Text>
               <View style={s.affToggleRight}>
                 <Text style={s.affToggleTx}>{showAff ? tl('ocultar', 'hide', 'ocultar', 'nascondi') : tl('ver aspectos', 'see aspects', 'ver aspectos', 'vedi aspetti')}</Text>
@@ -209,24 +226,25 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                 {!current.harmonics?.length && !current.tensions?.length ? (
                   <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
                 ) : null}
-                {/* Roda de sinastria: você (magenta) × a pessoa (dourado) */}
-                {myPos.length && current.positions?.length ? (
-                  <>
-                    <Text style={s.detailHead}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
-                    <SynastryWheel outer={myPos} inner={current.positions} aspects={current.grid || []} size={300} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={current.displayName} />
-                  </>
-                ) : null}
-                {/* Grade completa dos aspectos entre os dois mapas */}
-                {current.grid?.length && myPos.length && current.positions?.length ? (
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={s.detailHead}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
-                    <AspectGrid cross rowPlanets={toGridPlanets(myPos)} colPlanets={toGridPlanets(current.positions)} aspects={current.grid.map((g) => ({ planet1: CAP[g.mine] || g.mine, planet2: CAP[g.theirs] || g.theirs, type: g.labelPt || '', orb: g.orb }))} />
-                  </View>
-                ) : null}
-                {/* Dono não abriu a roda/grade — mostra só a leitura em texto */}
-                {!current.positions?.length ? (
+                {/* Roda + grade sob demanda (só quando o dono abriu). Busca na 1ª abertura. */}
+                {current.chartOpen ? (
+                  detailLoading && !detail ? (
+                    <ActivityIndicator color={C.magenta} style={{ marginVertical: 14 }} />
+                  ) : detail?.shared && detail.myPositions?.length && detail.positions?.length ? (
+                    <>
+                      <Text style={s.detailHead}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
+                      <SynastryWheel outer={detail.myPositions} inner={detail.positions} aspects={detail.grid || []} size={300} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={current.displayName} />
+                      {detail.grid?.length ? (
+                        <View style={{ marginTop: 12 }}>
+                          <Text style={s.detailHead}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
+                          <AspectGrid cross rowPlanets={toGridPlanets(detail.myPositions)} colPlanets={toGridPlanets(detail.positions)} aspects={detail.grid.map((g) => ({ planet1: CAP[g.mine] || g.mine, planet2: CAP[g.theirs] || g.theirs, type: g.labelPt || '', orb: g.orb }))} />
+                        </View>
+                      ) : null}
+                    </>
+                  ) : null
+                ) : (
                   <Text style={[s.reason, { marginTop: 10 }]}>🔒 {tl('Este perfil não abriu a roda de sinastria.', 'This profile did not open the synastry wheel.', 'Este perfil no abrio la rueda de sinastria.', 'Questo profilo non ha aperto la ruota di sinastria.')}</Text>
-                ) : null}
+                )}
               </View>
             ) : null}
             {/* Sobre a pessoa: bio + favoritos */}

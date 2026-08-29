@@ -125,15 +125,24 @@ export type MatchResult = {
 export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
 export type WheelPos = { planetEn: string; longitude: number }
 export type GridAspect = { mine: string; theirs: string; labelPt?: string; orb?: number }
-export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; grid?: GridAspect[]; positions?: WheelPos[] }
+export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; chartOpen?: boolean }
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
+export type DeckDetail = { shared: boolean; positions?: WheelPos[]; grid?: GridAspect[]; myPositions?: WheelPos[] }
 
 /** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial.
- * `myPositions` = minhas longitudes (uma vez), pra cruzar com o `positions` de cada card na roda. */
-export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; myPositions: WheelPos[]; gated?: boolean }> {
+ * A roda/grade NÃO vem aqui — é buscada sob demanda por `getDeckDetail` ao abrir os aspectos. */
+export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; gated?: boolean }> {
   const r = await post('deck', { filters: filters || {}, limit })
-  if (r?.gated) return { cards: [], myPositions: [], gated: true }
-  return { cards: Array.isArray(r?.cards) ? r.cards : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [] }
+  if (r?.gated) return { cards: [], gated: true }
+  return { cards: Array.isArray(r?.cards) ? r.cards : [] }
+}
+
+/** Roda + grade de sinastria de UM card, sob demanda (só quando a roda é aberta).
+ * `shared:false` quando o dono fechou a roda. */
+export async function getDeckDetail(uid: string): Promise<DeckDetail> {
+  const r = await post('deck-detail', { uid })
+  if (!r?.ok || r?.shared === false) return { shared: false }
+  return { shared: true, positions: Array.isArray(r?.positions) ? r.positions : [], grid: Array.isArray(r?.grid) ? r.grid : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [] }
 }
 
 /** Curte (like) ou passa. Like recíproco devolve `matched:true`. */
