@@ -111,7 +111,9 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
             {/* Info sobre a foto */}
             <View style={s.overlay}>
               <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
-              {current.city ? <Text style={s.city}>📍 {current.city}</Text> : null}
+              {current.city ? (
+                <Text style={s.city}>📍 {current.city}{current.sameCity ? <Text style={s.near}>  ·  {tl('perto de você', 'near you', 'cerca de ti', 'vicino a te')}</Text> : null}</Text>
+              ) : null}
               <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
           </View>
@@ -264,6 +266,7 @@ const s = StyleSheet.create({
   name: { color: '#fff', fontSize: 25, fontWeight: '900' },
   age: { color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: '600' },
   city: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 4 },
+  near: { color: C.good, fontSize: 13, fontWeight: '700' },
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
   detail: { padding: 16 },
   tierLabel: { color: C.magenta, fontSize: 15, fontWeight: '800', marginBottom: 6 },
