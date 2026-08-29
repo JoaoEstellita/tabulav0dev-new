@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, ScrollView, Alert, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
@@ -90,6 +91,23 @@ export default function NetworkProfileEditor() {
 
   return (
     <ScrollView style={s.wrap} contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+      {/* Prévia de como seu card aparece */}
+      <Text style={s.label}>{tl('Prévia do seu card', 'Preview of your card', 'Vista previa de tu tarjeta', 'Anteprima della tua card')}</Text>
+      <View style={s.preview}>
+        {photos[0]
+          ? <Image source={{ uri: photos[0] }} style={s.prevPhoto} />
+          : <View style={[s.prevPhoto, s.prevFb]}><Ionicons name="person" size={48} color="#3a3a5a" /></View>}
+        <LinearGradient colors={['transparent', 'rgba(12,8,24,0.94)']} style={s.prevGrad} pointerEvents="none" />
+        <View style={s.prevInfo}>
+          {bio ? <Text style={s.prevBio} numberOfLines={2}>{bio}</Text> : <Text style={[s.prevBio, { color: C.dim }]}>{tl('Sua bio aparece aqui', 'Your bio shows here', 'Tu bio aparece aqui', 'La tua bio appare qui')}</Text>}
+          {interests.length ? (
+            <View style={s.prevChips}>
+              {interests.slice(0, 4).map((sl) => <Text key={sl} style={s.prevChip}>{interestLabel(sl, lang)}</Text>)}
+            </View>
+          ) : null}
+        </View>
+      </View>
+
       {/* Fotos */}
       <Text style={s.label}>{tl('Suas fotos', 'Your photos', 'Tus fotos', 'Le tue foto')} <Text style={s.hint}>({photos.length}/{MAX_PHOTOS})</Text></Text>
       <View style={s.photoGrid}>
@@ -144,6 +162,14 @@ export default function NetworkProfileEditor() {
 const s = StyleSheet.create({
   wrap: { flex: 1 },
   label: { color: C.tx, fontSize: 15, fontWeight: '800', marginBottom: 10 },
+  preview: { height: 200, borderRadius: 18, overflow: 'hidden', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, marginBottom: 22 },
+  prevPhoto: { width: '100%', height: '100%', backgroundColor: '#000' },
+  prevFb: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#0d0d1c' },
+  prevGrad: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '65%' },
+  prevInfo: { position: 'absolute', left: 14, right: 14, bottom: 12 },
+  prevBio: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  prevChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  prevChip: { color: '#fff', fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(214,64,159,0.4)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
   hint: { color: C.dim, fontSize: 12, fontWeight: '600' },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   photoBox: { width: 96, height: 128, borderRadius: 12, overflow: 'hidden', backgroundColor: C.card, borderWidth: 1, borderColor: C.line },

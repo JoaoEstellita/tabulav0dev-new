@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Easing } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
@@ -26,6 +27,14 @@ export default function DiscoverDeck() {
   const [myPhoto, setMyPhoto] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<DeckFilters>({})
+  const matchAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (matchWith) {
+      matchAnim.setValue(0)
+      Animated.spring(matchAnim, { toValue: 1, useNativeDriver: true, friction: 6, tension: 60 }).start()
+    }
+  }, [matchWith]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!user?.uid) return
@@ -74,23 +83,34 @@ export default function DiscoverDeck() {
         </View>
       ) : (
         <View style={s.cardBox}>
-          <Image source={{ uri: (current.photos && current.photos[0]) || current.photoURL || undefined }} style={s.photo} />
-          <View style={s.scoreChip}><Ionicons name="heart" size={12} color="#fff" /><Text style={s.scoreTx}>{Math.round(current.score)}%</Text></View>
-          <View style={s.info}>
-            <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
-            {current.city ? <Text style={s.city}>📍 {current.city}</Text> : null}
-            <Text style={s.signs}>☉ {current.sunSign || '—'}  ·  ☽ {current.moonSign || '—'}  ·  ASC {current.ascSign || '—'}</Text>
-            {current.reasons?.length ? (
-              <View style={s.reasons}>
-                {current.reasons.slice(0, 3).map((r, i) => <Text key={i} style={s.reason}>✨ {r}</Text>)}
-              </View>
-            ) : null}
-            {current.common?.length ? (
-              <View style={s.common}>
-                {current.common.map((c) => <View key={c} style={s.commonChip}><Text style={s.commonTx}>{interestEmoji(c)} {interestLabel(c, lang)}</Text></View>)}
-              </View>
-            ) : null}
+          <View style={s.photoWrap}>
+            {(current.photos && current.photos[0]) || current.photoURL
+              ? <Image source={{ uri: (current.photos && current.photos[0]) || current.photoURL || undefined }} style={s.photo} />
+              : <View style={[s.photo, s.photoFb]}><Ionicons name="person" size={70} color="#3a3a5a" /></View>}
+            <LinearGradient colors={['transparent', 'rgba(12,8,24,0.35)', 'rgba(12,8,24,0.96)']} locations={[0, 0.55, 1]} style={s.grad} pointerEvents="none" />
+            {/* Anel de compatibilidade */}
+            <View style={s.ring}>
+              <Text style={s.ringPct}>{Math.round(current.score)}<Text style={s.ringSym}>%</Text></Text>
+              <Text style={s.ringLbl}>{tl('afinidade', 'match', 'afinidad', 'affinita')}</Text>
+            </View>
+            {/* Info sobre a foto */}
+            <View style={s.overlay}>
+              <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
+              {current.city ? <Text style={s.city}>📍 {current.city}</Text> : null}
+              <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
+            </View>
           </View>
+          {/* Painel de detalhes */}
+          {(current.reasons?.length || current.common?.length) ? (
+            <View style={s.detail}>
+              {current.reasons?.slice(0, 3).map((r, i) => <Text key={i} style={s.reason}>✨ {r}</Text>)}
+              {current.common?.length ? (
+                <View style={s.common}>
+                  {current.common.map((c) => <View key={c} style={s.commonChip}><Text style={s.commonTx}>{interestEmoji(c)} {interestLabel(c, lang)}</Text></View>)}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -108,14 +128,17 @@ export default function DiscoverDeck() {
       {/* Overlay de Match */}
       <Modal visible={!!matchWith} transparent animationType="fade" onRequestClose={() => setMatchWith(null)}>
         <View style={s.matchBack}>
-          <Text style={s.matchTitle}>{tl('Deu Match! 💘', 'It is a Match! 💘', 'Hubo Match! 💘', 'E Match! 💘')}</Text>
-          <View style={s.matchRow}>
-            <Image source={{ uri: myPhoto || undefined }} style={s.matchPhoto} />
-            <Ionicons name="heart" size={30} color={C.magenta} style={{ marginHorizontal: -8, zIndex: 2 }} />
-            <Image source={{ uri: (matchWith?.photos && matchWith.photos[0]) || matchWith?.photoURL || undefined }} style={s.matchPhoto} />
-          </View>
-          <Text style={s.matchSub}>{tl(`Você e ${matchWith?.displayName || ''} combinaram. Agora podem se falar.`, `You and ${matchWith?.displayName || ''} matched. Now you can talk.`, `Tu y ${matchWith?.displayName || ''} combinaron. Ahora pueden hablar.`, `Tu e ${matchWith?.displayName || ''} avete combinato. Ora potete parlare.`)}</Text>
-          <TouchableOpacity style={s.matchCta} onPress={() => setMatchWith(null)}><Text style={s.matchCtaTx}>{tl('Continuar', 'Continue', 'Continuar', 'Continua')}</Text></TouchableOpacity>
+          <Animated.View style={{ alignItems: 'center', opacity: matchAnim, transform: [{ scale: matchAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }] }}>
+            <Text style={s.matchSpark}>✨</Text>
+            <Text style={s.matchTitle}>{tl('Deu Match!', 'It is a Match!', 'Hubo Match!', 'E Match!')} 💘</Text>
+            <View style={s.matchRow}>
+              <Image source={{ uri: myPhoto || undefined }} style={s.matchPhoto} />
+              <View style={s.matchHeart}><Ionicons name="heart" size={26} color="#fff" /></View>
+              <Image source={{ uri: (matchWith?.photos && matchWith.photos[0]) || matchWith?.photoURL || undefined }} style={s.matchPhoto} />
+            </View>
+            <Text style={s.matchSub}>{tl(`Você e ${matchWith?.displayName || ''} combinaram. Agora podem se falar.`, `You and ${matchWith?.displayName || ''} matched. Now you can talk.`, `Tu y ${matchWith?.displayName || ''} combinaron. Ahora pueden hablar.`, `Tu e ${matchWith?.displayName || ''} avete combinato. Ora potete parlare.`)}</Text>
+            <TouchableOpacity style={s.matchCta} onPress={() => setMatchWith(null)}><Text style={s.matchCtaTx}>{tl('Continuar', 'Continue', 'Continuar', 'Continua')}</Text></TouchableOpacity>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -183,19 +206,24 @@ const s = StyleSheet.create({
   title: { color: C.tx, fontSize: 17, fontWeight: '800' },
   filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 18, borderWidth: 1, borderColor: C.line },
   filterTx: { color: C.gold, fontSize: 13, fontWeight: '700' },
-  cardBox: { backgroundColor: C.card, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: C.line },
-  photo: { width: '100%', height: 360, backgroundColor: '#000' },
-  scoreChip: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.magenta, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
-  scoreTx: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  info: { padding: 16 },
-  name: { color: C.tx, fontSize: 21, fontWeight: '800' },
-  age: { color: C.dim, fontSize: 19, fontWeight: '600' },
-  city: { color: C.dim, fontSize: 14, marginTop: 3 },
-  signs: { color: C.gold, fontSize: 13, marginTop: 8, fontWeight: '600' },
-  reasons: { marginTop: 10, gap: 3 },
+  cardBox: { backgroundColor: C.card, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: C.magenta, shadowOpacity: 0.25, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  photoWrap: { width: '100%', height: 440, position: 'relative' },
+  photo: { width: '100%', height: '100%', backgroundColor: '#000' },
+  photoFb: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#0d0d1c' },
+  grad: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%' },
+  ring: { position: 'absolute', top: 14, right: 14, width: 62, height: 62, borderRadius: 31, borderWidth: 2.5, borderColor: C.magenta, backgroundColor: 'rgba(12,8,24,0.55)', alignItems: 'center', justifyContent: 'center' },
+  ringPct: { color: '#fff', fontSize: 19, fontWeight: '900', lineHeight: 20 },
+  ringSym: { fontSize: 11, fontWeight: '700' },
+  ringLbl: { color: '#fff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.85 },
+  overlay: { position: 'absolute', left: 18, right: 18, bottom: 16 },
+  name: { color: '#fff', fontSize: 25, fontWeight: '900' },
+  age: { color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: '600' },
+  city: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 4 },
+  signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
+  detail: { padding: 16, gap: 4 },
   reason: { color: C.tx, fontSize: 13 },
-  common: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
-  commonChip: { backgroundColor: 'rgba(214,64,159,0.16)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
+  common: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  commonChip: { backgroundColor: 'rgba(214,64,159,0.16)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: 'rgba(214,64,159,0.35)' },
   commonTx: { color: C.tx, fontSize: 12, fontWeight: '600' },
   actions: { flexDirection: 'row', justifyContent: 'center', gap: 28, marginTop: 18 },
   act: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
@@ -205,9 +233,11 @@ const s = StyleSheet.create({
   emptyTx: { color: C.dim, fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
   reload: { backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: C.line },
   reloadTx: { color: C.gold, fontWeight: '700' },
-  matchBack: { flex: 1, backgroundColor: 'rgba(10,6,20,0.94)', alignItems: 'center', justifyContent: 'center', padding: 28 },
-  matchTitle: { color: C.tx, fontSize: 28, fontWeight: '900', marginBottom: 26 },
+  matchBack: { flex: 1, backgroundColor: 'rgba(10,6,20,0.95)', alignItems: 'center', justifyContent: 'center', padding: 28 },
+  matchSpark: { fontSize: 40, marginBottom: 6 },
+  matchTitle: { color: C.tx, fontSize: 30, fontWeight: '900', marginBottom: 26 },
   matchRow: { flexDirection: 'row', alignItems: 'center' },
+  matchHeart: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.magenta, alignItems: 'center', justifyContent: 'center', marginHorizontal: -12, zIndex: 2, borderWidth: 3, borderColor: 'rgba(10,6,20,0.95)' },
   matchPhoto: { width: 108, height: 108, borderRadius: 54, borderWidth: 3, borderColor: C.magenta, backgroundColor: '#000' },
   matchSub: { color: C.dim, fontSize: 15, textAlign: 'center', marginTop: 26, lineHeight: 22 },
   matchCta: { marginTop: 28, backgroundColor: C.gold, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40 },
