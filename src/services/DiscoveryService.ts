@@ -83,6 +83,12 @@ export async function setDeckVisible(visible: boolean): Promise<{ ok: boolean; d
   return { ok: !!r?.ok, deckHidden: !!r?.deckHidden }
 }
 
+/** Abrir/fechar a roda de sinastria no meu card (default aberto). */
+export async function setShareChart(open: boolean): Promise<{ ok: boolean; shareChart: boolean }> {
+  const r = await post('set-share-chart', { open })
+  return { ok: !!r?.ok, shareChart: r?.shareChart !== false }
+}
+
 /** Salva o perfil estendido (fotos/interesses/bio). `gated` se não for assinante/trial. */
 export async function setProfile(input: ProfileInput): Promise<{ ok: boolean; gated?: boolean; profile?: ProfileInput }> {
   const r = await post('set-profile', input)

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -49,6 +50,7 @@ import SynastryWheel from "../../components/SynastryWheel"
 import AspectGrid from "../../components/AspectGrid"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
+import { searchProfiles, type PublicProfile } from "../../services/DiscoveryService"
 import { gunaMilanBetween } from "../../astro/vedic"
 import { resolveGunaMilan, type ResolvedGunaMilan } from "../../utils/vedicInterpretation"
 
@@ -231,6 +233,23 @@ export default function GroupsScreen() {
   const [showGroupOrderModal, setShowGroupOrderModal] = useState(false)
   const [showGroupActionsModal, setShowGroupActionsModal] = useState(false)
   const [showAddChooser, setShowAddChooser] = useState(false)
+  // Busca de usuários do app dentro dos Grupos (não encaminha pra aba Match).
+  const [showFindUser, setShowFindUser] = useState(false)
+  const [findTerm, setFindTerm] = useState('')
+  const [findResults, setFindResults] = useState<PublicProfile[] | null>(null)
+  const [findSearching, setFindSearching] = useState(false)
+  const [friendSent, setFriendSent] = useState<Set<string>>(new Set())
+  const doFindUser = async () => {
+    const t = findTerm.trim()
+    if (t.length < 2) { setFindResults(null); return }
+    setFindSearching(true)
+    try { setFindResults(await searchProfiles(t)) } catch { setFindResults([]) }
+    setFindSearching(false)
+  }
+  const sendFriend = async (uid: string) => {
+    setFriendSent((prev) => new Set(prev).add(uid))
+    try { await requestConnection(uid, null, false) } catch { /* mantém marcado */ }
+  }
   const [memberSort, setMemberSort] = useState<"status" | "name" | "recent">("status")
   const [showMemberSortModal, setShowMemberSortModal] = useState(false)
   const [selectedMemberArea, setSelectedMemberArea] = useState<{
@@ -2545,13 +2564,13 @@ export default function GroupsScreen() {
               style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn, { marginTop: 12 }]}
               onPress={() => {
                 setShowAddChooser(false)
-                navigation.navigate('Network' as never)
+                setFindTerm(''); setFindResults(null); setShowFindUser(true)
               }}
             >
-              <Ionicons name="heart-outline" size={16} color="#0F0F23" />
+              <Ionicons name="search" size={16} color="#0F0F23" />
               <Text style={styles.modalButtonConfirmText}>{tr('groups.addChooser.discover', 'Encontrar usuário do app')}</Text>
             </TouchableOpacity>
-            <Text style={styles.addChooserHint}>{tr('groups.addChooser.discoverHint', 'Descubra e combine com pessoas no Match.')}</Text>
+            <Text style={styles.addChooserHint}>{tr('groups.addChooser.discoverHint', 'Busque por nome e peça amizade.')}</Text>
 
             <TouchableOpacity
               style={[styles.modalButtonCancel, styles.modalButtonFullWidth, { marginTop: 14 }]}
@@ -2560,6 +2579,72 @@ export default function GroupsScreen() {
               <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Busca de usuários do app (in-place, não vai pra aba Match) */}
+      <Modal
+        visible={showFindUser}
+        animationType="slide"
+        onRequestClose={() => setShowFindUser(false)}
+      >
+        <View style={styles.findScreen}>
+          <View style={styles.findHead}>
+            <Text style={styles.findTitle}>{tr('groups.find.title', 'Encontrar usuário')}</Text>
+            <TouchableOpacity onPress={() => setShowFindUser(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close" size={26} color="#8892a4" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.findSearchBox}>
+            <Ionicons name="search" size={18} color="#8892a4" />
+            <TextInput
+              style={styles.findInput}
+              placeholder={tr('groups.find.placeholder', 'Buscar por nome')}
+              placeholderTextColor="#8892a4"
+              value={findTerm}
+              onChangeText={setFindTerm}
+              onSubmitEditing={doFindUser}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoFocus
+            />
+            {findTerm ? (
+              <TouchableOpacity onPress={() => { setFindTerm(''); setFindResults(null) }}>
+                <Ionicons name="close-circle" size={18} color="#8892a4" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            {findResults !== null ? (
+              findSearching ? <ActivityIndicator color="#FFD700" style={{ marginVertical: 16 }} /> :
+                findResults.length ? findResults.map((p) => {
+                  const sent = friendSent.has(p.uid)
+                  const trio = [p.sunSign ? `☉ ${p.sunSign}` : '', p.moonSign ? `☽ ${p.moonSign}` : '', p.ascSign ? `ASC ${p.ascSign}` : ''].filter(Boolean).join('  ')
+                  return (
+                    <View key={p.uid} style={styles.findRow}>
+                      {p.photoURL ? <Image source={{ uri: p.photoURL }} style={styles.findAvatar} /> : <View style={[styles.findAvatar, styles.findAvatarFb]}><Ionicons name="person" size={22} color="#3a3a5a" /></View>}
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={styles.findName} numberOfLines={1}>{p.displayName || tr('groups.find.someone', 'Alguém')}</Text>
+                        {trio ? <Text style={styles.findTrio} numberOfLines={1}>{trio}</Text> : null}
+                        {p.city ? <Text style={styles.findCity} numberOfLines={1}>{p.city}</Text> : null}
+                      </View>
+                      {sent ? (
+                        <View style={styles.findSentTag}><Ionicons name="checkmark" size={14} color="#3ecf8e" /><Text style={styles.findSentTx}>{tr('groups.find.sent', 'Enviado')}</Text></View>
+                      ) : (
+                        <TouchableOpacity style={styles.findFriendBtn} onPress={() => sendFriend(p.uid)}>
+                          <Text style={styles.findFriendTx}>🤝 {tr('groups.find.friend', 'Amizade')}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )
+                }) : <Text style={styles.findEmpty}>{tr('groups.find.none', 'Ninguém encontrado.')}</Text>
+            ) : (
+              <View style={styles.findEmptyCard}>
+                <Ionicons name="search" size={32} color="#5a5a72" />
+                <Text style={styles.findEmpty}>{tr('groups.find.hint', 'Digite um nome para buscar pessoas do app.')}</Text>
+              </View>
+            )}
+          </ScrollView>
         </View>
       </Modal>
 
@@ -4588,6 +4673,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 6,
   },
+  findScreen: { flex: 1, backgroundColor: "#0F0F23", paddingTop: 52 },
+  findHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 12 },
+  findTitle: { color: "#FFFFFF", fontSize: 24, fontWeight: "900" },
+  findSearchBox: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#1c1c34", borderRadius: 12, borderWidth: 1, borderColor: "#2a2a44", marginHorizontal: 16, paddingHorizontal: 12, paddingVertical: 10 },
+  findInput: { flex: 1, color: "#eaeaf5", fontSize: 15 },
+  findRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#1c1c34", borderRadius: 14, borderWidth: 1, borderColor: "#2a2a44", padding: 12, marginBottom: 10 },
+  findAvatar: { width: 54, height: 54, borderRadius: 27, backgroundColor: "#000" },
+  findAvatarFb: { alignItems: "center", justifyContent: "center", backgroundColor: "#141428" },
+  findName: { color: "#eaeaf5", fontSize: 15, fontWeight: "800" },
+  findTrio: { color: "#FFD700", fontSize: 12.5, marginTop: 2 },
+  findCity: { color: "#8892a4", fontSize: 12, marginTop: 1 },
+  findFriendBtn: { backgroundColor: "#FFD700", borderRadius: 12, paddingVertical: 9, paddingHorizontal: 12 },
+  findFriendTx: { color: "#1a1405", fontSize: 13, fontWeight: "800" },
+  findSentTag: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8 },
+  findSentTx: { color: "#3ecf8e", fontSize: 12, fontWeight: "700" },
+  findEmpty: { color: "#8892a4", fontSize: 14, textAlign: "center", marginTop: 8, paddingHorizontal: 24 },
+  findEmptyCard: { alignItems: "center", paddingVertical: 40, gap: 12 },
   modalOptionButton: {
     backgroundColor: "#2C2C2E",
     paddingVertical: 12,

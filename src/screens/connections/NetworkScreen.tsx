@@ -10,7 +10,7 @@ import { listConnections, respondConnection, shareWhatsapp, blockConnection, rem
 import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
 import DiscoverDeck from './DiscoverDeck'
-import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, type MatchRow } from '../../services/DiscoveryService'
+import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, setShareChart as setShareChartApi, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
@@ -43,10 +43,22 @@ export default function NetworkScreen() {
   const [matches, setMatches] = useState<MatchRow[]>([])
   const [deckVisible, setDeckVis] = useState(true)
   const [togglingDeck, setTogglingDeck] = useState(false)
-  useEffect(() => { getMyProfile().then((r) => { if (!r.gated) setDeckVis(!r.deckHidden) }).catch(() => {}) }, [])
+  const [shareOpen, setShareOpen] = useState(true)
+  const [togglingShare, setTogglingShare] = useState(false)
+  useEffect(() => {
+    getMyProfile().then((r) => {
+      if (r.gated) return
+      setDeckVis(!r.deckHidden)
+      setShareOpen((r.profile as any)?.shareChart !== false)
+    }).catch(() => {})
+  }, [])
   const toggleDeck = async (v: boolean) => {
     setTogglingDeck(true); setDeckVis(v)
     try { await setDeckVisibleApi(v) } catch { setDeckVis(!v) } finally { setTogglingDeck(false) }
+  }
+  const toggleShare = async (v: boolean) => {
+    setTogglingShare(true); setShareOpen(v)
+    try { await setShareChartApi(v) } catch { setShareOpen(!v) } finally { setTogglingShare(false) }
   }
 
   const [page, setPage] = useState<Page>('discover')
@@ -231,10 +243,17 @@ export default function NetworkScreen() {
             <Ionicons name="help-circle-outline" size={20} color={C.faint} />
           </TouchableOpacity>
         </View>
-        <View style={st.visChip}>
-          <Ionicons name={deckVisible ? 'heart' : 'heart-dislike-outline'} size={15} color={deckVisible ? C.gold : C.faint} />
-          <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{tl('No Match', 'In Match', 'En Match', 'In Match')}</Text>
-          <Switch value={deckVisible} disabled={togglingDeck} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <View style={st.visChip}>
+            <Ionicons name={deckVisible ? 'heart' : 'heart-dislike-outline'} size={15} color={deckVisible ? C.gold : C.faint} />
+            <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{tl('No Match', 'In Match', 'En Match', 'In Match')}</Text>
+            <Switch value={deckVisible} disabled={togglingDeck} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+          </View>
+          <View style={st.visChip}>
+            <Ionicons name={shareOpen ? 'pie-chart' : 'lock-closed-outline'} size={15} color={shareOpen ? C.gold : C.faint} />
+            <Text style={[st.visChipTx, { color: shareOpen ? C.ink : C.faint }]}>{tl('Roda aberta', 'Open wheel', 'Rueda abierta', 'Ruota aperta')}</Text>
+            <Switch value={shareOpen} disabled={togglingShare} onValueChange={toggleShare} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+          </View>
         </View>
       </View>
 

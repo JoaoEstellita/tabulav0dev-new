@@ -7,6 +7,7 @@ import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getDeck, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters, type WheelPos } from '../../services/DiscoveryService'
+import { requestConnection } from '../../services/ConnectionsService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 import LocationField, { type PickedLocation } from '../../components/LocationField'
 import SynastryWheel from '../../components/SynastryWheel'
@@ -42,6 +43,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [filters, setFilters] = useState<DeckFilters>({})
   const [missing, setMissing] = useState<string[]>([])
   const [showAff, setShowAff] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const incomplete = missing.length > 0
   const matchAnim = useRef(new Animated.Value(0)).current
 
@@ -88,6 +90,21 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
       setBusy(false)
       setShowAff(false)
       setIdx((i) => i + 1)
+    }
+  }
+
+  // Pedir amizade: conexão não-romântica (requestConnection). Não é swipe/like —
+  // só manda o pedido e avança o card. A pessoa some do baralho (deck já exclui
+  // conexões pending) no próximo carregamento.
+  const askFriend = async () => {
+    if (!current || busy) return
+    setBusy(true)
+    try {
+      await requestConnection(current.uid, null, false)
+      setToast(tl('Pedido de amizade enviado 🤝', 'Friend request sent 🤝', 'Solicitud de amistad enviada 🤝', 'Richiesta di amicizia inviata 🤝'))
+    } catch { /* segue */ } finally {
+      setBusy(false); setShowAff(false); setIdx((i) => i + 1)
+      setTimeout(() => setToast(null), 2200)
     }
   }
 
@@ -239,15 +256,27 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
       )}
 
       {current ? (
-        <View style={s.actions}>
-          <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
-            <Ionicons name="close" size={30} color="#ff6b6b" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
-            <Ionicons name="heart" size={28} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <>
+          <View style={s.actions}>
+            <TouchableOpacity style={[s.act, s.pass]} disabled={busy} onPress={() => act('pass')} activeOpacity={0.85}>
+              <Ionicons name="close" size={30} color="#ff6b6b" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.act, s.friend]} disabled={busy} onPress={askFriend} activeOpacity={0.85}>
+              <Text style={s.friendEmoji}>🤝</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.act, s.like]} disabled={busy} onPress={() => act('like')} activeOpacity={0.85}>
+              <Ionicons name="heart" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View style={s.actionLabels}>
+            <Text style={s.actLbl}>{tl('Passar', 'Pass', 'Pasar', 'Passa')}</Text>
+            <Text style={s.actLbl}>{tl('Amizade', 'Friend', 'Amistad', 'Amicizia')}</Text>
+            <Text style={s.actLbl}>{tl('Match', 'Match', 'Match', 'Match')}</Text>
+          </View>
+        </>
       ) : null}
+
+      {toast ? <View style={s.toast}><Text style={s.toastTx}>{toast}</Text></View> : null}
 
       {/* Overlay de Match */}
       <Modal visible={!!matchWith} transparent animationType="fade" onRequestClose={() => setMatchWith(null)}>
@@ -371,10 +400,16 @@ const s = StyleSheet.create({
   bio: { color: C.tx, fontSize: 14, lineHeight: 20, marginBottom: 6 },
   prompt: { color: C.tx, fontSize: 13, lineHeight: 20 },
   promptLbl: { color: C.dim, fontWeight: '700' },
-  actions: { flexDirection: 'row', justifyContent: 'center', gap: 28, marginTop: 18 },
+  actions: { flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 18 },
   act: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   pass: { backgroundColor: C.card, borderColor: '#ff6b6b' },
+  friend: { backgroundColor: C.card, borderColor: C.good, width: 56, height: 56, borderRadius: 28 },
+  friendEmoji: { fontSize: 24 },
   like: { backgroundColor: C.magenta, borderColor: C.magenta },
+  actionLabels: { flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 6 },
+  actLbl: { width: 64, textAlign: 'center', color: C.dim, fontSize: 11, fontWeight: '700' },
+  toast: { position: 'absolute', bottom: 24, alignSelf: 'center', left: 40, right: 40, backgroundColor: 'rgba(20,16,32,0.96)', borderWidth: 1, borderColor: C.good, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 18 },
+  toastTx: { color: C.tx, fontSize: 13.5, fontWeight: '700', textAlign: 'center' },
   empty: { alignItems: 'center', paddingVertical: 44, gap: 12 },
   emptyTx: { color: C.dim, fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
   reload: { backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: C.line },
