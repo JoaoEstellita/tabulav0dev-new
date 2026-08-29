@@ -34,17 +34,22 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [myPhoto, setMyPhoto] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<DeckFilters>({})
-  const [incomplete, setIncomplete] = useState(false)
+  const [missing, setMissing] = useState<string[]>([])
+  const incomplete = missing.length > 0
   const matchAnim = useRef(new Animated.Value(0)).current
 
-  // Gate de completude: sem foto, não dá pra participar do Match direito.
+  // Gate de completude: foto + gênero + preferência são o mínimo pra o Match
+  // funcionar bem (card atraente + filtro bidirecional de gênero).
   useEffect(() => {
     getMyProfile().then((r) => {
-      const p = r.profile
-      const hasPhoto = !!((p?.photos && p.photos.length) || p?.photoURL)
-      setIncomplete(!hasPhoto)
+      const p: any = r.profile
+      const miss: string[] = []
+      if (!((p?.photos && p.photos.length) || p?.photoURL)) miss.push(tl('uma foto', 'a photo', 'una foto', 'una foto'))
+      if (!p?.gender) miss.push(tl('seu gênero', 'your gender', 'tu genero', 'il tuo genere'))
+      if (!p?.seeking) miss.push(tl('quem quer conhecer', 'who you want to meet', 'a quien conocer', 'chi conoscere'))
+      setMissing(miss)
     }).catch(() => {})
-  }, [user?.uid])
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (matchWith) {
@@ -102,8 +107,8 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
       {incomplete ? (
         <TouchableOpacity style={s.incomplete} onPress={onGoProfile} activeOpacity={0.9}>
-          <Ionicons name="camera-outline" size={20} color={C.gold} />
-          <Text style={s.incompleteTx}>{tl('Adicione ao menos uma foto no seu Perfil para dar match.', 'Add at least one photo to your Profile to match.', 'Agrega al menos una foto a tu Perfil para hacer match.', 'Aggiungi almeno una foto al Profilo per fare match.')}</Text>
+          <Ionicons name="person-circle-outline" size={22} color={C.gold} />
+          <Text style={s.incompleteTx}>{tl('Complete seu Perfil', 'Complete your Profile', 'Completa tu Perfil', 'Completa il Profilo')} ({missing.join(', ')}) {tl('para dar match.', 'to match.', 'para hacer match.', 'per fare match.')}</Text>
           <Ionicons name="chevron-forward" size={18} color={C.gold} />
         </TouchableOpacity>
       ) : null}
