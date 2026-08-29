@@ -8,6 +8,10 @@ export type PublicProfile = {
   moonSign: string | null
   ascSign: string | null
   city: string | null
+  photos?: string[]
+  interests?: string[]
+  bio?: string | null
+  age?: number | null
 }
 
 async function post(action: string, payload: Record<string, unknown>): Promise<any> {
@@ -17,6 +21,8 @@ async function post(action: string, payload: Record<string, unknown>): Promise<a
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  // 402 = seção só para assinantes/trial → o cliente cai no paywall.
+  if (res.status === 402) return { ok: false, gated: true }
   try { return await res.json() } catch { return { ok: false, error: 'parse' } }
 }
 
@@ -55,6 +61,21 @@ export async function searchProfiles(term: string, opts?: { city?: string; sunSi
 export async function getPublicProfile(uid: string): Promise<PublicProfile | null> {
   const r = await post('get-profile', { uid })
   return r?.ok ? r.profile : null
+}
+
+export type ProfileInput = { photos: string[]; interests: string[]; bio: string }
+
+/** Meu próprio perfil estendido (pro editor). `gated` se não for assinante/trial. */
+export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; gated?: boolean }> {
+  const r = await post('my-profile', {})
+  if (r?.gated) return { profile: null, discoverable: false, gated: true }
+  return { profile: r?.profile || null, discoverable: !!r?.discoverable }
+}
+
+/** Salva o perfil estendido (fotos/interesses/bio). `gated` se não for assinante/trial. */
+export async function setProfile(input: ProfileInput): Promise<{ ok: boolean; gated?: boolean; profile?: ProfileInput }> {
+  const r = await post('set-profile', input)
+  return { ok: !!r?.ok, gated: !!r?.gated, profile: r?.profile }
 }
 
 export type SynastryAspect = { mine: string; theirs: string; aspect: string; orb: number }
