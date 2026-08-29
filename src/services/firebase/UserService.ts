@@ -137,6 +137,26 @@ class UserService {
     return url
   }
 
+  /**
+   * Upload de UMA imagem qualquer (fotos da Rede/Match) — só sobe e devolve a URL,
+   * SEM gravar profilePhoto nem tocar o perfil. Mesmo caminho do setProfilePhoto.
+   */
+  async uploadImage(userId: string, photo: string): Promise<string> {
+    if (photo.startsWith('http')) return photo
+    const isWeb = Platform.OS === 'web'
+    if (isWeb && getBackendBaseUrl()) {
+      const resp = await backendFetch('/api/upload/profile-photo', {
+        method: 'POST',
+        auth: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, dataUrl: photo }),
+      })
+      if (!resp.ok) throw new Error(`upload_failed_${resp.status}`)
+      return (await resp.json()).url
+    }
+    return this.uploadProfilePhoto(userId, photo)
+  }
+
   async saveBirthData(userId: string, birthData: BirthData): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId)

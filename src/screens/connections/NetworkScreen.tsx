@@ -8,8 +8,13 @@ import { useAppLanguage } from '../../hooks/useAppLanguage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
 import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
+import NetworkProfileEditor from './NetworkProfileEditor'
+import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
+import IntroCarousel from '../../components/IntroCarousel'
+import { matchIntroSlides } from './matchIntroSlides'
 
 const WELCOME_KEY = 'network_welcome_seen_v1'
+const MATCH_TOUR_KEY = 'match_tour_seen_v1'
 
 // Paleta da Rede (mockup aprovado): índigo profundo + dourado (identidade) + magenta (match/sinastria)
 const C = {
@@ -18,7 +23,7 @@ const C = {
   ink: '#EDEBF7', dim: '#9A9CB8', faint: '#6E6F8C',
   gold: '#FFD700', goldDeep: '#C9A227', magenta: '#FF4D8D', good: '#22C55E',
 }
-type Page = 'connections' | 'discover'
+type Page = 'connections' | 'discover' | 'profile'
 
 export default function NetworkScreen() {
   const { user } = useAuth()
@@ -27,6 +32,11 @@ export default function NetworkScreen() {
   const { language } = useAppLanguage()
   const tl = (pt: string, en: string, es: string, it: string) =>
     language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt
+
+  const { isAdmin, subscription, trialActive } = useSubscriptionCheck()
+  // Gate: a Rede/Match é para assinante ATIVO ou TRIAL; grátis vê o paywall.
+  const gated = !isAdmin && !subscription?.active && !trialActive
+  const [showTour, setShowTour] = useState(false)
 
   const [page, setPage] = useState<Page>('discover')
   const [items, setItems] = useState<Connection[]>([])
@@ -166,6 +176,33 @@ export default function NetworkScreen() {
     <View style={st.sectRow}><Text style={st.sectLabel}>{children}</Text><View style={st.sectLine} /></View>
   )
 
+  // Guia de introdução ao Match: abre no 1º acesso; reabrível pelo botão de ajuda.
+  useEffect(() => {
+    AsyncStorage.getItem(MATCH_TOUR_KEY).then((v) => { if (!v) setShowTour(true) }).catch(() => {})
+  }, [])
+  const closeTour = () => { setShowTour(false); AsyncStorage.setItem(MATCH_TOUR_KEY, '1').catch(() => {}) }
+  const tourLabels = { skip: tl('Pular', 'Skip', 'Saltar', 'Salta'), next: tl('Próximo', 'Next', 'Siguiente', 'Avanti'), done: gated ? tl('Assinar', 'Subscribe', 'Suscribirse', 'Abbonati') : tl('Começar', 'Start', 'Empezar', 'Inizia') }
+
+  // Paywall: a seção Match é só para assinante ativo ou trial.
+  if (gated) {
+    return (
+      <View style={[st.screen, { paddingTop: insets.top + 48, alignItems: 'center', paddingHorizontal: 26 }]}>
+        <Ionicons name="heart" size={46} color={C.magenta} />
+        <Text style={[st.title, { marginTop: 16, textAlign: 'center' }]}>Match 💘</Text>
+        <Text style={{ color: C.faint, textAlign: 'center', marginTop: 12, fontSize: 15, lineHeight: 22 }}>
+          {tl('Descubra com quem você mais combina e dê match. Esta seção é para assinantes.', 'Discover who matches you most and match. This section is for subscribers.', 'Descubre con quien mas combinas y haz match. Esta seccion es para suscriptores.', 'Scopri con chi combini di piu e fai match. Questa sezione e per abbonati.')}
+        </Text>
+        <TouchableOpacity style={st.payCta} onPress={() => navigation.navigate('Premium')} activeOpacity={0.9}>
+          <Text style={st.payCtaTx}>{tl('Assinar para descobrir', 'Subscribe to discover', 'Suscribirse para descubrir', 'Abbonati per scoprire')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ marginTop: 16 }} onPress={() => setShowTour(true)}>
+          <Text style={{ color: C.faint, fontSize: 13 }}>{tl('Como funciona?', 'How it works?', 'Como funciona?', 'Come funziona?')}</Text>
+        </TouchableOpacity>
+        <IntroCarousel visible={showTour} slides={matchIntroSlides(language as any, true)} onClose={closeTour} labels={tourLabels} />
+      </View>
+    )
+  }
+
   return (
     <ScrollView
       style={st.screen}
@@ -174,7 +211,12 @@ export default function NetworkScreen() {
     >
       {/* Header */}
       <View style={st.head}>
-        <Text style={st.title}>Re<Text style={{ color: C.magenta }}>de</Text></Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={st.title}>Mat<Text style={{ color: C.magenta }}>ch</Text></Text>
+          <TouchableOpacity onPress={() => setShowTour(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="help-circle-outline" size={20} color={C.faint} />
+          </TouchableOpacity>
+        </View>
         <View style={st.visChip}>
           <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
           <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Na Rede', 'In Network', 'En la Red', 'Nella Rete')}</Text>
@@ -201,12 +243,15 @@ export default function NetworkScreen() {
 
       {/* Segmented */}
       <View style={st.seg}>
-        <TouchableOpacity style={[st.segBtn, page === 'connections' && st.segOn]} onPress={() => setPage('connections')}>
-          <Text style={[st.segTx, page === 'connections' && st.segTxOn]}>{tl('Conexões', 'Connections', 'Conexiones', 'Connessioni')}</Text>
-          {received.length ? <View style={st.segBadge}><Text style={st.segBadgeTx}>{received.length}</Text></View> : null}
-        </TouchableOpacity>
         <TouchableOpacity style={[st.segBtn, page === 'discover' && st.segOn]} onPress={() => setPage('discover')}>
           <Text style={[st.segTx, page === 'discover' && st.segTxOn]}>{tl('Descobrir', 'Discover', 'Descubrir', 'Scopri')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.segBtn, page === 'connections' && st.segOn]} onPress={() => setPage('connections')}>
+          <Text style={[st.segTx, page === 'connections' && st.segTxOn]}>{tl('Match', 'Match', 'Match', 'Match')}</Text>
+          {received.length ? <View style={st.segBadge}><Text style={st.segBadgeTx}>{received.length}</Text></View> : null}
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.segBtn, page === 'profile' && st.segOn]} onPress={() => setPage('profile')}>
+          <Text style={[st.segTx, page === 'profile' && st.segTxOn]}>{tl('Perfil', 'Profile', 'Perfil', 'Profilo')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -260,8 +305,10 @@ export default function NetworkScreen() {
             <Text style={st.nudge}>{tl('Dica: perfis com foto e cidade recebem mais conexões — edite na aba Perfil.', 'Tip: profiles with photo and city get more connections — edit them in the Profile tab.', 'Tip: perfiles con foto y ciudad reciben mas conexiones — editalos en Perfil.', 'Suggerimento: profili con foto e citta ricevono piu connessioni — modificali in Profilo.')}</Text>
           ) : null}
         </View>
+      ) : page === 'profile' ? (
+        <NetworkProfileEditor />
       ) : (
-        /* ===== CONEXÕES ===== */
+        /* ===== MATCH (conexões + pedidos) ===== */
         <View style={st.pad}>
           {received.length ? (
             <>
@@ -322,12 +369,16 @@ export default function NetworkScreen() {
           ) : null}
         </View>
       )}
+
+      <IntroCarousel visible={showTour} slides={matchIntroSlides(language as any, false)} onClose={closeTour} labels={tourLabels} />
     </ScrollView>
   )
 }
 
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.void },
+  payCta: { marginTop: 26, backgroundColor: C.magenta, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 28 },
+  payCtaTx: { color: '#fff', fontSize: 15, fontWeight: '800' },
   pad: { paddingHorizontal: 16 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 14 },
   title: { color: C.ink, fontSize: 30, fontWeight: '900', letterSpacing: -0.5 },
