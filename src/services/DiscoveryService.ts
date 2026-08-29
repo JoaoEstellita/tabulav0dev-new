@@ -14,6 +14,7 @@ export type PublicProfile = {
   prompts?: Record<string, string>
   gender?: 'm' | 'f' | 'nb' | null
   age?: number | null
+  shareChart?: boolean
 }
 export type Gender = 'm' | 'f' | 'nb'
 export type Seeking = 'm' | 'f' | 'all'
@@ -67,7 +68,7 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
   return r?.ok ? r.profile : null
 }
 
-export type ProfileInput = { photos: string[]; interests: string[]; bio: string; prompts?: Record<string, string>; gender?: Gender | null; seeking?: Seeking | null }
+export type ProfileInput = { photos: string[]; interests: string[]; bio: string; prompts?: Record<string, string>; gender?: Gender | null; seeking?: Seeking | null; shareChart?: boolean }
 
 /** Meu próprio perfil estendido (pro editor). `gated` se não for assinante/trial. */
 export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; deckHidden?: boolean; gated?: boolean }> {

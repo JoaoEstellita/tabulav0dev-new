@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, ScrollView, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, ScrollView, Alert, Platform, Switch } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
@@ -70,6 +70,7 @@ export default function NetworkProfileEditor() {
   const [prompts, setPrompts] = useState<Record<string, string>>({})
   const [gender, setGender] = useState<'m' | 'f' | 'nb' | null>(null)
   const [seeking, setSeeking] = useState<'m' | 'f' | 'all' | null>(null)
+  const [shareChart, setShareChart] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -82,6 +83,7 @@ export default function NetworkProfileEditor() {
       setPrompts(p?.prompts && typeof p.prompts === 'object' ? p.prompts : {})
       setGender((p as any)?.gender || null)
       setSeeking((p as any)?.seeking || null)
+      setShareChart((p as any)?.shareChart === true)
     }).finally(() => alive && setLoading(false))
     return () => { alive = false }
   }, [user?.uid])
@@ -113,7 +115,7 @@ export default function NetworkProfileEditor() {
   const save = async () => {
     setSaving(true)
     try {
-      const r = await setProfile({ photos, interests, bio, prompts, gender, seeking })
+      const r = await setProfile({ photos, interests, bio, prompts, gender, seeking, shareChart })
       if (r.gated) { Alert.alert(tl('Assinatura', 'Subscription', 'Suscripcion', 'Abbonamento'), tl('Esta seção é para assinantes.', 'This section is for subscribers.', 'Esta seccion es para suscriptores.', 'Questa sezione e per abbonati.')); return }
       if (!r.ok) throw new Error('save')
       Alert.alert(tl('Pronto!', 'Done!', 'Listo!', 'Fatto!'), tl('Seu perfil foi salvo.', 'Your profile was saved.', 'Tu perfil fue guardado.', 'Il tuo profilo e stato salvato.'))
@@ -159,6 +161,15 @@ export default function NetworkProfileEditor() {
             <Text style={[s.tagTx, seeking === v && s.tagTxOn]}>{l}</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Abrir a roda de sinastria no card (default fechado) */}
+      <View style={s.shareRow}>
+        <View style={{ flex: 1, paddingRight: 12 }}>
+          <Text style={s.shareTitle}>{tl('Abrir minha roda de sinastria', 'Share my synastry wheel', 'Abrir mi rueda de sinastria', 'Apri la mia ruota di sinastria')}</Text>
+          <Text style={s.shareSub}>{tl('Se ligado, quem vê seu card pode abrir a roda e a grade de aspectos com o mapa dela. Desligado: só a % de afinidade.', 'If on, whoever sees your card can open the wheel and aspect grid with your chart. Off: only the affinity %.', 'Si esta activo, quien ve tu tarjeta puede abrir la rueda y la grilla con tu carta. Apagado: solo el % de afinidad.', 'Se attivo, chi vede la tua card puo aprire la ruota e la griglia con la tua carta. Spento: solo la % di affinita.')}</Text>
+        </View>
+        <Switch value={shareChart} onValueChange={setShareChart} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
       </View>
 
       {/* Fotos */}
@@ -240,6 +251,9 @@ const s = StyleSheet.create({
   prevChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   prevChip: { color: '#fff', fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(214,64,159,0.4)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
   hint: { color: C.dim, fontSize: 12, fontWeight: '600' },
+  shareRow: { flexDirection: 'row', alignItems: 'center', marginTop: 22, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
+  shareTitle: { color: C.tx, fontSize: 14, fontWeight: '800' },
+  shareSub: { color: C.dim, fontSize: 12, lineHeight: 17, marginTop: 3 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   photoBox: { width: 96, height: 128, borderRadius: 12, overflow: 'hidden', backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   photo: { width: '100%', height: '100%' },

@@ -206,6 +206,10 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                     <AspectGrid cross rowPlanets={toGridPlanets(myPos)} colPlanets={toGridPlanets(current.positions)} aspects={current.grid.map((g) => ({ planet1: CAP[g.mine] || g.mine, planet2: CAP[g.theirs] || g.theirs, type: g.labelPt || '', orb: g.orb }))} />
                   </View>
                 ) : null}
+                {/* Dono não abriu a roda/grade — mostra só a leitura em texto */}
+                {!current.positions?.length ? (
+                  <Text style={[s.reason, { marginTop: 10 }]}>🔒 {tl('Este perfil não abriu a roda de sinastria.', 'This profile did not open the synastry wheel.', 'Este perfil no abrio la rueda de sinastria.', 'Questo profilo non ha aperto la ruota di sinastria.')}</Text>
+                ) : null}
               </View>
             ) : null}
             {/* Sobre a pessoa: bio + favoritos */}
