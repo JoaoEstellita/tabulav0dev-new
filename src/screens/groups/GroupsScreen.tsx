@@ -226,6 +226,10 @@ export default function GroupsScreen() {
   // Estados para modal de detalhes
   const [showGroupDetail, setShowGroupDetail] = useState(false)
   const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<Group | null>(null)
+  // Match → "Criar grupo com X": pré-preenche o nome e, após criar, abre o grupo pra convidar.
+  const [createWithUser, setCreateWithUser] = useState<{ uid: string; name: string | null } | null>(null)
+  const createWithHandledRef = useRef<string | null>(null)
+  const pendingInviteGroupRef = useRef<string | null>(null)
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [feedFilter, setFeedFilter] = useState<"all" | "messages" | "alerts">("all")
   const [groupOrder, setGroupOrder] = useState<string[]>([])
@@ -692,6 +696,30 @@ export default function GroupsScreen() {
     }
   }, [route?.params, groups, selectedGroup?.id])
 
+  // "Criar grupo com X" vindo do Match: abre o modal de criação já com o nome.
+  useEffect(() => {
+    const cw = route?.params?.createWith
+    if (!cw?.uid) return
+    if (createWithHandledRef.current === cw.uid) return
+    createWithHandledRef.current = cw.uid
+    setCreateWithUser(cw)
+    setNewGroupName((tr('groups.create.withPrefix', 'Eu & ')) + (cw.name || ''))
+    setShowCreateModal(true)
+    try { (navigation as any).setParams?.({ createWith: undefined }) } catch { /* noop */ }
+  }, [route?.params])
+
+  // Depois que o grupo novo aparece na lista, abre-o pra enviar o convite à pessoa.
+  useEffect(() => {
+    const gid = pendingInviteGroupRef.current
+    if (!gid) return
+    const g = groups.find((x) => x.id === gid)
+    if (g) {
+      pendingInviteGroupRef.current = null
+      setSelectedGroupForDetail(g)
+      setShowGroupDetail(true)
+    }
+  }, [groups])
+
   useEffect(() => {
     const params = route?.params || {}
     const feedTab = params.feedTab
@@ -1005,7 +1033,7 @@ export default function GroupsScreen() {
     }
 
     try {
-      await GroupService.createGroup(newGroupName, newGroupDescription, user!.uid, false, {
+      const newId = await GroupService.createGroup(newGroupName, newGroupDescription, user!.uid, false, {
         sharedLifeAreas: newGroupSharedLifeAreas,
         notifiedLifeAreas: newGroupNotifiedLifeAreas,
       })
@@ -1014,8 +1042,11 @@ export default function GroupsScreen() {
       setNewGroupDescription("")
       setNewGroupSharedLifeAreas(LIFE_AREA_KEYS)
       setNewGroupNotifiedLifeAreas(LIFE_AREA_KEYS)
+      // Veio do Match ("Criar grupo com X") → abre o grupo pra convidar a pessoa.
+      const fromMatch = !!createWithUser
+      if (fromMatch) { pendingInviteGroupRef.current = newId; setCreateWithUser(null) }
       await loadUserGroups()
-      Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.groupCreated', 'Grupo criado com sucesso!'))
+      if (!fromMatch) Alert.alert(tr('groups.alert.successTitle', 'Sucesso'), tr('groups.alert.groupCreated', 'Grupo criado com sucesso!'))
     } catch (error: any) {
       Alert.alert(tr('groups.alert.errorTitle', 'Erro'), error.message)
     }
@@ -2023,7 +2054,7 @@ export default function GroupsScreen() {
                   onPress={() => setSelectedGroup(group)}
                 >
                   <Text style={[styles.groupTabText, selectedGroup?.id === group.id && styles.groupTabTextActive]}>
-                    {group.name}
+                    {group.name}{Array.isArray(group.members) && group.members.length ? ` · ${group.members.length}` : ''}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -3610,22 +3641,26 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   groupTab: {
-    backgroundColor: "#2C2C2E",
+    backgroundColor: "#1E2038",
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 20,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   groupTabActive: {
     backgroundColor: "#FFD700",
+    borderColor: "#FFD700",
   },
   groupTabText: {
-    color: "#FFFFFF",
+    color: "#B9BAD6",
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   groupTabTextActive: {
-    color: "#000000",
+    color: "#0F0F23",
+    fontWeight: "800",
   },
   headerIconButton: {
     width: 34,

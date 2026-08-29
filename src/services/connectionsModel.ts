@@ -9,6 +9,7 @@ export type Connection = {
   status: ConnectionStatus
   requestedBy: string
   originGroupId: string | null
+  origin: 'match' | null // 'match' = veio do baralho; null = amizade/rede
   otherName: string | null
   otherPhoto: string | null
   iShared: boolean

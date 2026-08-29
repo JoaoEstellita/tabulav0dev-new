@@ -71,6 +71,7 @@ export default function NetworkScreen() {
   const [visible, setVisible] = useState(true)
   const [togglingVisible, setTogglingVisible] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
+  const [justConnected, setJustConnected] = useState<{ uid: string; name: string | null } | null>(null)
   // busca
   const [term, setTerm] = useState('')
   const [searchResults, setSearchResults] = useState<PublicProfile[] | null>(null)
@@ -121,7 +122,14 @@ export default function NetworkScreen() {
     try { await fn() } catch { /* silencioso */ }
     await load(); setBusy(null)
   }
-  const accept = (c: Connection) => run(`a:${c.id}`, () => respondConnection(c.other, true, shareOnAccept.has(c.id)))
+  const accept = (c: Connection) => run(`a:${c.id}`, async () => {
+    await respondConnection(c.other, true, shareOnAccept.has(c.id))
+    setJustConnected({ uid: c.other, name: c.otherName })
+  })
+  // Tipo da conexão pra rotular no card (💘 Match do baralho vs 🤝 Amizade).
+  const connKind = (c: Connection) => (c.origin === 'match'
+    ? { emoji: '💘', label: tl('Match', 'Match', 'Match', 'Match'), color: C.magenta }
+    : { emoji: '🤝', label: tl('Amizade', 'Friend', 'Amistad', 'Amicizia'), color: C.good })
   const decline = (c: Connection) => run(`d:${c.id}`, () => respondConnection(c.other, false, false))
   const doShare = (c: Connection) => run(`s:${c.id}`, () => shareWhatsapp(c.other))
   const doBlock = (c: Connection) => Alert.alert(
@@ -319,7 +327,13 @@ export default function NetworkScreen() {
               <SectionLabel>{tl(`✦ ${received.length} ${received.length === 1 ? 'pedido esperando' : 'pedidos esperando'}`, `✦ ${received.length} waiting`, `✦ ${received.length} esperando`, `✦ ${received.length} in attesa`)}</SectionLabel>
               {received.map((c) => (
                 <View key={c.id} style={st.req}>
-                  <View style={st.reqTop}><Avatar name={c.otherName} photo={c.otherPhoto} size={46} /><Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text></View>
+                  <View style={st.reqTop}>
+                    <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Alguém', 'Someone', 'Alguien', 'Qualcuno')}</Text>
+                      <View style={[st.kindBadge, { borderColor: connKind(c).color }]}><Text style={[st.kindTx, { color: connKind(c).color }]}>{connKind(c).emoji} {connKind(c).label}</Text></View>
+                    </View>
+                  </View>
                   <TouchableOpacity style={st.checkRow} onPress={() => setShareOnAccept((p) => { const n = new Set(p); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n })}>
                     <Ionicons name={shareOnAccept.has(c.id) ? 'checkbox' : 'square-outline'} size={18} color={C.gold} />
                     <Text style={st.checkTx}>{tl('Compartilhar meu WhatsApp', 'Share my WhatsApp', 'Compartir mi WhatsApp', 'Condividi WhatsApp')}</Text>
@@ -337,14 +351,16 @@ export default function NetworkScreen() {
           {!accepted.length ? (
             <View style={st.emptyCard}>
               <Ionicons name="people-outline" size={34} color={C.dim} />
-              <Text style={st.emptyTx}>{tl('Você ainda não tem conexões.', 'No connections yet.', 'Aun no tienes conexiones.', 'Nessuna connessione.')}</Text>
-              <TouchableOpacity style={st.goDiscover} onPress={() => setPage('discover')}><Text style={st.goDiscoverTx}>{tl('Encontrar pessoas', 'Find people', 'Encontrar personas', 'Trova persone')}</Text></TouchableOpacity>
+              <Text style={st.emptyTx}>{tl('Seus matches 💘 e amizades 🤝 aparecem aqui.', 'Your matches 💘 and friends 🤝 show up here.', 'Tus matches 💘 y amistades 🤝 aparecen aqui.', 'I tuoi match 💘 e amicizie 🤝 appaiono qui.')}</Text>
             </View>
           ) : accepted.map((c) => (
             <View key={c.id} style={st.conn}>
               <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
+                  <View style={[st.kindBadge, { borderColor: connKind(c).color }]}><Text style={[st.kindTx, { color: connKind(c).color }]}>{connKind(c).emoji} {connKind(c).label}</Text></View>
+                </View>
                 {c.otherWhatsapp
                   ? <Text style={st.city}>{tl('WhatsApp liberado', 'WhatsApp shared', 'WhatsApp disponible', 'WhatsApp disponibile')}</Text>
                   : c.iShared ? <Text style={st.city} numberOfLines={1}>{tl('Aguardando o WhatsApp da outra pessoa', 'Waiting their WhatsApp', 'Esperando su WhatsApp', 'In attesa del WhatsApp')}</Text>
@@ -405,12 +421,41 @@ export default function NetworkScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* "Conectado!" — ao aceitar, oferece o gancho pro core do app (grupo/sinastria) */}
+      <Modal visible={!!justConnected} transparent animationType="fade" onRequestClose={() => setJustConnected(null)}>
+        <View style={st.sheetBack}>
+          <View style={st.sheet}>
+            <Text style={st.sheetSpark}>🎉</Text>
+            <Text style={st.sheetTitle}>{tl('Conectado!', 'Connected!', '¡Conectado!', 'Connesso!')}</Text>
+            <Text style={st.sheetSub}>{tl(`Você e ${justConnected?.name || ''} estão conectados. Que tal criar um grupo pra ver a sinastria e as áreas da vida de vocês?`, `You and ${justConnected?.name || ''} are connected. Create a group to see your synastry and life areas?`, `Tú y ${justConnected?.name || ''} están conectados. ¿Crear un grupo para ver la sinastría?`, `Tu e ${justConnected?.name || ''} siete connessi. Creare un gruppo per la sinastria?`)}</Text>
+            <TouchableOpacity style={st.sheetPrimary} onPress={() => { const jc = justConnected; setJustConnected(null); navigation.navigate('Groups', { createWith: jc }) }}>
+              <Ionicons name="people" size={17} color="#0F0F23" />
+              <Text style={st.sheetPrimaryTx}>{tl('Criar grupo com', 'Create group with', 'Crear grupo con', 'Crea gruppo con')} {justConnected?.name || tl('a pessoa', 'them', 'la persona', 'la persona')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={st.sheetGhost} onPress={() => setJustConnected(null)}>
+              <Text style={st.sheetGhostTx}>{tl('Agora não', 'Not now', 'Ahora no', 'Non ora')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
 
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.void },
+  kindBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1, marginTop: 3 },
+  kindTx: { fontSize: 11, fontWeight: '800' },
+  sheetBack: { flex: 1, backgroundColor: 'rgba(8,6,18,0.86)', justifyContent: 'center', alignItems: 'center', padding: 28 },
+  sheet: { backgroundColor: C.surface, borderRadius: 22, borderWidth: 1, borderColor: C.line2, padding: 24, alignItems: 'center', width: '100%', maxWidth: 380 },
+  sheetSpark: { fontSize: 38, marginBottom: 4 },
+  sheetTitle: { color: C.ink, fontSize: 22, fontWeight: '900', marginBottom: 8 },
+  sheetSub: { color: C.dim, fontSize: 14, lineHeight: 20, textAlign: 'center', marginBottom: 20 },
+  sheetPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.gold, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 20, alignSelf: 'stretch' },
+  sheetPrimaryTx: { color: '#0F0F23', fontSize: 14.5, fontWeight: '800' },
+  sheetGhost: { marginTop: 12, paddingVertical: 8 },
+  sheetGhostTx: { color: C.faint, fontSize: 14, fontWeight: '600' },
   payCta: { marginTop: 26, backgroundColor: C.magenta, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 28 },
   payCtaTx: { color: '#fff', fontSize: 15, fontWeight: '800' },
   pad: { paddingHorizontal: 16 },
