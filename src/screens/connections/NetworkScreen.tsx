@@ -226,7 +226,7 @@ export default function NetworkScreen() {
         </View>
         <View style={st.visChip}>
           <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
-          <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Na Rede', 'In Network', 'En la Red', 'Nella Rete')}</Text>
+          <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Visível', 'Visible', 'Visible', 'Visibile')}</Text>
           <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
         </View>
       </View>
