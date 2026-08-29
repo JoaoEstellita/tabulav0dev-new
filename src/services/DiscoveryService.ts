@@ -127,6 +127,12 @@ export async function swipe(uid: string, action: 'like' | 'pass'): Promise<{ ok:
 }
 
 export type MatchRow = { uid: string; displayName: string; photoURL: string | null; age?: number | null; city?: string | null; score?: number | null; whatsapp?: string | null; iShared?: boolean }
+/** Denuncia um perfil (foto/conteúdo impróprio). Alvo com 3+ denúncias é auto-ocultado. */
+export async function reportProfile(uid: string, reason?: string): Promise<{ ok: boolean }> {
+  const r = await post('report', { uid, reason: reason || null })
+  return { ok: !!r?.ok }
+}
+
 /** Meus matches (like mútuo). WhatsApp só quando ambos liberaram. */
 export async function getMyMatches(): Promise<{ matches: MatchRow[]; gated?: boolean }> {
   const r = await post('my-matches', {})

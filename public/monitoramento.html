@@ -462,6 +462,14 @@
         </div>
       </div>
 
+      ${d.denuncias && d.denuncias.abertas > 0 ? `
+      <div class="card">
+        <div class="card-title">🚩 Denúncias de perfil (Match)</div>
+        <div class="metric-row"><span class="metric-label">Abertas</span><span class="metric-value" style="color:var(--err)">${fmtNum(d.denuncias.abertas)}</span></div>
+        ${(d.denuncias.alvos || []).map(a => `<div class="metric-row"><span class="metric-label">uid ${String(a.uid).slice(0, 10)}…</span><span class="metric-value">${a.n} ${a.n === 1 ? 'denúncia' : 'denúncias'}${a.n >= 3 ? ' · auto-oculto' : ''}</span></div>`).join('')}
+        <div class="metric-row" style="margin-top:8px"><span class="metric-label" style="font-size:11px;color:var(--muted)">Alvo com 3+ denúncias distintas é auto-ocultado. Revise e trate.</span></div>
+      </div>` : ''}
+
       <!-- Sistema -->
       <div class="card">
         <div class="card-title">Sistema</div>

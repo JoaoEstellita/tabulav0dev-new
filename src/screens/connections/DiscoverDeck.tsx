@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Easing } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, ScrollView, Animated, Alert, Platform } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getDeck, swipe, getMyProfile, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
+import { getDeck, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
@@ -87,6 +87,17 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
   const applyFilters = (f: DeckFilters) => { setFilters(f); setShowFilters(false); load(f) }
 
+  const report = () => {
+    if (!current) return
+    const advance = () => { reportProfile(current.uid).catch(() => {}); setShowAff(false); setIdx((i) => i + 1) }
+    const msg = tl('Denunciar este perfil por conteúdo impróprio? Ele será revisado.', 'Report this profile for inappropriate content? It will be reviewed.', 'Denunciar este perfil por contenido inapropiado? Sera revisado.', 'Segnalare questo profilo per contenuto inappropriato? Sara rivisto.')
+    if (Platform.OS === 'web') { if (typeof window !== 'undefined' && window.confirm(msg)) advance() }
+    else Alert.alert(tl('Denunciar', 'Report', 'Denunciar', 'Segnala'), msg, [
+      { text: tl('Cancelar', 'Cancel', 'Cancelar', 'Annulla'), style: 'cancel' },
+      { text: tl('Denunciar', 'Report', 'Denunciar', 'Segnala'), style: 'destructive', onPress: advance },
+    ])
+  }
+
   if (loading) return <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
 
   return (
@@ -133,6 +144,9 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               <Text style={s.ringPct}>{Math.round(current.score)}<Text style={s.ringSym}>%</Text></Text>
               <Text style={s.ringLbl}>{tl('afinidade', 'match', 'afinidad', 'affinita')}</Text>
             </View>
+            <TouchableOpacity style={s.report} onPress={report} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="flag-outline" size={16} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
             {/* Info sobre a foto */}
             <View style={s.overlay}>
               <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
@@ -310,6 +324,7 @@ const s = StyleSheet.create({
   photoFb: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#0d0d1c' },
   grad: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%' },
   ring: { position: 'absolute', top: 14, right: 14, width: 62, height: 62, borderRadius: 31, borderWidth: 2.5, borderColor: C.magenta, backgroundColor: 'rgba(12,8,24,0.55)', alignItems: 'center', justifyContent: 'center' },
+  report: { position: 'absolute', top: 14, left: 14, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(12,8,24,0.5)', alignItems: 'center', justifyContent: 'center' },
   ringPct: { color: '#fff', fontSize: 19, fontWeight: '900', lineHeight: 20 },
   ringSym: { fontSize: 11, fontWeight: '700' },
   ringLbl: { color: '#fff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.85 },
