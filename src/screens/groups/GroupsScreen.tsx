@@ -2526,6 +2526,18 @@ export default function GroupsScreen() {
             <Text style={styles.addChooserHint}>{tr('groups.addChooser.monitorHint', 'Para acompanhar alguém que não tem o app (parente etc.).')}</Text>
 
             <TouchableOpacity
+              style={[styles.modalButtonConfirm, styles.modalButtonFullWidth, styles.addChooserBtn, { marginTop: 12 }]}
+              onPress={() => {
+                setShowAddChooser(false)
+                navigation.navigate('Network' as never)
+              }}
+            >
+              <Ionicons name="heart-outline" size={16} color="#0F0F23" />
+              <Text style={styles.modalButtonConfirmText}>{tr('groups.addChooser.discover', 'Encontrar usuário do app')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.addChooserHint}>{tr('groups.addChooser.discoverHint', 'Descubra e combine com pessoas no Match.')}</Text>
+
+            <TouchableOpacity
               style={[styles.modalButtonCancel, styles.modalButtonFullWidth, { marginTop: 14 }]}
               onPress={() => setShowAddChooser(false)}
             >

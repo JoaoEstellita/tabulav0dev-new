@@ -266,8 +266,8 @@ export default function NetworkScreen() {
         <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
       ) : page === 'discover' ? (
         <View style={st.pad}>
-          {/* Só o baralho de swipe. A lista de pessoas abre pelo botão "Lista". */}
-          <DiscoverDeck onOpenList={() => setShowList(true)} />
+          {/* Só o baralho de swipe. A busca por nome abre pelo botão "Buscar". */}
+          <DiscoverDeck onOpenList={() => setShowList(true)} onGoProfile={() => setPage('profile')} />
         </View>
       ) : page === 'profile' ? (
         <NetworkProfileEditor />
@@ -350,32 +350,25 @@ export default function NetworkScreen() {
 
       <IntroCarousel visible={showTour} slides={matchIntroSlides(language as any, false)} onClose={closeTour} labels={tourLabels} />
 
-      {/* Lista de pessoas (aberta pelo botão "Lista" do baralho) */}
+      {/* Busca por usuários (aberta pelo botão "Buscar" do baralho) */}
       <Modal visible={showList} animationType="slide" onRequestClose={() => setShowList(false)}>
         <View style={{ flex: 1, backgroundColor: C.void, paddingTop: insets.top + 12 }}>
           <View style={[st.head, { marginBottom: 8 }]}>
-            <Text style={st.title}>{tl('Pessoas', 'People', 'Personas', 'Persone')}</Text>
+            <Text style={st.title}>{tl('Buscar pessoas', 'Search people', 'Buscar personas', 'Cerca persone')}</Text>
             <TouchableOpacity onPress={() => setShowList(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={26} color={C.faint} /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
             <View style={st.search}>
               <Ionicons name="search" size={18} color={C.faint} />
-              <TextInput style={st.searchInput} placeholder={tl('Buscar por nome', 'Search by name', 'Buscar por nombre', 'Cerca per nome')} placeholderTextColor={C.faint} value={term} onChangeText={setTerm} onSubmitEditing={doSearch} returnKeyType="search" autoCapitalize="none" />
+              <TextInput style={st.searchInput} placeholder={tl('Buscar por nome', 'Search by name', 'Buscar por nombre', 'Cerca per nome')} placeholderTextColor={C.faint} value={term} onChangeText={setTerm} onSubmitEditing={doSearch} returnKeyType="search" autoCapitalize="none" autoFocus />
               {term ? <TouchableOpacity onPress={clearSearch}><Ionicons name="close-circle" size={18} color={C.faint} /></TouchableOpacity> : null}
             </View>
             {searchResults !== null ? (
-              <>
-                <SectionLabel>{tl('Resultados', 'Results', 'Resultados', 'Risultati')}</SectionLabel>
-                {searching ? <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} /> :
-                  searchResults.length ? searchResults.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
-                    : <Text style={st.emptyTx}>{tl('Ninguém encontrado.', 'No one found.', 'Nadie encontrado.', 'Nessuno trovato.')}</Text>}
-              </>
+              searching ? <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} /> :
+                searchResults.length ? searchResults.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
+                  : <Text style={st.emptyTx}>{tl('Ninguém encontrado.', 'No one found.', 'Nadie encontrado.', 'Nessuno trovato.')}</Text>
             ) : (
-              <>
-                <SectionLabel>{tl('Pessoas na Rede', 'People in the Network', 'Personas en la Red', 'Persone nella Rete')}</SectionLabel>
-                {people.length ? people.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
-                  : <View style={st.emptyCard}><Ionicons name="planet-outline" size={34} color={C.dim} /><Text style={st.emptyTx}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona.')}</Text></View>}
-              </>
+              <View style={st.emptyCard}><Ionicons name="search" size={32} color={C.dim} /><Text style={st.emptyTx}>{tl('Digite um nome para buscar pessoas do app.', 'Type a name to search app users.', 'Escribe un nombre para buscar personas.', 'Scrivi un nome per cercare persone.')}</Text></View>
             )}
           </ScrollView>
         </View>

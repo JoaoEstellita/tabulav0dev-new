@@ -6,13 +6,13 @@ import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getDeck, swipe, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
+import { getDeck, swipe, getMyProfile, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 const ELEMENTS = ['fogo', 'terra', 'ar', 'agua'] as const
 
-export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }) {
+export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?: () => void; onGoProfile?: () => void }) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const lang = language as NetworkLang
@@ -34,7 +34,17 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
   const [myPhoto, setMyPhoto] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<DeckFilters>({})
+  const [incomplete, setIncomplete] = useState(false)
   const matchAnim = useRef(new Animated.Value(0)).current
+
+  // Gate de completude: sem foto, não dá pra participar do Match direito.
+  useEffect(() => {
+    getMyProfile().then((r) => {
+      const p = r.profile
+      const hasPhoto = !!((p?.photos && p.photos.length) || p?.photoURL)
+      setIncomplete(!hasPhoto)
+    }).catch(() => {})
+  }, [user?.uid])
 
   useEffect(() => {
     if (matchWith) {
@@ -79,8 +89,8 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {onOpenList ? (
             <TouchableOpacity style={s.filterBtn} onPress={onOpenList}>
-              <Ionicons name="list" size={18} color={C.gold} />
-              <Text style={s.filterTx}>{tl('Lista', 'List', 'Lista', 'Lista')}</Text>
+              <Ionicons name="search" size={18} color={C.gold} />
+              <Text style={s.filterTx}>{tl('Buscar', 'Search', 'Buscar', 'Cerca')}</Text>
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity style={s.filterBtn} onPress={() => setShowFilters(true)}>
@@ -89,6 +99,14 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
           </TouchableOpacity>
         </View>
       </View>
+
+      {incomplete ? (
+        <TouchableOpacity style={s.incomplete} onPress={onGoProfile} activeOpacity={0.9}>
+          <Ionicons name="camera-outline" size={20} color={C.gold} />
+          <Text style={s.incompleteTx}>{tl('Adicione ao menos uma foto no seu Perfil para dar match.', 'Add at least one photo to your Profile to match.', 'Agrega al menos una foto a tu Perfil para hacer match.', 'Aggiungi almeno una foto al Profilo per fare match.')}</Text>
+          <Ionicons name="chevron-forward" size={18} color={C.gold} />
+        </TouchableOpacity>
+      ) : null}
 
       {!current ? (
         <View style={s.empty}>
@@ -267,6 +285,8 @@ const s = StyleSheet.create({
   title: { color: C.tx, fontSize: 17, fontWeight: '800' },
   filterBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 18, borderWidth: 1, borderColor: C.line },
   filterTx: { color: C.gold, fontSize: 13, fontWeight: '700' },
+  incomplete: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(232,184,75,0.12)', borderWidth: 1, borderColor: 'rgba(232,184,75,0.4)', borderRadius: 14, padding: 14, marginBottom: 14 },
+  incompleteTx: { flex: 1, color: C.tx, fontSize: 13, fontWeight: '600' },
   cardBox: { backgroundColor: C.card, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: C.line, shadowColor: C.magenta, shadowOpacity: 0.25, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
   photoWrap: { width: '100%', height: 440, position: 'relative' },
   photo: { width: '100%', height: '100%', backgroundColor: '#000' },
