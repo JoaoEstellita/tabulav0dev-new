@@ -270,7 +270,7 @@ function MainTabs() {
           } else if (route.name === "Groups") {
             iconName = focused ? "sparkles" : "sparkles-outline"
           } else if (route.name === "Network") {
-            iconName = focused ? "share-social" : "share-social-outline"
+            iconName = focused ? "heart" : "heart-outline"
           } else if (route.name === "Forecast") {
             iconName = focused ? "calendar" : "calendar-outline"
           } else if (route.name === "Settings") {
@@ -331,7 +331,7 @@ function MainTabs() {
           </ErrorBoundary>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Network" options={{ title: t("nav.people"), headerShown: false }}>
+      <Tab.Screen name="Network" options={{ title: t("nav.match"), headerShown: false }}>
         {() => (
           <ErrorBoundary>
             <SwipeableTabScreen>
