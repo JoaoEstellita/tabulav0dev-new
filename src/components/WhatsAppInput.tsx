@@ -67,10 +67,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    minWidth: 62,
   },
   plus: { color: "#888", fontSize: 14, marginRight: 1 },
-  ddiInput: { color: "#FFFFFF", fontSize: 14, minWidth: 26, padding: 0 },
+  ddiInput: { color: "#FFFFFF", fontSize: 14, width: 34, padding: 0 },
   numInput: {
     flex: 1,
     backgroundColor: "#2C2C2E",
