@@ -35,6 +35,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<DeckFilters>({})
   const [missing, setMissing] = useState<string[]>([])
+  const [showAff, setShowAff] = useState(false)
   const incomplete = missing.length > 0
   const matchAnim = useRef(new Animated.Value(0)).current
 
@@ -79,6 +80,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
       if (r.matched) setMatchWith(current)
     } catch { /* segue mesmo se falhar */ } finally {
       setBusy(false)
+      setShowAff(false)
       setIdx((i) => i + 1)
     }
   }
@@ -144,23 +146,33 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
               <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
           </View>
-          {/* Leitura de afinidade */}
+          {/* Leitura de afinidade — resumo visível, aspectos sob toggle */}
           <View style={s.detail}>
-            <Text style={s.tierLabel}>{tierLabel(current.tier)}</Text>
-            {current.harmonics?.length ? (
-              <>
-                <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
-                {current.harmonics.map((h, i) => <Text key={'h' + i} style={s.harmonic}>✨ {h}</Text>)}
-              </>
-            ) : null}
-            {current.tensions?.length ? (
-              <>
-                <Text style={s.detailHead}>{tl('Onde há atrito (também atrai)', 'Where there is friction (also attracts)', 'Donde hay roce (tambien atrae)', 'Dove c e attrito (attrae anche)')}</Text>
-                {current.tensions.map((t, i) => <Text key={'t' + i} style={s.tension}>⚡ {t}</Text>)}
-              </>
-            ) : null}
-            {!current.harmonics?.length && !current.tensions?.length ? (
-              <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
+            <TouchableOpacity style={s.affToggle} onPress={() => setShowAff((v) => !v)} activeOpacity={0.8}>
+              <Text style={s.tierLabel}>💫 {tierLabel(current.tier)} · {Math.round(current.score)}%</Text>
+              <View style={s.affToggleRight}>
+                <Text style={s.affToggleTx}>{showAff ? tl('ocultar', 'hide', 'ocultar', 'nascondi') : tl('ver aspectos', 'see aspects', 'ver aspectos', 'vedi aspetti')}</Text>
+                <Ionicons name={showAff ? 'chevron-up' : 'chevron-down'} size={16} color={C.magenta} />
+              </View>
+            </TouchableOpacity>
+            {showAff ? (
+              <View style={{ marginTop: 4 }}>
+                {current.harmonics?.length ? (
+                  <>
+                    <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
+                    {current.harmonics.map((h, i) => <Text key={'h' + i} style={s.harmonic}>✨ {h}</Text>)}
+                  </>
+                ) : null}
+                {current.tensions?.length ? (
+                  <>
+                    <Text style={s.detailHead}>{tl('Onde há atrito (também atrai)', 'Where there is friction (also attracts)', 'Donde hay roce (tambien atrae)', 'Dove c e attrito (attrae anche)')}</Text>
+                    {current.tensions.map((t, i) => <Text key={'t' + i} style={s.tension}>⚡ {t}</Text>)}
+                  </>
+                ) : null}
+                {!current.harmonics?.length && !current.tensions?.length ? (
+                  <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
+                ) : null}
+              </View>
             ) : null}
             {/* Sobre a pessoa: bio + favoritos */}
             {(current.bio || Object.keys(current.prompts || {}).length) ? (
@@ -308,7 +320,10 @@ const s = StyleSheet.create({
   near: { color: C.good, fontSize: 13, fontWeight: '700' },
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
   detail: { padding: 16 },
-  tierLabel: { color: C.magenta, fontSize: 15, fontWeight: '800', marginBottom: 6 },
+  affToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  affToggleRight: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  affToggleTx: { color: C.magenta, fontSize: 12, fontWeight: '700' },
+  tierLabel: { color: C.magenta, fontSize: 15, fontWeight: '800' },
   detailHead: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 10, marginBottom: 4 },
   harmonic: { color: C.tx, fontSize: 13, lineHeight: 19 },
   tension: { color: C.gold, fontSize: 13, lineHeight: 19 },

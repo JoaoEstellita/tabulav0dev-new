@@ -35,6 +35,7 @@ import { NatalChartWheelContent } from '../cosmos/NatalChartWheelScreen'
 import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import HomeHeader from '../../components/HomeHeader'
 import NotificationOptInBanner from '../../components/NotificationOptInBanner'
+import MatchInviteCard from './MatchInviteCard'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
@@ -483,6 +484,9 @@ export default function HomeScreen() {
 
         {/* Ativar notificações (o passo saiu do onboarding; sem isso não recebe push) */}
         <NotificationOptInBanner />
+
+        {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
+        <MatchInviteCard />
 
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
