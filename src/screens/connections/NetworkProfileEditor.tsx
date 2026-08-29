@@ -7,15 +7,42 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getMyProfile, setProfile } from '../../services/DiscoveryService'
 import UserService from '../../services/firebase/UserService'
-import { NETWORK_INTERESTS, interestLabel, type NetworkLang } from '../../constants/networkInterests'
+import { NETWORK_INTERESTS, interestLabel, PROFILE_PROMPTS, type NetworkLang } from '../../constants/networkInterests'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', tx: '#eaeaf5', dim: '#8892a4' }
 const MAX_PHOTOS = 4
 const MAX_TAGS = 10
 
-// expo-image-picker >= 15 expõe manipulate via expo-image-manipulator; aqui usamos
-// o resultado do picker direto (dataUrl base64) pra não depender da versão.
+// Web: <input type=file> + canvas (o ImagePicker não retorna base64 confiável no
+// web). Native: ImagePicker com base64. Mesmo padrão do ProfileAvatarButton.
+async function fileToDataUrl(file: File): Promise<string> {
+  const objectUrl = URL.createObjectURL(file)
+  const img: HTMLImageElement = await new Promise((res, rej) => {
+    const im = new (window as any).Image()
+    im.onload = () => res(im); im.onerror = rej; im.src = objectUrl
+  })
+  const canvas = document.createElement('canvas')
+  const maxSize = 800
+  const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+  canvas.width = Math.round(img.width * scale)
+  canvas.height = Math.round(img.height * scale)
+  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+  URL.revokeObjectURL(objectUrl)
+  return canvas.toDataURL('image/jpeg', 0.82)
+}
 async function pickPhotoDataUrl(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return new Promise((resolve) => {
+      const input = document.createElement('input')
+      input.type = 'file'; input.accept = 'image/*'
+      input.onchange = async () => {
+        const f = input.files?.[0]
+        if (!f) return resolve(null)
+        try { resolve(await fileToDataUrl(f)) } catch { resolve(null) }
+      }
+      input.click()
+    })
+  }
   try {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -40,6 +67,9 @@ export default function NetworkProfileEditor() {
   const [photos, setPhotos] = useState<string[]>([])
   const [interests, setInterests] = useState<string[]>([])
   const [bio, setBio] = useState('')
+  const [prompts, setPrompts] = useState<Record<string, string>>({})
+  const [gender, setGender] = useState<'m' | 'f' | 'nb' | null>(null)
+  const [seeking, setSeeking] = useState<'m' | 'f' | 'all' | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -49,9 +79,14 @@ export default function NetworkProfileEditor() {
       setPhotos(Array.isArray(p?.photos) ? p!.photos! : (p?.photoURL ? [p.photoURL] : []))
       setInterests(Array.isArray(p?.interests) ? p!.interests! : [])
       setBio(p?.bio || '')
+      setPrompts(p?.prompts && typeof p.prompts === 'object' ? p.prompts : {})
+      setGender((p as any)?.gender || null)
+      setSeeking((p as any)?.seeking || null)
     }).finally(() => alive && setLoading(false))
     return () => { alive = false }
   }, [user?.uid])
+
+  const setPrompt = (key: string, val: string) => setPrompts((p) => ({ ...p, [key]: val.slice(0, 120) }))
 
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS || uploading || !user?.uid) return
@@ -78,7 +113,7 @@ export default function NetworkProfileEditor() {
   const save = async () => {
     setSaving(true)
     try {
-      const r = await setProfile({ photos, interests, bio })
+      const r = await setProfile({ photos, interests, bio, prompts, gender, seeking })
       if (r.gated) { Alert.alert(tl('Assinatura', 'Subscription', 'Suscripcion', 'Abbonamento'), tl('Esta seção é para assinantes.', 'This section is for subscribers.', 'Esta seccion es para suscriptores.', 'Questa sezione e per abbonati.')); return }
       if (!r.ok) throw new Error('save')
       Alert.alert(tl('Pronto!', 'Done!', 'Listo!', 'Fatto!'), tl('Seu perfil foi salvo.', 'Your profile was saved.', 'Tu perfil fue guardado.', 'Il tuo profilo e stato salvato.'))
@@ -108,8 +143,26 @@ export default function NetworkProfileEditor() {
         </View>
       </View>
 
+      {/* Gênero + preferência */}
+      <Text style={s.label}>{tl('Você é', 'You are', 'Eres', 'Sei')}</Text>
+      <View style={s.tags}>
+        {([['m', tl('Homem', 'Man', 'Hombre', 'Uomo')], ['f', tl('Mulher', 'Woman', 'Mujer', 'Donna')], ['nb', tl('Não-binário', 'Non-binary', 'No binario', 'Non binario')]] as const).map(([v, l]) => (
+          <TouchableOpacity key={v} style={[s.tag, gender === v && s.tagOn]} onPress={() => setGender(v as any)}>
+            <Text style={[s.tagTx, gender === v && s.tagTxOn]}>{l}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={[s.label, { marginTop: 18 }]}>{tl('Quer conhecer', 'Looking to meet', 'Quiere conocer', 'Vuoi conoscere')}</Text>
+      <View style={s.tags}>
+        {([['m', tl('Homens', 'Men', 'Hombres', 'Uomini')], ['f', tl('Mulheres', 'Women', 'Mujeres', 'Donne')], ['all', tl('Todos', 'Everyone', 'Todos', 'Tutti')]] as const).map(([v, l]) => (
+          <TouchableOpacity key={v} style={[s.tag, seeking === v && s.tagOn]} onPress={() => setSeeking(v as any)}>
+            <Text style={[s.tagTx, seeking === v && s.tagTxOn]}>{l}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Fotos */}
-      <Text style={s.label}>{tl('Suas fotos', 'Your photos', 'Tus fotos', 'Le tue foto')} <Text style={s.hint}>({photos.length}/{MAX_PHOTOS})</Text></Text>
+      <Text style={[s.label, { marginTop: 22 }]}>{tl('Suas fotos', 'Your photos', 'Tus fotos', 'Le tue foto')} <Text style={s.hint}>({photos.length}/{MAX_PHOTOS})</Text></Text>
       <View style={s.photoGrid}>
         {photos.map((uri, i) => (
           <View key={uri + i} style={s.photoBox}>
@@ -152,6 +205,22 @@ export default function NetworkProfileEditor() {
         maxLength={300}
       />
 
+      {/* Favoritos preenchíveis */}
+      <Text style={[s.label, { marginTop: 22 }]}>{tl('Seus favoritos', 'Your favorites', 'Tus favoritos', 'I tuoi preferiti')}</Text>
+      {PROFILE_PROMPTS.map((p) => (
+        <View key={p.key} style={s.promptRow}>
+          <Text style={s.promptLabel}>{p.emoji} {p.label[lang] || p.label['pt-BR']}</Text>
+          <TextInput
+            style={s.promptInput}
+            value={prompts[p.key] || ''}
+            onChangeText={(v) => setPrompt(p.key, v)}
+            placeholder={p.placeholder[lang] || p.placeholder['pt-BR']}
+            placeholderTextColor={C.dim}
+            maxLength={120}
+          />
+        </View>
+      ))}
+
       <TouchableOpacity style={s.saveBtn} onPress={save} disabled={saving} activeOpacity={0.9}>
         {saving ? <ActivityIndicator color="#1a1400" /> : <Text style={s.saveTx}>{tl('Salvar perfil', 'Save profile', 'Guardar perfil', 'Salva profilo')}</Text>}
       </TouchableOpacity>
@@ -185,6 +254,9 @@ const s = StyleSheet.create({
   tagTx: { color: C.dim, fontSize: 13, fontWeight: '600' },
   tagTxOn: { color: C.tx },
   bio: { minHeight: 88, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, color: C.tx, padding: 12, fontSize: 14, textAlignVertical: 'top' },
+  promptRow: { marginBottom: 12 },
+  promptLabel: { color: C.tx, fontSize: 13, fontWeight: '700', marginBottom: 5 },
+  promptInput: { backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.line, color: C.tx, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14 },
   saveBtn: { marginTop: 24, backgroundColor: C.gold, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
   saveTx: { color: '#1a1400', fontSize: 15, fontWeight: '800' },
 })

@@ -37,6 +37,25 @@ export const NETWORK_INTERESTS: NetworkInterest[] = [
   { slug: 'terapia', emoji: '🌱', label: L('Terapia', 'Therapy', 'Terapia', 'Terapia') },
   { slug: 'voluntariado', emoji: '🤝', label: L('Voluntariado', 'Volunteering', 'Voluntariado', 'Volontariato') },
   { slug: 'festas', emoji: '🎉', label: L('Festas', 'Parties', 'Fiestas', 'Feste') },
+  { slug: 'aventura', emoji: '⛰️', label: L('Aventura', 'Adventure', 'Aventura', 'Avventura') },
+  { slug: 'teatro', emoji: '🎭', label: L('Teatro', 'Theater', 'Teatro', 'Teatro') },
+  { slug: 'historia', emoji: '📜', label: L('História', 'History', 'Historia', 'Storia') },
+  { slug: 'ciencia', emoji: '🔬', label: L('Ciência', 'Science', 'Ciencia', 'Scienza') },
+  { slug: 'empreender', emoji: '💼', label: L('Empreender', 'Entrepreneurship', 'Emprender', 'Impresa') },
+  { slug: 'humor', emoji: '😂', label: L('Humor', 'Comedy', 'Humor', 'Umorismo') },
+  { slug: 'plantas', emoji: '🪴', label: L('Plantas', 'Plants', 'Plantas', 'Piante') },
+  { slug: 'corrida', emoji: '🏃', label: L('Corrida', 'Running', 'Correr', 'Corsa') },
+  { slug: 'academia', emoji: '🏋️', label: L('Academia', 'Gym', 'Gimnasio', 'Palestra') },
+  { slug: 'trilha', emoji: '🥾', label: L('Trilha', 'Hiking', 'Senderismo', 'Trekking') },
+  { slug: 'mar', emoji: '🌊', label: L('Mar', 'Sea', 'Mar', 'Mare') },
+  { slug: 'sustentabilidade', emoji: '♻️', label: L('Sustentabilidade', 'Sustainability', 'Sostenibilidad', 'Sostenibilita') },
+  { slug: 'idiomas', emoji: '🗣️', label: L('Idiomas', 'Languages', 'Idiomas', 'Lingue') },
+  { slug: 'escrita', emoji: '✍️', label: L('Escrita', 'Writing', 'Escritura', 'Scrittura') },
+  { slug: 'podcast', emoji: '🎙️', label: L('Podcast', 'Podcast', 'Podcast', 'Podcast') },
+  { slug: 'anime', emoji: '🍥', label: L('Anime', 'Anime', 'Anime', 'Anime') },
+  { slug: 'boardgames', emoji: '🎲', label: L('Jogos de mesa', 'Board games', 'Juegos de mesa', 'Giochi da tavolo') },
+  { slug: 'moto', emoji: '🏍️', label: L('Moto', 'Motorcycles', 'Moto', 'Moto') },
+  { slug: 'carros', emoji: '🚗', label: L('Carros', 'Cars', 'Autos', 'Auto') },
 ]
 
 const BY_SLUG = new Map(NETWORK_INTERESTS.map((t) => [t.slug, t]))
@@ -50,4 +69,34 @@ export function interestLabel(slug: string, lang: NetworkLang): string {
 
 export function interestEmoji(slug: string): string {
   return BY_SLUG.get(slug)?.emoji || '•'
+}
+
+// ─── Favoritos preenchíveis (prompts estilo "Filme favorito: qual?") ─────────
+export type ProfilePrompt = {
+  key: string
+  emoji: string
+  label: Record<NetworkLang, string>
+  placeholder: Record<NetworkLang, string>
+}
+
+export const PROFILE_PROMPTS: ProfilePrompt[] = [
+  { key: 'filme', emoji: '🎬', label: L('Filme favorito', 'Favorite movie', 'Pelicula favorita', 'Film preferito'), placeholder: L('Qual?', 'Which one?', 'Cual?', 'Quale?') },
+  { key: 'serie', emoji: '📺', label: L('Série favorita', 'Favorite series', 'Serie favorita', 'Serie preferita'), placeholder: L('Qual?', 'Which one?', 'Cual?', 'Quale?') },
+  { key: 'musica', emoji: '🎧', label: L('Música ou artista', 'Song or artist', 'Cancion o artista', 'Canzone o artista'), placeholder: L('Quem você ouve?', 'Who do you listen to?', 'A quien escuchas?', 'Chi ascolti?') },
+  { key: 'livro', emoji: '📖', label: L('Livro favorito', 'Favorite book', 'Libro favorito', 'Libro preferito'), placeholder: L('Qual?', 'Which one?', 'Cual?', 'Quale?') },
+  { key: 'prato', emoji: '🍲', label: L('Prato favorito', 'Favorite dish', 'Plato favorito', 'Piatto preferito'), placeholder: L('O que você ama comer?', 'What do you love to eat?', 'Que amas comer?', 'Cosa ami mangiare?') },
+  { key: 'viagem', emoji: '🌍', label: L('Viagem dos sonhos', 'Dream trip', 'Viaje sonado', 'Viaggio dei sogni'), placeholder: L('Para onde?', 'Where to?', 'A donde?', 'Dove?') },
+  { key: 'domingo', emoji: '☕', label: L('Domingo perfeito', 'Perfect Sunday', 'Domingo perfecto', 'Domenica perfetta'), placeholder: L('Como é?', 'How is it?', 'Como es?', 'Com e?') },
+  { key: 'naovivosem', emoji: '✨', label: L('Não vivo sem', 'Can\'t live without', 'No vivo sin', 'Non vivo senza'), placeholder: L('O quê?', 'What?', 'Que?', 'Cosa?') },
+  { key: 'busco', emoji: '💫', label: L('O que busco aqui', 'What I look for here', 'Lo que busco aqui', 'Cosa cerco qui'), placeholder: L('Algo sério, amizade…', 'Something serious, friendship…', 'Algo serio, amistad…', 'Qualcosa di serio, amicizia…') },
+  { key: 'signoideal', emoji: '♊', label: L('Combino com o signo', 'I match the sign', 'Combino con el signo', 'Combino col segno'), placeholder: L('Qual? (ou "surpreenda")', 'Which? (or "surprise me")', 'Cual? (o "sorprendeme")', 'Quale? (o "sorprendimi")') },
+]
+
+const PROMPT_BY_KEY = new Map(PROFILE_PROMPTS.map((p) => [p.key, p]))
+export function promptLabel(key: string, lang: NetworkLang): string {
+  const p = PROMPT_BY_KEY.get(key)
+  return p ? (p.label[lang] || p.label['pt-BR']) : key
+}
+export function promptEmoji(key: string): string {
+  return PROMPT_BY_KEY.get(key)?.emoji || '•'
 }

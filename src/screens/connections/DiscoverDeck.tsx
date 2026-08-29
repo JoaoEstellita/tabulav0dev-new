@@ -7,7 +7,7 @@ import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getDeck, swipe, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
-import { NETWORK_INTERESTS, interestLabel, interestEmoji, type NetworkLang } from '../../constants/networkInterests'
+import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 const ELEMENTS = ['fogo', 'terra', 'ar', 'agua'] as const
@@ -133,11 +133,25 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
             {!current.harmonics?.length && !current.tensions?.length ? (
               <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
             ) : null}
-            {current.common?.length ? (
+            {/* Sobre a pessoa: bio + favoritos */}
+            {(current.bio || Object.keys(current.prompts || {}).length) ? (
               <>
-                <Text style={s.detailHead}>{tl('Interesses em comum', 'Common interests', 'Intereses en comun', 'Interessi in comune')}</Text>
+                <Text style={s.detailHead}>{tl('Sobre', 'About', 'Sobre', 'Su')} {current.displayName}</Text>
+                {current.bio ? <Text style={s.bio}>{current.bio}</Text> : null}
+                {PROFILE_PROMPTS.filter((p) => current.prompts && current.prompts[p.key]).map((p) => (
+                  <Text key={p.key} style={s.prompt}>{promptEmoji(p.key)} <Text style={s.promptLbl}>{promptLabel(p.key, lang)}:</Text> {current.prompts![p.key]}</Text>
+                ))}
+              </>
+            ) : null}
+            {/* Interesses (comuns destacados) */}
+            {current.interests?.length ? (
+              <>
+                <Text style={s.detailHead}>{tl('Interesses', 'Interests', 'Intereses', 'Interessi')}</Text>
                 <View style={s.common}>
-                  {current.common.map((c) => <View key={c} style={s.commonChip}><Text style={s.commonTx}>{interestEmoji(c)} {interestLabel(c, lang)}</Text></View>)}
+                  {current.interests.map((c) => {
+                    const shared = current.common?.includes(c)
+                    return <View key={c} style={[s.commonChip, !shared && s.chipPlain]}><Text style={[s.commonTx, !shared && s.chipPlainTx]}>{interestEmoji(c)} {interestLabel(c, lang)}{shared ? ' ✓' : ''}</Text></View>
+                  })}
                 </View>
               </>
             ) : null}
@@ -260,6 +274,11 @@ const s = StyleSheet.create({
   common: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   commonChip: { backgroundColor: 'rgba(214,64,159,0.16)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: 'rgba(214,64,159,0.35)' },
   commonTx: { color: C.tx, fontSize: 12, fontWeight: '600' },
+  chipPlain: { backgroundColor: C.card, borderColor: C.line },
+  chipPlainTx: { color: C.dim },
+  bio: { color: C.tx, fontSize: 14, lineHeight: 20, marginBottom: 6 },
+  prompt: { color: C.tx, fontSize: 13, lineHeight: 20 },
+  promptLbl: { color: C.dim, fontWeight: '700' },
   actions: { flexDirection: 'row', justifyContent: 'center', gap: 28, marginTop: 18 },
   act: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   pass: { backgroundColor: C.card, borderColor: '#ff6b6b' },

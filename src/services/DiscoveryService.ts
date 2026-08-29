@@ -11,8 +11,12 @@ export type PublicProfile = {
   photos?: string[]
   interests?: string[]
   bio?: string | null
+  prompts?: Record<string, string>
+  gender?: 'm' | 'f' | 'nb' | null
   age?: number | null
 }
+export type Gender = 'm' | 'f' | 'nb'
+export type Seeking = 'm' | 'f' | 'all'
 
 async function post(action: string, payload: Record<string, unknown>): Promise<any> {
   const res = await backendFetch(`/api/discovery?action=${action}`, {
@@ -63,7 +67,7 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
   return r?.ok ? r.profile : null
 }
 
-export type ProfileInput = { photos: string[]; interests: string[]; bio: string }
+export type ProfileInput = { photos: string[]; interests: string[]; bio: string; prompts?: Record<string, string>; gender?: Gender | null; seeking?: Seeking | null }
 
 /** Meu próprio perfil estendido (pro editor). `gated` se não for assinante/trial. */
 export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; gated?: boolean }> {
