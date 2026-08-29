@@ -70,10 +70,16 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
 export type ProfileInput = { photos: string[]; interests: string[]; bio: string; prompts?: Record<string, string>; gender?: Gender | null; seeking?: Seeking | null }
 
 /** Meu próprio perfil estendido (pro editor). `gated` se não for assinante/trial. */
-export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; gated?: boolean }> {
+export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; deckHidden?: boolean; gated?: boolean }> {
   const r = await post('my-profile', {})
   if (r?.gated) return { profile: null, discoverable: false, gated: true }
-  return { profile: r?.profile || null, discoverable: !!r?.discoverable }
+  return { profile: r?.profile || null, discoverable: !!r?.discoverable, deckHidden: !!r?.deckHidden }
+}
+
+/** Aparecer (ou não) no BARALHO do Match — separado de "buscável" (setDiscoverable). */
+export async function setDeckVisible(visible: boolean): Promise<{ ok: boolean; deckHidden: boolean }> {
+  const r = await post('set-deck-visible', { visible })
+  return { ok: !!r?.ok, deckHidden: !!r?.deckHidden }
 }
 
 /** Salva o perfil estendido (fotos/interesses/bio). `gated` se não for assinante/trial. */
@@ -110,14 +116,17 @@ export type MatchResult = {
 }
 // ─── Fase 2: baralho (deck), swipe e matches ────────────────────────────────
 export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
-export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null }
+export type WheelPos = { planetEn: string; longitude: number }
+export type GridAspect = { mine: string; theirs: string; labelPt?: string; orb?: number }
+export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null; grid?: GridAspect[]; positions?: WheelPos[] }
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
 
-/** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial. */
-export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; gated?: boolean }> {
+/** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial.
+ * `myPositions` = minhas longitudes (uma vez), pra cruzar com o `positions` de cada card na roda. */
+export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; myPositions: WheelPos[]; gated?: boolean }> {
   const r = await post('deck', { filters: filters || {}, limit })
-  if (r?.gated) return { cards: [], gated: true }
-  return { cards: Array.isArray(r?.cards) ? r.cards : [] }
+  if (r?.gated) return { cards: [], myPositions: [], gated: true }
+  return { cards: Array.isArray(r?.cards) ? r.cards : [], myPositions: Array.isArray(r?.myPositions) ? r.myPositions : [] }
 }
 
 /** Curte (like) ou passa. Like recíproco devolve `matched:true`. */

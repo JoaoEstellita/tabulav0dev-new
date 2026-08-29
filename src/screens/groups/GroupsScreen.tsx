@@ -45,6 +45,8 @@ import { buildTransitTitle as buildSharedTransitTitle } from "../../utils/transi
 import { buildUnifiedTransitNarrative } from "../../utils/astroInterpretation"
 import { translatePlanet } from "../../utils/astro/pt"
 import { computeSynastryAspects, computeNatalChart, type SynastryAspect, type NatalChart } from "../../astro/synastry"
+import SynastryWheel from "../../components/SynastryWheel"
+import AspectGrid from "../../components/AspectGrid"
 import { synastryScore, synastryAspectLine, synastryHouseOverlays } from "../../astro/synastryReading"
 import { requestConnection } from "../../services/ConnectionsService"
 import { gunaMilanBetween } from "../../astro/vedic"
@@ -1805,6 +1807,10 @@ export default function GroupsScreen() {
     const expanded = expandedSyn.has(key)
     const score = synastryScore(aspects)
     const shown = expanded ? aspects : [] // compacto não mostra aspecto nenhum
+    // planetEn (minúsculo) → nome capitalizado do AspectGrid.
+    const SYN_CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto' }
+    const wheelPos = (c?: NatalChart) => (c?.planets || []).map((p) => ({ planetEn: p.name.toLowerCase(), longitude: p.longitude }))
+    const gridPlanets = (c?: NatalChart) => (c?.planets || []).map((p) => ({ name: SYN_CAP[p.name.toLowerCase()] || p.name, longitude: p.longitude }))
     const isPt = language === 'pt-BR'
     const overlays = expanded && chartA && chartB
       ? synastryHouseOverlays(chartA, chartB, aName || '', bName || '', language)
@@ -1846,6 +1852,16 @@ export default function GroupsScreen() {
             )
           })
         )}
+        {expanded && chartA && chartB ? (
+          <View style={{ marginTop: 12, alignItems: 'center' }}>
+            <Text style={[styles.gunaTitle, { alignSelf: 'flex-start' }]}>{tr('groups.synastry.wheel', 'Roda de sinastria')}</Text>
+            <SynastryWheel outer={wheelPos(chartA)} inner={wheelPos(chartB)} aspects={aspects.map((a) => ({ mine: a.mine, theirs: a.theirs, labelPt: a.aspect, orb: a.orb }))} size={300} outerLabel={aName} innerLabel={bName} />
+            <View style={{ marginTop: 12, alignSelf: 'stretch' }}>
+              <Text style={styles.gunaTitle}>{tr('groups.synastry.grid', 'Grade de aspectos')}</Text>
+              <AspectGrid cross rowPlanets={gridPlanets(chartA)} colPlanets={gridPlanets(chartB)} aspects={aspects.map((a) => ({ planet1: SYN_CAP[a.mine] || a.mine, planet2: SYN_CAP[a.theirs] || a.theirs, type: a.aspect, orb: a.orb }))} />
+            </View>
+          </View>
+        ) : null}
         {expanded && guna ? (
           <View style={styles.gunaBox}>
             {/* Só o resultado (pontos), sem veredito de bom/ruim no sistema védico. */}

@@ -10,7 +10,7 @@ import { listConnections, respondConnection, shareWhatsapp, blockConnection, rem
 import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
 import DiscoverDeck from './DiscoverDeck'
-import { getMyMatches, type MatchRow } from '../../services/DiscoveryService'
+import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
@@ -41,6 +41,13 @@ export default function NetworkScreen() {
   const [showTour, setShowTour] = useState(false)
   const [showList, setShowList] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
+  const [deckVisible, setDeckVis] = useState(true)
+  const [togglingDeck, setTogglingDeck] = useState(false)
+  useEffect(() => { getMyProfile().then((r) => { if (!r.gated) setDeckVis(!r.deckHidden) }).catch(() => {}) }, [])
+  const toggleDeck = async (v: boolean) => {
+    setTogglingDeck(true); setDeckVis(v)
+    try { await setDeckVisibleApi(v) } catch { setDeckVis(!v) } finally { setTogglingDeck(false) }
+  }
 
   const [page, setPage] = useState<Page>('discover')
   const [items, setItems] = useState<Connection[]>([])
@@ -225,9 +232,9 @@ export default function NetworkScreen() {
           </TouchableOpacity>
         </View>
         <View style={st.visChip}>
-          <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
-          <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Visível', 'Visible', 'Visible', 'Visibile')}</Text>
-          <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+          <Ionicons name={deckVisible ? 'heart' : 'heart-dislike-outline'} size={15} color={deckVisible ? C.gold : C.faint} />
+          <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{tl('No Match', 'In Match', 'En Match', 'In Match')}</Text>
+          <Switch value={deckVisible} disabled={togglingDeck} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
         </View>
       </View>
 
@@ -358,6 +365,12 @@ export default function NetworkScreen() {
             <TouchableOpacity onPress={() => setShowList(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={26} color={C.faint} /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            {/* Ser encontrável na busca por nome (independe de aparecer no baralho) */}
+            <View style={[st.visChip, { alignSelf: 'flex-start', marginBottom: 14 }]}>
+              <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
+              <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Aparecer na busca', 'Appear in search', 'Aparecer en la busqueda', 'Appari nella ricerca')}</Text>
+              <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
+            </View>
             <View style={st.search}>
               <Ionicons name="search" size={18} color={C.faint} />
               <TextInput style={st.searchInput} placeholder={tl('Buscar por nome', 'Search by name', 'Buscar por nombre', 'Cerca per nome')} placeholderTextColor={C.faint} value={term} onChangeText={setTerm} onSubmitEditing={doSearch} returnKeyType="search" autoCapitalize="none" autoFocus />

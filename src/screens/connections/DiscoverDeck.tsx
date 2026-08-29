@@ -6,11 +6,16 @@ import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../config/firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getDeck, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters } from '../../services/DiscoveryService'
+import { getDeck, swipe, getMyProfile, reportProfile, type DeckCard, type DeckFilters, type WheelPos } from '../../services/DiscoveryService'
 import { NETWORK_INTERESTS, interestLabel, interestEmoji, PROFILE_PROMPTS, promptLabel, promptEmoji, type NetworkLang } from '../../constants/networkInterests'
+import LocationField, { type PickedLocation } from '../../components/LocationField'
+import SynastryWheel from '../../components/SynastryWheel'
+import AspectGrid from '../../components/AspectGrid'
 
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
-const ELEMENTS = ['fogo', 'terra', 'ar', 'agua'] as const
+// planetEn (minúsculo) → nome capitalizado que o AspectGrid espera.
+const CAP: Record<string, string> = { sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto', lilith: 'Lilith', northnode: 'NorthNode', southnode: 'SouthNode' }
+const toGridPlanets = (pos?: WheelPos[]) => (pos || []).map((p) => ({ name: CAP[p.planetEn] || p.planetEn, longitude: p.longitude }))
 
 export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?: () => void; onGoProfile?: () => void }) {
   const { user } = useAuth()
@@ -27,6 +32,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
   }[tier] || '')
 
   const [cards, setCards] = useState<DeckCard[]>([])
+  const [myPos, setMyPos] = useState<WheelPos[]>([])
   const [idx, setIdx] = useState(0)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -66,7 +72,7 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 
   const load = (f: DeckFilters) => {
     setLoading(true)
-    getDeck(f).then((r) => { setCards(r.cards); setIdx(0) }).finally(() => setLoading(false))
+    getDeck(f).then((r) => { setCards(r.cards); setMyPos(r.myPositions || []); setIdx(0) }).finally(() => setLoading(false))
   }
   useEffect(() => { load(filters) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,6 +192,20 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
                 {!current.harmonics?.length && !current.tensions?.length ? (
                   <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
                 ) : null}
+                {/* Roda de sinastria: você (magenta) × a pessoa (dourado) */}
+                {myPos.length && current.positions?.length ? (
+                  <>
+                    <Text style={s.detailHead}>{tl('Roda de sinastria', 'Synastry wheel', 'Rueda de sinastria', 'Ruota di sinastria')}</Text>
+                    <SynastryWheel outer={myPos} inner={current.positions} aspects={current.grid || []} size={300} outerLabel={tl('Você', 'You', 'Tu', 'Tu')} innerLabel={current.displayName} />
+                  </>
+                ) : null}
+                {/* Grade completa dos aspectos entre os dois mapas */}
+                {current.grid?.length && myPos.length && current.positions?.length ? (
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={s.detailHead}>{tl('Grade de aspectos', 'Aspect grid', 'Grilla de aspectos', 'Griglia aspetti')}</Text>
+                    <AspectGrid cross rowPlanets={toGridPlanets(myPos)} colPlanets={toGridPlanets(current.positions)} aspects={current.grid.map((g) => ({ planet1: CAP[g.mine] || g.mine, planet2: CAP[g.theirs] || g.theirs, type: g.labelPt || '', orb: g.orb }))} />
+                  </View>
+                ) : null}
               </View>
             ) : null}
             {/* Sobre a pessoa: bio + favoritos */}
@@ -249,16 +269,15 @@ export default function DiscoverDeck({ onOpenList, onGoProfile }: { onOpenList?:
 }
 
 function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
-  const [city, setCity] = useState(initial.city || '')
-  const [element, setElement] = useState<string | null>(initial.element || null)
+  const [cityLoc, setCityLoc] = useState<PickedLocation | null>(null)
+  const [cityName, setCityName] = useState<string>(initial.city || '')
   const [minAge, setMinAge] = useState(initial.minAge ? String(initial.minAge) : '')
   const [maxAge, setMaxAge] = useState(initial.maxAge ? String(initial.maxAge) : '')
   const [maxKm, setMaxKm] = useState<number | null>(initial.maxKm ?? null)
   const [interests, setInterests] = useState<string[]>(initial.interests || [])
   const toggle = (slug: string) => setInterests((p: string[]) => p.includes(slug) ? p.filter((x) => x !== slug) : [...p, slug])
   const apply = () => onApply({
-    city: city.trim() || undefined,
-    element: element || undefined,
+    city: cityName.trim() || undefined,
     minAge: minAge ? Number(minAge) : undefined,
     maxAge: maxAge ? Number(maxAge) : undefined,
     maxKm: maxKm ?? undefined,
@@ -270,16 +289,13 @@ function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
         <View style={s.sheet}>
           <ScrollView contentContainerStyle={{ padding: 18 }}>
             <Text style={s.sheetTitle}>{tl('Filtros', 'Filters', 'Filtros', 'Filtri')}</Text>
-            <Text style={s.flabel}>{tl('Cidade', 'City', 'Ciudad', 'Citta')}</Text>
-            <TextInput style={s.finput} value={city} onChangeText={setCity} placeholder={tl('Qualquer', 'Any', 'Cualquiera', 'Qualsiasi')} placeholderTextColor={C.dim} />
-            <Text style={s.flabel}>{tl('Elemento', 'Element', 'Elemento', 'Elemento')}</Text>
-            <View style={s.chips}>
-              {ELEMENTS.map((e) => (
-                <TouchableOpacity key={e} style={[s.chip, element === e && s.chipOn]} onPress={() => setElement(element === e ? null : e)}>
-                  <Text style={[s.chipTx, element === e && s.chipTxOn]}>{tl(e === 'fogo' ? 'Fogo' : e === 'terra' ? 'Terra' : e === 'ar' ? 'Ar' : 'Água', e === 'fogo' ? 'Fire' : e === 'terra' ? 'Earth' : e === 'ar' ? 'Air' : 'Water', e === 'fogo' ? 'Fuego' : e === 'terra' ? 'Tierra' : e === 'ar' ? 'Aire' : 'Agua', e === 'fogo' ? 'Fuoco' : e === 'terra' ? 'Terra' : e === 'ar' ? 'Aria' : 'Acqua')}</Text>
-                </TouchableOpacity>
-              ))}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 8 }}>
+              <Text style={[s.flabel, { marginTop: 0, marginBottom: 0 }]}>{tl('Cidade', 'City', 'Ciudad', 'Citta')}</Text>
+              {cityName ? (
+                <TouchableOpacity onPress={() => { setCityLoc(null); setCityName('') }}><Text style={{ color: C.dim, fontSize: 12 }}>{tl('Qualquer cidade', 'Any city', 'Cualquier ciudad', 'Qualsiasi citta')} ✕</Text></TouchableOpacity>
+              ) : null}
             </View>
+            <LocationField value={cityLoc} language={lang} placeholder={cityName || tl('Qualquer', 'Any', 'Cualquiera', 'Qualsiasi')} onChange={(loc) => { setCityLoc(loc); setCityName(loc.city) }} />
             <Text style={s.flabel}>{tl('Faixa etária', 'Age range', 'Rango de edad', 'Fascia eta')}</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TextInput style={[s.finput, { flex: 1 }]} value={minAge} onChangeText={setMinAge} placeholder={tl('mín', 'min', 'min', 'min')} placeholderTextColor={C.dim} keyboardType="number-pad" />
