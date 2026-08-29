@@ -12,12 +12,19 @@ import { NETWORK_INTERESTS, interestLabel, interestEmoji, type NetworkLang } fro
 const C = { bg: '#141428', card: '#1c1c34', line: '#2a2a44', gold: '#e8b84b', magenta: '#d6409f', good: '#3ecf8e', tx: '#eaeaf5', dim: '#8892a4' }
 const ELEMENTS = ['fogo', 'terra', 'ar', 'agua'] as const
 
-export default function DiscoverDeck() {
+export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }) {
   const { user } = useAuth()
   const { language } = useAppLanguage()
   const lang = language as NetworkLang
   const tl = (pt: string, en: string, es: string, it: string) =>
     ({ 'pt-BR': pt, 'en-US': en, 'es-ES': es, 'it-IT': it }[lang] || pt)
+  const tierLabel = (tier: string) => ({
+    altissima: tl('Afinidade altíssima', 'Very high affinity', 'Afinidad altisima', 'Affinita altissima'),
+    alta: tl('Alta afinidade', 'High affinity', 'Alta afinidad', 'Alta affinita'),
+    boa: tl('Boa afinidade', 'Good affinity', 'Buena afinidad', 'Buona affinita'),
+    moderada: tl('Afinidade moderada', 'Moderate affinity', 'Afinidad moderada', 'Affinita moderata'),
+    baixa: tl('Afinidade baixa', 'Low affinity', 'Afinidad baja', 'Affinita bassa'),
+  }[tier] || '')
 
   const [cards, setCards] = useState<DeckCard[]>([])
   const [idx, setIdx] = useState(0)
@@ -69,10 +76,18 @@ export default function DiscoverDeck() {
     <View style={s.wrap}>
       <View style={s.topRow}>
         <Text style={s.title}>{tl('Descobrir', 'Discover', 'Descubrir', 'Scopri')}</Text>
-        <TouchableOpacity style={s.filterBtn} onPress={() => setShowFilters(true)}>
-          <Ionicons name="options-outline" size={18} color={C.gold} />
-          <Text style={s.filterTx}>{tl('Filtros', 'Filters', 'Filtros', 'Filtri')}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {onOpenList ? (
+            <TouchableOpacity style={s.filterBtn} onPress={onOpenList}>
+              <Ionicons name="list" size={18} color={C.gold} />
+              <Text style={s.filterTx}>{tl('Lista', 'List', 'Lista', 'Lista')}</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity style={s.filterBtn} onPress={() => setShowFilters(true)}>
+            <Ionicons name="options-outline" size={18} color={C.gold} />
+            <Text style={s.filterTx}>{tl('Filtros', 'Filters', 'Filtros', 'Filtri')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {!current ? (
@@ -100,17 +115,33 @@ export default function DiscoverDeck() {
               <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
           </View>
-          {/* Painel de detalhes */}
-          {(current.reasons?.length || current.common?.length) ? (
-            <View style={s.detail}>
-              {current.reasons?.slice(0, 3).map((r, i) => <Text key={i} style={s.reason}>✨ {r}</Text>)}
-              {current.common?.length ? (
+          {/* Leitura de afinidade */}
+          <View style={s.detail}>
+            <Text style={s.tierLabel}>{tierLabel(current.tier)}</Text>
+            {current.harmonics?.length ? (
+              <>
+                <Text style={s.detailHead}>{tl('O que flui entre vocês', 'What flows between you', 'Lo que fluye entre ustedes', 'Cosa scorre tra voi')}</Text>
+                {current.harmonics.map((h, i) => <Text key={'h' + i} style={s.harmonic}>✨ {h}</Text>)}
+              </>
+            ) : null}
+            {current.tensions?.length ? (
+              <>
+                <Text style={s.detailHead}>{tl('Onde há atrito (também atrai)', 'Where there is friction (also attracts)', 'Donde hay roce (tambien atrae)', 'Dove c e attrito (attrae anche)')}</Text>
+                {current.tensions.map((t, i) => <Text key={'t' + i} style={s.tension}>⚡ {t}</Text>)}
+              </>
+            ) : null}
+            {!current.harmonics?.length && !current.tensions?.length ? (
+              <Text style={s.reason}>{tl('Compatibilidade sem aspectos pessoais fortes.', 'Compatibility without strong personal aspects.', 'Compatibilidad sin aspectos personales fuertes.', 'Compatibilita senza aspetti personali forti.')}</Text>
+            ) : null}
+            {current.common?.length ? (
+              <>
+                <Text style={s.detailHead}>{tl('Interesses em comum', 'Common interests', 'Intereses en comun', 'Interessi in comune')}</Text>
                 <View style={s.common}>
                   {current.common.map((c) => <View key={c} style={s.commonChip}><Text style={s.commonTx}>{interestEmoji(c)} {interestLabel(c, lang)}</Text></View>)}
                 </View>
-              ) : null}
-            </View>
-          ) : null}
+              </>
+            ) : null}
+          </View>
         </View>
       )}
 
@@ -220,8 +251,12 @@ const s = StyleSheet.create({
   age: { color: 'rgba(255,255,255,0.9)', fontSize: 22, fontWeight: '600' },
   city: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 4 },
   signs: { color: C.gold, fontSize: 14, marginTop: 8, fontWeight: '700', letterSpacing: 0.3 },
-  detail: { padding: 16, gap: 4 },
-  reason: { color: C.tx, fontSize: 13 },
+  detail: { padding: 16 },
+  tierLabel: { color: C.magenta, fontSize: 15, fontWeight: '800', marginBottom: 6 },
+  detailHead: { color: C.dim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 10, marginBottom: 4 },
+  harmonic: { color: C.tx, fontSize: 13, lineHeight: 19 },
+  tension: { color: C.gold, fontSize: 13, lineHeight: 19 },
+  reason: { color: C.dim, fontSize: 13 },
   common: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   commonChip: { backgroundColor: 'rgba(214,64,159,0.16)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: 'rgba(214,64,159,0.35)' },
   commonTx: { color: C.tx, fontSize: 12, fontWeight: '600' },

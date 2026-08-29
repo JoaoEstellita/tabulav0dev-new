@@ -105,7 +105,8 @@ export type MatchResult = {
   total?: number
 }
 // ─── Fase 2: baralho (deck), swipe e matches ────────────────────────────────
-export type DeckCard = PublicProfile & { score: number; reasons: string[]; common: string[] }
+export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
+export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[] }
 export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[] }
 
 /** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial. */

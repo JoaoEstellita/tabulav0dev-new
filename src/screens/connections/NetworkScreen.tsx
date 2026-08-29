@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert, Switch, ActivityIndicator, TextInput } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Linking, Image, StyleSheet, Alert, Switch, ActivityIndicator, TextInput, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -39,6 +39,7 @@ export default function NetworkScreen() {
   // Gate: a Rede/Match é para assinante ATIVO ou TRIAL; grátis vê o paywall.
   const gated = !isAdmin && !subscription?.active && !trialActive
   const [showTour, setShowTour] = useState(false)
+  const [showList, setShowList] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
 
   const [page, setPage] = useState<Page>('discover')
@@ -265,57 +266,8 @@ export default function NetworkScreen() {
         <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
       ) : page === 'discover' ? (
         <View style={st.pad}>
-          {/* Baralho de swipe (o coração do Match) */}
-          <DiscoverDeck />
-
-          <View style={{ height: 28 }} />
-          <SectionLabel>{tl('Ou navegue a lista', 'Or browse the list', 'O navega la lista', 'O sfoglia la lista')}</SectionLabel>
-
-          {/* Acesso ao ranking "quem mais combina" */}
-          <TouchableOpacity style={st.matchHero} activeOpacity={0.9} onPress={() => navigation.navigate('Matches')}>
-            <View style={st.matchHeroIcon}><Ionicons name="sparkles" size={22} color={C.magenta} /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={st.matchHeroTitle}>{tl('Quem mais combina comigo', 'Who matches me most', 'Quien combina mas conmigo', 'Chi mi corrisponde di piu')}</Text>
-              <Text style={st.matchHeroSub}>{tl('Ranking de compatibilidade entre todos', 'Compatibility ranking across everyone', 'Ranking de compatibilidad con todos', 'Classifica di compatibilita con tutti')}</Text>
-            </View>
-            <Ionicons name="lock-closed" size={17} color={C.gold} />
-          </TouchableOpacity>
-
-          {/* Busca */}
-          <View style={st.search}>
-            <Ionicons name="search" size={18} color={C.faint} />
-            <TextInput
-              style={st.searchInput}
-              placeholder={tl('Buscar pessoas por nome', 'Search people by name', 'Buscar personas por nombre', 'Cerca persone per nome')}
-              placeholderTextColor={C.faint}
-              value={term}
-              onChangeText={setTerm}
-              onSubmitEditing={doSearch}
-              returnKeyType="search"
-              autoCapitalize="none"
-            />
-            {term ? <TouchableOpacity onPress={clearSearch}><Ionicons name="close-circle" size={18} color={C.faint} /></TouchableOpacity> : null}
-          </View>
-
-          {/* Resultados da busca OU feed */}
-          {searchResults !== null ? (
-            <>
-              <SectionLabel>{tl('Resultados', 'Results', 'Resultados', 'Risultati')}</SectionLabel>
-              {searching ? <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} /> :
-                searchResults.length ? searchResults.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
-                  : <Text style={st.emptyTx}>{tl('Ninguém encontrado. Tente outro nome.', 'No one found. Try another name.', 'Nadie encontrado. Prueba otro nombre.', 'Nessuno trovato. Prova un altro nome.')}</Text>}
-            </>
-          ) : (
-            <>
-              <SectionLabel>{tl('Pessoas na Rede', 'People in the Network', 'Personas en la Red', 'Persone nella Rete')}</SectionLabel>
-              {people.length ? people.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
-                : <View style={st.emptyCard}><Ionicons name="planet-outline" size={34} color={C.dim} /><Text style={st.emptyTx}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona.')}</Text></View>}
-            </>
-          )}
-
-          {visible ? (
-            <Text style={st.nudge}>{tl('Dica: perfis com foto e cidade recebem mais conexões — edite na aba Perfil.', 'Tip: profiles with photo and city get more connections — edit them in the Profile tab.', 'Tip: perfiles con foto y ciudad reciben mas conexiones — editalos en Perfil.', 'Suggerimento: profili con foto e citta ricevono piu connessioni — modificali in Profilo.')}</Text>
-          ) : null}
+          {/* Só o baralho de swipe. A lista de pessoas abre pelo botão "Lista". */}
+          <DiscoverDeck onOpenList={() => setShowList(true)} />
         </View>
       ) : page === 'profile' ? (
         <NetworkProfileEditor />
@@ -397,6 +349,37 @@ export default function NetworkScreen() {
       )}
 
       <IntroCarousel visible={showTour} slides={matchIntroSlides(language as any, false)} onClose={closeTour} labels={tourLabels} />
+
+      {/* Lista de pessoas (aberta pelo botão "Lista" do baralho) */}
+      <Modal visible={showList} animationType="slide" onRequestClose={() => setShowList(false)}>
+        <View style={{ flex: 1, backgroundColor: C.void, paddingTop: insets.top + 12 }}>
+          <View style={[st.head, { marginBottom: 8 }]}>
+            <Text style={st.title}>{tl('Pessoas', 'People', 'Personas', 'Persone')}</Text>
+            <TouchableOpacity onPress={() => setShowList(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={26} color={C.faint} /></TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            <View style={st.search}>
+              <Ionicons name="search" size={18} color={C.faint} />
+              <TextInput style={st.searchInput} placeholder={tl('Buscar por nome', 'Search by name', 'Buscar por nombre', 'Cerca per nome')} placeholderTextColor={C.faint} value={term} onChangeText={setTerm} onSubmitEditing={doSearch} returnKeyType="search" autoCapitalize="none" />
+              {term ? <TouchableOpacity onPress={clearSearch}><Ionicons name="close-circle" size={18} color={C.faint} /></TouchableOpacity> : null}
+            </View>
+            {searchResults !== null ? (
+              <>
+                <SectionLabel>{tl('Resultados', 'Results', 'Resultados', 'Risultati')}</SectionLabel>
+                {searching ? <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} /> :
+                  searchResults.length ? searchResults.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
+                    : <Text style={st.emptyTx}>{tl('Ninguém encontrado.', 'No one found.', 'Nadie encontrado.', 'Nessuno trovato.')}</Text>}
+              </>
+            ) : (
+              <>
+                <SectionLabel>{tl('Pessoas na Rede', 'People in the Network', 'Personas en la Red', 'Persone nella Rete')}</SectionLabel>
+                {people.length ? people.map((p) => <PersonCard key={p.uid} uid={p.uid} name={p.displayName} photo={p.photoURL} sun={p.sunSign} moon={p.moonSign} asc={p.ascSign} city={p.city} />)
+                  : <View style={st.emptyCard}><Ionicons name="planet-outline" size={34} color={C.dim} /><Text style={st.emptyTx}>{tl('Ainda não há pessoas visíveis.', 'No visible people yet.', 'Aun no hay personas visibles.', 'Ancora nessuna persona.')}</Text></View>}
+              </>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
