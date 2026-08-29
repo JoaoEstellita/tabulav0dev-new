@@ -110,8 +110,8 @@ export type MatchResult = {
 }
 // ─── Fase 2: baralho (deck), swipe e matches ────────────────────────────────
 export type AffinityTier = 'altissima' | 'alta' | 'boa' | 'moderada' | 'baixa'
-export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean }
-export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[] }
+export type DeckCard = PublicProfile & { score: number; tier: AffinityTier; harmonics: string[]; tensions: string[]; common: string[]; sameCity?: boolean; distanceKm?: number | null }
+export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[]; maxKm?: number }
 
 /** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial. */
 export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; gated?: boolean }> {

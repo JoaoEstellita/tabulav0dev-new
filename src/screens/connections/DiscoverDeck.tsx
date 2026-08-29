@@ -112,7 +112,11 @@ export default function DiscoverDeck({ onOpenList }: { onOpenList?: () => void }
             <View style={s.overlay}>
               <Text style={s.name}>{current.displayName}{current.age ? <Text style={s.age}>, {current.age}</Text> : null}</Text>
               {current.city ? (
-                <Text style={s.city}>📍 {current.city}{current.sameCity ? <Text style={s.near}>  ·  {tl('perto de você', 'near you', 'cerca de ti', 'vicino a te')}</Text> : null}</Text>
+                <Text style={s.city}>📍 {current.city}
+                  {typeof current.distanceKm === 'number'
+                    ? <Text style={s.near}>  ·  {current.distanceKm <= 1 ? tl('na sua cidade', 'in your city', 'en tu ciudad', 'nella tua citta') : tl(`a ${current.distanceKm} km`, `${current.distanceKm} km away`, `a ${current.distanceKm} km`, `a ${current.distanceKm} km`)}</Text>
+                    : current.sameCity ? <Text style={s.near}>  ·  {tl('perto de você', 'near you', 'cerca de ti', 'vicino a te')}</Text> : null}
+                </Text>
               ) : null}
               <Text style={s.signs}>☉ {current.sunSign || '—'}   ☽ {current.moonSign || '—'}   ↑ {current.ascSign || '—'}</Text>
             </View>
@@ -200,6 +204,7 @@ function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
   const [element, setElement] = useState<string | null>(initial.element || null)
   const [minAge, setMinAge] = useState(initial.minAge ? String(initial.minAge) : '')
   const [maxAge, setMaxAge] = useState(initial.maxAge ? String(initial.maxAge) : '')
+  const [maxKm, setMaxKm] = useState<number | null>(initial.maxKm ?? null)
   const [interests, setInterests] = useState<string[]>(initial.interests || [])
   const toggle = (slug: string) => setInterests((p: string[]) => p.includes(slug) ? p.filter((x) => x !== slug) : [...p, slug])
   const apply = () => onApply({
@@ -207,6 +212,7 @@ function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
     element: element || undefined,
     minAge: minAge ? Number(minAge) : undefined,
     maxAge: maxAge ? Number(maxAge) : undefined,
+    maxKm: maxKm ?? undefined,
     interests: interests.length ? interests : undefined,
   })
   return (
@@ -229,6 +235,14 @@ function FiltersSheet({ visible, initial, onClose, onApply, tl, lang }: any) {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TextInput style={[s.finput, { flex: 1 }]} value={minAge} onChangeText={setMinAge} placeholder={tl('mín', 'min', 'min', 'min')} placeholderTextColor={C.dim} keyboardType="number-pad" />
               <TextInput style={[s.finput, { flex: 1 }]} value={maxAge} onChangeText={setMaxAge} placeholder={tl('máx', 'max', 'max', 'max')} placeholderTextColor={C.dim} keyboardType="number-pad" />
+            </View>
+            <Text style={s.flabel}>{tl('Distância máxima', 'Max distance', 'Distancia maxima', 'Distanza massima')}</Text>
+            <View style={s.chips}>
+              {([[10, '10 km'], [30, '30 km'], [80, '80 km'], [300, '300 km'], [null, tl('Qualquer', 'Any', 'Cualquiera', 'Qualsiasi')]] as const).map(([v, l]) => (
+                <TouchableOpacity key={String(v)} style={[s.chip, maxKm === v && s.chipOn]} onPress={() => setMaxKm(v as any)}>
+                  <Text style={[s.chipTx, maxKm === v && s.chipTxOn]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
             <Text style={s.flabel}>{tl('Interesses', 'Interests', 'Intereses', 'Interessi')}</Text>
             <View style={s.chips}>
