@@ -9,6 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { listConnections, respondConnection, shareWhatsapp, blockConnection, removeConnection, requestConnection, type Connection } from '../../services/ConnectionsService'
 import { listPeople, ensureSelfDiscoverable, setDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
+import DiscoverDeck from './DiscoverDeck'
+import { getMyMatches, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
@@ -37,6 +39,7 @@ export default function NetworkScreen() {
   // Gate: a Rede/Match é para assinante ATIVO ou TRIAL; grátis vê o paywall.
   const gated = !isAdmin && !subscription?.active && !trialActive
   const [showTour, setShowTour] = useState(false)
+  const [matches, setMatches] = useState<MatchRow[]>([])
 
   const [page, setPage] = useState<Page>('discover')
   const [items, setItems] = useState<Connection[]>([])
@@ -181,6 +184,9 @@ export default function NetworkScreen() {
     AsyncStorage.getItem(MATCH_TOUR_KEY).then((v) => { if (!v) setShowTour(true) }).catch(() => {})
   }, [])
   const closeTour = () => { setShowTour(false); AsyncStorage.setItem(MATCH_TOUR_KEY, '1').catch(() => {}) }
+  useEffect(() => {
+    if (page === 'connections' && !gated) getMyMatches().then((r) => setMatches(r.matches)).catch(() => {})
+  }, [page, gated])
   const tourLabels = { skip: tl('Pular', 'Skip', 'Saltar', 'Salta'), next: tl('Próximo', 'Next', 'Siguiente', 'Avanti'), done: gated ? tl('Assinar', 'Subscribe', 'Suscribirse', 'Abbonati') : tl('Começar', 'Start', 'Empezar', 'Inizia') }
 
   // Paywall: a seção Match é só para assinante ativo ou trial.
@@ -259,7 +265,13 @@ export default function NetworkScreen() {
         <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
       ) : page === 'discover' ? (
         <View style={st.pad}>
-          {/* Acesso ao Match premium — recurso à parte, varre todos os usuários */}
+          {/* Baralho de swipe (o coração do Match) */}
+          <DiscoverDeck />
+
+          <View style={{ height: 28 }} />
+          <SectionLabel>{tl('Ou navegue a lista', 'Or browse the list', 'O navega la lista', 'O sfoglia la lista')}</SectionLabel>
+
+          {/* Acesso ao ranking "quem mais combina" */}
           <TouchableOpacity style={st.matchHero} activeOpacity={0.9} onPress={() => navigation.navigate('Matches')}>
             <View style={st.matchHeroIcon}><Ionicons name="sparkles" size={22} color={C.magenta} /></View>
             <View style={{ flex: 1 }}>
@@ -310,6 +322,20 @@ export default function NetworkScreen() {
       ) : (
         /* ===== MATCH (conexões + pedidos) ===== */
         <View style={st.pad}>
+          {matches.length ? (
+            <>
+              <SectionLabel>{tl('Seus Matches 💘', 'Your Matches 💘', 'Tus Matches 💘', 'I tuoi Match 💘')}</SectionLabel>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 14, paddingVertical: 4 }}>
+                {matches.map((m) => (
+                  <View key={m.uid} style={{ alignItems: 'center', width: 76 }}>
+                    <Avatar name={m.displayName} photo={m.photoURL} size={60} ring />
+                    <Text style={{ color: C.ink, fontSize: 12, fontWeight: '700', marginTop: 4 }} numberOfLines={1}>{m.displayName}</Text>
+                    {typeof m.score === 'number' ? <Text style={{ color: C.magenta, fontSize: 11, fontWeight: '800' }}>{Math.round(m.score)}%</Text> : null}
+                  </View>
+                ))}
+              </ScrollView>
+            </>
+          ) : null}
           {received.length ? (
             <>
               <SectionLabel>{tl(`✦ ${received.length} ${received.length === 1 ? 'pedido esperando' : 'pedidos esperando'}`, `✦ ${received.length} waiting`, `✦ ${received.length} esperando`, `✦ ${received.length} in attesa`)}</SectionLabel>

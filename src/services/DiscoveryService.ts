@@ -104,6 +104,31 @@ export type MatchResult = {
   teaser?: number            // não-premium: quantos matches fortes
   total?: number
 }
+// ─── Fase 2: baralho (deck), swipe e matches ────────────────────────────────
+export type DeckCard = PublicProfile & { score: number; reasons: string[]; common: string[] }
+export type DeckFilters = { city?: string; element?: string; minAge?: number; maxAge?: number; interests?: string[] }
+
+/** Baralho de descoberta (cards ordenados por sinastria). `gated` se não assinante/trial. */
+export async function getDeck(filters?: DeckFilters, limit = 10): Promise<{ cards: DeckCard[]; gated?: boolean }> {
+  const r = await post('deck', { filters: filters || {}, limit })
+  if (r?.gated) return { cards: [], gated: true }
+  return { cards: Array.isArray(r?.cards) ? r.cards : [] }
+}
+
+/** Curte (like) ou passa. Like recíproco devolve `matched:true`. */
+export async function swipe(uid: string, action: 'like' | 'pass'): Promise<{ ok: boolean; matched: boolean; gated?: boolean }> {
+  const r = await post('swipe', { uid, action })
+  return { ok: !!r?.ok, matched: !!r?.matched, gated: !!r?.gated }
+}
+
+export type MatchRow = { uid: string; displayName: string; photoURL: string | null; age?: number | null; city?: string | null; score?: number | null; whatsapp?: string | null; iShared?: boolean }
+/** Meus matches (like mútuo). WhatsApp só quando ambos liberaram. */
+export async function getMyMatches(): Promise<{ matches: MatchRow[]; gated?: boolean }> {
+  const r = await post('my-matches', {})
+  if (r?.gated) return { matches: [], gated: true }
+  return { matches: Array.isArray(r?.matches) ? r.matches : [] }
+}
+
 /** Ranking "quem mais combina" (Pro/Premium). Grátis recebe preview (top 3) + teaser. */
 export async function getMatches(): Promise<MatchResult> {
   const r = await post('match', {})
