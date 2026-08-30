@@ -36,6 +36,7 @@ import { decodeUnicodeEscapes, translatePlanet } from '../../utils/astro/pt'
 import HomeHeader from '../../components/HomeHeader'
 import NotificationOptInBanner from '../../components/NotificationOptInBanner'
 import MatchInviteCard from './MatchInviteCard'
+import MomentoHomeCard from './MomentoHomeCard'
 import PlanetQuickNav from '../../components/PlanetQuickNav'
 import ScrollTopButton, { SCROLL_TOP_THRESHOLD } from '../../components/ScrollTopButton'
 import WhatsAppAgentBanner from '../../components/WhatsAppAgentBanner'
@@ -513,6 +514,9 @@ export default function HomeScreen() {
 
         {/* Convite proativo pra completar o perfil do Match (só se incompleto) */}
         <MatchInviteCard />
+
+        {/* Descoberta do Momento Certo (eletiva) → aba Previsões */}
+        <MomentoHomeCard />
 
         {/* Status das Areas de Vida */}
         {lifeAreasForDisplay && (
