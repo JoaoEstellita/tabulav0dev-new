@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
-import { formatTransitCompact, aspectNature } from '../../utils/astro/pt'
+import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 
 const NATURE = {
@@ -26,6 +26,11 @@ export default function CollectiveTransitsScreen() {
       const bx = new Date(b?.window?.exact || b?.window?.start || Date.now()).getTime()
       return ax - bx
     })
+
+  // Ingressos coletivos = cada planeta no signo agora.
+  const ingresses = (transitData?.currentTransits?.planetComparisons || [])
+    .map((p: any) => ({ planet: p?.name, retro: !!p?.current?.isRetrograde, ...signInfoFromLongitude(p?.current?.longitude, language) }))
+    .filter((x: any) => x.planet && x.planet !== 'Ascendant' && x.planet !== 'Midheaven')
 
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
@@ -57,6 +62,26 @@ export default function CollectiveTransitsScreen() {
           </View>
         )
       })}
+
+      {ingresses.length ? (
+        <>
+          <Text style={[s.title, { fontSize: 17, marginTop: 22 }]}>{tl('Planetas nos signos', 'Planets in signs', 'Planetas en signos', 'Pianeti nei segni')}</Text>
+          <Text style={s.sub}>{tl('Onde cada planeta está no céu agora. Grau baixo = entrou há pouco no signo (ingresso recente).', 'Where each planet is in the sky now. Low degree = recently entered the sign (recent ingress).', 'Donde esta cada planeta en el cielo ahora. Grado bajo = entro hace poco en el signo (ingreso reciente).', 'Dove si trova ogni pianeta ora. Grado basso = entrato da poco nel segno (ingresso recente).')}</Text>
+          {ingresses.map((p: any, i: number) => (
+            <View key={'ing' + i} style={s.card}>
+              <View style={[s.bar, { backgroundColor: p.deg < 2 ? '#FFD700' : '#6B7280' }]} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.cardTitle}>{translatePlanet(p.planet)} {p.glyph} {p.name} {Math.floor(p.deg)}°</Text>
+                <View style={s.metaRow}>
+                  {p.retro ? <Text style={[s.natTag, { color: '#FCA5A5', borderColor: '#FCA5A5' }]}>{tl('retrógrado', 'retrograde', 'retrogrado', 'retrogrado')}</Text> : null}
+                  {p.deg < 2 ? <Text style={[s.natTag, { color: '#FFD700', borderColor: '#FFD700' }]}>{tl('ingresso recente', 'recent ingress', 'ingreso reciente', 'ingresso recente')}</Text> : null}
+                  {!p.retro && p.deg >= 2 ? <Text style={s.date}>{tl('no signo', 'in sign', 'en el signo', 'nel segno')}</Text> : null}
+                </View>
+              </View>
+            </View>
+          ))}
+        </>
+      ) : null}
     </ScrollView>
   )
 }

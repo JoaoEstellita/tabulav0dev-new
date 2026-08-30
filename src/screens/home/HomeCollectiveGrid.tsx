@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { formatTransitCompact, aspectNature } from '../../utils/astro/pt'
+import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
 
 // Grade de "Trânsitos coletivos" no fim da Home: o céu de agora (aspectos entre
 // planetas, iguais pra todo mundo). Botão-livro → lista completa (CollectiveTransits).
@@ -28,7 +28,12 @@ export default function HomeCollectiveGrid() {
     })
     .slice(0, 6)
 
-  if (!list.length) return null
+  // Ingressos coletivos = cada planeta no seu signo agora (mudança de signo é do céu).
+  const ingresses = (transitData?.currentTransits?.planetComparisons || [])
+    .map((p: any) => ({ planet: p?.name, retro: !!p?.current?.isRetrograde, ...signInfoFromLongitude(p?.current?.longitude, language) }))
+    .filter((x: any) => x.planet && x.planet !== 'Ascendant' && x.planet !== 'Midheaven')
+
+  if (!list.length && !ingresses.length) return null
 
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
@@ -45,21 +50,36 @@ export default function HomeCollectiveGrid() {
         </TouchableOpacity>
       </View>
       <Text style={s.sub}>{tl('O céu de agora — o mesmo pra todo mundo.', 'The sky right now — the same for everyone.', 'El cielo de ahora — el mismo para todos.', 'Il cielo di adesso — lo stesso per tutti.')}</Text>
-      <View style={s.grid}>
-        {list.map((a: any, i: number) => {
-          const nat = aspectNature(a.type)
-          const color = NATURE_COLOR[nat] || NATURE_COLOR.outro
-          return (
-            <TouchableOpacity key={i} style={s.cell} activeOpacity={0.85} onPress={() => navigation.navigate('CollectiveTransits')}>
-              <View style={[s.dot, { backgroundColor: color }]} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={s.cellTitle} numberOfLines={2}>{formatTransitCompact(a.planet1, a.type, a.planet2)}</Text>
-                {fmtDate(a) ? <Text style={s.cellDate}>{fmtDate(a)}</Text> : null}
+      {list.length ? (
+        <View style={s.grid}>
+          {list.map((a: any, i: number) => {
+            const nat = aspectNature(a.type)
+            const color = NATURE_COLOR[nat] || NATURE_COLOR.outro
+            return (
+              <TouchableOpacity key={i} style={s.cell} activeOpacity={0.85} onPress={() => navigation.navigate('CollectiveTransits')}>
+                <View style={[s.dot, { backgroundColor: color }]} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={s.cellTitle} numberOfLines={2}>{formatTransitCompact(a.planet1, a.type, a.planet2)}</Text>
+                  {fmtDate(a) ? <Text style={s.cellDate}>{fmtDate(a)}</Text> : null}
+                </View>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {ingresses.length ? (
+        <>
+          <Text style={s.stripLabel}>{tl('Planetas nos signos', 'Planets in signs', 'Planetas en signos', 'Pianeti nei segni')}</Text>
+          <View style={s.chips}>
+            {ingresses.map((p: any, i: number) => (
+              <View key={i} style={[s.chip, p.deg < 2 && s.chipNew]}>
+                <Text style={s.chipTx}>{translatePlanet(p.planet)} {p.glyph}{Math.floor(p.deg)}°{p.retro ? ' ℞' : ''}</Text>
               </View>
-            </TouchableOpacity>
-          )
-        })}
-      </View>
+            ))}
+          </View>
+        </>
+      ) : null}
     </View>
   )
 }
@@ -75,4 +95,9 @@ const s = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
   cellTitle: { color: '#EDEBF7', fontSize: 12.5, fontWeight: '700', lineHeight: 16 },
   cellDate: { color: '#9aa2b8', fontSize: 11, marginTop: 2, textTransform: 'capitalize' },
+  stripLabel: { color: '#9aa2b8', fontSize: 12, fontWeight: '700', marginTop: 12, marginBottom: 6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: { backgroundColor: '#1F1F3D', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 8, paddingVertical: 4 },
+  chipNew: { borderColor: '#FFD700' },
+  chipTx: { color: '#C7C9E0', fontSize: 12, fontWeight: '600' },
 })

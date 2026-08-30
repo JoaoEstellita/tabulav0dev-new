@@ -199,6 +199,16 @@ const SIGN_NAMES_BY_LANGUAGE: Record<AppLanguage, string[]> = {
   'it-IT': ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine', 'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci'],
 }
 
+const SIGN_GLYPHS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
+
+/** Signo + grau a partir da longitude eclíptica (0–360). Base dos "ingressos coletivos". */
+export function signInfoFromLongitude(longitude: number, language: AppLanguage = 'pt-BR'): { idx: number; deg: number; name: string; glyph: string } {
+  const n = (((Number(longitude) || 0) % 360) + 360) % 360
+  const idx = Math.floor(n / 30) % 12
+  const names = SIGN_NAMES_BY_LANGUAGE[language] || SIGN_NAMES_BY_LANGUAGE['pt-BR']
+  return { idx, deg: n % 30, name: names[idx] || '', glyph: SIGN_GLYPHS[idx] || '' }
+}
+
 export function translateSignName(value: string, language: AppLanguage = 'pt-BR'): string {
   const decoded = decodeUnicodeEscapes(value)
   const idx = SIGN_ALIAS_TO_INDEX[normalizeText(decoded)]
