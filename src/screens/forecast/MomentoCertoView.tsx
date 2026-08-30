@@ -61,6 +61,8 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
     const d = new Date(iso + 'T12:00:00')
     return d.toLocaleDateString(lang, { weekday: 'short', day: '2-digit', month: 'short' })
   }
+  // Faixa de hora (instante UTC) formatada no fuso do aparelho.
+  const fmtHour = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
   const scoreColor = (s: number) => (s >= 70 ? C.good : s >= 50 ? C.gold : C.dim)
 
   return (
@@ -100,6 +102,7 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
             <View key={w.dateISO + i} style={s.win}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
                 {w.reasons.map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
                 {w.cautions.map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
               </View>
@@ -128,6 +131,7 @@ const s = StyleSheet.create({
   label: { color: C.tx, fontSize: 14, fontWeight: '800' },
   win: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, padding: 14 },
   winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
+  winHour: { color: C.good, fontSize: 13, fontWeight: '800', marginTop: 3 },
   winReason: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 3 },
   winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   ring: { width: 46, height: 46, borderRadius: 23, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },

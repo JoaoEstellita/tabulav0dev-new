@@ -4,7 +4,7 @@ import { backendFetch } from './backend/client'
 export type MomentoReason = { planet: string; aspect: string | null; target: string | null }
 // Bandeira de regra clássica (F2a): Lua vazia / retrógrado.
 export type MomentoFlag = { code: 'moonVoid' | 'retro'; planet?: string }
-export type MomentoWindow = { dateISO: string; score: number; reasons: MomentoReason[]; cautions: (MomentoReason | MomentoFlag)[] }
+export type MomentoWindow = { dateISO: string; score: number; reasons: MomentoReason[]; cautions: (MomentoReason | MomentoFlag)[]; hourFromISO?: string; hourToISO?: string }
 export type MomentoIntention = 'amor' | 'carreira' | 'decisao' | 'conversa'
 export type MomentoResult = { windows: MomentoWindow[]; gated?: boolean; error?: string }
 
