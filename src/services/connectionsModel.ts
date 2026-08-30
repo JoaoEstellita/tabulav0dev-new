@@ -10,6 +10,7 @@ export type Connection = {
   requestedBy: string
   originGroupId: string | null
   origin: 'match' | null // 'match' = veio do baralho; null = amizade/rede
+  score: number | null // % de afinidade (só quando é match)
   otherName: string | null
   otherPhoto: string | null
   iShared: boolean

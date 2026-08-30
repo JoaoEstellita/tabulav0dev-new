@@ -14,6 +14,7 @@ import { getMyMatches, getMyProfile, setDeckVisible as setDeckVisibleApi, setSha
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
+import SynastryModal from '../../components/SynastryModal'
 
 const WELCOME_KEY = 'network_welcome_seen_v1'
 const MATCH_TOUR_KEY = 'match_tour_seen_v1'
@@ -114,7 +115,47 @@ export default function NetworkScreen() {
   const received = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy !== user?.uid), [items, user?.uid])
   const sent = useMemo(() => items.filter((c) => c.status === 'pending' && c.requestedBy === user?.uid), [items, user?.uid])
   const accepted = useMemo(() => items.filter((c) => c.status === 'accepted'), [items])
+  const accMatches = useMemo(() => accepted.filter((c) => c.origin === 'match'), [accepted])
+  const accFriends = useMemo(() => accepted.filter((c) => c.origin !== 'match'), [accepted])
   const connectedUids = useMemo(() => new Set(items.map((c) => c.other)), [items])
+  const [synWith, setSynWith] = useState<{ uid: string; name: string | null } | null>(null)
+  const createGroupWith = (c: Connection) => navigation.navigate('Groups', { createWith: { uid: c.other, name: c.otherName } })
+  // Card de pessoa unificado: mesmas ações em toda conexão (sinastria · WhatsApp · grupo).
+  const renderConn = (c: Connection) => (
+    <View key={c.id} style={st.connCard}>
+      <View style={st.connTop}>
+        <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
+            {typeof c.score === 'number' ? <Text style={st.connPct}>{Math.round(c.score)}%</Text> : null}
+          </View>
+          {c.otherWhatsapp
+            ? <Text style={st.city}>{tl('WhatsApp liberado', 'WhatsApp shared', 'WhatsApp disponible', 'WhatsApp disponibile')}</Text>
+            : c.iShared ? <Text style={st.city} numberOfLines={1}>{tl('Aguardando o WhatsApp da outra pessoa', 'Waiting their WhatsApp', 'Esperando su WhatsApp', 'In attesa del WhatsApp')}</Text>
+              : null}
+        </View>
+        <TouchableOpacity onPress={() => connMenu(c)} style={st.blockBtn}><Ionicons name="ellipsis-vertical" size={16} color={C.faint} /></TouchableOpacity>
+      </View>
+      <View style={st.connActions}>
+        <TouchableOpacity style={st.connAct} onPress={() => setSynWith({ uid: c.other, name: c.otherName })}>
+          <Ionicons name="planet-outline" size={15} color={C.gold} /><Text style={st.connActTx}>{tl('Sinastria', 'Synastry', 'Sinastria', 'Sinastria')}</Text>
+        </TouchableOpacity>
+        {c.otherWhatsapp ? (
+          <TouchableOpacity style={st.connAct} onPress={() => openWhatsapp(c.otherWhatsapp!)}>
+            <Ionicons name="logo-whatsapp" size={15} color={C.good} /><Text style={st.connActTx}>WhatsApp</Text>
+          </TouchableOpacity>
+        ) : !c.iShared ? (
+          <TouchableOpacity style={st.connAct} disabled={!!busy} onPress={() => doShare(c)}>
+            <Ionicons name="logo-whatsapp" size={15} color={C.good} /><Text style={st.connActTx}>{tl('Meu WhatsApp', 'My WhatsApp', 'Mi WhatsApp', 'Mio WhatsApp')}</Text>
+          </TouchableOpacity>
+        ) : null}
+        <TouchableOpacity style={st.connAct} onPress={() => createGroupWith(c)}>
+          <Ionicons name="people-outline" size={15} color={C.magenta} /><Text style={st.connActTx}>{tl('Criar grupo', 'Create group', 'Crear grupo', 'Crea gruppo')}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
 
   const run = async (key: string, fn: () => Promise<any>) => {
     if (busy) return
@@ -251,18 +292,6 @@ export default function NetworkScreen() {
             <Ionicons name="help-circle-outline" size={20} color={C.faint} />
           </TouchableOpacity>
         </View>
-        <View style={{ gap: 6, alignItems: 'flex-end' }}>
-          <View style={st.visChip}>
-            <Ionicons name={deckVisible ? 'heart' : 'heart-dislike-outline'} size={15} color={deckVisible ? C.gold : C.faint} />
-            <Text style={[st.visChipTx, { color: deckVisible ? C.ink : C.faint }]}>{deckVisible ? tl('Match visível', 'Match visible', 'Match visible', 'Match visibile') : tl('Match oculto', 'Match hidden', 'Match oculto', 'Match nascosto')}</Text>
-            <Switch value={deckVisible} disabled={togglingDeck} onValueChange={toggleDeck} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
-          </View>
-          <View style={st.visChip}>
-            <Ionicons name={shareOpen ? 'pie-chart' : 'lock-closed-outline'} size={15} color={shareOpen ? C.gold : C.faint} />
-            <Text style={[st.visChipTx, { color: shareOpen ? C.ink : C.faint }]}>{shareOpen ? tl('Sinastria visível', 'Synastry visible', 'Sinastria visible', 'Sinastria visibile') : tl('Sinastria oculta', 'Synastry hidden', 'Sinastria oculta', 'Sinastria nascosta')}</Text>
-            <Switch value={shareOpen} disabled={togglingShare} onValueChange={toggleShare} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
-          </View>
-        </View>
       </View>
 
       {/* Boas-vindas / opt-out — só na 1ª visita */}
@@ -288,7 +317,7 @@ export default function NetworkScreen() {
           <Text style={[st.segTx, page === 'discover' && st.segTxOn]}>{tl('Descobrir', 'Discover', 'Descubrir', 'Scopri')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[st.segBtn, page === 'connections' && st.segOn]} onPress={() => setPage('connections')}>
-          <Text style={[st.segTx, page === 'connections' && st.segTxOn]}>{tl('Match', 'Match', 'Match', 'Match')}</Text>
+          <Text style={[st.segTx, page === 'connections' && st.segTxOn]}>{tl('Conexões', 'Connections', 'Conexiones', 'Connessioni')}</Text>
           {received.length ? <View style={st.segBadge}><Text style={st.segBadgeTx}>{received.length}</Text></View> : null}
         </TouchableOpacity>
         <TouchableOpacity style={[st.segBtn, page === 'profile' && st.segOn]} onPress={() => setPage('profile')}>
@@ -347,33 +376,30 @@ export default function NetworkScreen() {
             </>
           ) : null}
 
-          <SectionLabel>{tl(`Minhas conexões${accepted.length ? ' · ' + accepted.length : ''}`, `My connections${accepted.length ? ' · ' + accepted.length : ''}`, `Mis conexiones${accepted.length ? ' · ' + accepted.length : ''}`, `Connessioni${accepted.length ? ' · ' + accepted.length : ''}`)}</SectionLabel>
           {!accepted.length ? (
-            <View style={st.emptyCard}>
-              <Ionicons name="people-outline" size={34} color={C.dim} />
-              <Text style={st.emptyTx}>{tl('Seus matches 💘 e amizades 🤝 aparecem aqui.', 'Your matches 💘 and friends 🤝 show up here.', 'Tus matches 💘 y amistades 🤝 aparecen aqui.', 'I tuoi match 💘 e amicizie 🤝 appaiono qui.')}</Text>
-            </View>
-          ) : accepted.map((c) => (
-            <View key={c.id} style={st.conn}>
-              <Avatar name={c.otherName} photo={c.otherPhoto} size={46} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={st.personName} numberOfLines={1}>{c.otherName || tl('Conexão', 'Connection', 'Conexión', 'Connessione')}</Text>
-                  <View style={[st.kindBadge, { borderColor: connKind(c).color }]}><Text style={[st.kindTx, { color: connKind(c).color }]}>{connKind(c).emoji} {connKind(c).label}</Text></View>
-                </View>
-                {c.otherWhatsapp
-                  ? <Text style={st.city}>{tl('WhatsApp liberado', 'WhatsApp shared', 'WhatsApp disponible', 'WhatsApp disponibile')}</Text>
-                  : c.iShared ? <Text style={st.city} numberOfLines={1}>{tl('Aguardando o WhatsApp da outra pessoa', 'Waiting their WhatsApp', 'Esperando su WhatsApp', 'In attesa del WhatsApp')}</Text>
-                    : null}
+            <>
+              <SectionLabel>{tl('Minhas conexões', 'My connections', 'Mis conexiones', 'Connessioni')}</SectionLabel>
+              <View style={st.emptyCard}>
+                <Ionicons name="people-outline" size={34} color={C.dim} />
+                <Text style={st.emptyTx}>{tl('Seus matches 💘 e amizades 🤝 aparecem aqui.', 'Your matches 💘 and friends 🤝 show up here.', 'Tus matches 💘 y amistades 🤝 aparecen aqui.', 'I tuoi match 💘 e amicizie 🤝 appaiono qui.')}</Text>
               </View>
-              {c.otherWhatsapp ? (
-                <TouchableOpacity style={st.wa} onPress={() => openWhatsapp(c.otherWhatsapp!)}><Ionicons name="logo-whatsapp" size={15} color="#04220f" /><Text style={st.waTx}>WhatsApp</Text></TouchableOpacity>
-              ) : !c.iShared ? (
-                <TouchableOpacity style={st.shareBtn} disabled={!!busy} onPress={() => doShare(c)}><Text style={st.shareTx}>{tl('Meu WhatsApp', 'My WhatsApp', 'Mi WhatsApp', 'Mio WhatsApp')}</Text></TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {accMatches.length ? (
+                <>
+                  <SectionLabel>{tl(`Matches 💘 · ${accMatches.length}`, `Matches 💘 · ${accMatches.length}`, `Matches 💘 · ${accMatches.length}`, `Match 💘 · ${accMatches.length}`)}</SectionLabel>
+                  {accMatches.map(renderConn)}
+                </>
               ) : null}
-              <TouchableOpacity onPress={() => connMenu(c)} style={st.blockBtn}><Ionicons name="ellipsis-vertical" size={16} color={C.faint} /></TouchableOpacity>
-            </View>
-          ))}
+              {accFriends.length ? (
+                <>
+                  <SectionLabel>{tl(`Amizades 🤝 · ${accFriends.length}`, `Friends 🤝 · ${accFriends.length}`, `Amistades 🤝 · ${accFriends.length}`, `Amicizie 🤝 · ${accFriends.length}`)}</SectionLabel>
+                  {accFriends.map(renderConn)}
+                </>
+              ) : null}
+            </>
+          )}
 
           {sent.length ? (
             <>
@@ -400,12 +426,6 @@ export default function NetworkScreen() {
             <TouchableOpacity onPress={() => setShowList(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Ionicons name="close" size={26} color={C.faint} /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-            {/* Ser encontrável na busca por nome (independe de aparecer no baralho) */}
-            <View style={[st.visChip, { alignSelf: 'flex-start', marginBottom: 14 }]}>
-              <Ionicons name={visible ? 'eye' : 'eye-off-outline'} size={15} color={visible ? C.gold : C.faint} />
-              <Text style={[st.visChipTx, { color: visible ? C.ink : C.faint }]}>{tl('Aparecer na busca', 'Appear in search', 'Aparecer en la busqueda', 'Appari nella ricerca')}</Text>
-              <Switch value={visible} disabled={togglingVisible} onValueChange={toggleVisible} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" style={{ transform: [{ scale: 0.75 }] }} />
-            </View>
             <View style={st.search}>
               <Ionicons name="search" size={18} color={C.faint} />
               <TextInput style={st.searchInput} placeholder={tl('Buscar por nome', 'Search by name', 'Buscar por nombre', 'Cerca per nome')} placeholderTextColor={C.faint} value={term} onChangeText={setTerm} onSubmitEditing={doSearch} returnKeyType="search" autoCapitalize="none" autoFocus />
@@ -439,6 +459,8 @@ export default function NetworkScreen() {
           </View>
         </View>
       </Modal>
+
+      <SynastryModal visible={!!synWith} uid={synWith?.uid || null} name={synWith?.name || null} onClose={() => setSynWith(null)} />
     </ScrollView>
   )
 }
@@ -447,6 +469,12 @@ const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.void },
   kindBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1, marginTop: 3 },
   kindTx: { fontSize: 11, fontWeight: '800' },
+  connCard: { backgroundColor: C.surface, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 12, marginBottom: 10 },
+  connTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  connPct: { color: C.magenta, fontSize: 13, fontWeight: '800' },
+  connActions: { flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' },
+  connAct: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.surface2, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 8, borderWidth: 1, borderColor: C.line },
+  connActTx: { color: C.ink, fontSize: 12.5, fontWeight: '700' },
   sheetBack: { flex: 1, backgroundColor: 'rgba(8,6,18,0.86)', justifyContent: 'center', alignItems: 'center', padding: 28 },
   sheet: { backgroundColor: C.surface, borderRadius: 22, borderWidth: 1, borderColor: C.line2, padding: 24, alignItems: 'center', width: '100%', maxWidth: 380 },
   sheetSpark: { fontSize: 38, marginBottom: 4 },

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, ScrollView, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, ScrollView, Alert, Platform, Switch } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
-import { getMyProfile, setProfile } from '../../services/DiscoveryService'
+import { getMyProfile, setProfile, setDiscoverable, setDeckVisible, setShareChart } from '../../services/DiscoveryService'
 import UserService from '../../services/firebase/UserService'
 import { NETWORK_INTERESTS, interestLabel, PROFILE_PROMPTS, type NetworkLang } from '../../constants/networkInterests'
 
@@ -70,6 +70,15 @@ export default function NetworkProfileEditor() {
   const [prompts, setPrompts] = useState<Record<string, string>>({})
   const [gender, setGender] = useState<'m' | 'f' | 'nb' | null>(null)
   const [seeking, setSeeking] = useState<'m' | 'f' | 'all' | null>(null)
+  // Privacidade do Match (aplica na hora, não espera o Salvar).
+  const [searchable, setSearchable] = useState(true)   // discoverable (aparecer na busca)
+  const [inDeck, setInDeck] = useState(true)            // !deckHidden (aparecer no baralho)
+  const [wheelOpen, setWheelOpen] = useState(true)      // shareChart (sinastria visível)
+  const [privBusy, setPrivBusy] = useState<string | null>(null)
+  const applyPriv = async (key: string, optimistic: () => void, revert: () => void, call: () => Promise<any>) => {
+    setPrivBusy(key); optimistic()
+    try { await call() } catch { revert() } finally { setPrivBusy(null) }
+  }
 
   useEffect(() => {
     let alive = true
@@ -82,6 +91,9 @@ export default function NetworkProfileEditor() {
       setPrompts(p?.prompts && typeof p.prompts === 'object' ? p.prompts : {})
       setGender((p as any)?.gender || null)
       setSeeking((p as any)?.seeking || null)
+      setSearchable(r.discoverable !== false)
+      setInDeck((r as any)?.deckHidden !== true)
+      setWheelOpen((p as any)?.shareChart !== false)
     }).finally(() => alive && setLoading(false))
     return () => { alive = false }
   }, [user?.uid])
@@ -159,6 +171,32 @@ export default function NetworkProfileEditor() {
             <Text style={[s.tagTx, seeking === v && s.tagTxOn]}>{l}</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Privacidade do Match — tudo num lugar só */}
+      <Text style={[s.label, { marginTop: 24 }]}>{tl('Privacidade do Match', 'Match privacy', 'Privacidad del Match', 'Privacy del Match')}</Text>
+      <View style={s.privBox}>
+        <View style={s.privRow}>
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Text style={s.privTitle}>{tl('Aparecer na busca', 'Appear in search', 'Aparecer en la busqueda', 'Appari nella ricerca')}</Text>
+            <Text style={s.privSub}>{tl('Outras pessoas te encontram buscando seu nome.', 'People can find you by name.', 'Otros te encuentran por tu nombre.', 'Gli altri ti trovano per nome.')}</Text>
+          </View>
+          <Switch value={searchable} disabled={privBusy === 'search'} onValueChange={(v) => applyPriv('search', () => setSearchable(v), () => setSearchable(!v), () => setDiscoverable(v))} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
+        </View>
+        <View style={[s.privRow, s.privDivider]}>
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Text style={s.privTitle}>{tl('Aparecer no baralho do Match', 'Appear in the Match deck', 'Aparecer en el mazo del Match', 'Appari nel mazzo del Match')}</Text>
+            <Text style={s.privSub}>{tl('Seu card entra no baralho de descoberta.', 'Your card enters the discovery deck.', 'Tu tarjeta entra en el mazo.', 'La tua card entra nel mazzo.')}</Text>
+          </View>
+          <Switch value={inDeck} disabled={privBusy === 'deck'} onValueChange={(v) => applyPriv('deck', () => setInDeck(v), () => setInDeck(!v), () => setDeckVisible(v))} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
+        </View>
+        <View style={[s.privRow, s.privDivider]}>
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Text style={s.privTitle}>{tl('Sinastria visível', 'Synastry visible', 'Sinastria visible', 'Sinastria visibile')}</Text>
+            <Text style={s.privSub}>{tl('Quem vê seu card pode abrir a roda e a grade de aspectos.', 'Viewers can open your wheel and aspect grid.', 'Quien ve tu tarjeta puede abrir la rueda.', 'Chi vede la card puo aprire la ruota.')}</Text>
+          </View>
+          <Switch value={wheelOpen} disabled={privBusy === 'wheel'} onValueChange={(v) => applyPriv('wheel', () => setWheelOpen(v), () => setWheelOpen(!v), () => setShareChart(v))} trackColor={{ true: C.gold, false: '#3a3a4a' }} thumbColor="#fff" />
+        </View>
       </View>
 
       {/* Fotos */}
@@ -240,6 +278,11 @@ const s = StyleSheet.create({
   prevChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   prevChip: { color: '#fff', fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(214,64,159,0.4)', borderRadius: 12, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
   hint: { color: C.dim, fontSize: 12, fontWeight: '600' },
+  privBox: { backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14 },
+  privRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  privDivider: { borderTopWidth: 1, borderTopColor: C.line },
+  privTitle: { color: C.tx, fontSize: 14, fontWeight: '700' },
+  privSub: { color: C.dim, fontSize: 12, lineHeight: 16, marginTop: 2 },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   photoBox: { width: 96, height: 128, borderRadius: 12, overflow: 'hidden', backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   photo: { width: '100%', height: '100%' },

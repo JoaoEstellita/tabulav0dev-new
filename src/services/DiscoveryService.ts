@@ -101,8 +101,11 @@ export type SynastryResult = {
   target?: PublicProfile
   score?: number | null
   aspects?: SynastryAspect[]
+  myPositions?: WheelPos[]
+  positions?: WheelPos[]
 }
-/** Sinastria par-a-par (PAGA). Grátis recebe só o alvo + premium:false. */
+/** Sinastria par-a-par (PAGA). Grátis recebe só o alvo + premium:false.
+ * `myPositions`/`positions` alimentam a roda (mesmo componente do Match/Grupos). */
 export async function getSynastry(uid: string): Promise<SynastryResult> {
   const r = await post('synastry', { uid })
   return {
@@ -110,6 +113,8 @@ export async function getSynastry(uid: string): Promise<SynastryResult> {
     target: r?.target,
     score: r?.score ?? null,
     aspects: Array.isArray(r?.aspects) ? r.aspects : undefined,
+    myPositions: Array.isArray(r?.myPositions) ? r.myPositions : undefined,
+    positions: Array.isArray(r?.positions) ? r.positions : undefined,
   }
 }
 
