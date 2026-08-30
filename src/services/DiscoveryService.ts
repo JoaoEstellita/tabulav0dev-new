@@ -71,10 +71,16 @@ export async function getPublicProfile(uid: string): Promise<PublicProfile | nul
 export type ProfileInput = { photos: string[]; interests: string[]; bio: string; prompts?: Record<string, string>; gender?: Gender | null; seeking?: Seeking | null; shareChart?: boolean }
 
 /** Meu próprio perfil estendido (pro editor). `gated` se não for assinante/trial. */
-export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; deckHidden?: boolean; gated?: boolean }> {
+export async function getMyProfile(): Promise<{ profile: PublicProfile | null; discoverable: boolean; deckHidden?: boolean; matchActive?: boolean; gated?: boolean }> {
   const r = await post('my-profile', {})
   if (r?.gated) return { profile: null, discoverable: false, gated: true }
-  return { profile: r?.profile || null, discoverable: !!r?.discoverable, deckHidden: !!r?.deckHidden }
+  return { profile: r?.profile || null, discoverable: !!r?.discoverable, deckHidden: !!r?.deckHidden, matchActive: !!r?.matchActive }
+}
+
+/** Ativa o Match (opt-in): publica o perfil e passa a aparecer no baralho/busca. */
+export async function activateMatch(): Promise<{ ok: boolean; matchActive: boolean; gated?: boolean }> {
+  const r = await post('activate-match', {})
+  return { ok: !!r?.ok, matchActive: !!r?.matchActive, gated: !!r?.gated }
 }
 
 /** Aparecer (ou não) no BARALHO do Match — separado de "buscável" (setDiscoverable). */

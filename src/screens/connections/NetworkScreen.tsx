@@ -10,7 +10,7 @@ import { listConnections, respondConnection, shareWhatsapp, blockConnection, rem
 import { listPeople, ensureSelfDiscoverable, searchProfiles, type PublicProfile } from '../../services/DiscoveryService'
 import NetworkProfileEditor from './NetworkProfileEditor'
 import DiscoverDeck from './DiscoverDeck'
-import { getMyMatches, type MatchRow } from '../../services/DiscoveryService'
+import { getMyMatches, getMyProfile, activateMatch, type MatchRow } from '../../services/DiscoveryService'
 import { useSubscriptionCheck } from '../../hooks/useSubscriptionCheck'
 import IntroCarousel from '../../components/IntroCarousel'
 import { matchIntroSlides } from './matchIntroSlides'
@@ -48,11 +48,26 @@ export default function NetworkScreen() {
   const aProfile = useTourAnchor('match.profile')
   const [showList, setShowList] = useState(false)
   const [matches, setMatches] = useState<MatchRow[]>([])
+  // Match é opt-in: só quem ATIVA aparece/usa. null = ainda carregando.
+  const [matchActive, setMatchActive] = useState<boolean | null>(null)
+  const [activating, setActivating] = useState(false)
+  const [showActivateModal, setShowActivateModal] = useState(false)
+  useEffect(() => {
+    if (gated) { setMatchActive(false); return }
+    getMyProfile().then((r) => setMatchActive(r.gated ? false : !!r.matchActive)).catch(() => setMatchActive(false))
+  }, [gated])
+  const doActivate = async () => {
+    setActivating(true)
+    try {
+      const r = await activateMatch()
+      if (r.matchActive) { setMatchActive(true); setShowActivateModal(false) }
+    } catch { /* segue */ } finally { setActivating(false) }
+  }
   // Privacidade (buscável/baralho/roda) migrou pro editor de Perfil.
 
   const [page, setPage] = useState<Page>('discover')
   const buildMatchTour = useCallback(() => {
-    if (gated) return [] // grátis: sem holofote (o carrossel do paywall explica)
+    if (gated || !matchActive) return [] // sem holofote no paywall / antes de ativar (o guia de ativação explica)
     return [
       { id: 'match.menu', title: tl('As 3 seções', 'The 3 sections', 'Las 3 secciones', 'Le 3 sezioni'),
         body: tl('Descobrir (o baralho), Conexões (seus matches e amizades) e Perfil (seu card e a privacidade). Vamos ver cada uma.', 'Discover (the deck), Connections (your matches and friends) and Profile (your card and privacy). Let\'s see each.', 'Descubrir (el mazo), Conexiones (tus matches y amistades) y Perfil (tu tarjeta y privacidad). Veamos cada una.', 'Scopri (il mazzo), Connessioni (i tuoi match e amicizie) e Profilo (la tua card e privacy). Vediamole.') },
@@ -63,7 +78,7 @@ export default function NetworkScreen() {
       { id: 'match.profile', onEnter: () => setPage('profile'), onExit: () => setPage('discover'), title: tl('Seu perfil', 'Your profile', 'Tu perfil', 'Il tuo profilo'),
         body: tl('Fotos, interesses, bio, gênero e preferência. E a privacidade: aparecer na busca, aparecer no baralho e deixar sua roda de sinastria visível.', 'Photos, interests, bio, gender and preference. And privacy: appear in search, appear in the deck and keep your synastry wheel visible.', 'Fotos, intereses, bio, genero y preferencia. Y la privacidad: aparecer en la busqueda, en el mazo y dejar tu rueda visible.', 'Foto, interessi, bio, genere e preferenza. E la privacy: apparire nella ricerca, nel mazzo e lasciare la ruota visibile.') },
     ]
-  }, [gated, language]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gated, language, matchActive]) // eslint-disable-line react-hooks/exhaustive-deps
   const { openTour: openMatchTour } = useTabTour('tour_seen_match', 'Network', buildMatchTour)
   const [items, setItems] = useState<Connection[]>([])
   const [people, setPeople] = useState<PublicProfile[]>([])
@@ -272,6 +287,64 @@ export default function NetworkScreen() {
     )
   }
 
+  // Carregando o estado de ativação
+  if (matchActive === null) {
+    return <View style={[st.screen, { paddingTop: insets.top + 60, alignItems: 'center' }]}><ActivityIndicator color={C.gold} /></View>
+  }
+
+  // Opt-in: guia + ativação. Só quem ATIVA passa a aparecer e usar o Match.
+  if (matchActive === false) {
+    const bullets = [
+      { i: 'sparkles', t: tl('Descubra por afinidade real', 'Discover by real affinity', 'Descubre por afinidad real', 'Scopri per affinita reale'), s: tl('Um baralho ordenado pela sua sinastria e proximidade.', 'A deck ranked by your synastry and distance.', 'Un mazo ordenado por tu sinastria y cercania.', 'Un mazzo ordinato per sinastria e vicinanza.') },
+      { i: 'heart', t: tl('Match e amizade', 'Match and friendship', 'Match y amistad', 'Match e amicizia'), s: tl('Curta, peça amizade ou dê match — recíproco libera o contato.', 'Like, ask friendship or match — mutual opens contact.', 'Da like, pide amistad o match — reciproco abre el contacto.', 'Metti like, chiedi amicizia o match — reciproco apre il contatto.') },
+      { i: 'planet', t: tl('Sinastria completa', 'Full synastry', 'Sinastria completa', 'Sinastria completa'), s: tl('Roda e grade de aspectos com cada pessoa.', 'Wheel and aspect grid with each person.', 'Rueda y grilla de aspectos con cada persona.', 'Ruota e griglia con ogni persona.') },
+      { i: 'lock-closed', t: tl('Você no controle', 'You are in control', 'Tu tienes el control', 'Sei tu al comando'), s: tl('Ative agora e desative quando quiser no seu Perfil.', 'Activate now and turn it off anytime in your Profile.', 'Activa ahora y desactiva cuando quieras en tu Perfil.', 'Attiva ora e disattiva quando vuoi nel Profilo.') },
+    ]
+    return (
+      <ScrollView style={st.screen} contentContainerStyle={{ paddingTop: insets.top + 40, paddingBottom: 40, paddingHorizontal: 24, alignItems: 'center' }}>
+        <Ionicons name="heart" size={46} color={C.magenta} />
+        <Text style={[st.title, { marginTop: 14, textAlign: 'center' }]}>Match 💘</Text>
+        <Text style={{ color: C.faint, textAlign: 'center', marginTop: 10, fontSize: 14.5, lineHeight: 21 }}>
+          {tl('Descubra com quem você mais combina. Ative para entrar — e só então você aparece para as outras pessoas.', 'Discover who matches you most. Activate to join — only then do you appear to others.', 'Descubre con quien mas combinas. Activa para entrar — solo entonces apareces para los demas.', 'Scopri con chi combini di piu. Attiva per entrare — solo allora appari agli altri.')}
+        </Text>
+        <View style={{ alignSelf: 'stretch', marginTop: 22, gap: 14 }}>
+          {bullets.map((b, i) => (
+            <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+              <View style={st.actIcon}><Ionicons name={b.i as any} size={17} color={C.gold} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.ink, fontSize: 14.5, fontWeight: '800' }}>{b.t}</Text>
+                <Text style={{ color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 2 }}>{b.s}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+        <TouchableOpacity style={[st.payCta, { marginTop: 26 }]} onPress={() => setShowActivateModal(true)} activeOpacity={0.9}>
+          <Text style={st.payCtaTx}>{tl('Ativar meu Match', 'Activate my Match', 'Activar mi Match', 'Attiva il mio Match')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ marginTop: 14 }} onPress={() => setShowTour(true)}>
+          <Text style={{ color: C.faint, fontSize: 13 }}>{tl('Ver o guia completo', 'See the full guide', 'Ver la guia completa', 'Vedi la guida completa')}</Text>
+        </TouchableOpacity>
+
+        <Modal visible={showActivateModal} transparent animationType="fade" onRequestClose={() => setShowActivateModal(false)}>
+          <View style={st.sheetBack}>
+            <View style={st.sheet}>
+              <Text style={st.sheetSpark}>💘</Text>
+              <Text style={st.sheetTitle}>{tl('Ativar o Match?', 'Activate Match?', '¿Activar Match?', 'Attivare Match?')}</Text>
+              <Text style={st.sheetSub}>{tl('Seu nome, foto e signos passam a aparecer para outras pessoas no Match. Você pode desativar quando quiser no seu Perfil.', 'Your name, photo and signs will appear to others in Match. You can turn it off anytime in your Profile.', 'Tu nombre, foto y signos apareceran para otros en Match. Puedes desactivar cuando quieras en tu Perfil.', 'Il tuo nome, foto e segni appariranno agli altri nel Match. Puoi disattivare quando vuoi nel Profilo.')}</Text>
+              <TouchableOpacity style={st.sheetPrimary} disabled={activating} onPress={doActivate}>
+                {activating ? <ActivityIndicator color="#0F0F23" /> : <Text style={st.sheetPrimaryTx}>{tl('Ativar agora', 'Activate now', 'Activar ahora', 'Attiva ora')}</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity style={st.sheetGhost} onPress={() => setShowActivateModal(false)}>
+                <Text style={st.sheetGhostTx}>{tl('Agora não', 'Not now', 'Ahora no', 'Non ora')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <IntroCarousel visible={showTour} slides={matchIntroSlides(language as any, true)} onClose={closeTour} labels={tourLabels} />
+      </ScrollView>
+    )
+  }
+
   return (
     <ScrollView
       style={st.screen}
@@ -461,6 +534,7 @@ export default function NetworkScreen() {
 
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.void },
+  actIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,215,0,0.12)', alignItems: 'center', justifyContent: 'center' },
   kindBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 7, paddingVertical: 1, marginTop: 3 },
   kindTx: { fontSize: 11, fontWeight: '800' },
   connCard: { backgroundColor: C.surface, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 12, marginBottom: 10 },
