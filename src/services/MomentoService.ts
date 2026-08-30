@@ -5,7 +5,7 @@ export type MomentoReason = { planet: string; aspect: string | null; target: str
 // Bandeira de regra clássica (F2a): Lua vazia / retrógrado.
 export type MomentoFlag = { code: 'moonVoid' | 'retro'; planet?: string }
 export type MomentoWindow = { dateISO: string; score: number; reasons: MomentoReason[]; cautions: (MomentoReason | MomentoFlag)[]; hourFromISO?: string; hourToISO?: string }
-export type MomentoIntention = 'amor' | 'carreira' | 'decisao' | 'conversa'
+export type MomentoIntention = 'amor' | 'carreira' | 'decisao' | 'conversa' | 'saude' | 'viagem' | 'lancar' | 'contrato'
 export type MomentoResult = { windows: MomentoWindow[]; gated?: boolean; error?: string }
 
 export async function getMomento(uid: string, intention: MomentoIntention): Promise<MomentoResult> {

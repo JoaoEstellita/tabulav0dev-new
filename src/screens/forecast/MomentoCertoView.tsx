@@ -35,6 +35,10 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
     { k: 'carreira', icon: 'briefcase', label: tl('Carreira', 'Career', 'Carrera', 'Carriera') },
     { k: 'decisao', icon: 'compass', label: tl('Decisão', 'Decision', 'Decision', 'Decisione') },
     { k: 'conversa', icon: 'chatbubbles', label: tl('Conversa', 'Talk', 'Conversacion', 'Conversazione') },
+    { k: 'saude', icon: 'fitness', label: tl('Saúde', 'Health', 'Salud', 'Salute') },
+    { k: 'viagem', icon: 'airplane', label: tl('Viagem', 'Travel', 'Viaje', 'Viaggio') },
+    { k: 'lancar', icon: 'rocket', label: tl('Começar', 'Launch', 'Empezar', 'Iniziare') },
+    { k: 'contrato', icon: 'document-text', label: tl('Contrato', 'Contract', 'Contrato', 'Contratto') },
   ]
 
   useEffect(() => {
@@ -154,12 +158,9 @@ export default function MomentoCertoView({ premium }: { premium: boolean }) {
                   {detail.reasons.map((r, j) => <Text key={'dr' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
                   {detail.cautions.map((c, j) => <Text key={'dc' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
                 </View>
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+                <View style={{ marginTop: 20 }}>
                   <TouchableOpacity style={[s.act, { backgroundColor: C.gold }]} onPress={() => detail && addToCalendar(detail)}>
-                    <Ionicons name="calendar-outline" size={16} color="#0F0F23" /><Text style={s.actTx}>{tl('Calendário', 'Calendar', 'Calendario', 'Calendario')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[s.act, { backgroundColor: C.card2, borderWidth: 1, borderColor: C.line }]} onPress={() => detail && shareWindow(detail)}>
-                    <Ionicons name="share-social-outline" size={16} color={C.tx} /><Text style={[s.actTx, { color: C.tx }]}>{tl('Compartilhar', 'Share', 'Compartir', 'Condividi')}</Text>
+                    <Ionicons name="calendar-outline" size={16} color="#0F0F23" /><Text style={s.actTx}>{tl('Adicionar ao calendário', 'Add to calendar', 'Anadir al calendario', 'Aggiungi al calendario')}</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={s.disclaimer}>{tl('Orientativo, não determinista. A escolha é sua.', 'Guidance, not fate. The choice is yours.', 'Orientativo, no determinista. La eleccion es tuya.', 'Indicativo, non deterministico. La scelta e tua.')}</Text>
