@@ -243,6 +243,7 @@ export default function GroupsScreen() {
   const [showGroupOrderModal, setShowGroupOrderModal] = useState(false)
   const [showGroupActionsModal, setShowGroupActionsModal] = useState(false)
   const [showAddChooser, setShowAddChooser] = useState(false)
+  const [showAllGroups, setShowAllGroups] = useState(false)
   // Busca de usuários do app dentro dos Grupos (não encaminha pra aba Match).
   const [showFindUser, setShowFindUser] = useState(false)
   const [findTerm, setFindTerm] = useState('')
@@ -2061,12 +2062,17 @@ export default function GroupsScreen() {
                   onPress={() => setSelectedGroup(group)}
                 >
                   <Text style={[styles.groupTabText, selectedGroup?.id === group.id && styles.groupTabTextActive]}>
-                    {group.name}{Array.isArray(group.members) && group.members.length ? ` · ${group.members.length}` : ''}
+                    {group.name}
                   </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
+              {groups.length > 1 ? (
+                <TouchableOpacity style={styles.groupHeaderActionButton} onPress={() => setShowAllGroups(true)}>
+                  <Ionicons name="grid-outline" size={17} color="#FFD700" />
+                </TouchableOpacity>
+              ) : null}
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupOrder}>
                   <Ionicons name="swap-vertical" size={18} color="#FFD700" />
@@ -2617,6 +2623,39 @@ export default function GroupsScreen() {
               <Text style={styles.modalButtonCancelText}>{tr('common.cancel', 'Cancelar')}</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Todos os grupos — visão completa (o topo é rolável, mas aqui vê tudo de uma vez) */}
+      <Modal visible={showAllGroups} animationType="slide" onRequestClose={() => setShowAllGroups(false)}>
+        <View style={styles.findScreen}>
+          <View style={styles.findHead}>
+            <Text style={styles.findTitle}>{tr('groups.all.title', 'Seus grupos')}</Text>
+            <TouchableOpacity onPress={() => setShowAllGroups(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close" size={26} color="#8892a4" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            {(groups || []).map((group) => {
+              const on = selectedGroup?.id === group.id
+              const count = Array.isArray(group.members) ? group.members.length : 0
+              return (
+                <TouchableOpacity key={group.id} style={[styles.allGroupRow, on && styles.allGroupRowOn]} activeOpacity={0.8}
+                  onPress={() => { setSelectedGroup(group); setShowAllGroups(false) }}>
+                  <View style={styles.allGroupIcon}><Ionicons name="people" size={18} color={on ? '#0F0F23' : '#FFD700'} /></View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={[styles.allGroupName, on && { color: '#0F0F23' }]} numberOfLines={1}>{group.name}</Text>
+                    <Text style={[styles.allGroupMeta, on && { color: 'rgba(15,15,35,0.7)' }]}>{count} {count === 1 ? tr('groups.all.member', 'membro') : tr('groups.all.members', 'membros')}</Text>
+                  </View>
+                  {on ? <Ionicons name="checkmark-circle" size={20} color="#0F0F23" /> : <Ionicons name="chevron-forward" size={18} color="#8892a4" />}
+                </TouchableOpacity>
+              )
+            })}
+            <TouchableOpacity style={styles.allGroupCreate} onPress={() => { setShowAllGroups(false); openGroupActions() }}>
+              <Ionicons name="add" size={20} color="#FFD700" />
+              <Text style={styles.allGroupCreateTx}>{tr('groups.all.new', 'Criar ou entrar em um grupo')}</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -4738,6 +4777,13 @@ const styles = StyleSheet.create({
   findSentTx: { color: "#3ecf8e", fontSize: 12, fontWeight: "700" },
   findEmpty: { color: "#8892a4", fontSize: 14, textAlign: "center", marginTop: 8, paddingHorizontal: 24 },
   findEmptyCard: { alignItems: "center", paddingVertical: 40, gap: 12 },
+  allGroupRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#1c1c34", borderRadius: 14, borderWidth: 1, borderColor: "#2a2a44", padding: 14, marginBottom: 10 },
+  allGroupRowOn: { backgroundColor: "#FFD700", borderColor: "#FFD700" },
+  allGroupIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,215,0,0.12)", alignItems: "center", justifyContent: "center" },
+  allGroupName: { color: "#eaeaf5", fontSize: 15, fontWeight: "800" },
+  allGroupMeta: { color: "#8892a4", fontSize: 12.5, marginTop: 2 },
+  allGroupCreate: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.4)", borderStyle: "dashed" },
+  allGroupCreateTx: { color: "#FFD700", fontSize: 14, fontWeight: "700" },
   modalOptionButton: {
     backgroundColor: "#2C2C2E",
     paddingVertical: 12,

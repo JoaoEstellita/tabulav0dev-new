@@ -598,10 +598,6 @@ export default function CosmosScreen() {
           <Text style={styles.heroSub}>
             {tl('Seu espaço astrológico', 'Your astrological space', 'Tu espacio astrológico', 'Il tuo spazio astrologico')}
           </Text>
-          <TouchableOpacity style={styles.shareCta} activeOpacity={0.85} onPress={() => setShareOpen(true)}>
-            <Ionicons name="share-social-outline" size={15} color="#FFD700" />
-            <Text style={styles.shareCtaText}>{tl('Compartilhar', 'Share', 'Compartir', 'Condividi')}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Mapa natal e Perfil completo embutidos: a aba se chama "Mapa" e agora
