@@ -101,8 +101,11 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
     contrato: tl('Melhores dias para assinar ou fechar', 'Best days to sign or close a deal', 'Mejores dias para firmar o cerrar', 'Migliori giorni per firmare o chiudere'),
   } as Record<MomentoIntention, string>)[k] || tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori'))
 
-  // Só vale mostrar dia com score >= 50 (abaixo disso não é um bom dia de verdade).
-  const shown = (windows || []).filter((w) => Number(w.score) >= 50)
+  // Dias favoráveis = score >= 50. Se não houver nenhum, não deixa vazio:
+  // mostra o mais favorável do período (rótulo honesto pela banda).
+  const favorable = (windows || []).filter((w) => Number(w.score) >= 50)
+  const weak = favorable.length === 0
+  const shown = weak ? (windows || []).slice(0, 2) : favorable
   const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
   const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
   const addToCalendar = (w: MomentoWindow) => {
@@ -160,10 +163,11 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
       ) : (
         <View style={{ marginTop: 18, gap: 10 }}>
           {shown.length === 0 ? (
-            <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Nenhum dia realmente favorável no período (nada acima de 50). Tente outra intenção ou volte mais pra frente.', 'No truly favorable day in this period (nothing above 50). Try another intention or check back later.', 'Ningun dia realmente favorable en el periodo (nada arriba de 50). Prueba otra intencion o vuelve mas adelante.', 'Nessun giorno davvero favorevole nel periodo (niente sopra 50). Prova un\'altra intenzione o torna piu avanti.')}</Text></View>
+            <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas no período. Tente outra intenção ou volte mais pra frente.', 'No windows in this period. Try another intention or check back later.', 'Sin ventanas en el periodo. Prueba otra intencion o vuelve mas adelante.', 'Nessuna finestra nel periodo. Prova un\'altra intenzione o torna piu avanti.')}</Text></View>
           ) : (
             <>
-              <Text style={s.label} {...aWindows}>{bestDaysTitle(intention)}</Text>
+              <Text style={s.label} {...aWindows}>{weak ? tl('Nenhum dia forte por aqui', 'No strong day here', 'Ningun dia fuerte aqui', 'Nessun giorno forte qui') : bestDaysTitle(intention)}</Text>
+              {weak ? <Text style={s.weakNote}>{tl('Mostrando o dia mais favorável do período — mesmo sem ser forte.', 'Showing the most favorable day of the period — even if not strong.', 'Mostrando el dia mas favorable del periodo — aunque no sea fuerte.', 'Mostro il giorno piu favorevole del periodo — anche se non forte.')}</Text> : null}
               {shown.map((w, i) => (
                 <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -249,6 +253,7 @@ const s = StyleSheet.create({
   winDate: { color: C.tx, fontSize: 15, fontWeight: '800', textTransform: 'capitalize' },
   winHuman: { color: C.tx, fontSize: 13.5, fontWeight: '700', lineHeight: 18, marginTop: 3 },
   loadHint: { color: C.dim, fontSize: 13, textAlign: 'center' },
+  weakNote: { color: C.dim, fontSize: 12.5, fontStyle: 'italic', marginTop: -4, marginBottom: 2, lineHeight: 17 },
   winHour: { color: C.good, fontSize: 13, fontWeight: '800', marginTop: 3 },
   winReason: { color: C.dim, fontSize: 13, lineHeight: 18, marginTop: 3 },
   winCaution: { color: C.gold, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
