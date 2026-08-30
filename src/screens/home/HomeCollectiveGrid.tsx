@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useLifeAreas } from '../../hooks/useLifeAreas'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { formatTransitCompact, aspectNature, signInfoFromLongitude, translatePlanet } from '../../utils/astro/pt'
+import { nextNewMoon, nextFullMoon, soonestIngress } from '../../astro/skyEvents'
 
 // Grade de "Trânsitos coletivos" no fim da Home: o céu de agora (aspectos entre
 // planetas, iguais pra todo mundo). Botão-livro → lista completa (CollectiveTransits).
@@ -33,13 +34,25 @@ export default function HomeCollectiveGrid() {
     .map((p: any) => ({ planet: p?.name, retro: !!p?.current?.isRetrograde, ...signInfoFromLongitude(p?.current?.longitude, language) }))
     .filter((x: any) => x.planet && x.planet !== 'Ascendant' && x.planet !== 'Midheaven')
 
+  // Próximos eventos do céu — calculados 1x (client-side, sem backend).
+  const events = React.useMemo(() => {
+    const now = new Date()
+    const nm = nextNewMoon(now); const fm = nextFullMoon(now); const ing = soonestIngress(now)
+    return { newMoon: nm, fullMoon: fm, ingress: ing }
+  }, [])
+
   if (!list.length && !ingresses.length) return null
 
+  const shortDate = (d?: Date | null) => {
+    if (!d) return ''
+    try { return d.toLocaleDateString(language, { day: '2-digit', month: 'short' }) } catch { return '' }
+  }
   const fmtDate = (a: any) => {
     const iso = a?.window?.exact || a?.window?.start
     if (!iso) return ''
     try { return new Date(iso).toLocaleDateString(language, { day: '2-digit', month: 'short' }) } catch { return '' }
   }
+  const ingSign = events.ingress ? signInfoFromLongitude(events.ingress.signIdx * 30 + 1, language) : null
 
   return (
     <View style={s.wrap}>
@@ -50,6 +63,15 @@ export default function HomeCollectiveGrid() {
         </TouchableOpacity>
       </View>
       <Text style={s.sub}>{tl('O céu de agora — o mesmo pra todo mundo.', 'The sky right now — the same for everyone.', 'El cielo de ahora — el mismo para todos.', 'Il cielo di adesso — lo stesso per tutti.')}</Text>
+
+      {events.newMoon || events.fullMoon || events.ingress ? (
+        <View style={s.events}>
+          {events.newMoon ? <Text style={s.event}>🌑 {tl('Nova', 'New', 'Nueva', 'Nuova')} {shortDate(events.newMoon)}</Text> : null}
+          {events.fullMoon ? <Text style={s.event}>🌕 {tl('Cheia', 'Full', 'Llena', 'Piena')} {shortDate(events.fullMoon)}</Text> : null}
+          {events.ingress && ingSign ? <Text style={s.event}>⏭ {translatePlanet(events.ingress.planet)} {ingSign.glyph} {shortDate(events.ingress.date)}</Text> : null}
+        </View>
+      ) : null}
+
       {list.length ? (
         <View style={s.grid}>
           {list.map((a: any, i: number) => {
@@ -90,6 +112,8 @@ const s = StyleSheet.create({
   title: { color: '#EDEBF7', fontSize: 15, fontWeight: '800' },
   bookBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#FFD700', alignItems: 'center', justifyContent: 'center' },
   sub: { color: '#9aa2b8', fontSize: 12, marginTop: 3, marginBottom: 10 },
+  events: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  event: { color: '#EDEBF7', fontSize: 12, fontWeight: '700', backgroundColor: '#1F1F3D', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 8, paddingVertical: 4, textTransform: 'capitalize' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cell: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1F1F3D', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', paddingVertical: 10, paddingHorizontal: 10 },
   dot: { width: 8, height: 8, borderRadius: 4 },
