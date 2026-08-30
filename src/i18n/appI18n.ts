@@ -15,7 +15,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 type Dict = Record<string, string>
 
-const dictionaries: Record<AppLanguage, Dict> = {
+export const dictionaries: Record<AppLanguage, Dict> = {
   'pt-BR': {
     'common.next': 'Próximo',
     'common.back': 'Voltar',
@@ -4053,9 +4053,9 @@ const postPatchReadingModal: Record<AppLanguage, Dict> = {
   'es-ES': {
     'reading.modal.subtitle': 'Lectura aplicada al contexto actual',
     'reading.modal.keyReading': 'Lectura clave',
-    'reading.modal.appliedInterpretation': 'Interpretación aplicada',
-    'reading.modal.practicalUse': 'Uso práctico',
-    'reading.modal.technicalContext': 'Contexto técnico',
+    'reading.modal.appliedInterpretation': 'Interpretacion aplicada',
+    'reading.modal.practicalUse': 'Uso practico',
+    'reading.modal.technicalContext': 'Contexto tecnico',
   },
   'it-IT': {
     'reading.modal.subtitle': 'Lettura applicata al contesto attuale',
