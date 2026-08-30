@@ -125,6 +125,15 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
   const { user } = useAuth()
   const [progressoes, setProgressoes] = useState<ProgressedAspect[]>([])
   const [janelas, setJanelas] = useState<Record<number, ProgressedWindow>>({})
+  // Filtro inline (usado no modo embutido do Mapa): mostra só a categoria escolhida.
+  const [filtro, setFiltro] = useState<'all' | 'imp' | 'long' | 'prog'>('all')
+  const mostra = (cat: 'imp' | 'recent' | 'long' | 'prog') => {
+    if (!embedded || filtro === 'all') return true
+    if (filtro === 'imp') return cat === 'imp'
+    if (filtro === 'long') return cat === 'long'
+    if (filtro === 'prog') return cat === 'prog'
+    return true
+  }
   useEffect(() => {
     let cancelado = false
     const rodar = async () => {
@@ -259,6 +268,24 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
     <>
         {!embedded ? <Text style={styles.title}>{t('transits.personal.title')}</Text> : null}
 
+        {embedded && list.length ? (
+          <View style={styles.navChips}>
+            {[
+              { k: 'all', r: tl('Tudo', 'All', 'Todo', 'Tutto') },
+              { k: 'imp', r: tl('Importantes', 'Important', 'Importantes', 'Importanti') },
+              grupos.longTerm.length ? { k: 'long', r: tl('Mais longos', 'Longest', 'Mas largos', 'Piu lunghi') } : null,
+              progressoes.length ? { k: 'prog', r: tl('Progressões', 'Progressions', 'Progresiones', 'Progressioni') } : null,
+            ].filter(Boolean).map((c: any) => {
+              const on = filtro === c.k
+              return (
+                <TouchableOpacity key={c.k} style={[styles.navChip, on && styles.navChipActive]} activeOpacity={0.8} onPress={() => setFiltro(c.k)}>
+                  <Text style={[styles.navChipText, on && styles.navChipTextActive]}>{c.r}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        ) : null}
+
         {!embedded && list.length ? (
           <View style={styles.navChips}>
             {[
@@ -280,7 +307,7 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
           </View>
         ) : (
           <>
-            {grupos.highlight ? (
+            {grupos.highlight && mostra('imp') ? (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>
                   {tl('✦ O que mais pesa hoje', '✦ What weighs most today', '✦ Lo que mas pesa hoy', '✦ Cio che pesa di piu oggi')}
@@ -292,25 +319,25 @@ export default function PersonalTransitsScreen({ embedded = false, highlightId =
               </View>
             ) : null}
 
-            {secao(
+            {mostra('recent') ? secao(
               tl('Mudanças recentes na vida', 'Recent changes', 'Cambios recientes', 'Cambiamenti recenti'),
               tl('Trânsitos que começaram nos últimos dias.', 'Transits that started in the last few days.', 'Transitos iniciados en los ultimos dias.', 'Transiti iniziati negli ultimi giorni.'),
               grupos.recent, 100, 'recent',
-            )}
+            ) : null}
 
-            {secao(
+            {mostra('imp') ? secao(
               tl('Tendências ainda ativas', 'Trends still active', 'Tendencias aun activas', 'Tendenze ancora attive'),
               tl('Você ainda pode usar essas tendências a seu favor.', 'You can still use these trends in your favor.', 'Aun puedes usar estas tendencias a tu favor.', 'Puoi ancora usare queste tendenze a tuo favore.'),
               grupos.active, 200, 'active',
-            )}
+            ) : null}
 
-            {secao(
+            {mostra('long') ? secao(
               tl('Tendências de longo prazo', 'Long-term trends', 'Tendencias de largo plazo', 'Tendenze di lungo periodo'),
               tl('Mudanças que pedem mais tempo para serem vividas e assimiladas.', 'Changes that take longer to live through and absorb.', 'Cambios que piden mas tiempo para vivirse.', 'Cambiamenti che richiedono piu tempo.'),
               grupos.longTerm, 300, 'longTerm',
-            )}
+            ) : null}
 
-            {progressoes.length ? (
+            {progressoes.length && mostra('prog') ? (
               <View style={styles.section} ref={(n) => { ancoras.current.prog = n }}>
                 <Text style={styles.sectionTitle}>
                   {tl('Como você está vendo a vida', 'How you are seeing life', 'Como estas viendo la vida', 'Come stai vedendo la vita')}
@@ -436,6 +463,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,215,0,0.08)',
   },
   navChipText: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
+  navChipActive: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
+  navChipTextActive: { color: '#0F0F23', fontWeight: '800' },
   progDot: { width: 8, height: 8, borderRadius: 4 },
   progText: { color: '#E2E8F0', fontSize: 13, flex: 1 },
   progOrb: { color: '#8890B5', fontSize: 11 },
