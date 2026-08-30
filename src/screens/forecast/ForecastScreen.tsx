@@ -683,8 +683,15 @@ export default function ForecastScreen() {
   useTourScroller('Forecast', useCallback((y: number) => forecastScrollRef.current?.scrollTo({ y, animated: true }), []))
   const forecastViewRef = useRef<'momento' | 'grafico' | 'calendario'>('grafico')
   const buildForecastTour = useCallback(() => {
-    if (forecastViewRef.current === 'momento') return [] // tour de previsão não faz sentido no Momento Certo
     const fl = (pt: string, en: string, es: string, it: string) => (language === 'en-US' ? en : language === 'es-ES' ? es : language === 'it-IT' ? it : pt)
+    if (forecastViewRef.current === 'momento') return [
+      { id: 'momento.intentions', title: fl('Escolha a intenção', 'Pick your intention', 'Elige la intencion', 'Scegli l\'intenzione'),
+        body: fl('Toque no que você quer fazer — amor, carreira, uma decisão, uma conversa… O céu é lido para AQUILO, não em geral.', 'Tap what you want to do — love, career, a decision, a talk… The sky is read for THAT, not in general.', 'Toca lo que quieres hacer — amor, carrera, una decision, una conversacion… El cielo se lee para ESO, no en general.', 'Tocca cosa vuoi fare — amore, carriera, una decisione, una conversazione… Il cielo e letto per QUELLO, non in generale.') },
+      { id: 'momento.windows', title: fl('Os melhores dias', 'The best days', 'Los mejores dias', 'I giorni migliori'),
+        body: fl('As melhores janelas ranqueadas: dia, faixa de hora ideal, o que apoia (✨) e o que pesar (⚠️). Toque numa janela para ver tudo e adicionar ao calendário. Só aparecem dias realmente favoráveis.', 'The best ranked windows: day, ideal hour range, what supports (✨) and what to weigh (⚠️). Tap a window to see everything and add it to your calendar. Only truly favorable days show.', 'Las mejores ventanas: dia, franja horaria ideal, lo que apoya (✨) y lo que sopesar (⚠️). Toca una ventana para ver todo y anadir al calendario. Solo aparecen dias realmente favorables.', 'Le migliori finestre: giorno, fascia oraria ideale, cosa sostiene (✨) e cosa valutare (⚠️). Tocca una finestra per vedere tutto e aggiungerla al calendario. Compaiono solo giorni davvero favorevoli.') },
+      { id: 'momento.alert', title: fl('Avise-me quando abrir', 'Alert me when it opens', 'Avisame cuando se abra', 'Avvisami quando si apre'),
+        body: fl('Ative para receber um aviso quando uma boa janela desta intenção estiver chegando — assim você não perde o timing.', 'Turn it on to get a heads-up when a good window for this intention is near — so you don\'t miss the timing.', 'Activalo para recibir un aviso cuando una buena ventana de esta intencion se acerque — asi no pierdes el timing.', 'Attivalo per ricevere un avviso quando una buona finestra di questa intenzione si avvicina — cosi non perdi il momento.') },
+    ]
     return [
       { id: 'forecast.period', title: fl('Horizonte', 'Horizon', 'Horizonte', 'Orizzonte'),
         body: fl('Escolha quantos dias olhar à frente (7, 30…). Planos maiores liberam horizontes mais longos.', 'Choose how many days to look ahead (7, 30…). Higher plans unlock longer horizons.', 'Elige cuantos dias mirar adelante (7, 30…). Planes mayores desbloquean horizontes mas largos.', 'Scegli quanti giorni guardare avanti (7, 30…). I piani superiori sbloccano orizzonti piu lunghi.') },
@@ -1531,7 +1538,12 @@ export default function ForecastScreen() {
       </View>
 
       {forecastView === 'momento' ? (
-        <MomentoCertoView premium={isPremium} initialIntention={momentoIntention} />
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity onPress={openForecastTour} style={styles.momentoHelpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
+          </TouchableOpacity>
+          <MomentoCertoView premium={isPremium} initialIntention={momentoIntention} />
+        </View>
       ) : (
       <>
       <View style={styles.periodRow} {...aPeriod}>
@@ -2122,6 +2134,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
+  momentoHelpBtn: { position: 'absolute', right: 12, top: 8, zIndex: 10, padding: 6 },
   topMenu: {
     flexDirection: 'row',
     gap: 6,

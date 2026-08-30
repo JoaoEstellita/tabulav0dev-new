@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppLanguage } from '../../hooks/useAppLanguage'
 import { getMomento, setMomentoAlert, type MomentoIntention, type MomentoWindow, type MomentoReason } from '../../services/MomentoService'
+import { useTourAnchor } from '../../tour/TourProvider'
 
 /**
  * Momento Certo — astrologia eletiva pessoal ("quando agir"). Escolhe a intenção
@@ -33,6 +34,10 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
   const [detail, setDetail] = useState<MomentoWindow | null>(null)
   const [alertOn, setAlertOn] = useState(false)
   const [alertBusy, setAlertBusy] = useState(false)
+  // Âncoras do tour holofote da aba (ids casam com o buildForecastTour em modo momento).
+  const aIntentions = useTourAnchor('momento.intentions')
+  const aWindows = useTourAnchor('momento.windows')
+  const aAlert = useTourAnchor('momento.alert')
 
   const INTENTIONS: { k: MomentoIntention; icon: string; label: string }[] = [
     { k: 'amor', icon: 'heart', label: tl('Amor', 'Love', 'Amor', 'Amore') },
@@ -84,18 +89,20 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
   // Faixa de hora (instante UTC) formatada no fuso do aparelho.
   const fmtHour = (iso: string) => new Date(iso).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
 
-  // Frase humana por intenção — o resumo acolhedor acima do jargão técnico.
-  const humanLine = (k: MomentoIntention): string => (({
-    amor: tl('Dia leve pra se abrir e se aproximar.', 'A light day to open up and get closer.', 'Un dia ligero para abrirte y acercarte.', 'Un giorno leggero per aprirti e avvicinarti.'),
-    carreira: tl('Bom para dar um passo profissional.', 'Good to take a career step.', 'Bueno para dar un paso profesional.', 'Buono per fare un passo di carriera.'),
-    decisao: tl('Mente clara pra decidir.', 'A clear mind to decide.', 'Mente clara para decidir.', 'Mente lucida per decidere.'),
-    conversa: tl('Abertura pra aquela conversa.', 'Openness for that talk.', 'Apertura para esa conversacion.', 'Apertura per quella conversazione.'),
-    saude: tl('Bom pra cuidar de você.', 'Good to take care of yourself.', 'Bueno para cuidarte.', 'Buono per prenderti cura di te.'),
-    viagem: tl('Céu a favor de se mover.', 'The sky favors moving.', 'El cielo favorece moverte.', 'Il cielo favorisce il muoverti.'),
-    lancar: tl('Bom pra começar algo novo.', 'Good to start something new.', 'Bueno para empezar algo nuevo.', 'Buono per iniziare qualcosa.'),
-    contrato: tl('Terreno firme pra fechar.', 'Solid ground to close a deal.', 'Terreno firme para cerrar.', 'Terreno solido per chiudere.'),
-  } as Record<MomentoIntention, string>)[k] || '')
+  // Título "Melhores dias para ..." por intenção (substitui a frase repetida nos cards).
+  const bestDaysTitle = (k: MomentoIntention): string => (({
+    amor: tl('Melhores dias para se abrir e se aproximar', 'Best days to open up and connect', 'Mejores dias para abrirte y acercarte', 'Migliori giorni per aprirti e avvicinarti'),
+    carreira: tl('Melhores dias para dar um passo profissional', 'Best days to take a career step', 'Mejores dias para dar un paso profesional', 'Migliori giorni per un passo di carriera'),
+    decisao: tl('Melhores dias para decidir com clareza', 'Best days to decide clearly', 'Mejores dias para decidir con claridad', 'Migliori giorni per decidere con chiarezza'),
+    conversa: tl('Melhores dias para aquela conversa', 'Best days for that talk', 'Mejores dias para esa conversacion', 'Migliori giorni per quella conversazione'),
+    saude: tl('Melhores dias para cuidar de você', 'Best days to care for yourself', 'Mejores dias para cuidarte', 'Migliori giorni per prenderti cura di te'),
+    viagem: tl('Melhores dias para viajar', 'Best days to travel', 'Mejores dias para viajar', 'Migliori giorni per viaggiare'),
+    lancar: tl('Melhores dias para começar algo', 'Best days to start something', 'Mejores dias para empezar algo', 'Migliori giorni per iniziare qualcosa'),
+    contrato: tl('Melhores dias para assinar ou fechar', 'Best days to sign or close a deal', 'Mejores dias para firmar o cerrar', 'Migliori giorni per firmare o chiudere'),
+  } as Record<MomentoIntention, string>)[k] || tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori'))
 
+  // Só vale mostrar dia com score >= 50 (abaixo disso não é um bom dia de verdade).
+  const shown = (windows || []).filter((w) => Number(w.score) >= 50)
   const intentionLabel = INTENTIONS.find((x) => x.k === intention)?.label || ''
   const winTitle = tl('Momento Certo', 'Right Moment', 'Momento Justo', 'Momento Giusto') + ' · ' + intentionLabel
   const addToCalendar = (w: MomentoWindow) => {
@@ -127,7 +134,7 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
         <Text style={s.heroSub}>{tl('Escolha uma intenção e veja os melhores dias — em que o céu te apoia para aquilo.', 'Pick an intention and see the best days — when the sky supports you for it.', 'Elige una intencion y ve los mejores dias — cuando el cielo te apoya.', 'Scegli un\'intenzione e vedi i giorni migliori — quando il cielo ti sostiene.')}</Text>
       </View>
 
-      <View style={s.grid}>
+      <View style={s.grid} {...aIntentions}>
         {INTENTIONS.map((it) => {
           const on = intention === it.k
           return (
@@ -150,28 +157,31 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
           <ActivityIndicator color={C.gold} />
           <Text style={s.loadHint}>{tl('Montando as melhores janelas para você…', 'Building your best windows…', 'Montando tus mejores ventanas…', 'Sto costruendo le tue finestre migliori…')}</Text>
         </View>
-      ) : !windows || windows.length === 0 ? (
-        <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Sem janelas fortes no período. Tente outra intenção.', 'No strong windows in this period. Try another intention.', 'Sin ventanas fuertes en el periodo. Prueba otra intencion.', 'Nessuna finestra forte nel periodo. Prova un\'altra intenzione.')}</Text></View>
       ) : (
         <View style={{ marginTop: 18, gap: 10 }}>
-          <Text style={s.label}>{tl('Melhores dias', 'Best days', 'Mejores dias', 'Giorni migliori')}</Text>
-          {windows.map((w, i) => (
-            <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
-                <Text style={s.winHuman}>{humanLine(intention)}</Text>
-                {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
-                {w.reasons.slice(0, 2).map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
-                {w.cautions.slice(0, 1).map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
-                {w.reasons.length + w.cautions.length > 3 ? <Text style={s.winMore}>{tl('ver mais', 'see more', 'ver mas', 'vedi altro')} ›</Text> : null}
-              </View>
-              <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
-                <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={C.dim} />
-            </TouchableOpacity>
-          ))}
-          <View style={s.alertRow}>
+          {shown.length === 0 ? (
+            <View style={s.soon}><Ionicons name="planet-outline" size={26} color={C.dim} /><Text style={s.soonTx}>{tl('Nenhum dia realmente favorável no período (nada acima de 50). Tente outra intenção ou volte mais pra frente.', 'No truly favorable day in this period (nothing above 50). Try another intention or check back later.', 'Ningun dia realmente favorable en el periodo (nada arriba de 50). Prueba otra intencion o vuelve mas adelante.', 'Nessun giorno davvero favorevole nel periodo (niente sopra 50). Prova un\'altra intenzione o torna piu avanti.')}</Text></View>
+          ) : (
+            <>
+              <Text style={s.label} {...aWindows}>{bestDaysTitle(intention)}</Text>
+              {shown.map((w, i) => (
+                <TouchableOpacity key={w.dateISO + i} style={s.win} activeOpacity={0.85} onPress={() => setDetail(w)}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={s.winDate}>{i === 0 ? '⭐ ' : ''}{fmtDate(w.dateISO)}</Text>
+                    {w.hourFromISO && w.hourToISO ? <Text style={s.winHour}>🕐 {fmtHour(w.hourFromISO)}–{fmtHour(w.hourToISO)}</Text> : null}
+                    {w.reasons.slice(0, 2).map((r, j) => <Text key={'r' + j} style={s.winReason}>✨ {reasonLine(r)}</Text>)}
+                    {w.cautions.slice(0, 1).map((c, j) => <Text key={'c' + j} style={s.winCaution}>⚠️ {cautionLine(c)}</Text>)}
+                    {w.reasons.length + w.cautions.length > 3 ? <Text style={s.winMore}>{tl('ver mais', 'see more', 'ver mas', 'vedi altro')} ›</Text> : null}
+                  </View>
+                  <View style={[s.ring, { borderColor: scoreColor(w.score) }]}>
+                    <Text style={[s.ringTx, { color: scoreColor(w.score) }]}>{w.score}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={C.dim} />
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
+          <View style={s.alertRow} {...aAlert}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={s.alertTitle}>🔔 {tl('Avise-me quando abrir', 'Alert me when it opens', 'Avisame cuando se abra', 'Avvisami quando si apre')}</Text>
               <Text style={s.alertSub}>{tl('Um push quando uma janela forte desta intenção estiver chegando.', 'A push when a strong window for this intention is near.', 'Un aviso cuando una ventana fuerte de esta intencion se acerque.', 'Una notifica quando una finestra forte di questa intenzione si avvicina.')}</Text>
@@ -196,7 +206,6 @@ export default function MomentoCertoView({ premium, initialIntention }: { premiu
                   <Text style={s.sheetDate}>{fmtDate(detail.dateISO)}</Text>
                   <View style={[s.bandTag, { borderColor: scoreColor(detail.score) }]}><Text style={[s.bandTx, { color: scoreColor(detail.score) }]}>{scoreBand(detail.score)} · {detail.score}</Text></View>
                 </View>
-                <Text style={s.winHuman}>{humanLine(intention)}</Text>
                 {detail.hourFromISO && detail.hourToISO ? (
                   <>
                     <Text style={s.sheetHour}>🕐 {fmtHour(detail.hourFromISO)}–{fmtHour(detail.hourToISO)}</Text>

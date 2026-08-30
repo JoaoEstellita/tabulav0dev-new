@@ -2084,9 +2084,6 @@ export default function GroupsScreen() {
               ))}
             </ScrollView>
             <View style={styles.headerActionsInline}>
-              <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupsTour}>
-                <Ionicons name="help-circle-outline" size={18} color="#FFD700" />
-              </TouchableOpacity>
               {groups.length > 1 ? (
                 <TouchableOpacity style={styles.groupHeaderActionButton} onPress={() => setShowAllGroups(true)}>
                   <Ionicons name="grid-outline" size={17} color="#FFD700" />
@@ -2144,6 +2141,9 @@ export default function GroupsScreen() {
                     <TouchableOpacity style={styles.groupHeaderPreferencesButton} onPress={openGroupSettings}>
                       <Ionicons name="options" size={12} color="#FFD700" />
                       <Text style={styles.groupHeaderPreferencesText}>{tr('groups.label.preferences', 'Preferencias')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.groupHeaderActionButton} onPress={openGroupsTour} accessibilityRole="button" accessibilityLabel="Guia">
+                      <Ionicons name="help-circle-outline" size={18} color="#FFD700" />
                     </TouchableOpacity>
                   </View>
                   <View style={styles.groupHeaderMetaRow}>

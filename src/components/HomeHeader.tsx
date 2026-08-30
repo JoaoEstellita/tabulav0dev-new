@@ -137,13 +137,15 @@ export default function HomeHeader({ sunSign, moonSign, unreadCount = 0, onPress
             ) : null}
           </TouchableOpacity>
         ) : null}
-        {onPressHelp ? (
-          <TouchableOpacity onPress={onPressHelp} style={styles.helpBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="help-circle-outline" size={22} color="#FFD700" />
-          </TouchableOpacity>
-        ) : null}
-        <View {...(moonAnchor || {})}>
-          <MoonPhaseButton userReady={!!user} signGlyph={currentMoonSignGlyph()} />
+        <View style={styles.moonCol}>
+          {onPressHelp ? (
+            <TouchableOpacity onPress={onPressHelp} style={styles.helpBtnTop} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="help-circle-outline" size={20} color="#FFD700" />
+            </TouchableOpacity>
+          ) : null}
+          <View {...(moonAnchor || {})}>
+            <MoonPhaseButton userReady={!!user} signGlyph={currentMoonSignGlyph()} />
+          </View>
         </View>
       </View>
     </View>
@@ -225,6 +227,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   helpBtn: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center', marginRight: 2 },
+  moonCol: { alignItems: 'flex-end', gap: 2 },
+  helpBtnTop: { width: 26, height: 22, justifyContent: 'center', alignItems: 'center' },
   bellBadge: {
     position: 'absolute',
     top: 4,
